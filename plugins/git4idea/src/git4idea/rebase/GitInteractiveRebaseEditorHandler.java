@@ -15,159 +15,152 @@
  */
 package git4idea.rebase;
 
-import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.DialogManager;
-import git4idea.commands.GitHandler;
+import git4idea.config.GitConfigUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
+import static com.intellij.CommonBundle.getCancelButtonText;
+import static com.intellij.CommonBundle.getOkButtonText;
+import static com.intellij.openapi.ui.Messages.getQuestionIcon;
+import static git4idea.DialogManager.showOkCancelDialog;
+import static git4idea.rebase.GitRebaseEditorMain.ERROR_EXIT_CODE;
+
 /**
- * The handler for rebase editor request. The handler shows {@link git4idea.rebase.GitRebaseEditor}
+ * The handler for rebase editor request. The handler shows the {@link GitRebaseEditor}
  * dialog with the specified file. If user accepts the changes, it saves file and returns 0,
  * otherwise it just returns error code.
  */
 public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEditorHandler {
-  /**
-   * The logger
-   */
-  private final static Logger LOG = Logger.getInstance(GitInteractiveRebaseEditorHandler.class.getName());
-  /**
-   * The service object that has created this handler
-   */
+  private final static Logger LOG = Logger.getInstance(GitInteractiveRebaseEditorHandler.class);
   private final GitRebaseEditorService myService;
-  /**
-   * The context project
-   */
   private final Project myProject;
-  /**
-   * The git repository root
-   */
   private final VirtualFile myRoot;
-  /**
-   * The handler that specified this editor
-   */
-  private final GitHandler myHandler;
-  /**
-   * The handler number
-   */
   @NotNull private final UUID myHandlerNo;
-  /**
-   * If true, the handler has been closed
-   */
   private boolean myIsClosed;
+
   /**
-   * Set to true after rebase editor was shown
+   * If interactive rebase editor (with the list of commits) was shown, this is true.
+   * In that case, the class expects only unstructured editor to edit the commit message.
    */
   protected boolean myRebaseEditorShown = false;
 
-  private boolean myNoopSituation;
-
   private boolean myEditorCancelled;
 
-  /**
-   * The constructor from fields that is expected to be
-   * accessed only from {@link git4idea.rebase.GitRebaseEditorService}.
-   *
-   * @param service the service object that has created this handler
-   * @param project the context project
-   * @param root    the git repository root
-   * @param handler the handler for process that needs this editor
-   */
-  public GitInteractiveRebaseEditorHandler(@NotNull final GitRebaseEditorService service,
-                                           @NotNull final Project project,
-                                           @NotNull final VirtualFile root,
-                                           @NotNull GitHandler handler) {
+  public GitInteractiveRebaseEditorHandler(@NotNull GitRebaseEditorService service, @NotNull Project project, @NotNull VirtualFile root) {
     myService = service;
     myProject = project;
     myRoot = root;
-    myHandler = handler;
     myHandlerNo = service.registerHandler(this, project);
   }
 
-  /**
-   * @return the handler for the process that started this editor
-   */
-  public GitHandler getHandler() {
-    return myHandler;
+  public int editCommits(@NotNull String path) {
+    ensureOpen();
+    try {
+      if (myRebaseEditorShown) {
+        myEditorCancelled = !handleUnstructuredEditor(path);
+        return 0;
+      }
+      else {
+        setRebaseEditorShown();
+        boolean success = handleInteractiveEditor(path);
+        if (success) {
+          return 0;
+        }
+        else {
+          myEditorCancelled = true;
+          return ERROR_EXIT_CODE;
+        }
+      }
+    }
+    catch (Exception e) {
+      LOG.error("Failed to edit git rebase file: " + path, e);
+      return ERROR_EXIT_CODE;
+    }
   }
 
-  /**
-   * Edit commits request
-   *
-   * @param path the path to editing
-   * @return the exit code to be returned from editor
-   */
-  public int editCommits(final String path) {
-    ensureOpen();
-    final Ref<Boolean> isSuccess = new Ref<>();
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      public void run() {
-        try {
-          myEditorCancelled = false;
-          myNoopSituation = false;
-          if (myRebaseEditorShown) {
-            GitRebaseUnstructuredEditor editor = new GitRebaseUnstructuredEditor(myProject, myRoot, path);
-            DialogManager.show(editor);
-            if (editor.isOK()) {
-              editor.save();
-            }
-            else {
-              myEditorCancelled = true;
-            }
-            isSuccess.set(true);
-            return;
-          }
-          else {
-            setRebaseEditorShown();
-            GitInteractiveRebaseFile rebaseFile = new GitInteractiveRebaseFile(myProject, myRoot, path);
-            try {
-              List<GitRebaseEntry> entries = rebaseFile.load();
-              GitRebaseEditor editor = new GitRebaseEditor(myProject, myRoot, entries);
-              DialogManager.show(editor);
-              if (editor.isOK()) {
-                rebaseFile.save(editor.getEntries());
-                isSuccess.set(true);
-                return;
-              }
-              else {
-                rebaseFile.cancel();
-                myEditorCancelled = true;
-              }
-            }
-            catch (GitInteractiveRebaseFile.NoopException e) {
-              LOG.info("Noop situation while rebasing " + myRoot);
-              String message = "There are no commits to rebase because the current branch is directly below the base branch, " +
-                               "or they point to the same commit (the 'noop' situation).\n" +
-                               "Do you want to continue (this will reset the current branch to the base branch)?";
-              int rebase = DialogManager.showOkCancelDialog(myProject, message, "Git Rebase", CommonBundle.getOkButtonText(),
-                                                            CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
-              if (rebase == Messages.OK) {
-                isSuccess.set(true);
-                myNoopSituation = true;
-                return;
-              }
-              else {
-                myEditorCancelled = true;
-              }
-            }
-          }
-        }
-        catch (Exception e) {
-          LOG.error("Failed to edit the git rebase file: " + path, e);
-        }
-        isSuccess.set(false);
+  private boolean handleUnstructuredEditor(@NotNull String path) throws IOException {
+    String encoding = GitConfigUtil.getCommitEncoding(myProject, myRoot);
+    File file = new File(path);
+    String initialText = FileUtil.loadFile(file, encoding);
+
+    String newText = showUnstructuredEditor(initialText);
+    if (newText == null) {
+      return false;
+    }
+    else {
+      FileUtil.writeToFile(file, newText.getBytes(encoding));
+      return true;
+    }
+  }
+
+  @Nullable
+  private String showUnstructuredEditor(@NotNull String initialText) {
+    Ref<String> newText = Ref.create();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      GitRebaseUnstructuredEditor editor = new GitRebaseUnstructuredEditor(myProject, myRoot, initialText);
+      DialogManager.show(editor);
+      if (editor.isOK()) {
+        newText.set(editor.getText());
       }
     });
-    return (isSuccess.isNull() || !isSuccess.get().booleanValue()) ? GitRebaseEditorMain.ERROR_EXIT_CODE : 0;
+    return newText.get();
+  }
+
+  private boolean handleInteractiveEditor(@NotNull String path) throws IOException {
+    GitInteractiveRebaseFile rebaseFile = new GitInteractiveRebaseFile(myProject, myRoot, path);
+    try {
+      List<GitRebaseEntry> entries = rebaseFile.load();
+      List<GitRebaseEntry> newEntries = showInteractiveRebaseEditor(entries);
+      if (newEntries != null) {
+        rebaseFile.save(newEntries);
+        return true;
+      }
+      else {
+        rebaseFile.cancel();
+        return false;
+      }
+    }
+    catch (GitInteractiveRebaseFile.NoopException e) {
+      return confirmNoopRebase();
+    }
+  }
+
+  @Nullable
+  private List<GitRebaseEntry> showInteractiveRebaseEditor(@NotNull List<GitRebaseEntry> entries) {
+    Ref<List<GitRebaseEntry>> newText = Ref.create();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      GitRebaseEditor editor = new GitRebaseEditor(myProject, myRoot, entries);
+      DialogManager.show(editor);
+      if (editor.isOK()) {
+        newText.set(editor.getEntries());
+      }
+    });
+    return newText.get();
+  }
+
+  private boolean confirmNoopRebase() {
+    LOG.info("Noop situation while rebasing " + myRoot);
+    String message = "There are no commits to rebase because the current branch is directly below the base branch, " +
+                     "or they point to the same commit (the 'noop' situation).\n" +
+                     "Do you want to continue (this will reset the current branch to the base branch)?";
+    Ref<Boolean> result = Ref.create(false);
+    ApplicationManager.getApplication().invokeAndWait(() -> result.set(
+      Messages.OK == showOkCancelDialog(myProject, message, "Git Rebase", getOkButtonText(), getCancelButtonText(), getQuestionIcon())));
+    return result.get();
   }
 
   /**
@@ -186,30 +179,19 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
     }
   }
 
-  /**
-   * Stop using the handler
-   */
   public void close() {
     ensureOpen();
     myIsClosed = true;
     myService.unregisterHandler(myHandlerNo);
   }
 
-  /**
-   * @return the handler number
-   */
+  @Override
   @NotNull
   public UUID getHandlerNo() {
     return myHandlerNo;
   }
 
-  /**
-   * Tells if there was a "noop" situation during rebase (no commits were rebase, just the label was moved).
-   */
-  public boolean wasNoopSituationDetected() {
-    return myNoopSituation;
-  }
-
+  @Override
   public boolean wasEditorCancelled() {
     return myEditorCancelled;
   }

@@ -30,7 +30,7 @@ public class VariablesNotProcessor extends VariablesProcessor{
   }
 
   public VariablesNotProcessor(PsiVariable var, boolean staticSensitive){
-    this(var, staticSensitive, new SmartList<PsiVariable>());
+    this(var, staticSensitive, new SmartList<>());
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -608,37 +609,22 @@ public class ExpectedTypeUtils {
 
     @Nullable
     private static PsiType getTypeOfParameter(@NotNull JavaResolveResult result, int parameterPosition) {
+      if (parameterPosition < 0 ) {
+        return null;
+      }
       final PsiMethod method = (PsiMethod)result.getElement();
       if (method == null) {
         return null;
       }
-      final PsiSubstitutor substitutor = result.getSubstitutor();
       final PsiParameterList parameterList = method.getParameterList();
-      if (parameterPosition < 0) {
+      final PsiParameter[] parameters = parameterList.getParameters();
+      if (parameters.length == 0) {
         return null;
       }
-      final int parametersCount = parameterList.getParametersCount();
-      final PsiParameter[] parameters;
-      if (parameterPosition >= parametersCount) {
-        final int lastParameterPosition = parametersCount - 1;
-        if (lastParameterPosition < 0) {
-          return null;
-        }
-        parameters = parameterList.getParameters();
-        final PsiParameter lastParameter = parameters[lastParameterPosition];
-        if (lastParameter.isVarArgs()) {
-          final PsiArrayType arrayType = (PsiArrayType)lastParameter.getType();
-          return substitutor.substitute(arrayType.getComponentType());
-        }
-        return null;
-      }
-      parameters = parameterList.getParameters();
-      final PsiParameter parameter = parameters[parameterPosition];
-      final PsiType parameterType = parameter.getType();
-      if (parameter.isVarArgs()) {
-        final PsiArrayType arrayType = (PsiArrayType)parameterType;
-        return substitutor.substitute(arrayType.getComponentType());
-      }
+      final boolean isVarargs = result instanceof MethodCandidateInfo && 
+                                ((MethodCandidateInfo)result).getApplicabilityLevel() == MethodCandidateInfo.ApplicabilityLevel.VARARGS;
+      final PsiType parameterType = PsiTypesUtil.getParameterType(parameters, parameterPosition, isVarargs);
+      final PsiSubstitutor substitutor = result.getSubstitutor();
       final PsiType type = GenericsUtil.getVariableTypeByExpressionType(substitutor.substitute(parameterType));
       if (type == null) {
         return null;

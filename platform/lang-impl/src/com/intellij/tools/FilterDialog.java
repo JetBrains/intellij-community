@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.execution.filters.RegexpFilter;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.ui.JBUI;
 
@@ -30,6 +31,7 @@ import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.regex.PatternSyntaxException;
 
 class FilterDialog extends DialogWrapper {
   private final JTextField myRegexpField = new JTextField();
@@ -147,7 +149,8 @@ class FilterDialog extends DialogWrapper {
 
     try {
       checkRegexp(myRegexpField.getText());
-    } catch (InvalidExpressionException e) {
+    }
+    catch (InvalidExpressionException | PatternSyntaxException e) {
       Messages.showMessageDialog(getContentPane(), e.getMessage(), ToolsBundle.message("tools.filters.add.regex.invalid.title"), Messages.getErrorIcon());
       return;
     }
@@ -189,7 +192,9 @@ class FilterDialog extends DialogWrapper {
         }
       } catch (BadLocationException ex) {
       }
-      myRegexpField.requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(myRegexpField, true);
+      });
     }
   }
 

@@ -53,7 +53,7 @@ public class GitStash extends GitRepositoryAction {
       GitHandlerUtil.doSynchronously(h, GitBundle.getString("stashing.title"), h.printableCommandLine());
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(project, token);
+      token.finish();
     }
     VfsUtil.markDirtyAndRefresh(false, true, false, root);
     if(!h.errors().isEmpty()) {

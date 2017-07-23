@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.util.io.URLUtil;
@@ -32,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class VirtualFileManager implements ModificationTracker {
   public static final Topic<BulkFileListener> VFS_CHANGES =
-    new Topic<BulkFileListener>("NewVirtualFileSystem changes", BulkFileListener.class);
+    new Topic<>("NewVirtualFileSystem changes", BulkFileListener.class);
 
   public static final ModificationTracker VFS_STRUCTURE_MODIFICATIONS = new ModificationTracker() {
     @Override
@@ -41,9 +42,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
     }
   };
 
-  private static class InstanceHolder {
-    static final VirtualFileManager ourInstance = ApplicationManager.getApplication().getComponent(VirtualFileManager.class);
-  }
+  private static VirtualFileManager ourInstance = CachedSingletonsRegistry.markCachedField(VirtualFileManager.class);
 
   /**
    * Gets the instance of {@code VirtualFileManager}.
@@ -52,7 +51,11 @@ public abstract class VirtualFileManager implements ModificationTracker {
    */
   @NotNull
   public static VirtualFileManager getInstance() {
-    return InstanceHolder.ourInstance;
+    VirtualFileManager result = ourInstance;
+    if (result == null) {
+      ourInstance = result = ApplicationManager.getApplication().getComponent(VirtualFileManager.class);
+    }
+    return result;
   }
 
   /**

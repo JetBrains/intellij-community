@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,7 +98,7 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
       PsiElement sibling = element.getPrevSibling();
       if (sibling instanceof PsiDeclarationStatement) {
         PsiElement lastVar = ArrayUtil.getLastElement(((PsiDeclarationStatement)sibling).getDeclaredElements());
-        if (lastVar instanceof PsiLocalVariable) {
+        if (lastVar instanceof PsiLocalVariable && ((PsiLocalVariable)lastVar).getInitializer() != null) {
           return (PsiLocalVariable)lastVar;
         }
       }
@@ -184,7 +184,7 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
     PsiElement i = statement.getNextSibling();
     while (i != null && i != stopAt) {
       PsiElement child = i;
-      i = PsiTreeUtil.skipSiblingsForward(i, PsiWhiteSpace.class, PsiComment.class);
+      i = PsiTreeUtil.skipWhitespacesAndCommentsForward(i);
 
       if (!(child instanceof PsiDeclarationStatement)) continue;
 

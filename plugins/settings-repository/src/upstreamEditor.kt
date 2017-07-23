@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.settingsRepository
 
+import com.intellij.internal.statistic.ActionsCollector
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
@@ -70,6 +71,7 @@ fun createMergeActions(project: Project?, urlTextField: TextFieldWithBrowseButto
       }
 
       override fun actionPerformed(event: ActionEvent) {
+        ActionsCollector.getInstance().record("Ics." + getValue(Action.NAME))
         val repositoryWillBeCreated = !icsManager.repositoryManager.isRepositoryExists()
         var upstreamSet = false
         try {
@@ -83,7 +85,7 @@ fun createMergeActions(project: Project?, urlTextField: TextFieldWithBrowseButto
           upstreamSet = true
 
           if (repositoryWillBeCreated) {
-            icsManager.newStreamProvider()
+            icsManager.setApplicationLevelStreamProvider()
           }
 
           if (repositoryWillBeCreated && syncType != SyncType.OVERWRITE_LOCAL) {

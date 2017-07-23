@@ -17,12 +17,6 @@ package org.jetbrains.idea.svn.svnkit.lowLevel;
 
 import org.tmatesoft.svn.core.SVNException;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/2/12
- * Time: 12:11 PM
- */
 public interface ApplicationLevelNumberConnectionsGuard {
   void waitForTotalNumberOfConnectionsOk() throws SVNException;
   boolean shouldKeepConnectionLocally();

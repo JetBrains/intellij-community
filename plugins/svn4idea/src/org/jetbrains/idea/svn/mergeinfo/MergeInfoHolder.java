@@ -121,26 +121,22 @@ public class MergeInfoHolder {
           myMergeInfoCache.getState(myRefreshedRoot, (SvnChangeList)list, myRefreshedBranch, myBranchPath);
         // todo make batches - by 10
         final long number = list.getNumber();
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            final MergeInfoCached cachedState = myCachedMap.get(createKey(myRefreshedRoot, myRefreshedBranch));
-            if (cachedState != null) {
-              cachedState.getMap().put(number, checkState);
-            }
-            myManager.repaintTree();
+        ApplicationManager.getApplication().invokeLater(() -> {
+          final MergeInfoCached cachedState = myCachedMap.get(createKey(myRefreshedRoot, myRefreshedBranch));
+          if (cachedState != null) {
+            cachedState.getMap().put(number, checkState);
           }
+          myManager.repaintTree();
         });
       }
       return true;
     }
 
     public void onAfterEndReport() {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          myCachedMap.remove(createKey(myRefreshedRoot, myRefreshedBranch));
-          updateMixedRevisionsForPanel();
-          myManager.repaintTree();
-        }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        myCachedMap.remove(createKey(myRefreshedRoot, myRefreshedBranch));
+        updateMixedRevisionsForPanel();
+        myManager.repaintTree();
       });
     }
   }

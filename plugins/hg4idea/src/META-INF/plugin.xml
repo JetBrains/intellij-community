@@ -1,9 +1,9 @@
 <idea-plugin>
   <id>hg4idea</id>
-  <name>hg4idea</name>
+  <name>Mercurial Integration</name>
   <description>
     <![CDATA[
-      Allows working with <a href="http://mercurial.selenic.com/">Mercurial version control system</a>.
+      Allows working with <a href="http://www.mercurial-scm.org/">Mercurial version control system</a>.
       The following features are available:
         <ul>
         <li>Dedicated page under the Version Control node in the Settings/Preferences dialog.</li>
@@ -26,17 +26,18 @@
     <vcsRootChecker implementation="org.zmlx.hg4idea.roots.HgRootChecker"/>
     <vcsRepositoryCreator implementation="org.zmlx.hg4idea.repo.HgRepositoryCreator"/>
     <pushSupport implementation="org.zmlx.hg4idea.push.HgPushSupport"/>
-    <vcsChangesViewRefresher implementation="org.zmlx.hg4idea.provider.HgIgnoredFileHolder"/>
+    <vcsChangesViewRefresher implementation="org.zmlx.hg4idea.provider.HgIgnoredFileHolder$Provider"/>
     <cherryPicker implementation="org.zmlx.hg4idea.cherrypick.HgCherryPicker"/>
     <vcsPopupProvider implementation="org.zmlx.hg4idea.provider.HgQuickListProvider"/>
     <logProvider implementation="org.zmlx.hg4idea.log.HgLogProvider"/>
     <vcs.taskHandler implementation="org.zmlx.hg4idea.HgTaskHandler"/>
-    <vcs.ignoredFilesHolder implementation="org.zmlx.hg4idea.provider.HgIgnoredFileHolder"/>
+    <vcs.ignoredFilesHolder implementation="org.zmlx.hg4idea.provider.HgIgnoredFileHolder$Provider"/>
 
     <applicationService serviceInterface="org.zmlx.hg4idea.HgGlobalSettings"
                         serviceImplementation="org.zmlx.hg4idea.HgGlobalSettings"/>
     <applicationService serviceInterface="org.zmlx.hg4idea.HgRememberedInputs"
                         serviceImplementation="org.zmlx.hg4idea.HgRememberedInputs"/>
+    <projectService serviceImplementation="org.zmlx.hg4idea.branch.HgBranchManager"/>
     <projectService serviceImplementation="org.zmlx.hg4idea.repo.HgRepositoryManager"/>
     <projectService serviceInterface="org.zmlx.hg4idea.HgProjectSettings"
                     serviceImplementation="org.zmlx.hg4idea.HgProjectSettings"/>

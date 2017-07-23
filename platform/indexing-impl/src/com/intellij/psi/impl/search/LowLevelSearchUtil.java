@@ -22,6 +22,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -79,7 +80,7 @@ public class LowLevelSearchUtil {
                                            @NotNull ProgressIndicator progress,
                                            TreeElement lastElement) {
     if (scope instanceof PsiCompiledElement) {
-      throw new IllegalArgumentException("Scope is compiled, can't scan: "+scope);
+      throw new IllegalArgumentException("Scope is compiled, can't scan: "+scope+"; containingFile: "+scope.getContainingFile());
     }
     final int scopeStartOffset = scope.getTextRange().getStartOffset();
     final int patternLength = searcher.getPatternLength();
@@ -116,7 +117,7 @@ public class LowLevelSearchUtil {
     TreeElement prevNode = null;
     PsiElement run = null;
     while (run != scope) {
-      progress.checkCanceled();
+      ProgressManager.checkCanceled();
       if (useTree) {
         start += prevNode == null ? 0 : prevNode.getStartOffsetInParent();
         prevNode = leafNode;
@@ -183,8 +184,9 @@ public class LowLevelSearchUtil {
     return processElementsAtOffsets(scope, searcher, processInjectedPsi, progress, occurrences, processor);
   }
 
+  @NotNull
   static int[] getTextOccurrencesInScope(@NotNull PsiElement scope, @NotNull StringSearcher searcher, ProgressIndicator progress) {
-    if (progress != null) progress.checkCanceled();
+    ProgressManager.checkCanceled();
 
     PsiFile file = scope.getContainingFile();
     FileViewProvider viewProvider = file.getViewProvider();
@@ -218,11 +220,11 @@ public class LowLevelSearchUtil {
     if (offsetsInScope.length == 0) return true;
 
     Project project = scope.getProject();
-    TreeElement[] lastElement = {null};
+    TreeElement lastElement = null;
     for (int offset : offsetsInScope) {
       progress.checkCanceled();
-      lastElement[0] = processTreeUp(project, processor, scope, searcher, offset, processInjectedPsi, progress, lastElement[0]);
-      if (lastElement[0] == null) return false;
+      lastElement = processTreeUp(project, processor, scope, searcher, offset, processInjectedPsi, progress, lastElement);
+      if (lastElement == null) return false;
     }
     return true;
   }
@@ -265,6 +267,7 @@ public class LowLevelSearchUtil {
     return true;
   }
 
+  @NotNull
   private static int[] getTextOccurrences(@NotNull CharSequence text,
                                           int startOffset,
                                           int endOffset,
@@ -283,7 +286,7 @@ public class LowLevelSearchUtil {
       occurrences.add(newStart);
       occurrences.add(newEnd);
       for (int index = newStart; index < newEnd; index++) {
-        if (progress != null) progress.checkCanceled();
+        ProgressManager.checkCanceled();
         //noinspection AssignmentToForLoopParameter
         index = searcher.scan(text, index, newEnd);
         if (index < 0) break;

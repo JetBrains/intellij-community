@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,13 +30,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SwitchBootJdkAction;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -45,11 +42,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture;
+import com.intellij.testGuiFramework.matcher.ClassNameMatcher;
 import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.ListPopupModel;
 import com.intellij.util.JdkBundle;
+import com.intellij.util.PathUtil;
+import com.intellij.util.Producer;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
 import org.fest.swing.core.*;
 import org.fest.swing.core.Robot;
@@ -60,6 +61,7 @@ import org.fest.swing.exception.ComponentLookupException;
 import org.fest.swing.exception.WaitTimedOutError;
 import org.fest.swing.fixture.*;
 import org.fest.swing.timing.Condition;
+import org.fest.swing.timing.Pause;
 import org.fest.swing.timing.Timeout;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
@@ -80,8 +82,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.openapi.projectRoots.JdkUtil.checkForJdk;
-import static com.intellij.openapi.util.io.FileUtil.pathsEqual;
 import static com.intellij.openapi.util.io.FileUtil.toCanonicalPath;
 import static com.intellij.openapi.util.io.FileUtilRt.toSystemDependentName;
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
@@ -92,7 +92,6 @@ import static org.fest.assertions.Assertions.assertThat;
 import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.fest.swing.finder.WindowFinder.findDialog;
 import static org.fest.swing.finder.WindowFinder.findFrame;
-import static org.fest.swing.timing.Pause.pause;
 import static org.fest.swing.timing.Timeout.timeout;
 import static org.fest.util.Strings.isNullOrEmpty;
 import static org.fest.util.Strings.quote;
@@ -115,11 +114,11 @@ public final class GuiTestUtil {
    */
 
   public static final String JDK_HOME_FOR_TESTS = "JDK_HOME_FOR_TESTS";
+  public static final String TEST_DATA_DIR = "GUI_TEST_DATA_DIR";
+  public static final String FIRST_START = "GUI_FIRST_START";
   private static final EventQueue SYSTEM_EVENT_QUEUE = Toolkit.getDefaultToolkit().getSystemEventQueue();
   private static final File TMP_PROJECT_ROOT = createTempProjectCreationDir();
 
-  // Called by MethodInvoker via reflection
-  @SuppressWarnings("unused")
   public static void failIfIdeHasFatalErrors() {
     final MessagePool messagePool = MessagePool.getInstance();
     List<AbstractMessage> fatalErrors = messagePool.getFatalErrors(true, true);
@@ -159,84 +158,6 @@ public final class GuiTestUtil {
   @SuppressWarnings("unused")
   public static void setUpDefaultGeneralSettings() {
 
-
-  }
-
-  public static String getSystemJdk() {
-    String jdkHome = getSystemPropertyOrEnvironmentVariable(JDK_HOME_FOR_TESTS);
-    if (isNullOrEmpty(jdkHome) || !checkForJdk(jdkHome)) {
-      //than use bundled JDK
-      jdkHome = getBundledJdLocation();
-    }
-    if (isNullOrEmpty(jdkHome) || !checkForJdk(jdkHome)) {
-      fail("Please specify the path to a valid JDK using system property " + JDK_HOME_FOR_TESTS);
-    }
-    return jdkHome;
-  }
-
-  public static void setUpSdks() {
-
-    String jdkHome = getSystemPropertyOrEnvironmentVariable(JDK_HOME_FOR_TESTS);
-    if (isNullOrEmpty(jdkHome) || !checkForJdk(jdkHome)) {
-      //than use bundled JDK
-      jdkHome = getBundledJdLocation();
-    }
-    final File jdkPath = new File(jdkHome);
-
-    execute(new GuiTask() {
-      @Override
-      protected void executeInEDT() throws Throwable {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            LOG.info(String.format("Setting JDK: '%1$s'", jdkPath.getPath()));
-            setJdkPath(jdkPath);
-          }
-        });
-      }
-    });
-  }
-
-  public static void setJdkPath(@NotNull File path) {
-    if (JavaSdk.checkForJdk(path)) {
-      ApplicationManager.getApplication().assertWriteAccessAllowed();
-      Sdk chosenJdk = null;
-
-      for (Sdk jdk : ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance())) {
-        if (pathsEqual(jdk.getHomePath(), path.getPath())) {
-          chosenJdk = jdk;
-          break;
-        }
-      }
-
-      if (chosenJdk == null) {
-        if (path.isDirectory()) {
-
-          JavaSdk javaSdk = JavaSdk.getInstance();
-
-          //in case of running different from IntelliJ or Android Studio IDE (PyCharm for example)
-          if (javaSdk == null) return;
-
-          String jdk_name = "JDK";
-          final Sdk newJdk = javaSdk.createJdk(jdk_name, path.toString(), false);
-          final Sdk foundJdk = ProjectJdkTable.getInstance().findJdk(newJdk.getName(), newJdk.getSdkType().getName());
-          if (foundJdk == null) {
-            ApplicationManager.getApplication().runWriteAction(() -> {
-              ProjectJdkTable.getInstance().addJdk(newJdk);
-            });
-          }
-
-          ApplicationManager.getApplication().runWriteAction(() -> {
-            SdkModificator modificator = newJdk.getSdkModificator();
-            JavaSdkImpl.attachJdkAnnotations(modificator);
-            modificator.commitChanges();
-          });
-        }
-        else {
-          throw new IllegalStateException("The resolved path '" + path.getPath() + "' was not found");
-        }
-      }
-    }
   }
 
   @Nullable
@@ -267,25 +188,29 @@ public final class GuiTestUtil {
         return path;
       }
     }
-    System.out.println("Please specify " + description + ", using system property " + quote(propertyName));
+    LOG.warn("Please specify " + description + ", using system property " + quote(propertyName));
     return null;
   }
 
   public static void setUpDefaultProjectCreationLocationPath() {
-    RecentProjectsManager.getInstance().setLastProjectCreationLocation(getProjectCreationDirPath().getPath());
+    RecentProjectsManager.getInstance().setLastProjectCreationLocation(PathUtil.toSystemIndependentName(getProjectCreationDirPath().getPath()));
   }
 
   // Called by IdeTestApplication via reflection.
   @SuppressWarnings("UnusedDeclaration")
   public static void waitForIdeToStart() {
+    String firstStart = getSystemPropertyOrEnvironmentVariable(FIRST_START);
+    boolean isFirstStart = firstStart != null && firstStart.toLowerCase().equals("true");
     GuiActionRunner.executeInEDT(false);
     Robot robot = null;
     try {
       robot = BasicRobot.robotWithCurrentAwtHierarchy();
-      final MyProjectManagerListener listener = new MyProjectManagerListener();
 
       //[ACCEPT IntelliJ IDEA Privacy Policy Agreement]
       acceptAgreementIfNeeded(robot);
+
+      final MyProjectManagerListener listener = new MyProjectManagerListener();
+      final Ref<MessageBusConnection> connection = new Ref<>();
 
       findFrame(new GenericTypeMatcher<Frame>(Frame.class) {
         @Override
@@ -293,7 +218,8 @@ public final class GuiTestUtil {
           if (frame instanceof IdeFrame) {
             if (frame instanceof IdeFrameImpl) {
               listener.myActive = true;
-              ProjectManager.getInstance().addProjectManagerListener(listener);
+              connection.set(ApplicationManager.getApplication().getMessageBus().connect());
+              connection.get().subscribe(ProjectManager.TOPIC, listener);
             }
             return true;
           }
@@ -314,7 +240,7 @@ public final class GuiTestUtil {
       //}
 
       if (listener.myActive) {
-        pause(new Condition("Project to be opened") {
+        Pause.pause(new Condition("Project to be opened") {
           @Override
           public boolean test() {
             boolean notified = listener.myNotified;
@@ -324,7 +250,11 @@ public final class GuiTestUtil {
                                !progressManager.hasProgressIndicator() &&
                                !progressManager.hasUnsafeProgressIndicator();
               if (isIdle) {
-                ProjectManager.getInstance().removeProjectManagerListener(listener);
+                MessageBusConnection busConnection = connection.get();
+                if (busConnection != null) {
+                  connection.set(null);
+                  busConnection.disconnect();
+                }
               }
               return isIdle;
             }
@@ -372,12 +302,7 @@ public final class GuiTestUtil {
       execute(new GuiTask() {
         @Override
         protected void executeInEDT() throws Throwable {
-          EdtInvocationManager.getInstance().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              acceptButton.doClick();
-            }
-          });
+          EdtInvocationManager.getInstance().invokeLater(() -> acceptButton.doClick());
         }
       });
     }
@@ -408,7 +333,7 @@ public final class GuiTestUtil {
       completeInstallationDialog.button("Evaluate for free for 30 days").click();
     }
     catch (WaitTimedOutError we) {
-      System.out.println("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
+      LOG.error("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
     }
   }
 
@@ -422,7 +347,7 @@ public final class GuiTestUtil {
       completeInstallationDialog.button("Evaluate for free for 30 days").click();
     }
     catch (WaitTimedOutError we) {
-      System.out.println("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
+      LOG.error("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
     }
   }
 
@@ -436,7 +361,7 @@ public final class GuiTestUtil {
       completeInstallationDialog.button("Skip All and Set Defaults").click();
     }
     catch (WaitTimedOutError we) {
-      System.out.println("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
+      LOG.error("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
     }
   }
 
@@ -462,6 +387,9 @@ public final class GuiTestUtil {
 
   @NotNull
   public static File getTestProjectsRootDirPath() {
+
+    String testDataDirEnvVar = getSystemPropertyOrEnvironmentVariable(TEST_DATA_DIR);
+    if (testDataDirEnvVar != null) return new File(testDataDirEnvVar);
 
     String testDataPath = PathManager.getHomePath() + "/community/platform/testGuiFramework/testData";
     assertNotNull(testDataPath);
@@ -530,7 +458,20 @@ public final class GuiTestUtil {
     }
   }
 
+  public static void clickPopupMenuItem(@NotNull String label, boolean searchByPrefix, @NotNull Component component, @NotNull Robot robot, @NotNull Timeout timeout) {
+    if (searchByPrefix) {
+      clickPopupMenuItemMatching(new PrefixMatcher(label), component, robot, timeout);
+    }
+    else {
+      clickPopupMenuItemMatching(new EqualsMatcher(label), component, robot, timeout);
+    }
+  }
+
   public static void clickPopupMenuItemMatching(@NotNull Matcher<String> labelMatcher, @NotNull Component component, @NotNull Robot robot) {
+    clickPopupMenuItemMatching(labelMatcher, component, robot, SHORT_TIMEOUT);
+  }
+
+  public static void clickPopupMenuItemMatching(@NotNull Matcher<String> labelMatcher, @NotNull Component component, @NotNull Robot robot, @NotNull Timeout timeout) {
     // IntelliJ doesn't seem to use a normal JPopupMenu, so this won't work:
     //    JPopupMenu menu = myRobot.findActivePopupMenu();
     // Instead, it uses a JList (technically a JBList), which is placed somewhere
@@ -541,13 +482,15 @@ public final class GuiTestUtil {
     // First find the JBList which holds the popup. There could be other JBLists in the hierarchy,
     // so limit it to one that is actually used as a popup, as identified by its model being a ListPopupModel:
     assertNotNull(root);
-    JBList list = robot.finder().find(root, new GenericTypeMatcher<JBList>(JBList.class) {
+
+    JBList list = waitUntilFound(robot, null,  new GenericTypeMatcher<JBList>(JBList.class) {
       @Override
       protected boolean isMatching(@NotNull JBList list) {
         ListModel model = list.getModel();
         return model instanceof ListPopupModel;
       }
-    });
+    }, timeout);
+
 
     // We can't use the normal JListFixture method to click by label since the ListModel items are
     // ActionItems whose toString does not reflect the text, so search through the model items instead:
@@ -604,17 +547,15 @@ public final class GuiTestUtil {
   }
 
   public static void findAndClickButton(@NotNull ContainerFixture<? extends Container> container, @NotNull final String text) {
-    final boolean[] checkClick = {false};
     Robot robot = container.robot();
     JButton button = findButton(container, text, robot);
     robot.click(button);
   }
 
-
   public static void findAndClickButtonWhenEnabled(@NotNull ContainerFixture<? extends Container> container, @NotNull final String text) {
     Robot robot = container.robot();
     final JButton button = findButton(container, text, robot);
-    pause(new Condition("Wait for button " + text + " to be enabled.") {
+    Pause.pause(new Condition("Wait for button " + text + " to be enabled.") {
       @Override
       public boolean test() {
         return button.isEnabled() && button.isVisible() && button.isShowing();
@@ -652,23 +593,33 @@ public final class GuiTestUtil {
     robot.waitForIdle();
     for (int i = 0; i < text.length(); ++i) {
       robot.type(text.charAt(i));
-      pause(delayAfterEachCharacterMillis, TimeUnit.MILLISECONDS);
+      Pause.pause(delayAfterEachCharacterMillis, TimeUnit.MILLISECONDS);
     }
   }
 
   @Nullable
   public static JLabel findBoundedLabel(@NotNull Container container, @NotNull JTextField textField, @NotNull Robot robot) {
-    Collection<JLabel> labels = robot.finder().findAll(container, new GenericTypeMatcher<JLabel>(JLabel.class) {
-      @Override
-      protected boolean isMatching(@NotNull JLabel label) {
-        return (label.getLabelFor() != null && label.getLabelFor().equals(textField));
+    //in Case of parent component is TextFieldWithBrowseButton
+    if(textField.getParent() instanceof TextFieldWithBrowseButton) {
+      return robot.finder().find(container, new GenericTypeMatcher<JLabel>(JLabel.class) {
+        @Override
+        protected boolean isMatching(@NotNull JLabel label) {
+          return (label.getLabelFor() != null && label.getLabelFor().equals(textField.getParent()));
+        }
+      });
+    } else {
+      Collection<JLabel> labels = robot.finder().findAll(container, new GenericTypeMatcher<JLabel>(JLabel.class) {
+        @Override
+        protected boolean isMatching(@NotNull JLabel label) {
+          return (label.getLabelFor() != null && label.getLabelFor().equals(textField));
+        }
+      });
+      if (labels != null && !labels.isEmpty()) {
+        return labels.iterator().next();
       }
-    });
-    if (labels != null && !labels.isEmpty()) {
-      return labels.iterator().next();
-    }
-    else {
-      return null;
+      else {
+        return null;
+      }
     }
   }
 
@@ -685,7 +636,7 @@ public final class GuiTestUtil {
       }
     };
 
-    pause(new Condition("Finding for a button with text \"" + text + "\"") {
+    Pause.pause(new Condition("Finding for a button with text \"" + text + "\"") {
       @Override
       public boolean test() {
         Collection<JButton> buttons = robot.finder().findAll(matcher);
@@ -695,6 +646,7 @@ public final class GuiTestUtil {
 
     return robot.finder().find(container.target(), matcher);
   }
+
 
   /** Returns a full path to the GUI data directory in the user's AOSP source tree, if known, or null */
   //@Nullable
@@ -713,7 +665,7 @@ public final class GuiTestUtil {
   }
 
   public static void skip(@NotNull String testName) {
-    System.out.println("Skipping test '" + testName + "'");
+    LOG.info("Skipping test '" + testName + "'");
   }
 
   /**
@@ -735,7 +687,7 @@ public final class GuiTestUtil {
                                                        @NotNull final GenericTypeMatcher<T> matcher,
                                                        @NotNull Timeout timeout) {
     final AtomicReference<T> reference = new AtomicReference<T>();
-    pause(new Condition("Find component using " + matcher.toString()) {
+    Pause.pause(new Condition("Find component using " + matcher.toString()) {
       @Override
       public boolean test() {
         ComponentFinder finder = robot.finder();
@@ -747,7 +699,7 @@ public final class GuiTestUtil {
         else if (allFound.size() > 1) {
           // Only allow a single component to be found, otherwise you can get some really confusing
           // test failures; the matcher should pick a specific enough instance
-          fail("Found more than one " + matcher.supportedType().getSimpleName() + " which matches the criteria: " + allFound);
+          throw new ComponentLookupException("Found more than one " + matcher.supportedType().getSimpleName() + " which matches the criteria: " + allFound);
         }
         return found;
       }
@@ -762,7 +714,7 @@ public final class GuiTestUtil {
   public static <T extends Component> void waitUntilGone(@NotNull final Robot robot,
                                                          @NotNull final Container root,
                                                          @NotNull final GenericTypeMatcher<T> matcher) {
-    pause(new Condition("Find component using " + matcher.toString()) {
+    Pause.pause(new Condition("Find component using " + matcher.toString()) {
       @Override
       public boolean test() {
         Collection<T> allFound = robot.finder().findAll(root, matcher);
@@ -777,7 +729,7 @@ public final class GuiTestUtil {
     return s == null ? System.getenv(name) : s;
   }
 
-  private static class MyProjectManagerListener extends ProjectManagerAdapter {
+  private static class MyProjectManagerListener implements ProjectManagerListener {
     boolean myActive;
     boolean myNotified;
 
@@ -851,14 +803,35 @@ public final class GuiTestUtil {
     return new JTextComponentFixture(robot, robot.finder().findByLabel(labelText, JTextComponent.class));
   }
 
+  @NotNull
+  public static JTreeFixture findJTreeFixture(@NotNull Robot robot, @NotNull Container container) {
+    JTree actionTree = robot.finder().findByType(container, JTree.class);
+    return new JTreeFixture(robot, actionTree);
+  }
+
+  @NotNull
+  public static JTreeFixture findJTreeFixtureByClassName(@NotNull Robot robot, @NotNull Container container, @NotNull String className) {
+    JTree actionTree = robot.finder().find(container, ClassNameMatcher.forClass(className, JTree.class, true));
+    return new JTreeFixture(robot, actionTree);
+  }
+
+  public static JRadioButtonFixture findRadioButton(@NotNull Robot robot, @Nullable Container container, @NotNull String text, @NotNull Timeout timeout){
+    JRadioButton radioButton = waitUntilFound(robot, container, new GenericTypeMatcher<JRadioButton>(JRadioButton.class) {
+      @Override
+      protected boolean isMatching(@Nonnull JRadioButton button) {
+        return (button.getText() != null && button.getText().equals(text));
+      }
+    }, timeout);
+    return new JRadioButtonFixture(robot, radioButton);
+  }
+
   public static JRadioButtonFixture findRadioButton(@NotNull Robot robot, @NotNull Container container, @NotNull String text){
     JRadioButton radioButton = waitUntilFound(robot, container, new GenericTypeMatcher<JRadioButton>(JRadioButton.class) {
       @Override
       protected boolean isMatching(@Nonnull JRadioButton button) {
         return (button.getText() != null && button.getText().equals(text));
       }
-    });
-
+    }, SHORT_TIMEOUT);
     return new JRadioButtonFixture(robot, radioButton);
   }
 
@@ -889,12 +862,26 @@ public final class GuiTestUtil {
   }
 
   public static void invokeAction(@NotNull Robot robot, @NotNull String actionId) {
-
     KeyboardShortcut keyboardShortcut = ActionManager.getInstance().getKeyboardShortcut(actionId);
 
     assert keyboardShortcut != null;
     KeyStroke keyStroke = keyboardShortcut.getFirstKeyStroke();
     LOG.info("Invoking action \"" + actionId + "\" via shortcut " + keyboardShortcut.toString());
     robot.pressAndReleaseKey(keyStroke.getKeyCode(), new int[]{keyStroke.getModifiers()});
+  }
+
+  public static void pause(String conditionString, Producer<Boolean> producer, Timeout timeout){
+    Pause.pause(new Condition(conditionString) {
+      @Override
+      public boolean test() {
+        Boolean produce = producer.produce();
+        assertNotNull(produce);
+        return produce;
+      }
+    }, timeout);
+  }
+
+  public static Component getListCellRendererComponent(JList list, Object value, int index) {
+    return list.getCellRenderer().getListCellRendererComponent(list, value, index, true, true);
   }
 }

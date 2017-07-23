@@ -3,6 +3,7 @@
 class X {
   Object f;
   X() {
+    // Create default runnable
     <caret>f = new Runnable() {
       void x(int p) {
         int f = p;

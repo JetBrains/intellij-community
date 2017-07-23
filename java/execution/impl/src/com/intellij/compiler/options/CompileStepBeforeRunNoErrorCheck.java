@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * User: Vassiliy.Kudryashov
- */
 public class CompileStepBeforeRunNoErrorCheck
   extends BeforeRunTaskProvider<CompileStepBeforeRunNoErrorCheck.MakeBeforeRunTaskNoErrorCheck> {
   public static final Key<MakeBeforeRunTaskNoErrorCheck> ID = Key.create("MakeNoErrorCheck");
@@ -60,7 +57,7 @@ public class CompileStepBeforeRunNoErrorCheck
   }
 
   @Override
-  public MakeBeforeRunTaskNoErrorCheck createTask(RunConfiguration runConfiguration) {
+  public MakeBeforeRunTaskNoErrorCheck createTask(@NotNull RunConfiguration runConfiguration) {
     return CompileStepBeforeRun.shouldCreateTask(runConfiguration) ? new MakeBeforeRunTaskNoErrorCheck() : null;
   }
 

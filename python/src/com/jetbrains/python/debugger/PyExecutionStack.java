@@ -16,7 +16,6 @@
 package com.jetbrains.python.debugger;
 
 import com.intellij.xdebugger.frame.XExecutionStack;
-import com.intellij.xdebugger.frame.XStackFrame;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +70,7 @@ public class PyExecutionStack extends XExecutionStack {
       container.addStackFrames(xFrames, true);
     }
     else {
-      container.addStackFrames(Collections.<XStackFrame>emptyList(), true);
+      container.addStackFrames(Collections.emptyList(), true);
     }
   }
 

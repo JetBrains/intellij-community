@@ -176,12 +176,9 @@ public class DownloadingOptionsDialog extends DialogWrapper {
     if (version != null) {
       final List<? extends DownloadableLibraryFileDescription> downloads = version.getFiles();
       myFilesList.setModel(new CollectionListModel<>(
-        ContainerUtil.map2Array(downloads, JCheckBox.class, new Function<DownloadableLibraryFileDescription, JCheckBox>() {
-          @Override
-          public JCheckBox fun(DownloadableLibraryFileDescription description) {
-            final boolean selected = selectedFiles != null ? selectedFiles.contains(description) : !description.isOptional();
-            return new JCheckBox(description.getPresentableFileName(), selected);
-          }
+        ContainerUtil.map2Array(downloads, JCheckBox.class, (Function<DownloadableLibraryFileDescription, JCheckBox>)description -> {
+          final boolean selected = selectedFiles != null ? selectedFiles.contains(description) : !description.isOptional();
+          return new JCheckBox(description.getPresentableFileName(), selected);
         })));
       if (myNameAndLevelPanel != null) {
         myNameAndLevelPanel.setDefaultName(version.getDefaultLibraryName());

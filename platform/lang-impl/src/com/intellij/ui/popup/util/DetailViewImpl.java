@@ -34,7 +34,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.SideBorder;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -122,32 +121,13 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
     final LogicalPosition positionToNavigate = editorState.getNavigate();
     final TextAttributes lineAttributes = editorState.getAttributes();
     Document document = FileDocumentManager.getInstance().getDocument(file);
-    Project project = myProject;
 
     clearEditor();
     myEditorState = editorState;
     remove(myLabel);
     if (document != null) {
       if (getEditor() == null || getEditor().getDocument() != document) {
-        setEditor(EditorFactory.getInstance().createViewer(document, project));
-
-        final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-
-        EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(file, scheme, project);
-
-        ((EditorEx)getEditor()).setFile(file);
-        ((EditorEx)getEditor()).setHighlighter(highlighter);
-
-        EditorSettings settings = getEditor().getSettings();
-        settings.setAnimatedScrolling(false);
-        settings.setRefrainFromScrolling(false);
-        settings.setLineNumbersShown(true);
-        settings.setFoldingOutlineShown(false);
-        if (settings instanceof SettingsImpl) {
-          ((SettingsImpl)settings).setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.PREVIEW);
-        }
-        ((EditorEx)getEditor()).getFoldingModel().setFoldingEnabled(false);
-
+        setEditor(createEditor(myProject, document, file));
         add(getEditor().getComponent(), BorderLayout.CENTER);
       }
 
@@ -160,8 +140,6 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
         repaint();
       }
 
-      getEditor().setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
-
       clearHighlighting();
       if (lineAttributes != null && positionToNavigate != null && positionToNavigate.line < getEditor().getDocument().getLineCount()) {
         myHighlighter = getEditor().getMarkupModel().addLineHighlighter(positionToNavigate.line, HighlighterLayer.SELECTION - 1,
@@ -173,6 +151,26 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
       add(myLabel, BorderLayout.CENTER);
       validate();
     }
+  }
+
+  @NotNull
+  protected Editor createEditor(@Nullable Project project, Document document, VirtualFile file) {
+    EditorEx editor = (EditorEx)EditorFactory.getInstance().createViewer(document, project, EditorKind.PREVIEW);
+
+    final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(file, scheme, project);
+
+    editor.setFile(file);
+    editor.setHighlighter(highlighter);
+
+    EditorSettings settings = editor.getSettings();
+    settings.setAnimatedScrolling(false);
+    settings.setRefrainFromScrolling(false);
+    settings.setLineNumbersShown(true);
+    settings.setFoldingOutlineShown(false);
+    editor.getFoldingModel().setFoldingEnabled(false);
+
+    return editor;
   }
 
   private void clearHighlighting() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -108,7 +109,9 @@ public abstract class OrderPanel<T> extends JPanel {
   }
 
   public void moveSelectedItemsUp() {
-    myEntryTable.requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(myEntryTable, true);
+    });
     try {
       myInsideMove++;
       TableUtil.moveSelectedItemsUp(myEntryTable);
@@ -122,7 +125,9 @@ public abstract class OrderPanel<T> extends JPanel {
   }
 
   public void moveSelectedItemsDown() {
-    myEntryTable.requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(myEntryTable, true);
+    });
     try {
       myInsideMove++;
       TableUtil.moveSelectedItemsDown(myEntryTable);

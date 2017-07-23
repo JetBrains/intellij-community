@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.impl.VcsPathPresenter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFilePathUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -84,18 +85,6 @@ public class Change {
     return myOtherLayers;
   }
 
-  public boolean isTreeConflict() {
-    return false;
-  }
-
-  public boolean isPhantom() {
-    return false;
-  }
-
-  public boolean hasOtherLayers() {
-    return ! myOtherLayers.isEmpty();
-  }
-
   public Type getType() {
     if (myType == null) {
       if (myBeforeRevision == null) {
@@ -130,6 +119,7 @@ public class Change {
     return myAfterRevision;
   }
 
+  @NotNull
   public FileStatus getFileStatus() {
     return myFileStatus;
   }

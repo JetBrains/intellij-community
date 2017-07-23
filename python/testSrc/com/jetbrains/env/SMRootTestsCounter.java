@@ -31,7 +31,7 @@ final class SMRootTestsCounter {
   static final Filter<SMTestProxy> NOT_SUIT = new Filter<SMTestProxy>() {
     @Override
     public boolean shouldAccept(final SMTestProxy test) {
-      return !test.isSuite();
+      return test.isLeaf();
     }
   };
 
@@ -62,6 +62,10 @@ final class SMRootTestsCounter {
    */
   int getPassedTestsCount() {
     return myTestProxy.collectChildren(NOT_SUIT.and(Filter.PASSED)).size();
+  }
+
+  int getIgnoredTestsCount() {
+    return myTestProxy.collectChildren(NOT_SUIT.and(Filter.IGNORED)).size();
   }
 
 

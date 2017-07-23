@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,36 +31,37 @@ public class ClipboardTextPerCaretSplitter {
     if (caretCount == 1) {
       return Collections.singletonList(input);
     }
+    //
+    // | caretData |  input split by   | split count | Nth caret content |
+    // |:----------|:-----------------:|:-----------:|:------------------|
+    // | null      |        \n         |      1      | split[0]          |
+    // | null      |        \n         |    != 1     | split[N]          |
+    // | !null     | caretData.offsets |      1      | split[0]          |
+    // | !null     | caretData.offsets |    != 1     | split[N]          |
+    //
     List<String> result = new ArrayList<>(caretCount);
-    int sourceCaretCount = caretData == null ? -1 : caretData.startOffsets.length;
-    String[] lines = sourceCaretCount == 1 || sourceCaretCount == caretCount ? null : input.split("\n", -1);
-    for (int i = 0; i < caretCount; i++) {
-      if (sourceCaretCount == 1) {
-        result.add(input);
-      }
-      else if (sourceCaretCount == caretCount) {
-        //noinspection ConstantConditions
-        result.add(new String(input.substring(caretData.startOffsets[i], caretData.endOffsets[i])));
-      }
-      else if (lines.length == 0) {
-        result.add("");
-      }
-      else if (lines.length == 1) {
-        result.add(lines[0]);
-      }
-      else if (lines.length % caretCount == 0) {
-        StringBuilder b = new StringBuilder();
-        int linesPerSegment = lines.length / caretCount;
-        for (int j = 0; j < linesPerSegment; j++) {
-          if (j > 0) {
-            b.append('\n');
-          }
-          b.append(lines[i * linesPerSegment + j]);
+    if (caretData == null) {
+      String[] lines = input.split("\n", -1);
+      // need to ignore the trailing \n in input for purpose of having a 1 sourceCaret, and makes no difference for non 1 sourceCaret count
+      int sourceCaretCount = lines.length == 2 && lines[1].isEmpty() ? 1 : lines.length;
+      for (int i = 0; i < caretCount; i++) {
+        if (sourceCaretCount == 1) {
+          result.add(lines[0]);
         }
-        result.add(b.toString());
+        else {
+          result.add(i < lines.length ? lines[i] : "");
+        }
       }
-      else {
-        result.add(i < lines.length ? lines[i] : "");
+    }
+    else {
+      int sourceCaretCount = caretData.startOffsets.length;
+      for (int i = 0; i < caretCount; i++) {
+        if (sourceCaretCount == 1) {
+          result.add(input);
+        }
+        else {
+          result.add(i < sourceCaretCount ? input.substring(caretData.startOffsets[i], caretData.endOffsets[i]) : "");
+        }
       }
     }
     return result;

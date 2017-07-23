@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,6 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.AppUIUtil;
@@ -402,7 +401,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private <B extends XBreakpoint<?>> void handleBreakpoint(final XBreakpointHandler<B> handler, final B b, final boolean register,
                                                            final boolean temporary) {
     if (register) {
-      boolean active = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> isBreakpointActive(b));
+      boolean active = ReadAction.compute(() -> isBreakpointActive(b));
       if (active) {
         synchronized (myRegisteredBreakpoints) {
           myRegisteredBreakpoints.put(b, new CustomizedBreakpointPresentation());
@@ -900,6 +899,8 @@ public class XDebugSessionImpl implements XDebugSession {
         }
         myDebuggerManager.removeSession(this);
         myDispatcher.getMulticaster().sessionStopped();
+        myDispatcher.getListeners().clear();
+
         myProject.putUserData(XDebuggerEditorLinePainter.CACHE, null);
 
         synchronized (myRegisteredBreakpoints) {
@@ -915,8 +916,8 @@ public class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void stop() {
-    ProcessHandler processHandler = myDebugProcess.getProcessHandler();
-    if (processHandler.isProcessTerminated() || processHandler.isProcessTerminating()) return;
+    ProcessHandler processHandler = myDebugProcess == null ? null : myDebugProcess.getProcessHandler();
+    if (processHandler == null || processHandler.isProcessTerminated() || processHandler.isProcessTerminating()) return;
 
     if (processHandler.detachIsDefault()) {
       processHandler.detachProcess();

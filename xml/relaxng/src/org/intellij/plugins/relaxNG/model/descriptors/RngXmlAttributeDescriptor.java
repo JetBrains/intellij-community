@@ -24,7 +24,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
 import com.intellij.xml.util.XmlEnumeratedValueReference;
@@ -86,7 +85,7 @@ public class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor {
   public RngXmlAttributeDescriptor mergeWith(RngXmlAttributeDescriptor d) {
     final QName name = d.myName.equals(UNKNOWN) ? myName : d.myName;
 
-    final HashMap<String, String> values = new HashMap<>(myValues);
+    final HashMap<String, String> values = new LinkedHashMap<>(myValues);
     values.putAll(d.myValues);
 
     final THashSet<Locator> locations = new THashSet<>(myDeclarations, HASHING_STRATEGY);
@@ -188,6 +187,7 @@ public class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor {
 
   }
 
+  @NotNull
   @Override
   public Object[] getDependences() {
     return myElementDescriptor.getDependences();

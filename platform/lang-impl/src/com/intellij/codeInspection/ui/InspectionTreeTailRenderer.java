@@ -24,14 +24,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.SoftHashMap;
-import org.jetbrains.annotations.Nullable;
+import gnu.trove.TObjectIntHashMap;
 
 import java.awt.*;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Locale;
 import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * @author Dmitry Batkovich
@@ -45,31 +45,18 @@ public abstract class InspectionTreeTailRenderer {
   private final Map<HighlightSeverity, String> myPluralizedSeverityNames = new SoftHashMap<>();
   private final Map<HighlightSeverity, String> myUnpluralizedSeverityNames = new SoftHashMap<>();
 
-  private final FactoryMap<HighlightDisplayLevel, Integer> myItemCounter;
+  private final TObjectIntHashMap<HighlightDisplayLevel> myItemCounter = new TObjectIntHashMap<>();
   private final SeverityRegistrar myRegistrar;
   private final GlobalInspectionContextImpl myContext;
 
   public InspectionTreeTailRenderer(GlobalInspectionContextImpl context) {
     myRegistrar = SeverityRegistrar.getSeverityRegistrar(context.getProject());
     myContext = context;
-    myItemCounter = new FactoryMap<HighlightDisplayLevel, Integer>() {
-
-      @Nullable
-      @Override
-      protected Integer create(HighlightDisplayLevel key) {
-        return 0;
-      }
-
-      @Override
-      protected Map<HighlightDisplayLevel, Integer> createMap() {
-        return new TreeMap<>((o1, o2) -> -myRegistrar.compare(o1.getSeverity(), o2.getSeverity()));
-      }
-    };
   }
 
   public void appendTailText(InspectionTreeNode node) {
     appendText("  ");
-    final String customizedTailText = node.getCustomizedTailText();
+    final String customizedTailText = node.getTailText();
     if (customizedTailText != null) {
       appendText("  ");
       appendText(customizedTailText, SimpleTextAttributes.GRAYED_ATTRIBUTES);
@@ -78,14 +65,15 @@ public abstract class InspectionTreeTailRenderer {
       myItemCounter.clear();
       node.visitProblemSeverities(myItemCounter);
       if (myItemCounter.size() > MAX_LEVEL_TYPES) {
-        appendText(InspectionsBundle.message("inspection.problem.descriptor.count",
-                                             myItemCounter.values().stream().reduce(0, (i, j) -> i + j)) + " ",
-                   SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        appendText(InspectionsBundle.message("inspection.problem.descriptor.count", sum(myItemCounter.getValues()), SimpleTextAttributes.GRAYED_ATTRIBUTES));
       }
       else {
-        for (Map.Entry<HighlightDisplayLevel, Integer> entry : myItemCounter.entrySet()) {
-          final HighlightDisplayLevel level = entry.getKey();
-          final Integer occur = entry.getValue();
+        Object[] levels = myItemCounter.keys();
+        Arrays.sort(levels, Comparator.comparing(l -> ((HighlightDisplayLevel) l).getSeverity()).reversed());
+        for (Object o : levels) {
+          HighlightDisplayLevel level = (HighlightDisplayLevel) o;
+
+          int occur = myItemCounter.get(level);
 
           SimpleTextAttributes attrs = SimpleTextAttributes.GRAY_ATTRIBUTES;
           attrs = attrs.derive(-1, level == HighlightDisplayLevel.ERROR && !myContext.getUIOptions().GROUP_BY_SEVERITY
@@ -120,5 +108,13 @@ public abstract class InspectionTreeTailRenderer {
       }
       return name;
     }
+  }
+
+  private static int sum(int[] numbers) {
+    int result = 0;
+    for (int number : numbers) {
+      result += number;
+    }
+    return result;
   }
 }

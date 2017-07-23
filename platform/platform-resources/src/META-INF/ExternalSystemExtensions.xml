@@ -18,10 +18,15 @@
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager"/>
     <externalSystemNotificationExtension implementation="com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationExtensionImpl" />
 
+    <module.workingDirectoryProvider implementation="com.intellij.openapi.externalSystem.service.project.ExternalSystemWorkingDirectoryProvider"/>
     <!--Project structure management services-->
-    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager"/>
-    <projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager" order="first"/>
+    <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.ProjectDataManager"
+                        serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager"
+                    serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl"
+                    order="first"/>
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage"/>
+    <projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.ExternalProjectsWorkspaceImpl"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataServiceImpl"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.LibraryDataService"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ModuleDataService"/>
@@ -39,7 +44,13 @@
     <!--Execution-->
     <programRunner implementation="com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskRunner"/>
     <programRunner implementation="com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskDebugRunner"/>
-    
+
+    <streamProviderFactory implementation="com.intellij.openapi.externalSystem.configurationStore.ExternalSystemStreamProviderFactory"/>
+
+    <moduleService serviceImplementation="com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.roots.ExternalProjectSystemRegistry"
+                        serviceImplementation="com.intellij.openapi.externalSystem.ExternalProjectSystemRegistryImpl" overrides="true"/>
   </extensions>
 
 </idea-plugin>

@@ -30,6 +30,8 @@ import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+
 /**
  * @author yole
  */
@@ -75,7 +77,7 @@ public class SvnDeleteTest extends Svn17TestCase {
     runAndVerifyStatusSorted("A child", "A child" + File.separatorChar + "a.txt");
     checkin();
 
-    final File wasFile = new File(dir.getPath());
+    final File wasFile = virtualToIoFile(dir);
     deleteFileInCommand(dir);
     runAndVerifyStatusSorted("! child", "! child" + File.separatorChar + "a.txt");
     Assert.assertTrue(! wasFile.exists());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,9 +34,9 @@ public class ForStatementEvaluator extends ForStatementEvaluatorBase {
                                Evaluator bodyEvaluator,
                                String labelName) {
     super(labelName, bodyEvaluator);
-    myInitializationEvaluator = initializationEvaluator != null ? new DisableGC(initializationEvaluator) : null;
-    myConditionEvaluator = conditionEvaluator != null ? new DisableGC(conditionEvaluator) : null;
-    myUpdateEvaluator = updateEvaluator != null ? new DisableGC(updateEvaluator) : null;
+    myInitializationEvaluator = initializationEvaluator != null ? DisableGC.create(initializationEvaluator) : null;
+    myConditionEvaluator = conditionEvaluator != null ? DisableGC.create(conditionEvaluator) : null;
+    myUpdateEvaluator = updateEvaluator != null ? DisableGC.create(updateEvaluator) : null;
   }
 
   public Modifier getModifier() {

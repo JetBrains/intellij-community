@@ -17,6 +17,7 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLambdaExpression;
@@ -24,7 +25,7 @@ import com.intellij.psi.PsiLambdaExpression;
 /**
  * @author Nikolay.Tropin
  */
-public class JavaSourcePositionHighlighter extends SourcePositionHighlighter {
+public class JavaSourcePositionHighlighter extends SourcePositionHighlighter implements DumbAware {
   @Override
   public TextRange getHighlightRange(SourcePosition sourcePosition) {
     PsiElement method = DebuggerUtilsEx.getContainingMethod(sourcePosition);

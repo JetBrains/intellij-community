@@ -24,9 +24,10 @@ import git4idea.branch.GitBranchUiHandler
 import git4idea.branch.GitBranchWorker
 import git4idea.branch.GitRebaseParams
 import git4idea.repo.GitRepository
-import git4idea.test.GitExecutor.git
-import git4idea.test.GitTestUtil.cleanupForAssertion
 import git4idea.test.UNKNOWN_ERROR_TEXT
+import com.intellij.vcs.test.cleanupForAssertion
+import git4idea.test.git
+import git4idea.test.resolveConflicts
 import org.mockito.Mockito
 import kotlin.properties.Delegates
 
@@ -87,7 +88,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     var confirmation: String? = null
     myDialogManager.onMessage {
       confirmation = it
-      Messages.YES;
+      Messages.YES
     }
 
     abortOngoingRebase()
@@ -95,7 +96,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     assertNotNull(confirmation, "Abort confirmation message was not shown")
     assertEquals("Incorrect confirmation message text",
                  cleanupForAssertion("Do you want to rollback the successful rebase in project?"),
-                 cleanupForAssertion(confirmation!!));
+                 cleanupForAssertion(confirmation!!))
     assertNoRebaseInProgress(myAllRepositories)
     myAllRepositories.forEach { it.`assert feature not rebased on master`() }
 
@@ -111,7 +112,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     var confirmation: String? = null
     myDialogManager.onMessage {
       confirmation = it
-      Messages.YES;
+      Messages.YES
     }
 
     abortOngoingRebase()
@@ -119,7 +120,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     assertNotNull(confirmation, "Abort confirmation message was not shown")
     assertEquals("Incorrect confirmation message text",
                  cleanupForAssertion("Do you want just to abort rebase in community, or also rollback the successful rebase in project?"),
-                 cleanupForAssertion(confirmation!!));
+                 cleanupForAssertion(confirmation!!))
     assertNoRebaseInProgress(myAllRepositories)
     myAllRepositories.forEach { it.`assert feature not rebased on master`() }
 
@@ -133,19 +134,19 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
 
     var facedConflictInUltimate = false
     var facedConflictInCommunity = false
-    myVcsHelper.onMerge({
+    vcsHelper.onMerge({
       assertFalse(facedConflictInCommunity && facedConflictInUltimate)
       if (myUltimate.hasConflict("c.txt")) {
         assertFalse(facedConflictInUltimate)
         facedConflictInUltimate = true
         assertNoRebaseInProgress(myCommunity)
-        resolveConflicts(myUltimate)
+        myUltimate.resolveConflicts()
       }
       else if (myCommunity.hasConflict("c.txt")) {
         assertFalse(facedConflictInCommunity)
         facedConflictInCommunity = true
         assertNoRebaseInProgress(myUltimate)
-        resolveConflicts(myCommunity)
+        myCommunity.resolveConflicts()
       }
     })
 
@@ -170,7 +171,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     assertNoRebaseInProgress(myAllRepositories)
   }
 
-  public fun `test continue rebase shouldn't attempt to stash`() {
+  fun `test continue rebase shouldn't attempt to stash`() {
     myUltimate.`diverge feature and master`()
     myCommunity.`prepare simple conflict`()
     myContrib.`diverge feature and master`()
@@ -183,7 +184,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     assertNotRebased("feature", "master", myCommunity)
   }
 
-  public fun `test continue rebase with unresolved conflicts should show merge dialog`() {
+  fun `test continue rebase with unresolved conflicts should show merge dialog`() {
     myUltimate.`diverge feature and master`()
     myCommunity.`prepare simple conflict`()
     myContrib.`diverge feature and master`()
@@ -192,9 +193,9 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     rebase("master")
 
     var mergeDialogShown = false
-    myVcsHelper.onMerge {
+    vcsHelper.onMerge {
       mergeDialogShown = true
-      resolveConflicts(myCommunity)
+      myCommunity.resolveConflicts()
     }
     GitRebaseUtils.continueRebase(myProject)
 
@@ -221,7 +222,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     var confirmation: String? = null
     myDialogManager.onMessage {
       confirmation = it
-      Messages.YES;
+      Messages.YES
     }
 
     abortOngoingRebase()
@@ -229,7 +230,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     assertNotNull(confirmation, "Abort confirmation message was not shown")
     assertEquals("Incorrect confirmation message text",
                  cleanupForAssertion("Do you want to rollback the successful rebase in project?"),
-                 cleanupForAssertion(confirmation!!));
+                 cleanupForAssertion(confirmation!!))
     assertNoRebaseInProgress(myAllRepositories)
     myAllRepositories.forEach {
       it.`assert feature not rebased on master`()

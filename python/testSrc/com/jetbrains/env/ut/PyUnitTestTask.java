@@ -1,8 +1,22 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jetbrains.env.ut;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.RunManager;
-import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -40,7 +54,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
+import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration;
 import com.jetbrains.python.testing.PythonTestConfigurationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -122,31 +136,28 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
 
   @Override
   public void tearDown() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-                                   @Override
-                                   public void run() {
-                                     try {
-                                       if (mySetUp) {
-                                         if (myConsoleView != null) {
-                                           Disposer.dispose(myConsoleView);
-                                           myConsoleView = null;
-                                         }
-                                         if (myDescriptor != null) {
-                                           Disposer.dispose(myDescriptor);
-                                           myDescriptor = null;
-                                         }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        if (mySetUp) {
+          if (myConsoleView != null) {
+            Disposer.dispose(myConsoleView);
+            myConsoleView = null;
+          }
+          if (myDescriptor != null) {
+            Disposer.dispose(myDescriptor);
+            myDescriptor = null;
+          }
 
 
-                                         PyUnitTestTask.super.tearDown();
+          PyUnitTestTask.super.tearDown();
 
-                                         mySetUp = false;
-                                       }
-                                     }
-                                     catch (Exception e) {
-                                       throw new RuntimeException(e);
-                                     }
-                                   }
-                                 }
+          mySetUp = false;
+        }
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
 
     );
   }
@@ -154,7 +165,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
   @Override
   public void runTestOn(String sdkHome) throws Exception {
     final Project project = getProject();
-    final ConfigurationFactory factory = PythonTestConfigurationType.getInstance().PY_UNITTEST_FACTORY;
+    final ConfigurationFactory factory = PythonTestConfigurationType.getInstance().LEGACY_UNITTEST_FACTORY;
     runConfiguration(factory, sdkHome, project);
   }
 
@@ -162,7 +173,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
     final RunnerAndConfigurationSettings settings =
       RunManager.getInstance(project).createRunConfiguration("test", factory);
 
-    AbstractPythonTestRunConfiguration config = (AbstractPythonTestRunConfiguration)settings.getConfiguration();
+    AbstractPythonLegacyTestRunConfiguration config = (AbstractPythonLegacyTestRunConfiguration)settings.getConfiguration();
 
 
     config.setSdkHome(sdkHome);
@@ -173,7 +184,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
 
 
     if (sdk instanceof JythonSdkFlavor) {
-      config.setInterpreterOptions(JythonSdkFlavor.getPythonPathCmdLineArgument(Lists.<String>newArrayList(myFixture.getTempDirPath())));
+      config.setInterpreterOptions(JythonSdkFlavor.getPythonPathCmdLineArgument(Lists.newArrayList(myFixture.getTempDirPath())));
     }
     else {
       PythonEnvUtil.addToPythonPath(config.getEnvs(), myFixture.getTempDirPath());
@@ -185,9 +196,10 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
     new WriteAction() {
       @Override
       protected void run(@NotNull Result result) throws Throwable {
-        RunManagerEx.getInstanceEx(project).addConfiguration(settings, false);
-        RunManagerEx.getInstanceEx(project).setSelectedConfiguration(settings);
-        Assert.assertSame(settings, RunManagerEx.getInstanceEx(project).getSelectedConfiguration());
+        RunManager runManager = RunManager.getInstance(project);
+        runManager.addConfiguration(settings, false);
+        runManager.setSelectedConfiguration(settings);
+        Assert.assertSame(settings, runManager.getSelectedConfiguration());
       }
     }.execute();
 
@@ -222,35 +234,32 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
 
     myOutput = new StringBuilder();
 
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          environment.getRunner().execute(environment, new ProgramRunner.Callback() {
-            @Override
-            public void processStarted(RunContentDescriptor descriptor) {
-              myDescriptor = descriptor;
-              myProcessHandler = myDescriptor.getProcessHandler();
-              myProcessHandler.addProcessListener(new ProcessAdapter() {
-                @Override
-                public void onTextAvailable(ProcessEvent event, Key outputType) {
-                  myOutput.append(event.getText());
-                }
-              });
-              myConsoleView = (SMTRunnerConsoleView)descriptor.getExecutionConsole();
-              myTestProxy = myConsoleView.getResultsViewer().getTestsRootNode();
-              myConsoleView.getResultsViewer().addEventsListener(new TestResultsViewer.SMEventsAdapter() {
-                @Override
-                public void onTestingFinished(TestResultsViewer sender) {
-                  s.up();
-                }
-              });
-            }
-          });
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        environment.getRunner().execute(environment, new ProgramRunner.Callback() {
+          @Override
+          public void processStarted(RunContentDescriptor descriptor) {
+            myDescriptor = descriptor;
+            myProcessHandler = myDescriptor.getProcessHandler();
+            myProcessHandler.addProcessListener(new ProcessAdapter() {
+              @Override
+              public void onTextAvailable(ProcessEvent event, Key outputType) {
+                myOutput.append(event.getText());
+              }
+            });
+            myConsoleView = (SMTRunnerConsoleView)descriptor.getExecutionConsole();
+            myTestProxy = myConsoleView.getResultsViewer().getTestsRootNode();
+            myConsoleView.getResultsViewer().addEventsListener(new TestResultsViewer.SMEventsAdapter() {
+              @Override
+              public void onTestingFinished(TestResultsViewer sender) {
+                s.up();
+              }
+            });
+          }
+        });
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
 
@@ -271,7 +280,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
     return 60000;
   }
 
-  protected void configure(AbstractPythonTestRunConfiguration config) {
+  protected void configure(AbstractPythonLegacyTestRunConfiguration config) {
   }
 
   /**
@@ -318,22 +327,19 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
     final Editor editor = consoleView.getEditor();
     final List<String> resultStrings = new ArrayList<>();
     final List<Pair<Integer, Integer>> resultRanges = new ArrayList<>();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        /**
-         * To fetch data from console we need to flush it first.
-         * It works locally, but does not work on TC (reasons are not clear yet and need to be investigated).
-         * So, we flush it explicitly to make test run on TC.
-         */
-        consoleView.flushDeferredText();
-        for (final RangeHighlighter highlighter : editor.getMarkupModel().getAllHighlighters()) {
-          if (highlighter instanceof RangeHighlighterEx) {
-            final int start = ((RangeHighlighterEx)highlighter).getAffectedAreaStartOffset();
-            final int end = ((RangeHighlighterEx)highlighter).getAffectedAreaEndOffset();
-            resultRanges.add(Pair.create(start, end));
-            resultStrings.add(editor.getDocument().getText().substring(start, end));
-          }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      /**
+       * To fetch data from console we need to flush it first.
+       * It works locally, but does not work on TC (reasons are not clear yet and need to be investigated).
+       * So, we flush it explicitly to make test run on TC.
+       */
+      consoleView.flushDeferredText();
+      for (final RangeHighlighter highlighter : editor.getMarkupModel().getAllHighlighters()) {
+        if (highlighter instanceof RangeHighlighterEx) {
+          final int start = ((RangeHighlighterEx)highlighter).getAffectedAreaStartOffset();
+          final int end = ((RangeHighlighterEx)highlighter).getAffectedAreaEndOffset();
+          resultRanges.add(Pair.create(start, end));
+          resultStrings.add(editor.getDocument().getText().substring(start, end));
         }
       }
     });

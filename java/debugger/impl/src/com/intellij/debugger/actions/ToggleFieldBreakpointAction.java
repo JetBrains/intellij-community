@@ -47,11 +47,6 @@ import com.sun.jdi.Field;
 import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: lex
- * Date: Sep 4, 2003
- * Time: 8:59:30 PM
- */
 public class ToggleFieldBreakpointAction extends AnAction {
 
   @Override

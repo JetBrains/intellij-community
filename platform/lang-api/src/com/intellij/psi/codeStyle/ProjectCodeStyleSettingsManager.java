@@ -16,10 +16,39 @@
 
 package com.intellij.psi.codeStyle;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 
 @State(name = "ProjectCodeStyleSettingsManager", storages = @Storage("codeStyleSettings.xml"))
 public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager{
+  private static final Logger LOG = Logger.getInstance("#" + ProjectCodeStyleSettingsManager.class);
+
+  private volatile boolean myIsLoaded;
+  private final static Object LEGACY_SETTINGS_IMPORT_LOCK = new Object();
+
+  void importLegacySettings(@NotNull Project project) {
+    if (!myIsLoaded) {
+      synchronized (LEGACY_SETTINGS_IMPORT_LOCK) {
+        if (!myIsLoaded) {
+          LegacyCodeStyleSettingsManager legacySettingsManager = ServiceManager.getService(project, LegacyCodeStyleSettingsManager.class);
+          if (legacySettingsManager != null && legacySettingsManager.getState() != null) {
+            loadState(legacySettingsManager.getState());
+            LOG.info("Imported old project code style settings.");
+          }
+        }
+      }
+    }
+  }
+
+  @Override
+  public void loadState(Element state) {
+    super.loadState(state);
+    myIsLoaded = true;
+  }
 }

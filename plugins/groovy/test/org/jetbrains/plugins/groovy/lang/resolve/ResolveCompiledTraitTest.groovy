@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitField
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod
@@ -275,6 +277,20 @@ class ExternalConcrete2 implements somepackage.GenericTrait<String, somepackage.
     assert substitutor.substitute(method.parameterList.parameters[0].type).canonicalText == "java.lang.Integer"
     assert method.parameterList.parameters[1].type.canonicalText == "java.lang.String"
     assert method.parameterList.parameters[2].type.canonicalText == "PojoInheritor"
+  }
+
+  void 'test do not resolve private trait method'() {
+    fixture.enableInspections GrUnresolvedAccessInspection, GroovyAccessibilityInspection
+    testHighlighting '''\
+import privateTraitMethods.C 
+import privateTraitMethods.T
+
+def foo(T t) {
+  t.<warning descr="Cannot resolve symbol 'privateMethod'">privateMethod</warning>() // via interface
+}
+
+new C().<warning descr="Cannot resolve symbol 'privateMethod'">privateMethod</warning>() // via implementation
+'''
   }
 
   private PsiClass configureTraitInheritor() {

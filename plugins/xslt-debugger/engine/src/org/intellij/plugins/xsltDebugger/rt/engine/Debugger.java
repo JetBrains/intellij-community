@@ -17,11 +17,6 @@ package org.intellij.plugins.xsltDebugger.rt.engine;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 23.05.2007
- */
 public interface Debugger extends Watchable {
   enum State {
     CREATED, RUNNING, SUSPENDED, STOPPED

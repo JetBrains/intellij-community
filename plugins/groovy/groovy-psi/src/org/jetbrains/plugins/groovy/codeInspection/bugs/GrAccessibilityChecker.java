@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -42,17 +43,12 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by Max Medvedev on 21/03/14
- */
 public class GrAccessibilityChecker {
   private static final Logger LOG = Logger.getInstance(GrAccessibilityChecker.class);
 
@@ -118,17 +114,20 @@ public class GrAccessibilityChecker {
 
     PsiElement parent = ref.getParent();
     if (parent instanceof GrConstructorCall) {
-      String constructorError = checkConstructorCall((GrConstructorCall)parent, ref);
+      String constructorError = checkConstructorCall((GrConstructorCall)parent);
       if (constructorError != null) {
         return createAnnotationForRef(ref, isCompileStatic, constructorError);
       }
     }
 
-    GroovyResolveResult result = ref.advancedResolve();
-    String error = checkResolveResult(ref, result) ? GroovyBundle.message("cannot.access", ref.getReferenceName()) : null;
-    if (error != null) {
+    GroovyResolveResult[] results = ref.multiResolve(false);
+    boolean hasInaccessibleResults = ContainerUtil.or(results, GrAccessibilityChecker::checkResolveResult);
+    if (hasInaccessibleResults) {
+      String error = GroovyBundle.message("cannot.access", ref.getReferenceName());
       HighlightInfo info = createAnnotationForRef(ref, isCompileStatic, error);
-      registerFixes(ref, result, info);
+      if (results.length == 1) {
+        registerFixes(ref, results[0], info);
+      }
       return info;
     }
 
@@ -150,25 +149,10 @@ public class GrAccessibilityChecker {
     return checkReferenceImpl(ref);
   }
 
-  private static boolean isStaticallyImportedProperty(GroovyResolveResult result, GrReferenceElement place) {
-    final PsiElement parent = place.getParent();
-    if (!(parent instanceof GrImportStatement)) return false;
-
-    final PsiElement resolved = result.getElement();
-    if (!(resolved instanceof PsiField)) return false;
-
-    final PsiMethod getter = GroovyPropertyUtils.findGetterForField((PsiField)resolved);
-    final PsiMethod setter = GroovyPropertyUtils.findSetterForField((PsiField)resolved);
-
-    return getter != null && PsiUtil.isAccessible(place, getter) ||
-           setter != null && PsiUtil.isAccessible(place, setter);
-  }
-
-  private static boolean checkResolveResult(GrReferenceElement ref, GroovyResolveResult result) {
+  private static boolean checkResolveResult(GroovyResolveResult result) {
     return result != null &&
            result.getElement() != null &&
-           !result.isAccessible() &&
-           !isStaticallyImportedProperty(result, ref);
+           !result.isAccessible();
   }
 
   private boolean needToCheck(GrReferenceElement ref, boolean isCompileStatic) {
@@ -179,9 +163,9 @@ public class GrAccessibilityChecker {
     return true;
   }
 
-  private static String checkConstructorCall(GrConstructorCall constructorCall, GrReferenceElement ref) {
+  private static String checkConstructorCall(GrConstructorCall constructorCall) {
     GroovyResolveResult result = constructorCall.advancedResolve();
-    if (checkResolveResult(ref, result)) {
+    if (checkResolveResult(result)) {
       return GroovyBundle.message("cannot.access", PsiFormatUtil.formatMethod((PsiMethod)result.getElement(), PsiSubstitutor.EMPTY,
                                                                               PsiFormatUtilBase.SHOW_NAME |
                                                                               PsiFormatUtilBase.SHOW_TYPE |

@@ -65,6 +65,6 @@ public class GraphChangesUtil {
       edgeChanges.add(edgeChanged(edge, delegateGraph, false));
     }
 
-    return new GraphChanges.GraphChangesImpl<>(Collections.<GraphChanges.Node<Integer>>emptySet(), edgeChanges);
+    return new GraphChanges.GraphChangesImpl<>(Collections.emptySet(), edgeChanges);
   }
 }

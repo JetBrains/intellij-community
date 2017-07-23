@@ -26,16 +26,6 @@ public class ${NAME} implements ModuleComponent {
     }
 
     @Override
-    public void projectOpened() {
-        // called when project is opened
-    }
-
-    @Override
-    public void projectClosed() {
-        // called when project is being closed
-    }
-
-    @Override
     public void moduleAdded() {
        // Invoked when the module corresponding to this component instance has been completely
        // loaded and added to the project.

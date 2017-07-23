@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 public interface WindowWrapper extends Disposable {
   enum Mode {FRAME, MODAL, NON_MODAL}
@@ -27,7 +28,7 @@ public interface WindowWrapper extends Disposable {
 
   void setTitle(@Nullable String title);
 
-  void setImage(@Nullable Image image);
+  void setImages(@Nullable List<Image> images);
 
   void close();
 }

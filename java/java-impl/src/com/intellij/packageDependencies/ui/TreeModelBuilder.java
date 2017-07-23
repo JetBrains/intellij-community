@@ -20,6 +20,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -71,6 +72,7 @@ public class TreeModelBuilder {
   private final Map<ScopeType, Map<Module, ModuleNode>> myModuleNodes = new HashMap<>();
   private final Map<ScopeType, Map<String, ModuleGroupNode>> myModuleGroupNodes = new HashMap<>();
   private final Map<ScopeType, Map<OrderEntry, LibraryNode>> myLibraryNodes = new HashMap<>();
+  private final ModuleGrouper myModuleGrouper;
   private int myScannedFileCount;
   private int myTotalFileCount;
   private int myMarkedFileCount;
@@ -84,7 +86,7 @@ public class TreeModelBuilder {
   public static final String TEST_NAME = AnalysisScopeBundle.message("package.dependencies.test.node.text");
   public static final String LIBRARY_NAME = AnalysisScopeBundle.message("package.dependencies.library.node.text");
 
-  public TreeModelBuilder(Project project, boolean showIndividualLibs, Marker marker, DependenciesPanel.DependencyPanelSettings settings) {
+  public TreeModelBuilder(@NotNull Project project, boolean showIndividualLibs, Marker marker, DependenciesPanel.DependencyPanelSettings settings) {
     myProject = project;
     final boolean multiModuleProject = ModuleManager.getInstance(project).getModules().length > 1;
     myShowModules = settings.UI_SHOW_MODULES && multiModuleProject;
@@ -93,6 +95,7 @@ public class TreeModelBuilder {
     myShowFiles = settings.UI_SHOW_FILES;
     myShowIndividualLibs = showIndividualLibs;
     myShowModuleGroups = settings.UI_SHOW_MODULE_GROUPS && multiModuleProject;
+    myModuleGrouper = ModuleGrouper.instanceFor(project);
     myMarker = marker;
     myAddUnmarkedFiles = !settings.UI_FILTER_LEGALS;
     myRoot = new RootNode(project);
@@ -138,13 +141,11 @@ public class TreeModelBuilder {
   private void countFiles(Project project) {
     final Integer fileCount = project.getUserData(FILE_COUNT);
     if (fileCount == null) {
-      myFileIndex.iterateContent(new ContentIterator() {
-        public boolean processFile(VirtualFile fileOrDir) {
-          if (!fileOrDir.isDirectory()) {
-            counting();
-          }
-          return true;
+      myFileIndex.iterateContent(fileOrDir -> {
+        if (!fileOrDir.isDirectory()) {
+          counting();
         }
+        return true;
       });
 
       for (VirtualFile root : LibraryUtil.getLibraryRoots(project)) {
@@ -256,7 +257,7 @@ public class TreeModelBuilder {
       buildingRunnable.run();
     }
 
-    TreeUtil.sort(myRoot, new DependencyNodeComparator());
+    TreeUtil.sortRecursively(myRoot, new DependencyNodeComparator());
     return new TreeModel(myRoot, myTotalFileCount, myMarkedFileCount);
   }
 
@@ -383,10 +384,9 @@ public class TreeModelBuilder {
     }
     ModuleNode node = getMap(myModuleNodes, scopeType).get(module);
     if (node != null) return node;
-    node = new ModuleNode(module);
-    final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-    final String[] groupPath = moduleManager.getModuleGroupPath(module);
-    if (groupPath == null) {
+    node = new ModuleNode(module, myShowModuleGroups ? myModuleGrouper : null);
+    final List<String> groupPath = myModuleGrouper.getGroupPath(module);
+    if (groupPath.isEmpty()) {
       getMap(myModuleNodes, scopeType).put(module, node);
       getRootNode(scopeType).add(node);
       return node;
@@ -400,7 +400,7 @@ public class TreeModelBuilder {
     return node;
   }
 
-  private PackageDependenciesNode getParentModuleGroup(String [] groupPath, ScopeType scopeType){
+  private PackageDependenciesNode getParentModuleGroup(List<String> groupPath, ScopeType scopeType){
     final String key = StringUtil.join(groupPath, ",");
     ModuleGroupNode groupNode = getMap(myModuleGroupNodes, scopeType).get(key);
     if (groupNode == null) {
@@ -408,10 +408,8 @@ public class TreeModelBuilder {
       getMap(myModuleGroupNodes, scopeType).put(key, groupNode);
       getRootNode(scopeType).add(groupNode);
     }
-    if (groupPath.length > 1) {
-      String [] path = new String[groupPath.length - 1];
-      System.arraycopy(groupPath, 0, path, 0, groupPath.length - 1);
-      final PackageDependenciesNode node = getParentModuleGroup(path, scopeType);
+    if (groupPath.size() > 1) {
+      final PackageDependenciesNode node = getParentModuleGroup(groupPath.subList(0, groupPath.size()-1), scopeType);
       node.add(groupNode);
     }
     return groupNode;

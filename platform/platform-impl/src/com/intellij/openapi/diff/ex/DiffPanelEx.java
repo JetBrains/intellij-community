@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: mike
- * Date: Jul 31, 2002
- * Time: 3:02:52 PM
- * To change template for new interface use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.diff.ex;
 
 import com.intellij.openapi.Disposable;

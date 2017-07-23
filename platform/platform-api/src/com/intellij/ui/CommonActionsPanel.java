@@ -136,7 +136,7 @@ public class CommonActionsPanel extends JPanel {
     if (buttonComparator != null) {
       Arrays.sort(myActions, buttonComparator);
     }
-    ArrayList<AnAction> toolbarActions = ContainerUtilRt.<AnAction>newArrayList(myActions);
+    ArrayList<AnAction> toolbarActions = ContainerUtilRt.newArrayList(myActions);
     for (int i = 0; i < toolbarActions.size(); i++) {
         if (toolbarActions.get(i) instanceof AnActionButton.CheckedAnActionButton) {
           toolbarActions.set(i, ((AnActionButton.CheckedAnActionButton)toolbarActions.get(i)).getDelegate());
@@ -145,7 +145,7 @@ public class CommonActionsPanel extends JPanel {
     myDecorateButtons = UIUtil.isUnderAquaLookAndFeel() && position == ActionToolbarPosition.BOTTOM;
 
     final ActionManagerEx mgr = (ActionManagerEx)ActionManager.getInstance();
-    myToolbar = mgr.createActionToolbar(ActionPlaces.UNKNOWN,
+    myToolbar = mgr.createActionToolbar("ToolbarDecorator",
                                         new DefaultActionGroup(toolbarActions.toArray(new AnAction[toolbarActions.size()])),
                                         position == ActionToolbarPosition.BOTTOM || position == ActionToolbarPosition.TOP,
                                         myDecorateButtons);

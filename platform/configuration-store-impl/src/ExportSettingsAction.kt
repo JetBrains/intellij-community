@@ -30,7 +30,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.ServiceManagerImpl
-import com.intellij.openapi.components.impl.stores.StateStorageManager
 import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.options.OptionsBundle
@@ -39,7 +38,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.util.PairProcessor
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.containers.putValue
@@ -188,16 +186,16 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
 
   val fileToContent = THashMap<Path, String>()
 
-  ServiceManagerImpl.processAllImplementationClasses(ApplicationManager.getApplication() as ApplicationImpl, PairProcessor<Class<*>, PluginDescriptor> { aClass, pluginDescriptor ->
+  ServiceManagerImpl.processAllImplementationClasses(ApplicationManager.getApplication() as ApplicationImpl, { aClass, pluginDescriptor ->
     val stateAnnotation = StoreUtil.getStateSpec(aClass)
     @Suppress("DEPRECATION")
     if (stateAnnotation == null || stateAnnotation.name.isNullOrEmpty() || ExportableComponent::class.java.isAssignableFrom(aClass)) {
-      return@PairProcessor true
+      return@processAllImplementationClasses true
     }
 
-    val storage = stateAnnotation.storages.sortByDeprecated().firstOrNull() ?: return@PairProcessor true
+    val storage = stateAnnotation.storages.sortByDeprecated().firstOrNull() ?: return@processAllImplementationClasses true
     if (!(storage.roamingType != RoamingType.DISABLED && storage.storageClass == StateStorage::class && !storage.path.isNullOrEmpty())) {
-      return@PairProcessor true
+      return@processAllImplementationClasses true
     }
 
     var additionalExportFile: Path? = null
@@ -221,7 +219,7 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
       if (computePresentableNames && onlyExisting && additionalExportFile == null && file.fileName.toString().endsWith(".xml")) {
         val content = fileToContent.getOrPut(file) { file.readText() }
         if (!content.contains("""<component name="${stateAnnotation.name}">""")) {
-          return@PairProcessor true
+          return@processAllImplementationClasses true
         }
       }
 

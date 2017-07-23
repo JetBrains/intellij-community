@@ -26,7 +26,7 @@ import java.util.Collection;
  */
 public interface Query<Result> extends Iterable<Result> {
   /**
-   * Get all of the results in the {@link java.util.Collection}
+   * Get all of the results in the {@link Collection}
    * @return results in a collection or empty collection if no results found.
    */
   @NotNull

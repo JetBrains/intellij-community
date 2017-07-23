@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.io.NettyKt;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpObjectAggregator;
@@ -31,7 +31,6 @@ import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.IOException;
 import java.net.BindException;
@@ -82,10 +81,12 @@ public final class NettyUtil {
            (message.startsWith("Connection reset") || message.equals("Operation timed out") || message.equals("Connection timed out"));
   }
 
+  @NotNull
   public static Bootstrap nioClientBootstrap() {
-    return nioClientBootstrap(new NioEventLoopGroup(1, PooledThreadExecutor.INSTANCE));
+    return nioClientBootstrap(NettyKt.MultiThreadEventLoopGroup(2));
   }
 
+  @NotNull
   public static Bootstrap nioClientBootstrap(@NotNull EventLoopGroup eventLoopGroup) {
     Bootstrap bootstrap = new Bootstrap().group(eventLoopGroup).channel(NioSocketChannel.class);
     bootstrap.option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.SO_KEEPALIVE, true);
@@ -107,7 +108,7 @@ public final class NettyUtil {
                                                                        .allowCredentials()
                                                                        .allowNullOrigin()
                                                                        .allowedRequestMethods(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.HEAD, HttpMethod.PATCH)
-                                                                       .allowedRequestHeaders("origin", "accept", "authorization", "content-type")
+                                                                       .allowedRequestHeaders("origin", "accept", "authorization", "content-type", "x-ijt")
                                                                        .build()));
   }
 

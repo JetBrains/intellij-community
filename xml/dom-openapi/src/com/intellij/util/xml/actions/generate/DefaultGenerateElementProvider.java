@@ -35,9 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * User: Sergey.Vasiliev
- */
 public abstract class DefaultGenerateElementProvider<T extends DomElement> extends GenerateDomElementProvider<T> {
   private final Class<T> myChildElementClass;
 

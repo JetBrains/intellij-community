@@ -19,12 +19,10 @@ import com.intellij.application.options.ModuleListCellRenderer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.compiler.ModuleCompilerUtil;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
@@ -38,7 +36,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author anna
@@ -137,20 +138,18 @@ class AddModuleDependencyFix extends AddOrderEntryFix {
     if (module == null) return;
     Couple<Module> circularModules = ModuleCompilerUtil.addingDependencyFormsCircularity(myCurrentModule, module);
     if (circularModules == null || showCircularWarning(project, circularModules, module)) {
-      WriteAction.run(() -> {
-        boolean test = ModuleRootManager.getInstance(myCurrentModule).getFileIndex().isInTestSourceContent(myRefVFile);
-        DependencyScope scope = test ? DependencyScope.TEST : DependencyScope.COMPILE;
-        JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, module, scope);
+      boolean test = ModuleRootManager.getInstance(myCurrentModule).getFileIndex().isInTestSourceContent(myRefVFile);
+      DependencyScope scope = test ? DependencyScope.TEST : DependencyScope.COMPILE;
+      JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, module, scope);
 
-        if (editor != null && !myClasses.isEmpty()) {
-          PsiClass[] targetClasses = myClasses.stream()
-            .filter(c -> ModuleUtilCore.findModuleForPsiElement(c) == module)
-            .toArray(PsiClass[]::new);
-          if (targetClasses.length > 0 && !DumbService.isDumb(project)) {
-            new AddImportAction(project, myReference, editor, targetClasses).execute();
-          }
+      if (editor != null && !myClasses.isEmpty()) {
+        PsiClass[] targetClasses = myClasses.stream()
+          .filter(c -> ModuleUtilCore.findModuleForPsiElement(c) == module)
+          .toArray(PsiClass[]::new);
+        if (targetClasses.length > 0) {
+          new AddImportAction(project, myReference, editor, targetClasses).execute();
         }
-      });
+      }
     }
   }
 

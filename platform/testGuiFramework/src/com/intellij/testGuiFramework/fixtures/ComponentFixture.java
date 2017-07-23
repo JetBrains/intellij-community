@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-/**
- * @author Sergey Karashevich
- */
 public class ComponentFixture<S, C extends Component> extends AbstractComponentFixture<S, C, ComponentDriver> {
   public ComponentFixture(@NotNull Class<S> selfType, @NotNull Robot robot, @NotNull Class<? extends C> type) {
     super(selfType, robot, type);

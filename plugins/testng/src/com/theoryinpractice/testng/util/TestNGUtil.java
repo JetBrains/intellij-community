@@ -25,7 +25,9 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -237,8 +239,8 @@ public class TestNGUtil {
       return false;
     }
     else if (element instanceof PsiMethod) {
-      //even if it has a global test, we ignore private and static methods
-      if (element.hasModifierProperty(PsiModifier.PRIVATE) || 
+      //even if it has a global test, we ignore non-public and static methods
+      if (!element.hasModifierProperty(PsiModifier.PUBLIC) || 
           element.hasModifierProperty(PsiModifier.STATIC)) {
         return false;
       }
@@ -571,5 +573,29 @@ public class TestNGUtil {
       }
     }
     return topLevelClass;
+  }
+
+  @Nullable
+  public static Version detectVersion(Project project, @Nullable Module module) {
+    if (module == null) return null;
+    return CachedValuesManager.getManager(project).getCachedValue(module, () -> {
+      Version version = null;
+      JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+      PsiClass aClass = psiFacade.findClass("org.testng.internal.Version",
+                                            GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
+      if (aClass != null) {
+        PsiField versionField = aClass.findFieldByName("VERSION", false);
+        if (versionField != null) {
+          PsiExpression initializer = versionField.getInitializer();
+          if (initializer instanceof PsiLiteralExpression) {
+            Object eval = ((PsiLiteralExpression)initializer).getValue();
+            if (eval instanceof String) {
+              version = Version.parseVersion((String)eval);
+            }
+          }
+        }
+      }
+      return CachedValueProvider.Result.createSingleDependency(version, ProjectRootManager.getInstance(module.getProject()));
+    });
   }
 }

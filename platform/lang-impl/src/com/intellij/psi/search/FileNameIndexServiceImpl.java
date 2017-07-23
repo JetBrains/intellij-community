@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,15 +22,22 @@ import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Set;
 
 public class FileNameIndexServiceImpl implements FileNameIndexService {
+  private final FileBasedIndex myIndex;
+
+  public FileNameIndexServiceImpl(@NotNull FileBasedIndex index) {
+    myIndex = index;
+  }
+
   @Override
   public Collection<VirtualFile> getVirtualFilesByName(Project project, String name, GlobalSearchScope scope, IdFilter filter) {
-    final Set<VirtualFile> files = new THashSet<VirtualFile>();
-    FileBasedIndex.getInstance().processValues(FilenameIndexImpl.NAME, name, null, (file, value) -> {
+    Set<VirtualFile> files = new THashSet<>();
+    myIndex.processValues(FilenameIndexImpl.NAME, name, null, (file, value) -> {
       files.add(file);
       return true;
     }, scope, filter);
@@ -39,21 +46,16 @@ public class FileNameIndexServiceImpl implements FileNameIndexService {
 
   @Override
   public void processAllFileNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {
-    final FileBasedIndex index = FileBasedIndex.getInstance();
-    index.processAllKeys(FilenameIndexImpl.NAME, processor, scope, filter);
+    myIndex.processAllKeys(FilenameIndexImpl.NAME, processor, scope, filter);
   }
 
   @Override
   public Collection<VirtualFile> getFilesWithFileType(FileType fileType, GlobalSearchScope scope) {
-    return FileBasedIndex.getInstance().getContainingFiles(FileTypeIndexImpl.NAME, fileType, scope);
+    return myIndex.getContainingFiles(FileTypeIndexImpl.NAME, fileType, scope);
   }
 
   @Override
   public boolean processFilesWithFileType(FileType fileType, Processor<VirtualFile> processor, GlobalSearchScope scope) {
-    return FileBasedIndex.getInstance().processValues(
-      FileTypeIndexImpl.NAME,
-      fileType,
-      null,
-      (file, value) -> processor.process(file), scope);
+    return myIndex.processValues(FileTypeIndexImpl.NAME, fileType, null, (file, value) -> processor.process(file), scope);
   }
 }

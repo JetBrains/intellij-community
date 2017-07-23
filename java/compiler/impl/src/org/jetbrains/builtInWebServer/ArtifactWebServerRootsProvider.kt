@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.packaging.artifacts.ArtifactManager
 
 internal class ArtifactWebServerRootsProvider : PrefixlessWebServerRootsProvider() {
-  override fun resolve(path: String, project: Project, resolver: FileResolver): PathInfo? {
+  override fun resolve(path: String, project: Project, resolver: FileResolver, pathQuery: PathQuery): PathInfo? {
+    if (!pathQuery.searchInArtifacts) {
+      return null
+    }
+    
     for (artifact in ArtifactManager.getInstance(project).artifacts) {
       val root = artifact.outputFile ?: continue
-      return resolver.resolve(path, root)
+      return resolver.resolve(path, root, pathQuery = pathQuery)
     }
     return null
   }

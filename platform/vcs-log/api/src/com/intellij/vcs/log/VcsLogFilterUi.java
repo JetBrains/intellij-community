@@ -1,6 +1,7 @@
 package com.intellij.vcs.log;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Graphical UI for filtering commits in the log.
@@ -15,7 +16,6 @@ public interface VcsLogFilterUi {
 
   /**
    * Sets the given filter to the given value and updates the log view. <br/>
-   * <b>Note:</b> only VcsLogBranchFilter and VcsLogStructureFilter are currently supported.
    */
-  void setFilter(@NotNull VcsLogFilter filter);
+  void setFilter(@Nullable VcsLogFilter filter);
 }

@@ -2,19 +2,20 @@ Backward Hierarchy:
 java.lang.Object -> Bar FooImpl
 
 Backward References:
-Bar in Bar
-Bar.<init>(0) in Bar
-Bar.m(1) in Bar
-Foo in Foo
-Foo.getSomeText(0) in Foo
-FooImpl in Bar FooImpl
-FooImpl.<init>(0) in FooImpl
-FooImpl.TITLE in FooImpl
-FooImpl.getSomeText(0) in FooImpl
-java.lang.Object.<init>(0) in Bar FooImpl
-java.lang.String in Foo FooImpl
+Bar in Bar occurrences = 1
+Bar.m(1) in Bar occurrences = 1
+Foo in Foo occurrences = 1
+Foo.getSomeText(0) in Foo occurrences = 1
+FooImpl in Bar FooImpl occurrences = 2
+FooImpl.TITLE in FooImpl occurrences = 1
+FooImpl.getSomeText(0) in FooImpl occurrences = 1
+java.lang.String in Foo FooImpl occurrences = 3
 
 Class Definitions:
 Bar in Bar
 Foo in Foo
 FooImpl in FooImpl
+
+Members Signatures:
+java.lang.String <- Foo.getSomeText(0) FooImpl.getSomeText(0)
+static java.lang.String <- FooImpl.TITLE

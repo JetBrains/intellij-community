@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -67,7 +67,7 @@ class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
                    @NotNull FileStatusMap fileStatusMap) {
     myProject = project;
     myFileStatusMap = fileStatusMap;
-    editorFactory.getEventMulticaster().addDocumentListener(new DocumentAdapter() {
+    editorFactory.getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
       public void beforeDocumentChange(DocumentEvent e) {
         final Document document = e.getDocument();

@@ -50,8 +50,6 @@
     <extensionPoint name="xml.nsColorProvider"
                     interface="com.intellij.codeInsight.daemon.impl.analysis.XmlNSColorProvider"/>
 
-    <extensionPoint name="breadcrumbsInfoProvider" interface="com.intellij.xml.breadcrumbs.BreadcrumbsInfoProvider"/>
-
     <extensionPoint name="breadcrumbsPresentationProvider" interface="com.intellij.xml.breadcrumbs.BreadcrumbsPresentationProvider"/>
 
     <extensionPoint name="xmlStructureViewElementProvider"
@@ -135,8 +133,10 @@
 
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.XmlCompletionContributor" id="xml"
                             order="first"/>
+    <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.HtmlCompletionContributor" id="html"/>
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.XmlNonFirstCompletionContributor" id="xmlNonFirst" order="after xml"/>
 
+    <completion.contributor language="DTD" implementationClass="com.intellij.codeInsight.completion.DtdCompletionContributor" id="dtd" />
     <completion.contributor language="XML" implementationClass="com.intellij.codeInsight.completion.XmlNoVariantsDelegator" order="before xmlNonFirst"/>
     <completion.contributor language="XML" implementationClass="com.intellij.codeInsight.completion.XmlLocationCompletionContributor"/>
 
@@ -169,6 +169,10 @@
                                   id="WebEditorAppearanceConfigurable"/>
 
     <editorAppearanceConfigurable instance="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingConfigurable"/>
+
+    <applicationConfigurable parentId="preferences.editor" id="editor.breadcrumbs"
+                             key="configurable.breadcrumbs" bundle="messages.ApplicationBundle"
+                             instance="com.intellij.xml.breadcrumbs.BreadcrumbsConfigurable"/>
 
     <autoImportOptionsProvider instance="com.intellij.application.options.XmlAutoImportOptionsProvider"/>
 
@@ -218,10 +222,6 @@
     <lookup.actionProvider implementation="com.intellij.codeInsight.template.emmet.completion.EmmetLookupActionProvider"/>
 
     <externalAnnotator language="XML" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
-    <externalAnnotator language="HTML" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
-    <externalAnnotator language="XHTML" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
-    <externalAnnotator language="JSP" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
-    <externalAnnotator language="JSPX" implementationClass="com.intellij.lang.xml.XMLExternalAnnotator"/>
 
     <lang.parserDefinition language="DTD" implementationClass="com.intellij.lang.dtd.DTDParserDefinition"/>
     <lang.parserDefinition language="XML" implementationClass="com.intellij.lang.xml.XMLParserDefinition"/>
@@ -309,11 +309,7 @@
     <quoteHandler fileType="XML" className="com.intellij.codeInsight.editorActions.XmlQuoteHandler"/>
     <quoteHandler fileType="HTML" className="com.intellij.codeInsight.editorActions.HtmlQuoteHandler"/>
     <quoteHandler fileType="XHTML" className="com.intellij.codeInsight.editorActions.HtmlQuoteHandler"/>
-
-    <completionData fileType="XML" className="com.intellij.codeInsight.completion.XmlCompletionData"/>
-    <completionData fileType="HTML" className="com.intellij.codeInsight.completion.HtmlCompletionData"/>
-    <completionData fileType="XHTML" className="com.intellij.codeInsight.completion.XHtmlCompletionData"/>
-    <completionData fileType="DTD" className="com.intellij.codeInsight.completion.DtdCompletionData"/>
+    <selectionDequotingFilter implementation="com.intellij.codeInsight.editorActions.XmlDequotingFilter"/>
 
     <referenceProviderType key="Path References Provider" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.providers.JspxIncludePathReferenceProvider"/>
     <psi.referenceContributor implementation="com.intellij.xml.util.XmlReferenceContributor"/>
@@ -437,6 +433,10 @@
                      bundle="messages.XmlBundle" key="xml.inspections.path.resolve"
                      groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
                      implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection"/>
+    <localInspection language="XML" enabledByDefault="true" level="WARNING"
+                     bundle="messages.XmlBundle" key="xml.inspections.default.attribute.value"
+                     groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
+                     implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlDefaultAttributeValueInspection"/>
 
     <localInspection language="XML" shortName="CheckEmptyScriptTag" enabledByDefault="true" level="WARNING"
                      bundle="messages.XmlBundle" key="html.inspections.check.empty.tag"
@@ -446,26 +446,30 @@
                      bundle="messages.XmlBundle" key="html.inspections.check.valid.script.tag"
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.xml.util.CheckValidXmlInScriptBodyInspection"/>
-    <localInspection language="XML" shortName="RequiredAttributes" enabledByDefault="true" level="WARNING" unfair="true"
+    <localInspection language="XML" shortName="RequiredAttributes" enabledByDefault="true" level="WARNING"
                      bundle="messages.InspectionsBundle" key="inspection.required.attributes.display.name"
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection"/>
-    <localInspection language="XML" shortName="HtmlExtraClosingTag" enabledByDefault="true" level="WARNING"
+    <localInspection language="HTML" shortName="HtmlExtraClosingTag" enabledByDefault="true" level="WARNING"
                      bundle="messages.XmlBundle" key="html.inspection.extra.closing.tag"
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInspection.htmlInspections.HtmlExtraClosingTagInspection"/>
-    <localInspection language="XML" shortName="HtmlUnknownTag" enabledByDefault="true" level="WARNING"
+    <localInspection language="HTML" shortName="HtmlUnknownTag" enabledByDefault="true" level="WARNING"
                      bundle="messages.XmlBundle" key="html.inspections.unknown.tag"
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection"/>
-    <localInspection language="XML" shortName="HtmlUnknownAttribute" enabledByDefault="true" level="WARNING"
+    <localInspection language="HTML" shortName="HtmlUnknownAttribute" enabledByDefault="true" level="WARNING"
                      bundle="messages.XmlBundle" key="html.inspections.unknown.attribute"
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownAttributeInspection"/>
-    <localInspection language="XML" enabledByDefault="true" level="WARNING"
+    <localInspection language="HTML" enabledByDefault="true" level="WARNING"
                      bundle="messages.XmlBundle" key="html.inspections.unknown.boolean.attribute"
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInspection.htmlInspections.HtmlUnknownBooleanAttributeInspection"/>
+    <localInspection language="HTML" enabledByDefault="true" level="INFORMATION"
+                     bundle="messages.XmlBundle" key="html.inspections.missing.closing.tag"
+                     groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
+                     implementationClass="com.intellij.codeInspection.htmlInspections.HtmlMissingClosingTagInspection"/>
     <localInspection language="XML" shortName="HtmlUnknownTarget" enabledByDefault="true" level="WARNING"
                      bundle="messages.XmlBundle" key="html.inspections.unknown.target"
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
@@ -555,7 +559,6 @@
     <renameInputValidator implementation="com.intellij.lang.xml.XmlAttributeValueRenameValidator"/>
 
     <xml.attributeDescriptorsProvider implementation="com.intellij.html.impl.Html5CustomAttributeDescriptorsProvider"/>
-    <xml.attributeDescriptorsProvider implementation="com.intellij.html.impl.MicrodataAttributeDescriptorsProvider"/>
 
     <breadcrumbsPresentationProvider implementation="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeBreadcrumbsPresentationProvider"/>
     <daemon.changeLocalityDetector implementation="com.intellij.xml.XmlChangeLocalityDetector"/>

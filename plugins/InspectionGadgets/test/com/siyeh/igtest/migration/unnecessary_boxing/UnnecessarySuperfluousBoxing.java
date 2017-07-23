@@ -56,6 +56,13 @@ public class UnnecessarySuperfluousBoxing {
     }
 
     int bababoxing(int i) {
+        int j = <warning descr="Unnecessary boxing 'Integer.valueOf(i)'">Integer.valueOf(i)</warning>;
       return <warning descr="Unnecessary boxing 'Integer.valueOf(i)'">Integer.valueOf(i)</warning>;
+    }
+
+    void bibaboxing() {
+        Integer i = Integer.valueOf(0);
+        new java.util.ArrayList<Integer>().add(Integer.valueOf(0));
+        String.format("%d", Integer.valueOf(0));
     }
 }

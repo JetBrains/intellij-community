@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,33 +90,61 @@ public abstract class MavenTestCase extends UsefulTestCase {
       getMavenGeneralSettings().setMavenHome(home);
     }
 
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        restoreSettingsFile();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+
+      ApplicationManager.getApplication().runWriteAction(() -> {
         try {
-          restoreSettingsFile();
+          setUpInWriteAction();
         }
-        catch (IOException e) {
+        catch (Throwable e) {
+          try {
+            tearDown();
+          }
+          catch (Exception e1) {
+            e1.printStackTrace();
+          }
           throw new RuntimeException(e);
         }
-
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          try {
-            setUpInWriteAction();
-          }
-          catch (Throwable e) {
-            try {
-              tearDown();
-            }
-            catch (Exception e1) {
-              e1.printStackTrace();
-            }
-            throw new RuntimeException(e);
-          }
-        });
-      }
+      });
     });
 
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      MavenServerManager.getInstance().shutdown(true);
+      MavenArtifactDownloader.awaitQuiescence(100, TimeUnit.SECONDS);
+      myProject = null;
+      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+        try {
+          tearDownFixtures();
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      });
+
+      MavenIndicesManager.getInstance().clear();
+    }
+    finally {
+      super.tearDown();
+      FileUtil.delete(myDir);
+      // cannot use reliably the result of the com.intellij.openapi.util.io.FileUtil.delete() method
+      // because com.intellij.openapi.util.io.FileUtilRt.deleteRecursivelyNIO() does not honor this contract
+      if (myDir.exists()) {
+        System.err.println("Cannot delete " + myDir);
+        //printDirectoryContent(myDir);
+        myDir.deleteOnExit();
+      }
+      resetClassFields(getClass());
+    }
   }
 
   private void ensureTempDirCreated() throws IOException {
@@ -136,40 +164,6 @@ public abstract class MavenTestCase extends UsefulTestCase {
     File projectDir = new File(myDir, "project");
     projectDir.mkdirs();
     myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectDir);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      MavenServerManager.getInstance().shutdown(true);
-      MavenArtifactDownloader.awaitQuiescence(100, TimeUnit.SECONDS);
-      myProject = null;
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            tearDownFixtures();
-          }
-          catch (Exception e) {
-            throw new RuntimeException(e);
-          }
-        }
-      });
-
-      MavenIndicesManager.getInstance().clear();
-    }
-    finally {
-      super.tearDown();
-      FileUtil.delete(myDir);
-      // cannot use reliably the result of the com.intellij.openapi.util.io.FileUtil.delete() method
-      // because com.intellij.openapi.util.io.FileUtilRt.deleteRecursivelyNIO() does not honor this contract
-      if (myDir.exists()) {
-        System.err.println("Cannot delete " + myDir);
-        //printDirectoryContent(myDir);
-        myDir.deleteOnExit();
-      }
-      resetClassFields(getClass());
-    }
   }
 
   private static void printDirectoryContent(File dir) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -53,6 +54,7 @@ import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import gnu.trove.TIntHashSet;
@@ -178,11 +180,8 @@ public class XLineBreakpointManager {
       return;
     }
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      for (XBreakpoint<?> breakpoint : toRemove) {
-        XDebuggerManager.getInstance(myProject).getBreakpointManager().removeBreakpoint(breakpoint);
-      }
-    });
+    XBreakpointManager manager = XDebuggerManager.getInstance(myProject).getBreakpointManager();
+    WriteAction.run(() -> toRemove.forEach(manager::removeBreakpoint));
   }
 
   public void breakpointChanged(final XLineBreakpointImpl breakpoint) {
@@ -218,7 +217,7 @@ public class XLineBreakpointManager {
     });
   }
 
-  private class MyDocumentListener extends DocumentAdapter {
+  private class MyDocumentListener implements DocumentListener {
     @Override
     public void documentChanged(final DocumentEvent e) {
       final Document document = e.getDocument();

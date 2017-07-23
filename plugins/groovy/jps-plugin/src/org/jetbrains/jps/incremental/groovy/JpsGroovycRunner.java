@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -36,11 +37,8 @@ import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
-import org.jetbrains.jps.incremental.Builder;
-import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.ModuleLevelBuilder.ExitCode;
-import org.jetbrains.jps.incremental.ProjectBuildException;
-import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.model.JpsDummyElement;
@@ -72,12 +70,13 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
                    ModuleChunk chunk,
                    DirtyFilesHolder<R, T> dirtyFilesHolder,
                    Builder builder, GroovyOutputConsumer outputConsumer) throws ProjectBuildException {
+    List<CompilerMessage> messages;
     long start = 0;
     try {
       JpsGroovySettings settings = JpsGroovySettings.getSettings(context.getProjectDescriptor().getProject());
 
       Ref<Boolean> hasStubExcludes = Ref.create(false);
-      final List<File> toCompile = collectChangedFiles(context, dirtyFilesHolder, myForStubs, false, hasStubExcludes);
+      final List<File> toCompile = collectChangedFiles(context, dirtyFilesHolder, myForStubs, hasStubExcludes);
       if (toCompile.isEmpty()) {
         return ExitCode.NOTHING_DONE;
       }
@@ -104,7 +103,8 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
         return ExitCode.CHUNK_REBUILD_REQUIRED;
       }
 
-      for (CompilerMessage message : parser.getCompilerMessages()) {
+      messages = parser.getCompilerMessages();
+      for (CompilerMessage message : messages) {
         context.processMessage(message);
       }
 
@@ -114,7 +114,6 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
       else {
         updateDependencies(context, toCompile, compiled, outputConsumer, builder);
       }
-      return ExitCode.OK;
     }
     catch (Exception e) {
       throw new ProjectBuildException(e);
@@ -124,6 +123,12 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
         LOG.debug(builder.getPresentableName() + " took " + (System.currentTimeMillis() - start) + " on " + chunk.getName());
       }
     }
+
+    if (ContainerUtil.exists(messages, message -> message.getKind() == BuildMessage.Kind.ERROR)) {
+      throw new StopBuildException();
+    }
+
+    return ExitCode.OK;
   }
 
   protected void stubsGenerated(CompileContext context, Map<T, String> generationOutputs, MultiMap<T, GroovycOutputParser.OutputItem> compiled) {
@@ -160,7 +165,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
     Map<String, String> class2Src = buildClassToSourceMap(chunk, context, toCompilePaths, finalOutputs);
 
     final String encoding = context.getProjectDescriptor().getEncodingConfiguration().getPreferredModuleChunkEncoding(chunk);
-    List<String> patchers = new ArrayList<String>();
+    List<String> patchers = new ArrayList<>();
 
     for (GroovyBuilderExtension extension : JpsServiceManager.getInstance().getExtensions(GroovyBuilderExtension.class)) {
       patchers.addAll(extension.getCompilationUnitPatchers(context, chunk));
@@ -217,7 +222,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
   }
 
   private static Set<String> getPathsToCompile(List<File> toCompile) {
-    final Set<String> toCompilePaths = new LinkedHashSet<String>();
+    final Set<String> toCompilePaths = new LinkedHashSet<>();
     for (File file : toCompile) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Path to compile: " + file.getPath());
@@ -229,7 +234,9 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
 
   protected boolean checkChunkRebuildNeeded(CompileContext context, GroovycOutputParser parser) {
     if (CHUNK_REBUILD_ORDERED.get(context) != null) {
-      CHUNK_REBUILD_ORDERED.set(context, null);
+      if (!myForStubs) {
+        CHUNK_REBUILD_ORDERED.set(context, null);
+      }
       return false;
     }
 
@@ -292,7 +299,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
 
       //todo honor package prefixes
       File correctRoot = new File(srcTargetOutput);
-      File correctOutput = new File(correctRoot, FileUtil.getRelativePath(new File(compilerOutput), output));
+      File correctOutput = new File(correctRoot, ObjectUtils.assertNotNull(FileUtil.getRelativePath(new File(compilerOutput), output)));
 
       FileUtil.rename(output, correctOutput);
       return correctOutput.getPath();
@@ -306,7 +313,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
 
   List<File> collectChangedFiles(CompileContext context,
                                  DirtyFilesHolder<R, T> dirtyFilesHolder,
-                                 final boolean forStubs, final boolean forEclipse, final Ref<Boolean> hasExcludes)
+                                 boolean forStubs, Ref<Boolean> hasExcludes)
     throws IOException {
 
     final JpsJavaCompilerConfiguration configuration =
@@ -315,7 +322,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
 
     final JpsGroovySettings settings = JpsGroovySettings.getSettings(context.getProjectDescriptor().getProject());
 
-    final List<File> toCompile = new ArrayList<File>();
+    final List<File> toCompile = new ArrayList<>();
     dirtyFilesHolder.processDirtyFiles(new FileProcessor<R, T>() {
       public boolean apply(T target, File file, R sourceRoot) throws IOException {
         if (shouldProcessSourceFile(file, sourceRoot, file.getPath(), configuration)) {
@@ -383,7 +390,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
   }
 
   protected Collection<String> generateClasspath(CompileContext context, ModuleChunk chunk) {
-    final Set<String> cp = new LinkedHashSet<String>();
+    final Set<String> cp = new LinkedHashSet<>();
     //groovy_rt.jar
     // IMPORTANT! must be the first in classpath
     cp.addAll(GroovyBuilder.getGroovyRtRoots());
@@ -400,7 +407,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
   }
 
   private Map<String, String> buildClassToSourceMap(ModuleChunk chunk, CompileContext context, Set<String> toCompilePaths, Map<T, String> finalOutputs) throws IOException {
-    final Map<String, String> class2Src = new HashMap<String, String>();
+    final Map<String, String> class2Src = new HashMap<>();
     JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(
       context.getProjectDescriptor().getProject());
     for (T target : getTargets(chunk)) {

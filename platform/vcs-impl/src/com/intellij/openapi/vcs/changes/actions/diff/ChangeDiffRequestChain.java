@@ -1,9 +1,9 @@
 package com.intellij.openapi.vcs.changes.actions.diff;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.diff.chains.DiffRequestChain;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
@@ -55,12 +55,8 @@ public class ChangeDiffRequestChain extends UserDataHolderBase implements DiffRe
       @NotNull
       @Override
       protected List<Change> getChanges() {
-        return ContainerUtil.mapNotNull(myChain.getRequests(), new Function<ChangeDiffRequestProducer, Change>() {
-          @Override
-          public Change fun(ChangeDiffRequestProducer presentable) {
-            return presentable.getChange();
-          }
-        });
+        return ContainerUtil.mapNotNull(myChain.getRequests(),
+                                        (Function<ChangeDiffRequestProducer, Change>)presentable -> presentable.getChange());
       }
 
       @Nullable

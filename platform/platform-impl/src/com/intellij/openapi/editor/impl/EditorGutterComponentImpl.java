@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,10 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jun 6, 2002
- * Time: 8:37:03 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.codeInsight.daemon.NonHideableIconGutterMark;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.ide.IdeEventQueue;
@@ -52,7 +45,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -63,10 +55,11 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.JBSwingUtilities;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
-import gnu.trove.*;
+import com.intellij.util.ui.*;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntFunction;
+import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -124,6 +117,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private final EditorImpl myEditor;
   private final FoldingAnchorsOverlayStrategy myAnchorsDisplayStrategy;
   @Nullable private TIntObjectHashMap<List<GutterMark>> myLineToGutterRenderers;
+  private int myStartIconAreaWidth = START_ICON_AREA_WIDTH;
   private int myIconsAreaWidth;
   private int myLineNumberAreaWidth;
   private int myAdditionalLineNumberAreaWidth;
@@ -190,14 +184,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           if (draggableObject != null) {
             final int line = convertPointToLineNumber(e.getPoint());
             if (line != -1) {
-              draggableObject.copy(line, myEditor.getVirtualFile());
+              draggableObject.copy(line, myEditor.getVirtualFile(), e.getAction().getActionId());
             }
           }
         }
         else if (attachedObject instanceof DnDNativeTarget.EventInfo && myEditor.getSettings().isDndEnabled()) {
           Transferable transferable = ((DnDNativeTarget.EventInfo)attachedObject).getTransferable();
           if (transferable != null && transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
-            EditorImpl.handleDrop(myEditor, transferable);
+            EditorImpl.handleDrop(myEditor, transferable, e.getAction().getActionId());
           }
         }
         myDnDInProgress = false;
@@ -210,7 +204,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
             final int line = convertPointToLineNumber(e.getPoint());
             if (line != -1) {
               e.setDropPossible(true);
-              e.setCursor(draggableObject.getCursor(line));
+              e.setCursor(draggableObject.getCursor(line, e.getAction().getActionId()));
             }
           }
         }
@@ -227,11 +221,17 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         return true;
       })
       .setImageProvider((NullableFunction<DnDActionInfo, DnDImage>)info -> {
-        Image image = IconUtil.toImage(scaleIcon(getGutterRenderer(info.getPoint()).getIcon()));
+        // [tav] temp workaround for JRE-224
+        boolean inUserScale = SystemInfo.isWindows ? !UIUtil.isJreHiDPI(myEditor.getComponent()) : true;
+        Image image = ImageUtil.toBufferedImage(getDragImage(getGutterRenderer(info.getPoint())), inUserScale);
         return new DnDImage(image, new Point(image.getWidth(null) / 2, image.getHeight(null) / 2));
       })
       .enableAsNativeTarget() // required to accept dragging from editor (as editor component doesn't use DnDSupport to implement drag'n'drop)
       .install();
+  }
+
+  Image getDragImage(GutterMark renderer) {
+    return IconUtil.toImage(scaleIcon(renderer.getIcon()));
   }
 
   private void fireResized() {
@@ -241,7 +241,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Override
   public Dimension getPreferredSize() {
     int w = getFoldingAreaOffset() + getFoldingAreaWidth();
-    return new Dimension(w, myEditor.getPreferredHeight());
+    Dimension size = new Dimension(w, myEditor.getPreferredHeight());
+    JBInsets.addTo(size, getInsets());
+    return size;
   }
 
   @Override
@@ -298,7 +300,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       paintEditorBackgrounds(g, firstVisibleOffset, lastVisibleOffset);
 
       Object hint = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-      if (!UIUtil.isJDKManagedHiDPIScreen(g)) g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+      if (!UIUtil.isJreHiDPI(g)) g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 
       try {
         paintAnnotations(g, startVisualLine, endVisualLine);
@@ -322,7 +324,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     myTextFgColors.clear();
     Color defaultBackgroundColor = myEditor.getBackgroundColor();
     Color defaultForegroundColor = myEditor.getColorsScheme().getDefaultForeground();
-    int startX = myEditor.isInDistractionFreeMode() ? 0 : getWhitespaceSeparatorOffset() + (isFoldingOutlineShown() ? 1 : 0);
+    int startX = myEditor.isInDistractionFreeMode() ? 0 : getWhitespaceSeparatorOffset();
     IterationState state = new IterationState(myEditor, firstVisibleOffset, lastVisibleOffset, null, true, false, true, false);
     while (!state.atEnd()) {
       drawEditorBackgroundForRange(g, state.getStartOffset(), state.getEndOffset(), state.getMergedAttributes(),
@@ -590,7 +592,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private void processRangeHighlighters(int startOffset, int endOffset, @NotNull RangeHighlighterProcessor processor) {
     Document document = myEditor.getDocument();
     // we limit highlighters to process to between line starting at startOffset and line ending at endOffset
-    MarkupIterator<RangeHighlighterEx>docHighlighters = myEditor.getFilteredDocumentMarkupModel().overlappingIterator(startOffset, endOffset);
+    MarkupIterator<RangeHighlighterEx> docHighlighters = myEditor.getFilteredDocumentMarkupModel().overlappingIterator(startOffset, endOffset);
     MarkupIterator<RangeHighlighterEx> editorHighlighters = myEditor.getMarkupModel().overlappingIterator(startOffset, endOffset);
 
     try {
@@ -754,6 +756,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       if (renderer == null) {
         return;
       }
+      if (!areIconsShown() && !(renderer instanceof NonHideableIconGutterMark)) {
+        return;
+      }
       if (!isHighlighterVisible(highlighter)) {
         return;
       }
@@ -795,13 +800,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
     });
 
-    if (!areIconsShown()) {
-      myIconsAreaWidth = 0;
-      myLastNonDumbModeIconAreaWidth = 0;
-      return;
-    }
-
-    int minWidth = (int)(START_ICON_AREA_WIDTH * myEditor.getScale());
+    int minWidth = areIconsShown() ? scaleWidth(myStartIconAreaWidth) : 0;
     myIconsAreaWidth = canShrink ? minWidth : Math.max(myIconsAreaWidth, minWidth);
 
     processGutterRenderers((line, renderers) -> {
@@ -968,19 +967,26 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     void process(int x, int y, @NotNull GutterMark renderer);
   }
 
-  private Icon scaleIcon(Icon icon) {
-    if (Registry.is("editor.scale.gutter.icons") && icon instanceof ScalableIcon) {
+  private float getEditorScaleFactor() {
+    if (Registry.is("editor.scale.gutter.icons")) {
       float scale = myEditor.getScale();
       if (Math.abs(1f - scale) > 0.10f) {
-        return ((ScalableIcon)icon).scale(scale);
+        return scale;
       }
     }
-    return icon;
+    return 1f;
+  }
+
+  private Icon scaleIcon(Icon icon) {
+    float scale = getEditorScaleFactor();
+    return scale == 1 ? icon : IconUtil.scale(icon, this, scale);
+  }
+
+  private int scaleWidth(int width) {
+    return (int) (getEditorScaleFactor() * width);
   }
 
   private void processIconsRow(int line, @NotNull List<GutterMark> row, @NotNull LineGutterIconRendererProcessor processor) {
-    if (!areIconsShown()) return;
-
     int middleCount = 0;
     int middleSize = 0;
     int x = getIconAreaOffset() + 2;
@@ -1158,7 +1164,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
                                int baseHeight,
                                boolean active) {
     Object antialiasing = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-    if (SystemInfo.isMac && SystemInfo.JAVA_VERSION.startsWith("1.4.1") || UIUtil.isJDKManagedHiDPIScreen(g)) {
+    if (SystemInfo.isMac && SystemInfo.JAVA_VERSION.startsWith("1.4.1") || UIUtil.isJreHiDPI(g)) {
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     }
 
@@ -1535,7 +1541,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         }
       }
     }
-    setCursor(cursor);
+    UIUtil.setCursor(this, cursor);
   }
 
   @Override
@@ -1781,6 +1787,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Override
   public void setForceShowRightFreePaintersArea(boolean value) {
     myForceRightFreePaintersAreaShown = value;
+  }
+
+  @Override
+  public void setInitialIconAreaWidth(int width) {
+    myStartIconAreaWidth = width;
   }
 
   private void invokePopup(MouseEvent e) {

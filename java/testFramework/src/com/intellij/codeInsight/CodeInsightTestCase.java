@@ -41,6 +41,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -51,6 +52,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -133,6 +135,9 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     final VirtualFile[] vFiles = new VirtualFile[files.length];
     for (int i = 0; i < files.length; i++) {
       vFiles[i] = findVirtualFile(files[i]);
+      if (vFiles[i] != null) {
+        VfsTestUtil.assertFilePathEndsWithCaseSensitivePath(vFiles[i], files[i]);
+      }
     }
 
     File projectFile = projectRoot == null ? null : new File(getTestDataPath() + projectRoot);
@@ -454,25 +459,26 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
         VirtualFile vFile = findVirtualFile(filePath);
-        String ft;
+
+        VfsTestUtil.assertFilePathEndsWithCaseSensitivePath(vFile, filePath);
+        String expectedText;
         try {
-          ft = VfsUtilCore.loadText(vFile);
+          expectedText = VfsUtilCore.loadText(vFile);
         }
         catch (IOException e) {
           throw new RuntimeException(e);
         }
 
-        String fileText = StringUtil.convertLineSeparators(ft);
-        Document document = EditorFactory.getInstance().createDocument(fileText);
+        expectedText = StringUtil.convertLineSeparators(expectedText);
+        Document document = EditorFactory.getInstance().createDocument(expectedText);
 
         EditorTestUtil.CaretAndSelectionState caretState = EditorTestUtil.extractCaretAndSelectionMarkers(document);
 
-        String newFileText = document.getText();
-        String newFileText1 = newFileText;
+        expectedText = document.getText();
         if (stripTrailingSpaces) {
-          Document document1 = EditorFactory.getInstance().createDocument(newFileText);
+          Document document1 = EditorFactory.getInstance().createDocument(expectedText);
           ((DocumentImpl)document1).stripTrailingSpaces(getProject());
-          newFileText1 = document1.getText();
+          expectedText = document1.getText();
         }
 
         if (myEditor instanceof EditorWindow) {
@@ -480,10 +486,11 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
         }
         myFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(myEditor.getDocument());
 
-        String text = myFile.getText();
-        text = StringUtil.convertLineSeparators(text);
+        String actualText = StringUtil.convertLineSeparators(myFile.getText());
 
-        assertEquals("Text mismatch in file " + filePath, newFileText1, text);
+        if (!Comparing.equal(expectedText, actualText)) {
+            throw new FileComparisonFailure("Text mismatch in file " + filePath, expectedText, actualText, vFile.getPath());
+        }
 
         EditorTestUtil.verifyCaretAndSelectionState(myEditor, caretState);
       }

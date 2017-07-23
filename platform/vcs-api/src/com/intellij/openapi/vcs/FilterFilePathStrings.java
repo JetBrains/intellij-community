@@ -18,12 +18,6 @@ package com.intellij.openapi.vcs;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 12/9/12
- * Time: 8:39 PM
- */
 public class FilterFilePathStrings extends AbstractFilterChildren<String> {
   private final static FilterFilePathStrings ourInstance = new FilterFilePathStrings();
 

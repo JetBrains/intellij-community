@@ -1,5 +1,6 @@
 package com.intellij.promoter;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -9,7 +10,6 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
@@ -24,7 +24,7 @@ import java.util.Map;
   name = "ShortcutPromoterManager",
   storages = @Storage(value = "promoter.xml", roamingType = RoamingType.PER_OS)
 )
-public class ShortcutPromoterManager implements ApplicationComponent, AnActionListener, PersistentStateComponent<Element> {
+public class ShortcutPromoterManager implements Disposable, AnActionListener, PersistentStateComponent<Element>, ApplicationComponent {
   private final Map<String, PromoterState> myState = new LinkedHashMap<>();
   private final Map<String, ShortcutPromoterEP> myExtensions = new THashMap<>();
 
@@ -40,14 +40,8 @@ public class ShortcutPromoterManager implements ApplicationComponent, AnActionLi
   }
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     ActionManager.getInstance().removeAnActionListener(this);
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return getClass().getName();
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
 
   private void doTest() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
-      myFixture.copyDirectoryToProject("typing", "");
       myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
       myFixture.enableInspections(PyTypeCheckerInspection.class);
       myFixture.checkHighlighting(true, false, true);
@@ -42,7 +41,6 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   private void doMultiFileTest() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
       myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
-      myFixture.copyDirectoryToProject("typing", "");
       myFixture.configureFromTempProjectFile("a.py");
       myFixture.enableInspections(PyTypeCheckerInspection.class);
       myFixture.checkHighlighting(true, false, true);
@@ -75,11 +73,6 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
 
   // PY-16855
   public void testTypingTypeVarWithUnresolvedBound() {
-    doTest();
-  }
-
-  // PY-16303
-  public void testTypingTupleInDocstring() {
     doTest();
   }
 
@@ -169,6 +162,26 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-20967
+  public void testAsyncFunctionAnnotatedToReturnNone() {
+    doTest();
+  }
+
+  // PY-20709
+  public void testGeneratorReturnType() {
+    doTest();
+  }
+
+  // PY-20657, PY-21916
+  public void testGeneratorAnnotatedToReturnIterable() {
+    doTest();
+  }
+
+  // PY-20657, PY-21916
+  public void testAsyncGeneratorAnnotatedToReturnAsyncIterable() {
+    doTest();
+  }
+
   // PY-21083
   public void testFloatFromhex() {
     doTest();
@@ -181,6 +194,70 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
 
   // PY-21350
   public void testBuiltinInputPy3() {
+    doTest();
+  }
+
+  // PY-200057
+  public void testClassObjectType() {
+    doTest();
+  }
+
+  // PY-20057
+  public void testTypeAndClassObjectTypesCompatibility() {
+    doTest();
+  }
+
+  // PY-20057
+  public void testClassObjectTypeWithUnion() {
+    doTest();
+  }
+
+  // PY-22730
+  public void testOptionalOfBoundTypeVarInWarnings() {
+    doTest();
+  }
+
+  // PY-22769
+  public void testReplaceCalledOnUnionOfStrAndBytesWithStrArguments() {
+    doTest();
+  }
+
+  // PY-23053
+  public void testUnboundTypeVarsMatchClassObjectTypes() {
+    doTest();
+  }
+
+  // PY-22513
+  public void testGenericKwargs() {
+    doTest();
+  }
+
+  public void testTypingNamedTupleAsParameter() {
+    doTest();
+  }
+
+  // PY-17962
+  public void testTypingCallableCall() {
+    doTest();
+  }
+
+  // PY-23057
+  public void testEllipsisInFunctionWithSpecifiedReturnType() {
+    doTest();
+  }
+
+  // PY-23239, PY-23253
+  public void testInitializingTypingNamedTuple() {
+    doTest();
+  }
+
+  // PY-24287
+  public void testPromotingBytearrayToBytes() {
+    doTest();
+  }
+
+  // PY-25045
+  public void testUnionOfIntAndFloatShouldBeConsideredAsDividable() {
     doTest();
   }
 }

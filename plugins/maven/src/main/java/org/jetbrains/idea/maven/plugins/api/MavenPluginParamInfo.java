@@ -181,7 +181,7 @@ public class MavenPluginParamInfo {
 
   public static class ParamInfoList implements Iterable<ParamInfo> {
 
-    private static final ParamInfoList EMPTY = new ParamInfoList(null, Collections.<ParamInfo>emptyList());
+    private static final ParamInfoList EMPTY = new ParamInfoList(null, Collections.emptyList());
 
     private final MavenDomConfiguration domCfg;
 

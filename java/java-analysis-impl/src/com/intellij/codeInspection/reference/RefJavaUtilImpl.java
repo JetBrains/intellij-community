@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 21-Dec-2007
- */
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -56,6 +52,17 @@ public class RefJavaUtilImpl extends RefJavaUtil{
 
           if (target instanceof PsiModifierListOwner && isDeprecated(target)) {
             refFrom.setUsesDeprecatedApi(true);
+          }
+        }
+
+        @Override
+        public void visitLiteralExpression(PsiLiteralExpression expression) {
+          for (PsiReference reference : expression.getReferences()) {
+            PsiElement resolve = reference.resolve();
+            if (resolve instanceof PsiMember) {
+              final RefElement refClass = refFrom.getRefManager().getReference(resolve);
+              refFrom.addReference(refClass, resolve, psiFrom, false, true, null);
+            }
           }
         }
 
@@ -146,7 +153,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
               }
 
               final Collection<PsiClassType> exceptionTypes = body != null ? ExceptionUtil.collectUnhandledExceptions(body, topElement, false) 
-                                                                           : Collections.<PsiClassType>emptyList();
+                                                                           : Collections.emptyList();
               RefElement refResolved = refFrom.getRefManager().getReference(interfaceMethod);
               if (refResolved instanceof RefMethodImpl) {
                 for (final PsiClassType exceptionType : exceptionTypes) {
@@ -301,7 +308,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
   public RefClass getTopLevelClass(@NotNull RefElement refElement) {
     RefEntity refParent = refElement.getOwner();
 
-    while (refParent != null && refParent instanceof RefElement && !(refParent instanceof RefFile)) {
+    while (refParent instanceof RefElement && !(refParent instanceof RefFile)) {
       refElement = (RefElementImpl)refParent;
       refParent = refParent.getOwner();
     }
@@ -458,13 +465,13 @@ public class RefJavaUtilImpl extends RefJavaUtil{
      if (a == PsiModifier.PRIVATE) {
        return 0;
      }
-     else if (a == PsiModifier.PACKAGE_LOCAL) {
+     if (a == PsiModifier.PACKAGE_LOCAL) {
        return 1;
      }
-     else if (a == PsiModifier.PROTECTED) {
+     if (a == PsiModifier.PROTECTED) {
        return 2;
      }
-     else if (a == PsiModifier.PUBLIC) return 3;
+     if (a == PsiModifier.PUBLIC) return 3;
 
      return -1;
    }
@@ -507,7 +514,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
             }
           }
           else {
-            ((RefManagerImpl)refManager).fireNodeMarkedReferenced(psiClass, psiElement, false);
+            ((RefManagerImpl)refManager).fireNodeMarkedReferenced(psiClass, psiElement);
           }
         }
       }

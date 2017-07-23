@@ -53,7 +53,7 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
     List<AbstractTreeNode> result = new ArrayList<>();
     try {
       for (String groupPath : groups.keySet()) {
-        result.add(createModuleGroupNode(new ModuleGroup(new String[]{groupPath})));
+        result.add(createModuleGroupNode(new ModuleGroup(Collections.singletonList(groupPath))));
       }
       for (Module module : nonGroupedModules) {
         result.add(createModuleGroup(module));

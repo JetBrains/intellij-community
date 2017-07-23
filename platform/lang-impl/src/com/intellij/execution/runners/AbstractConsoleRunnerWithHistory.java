@@ -16,7 +16,6 @@
 package com.intellij.execution.runners;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.console.ConsoleExecuteAction;
@@ -39,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * This class provides basic functionality for running consoles.
@@ -111,7 +109,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   protected void createContentDescriptorAndActions() {
     final Executor defaultExecutor = getExecutor();
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, false);
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("ConsoleRunner", toolbarActions, false);
 
     // Runner creating
     final JPanel panel = new JPanel(new BorderLayout());

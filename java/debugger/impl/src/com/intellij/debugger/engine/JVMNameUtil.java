@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,10 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.ide.util.JavaAnonymousClassesHelper;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -41,11 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: lex
- * Date: Sep 2, 2003
- * Time: 11:25:59 AM
- */
 public class JVMNameUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.JVMNameUtil");
 
@@ -222,11 +216,7 @@ public class JVMNameUtil {
       List<ReferenceType> allClasses = process.getPositionManager().getAllClasses(mySourcePosition);
       // If there are more than one available, try to match by name
       if (allClasses.size() > 1) {
-        String name = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-          public String compute() {
-            return getClassVMName(getClassAt(mySourcePosition));
-          }
-        });
+        String name = ReadAction.compute(() -> getClassVMName(getClassAt(mySourcePosition)));
         for (ReferenceType aClass : allClasses) {
           if (Comparing.equal(aClass.name(), name)) {
             return name;
@@ -241,11 +231,7 @@ public class JVMNameUtil {
     }
 
     public String getDisplayName(final DebugProcessImpl debugProcess) {
-      return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        public String compute() {
-          return getSourcePositionClassDisplayName(debugProcess, mySourcePosition);
-        }
-      });
+      return ReadAction.compute(() -> getSourcePositionClassDisplayName(debugProcess, mySourcePosition));
     }
   }
 

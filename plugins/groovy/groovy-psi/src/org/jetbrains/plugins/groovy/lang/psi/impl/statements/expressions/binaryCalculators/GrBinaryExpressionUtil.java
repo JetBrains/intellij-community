@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,46 +17,48 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binary
 
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
-/**
- * Created by Max Medvedev on 12/20/13
- */
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypeConstants.*;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createTypeByFQClassName;
+
 public class GrBinaryExpressionUtil {
-  @Nullable
-  public static PsiType getRightType(GrBinaryFacade e) {
-    final GrExpression rightOperand = e.getRightOperand();
-    return rightOperand == null ? null : rightOperand.getType();
+
+  private static final int[] RANKS = new int[]{
+    INTEGER_RANK, LONG_RANK, BIG_INTEGER_RANK, BIG_DECIMAL_RANK, DOUBLE_RANK
+  };
+
+  public static PsiType getDefaultNumericResultType(PsiType ltype, PsiType rtype, GrOperatorExpression e) {
+    int lRank = getTypeRank(ltype);
+    int rRank = getTypeRank(rtype);
+    int resultRank = getResultTypeRank(lRank, rRank);
+    String fqn = getTypeFqn(resultRank);
+    return fqn == null ? null : createTypeByFQClassName(fqn, e);
   }
 
-  @Nullable
-  public static PsiType getLeftType(GrBinaryFacade e) {
-    return e.getLeftOperand().getType();
+  private static int getResultTypeRank(int lRank, int rRank) {
+    for (int rank : RANKS) {
+      if (lRank <= rank && rRank <= rank) {
+        return rank;
+      }
+    }
+    return 0;
   }
 
-  public static PsiType getDefaultNumericResultType(PsiType ltype, PsiType rtype, GrBinaryFacade e) {
-    if (isBigDecimal(ltype, rtype)) return createBigDecimal(e);
-    if (isFloatOrDouble(ltype, rtype)) return createDouble(e);
-    if (isLong(ltype, rtype)) return createLong(e);
-    return createInteger(e);
-  }
-
-  public static PsiType createDouble(GrBinaryFacade e) {
+  public static PsiType createDouble(GrOperatorExpression e) {
     return getTypeByFQName(CommonClassNames.JAVA_LANG_DOUBLE, e);
   }
 
-  public static PsiType createLong(GrBinaryFacade e) {
+  public static PsiType createLong(GrOperatorExpression e) {
     return getTypeByFQName(CommonClassNames.JAVA_LANG_LONG, e);
   }
 
-  public static PsiType createInteger(GrBinaryFacade e) {
+  public static PsiType createInteger(GrOperatorExpression e) {
     return getTypeByFQName(CommonClassNames.JAVA_LANG_INTEGER, e);
   }
 
-  public static PsiType createBigDecimal(GrBinaryFacade e) {
+  public static PsiType createBigDecimal(GrOperatorExpression e) {
     return getTypeByFQName(GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL, e);
   }
 
@@ -73,7 +75,7 @@ public class GrBinaryExpressionUtil {
     return ltype.equalsToText(CommonClassNames.JAVA_LANG_LONG) || rtype.equalsToText(CommonClassNames.JAVA_LANG_LONG);
   }
 
-  public static PsiType getTypeByFQName(String fqn, GrBinaryFacade e) {
-    return TypesUtil.createTypeByFQClassName(fqn, e.getPsiElement());
+  public static PsiType getTypeByFQName(String fqn, GrOperatorExpression e) {
+    return createTypeByFQClassName(fqn, e);
   }
 }

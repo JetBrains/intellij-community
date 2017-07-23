@@ -61,23 +61,20 @@ public class SvnLogUtil implements SvnLogLoader {
                                                final SVNRevision toIncluding,
                                                final boolean includingYoungest,
                                                final boolean includeOldest, final List<CommittedChangeList> result) {
-    return new LogEntryConsumer() {
-      @Override
-      public void consume(LogEntry logEntry) {
-        if (myProject.isDisposed()) throw new ProcessCanceledException();
-        final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-        if (progress != null) {
-          progress.setText2(SvnBundle.message("progress.text2.processing.revision", logEntry.getRevision()));
-          progress.checkCanceled();
-        }
-        if ((!includingYoungest) && (logEntry.getRevision() == fromIncluding.getNumber())) {
-          return;
-        }
-        if ((!includeOldest) && (logEntry.getRevision() == toIncluding.getNumber())) {
-          return;
-        }
-        result.add(new SvnChangeList(myVcs, myLocation, logEntry, myRepositoryRoot.toString()));
+    return logEntry -> {
+      if (myProject.isDisposed()) throw new ProcessCanceledException();
+      final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+      if (progress != null) {
+        progress.setText2(SvnBundle.message("progress.text2.processing.revision", logEntry.getRevision()));
+        progress.checkCanceled();
       }
+      if ((!includingYoungest) && (logEntry.getRevision() == fromIncluding.getNumber())) {
+        return;
+      }
+      if ((!includeOldest) && (logEntry.getRevision() == toIncluding.getNumber())) {
+        return;
+      }
+      result.add(new SvnChangeList(myVcs, myLocation, logEntry, myRepositoryRoot.toString()));
     };
   }
 }

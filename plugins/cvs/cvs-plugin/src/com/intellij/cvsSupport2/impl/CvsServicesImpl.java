@@ -94,13 +94,6 @@ public class CvsServicesImpl extends CvsServices {
 
   }
 
-  public void showDifferencesForFiles(CvsModule first, CvsModule second, Project project) throws Exception {
-    AbstractVcsHelper.getInstance(project).showDifferences(
-      createCvsVersionOn(first, project),
-      createCvsVersionOn(second, project),
-      new File(first.getPathInCvs()));
-  }
-
   public String getScrambledPasswordForPServerCvsRoot(String cvsRoot) {
     return PServerLoginProvider.getInstance()
       .getScrambledPasswordForCvsRoot(cvsRoot);

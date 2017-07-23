@@ -21,7 +21,7 @@
       This plugin supports <a href="https://github.com/junit-team/junit">JUnit tests</a>.
       The following features are available:
         <ul>
-        <li>Ability to create JUnit 3.x or JUnit 4.x tests.</li>
+        <li>Ability to create JUnit 3.x, JUnit 4.x or JUnit 5.x tests.</li>
         <li>Navigation between a test and test subject.</li>
         <li>Running tests.</li>
         <li>Viewing test results in the dedicated Test Runner tab of the Run tool window.</li>
@@ -34,8 +34,7 @@
     <runConfigurationProducer implementation="com.intellij.execution.junit.AllInDirectoryConfigurationProducer"/>
     <runConfigurationProducer implementation="com.intellij.execution.junit.AllInPackageConfigurationProducer"/>
     <runConfigurationProducer implementation="com.intellij.execution.junit.PatternConfigurationProducer"/>
-    <runConfigurationProducer implementation="com.intellij.execution.junit.TestClassConfigurationProducer"/>
-    <runConfigurationProducer implementation="com.intellij.execution.junit.TestMethodConfigurationProducer"/>
+    <runConfigurationProducer implementation="com.intellij.execution.junit.TestInClassConfigurationProducer"/>
     <deadCode implementation="com.intellij.execution.junit2.inspection.JUnitEntryPoint"/>
     <cantBeStatic implementation="com.intellij.execution.junit2.inspection.JUnitCantBeStaticExtension" />
     <testFramework implementation="com.intellij.execution.junit.JUnit3Framework"/>
@@ -50,15 +49,26 @@
     <stacktrace.fold substring="at org.junit.Assert.fail("/>
     <stacktrace.fold substring="at org.junit.Assert.failNotSame("/>
     <stacktrace.fold substring="at org.junit.Assert.failSame("/>
+    <stacktrace.fold substring="at junit.framework.Assert.assert"/>
+    <stacktrace.fold substring="at junit.framework.Assert.fail("/>
+    <stacktrace.fold substring="at junit.framework.Assert.failNotSame("/>
+    <stacktrace.fold substring="at junit.framework.Assert.failSame("/>
     <stacktrace.fold substring="at org.junit.Assert.internalArrayEquals("/>
     <stacktrace.fold substring="at org.junit.internal.ComparisonCriteria.arrayEquals("/>
     <stacktrace.fold substring="at org.junit.Assert.assert"/>
     <stacktrace.fold substring="at com.intellij.junit3."/>
     <stacktrace.fold substring="at com.intellij.junit4."/>
+    <stacktrace.fold substring="at com.intellij.junit5."/>
     <stacktrace.fold substring="at junit.framework.TestSuite.run"/>
     <stacktrace.fold substring="at junit.framework.TestCase.run"/>
     <stacktrace.fold substring="at junit.framework.TestResult"/>
-
+    <stacktrace.fold substring="at org.junit.jupiter.api.AssertionUtils.fail("/>
+    <stacktrace.fold substring="at org.junit.jupiter.api.AssertEquals.failNotEqual("/>
+    <stacktrace.fold substring="at org.junit.jupiter.api.AssertEquals.assertEquals("/>
+    <stacktrace.fold substring="at org.junit.jupiter.api.Assertions.assertEquals("/>
+    <stacktrace.fold substring="at org.junit.platform."/>
+    <stacktrace.fold substring="at org.junit.jupiter."/>
+    <stacktrace.fold substring="at org.junit.vintage."/>
     <programRunner implementation="com.intellij.execution.junit.JUnitDebuggerRunner"/>
     <codeInsight.externalLibraryResolver implementation="com.intellij.execution.junit.codeInsight.JUnitExternalLibraryResolver"/>
     <codeInsight.externalLibraryResolver implementation="com.intellij.execution.junit.codeInsight.JUnit5ExternalLibraryResolver"/>
@@ -66,6 +76,16 @@
     <runConfigurationProducer implementation="com.intellij.execution.junit.testDiscovery.JUnitTestDiscoveryConfigurationProducer"/>
     <implicitUsageProvider implementation="com.intellij.execution.junit2.inspection.JUnitImplicitUsageProvider"/>
     <predefinedMigrationMapProvider implementation="com.intellij.execution.junit2.refactoring.JUnit5Migration"/>
+    <psi.referenceContributor implementation="com.intellij.execution.junit.codeInsight.references.JUnitReferenceContributor"/>
+
+    <localInspection groupPath="Java" language="JAVA" shortName="JUnit5MalformedParameterized" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="junit5.valid.parameterized.configuration.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.execution.junit.codeInsight.JUnit5MalformedParameterizedInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="JUnit5MalformedRepeated" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="junit5.malformed.repeated.test.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.execution.junit.codeInsight.JUnit5MalformedRepeatedTestInspection"/>
   </extensions>
 
   <extensionPoints>
@@ -79,7 +99,7 @@
       <add-to-group relative-to-action="openAssertEqualsDiff" anchor="after" group-id="TestTreePopupMenu"/>
     </group>
     <group>
-      <action class="com.intellij.execution.junit.JUnitAddToTestsPatternAction" id="AddToISuite" text="Add to pattern suite"/>
+      <action class="com.intellij.execution.junit.JUnitAddToTestsPatternAction" id="AddToISuite" text="Add to JUnit pattern suite"/>
       <add-to-group anchor="last" group-id="RunContextGroup"/>
     </group>
   </actions>

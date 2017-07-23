@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.richcopy.model.SyntaxInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,20 +32,18 @@ import java.io.UnsupportedEncodingException;
  * @author Denis Zhdanov
  * @since 3/28/13 1:20 PM
  */
-public abstract class AbstractSyntaxAwareInputStreamTransferableData extends InputStream implements RawTextWithMarkup
-{
+abstract class AbstractSyntaxAwareInputStreamTransferableData extends InputStream implements RawTextWithMarkup {
+  private static final Logger LOG = Logger.getInstance(AbstractSyntaxAwareInputStreamTransferableData.class);
 
-  private static final Logger LOG = Logger.getInstance("#" + AbstractSyntaxAwareInputStreamTransferableData.class.getName());
-
-  protected String myRawText;
+  String myRawText;
   @NotNull
-  protected final SyntaxInfo mySyntaxInfo;
+  final SyntaxInfo mySyntaxInfo;
   @NotNull
   private final DataFlavor myDataFlavor;
 
   @Nullable private transient InputStream myDelegate;
 
-  public AbstractSyntaxAwareInputStreamTransferableData(@NotNull SyntaxInfo syntaxInfo, @NotNull DataFlavor flavor) {
+  AbstractSyntaxAwareInputStreamTransferableData(@NotNull SyntaxInfo syntaxInfo, @NotNull DataFlavor flavor) {
     mySyntaxInfo = syntaxInfo;
     myDataFlavor = flavor;
   }
@@ -98,33 +95,43 @@ public abstract class AbstractSyntaxAwareInputStreamTransferableData extends Inp
     }
 
     int maxLength = Registry.intValue("editor.richcopy.max.size.megabytes") * FileUtilRt.MEGABYTE;
-    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
+    final StringBuilder buffer = new StringBuilder();
     try {
-      try {
-        build(buffer, maxLength);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-      String s = buffer.toString();
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Resulting text: \n" + s);
-      }
-      try {
-        myDelegate = new ByteArrayInputStream(s.getBytes(getCharset()));
-      }
-      catch (UnsupportedEncodingException e) {
-        throw new RuntimeException(e);
-      }
-      return myDelegate;
+      build(buffer, maxLength);
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
+    catch (Exception e) {
+      LOG.error(e);
     }
+    String s = buffer.toString();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Resulting text: \n" + s);
+    }
+    try {
+      myDelegate = new ByteArrayInputStream(s.getBytes(getCharset()));
+    }
+    catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(e);
+    }
+    return myDelegate;
   }
   
   protected abstract void build(@NotNull StringBuilder holder, int maxLength);
 
   @NotNull
   protected abstract String getCharset();
+
+  @Override
+  public synchronized void mark(int readlimit) {
+    getDelegate().mark(readlimit);
+  }
+
+  @Override
+  public synchronized void reset() throws IOException {
+    getDelegate().reset();
+  }
+
+  @Override
+  public boolean markSupported() {
+    return getDelegate().markSupported();
+  }
 }

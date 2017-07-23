@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,8 +66,9 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
         setOpaque(true);
         setBackground(selected ? list.getSelectionBackground() : null);
       }
-    }
-    else {
+    } else if (UIUtil.isUnderWin10LookAndFeel()) {
+      setBackground(selected ? list.getSelectionBackground() : list.getBackground());
+    } else {
       setBackground(selected ? list.getSelectionBackground() : null);
     }
 
@@ -94,11 +95,16 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
       super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), mySelectionForeground), isMainText);
     }
     else if (attributes.getFgColor() == null) {
-      super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), myForeground), isMainText);
+      super.append(fragment, attributes.derive(-1, myForeground, null, null), isMainText);
     }
     else {
       super.append(fragment, attributes, isMainText);
     }
+  }
+
+  @Override
+  void revalidateAndRepaint() {
+    // no need for this in a renderer
   }
 
   @Override

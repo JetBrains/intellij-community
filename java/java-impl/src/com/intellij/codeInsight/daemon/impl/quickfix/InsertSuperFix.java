@@ -15,73 +15,12 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.command.undo.UndoUtil;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiMatcherImpl;
-import com.intellij.psi.util.PsiMatchers;
+import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 
-public class InsertSuperFix implements IntentionAction, HighPriorityAction {
-  private final PsiMethod myConstructor;
+public class InsertSuperFix extends InsertConstructorCallFix {
 
   public InsertSuperFix(@NotNull PsiMethod constructor) {
-    myConstructor = constructor;
+    super(constructor, "super();");
   }
-
-  @Override
-  @NotNull
-  public String getText() {
-    return QuickFixBundle.message("insert.super.constructor.call.text");
-  }
-
-  @Override
-  @NotNull
-  public String getFamilyName() {
-    return QuickFixBundle.message("insert.super.constructor.call.family");
-  }
-
-  @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myConstructor.isValid()
-        && myConstructor.getBody() != null
-        && myConstructor.getBody().getLBrace() != null
-        && myConstructor.getManager().isInProject(myConstructor)
-    ;
-  }
-
-  @NotNull
-  @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
-    return myConstructor;
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    PsiStatement superCall =
-      JavaPsiFacade.getInstance(myConstructor.getProject()).getElementFactory().createStatementFromText("super();",null);
-
-    PsiCodeBlock body = myConstructor.getBody();
-    PsiJavaToken lBrace = body.getLBrace();
-    body.addAfter(superCall, lBrace);
-    lBrace = (PsiJavaToken) new PsiMatcherImpl(body)
-              .firstChild(PsiMatchers.hasClass(PsiExpressionStatement.class))
-              .firstChild(PsiMatchers.hasClass(PsiMethodCallExpression.class))
-              .firstChild(PsiMatchers.hasClass(PsiExpressionList.class))
-              .firstChild(PsiMatchers.hasClass(PsiJavaToken.class))
-              .dot(PsiMatchers.hasText("("))
-              .getElement();
-    editor.getCaretModel().moveToOffset(lBrace.getTextOffset()+1);
-    UndoUtil.markPsiFileForUndo(file);
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
 }

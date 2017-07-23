@@ -79,6 +79,7 @@ public class ThreeStateCheckBoxRenderer extends ThreeStateCheckBox implements Ta
     } else {
       setSelected((Boolean) value);
     }
+
     return this;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.openapi.diff.impl.settings;
 
 import com.intellij.application.options.colors.ColorAndFontSettingsListener;
 import com.intellij.application.options.colors.PreviewPanel;
-import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.ContentDiffRequest;
@@ -26,19 +25,16 @@ import com.intellij.diff.tools.simple.SimpleThreesideDiffChange;
 import com.intellij.diff.tools.simple.SimpleThreesideDiffViewer;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
-import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.TextDiffTypeFactory.TextDiffTypeImpl;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.IdeBorderFactory;
@@ -52,7 +48,10 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.List;
+
+import static com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 
 /**
  * The panel from the Settings, that allows to see changes to diff/merge coloring scheme right away.
@@ -107,14 +106,7 @@ class DiffPreviewPanel implements PreviewPanel {
     private final List<DiffContent> myContents;
 
     public SampleRequest() {
-      com.intellij.openapi.diff.DiffContent[] contents = DiffPreviewProvider.getContents();
-      myContents = ContainerUtil.list(convert(contents[0]), convert(contents[1]), convert(contents[2]));
-    }
-
-    private static DiffContent convert(@NotNull com.intellij.openapi.diff.DiffContent content) {
-      Document document = content.getDocument();
-      FileType fileType = content.getContentType();
-      return DiffContentFactory.getInstance().create(null, document, fileType);
+      myContents = Arrays.asList(DiffPreviewProvider.getContents());
     }
 
     @NotNull
@@ -138,10 +130,10 @@ class DiffPreviewPanel implements PreviewPanel {
 
   private static class SampleContext extends DiffContext {
     public SampleContext() {
-      TextDiffSettingsHolder.TextDiffSettings settings = new TextDiffSettingsHolder.TextDiffSettings();
+      TextDiffSettings settings = new TextDiffSettings();
       settings.setHighlightPolicy(HighlightPolicy.BY_WORD);
       settings.setIgnorePolicy(IgnorePolicy.IGNORE_WHITESPACES);
-      putUserData(TextDiffSettingsHolder.KEY, settings);
+      putUserData(TextDiffSettings.KEY, settings);
     }
 
     @Nullable
@@ -198,14 +190,6 @@ class DiffPreviewPanel implements PreviewPanel {
     @Override
     public void caretPositionChanged(CaretEvent e) {
       selectChange(getChange(mySide, e.getNewPosition().line));
-    }
-
-    @Override
-    public void caretAdded(CaretEvent e) {
-    }
-
-    @Override
-    public void caretRemoved(CaretEvent e) {
     }
   }
 

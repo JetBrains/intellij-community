@@ -63,7 +63,7 @@ public abstract class RadComponent implements IComponent {
   public static final RadComponent[] EMPTY_ARRAY = new RadComponent[]{};
   /**
    * Using this constant as client property of the Swing component
-   * you can find corresponding <code>RadComponent</code>
+   * you can find corresponding {@code RadComponent}
    */
   @NonNls
   public static final String CLIENT_PROP_RAD_COMPONENT = "radComponent";
@@ -102,9 +102,9 @@ public abstract class RadComponent implements IComponent {
    */
   @NotNull private final JComponent myDelegee;
   /**
-   * Parent RadContainer. This field is always not <code>null</code>
+   * Parent RadContainer. This field is always not {@code null}
    * is the component is in hierarchy. But the root of hierarchy
-   * has <code>null</code> parent indeed.
+   * has {@code null} parent indeed.
    */
   private RadContainer myParent;
   /**
@@ -129,11 +129,11 @@ public abstract class RadComponent implements IComponent {
   private boolean myDefaultBinding;
 
   /**
-   * Creates new <code>RadComponent</code> with the specified
+   * Creates new {@code RadComponent} with the specified
    * class of delegee and specified ID.
    *
    * @param aClass class of the compoent's delegee
-   * @param id     id of the compoent inside the form. <code>id</code>
+   * @param id     id of the compoent inside the form. {@code id}
    *               should be a unique atring inside the form.
    */
   public RadComponent(final ModuleProvider module, @NotNull final Class aClass, @NotNull final String id) {
@@ -257,7 +257,7 @@ public abstract class RadComponent implements IComponent {
   }
 
   /**
-   * @return Swing delegee component. The <code>RadComponent</code> has the same
+   * @return Swing delegee component. The {@code RadComponent} has the same
    *         delegee during all its life.
    */
   @NotNull
@@ -271,8 +271,8 @@ public abstract class RadComponent implements IComponent {
    *
    * @param x x in delegee coordinate system
    * @param y y in delegee coordinate system
-   * @return inplace property for the <code>RadComponent</code> if any.
-   *         The method returns <code>null</code> if the component doesn't have
+   * @return inplace property for the {@code RadComponent} if any.
+   *         The method returns {@code null} if the component doesn't have
    *         any inplace property. Please not the method can return different
    *         instances of the property for each invokation.
    */
@@ -550,7 +550,7 @@ public abstract class RadComponent implements IComponent {
   }
 
   /**
-   * Serializes component into the passed <code>writer</code>
+   * Serializes component into the passed {@code writer}
    */
   public abstract void write(XmlWriter writer);
 

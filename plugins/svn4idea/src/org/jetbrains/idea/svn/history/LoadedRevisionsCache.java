@@ -54,11 +54,9 @@ public class LoadedRevisionsCache implements Disposable {
 
       @Override
       public void changesLoaded(final RepositoryLocation location, final List<CommittedChangeList> changes) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            myMap.clear();
-            setRefreshTime(System.currentTimeMillis());
-          }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          myMap.clear();
+          setRefreshTime(System.currentTimeMillis());
         });
       }
     });

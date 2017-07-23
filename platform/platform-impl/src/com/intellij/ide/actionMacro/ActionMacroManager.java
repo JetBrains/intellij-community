@@ -517,7 +517,7 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
   private class MyKeyPostpocessor implements IdeEventQueue.EventDispatcher {
 
     @Override
-    public boolean dispatch(AWTEvent e) {
+    public boolean dispatch(@NotNull AWTEvent e) {
       if (isRecording() && e instanceof KeyEvent) {
         postProcessKeyEvent((KeyEvent)e);
       }

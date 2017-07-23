@@ -5,10 +5,6 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.InspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- * Date: 05-Sep-2005
- */
 public class DuplicatePropertyInspectionTest extends InspectionTestCase {
   //ProblemDescriptor.getLineNumber()==1 for this inspection (there is no RefPropertyElement thus PsiElement -> PsiFile)
   private DuplicatePropertyInspection myTool;

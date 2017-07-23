@@ -26,7 +26,7 @@ import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.vcs.log.VcsLogFilter;
-import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,10 +38,10 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
 
   private static final int MAX_FILTER_VALUE_LENGTH = 30;
 
-  @NotNull protected final VcsLogUiProperties myUiProperties;
+  @NotNull protected final MainVcsLogUiProperties myUiProperties;
 
   MultipleValueFilterPopupComponent(@NotNull String filterName,
-                                    @NotNull VcsLogUiProperties uiProperties,
+                                    @NotNull MainVcsLogUiProperties uiProperties,
                                     @NotNull FilterModel<Filter> filterModel) {
     super(filterName, filterModel);
     myUiProperties = uiProperties;

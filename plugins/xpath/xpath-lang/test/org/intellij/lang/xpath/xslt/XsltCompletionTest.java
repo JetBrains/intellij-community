@@ -17,11 +17,6 @@ package org.intellij.lang.xpath.xslt;
 
 import org.intellij.lang.xpath.TestBase;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 12.06.2008
-*/
 public class XsltCompletionTest extends TestBase {
 
     public void testLocalVariable() throws Throwable {

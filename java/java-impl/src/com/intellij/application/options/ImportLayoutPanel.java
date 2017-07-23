@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.ui.*;
@@ -392,7 +393,9 @@ public abstract class ImportLayoutPanel extends JPanel {
     TableUtil.editCellAt(table, selectedRow, 0);
     Component editorComp = table.getEditorComponent();
     if (editorComp != null) {
-      editorComp.requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(editorComp, true);
+      });
     }
   }
 }

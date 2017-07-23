@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.java.decompiler.struct.attr;
 
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
+import org.jetbrains.java.decompiler.util.DataInputFullStream;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -28,8 +29,7 @@ public class StructEnclosingMethodAttribute extends StructGeneralAttribute {
   private String methodDescriptor;
 
   @Override
-  public void initContent(ConstantPool pool) throws IOException {
-    DataInputStream data = stream();
+  public void initContent(DataInputFullStream data, ConstantPool pool) throws IOException {
     int classIndex = data.readUnsignedShort();
     int methodIndex = data.readUnsignedShort();
 

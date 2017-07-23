@@ -1,0 +1,38 @@
+package pkg;
+
+public class TestStringLiterals {
+   public static void main(String[] var0) {
+      String var1 = "abc\b\t\n\f\r\"'\\def";// 20
+      char[] var2 = new char[]{'\b', '\t', '\n', '\f', '\r', '"', '\'', '\\'};// 21
+      System.out.println(var1);// 22
+      System.out.println(var2);// 23
+   }// 24
+}
+
+class 'pkg/TestStringLiterals' {
+   method 'main ([Ljava/lang/String;)V' {
+      0      4
+      2      4
+      9      5
+      e      5
+      13      5
+      18      5
+      1d      5
+      22      5
+      28      5
+      2e      5
+      31      5
+      32      6
+      36      6
+      39      7
+      3d      7
+      40      8
+   }
+}
+
+Lines mapping:
+20 <-> 5
+21 <-> 6
+22 <-> 7
+23 <-> 8
+24 <-> 9

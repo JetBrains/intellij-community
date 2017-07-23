@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,10 @@ import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -162,13 +165,7 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
 
   @Override
   public void loadState(Element element) {
-    try {
-      DefaultJDOMExternalizer.readExternal(this, element);
-    }
-    catch (InvalidDataException e) {
-      throw new RuntimeException(e);
-    }
-
+    DefaultJDOMExternalizer.readExternal(this, element);
     Element schElement = element;
     final String activeName = element.getAttributeValue(ACTIVE);
     if (activeName != null) {
@@ -182,14 +179,9 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
         }
       }
     }
-    for (Object groupElement : schElement.getChildren(GROUP)) {
+    for (Element groupElement : schElement.getChildren(GROUP)) {
       ActionUrl url = new ActionUrl();
-      try {
-        url.readExternal((Element)groupElement);
-      }
-      catch (InvalidDataException e) {
-        throw new RuntimeException(e);
-      }
+      url.readExternal(groupElement);
       myActions.add(url);
     }
 

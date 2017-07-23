@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,12 +42,7 @@ import java.util.jar.Manifest;
  */
 public class JdkVersionDetectorImpl extends JdkVersionDetector {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.SdkVersionUtil");
-  private static final ActionRunner ACTION_RUNNER = new ActionRunner() {
-    @Override
-    public Future<?> run(Runnable runnable) {
-      return SharedThreadPool.getInstance().executeOnPooledThread(runnable);
-    }
-  };
+  private static final ActionRunner ACTION_RUNNER = r -> SharedThreadPool.getInstance().executeOnPooledThread(r);
 
   @Override
   @Nullable
@@ -59,19 +54,13 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
   public String detectJdkVersion(@NotNull String homePath, @NotNull ActionRunner runner) {
     File rtFile = new File(homePath, "jre/lib/rt.jar");
     if (rtFile.isFile()) {
-      try {
-        JarFile rtJar = new JarFile(rtFile, false);
-        try {
-          Manifest manifest = rtJar.getManifest();
-          if (manifest != null) {
-            String version = manifest.getMainAttributes().getValue("Implementation-Version");
-            if (version != null) {
-              return "java version \"" + version + "\"";
-            }
+      try (JarFile rtJar = new JarFile(rtFile, false)) {
+        Manifest manifest = rtJar.getManifest();
+        if (manifest != null) {
+          String version = manifest.getMainAttributes().getValue("Implementation-Version");
+          if (version != null) {
+            return "java version \"" + version + "\"";
           }
-        }
-        finally {
-          rtJar.close();
         }
       }
       catch (IOException e) {
@@ -118,7 +107,7 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
         Process process = new ProcessBuilder(javaExe, "-version").redirectErrorStream(true).start();
         VersionOutputReader reader = new VersionOutputReader(process.getInputStream(), runner);
         try {
-          process.waitFor();
+          reader.waitFor();
         }
         catch (InterruptedException e) {
           LOG.info(e);
@@ -148,7 +137,7 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
     public VersionOutputReader(@NotNull InputStream stream, @NotNull ActionRunner runner) {
       super(stream, CharsetToolkit.getDefaultSystemCharset(), OPTIONS);
       myRunner = runner;
-      myLines = new CopyOnWriteArrayList<String>();
+      myLines = new CopyOnWriteArrayList<>();
       start("java -version");
     }
 
@@ -161,6 +150,7 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
     @Override
     protected void onTextAvailable(@NotNull String text) {
       myLines.add(text);
+      LOG.debug("text: " + text);
     }
 
     @Nullable
@@ -179,6 +169,7 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
         }
       }
 
+      LOG.debug("Returning " + version + " " + arch);
       return version != null ? new JdkVersionInfo(version, arch) : null;
     }
   }

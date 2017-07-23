@@ -21,9 +21,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyProtectedMemberInspection;
 
-/**
- * User: ktisha
- */
 @TestDataPath("$CONTENT_ROOT/../testData/quickFixes/PyAddPropertyForFieldQuickFixTest")
 public class PyAddPropertyForFieldQuickFixTest extends PyQuickFixTestCase {
   public void testProtectedMember() {

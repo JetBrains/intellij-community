@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package git4idea.commands;
 
+import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.credentialStore.CredentialPromptDialog;
+import com.intellij.credentialStore.CredentialRequestResult;
 import com.intellij.credentialStore.Credentials;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,6 +30,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.AuthData;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
@@ -67,7 +70,9 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @Nullable private String myPasswordKey;
   @Nullable private String myUnifiedUrl;
   @Nullable private String myLogin;
-  private boolean mySaveOnDisk;
+  
+  private ThreeState myIsMemoryOnly = ThreeState.UNSURE;
+  
   @Nullable private GitHttpAuthDataProvider myDataProvider;
   private boolean myWasCancelled;
 
@@ -95,23 +100,34 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       myPassword = password;
       LOG.debug("askPassword. dataProvider=" + getCurrentDataProviderName() + ", unifiedUrl= " + getUnifiedUrl(url) +
                 ", login=" + authData.second.getLogin() + ", passwordKnown=" + (password != null));
+      myIsMemoryOnly = ThreeState.UNSURE;
       return password;
     }
 
     myPasswordKey = getUnifiedUrl(url);
-    String password = CredentialPromptDialog.askPassword(myProject, myTitle, "Password for " + getDisplayableUrl(url),
-                                                         CredentialAttributes(PASS_REQUESTER, myPasswordKey));
+    CredentialRequestResult result = CredentialPromptDialog.askCredentials(myProject,
+                                                                           myTitle, "Password for " + getDisplayableUrl(url),
+                                                                           createCredentialAttributes(myPasswordKey), false, false);
+    String password = result == null ? null : result.getCredentials().getPasswordAsString();
     LOG.debug("askPassword. Password was asked and returned: " + (password == null ? "NULL" : password.isEmpty() ? "EMPTY" : "NOT EMPTY"));
     if (password == null) {
       myWasCancelled = true;
       return "";
     }
-    // Password is stored in the safe in PasswordSafePromptDialog.askPassword,
-    // but it is not the right behavior (incorrect password is stored too because of that) and should be fixed separately.
-    // We store it here manually, to let it work after that behavior is fixed.
+    myIsMemoryOnly = ThreeState.fromBoolean(result.isMemoryOnly());
     myPassword = password;
-    myDataProvider = new GitDefaultHttpAuthDataProvider(); // workaround: askPassword remembers the password even it is not correct
+    myDataProvider = new BaseGitAuthDataProvider() {
+      @Override
+      public AuthData getAuthData(@NotNull String url) {
+        return new AuthData(StringUtil.notNullize(getUsername(url)), myPassword);
+      }
+    };
     return password;
+  }
+
+  @NotNull
+  private static CredentialAttributes createCredentialAttributes(@NotNull String key) {
+    return CredentialAttributes(PASS_REQUESTER, key);
   }
 
   @Override
@@ -130,6 +146,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
               ", login=" + login + ", passwordKnown=" + (password != null));
     if (login != null && password != null) {
       myPassword = password;
+      myIsMemoryOnly = ThreeState.UNSURE;
       return login;
     }
 
@@ -143,7 +160,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     // remember values to store in the database afterwards, if authentication succeeds
     myPassword = dialog.getPassword();
     myLogin = dialog.getUsername();
-    mySaveOnDisk = dialog.isRememberPassword();
+    myIsMemoryOnly = ThreeState.fromBoolean(!dialog.isRememberPassword());
     myPasswordKey = makeKey(myUnifiedUrl, myLogin);
 
     return myLogin;
@@ -152,12 +169,9 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @Nullable
   private AuthDialog showAuthDialog(final String url, final String login) {
     final Ref<AuthDialog> dialog = Ref.create();
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        dialog.set(new AuthDialog(myProject, myTitle, "Enter credentials for " + url, login, null, true));
-        dialog.get().show();
-      }
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      dialog.set(new AuthDialog(myProject, myTitle, "Enter credentials for " + url, login, null, true));
+      dialog.get().show();
     }, ModalityState.any());
     return dialog.get();
   }
@@ -170,9 +184,9 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
 
     // save password
-    if (myPasswordKey != null && myPassword != null) {
+    if (myIsMemoryOnly != ThreeState.UNSURE && myPasswordKey != null && myPassword != null) {
       Credentials credentials = new Credentials(myPasswordKey, myPassword);
-      PasswordSafe.getInstance().set(CredentialAttributes(PASS_REQUESTER, credentials.getUserName()), credentials, !mySaveOnDisk);
+      PasswordSafe.getInstance().set(createCredentialAttributes(myPasswordKey), credentials, myIsMemoryOnly.toBoolean());
     }
   }
 
@@ -252,7 +266,14 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @NotNull
   private List<GitHttpAuthDataProvider> getProviders() {
     List<GitHttpAuthDataProvider> providers = ContainerUtil.newArrayList();
-    providers.add(new GitDefaultHttpAuthDataProvider());
+    providers.add(new BaseGitAuthDataProvider() {
+      @Override
+      public AuthData getAuthData(@NotNull String url) {
+        String userName = getUsername(url);
+        Credentials credentials = PasswordSafe.getInstance().get(createCredentialAttributes(makeKey(url, userName)));
+        return new AuthData(StringUtil.notNullize(userName), credentials == null ? null : credentials.getPasswordAsString());
+      }
+    });
     providers.addAll(Arrays.asList(GitHttpAuthDataProvider.EP_NAME.getExtensions()));
     return providers;
   }
@@ -273,28 +294,20 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     return login + "@" + url;
   }
 
-  public class GitDefaultHttpAuthDataProvider implements GitHttpAuthDataProvider {
-
+  private abstract class BaseGitAuthDataProvider implements GitHttpAuthDataProvider {
     @Nullable
-    @Override
-    public AuthData getAuthData(@NotNull String url) {
-      String userName = getUsername(url);
-      String key = makeKey(url, userName);
-      final PasswordSafe passwordSafe = PasswordSafe.getInstance();
-      String password = passwordSafe.getPassword(PASS_REQUESTER, key);
-      return new AuthData(StringUtil.notNullize(userName), password);
-    }
-
-    @Nullable
-    private String getUsername(@NotNull String url) {
+    protected final String getUsername(@NotNull String url) {
       return GitRememberedInputs.getInstance().getUserNameForUrl(url);
     }
 
     @Override
-    public void forgetPassword(@NotNull String url) {
-      String key = myPasswordKey != null ? myPasswordKey : makeKey(url, getUsername(url));
-      LOG.debug("forgetPassword. key=" + key);
-      PasswordSafe.getInstance().setPassword(PASS_REQUESTER, key, null);
+    public final void forgetPassword(@NotNull String url) {
+      myPassword = null;
+      myIsMemoryOnly = ThreeState.UNSURE;
+      // clear in any case from PasswordSafe otherwise we get loop askPassword -> from password safe -> forgetPassword -> askPassword -> from password safe
+      CredentialAttributes attributes = createCredentialAttributes(makeKey(url, myPasswordKey == null ? makeKey(url, getUsername(url)) : myPasswordKey));
+      LOG.debug("forgetPassword. key=" + attributes.getUserName());
+      PasswordSafe.getInstance().set(attributes, null);
     }
   }
 }

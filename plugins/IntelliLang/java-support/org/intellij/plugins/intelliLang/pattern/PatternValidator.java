@@ -266,8 +266,7 @@ public class PatternValidator extends LocalInspectionTool {
           }
 
           final String classname = myConfiguration.getAdvancedConfiguration().getSubstAnnotationPair().first;
-          final AnnotateFix fix = new AnnotateFix((PsiModifierListOwner)e, classname);
-          quickFix = fix.canApply() ? fix : new IntroduceVariableFix();
+          quickFix = AnnotateFix.canApplyOn(owner) ? new AnnotateFix(classname) : new IntroduceVariableFix();
         }
         else {
           quickFix = new IntroduceVariableFix();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,16 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
+import com.intellij.debugger.memory.utils.StackFrameItem;
+import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.impl.watch.MethodsTracker;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ColoredTextContainer;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
@@ -37,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author egor
@@ -177,14 +184,16 @@ public class JavaExecutionStack extends XExecutionStack {
     public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
       if (myContainer.isObsolete()) return;
       if (myStackFramesIterator.hasNext()) {
+        StackFrameProxyImpl frameProxy;
         XStackFrame frame;
         boolean first = myAdded == 0;
         if (first && myTopFrameReady) {
           frame = myTopFrame;
-          myStackFramesIterator.next();
+          frameProxy = myStackFramesIterator.next();
         }
         else {
-          frame = createStackFrame(myStackFramesIterator.next(), myTracker);
+          frameProxy = myStackFramesIterator.next();
+          frame = createStackFrame(frameProxy, myTracker);
           if (first && !myTopFrameReady) {
             myTopFrame = frame;
             myTopFrameReady = true;
@@ -195,6 +204,43 @@ public class JavaExecutionStack extends XExecutionStack {
             myContainer.addStackFrames(Collections.singletonList(frame), false);
           }
         }
+
+        // replace the rest with the related stack (if available)
+        if (Registry.is("debugger.capture.points") && frame instanceof JavaStackFrame) {
+          List<StackFrameItem> relatedStack = StackCapturingLineBreakpoint.getRelatedStack(frameProxy, suspendContext);
+          if (!ContainerUtil.isEmpty(relatedStack)) {
+            int i = 0;
+            boolean separator = true;
+            for (StackFrameItem stackFrame : relatedStack) {
+              if (i > StackCapturingLineBreakpoint.MAX_STACK_LENGTH) {
+                myContainer.addStackFrames(Collections.singletonList(new XStackFrame() {
+                  @Override
+                  public void customizePresentation(@NotNull ColoredTextContainer component) {
+                    component.append("Too many frames, the rest is truncated...", SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES);
+                  }
+                }), true);
+                return;
+              }
+              if (stackFrame == null) {
+                separator = true;
+                continue;
+              }
+              StackFrameItem.CapturedStackFrame newFrame = stackFrame.createFrame(myDebugProcess);
+              if (showFrame(newFrame)) {
+                newFrame.setWithSeparator(separator);
+                myContainer.addStackFrames(Collections.singletonList(newFrame), false);
+                separator = false;
+              }
+              i++;
+            }
+            myContainer.addStackFrames(Collections.emptyList(), true);
+            return;
+          }
+          else {
+            ((JavaStackFrame)frame).setInsertCapturePoint(StackCapturingLineBreakpoint.getMatchingDisabledInsertionPoint(frameProxy));
+          }
+        }
+
         myDebugProcess.getManagerThread().schedule(
           new AppendFrameCommand(suspendContext, myStackFramesIterator, myContainer, myAdded, mySkip));
       }
@@ -205,10 +251,10 @@ public class JavaExecutionStack extends XExecutionStack {
   }
 
   private static boolean showFrame(@NotNull XStackFrame frame) {
-    if (XDebuggerSettingsManager.getInstance().getDataViewSettings().isShowLibraryStackFrames()) return true;
-    if (frame instanceof JavaStackFrame) {
-      StackFrameDescriptorImpl descriptor = ((JavaStackFrame)frame).getDescriptor();
-      return !descriptor.isSynthetic() && !descriptor.isInLibraryContent();
+    if (!XDebuggerSettingsManager.getInstance().getDataViewSettings().isShowLibraryStackFrames() &&
+        frame instanceof JVMStackFrameInfoProvider) {
+      JVMStackFrameInfoProvider info = (JVMStackFrameInfoProvider)frame;
+      return !info.isSynthetic() && !info.isInLibraryContent();
     }
     return true;
   }

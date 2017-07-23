@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,14 @@ public interface StateStorage {
    */
   void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<String> componentNames);
 
+  @NotNull
+  default StateStorageChooserEx.Resolution getResolution(@NotNull PersistentStateComponent<?> component, @NotNull StateStorageOperation operation) {
+    return StateStorageChooserEx.Resolution.DO;
+  }
+
   interface ExternalizationSession {
-    void setState(@Nullable Object component, @NotNull String componentName, @NotNull Object state);
+    default void setState(@Nullable Object component, @NotNull String componentName, @NotNull Object state) {
+    }
 
     /**
      * return null if nothing to save

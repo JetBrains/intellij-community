@@ -14,20 +14,17 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 28-Dec-2009
- */
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
-import com.intellij.CommonBundle;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -45,23 +42,24 @@ import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor {
   private final PsiDirectory[] myDirectories;
   private final PsiDirectory myTargetDirectory;
   private final boolean mySearchInComments;
   private final boolean mySearchInNonJavaFiles;
-  private final Map<PsiFile, TargetDirectoryWrapper> myFilesToMove;
+  private final Map<VirtualFile, TargetDirectoryWrapper> myFilesToMove;
   private final Map<PsiDirectory, TargetDirectoryWrapper> myNestedDirsToMove;
   private NonCodeUsageInfo[] myNonCodeUsages;
   private final MoveCallback myMoveCallback;
+  private final PsiManager myManager;
 
   public MoveDirectoryWithClassesProcessor(Project project,
                                            PsiDirectory[] directories,
@@ -81,6 +79,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
       }
       directories = dirs.toArray(new PsiDirectory[dirs.size()]);
     }
+    myManager = PsiManager.getInstance(project);
     myDirectories = directories;
     myTargetDirectory = targetDirectory;
     mySearchInComments = searchInComments;
@@ -97,9 +96,13 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
   @Override
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     PsiElement[] elements = new PsiElement[myFilesToMove.size()];
-    final PsiFile[] classes = PsiUtilCore.toPsiFileArray(myFilesToMove.keySet());
+    final PsiFile[] classes = PsiUtilCore.toPsiFileArray(getPsiFiles());
     System.arraycopy(classes, 0, elements, 0, classes.length);
     return new MoveMultipleElementsViewDescriptor(elements, getTargetName());
+  }
+
+  private Set<PsiFile> getPsiFiles() {
+    return myFilesToMove.keySet().stream().map(myManager::findFile).filter(Objects::nonNull).collect(Collectors.toSet());
   }
 
   protected String getTargetName() {
@@ -111,7 +114,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
   public UsageInfo[] findUsages() {
     final List<UsageInfo> usages = new ArrayList<>();
     for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
-      helper.findUsages(myFilesToMove.keySet(), myDirectories, usages, mySearchInComments, mySearchInNonJavaFiles, myProject);
+      helper.findUsages(getPsiFiles(), myDirectories, usages, mySearchInComments, mySearchInNonJavaFiles, myProject);
     }
     return UsageViewUtil.removeDuplicatedUsages(usages.toArray(new UsageInfo[usages.size()]));
   }
@@ -119,16 +122,18 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
-    for (PsiFile psiFile : myFilesToMove.keySet()) {
+    for (VirtualFile vFile : myFilesToMove.keySet()) {
+      PsiFile file = myManager.findFile(vFile);
+      if (file == null) continue;
       try {
-        myFilesToMove.get(psiFile).checkMove(psiFile);
+        myFilesToMove.get(vFile).checkMove(file);
       }
       catch (IncorrectOperationException e) {
-        conflicts.putValue(psiFile, e.getMessage());
+        conflicts.putValue(file, e.getMessage());
       }
     }
     for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
-      helper.preprocessUsages(myProject, myFilesToMove.keySet(), refUsages.get(), myTargetDirectory, conflicts);
+      helper.preprocessUsages(myProject, getPsiFiles(), refUsages.get(), myTargetDirectory, conflicts);
     }
     return showConflicts(conflicts, refUsages.get());
   }
@@ -149,26 +154,25 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
         myNestedDirsToMove.get(directory).findOrCreateTargetDirectory();
       }
 
-      for (PsiFile psiFile : myFilesToMove.keySet()) {
-        myFilesToMove.get(psiFile).findOrCreateTargetDirectory();
+      for (VirtualFile virtualFile : myFilesToMove.keySet()) {
+        myFilesToMove.get(virtualFile).findOrCreateTargetDirectory();
       }
-    }
-    catch (IncorrectOperationException e) {
-      Messages.showErrorDialog(myProject, e.getMessage(), CommonBundle.getErrorTitle());
-      return;
-    }
-    try {
+
+      DumbService.getInstance(myProject).completeJustSubmittedTasks();
+
       final List<PsiFile> movedFiles = new ArrayList<>();
       final Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<>();
-      for (PsiFile psiFile : myFilesToMove.keySet()) {
+      for (VirtualFile virtualFile : myFilesToMove.keySet()) {
+        PsiFile file = myManager.findFile(virtualFile);
+        if (file == null) continue;
         for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
-          helper.beforeMove(psiFile);
+          helper.beforeMove(file);
         }
-        final RefactoringElementListener listener = getTransaction().getElementListener(psiFile);
-        final PsiDirectory moveDestination = myFilesToMove.get(psiFile).getTargetDirectory();
+        final RefactoringElementListener listener = getTransaction().getElementListener(file);
+        final PsiDirectory moveDestination = myFilesToMove.get(virtualFile).getTargetDirectory();
   
         for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
-          boolean processed = helper.move(psiFile, moveDestination, oldToNewElementsMapping, movedFiles, listener);
+          boolean processed = helper.move(file, moveDestination, oldToNewElementsMapping, movedFiles, listener);
           if (processed) {
             break;
           }
@@ -188,7 +192,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
 
       myNonCodeUsages = CommonMoveUtil.retargetUsages(usages, oldToNewElementsMapping);
       for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
-        helper.postProcessUsages(usages, dir -> getResultDirectory(dir).getTargetDirectory());
+        helper.postProcessUsages(usages, dir -> getResultDirectory(dir).findOrCreateTargetDirectory());
       }
       for (PsiDirectory directory : myDirectories) {
         final TargetDirectoryWrapper wrapper = myNestedDirsToMove.get(directory);
@@ -241,7 +245,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     }
   }
 
-  private static void collectFiles2Move(Map<PsiFile, TargetDirectoryWrapper> files2Move,
+  private static void collectFiles2Move(Map<VirtualFile, TargetDirectoryWrapper> files2Move,
                                         Map<PsiDirectory, TargetDirectoryWrapper> nestedDirsToMove,
                                         PsiDirectory directory,
                                         PsiDirectory rootDirectory,
@@ -255,7 +259,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     nestedDirsToMove.put(directory, newTargetDirectory);
     for (PsiElement child : children) {
       if (child instanceof PsiFile) {
-        files2Move.put((PsiFile)child, newTargetDirectory);
+        files2Move.put(PsiUtilCore.getVirtualFile(child), newTargetDirectory);
       }
       else if (child instanceof PsiDirectory){
         collectFiles2Move(files2Move, nestedDirsToMove, (PsiDirectory)child, directory, newTargetDirectory);

@@ -3,19 +3,19 @@ package com.siyeh.igtest.bugs.malformed_format_string;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Formattable;
 
 public class MalformedFormatString {
 
-    public void foo()
-    {
-        String.<warning descr="Too many arguments for format string (found: 1, expected: 0)">format</warning>("%", 3.0);
-        System.out.<warning descr="Too many arguments for format string (found: 1, expected: 0)">printf</warning>("%", 3.0);
+    public void foo() {
+        String.<warning descr="Too many arguments for format string (found: 1, expected: 0)">format</warning>("%%", 3.0);
+        System.out.<warning descr="Too many arguments for format string (found: 2, expected: 1)">printf</warning>("%s", 3.0, 2.0);
         System.out.printf(<warning descr="Illegal format string specifier: unknown conversion in '%q'">"%q"</warning>, 3.0);
         System.out.printf("%d", <warning descr="Argument type 'double' does not match the type of the format specifier '%d'">3.0</warning>);
         System.out.printf(new Locale(""),"%d%s", <warning descr="Argument type 'double' does not match the type of the format specifier '%d'">3.0</warning>, "foo");
     }
 
-    public static void main(String[] args)  {
+    public static void main(String[] args) {
         String local = "hmm";
 
         String good = String.format("%s %s", 1, 2); // this is valid according to the inspector (correct)
@@ -59,6 +59,7 @@ public class MalformedFormatString {
     void badStrings() {
         // bad format specifier
         String.format(<warning descr="Format string '\"%) %n\"' is malformed">"%) %n"</warning>);
+        String.format(<warning descr="Format string '\"%d%\"' is malformed">"%d%"</warning>, 1);
 
         // flags on newline not allowed
         String.format(<warning descr="Illegal format string specifier: flag '(' not allowed in '%(n'">"%(n"</warning>);
@@ -115,5 +116,34 @@ public class MalformedFormatString {
         System.out.printf("%h %<H", 15);
         System.out.printf("%c %<C", '\u00A9');
         System.out.printf("%o %<o", 15);
+    }
+
+    private int count1;
+    private int count2;
+
+    public String highlightBothArguments() {
+        return String.format("count 1: %f, count 2: %f", <warning descr="Argument type 'int' does not match the type of the format specifier '%f'">count1</warning>, <warning descr="Argument type 'int' does not match the type of the format specifier '%f'">count2</warning>);
+    }
+
+    void arrayArguments() {
+        String.format("%c", new Object[]{'a'});
+        String.<warning descr="Too many arguments for format string (found: 2, expected: 1)">format</warning>("%c", new Object[]{'a', 'b'});
+        String.<warning descr="Too few arguments for format string (found: 1, expected: 2)">format</warning>("%c %c", new Object[]{'a'});
+        Object[] array = new Object[]{<warning descr="Argument type 'String' does not match the type of the format specifier '%#s'">"the void"</warning>};
+        String.format("%#s", array);
+        Object[] array2 = {<warning descr="Argument type 'String' does not match the type of the format specifier '%#s'">"the void"</warning>};
+        String.format("%#s", array2);
+    }
+}
+class A {
+    void m(Formattable f) {
+        // each one fails, but inspection doesn't find the problems
+        String.format("%#s", <warning descr="Argument type 'int' does not match the type of the format specifier '%#s'">0</warning>);
+        String.format("%#s", <warning descr="Argument type 'float' does not match the type of the format specifier '%#s'">0.5f</warning>);
+        String.format("%#S", <warning descr="Argument type 'String' does not match the type of the format specifier '%#S'">"hello"</warning>);
+        String.format("%#S", <warning descr="Argument type 'int' does not match the type of the format specifier '%#S'">new Object().hashCode()</warning>);
+
+        // should be OK
+        String.format("%#s", f);
     }
 }

@@ -24,6 +24,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CatchingConsumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.webcore.packaging.InstalledPackage;
 import com.intellij.webcore.packaging.PackageManagementServiceEx;
 import com.intellij.webcore.packaging.RepoPackage;
@@ -48,13 +49,24 @@ import java.util.regex.Pattern;
  */
 public class PyPackageManagementService extends PackageManagementServiceEx {
   @NotNull private static final Pattern PATTERN_ERROR_LINE = Pattern.compile(".*error:.*", Pattern.CASE_INSENSITIVE);
-  @NonNls private static final String TEXT_PREFIX = "<html><head>" +
-                                                    "    <style type=\"text/css\">" +
-                                                    "        p {" +
-                                                    "            font-family: Arial,serif; font-size: 12pt; margin: 2px 2px" +
-                                                    "        }" +
-                                                    "    </style>" +
-                                                    "</head><body style=\"font-family: Arial,serif; font-size: 12pt; margin: 5px 5px;\">";
+  @NonNls private static final String TEXT_PREFIX = buildHtmlStylePrefix();
+
+  @NotNull
+  private static String buildHtmlStylePrefix() {
+    // Shamelessly copied from Plugin Manager dialog
+    final int fontSize = JBUI.scale(12);
+    final int m1 = JBUI.scale(2);
+    final int m2 = JBUI.scale(5);
+    return String.format("<html><head>" +
+                         "    <style type=\"text/css\">" +
+                         "        p {" +
+                         "            font-family: Arial,serif; font-size: %dpt; margin: %dpx %dpx" +
+                         "        }" +
+                         "    </style>" +
+                         "</head><body style=\"font-family: Arial,serif; font-size: %dpt; margin: %dpx %dpx;\">",
+                         fontSize, m1, m1, fontSize, m2, m2);
+  }
+  
   @NonNls private static final String TEXT_SUFFIX = "</body></html>";
 
   private final Project myProject;
@@ -162,7 +174,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     catch (ExecutionException e) {
       throw new IOException(e);
     }
-    Collections.sort(packages, (pkg1, pkg2) -> pkg1.getName().compareTo(pkg2.getName()));
+    Collections.sort(packages, Comparator.comparing(InstalledPackage::getName));
     return new ArrayList<>(packages);
   }
 

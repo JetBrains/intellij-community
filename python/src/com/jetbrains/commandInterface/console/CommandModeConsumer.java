@@ -65,7 +65,7 @@ final class CommandModeConsumer implements Consumer<String> {
                       @NotNull final Module module,
                       @NotNull final LanguageConsoleImpl console,
                       @Nullable final CommandExecutor defaultExecutor) {
-    myCommands = commands != null ? new ArrayList<>(commands) : Collections.<Command>emptyList();
+    myCommands = commands != null ? new ArrayList<>(commands) : Collections.emptyList();
     myModule = module;
     myConsole = console;
     myDefaultExecutor = defaultExecutor;
@@ -85,7 +85,7 @@ final class CommandModeConsumer implements Consumer<String> {
     final List<String> commandAndArgs = Arrays.asList(EMPTY_SPACE.split(file.getText().trim()));
     // 1 because we need to remove command which is on the first place
     final List<String> args =
-      (commandAndArgs.size() > 1 ? commandAndArgs.subList(1, commandAndArgs.size()) : Collections.<String>emptyList());
+      (commandAndArgs.size() > 1 ? commandAndArgs.subList(1, commandAndArgs.size()) : Collections.emptyList());
     for (final Command command : myCommands) {
       if (command.getName().equals(commandName)) {
 

@@ -19,6 +19,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.TreeViewUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
@@ -125,6 +126,7 @@ public class PackageUtil {
     final Set<PsiPackage> topLevelPackages = new HashSet<>();
 
     for (final VirtualFile root : sourceRoots) {
+      ProgressManager.checkCanceled();
       final PsiDirectory directory = psiManager.findDirectory(root);
       if (directory == null) {
         continue;

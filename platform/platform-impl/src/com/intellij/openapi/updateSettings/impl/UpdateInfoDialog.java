@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.Messages;
@@ -55,6 +56,7 @@ import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -154,19 +156,9 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     }
 
     List<ButtonInfo> buttons = myNewBuild.getButtons();
-    if (buttons.isEmpty()) {
-      actions.add(new AbstractAction(IdeBundle.message("updates.more.info.button")) {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          openDownloadPage();
-        }
-      });
-    }
-    else {
-      for (ButtonInfo info : buttons) {
-        if (!info.isDownload() || myPatch == null) {
-          actions.add(new ButtonAction(info));
-        }
+    for (ButtonInfo info : buttons) {
+      if (!info.isDownload() || myPatch == null) {
+        actions.add(new ButtonAction(info));
       }
     }
 
@@ -190,16 +182,21 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   private void downloadPatchAndRestart() {
-    boolean updatePlugins =
-      !ContainerUtil.isEmpty(myUpdatedPlugins) && new PluginUpdateInfoDialog(myUpdatedPlugins).showAndGet();
+    boolean updatePlugins = !ContainerUtil.isEmpty(myUpdatedPlugins);
+    if (updatePlugins && !new PluginUpdateInfoDialog(myUpdatedPlugins).showAndGet()) {
+      return;  // update cancelled
+    }
 
     new Task.Modal(null, IdeBundle.message("update.notifications.title"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         String[] command;
         try {
-          command = UpdateInstaller.installPlatformUpdate(myPatch, myNewBuild.getNumber(), myForceHttps, indicator);
+          File file = doDownloadPatch(indicator);
+          indicator.setText(IdeBundle.message("update.preparing.patch.progress"));
+          command = UpdateInstaller.preparePatchCommand(file);
         }
+        catch (ProcessCanceledException e) { throw e; }
         catch (Exception e) {
           Logger.getInstance(UpdateInstaller.class).warn(e);
 
@@ -216,8 +213,6 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         }
 
         if (updatePlugins) {
-          indicator.setText(IdeBundle.message("update.downloading.plugins.progress"));
-          UpdateChecker.saveDisabledToUpdatePlugins();
           UpdateInstaller.installPluginUpdates(myUpdatedPlugins, indicator);
         }
 
@@ -232,9 +227,14 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     }.queue();
   }
 
+  @NotNull
+  File doDownloadPatch(@NotNull ProgressIndicator indicator) throws IOException {
+    return UpdateInstaller.downloadPatchFile(myPatch, myNewBuild.getNumber(), myForceHttps, indicator);
+  }
+
   private void openDownloadPage() {
-    String url = myUpdatedChannel.getHomePageUrl();
-    assert url != null : "channel: " + myUpdatedChannel.getId();
+    String url = myNewBuild.getDownloadUrl();
+    assert !StringUtil.isEmptyOrSpaces(url) : "channel:" + myUpdatedChannel.getId() + " build:" + myNewBuild.getNumber();
     BrowserUtil.browse(augmentUrl(url));
   }
 
@@ -287,16 +287,17 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       ApplicationNamesInfo appNames = ApplicationNamesInfo.getInstance();
 
       String message = myNewBuild.getMessage();
-      final String fullProductName = appNames.getFullProductName();
+      String fullProductName = appNames.getFullProductName();
       if (StringUtil.isEmpty(message)) {
         message = IdeBundle.message("updates.new.version.available", fullProductName);
       }
-      final String homePageUrl = myUpdatedChannel.getHomePageUrl();
-      if (!StringUtil.isEmptyOrSpaces(homePageUrl)) {
-        final int idx = message.indexOf(fullProductName);
+      String url = myNewBuild.getDownloadUrl();
+      if (!StringUtil.isEmptyOrSpaces(url)) {
+        int idx = message.indexOf(fullProductName);
         if (idx >= 0) {
           message = message.substring(0, idx) +
-                    "<a href=\'" + augmentUrl(homePageUrl) + "\'>" + fullProductName + "</a>" + message.substring(idx + fullProductName.length());
+                    "<a href=\'" + augmentUrl(url) + "\'>" + fullProductName + "</a>" +
+                    message.substring(idx + fullProductName.length());
         }
       }
       configureMessageArea(myUpdateMessage, message, null, BrowserHyperlinkListener.INSTANCE);

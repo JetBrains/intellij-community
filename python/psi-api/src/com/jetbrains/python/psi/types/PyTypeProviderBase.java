@@ -24,10 +24,7 @@ import com.jetbrains.python.psi.impl.PyTypeProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * @author yole
@@ -41,12 +38,7 @@ public class PyTypeProviderBase implements PyTypeProvider {
     .orElse(null);
 
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
-  private final Map<String, ReturnTypeDescriptor> myMethodToReturnTypeMap = new FactoryMap<String, ReturnTypeDescriptor>() {
-    @Override
-    protected ReturnTypeDescriptor create(String key) {
-      return new ReturnTypeDescriptor();
-    }
-  };
+  private final Map<String, ReturnTypeDescriptor> myMethodToReturnTypeMap = FactoryMap.createMap(key -> new ReturnTypeDescriptor());
 
   @Nullable
   @Override
@@ -94,6 +86,18 @@ public class PyTypeProviderBase implements PyTypeProvider {
   @Override
   public PyType getCallableType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     return null;
+  }
+
+  @Nullable
+  @Override
+  public PyType getGenericType(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    return null;
+  }
+
+  @NotNull
+  @Override
+  public Map<PyType, PyType> getGenericSubstitutions(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    return Collections.emptyMap();
   }
 
   protected void registerSelfReturnType(@NotNull String classQualifiedName, @NotNull Collection<String> methods) {

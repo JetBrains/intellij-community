@@ -18,25 +18,26 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.ig.psiutils.SideEffectChecker;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class DuplicateConditionInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField
    */
-  public boolean ignoreMethodCalls = false;
+  public boolean ignoreMethodCalls = true;
 
   // This is a dirty fix of 'squared' algorithm performance issue.
   private static final int LIMIT_DEPTH = 20;
@@ -66,6 +67,7 @@ public class DuplicateConditionInspection extends BaseInspection {
   }
 
   private class DuplicateConditionVisitor extends BaseInspectionVisitor {
+    private Set<PsiIfStatement> myAnalyzedStatements = new HashSet<>();
 
     @Override
     public void visitIfStatement(@NotNull PsiIfStatement statement) {
@@ -73,49 +75,73 @@ public class DuplicateConditionInspection extends BaseInspection {
       if (ControlFlowUtils.isElseIf(statement)) {
         return;
       }
-      final Set<PsiExpression> conditions = new HashSet<>();
+      final Set<PsiExpression> conditions = new LinkedHashSet<>();
       collectConditionsForIfStatement(statement, conditions, 0);
       final int numConditions = conditions.size();
       if (numConditions < 2) {
         return;
       }
-      final PsiExpression[] conditionArray = conditions.toArray(new PsiExpression[numConditions]);
-      final boolean[] matched = new boolean[conditionArray.length];
-      Arrays.fill(matched, false);
-      for (int i = 0; i < conditionArray.length; i++) {
-        if (matched[i]) {
+      final List<PsiExpression> conditionList = new ArrayList<>(conditions);
+      if (ignoreMethodCalls) {
+        conditionList.replaceAll(cond -> SideEffectChecker.mayHaveSideEffects(cond) ? null : cond);
+        // Every condition having side-effect separates non-side-effect conditions into independent groups
+        // like:
+        // if(!readToken() || token == X || token == Y) ...
+        // else if(!readToken() || token == X || token == Y) ...
+        // here we analyze independently first ['token == X', 'token == Y'] and second ['token == X', 'token == Y']
+        // thus no warning is issued. Such constructs often appear in parsers.
+        StreamEx.of(conditionList).groupRuns((a, b) -> a != null && b != null)
+          .filter(list -> list.size() >= 2).forEach(this::findDuplicates);
+      } else {
+        findDuplicates(conditionList);
+      }
+    }
+
+    private void findDuplicates(List<PsiExpression> conditions) {
+      final BitSet matched = new BitSet();
+
+      for (int i = 0; i < conditions.size(); i++) {
+        if (matched.get(i)) {
           continue;
         }
-        final PsiExpression condition = conditionArray[i];
-        for (int j = i + 1; j < conditionArray.length; j++) {
-          if (matched[j]) {
+        final PsiExpression condition = conditions.get(i);
+        for (int j = i + 1; j < conditions.size(); j++) {
+          if (matched.get(j)) {
             continue;
           }
-          final PsiExpression testCondition = conditionArray[j];
+          final PsiExpression testCondition = conditions.get(j);
           final boolean areEquivalent = EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(condition, testCondition);
           if (areEquivalent) {
-            if (!ignoreMethodCalls || !containsMethodCallExpression(testCondition)) {
-              registerError(testCondition);
-              if (!matched[i]) {
-                registerError(condition);
-              }
+            registerError(testCondition);
+            if (!matched.get(i)) {
+              registerError(condition);
             }
-            matched[i] = true;
-            matched[j] = true;
+            matched.set(i);
+            matched.set(j);
           }
         }
       }
     }
 
     private void collectConditionsForIfStatement(PsiIfStatement statement, Set<PsiExpression> conditions, int depth) {
-      if (depth > LIMIT_DEPTH) {
+      if (depth > LIMIT_DEPTH || !myAnalyzedStatements.add(statement)) {
         return;
       }
       final PsiExpression condition = statement.getCondition();
       collectConditionsForExpression(condition, conditions);
-      final PsiStatement branch = statement.getElseBranch();
+      final PsiStatement branch = ControlFlowUtils.stripBraces(statement.getElseBranch());
       if (branch instanceof PsiIfStatement) {
         collectConditionsForIfStatement((PsiIfStatement)branch, conditions, depth + 1);
+      }
+      if (branch == null) {
+        final PsiStatement thenBranch = statement.getThenBranch();
+        if (ControlFlowUtils.statementMayCompleteNormally(thenBranch)) {
+          return;
+        }
+        PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(statement);
+        if(next instanceof PsiIfStatement) {
+          collectConditionsForIfStatement((PsiIfStatement)next, conditions, depth + 1);
+        }
       }
     }
 
@@ -141,19 +167,6 @@ public class DuplicateConditionInspection extends BaseInspection {
         }
       }
       conditions.add(condition);
-    }
-
-    private boolean containsMethodCallExpression(PsiElement element) {
-      if (element instanceof PsiMethodCallExpression) {
-        return true;
-      }
-      final PsiElement[] children = element.getChildren();
-      for (PsiElement child : children) {
-        if (containsMethodCallExpression(child)) {
-          return true;
-        }
-      }
-      return false;
     }
   }
 }

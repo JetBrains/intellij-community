@@ -58,6 +58,7 @@ public class JavaLineIndentProvider extends JavaLikeLangLineIndentProvider {
     SYNTAX_MAP.put(JavaDocTokenType.DOC_COMMENT_END, DocBlockEnd);
     SYNTAX_MAP.put(JavaTokenType.COMMA, Comma);
     SYNTAX_MAP.put(JavaTokenType.END_OF_LINE_COMMENT, LineComment);
+    SYNTAX_MAP.put(JavaTokenType.TRY_KEYWORD, TryKeyword);
   }
   
   @Nullable
@@ -85,5 +86,10 @@ public class JavaLineIndentProvider extends JavaLikeLangLineIndentProvider {
       return CONTINUATION;
     }
     return super.getIndentTypeInBlock(project, language, blockStartPosition);
+  }
+
+  @Override
+  protected boolean isInsideForLikeConstruction(SemanticEditorPosition position) {
+    return position.isAfterOnSameLine(ForKeyword, TryKeyword);
   }
 }

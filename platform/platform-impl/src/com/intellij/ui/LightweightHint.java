@@ -112,8 +112,8 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   }
 
   /**
-   * Shows the hint in the layered pane. Coordinates <code>x</code> and <code>y</code>
-   * are in <code>parentComponent</code> coordinate system. Note that the component
+   * Shows the hint in the layered pane. Coordinates {@code x} and {@code y}
+   * are in {@code parentComponent} coordinate system. Note that the component
    * appears on 250 layer.
    */
   @Override

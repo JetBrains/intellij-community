@@ -43,14 +43,14 @@ import java.util.*;
 public class DuplicatesFinder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.duplicates.DuplicatesFinder");
   public static final Key<Pair<PsiVariable, PsiType>> PARAMETER = Key.create("PARAMETER");
-  private final PsiElement[] myPattern;
+  @NotNull private final PsiElement[] myPattern;
   private final InputVariables myParameters;
   private final List<? extends PsiVariable> myOutputParameters;
   private final List<PsiElement> myPatternAsList;
   private boolean myMultipleExitPoints;
   @Nullable private final ReturnValue myReturnValue;
 
-  public DuplicatesFinder(PsiElement[] pattern,
+  public DuplicatesFinder(@NotNull PsiElement[] pattern,
                           InputVariables parameters,
                           @Nullable ReturnValue returnValue,
                           @NotNull List<? extends PsiVariable> outputParameters
@@ -102,6 +102,7 @@ public class DuplicatesFinder {
     return myParameters;
   }
 
+  @NotNull
   public PsiElement[] getPattern() {
     return myPattern;
   }
@@ -674,6 +675,7 @@ public class DuplicatesFinder {
     return false;
   }
 
+  @NotNull
   public static PsiElement[] getFilteredChildren(PsiElement element1) {
     PsiElement[] children1 = element1.getChildren();
     ArrayList<PsiElement> array = new ArrayList<>();

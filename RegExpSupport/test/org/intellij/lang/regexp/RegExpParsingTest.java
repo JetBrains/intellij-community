@@ -148,6 +148,8 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testCharclasses67() throws IOException { doCodeTest("\\-[\\*\\-\\[\\]\\\\\\+]"); }
   public void testCharclasses68() throws IOException { doCodeTest("[\\b]"); }
   public void testCharClasses69() throws IOException { doCodeTest("\\p{^L}"); }
+  public void testCharClasses70() throws IOException { doCodeTest("[&&&&a]"); }
+  public void testCharClasses71() throws IOException { doCodeTest("[a-\\Qz\\E]"); }
 
   public void testGroups1() throws IOException { doCodeTest("()ef"); }
   public void testGroups2() throws IOException { doCodeTest("()*"); }
@@ -189,6 +191,9 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testGroups38() throws IOException { doCodeTest("\\g'name'"); }
   public void testGroups39() throws IOException { doCodeTest("(?(name)yes-pattern|no-pattern)"); }
   public void testGroups40() throws IOException { doCodeTest("(?(name)yes-pattern|{"); }
+  public void testGroups41() throws IOException { doCodeTest("(?>atomic)"); }
+  public void testGroups42() throws IOException { doCodeTest("(?:non-capturing)"); }
+  public void testGroups43() throws IOException { doCodeTest("(?(name)yes-pattern|no_pattern|maybe-pattern)"); }
 
   public void testEscapes1() throws IOException { doCodeTest("\\q"); }
   public void testEscapes2() throws IOException { doCodeTest("\\#"); }
@@ -245,6 +250,7 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testNamedchars12() throws IOException { doCodeTest("\\p{InArabic Extended-A}"); }
   public void testNamedchars13() throws IOException { doCodeTest("\\N{Mahjong Tile Winter}"); }
   public void testNamedchars14() throws IOException { doCodeTest("[\\N{Mahjong Tile Winter}]"); }
+  public void testNamedchars15() throws IOException { doCodeTest("[\\N{LATIN SMALL LETTER A}-\\N{LATIN SMALL LETTER Z}]"); }
 
   public void testBackrefs1() throws IOException { doCodeTest("(ac*)c*d[ac]*\\1"); }
   public void testBackrefs2() throws IOException { doCodeTest("(.)=\\1"); }
@@ -338,42 +344,5 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testParse2() throws IOException { doCodeTest("1**"); }
   public void testParse3() throws IOException { doCodeTest("(([hH][tT]{2}[pP]|[fF][tT][pP])://)?[a-zA-Z0-9\\-]+(\\.[a-zA-Z0-9\\-]+)*"); }
 
-  public void testPosixBracketExpression1() throws IOException {
-    RegExpParserDefinition.setTestCapability(RegExpCapability.POSIX_BRACKET_EXPRESSIONS, getTestRootDisposable());
-    doCodeTest("[[:alpha:]]");
-  }
-
-  public void testPosixBracketExpression2() throws IOException {
-    RegExpParserDefinition.setTestCapability(RegExpCapability.POSIX_BRACKET_EXPRESSIONS, getTestRootDisposable());
-    doCodeTest("[[:^alpha:]]");
-  }
-
-  public void testCategoryShorthand1() throws IOException {
-    doCodeTest("\\pL");
-  }
-
-  public void testCategoryShorthand2() throws IOException {
-    RegExpParserDefinition.setTestCapability(RegExpCapability.UNICODE_CATEGORY_SHORTHAND, getTestRootDisposable());
-    doCodeTest("\\pL");
-  }
-
-  public void testOmitNumberInQuantifier() throws IOException {
-    RegExpParserDefinition.setTestCapability(RegExpCapability.OMIT_NUMBERS_IN_QUANTIFIERS, getTestRootDisposable());
-    doCodeTest("a{,3}");
-  }
-
-  public void testDanglingMetaCharacter1() throws IOException {
-    RegExpParserDefinition.setTestCapability(RegExpCapability.DANGLING_METACHARACTERS, getTestRootDisposable());
-    doCodeTest("{");
-  }
-
-  public void testDanglingMetaCharacter2() throws IOException {
-    RegExpParserDefinition.setTestCapability(RegExpCapability.DANGLING_METACHARACTERS, getTestRootDisposable());
-    doCodeTest("a{a");
-  }
-
-  public void testDanglingMetaCharacters3() throws IOException {
-    RegExpParserDefinition.setTestCapability(RegExpCapability.DANGLING_METACHARACTERS, getTestRootDisposable());
-    doCodeTest("{{E1:\\s*(?P<ref>([^\\n]+\\+)?[0-9]+)( *\\|[^\\n]*)?}}");
-  }
+  public void testCategoryShorthand1() throws IOException { doCodeTest("\\pL"); }
 }

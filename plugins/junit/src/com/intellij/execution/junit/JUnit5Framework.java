@@ -18,6 +18,7 @@ package com.intellij.execution.junit;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
@@ -26,7 +27,6 @@ import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +63,7 @@ public class JUnit5Framework extends JavaTestFramework {
 
   public boolean isTestClass(PsiClass clazz, boolean canBePotential) {
     if (canBePotential) return isUnderTestSources(clazz);
-    return JUnitUtil.isJUnit5TestClass(clazz, true);
+    return JUnitUtil.isJUnit5TestClass(clazz, false);
   }
 
   @Nullable
@@ -125,13 +125,18 @@ public class JUnit5Framework extends JavaTestFramework {
   }
 
   @Override
-  public boolean isTestMethod(PsiElement element) {
-    return element instanceof PsiMethod && JUnitUtil.getTestMethod(element) != null;
+  public boolean isTestMethod(PsiElement element, boolean checkAbstract) {
+    return element instanceof PsiMethod && JUnitUtil.getTestMethod(element, checkAbstract) != null;
   }
 
   @Override
   public boolean isTestMethod(PsiMethod method, PsiClass myClass) {
     return JUnitUtil.isTestMethod(MethodLocation.elementInClass(method, myClass));
+  }
+
+  @Override
+  public boolean isMyConfigurationType(ConfigurationType type) {
+    return type instanceof JUnitConfigurationType;
   }
 
   @Override
@@ -147,6 +152,7 @@ public class JUnit5Framework extends JavaTestFramework {
     return new FileTemplateDescriptor("JUnit5 TearDown Method.java");
   }
 
+  @NotNull
   public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit5 Test Method.java");
   }

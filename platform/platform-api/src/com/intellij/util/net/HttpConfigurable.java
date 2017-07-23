@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.util.net;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -73,7 +74,7 @@ import static com.intellij.openapi.util.Pair.pair;
     @Storage(value = "other.xml", deprecated = true)
   }
 )
-public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, ApplicationComponent {
+public class HttpConfigurable implements PersistentStateComponent<HttpConfigurable>, Disposable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.net.HttpConfigurable");
   private static final File PROXY_CREDENTIALS_FILE = new File(PathManager.getOptionsPath(), "proxy.settings.pwd");
   public static final int CONNECTION_TIMEOUT = SystemProperties.getIntProperty("idea.connection.timeout", 10000);
@@ -182,16 +183,10 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     final String name = getClass().getName();
     CommonProxy.getInstance().removeCustom(name);
     CommonProxy.getInstance().removeCustomAuth(name);
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return getClass().getName();
   }
 
   private void correctPasswords(@NotNull HttpConfigurable to) {

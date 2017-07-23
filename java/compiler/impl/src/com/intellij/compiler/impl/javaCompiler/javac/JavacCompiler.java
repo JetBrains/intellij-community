@@ -53,6 +53,6 @@ public class JavacCompiler implements BackendCompiler {
 
   @NotNull 
   public Set<FileType> getCompilableFileTypes() {
-    return Collections.<FileType>singleton(StdFileTypes.JAVA);
+    return Collections.singleton(StdFileTypes.JAVA);
   }
 }

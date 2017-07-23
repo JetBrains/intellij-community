@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -129,7 +130,7 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection implemen
 
     private static boolean hasUnnecessarySuperQualifier(PsiMethodCallExpression methodCallExpression) {
       final PsiMethod superMethod = methodCallExpression.resolveMethod();
-      if (superMethod == null) {
+      if (superMethod == null || MethodUtils.isOverridden(superMethod)) {
         return false;
       }
       // check that super.m() and m() resolve to the same method

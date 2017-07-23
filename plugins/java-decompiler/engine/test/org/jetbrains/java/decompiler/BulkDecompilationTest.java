@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,14 +58,24 @@ public class BulkDecompilationTest {
 
   @Test
   public void testJar() {
+    doTestJar("bulk");
+  }
+
+  @Test
+  public void testObfuscated() {
+    doTestJar("obfuscated");
+  }
+
+  private void doTestJar(String name) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();
-    decompiler.addSpace(new File(fixture.getTestDataDir(), "bulk.jar"), true);
+    String jarName = name + ".jar";
+    decompiler.addSpace(new File(fixture.getTestDataDir(), jarName), true);
     decompiler.decompileContext();
 
     File unpacked = new File(fixture.getTempDir(), "unpacked");
-    unpack(new File(fixture.getTargetDir(), "bulk.jar"), unpacked);
+    unpack(new File(fixture.getTargetDir(), jarName), unpacked);
 
-    assertFilesEqual(new File(fixture.getTestDataDir(), "bulk"), unpacked);
+    assertFilesEqual(new File(fixture.getTestDataDir(), name), unpacked);
   }
 
   private static void unpack(File archive, File targetDir) {

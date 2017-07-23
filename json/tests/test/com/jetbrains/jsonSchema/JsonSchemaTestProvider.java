@@ -36,9 +36,4 @@ public class JsonSchemaTestProvider implements JsonSchemaFileProvider {
   public SchemaType getSchemaType() {
     return SchemaType.userSchema;
   }
-
-  @Override
-  public int getOrder() {
-    return Orders.TEST;
-  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,13 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageExtension;
+import com.intellij.lang.*;
 import com.intellij.lang.parser.GeneratedParserUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +43,12 @@ public class FlipCommaIntention implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiElement comma = currentCommaElement(editor, file);
-    return comma != null && smartAdvance(comma, true) != null && smartAdvance(comma, false) != null;
+    if (comma == null) {
+      return false;
+    }
+    final PsiElement left = smartAdvance(comma, false);
+    final PsiElement right = smartAdvance(comma, true);
+    return left != null && right != null && !left.getText().equals(right.getText());
   }
 
   @Override
@@ -130,6 +135,24 @@ public class FlipCommaIntention implements IntentionAction {
 
   @Nullable
   private static PsiElement smartAdvance(PsiElement element, boolean fwd) {
-    return getSiblings(element, fwd).filter(e -> isFlippable(e)).first();
+    final PsiElement candidate = getSiblings(element, fwd).filter(e -> isFlippable(e)).first();
+    if (candidate != null && isBrace(candidate)) return null;
+    return candidate;
+  }
+
+  private static boolean isBrace(@NotNull PsiElement candidate) {
+    final ASTNode node = candidate.getNode();
+    if (node != null && node.getFirstChildNode() == null) {
+      final PairedBraceMatcher braceMatcher = LanguageBraceMatching.INSTANCE.forLanguage(candidate.getLanguage());
+      if (braceMatcher != null) {
+        final IElementType elementType = node.getElementType();
+        for (BracePair pair : braceMatcher.getPairs()) {
+          if (elementType == pair.getLeftBraceType() || elementType == pair.getRightBraceType()) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 }

@@ -46,7 +46,7 @@ public class PyiClassMembersProvider extends PyClassMembersProviderBase implemen
 
   @Nullable
   @Override
-  public PsiElement resolveMember(@NotNull PyClassType classType, @NotNull String name, PsiElement location,
+  public PsiElement resolveMember(@NotNull PyClassType classType, @NotNull String name, @Nullable PsiElement location,
                                   @Nullable TypeEvalContext context) {
     final PyClass cls = classType.getPyClass();
     final PsiElement pythonStub = PyiUtil.getPythonStub(cls);

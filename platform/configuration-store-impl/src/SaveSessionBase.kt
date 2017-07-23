@@ -18,13 +18,11 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.WriteExternalException
+import com.intellij.openapi.vfs.LargeFileWriteRequestor
 import com.intellij.openapi.vfs.SafeWriteRequestor
-import com.intellij.reference.SoftReference
-import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
-import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
 
-abstract class SaveSessionBase : StateStorage.SaveSession, StateStorage.ExternalizationSession, SafeWriteRequestor {
+abstract class SaveSessionBase : StateStorage.SaveSession, StateStorage.ExternalizationSession, SafeWriteRequestor, LargeFileWriteRequestor {
   override final fun setState(component: Any?, componentName: String, state: Any) {
     val element: Element?
     try {
@@ -45,9 +43,8 @@ abstract class SaveSessionBase : StateStorage.SaveSession, StateStorage.External
   protected abstract fun setSerializedState(componentName: String, element: Element?)
 }
 
-private val skipDefaultsSerializationFilter = ThreadLocal<SoftReference<SkipDefaultsSerializationFilter>>()
-
-fun serializeState(state: Any): Element? {
+internal fun serializeState(state: Any): Element? {
+  @Suppress("DEPRECATION")
   if (state is Element) {
     return state
   }
@@ -57,11 +54,6 @@ fun serializeState(state: Any): Element? {
     return element
   }
   else {
-    var serializationFilter = SoftReference.dereference(skipDefaultsSerializationFilter.get())
-    if (serializationFilter == null) {
-      serializationFilter = SkipDefaultsSerializationFilter()
-      skipDefaultsSerializationFilter.set(SoftReference(serializationFilter))
-    }
-    return XmlSerializer.serializeIfNotDefault(state, serializationFilter)
+    return state.serialize()
   }
 }

@@ -62,7 +62,8 @@ class UnifiedFragmentBuilderAutoTest : DiffTestCase() {
     val ignoreWhitespaces = policy !== ComparisonPolicy.DEFAULT
     val text = builder.text
     val blocks = builder.blocks
-    val convertor = builder.convertor
+    val convertor1 = builder.convertor1
+    val convertor2 = builder.convertor2
     val changedLines = builder.changedLines
     val ranges = builder.ranges
 
@@ -80,12 +81,12 @@ class UnifiedFragmentBuilderAutoTest : DiffTestCase() {
       val endLine2 = fragment.endLine2
 
       for (i in startLine1 until endLine1) {
-        val targetLine = convertor.convertInv1(i)
+        val targetLine = convertor1.convertInv(i)
         assertTrue(targetLine != -1)
         assertTrue(isLineChanged(targetLine, changedLines))
       }
       for (i in startLine2 until endLine2) {
-        val targetLine = convertor.convertInv2(i)
+        val targetLine = convertor2.convertInv(i)
         assertTrue(targetLine != -1)
         assertTrue(isLineChanged(targetLine, changedLines))
       }

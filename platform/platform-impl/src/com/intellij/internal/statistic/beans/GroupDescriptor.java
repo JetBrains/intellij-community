@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,68 +15,53 @@
  */
 package com.intellij.internal.statistic.beans;
 
-public class GroupDescriptor implements Comparable<GroupDescriptor> {
-    public static final double DEFAULT_PRIORITY = 0.0;
-    public static final double HIGHER_PRIORITY = 100.0;
-    public static final double LOWER_PRIORITY = -100.0;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 
-  public static final int MAX_ID_LENGTH = 30;
+public class GroupDescriptor {
+  public static final double DEFAULT_PRIORITY = 0.0;
+  public static final double HIGHER_PRIORITY = 100.0;
+  public static final double LOWER_PRIORITY = -100.0;
+
+  private static final int MAX_ID_LENGTH = 30;
 
   private final String myId;
-    private double myPriority;
+  private final double myPriority;
 
-    public static GroupDescriptor create(String id) {
-      return new GroupDescriptor(id);
+  public static GroupDescriptor create(String id) {
+    return new GroupDescriptor(id, DEFAULT_PRIORITY);
+  }
+
+  public static GroupDescriptor create(String id, double priority) {
+    return new GroupDescriptor(id, priority);
+  }
+
+  private GroupDescriptor(String id, double priority) {
+    if (StringUtil.isEmptyOrSpaces(id)) throw new IllegalArgumentException("Invalid ID: '" + id + "'");
+    if (id.length() > MAX_ID_LENGTH) {
+      Logger.getInstance(GroupDescriptor.class).error("ID too long: '" + id + "', truncated");
+      id = id.substring(0, MAX_ID_LENGTH);
     }
 
-    public static GroupDescriptor create(String id, double priority) {
-        assert id != null;
-        return new GroupDescriptor(id, priority);
-    }
+    myId = ConvertUsagesUtil.ensureProperKey(id);
+    myPriority = priority;
+  }
 
-    private GroupDescriptor(String id) {
-        this(id, DEFAULT_PRIORITY);
-    }
+  public String getId() {
+    return myId;
+  }
 
-    private GroupDescriptor(String id, double priority) {
-        assert id != null;
-        myId = ConvertUsagesUtil.ensureProperKey(id);
-        myPriority = priority;
-    }
+  public double getPriority() {
+    return myPriority;
+  }
 
+  @Override
+  public boolean equals(Object o) {
+    return this == o || o instanceof GroupDescriptor && myId.equals(((GroupDescriptor)o).myId);
+  }
 
-    public String getId() {
-        return myId;
-    }
-
-    public double getPriority() {
-        return myPriority;
-    }
-
-    public void setPriority(double priority) {
-        myPriority = priority;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof GroupDescriptor)) return false;
-
-        GroupDescriptor that = (GroupDescriptor) o;
-
-        if (myId != null ? !myId.equals(that.myId) : that.myId != null) return false;
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        return myId != null ? myId.hashCode() : 0;
-    }
-
-    public int compareTo(GroupDescriptor gd) {
-        final int priority = (int) (this.getPriority() - gd.getPriority());
-        return priority == 0 ? gd.getId().compareTo(gd.getId()) : priority;
-    }
+  @Override
+  public int hashCode() {
+    return myId.hashCode();
+  }
 }
-

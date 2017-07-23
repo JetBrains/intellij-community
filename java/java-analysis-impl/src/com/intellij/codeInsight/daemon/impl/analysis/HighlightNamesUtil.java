@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,13 +37,14 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public class HighlightNamesUtil {
-  private static final Logger LOG = Logger.getInstance("#" + HighlightNamesUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance(HighlightNamesUtil.class);
 
   @Nullable
   static HighlightInfo highlightMethodName(@NotNull PsiMethod method,
@@ -324,7 +325,7 @@ public class HighlightNamesUtil {
         // empty PsiReferenceParameterList
         nextSibling = PsiTreeUtil.nextLeaf(nextSibling);
       }
-      if (nextSibling instanceof PsiJavaToken && ((PsiJavaToken)nextSibling).getTokenType() == JavaTokenType.DOT) {
+      if (PsiUtil.isJavaToken(nextSibling, JavaTokenType.DOT)) {
         range = new TextRange(referenceNameElement.getTextRange().getStartOffset(), nextSibling.getTextRange().getEndOffset());
       }
       else {

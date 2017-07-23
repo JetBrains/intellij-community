@@ -41,26 +41,22 @@ public class IconDeferrerImpl extends IconDeferrer {
     }
   };
   private long myLastClearTimestamp;
-  @SuppressWarnings("UnusedDeclaration")
-  private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(this::clear);
+
+  protected IconDeferrerImpl() {}
 
   public IconDeferrerImpl(MessageBus bus) {
     final MessageBusConnection connection = bus.connect();
-    connection.subscribe(PsiModificationTracker.TOPIC, new PsiModificationTracker.Listener() {
-      @Override
-      public void modificationCountChanged() {
-        clear();
-      }
-    });
+    connection.subscribe(PsiModificationTracker.TOPIC, this::clear);
     connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
       @Override
       public void afterProjectClosed(@NotNull Project project) {
         clear();
       }
     });
+    LowMemoryWatcher.register(this::clear, connection);
   }
 
-  private void clear() {
+  protected final void clear() {
     synchronized (LOCK) {
       myIconsCache.clear();
       myLastClearTimestamp++;
@@ -86,14 +82,11 @@ public class IconDeferrerImpl extends IconDeferrer {
       Icon result = myIconsCache.get(param);
       if (result == null) {
         final long started = myLastClearTimestamp;
-        result = new DeferredIconImpl<>(base, param, evaluator, new DeferredIconImpl.IconListener<T>() {
-          @Override
-          public void evalDone(DeferredIconImpl<T> source, T key, @NotNull Icon r) {
-            synchronized (LOCK) {
-              // check if our results is not outdated yet
-              if (started == myLastClearTimestamp) {
-                myIconsCache.put(key, autoUpdatable ? source : r);
-              }
+        result = new DeferredIconImpl<>(base, param, evaluator, (DeferredIconImpl<T> source, T key, Icon r) -> {
+          synchronized (LOCK) {
+            // check if our results is not outdated yet
+            if (started == myLastClearTimestamp) {
+              myIconsCache.put(key, autoUpdatable ? source : r);
             }
           }
         }, autoUpdatable);
@@ -104,12 +97,13 @@ public class IconDeferrerImpl extends IconDeferrer {
     }
   }
 
-  private static final ThreadLocal<Boolean> myEvaluationIsInProgress = new ThreadLocal<Boolean>() {
-    @Override
-    protected Boolean initialValue() {
-      return Boolean.FALSE;
+  protected void cacheIcon(Object key,Icon value) {
+    synchronized (LOCK) {
+      myIconsCache.put(key, value);
     }
-  };
+  }
+
+  private static final ThreadLocal<Boolean> myEvaluationIsInProgress = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
   static void evaluateDeferred(@NotNull Runnable runnable) {
     try {

@@ -19,7 +19,6 @@ package com.intellij.util.containers;
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.ReferenceQueue;
 import java.util.ArrayList;
@@ -102,7 +101,7 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
       processQueue();
       ValueReference<K, V> oldRef = myMap.putIfAbsent(key, newRef);
       if (oldRef == null) return null;
-      final V oldVal = oldRef.get();
+      V oldVal = oldRef.get();
       if (oldVal == null) {
         if (myMap.replace(key, oldRef, newRef)) return null;
       }
@@ -238,10 +237,5 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
   @Override
   public String toString() {
     return "map size:" + size() + " [" + StringUtil.join(entrySet(), ",") + "]";
-  }
-
-  @TestOnly
-  int underlyingMapSize() {
-    return myMap.size();
   }
 }

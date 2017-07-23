@@ -1,0 +1,50 @@
+package pkg;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+
+public class TestAnonymousSignature {
+   public static void main(String[] var0) {
+      System.out.println(new ArrayList<String>() {// 25
+         public int size() {
+            return super.size();// 28
+         }
+      });
+      System.out.println(new Comparator<String>() {// 33
+         public int compare(String var1, String var2) {
+            return 0;// 36
+         }
+      });
+   }// 39
+}
+
+class 'pkg/TestAnonymousSignature$1' {
+   method 'size ()I' {
+      1      9
+      4      9
+   }
+}
+
+class 'pkg/TestAnonymousSignature$2' {
+   method 'compare (Ljava/lang/String;Ljava/lang/String;)I' {
+      0      14
+      1      14
+   }
+}
+
+class 'pkg/TestAnonymousSignature' {
+   method 'main ([Ljava/lang/String;)V' {
+      0      7
+      a      7
+      d      12
+      17      12
+      1a      17
+   }
+}
+
+Lines mapping:
+25 <-> 8
+28 <-> 10
+33 <-> 13
+36 <-> 15
+39 <-> 18

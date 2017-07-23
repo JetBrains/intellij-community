@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -45,14 +46,16 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 
 public class ProjectViewPane extends AbstractProjectViewPSIPane {
   @NonNls public static final String ID = "ProjectPane";
   public static final String SHOW_EXCLUDED_FILES_OPTION = "show-excluded-files";
+  private static final String USE_FILE_NESTING_RULES = "use-file-nesting-rules";
+
   private boolean myShowExcludedFiles = true;
+  private boolean myUseFileNestingRules = true;
 
   public ProjectViewPane(Project project) {
     super(project);
@@ -104,11 +107,6 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
         }
         super.setFont(font);
       }
-
-      @Override
-      public DefaultMutableTreeNode getSelectedNode() {
-        return ProjectViewPane.this.getSelectedNode();
-      }
     };
   }
 
@@ -122,6 +120,8 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
     super.readExternal(element);
     String showExcludedOption = JDOMExternalizerUtil.readField(element, SHOW_EXCLUDED_FILES_OPTION);
     myShowExcludedFiles = showExcludedOption == null || Boolean.parseBoolean(showExcludedOption);
+    String useFileNestingRules = JDOMExternalizerUtil.readField(element, USE_FILE_NESTING_RULES);
+    myUseFileNestingRules = useFileNestingRules == null || Boolean.parseBoolean(useFileNestingRules);
   }
 
   @Override
@@ -130,11 +130,19 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
     if (!myShowExcludedFiles) {
       JDOMExternalizerUtil.writeField(element, SHOW_EXCLUDED_FILES_OPTION, String.valueOf(false));
     }
+    if (!myUseFileNestingRules) {
+      JDOMExternalizerUtil.writeField(element, USE_FILE_NESTING_RULES, String.valueOf(false));
+    }
   }
 
   @Override
   public void addToolbarActions(DefaultActionGroup actionGroup) {
     actionGroup.addAction(new ShowExcludedFilesAction()).setAsSecondary(true);
+    actionGroup.addAction(new ConfigureFilesNestingAction()).setAsSecondary(true);
+  }
+
+  public boolean isUseFileNestingRules() {
+    return myUseFileNestingRules;
   }
 
   // should be first
@@ -193,6 +201,11 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
     }
 
     @Override
+    public boolean isUseFileNestingRules() {
+      return myUseFileNestingRules;
+    }
+
+    @Override
     public boolean isToBuildChildrenInBackground(Object element) {
       return Registry.is("ide.projectView.ProjectViewPaneTreeStructure.BuildChildrenInBackground");
     }
@@ -222,6 +235,29 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
       final Presentation presentation = e.getPresentation();
       final ProjectView projectView = ProjectView.getInstance(myProject);
       presentation.setEnabledAndVisible(projectView.getCurrentProjectViewPane() == ProjectViewPane.this);
+    }
+  }
+
+  private class ConfigureFilesNestingAction extends DumbAwareAction {
+    private ConfigureFilesNestingAction() {
+      super(IdeBundle.message("action.file.nesting.in.project.view"));
+    }
+
+    @Override
+    public void update(@NotNull final AnActionEvent e) {
+      final ProjectView projectView = ProjectView.getInstance(myProject);
+      e.getPresentation().setEnabledAndVisible(projectView.getCurrentProjectViewPane() == ProjectViewPane.this);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull final AnActionEvent e) {
+      final FileNestingInProjectViewDialog dialog = new FileNestingInProjectViewDialog(myProject);
+      dialog.reset(myUseFileNestingRules);
+      dialog.show();
+      if (dialog.isOK()) {
+        dialog.apply(useFileNestingRules -> myUseFileNestingRules = useFileNestingRules);
+        updateFromRoot(true);
+      }
     }
   }
 }

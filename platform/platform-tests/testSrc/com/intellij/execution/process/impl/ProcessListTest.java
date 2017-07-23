@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,17 @@ package com.intellij.execution.process.impl;
 import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.execution.process.ProcessInfo;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.testFramework.UsefulTestCase;
+import junit.framework.TestCase;
 
 import java.util.Arrays;
 import java.util.List;
 
-public class ProcessListTest extends UsefulTestCase {
-  public void testWorksOnAllPlatforms() throws Exception {
+import static com.intellij.testFramework.UsefulTestCase.assertEmpty;
+import static com.intellij.testFramework.UsefulTestCase.assertNotEmpty;
+import static com.intellij.testFramework.UsefulTestCase.assertOrderedEquals;
+
+public class ProcessListTest extends TestCase {
+  public void testWorksOnAllPlatforms() {
     assertNotEmpty(Arrays.asList(OSProcessUtil.getProcessList()));
 
     if (SystemInfo.isWindows) {
@@ -33,7 +37,7 @@ public class ProcessListTest extends UsefulTestCase {
     }
   }
 
-  public void testMac_Basic() throws Exception {
+  public void testMac_Basic() {
     List<ProcessInfo> infos = ProcessListUtil.parseMacOutput(
       "   PID STAT USER    COMM\n\n" +
       "     1 S    user    /dir/file\n" +
@@ -50,7 +54,7 @@ public class ProcessListTest extends UsefulTestCase {
                         new ProcessInfo(3, "./dir/dir/file param param", "file", "param param", "./dir/dir/file"));
   }
 
-  public void testMac_DoNotIncludeProcessedMissingOnTheSecondPSRun() throws Exception {
+  public void testMac_DoNotIncludeProcessedMissingOnTheSecondPSRun() {
     List<ProcessInfo> infos = ProcessListUtil.parseMacOutput(
       "   PID STAT USER    COMM\n\n" +
       "     1 S    user    /dir/file\n" +
@@ -62,7 +66,7 @@ public class ProcessListTest extends UsefulTestCase {
     assertOrderedEquals(infos, new ProcessInfo(1, "/dir/file", "file", "", "/dir/file"));
   }
 
-  public void testMac_DoNotIncludeProcessedChangedOnTheSecondPSRun() throws Exception {
+  public void testMac_DoNotIncludeProcessedChangedOnTheSecondPSRun() {
     List<ProcessInfo> infos = ProcessListUtil.parseMacOutput(
       "   PID STAT USER    COMM\n\n" +
       "     1 S    user    /dir/file\n" +
@@ -78,7 +82,7 @@ public class ProcessListTest extends UsefulTestCase {
     assertOrderedEquals(infos, new ProcessInfo(1, "/dir/file param", "file", "param", "/dir/file"));
   }
 
-  public void testMac_DoNotIncludeZombies() throws Exception {
+  public void testMac_DoNotIncludeZombies() {
     List<ProcessInfo> infos = ProcessListUtil.parseMacOutput(
       "   PID STAT USER    COMM\n\n" +
       "     1 S    user    /dir/file\n" +
@@ -92,7 +96,7 @@ public class ProcessListTest extends UsefulTestCase {
     assertOrderedEquals(infos, new ProcessInfo(1, "/dir/file", "file", "", "/dir/file"));
   }
 
-  public void testMac_VariousFormsPidStatUser() throws Exception {
+  public void testMac_VariousFormsPidStatUser() {
     List<ProcessInfo> infos = ProcessListUtil.parseMacOutput(
       "   PID STAT USER      COMMAND\n\n" +
       "     1 S    user      /dir/file\n" +
@@ -106,7 +110,7 @@ public class ProcessListTest extends UsefulTestCase {
                         new ProcessInfo(101, "/dir/file", "file", "", "/dir/file"));
   }
 
-  public void testMac_WrongFormat() throws Exception {
+  public void testMac_WrongFormat() {
     assertNull(ProcessListUtil.parseMacOutput(
       "   PID STAT USER    COMM\n\n" +
       "     1 S    user    /dir/file\n",
@@ -144,7 +148,7 @@ public class ProcessListTest extends UsefulTestCase {
     ));
   }
   
-  public void testWindows_WMIC() throws Exception {
+  public void testWindows_WMIC() {
     List<ProcessInfo> infos = ProcessListUtil.parseWMICOutput(
       "Caption                   CommandLine                                            ExecutablePath                          ProcessId  \n" +
       "smss.exe                                                                                                                 304        \n" +
@@ -162,7 +166,7 @@ public class ProcessListTest extends UsefulTestCase {
                         new ProcessInfo(3348, "\\??\\C:\\WINDOWS\\system32\\conhost.exe 0x4", "conhost.exe", "0x4", "\\??\\C:\\WINDOWS\\system32\\conhost.exe"));
   }
 
-  public void testOnWindows_WMIC_DoNotIncludeSystemIdleProcess() throws Exception {
+  public void testOnWindows_WMIC_DoNotIncludeSystemIdleProcess() {
     List<ProcessInfo> infos = ProcessListUtil.parseWMICOutput(
       "Caption                   CommandLine                     ExecutablePath                       ProcessId  \n" +
       "System Idle Process                                                                            0          \n" +
@@ -173,7 +177,7 @@ public class ProcessListTest extends UsefulTestCase {
                         new ProcessInfo(304, "smss.exe", "smss.exe", ""));
   }
 
-  public void testWindows_WMIC_WrongFormat() throws Exception {
+  public void testWindows_WMIC_WrongFormat() {
     assertNull(ProcessListUtil.parseWMICOutput(
       ""));
     assertNull(ProcessListUtil.parseWMICOutput(
@@ -194,7 +198,7 @@ public class ProcessListTest extends UsefulTestCase {
       "                                                                                                          \n"));
   }
 
-  public void testWindows_TaskList() throws Exception {
+  public void testWindows_TaskList() {
     List<ProcessInfo> infos = ProcessListUtil.parseListTasksOutput(
       "\"smss.exe\",\"304\",\"Services\",\"0\",\"224 K\",\"Unknown\",\"N/A\",\"0:00:00\",\"N/A\"\n" +
       "\"sihost.exe\",\"3052\",\"Console\",\"1\",\"10,924 K\",\"Running\",\"VM-WINDOWS\\Anton Makeev\",\"0:00:02\",\"N/A\"\n" +
@@ -211,7 +215,7 @@ public class ProcessListTest extends UsefulTestCase {
                         new ProcessInfo(3348, "conhost.exe", "conhost.exe", ""));
   }
 
-  public void testWindows_TaskList_WrongFormat() throws Exception {
+  public void testWindows_TaskList_WrongFormat() {
     assertEmpty(ProcessListUtil.parseListTasksOutput(""));
     assertNull(ProcessListUtil.parseListTasksOutput("wrong format"));
     assertNull(ProcessListUtil.parseListTasksOutput("\"\""));

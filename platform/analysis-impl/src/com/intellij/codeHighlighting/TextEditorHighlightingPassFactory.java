@@ -22,10 +22,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- * Date: 19-Apr-2006
- */
 public interface TextEditorHighlightingPassFactory extends ProjectComponent{
   @Nullable
   TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor);

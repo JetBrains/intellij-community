@@ -19,12 +19,16 @@ import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.diff.DiffErrorElement;
 import com.intellij.ide.diff.DiffType;
 import com.intellij.ide.diff.DirDiffSettings;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.SortedList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -153,18 +157,24 @@ public class DTree {
         tree.setType(DiffType.SOURCE);
       } else {
         assert src != null;
-        DiffType dtype = src.getSize() == trg.getSize() ? DiffType.EQUAL : DiffType.CHANGED;
-        if (dtype == DiffType.EQUAL) {
-          switch (settings.compareMode) {
-            case CONTENT:
-              dtype = isEqual(src, trg) ? DiffType.EQUAL : DiffType.CHANGED;
-              break;
-            case TIMESTAMP:
-              dtype = Math.abs(src.getTimeStamp() - trg.getTimeStamp()) <= settings.compareTimestampAccuracy ? DiffType.EQUAL : DiffType.CHANGED;
-              break;
-          }
+        boolean equals;
+        switch (settings.compareMode) {
+          case CONTENT:
+            equals = isEqualContents(src, trg);
+            break;
+          case CONTENT_IGNORE_SEPARATORS:
+            equals = isEqualContentsIgnoreSeparators(src, trg);
+            break;
+          case SIZE:
+            equals = isEqualSizes(src, trg);
+            break;
+          case TIMESTAMP:
+            equals = isEqualTimestamps(src, trg, settings);
+            break;
+          default:
+            throw new IllegalStateException(settings.compareMode.name());
         }
-        tree.setType(dtype);
+        tree.setType(equals ? DiffType.EQUAL : DiffType.CHANGED);
       }
       tree.update(settings);
     }
@@ -234,7 +244,16 @@ public class DTree {
     }
   }
 
-  private static boolean isEqual(DiffElement file1, DiffElement file2) {
+  private static boolean isEqualSizes(DiffElement<?> file1, DiffElement<?> file2) {
+    return file1.getSize() == file2.getSize();
+  }
+
+  private static boolean isEqualTimestamps(DiffElement<?> src, DiffElement<?> trg, DirDiffSettings settings) {
+    if (src.getSize() != trg.getSize()) return false;
+    return Math.abs(src.getTimeStamp() - trg.getTimeStamp()) <= settings.compareTimestampAccuracy;
+  }
+
+  private static boolean isEqualContents(DiffElement<?> file1, DiffElement<?> file2) {
     if (file1.isContainer() || file2.isContainer()) return false;
     if (file1.getSize() != file2.getSize()) return false;
     try {
@@ -243,6 +262,53 @@ public class DTree {
     catch (IOException e) {
       return false;
     }
+  }
+
+  private static boolean isEqualContentsIgnoreSeparators(DiffElement<?> file1, DiffElement<?> file2) {
+    if (file1.isContainer() || file2.isContainer()) return false;
+
+    if (file1.getFileType().isBinary() && file2.getFileType().isBinary()) {
+      return isEqualContents(file1, file2);
+    }
+
+    try {
+      byte[] content1 = file1.getContent();
+      byte[] content2 = file2.getContent();
+
+      Charset charset1 = file1.getCharset();
+      Charset charset2 = file2.getCharset();
+
+      if (Arrays.equals(file1.getContent(), file2.getContent())) return true;
+      if (content1 == null || content2 == null) return false;
+
+      ThreeState isEqual = isEqualContentsIgnoreSeparators(content1, content2, charset1);
+      if (isEqual != ThreeState.UNSURE) return isEqual.toBoolean();
+
+      if (!charset1.equals(charset2)) {
+        isEqual = isEqualContentsIgnoreSeparators(content1, content2, charset2);
+        if (isEqual != ThreeState.UNSURE) return isEqual.toBoolean();
+      }
+
+      return false;
+    }
+    catch (IOException e) {
+      return false;
+    }
+  }
+
+  @NotNull
+  private static ThreeState isEqualContentsIgnoreSeparators(byte[] content1, byte[] content2, @NotNull Charset charset) {
+    String text1 = CharsetToolkit.tryDecodeString(content1, charset);
+    if (text1 == null) return ThreeState.UNSURE;
+
+    String text2 = CharsetToolkit.tryDecodeString(content2, charset);
+    if (text2 == null) return ThreeState.UNSURE;
+
+    String convertedText1 = StringUtil.convertLineSeparators(text1);
+    String convertedText2 = StringUtil.convertLineSeparators(text2);
+
+    boolean isEquals = StringUtil.equals(convertedText1, convertedText2);
+    return ThreeState.fromBoolean(isEquals);
   }
 
   public DiffType getType() {

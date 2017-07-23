@@ -41,8 +41,6 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ComparatorDelegate;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.CalledInAwt;
@@ -65,10 +63,15 @@ import org.zmlx.hg4idea.util.HgVersion;
 
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
+
+import static com.intellij.util.containers.ContainerUtil.exists;
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static java.util.Comparator.comparing;
 
 public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
@@ -93,7 +96,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private final HgCheckinEnvironment checkinEnvironment;
   private final HgAnnotationProvider annotationProvider;
   private final HgUpdateEnvironment updateEnvironment;
-  private final HgCachingCommittedChangesProvider committedChangesProvider;
+  private final HgCommittedChangesProvider committedChangesProvider;
   private MessageBusConnection messageBusConnection;
   @NotNull private final HgGlobalSettings globalSettings;
   @NotNull private final HgProjectSettings projectSettings;
@@ -129,7 +132,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     checkinEnvironment = new HgCheckinEnvironment(project);
     annotationProvider = new HgAnnotationProvider(project);
     updateEnvironment = new HgUpdateEnvironment(project);
-    committedChangesProvider = new HgCachingCommittedChangesProvider(project, this);
+    committedChangesProvider = new HgCommittedChangesProvider(project, this);
     myMergeProvider = new HgMergeProvider(myProject);
     myCommitAndPushExecutor = new HgCommitAndPushExecutor(checkinEnvironment);
     myMqNewExecutor = new HgMQNewExecutor(checkinEnvironment);
@@ -217,20 +220,21 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     return true;
   }
 
+  @NotNull
   @Override
-  public <S> List<S> filterUniqueRoots(final List<S> in, final Convertor<S, VirtualFile> convertor) {
-    Collections.sort(in, new ComparatorDelegate<>(convertor, FilePathComparator.getInstance()));
+  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
+    Collections.sort(in, comparing(convertor, FilePathComparator.getInstance()));
 
     for (int i = 1; i < in.size(); i++) {
       final S sChild = in.get(i);
-      final VirtualFile child = convertor.convert(sChild);
+      final VirtualFile child = convertor.apply(sChild);
       final VirtualFile childRoot = HgUtil.getHgRootOrNull(myProject, child);
       if (childRoot == null) {
         continue;
       }
       for (int j = i - 1; j >= 0; --j) {
         final S sParent = in.get(j);
-        final VirtualFile parent = convertor.convert(sParent);
+        final VirtualFile parent = convertor.apply(sParent);
         // if the parent is an ancestor of the child and that they share common root, the child is removed
         if (VfsUtilCore.isAncestor(parent, child, false) && VfsUtilCore.isAncestor(childRoot, parent, false)) {
           in.remove(i);
@@ -281,12 +285,9 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     myIncomingWidget = new HgIncomingOutgoingWidget(this, getProject(), projectSettings, true);
     myOutgoingWidget = new HgIncomingOutgoingWidget(this, getProject(), projectSettings, false);
 
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        myIncomingWidget.activate();
-        myOutgoingWidget.activate();
-      }
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      myIncomingWidget.activate();
+      myOutgoingWidget.activate();
     }, ModalityState.NON_MODAL);
 
     // updaters and listeners
@@ -302,11 +303,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     final String ignoredPattern = FileTypeManager.getInstance().getIgnoredFilesList();
     if (!ignoredPattern.contains(ORIG_FILE_PATTERN)) {
       final String newPattern = ignoredPattern + (ignoredPattern.endsWith(";") ? "" : ";") + ORIG_FILE_PATTERN;
-      HgUtil.runWriteActionLater(new Runnable() {
-        public void run() {
-          FileTypeManager.getInstance().setIgnoredFilesList(newPattern);
-        }
-      });
+      HgUtil.runWriteActionLater(() -> FileTypeManager.getInstance().setIgnoredFilesList(newPattern));
     }
   }
 
@@ -380,13 +377,12 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @Override
-  public boolean reportsIgnoredDirectories() {
-    return false;
-  }
-
-  @Override
   public List<CommitExecutor> getCommitExecutors() {
-    return Arrays.asList(myCommitAndPushExecutor, myMqNewExecutor);
+    ArrayList<CommitExecutor> commitExecutors = newArrayList(myCommitAndPushExecutor);
+    if (exists(HgUtil.getRepositoryManager(myProject).getRepositories(), r -> r.getRepositoryConfig().isMqUsed())) {
+      commitExecutors.add(myMqNewExecutor);
+    }
+    return commitExecutors;
   }
 
   @NotNull
@@ -406,11 +402,9 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   @CalledInAwt
   public void enableIntegration() {
-    HgUtil.executeOnPooledThread(new Runnable() {
-      public void run() {
-        Collection<VcsRoot> roots = ServiceManager.getService(myProject, VcsRootDetector.class).detect();
-        new HgIntegrationEnabler(HgVcs.this).enable(roots);
-      }
+    HgUtil.executeOnPooledThread(() -> {
+      Collection<VcsRoot> roots = ServiceManager.getService(myProject, VcsRootDetector.class).detect();
+      new HgIntegrationEnabler(HgVcs.this).enable(roots);
     }, myProject);
   }
 

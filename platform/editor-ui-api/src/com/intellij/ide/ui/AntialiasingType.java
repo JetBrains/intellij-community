@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,7 @@
 package com.intellij.ide.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.util.ui.UIUtil;
-import sun.swing.SwingUtilities2;
+import com.intellij.util.ui.GraphicsUtil;
 
 import java.awt.*;
 
@@ -29,7 +28,7 @@ public enum AntialiasingType {
   public static Object getAAHintForSwingComponent() {
     UISettings uiSettings = ApplicationManager.getApplication() == null ? null : UISettings.getInstance();
     if (uiSettings != null) {
-      AntialiasingType type = uiSettings.IDE_AA_TYPE;
+      AntialiasingType type = uiSettings.getIdeAAType();
       if (type != null) return type.getTextInfo();
     }
     return GREYSCALE.getTextInfo();
@@ -38,7 +37,7 @@ public enum AntialiasingType {
   public static Object getKeyForCurrentScope(boolean inEditor) {
     UISettings uiSettings = ApplicationManager.getApplication() == null ? null : UISettings.getInstance();
     if (uiSettings != null) {
-      AntialiasingType type = inEditor ? uiSettings.EDITOR_AA_TYPE : uiSettings.IDE_AA_TYPE;
+      AntialiasingType type = inEditor ? uiSettings.getEditorAAType() : uiSettings.getIdeAAType();
       if (type != null) return type.myHint;
     }
     return RenderingHints.VALUE_TEXT_ANTIALIAS_ON;
@@ -54,8 +53,8 @@ public enum AntialiasingType {
     isEnabled = enabled;
   }
 
-  public SwingUtilities2.AATextInfo getTextInfo() {
-    return !isEnabled ? null : new SwingUtilities2.AATextInfo(myHint, UIUtil.getLcdContrastValue());
+  public Object getTextInfo() {
+    return isEnabled ? GraphicsUtil.createAATextInfo(myHint) : null;
   }
 
   @Override

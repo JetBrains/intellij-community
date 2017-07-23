@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
-import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,7 +124,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
       final XInlineDebuggerDataCallback callback = new XInlineDebuggerDataCallback() {
         @Override
         public void computed(XSourcePosition position) {
-          if (position == null) return;
+          if (isObsolete() || position == null) return;
           VirtualFile file = position.getFile();
           // filter out values from other files
           if (!Comparing.equal(debuggerPosition.getFile(), file)) {
@@ -135,14 +134,12 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
           if (document == null) return;
 
           XVariablesView.InlineVariablesInfo data = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES);
-          final TObjectLongHashMap<VirtualFile> timestamps = myTree.getProject().getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
-          if (data == null || timestamps == null) {
+          if (data == null) {
             return;
           }
 
           if (!showAsInlay(file, position, debuggerPosition)) {
-            data.put(file, position, XValueNodeImpl.this);
-            timestamps.put(file, document.getModificationStamp());
+            data.put(file, position, XValueNodeImpl.this, document.getModificationStamp());
 
             myTree.updateEditor();
           }
@@ -174,6 +171,10 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
       myFullValueEvaluator = fullValueEvaluator;
       fireNodeChanged();
     });
+  }
+
+  public void clearFullValueEvaluator() {
+    myFullValueEvaluator = null;
   }
 
   private void updateText() {
@@ -230,7 +231,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
   @Nullable
   @Override
-  protected XDebuggerTreeNodeHyperlink getLink() {
+  public XDebuggerTreeNodeHyperlink getLink() {
     if (myFullValueEvaluator != null) {
       return new XDebuggerTreeNodeHyperlink(myFullValueEvaluator.getLinkText()) {
         @Override

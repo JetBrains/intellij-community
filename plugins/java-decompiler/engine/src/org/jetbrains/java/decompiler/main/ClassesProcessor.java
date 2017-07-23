@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public class ClassesProcessor {
     for (StructClass cl : context.getClasses().values()) {
       if (cl.isOwn() && !mapRootClasses.containsKey(cl.qualifiedName)) {
         if (bDecompileInner) {
-          StructInnerClassesAttribute inner = (StructInnerClassesAttribute)cl.getAttributes().getWithKey("InnerClasses");
+          StructInnerClassesAttribute inner = (StructInnerClassesAttribute)cl.getAttribute("InnerClasses");
 
           if (inner != null) {
             for (StructInnerClassesAttribute.Entry entry : inner.getEntries()) {
@@ -157,7 +157,7 @@ public class ClassesProcessor {
             if (setNestedClasses != null) {
 
               StructClass scl = superNode.classStruct;
-              StructInnerClassesAttribute inner = (StructInnerClassesAttribute)scl.getAttributes().getWithKey("InnerClasses");
+              StructInnerClassesAttribute inner = (StructInnerClassesAttribute)scl.getAttribute("InnerClasses");
 
               if (inner == null || inner.getEntries().isEmpty()) {
                 DecompilerContext.getLogger().writeMessage(superClass + " does not contain inner classes!", IFernflowerLogger.Severity.WARN);

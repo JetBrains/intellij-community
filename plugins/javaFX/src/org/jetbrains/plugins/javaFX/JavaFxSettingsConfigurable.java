@@ -29,10 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * User: anna
- * Date: 2/14/13
- */
 public class JavaFxSettingsConfigurable implements SearchableConfigurable, Configurable.NoScroll {
 
   private final JavaFxSettings mySettings;

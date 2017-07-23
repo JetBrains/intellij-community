@@ -31,12 +31,6 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-/**
-* Created by IntelliJ IDEA.
-* User: Irina.Chernushina
-* Date: 8/8/11
-* Time: 8:26 PM
-*/
 public class ContentAnnotationCacheImpl implements ContentAnnotationCache {
   private final SLRUMap<HistoryCacheWithRevisionKey, TreeMap<Integer, Long>> myCache;
   private final Object myLock;

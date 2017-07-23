@@ -36,9 +36,6 @@ import java.util.Set;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * User: ktisha
- */
 public class PyAbstractClassInspection extends PyInspection {
   @Nls
   @NotNull

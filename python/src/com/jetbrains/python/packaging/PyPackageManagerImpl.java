@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,9 +61,9 @@ public class PyPackageManagerImpl extends PyPackageManager {
   private static final String PIP_PRE_26_VERSION = "1.1";
   private static final String VIRTUALENV_PRE_26_VERSION = "1.7.2";
 
-  private static final String SETUPTOOLS_VERSION = "18.1";
-  private static final String PIP_VERSION = "7.1.0";
-  private static final String VIRTUALENV_VERSION = "13.1.0";
+  private static final String SETUPTOOLS_VERSION = "28.8.0";
+  private static final String PIP_VERSION = "9.0.1";
+  private static final String VIRTUALENV_VERSION = "15.1.0";
 
   private static final int ERROR_NO_SETUPTOOLS = 3;
 
@@ -118,7 +119,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   private boolean refreshAndCheckForSetuptools() throws ExecutionException {
     try {
       final List<PyPackage> packages = refreshAndGetPackages(false);
-      return PyPackageUtil.findPackage(packages, PyPackageUtil.SETUPTOOLS) != null || 
+      return PyPackageUtil.findPackage(packages, PyPackageUtil.SETUPTOOLS) != null ||
              PyPackageUtil.findPackage(packages, PyPackageUtil.DISTRIBUTE) != null;
     }
     catch (PyExecutionException e) {
@@ -233,7 +234,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
         if (canModify) {
           final String location = pkg.getLocation();
           if (location != null) {
-            canModify = FileUtil.ensureCanCreateFile(new File(location));
+            canModify = ensureCanCreateFile(new File(location));
           }
         }
         args.add(pkg.getName());
@@ -247,6 +248,29 @@ public class PyPackageManagerImpl extends PyPackageManager {
       LOG.debug("Packages cache is about to be refreshed because these packages were uninstalled: " + packages);
       refreshPackagesSynchronously();
     }
+  }
+
+  // TODO: Move to FileUtil.ensureCanCreateFile ?
+
+  /**
+   * When file it protected with UAC on Windows, you can't relay on {@link File#canWrite()}.
+   *
+   * @param file file to check if writable (works in UAC too)
+   */
+  private static boolean ensureCanCreateFile(@NotNull final File file) {
+    if (SystemInfo.isWinVistaOrNewer) {
+      try {
+        final File folder = (file.isFile() ? file.getParentFile() : file);
+        final File tmpFile = File.createTempFile("pycharm", null, folder);
+        tmpFile.deleteOnExit();
+        tmpFile.delete();
+      }
+      catch (final IOException ignored) {
+        return false;
+      }
+      return true;
+    }
+    return FileUtil.ensureCanCreateFile(file);
   }
 
 
@@ -363,6 +387,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
         final List<PyPackage> packages = collectPackages();
         LOG.debug("Packages installed in " + mySdk.getName() + ": " + packages);
         myPackagesCache = packages;
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(PACKAGE_MANAGER_TOPIC).packagesRefreshed(mySdk);
         return Collections.unmodifiableList(packages);
       }
       catch (ExecutionException e) {
@@ -438,8 +463,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
     cmdline.addAll(args);
     LOG.info("Running packaging tool: " + StringUtil.join(cmdline, " "));
 
-    final boolean canCreate = FileUtil.ensureCanCreateFile(new File(homePath));
-    final boolean useSudo = !canCreate && !SystemInfo.isWindows && askForSudo;
+    final boolean canCreate = ensureCanCreateFile(new File(homePath));
+    final boolean useSudo = !canCreate && askForSudo;
 
     try {
       final GeneralCommandLine commandLine = new GeneralCommandLine(cmdline).withWorkDirectory(workingDir);
@@ -447,6 +472,10 @@ public class PyPackageManagerImpl extends PyPackageManager {
       PythonEnvUtil.setPythonUnbuffered(environment);
       PythonEnvUtil.setPythonDontWriteBytecode(environment);
       PythonEnvUtil.resetHomePathChanges(homePath, environment);
+      final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(mySdk);
+      if (flavor != null && flavor.commandLinePatcher() != null) {
+        flavor.commandLinePatcher().patchCommandLine(commandLine);
+      }
       final Process process;
       if (useSudo) {
         process = ExecUtil.sudo(commandLine, "Please enter your password to make changes in system packages: ");
@@ -522,7 +551,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     return packages;
   }
 
-  private class MySdkRootWatcher extends BulkFileListener.Adapter {
+  private class MySdkRootWatcher implements BulkFileListener {
     @Override
     public void after(@NotNull List<? extends VFileEvent> events) {
       final Sdk sdk = getSdk();

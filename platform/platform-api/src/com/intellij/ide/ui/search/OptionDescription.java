@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,6 @@ package com.intellij.ide.ui.search;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: 17-Mar-2006
- */
 public class OptionDescription implements Comparable{
   private final String myOption;
   private final String myHit;
@@ -72,6 +68,18 @@ public class OptionDescription implements Comparable{
 
   public String getGroupName() {
     return myGroupName;
+  }
+
+  public String getValue() {
+    return null;
+  }
+
+  public boolean hasExternalEditor() {
+    return false;
+  }
+
+  public void invokeInternalEditor() {
+
   }
 
   public String toString() {

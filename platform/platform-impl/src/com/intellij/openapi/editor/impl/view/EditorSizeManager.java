@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +71,8 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
   private int myFoldingChangeEndOffset = Integer.MIN_VALUE;
   
   private int myVirtualPageHeight;
-  
+
+  private boolean myDuringDocumentUpdate; 
   private boolean myDirty; // true if we cannot calculate preferred size now because soft wrap model was invalidated after editor 
                            // became hidden. myLineWidths contents is irrelevant in such a state. Previously calculated preferred size
                            // is kept until soft wraps will be recalculated and size calculations will become possible
@@ -107,6 +108,7 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
 
   @Override
   public void beforeDocumentChange(DocumentEvent event) {
+    myDuringDocumentUpdate = true;
     if (myDocument.isInBulkUpdate()) return;
     myDocumentChangeStartOffset = event.getOffset();
     myDocumentChangeEndOffset = event.getOffset() + event.getNewLength();
@@ -114,6 +116,7 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
 
   @Override
   public void documentChanged(DocumentEvent event) {
+    myDuringDocumentUpdate = false;
     if (myDocument.isInBulkUpdate()) return;
     doInvalidateRange(myDocumentChangeStartOffset, myDocumentChangeEndOffset);
     assertValidState();
@@ -146,7 +149,7 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
 
   @Override
   public void onUpdated(@NotNull Inlay inlay) {
-    if (myDocument.isInEventsHandling() || myDocument.isInBulkUpdate()) return;
+    if (myDuringDocumentUpdate || myDocument.isInBulkUpdate()) return;
     doInvalidateRange(inlay.getOffset(), inlay.getOffset());
   }
 
@@ -158,7 +161,7 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
       myFoldingChangeEndOffset = Math.max(myFoldingChangeEndOffset, event.getActualEndOffset());
       invalidate = false;
     }
-    if (myDocument.isInEventsHandling()) {
+    if (myDuringDocumentUpdate) {
       myDocumentChangeStartOffset = Math.min(myDocumentChangeStartOffset, event.getStartOffset());
       myDocumentChangeEndOffset = Math.max(myDocumentChangeEndOffset, event.getActualEndOffset());
       invalidate = false;
@@ -175,7 +178,7 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
       CaretModelImpl caretModel = myEditor.getCaretModel();
       int caretMaxX = (caretModel.isIteratingOverCarets() ? Stream.of(caretModel.getCurrentCaret()) : caretModel.getAllCarets().stream())
         .filter(Caret::isUpToDate)
-        .mapToInt(c -> myView.visualPositionToXY(c.getVisualPosition()).x)
+        .mapToInt(c -> (int)myView.visualPositionToXY(c.getVisualPosition()).getX())
         .max().orElse(0);
       width = Math.max(width, caretMaxX);
     }
@@ -185,7 +188,29 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
     Insets insets = myView.getInsets();
     return new Dimension(width + insets.left + insets.right, getPreferredHeight());
   }
-  
+
+  // Returns preferred width of the lines in range.
+  // This method is currently used only with "idea.true.smooth.scrolling" experimental option.
+  // We may unite the code with the getPreferredSize() method.
+  int getPreferredWidth(int beginLine, int endLine) {
+    int widthWithoutCaret = getPreferredWidthWithoutCaret(beginLine, endLine);
+    int width = widthWithoutCaret;
+    if (!myDocument.isInBulkUpdate()) {
+      CaretModelImpl caretModel = myEditor.getCaretModel();
+      int caretMaxX = (caretModel.isIteratingOverCarets() ? Stream.of(caretModel.getCurrentCaret()) : caretModel.getAllCarets().stream())
+        .filter(Caret::isUpToDate)
+        .filter(caret -> caret.getVisualPosition().line >= beginLine && caret.getVisualPosition().line < endLine)
+        .mapToInt(c -> (int)myView.visualPositionToXY(c.getVisualPosition()).getX())
+        .max().orElse(0);
+      width = Math.max(width, caretMaxX);
+    }
+    if (shouldRespectAdditionalColumns(widthWithoutCaret)) {
+      width += myEditor.getSettings().getAdditionalColumnsCount() * myView.getPlainSpaceWidth();
+    }
+    Insets insets = myView.getInsets();
+    return width + insets.left + insets.right;
+  }
+
   int getPreferredHeight() {
     int lineHeight = myView.getLineHeight();
     if (myEditor.isOneLineMode()) return lineHeight;
@@ -227,6 +252,21 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
     }
     validateMaxLineWithExtension();
     return Math.max(myWidthInPixels, myMaxLineWithExtensionWidth);
+  }
+
+  // This method is currently used only with "idea.true.smooth.scrolling" experimental option.
+  // We may optimize this computation by caching results and performing incremental updates.
+  private int getPreferredWidthWithoutCaret(int beginLine, int endLine) {
+    if (myWidthInPixels < 0) {
+      assert !myDocument.isInBulkUpdate();
+      calculatePreferredWidth();
+    }
+    int maxWidth = 0;
+    for (int i = beginLine; i < endLine && i < myLineWidths.size(); i++) {
+      maxWidth = Math.max(maxWidth, Math.abs(myLineWidths.get(i)));
+    }
+    validateMaxLineWithExtension();
+    return Math.max(maxWidth, myMaxLineWithExtensionWidth);
   }
 
   private void validateMaxLineWithExtension() {
@@ -299,7 +339,7 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
 
   void invalidateRange(int startOffset, int endOffset) {
     if (myDocument.isInBulkUpdate()) return;
-    if (myDocument.isInEventsHandling()) {
+    if (myDuringDocumentUpdate) {
       myDocumentChangeStartOffset = Math.min(myDocumentChangeStartOffset, startOffset);
       myDocumentChangeEndOffset = Math.max(myDocumentChangeEndOffset, endOffset);
     }
@@ -341,6 +381,8 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
   }
 
   void textLayoutPerformed(int startOffset, int endOffset) {
+    assert 0 <= startOffset && startOffset < endOffset && endOffset <= myDocument.getTextLength() 
+      : "startOffset=" + startOffset + ", endOffset=" + endOffset;
     if (myDocument.isInBulkUpdate()) return;
     if (myEditor.getFoldingModel().isInBatchFoldingOperation()) {
       myDeferredRanges.add(new TextRange(startOffset, endOffset));
@@ -413,7 +455,7 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
   }
 
   @TestOnly
-  public void validateState() {
+  void validateState() {
     assertValidState();
   }
 }

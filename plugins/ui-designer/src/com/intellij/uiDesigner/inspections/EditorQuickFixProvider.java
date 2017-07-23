@@ -18,10 +18,13 @@ package com.intellij.uiDesigner.inspections;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.uiDesigner.radComponents.RadComponent;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
+@FunctionalInterface
 public interface EditorQuickFixProvider {
-  QuickFix createQuickFix(GuiEditor editor, RadComponent component);
+  @NotNull
+  QuickFix createQuickFix(GuiEditor editor, @NotNull RadComponent component);
 }

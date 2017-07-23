@@ -17,6 +17,7 @@ package com.intellij.junit5;
 
 import org.junit.platform.commons.util.AnnotationUtils;
 import org.junit.platform.engine.DiscoverySelector;
+import org.junit.platform.engine.discovery.ClassNameFilter;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.TagFilter;
@@ -28,10 +29,6 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
 
 public class JUnit5TestRunnerUtil {
 
@@ -54,6 +51,7 @@ public class JUnit5TestRunnerUtil {
           if (packageName == null) return null;
 
           String tagName = reader.readLine();
+          String filters = reader.readLine();
           String line;
 
           List<DiscoverySelector> selectors = new ArrayList<>();
@@ -61,8 +59,15 @@ public class JUnit5TestRunnerUtil {
             selectors.add(createSelector(line));
           }
           packageNameRef[0] = packageName.length() == 0 ? "<default package>" : packageName;
-          builder = selectors.isEmpty() ? builder.selectors(DiscoverySelectors.selectPackage(packageName))
-                                        : builder.selectors(selectors);
+          if (selectors.isEmpty()) {
+            builder = builder.selectors(DiscoverySelectors.selectPackage(packageName));
+            if (filters != null && !filters.isEmpty()) {
+              builder = builder.filters(ClassNameFilter.includeClassNamePatterns(filters.split("\\|\\|")));
+            }
+          }
+          else {
+            builder = builder.selectors(selectors);
+          }
           if (tagName != null && !tagName.isEmpty()) {
             builder = builder.filters(TagFilter.includeTags(tagName));
           }

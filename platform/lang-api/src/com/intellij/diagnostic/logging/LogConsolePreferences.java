@@ -28,20 +28,19 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * User: anna
- * Date: 06-Feb-2006
- */
 @State(name = "LogFilters", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public class LogConsolePreferences extends LogFilterRegistrar {
@@ -62,16 +61,73 @@ public class LogConsolePreferences extends LogFilterRegistrar {
   @NonNls public static final String DEBUG = "DEBUG";
   @NonNls public static final String CUSTOM = "CUSTOM";
 
+  @Deprecated
   public final static Pattern ERROR_PATTERN = Pattern.compile(".*(" + ERROR + "|FATAL).*");
+  @Deprecated
   public final static Pattern WARNING_PATTERN = Pattern.compile(".*" + WARNING + ".*");
+  @Deprecated
   public final static Pattern WARN_PATTERN = Pattern.compile(".*" + WARN + ".*");
+  @Deprecated
   public final static Pattern INFO_PATTERN = Pattern.compile(".*" + INFO + ".*");
+  @Deprecated
   public static final Pattern DEBUG_PATTERN = Pattern.compile(".*" + DEBUG + ".*");
 
   @NonNls public final static Pattern EXCEPTION_PATTERN = Pattern.compile(".*at .*");
 
+  /**
+   * Set of patterns to assign severity to given message. Replaces deprecated patterns {@link LogConsolePreferences#ERROR_PATTERN},
+   * {@link LogConsolePreferences#DEBUG_PATTERN}, etc with the versions which don't contain ".*"
+   */
+  private enum LevelPattern {
+
+    ERROR("ERROR|FATAL", LogConsolePreferences.ERROR),
+    WARNING("WARN", LogConsolePreferences.WARNING), // "|WARNING" omitted since it is covered by "WARN"
+    INFO("INFO", LogConsolePreferences.INFO),
+    DEBUG("DEBUG", LogConsolePreferences.DEBUG);
+
+    private final Pattern myPattern;
+    private final String myType;
+
+    LevelPattern(@NotNull @NonNls String regexp, @NotNull @NonNls String type) {
+      myPattern = Pattern.compile(regexp, Pattern.CASE_INSENSITIVE);
+      myType = type;
+    }
+
+    @NotNull
+    public Pattern getPattern() {
+      return myPattern;
+    }
+
+    @NotNull @NonNls
+    public String getType() {
+      return myType;
+    }
+
+    @Nullable
+    public static LevelPattern findBestMatchingPattern(@NotNull String text) {
+      return findBestMatchingPattern(text, LevelPattern.values());
+    }
+
+    @Nullable
+    public static LevelPattern findBestMatchingPattern(@NotNull String text, @NotNull LevelPattern[] patterns) {
+      int bestStart = Integer.MAX_VALUE;
+      LevelPattern bestMatch = null;
+      for (LevelPattern next : patterns) {
+        Matcher nextMatcher = next.getPattern().matcher(text);
+        if (nextMatcher.find()) {
+          int nextStart = nextMatcher.start();
+          if (nextStart < bestStart) {
+            bestMatch = next;
+            bestStart = nextStart;
+          }
+        }
+      }
+      return bestMatch;
+    }
+  }
+
   private final List<LogFilterListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private static final Logger LOG = Logger.getInstance("#" + LogConsolePreferences.class.getName());
+  private static final Logger LOG = Logger.getInstance(LogConsolePreferences.class);
 
   public static LogConsolePreferences getInstance(Project project) {
     return ServiceManager.getService(project, LogConsolePreferences.class);
@@ -121,12 +177,8 @@ public class LogConsolePreferences extends LogFilterRegistrar {
 
   @Nullable
   public static String getType(@NotNull String text) {
-    String upcased = StringUtil.toUpperCase(text);
-    if (ERROR_PATTERN.matcher(upcased).matches()) return ERROR;
-    if (WARNING_PATTERN.matcher(upcased).matches() || WARN_PATTERN.matcher(upcased).matches()) return WARNING;
-    if (INFO_PATTERN.matcher(upcased).matches()) return INFO;
-    if (DEBUG_PATTERN.matcher(upcased).matches()) return DEBUG;
-    return null;
+    LevelPattern bestMatch = LevelPattern.findBestMatchingPattern(text);
+    return bestMatch == null ? null : bestMatch.getType();
   }
 
   public static Key getProcessOutputTypes(String type) {

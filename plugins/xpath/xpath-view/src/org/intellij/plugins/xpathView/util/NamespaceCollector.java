@@ -23,13 +23,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 
 import javax.xml.namespace.QName;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Helper class to collect all used namespaces and their prefixes from an xml document
@@ -125,7 +119,7 @@ public class NamespaceCollector extends XmlRecursiveElementVisitor {
 
     public static CollectedInfo empty() {
         //noinspection unchecked
-        return new CollectedInfo(Collections.<Namespace>emptySet(), Collections.<QName>emptySet(), Collections.<QName>emptySet());
+        return new CollectedInfo(Collections.emptySet(), Collections.emptySet(), Collections.emptySet());
     }
     
     public static CollectedInfo collectInfo(final XmlFile psiFile) {

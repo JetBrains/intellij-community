@@ -64,7 +64,32 @@ public class PyInjectionResolveTest extends PyResolveTestCase {
   public void testFStringNestedScopes() {
     assertResolvesTo(LanguageLevel.PYTHON36, PyTargetExpression.class, "foo");
   }
+
+  // PY-21479
+  public void testFStringComprehensionTarget() {
+    assertResolvesTo(LanguageLevel.PYTHON36, PyTargetExpression.class, "foo");
+  }
+
+  // PY-21479
+  public void testFStringComprehensionSourcePart() {
+    assertResolvesTo(LanguageLevel.PYTHON36, PyTargetExpression.class, "foo");
+  }
   
+  // PY-21479
+  public void testFStringNestedInResultComprehensionSourcePart() {
+    assertResolvesTo(LanguageLevel.PYTHON36, PyTargetExpression.class, "foo");
+  }
+  
+  // PY-21479
+  public void testFStringComprehensionConditionPart() {
+    assertResolvesTo(LanguageLevel.PYTHON36, PyTargetExpression.class, "foo");
+  }
+
+  // PY-21479
+  public void testFStringNestedComprehensionSourcePart() {
+    assertResolvesTo(LanguageLevel.PYTHON36, PyTargetExpression.class, "foo");
+  }
+
   public void testTypeCommentReference() {
     assertResolvesTo(PyClass.class, "MyClass");
   }
@@ -92,5 +117,10 @@ public class PyInjectionResolveTest extends PyResolveTestCase {
   // PY-20377
   public void testFunctionTypeCommentReturnTypeReference() {
     assertResolvesTo(PyClass.class, "MyClass");
+  }
+
+  // PY-22094
+  public void testFStringInsideAssertStatement() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> assertResolvesTo(PyParameter.class, "name"));
   }
 }

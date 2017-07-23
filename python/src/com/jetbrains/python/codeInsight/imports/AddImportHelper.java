@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
@@ -39,6 +40,8 @@ import com.jetbrains.python.formatter.PyBlock;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.pyi.PyiFile;
+import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +60,7 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * Date: Apr 24, 2009 3:17:59 AM
  */
 public class AddImportHelper {
-  private static final Logger LOG = Logger.getInstance("#" + AddImportHelper.class.getName());
+  private static final Logger LOG = Logger.getInstance(AddImportHelper.class);
 
   // normal imports go first, then "from" imports
   private static final Comparator<PyImportStatementBase> IMPORT_TYPE_COMPARATOR = (import1, import2) -> {
@@ -272,7 +275,7 @@ public class AddImportHelper {
       return UNRESOLVED_SYMBOL_PRIORITY;
     }
 
-    final PsiFileSystemItem resolvedFileOrDir;
+    PsiFileSystemItem resolvedFileOrDir;
     if (resolved instanceof PsiDirectory) {
       resolvedFileOrDir = (PsiFileSystemItem)resolved;
     }
@@ -282,6 +285,10 @@ public class AddImportHelper {
     }
     else {
       resolvedFileOrDir = resolved.getContainingFile();
+    }
+
+    if (resolvedFileOrDir instanceof PyiFile) {
+      resolvedFileOrDir = as(PyiUtil.getOriginalElement((PyiFile)resolvedFileOrDir), PsiFileSystemItem.class); 
     }
     
     if (resolvedFileOrDir == null) {
@@ -473,6 +480,8 @@ public class AddImportHelper {
         final PyElementGenerator generator = PyElementGenerator.getInstance(file.getProject());
         final PyImportElement importElement = generator.createImportElement(LanguageLevel.forElement(file), name, asName);
         existingImport.add(importElement);
+        // May need to add parentheses, trailing comma, etc.
+        CodeStyleManager.getInstance(file.getProject()).reformat(existingImport);
         return true;
       }
     }

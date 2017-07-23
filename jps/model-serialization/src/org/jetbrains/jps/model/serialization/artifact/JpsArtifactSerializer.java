@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ import org.jetbrains.jps.model.artifact.*;
 import org.jetbrains.jps.model.artifact.elements.*;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.module.JpsModuleReference;
-import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 
 import java.util.List;
 
@@ -58,7 +58,6 @@ public class JpsArtifactSerializer {
     JpsArtifactService service = JpsArtifactService.getInstance();
     for (Element artifactElement : JDOMUtil.getChildren(componentElement, "artifact")) {
       ArtifactState state = XmlSerializer.deserialize(artifactElement, ArtifactState.class);
-      if (state == null) continue;
       JpsArtifactPropertiesSerializer<?> serializer = getTypePropertiesSerializer(state.getArtifactType());
       loadArtifact(project, service, state, serializer);
     }

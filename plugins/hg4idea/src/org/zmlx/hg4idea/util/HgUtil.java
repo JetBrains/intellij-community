@@ -182,7 +182,7 @@ public abstract class HgUtil {
    * Finds the nearest parent directory which is an hg root.
    * @param dir Directory which parent will be checked.
    * @return Directory which is the nearest hg root being a parent of this directory,
-   * or <code>null</code> if this directory is not under hg.
+   * or {@code null} if this directory is not under hg.
    * @see com.intellij.openapi.vcs.AbstractVcs#isVersionedDirectory(VirtualFile)
    */
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.execution.runners
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.ExecutionResult
-import com.intellij.execution.RunProfileStarter
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.ui.RunContentDescriptor
@@ -25,13 +24,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 
 abstract class DefaultProgramRunner : GenericProgramRunner<RunnerSettings>() {
   @Throws(ExecutionException::class)
-  override fun doExecute(state: RunProfileState, env: ExecutionEnvironment): RunContentDescriptor? {
-    return executeState(state, env, this)
+  override fun doExecute(state: RunProfileState, environment: ExecutionEnvironment): RunContentDescriptor? {
+    return executeState(state, environment, this)
   }
-}
-
-inline fun runProfileStarter(crossinline starter: (state: RunProfileState, environment: ExecutionEnvironment) -> RunContentDescriptor?) = object : RunProfileStarter() {
-  override fun execute(state: RunProfileState, env: ExecutionEnvironment) = starter(state, env)
 }
 
 internal fun executeState(state: RunProfileState, env: ExecutionEnvironment, runner: ProgramRunner<*>): RunContentDescriptor? {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,10 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/**
- * @author cdr
  */
 package com.intellij.codeInspection.i18n;
 
@@ -30,7 +26,8 @@ import com.intellij.lang.properties.psi.PropertyCreationHandler;
 import com.intellij.lang.properties.psi.ResourceBundleManager;
 import com.intellij.lang.properties.references.I18nizeQuickFixDialog;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -123,9 +120,9 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
       myRBEditorTextField = new EditorComboBox(document, myProject, StdFileTypes.JAVA);
       myResourceBundleSuggester.add(myRBEditorTextField, BorderLayout.CENTER);
       suggestAvailableResourceBundleExpressions();
-      myRBEditorTextField.addDocumentListener(new DocumentAdapter() {
+      myRBEditorTextField.addDocumentListener(new DocumentListener() {
         @Override
-        public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+        public void documentChanged(DocumentEvent e) {
           somethingChanged();
         }
       });

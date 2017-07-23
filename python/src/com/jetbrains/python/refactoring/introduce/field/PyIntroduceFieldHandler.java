@@ -34,6 +34,7 @@ import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
+import com.intellij.util.ThreeState;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -88,7 +89,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     }
     if (element1 != null) {
       final PyClass clazz = PyUtil.getContainingClassOrSelf(element1);
-      if (clazz != null && PythonUnitTestUtil.isTestCaseClass(clazz, null)) return true;
+      if (clazz != null && PythonUnitTestUtil.isTestClass(clazz, ThreeState.UNSURE, null)) return true;
     }
     return false;
   }
@@ -181,7 +182,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     return false;
   }
 
-  @Nullable
+  @NotNull
   private static PsiElement addFieldToSetUp(PyClass clazz, final Function<String, PyStatement> callback) {
     final PyFunction init = clazz.findMethodByName(PythonUnitTestUtil.TESTCASE_SETUP_NAME, false, null);
     if (init != null) {
@@ -361,7 +362,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
         WriteAction.run(() -> {
           final PyAssignmentStatement initializer = PsiTreeUtil.getParentOfType(myTarget, PyAssignmentStatement.class);
           assert initializer != null;
-          final Function<String, PyStatement> callback = FunctionUtil.<String, PyStatement>constant(initializer);
+          final Function<String, PyStatement> callback = FunctionUtil.constant(initializer);
           final PyClass pyClass = PyUtil.getContainingClassOrSelf(initializer);
           InitPlace initPlace = myPanel != null ? myPanel.getInitPlace() : myOperation.getInplaceInitPlace();
           if (initPlace == InitPlace.CONSTRUCTOR) {

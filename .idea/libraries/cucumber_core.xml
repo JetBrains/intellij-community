@@ -2,7 +2,6 @@
   <library name="cucumber-core">
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/gherkin-2.12.2.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/cucumber-jvm-deps-1.0.3.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/cucumber-core-1.2.4.jar!/" />
     </CLASSES>
     <JAVADOC />

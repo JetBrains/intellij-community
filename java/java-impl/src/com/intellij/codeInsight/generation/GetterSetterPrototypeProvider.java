@@ -23,10 +23,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PropertyUtil;
 
-/**
- * User: anna
- * Date: 3/4/13
- */
 public abstract class GetterSetterPrototypeProvider {
   public static final ExtensionPointName<GetterSetterPrototypeProvider> EP_NAME = ExtensionPointName.create("com.intellij.getterSetterProvider");
   public abstract boolean canGeneratePrototypeFor(PsiField field);
@@ -52,14 +48,14 @@ public abstract class GetterSetterPrototypeProvider {
 
   public static PsiMethod[] generateGetterSetters(PsiField field,
                                                   boolean generateGetter,
-                                                  boolean invalidTemplate) {
+                                                  boolean ignoreInvalidTemplate) {
     for (GetterSetterPrototypeProvider provider : Extensions.getExtensions(EP_NAME)) {
       if (provider.canGeneratePrototypeFor(field)) {
         return generateGetter ? provider.generateGetters(field) : provider.generateSetters(field);
       }
     }
-    return new PsiMethod[]{generateGetter ? GenerateMembersUtil.generateGetterPrototype(field, invalidTemplate) :
-                           GenerateMembersUtil.generateSetterPrototype(field, invalidTemplate)};
+    return new PsiMethod[]{generateGetter ? GenerateMembersUtil.generateGetterPrototype(field, ignoreInvalidTemplate) :
+                           GenerateMembersUtil.generateSetterPrototype(field, ignoreInvalidTemplate)};
   }
 
   public static boolean isReadOnlyProperty(PsiField field) {

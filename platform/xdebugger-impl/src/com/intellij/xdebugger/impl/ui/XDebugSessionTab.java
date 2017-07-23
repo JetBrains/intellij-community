@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
@@ -159,6 +160,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     myRunContentDescriptor = new RunContentDescriptor(myConsole, session.getDebugProcess().getProcessHandler(),
                                                       myUi.getComponent(), session.getSessionName(), icon, myRebuildWatchesRunnable, restartActions);
+    myRunContentDescriptor.setRunnerLayoutUi(myUi);
     Disposer.register(myRunContentDescriptor, this);
     Disposer.register(myProject, myRunContentDescriptor);
   }
@@ -304,7 +306,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   private static void attachViewToSession(@NotNull XDebugSessionImpl session, @Nullable XDebugView view) {
     if (view != null) {
-      session.addSessionListener(new XDebugViewSessionListener(view, session), view);
+      XDebugViewSessionListener.attach(view, session);
     }
   }
 
@@ -377,8 +379,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myRunContentDescriptor != null) {
-        ToolWindow toolWindow = ExecutionManager.getInstance(myProject).getContentManager()
-          .getToolWindowByDescriptor(myRunContentDescriptor);
+        RunContentManager manager = ExecutionManager.getInstance(myProject).getContentManager();
+        ToolWindow toolWindow = manager.getToolWindowByDescriptor(myRunContentDescriptor);
         if (toolWindow != null) {
           if (!toolWindow.isVisible()) {
             toolWindow.show(() -> {
@@ -388,8 +390,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
               myRebuildWatchesRunnable.run();
             });
           }
-          //noinspection ConstantConditions
-          toolWindow.getContentManager().setSelectedContent(myRunContentDescriptor.getAttachedContent());
+          manager.selectRunContent(myRunContentDescriptor);
         }
       }
     });

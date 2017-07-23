@@ -27,17 +27,12 @@ import java.util.Collection;
 
 /**
  * @author pegov
- * @deprecated
- * @see com.intellij.ui.popup.HintUpdateSupply
+ * @deprecated use HintUpdateSupply directly
+ * @see HintUpdateSupply
  */
 public abstract class JBListWithHintProvider extends JBList {
   {
-    new HintUpdateSupply(this) {
-      @Override
-      protected PsiElement getPsiElementForHint(Object selectedValue) {
-        return JBListWithHintProvider.this.getPsiElementForHint(selectedValue);
-      }
-    };
+    HintUpdateSupply.installHintUpdateSupply(this, o -> getPsiElementForHint(o));
   }
 
   public JBListWithHintProvider() {

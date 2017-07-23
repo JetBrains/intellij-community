@@ -26,9 +26,6 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
-* User: anna
-*/
 class JavaFxFactoryReferenceProvider extends PsiReferenceProvider {
   @NotNull
   @Override

@@ -29,6 +29,7 @@ public class HighlightUsagesDescriptionLocation extends ElementDescriptionLocati
   private HighlightUsagesDescriptionLocation() {
   }
 
+  @NotNull
   @Override
   public ElementDescriptionProvider getDefaultProvider() {
     return new ElementDescriptionProvider() {

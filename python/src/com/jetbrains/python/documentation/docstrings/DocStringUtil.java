@@ -40,9 +40,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * User: catherine
- */
 public class DocStringUtil {
   private DocStringUtil() {
   }

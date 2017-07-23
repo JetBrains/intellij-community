@@ -12,8 +12,7 @@ public class Main {
     BinaryOperator<Integer> min = Math::min;
     String foo = "xyz";
 
-    /*check*/
-
+      /*check*/
       boolean b = selector.andThen(Collections.singleton(/* "xyz" here */ "xyz")::contains).apply(/* foo here */ foo);
   }
 }

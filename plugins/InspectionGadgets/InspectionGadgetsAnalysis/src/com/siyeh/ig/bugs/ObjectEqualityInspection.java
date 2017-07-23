@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
@@ -23,11 +24,14 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.EqualityToEqualsFix;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -47,7 +51,7 @@ public class ObjectEqualityInspection extends BaseInspection {
   /**
    * @noinspection PublicField
    */
-  public boolean m_ignoreClassObjects = false;
+  public boolean m_ignoreClassObjects = true;
 
   /**
    * @noinspection PublicField
@@ -82,9 +86,10 @@ public class ObjectEqualityInspection extends BaseInspection {
     return new ObjectEqualityVisitor();
   }
 
+  @NotNull
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
-    return new EqualityToEqualsFix();
+  public InspectionGadgetsFix[] buildFixes(Object... infos) {
+    return EqualityToEqualsFix.buildEqualityFixes((PsiBinaryExpression)infos[0]);
   }
 
   private class ObjectEqualityVisitor extends BaseInspectionVisitor {
@@ -103,21 +108,26 @@ public class ObjectEqualityInspection extends BaseInspection {
       if (!isObjectType(lhs)) {
         return;
       }
-      if (m_ignoreEnums && (isEnumType(rhs) || isEnumType(lhs))) {
-        return;
-      }
-      if (m_ignoreClassObjects && (isClass(rhs) || isClass(lhs))) {
-        return;
-      }
-      if (m_ignorePrivateConstructors && (typeHasPrivateConstructor(lhs) || typeHasPrivateConstructor(rhs))) {
-        return;
-      }
       final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
-      if (method != null && MethodUtils.isEquals(method)) {
+      if (method != null && MethodUtils.isEquals(method) &&
+          (isThisReference(lhs, method.getContainingClass()) || isThisReference(rhs, method.getContainingClass()))) {
         return;
       }
-      final PsiJavaToken sign = expression.getOperationSign();
-      registerError(sign);
+      if (m_ignoreEnums && TypeConversionUtil.isEnumType(lhs.getType())) {
+        return;
+      }
+      ProblemHighlightType highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+      if (!TypeConversionUtil.isBinaryOperatorApplicable(expression.getOperationTokenType(), lhs, rhs, false)) {
+        // don't warn on non-compiling code, but allow to replace
+        highlightType = ProblemHighlightType.INFORMATION;
+      }
+      if (m_ignoreClassObjects && ClassUtils.isFinalClassWithDefaultEquals(PsiUtil.resolveClassInClassTypeOnly(lhs.getType()))) {
+        highlightType = ProblemHighlightType.INFORMATION;
+      }
+      if (m_ignorePrivateConstructors && typeHasPrivateConstructor(lhs)) {
+        highlightType = ProblemHighlightType.INFORMATION;
+      }
+      registerError(expression.getOperationSign(), highlightType, expression);
     }
 
     private boolean typeHasPrivateConstructor(@Nullable PsiExpression expression) {
@@ -134,7 +144,7 @@ public class ObjectEqualityInspection extends BaseInspection {
         return implementersHaveOnlyPrivateConstructors(aClass);
       }
       else {
-        return hasOnlyPrivateConstructors(aClass);
+        return ClassUtils.hasOnlyPrivateConstructors(aClass);
       }
     }
 
@@ -149,49 +159,13 @@ public class ObjectEqualityInspection extends BaseInspection {
       }
       final Collection<PsiClass> implementers = processor.getCollection();
       for (PsiClass implementer : implementers) {
-        if (!implementer.isInterface() && !implementer.hasModifierProperty(PsiModifier.ABSTRACT)) {
-          if (!hasOnlyPrivateConstructors(implementer)) {
-            return false;
-          }
-        }
-      }
-      return true;
-    }
-
-    private boolean hasOnlyPrivateConstructors(PsiClass aClass) {
-      if (aClass == null) {
-        return false;
-      }
-      final PsiMethod[] constructors = aClass.getConstructors();
-      if (constructors.length == 0) {
-        return false;
-      }
-      for (PsiMethod constructor : constructors) {
-        if (!constructor.hasModifierProperty(PsiModifier.PRIVATE)) {
+        if (!implementer.isInterface() &&
+            !implementer.hasModifierProperty(PsiModifier.ABSTRACT) &&
+            !ClassUtils.hasOnlyPrivateConstructors(implementer)) {
           return false;
         }
       }
       return true;
-    }
-
-    private boolean isClass(@Nullable PsiExpression expression) {
-      if (expression == null) {
-        return false;
-      }
-      if (expression instanceof PsiClassObjectAccessExpression) {
-        return true;
-      }
-      final PsiType type = expression.getType();
-      if (!(type instanceof PsiClassType)) {
-        return false;
-      }
-      final PsiClassType classType = (PsiClassType)type;
-      final PsiClassType rawType = classType.rawType();
-      return rawType.equalsToText(CommonClassNames.JAVA_LANG_CLASS);
-    }
-
-    private boolean isEnumType(@Nullable PsiExpression expression) {
-      return expression != null && TypeUtils.expressionHasTypeOrSubtype(expression, CommonClassNames.JAVA_LANG_ENUM);
     }
 
     private boolean isObjectType(PsiExpression expression) {
@@ -204,6 +178,15 @@ public class ObjectEqualityInspection extends BaseInspection {
              !(type instanceof PsiPrimitiveType) &&
              !TypeUtils.isJavaLangString(type) &&
              !TypeUtils.expressionHasTypeOrSubtype(expression, CommonClassNames.JAVA_LANG_NUMBER);
+    }
+
+    private boolean isThisReference(@Nullable PsiExpression expression, @Nullable PsiClass psiClass) {
+      if (!(expression instanceof PsiThisExpression)) {
+        return false;
+      }
+      final PsiThisExpression thisExpression = (PsiThisExpression)expression;
+      final PsiJavaCodeReferenceElement qualifier = thisExpression.getQualifier();
+      return qualifier == null || psiClass != null && qualifier.isReferenceTo(psiClass);
     }
   }
 }

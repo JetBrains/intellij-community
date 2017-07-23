@@ -17,8 +17,9 @@ package com.intellij.codeInspection.ex
 
 import com.intellij.configurationStore.SchemeManagerFactoryBase
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.openapi.options.SchemeState
 import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.testFramework.runInInitMode
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
@@ -53,15 +54,19 @@ class InspectionSchemeTest {
 
     assertThat(profileManager.profiles).hasSize(1)
     val scheme = profileManager.profiles.first()
+    assertThat(scheme.schemeState).isEqualTo(SchemeState.UNCHANGED)
     assertThat(scheme.name).isEqualTo("Bar")
 
     runInInitMode { scheme.initInspectionTools(null) }
 
     schemeManagerFactory.save()
 
+    assertThat(scheme.schemeState).isEqualTo(SchemeState.UNCHANGED)
+
     assertThat(schemeFile.readText()).isEqualTo(schemeData)
     profileManager.profiles
 
+    // test reload
     schemeManagerFactory.process {
       it.reload()
     }

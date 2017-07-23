@@ -43,7 +43,7 @@ public class ConsoleExecuteAction extends DumbAwareAction {
 
   @SuppressWarnings("UnusedDeclaration")
   public ConsoleExecuteAction(@NotNull LanguageConsoleView console, @NotNull BaseConsoleExecuteActionHandler executeActionHandler) {
-    this(console, executeActionHandler, CONSOLE_EXECUTE_ACTION_ID, Conditions.<LanguageConsoleView>alwaysTrue());
+    this(console, executeActionHandler, CONSOLE_EXECUTE_ACTION_ID, Conditions.alwaysTrue());
   }
 
   ConsoleExecuteAction(@NotNull LanguageConsoleView console, final @NotNull ConsoleExecuteActionHandler executeActionHandler, @Nullable Condition<LanguageConsoleView> enabledCondition) {
@@ -64,7 +64,7 @@ public class ConsoleExecuteAction extends DumbAwareAction {
 
     myConsoleView = consoleView;
     myExecuteActionHandler = executeActionHandler;
-    myEnabledCondition = enabledCondition == null ? Conditions.<LanguageConsoleView>alwaysTrue() : enabledCondition;
+    myEnabledCondition = enabledCondition == null ? Conditions.alwaysTrue() : enabledCondition;
 
     EmptyAction.setupAction(this, emptyExecuteActionId, null);
   }

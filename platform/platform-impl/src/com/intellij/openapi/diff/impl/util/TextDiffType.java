@@ -42,11 +42,7 @@ public class TextDiffType implements DiffStatusBar.LegendTypeDescriptor {
   public static final List<TextDiffType> DIFF_TYPES = Arrays.asList(DELETED, CHANGED, INSERT);
   public static final List<TextDiffType> MERGE_TYPES = Arrays.asList(DELETED, CHANGED, INSERT, CONFLICT);
 
-  public static final Convertor<TextDiffType, TextAttributesKey> ATTRIBUTES_KEY = new Convertor<TextDiffType, TextAttributesKey>() {
-    public TextAttributesKey convert(TextDiffType textDiffType) {
-      return textDiffType.getAttributesKey();
-    }
-  };
+  public static final Convertor<TextDiffType, TextAttributesKey> ATTRIBUTES_KEY = textDiffType -> textDiffType.getAttributesKey();
   private static final double MIDDLE_COLOR_FACTOR = 0.6;
 
   private final TextDiffTypeEnum myType;

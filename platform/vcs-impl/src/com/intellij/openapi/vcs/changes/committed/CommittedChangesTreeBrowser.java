@@ -67,8 +67,10 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterRevisionsFiles;
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getAllFiles;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
+import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
 
 /**
  * @author yole
@@ -114,7 +116,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     TreeUtil.expandAll(myChangesTree);
     myChangesTree.setExpandableItemsEnabled(false);
 
-    myDetailsView = new RepositoryChangesBrowser(project, Collections.<CommittedChangeList>emptyList());
+    myDetailsView = new RepositoryChangesBrowser(project, Collections.emptyList());
     myDetailsView.getViewerScrollPane().setBorder(RIGHT_BORDER);
 
     myChangesTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
@@ -165,11 +167,9 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
     add(mainSplitter, BorderLayout.CENTER);
 
-    myInnerSplitter = new WiseSplitter(new Runnable() {
-      public void run() {
-        filterSplitter.doLayout();
-        updateModel();
-      }
+    myInnerSplitter = new WiseSplitter(() -> {
+      filterSplitter.doLayout();
+      updateModel();
     }, filterSplitter);
     Disposer.register(this, myInnerSplitter);
 
@@ -184,11 +184,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
   private void updateGrouping() {
     if (myGroupingStrategy.changedSinceApply()) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          updateModel();
-        }
-      }, ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(() -> updateModel(), ModalityState.NON_MODAL);
     }
   }
 
@@ -245,11 +241,11 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   private void updateModel() {
+    TreeState state = TreeState.createOn(myChangesTree, (DefaultMutableTreeNode)myChangesTree.getModel().getRoot());
     final List<CommittedChangeList> filteredChangeLists = myFilteringStrategy.filterChangeLists(myChangeLists);
-    final TreePath[] paths = myChangesTree.getSelectionPaths();
     myChangesTree.setModel(buildTreeModel(filteredChangeLists));
+    state.applyTo(myChangesTree);
     TreeUtil.expandAll(myChangesTree);
-    myChangesTree.setSelectionPaths(paths);
   }
 
   public void setGroupingStrategy(@NotNull ChangeListGroupingStrategy strategy) {
@@ -406,12 +402,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     toolbarGroup.add(new SelectGroupingAction(project, this));
     final ExpandAllAction expandAllAction = new ExpandAllAction(myChangesTree);
     final CollapseAllAction collapseAllAction = new CollapseAllAction(myChangesTree);
-    expandAllAction.registerCustomShortcutSet(
-      new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_EXPAND_ALL)),
-      myChangesTree);
-    collapseAllAction.registerCustomShortcutSet(
-      new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_COLLAPSE_ALL)),
-      myChangesTree);
+    expandAllAction.registerCustomShortcutSet(getActiveKeymapShortcuts(IdeActions.ACTION_EXPAND_ALL), myChangesTree);
+    collapseAllAction.registerCustomShortcutSet(getActiveKeymapShortcuts(IdeActions.ACTION_COLLAPSE_ALL), myChangesTree);
     toolbarGroup.add(expandAllAction);
     toolbarGroup.add(collapseAllAction);
     toolbarGroup.add(ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER));
@@ -422,7 +414,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     for (AnAction anAction : extra) {
       toolbarGroup.add(anAction);
     }
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroup, true);
+    return ActionManager.getInstance().createActionToolbar("CommittedChangesTree", toolbarGroup, true);
   }
 
   public void calcData(DataKey key, DataSink sink) {
@@ -445,7 +437,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     }
     else if (key.equals(CommonDataKeys.NAVIGATABLE_ARRAY)) {
       Collection<Change> changes = collectChanges(getSelectedChangeLists(), false);
-      sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, getNavigatableArray(myProject, getAfterRevisionsFiles(changes.stream())));
+      sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, getNavigatableArray(myProject, getAllFiles(changes.stream())));
     }
     else if (key.equals(PlatformDataKeys.HELP_ID)) {
       sink.put(PlatformDataKeys.HELP_ID, myHelpId);
@@ -475,14 +467,12 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   public void reportLoadedLists(final CommittedChangeListsListener listener) {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        listener.onBeforeStartReport();
-        for (CommittedChangeList list : myChangeLists) {
-          listener.report(list);
-        }
-        listener.onAfterEndReport();
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      listener.onBeforeStartReport();
+      for (CommittedChangeList list : myChangeLists) {
+        listener.report(list);
       }
+      listener.onAfterEndReport();
     });
   }
 
@@ -528,11 +518,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       if (ApplicationManager.getApplication().isDispatchThread()) {
         updateModel();
       } else {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            updateModel();
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> updateModel());
       }
     }
   }
@@ -572,10 +558,6 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   public void setLoading(final boolean value) {
-    new AbstractCalledLater(myProject, ModalityState.NON_MODAL) {
-      public void run() {
-        myChangesTree.setPaintBusy(value);
-      }
-    }.callMe();
+    runOrInvokeLaterAboveProgress(() -> myChangesTree.setPaintBusy(value), ModalityState.NON_MODAL, myProject);
   }
 }

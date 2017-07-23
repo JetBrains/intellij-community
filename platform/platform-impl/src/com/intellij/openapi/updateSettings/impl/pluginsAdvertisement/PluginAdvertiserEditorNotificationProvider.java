@@ -34,10 +34,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: 10/11/13
- */
 public class PluginAdvertiserEditorNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
   private static final Key<EditorNotificationPanel> KEY = Key.create("file.type.associations.detected");
   private final Project myProject;
@@ -92,7 +88,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
   private EditorNotificationPanel createPanel(final String extension, final Set<PluginsAdvertiser.Plugin> plugins) {
     final EditorNotificationPanel panel = new EditorNotificationPanel();
     
-    panel.setText("Plugins supporting " + extension + " files are found");
+    panel.setText("Plugins supporting " + extension + " files found.");
     final IdeaPluginDescriptor disabledPlugin = PluginsAdvertiser.getDisabledPlugin(plugins);
     if (disabledPlugin != null) {
       panel.createActionLabel("Enable " + disabledPlugin.getName() + " plugin", () -> {

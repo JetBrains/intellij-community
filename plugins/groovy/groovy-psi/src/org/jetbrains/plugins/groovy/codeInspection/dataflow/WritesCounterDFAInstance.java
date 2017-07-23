@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class WritesCounterDFAInstance implements DfaInstance<TObjectIntHashMap<G
   }
 
   @Override
-  public void fun(TObjectIntHashMap<GrVariable> map, Instruction instruction) {
+  public void fun(@NotNull TObjectIntHashMap<GrVariable> map, @NotNull Instruction instruction) {
     if (!(instruction instanceof ReadWriteVariableInstruction)) return;
 
     final ReadWriteVariableInstruction rwInstruction = (ReadWriteVariableInstruction)instruction;
@@ -68,10 +68,5 @@ public class WritesCounterDFAInstance implements DfaInstance<TObjectIntHashMap<G
   @Override
   public TObjectIntHashMap<GrVariable> initial() {
     return new TObjectIntHashMap<>();
-  }
-
-  @Override
-  public boolean isForward() {
-    return true;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.tools;
 
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
@@ -111,7 +112,9 @@ public class OutputFiltersDialog extends DialogWrapper {
             myFiltersModel.addElement(filterInfo);
             setModified(true);
           }
-          myFiltersList.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(myFiltersList, true);
+          });
         }
       }).setEditAction(new AnActionButtonRunnable() {
         @Override
@@ -122,7 +125,9 @@ public class OutputFiltersDialog extends DialogWrapper {
           if (wasEdited) {
             setModified(true);
           }
-          myFiltersList.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(myFiltersList, true);
+          });
         }
       }).setRemoveAction(new AnActionButtonRunnable() {
         @Override
@@ -131,7 +136,9 @@ public class OutputFiltersDialog extends DialogWrapper {
             myFiltersModel.removeElementAt(myFiltersList.getSelectedIndex());
             setModified(true);
           }
-          myFiltersList.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(myFiltersList, true);
+          });
         }
       }).setMoveUpAction(new AnActionButtonRunnable() {
         @Override
@@ -140,7 +147,9 @@ public class OutputFiltersDialog extends DialogWrapper {
           if (movedCount > 0) {
             setModified(true);
           }
-          myFiltersList.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(myFiltersList, true);
+          });
         }
       }).setMoveDownAction(new AnActionButtonRunnable() {
         @Override
@@ -149,7 +158,9 @@ public class OutputFiltersDialog extends DialogWrapper {
           if (movedCount > 0) {
             setModified(true);
           }
-          myFiltersList.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(myFiltersList, true);
+          });
         }
       })
       .createPanel();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     myProject = myModel.getProject();
     myDataStorageRoot = FileUtil.createTempDirectory("compile-server-" + getProjectName(), null);
     myLogger = new TestProjectBuilderLogger();
-    myBuildParams = new HashMap<String, String>();
+    myBuildParams = new HashMap<>();
   }
 
   @Override
@@ -173,18 +173,22 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
 
   protected JpsSdk<JpsDummyElement> addJdk(final String name) {
     try {
-      return addJdk(name, FileUtil.toSystemIndependentName(ClasspathBootstrap.getResourceFile(Object.class).getCanonicalPath()));
+      String pathToRtJar = ClasspathBootstrap.getResourcePath(Object.class);
+      String path = pathToRtJar == null ? null : FileUtil.toSystemIndependentName(new File(pathToRtJar).getCanonicalPath());
+      return addJdk(name, path);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  protected JpsSdk<JpsDummyElement> addJdk(final String name, final String path) {
+  protected JpsSdk<JpsDummyElement> addJdk(final String name, @Nullable String jdkClassesRoot) {
     String homePath = System.getProperty("java.home");
     String versionString = System.getProperty("java.version");
     JpsTypedLibrary<JpsSdk<JpsDummyElement>> jdk = myModel.getGlobal().addSdk(name, homePath, versionString, JpsJavaSdkType.INSTANCE);
-    jdk.addRoot(JpsPathUtil.pathToUrl(path), JpsOrderRootType.COMPILED);
+    if (jdkClassesRoot != null) {
+      jdk.addRoot(JpsPathUtil.pathToUrl(jdkClassesRoot), JpsOrderRootType.COMPILED);
+    }
     return jdk.getProperties();
   }
 
@@ -212,7 +216,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   }
 
   protected void loadProject(String projectPath) {
-    loadProject(projectPath, Collections.<String, String>emptyMap());
+    loadProject(projectPath, Collections.emptyMap());
   }
 
   protected void loadProject(String projectPath,
@@ -220,7 +224,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     try {
       String testDataRootPath = getTestDataRootPath();
       String fullProjectPath = FileUtil.toSystemDependentName(testDataRootPath != null ? testDataRootPath + "/" + projectPath : projectPath);
-      Map<String, String> allPathVariables = new HashMap<String, String>(pathVariables.size() + 1);
+      Map<String, String> allPathVariables = new HashMap<>(pathVariables.size() + 1);
       allPathVariables.putAll(pathVariables);
       allPathVariables.put(PathMacroUtil.APPLICATION_HOME_DIR, PathManager.getHomePath());
       allPathVariables.putAll(getAdditionalPathVariables());
@@ -340,10 +344,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       builder.build(scopeBuilder.build(), false);
       result.storeMappingsDump(descriptor);
     }
-    catch (RebuildRequestedException e) {
-      throw new RuntimeException(e);
-    }
-    catch (IOException e) {
+    catch (RebuildRequestedException | IOException e) {
       throw new RuntimeException(e);
     }
     return result;

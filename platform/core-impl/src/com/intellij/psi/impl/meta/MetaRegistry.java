@@ -40,13 +40,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 07.05.2003
- * Time: 3:31:09
- * To change this template use Options | File Templates.
- */
 public class MetaRegistry extends MetaDataRegistrar {
 
   private static final Logger LOG = Logger.getInstance(MetaRegistry.class);
@@ -57,12 +50,9 @@ public class MetaRegistry extends MetaDataRegistrar {
 
   public static void bindDataToElement(final PsiElement element, final PsiMetaData data) {
     CachedValue<PsiMetaData> value =
-      CachedValuesManager.getManager(element.getProject()).createCachedValue(new CachedValueProvider<PsiMetaData>() {
-        @Override
-        public Result<PsiMetaData> compute() {
-          data.init(element);
-          return new Result<PsiMetaData>(data, data.getDependences());
-        }
+      CachedValuesManager.getManager(element.getProject()).createCachedValue(() -> {
+        data.init(element);
+        return new CachedValueProvider.Result<>(data, data.getDependences());
       });
     element.putUserData(META_DATA_KEY, value);
   }
@@ -76,34 +66,31 @@ public class MetaRegistry extends MetaDataRegistrar {
     new UserDataCache<CachedValue<PsiMetaData>, PsiElement, Object>() {
       @Override
       protected CachedValue<PsiMetaData> compute(final PsiElement element, Object p) {
-        return CachedValuesManager.getManager(element.getProject()).createCachedValue(new CachedValueProvider<PsiMetaData>() {
-          @Override
-          public Result<PsiMetaData> compute() {
-            ensureContributorsLoaded();
-            for (final MyBinding binding : ourBindings) {
-              if (binding.myFilter.isClassAcceptable(element.getClass()) && binding.myFilter.isAcceptable(element, element.getParent())) {
-                final PsiMetaData data;
-                try {
-                  data = binding.myDataClass.newInstance();
-                }
-                catch (InstantiationException e) {
-                  throw new RuntimeException("failed to instantiate " + binding.myDataClass, e);
-                }
-                catch (IllegalAccessException e) {
-                  throw new RuntimeException("failed to instantiate " + binding.myDataClass, e);
-                }
-                data.init(element);
-                Object[] dependences = data.getDependences();
-                for (Object dependence : dependences) {
-                  if (dependence == null) {
-                    LOG.error(data + "(" + binding.myDataClass + ") provided null dependency");
-                  }
-                }
-                return new Result<PsiMetaData>(data, ArrayUtil.append(dependences, element));
+        return CachedValuesManager.getManager(element.getProject()).createCachedValue(() -> {
+          ensureContributorsLoaded();
+          for (final MyBinding binding : ourBindings) {
+            if (binding.myFilter.isClassAcceptable(element.getClass()) && binding.myFilter.isAcceptable(element, element.getParent())) {
+              final PsiMetaData data;
+              try {
+                data = binding.myDataClass.newInstance();
               }
+              catch (InstantiationException e) {
+                throw new RuntimeException("failed to instantiate " + binding.myDataClass, e);
+              }
+              catch (IllegalAccessException e) {
+                throw new RuntimeException("failed to instantiate " + binding.myDataClass, e);
+              }
+              data.init(element);
+              Object[] dependences = data.getDependences();
+              for (Object dependence : dependences) {
+                if (dependence == null) {
+                  LOG.error(data + "(" + binding.myDataClass + ") provided null dependency");
+                }
+              }
+              return new CachedValueProvider.Result<>(data, ArrayUtil.append(dependences, element));
             }
-            return new Result<PsiMetaData>(null, element);
           }
+          return new CachedValueProvider.Result<>(null, element);
         }, false);
       }
     };

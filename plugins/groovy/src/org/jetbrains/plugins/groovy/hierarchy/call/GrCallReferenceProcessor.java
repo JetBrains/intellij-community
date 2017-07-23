@@ -31,9 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousC
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created by Max Medvedev on 10/5/13
- */
 public class GrCallReferenceProcessor implements CallReferenceProcessor {
   @Override
   public boolean process(@NotNull PsiReference reference, @NotNull JavaCallHierarchyData data) {

@@ -24,17 +24,17 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.ui.JBListWithHintProvider;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.ClosableByLeftArrow;
+import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.popup.WizardPopup;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -155,6 +155,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     }
 
     return false;
+  }
+
+  protected boolean shouldUseStatistics() {
+    return true;
   }
 
   private boolean autoSelectUsingStatistics() {
@@ -406,11 +410,13 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
   }
 
   private void valuesSelected(final Object[] values) {
-    final String filter = getSpeedSearch().getFilter();
-    if (!StringUtil.isEmpty(filter)) {
-      for (Object value : values) {
-        final String text = getListStep().getTextFor(value);
-        StatisticsManager.getInstance().incUseCount(new StatisticsInfo("#list_popup:" + getListStep().getTitle() + "#" + filter, text));
+    if (shouldUseStatistics()) {
+      final String filter = getSpeedSearch().getFilter();
+      if (!StringUtil.isEmpty(filter)) {
+        for (Object value : values) {
+          final String text = getListStep().getTextFor(value);
+          StatisticsManager.getInstance().incUseCount(new StatisticsInfo("#list_popup:" + getListStep().getTitle() + "#" + filter, text));
+        }
       }
     }
   }
@@ -435,7 +441,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
         y += swt.getPreferredSize().height - 1;
       }
 
-      myChild.show(container, point.x + container.getWidth() - STEP_X_PADDING, y, true);
+      myChild.show(container, container.getLocationOnScreen().x + container.getWidth() - STEP_X_PADDING, y, true);
       setIndexForShowingChild(myList.getSelectedIndex());
       return false;
     }
@@ -530,14 +536,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     myIndexForShowingChild = aIndexForShowingChild;
   }
 
-  private class MyList extends JBListWithHintProvider implements DataProvider {
+  private class MyList extends JBList implements DataProvider {
     public MyList() {
       super(myListModel);
-    }
-
-    @Override
-    protected PsiElement getPsiElementForHint(Object selectedValue) {
-      return selectedValue instanceof PsiElement ? (PsiElement)selectedValue : null;
+      HintUpdateSupply.installSimpleHintUpdateSupply(this);
     }
 
     @Override
@@ -593,16 +595,20 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
   protected void onSpeedSearchPatternChanged() {
     myListModel.refilter();
     if (myListModel.getSize() > 0) {
-      if (!autoSelectUsingStatistics()) {
-        int fullMatchIndex = myListModel.getClosestMatchIndex();
-        if (fullMatchIndex != -1) {
-          myList.setSelectedIndex(fullMatchIndex);
-        }
-
-        if (myListModel.getSize() <= myList.getSelectedIndex() || !myListModel.isVisible(myList.getSelectedValue())) {
-          myList.setSelectedIndex(0);
-        }
+      if (!(shouldUseStatistics() && autoSelectUsingStatistics())) {
+        selectBestMatch();
       }
+    }
+  }
+
+  private void selectBestMatch() {
+    int fullMatchIndex = myListModel.getClosestMatchIndex();
+    if (fullMatchIndex != -1) {
+      myList.setSelectedIndex(fullMatchIndex);
+    }
+
+    if (myListModel.getSize() <= myList.getSelectedIndex() || !myListModel.isVisible(myList.getSelectedValue())) {
+      myList.setSelectedIndex(0);
     }
   }
 
@@ -641,6 +647,9 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
   public void showInBestPositionFor(@NotNull Editor editor) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       handleSelect(true);
+      if (!Disposer.isDisposed(this)) {
+        Disposer.dispose(this);
+      }
     }
     else {
       super.showInBestPositionFor(editor);

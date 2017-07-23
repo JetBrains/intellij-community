@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -269,13 +270,26 @@ public class JavaDocUtil {
     if (qName == null) return shortName;
 
     final PsiManager manager = aClass.getManager();
-    return manager.areElementsEquivalent(aClass, JavaPsiFacade.getInstance(manager.getProject()).getResolveHelper().resolveReferencedClass(shortName, context))
+    PsiClass resolvedClass = null;
+    try {
+      resolvedClass = JavaPsiFacade.getInstance(manager.getProject()).getResolveHelper().resolveReferencedClass(shortName, context);
+    }
+    catch (IndexNotReadyException e) {
+      LOG.debug(e);
+    }
+    return manager.areElementsEquivalent(aClass, resolvedClass)
       ? shortName
       : StringUtil.trimStart(qName, "java.lang.");
   }
 
   public static String getLabelText(Project project, PsiManager manager, String refText, PsiElement context) {
-    PsiElement refElement = findReferenceTarget(manager, refText, context, false);
+    PsiElement refElement = null;
+    try {
+      refElement = findReferenceTarget(manager, refText, context, false);
+    }
+    catch (IndexNotReadyException e) {
+      LOG.debug(e);
+    }
     if (refElement == null) {
       return refText.replaceFirst("^#", "").replaceAll("#", ".");
     }
@@ -304,7 +318,13 @@ public class JavaDocUtil {
       String memberText = refText.substring(poundIndex + 1);
       String memberLabel = getMemberLabelText(project, manager, memberText, context);
       if (!classRef.isEmpty()) {
-        PsiElement refClass = findReferenceTarget(manager, classRef, context);
+        PsiElement refClass = null;
+        try {
+          refClass = findReferenceTarget(manager, classRef, context);
+        }
+        catch (IndexNotReadyException e) {
+          LOG.debug(e);
+        }
         if (refClass instanceof PsiClass) {
           PsiElement scope = context;
           while (true) {

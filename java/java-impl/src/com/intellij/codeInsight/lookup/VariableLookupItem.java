@@ -45,6 +45,7 @@ import java.awt.*;
 * @author peter
 */
 public class VariableLookupItem extends LookupItem<PsiVariable> implements TypedLookupItem, StaticallyImportable {
+  private static final String EQ = " = ";
   @Nullable private final MemberLookupHelper myHelper;
   private final Color myColor;
   private final String myTailText;
@@ -77,7 +78,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     String initText = initializer == null ? null : initializer.getText();
     if (StringUtil.isEmpty(initText)) return null;
 
-    String prefix = var instanceof PsiEnumConstant ? "" : " = ";
+    String prefix = var instanceof PsiEnumConstant ? "" : EQ;
     String suffix = var instanceof PsiEnumConstant && ((PsiEnumConstant)var).getInitializingClass() != null ? " {...}" : "";
     return StringUtil.trimLog(prefix + initText + suffix, 30);
   }
@@ -159,7 +160,11 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       presentation.setTypeText(getType().getPresentableText());
     }
     if (myTailText != null && StringUtil.isEmpty(presentation.getTailText())) {
-      presentation.setTailText(myTailText, true);
+      if (myTailText.startsWith(EQ)) {
+        presentation.appendTailTextItalic(" (" + myTailText + ")", true);
+      } else {
+        presentation.setTailText(myTailText, true);
+      }
     }
   }
 
@@ -215,7 +220,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       TailType.COMMA.processTail(context.getEditor(), context.getTailOffset());
       AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(context.getEditor(), null);
     }
-    else if (completionChar == ':' && getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN) {
+    else if (completionChar == ':' && getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN && isTernaryCondition(ref)) {
       context.setAddCompletionChar(false);
       TailType.COND_EXPR_COLON.processTail(context.getEditor(), context.getTailOffset());
     }
@@ -229,6 +234,11 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
         document.insertString(ref.getTextRange().getStartOffset(), "!");
       }
     }
+  }
+
+  private static boolean isTernaryCondition(PsiReferenceExpression ref) {
+    PsiElement parent = ref == null ? null : ref.getParent();
+    return parent instanceof PsiConditionalExpression && ref == ((PsiConditionalExpression)parent).getThenExpression();
   }
 
   public static void makeFinalIfNeeded(@NotNull InsertionContext context, @NotNull PsiVariable variable) {

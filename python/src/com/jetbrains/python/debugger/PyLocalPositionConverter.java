@@ -17,9 +17,9 @@ package com.jetbrains.python.debugger;
 
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -109,7 +109,7 @@ public class PyLocalPositionConverter implements PyPositionConverter {
   }
 
   @Nullable
-  public XSourcePosition convertFromPython(@NotNull final PySourcePosition position) {
+  public XSourcePosition convertFromPython(@NotNull final PySourcePosition position, String frameName) {
     return createXSourcePosition(getVirtualFile(position.getFile()), position.getLine());
   }
 
@@ -189,12 +189,8 @@ public class PyLocalPositionConverter implements PyPositionConverter {
   }
 
   private static int convertRemoteLineToLocal(final VirtualFile vFile, int line) {
-    final Document document = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
-      @Override
-      public Document compute() {
-        return FileDocumentManager.getInstance().getDocument(vFile);
-      }
-    });
+    final Document document =
+      ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(vFile));
 
     line--;
     if (document != null) {

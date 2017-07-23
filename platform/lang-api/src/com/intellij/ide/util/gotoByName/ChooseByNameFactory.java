@@ -19,10 +19,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- * Date: Jan 26, 2005
- */
 public abstract class ChooseByNameFactory {
   public static ChooseByNameFactory getInstance(Project project){
     return ServiceManager.getService(project, ChooseByNameFactory.class);

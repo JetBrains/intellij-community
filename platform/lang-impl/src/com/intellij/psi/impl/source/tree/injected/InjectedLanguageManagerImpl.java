@@ -40,6 +40,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
@@ -64,6 +65,8 @@ import java.util.*;
  */
 public class InjectedLanguageManagerImpl extends InjectedLanguageManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl");
+  @SuppressWarnings("RedundantStringConstructorCall")
+  static final Object ourInjectionPsiLock = new String("injectionPsiLock");
   private final Project myProject;
   private final DumbService myDumbService;
   private volatile DaemonProgressIndicator myProgress;
@@ -152,21 +155,14 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
       if (myProgress.isCanceled()) return;
       JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(injected), myProgress, true, commitProcessor);
 
-      synchronized (PsiLock.LOCK) {
+      synchronized (ourInjectionPsiLock) {
         injected.clear();
         injected.addAll(newDocuments);
       }
     };
 
     if (synchronously) {
-      if (Thread.holdsLock(PsiLock.LOCK)) {
-        // hack for the case when docCommit was called from within PSI modification, e.g. in formatter.
-        // we can't spawn threads to do injections there, otherwise a deadlock is imminent
-        ContainerUtil.process(new ArrayList<>(injected), commitProcessor);
-      }
-      else {
-        commitInjectionsRunnable.run();
-      }
+      commitInjectionsRunnable.run();
     }
     else {
       JobLauncher.getInstance().submitToJobThread(() -> ApplicationManagerEx.getApplicationEx().tryRunReadAction(commitInjectionsRunnable), null);
@@ -254,6 +250,12 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   public void registerMultiHostInjector(@NotNull MultiHostInjector injector) {
     myManualInjectors.add(injector);
     clearInjectorCache();
+  }
+
+  @Override
+  public void registerMultiHostInjector(@NotNull MultiHostInjector injector, @NotNull Disposable parentDisposable) {
+    registerMultiHostInjector(injector);
+    Disposer.register(parentDisposable, () -> unregisterMultiHostInjector(injector));
   }
 
   @Override
@@ -443,6 +445,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     }
   }
 
+  @FunctionalInterface
   interface InjProcessor {
     boolean process(PsiElement element, MultiHostInjector injector);
   }

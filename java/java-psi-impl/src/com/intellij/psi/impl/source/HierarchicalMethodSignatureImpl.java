@@ -40,11 +40,11 @@ public class HierarchicalMethodSignatureImpl extends HierarchicalMethodSignature
     PsiMethod superMethod = superSignatureHierarchical.getMethod();
     PsiMethod method = getMethod();
     if (PsiUtil.isAccessible(method.getProject(), superMethod, method, null)) {
-      if (mySupers == null) mySupers = new SmartList<HierarchicalMethodSignature>();
+      if (mySupers == null) mySupers = new SmartList<>();
       mySupers.add(superSignatureHierarchical);
     }
     else {
-      if (myInaccessibleSupers == null) myInaccessibleSupers = new SmartList<HierarchicalMethodSignature>();
+      if (myInaccessibleSupers == null) myInaccessibleSupers = new SmartList<>();
       myInaccessibleSupers.add(superSignatureHierarchical);
     }
   }
@@ -52,7 +52,7 @@ public class HierarchicalMethodSignatureImpl extends HierarchicalMethodSignature
   @Override
   @NotNull
   public List<HierarchicalMethodSignature> getSuperSignatures() {
-    return mySupers == null ? Collections.<HierarchicalMethodSignature>emptyList() : mySupers;
+    return mySupers == null ? Collections.emptyList() : mySupers;
   }
 
   @NotNull

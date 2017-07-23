@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,6 @@ public class FieldAccessNotGuardedInspection extends BaseJavaBatchLocalInspectio
     return new Visitor(holder);
   }
 
-
   private static class Visitor extends JavaElementVisitor {
     private final ProblemsHolder myHolder;
 
@@ -83,16 +82,28 @@ public class FieldAccessNotGuardedInspection extends BaseJavaBatchLocalInspectio
       } catch (IncorrectOperationException ignore) {
         return;
       }
+      if (guardExpression instanceof PsiThisExpression && !PsiUtil.isAccessedForWriting(expression) &&
+          field.hasModifierProperty(PsiModifier.VOLATILE)) {
+        return;
+      }
       final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
       if (containingMethod != null) {
         if (JCiPUtil.isGuardedBy(containingMethod, guard) || containingMethod.isConstructor()) {
           return;
         }
-        if (containingMethod.hasModifierProperty(PsiModifier.SYNCHRONIZED) && guardExpression instanceof PsiThisExpression) {
-          final PsiThisExpression thisExpression = (PsiThisExpression)guardExpression;
-          final PsiClass aClass = getClassFromThisExpression(thisExpression, field);
-          if (aClass == null || aClass.equals(containingMethod.getContainingClass())) {
-            return;
+        if (containingMethod.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
+          if (guardExpression instanceof PsiThisExpression) {
+            final PsiThisExpression thisExpression = (PsiThisExpression)guardExpression;
+            final PsiClass aClass = getClassFromThisExpression(thisExpression, field);
+            if (aClass == null || aClass.equals(containingMethod.getContainingClass())) {
+              return;
+            }
+          }
+          else if (containingMethod.hasModifierProperty(PsiModifier.STATIC) && guardExpression instanceof PsiClassObjectAccessExpression) {
+            PsiClass psiClass = PsiUtil.resolveClassInType(((PsiClassObjectAccessExpression)guardExpression).getOperand().getType());
+            if (psiClass == null || psiClass.equals(containingMethod.getContainingClass())) {
+              return;
+            }
           }
         }
       }

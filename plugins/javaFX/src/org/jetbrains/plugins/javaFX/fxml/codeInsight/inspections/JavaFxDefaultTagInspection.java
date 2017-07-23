@@ -30,9 +30,6 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyTagDescriptor;
 
-/**
- * User: anna
- */
 public class JavaFxDefaultTagInspection extends XmlSuppressableInspectionTool{
   @NotNull
   @Override
@@ -67,7 +64,7 @@ public class JavaFxDefaultTagInspection extends XmlSuppressableInspectionTool{
     if (subTags.length != 0) {
       final PsiClass tagValueClass = JavaFxPsiUtil.getTagValueClass(subTags[subTags.length - 1]);
       if (JavaFxPsiUtil.isObservableCollection(tagValueClass)) {
-        final PsiMember property = JavaFxPsiUtil.collectWritableProperties(parentTagClass).get(propertyName);
+        final PsiMember property = JavaFxPsiUtil.getWritableProperties(parentTagClass).get(propertyName);
         if (property != null) {
           final PsiType propertyType = JavaFxPsiUtil.getWritablePropertyType(parentTagClass, property);
           final PsiClass propertyClass = PsiUtil.resolveClassInClassTypeOnly(propertyType);

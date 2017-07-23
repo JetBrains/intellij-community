@@ -190,6 +190,16 @@ public class PsiElement2UsageTargetAdapter
     return targets;
   }
 
+  @NotNull
+  public static PsiElement[] convertToPsiElements(PsiElement2UsageTargetAdapter[] adapters) {
+    PsiElement[] targets = new PsiElement[adapters.length];
+    for (int i = 0; i < targets.length; i++) {
+      targets[i] = adapters[i].getElement();
+    }
+
+    return targets;
+  }
+
   @Override
   public void calcData(final DataKey key, final DataSink sink) {
     if (key == UsageView.USAGE_INFO_KEY) {

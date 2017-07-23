@@ -29,6 +29,8 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.gotoByName.ModelDiff;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
@@ -43,10 +45,11 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -97,7 +100,10 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class ShowUsagesAction extends AnAction implements PopupAction {
   public static final String ID = "ShowUsages";
-  public static final int USAGES_PAGE_SIZE = 100;
+
+  public static int getUsagesPageSize() {
+    return Math.max(1, Registry.intValue("ide.usages.page.size", 100));
+  }
 
   static final Usage MORE_USAGES_SEPARATOR = NullUsage.INSTANCE;
   static final Usage USAGES_OUTSIDE_SCOPE_SEPARATOR = new UsageAdapter();
@@ -205,14 +211,14 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (usageTargets == null) {
       FindUsagesAction.chooseAmbiguousTargetAndPerform(project, editor, element -> {
-        startFindUsages(element, popupPosition, editor, USAGES_PAGE_SIZE);
+        startFindUsages(element, popupPosition, editor, getUsagesPageSize());
         return false;
       });
     }
     else if (ArrayUtil.getFirstElement(usageTargets) instanceof PsiElementUsageTarget) {
       PsiElement element = ((PsiElementUsageTarget)usageTargets[0]).getElement();
       if (element != null) {
-        startFindUsages(element, popupPosition, editor, USAGES_PAGE_SIZE);
+        startFindUsages(element, popupPosition, editor, getUsagesPageSize());
       }
     }
   }
@@ -322,7 +328,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       synchronized (usages) {
         if (visibleNodes.size() >= maxUsages) return false;
         if(UsageViewManager.isSelfUsage(usage, myUsageTarget)) return true;
-        UsageNode node = ApplicationManager.getApplication().runReadAction((Computable<UsageNode>)() -> usageView.doAppendUsage(usage));
+        UsageNode node = ReadAction.compute(() -> usageView.doAppendUsage(usage));
         usages.add(usage);
         if (node != null) {
           visibleNodes.add(node);
@@ -638,6 +644,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                                    @NotNull final Runnable itemChoseCallback,
                                    @NotNull final UsageViewPresentation presentation,
                                    @NotNull final AsyncProcessIcon processIcon) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     PopupChooserBuilder builder = new PopupChooserBuilder(table);
     final String title = presentation.getTabText();
@@ -660,6 +667,11 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
           cancel(popup[0]);
           showDialogAndFindUsages(handler, popupPosition, editor, maxUsages);
         }
+
+        @Override
+        public boolean startInTransaction() {
+          return true;
+        }
       }.registerCustomShortcutSet(new CustomShortcutSet(shortcut.getFirstKeyStroke()), table);
     }
     shortcut = getShowUsagesShortcut();
@@ -669,6 +681,11 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
         public void actionPerformed(@NotNull AnActionEvent e) {
           cancel(popup[0]);
           searchEverywhere(options, handler, editor, popupPosition, maxUsages);
+        }
+
+        @Override
+        public boolean startInTransaction() {
+          return true;
         }
       }.registerCustomShortcutSet(new CustomShortcutSet(shortcut.getFirstKeyStroke()), table);
     }
@@ -1058,7 +1075,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                                 @NotNull FindUsagesHandler handler,
                                 int maxUsages,
                                 @NotNull FindUsagesOptions options) {
-    showElementUsages(editor, popupPosition, handler, maxUsages+USAGES_PAGE_SIZE, options);
+    TransactionGuard.submitTransaction(handler.getProject(), () ->
+      showElementUsages(editor, popupPosition, handler, maxUsages + getUsagesPageSize(), options));
   }
 
   private static void addUsageNodes(@NotNull GroupNode root, @NotNull final UsageViewImpl usageView, @NotNull List<UsageNode> outNodes) {
@@ -1150,7 +1168,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
     public MyTable() {
       ScrollingUtil.installActions(this);
-      HintUpdateSupply.installSimpleHintUpdateSupply(this);
+      HintUpdateSupply.installDataContextHintUpdateSupply(this);
     }
 
     @Override
@@ -1165,6 +1183,9 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
         if (selected.length == 1) {
           return getPsiElementForHint(getValueAt(selected[0], 0));
         }
+      }
+      else if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
+        return PopupUtil.getPopupContainerFor(this);
       }
       return null;
     }
@@ -1243,7 +1264,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       Usage usage = node.getUsage();
       if (usage == MORE_USAGES_SEPARATOR || usage == USAGES_OUTSIDE_SCOPE_SEPARATOR) return "";
       GroupNode group = (GroupNode)node.getParent();
-      return group + usage.getPresentation().getPlainText();
+      String groupText = group == null ? "" : group.getGroup().getText(null);
+      return groupText + usage.getPresentation().getPlainText();
     }
 
     @Override

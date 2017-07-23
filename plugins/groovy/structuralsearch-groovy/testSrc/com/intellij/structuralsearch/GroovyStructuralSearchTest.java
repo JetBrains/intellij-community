@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,7 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider;
-import com.intellij.idea.Bombed;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-
-import java.util.Calendar;
-import java.util.List;
 
 /**
  * @author Eugene.Kudelevsky
@@ -142,11 +138,8 @@ public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
     }
   }
 
-  private void doTest(String source,
-                      String pattern,
-                      int expectedOccurences,
-                      int expectedWithDefaultEquivalence) {
-    findAndCheck(source, pattern, expectedOccurences);
+  private void doTest(String source, String pattern, int expectedOccurrences, int expectedWithDefaultEquivalence) {
+    findAndCheck(source, pattern, expectedOccurrences);
     try {
       EquivalenceDescriptorProvider.ourUseDefaultEquivalence = true;
       findAndCheck(source, pattern, expectedWithDefaultEquivalence);
@@ -158,8 +151,6 @@ public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
 
   private void findAndCheck(String source, String pattern, int expectedOccurences) {
     testMatcher.clearContext();
-    final List<MatchResult> matches =
-      findMatches(source, pattern, true, GroovyFileType.GROOVY_FILE_TYPE, null, GroovyFileType.GROOVY_FILE_TYPE, null, false);
-    assertEquals(expectedOccurences, matches.size());
+    assertEquals(expectedOccurences, findMatchesCount(source, pattern, GroovyFileType.GROOVY_FILE_TYPE));
   }
 }

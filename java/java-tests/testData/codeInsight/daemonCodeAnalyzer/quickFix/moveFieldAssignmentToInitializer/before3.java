@@ -1,9 +1,12 @@
-// "Move assignment to field declaration" "true"
+// "Move assignment to field declaration" "GENERIC_ERROR_OR_WARNING"
 
 class X {
   static int f;
   static {
-    f = <caret>0;
+    /*
+    Set to zero
+     */
+    <caret>f = 0;
   }
   X(int i) {
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.util.FixedValuesReferenceProvider;
 
 import java.lang.reflect.Modifier;
@@ -126,6 +126,13 @@ public class GroovyMethodInfo {
     if (methodKind instanceof String) {
       lightMethodInfos = getInfos(LIGHT_METHOD_INFOS, (String)methodKind, method);
     }
+
+    if (method instanceof PsiMirrorElement) {
+      PsiElement prototype = ((PsiMirrorElement)method).getPrototype();
+      if (prototype instanceof PsiMethod) {
+        method = (PsiMethod)prototype;
+      }
+    }
     
     List<GroovyMethodInfo> methodInfos = null;
 
@@ -135,7 +142,7 @@ public class GroovyMethodInfo {
     }
     
     if (methodInfos == null) {
-      return lightMethodInfos == null ? Collections.<GroovyMethodInfo>emptyList() : lightMethodInfos;
+      return lightMethodInfos == null ? Collections.emptyList() : lightMethodInfos;
     }
     else {
       if (lightMethodInfos == null) {

@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -106,8 +107,15 @@ public final class IntentionActionMetaData extends BeforeAfterActionMetaData {
     if (myDirURL == null) { //plugin compatibility
       myDirURL = getIntentionDescriptionDirURL(myLoader, getFamily());
     }
-    LOG.assertTrue(myDirURL != null, "Intention Description Dir URL is null: " +
-                                     getFamily() + "; " + myDescriptionDirectoryName + ", " + myLoader);
+    if (myDirURL == null) {
+      PluginId pluginId = getPluginId();
+      String errorMessage = "Intention Description Dir URL is null: " + getFamily() + "; " + myDescriptionDirectoryName;
+      if (pluginId != null) {
+        throw new PluginException(errorMessage, pluginId);
+      } else {
+        throw new RuntimeException(errorMessage);
+      }
+    }
     return myDirURL;
   }
 }

@@ -145,6 +145,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                    "BRACE_STYLE",
                                    "CLASS_BRACE_STYLE",
                                    "METHOD_BRACE_STYLE",
+                                   "LAMBDA_BRACE_STYLE",
                                    "USE_FLYING_GEESE_BRACES",
                                    "FLYING_GEESE_BRACES_GAP",
                                    "DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS",
@@ -153,6 +154,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                    "CATCH_ON_NEW_LINE",
                                    "FINALLY_ON_NEW_LINE",
                                    "INDENT_CASE_FROM_SWITCH",
+                                   "CASE_STATEMENT_ON_NEW_LINE",
                                    "SPECIAL_ELSE_IF_TREATMENT",
                                    "ENUM_CONSTANTS_WRAP",
                                    "ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS",
@@ -188,7 +190,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   @Override
   public PsiFile createFileFromText(final Project project, final String text) {
     final PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(
-      "sample.java", StdFileTypes.JAVA, text, LocalTimeCounter.currentTime(), true, false
+      "sample.java", StdFileTypes.JAVA, text, LocalTimeCounter.currentTime(), false, false
     );
     file.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
     return file;
@@ -210,6 +212,33 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   @Override
   public IndentOptionsEditor getIndentOptionsEditor() {
     return new JavaIndentOptionsEditor();
+  }
+
+
+  @Override
+  @NotNull
+  public DocCommentSettings getDocCommentSettings(@NotNull PsiFile file) {
+    if (file.isValid()) {
+      return new DocCommentSettings() {
+        private final CodeStyleSettings mySettings = CodeStyleSettingsManager.getSettings(file.getProject());
+
+        @Override
+        public boolean isDocFormattingEnabled() {
+          return mySettings.ENABLE_JAVADOC_FORMATTING;
+        }
+
+        @Override
+        public void setDocFormattingEnabled(boolean formattingEnabled) {
+          mySettings.ENABLE_JAVADOC_FORMATTING = formattingEnabled;
+        }
+
+        @Override
+        public boolean isLeadingAsteriskEnabled() {
+          return mySettings.JD_LEADING_ASTERISKS_ARE_ENABLED;
+        }
+      };
+    }
+    return super.getDocCommentSettings(file);
   }
 
   private static final String GENERAL_CODE_SAMPLE =

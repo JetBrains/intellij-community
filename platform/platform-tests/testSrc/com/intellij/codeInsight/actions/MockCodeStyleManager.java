@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.actions;
 
-import com.intellij.formatting.FormattingMode;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
@@ -76,6 +75,7 @@ public class MockCodeStyleManager extends CodeStyleManager {
   @Override
   public void reformatTextWithContext(@NotNull PsiFile file, 
                                       @NotNull ChangedRangesInfo ranges) throws IncorrectOperationException {
+    //in real world ranges are optimized before passing to formatter
     reformatText(file, ranges.allChangedRanges);
   }
 
@@ -124,7 +124,7 @@ public class MockCodeStyleManager extends CodeStyleManager {
   }
 
   @Override
-  public int adjustLineIndent(@NotNull Document document, int offset, FormattingMode mode) {
+  public int adjustLineIndent(@NotNull Document document, int offset) {
     throw new UnsupportedOperationException("com.intellij.codeInsight.actions.MockCodeStyleManager.adjustLineIndent(...)");
   }
 
@@ -187,11 +187,5 @@ public class MockCodeStyleManager extends CodeStyleManager {
   public <T> T performActionWithFormatterDisabled(Computable<T> r) {
     throw new UnsupportedOperationException(
       "com.intellij.codeInsight.actions.MockCodeStyleManager.performActionWithFormatterDisabled(...)");
-  }
-
-  @Override
-  public FormattingMode getCurrentFormattingMode() {
-    throw new UnsupportedOperationException(
-      "com.intellij.codeInsight.actions.MockCodeStyleManager.getCurrentFormattingMode(...)");
   }
 }

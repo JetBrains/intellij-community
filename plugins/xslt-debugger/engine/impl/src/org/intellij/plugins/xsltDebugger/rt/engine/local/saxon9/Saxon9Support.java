@@ -19,11 +19,6 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import java.util.Properties;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 12.01.2009
-*/
 public class Saxon9Support {
   public static boolean init(Transformer transformer, final LocalDebugger dbg) {
     if (transformer instanceof Controller) {

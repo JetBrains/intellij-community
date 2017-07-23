@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,15 +26,15 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction;
@@ -142,7 +142,7 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
         updateForDocument(document);
       }
     }, this);
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileAdapter() {
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileListener() {
       @Override
       public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
         if (VirtualFile.PROP_ENCODING.equals(event.getPropertyName())) {
@@ -151,7 +151,7 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
       }
     }));
 
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter() {
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         Document document = e.getDocument();
@@ -214,7 +214,7 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
 
       if (file == null) {
         toolTipText = "";
-        charsetName = "n/a";
+        charsetName = "";
       }
       else {
         Pair<Charset, String> check = EncodingUtil.checkSomeActionEnabled(file);

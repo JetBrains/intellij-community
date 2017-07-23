@@ -69,15 +69,12 @@ public class LightTempDirTestFixtureImpl extends BaseFixture implements TempDirT
   @Override
   @NotNull
   public VirtualFile findOrCreateDir(@NotNull final String path) {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-      @Override
-      public VirtualFile compute() {
-        try {
-          return findOrCreateChildDir(getSourceRoot(), path);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+    return WriteAction.compute(() -> {
+      try {
+        return findOrCreateChildDir(getSourceRoot(), path);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
       }
     });
   }

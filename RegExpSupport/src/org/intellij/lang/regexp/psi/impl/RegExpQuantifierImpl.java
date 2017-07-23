@@ -18,96 +18,89 @@ package org.intellij.lang.regexp.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import org.jetbrains.annotations.NotNull;
-
-import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.RegExpElementTypes;
+import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
+import org.intellij.lang.regexp.psi.RegExpNumber;
 import org.intellij.lang.regexp.psi.RegExpQuantifier;
-import org.intellij.lang.regexp.psi.RegExpAtom;
+import org.jetbrains.annotations.Nullable;
 
 public class RegExpQuantifierImpl extends RegExpElementImpl implements RegExpQuantifier {
+
+    private static final TokenSet TOKENS = TokenSet.create(RegExpElementTypes.NUMBER, RegExpTT.COMMA);
 
     public RegExpQuantifierImpl(ASTNode astNode) {
         super(astNode);
     }
 
+    @Override
     public void accept(RegExpElementVisitor visitor) {
         visitor.visitRegExpQuantifier(this);
     }
 
-    @NotNull
-    public RegExpAtom getAtom() {
-        final ASTNode[] nodes = getNode().getChildren(RegExpElementTypes.ATOMS);
-        assert nodes.length > 0;
-        return (RegExpAtom)nodes[0].getPsi();
+    @Override
+    public boolean isCounted() {
+        return getNode().getFirstChildNode().getElementType() == RegExpTT.LBRACE;
     }
 
-    @NotNull
-    public Count getCount() {
-        final ASTNode[] nodes = getNode().getChildren(RegExpTT.QUANTIFIERS);
-        assert nodes.length > 0;
-
-        final IElementType type = nodes[0].getElementType();
-        if (type == RegExpTT.QUEST) {
-            return SimpleCount.ONE_OR_ZERO;
-        } else if (type == RegExpTT.STAR) {
-            return SimpleCount.ZERO_OR_MORE;
-        } else if (type == RegExpTT.PLUS) {
-            return SimpleCount.ONE_OR_MORE;
-        } else if (type == RegExpTT.LBRACE) {
-            final ASTNode[] numbers = getNode().getChildren(TokenSet.create(RegExpTT.NUMBER));
-            if (numbers.length >= 1) {
-                final String min = numbers[0].getText();
-                final String max;
-                if (numbers.length == 2) {
-                    max = numbers[1].getText();
-                } else if (getNode().findChildByType(RegExpTT.COMMA) != null) {
-                    max = "";
-                } else {
-                    max = min;
-                }
-                return new RepeatedCount(min, max);
-            }
-            // syntactically incorrect
-            return new RepeatedCount("", "");
+    @Override
+    @Nullable
+    public ASTNode getToken() {
+        final ASTNode node = getNode().getFirstChildNode();
+        final IElementType type = node.getElementType();
+        if (type == RegExpTT.LBRACE) {
+            return null;
         }
+        return node;
+    }
 
-        assert false;
+    @Nullable
+    @Override
+    public RegExpNumber getMin() {
+        final ASTNode[] nodes = getNode().getChildren(TOKENS);
+        if (nodes.length == 0 || nodes[0].getElementType() != RegExpElementTypes.NUMBER) {
+            return null;
+        }
+        return (RegExpNumber)nodes[0].getPsi();
+    }
+
+    @Nullable
+    @Override
+    public RegExpNumber getMax() {
+        final ASTNode[] nodes = getNode().getChildren(TOKENS);
+        if (nodes.length == 0) {
+            return null;
+        }
+        final ASTNode node = nodes[nodes.length - 1];
+        if (node.getElementType() != RegExpElementTypes.NUMBER) {
+            return null;
+        }
+        return (RegExpNumber)node.getPsi();
+    }
+
+    @Nullable
+    @Override
+    public ASTNode getModifier() {
+        final ASTNode[] nodes = getNode().getChildren(RegExpTT.QUANTIFIERS);
+        if (nodes.length > 1) {
+            final ASTNode node = nodes[1];
+            final IElementType type = node.getElementType();
+            if (type == RegExpTT.QUEST || type == RegExpTT.PLUS) {
+                return node;
+            }
+        }
         return null;
     }
 
-    @NotNull
-    public Type getType() {
-        final ASTNode[] nodes = getNode().getChildren(RegExpTT.QUANTIFIERS);
-        if (nodes.length > 1) {
-            final IElementType type = nodes[1].getElementType();
-            if (type == RegExpTT.QUEST) {
-                return Type.RELUCTANT;
-            } else if (type == RegExpTT.PLUS) {
-                return Type.POSSESSIVE;
-            }
-        }
-        return Type.GREEDY;
+    @Override
+    public boolean isReluctant() {
+        final ASTNode modifier = getModifier();
+        return modifier != null && modifier.getElementType() == RegExpTT.QUEST;
     }
 
-    private static class RepeatedCount implements RegExpQuantifier.Count {
-        private final String myMin;
-        private final String myMax;
-
-        public RepeatedCount(@NotNull String min, @NotNull String max) {
-            myMin = min;
-            myMax = max;
-        }
-
-        @NotNull
-        public String getMin() {
-            return myMin;
-        }
-
-        @NotNull
-        public String getMax() {
-            return myMax;
-        }
+    @Override
+    public boolean isPossessive() {
+        final ASTNode modifier = getModifier();
+        return modifier != null && modifier.getElementType() == RegExpTT.PLUS;
     }
 }

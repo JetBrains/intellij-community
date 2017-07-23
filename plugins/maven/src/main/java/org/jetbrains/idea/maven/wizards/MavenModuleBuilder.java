@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.wizards;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.JavaModuleType;
@@ -78,15 +77,13 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
       rootModel.inheritSdk();
     }
 
-    MavenUtil.runWhenInitialized(project, new DumbAwareRunnable() {
-      public void run() {
-        if (myEnvironmentForm != null) {
-          myEnvironmentForm.setData(MavenProjectsManager.getInstance(project).getGeneralSettings());
-        }
-
-        new MavenModuleBuilderHelper(myProjectId, myAggregatorProject, myParentProject, myInheritGroupId,
-                                     myInheritVersion, myArchetype, myPropertiesToCreateByArtifact, "Create new Maven module").configure(project, root, false);
+    MavenUtil.runWhenInitialized(project, (DumbAwareRunnable)() -> {
+      if (myEnvironmentForm != null) {
+        myEnvironmentForm.setData(MavenProjectsManager.getInstance(project).getGeneralSettings());
       }
+
+      new MavenModuleBuilderHelper(myProjectId, myAggregatorProject, myParentProject, myInheritGroupId,
+                                   myInheritVersion, myArchetype, myPropertiesToCreateByArtifact, "Create new Maven module").configure(project, root, false);
     });
   }
 
@@ -114,11 +111,6 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
   public String getDescription() {
     return "Maven modules are used for developing <b>JVM-based</b> applications with dependencies managed by <b>Maven</b>. " +
            "You can create either a blank Maven module or a module based on a <b>Maven archetype</b>.";
-  }
-
-  @Override
-  public Icon getBigIcon() {
-    return AllIcons.Modules.Types.JavaModule;
   }
 
   @Override

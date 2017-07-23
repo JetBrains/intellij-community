@@ -27,6 +27,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import git4idea.config.GitVcsSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,26 +41,25 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 
-/**
- * @author Kirill Likhodedov
- */
 class GitUserNameNotDefinedDialog extends DialogWrapper {
 
   @NotNull private final Collection<VirtualFile> myRootsWithUndefinedProps;
   @NotNull private final Collection<VirtualFile> myAllRootsAffectedByCommit;
   @Nullable private final Couple<String> myProposedValues;
+  @NotNull private final GitVcsSettings mySettings;
 
   private JTextField myNameTextField;
   private JTextField myEmailTextField;
   private JBCheckBox myGlobalCheckbox;
 
   GitUserNameNotDefinedDialog(@NotNull Project project,
-                                        @NotNull Collection<VirtualFile> rootsWithUndefinedProps,
-                                        @NotNull Collection<VirtualFile> allRootsAffectedByCommit,
-                                        @NotNull Map<VirtualFile, Couple<String>> rootsWithDefinedProps) {
+                              @NotNull Collection<VirtualFile> rootsWithUndefinedProps,
+                              @NotNull Collection<VirtualFile> allRootsAffectedByCommit,
+                              @NotNull Map<VirtualFile, Couple<String>> rootsWithDefinedProps) {
     super(project, false);
     myRootsWithUndefinedProps = rootsWithUndefinedProps;
     myAllRootsAffectedByCommit = allRootsAffectedByCommit;
+    mySettings = GitVcsSettings.getInstance(project);
 
     myProposedValues = calcProposedValues(rootsWithDefinedProps);
 
@@ -126,7 +126,7 @@ class GitUserNameNotDefinedDialog extends DialogWrapper {
       myNameTextField.setText(SystemProperties.getUserName());
     }
 
-    myGlobalCheckbox = new JBCheckBox("Set properties globally", true);
+    myGlobalCheckbox = new JBCheckBox("Set properties globally", mySettings.shouldSetUserNameGlobally());
     myGlobalCheckbox.setMnemonic('g');
 
     JPanel rootPanel = new JPanel(new GridBagLayout());

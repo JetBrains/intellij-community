@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,18 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -42,6 +43,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.List;
+import java.util.Set;
 
 public class DirectoryIndexImpl extends DirectoryIndex {
   private static final Logger LOG = Logger.getInstance(DirectoryIndexImpl.class);
@@ -56,13 +58,16 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     myProject = project;
     myConnection = project.getMessageBus().connect(project);
     subscribeToFileChanges();
-    Disposer.register(project, new Disposable() {
-      @Override
-      public void dispose() {
-        myDisposed = true;
-        myRootIndex = null;
-      }
+    Disposer.register(project, () -> {
+      myDisposed = true;
+      myRootIndex = null;
     });
+    LowMemoryWatcher.register(() -> {
+      RootIndex index = myRootIndex;
+      if (index != null) {
+        index.onLowMemory();
+      }
+    }, project);
   }
 
   protected void subscribeToFileChanges() {
@@ -80,7 +85,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       }
     });
 
-    myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
+    myConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         RootIndex rootIndex = myRootIndex;
@@ -129,7 +134,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   @Override
   public DirectoryInfo getInfoForDirectory(@NotNull VirtualFile dir) {
     DirectoryInfo info = getInfoForFile(dir);
-    return info.isInProject() ? info : null;
+    return info.isInProject(dir) ? info : null;
   }
 
   @NotNull
@@ -167,8 +172,15 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     return getRootIndex().getOrderEntries(info);
   }
 
+  @Override
+  @NotNull
+  public Set<String> getDependentUnloadedModules(@NotNull Module module) {
+    checkAvailability();
+    return getRootIndex().getDependentUnloadedModules(module);
+  }
+
   @TestOnly
-  void assertConsistency(DirectoryInfo info) {
+  public void assertConsistency(DirectoryInfo info) {
     List<OrderEntry> entries = getOrderEntries(info);
     for (int i = 1; i < entries.size(); i++) {
       assert RootIndex.BY_OWNER_MODULE.compare(entries.get(i - 1), entries.get(i)) <= 0;

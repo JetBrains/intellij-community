@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.parser;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.stubs.*;
+import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -206,6 +207,7 @@ public interface GroovyElementTypes {
   GroovyElementType CONDITIONAL_EXPRESSION = new GroovyElementType("Conditional expression");
   GroovyElementType ELVIS_EXPRESSION = new GroovyElementType("Elvis expression");
   GroovyElementType ASSIGNMENT_EXPRESSION = new GroovyElementType("Assignment expression");
+  GroovyElementType TUPLE_ASSIGNMENT_EXPRESSION = new GroovyElementType("Tuple assignment expression");
   GroovyElementType LOGICAL_OR_EXPRESSION = new GroovyElementType("Logical OR expression");
   GroovyElementType LOGICAL_AND_EXPRESSION = new GroovyElementType("Logical AND expression");
   GroovyElementType INCLUSIVE_OR_EXPRESSION = new GroovyElementType("Inclusive OR expression");
@@ -217,9 +219,9 @@ public interface GroovyElementTypes {
   GroovyElementType RELATIONAL_EXPRESSION = new GroovyElementType("Relational expression");
   GroovyElementType SHIFT_EXPRESSION = new GroovyElementType("Shift expression");
   GroovyElementType RANGE_EXPRESSION = new GroovyElementType("Range expression");
-  GroovyElementType COMPOSITE_LSHIFT_SIGN = new GroovyElementType("Composite shift sign <<");
-  GroovyElementType COMPOSITE_RSHIFT_SIGN = new GroovyElementType("Composite shift sign >>");
-  GroovyElementType COMPOSITE_TRIPLE_SHIFT_SIGN = new GroovyElementType("Composite shift sign >>>");
+  GroovyElementType COMPOSITE_LSHIFT_SIGN = new GroovyElementType("<<");
+  GroovyElementType COMPOSITE_RSHIFT_SIGN = new GroovyElementType(">>");
+  GroovyElementType COMPOSITE_TRIPLE_SHIFT_SIGN = new GroovyElementType(">>>");
   GroovyElementType MORE_OR_EQUALS_SIGN = new GroovyElementType(">=");
   GroovyElementType ADDITIVE_EXPRESSION = new GroovyElementType("Additive expression");
   GroovyElementType MULTIPLICATIVE_EXPRESSION = new GroovyElementType("Multiplicative expression");
@@ -415,15 +417,15 @@ public interface GroovyElementTypes {
   };
   GrVariableDeclarationElementType VARIABLE_DEFINITION = new GrVariableDeclarationElementType();
   GroovyElementType TUPLE_DECLARATION = new GroovyElementType("tuple declaration");
-  GroovyElementType TUPLE_EXPRESSION = new GroovyElementType("tuple expression");
+  GroovyElementType TUPLE = new GroovyElementType("tuple");
 
   GrVariableElementType VARIABLE = new GrVariableElementType();
 
   //modifiers
   GrStubElementType<GrModifierListStub, GrModifierList> MODIFIERS = new GrModifierListElementType("modifier list");
 
-  GroovyElementType BALANCED_BRACKETS = new GroovyElementType("balanced brackets"); //node
-
   //types
   GroovyElementType CLASS_TYPE_ELEMENT = new GroovyElementType("class type element"); //node
+
+  IStubFileElementType GROOVY_FILE = new GrStubFileElementType(GroovyLanguage.INSTANCE);
 }

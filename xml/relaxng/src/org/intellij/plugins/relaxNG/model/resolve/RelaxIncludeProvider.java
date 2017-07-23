@@ -18,11 +18,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 09.06.2010
-*/
 public class RelaxIncludeProvider extends FileIncludeProvider {
   @NotNull
   @Override

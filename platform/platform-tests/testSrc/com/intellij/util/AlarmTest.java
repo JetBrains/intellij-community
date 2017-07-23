@@ -15,7 +15,7 @@
  */
 package com.intellij.util;
 
-import com.intellij.openapi.application.ApplicationManager;
+ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.testFramework.PlatformTestCase;
@@ -107,7 +107,7 @@ public class AlarmTest extends PlatformTestCase {
       UIUtil.dispatchAllInvocationEvents();
     }
     Map<Thread, StackTraceElement[]> after = Thread.getAllStackTraces();
-    System.out.println("before: "+before.size()+"; after: "+after.size());
+    LOG.debug("before: "+before.size()+"; after: "+after.size());
     assertTrue(after.size() - before.size() < 10);
   }
 
@@ -146,4 +146,38 @@ public class AlarmTest extends PlatformTestCase {
     assertEquals("12", sb.toString());
   }
 
+  public void testWaitForAllExecutedMustWaitUntilExecutionFinish() throws Exception {
+    Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
+    StringBuffer sb = new StringBuffer();
+    long start = System.currentTimeMillis();
+    int delay = 100;
+    alarm.addRequest(() -> {
+      TimeoutUtil.sleep(1000);
+      sb.append("1");
+    }, delay);
+    alarm.addRequest(() -> {
+      TimeoutUtil.sleep(1000);
+      sb.append("2");
+    }, delay*2);
+
+    String s = sb.toString();
+    long elapsed = System.currentTimeMillis() - start;
+    if (elapsed > delay/2) {
+      System.err.println("No no no no this agent is so overloaded I quit");
+      return;
+    }
+    assertEquals(2, alarm.getActiveRequestCount());
+    assertEquals("", s);
+    try {
+      // started to execute but not finished yet
+      alarm.waitForAllExecuted(1000, TimeUnit.MILLISECONDS);
+      fail();
+    }
+    catch (TimeoutException ignored) {
+    }
+
+    alarm.waitForAllExecuted(3000, TimeUnit.MILLISECONDS);
+
+    assertEquals(2, sb.length());
+  }
 }

@@ -76,8 +76,6 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
   protected void collectInformationWithProgress(@NotNull final ProgressIndicator progress) {
     if (!Registry.is("editor.injected.highlighting.enabled")) return;
 
-    final Set<HighlightInfo> gotHighlights = new THashSet<>(100);
-
     List<Divider.DividedElements> allDivided = new ArrayList<>();
     Divider.divideInsideAndOutsideAllRoots(myFile, myRestrictRange, myPriorityRange, SHOULD_HIGHLIGHT_FILTER, new CommonProcessors.CollectProcessor<>(allDivided));
 
@@ -99,6 +97,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
       // sync here because all writes happened in another thread
       result = injectedResult;
     }
+    final Set<HighlightInfo> gotHighlights = new THashSet<>(100);
     final List<HighlightInfo> injectionsOutside = new ArrayList<>(gotHighlights.size());
     for (HighlightInfo info : result) {
       if (myRestrictRange.contains(info)) {
@@ -119,7 +118,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
         myHighlights.addAll(toApplyInside);
         gotHighlights.clear();
 
-        myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, toApplyInside, myPriorityRange, myRestrictRange,
+        myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(), toApplyInside, myPriorityRange, myRestrictRange,
                                                                         getId());
       }
 
@@ -132,13 +131,13 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
       }
       toApply.addAll(injectionsOutside);
 
-      myHighlightInfoProcessor.highlightsOutsideVisiblePartAreProduced(myHighlightingSession, toApply, myRestrictRange, new ProperTextRange(0, myDocument.getTextLength()),
+      myHighlightInfoProcessor.highlightsOutsideVisiblePartAreProduced(myHighlightingSession, getEditor(), toApply, myRestrictRange, new ProperTextRange(0, myDocument.getTextLength()),
                                                                        getId());
     }
     else {
       // else apply only result (by default apply command) and only within inside
       myHighlights.addAll(gotHighlights);
-      myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, myHighlights, myRestrictRange, myRestrictRange,
+      myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(), myHighlights, myRestrictRange, myRestrictRange,
                                                                       getId());
     }
   }
@@ -155,7 +154,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
     //rehighlight all injected PSI regardless the range,
     //since change in one place can lead to invalidation of injected PSI in (completely) other place.
     for (DocumentWindow documentRange : injected) {
-      progress.checkCanceled();
+      ProgressManager.checkCanceled();
       if (!documentRange.isValid()) continue;
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(documentRange);
       if (file == null) continue;
@@ -173,18 +172,15 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
     injectedLanguageManager.processInjectableElements(elements2, collectInjectableProcessor);
 
     final Set<PsiFile> outInjected = new THashSet<>();
-    final PsiLanguageInjectionHost.InjectedPsiVisitor visitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-      @Override
-      public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-        synchronized (outInjected) {
-          outInjected.add(injectedPsi);
-        }
+    final PsiLanguageInjectionHost.InjectedPsiVisitor visitor = (injectedPsi, places) -> {
+      synchronized (outInjected) {
+        outInjected.add(injectedPsi);
       }
     };
     if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(hosts), progress, true,
                                                                    element -> {
                                                                      ApplicationManager.getApplication().assertReadAccessAllowed();
-                                                                     progress.checkCanceled();
+                                                                     ProgressManager.checkCanceled();
                                                                      InjectedLanguageUtil.enumerate(element, myFile, false, visitor);
                                                                      return true;
                                                                    })) {
@@ -362,7 +358,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
       for (final HighlightVisitor visitor : filtered) {
         visitor.analyze(injectedPsi, true, holder, () -> {
           for (PsiElement element : elements) {
-            progress.checkCanceled();
+            ProgressManager.checkCanceled();
             visitor.visit(element);
           }
         });

@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 public class IntroduceVariableAction extends BasePlatformRefactoringAction {
   public IntroduceVariableAction() {
     setInjectedContext(true);
+    setEnabledInModalContext(true);
   }
 
   @Override

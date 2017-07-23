@@ -32,13 +32,7 @@ public interface PsiCatchSection extends PsiElement {
    */
   PsiCatchSection[] EMPTY_ARRAY = new PsiCatchSection[0];
 
-  ArrayFactory<PsiCatchSection> ARRAY_FACTORY = new ArrayFactory<PsiCatchSection>() {
-    @NotNull
-    @Override
-    public PsiCatchSection[] create(final int count) {
-      return count == 0 ? EMPTY_ARRAY : new PsiCatchSection[count];
-    }
-  };
+  ArrayFactory<PsiCatchSection> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiCatchSection[count];
 
   /**
    * Returns the variable in which the caught exception is captured.

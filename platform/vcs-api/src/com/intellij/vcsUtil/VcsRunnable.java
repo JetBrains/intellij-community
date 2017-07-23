@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 14.03.2007
- * Time: 14:33:16
- */
 package com.intellij.vcsUtil;
 
 import com.intellij.openapi.vcs.VcsException;

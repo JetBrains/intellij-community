@@ -15,9 +15,12 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import org.jetbrains.annotations.NonNls;
+
 /**
  * @author irengrig
  */
 public interface CommitExecutorWithHelp extends CommitExecutor {
+  @NonNls
   String getHelpId();
 }

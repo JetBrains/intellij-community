@@ -118,10 +118,10 @@ public class CreateEnumSwitchBranchesIntention extends Intention {
 
   private static void addSwitchLabelStatementBefore(PsiEnumConstant missingEnumElement, PsiElement anchor) {
     if (anchor instanceof PsiSwitchLabelStatement) {
-      PsiElement sibling = PsiTreeUtil.skipSiblingsBackward(anchor, PsiWhiteSpace.class);
+      PsiElement sibling = PsiTreeUtil.skipWhitespacesBackward(anchor);
       while (sibling instanceof PsiSwitchLabelStatement) {
         anchor = sibling;
-        sibling = PsiTreeUtil.skipSiblingsBackward(anchor, PsiWhiteSpace.class);
+        sibling = PsiTreeUtil.skipWhitespacesBackward(anchor);
       }
     }
     final PsiElement parent = anchor.getParent();

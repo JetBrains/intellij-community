@@ -26,11 +26,14 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestLoggerFactory
+import com.intellij.testFramework.ThreadTracker
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyFileType
+
+import java.util.concurrent.TimeUnit
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
 
@@ -52,12 +55,18 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase implements DebuggerMetho
   }
 
   @Override
+  protected void tearDown() throws Exception {
+    ThreadTracker.awaitJDIThreadsTermination(100, TimeUnit.SECONDS);
+    super.tearDown()
+  }
+
+  @Override
   protected boolean runInDispatchThread() {
     return false
   }
 
   private void enableDebugLogging() {
-    TestLoggerFactory.enableDebugLogging(testRootDisposable,
+    TestLoggerFactory.enableDebugLogging(myFixture.testRootDisposable,
                                          "#com.intellij.debugger.engine.DebugProcessImpl",
                                          "#com.intellij.debugger.engine.DebugProcessEvents",
                                          "#org.jetbrains.plugins.groovy.compiler.GroovyDebuggerTest")

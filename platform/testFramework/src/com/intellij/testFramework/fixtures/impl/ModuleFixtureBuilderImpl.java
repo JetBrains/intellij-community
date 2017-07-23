@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -34,10 +34,10 @@ import com.intellij.testFramework.fixtures.ModuleFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.PathUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -47,8 +47,8 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
   private static int ourIndex;
 
   private final NotNullProducer<? extends ModuleType> myModuleTypeProducer;
-  protected final List<String> myContentRoots = new ArrayList<>();
-  protected final List<String> mySourceRoots = new ArrayList<>();
+  protected final List<String> myContentRoots = new SmartList<>();
+  protected final List<String> mySourceRoots = new SmartList<>();
   protected final TestFixtureBuilder<? extends IdeaProjectTestFixture> myFixtureBuilder;
   private T myModuleFixture;
   protected String myOutputPath;
@@ -115,43 +115,46 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
   protected abstract T instantiateFixture();
 
   Module buildModule() {
-    final Module[] module = {null};
-
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      module[0] = createModule();
-      initModule(module[0]);
+    return WriteAction.compute(() -> {
+      Module module = createModule();
+      initModule(module);
+      return module;
     });
-
-    return module[0];
   }
 
   protected void initModule(Module module) {
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     final ModifiableRootModel rootModel = rootManager.getModifiableModel();
 
-    for (String contentRoot : myContentRoots) {
-      final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(contentRoot);
-      Assert.assertNotNull("cannot find content root: " + contentRoot, virtualFile);
-      final ContentEntry contentEntry = rootModel.addContentEntry(virtualFile);
+    try {
+      for (String contentRoot : myContentRoots) {
+        final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(contentRoot);
+        Assert.assertNotNull("cannot find content root: " + contentRoot, virtualFile);
+        final ContentEntry contentEntry = rootModel.addContentEntry(virtualFile);
 
-      for (String sourceRoot: mySourceRoots) {
-        String s = contentRoot + "/" + sourceRoot;
-        VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(s);
-        if (vf == null) {
-          final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(sourceRoot);
-          if (file != null && VfsUtilCore.isAncestor(virtualFile, file, false)) vf = file;
-        }
-//        assert vf != null : "cannot find source root: " + sourceRoot;
-        if (vf != null) {
-          contentEntry.addSourceFolder(vf, false);
-        }
-        else {
-          // files are not created yet
-          contentEntry.addSourceFolder(VfsUtilCore.pathToUrl(s), false);
+        for (String sourceRoot: mySourceRoots) {
+          String s = contentRoot + "/" + sourceRoot;
+          VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(s);
+          if (vf == null) {
+            final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(sourceRoot);
+            if (file != null && VfsUtilCore.isAncestor(virtualFile, file, false)) vf = file;
+          }
+  //        assert vf != null : "cannot find source root: " + sourceRoot;
+          if (vf != null) {
+            contentEntry.addSourceFolder(vf, false);
+          }
+          else {
+            // files are not created yet
+            contentEntry.addSourceFolder(VfsUtilCore.pathToUrl(s), false);
+          }
         }
       }
+      setupRootModel(rootModel);
     }
-    setupRootModel(rootModel);
+    catch (Throwable e) {
+      rootModel.dispose();
+      throw e;
+    }
     rootModel.commit();
   }
 

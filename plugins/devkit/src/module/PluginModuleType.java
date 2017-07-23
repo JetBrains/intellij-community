@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,12 @@ package org.jetbrains.idea.devkit.module;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.descriptors.ConfigFile;
@@ -28,11 +33,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.build.PluginBuildConfiguration;
 import org.jetbrains.idea.devkit.build.PluginBuildUtil;
-import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
+import org.jetbrains.idea.devkit.util.PsiUtil;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -45,7 +50,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   }
 
   public static PluginModuleType getInstance() {
-    return (PluginModuleType) ModuleTypeManager.getInstance().findByID(ID);
+    return (PluginModuleType)ModuleTypeManager.getInstance().findByID(ID);
   }
 
   public static boolean isOfType(@NotNull Module module) {
@@ -67,10 +72,6 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
     return DevKitBundle.message("module.description");
   }
 
-  public Icon getBigIcon() {
-    return AllIcons.Modules.Types.PluginModule;
-  }
-
   public Icon getNodeIcon(boolean isOpened) {
     return AllIcons.Nodes.Plugin;
   }
@@ -78,13 +79,35 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   @Nullable
   public static XmlFile getPluginXml(Module module) {
     if (module == null) return null;
-    if (!isOfType(module)) return null;
+    if (!isOfType(module)) {
+      for (final ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
+        for (final SourceFolder folder : entry.getSourceFolders(JavaModuleSourceRootTypes.PRODUCTION)) {
+          final VirtualFile file = folder.getFile();
+          if (file == null) continue;
+
+          final String packagePrefix = folder.getPackagePrefix();
+          final String prefixPath = packagePrefix.isEmpty() ? "" :
+                                    packagePrefix.replace('.', '/') + '/';
+
+          final String relativePath = prefixPath + PluginDescriptorConstants.PLUGIN_XML_PATH;
+          final VirtualFile pluginXmlVF = file.findFileByRelativePath(relativePath);
+          if (pluginXmlVF != null) {
+            final PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(pluginXmlVF);
+            if (psiFile instanceof XmlFile) {
+              return (XmlFile)psiFile;
+            }
+          }
+        }
+      }
+
+      return null;
+    }
 
     final PluginBuildConfiguration buildConfiguration = PluginBuildConfiguration.getInstance(module);
     if (buildConfiguration == null) return null;
     final ConfigFile configFile = buildConfiguration.getPluginXmlConfigFile();
     return configFile != null ? configFile.getXmlFile() : null;
-}
+  }
 
   public static boolean isPluginModuleOrDependency(@Nullable Module module) {
     if (module == null) return false;
@@ -93,12 +116,10 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   }
 
   public static List<Module> getCandidateModules(Module module) {
-    final ModuleRootManager manager = ModuleRootManager.getInstance(module);
-
-    final Sdk jdk = manager.getSdk();
-    // don't allow modules that don't use an IDEA-JDK
-    if (IdeaJdk.findIdeaJdk(jdk) == null) {
-      return Collections.emptyList();
+    if (PsiUtil.isIdeaProject(module.getProject())) {
+      Set<Module> dependents = new java.util.HashSet<>();
+      ModuleUtilCore.collectModulesDependsOn(module, dependents);
+      return new ArrayList<>(dependents);
     }
 
     final Module[] modules = ModuleManager.getInstance(module.getProject()).getModules();

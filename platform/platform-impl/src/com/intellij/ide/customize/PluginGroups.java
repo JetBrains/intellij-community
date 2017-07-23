@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public class PluginGroups {
   private Runnable myLoadingCallback = null;
 
   public PluginGroups() {
-    myAllPlugins = PluginManagerCore.loadDescriptors(null, ContainerUtil.<String>newArrayList());
+    myAllPlugins = PluginManagerCore.loadDescriptors(null, ContainerUtil.newArrayList());
     SwingWorker worker = new SwingWorker<List<IdeaPluginDescriptor>, Object>() {
       @Override
       protected List<IdeaPluginDescriptor> doInBackground() throws Exception {
@@ -74,10 +74,7 @@ public class PluginGroups {
           myPluginsFromRepository.addAll(get());
           if (myLoadingCallback != null) myLoadingCallback.run();
         }
-        catch (InterruptedException e) {
-          if (myLoadingCallback != null) myLoadingCallback.run();
-        }
-        catch (ExecutionException e) {
+        catch (InterruptedException | ExecutionException e) {
           if (myLoadingCallback != null) myLoadingCallback.run();
         }
       }
@@ -121,7 +118,7 @@ public class PluginGroups {
 
   protected void
   initGroups(Map<String, Pair<Icon, List<String>>> tree, Map<String, String> featuredPlugins) {
-    tree.put(CORE, Pair.create((Icon)null, Arrays.asList(
+    tree.put(CORE, Pair.create(null, Arrays.asList(
       "com.intellij.copyright",
       "com.intellij.java-i18n",
       "org.intellij.intelliLang",
@@ -237,12 +234,15 @@ public class PluginGroups {
     )));
     tree.put("Plugin Development", Pair.create(PlatformImplIcons.PluginDevelopment, Arrays.asList("DevKit")));
 
+    initFeaturedPlugins(featuredPlugins);
+  }
+
+  protected void initFeaturedPlugins(Map<String, String> featuredPlugins) {
     featuredPlugins.put("Scala", "Custom Languages:Plugin for Scala language support:org.intellij.scala");
     featuredPlugins.put("Live Edit Tool",
                         "Web Development:Provides live edit HTML/CSS/JavaScript:com.intellij.plugins.html.instantEditing");
     addVimPlugin(featuredPlugins);
     featuredPlugins.put("NodeJS", "JavaScript:Node.js integration:NodeJS");
-    featuredPlugins.put("Angular", "Web Development:Angular 1&2 support:AngularJS");
     featuredPlugins.put("Atlassian Connector",
                         "Tools Integration:Integration for Atlassian JIRA, Bamboo, Crucible, FishEye:atlassian-idea-plugin");
   }
@@ -269,7 +269,7 @@ public class PluginGroups {
   }
 
   public static void addGoPlugin(Map<String, String> featuredPlugins) {
-    featuredPlugins.put("Go", "Custom Languages:Go language support:ro.redeul.google.go");
+    featuredPlugins.put("Go", "Custom Languages:Go language support:org.jetbrains.plugins.go");
   }
 
   public static void addMarkdownPlugin(Map<String, String> featuredPlugins) {

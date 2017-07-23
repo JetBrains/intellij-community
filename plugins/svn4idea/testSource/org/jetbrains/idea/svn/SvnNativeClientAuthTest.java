@@ -21,13 +21,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
-import com.intellij.openapi.vcs.update.SequentialUpdatesContext;
 import com.intellij.openapi.vcs.update.UpdateSession;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Processor;
-import com.intellij.util.containers.Convertor;
 import com.intellij.vcsUtil.VcsUtil;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +33,10 @@ import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.junit.Before;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.SVNDirEntry;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.*;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -47,12 +47,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 3/4/13
- * Time: 9:55 PM
- */
 public class SvnNativeClientAuthTest extends Svn17TestCase {
   private SvnVcs myVcs;
   private int myCertificateAnswer = ISVNAuthenticationProvider.ACCEPTED_TEMPORARY;
@@ -111,31 +105,25 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
     manager.setAuthenticationProvider(authentication);
 
     authentication.addAuthentication(ISVNAuthenticationManager.PASSWORD,
-                                     new Convertor<SVNURL, SVNAuthentication>() {
-                                       @Override
-                                       public SVNAuthentication convert(SVNURL o) {
-                                         ++ myCredentialsAskedInteractivelyCount;
-                                         if (myCancelAuth) return null;
-                                         if (myCredentialsCorrect) {
-                                           return new SVNPasswordAuthentication(outHttpUser, outHttpPassword, mySaveCredentials, o, false);
-                                         } else {
-                                           myCredentialsCorrect = true;// only once
-                                           return new SVNPasswordAuthentication("1234214 23 4234", "324324", mySaveCredentials, o, false);
-                                         }
+                                     o -> {
+                                       ++ myCredentialsAskedInteractivelyCount;
+                                       if (myCancelAuth) return null;
+                                       if (myCredentialsCorrect) {
+                                         return new SVNPasswordAuthentication(outHttpUser, outHttpPassword, mySaveCredentials, o, false);
+                                       } else {
+                                         myCredentialsCorrect = true;// only once
+                                         return new SVNPasswordAuthentication("1234214 23 4234", "324324", mySaveCredentials, o, false);
                                        }
                                      });
     authentication.addAuthentication(ISVNAuthenticationManager.SSL,
-                                     new Convertor<SVNURL, SVNAuthentication>() {
-                                       @Override
-                                       public SVNAuthentication convert(SVNURL o) {
-                                         ++ myCredentialsAskedInteractivelyCount;
-                                         if (myCancelAuth) return null;
-                                         if (myCredentialsCorrect) {
-                                           return new SVNSSLAuthentication(certFile, "12345", mySaveCredentials, o, false);
-                                         } else {
-                                           myCredentialsCorrect = true;// only once
-                                           return new SVNSSLAuthentication(new File("1232432423"), "3245321532534235445", mySaveCredentials, o, false);
-                                         }
+                                     o -> {
+                                       ++ myCredentialsAskedInteractivelyCount;
+                                       if (myCancelAuth) return null;
+                                       if (myCredentialsCorrect) {
+                                         return new SVNSSLAuthentication(certFile, "12345", mySaveCredentials, o, false);
+                                       } else {
+                                         myCredentialsCorrect = true;// only once
+                                         return new SVNSSLAuthentication(new File("1232432423"), "3245321532534235445", mySaveCredentials, o, false);
                                        }
                                      });
     myCertificateAskedInteractivelyCount = 0;
@@ -557,12 +545,9 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
       }, WorkingCopyFormat.ONE_DOT_SEVEN);
     final int[] cnt = new int[1];
     cnt[0] = 0;
-    FileUtil.processFilesRecursively(root, new Processor<File>() {
-      @Override
-      public boolean process(File file) {
-        ++ cnt[0];
-        return ! (cnt[0] > 1);
-      }
+    FileUtil.processFilesRecursively(root, file -> {
+      ++ cnt[0];
+      return ! (cnt[0] > 1);
     });
     Assert.assertTrue(cnt[0] > 1);
     myIsSecure = url.contains("https:");
@@ -610,12 +595,7 @@ public class SvnNativeClientAuthTest extends Svn17TestCase {
   private void testBrowseRepositoryImpl(final String url) throws SVNException {
     final List<SVNDirEntry> list = new ArrayList<>();
     final SVNRepository repository = myVcs.getSvnKitManager().createRepository(url);
-    repository.getDir(".", -1, null, new ISVNDirEntryHandler() {
-      @Override
-      public void handleDirEntry(SVNDirEntry dirEntry) throws SVNException {
-        list.add(dirEntry);
-      }
-    });
+    repository.getDir(".", -1, null, dirEntry -> list.add(dirEntry));
 
     Assert.assertTrue(!list.isEmpty());
   }

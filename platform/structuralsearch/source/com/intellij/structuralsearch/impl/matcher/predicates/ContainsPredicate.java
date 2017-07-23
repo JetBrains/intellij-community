@@ -6,13 +6,12 @@ import com.intellij.structuralsearch.impl.matcher.MatchContext;
 /**
  * @author Maxim.Mossienko
  */
-public class ContainsPredicate extends AbstractStringBasedPredicate {
+public class ContainsPredicate extends MatchPredicate {
 
   public ContainsPredicate(String name, String within) {
-    super(name, within);
   }
 
-  public boolean match(PsiElement node, PsiElement match, int start, int end, MatchContext context) {
+  public boolean match(PsiElement match, int start, int end, MatchContext context) {
     return false;
   }
 }

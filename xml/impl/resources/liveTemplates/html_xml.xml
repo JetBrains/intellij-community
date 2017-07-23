@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templateSet group="html/xml">
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.tag.pair" 
-      name="t" toReformat="true" toShortenFQNames="true" value="&lt;$TAG$&gt;$END$&lt;/$TAG_NAME$&gt;">
+      name="t" toReformat="true" toShortenFQNames="true" value="&lt;$TAG$&gt;$END$&lt;/$TAG_NAME$&gt;" shortcut="TAB">
     <variable name="TAG" expression="" defaultValue="" alwaysStopAt="true" />
     <variable name="TAG_NAME" expression="firstWord(TAG)" defaultValue="&quot;&quot;" alwaysStopAt="false" />
     <context>
@@ -14,7 +14,7 @@
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.tag"
-    name="T" toReformat="true" toShortenFQNames="true" value="&lt;$TAG$&gt;$SELECTION$&lt;/$TAGNAME$&gt;&#13;&#10;">
+    name="T" toReformat="true" toShortenFQNames="true" value="&lt;$TAG$&gt;$SELECTION$&lt;/$TAGNAME$&gt;&#13;&#10;" shortcut="TAB">
     <variable name="TAG" expression="" defaultValue="" alwaysStopAt="true" />
     <variable name="TAGNAME" expression="firstWord(TAG)" defaultValue="&quot;&quot;" alwaysStopAt="false" />
     <context>

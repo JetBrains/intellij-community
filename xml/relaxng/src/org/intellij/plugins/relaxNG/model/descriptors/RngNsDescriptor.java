@@ -19,7 +19,6 @@ package org.intellij.plugins.relaxNG.model.descriptors;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -52,11 +51,6 @@ import org.kohsuke.rngom.nc.NameClass;
 import javax.xml.namespace.QName;
 import java.util.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 18.07.2007
- */
 public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
   private final Map<QName, CachedValue<XmlElementDescriptor>> myDescriptorsMap =
     Collections.synchronizedMap(new HashMap<QName, CachedValue<XmlElementDescriptor>>());
@@ -182,7 +176,7 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
   XmlElementDescriptor[] convertElementDescriptors(List<DElementPattern> patterns) {
     patterns = ContainerUtil.findAll(patterns, NamedPatternFilter.INSTANCE);
 
-    final Map<QName, List<DElementPattern>> name2patterns = new HashMap<>();
+    final Map<QName, List<DElementPattern>> name2patterns = new LinkedHashMap<>();
     for (DElementPattern pattern : patterns) {
       for (QName qName : pattern.getName().listNames()) {
         List<DElementPattern> dPatterns = name2patterns.get(qName);
@@ -245,6 +239,7 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
     return getDescriptorFile().getName();
   }
 
+  @NotNull
   @Override
   public Object[] getDependences() {
     if (myPattern != null) {

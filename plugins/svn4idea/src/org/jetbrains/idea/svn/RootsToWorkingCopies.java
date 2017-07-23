@@ -38,6 +38,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+
 // 1. listen to roots changes
 // 2. - possibly - to deletion/checkouts??? what if WC roots can be
 public class RootsToWorkingCopies implements VcsListener {
@@ -57,14 +59,12 @@ public class RootsToWorkingCopies implements VcsListener {
     myRootMapping = new HashMap<>();
     myUnversioned = new HashSet<>();
     myVcs = vcs;
-    myRechecker = new Runnable() {
-      public void run() {
-        final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(myVcs);
-        synchronized (myLock) {
-          clear();
-          for (VirtualFile root : roots) {
-            addRoot(root);
-          }
+    myRechecker = () -> {
+      final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(myVcs);
+      synchronized (myLock) {
+        clear();
+        for (VirtualFile root : roots) {
+          addRoot(root);
         }
       }
     };
@@ -115,7 +115,7 @@ public class RootsToWorkingCopies implements VcsListener {
 
   @Nullable
   private WorkingCopy calculateRoot(@NotNull VirtualFile root) {
-    File workingCopyRoot = SvnUtil.getWorkingCopyRootNew(new File(root.getPath()));
+    File workingCopyRoot = SvnUtil.getWorkingCopyRootNew(virtualToIoFile(root));
     WorkingCopy workingCopy = null;
 
     if (workingCopyRoot != null) {

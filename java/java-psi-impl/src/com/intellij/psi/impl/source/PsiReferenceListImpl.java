@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,25 +16,21 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.JavaClassReferenceListElementType;
 import com.intellij.psi.impl.java.stubs.PsiClassReferenceListStub;
 import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
  */
 public class PsiReferenceListImpl extends JavaStubPsiElement<PsiClassReferenceListStub> implements PsiReferenceList {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiReferenceListImpl");
-
-  public PsiReferenceListImpl(PsiClassReferenceListStub stub, IStubElementType nodeType) {
-    super(stub, nodeType);
+  public PsiReferenceListImpl(@NotNull PsiClassReferenceListStub stub) {
+    super(stub, stub.getStubType());
   }
 
-  public PsiReferenceListImpl(ASTNode node) {
+  public PsiReferenceListImpl(@NotNull ASTNode node) {
     super(node);
   }
 
@@ -64,22 +60,7 @@ public class PsiReferenceListImpl extends JavaStubPsiElement<PsiClassReferenceLi
 
   @Override
   public Role getRole() {
-    IElementType type = getElementType();
-    if (type == JavaElementType.EXTENDS_LIST) {
-      return Role.EXTENDS_LIST;
-    }
-    else if (type == JavaElementType.IMPLEMENTS_LIST) {
-      return Role.IMPLEMENTS_LIST;
-    }
-    else if (type == JavaElementType.THROWS_LIST) {
-      return Role.THROWS_LIST;
-    }
-    else if (type == JavaElementType.EXTENDS_BOUND_LIST) {
-      return Role.EXTENDS_BOUNDS_LIST;
-    }
-
-    LOG.error("Unknown element type:" + type);
-    return null;
+    return JavaClassReferenceListElementType.elementTypeToRole(getElementType());
   }
 
   @Override

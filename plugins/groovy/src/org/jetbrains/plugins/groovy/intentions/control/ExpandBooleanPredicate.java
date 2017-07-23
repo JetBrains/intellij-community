@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.intentions.control;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
@@ -29,7 +30,7 @@ class ExpandBooleanPredicate implements PsiElementPredicate {
   private static final Logger LOGGER = Logger.getInstance("ExpandBooleanPredicate");
 
   @Override
-  public boolean satisfiedBy(PsiElement element) {
+  public boolean satisfiedBy(@NotNull PsiElement element) {
     if (!(element instanceof GrStatement)) {
       return false;
     }

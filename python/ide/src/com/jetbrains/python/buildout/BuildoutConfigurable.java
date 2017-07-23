@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
     myEnabledCheckbox.setSelected(isEnabled);
     updateFacetEnabled(isEnabled);
     myEnabledCheckbox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final boolean enabled = myEnabledCheckbox.isSelected();
         updateFacetEnabled(enabled);
@@ -120,7 +121,7 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
     boolean facet_is_desired = myEnabledCheckbox.isSelected();
 
     mySettingsPanel.apply();
-    List<String> paths_from_script = null;
+    List<String> paths_from_script;
     if (facet_is_desired) {
       String script_name = mySettingsPanel.getScriptName();
       VirtualFile script_file = BuildoutConfigPanel.getScriptFile(script_name);
@@ -174,9 +175,4 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
   private void switchNoticeText() {
     mySettingsPanel.showNoticeText(/*DjangoFacet.getInstance(myModule) != null*/ false);
   }
-
-  @Override
-  public void disposeUIResources() {
-  }
-
 }

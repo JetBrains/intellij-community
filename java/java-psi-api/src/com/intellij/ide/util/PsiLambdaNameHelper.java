@@ -39,7 +39,7 @@ public class PsiLambdaNameHelper {
         new ParameterizedCachedValueProvider<Map<PsiLambdaExpression, String>, PsiClass>() {
           @Override
           public CachedValueProvider.Result<Map<PsiLambdaExpression, String>> compute(final PsiClass upper) {
-            final Map<PsiLambdaExpression, String> map = new THashMap<PsiLambdaExpression, String>();
+            final Map<PsiLambdaExpression, String> map = new THashMap<>();
             upper.accept(new JavaRecursiveElementWalkingVisitor() {
               int index;
 

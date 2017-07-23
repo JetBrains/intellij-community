@@ -17,12 +17,6 @@ package org.jetbrains.idea.svn.commandLine;
 
 import org.tmatesoft.svn.core.SVNException;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/24/12
- * Time: 12:54 PM
- */
 public class SvnExceptionWrapper extends RuntimeException {
   /**
    * Constructs a new runtime exception with the specified cause and a

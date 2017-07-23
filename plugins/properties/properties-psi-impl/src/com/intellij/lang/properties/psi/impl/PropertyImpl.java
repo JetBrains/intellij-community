@@ -316,26 +316,22 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
             off++;
           }
         }
-        else if (aChar == 't') {
-          if (startSpaces == -1) startSpaces = off;
-        }
-        else if (aChar == 'r') {
-          if (startSpaces == -1) startSpaces = off;
-        }
-        else if (aChar == 'n') {
-          if (startSpaces == -1) startSpaces = off;
-        }
-        else if (aChar == 'f') {
+        else if (aChar == 't' || aChar == 'r') {
           if (startSpaces == -1) startSpaces = off;
         }
         else {
-          if (Character.isWhitespace(aChar)) {
-            if (startSpaces == -1) {
-              startSpaces = off-1;
-            }
+          if (aChar == 'n' || aChar == 'f') {
+            if (startSpaces == -1) startSpaces = off;
           }
           else {
-            startSpaces = -1;
+            if (Character.isWhitespace(aChar)) {
+              if (startSpaces == -1) {
+                startSpaces = off-1;
+              }
+            }
+            else {
+              startSpaces = -1;
+            }
           }
         }
       }

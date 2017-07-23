@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 25-Sep-2007
- */
 package com.intellij.openapi.project.impl;
 
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.WaitForProgressToShow;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -57,7 +55,9 @@ public class ProjectMacrosUtil {
   }
 
   public static boolean checkMacros(@NotNull final Project project, @NotNull final Set<String> usedMacros) {
-    usedMacros.removeAll(getDefinedMacros());
+    PathMacros pathMacros = PathMacros.getInstance();
+    usedMacros.removeAll(pathMacros.getSystemMacroNames());
+    usedMacros.removeAll(pathMacros.getUserMacroNames());
 
     // try to lookup values in System properties
     String pathMacroSystemPrefix = "path.macro.";
@@ -65,7 +65,7 @@ public class ProjectMacrosUtil {
       String macro = it.next();
       String value = System.getProperty(pathMacroSystemPrefix + macro, null);
       if (value != null) {
-        WriteAction.run(() -> PathMacros.getInstance().setMacro(macro, value));
+        pathMacros.setMacro(macro, value);
         it.remove();
       }
     }
@@ -79,13 +79,5 @@ public class ProjectMacrosUtil {
     final boolean[] result = new boolean[1];
     WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(() -> result[0] = showMacrosConfigurationDialog(project, usedMacros), ModalityState.NON_MODAL);
     return result[0];
-  }
-
-  @NotNull
-  public static Set<String> getDefinedMacros() {
-    PathMacros pathMacros = PathMacros.getInstance();
-    Set<String> definedMacros = new THashSet<>(pathMacros.getUserMacroNames());
-    definedMacros.addAll(pathMacros.getSystemMacroNames());
-    return definedMacros;
   }
 }

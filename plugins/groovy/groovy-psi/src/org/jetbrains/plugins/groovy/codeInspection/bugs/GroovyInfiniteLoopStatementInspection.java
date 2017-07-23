@@ -28,13 +28,6 @@ public class GroovyInfiniteLoopStatementInspection extends BaseInspection {
   @Override
   @Nls
   @NotNull
-  public String getGroupDisplayName() {
-    return PROBABLE_BUGS;
-  }
-
-  @Override
-  @Nls
-  @NotNull
   public String getDisplayName() {
     return "Infinite loop statement";
   }

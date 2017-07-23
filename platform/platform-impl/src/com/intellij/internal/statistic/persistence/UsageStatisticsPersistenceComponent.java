@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -66,9 +65,7 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
 
   @Override
   public void loadState(final Element element) {
-    List groupsList = element.getChildren(GROUP_TAG);
-    for (Object project : groupsList) {
-      Element groupElement = (Element)project;
+    for (Element groupElement : element.getChildren(GROUP_TAG)) {
       String groupId = groupElement.getAttributeValue(GROUP_ID_ATTR);
       double groupPriority = getPriority(groupElement.getAttributeValue(GROUP_PRIORITY_ATTR));
 
@@ -76,14 +73,15 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
       if (!StringUtil.isEmptyOrSpaces(groupId) && !StringUtil.isEmptyOrSpaces(valueData)) {
         try {
           getSentUsages().putAll(ConvertUsagesUtil.convertValueString(GroupDescriptor.create(groupId, groupPriority), valueData));
-        } catch (AssertionError e) {
+        }
+        catch (AssertionError e) {
           //don't load incorrect groups
         }
       }
     }
 
     try {
-      setSentTime(Long.parseLong(element.getAttributeValue(LAST_TIME_ATTR)));
+      setSentTime(Long.parseLong(element.getAttributeValue(LAST_TIME_ATTR, "0")));
     }
     catch (NumberFormatException e) {
       setSentTime(0);
@@ -102,8 +100,7 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
   public Element getState() {
     Element element = new Element("state");
 
-    for (Map.Entry<GroupDescriptor, Set<UsageDescriptor>> entry : ConvertUsagesUtil.sortDescriptorsByPriority(getSentUsages())
-      .entrySet()) {
+    for (Map.Entry<GroupDescriptor, Set<UsageDescriptor>> entry : ConvertUsagesUtil.sortDescriptorsByPriority(getSentUsages()).entrySet()) {
       Element projectElement = new Element(GROUP_TAG);
       projectElement.setAttribute(GROUP_ID_ATTR, entry.getKey().getId());
       projectElement.setAttribute(GROUP_PRIORITY_ATTR, Double.toString(entry.getKey().getPriority()));
@@ -112,10 +109,20 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
       element.addContent(projectElement);
     }
 
-    element.setAttribute(LAST_TIME_ATTR, String.valueOf(getLastTimeSent()));
-    element.setAttribute(IS_ALLOWED_ATTR, String.valueOf(isAllowed()));
-    element.setAttribute(SHOW_NOTIFICATION_ATTR, String.valueOf(isShowNotification()));
-    element.setAttribute(PERIOD_ATTR, myPeriod.getName());
+    long lastTimeSent = getLastTimeSent();
+    if (lastTimeSent > 0) {
+      element.setAttribute(LAST_TIME_ATTR, String.valueOf(lastTimeSent));
+    }
+
+    if (isAllowed()) {
+      element.setAttribute(IS_ALLOWED_ATTR, "true");
+    }
+    if (!isShowNotification()) {
+      element.setAttribute(SHOW_NOTIFICATION_ATTR, "false");
+    }
+    if (myPeriod != SendPeriod.WEEKLY) {
+      element.setAttribute(PERIOD_ATTR, myPeriod.getName());
+    }
 
     return element;
   }

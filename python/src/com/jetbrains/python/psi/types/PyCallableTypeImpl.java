@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Function;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.AccessDirection;
@@ -40,11 +40,6 @@ public class PyCallableTypeImpl implements PyCallableType {
   public PyCallableTypeImpl(@Nullable List<PyCallableParameter> parameters, @Nullable PyType returnType) {
     myParameters = parameters;
     myReturnType = returnType;
-  }
-
-  @Override
-  public boolean isCallable() {
-    return true;
   }
 
   @Nullable
@@ -76,7 +71,7 @@ public class PyCallableTypeImpl implements PyCallableType {
 
   @Override
   public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
-    return new Object[0];
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Nullable

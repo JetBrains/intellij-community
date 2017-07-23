@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent implements CommandListener {
-  private static final Logger LOG = Logger.getInstance("#" + CvsStorageSupportingDeletionComponent.class.getName());
+  private static final Logger LOG = Logger.getInstance(CvsStorageSupportingDeletionComponent.class);
   private Project myProject;
 
   private DeletedCVSDirectoryStorage myDeletedStorage;
@@ -57,15 +57,6 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
       LOG.debug("Started" + event.getCommandName() + ", commandLevel: " + myCommandLevel);
     }
   }
-
-  @Override
-  public void beforeCommandFinished(CommandEvent event) {}
-
-  @Override
-  public void undoTransparentActionStarted() {}
-
-  @Override
-  public void undoTransparentActionFinished() {}
 
   @Override
   public void commandFinished(CommandEvent event) {
@@ -105,9 +96,6 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
     }
     return myDeleteHandler;
   }
-
-  @Override
-  public void fileDeleted(@NotNull VirtualFileEvent event) {}
 
   private boolean shouldProcessEvent(VirtualFileEvent event, boolean parentShouldBeUnderCvs) {
     if (myAnotherProjectCommand) {

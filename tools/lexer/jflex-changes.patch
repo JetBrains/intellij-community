@@ -3,8 +3,8 @@ IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
---- jflex/src/main/java/jflex/Emitter.java	(revision de2312d6891de7fdf2752ad8e0a45983202ad5e0)
-+++ jflex/src/main/java/jflex/Emitter.java	(revision 5b6b151f542d88ffb2ea4363c6ee8f23c7a49b09)
+--- jflex/src/main/java/jflex/Emitter.java	(revision cb7fee31d5162f1846da82ea6adb256176a8eef6)
++++ jflex/src/main/java/jflex/Emitter.java	(revision dec3dea802a8bb1f792789b6620c281e512651ee)
 @@ -10,7 +10,9 @@
  package jflex;
  
@@ -68,7 +68,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
      println("      int  count = packed.charAt(i++);");
      println("      char value = packed.charAt(i++);");
      println("      do map[j++] = value; while (--count > 0);");
-@@ -613,85 +619,46 @@
+@@ -613,84 +619,45 @@
     * the number of char map array entries per value is
     * ceil(count / 0xFFFF)
     */
@@ -86,17 +86,28 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
      intervals = cl.getIntervals();
 -    
 +
--    println("");
--    println("  /** ");
--    println("   * Translates characters to character classes");
--    println("   */");
--    println("  private static final String ZZ_CMAP_PACKED = ");
 +    char[] exploded = new char[cl.getMaxCharCode() + 1];
 +    for (int i = 0, k = 0; i < intervals.length && k < exploded.length; i ++) {
 +      int count = intervals[i].end - intervals[i].start + 1;
 +      int value = colMap[intervals[i].charClass];
--  
 +
++      while (count-- > 0) {
++        exploded[k++] = (char) value;
++      }
++    }
++
++    int[] sizes = EmitterCM.findBestSizes(exploded, 3);
++    Object[] o = EmitterCM.generateForSizes(exploded, sizes);
++    int totalSize = EmitterCM.getTotalBytes((char[][]) o[0], sizes, (int[]) o[1]);
++
+     println("");
+     println("  /** ");
+     println("   * Translates characters to character classes");
++    println("   * Chosen bits are " + Arrays.toString(sizes));
++    println("   * Total runtime size is " + totalSize + " bytes");
+     println("   */");
+-    println("  private static final String ZZ_CMAP_PACKED = ");
+-  
 -    int n = 0;  // numbers of entries in current line    
 -    print("    \"");
 -    
@@ -105,7 +116,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 -    while ( i < intervals.length ) {
 -      count = intervals[i].end-intervals[i].start+1;
 -      value = colMap[intervals[i].charClass];
--
+ 
 -      // count could be >= 0x10000
 -      while (count > 0xFFFF) {
 -        printUC(0xFFFF);
@@ -113,9 +124,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 -        count -= 0xFFFF;
 -        numPairs++;
 -        n++;       
-+      while (count-- > 0) {
-+        exploded[k++] = (char) value;
-       }
+-      }
 -      numPairs++;
 -      printUC(count);
 -      printUC(value);
@@ -126,34 +135,25 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 -          print("    \"");
 -          n = 0;
 -        }
-+    }
 -      }
- 
+-
 -      i++;
 -    }
-+    int[] sizes = EmitterCM.findBestSizes(exploded, 3);
-+    Object[] o = EmitterCM.generateForSizes(exploded, sizes);
-+    int totalSize = EmitterCM.getTotalBytes((char[][]) o[0], sizes, (int[]) o[1]);
 -      
-+
 -    println("\";");
--    println();
--
-+    println("");
-     println("  /** ");
-     println("   * Translates characters to character classes");
-+    println("   * Chosen bits are " + Arrays.toString(sizes));
-+    println("   * Total runtime size is " + totalSize + " bytes");
-     println("   */");
--    println("  private static final char [] ZZ_CMAP = zzUnpackCMap(ZZ_CMAP_PACKED);");
-+
 +    println("  public static int ZZ_CMAP(int ch) {\n" +
 +            "    return " + EmitterCM.genAccess("ZZ_CMAP_" + "A", "ch", 16, sizes, (int[]) o[3], (int[]) o[4], (boolean[]) o[2]) + ";\n" +
 +            "  }");
      println();
+ 
+-    println("  /** ");
+-    println("   * Translates characters to character classes");
+-    println("   */");
+-    println("  private static final char [] ZZ_CMAP = zzUnpackCMap(ZZ_CMAP_PACKED);");
+-    println();
 -    return numPairs;
 -  }
- 
+-
 -
 -  /**
 -   * Print number as octal/unicode escaped string character.
@@ -166,18 +166,16 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 -      out.print("\\u");
 -      if (c < 0x1000) out.print("0");
 -      out.print(Integer.toHexString(c));
-+    String tables = EmitterCM.genTables((char[][]) o[0], sizes, (int[]) o[1], (boolean[]) o[2]);
-+    println(tables);
 -    }
-+  }
 -    else {
 -      out.print("\\");
 -      out.print(Integer.toOctalString(c));
 -    }    
--  }
++    String tables = EmitterCM.genTables((char[][]) o[0], sizes, (int[]) o[1], (boolean[]) o[2]);
++    println(tables);
+   }
  
  
-   private void emitRowMapArray() {
 @@ -949,7 +916,7 @@
        println("      for (zzCurrentPosL = zzStartRead  ;");
        println("           zzCurrentPosL < zzMarkedPosL ;");
@@ -322,7 +320,7 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
      
      emitActionTable();
      
-@@ -1444,7 +1418,7 @@
+@@ -1444,14 +1418,14 @@
      
      emitConstructorDecl();
          
@@ -331,13 +329,22 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
  
      if (scanner.debugOption) {
        println("");
+-      println("  private static String zzToPrintable(String str) {");
++      println("  private static String zzToPrintable(CharSequence str) {");
+       println("    StringBuilder builder = new StringBuilder();");
+       println("    for (int n = 0 ; n < str.length() ; ) {");
+-      println("      int ch = str.codePointAt(n);");
++      println("      int ch = Character.codePointAt(str, n);");
+       println("      int charCount = Character.charCount(ch);");
+       println("      n += charCount;");
+       println("      if (ch > 31 && ch < 127) {");
 Index: jflex/src/main/java/jflex/EmitterCM.java
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
---- jflex/src/main/java/jflex/EmitterCM.java	(revision 5b6b151f542d88ffb2ea4363c6ee8f23c7a49b09)
-+++ jflex/src/main/java/jflex/EmitterCM.java	(revision 5b6b151f542d88ffb2ea4363c6ee8f23c7a49b09)
+--- jflex/src/main/java/jflex/EmitterCM.java	(revision dec3dea802a8bb1f792789b6620c281e512651ee)
++++ jflex/src/main/java/jflex/EmitterCM.java	(revision dec3dea802a8bb1f792789b6620c281e512651ee)
 @@ -0,0 +1,328 @@
 +package jflex;
 +

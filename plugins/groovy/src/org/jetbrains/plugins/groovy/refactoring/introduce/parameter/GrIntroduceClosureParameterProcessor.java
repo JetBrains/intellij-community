@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -44,7 +43,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -223,7 +221,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
   private static Collection<PsiReference> findUsagesForLocal(GrClosableBlock initializer, final GrVariable var) {
     final Instruction[] flow = ControlFlowUtils.findControlFlowOwner(initializer).getControlFlow();
-    final ArrayList<BitSet> writes = ControlFlowUtils.inferWriteAccessMap(flow, var);
+    final List<BitSet> writes = ControlFlowUtils.inferWriteAccessMap(flow, var);
 
     Instruction writeInstr = null;
 
@@ -327,18 +325,15 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     final FieldConflictsResolver fieldConflictsResolver = new FieldConflictsResolver(name, block);
 
     final GrParameter[] parameters = block.getParameters();
-    settings.parametersToRemove().forEachDescending(new TIntProcedure() {
-      @Override
-      public boolean execute(final int paramNum) {
-        try {
-          PsiParameter param = parameters[paramNum];
-          param.delete();
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-        return true;
+    settings.parametersToRemove().forEachDescending(paramNum -> {
+      try {
+        PsiParameter param = parameters[paramNum];
+        param.delete();
       }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+      return true;
     });
 
     final PsiType type = settings.getSelectedType();
@@ -589,15 +584,12 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     final GrClosureSignature signature = GrClosureSignatureUtil.createSignature((PsiMethod)resolved, resolveResult.getSubstitutor());
     final GrClosureSignatureUtil.ArgInfo<PsiElement>[] argInfos = GrClosureSignatureUtil.mapParametersToArguments(signature, methodCall);
     LOG.assertTrue(argInfos != null);
-    settings.parametersToRemove().forEach(new TIntProcedure() {
-      @Override
-      public boolean execute(int value) {
-        final List<PsiElement> args = argInfos[value].args;
-        for (PsiElement arg : args) {
-          arg.delete();
-        }
-        return true;
+    settings.parametersToRemove().forEach(value -> {
+      final List<PsiElement> args = argInfos[value].args;
+      for (PsiElement arg : args) {
+        arg.delete();
       }
+      return true;
     });
   }
 

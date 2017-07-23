@@ -23,22 +23,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-class VcsAnnotateUtil {
+public class VcsAnnotateUtil {
   @NotNull
   public static List<Editor> getEditors(@NotNull Project project, @NotNull VirtualFile file) {
     FileEditor[] editors = FileEditorManager.getInstance(project).getEditors(file);
-    return ContainerUtil.mapNotNull(editors, new Function<FileEditor, Editor>() {
-      @Override
-      public Editor fun(FileEditor fileEditor) {
-        return fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
-      }
-    });
+    return ContainerUtil.mapNotNull(editors, fileEditor -> fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null);
   }
 
   @NotNull

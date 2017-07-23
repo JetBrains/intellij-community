@@ -20,14 +20,13 @@ import org.jetbrains.annotations.NotNull;
 
 class EditorPosition implements Cloneable {
 
-  public int logicalLine;
-  public int offset;
-  public int x;
-  public char symbol;
+  int logicalLine;
+  int offset;
+  int x;
 
   private final Editor myEditor;
 
-  EditorPosition(@NotNull Editor editor) {
+  private EditorPosition(@NotNull Editor editor) {
     myEditor = editor;
   }
 
@@ -37,7 +36,7 @@ class EditorPosition implements Cloneable {
     this.offset = offset;
   }
 
-  public void onNewLine() {
+  void onNewLine() {
     logicalLine++;
     x = 0;
     offset++;
@@ -63,7 +62,6 @@ class EditorPosition implements Cloneable {
     logicalLine = position.logicalLine;
     offset = position.offset;
     x = position.x;
-    symbol = position.symbol;
   }
 
   @Override
@@ -72,7 +70,6 @@ class EditorPosition implements Cloneable {
     result.logicalLine = logicalLine;
     result.offset = offset;
     result.x = x;
-    result.symbol = symbol;
     return result;
   }
 

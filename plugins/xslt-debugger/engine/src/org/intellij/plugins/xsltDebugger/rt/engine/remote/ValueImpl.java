@@ -20,11 +20,6 @@ import org.intellij.plugins.xsltDebugger.rt.engine.Value;
 
 import java.io.Serializable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 28.05.2007
- */
 class ValueImpl implements Value {
   private final Serializable myValue;
   private final Type myType;

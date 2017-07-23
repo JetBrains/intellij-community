@@ -28,12 +28,13 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyReferenceOwner;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.stubs.PyAnnotationOwnerStub;
+import com.jetbrains.python.psi.stubs.PyTypeCommentOwnerStub;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,6 +69,14 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
     }
     className = StringUtil.trimEnd(className, "Impl");
     return className;
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getNavigationElement() {
+    // TODO: Limit to classes, functions, targets?
+    final PsiElement element = PyiUtil.getOriginalElement(this);
+    return element != null ? element : super.getNavigationElement();
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -176,7 +185,7 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
     final PsiReference[] references;
     if (element instanceof PyReferenceOwner) {
       final PsiPolyVariantReference reference = ((PyReferenceOwner)element).getReference(resolveContext);
-      references = reference == null ? PsiReference.EMPTY_ARRAY : new PsiReference[] {reference};
+      references = reference == null ? PsiReference.EMPTY_ARRAY : new PsiReference[]{reference};
     }
     else {
       references = element.getReferences();
@@ -189,5 +198,41 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
         }
       }
     }
+  }
+
+  @Nullable
+  protected static <T extends StubBasedPsiElement<? extends PyAnnotationOwnerStub> & PyAnnotationOwner> 
+  String getAnnotationContentFromStubOrPsi(@NotNull T elem) {
+    final PyAnnotationOwnerStub stub = elem.getStub();
+    if (stub != null) {
+      return stub.getAnnotation();
+    }
+    return getAnnotationContentFromPsi(elem);
+  }
+
+  @Nullable
+  protected static <T extends PyAnnotationOwner> String getAnnotationContentFromPsi(@NotNull T elem) {
+    final PyAnnotation annotation = elem.getAnnotation();
+    if (annotation != null) {
+      final PyExpression annotationValue = annotation.getValue();
+      if (annotationValue != null) {
+        return annotationValue.getText();
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  protected static <T extends StubBasedPsiElement<? extends PyTypeCommentOwnerStub> & PyTypeCommentOwner> 
+  String getTypeCommentAnnotationFromStubOrPsi(@NotNull T elem) {
+    final PyTypeCommentOwnerStub stub = elem.getStub();
+    if (stub != null) {
+      return stub.getTypeComment();
+    }
+    final PsiComment comment = elem.getTypeComment();
+    if (comment != null) {
+      return PyTypingTypeProvider.getTypeCommentValue(comment.getText());
+    }
+    return null;
   }
 }

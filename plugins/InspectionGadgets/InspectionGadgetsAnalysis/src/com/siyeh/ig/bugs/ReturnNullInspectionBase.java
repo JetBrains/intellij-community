@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.AnnotateMethodFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -32,8 +31,6 @@ import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 public class ReturnNullInspectionBase extends BaseInspection {
 
@@ -142,23 +139,6 @@ public class ReturnNullInspectionBase extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel =
-      new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "return.of.null.ignore.private.option"),
-                             "m_ignorePrivateMethods");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "return.of.null.arrays.option"), "m_reportArrayMethods");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "return.of.null.collections.option"),
-                             "m_reportCollectionMethods");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "return.of.null.objects.option"), "m_reportObjectMethods");
-    return optionsPanel;
-  }
-
-  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ReturnNullVisitor();
   }
@@ -223,7 +203,7 @@ public class ReturnNullInspectionBase extends BaseInspection {
           registerError(value, value);
         }
       }
-      else {
+      else if (!returnType.equalsToText("java.lang.Void")){
         if (m_reportObjectMethods) {
           registerError(value, value);
         }

@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,7 +95,7 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
 
     final byte[] bytes;
     try {
-      bytes = virtualFile.isDirectory() ? null : virtualFile.contentsToByteArray();
+      bytes = virtualFile.isDirectory() ? null : VfsUtilCore.loadBytes(virtualFile);
     }
     catch (IOException e) {
       return null;
@@ -105,13 +106,11 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
       group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
   }
 
-  public DefaultActionGroup createActionGroup(@NotNull final VirtualFile myFile,
+  public DefaultActionGroup createActionGroup(@Nullable final VirtualFile myFile,
                                               final Editor editor,
                                               final Document document,
                                               final byte[] bytes,
                                               @Nullable final String clearItemText) {
-    final String text = document == null ? null : document.getText();
-
     return new ChooseFileEncodingAction(myFile) {
      @Override
      public void update(final AnActionEvent e) {
@@ -120,24 +119,14 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
      @NotNull
      @Override
      protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-       return createCharsetsActionGroup(clearItemText, null, charset -> {
-         assert myFile.isDirectory() || text != null : charset;
-         EncodingUtil.Magic8 safeToReload = myFile.isDirectory() ? EncodingUtil.Magic8.ABSOLUTELY : EncodingUtil.isSafeToReloadIn(myFile, text, bytes, charset);
-         boolean enabled = safeToReload != EncodingUtil.Magic8.NO_WAY;
-         if (!enabled) {
-           EncodingUtil.Magic8 safeToConvert = myFile.isDirectory() ? EncodingUtil.Magic8.ABSOLUTELY : EncodingUtil.isSafeToConvertTo(myFile, text, bytes, charset);
-           enabled = safeToConvert != EncodingUtil.Magic8.NO_WAY;
-         }
-         return enabled ? "Change encoding to '"+charset.displayName()+"'" : null;
-       }); // no 'clear'
+       return createCharsetsActionGroup(clearItemText, null, charset -> "Change encoding to '" + charset.displayName() + "'");
+       // no 'clear'
      }
 
-     @Override
-     protected void chosen(@Nullable VirtualFile virtualFile, @NotNull Charset charset) {
-       if (virtualFile != null) {
-         ChangeFileEncodingAction.this.chosen(document, editor, virtualFile, bytes, charset);
-       }
-     }
+      @Override
+      protected void chosen(@Nullable VirtualFile virtualFile, @NotNull Charset charset) {
+        ChangeFileEncodingAction.this.chosen(document, editor, virtualFile, bytes, charset);
+      }
    }
    .createPopupActionGroup(null);
   }
@@ -145,9 +134,10 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
   // returns true if charset was changed, false if failed
   protected boolean chosen(final Document document,
                            final Editor editor,
-                           @NotNull final VirtualFile virtualFile,
+                           @Nullable final VirtualFile virtualFile,
                            byte[] bytes,
                            @NotNull final Charset charset) {
+    if (virtualFile == null) return false;
     String text = document.getText();
     EncodingUtil.Magic8 isSafeToConvert = EncodingUtil.isSafeToConvertTo(virtualFile, text, bytes, charset);
     EncodingUtil.Magic8 isSafeToReload = EncodingUtil.isSafeToReloadIn(virtualFile, text, bytes, charset);

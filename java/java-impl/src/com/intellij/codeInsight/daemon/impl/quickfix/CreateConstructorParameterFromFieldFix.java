@@ -32,7 +32,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -274,15 +273,11 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     if (containingClass == null) return false;
     final int minUsagesNumber = containingClass.findMethodsBySignature(fromText, false).length > 0 ? 0 : 1;
     final List<ParameterInfoImpl> parameterInfos =
-      ChangeMethodSignatureFromUsageFix.performChange(project, editor, file, constructor, minUsagesNumber, newParamInfos, true, true);
-    if (parameterInfos == null) return false;
-    final ParameterInfoImpl[] resultParams = parameterInfos.toArray(new ParameterInfoImpl[parameterInfos.size()]);
-    return ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        return doCreate(project, editor, parameters, constructorPointer, resultParams, usedFields, cleanupElements);
-      }
-    });
+      ChangeMethodSignatureFromUsageFix.performChange(project, editor, file, constructor, minUsagesNumber, newParamInfos, true, true, (List<ParameterInfoImpl> p) -> {
+        final ParameterInfoImpl[] resultParams = p.toArray(new ParameterInfoImpl[0]);
+        doCreate(project, editor, parameters, constructorPointer, resultParams, usedFields, cleanupElements);
+      } );
+    return parameterInfos != null;
   }
 
   private static String createDummyMethod(PsiMethod constructor, ParameterInfoImpl[] newParamInfos) {

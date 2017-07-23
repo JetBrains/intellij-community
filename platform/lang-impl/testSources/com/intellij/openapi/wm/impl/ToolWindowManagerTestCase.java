@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -35,15 +36,18 @@ public abstract class ToolWindowManagerTestCase extends LightPlatformCodeInsight
   public void setUp() throws Exception {
     super.setUp();
     myManager = new ToolWindowManagerImpl(getProject(), WindowManagerEx.getInstanceEx(), ActionManager.getInstance());
+    Disposer.register(getTestRootDisposable(), myManager);
     myOldManager = (ToolWindowManagerEx)((ComponentManagerImpl)getProject()).registerComponentInstance(ToolWindowManager.class, myManager);
-    myManager.projectOpened();
+    myManager.init();
   }
 
   @Override
   public void tearDown() throws Exception {
     try {
       myManager.projectClosed();
+      myManager = null;
       ((ComponentManagerImpl)getProject()).registerComponentInstance(ToolWindowManager.class, myOldManager);
+      myOldManager = null;
     }
     finally {
       super.tearDown();

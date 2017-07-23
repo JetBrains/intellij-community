@@ -187,12 +187,12 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   private boolean isAccessible(PsiClass otherClass) {
     if (otherClass.hasModifierProperty(PsiModifier.PRIVATE)) {
       final PsiClass containingClass = otherClass.getContainingClass();
-      PsiClass containingPlaceClass = PsiTreeUtil.getParentOfType(myPlace, PsiClass.class, false);
+      PsiClass containingPlaceClass = PsiTreeUtil.getContextOfType(myPlace, PsiClass.class, false);
       while (containingPlaceClass != null) {
         if (containingClass == containingPlaceClass) {
           return true;
         }
-        containingPlaceClass = PsiTreeUtil.getParentOfType(containingPlaceClass, PsiClass.class);
+        containingPlaceClass = PsiTreeUtil.getContextOfType(containingPlaceClass, PsiClass.class);
       }
       return false;
     }
@@ -200,7 +200,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   }
 
   private boolean isAmbiguousInherited(PsiClass containingClass1) {
-    PsiClass psiClass = PsiTreeUtil.getParentOfType(myPlace, PsiClass.class);
+    PsiClass psiClass = PsiTreeUtil.getContextOfType(myPlace, PsiClass.class);
     while (psiClass != null) {
       if (psiClass.isInheritor(containingClass1, false)) {
         return true;
@@ -220,7 +220,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     }
     boolean accessible = myPlace == null || checkAccessibility(aClass);
     if (myCandidates == null) {
-      myCandidates = new SmartList<ClassCandidateInfo>();
+      myCandidates = new SmartList<>();
     }
     else {
       String fqName = aClass.getQualifiedName();
@@ -245,7 +245,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     myResult = null;
     if (!accessible) return true;
     if (aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
-      final PsiClass containingPlaceClass = PsiTreeUtil.getParentOfType(myPlace, PsiClass.class, false);
+      final PsiClass containingPlaceClass = PsiTreeUtil.getContextOfType(myPlace, PsiClass.class, false);
       if (containingPlaceClass != null && !PsiTreeUtil.isAncestor(containingPlaceClass, aClass, false)){
         return true;
       }

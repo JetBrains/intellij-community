@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public interface PyTargetExpressionStub extends NamedStub<PyTargetExpression> {
+public interface PyTargetExpressionStub extends NamedStub<PyTargetExpression>, PyTypeCommentOwnerStub, PyAnnotationOwnerStub {
   enum InitializerType {
     ReferenceExpression(1),
     CallExpression(2),
@@ -63,7 +63,4 @@ public interface PyTargetExpressionStub extends NamedStub<PyTargetExpression> {
 
   @Nullable
   String getDocString();
-
-  @Nullable
-  String getTypeComment();
 }

@@ -33,7 +33,6 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.io.File;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 public class WcInfoLoader {
@@ -107,11 +106,7 @@ public class WcInfoLoader {
       }
     }
 
-    Collections.sort(branches, new Comparator<WCInfoWithBranches.Branch>() {
-      public int compare(final WCInfoWithBranches.Branch o1, final WCInfoWithBranches.Branch o2) {
-        return Comparing.compare(o1.getUrl(), o2.getUrl());
-      }
-    });
+    Collections.sort(branches, (o1, o2) -> Comparing.compare(o1.getUrl(), o2.getUrl()));
 
     return new WCInfoWithBranches(info, branches, rootUrlInfo.getRoot(), workingCopyBranch.get());
   }

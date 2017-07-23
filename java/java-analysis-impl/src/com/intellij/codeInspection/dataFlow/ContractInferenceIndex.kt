@@ -17,7 +17,7 @@ package com.intellij.codeInspection.dataFlow
 
 import com.intellij.lang.LighterAST
 import com.intellij.lang.LighterASTNode
-import com.intellij.psi.PsiMethod
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.impl.source.JavaLightStubBuilder
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.PsiMethodImpl
@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType
 import com.intellij.psi.impl.source.tree.JavaElementType.*
 import com.intellij.psi.impl.source.tree.LightTreeUtil
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor
+import com.intellij.psi.util.PsiUtil
 import com.intellij.util.gist.GistManager
 import java.util.*
 
@@ -32,7 +33,7 @@ import java.util.*
  * @author peter
  */
 
-private val gist = GistManager.getInstance().newPsiFileGist("contractInference", 0, MethodDataExternalizer) { file ->
+private val gist = GistManager.getInstance().newPsiFileGist("contractInference", 2, MethodDataExternalizer) { file ->
   indexFile(file.node.lighterAST)
 }
 
@@ -93,14 +94,18 @@ private fun createData(body: LighterASTNode,
   return MethodData(nullity, purity, contracts, body.startOffset, body.endOffset)
 }
 
-fun getIndexedData(method: PsiMethod): MethodData? {
-  if (method !is PsiMethodImpl || !InferenceFromSourceUtil.shouldInferFromSource(method)) return null
+fun getIndexedData(method: PsiMethodImpl): MethodData? = gist.getFileData(method.containingFile)?.get(methodIndex(method))
 
-  return gist.getFileData(method.containingFile)?.get(methodIndex(method))
-}
-
-private fun methodIndex(method: PsiMethodImpl): Int {
+private fun methodIndex(method: PsiMethodImpl): Int? {
   val file = method.containingFile as PsiFileImpl
-  val stubTree = file.stubTree ?: file.calcStubTree()
+  if (file.elementTypeForStubBuilder == null) return null
+
+  val stubTree = try {
+    file.stubTree ?: file.calcStubTree()
+  } catch (e: ProcessCanceledException) {
+    throw e
+  } catch (e: RuntimeException) {
+    throw RuntimeException("While inferring contract for " + PsiUtil.getMemberQualifiedName(method), e)
+  }
   return stubTree.plainList.filter { it.stubType == JavaElementType.METHOD }.map { it.psi }.indexOf(method)
 }

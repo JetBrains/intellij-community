@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PreloadingActivity;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -27,7 +28,7 @@ public class CompletionPreloader extends PreloadingActivity {
   @Override
   public void preload(@NotNull ProgressIndicator indicator) {
     for (Object extension : Extensions.getExtensions("com.intellij.completion.contributor")) {
-      if (extension instanceof CompletionContributorEP) {
+      if (extension instanceof CompletionContributorEP && !ApplicationManager.getApplication().isDisposed()) {
         ((CompletionContributorEP)extension).getInstance();
       }
     }

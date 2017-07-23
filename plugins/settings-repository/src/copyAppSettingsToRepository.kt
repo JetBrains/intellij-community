@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
  */
 package org.jetbrains.settingsRepository
 
-import com.intellij.configurationStore.*
+import com.intellij.configurationStore.ROOT_CONFIG
+import com.intellij.configurationStore.StateStorageManagerImpl
+import com.intellij.configurationStore.getExportableComponentsMap
+import com.intellij.configurationStore.removeMacroIfStartsWith
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.stateStore
@@ -29,7 +32,7 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 
 fun copyLocalConfig(storageManager: StateStorageManagerImpl = ApplicationManager.getApplication()!!.stateStore.stateStorageManager as StateStorageManagerImpl) {
-  val streamProvider = StreamProviderWrapper.getOriginalProvider(storageManager.streamProvider)!! as IcsManager.IcsStreamProvider
+  val streamProvider = storageManager.compoundStreamProvider.providers.first { it is IcsManager.IcsStreamProvider } as IcsManager.IcsStreamProvider
 
   val fileToItems = getExportableComponentsMap(true, false, storageManager)
   fileToItems.keys.forEachGuaranteed { file ->

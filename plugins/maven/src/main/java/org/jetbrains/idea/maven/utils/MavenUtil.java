@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,8 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PathManagerEx;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Editor;
@@ -48,11 +49,13 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.DisposeAwareRunnable;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.Semaphore;
@@ -61,6 +64,7 @@ import gnu.trove.THashSet;
 import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenPlugin;
@@ -86,6 +90,7 @@ import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Stream;
 import java.util.zip.CRC32;
 
 public class MavenUtil {
@@ -220,9 +225,9 @@ public class MavenUtil {
     Notifications.Bus.notify(new Notification(MAVEN_NOTIFICATION_GROUP, title, e.getMessage(), NotificationType.ERROR), project);
   }
 
-  public static File getPluginSystemDir(String folder) {
-    // PathManager.getSystemPath() may return relative path
-    return new File(PathManager.getSystemPath(), "Maven" + "/" + folder).getAbsoluteFile();
+  @NotNull
+  public static java.nio.file.Path getPluginSystemDir(@NotNull String folder) {
+    return PathManagerEx.getAppSystemDir().resolve("Maven").resolve(folder);
   }
 
   public static File getBaseDir(@NotNull VirtualFile file) {
@@ -424,10 +429,7 @@ public class MavenUtil {
         try {
           task.run(new MavenProgressIndicator(i));
         }
-        catch (MavenProcessCanceledException e) {
-          canceledEx[0] = e;
-        }
-        catch (ProcessCanceledException e) {
+        catch (MavenProcessCanceledException | ProcessCanceledException e) {
           canceledEx[0] = e;
         }
         catch (RuntimeException e) {
@@ -457,10 +459,7 @@ public class MavenUtil {
       try {
         task.run(indicator);
       }
-      catch (MavenProcessCanceledException ignore) {
-        indicator.cancel();
-      }
-      catch (ProcessCanceledException ignore) {
+      catch (MavenProcessCanceledException | ProcessCanceledException ignore) {
         indicator.cancel();
       }
     };
@@ -479,10 +478,7 @@ public class MavenUtil {
           try {
             future.get();
           }
-          catch (InterruptedException e) {
-            MavenLog.LOG.error(e);
-          }
-          catch (ExecutionException e) {
+          catch (InterruptedException | ExecutionException e) {
             MavenLog.LOG.error(e);
           }
         }
@@ -718,14 +714,17 @@ public class MavenUtil {
     }
   }
 
-  public static String expandProperties(String text) {
+  public static String expandProperties(String text, Properties props) {
     if (StringUtil.isEmptyOrSpaces(text)) return text;
-    Properties props = MavenServerUtil.collectSystemProperties();
     for (Map.Entry<Object, Object> each : props.entrySet()) {
       Object val = each.getValue();
       text = text.replace("${" + each.getKey() + "}", val instanceof CharSequence ? (CharSequence)val : val.toString());
     }
     return text;
+  }
+
+  public static String expandProperties(String text) {
+    return expandProperties(text, MavenServerUtil.collectSystemProperties());
   }
 
   @Nullable
@@ -795,7 +794,7 @@ public class MavenUtil {
       final CRC32 crc = new CRC32();
 
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-
+      parser.getXMLReader().setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
       parser.parse(in, new DefaultHandler(){
 
         boolean textContentOccur = false;
@@ -964,5 +963,31 @@ public class MavenUtil {
     return fileName.equals(MavenConstants.POM_XML) ||
            fileName.endsWith(".pom") || fileName.startsWith("pom.") ||
            fileName.equals(MavenConstants.SUPER_POM_XML);
+  }
+
+  public static boolean isPotentialPomFile(String path) {
+    return ArrayUtil.contains(FileUtilRt.getExtension(path), MavenConstants.POM_EXTENSIONS);
+  }
+
+  public static boolean isPomFile(@Nullable Project project, @Nullable VirtualFile file) {
+    if (file == null) return false;
+
+    if (isPomFileName(file.getName())) return true;
+    if (!isPotentialPomFile(file.getPath())) return false;
+
+    if (project == null || !project.isInitialized()) return false;
+
+    MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(project);
+    if (mavenProjectsManager.findProject(file) != null) return true;
+
+    return ReadAction.compute(() -> {
+      PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+      if (psiFile == null) return false;
+      return MavenDomUtil.isProjectFile(psiFile);
+    });
+  }
+
+  public static Stream<VirtualFile> streamPomFiles(@Nullable Project project, @NotNull VirtualFile root) {
+    return Stream.of(root.getChildren()).filter(file -> isPomFile(project, file));
   }
 }

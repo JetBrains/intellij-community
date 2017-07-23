@@ -24,6 +24,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.util.ExceptionUtil;
 import org.apache.log4j.DefaultThrowableRenderer;
 import org.apache.log4j.spi.LoggerRepository;
 import org.apache.log4j.spi.ThrowableRenderer;
@@ -115,12 +116,7 @@ public class IdeaLogger extends Log4jBasedLogger {
   public void error(String message, @Nullable Throwable t, @NotNull String... details) {
     if (t instanceof ControlFlowException) {
       myLogger.error(message, new Throwable("Control-flow exceptions (like " + t.getClass().getSimpleName() + ") should never be logged", t));
-      if (t instanceof RuntimeException) {
-        throw (RuntimeException)t;
-      }
-      else {
-        throw new RuntimeException(t);
-      }
+      ExceptionUtil.rethrow(t);
     }
 
     String detailString = StringUtil.join(details, "\n");

@@ -39,7 +39,7 @@
 
     <action id="ShowIntentionActions" class="com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction"/>
 
-    <action id="TogglePopupHints" class="com.intellij.ide.actions.TogglePopupHintsAction"/>
+    <action id="TogglePopupHints" class="com.intellij.codeInsight.daemon.impl.TogglePopupHintsAction"/>
     <action id="FindModal" class="com.intellij.openapi.editor.actions.FindAction" icon="AllIcons.Actions.Menu_find"/>
 
     <action id="CodeInspection.OnEditor" class="com.intellij.codeInspection.actions.CodeInspectionOnEditorAction"/>
@@ -304,7 +304,6 @@
     </group>
     
     <action id="ToggleInlineHintsAction" class="com.intellij.codeInsight.hints.ToggleInlineHintsAction">
-      <add-to-group group-id="EditorPopupMenu"/>
       <add-to-group group-id="ParameterNameHints"/>
     </action>
     
@@ -357,6 +356,7 @@
       <action id="editRunConfigurations" class="com.intellij.execution.actions.EditRunConfigurationsAction"/>
       <action id="Stop" class="com.intellij.execution.actions.StopAction" icon="AllIcons.Actions.Suspend"/>
       <action id="ShowLiveRunConfigurations" class="com.intellij.execution.actions.ShowRunningListAction"/>
+      <action id="StopBackgroundProcesses" class="com.intellij.execution.actions.StopBackgroundProcessesAction" icon="AllIcons.Process.Stop"/>
 
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="RefactoringMenu"/>
     </group>
@@ -413,7 +413,7 @@
       <separator/>
       <reference ref="RunConfiguration"/>
       <reference ref="RunnerActions"/>
-
+      <reference ref="Stop"/>
       <add-to-group group-id="MainToolBar" relative-to-action="Forward" anchor="after"/>
     </group>
 
@@ -730,7 +730,6 @@
       <action id="XDebugger.JumpToTypeSource" class="com.intellij.xdebugger.impl.ui.tree.actions.XJumpToTypeSourceAction"
               use-shortcut-of="Debugger.EditTypeSource"/>
 
-      <action id="Debugger.Tree.AddToWatches" class="com.intellij.xdebugger.impl.ui.tree.actions.XAddToWatchesAction" icon="AllIcons.Debugger.AddToWatch"/>
       <action id="Debugger.Tree.EvaluateInConsole" class="com.intellij.xdebugger.impl.ui.tree.actions.EvaluateInConsoleFromTreeAction"/>
 
       <action id="XDebugger.NewWatch" class="com.intellij.xdebugger.impl.frame.actions.XNewWatchAction" icon="AllIcons.Debugger.NewWatch"/>
@@ -796,7 +795,7 @@
       <separator/>
       <reference ref="EvaluateExpression"/>
       <reference ref="Debugger.Tree.EvaluateInConsole"/>
-      <reference ref="Debugger.Tree.AddToWatches"/>
+      <reference ref="Debugger.AddToWatch"/>
       <reference ref="Debugger.ShowReferring"/>
       <separator/>
       <reference ref="XDebugger.JumpToSource"/>
@@ -921,6 +920,8 @@
       <add-to-group group-id="MaintenanceGroup" anchor="last"/>
     </action>
 
+    <action id="JumpToColorsAndFonts" class="com.intellij.application.options.colors.JumpToColorsAndFontsAction" icon="AllIcons.General.EditColors"/>
+
     <!-- Arrangement rules -->
     <action id="Arrangement.Rule.Add"
             use-shortcut-of="NewElement"
@@ -1016,5 +1017,25 @@
       <action id="DisableInspection" class="com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction$DisableInspection"/>
       <action id="RunInspectionOn" class="com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction$RunInspectionOn"/>
     </group>
+
+    <group id="RunDashboardContentToolbar">
+      <action id="RunDashboard.Run" class="com.intellij.execution.dashboard.actions.RunAction"/>
+      <action id="RunDashboard.Debug" class="com.intellij.execution.dashboard.actions.DebugAction"/>
+      <action id="RunDashboard.Stop" class="com.intellij.execution.dashboard.actions.StopAction"/>
+    </group>
+
+    <group id="RunDashboardTreeToolbar"/>
+    <group id="RunDashboardPopup">
+      <action id="RunDashboard.EditConfiguration" class="com.intellij.execution.dashboard.actions.EditConfigurationAction"
+              use-shortcut-of="EditSource"/>
+      <action id="RunDashboard.CopyConfiguration" class="com.intellij.execution.dashboard.actions.CopyConfigurationAction"
+              use-shortcut-of="EditorDuplicate"/>
+      <action id="RunDashboard.RemoveConfiguration" class="com.intellij.execution.dashboard.actions.RemoveConfigurationAction"
+              use-shortcut-of="$Delete"/>
+    </group>
+
+    <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction">
+      <add-to-group group-id="EditorTabPopupMenuEx" anchor="after" relative-to-action="AddAllToFavorites"/>
+    </action>
   </actions>
 </idea-plugin>

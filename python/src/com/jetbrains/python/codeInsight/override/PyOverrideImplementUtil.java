@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,10 +39,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.types.PyClassLikeType;
-import com.jetbrains.python.psi.types.PyNoneType;
-import com.jetbrains.python.psi.types.PyTypeUtil;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -145,6 +142,7 @@ public class PyOverrideImplementUtil {
       return;
     }
     new WriteCommandAction(pyClass.getProject(), pyClass.getContainingFile()) {
+      @Override
       protected void run(@NotNull final Result result) throws Throwable {
         write(pyClass, membersToOverride, editor, implement);
       }
@@ -204,14 +202,40 @@ public class PyOverrideImplementUtil {
         pyFunctionBuilder.decorate(PyNames.PROPERTY);
       }
     }
+    final LanguageLevel level = LanguageLevel.forElement(pyClass);
     PyAnnotation anno = baseFunction.getAnnotation();
-    if (anno != null) {
+    if (anno != null && level.isAtLeast(LanguageLevel.PYTHON30)) {
       pyFunctionBuilder.annotation(anno.getText());
     }
     final TypeEvalContext context = TypeEvalContext.userInitiated(baseFunction.getProject(), baseFunction.getContainingFile());
-    final List<PyParameter> baseParams = PyUtil.getParameters(baseFunction, context);
-    for (PyParameter parameter : baseParams) {
-      pyFunctionBuilder.parameter(parameter.getText());
+    final List<PyCallableParameter> baseParams = baseFunction.getParameters(context);
+    for (PyCallableParameter parameter : baseParams) {
+      final PyParameter psi = parameter.getParameter();
+      final PyNamedParameter namedParameter = PyUtil.as(psi, PyNamedParameter.class);
+
+      if (namedParameter != null) {
+        final StringBuilder parameterBuilder = new StringBuilder();
+        if (namedParameter.isPositionalContainer()) {
+          parameterBuilder.append("*");
+        }
+        else if (namedParameter.isKeywordContainer()) {
+          parameterBuilder.append("**");
+        }
+        parameterBuilder.append(namedParameter.getName());
+        final PyAnnotation annotation = namedParameter.getAnnotation();
+        if (annotation != null && level.isAtLeast(LanguageLevel.PYTHON30)) {
+          parameterBuilder.append(annotation.getText());
+        }
+        final PyExpression defaultValue = namedParameter.getDefaultValue();
+        if (defaultValue != null) {
+          parameterBuilder.append("=");
+          parameterBuilder.append(defaultValue.getText());
+        }
+        pyFunctionBuilder.parameter(parameterBuilder.toString());
+      }
+      else if (psi != null) {
+        pyFunctionBuilder.parameter(psi.getText());
+      }
     }
 
     PyClass baseClass = baseFunction.getContainingClass();
@@ -220,24 +244,26 @@ public class PyOverrideImplementUtil {
 
     boolean hadStar = false;
     List<String> parameters = new ArrayList<>();
-    for (PyParameter parameter : baseParams) {
-      final PyNamedParameter pyNamedParameter = parameter.getAsNamed();
-      if (pyNamedParameter != null) {
-        String repr = pyNamedParameter.getRepr(false);
-        parameters.add(hadStar && !pyNamedParameter.isKeywordContainer() ? pyNamedParameter.getName() + "=" + repr : repr);
-        if (pyNamedParameter.isPositionalContainer()) {
+    for (PyCallableParameter parameter : baseParams) {
+      final PyParameter psi = parameter.getParameter();
+      final PyNamedParameter namedParameter = PyUtil.as(psi, PyNamedParameter.class);
+
+      if (namedParameter != null) {
+        final String repr = namedParameter.getRepr(false);
+        parameters.add(hadStar && !namedParameter.isKeywordContainer() ? namedParameter.getName() + "=" + repr : repr);
+        if (namedParameter.isPositionalContainer()) {
           hadStar = true;
         }
       }
-      else if (parameter instanceof PySingleStarParameter) {
+      else if (psi instanceof PySingleStarParameter) {
         hadStar = true;
       }
-      else {
-        parameters.add(parameter.getText());
+      else if (psi != null) {
+        parameters.add(psi.getText());
       }
     }
 
-    if (PyNames.FAKE_OLD_BASE.equals(baseClass.getName()) || raisesNotImplementedError(baseFunction) || implement) {
+    if (PyNames.TYPES_INSTANCE_TYPE.equals(baseClass.getQualifiedName()) || raisesNotImplementedError(baseFunction) || implement) {
       statementBody.append(PyNames.PASS);
     }
     else {

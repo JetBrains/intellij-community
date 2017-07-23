@@ -47,6 +47,7 @@ import java.util.concurrent.ConcurrentMap;
 public class ImageLoader implements Serializable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ImageLoader");
 
+  public static final int CACHED_IMAGE_MAX_SIZE = (int)Math.round(Registry.doubleValue("ide.cached.image.max.size") * 1024 * 1024);
   private static final ConcurrentMap<String, Image> ourCache = ContainerUtil.createConcurrentSoftValueMap();
 
   private static class ImageDesc {
@@ -96,7 +97,7 @@ public class ImageLoader implements Serializable {
         if (stream == null) return null;
       }
       if (stream == null) {
-        cacheKey = path;
+        cacheKey = path + (type == Type.SVG ? "_@" + scale + "x" : "");
         Image image = ourCache.get(cacheKey);
         if (image != null) return image;
 
@@ -109,7 +110,9 @@ public class ImageLoader implements Serializable {
         stream = connection.getInputStream();
       }
       Image image = type.load(url, stream, scale);
-      if (image != null && cacheKey != null) {
+      if (image != null && cacheKey != null &&
+          image.getWidth(null) * image.getHeight(null) * 4 <= CACHED_IMAGE_MAX_SIZE)
+      {
         ourCache.put(cacheKey, image);
       }
       return image;
@@ -224,7 +227,7 @@ public class ImageLoader implements Serializable {
       return with(new ImageConverter() {
         @Override
         public Image convert(Image source, ImageDesc desc) {
-          if (source != null && UIUtil.isJDKManagedHiDPI() && desc.scale > 1) {
+          if (source != null && UIUtil.isJreHiDPIEnabled() && desc.scale > 1) {
             return RetinaImage.createFrom(source, (int)desc.scale, ourComponent);
           }
           return source;
@@ -279,7 +282,7 @@ public class ImageLoader implements Serializable {
 
   /**
    * Loads an image by the passed url in scale (1x, 2x, ...) possibly closed to the passed JBUI pix scale,
-   * then simply returns it in the JDK-managed HiDPI mode, otherwise scales the image
+   * then simply returns it in the JRE-managed HiDPI mode, otherwise scales the image
    * according to the passed scale and returns.
    */
   @Nullable
@@ -287,14 +290,14 @@ public class ImageLoader implements Serializable {
     final float scaleFactor = adjustScaleFactor(allowFloatScaling, pixScale); // valid for Retina as well
 
     // We can't check all 3rd party plugins and convince the authors to add @2x icons.
-    // (scaleFactor > 1.0) != isJDKManagedHiDPI() => we should scale images manually.
-    // Note we never scale images on JDKManagedHiDPI displays because scaling is handled by the system.
+    // In IDE-managed HiDPI mode with (scaleFactor > 1.0) we should scale images manually.
+    // Note we never scale images in JRE-managed HiDPI mode because scaling is handled by JRE.
 
-    final boolean scaleImages = (scaleFactor > 1.0f && !UIUtil.isJDKManagedHiDPI());
+    final boolean scaleImages = (scaleFactor > 1.0f && !UIUtil.isJreHiDPIEnabled());
 
-    // For any scale factor > 1.0, always prefer retina images, because downscaling
+    // Prefer retina images for HiDPI scale, because downscaling
     // retina images provides a better result than upscaling non-retina images.
-    final boolean loadRetinaImages = (scaleFactor > 1.0f);
+    final boolean loadRetinaImages = JBUI.isHiDPI(scaleFactor);
 
     return ImageDescList.create(url.toString(), null, UIUtil.isUnderDarcula(), loadRetinaImages, allowFloatScaling, pixScale).load(
       ImageConverterChain.create().
@@ -314,9 +317,7 @@ public class ImageLoader implements Serializable {
   }
 
   private static float adjustScaleFactor(boolean allowFloatScaling, float scale) {
-    float scaleFactor = allowFloatScaling ? scale : scale > 1.5f ? 2f : 1f;
-    assert scaleFactor >= 1.0f : "By design, only scale factors >= 1.0 are supported";
-    return scaleFactor;
+    return allowFloatScaling ? scale : JBUI.isHiDPI(scale) ? 2f : 1f;
   }
 
   @NotNull
@@ -364,7 +365,7 @@ public class ImageLoader implements Serializable {
 
   @Nullable
   public static Image loadFromResource(@NonNls @NotNull String path, @NotNull Class aClass) {
-    return ImageDescList.create(path, aClass, UIUtil.isUnderDarcula(), JBUI.pixScale() >= 1.5f, true).
+    return ImageDescList.create(path, aClass, UIUtil.isUnderDarcula(), JBUI.isHiDPI(JBUI.pixScale()), true).
       load(ImageConverterChain.create().withRetina());
   }
 

@@ -22,10 +22,6 @@ import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.GrDynamicImplicitProperty;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 20.12.2007
- */
 public class DPropertyElement extends DItemElement {
   private GrDynamicImplicitProperty myPsi;
 

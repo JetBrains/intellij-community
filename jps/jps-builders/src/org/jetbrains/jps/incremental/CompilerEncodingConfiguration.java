@@ -49,7 +49,7 @@ public class CompilerEncodingConfiguration {
   public CompilerEncodingConfiguration(JpsModel jpsModel, BuildRootIndex index) {
     myJpsModel = jpsModel;
     JpsEncodingProjectConfiguration configuration = JpsEncodingConfigurationService.getInstance().getEncodingConfiguration(jpsModel.getProject());
-    myUrlToCharset = configuration != null ? configuration.getUrlToEncoding() : Collections.<String, String>emptyMap();
+    myUrlToCharset = configuration != null ? configuration.getUrlToEncoding() : Collections.emptyMap();
     myProjectCharset = JpsEncodingConfigurationService.getInstance().getProjectEncoding(jpsModel);
     myRootsIndex = index;
   }
@@ -62,7 +62,7 @@ public class CompilerEncodingConfiguration {
   }
 
   private Map<JpsModule, Set<String>> computeModuleCharsetMap() {
-    final Map<JpsModule, Set<String>> map = new THashMap<JpsModule, Set<String>>();
+    final Map<JpsModule, Set<String>> map = new THashMap<>();
     final Iterable<JavaBuilderExtension> builderExtensions = JpsServiceManager.getInstance().getExtensions(JavaBuilderExtension.class);
     for (Map.Entry<String, String> entry : myUrlToCharset.entrySet()) {
       final String fileUrl = entry.getKey();
@@ -78,7 +78,7 @@ public class CompilerEncodingConfiguration {
       final JpsModule module = rootDescriptor.target.getModule();
       Set<String> set = map.get(module);
       if (set == null) {
-        set = new LinkedHashSet<String>();
+        set = new LinkedHashSet<>();
         map.put(module, set);
         // need to search parents only once because
         // file parent's charset, if explicitly defined, has higher priority than the charset assigned to individual files
@@ -112,7 +112,7 @@ public class CompilerEncodingConfiguration {
         if (encoding != null) {
           Set<String> charsets = map.get(module);
           if (charsets == null) {
-            charsets = new LinkedHashSet<String>();
+            charsets = new LinkedHashSet<>();
             map.put(module, charsets);
           }
           charsets.add(encoding);
@@ -168,7 +168,7 @@ public class CompilerEncodingConfiguration {
   @NotNull
   public Set<String> getAllModuleChunkEncodings(@NotNull ModuleChunk moduleChunk) {
     final Map<JpsModule, Set<String>> map = getModuleCharsetMap();
-    Set<String> encodings = new HashSet<String>();
+    Set<String> encodings = new HashSet<>();
     for (JpsModule module : moduleChunk.getModules()) {
       final Set<String> moduleEncodings = map.get(module);
       if (moduleEncodings != null) {

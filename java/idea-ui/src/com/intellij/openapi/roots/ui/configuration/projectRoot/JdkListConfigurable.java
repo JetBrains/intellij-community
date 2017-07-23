@@ -31,7 +31,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.SdkProjectStructureElement;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +40,7 @@ import javax.swing.tree.TreePath;
 import java.util.*;
 
 public class JdkListConfigurable extends BaseStructureConfigurable {
+  @NotNull
   private final ProjectSdksModel myJdksTreeModel;
   private final SdkModel.Listener myListener = new SdkModel.Listener() {
     @Override

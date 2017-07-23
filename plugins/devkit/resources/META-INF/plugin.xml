@@ -11,6 +11,7 @@
   <vendor>JetBrains</vendor>
 
   <depends>com.intellij.properties</depends>
+  <depends config-file="gradle-devkit.xml" optional="true">org.jetbrains.plugins.gradle</depends>
 
   <resource-bundle>org.jetbrains.idea.devkit.DevKitBundle</resource-bundle>
 
@@ -42,6 +43,9 @@
                         implementationClass="org.jetbrains.idea.devkit.dom.impl.ExtensionPointImpl"/>
     <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.Extensions"
                         implementationClass="org.jetbrains.idea.devkit.dom.impl.ExtensionsImpl"/>
+
+    <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex"/>
+
     <useScopeEnlarger implementation="org.jetbrains.idea.devkit.DevKitUseScopeEnlarger"/>
     <properties.implicitPropertyUsageProvider implementation="org.jetbrains.idea.devkit.inspections.RegistryImplicitPropertyUsageProvider"/>
 
@@ -65,6 +69,9 @@
     <localInspection language="JAVA" shortName="InspectionUsingGrayColors" displayName="Using new Color(a,a,a)"
                      groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UseGrayInspection"/>
+    <localInspection language="JAVA" shortName="InspectionUniqueToolbarId" displayName="Specify toolbar id"
+                     groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.UniqueToolbarIdInspection"/>
     <localInspection language="JAVA" shortName="IntentionDescriptionNotFoundInspection" displayName="Intention Description Checker"
                      groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.IntentionDescriptionNotFoundInspection"/>
@@ -86,7 +93,7 @@
                      level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.InspectionMappingConsistencyInspection"/>
 
-    <localInspection language="JAVA" shortName="UndesirableClassUsage" displayName="Undesirable class usage"
+    <localInspection language="UAST" shortName="UndesirableClassUsage" displayName="Undesirable class usage"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UndesirableClassUsageInspection"/>
@@ -125,7 +132,7 @@
     <localInspection language="JAVA" shortName="UnsafeReturnStatementVisitor" displayName="Unsafe return statements visitor"
                      groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UnsafeReturnStatementVisitorInspection"/>
-    <localInspection language="JAVA" shortName="StatefulEp" displayName="Stateful Extension"
+    <localInspection language="UAST" shortName="StatefulEp" displayName="Stateful Extension"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.StatefulEpInspection"/>
@@ -170,15 +177,24 @@
     <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.checkResultByFile("/>
     <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.access$"/>
     <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl$"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.LightPlatformTestCase"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.LightPlatformCodeInsightTestCase"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.PlatformTestCase"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.EditorActionTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.ExpectedHighlightingData"/>
 
     <codeInsight.lineMarkerProvider language="JAVA"
                                     implementationClass="org.jetbrains.idea.devkit.navigation.DescriptionTypeRelatedItemLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="JAVA"
                                     implementationClass="org.jetbrains.idea.devkit.navigation.ExtensionPointDeclarationRelatedItemLineMarkerProvider"/>
-    <codeInsight.implementedAtRuntime implementation="org.jetbrains.idea.devkit.inspections.DevKitImplementedAtRuntimeCondition"/>
+    <codeInsight.implicitSubclassProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitSubclassProvider"/>
 
     <annotator language="Properties" implementationClass="org.jetbrains.idea.devkit.inspections.RegistryPropertiesAnnotator"/>
+
+    <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DefaultThemeFilter"/>
+    <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DefaultHiDPIThemeFilter"/>
+    <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DarculaThemeFilter"/>
+    <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DarculaHiDPIThemeFilter"/>
 
     <moduleService serviceImplementation="org.jetbrains.idea.devkit.build.PluginBuildConfiguration"/>
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.internal.IconsGeneratedSourcesFilter"/>
@@ -202,22 +218,20 @@
       <add-to-group anchor="after" group-id="BuildMenu" relative-to-action="BuildArtifact"/>
     </group>
 
-    <action class="org.jetbrains.idea.devkit.actions.NewApplicationComponentAction" text="Application Component"
-            id="NewApplicationComponent">
-      <add-to-group anchor="last" group-id="NewGroup"/>
-    </action>
+    <group id="DevkitNewActions" text="Plugin DevKit" icon="AllIcons.Nodes.Plugin" popup="true"
+           class="com.intellij.ide.actions.NonTrivialActionGroup">
+      <action class="org.jetbrains.idea.devkit.actions.NewActionAction" text="Action" id="NewAction"/>
+      <separator/>
+      <action text="Application Component" id="NewApplicationComponent"
+              class="org.jetbrains.idea.devkit.actions.NewApplicationComponentAction"/>
+      <action text="Project Component" id="NewProjectComponent"
+              class="org.jetbrains.idea.devkit.actions.NewProjectComponentAction"/>
+      <action text="Module Component" id="NewModuleComponent"
+              class="org.jetbrains.idea.devkit.actions.NewModuleComponentAction"/>
 
-    <action class="org.jetbrains.idea.devkit.actions.NewProjectComponentAction" text="Project Component" id="NewProjectComponent">
-      <add-to-group anchor="last" group-id="NewGroup"/>
-    </action>
+      <add-to-group group-id="NewGroup" anchor="last"/>
+    </group>
 
-    <action class="org.jetbrains.idea.devkit.actions.NewModuleComponentAction" text="Module Component" id="NewModuleComponent">
-      <add-to-group anchor="last" group-id="NewGroup"/>
-    </action>
-
-    <action class="org.jetbrains.idea.devkit.actions.NewActionAction" text="Action" id="NewAction">
-      <add-to-group anchor="last" group-id="NewGroup"/>
-    </action>
 
     <action class="org.jetbrains.idea.devkit.actions.GenerateComponentExternalizationAction" text="Generate Externalization"
             id="GenerateExternalization">
@@ -237,6 +251,9 @@
 
       <action internal="true" class="org.jetbrains.idea.devkit.dom.generator.GenerateDomModelAction" text="Generate DOM Model..."
               id="GenerateDomModel"/>
+
+      <action internal="true" class="org.jetbrains.idea.devkit.actions.ShowHelpPageByIdAction" text="Show Help Page by ID"
+              id="ShowHelpPageById"/>
 
       <add-to-group group-id="Internal" anchor="last"/>
 

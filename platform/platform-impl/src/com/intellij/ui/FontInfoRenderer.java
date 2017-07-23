@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,15 @@ public class FontInfoRenderer extends ColoredListCellRenderer<Object> {
         append("  Non-latin", SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
     }
+  }
+
+  @NotNull
+  @Override
+  public Dimension getPreferredSize() {
+    // Existing usages (e.g. FontComboBox) ignore returned preferred width. 
+    // Calculating preferred width can be quite consuming though (in particular, when a large number of fonts is available),
+    // so we avoid such a calculation here.
+    return new Dimension(1, computePreferredHeight());
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public class StepIntoBreakpoint extends RunToCursorBreakpoint {
   @NotNull private final BreakpointStepMethodFilter myFilter;
   @Nullable private RequestHint myHint;
 
-  StepIntoBreakpoint(@NotNull Project project, @NotNull SourcePosition pos, @NotNull BreakpointStepMethodFilter filter) {
+  protected StepIntoBreakpoint(@NotNull Project project, @NotNull SourcePosition pos, @NotNull BreakpointStepMethodFilter filter) {
     super(project, pos, false);
     myFilter = filter;
   }
@@ -89,7 +89,7 @@ public class StepIntoBreakpoint extends RunToCursorBreakpoint {
             }
           }
         }
-        createLocationBreakpointRequest(location, debugProcess);
+        createLocationBreakpointRequest(this, location, debugProcess);
       }
     }
     catch (ClassNotPreparedException ex) {
@@ -101,9 +101,6 @@ public class StepIntoBreakpoint extends RunToCursorBreakpoint {
       if (LOG.isDebugEnabled()) {
         LOG.debug("ObjectCollectedException: " + ex.getMessage());
       }
-    }
-    catch (InternalException ex) {
-      LOG.info(ex);
     }
     catch(Exception ex) {
       LOG.info(ex);

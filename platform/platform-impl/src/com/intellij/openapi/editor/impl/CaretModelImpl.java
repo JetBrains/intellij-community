@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jun 18, 2002
- * Time: 9:12:05 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
@@ -32,14 +24,17 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -473,12 +468,17 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       int index = 0;
       int oldCaretCount = myCarets.size();
       Iterator<CaretImpl> caretIterator = myCarets.iterator();
+      TIntArrayList selectionStartsBefore = null;
+      TIntArrayList selectionStartsAfter = null;
+      TIntArrayList selectionEndsBefore = null;
+      TIntArrayList selectionEndsAfter = null;
       for (CaretState caretState : caretStates) {
         CaretImpl caret;
-        boolean caretAdded;
         if (index++ < oldCaretCount) {
           caret = caretIterator.next();
-          caretAdded = false;
+          if (caretState != null && caretState.getCaretPosition() != null) {
+            caret.moveToLogicalPosition(caretState.getCaretPosition());
+          }
         }
         else {
           caret = new CaretImpl(myEditor);
@@ -489,17 +489,28 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
             myCarets.add(caret);
           }
           fireCaretAdded(caret);
-          caretAdded = true;
         }
-        if (caretState != null && caretState.getCaretPosition() != null && !caretAdded) {
-          caret.moveToLogicalPosition(caretState.getCaretPosition());
-        }
+        if (caretState != null && caretState.getCaretPosition() != null && caretState.getVisualColumnAdjustment() != 0) {
+          caret.myVisualColumnAdjustment = caretState.getVisualColumnAdjustment();
+          caret.updateVisualPosition();
+        } 
         if (caretState != null && caretState.getSelectionStart() != null && caretState.getSelectionEnd() != null) {
-          caret.setSelection(myEditor.logicalToVisualPosition(caretState.getSelectionStart()),
-                             myEditor.logicalPositionToOffset(caretState.getSelectionStart()),
-                             myEditor.logicalToVisualPosition(caretState.getSelectionEnd()),
-                             myEditor.logicalPositionToOffset(caretState.getSelectionEnd()),
-                             updateSystemSelection);
+          if (selectionStartsBefore == null) {
+            int capacity = caretStates.size();
+            selectionStartsBefore = new TIntArrayList(capacity);
+            selectionStartsAfter = new TIntArrayList(capacity);
+            selectionEndsBefore = new TIntArrayList(capacity);
+            selectionEndsAfter = new TIntArrayList(capacity);
+          }
+          selectionStartsBefore.add(caret.getSelectionStart());
+          selectionEndsBefore.add(caret.getSelectionEnd());
+          caret.doSetSelection(myEditor.logicalToVisualPosition(caretState.getSelectionStart()),
+                               myEditor.logicalPositionToOffset(caretState.getSelectionStart()),
+                               myEditor.logicalToVisualPosition(caretState.getSelectionEnd()),
+                               myEditor.logicalPositionToOffset(caretState.getSelectionEnd()), 
+                               true, updateSystemSelection, false);
+          selectionStartsAfter.add(caret.getSelectionStart());
+          selectionEndsAfter.add(caret.getSelectionEnd());
         }
       }
       int caretsToRemove = myCarets.size() - caretStates.size();
@@ -511,6 +522,11 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
         fireCaretRemoved(caret);
         Disposer.dispose(caret);
       }
+      if (selectionStartsBefore != null) {
+        SelectionEvent event = new SelectionEvent(myEditor, selectionStartsBefore.toNativeArray(), selectionEndsBefore.toNativeArray(), 
+                                                  selectionStartsAfter.toNativeArray(), selectionEndsAfter.toNativeArray());
+        myEditor.getSelectionModel().fireSelectionChanged(event);
+      }
     });
   }
 
@@ -521,6 +537,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       List<CaretState> states = new ArrayList<>(myCarets.size());
       for (CaretImpl caret : myCarets) {
         states.add(new CaretState(caret.getLogicalPosition(),
+                                  caret.myVisualColumnAdjustment,
                                   caret.getSelectionStartLogicalPosition(),
                                   caret.getSelectionEndLogicalPosition()));
       }
@@ -566,13 +583,24 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   @Override
   public void onRemoved(@NotNull Inlay inlay) {
     if (myEditor.getDocument().isInEventsHandling() || myEditor.getDocument().isInBulkUpdate()) return;
-    doWithCaretMerging(this::updateVisualPosition);
+    doWithCaretMerging(() -> {
+      for (CaretImpl caret : myCarets) {
+        caret.onInlayRemoved(inlay.getOffset(), ((InlayImpl)inlay).getOrder());
+      }
+    });
   }
 
   @Override
   public void onUpdated(@NotNull Inlay inlay) {
     if (myEditor.getDocument().isInBulkUpdate()) return;
     updateVisualPosition();
+  }
+
+  @TestOnly
+  public void validateState() {
+    for (CaretImpl caret : myCarets) {
+      caret.validateState();
+    }
   }
 
   private static class VisualPositionComparator implements Comparator<VisualPosition> {

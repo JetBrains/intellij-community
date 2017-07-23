@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,11 +37,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.speedSearch.ListWithFilter;
+import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -54,6 +56,8 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
+import java.util.HashSet;
+import java.util.Set;
 
 public class RecentProjectPanel extends JPanel {
   public static final String RECENT_PROJECTS_LABEL = "Recent Projects";
@@ -63,7 +67,8 @@ public class RecentProjectPanel extends JPanel {
   private int myHoverIndex = -1;
   private final int closeButtonInset = JBUI.scale(7);
   private Icon currentIcon = AllIcons.Welcome.Project.Remove;
-  private static final Logger LOG = Logger.getInstance("#" + RecentProjectPanel.class.getName());
+  private static final Logger LOG = Logger.getInstance(RecentProjectPanel.class);
+  Set<ReopenProjectAction> projectsWithLongPathes = new HashSet<>(0);
 
   private final JPanel myCloseButtonForEditor = new JPanel() {
     {
@@ -80,8 +85,8 @@ public class RecentProjectPanel extends JPanel {
 
   private boolean rectInListCoordinatesContains(Rectangle listCellBounds,  Point p) {
 
-    int realCloseButtonInset = (UIUtil.isJDKManagedHiDPIScreen((Graphics2D)getGraphics())) ?
-                               (int)(closeButtonInset * JBUI.sysScale((Graphics2D)getGraphics())) : closeButtonInset;
+    int realCloseButtonInset = (UIUtil.isJreHiDPI(this)) ?
+                               (int)(closeButtonInset * JBUI.sysScale(this)) : closeButtonInset;
 
     Rectangle closeButtonRect = new Rectangle(myCloseButtonForEditor.getX() - realCloseButtonInset,
                                               myCloseButtonForEditor.getY() - realCloseButtonInset,
@@ -122,8 +127,16 @@ public class RecentProjectPanel extends JPanel {
             if (Registry.is("removable.welcome.screen.projects") && rectInListCoordinatesContains(cellBounds, event.getPoint())) {
               removeRecentProjectAction.actionPerformed(null);
             } else if (selection != null) {
-              ((AnAction)selection).actionPerformed(
-                AnActionEvent.createFromInputEvent((AnAction)selection, event, ActionPlaces.WELCOME_SCREEN));
+              AnAction selectedAction = (AnAction) selection;
+              AnActionEvent actionEvent = AnActionEvent.createFromInputEvent(selectedAction, event, ActionPlaces.WELCOME_SCREEN);
+              selectedAction.actionPerformed(actionEvent);
+
+              // remove action from list if needed
+              if (selectedAction instanceof ReopenProjectAction) {
+                if (((ReopenProjectAction)selectedAction).isRemoved()) {
+                  ListUtil.removeSelectedItems(myList);
+                }
+              }
             }
           }
         }
@@ -168,7 +181,7 @@ public class RecentProjectPanel extends JPanel {
 
       @Override
       public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabled(!ListWithFilter.isSearchActive(myList));
+        e.getPresentation().setEnabled(true);
       }
     };
     removeRecentProjectAction.registerCustomShortcutSet(CustomShortcutSet.fromString("DELETE", "BACK_SPACE"), myList, parentDisposable);
@@ -236,7 +249,9 @@ public class RecentProjectPanel extends JPanel {
       public void mouseMoved(MouseEvent e) {
         Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         if (focusOwner == null) {
-          myList.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(myList, true);
+          });
         }
         if (myList.getSelectedIndices().length > 1) {
           return;
@@ -248,7 +263,7 @@ public class RecentProjectPanel extends JPanel {
 
           final Rectangle cellBounds = myList.getCellBounds(index, index);
           if (cellBounds != null && cellBounds.contains(point)) {
-            myList.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            UIUtil.setCursor(myList, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             if (rectInListCoordinatesContains(cellBounds, point)) {
               currentIcon = AllIcons.Welcome.Project.Remove_hover;
             } else {
@@ -258,7 +273,7 @@ public class RecentProjectPanel extends JPanel {
             myList.repaint(cellBounds);
           }
           else {
-            myList.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            UIUtil.setCursor(myList, Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             myHoverIndex = -1;
             myList.repaint();
           }
@@ -307,7 +322,7 @@ public class RecentProjectPanel extends JPanel {
     return title;
   }
 
-  private static class MyList extends JBList {
+  private class MyList extends JBList {
     private final Dimension mySize;
     private Point myMousePoint;
 
@@ -339,6 +354,18 @@ public class RecentProjectPanel extends JPanel {
           icon.paintIcon(this, g, iconRect.x, iconRect.y);
         }
       }
+    }
+
+    @Override
+    public String getToolTipText(MouseEvent event) {
+      final int i = locationToIndex(event.getPoint());
+      if (i != -1) {
+        final Object elem = getModel().getElementAt(i);
+        if (elem instanceof ReopenProjectAction && RecentProjectPanel.this.projectsWithLongPathes.contains(elem)) {
+          return PathUtil.toSystemDependentName(((ReopenProjectAction)elem).getProjectPath());
+        }
+      }
+      return super.getToolTipText(event);
     }
 
     @Override

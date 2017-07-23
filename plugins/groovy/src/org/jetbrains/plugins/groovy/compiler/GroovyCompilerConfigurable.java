@@ -80,12 +80,8 @@ public class GroovyCompilerConfigurable implements SearchableConfigurable, Confi
       }
     };
     descriptor.setRoots(ContainerUtil.concat(
-      ContainerUtil.map(ModuleManager.getInstance(project).getModules(), new Function<Module, List<VirtualFile>>() {
-        @Override
-        public List<VirtualFile> fun(final Module module) {
-          return ModuleRootManager.getInstance(module).getSourceRoots(JavaModuleSourceRootTypes.SOURCES);
-        }
-      })));
+      ContainerUtil.map(ModuleManager.getInstance(project).getModules(),
+                        (Function<Module, List<VirtualFile>>)module -> ModuleRootManager.getInstance(module).getSourceRoots(JavaModuleSourceRootTypes.SOURCES))));
     return new ExcludedEntriesConfigurable(project, descriptor, configuration);
   }
 

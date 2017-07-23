@@ -40,20 +40,9 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
   @NotNull private final Editor myEditor;
   @NotNull private final BooleanGetter myCondition;
 
-  public DiffLineSeparatorRenderer(@NotNull Editor editor) {
-    this(editor, BooleanGetter.TRUE);
-  }
-
   public DiffLineSeparatorRenderer(@NotNull Editor editor, @NotNull BooleanGetter condition) {
     myEditor = editor;
     myCondition = condition;
-  }
-
-  public static void drawConnectorLine(@NotNull Graphics2D g,
-                                       int x1, int x2,
-                                       int start1, int end1,
-                                       int start2, int end2) {
-    drawConnectorLine(g, x1, x2, start1, start2, end1 - end2, null);
   }
 
   /*
@@ -142,6 +131,7 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
     draw(g, shiftX, y, lineHeight, myEditor.getColorsScheme());
   }
 
+  @NotNull
   @Override
   public LineMarkerRendererEx.Position getPosition() {
     return LineMarkerRendererEx.Position.CUSTOM;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -334,10 +334,6 @@ public class NameUtil {
     return suggestion;
   }
 
-  static boolean isWordStart(char p) {
-    return Character.isUpperCase(p) || Character.isDigit(p);
-  }
-
   static int nextWord(@NotNull String text, int start) {
     if (!Character.isLetterOrDigit(text.charAt(start))) {
       return start + 1;
@@ -359,8 +355,9 @@ public class NameUtil {
       }
       return i - 1;
     }
-    
-    while (i < text.length() && Character.isLetter(text.charAt(i)) && !Character.isUpperCase(text.charAt(i))) i++;
+
+    if (i == start) i++;
+    while (i < text.length() && Character.isLetter(text.charAt(i)) && !isWordStart(text, i)) i++;
     return i;
   }
 
@@ -373,9 +370,34 @@ public class NameUtil {
     }
   }
 
+  static boolean isWordStart(String text, int i) {
+    char c = text.charAt(i);
+    if (Character.isUpperCase(c)) {
+      if (i > 0 && Character.isUpperCase(text.charAt(i - 1))) {
+        // check that we're not in the middle of an all-caps word
+        return i + 1 < text.length() && Character.isLowerCase(text.charAt(i + 1));
+      }
+      return true;
+    }
+    if (Character.isDigit(c)) {
+      return true;
+    }
+    if (!Character.isLetter(c)) {
+      return false;
+    }
+    return i == 0 || !Character.isLetterOrDigit(text.charAt(i - 1)) || isHardCodedWordStart(text, i);
+  }
+
+  private static boolean isHardCodedWordStart(String text, int i) {
+    return text.charAt(i) == 'l' &&
+           i < text.length() - 1 && text.charAt(i + 1) == 'n' &&
+           (text.length() == i + 2 || isWordStart(text, i + 2));
+  }
+
   /**
    * @deprecated use com.intellij.util.text.Matcher
    */
+  @Deprecated
   public interface Matcher {
     boolean matches(@NotNull String name);
   }
@@ -388,8 +410,11 @@ public class NameUtil {
   }
 
   @NotNull
-  public static com.intellij.util.text.Matcher buildMatcher(@NotNull String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
-    MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL : exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER : MatchingCaseSensitivity.NONE;
+  public static com.intellij.util.text.Matcher buildMatcher(@NotNull String pattern, int exactPrefixLen, 
+                                                            boolean allowToUpper, boolean allowToLower) {
+    MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL
+                                                                     : exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER
+                                                                                          : MatchingCaseSensitivity.NONE;
     return buildMatcher(pattern, options);
   }
 

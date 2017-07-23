@@ -17,12 +17,10 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
@@ -111,29 +109,19 @@ public class FileLocalResolver {
     }
     if (type == LAMBDA_EXPRESSION || type == METHOD) {
       LighterASTNode paramList = LightTreeUtil.firstChildOfType(myTree, scope, PARAMETER_LIST);
-      return paramList == null ? ContainerUtil.<LighterASTNode>emptyList() : LightTreeUtil.getChildrenOfType(myTree, paramList, PARAMETER);
+      return paramList == null ? ContainerUtil.emptyList() : LightTreeUtil.getChildrenOfType(myTree, paramList, PARAMETER);
     }
     return Collections.emptyList();
   }
 
   @NotNull
   private JBIterable<LighterASTNode> walkChildrenScopes(JBIterable<LighterASTNode> children) {
-    return children.flatMap(new Function<LighterASTNode, Iterable<? extends LighterASTNode>>() {
-      @Override
-      public Iterable<? extends LighterASTNode> fun(LighterASTNode child) {
-        return getDeclarations(child, null);
-      }
-    });
+    return children.flatMap(child -> getDeclarations(child, null));
   }
 
   @NotNull
   private static JBIterable<LighterASTNode> before(List<LighterASTNode> children, @Nullable final LighterASTNode lastParent) {
-    return JBIterable.from(children).filter(new Condition<LighterASTNode>() {
-      @Override
-      public boolean value(LighterASTNode node) {
-        return lastParent == null || node.getStartOffset() < lastParent.getStartOffset();
-      }
-    });
+    return JBIterable.from(children).filter(node -> lastParent == null || node.getStartOffset() < lastParent.getStartOffset());
   }
 
   /**

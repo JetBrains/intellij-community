@@ -27,8 +27,6 @@ import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiFile;
@@ -41,7 +39,6 @@ import com.intellij.util.ui.UIUtil;
 import icons.XpathIcons;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -137,12 +134,9 @@ class AssociationsEditor {
     final TreePath rootPath = new TreePath(newModel.getRoot());
 
     final Object element = myBuilder.getTreeStructure().getRootElement();
-    myBuilder.batch(new Progressive() {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        myBuilder.expand(element, null);
-        myBuilder.expand(myBuilder.getTreeStructure().getChildElements(element), null);
-      }
+    myBuilder.batch(indicator -> {
+      myBuilder.expand(element, null);
+      myBuilder.expand(myBuilder.getTreeStructure().getChildElements(element), null);
     });
 
     myTree.setSelectionPath(rootPath);

@@ -70,7 +70,7 @@ import java.util.Set;
 public class ImplementationViewComponent extends JPanel {
   @NonNls private static final String TEXT_PAGE_KEY = "Text";
   @NonNls private static final String BINARY_PAGE_KEY = "Binary";
-  private static final Logger LOG = Logger.getInstance("#" + ImplementationViewComponent.class.getName());
+  private static final Logger LOG = Logger.getInstance(ImplementationViewComponent.class);
 
   private PsiElement[] myElements;
   private int myIndex;
@@ -491,7 +491,7 @@ public class ImplementationViewComponent extends JPanel {
     edit.registerCustomShortcutSet(new CompositeShortcutSet(CommonShortcuts.getViewSource(), CommonShortcuts.CTRL_ENTER), this);
     group.add(edit);
 
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    return ActionManager.getInstance().createActionToolbar("ImplementationView", group, true);
   }
 
   private void goBack() {

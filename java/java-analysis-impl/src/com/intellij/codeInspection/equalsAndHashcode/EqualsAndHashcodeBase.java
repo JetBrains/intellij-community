@@ -15,11 +15,13 @@
  */
 package com.intellij.codeInspection.equalsAndHashcode;
 
-import com.intellij.codeInspection.*;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -28,7 +30,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.MethodSignatureUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -40,15 +41,8 @@ public class EqualsAndHashcodeBase extends BaseJavaBatchLocalInspectionTool {
     final Project project = holder.getProject();
     Pair<PsiMethod, PsiMethod> pair = CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-      final PsiClass psiObjectClass = ApplicationManager.getApplication().runReadAction(
-          new Computable<PsiClass>() {
-            @Override
-            @Nullable
-            public PsiClass compute() {
-              return psiFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(project));
-            }
-          }
-      );
+      final PsiClass psiObjectClass = ReadAction
+        .compute(() -> psiFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(project)));
       if (psiObjectClass == null) {
         return CachedValueProvider.Result.create(null, ProjectRootManager.getInstance(project));
       }
@@ -67,12 +61,12 @@ public class EqualsAndHashcodeBase extends BaseJavaBatchLocalInspectionTool {
       return CachedValueProvider.Result.create(Pair.create(myEquals, myHashCode), psiObjectClass);
     });
 
-    if (pair == null) return new PsiElementVisitor() {};
+    if (pair == null) return PsiElementVisitor.EMPTY_VISITOR;
 
     //jdk wasn't configured for the project
     final PsiMethod myEquals = pair.first;
     final PsiMethod myHashCode = pair.second;
-    if (myEquals == null || myHashCode == null || !myEquals.isValid() || !myHashCode.isValid()) return new PsiElementVisitor() {};
+    if (myEquals == null || myHashCode == null || !myEquals.isValid() || !myHashCode.isValid()) return PsiElementVisitor.EMPTY_VISITOR;
 
     return new JavaElementVisitor() {
       @Override public void visitClass(PsiClass aClass) {

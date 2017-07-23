@@ -13,11 +13,6 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import java.util.TooManyListenersException;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 12.01.2009
-*/
 public class XalanSupport {
   public static boolean init(Transformer transformer, LocalDebugger dbg) {
     if (transformer instanceof TransformerImpl) {

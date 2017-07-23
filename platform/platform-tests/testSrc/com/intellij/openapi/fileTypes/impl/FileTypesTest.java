@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.editor.Document;
@@ -28,7 +29,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -44,6 +47,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.util.JdomKt;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -76,6 +80,7 @@ public class FileTypesTest extends PlatformTestCase {
   protected void tearDown() throws Exception {
     FileTypeManagerImpl.reDetectAsync(false);
     ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.setIgnoredFilesList(myOldIgnoredFilesList));
+    myFileTypeManager = null;
     super.tearDown();
   }
 
@@ -102,7 +107,7 @@ public class FileTypesTest extends PlatformTestCase {
       String name = String.valueOf(i % 10 * 10 + i * 100 + i + 1);
       names[i] = name + name + name + name;
     }
-    PlatformTestUtil.startPerformanceTest("ignore perf", 700, () -> {
+    PlatformTestUtil.startPerformanceTest("isFileIgnored", 150, () -> {
       for (int i=0;i<1000;i++) {
         for (String name : names) {
           myFileTypeManager.isFileIgnored(name);
@@ -286,7 +291,7 @@ public class FileTypesTest extends PlatformTestCase {
         detectorCalled.add(file);
         String text = firstCharsIfText.toString();
         FileType result = text.startsWith("TYPE:") ? fileTypeManager.findFileTypeByName(StringUtil.trimStart(text, "TYPE:")) : null;
-        log("T: my detector run for "+file.getName()+"; result: "+(result == null ? null : result.getName()));
+        log("T: my detector run for "+file.getName()+"; result: "+(result == null ? null : result.getName())+" (text="+text+")");
         return result;
       }
 
@@ -500,12 +505,12 @@ public class FileTypesTest extends PlatformTestCase {
     myFileTypeManager.initStandardFileTypes();
     myFileTypeManager.initComponent();
 
-    Element element = JDOMUtil.loadDocument(
+    Element element = JdomKt.loadElement(
       "<component name=\"FileTypeManager\" version=\"13\">\n" +
       "   <extensionMap>\n" +
       "      <mapping ext=\"zip\" type=\"Velocity Template files\" />\n" +
       "   </extensionMap>\n" +
-      "</component>").getRootElement();
+      "</component>");
 
     myFileTypeManager.loadState(element);
     myFileTypeManager.initComponent();
@@ -611,7 +616,7 @@ public class FileTypesTest extends PlatformTestCase {
     List<Thread> threads = ContainerUtil.map(new Object[NThreads], o -> new Thread(() -> {
       try {
         for (int i = 0; i < N; i++) {
-          boolean isText = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+          boolean isText = ReadAction.compute(() -> {
             if (virtualFile.getFileType().isBinary()) {
               return false;
             }

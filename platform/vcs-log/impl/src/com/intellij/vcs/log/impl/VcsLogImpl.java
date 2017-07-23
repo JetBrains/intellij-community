@@ -18,14 +18,15 @@ package com.intellij.vcs.log.impl;
 import com.google.common.primitives.Ints;
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.FutureResult;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
-import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
-import com.intellij.vcs.log.ui.tables.GraphTableModel;
+import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.ui.table.GraphTableModel;
+import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,9 +37,9 @@ import java.util.stream.Collectors;
 
 public class VcsLogImpl implements VcsLog {
   @NotNull private final VcsLogData myLogData;
-  @NotNull private final VcsLogUiImpl myUi;
+  @NotNull private final AbstractVcsLogUi myUi;
 
-  public VcsLogImpl(@NotNull VcsLogData manager, @NotNull VcsLogUiImpl ui) {
+  public VcsLogImpl(@NotNull VcsLogData manager, @NotNull AbstractVcsLogUi ui) {
     myLogData = manager;
     myUi = ui;
   }
@@ -62,21 +63,22 @@ public class VcsLogImpl implements VcsLog {
   }
 
   @Override
-  public void requestSelectedDetails(@NotNull Consumer<List<VcsFullCommitDetails>> consumer, @Nullable ProgressIndicator indicator) {
+  public void requestSelectedDetails(@NotNull Consumer<List<VcsFullCommitDetails>> consumer) {
     List<Integer> rowsList = Ints.asList(myUi.getTable().getSelectedRows());
     myLogData.getCommitDetailsGetter()
-      .loadCommitsData(getTable().getModel().convertToCommitIds(rowsList), consumer, indicator);
+      .loadCommitsData(getTable().getModel().convertToCommitIds(rowsList), consumer, null);
   }
 
   @Nullable
   @Override
   public Collection<String> getContainingBranches(@NotNull Hash commitHash, @NotNull VirtualFile root) {
-    return myLogData.getContainingBranchesGetter().getContainingBranchesFromCache(root, commitHash);
+    return myLogData.getContainingBranchesGetter().getContainingBranchesQuickly(root, commitHash);
   }
 
   @NotNull
   @Override
   public Future<Boolean> jumpToReference(final String reference) {
+    if (StringUtil.isEmptyOrSpaces(reference)) return new FutureResult<>(false);
     SettableFuture<Boolean> future = SettableFuture.create();
     VcsLogRefs refs = myUi.getDataPack().getRefs();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {

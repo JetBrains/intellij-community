@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,9 @@ package git4idea.push;
 import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.dvcs.push.ui.*;
 import com.intellij.openapi.command.undo.UndoConstants;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -39,6 +38,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import git4idea.GitRemoteBranch;
 import git4idea.commands.Git;
@@ -67,8 +67,11 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
 
   private static final Comparator<GitRemoteBranch> REMOTE_BRANCH_COMPARATOR = new MyRemoteBranchComparator();
   private static final String SEPARATOR = " : ";
-  private static final Color NEW_BRANCH_LABEL_FG = new JBColor(0x00b53d, 0x24953c);
-  private static final Color NEW_BRANCH_LABEL_BG = ColorUtil.toAlpha(NEW_BRANCH_LABEL_FG, 40);
+  private static final Color NEW_BRANCH_LABEL_FG = new JBColor(0x00b53d, 0x6ba65d);
+  private static final Color NEW_BRANCH_LABEL_SELECTION_FG = UIUtil.getTreeSelectionForeground();
+  private static final Color NEW_BRANCH_LABEL_BG = new JBColor(0xebfcf1, 0x313b32);
+  private static final Color NEW_BRANCH_LABEL_SELECTION_BG =
+    new JBColor(ColorUtil.toAlpha(NEW_BRANCH_LABEL_SELECTION_FG, 20), ColorUtil.toAlpha(NEW_BRANCH_LABEL_SELECTION_FG, 30));
   private static final RelativeFont NEW_BRANCH_LABEL_FONT = RelativeFont.TINY.small();
   private static final TextIcon NEW_BRANCH_LABEL = new TextIcon("New", NEW_BRANCH_LABEL_FG, NEW_BRANCH_LABEL_BG, 0);
 
@@ -88,7 +91,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   public GitPushTargetPanel(@NotNull GitPushSupport support, @NotNull GitRepository repository, @Nullable GitPushTarget defaultTarget) {
     myPushSupport = support;
     myRepository = repository;
-    myGit = ServiceManager.getService(Git.class);
+    myGit = Git.getInstance();
     myProject = myRepository.getProject();
 
     myTargetRenderer = new VcsEditableTextComponent("", null);
@@ -279,6 +282,8 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
           NEW_BRANCH_LABEL.setInsets(JBUI.insets(2));
           NEW_BRANCH_LABEL.setRound(JBUI.scale(4));
           NEW_BRANCH_LABEL.setFont(NEW_BRANCH_LABEL_FONT.derive(renderer.getFont()));
+          NEW_BRANCH_LABEL.setForeground(isSelected ? NEW_BRANCH_LABEL_SELECTION_FG : NEW_BRANCH_LABEL_FG);
+          NEW_BRANCH_LABEL.setBackground(isSelected ? NEW_BRANCH_LABEL_SELECTION_BG : NEW_BRANCH_LABEL_BG);
           renderer.setIcon(NEW_BRANCH_LABEL);
         }
       }
@@ -365,7 +370,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
 
   @Override
   public void addTargetEditorListener(@NotNull final PushTargetEditorListener listener) {
-    myTargetEditor.addDocumentListener(new DocumentAdapter() {
+    myTargetEditor.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         processActiveUserChanges(listener);

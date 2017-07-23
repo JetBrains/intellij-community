@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.find.FindManager;
 import com.intellij.ide.TitledHandler;
 import com.intellij.lang.Language;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -34,11 +35,10 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -169,16 +169,6 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
     return firstExtracted.getLanguage();
   }
 
-  @Nullable
-  private static FileType getFileType(final Language language) {
-    final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
-    for (FileType fileType : fileTypes) {
-      if (fileType instanceof LanguageFileType && language.equals(((LanguageFileType)fileType).getLanguage())) return fileType;
-    }
-
-    return null;
-  }
-
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
     try {
@@ -212,41 +202,71 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
       return;
     }
 
-    final FileType fileType = getFileType(getLanguageForExtract(children.getFirst()));
-    if (!(fileType instanceof LanguageFileType)) {
+    FileType fileType = getLanguageForExtract(children.getFirst()).getAssociatedFileType();
+    if (fileType == null) {
       String message = RefactoringBundle.message("the.language.for.selected.elements.has.no.associated.file.type");
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HELP_ID);
       return;
     }
 
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file) || ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
 
+
+    Pair<PsiDirectory, String> directoryAndFileName = getTargetDirectoryAndFileName(file, fileType, children);
+    if (directoryAndFileName.first == null || directoryAndFileName.second == null) {
+      return;
+    }
+
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        final List<IncludeDuplicate<T>> duplicates = new ArrayList<>();
+        final T first = children.getFirst();
+        final T second = children.getSecond();
+        PsiEquivalenceUtil.findChildRangeDuplicates(first, second, file, (start1, end1) -> duplicates.add(
+          new IncludeDuplicate<>((T)start1, (T)end1)));
+        String includePath = processPrimaryFragment(first, second, directoryAndFileName.first, directoryAndFileName.second, file);
+        editor.getCaretModel().moveToOffset(first.getTextRange().getStartOffset());
+
+        ApplicationManager.getApplication().invokeLater(() -> replaceDuplicates(includePath, duplicates, editor, project));
+      }
+      catch (IncorrectOperationException e) {
+        CommonRefactoringUtil.showErrorMessage(getRefactoringName(), e.getMessage(), null, project);
+      }
+
+      editor.getSelectionModel().removeSelection();
+    }), getRefactoringName(), null);
+  }
+  
+  private static PsiDirectory ourTargetDirectory = null;
+  private static String ourTargetFileName = null;
+
+  @TestOnly
+  public static void setTestingTargetFile(@Nullable PsiDirectory targetDirectory,
+                                          @Nullable String targetFileName,
+                                          @NotNull Disposable parentDisposable) {
+    ourTargetFileName = targetFileName;
+    ourTargetDirectory = targetDirectory;
+    Disposer.register(parentDisposable, () -> {
+      ourTargetFileName = null;
+      ourTargetDirectory = null;
+    });
+  } 
+  
+  @NotNull
+  private Pair<PsiDirectory, String> getTargetDirectoryAndFileName(@NotNull PsiFile file, FileType fileType, @NotNull Pair<T, T> children) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return Pair.create(ourTargetDirectory, ourTargetFileName);
+    }
+    
     ExtractIncludeDialog dialog = createDialog(file.getContainingDirectory(), getExtractExtension(fileType, children.first));
     dialog.show();
-    if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-      final PsiDirectory targetDirectory = dialog.getTargetDirectory();
-      LOG.assertTrue(targetDirectory != null);
-      final String targetfileName = dialog.getTargetFileName();
-      CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-        try {
-          final List<IncludeDuplicate<T>> duplicates = new ArrayList<>();
-          final T first = children.getFirst();
-          final T second = children.getSecond();
-          PsiEquivalenceUtil.findChildRangeDuplicates(first, second, file, (start1, end1) -> duplicates.add(
-            new IncludeDuplicate<>((T)start1, (T)end1)));
-          final String includePath = processPrimaryFragment(first, second, targetDirectory, targetfileName, file);
-          editor.getCaretModel().moveToOffset(first.getTextRange().getStartOffset());
-
-          ApplicationManager.getApplication().invokeLater(() -> replaceDuplicates(includePath, duplicates, editor, project));
-        }
-        catch (IncorrectOperationException e) {
-          CommonRefactoringUtil.showErrorMessage(getRefactoringName(), e.getMessage(), null, project);
-        }
-
-        editor.getSelectionModel().removeSelection();
-      }), getRefactoringName(), null);
-
+    if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
+      return Pair.create(null, null);
     }
+    PsiDirectory targetDirectory = dialog.getTargetDirectory();
+    String targetFileName = dialog.getTargetFileName();
+    LOG.assertTrue(targetDirectory != null && targetFileName != null);
+    return Pair.create(targetDirectory, targetFileName);
   }
 
   protected ExtractIncludeDialog createDialog(final PsiDirectory containingDirectory, final String extractExtension) {

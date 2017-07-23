@@ -45,6 +45,8 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.slicer.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -325,42 +327,60 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
   private static AllowedValues getAllowedValuesFromMagic(@NotNull PsiType type,
                                                          @NotNull PsiAnnotation magic,
                                                          @NotNull PsiManager manager) {
-    PsiAnnotationMemberValue[] allowedValues;
-    final boolean canBeOred;
+    PsiAnnotationMemberValue[] allowedValues = PsiAnnotationMemberValue.EMPTY_ARRAY;
+    boolean values = false, flags = false;
     if (TypeConversionUtil.getTypeRank(type) <= TypeConversionUtil.LONG_RANK) {
       PsiAnnotationMemberValue intValues = magic.findAttributeValue("intValues");
-      allowedValues = intValues instanceof PsiArrayInitializerMemberValue ? ((PsiArrayInitializerMemberValue)intValues).getInitializers() : PsiAnnotationMemberValue.EMPTY_ARRAY;
-      if (allowedValues.length == 0) {
-        PsiAnnotationMemberValue orValue = magic.findAttributeValue("flags");
-        allowedValues = orValue instanceof PsiArrayInitializerMemberValue ? ((PsiArrayInitializerMemberValue)orValue).getInitializers() : PsiAnnotationMemberValue.EMPTY_ARRAY;
-        canBeOred = true;
+      if (intValues instanceof PsiArrayInitializerMemberValue) {
+        final PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)intValues).getInitializers();
+        if (initializers.length != 0) {
+          allowedValues = initializers;
+          values = true;
+        }
       }
-      else {
-        canBeOred = false;
+      if (!values) {
+        PsiAnnotationMemberValue orValue = magic.findAttributeValue("flags");
+        if (orValue instanceof PsiArrayInitializerMemberValue) {
+          final PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)orValue).getInitializers();
+          if (initializers.length != 0) {
+            allowedValues = initializers;
+            flags = true;
+          }
+        }
       }
     }
     else if (type.equals(PsiType.getJavaLangString(manager, GlobalSearchScope.allScope(manager.getProject())))) {
       PsiAnnotationMemberValue strValuesAttr = magic.findAttributeValue("stringValues");
-      allowedValues = strValuesAttr instanceof PsiArrayInitializerMemberValue ? ((PsiArrayInitializerMemberValue)strValuesAttr).getInitializers() : PsiAnnotationMemberValue.EMPTY_ARRAY;
-      canBeOred = false;
+      if (strValuesAttr instanceof PsiArrayInitializerMemberValue) {
+        final PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)strValuesAttr).getInitializers();
+        if (initializers.length != 0) {
+          allowedValues = initializers;
+          values = true;
+        }
+      }
     }
     else {
       return null; //other types not supported
     }
 
-    if (allowedValues.length != 0) {
-      return new AllowedValues(allowedValues, canBeOred);
+    PsiAnnotationMemberValue[] valuesFromClass = readFromClass("valuesFromClass", magic, type, manager);
+    if (valuesFromClass != null) {
+      allowedValues = ArrayUtil.mergeArrays(allowedValues, valuesFromClass, PsiAnnotationMemberValue.ARRAY_FACTORY);
+      values = true;
     }
-
-    // last resort: try valuesFromClass
-    PsiAnnotationMemberValue[] values = readFromClass("valuesFromClass", magic, type, manager);
-    boolean ored = false;
-    if (values == null) {
-      values = readFromClass("flagsFromClass", magic, type, manager);
-      ored = true;
+    PsiAnnotationMemberValue[] flagsFromClass = readFromClass("flagsFromClass", magic, type, manager);
+    if (flagsFromClass != null) {
+      allowedValues = ArrayUtil.mergeArrays(allowedValues, flagsFromClass, PsiAnnotationMemberValue.ARRAY_FACTORY);
+      flags = true;
     }
-    if (values == null) return null;
-    return new AllowedValues(values, ored);
+    if (allowedValues.length == 0) {
+      return null;
+    }
+    if (values && flags) {
+      throw new IncorrectOperationException(
+        "Misconfiguration of @MagicConstant annotation: 'flags' and 'values' shouldn't be used at the same time");
+    }
+    return new AllowedValues(allowedValues, flags);
   }
 
   private static PsiAnnotationMemberValue[] readFromClass(@NonNls @NotNull String attributeName,
@@ -387,23 +407,23 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
     return constants.toArray(new PsiAnnotationMemberValue[constants.size()]);
   }
 
+  @Nullable
   static AllowedValues getAllowedValues(@NotNull PsiModifierListOwner element, @Nullable PsiType type, @Nullable Set<PsiClass> visited) {
-    PsiAnnotation[] annotations = getAllAnnotations(element);
     PsiManager manager = element.getManager();
-    for (PsiAnnotation annotation : annotations) {
+    for (PsiAnnotation annotation : getAllAnnotations(element)) {
+      if (type != null && MagicConstant.class.getName().equals(annotation.getQualifiedName())) {
+        AllowedValues values = getAllowedValuesFromMagic(type, annotation, manager);
+        if (values != null) return values;
+      }
+
       PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
       PsiElement resolved = ref == null ? null : ref.resolve();
       if (!(resolved instanceof PsiClass) || !((PsiClass)resolved).isAnnotationType()) continue;
       PsiClass aClass = (PsiClass)resolved;
-      AllowedValues values;
-      if (type != null && MagicConstant.class.getName().equals(aClass.getQualifiedName())) {
-        values = getAllowedValuesFromMagic(type, annotation, manager);
-        if (values != null) return values;
-      }
 
       if (visited == null) visited = new THashSet<>();
       if (!visited.add(aClass)) continue;
-      values = getAllowedValues(aClass, type, visited);
+      AllowedValues values = getAllowedValues(aClass, type, visited);
       if (values != null) return values;
     }
 

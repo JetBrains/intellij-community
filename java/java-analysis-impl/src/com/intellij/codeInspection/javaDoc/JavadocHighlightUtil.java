@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class JavadocHighlightUtil {
@@ -45,6 +46,7 @@ public class JavadocHighlightUtil {
   private static final TokenSet SEE_TAG_REFS = TokenSet.create(
     JavaDocElementType.DOC_REFERENCE_HOLDER, JavaDocElementType.DOC_METHOD_OR_FIELD_REF);
 
+  @SuppressWarnings("SameParameterValue")
   public interface ProblemHolder {
     Project project();
     JavaDocLocalInspectionBase inspection();
@@ -192,7 +194,7 @@ public class JavadocHighlightUtil {
         if (dataElements.length == 0 || dataElements.length == 1 && empty(dataElements[0])) {
           holder.problem(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.problem.see.tag.expecting.ref"), null);
         }
-        else if (!isValidSeeRef(dataElements[0])) {
+        else if (!isValidSeeRef(dataElements)) {
           holder.problem(dataElements[0], InspectionsBundle.message("inspection.javadoc.problem.see.tag.expecting.ref"), null);
         }
       }
@@ -201,13 +203,13 @@ public class JavadocHighlightUtil {
     }
   }
 
-  private static boolean isValidSeeRef(PsiElement e) {
-    if (SEE_TAG_REFS.contains(e.getNode().getElementType())) return true;
+  private static boolean isValidSeeRef(PsiElement... elements) {
+    if (SEE_TAG_REFS.contains(elements[0].getNode().getElementType())) return true;
 
-    String text = e.getText().trim();
+    String text = Stream.of(elements).map(e -> e.getText().trim()).collect(Collectors.joining(" ")).trim();
     if (StringUtil.isQuotedString(text) && text.charAt(0) == '"') return true;
 
-    if (text.toLowerCase(Locale.US).startsWith("<a href=")) return true;
+    if (text.toLowerCase(Locale.US).matches("^<a\\s+href=.+")) return true;
 
     return false;
   }

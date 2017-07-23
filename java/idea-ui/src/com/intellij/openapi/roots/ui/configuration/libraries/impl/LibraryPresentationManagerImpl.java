@@ -147,7 +147,7 @@ public class LibraryPresentationManagerImpl extends LibraryPresentationManager {
   @Override
   public List<String> getDescriptions(@NotNull Library library, StructureConfigurableContext context) {
     final VirtualFile[] files = getLibraryFiles(library, context);
-    return getDescriptions(files, Collections.<LibraryKind>emptySet());
+    return getDescriptions(files, Collections.emptySet());
   }
 
   @NotNull

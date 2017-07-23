@@ -43,7 +43,7 @@ import java.util.Map;
 class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   private final PsiElement myStatement;
   private final TypeMigrationLabeler myLabeler;
-  private static final Logger LOG = Logger.getInstance("#" + TypeMigrationStatementProcessor.class.getName());
+  private static final Logger LOG = Logger.getInstance(TypeMigrationStatementProcessor.class);
   private final TypeEvaluator myTypeEvaluator;
 
   public TypeMigrationStatementProcessor(final PsiElement expression, TypeMigrationLabeler labeler) {
@@ -386,6 +386,8 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       final PsiExpression rOperand = operands[i];
       if (rOperand == null) return;
       final TypeView right = new TypeView(rOperand);
+      if (tryFindConversionIfOperandIsNull(left, right, rOperand)) continue;
+      if (tryFindConversionIfOperandIsNull(right, left, lOperand)) continue;
       if (!TypeConversionUtil.isBinaryOperatorApplicable(operationTokenType, left.getType(), right.getType(), false)) {
         if (left.isChanged()) {
           findConversionOrFail(lOperand, lOperand, left.getTypePair());
@@ -397,6 +399,19 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       lOperand = rOperand;
       left = right;
     }
+  }
+
+  protected boolean tryFindConversionIfOperandIsNull(TypeView nullCandidate, TypeView comparingType, PsiExpression comparingExpr) {
+    if (nullCandidate.getType() == PsiType.NULL && comparingType.isChanged()) {
+      Pair<PsiType, PsiType> typePair = comparingType.getTypePair();
+      final TypeConversionDescriptorBase
+        conversion = myLabeler.getRules().findConversion(typePair.getFirst(), typePair.getSecond(), null, comparingExpr, false, myLabeler);
+      if (conversion != null) {
+        myLabeler.setConversionMapping(comparingExpr, conversion);
+      }
+      return true;
+    }
+    return false;
   }
 
   private void processArrayInitializer(final PsiArrayInitializerExpression expression, final PsiExpression parentExpression) {
@@ -520,7 +535,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
           myLabeler.migrateExpressionType(value,
                                           adjustMigrationTypeIfGenericArrayCreation(declarationType, value),
                                           myStatement,
-                                          TypeConversionUtil.isAssignable(declarationType, valueType), true);
+                                          left.isVarArgs() ? isVarargAssignable(left, right) : TypeConversionUtil.isAssignable(declarationType, valueType), true);
         }
         break;
 
@@ -593,6 +608,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
     }
   }
 
+
   private static boolean canBeVariableType(@NotNull PsiType type) {
     return !type.getDeepComponentType().equals(PsiType.VOID);
   }
@@ -663,6 +679,10 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
     public Pair<PsiType, PsiType> getTypePair() {
       return Pair.create(myOriginType, myType);
     }
+
+    public boolean isVarArgs() {
+      return myType instanceof PsiEllipsisType && myOriginType instanceof PsiEllipsisType;
+    }
   }
 
   private static class TypeInfection {
@@ -730,5 +750,19 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
       }
     }
     return result;
+  }
+
+  private static boolean isVarargAssignable(TypeView left, TypeView right) {
+    Pair<PsiType, PsiType> leftPair = left.getTypePair();
+    Pair<PsiType, PsiType> rightPair = right.getTypePair();
+
+    PsiType leftOrigin = leftPair.getFirst();
+    PsiType rightOrigin = rightPair.getFirst();
+
+    boolean isDirectlyAssignable = TypeConversionUtil.isAssignable(leftOrigin, rightOrigin);
+
+    return TypeConversionUtil.isAssignable(isDirectlyAssignable ?
+                                           leftPair.getSecond() :
+                                           ((PsiEllipsisType)leftPair.getSecond()).getComponentType(), rightPair.getSecond());
   }
 }

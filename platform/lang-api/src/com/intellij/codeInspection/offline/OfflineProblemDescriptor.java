@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 05-Jan-2007
- */
 package com.intellij.codeInspection.offline;
 
 import com.intellij.codeInspection.reference.RefEntity;
@@ -87,7 +83,7 @@ public class OfflineProblemDescriptor {
 
   @Nullable
   public RefEntity getRefElement(final RefManager refManager) {
-    return ReadAction.compute(() -> refManager.getReference(myType, myFQName));
+    return ReadAction.compute(() -> refManager.getProject().isDisposed() ? null : refManager.getReference(myType, myFQName));
   }
 
   public boolean equals(final Object o) {

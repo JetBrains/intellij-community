@@ -30,17 +30,18 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Dmitry Batkovich
  */
 public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
-  private final static Logger LOG = Logger.getInstance(AlphaUnsortedPropertiesFileInspection.class);
-  private final static String MESSAGE_TEMPLATE_WHOLE_RESOURCE_BUNDLE = "Property keys of resource bundle '%s' aren't alphabetically sorted";
+  private static final Logger LOG = Logger.getInstance(AlphaUnsortedPropertiesFileInspection.class);
+  private static final String MESSAGE_TEMPLATE_WHOLE_RESOURCE_BUNDLE = "Property keys of resource bundle '%s' aren't alphabetically sorted";
 
   @NotNull
   @Override
@@ -62,19 +63,20 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
         if (!isResourceBundleAlphaSortedExceptOneFile(resourceBundle, propertiesFile)) {
           final List<PropertiesFile> allFiles = resourceBundle.getPropertiesFiles();
           holder.registerProblem(file, String.format(MESSAGE_TEMPLATE_WHOLE_RESOURCE_BUNDLE, resourceBundleBaseName),
-                                 ProblemHighlightType.INFO,
-                                 new PropertiesSorterQuickFix(true, allFiles.toArray(new PropertiesFile[allFiles.size()])));
+                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                 new PropertiesSorterQuickFix(allFiles.toArray(new PropertiesFile[allFiles.size()])));
           return;
         }
         if (!propertiesFile.isAlphaSorted()) {
-          holder.registerProblem(file, "Properties file is alphabetically unsorted", ProblemHighlightType.INFO, new PropertiesSorterQuickFix(true, propertiesFile));
+          holder.registerProblem(file, "Properties file is alphabetically unsorted", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new PropertiesSorterQuickFix(
+            propertiesFile));
         }
       }
     };
   }
 
-  private static boolean isResourceBundleAlphaSortedExceptOneFile(final @NotNull ResourceBundle resourceBundle,
-                                                                  final @NotNull PropertiesFile exceptedFile) {
+  private static boolean isResourceBundleAlphaSortedExceptOneFile(@NotNull final ResourceBundle resourceBundle,
+                                                                  @NotNull final PropertiesFile exceptedFile) {
     for (PropertiesFile file : resourceBundle.getPropertiesFiles()) {
       if (!(file instanceof PropertiesFileImpl)) {
         return true;
@@ -87,18 +89,16 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
   }
 
   private static class PropertiesSorterQuickFix implements LocalQuickFix {
-    private final boolean myWholeResourceBundle;
     private final PropertiesFile[] myFilesToSort;
 
-    private PropertiesSorterQuickFix(final boolean wholeResourceBundle, PropertiesFile... toSort) {
-      myWholeResourceBundle = wholeResourceBundle;
+    private PropertiesSorterQuickFix(PropertiesFile... toSort) {
       myFilesToSort = toSort;
     }
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return myWholeResourceBundle ? "Sort resource bundle files" : "Sort properties file";
+      return "Sort resource bundle files";
     }
 
     @Override

@@ -53,12 +53,9 @@ public class SvnConcurrentChangeListManagerTest extends Svn17TestCase {
 
     final String newName = "renamed";
 
-    myScheme.doTest(new Runnable() {
-      @Override
-      public void run() {
-        changeListManager.editName(list.getName(), newName);
-        checkFilesAreInList(new VirtualFile[] {file}, newName, changeListManager);
-      }
+    myScheme.doTest(() -> {
+      changeListManager.editName(list.getName(), newName);
+      checkFilesAreInList(new VirtualFile[] {file}, newName, changeListManager);
     });
 
     checkFilesAreInList(new VirtualFile[] {file}, newName, changeListManager);
@@ -80,15 +77,12 @@ public class SvnConcurrentChangeListManagerTest extends Svn17TestCase {
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     changeListManager.ensureUpToDate(false);
 
-    final Runnable check = new Runnable() {
-      @Override
-      public void run() {
-        Assert.assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myS1File));
-        Assert.assertEquals(FileStatus.NOT_CHANGED, changeListManager.getStatus(tree.myS2File));
-        Assert.assertEquals(FileStatus.NOT_CHANGED, changeListManager.getStatus(tree.mySourceDir));
-        Assert.assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myTargetDir));
-        Assert.assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myTargetFiles.get(1)));
-      }
+    final Runnable check = () -> {
+      Assert.assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myS1File));
+      Assert.assertEquals(FileStatus.NOT_CHANGED, changeListManager.getStatus(tree.myS2File));
+      Assert.assertEquals(FileStatus.NOT_CHANGED, changeListManager.getStatus(tree.mySourceDir));
+      Assert.assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myTargetDir));
+      Assert.assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myTargetFiles.get(1)));
     };
     // do before refresh check
     check.run();
@@ -101,15 +95,12 @@ public class SvnConcurrentChangeListManagerTest extends Svn17TestCase {
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     changeListManager.ensureUpToDate(false);
 
-    final Runnable check2 = new Runnable() {
-      @Override
-      public void run() {
-        Assert.assertEquals(FileStatus.MODIFIED, changeListManager.getStatus(tree.myS1File));
-        Assert.assertEquals(FileStatus.NOT_CHANGED, changeListManager.getStatus(tree.myS2File));
-        Assert.assertEquals(FileStatus.NOT_CHANGED, changeListManager.getStatus(tree.mySourceDir));
-        Assert.assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myTargetDir));
-        Assert.assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myTargetFiles.get(1)));
-      }
+    final Runnable check2 = () -> {
+      Assert.assertEquals(FileStatus.MODIFIED, changeListManager.getStatus(tree.myS1File));
+      Assert.assertEquals(FileStatus.NOT_CHANGED, changeListManager.getStatus(tree.myS2File));
+      Assert.assertEquals(FileStatus.NOT_CHANGED, changeListManager.getStatus(tree.mySourceDir));
+      Assert.assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myTargetDir));
+      Assert.assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myTargetFiles.get(1)));
     };
     myScheme.doTest(check2);
 
@@ -130,19 +121,16 @@ public class SvnConcurrentChangeListManagerTest extends Svn17TestCase {
 
     final String finalText = "final text";
 
-    myScheme.doTest(new Runnable() {
-      @Override
-      public void run() {
-        final String intermediate = "intermediate text";
-        changeListManager.editComment(list.getName(), intermediate);
-        assert changeListManager.findChangeList(listName) != null;
-        LocalChangeList list = changeListManager.findChangeList(listName);
-        assert intermediate.equals(list.getComment());
+    myScheme.doTest(() -> {
+      final String intermediate = "intermediate text";
+      changeListManager.editComment(list.getName(), intermediate);
+      assert changeListManager.findChangeList(listName) != null;
+      LocalChangeList list1 = changeListManager.findChangeList(listName);
+      assert intermediate.equals(list1.getComment());
 
-        changeListManager.editComment(list.getName(), finalText);
-        list = changeListManager.findChangeList(listName);
-        assert finalText.equals(list.getComment());
-      }
+      changeListManager.editComment(list1.getName(), finalText);
+      list1 = changeListManager.findChangeList(listName);
+      assert finalText.equals(list1.getComment());
     });
 
     LocalChangeList changedList = changeListManager.findChangeList(listName);
@@ -164,12 +152,9 @@ public class SvnConcurrentChangeListManagerTest extends Svn17TestCase {
     final LocalChangeList target = changeListManager.addChangeList("target", null);
     changeListManager.moveChangesTo(list, new Change[] {changeListManager.getChange(file)});
 
-    myScheme.doTest(new Runnable() {
-      @Override
-      public void run() {
-        changeListManager.moveChangesTo(target, new Change[] {changeListManager.getChange(file)});
-        checkFilesAreInList(new VirtualFile[] {file}, target.getName(), changeListManager);
-      }
+    myScheme.doTest(() -> {
+      changeListManager.moveChangesTo(target, new Change[] {changeListManager.getChange(file)});
+      checkFilesAreInList(new VirtualFile[] {file}, target.getName(), changeListManager);
     });
 
     checkFilesAreInList(new VirtualFile[] {file}, target.getName(), changeListManager);
@@ -189,12 +174,9 @@ public class SvnConcurrentChangeListManagerTest extends Svn17TestCase {
     final LocalChangeList target = changeListManager.addChangeList("target", null);
     changeListManager.moveChangesTo(list, new Change[] {changeListManager.getChange(file)});
 
-    myScheme.doTest(new Runnable() {
-      @Override
-      public void run() {
-        changeListManager.setDefaultChangeList(target);
-        assert changeListManager.getDefaultChangeList().getName().equals(target.getName());
-      }
+    myScheme.doTest(() -> {
+      changeListManager.setDefaultChangeList(target);
+      assert changeListManager.getDefaultChangeList().getName().equals(target.getName());
     });
 
     assert changeListManager.getDefaultChangeList().getName().equals(target.getName());
@@ -214,13 +196,10 @@ public class SvnConcurrentChangeListManagerTest extends Svn17TestCase {
     final LocalChangeList list = changeListManager.addChangeList("test", null);
     changeListManager.moveChangesTo(list, new Change[] {changeListManager.getChange(file)});
 
-    myScheme.doTest(new Runnable() {
-      @Override
-      public void run() {
-        changeListManager.removeChangeList(list.getName());
-        assert changeListManager.findChangeList(list.getName()) == null;
-        checkFilesAreInList(new VirtualFile[] {file, fileB}, myDefaulListName, changeListManager);
-      }
+    myScheme.doTest(() -> {
+      changeListManager.removeChangeList(list.getName());
+      assert changeListManager.findChangeList(list.getName()) == null;
+      checkFilesAreInList(new VirtualFile[] {file, fileB}, myDefaulListName, changeListManager);
     });
 
     assert changeListManager.findChangeList(list.getName()) == null;
@@ -243,14 +222,11 @@ public class SvnConcurrentChangeListManagerTest extends Svn17TestCase {
     final LocalChangeList target2 = changeListManager.addChangeList("target2", null);
     changeListManager.moveChangesTo(list, new Change[] {changeListManager.getChange(file)});
 
-    myScheme.doTest(new Runnable() {
-      @Override
-      public void run() {
-        changeListManager.moveChangesTo(target, new Change[] {changeListManager.getChange(file)});
-        checkFilesAreInList(new VirtualFile[] {file}, target.getName(), changeListManager);
-        changeListManager.moveChangesTo(target2, new Change[] {changeListManager.getChange(file)});
-        checkFilesAreInList(new VirtualFile[] {file}, target2.getName(), changeListManager);
-      }
+    myScheme.doTest(() -> {
+      changeListManager.moveChangesTo(target, new Change[] {changeListManager.getChange(file)});
+      checkFilesAreInList(new VirtualFile[] {file}, target.getName(), changeListManager);
+      changeListManager.moveChangesTo(target2, new Change[] {changeListManager.getChange(file)});
+      checkFilesAreInList(new VirtualFile[] {file}, target2.getName(), changeListManager);
     });
 
     checkFilesAreInList(new VirtualFile[] {file}, target2.getName(), changeListManager);
@@ -270,14 +246,11 @@ public class SvnConcurrentChangeListManagerTest extends Svn17TestCase {
     final LocalChangeList target = changeListManager.addChangeList("target", null);
     changeListManager.moveChangesTo(list, new Change[] {changeListManager.getChange(file)});
 
-    myScheme.doTest(new Runnable() {
-      @Override
-      public void run() {
-        changeListManager.moveChangesTo(target, new Change[] {changeListManager.getChange(file)});
-        checkFilesAreInList(new VirtualFile[] {file}, target.getName(), changeListManager);
-        changeListManager.moveChangesTo(list, new Change[] {changeListManager.getChange(file)});
-        checkFilesAreInList(new VirtualFile[] {file}, list.getName(), changeListManager);
-      }
+    myScheme.doTest(() -> {
+      changeListManager.moveChangesTo(target, new Change[] {changeListManager.getChange(file)});
+      checkFilesAreInList(new VirtualFile[] {file}, target.getName(), changeListManager);
+      changeListManager.moveChangesTo(list, new Change[] {changeListManager.getChange(file)});
+      checkFilesAreInList(new VirtualFile[] {file}, list.getName(), changeListManager);
     });
 
     checkFilesAreInList(new VirtualFile[] {file}, list.getName(), changeListManager);
@@ -298,13 +271,10 @@ public class SvnConcurrentChangeListManagerTest extends Svn17TestCase {
 
     final String targetName = "target";
 
-    myScheme.doTest(new Runnable() {
-      @Override
-      public void run() {
-        final LocalChangeList target = changeListManager.addChangeList(targetName, null);
-        changeListManager.moveChangesTo(target, new Change[] {changeListManager.getChange(file)});
-        checkFilesAreInList(new VirtualFile[] {file}, targetName, changeListManager);
-      }
+    myScheme.doTest(() -> {
+      final LocalChangeList target = changeListManager.addChangeList(targetName, null);
+      changeListManager.moveChangesTo(target, new Change[] {changeListManager.getChange(file)});
+      checkFilesAreInList(new VirtualFile[] {file}, targetName, changeListManager);
     });
 
     checkFilesAreInList(new VirtualFile[] {file}, targetName, changeListManager);
@@ -347,21 +317,18 @@ public class SvnConcurrentChangeListManagerTest extends Svn17TestCase {
     final String targetName = "target";
     final String finalName = "final list name";
 
-    myScheme.doTest(new Runnable() {
-      @Override
-      public void run() {
-        final LocalChangeList target = changeListManager.addChangeList(targetName, null);
-        changeListManager.moveChangesTo(target, new Change[] {changeListManager.getChange(file), changeListManager.getChange(fileB)});
-        checkFilesAreInList(new VirtualFile[] {file, fileB}, targetName, changeListManager);
-        changeListManager.editName(targetName, finalName);
-        checkFilesAreInList(new VirtualFile[] {file, fileB}, finalName, changeListManager);
-        changeListManager.removeChangeList(toBeDeletedList.getName());
-        checkFilesAreInList(new VirtualFile[] {fileC, fileD}, myDefaulListName, changeListManager);
-        changeListManager.moveChangesTo(LocalChangeList.createEmptyChangeList(myProject, finalName),
-                                        new Change[] {changeListManager.getChange(fileC)});
-        checkFilesAreInList(new VirtualFile[] {file, fileB, fileC}, finalName, changeListManager);
-        checkFilesAreInList(new VirtualFile[] {fileD}, myDefaulListName, changeListManager);
-      }
+    myScheme.doTest(() -> {
+      final LocalChangeList target = changeListManager.addChangeList(targetName, null);
+      changeListManager.moveChangesTo(target, new Change[] {changeListManager.getChange(file), changeListManager.getChange(fileB)});
+      checkFilesAreInList(new VirtualFile[] {file, fileB}, targetName, changeListManager);
+      changeListManager.editName(targetName, finalName);
+      checkFilesAreInList(new VirtualFile[] {file, fileB}, finalName, changeListManager);
+      changeListManager.removeChangeList(toBeDeletedList.getName());
+      checkFilesAreInList(new VirtualFile[] {fileC, fileD}, myDefaulListName, changeListManager);
+      changeListManager.moveChangesTo(LocalChangeList.createEmptyChangeList(myProject, finalName),
+                                      new Change[] {changeListManager.getChange(fileC)});
+      checkFilesAreInList(new VirtualFile[] {file, fileB, fileC}, finalName, changeListManager);
+      checkFilesAreInList(new VirtualFile[] {fileD}, myDefaulListName, changeListManager);
     });
 
     checkFilesAreInList(new VirtualFile[] {file, fileB, fileC}, finalName, changeListManager);

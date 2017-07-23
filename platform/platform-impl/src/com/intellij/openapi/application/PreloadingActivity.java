@@ -34,7 +34,7 @@ public abstract class PreloadingActivity {
    * Perform the preloading
    * @param indicator a progress indicator for the background preloading process.
    *                  Canceled if the application has exited.
-   *                  Long actions should periodically perform <code>indicator.checkCanceled()</code>.
+   *                  Long actions should periodically perform {@code indicator.checkCanceled()}.
    */
   public abstract void preload(@NotNull ProgressIndicator indicator);
 

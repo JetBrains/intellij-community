@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
  */
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.*;
+import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.JavaValueModifier;
@@ -30,11 +33,10 @@ import com.intellij.debugger.engine.evaluation.expression.UnsupportedExpressionE
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiCodeFragment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiExpressionCodeFragment;
+import com.intellij.psi.*;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
@@ -69,18 +71,19 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
 
   public final Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
     try {
+      PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(() -> {});
+
       EvaluationContextImpl thisEvaluationContext = getEvaluationContext(evaluationContext);
       SourcePosition position = ContextUtil.getSourcePosition(evaluationContext);
       PsiElement psiContext = ContextUtil.getContextElement(evaluationContext, position);
 
-      ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, () -> {
+      ExpressionEvaluator evaluator = ReadAction.compute(() -> {
+        PsiCodeFragment code = getEvaluationCode(thisEvaluationContext);
         try {
-          return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(getEvaluationText(), psiContext)
-            .getEvaluatorBuilder()
-            .build(getEvaluationCode(thisEvaluationContext), position);
+          return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(getEvaluationText(), psiContext).getEvaluatorBuilder().build(code, position);
         }
         catch (UnsupportedExpressionException ex) {
-          ExpressionEvaluator eval = CompilingEvaluatorImpl.create(myProject, psiContext, this::createCodeFragment);
+          ExpressionEvaluator eval = CompilingEvaluatorImpl.create(myProject, code.getContext(), element -> code);
           if (eval != null) {
             return eval;
           }
@@ -103,6 +106,9 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
       setLvalue(myModifier != null);
 
       return value;
+    }
+    catch (IndexNotReadyException ex) {
+      throw new EvaluateException("Evaluation is not possible during indexing", ex);
     }
     catch (final EvaluateException ex) {
       throw new EvaluateException(ex.getLocalizedMessage(), ex);

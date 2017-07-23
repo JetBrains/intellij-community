@@ -31,9 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * User: anna
- */
 public class SPIFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile {
   public static final SPIFileType INSTANCE = new SPIFileType();
 

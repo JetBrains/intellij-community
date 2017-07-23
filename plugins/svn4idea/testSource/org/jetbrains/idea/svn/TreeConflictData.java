@@ -21,12 +21,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 5/2/12
- * Time: 1:11 PM
- */
 public interface TreeConflictData {
   Data[] ourAll = new Data[] {
     FileToFile.MINE_DELETE_THEIRS_EDIT, FileToFile.MINE_EDIT_THEIRS_DELETE, FileToFile.MINE_EDIT_THEIRS_MOVE,

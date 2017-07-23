@@ -66,7 +66,8 @@ from _pydev_imps._pydev_saved_modules import thread
 from _pydev_imps._pydev_saved_modules import threading
 from _pydev_imps._pydev_saved_modules import socket
 from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR, timeout
-from _pydevd_bundle.pydevd_constants import DebugInfoHolder, dict_contains, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, STATE_RUN
+from _pydevd_bundle.pydevd_constants import DebugInfoHolder, dict_contains, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, IS_PY36_OR_GREATER, \
+    STATE_RUN
 
 try:
     from urllib import quote_plus, unquote, unquote_plus
@@ -77,7 +78,7 @@ from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle import pydevd_xml
 from _pydevd_bundle import pydevd_tracing
 from _pydevd_bundle import pydevd_vm_type
-import pydevd_file_utils
+from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER, norm_file_to_client
 import sys
 import traceback
 from _pydevd_bundle.pydevd_utils import quote_smart as quote, compare_object_attrs, cmp_to_key, to_string
@@ -146,6 +147,7 @@ CMD_INPUT_REQUESTED = 147
 CMD_GET_DESCRIPTION = 148
 
 CMD_PROCESS_CREATED = 149
+CMD_SHOW_CYTHON_WARNING = 150
 
 CMD_VERSION = 501
 CMD_RETURN = 502
@@ -204,6 +206,7 @@ ID_TO_MEANING = {
     '148': 'CMD_GET_DESCRIPTION',
 
     '149': 'CMD_PROCESS_CREATED',
+    '150': 'CMD_SHOW_CYTHON_WARNING',
 
     '501': 'CMD_VERSION',
     '502': 'CMD_RETURN',
@@ -590,6 +593,12 @@ class NetCommandFactory:
         cmdText = '<process/>'
         return NetCommand(CMD_PROCESS_CREATED, 0, cmdText)
 
+    def make_show_cython_warning_message(self):
+        try:
+            return NetCommand(CMD_SHOW_CYTHON_WARNING, 0, '')
+        except:
+            return self.make_error_message(0, get_exception_traceback_str())
+
     def make_custom_frame_created_message(self, frameId, frameDescription):
         frameDescription = pydevd_xml.make_valid_xml_value(frameDescription)
         cmdText = '<xml><thread name="%s" id="%s"/></xml>' % (frameDescription, frameId)
@@ -648,7 +657,7 @@ class NetCommandFactory:
         except:
             return self.make_error_message(0, get_exception_traceback_str())
 
-    def make_thread_suspend_str(self, thread_id, frame, stop_reason, message):
+    def make_thread_suspend_str(self, thread_id, frame, stop_reason, message, suspend_type="trace"):
         """ <xml>
             <thread id="id" stop_reason="reason">
                     <frame id="id" name="functionName " file="file" line="line">
@@ -663,7 +672,7 @@ class NetCommandFactory:
         if message:
             message = make_valid_xml_value(message)
 
-        append('<thread id="%s" stop_reason="%s" message="%s">' % (thread_id, stop_reason, message))
+        append('<thread id="%s" stop_reason="%s" message="%s" suspend_type="%s">' % (thread_id, stop_reason, message, suspend_type))
 
         curr_frame = frame
         try:
@@ -681,9 +690,9 @@ class NetCommandFactory:
 
                 #print "name is ", my_name
 
-                abs_path_real_path_and_base = pydevd_file_utils.get_abs_path_real_path_and_base_from_frame(curr_frame)
+                abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(curr_frame)
 
-                myFile = pydevd_file_utils.norm_file_to_client(abs_path_real_path_and_base[0])
+                myFile = norm_file_to_client(abs_path_real_path_and_base[0])
                 if file_system_encoding.lower() != "utf-8" and hasattr(myFile, "decode"):
                     # myFile is a byte string encoded using the file system encoding
                     # convert it to utf8
@@ -710,9 +719,9 @@ class NetCommandFactory:
         append("</thread></xml>")
         return ''.join(cmd_text_list)
 
-    def make_thread_suspend_message(self, thread_id, frame, stop_reason, message):
+    def make_thread_suspend_message(self, thread_id, frame, stop_reason, message, suspend_type):
         try:
-            return NetCommand(CMD_THREAD_SUSPEND, 0, self.make_thread_suspend_str(thread_id, frame, stop_reason, message))
+            return NetCommand(CMD_THREAD_SUSPEND, 0, self.make_thread_suspend_str(thread_id, frame, stop_reason, message, suspend_type))
         except:
             return self.make_error_message(0, get_exception_traceback_str())
 
@@ -827,7 +836,6 @@ class NetCommandFactory:
             return NetCommand(CMD_INPUT_REQUESTED, 0, started)
         except:
             return self.make_error_message(0, get_exception_traceback_str())
-
 
     def make_exit_message(self):
         try:
@@ -993,18 +1001,19 @@ class InternalGetVariable(InternalThreadCommand):
         """ Converts request into python variable """
         try:
             xml = "<xml>"
-            valDict = pydevd_vars.resolve_compound_variable(self.thread_id, self.frame_id, self.scope, self.attributes)
+            _typeName, valDict = pydevd_vars.resolve_compound_variable(self.thread_id, self.frame_id, self.scope, self.attributes)
             if valDict is None:
                 valDict = {}
 
             keys = valDict.keys()
-            if hasattr(keys, 'sort'):
-                keys.sort(compare_object_attrs) #Python 3.0 does not have it
-            else:
-                if IS_PY3K:
-                    keys = sorted(keys, key=cmp_to_key(compare_object_attrs)) #Jython 2.1 does not have it (and all must be compared as strings).
+            if _typeName != "OrderedDict" and not IS_PY36_OR_GREATER:
+                if hasattr(keys, 'sort'):
+                    keys.sort(compare_object_attrs) #Python 3.0 does not have it
                 else:
-                    keys = sorted(keys, cmp=compare_object_attrs) #Jython 2.1 does not have it (and all must be compared as strings).
+                    if IS_PY3K:
+                        keys = sorted(keys, key=cmp_to_key(compare_object_attrs)) #Jython 2.1 does not have it (and all must be compared as strings).
+                    else:
+                        keys = sorted(keys, cmp=compare_object_attrs) #Jython 2.1 does not have it (and all must be compared as strings).
 
             for k in keys:
                 xml += pydevd_xml.var_to_xml(valDict[k], to_string(k))
@@ -1443,4 +1452,3 @@ def pydevd_find_thread_by_id(thread_id):
         traceback.print_exc()
 
     return None
-

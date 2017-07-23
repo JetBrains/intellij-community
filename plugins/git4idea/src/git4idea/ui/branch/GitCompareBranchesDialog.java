@@ -75,7 +75,7 @@ public class GitCompareBranchesDialog {
 
     myTabbedPane = new TabbedPaneImpl(SwingConstants.TOP);
     myTabbedPane.addTab("Log", VcsLogIcons.Branch, myLogPanel);
-    myTabbedPane.addTab("Diff", AllIcons.Actions.Diff, diffPanel);
+    myTabbedPane.addTab("Files", AllIcons.Actions.ListChanges, diffPanel);
     myTabbedPane.setKeyboardNavigation(TabbedPaneImpl.DEFAULT_PREV_NEXT_SHORTCUTS);
   }
 

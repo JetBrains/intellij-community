@@ -14,61 +14,50 @@ import com.intellij.openapi.roots.impl.storage.ClasspathStorage
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.*
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.io.parentSystemIndependentPath
 import com.intellij.util.io.readText
 import com.intellij.util.io.systemIndependentPath
 import gnu.trove.TObjectIntHashMap
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
 import java.nio.file.Paths
 
+const val ESCAPED_MODULE_DIR = "\$MODULE_DIR$"
+
 @RunsInEdt
 @RunsInActiveStoreMode
 class ModuleStoreTest {
   companion object {
     @JvmField
-    @ClassRule val projectRule = ProjectRule()
-
-    val MODULE_DIR = "\$MODULE_DIR$"
-
-    private inline fun <T> Module.useAndDispose(task: Module.() -> T): T {
-      try {
-        return task()
-      }
-      finally {
-        ModuleManager.getInstance(projectRule.project).disposeModule(this)
-      }
-    }
-
-    private fun VirtualFile.loadModule(): Module {
-      val project = projectRule.project
-      return runWriteAction { ModuleManager.getInstance(project).loadModule(path) }
-    }
-
-    fun Path.createModule() = projectRule.createModule(this)
+    @ClassRule
+    val projectRule = ProjectRule()
   }
 
   private val tempDirManager = TemporaryDirectory()
 
-  private val ruleChain = RuleChain(tempDirManager, EdtRule(), ActiveStoreRule(projectRule), DisposeModulesRule(projectRule))
-  @Rule fun getChain() = ruleChain
+  @Suppress("unused")
+  @JvmField
+  @Rule
+  val ruleChain = RuleChain(tempDirManager, EdtRule(), ActiveStoreRule(projectRule), DisposeModulesRule(projectRule))
 
   @Test fun `set option`() {
     val moduleFile = runWriteAction {
-      VfsTestUtil.createFile(tempDirManager.newVirtualDirectory("module"), "test.iml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<module type=\"JAVA_MODULE\" foo=\"bar\" version=\"4\" />")
+      VfsTestUtil.createFile(tempDirManager.newVirtualDirectory("module"), "test.iml", """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <module type="JAVA_MODULE" foo="bar" version="4" />""".trimIndent())
     }
 
-    moduleFile.loadModule().useAndDispose {
+    projectRule.loadModule(moduleFile).useAndDispose {
       assertThat(getOptionValue("foo")).isEqualTo("bar")
 
       setOption("foo", "not bar")
       saveStore()
     }
 
-    moduleFile.loadModule().useAndDispose {
+    projectRule.loadModule(moduleFile).useAndDispose {
       assertThat(getOptionValue("foo")).isEqualTo("not bar")
 
       setOption("foo", "not bar")
@@ -77,19 +66,32 @@ class ModuleStoreTest {
     }
   }
 
+  @Test fun `newModule should always create a new module from scratch`() {
+    val moduleFile = runWriteAction {
+      VfsTestUtil.createFile(tempDirManager.newVirtualDirectory("module"), "test.iml", "<module type=\"JAVA_MODULE\" foo=\"bar\" version=\"4\" />")
+    }
+
+    projectRule.createModule(Paths.get(moduleFile.path)).useAndDispose {
+      assertThat(getOptionValue("foo")).isNull()
+    }
+  }
+
   @Test fun `must be empty if classpath storage`() {
     // we must not use VFS here, file must not be created
     val moduleFile = tempDirManager.newPath("module", refreshVfs = true).resolve("test.iml")
-    moduleFile.createModule().useAndDispose {
+    projectRule.createModule(moduleFile).useAndDispose {
       ModuleRootModificationUtil.addContentRoot(this, moduleFile.parentSystemIndependentPath)
       saveStore()
-      assertThat(moduleFile).isRegularFile()
-      assertThat(moduleFile.readText()).startsWith("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<module type=\"JAVA_MODULE\" version=\"4\">")
+      assertThat(moduleFile).isRegularFile
+      assertThat(moduleFile.readText()).startsWith("""
+      <?xml version="1.0" encoding="UTF-8"?>
+      <module type="JAVA_MODULE" version="4">""".trimIndent())
 
       ClasspathStorage.setStorageType(ModuleRootManager.getInstance(this), "eclipse")
       saveStore()
-      assertThat(moduleFile).hasContent("""<?xml version="1.0" encoding="UTF-8"?>
-<module classpath="eclipse" classpath-dir="$MODULE_DIR" type="JAVA_MODULE" version="4" />""")
+      assertThat(moduleFile).isEqualTo("""
+      <?xml version="1.0" encoding="UTF-8"?>
+      <module classpath="eclipse" classpath-dir="$ESCAPED_MODULE_DIR" type="JAVA_MODULE" version="4" />""")
     }
   }
 
@@ -117,7 +119,7 @@ class ModuleStoreTest {
     fun Module.removeContentRoot() {
       val modulePath = stateStore.stateStorageManager.expandMacros(StoragePathMacros.MODULE_FILE)
       val moduleFile = Paths.get(modulePath)
-      assertThat(moduleFile).isRegularFile()
+      assertThat(moduleFile).isRegularFile
 
       val virtualFile = LocalFileSystem.getInstance().findFileByPath(modulePath)!!
       val newData = moduleFile.readText().replace("<content url=\"file://\$MODULE_DIR$/$name\" />\n", "").toByteArray()
@@ -130,8 +132,8 @@ class ModuleStoreTest {
       assertThat(contentRootUrls).isEmpty()
     }
 
-    val m1 = root.resolve("m1.iml").createModule()
-    val m2 = root.resolve("m2.iml").createModule()
+    val m1 = projectRule.createModule(root.resolve("m1.iml"))
+    val m2 = projectRule.createModule(root.resolve("m2.iml"))
 
     var projectBatchUpdateCount = 0
     projectRule.project.messageBus.connect(m1).subscribe(BatchUpdateListener.TOPIC, object : BatchUpdateListener {
@@ -146,7 +148,7 @@ class ModuleStoreTest {
     m1.removeContentRoot()
     m2.removeContentRoot()
 
-    (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedAlarm()
+    (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedProjectFileAlarm()
 
     m1.assertChangesApplied()
     m2.assertChangesApplied()
@@ -158,10 +160,24 @@ class ModuleStoreTest {
   }
 }
 
+inline fun <T> Module.useAndDispose(task: Module.() -> T): T {
+  try {
+    return task()
+  }
+  finally {
+    ModuleManager.getInstance(project).disposeModule(this)
+  }
+}
+
+fun ProjectRule.loadModule(file: VirtualFile): Module {
+  val project = project
+  return runWriteAction { ModuleManager.getInstance(project).loadModule(file.path) }
+}
+
 val Module.contentRootUrls: Array<String>
   get() = ModuleRootManager.getInstance(this).contentRootUrls
 
 fun ProjectRule.createModule(path: Path): Module {
-  val p = project
-  return runWriteAction { ModuleManager.getInstance(p).newModule(path.systemIndependentPath, ModuleTypeId.JAVA_MODULE) }
+  val project = project
+  return runWriteAction { ModuleManager.getInstance(project).newModule(path.systemIndependentPath, ModuleTypeId.JAVA_MODULE) }
 }

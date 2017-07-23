@@ -69,81 +69,19 @@ public class PyStringFormatParser {
 
   public static class SubstitutionChunk extends FormatStringChunk {
     @Nullable private String myMappingKey;
-    @Nullable private String myConversionFlags;
     @Nullable private String myWidth;
     @Nullable private String myPrecision;
     @Nullable private Integer myPosition;
     @Nullable private Integer myAutoPosition;
-    private char myLengthModifier;
-    private char myConversionType;
-    private boolean myUnclosedMapping;
 
-    public SubstitutionChunk(int startIndex) {
-      super(startIndex, startIndex);
+    private char myConversionType;
+
+    public SubstitutionChunk(int startIndex, int endIndex) {
+      super(startIndex, endIndex);
     }
 
     protected void setEndIndex(int endIndex) {
       myEndIndex = endIndex;
-    }
-
-    public char getConversionType() {
-      return myConversionType;
-    }
-
-    private void setConversionType(char conversionType) {
-      myConversionType = conversionType;
-    }
-
-    @Nullable
-    public String getMappingKey() {
-      return myMappingKey;
-    }
-
-    protected void setMappingKey(@Nullable String mappingKey) {
-      myMappingKey = mappingKey;
-    }
-
-    @Nullable
-    public String getConversionFlags() {
-      return myConversionFlags;
-    }
-
-    private void setConversionFlags(@Nullable String conversionFlags) {
-      myConversionFlags = conversionFlags;
-    }
-
-    @Nullable
-    public String getWidth() {
-      return myWidth;
-    }
-
-    private void setWidth(@Nullable String width) {
-      myWidth = width;
-    }
-
-    @Nullable
-    public String getPrecision() {
-      return myPrecision;
-    }
-
-    private void setPrecision(@Nullable String precision) {
-      myPrecision = precision;
-    }
-
-    public char getLengthModifier() {
-      return myLengthModifier;
-    }
-
-    private void setLengthModifier(char lengthModifier) {
-      myLengthModifier = lengthModifier;
-    }
-
-    public boolean isUnclosedMapping() {
-      return myUnclosedMapping;
-    }
-
-    private void setUnclosedMapping(boolean unclosedMapping) {
-      myUnclosedMapping = unclosedMapping;
     }
 
     @Nullable
@@ -171,6 +109,149 @@ public class PyStringFormatParser {
     protected void setAutoPosition(@Nullable Integer autoPosition) {
       myAutoPosition = autoPosition;
     }
+
+    public char getConversionType() {
+      return myConversionType;
+    }
+
+    public void setConversionType(char conversionType) {
+      myConversionType = conversionType;
+    }
+
+    @Nullable
+    public String getPrecision() {
+      return myPrecision;
+    }
+
+    public void setPrecision(@Nullable String precision) {
+      myPrecision = precision;
+    }
+
+    @Nullable
+    public String getWidth() {
+      return myWidth;
+    }
+
+    public void setWidth(@Nullable String width) {
+      myWidth = width;
+    }
+
+    @Nullable
+    public String getMappingKey() {
+      return myMappingKey;
+    }
+
+    protected void setMappingKey(@Nullable String mappingKey) {
+      myMappingKey = mappingKey;
+    }
+  }
+
+  public static class PercentSubstitutionChunk extends SubstitutionChunk {
+    @Nullable private String myConversionFlags;
+    private char myLengthModifier;
+    private boolean myUnclosedMapping;
+
+    public PercentSubstitutionChunk(int startIndex) {
+      super(startIndex, startIndex);
+    }
+
+    @Nullable
+    public String getConversionFlags() {
+      return myConversionFlags;
+    }
+
+    private void setConversionFlags(@Nullable String conversionFlags) {
+      myConversionFlags = conversionFlags;
+    }
+
+    public char getLengthModifier() {
+      return myLengthModifier;
+    }
+
+    private void setLengthModifier(char lengthModifier) {
+      myLengthModifier = lengthModifier;
+    }
+
+    public boolean isUnclosedMapping() {
+      return myUnclosedMapping;
+    }
+
+    private void setUnclosedMapping() {
+      myUnclosedMapping = true;
+    }
+  }
+
+  public static class NewStyleSubstitutionChunk extends SubstitutionChunk {
+    @Nullable private String myConversion;
+    @Nullable private String myMappingKeyAttributeName;
+    @Nullable private String myMappingKeyElementIndex;
+    private boolean signOption;
+    private boolean zeroPadding;
+    private boolean alternateForm;
+    private boolean thousandsSeparator;
+
+    public NewStyleSubstitutionChunk(int startIndex) {
+      super(startIndex, startIndex);
+    }
+
+    @Nullable
+    public String getConversion() {
+      return myConversion;
+    }
+
+    public void setConversion(@Nullable String conversion) {
+      myConversion = conversion;
+    }
+
+    public boolean hasSignOption() {
+      return signOption;
+    }
+
+    public void setSignOption() {
+      this.signOption = true;
+    }
+
+    public boolean useAlternateForm() {
+      return alternateForm;
+    }
+
+    public void setAlternateForm() {
+      this.alternateForm = true;
+    }
+
+    public boolean hasZeroPadding() {
+      return zeroPadding;
+    }
+
+    public void setZeroPadding() {
+      this.zeroPadding = true;
+    }
+
+    public boolean hasThousandsSeparator() {
+      return thousandsSeparator;
+    }
+
+    public void setThousandsSeparator() {
+      this.thousandsSeparator = true;
+    }
+
+    @Nullable
+    public String getMappingKeyAttributeName() {
+      return myMappingKeyAttributeName;
+    }
+
+    public void setMappingKeyAttributeName(@NotNull String mappingKeyAttributeName) {
+      myMappingKeyAttributeName = mappingKeyAttributeName;
+    }
+
+    @Nullable
+    public String getMappingKeyElementIndex() {
+      return myMappingKeyElementIndex;
+    }
+
+    public void setMappingKeyElementIndex(@Nullable String mappingKeyElementIndex) {
+      myMappingKeyElementIndex = mappingKeyElementIndex;
+    }
   }
 
   @NotNull private final String myLiteral;
@@ -178,10 +259,19 @@ public class PyStringFormatParser {
   private int myPos;
   private int mySubstitutionsCount = 0;
 
+  // % strings
   private static final String CONVERSION_FLAGS = "#0- +";
   private static final String DIGITS = "0123456789";
   private static final String LENGTH_MODIFIERS = "hlL";
-  private static final String VALID_CONVERSION_TYPES = "diouxXeEfFgGcrsb";
+  private static final String VALID_CONVERSION_TYPES = "diouxXeEfFgGcrsba";
+
+  // new style strings
+  private static final String ALIGN_SYMBOLS = "<>=^";
+  private static final String SIGN_SYMBOLS = "+- ";
+  private static final String CONVERSIONS = "rsa";
+  private static final char ALTERNATE_FORM_SYMBOL = '#';
+  private static final char ZERO_PADDING_SYMBOL = '0';
+
 
   private PyStringFormatParser(@NotNull String literal) {
     myLiteral = literal;
@@ -194,48 +284,13 @@ public class PyStringFormatParser {
 
   @NotNull
   public static List<FormatStringChunk> parseNewStyleFormat(@NotNull String s) {
-    final List<FormatStringChunk> results = new ArrayList<>();
-    final Matcher matcher = NEW_STYLE_FORMAT_TOKENS.matcher(s);
-    int autoPositionedFieldsCount = 0;
-    while (matcher.find()) {
-      final String group = matcher.group();
-      final int start = matcher.start();
-      final int end = matcher.end();
-      if ("{{".equals(group) || "}}".equals(group)) {
-        results.add(new ConstantChunk(start, end));
-      }
-      else if (group.startsWith("{") && group.endsWith("}")) {
-        final SubstitutionChunk chunk = new SubstitutionChunk(start);
-        chunk.setEndIndex(end);
-        final int nameStart = start + 1;
-        final int nameEnd = StringUtil.indexOfAny(s, "!:.[}", nameStart, end);
-        if (nameEnd > 0 && nameStart < nameEnd) {
-          final String name = s.substring(nameStart, nameEnd);
-          try {
-            final int number = Integer.parseInt(name);
-            chunk.setPosition(number);
-          } catch (NumberFormatException e) {
-            chunk.setMappingKey(name);
-          }
-        }
-        else {
-          chunk.setAutoPosition(autoPositionedFieldsCount);
-          autoPositionedFieldsCount++;
-        }
-        // TODO: Parse substitution details
-        results.add(chunk);
-      }
-      else {
-        results.add(new ConstantChunk(start, end));
-      }
-    }
-    return results;
+    return new PyStringFormatParser(s).parseNewStyle();
   }
 
   @NotNull
   private List<FormatStringChunk> parse() {
     myPos = 0;
-    while(myPos < myLiteral.length()) {
+    while (myPos < myLiteral.length()) {
       int next = myLiteral.indexOf('%', myPos);
       while(next >= 0 && next < myLiteral.length()-1 && myLiteral.charAt(next+1) == '%') {
         next = myLiteral.indexOf('%', next+2);
@@ -253,22 +308,174 @@ public class PyStringFormatParser {
     return myResult;
   }
 
+  private List<FormatStringChunk> parseNewStyle() {
+    final List<FormatStringChunk> results = new ArrayList<>();
+    final Matcher matcher = NEW_STYLE_FORMAT_TOKENS.matcher(myLiteral);
+    int autoPositionedFieldsCount = 0;
+    boolean skipNext = false;
+    while (matcher.find()) {
+      final String group = matcher.group();
+      myPos = matcher.start();
+      final int end = matcher.end();
+      if (group.endsWith("\\N")) {
+        skipNext = true;
+        continue;
+      }
+      if ("{{".equals(group) || "}}".equals(group)) {
+        results.add(new ConstantChunk(myPos, end));
+      }
+      else if (group.startsWith("{") && group.endsWith("}")) {
+        if (!skipNext) {
+          autoPositionedFieldsCount = parseNewStyleSubstitution(results, end, autoPositionedFieldsCount);
+        }
+        skipNext = false;
+      }
+      else {
+        results.add(new ConstantChunk(myPos, end));
+      }
+    }
+    return results;
+  }
+
+  private int parseNewStyleSubstitution(List<FormatStringChunk> results, int end, int autoPositionedFieldsCount) {
+    final NewStyleSubstitutionChunk chunk = new NewStyleSubstitutionChunk(myPos);
+    chunk.setEndIndex(end);
+
+    // skip "{"
+    myPos++;
+    // name
+    final int nameEnd = StringUtil.indexOfAny(myLiteral, "!:.[}", myPos, end);
+    if (nameEnd > 0 && myPos < nameEnd) {
+      final String name = myLiteral.substring(myPos, nameEnd);
+      try {
+        final int number = Integer.parseInt(name);
+        chunk.setPosition(number);
+      }
+      catch (NumberFormatException e) {
+        chunk.setMappingKey(name);
+      }
+      myPos = nameEnd;
+    }
+    else {
+      chunk.setAutoPosition(autoPositionedFieldsCount);
+      autoPositionedFieldsCount++;
+    }
+
+    // parse field name attribute name
+    if (isAt('.')) {
+      myPos++;
+
+      final int attributeEnd = StringUtil.indexOfAny(myLiteral, "!:.[}", myPos, end);
+      if (attributeEnd > 0 && myPos < attributeEnd) {
+        final String attributeName = myLiteral.substring(myPos, attributeEnd);
+        chunk.setMappingKeyAttributeName(attributeName);
+        myPos = attributeEnd;
+      }
+    }
+
+    // parse field name element indexes
+    if (isAt('[')) {
+      myPos++;
+
+      final int indexElementEnd = StringUtil.indexOfAny(myLiteral, "!:.]", myPos, end);
+      if (indexElementEnd > 0 && myPos < indexElementEnd) {
+        final String index = myLiteral.substring(myPos, indexElementEnd);
+        chunk.setMappingKeyElementIndex(index);
+        myPos = indexElementEnd + 1;
+      }
+    }
+
+    // skip other attribute names and element indexes
+    while (isAt('.') || isAt('[')) {
+      if (isAt('.')) {
+        myPos++;
+        final int attributeEnd = StringUtil.indexOfAny(myLiteral, "!:.[", myPos, end);
+        if (attributeEnd > 0 && myPos < attributeEnd) {
+          myPos = attributeEnd;
+        }
+      }
+      else {
+        myPos++;
+        final int attributeEnd = StringUtil.indexOf(myLiteral, ']', myPos, end);
+        if (attributeEnd > 0 && myPos < attributeEnd) {
+          myPos = attributeEnd + 1;
+        }
+      }
+    }
+
+    // conversion
+    myPos = Math.max(myPos, StringUtil.indexOf(myLiteral, '!', myPos, end) + 1);
+    final int conversionEnd = StringUtil.indexOfAny(myLiteral, ":}", myPos, end);
+    if (conversionEnd - myPos == 1) {
+      final String conversion = myLiteral.substring(myPos, conversionEnd);
+      if (StringUtil.containsAnyChar(conversion, CONVERSIONS)) {
+        chunk.setConversion(conversion);
+        myPos = conversionEnd;
+      }
+    }
+
+    // parse format spec
+    // [[fill]align][sign][#][0][width][,][.precision][type]
+    if (isAt(':')) {
+      //skip ":"
+      myPos++;
+
+      //skip align options
+      myPos = Math.max(myPos, StringUtil.indexOfAny(myLiteral, ALIGN_SYMBOLS, myPos, end) + 1);
+
+      if (isAtSet(SIGN_SYMBOLS)) {
+        chunk.setSignOption();
+        myPos++;
+      }
+
+      if (isAt(ALTERNATE_FORM_SYMBOL)) {
+        chunk.setAlternateForm();
+        myPos++;
+      }
+
+      if (isAt(ZERO_PADDING_SYMBOL)) {
+        chunk.setZeroPadding();
+        myPos++;
+      }
+
+      chunk.setWidth(parseWhileCharacterInSet(DIGITS));
+
+      if (isAt(',')) {
+        myPos++;
+        chunk.setThousandsSeparator();
+      }
+
+      if (isAt('.')) {
+        myPos++;
+        chunk.setPrecision(parseWhileCharacterInSet(DIGITS));
+      }
+
+      if (myPos < end - 1) {
+        chunk.setConversionType(myLiteral.charAt(myPos));
+      }
+    } 
+
+
+    results.add(chunk);
+    return autoPositionedFieldsCount;
+  }
+
   private void parseSubstitution() {
     assert myLiteral.charAt(myPos) == '%';
-    SubstitutionChunk chunk = new SubstitutionChunk(myPos);
+    PercentSubstitutionChunk chunk = new PercentSubstitutionChunk(myPos);
     myResult.add(chunk);
     myPos++;
     if (isAt('(')) {
-      int mappingEnd = myLiteral.indexOf(')', myPos+1);
+      int mappingEnd = myLiteral.indexOf(')', myPos + 1);
       if (mappingEnd < 0) {
         chunk.setEndIndex(myLiteral.length());
-        chunk.setMappingKey(myLiteral.substring(myPos+1));
-        chunk.setUnclosedMapping(true);
+        chunk.setMappingKey(myLiteral.substring(myPos + 1));
+        chunk.setUnclosedMapping();
         myPos = myLiteral.length();
         return;
       }
-      chunk.setMappingKey(myLiteral.substring(myPos+1, mappingEnd));
-      myPos = mappingEnd+1;
+      chunk.setMappingKey(myLiteral.substring(myPos + 1, mappingEnd));
+      myPos = mappingEnd + 1;
     }
     else  {
       chunk.setAutoPosition(mySubstitutionsCount);
@@ -311,7 +518,7 @@ public class PyStringFormatParser {
   @NotNull
   private String parseWhileCharacterInSet(@NotNull final String characterSet) {
     int flagStart = myPos;
-    while(isAtSet(characterSet)) {
+    while (isAtSet(characterSet)) {
       myPos++;
     }
     return myLiteral.substring(flagStart, myPos);

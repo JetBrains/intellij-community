@@ -31,7 +31,7 @@ public class JarInfo {
 
   public JarInfo(@NotNull DestinationInfo destination) {
     myDestination = destination;
-    myContent = new ArrayList<Pair<String, Object>>();
+    myContent = new ArrayList<>();
   }
 
   public void addContent(String pathInJar, ArtifactRootDescriptor descriptor) {

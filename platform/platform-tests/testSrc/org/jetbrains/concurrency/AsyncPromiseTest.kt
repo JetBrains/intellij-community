@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,10 @@
  */
 package org.jetbrains.concurrency
 
-import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.lang.CompoundRuntimeException
+import com.intellij.testFramework.assertConcurrent
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.Test
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
@@ -52,7 +49,7 @@ class AsyncPromiseTest {
 
     val numThreads = 30
     assertConcurrent(*Array(numThreads, {
-      if (it and 1 === 0) r else s
+      if ((it and 1) == 0) r else s
     }))
 
     assertThat(count.get()).isEqualTo(numThreads / 2)
@@ -71,6 +68,13 @@ class AsyncPromiseTest {
           Thread.sleep(100)
           promise.setResult("test")
         })
+  }
+
+  @Test
+  fun `ignoreErrors`() {
+    val a = resolvedPromise("foo")
+    val b = rejectedPromise<String>()
+    assertThat(collectResults(listOf(a, b), ignoreErrors = true).blockingGet(100, TimeUnit.MILLISECONDS)).containsExactly("foo")
   }
 
   @Test
@@ -115,40 +119,4 @@ class AsyncPromiseTest {
     r()
     assertThat(count.get()).isEqualTo(numThreads + 1)
   }
-}
-
-fun assertConcurrent(vararg runnables: () -> Any?, maxTimeoutSeconds: Int = 5) {
-  val numThreads = runnables.size
-  val exceptions = ContainerUtil.createLockFreeCopyOnWriteList<Throwable>()
-  val threadPool = Executors.newFixedThreadPool(numThreads)
-  try {
-    val allExecutorThreadsReady = CountDownLatch(numThreads)
-    val afterInitBlocker = CountDownLatch(1)
-    val allDone = CountDownLatch(numThreads)
-    for (submittedTestRunnable in runnables) {
-      threadPool.submit {
-        allExecutorThreadsReady.countDown()
-        try {
-          afterInitBlocker.await()
-          submittedTestRunnable()
-        }
-        catch (e: Throwable) {
-          exceptions.add(e)
-        }
-        finally {
-          allDone.countDown()
-        }
-      }
-    }
-
-    // wait until all threads are ready
-    assertThat(allExecutorThreadsReady.await((runnables.size * 1000).toLong(), TimeUnit.MILLISECONDS)).isTrue()
-    // start all test runners
-    afterInitBlocker.countDown()
-    assertThat(allDone.await(maxTimeoutSeconds.toLong(), TimeUnit.SECONDS)).isTrue()
-  }
-  finally {
-    threadPool.shutdownNow()
-  }
-  CompoundRuntimeException.throwIfNotEmpty(exceptions)
 }

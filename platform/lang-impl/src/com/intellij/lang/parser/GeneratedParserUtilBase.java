@@ -317,7 +317,11 @@ public class GeneratedParserUtilBase {
     ErrorState state = ErrorState.get(builder);
     if (state.completionState != null) return true;
     boolean track = !state.suppressErrors && state.predicateCount < 2 && state.predicateSign;
-    if (!track) return nextTokenIsFast(builder, tokens);
+    return !track ? nextTokenIsFast(builder, tokens) : nextTokenIsSlow(builder, frameName, tokens);
+  }
+
+  public static boolean nextTokenIsSlow(PsiBuilder builder, String frameName, IElementType... tokens) {
+    ErrorState state = ErrorState.get(builder);
     IElementType tokenType = builder.getTokenType();
     if (isNotEmpty(frameName)) {
       addVariantInner(state, builder.rawTokenIndex(), frameName);
@@ -419,7 +423,7 @@ public class GeneratedParserUtilBase {
     int offset = builder.getCurrentOffset();
     if (!builder.eof() && offset == builder.rawTokenTypeStart(1)) return; // suppress for zero-length tokens
     String text = completionState.convertItem(o);
-    int length = text == null? 0 : text.length();
+    int length = text == null ? 0 : text.length();
     boolean add = length != 0 && completionState.prefixMatches(builder, text);
     add = add && length > 1 && !(text.charAt(0) == '<' && text.charAt(length - 1) == '>') &&
           !(text.charAt(0) == '\'' && text.charAt(length - 1) == '\'' && length < 5);

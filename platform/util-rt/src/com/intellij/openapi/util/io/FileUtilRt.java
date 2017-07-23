@@ -43,8 +43,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class FileUtilRt {
   private static final int KILOBYTE = 1024;
+  private static final int DEFAULT_INTELLISENSE_LIMIT = 2500 * KILOBYTE;
+
   public static final int MEGABYTE = KILOBYTE * KILOBYTE;
   public static final int LARGE_FOR_CONTENT_LOADING = Math.max(20 * MEGABYTE, Math.max(getUserFileSizeLimit(), getUserContentLoadLimit()));
+  public static final int LARGE_FILE_PREVIEW_SIZE = Math.min(getLargeFilePreviewSize(), LARGE_FOR_CONTENT_LOADING);
 
   private static final int MAX_FILE_IO_ATTEMPTS = 10;
   private static final boolean USE_FILE_CHANNELS = "true".equalsIgnoreCase(System.getProperty("idea.fs.useChannels"));
@@ -77,6 +80,7 @@ public class FileUtilRt {
     private static Method ourFilesWalkMethod;
     private static Method ourFileToPathMethod;
     private static Method ourPathToFileMethod;
+    private static Method ourAttributesIsOtherMethod;
     private static Object ourDeletionVisitor;
     private static Class ourNoSuchFileExceptionClass;
     private static Class ourAccessDeniedExceptionClass;
@@ -93,6 +97,7 @@ public class FileUtilRt {
         ourFileToPathMethod = Class.forName("java.io.File").getMethod("toPath");
         ourPathToFileMethod = pathClass.getMethod("toFile");
         ourFilesWalkMethod = filesClass.getMethod("walkFileTree", pathClass, visitorClass);
+        ourAttributesIsOtherMethod = Class.forName("java.nio.file.attribute.BasicFileAttributes").getDeclaredMethod("isOther");
         ourFilesDeleteIfExistsMethod = filesClass.getMethod("deleteIfExists", pathClass);
 
         final Object Result_Continue = Class.forName("java.nio.file.FileVisitResult").getDeclaredField("CONTINUE").get(null);
@@ -110,14 +115,12 @@ public class FileUtilRt {
                 performDelete(args[0]);
               }
               else if (SystemInfoRt.isWindows && "preVisitDirectory".equals(methodName)) {
-                boolean reparsePoint = false;
+                boolean notDirectory = false;
                 try {
-                  Method isReparsePoint = second.getClass().getDeclaredMethod("isReparsePoint");
-                  isReparsePoint.setAccessible(true);
-                  reparsePoint = Boolean.TRUE.equals(isReparsePoint.invoke(second));
+                  notDirectory = Boolean.TRUE.equals(ourAttributesIsOtherMethod.invoke(second));
                 }
                 catch (Throwable ignored) { }
-                if (reparsePoint) {
+                if (notDirectory) {
                   performDelete(args[0]);
                   return Result_Skip;
                 }
@@ -878,7 +881,7 @@ public class FileUtilRt {
       return Integer.parseInt(System.getProperty("idea.max.intellisense.filesize")) * KILOBYTE;
     }
     catch (NumberFormatException e) {
-      return 2500 * KILOBYTE;
+      return DEFAULT_INTELLISENSE_LIMIT;
     }
   }
 
@@ -888,6 +891,15 @@ public class FileUtilRt {
     }
     catch (NumberFormatException e) {
       return 20 * MEGABYTE;
+    }
+  }
+
+  private static int getLargeFilePreviewSize() {
+    try {
+      return Integer.parseInt(System.getProperty("idea.max.content.load.large.preview.size")) * KILOBYTE;
+    }
+    catch (NumberFormatException e) {
+      return DEFAULT_INTELLISENSE_LIMIT;
     }
   }
 

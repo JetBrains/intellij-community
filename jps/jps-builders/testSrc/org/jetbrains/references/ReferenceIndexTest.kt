@@ -78,6 +78,10 @@ class ReferenceIndexTest : ReferenceIndexTestBase() {
     assertIndexOnRebuild("myPackage/package-info.java")
   }
 
+  fun testPackageInfo2() {
+    assertIndexOnRebuild("myPackage/package-info.java")
+  }
+
   fun testArrayRefs() {
     assertIndexOnRebuild("Array.java", "Foo.java", "Bar.java")
   }
@@ -123,6 +127,59 @@ class ReferenceIndexTest : ReferenceIndexTestBase() {
 
   fun testStaticallyImportedConstant() {
     assertIndexOnRebuild("pack/Foo.java", "pack/Bar.java")
+  }
+
+  fun testOccurrences() {
+
+    assertIndexOnRebuild("Foo.java", "Bar.java")
+  }
+
+  fun testConstructors() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testAnnotation() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testUnqualifiedMethodCallResolution() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testUnqualifiedMethodCallResolution2() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testUnqualifiedMethodCallResolution3() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testUnqualifiedMethodCallResolution4() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testUnqualifiedMethodCallResolution5() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testQualifierResolution() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testSignatureDataIndex() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testClassWithModifiers() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testParameterlessExplicitConstructor() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testDefaultConstructorUsage() {
+    assertIndexOnRebuild("Foo.java")
   }
 }
 

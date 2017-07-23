@@ -19,6 +19,7 @@ package com.intellij.codeInsight.navigation;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ContainerProvider;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
@@ -29,6 +30,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,6 +51,10 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     int offset = editor.getCaretModel().getOffset();
     PsiElement source = TargetElementUtil.getInstance().findTargetElement(editor, ImplementationSearcher.getFlags(), offset);
     if (source == null) return null;
+    return createDataForSource(editor, offset, source);
+  }
+
+  private GotoData createDataForSource(@NotNull Editor editor, int offset, PsiElement source) {
     final PsiReference reference = TargetElementUtil.findReference(editor, offset);
     final TargetElementUtil instance = TargetElementUtil.getInstance();
     PsiElement[] targets = new ImplementationSearcher.FirstImplementationsSearcher() {
@@ -76,6 +83,19 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     return gotoData;
   }
 
+  @Override
+  protected void chooseFromAmbiguousSources(Editor editor, PsiFile file, Consumer<GotoData> successCallback) {
+    int offset = editor.getCaretModel().getOffset();
+    PsiElementProcessor<PsiElement> navigateProcessor = element -> {
+      GotoData data = createDataForSource(editor, offset, element);
+      if (data != null) {
+        successCallback.consume(data);
+      }
+      return true;
+    };
+    GotoDeclarationAction
+      .chooseAmbiguousTarget(editor, offset, navigateProcessor, CodeInsightBundle.message("declaration.navigation.title"), null);
+  }
 
   private static PsiElement getContainer(PsiElement refElement) {
     for (ContainerProvider provider : ContainerProvider.EP_NAME.getExtensions()) {

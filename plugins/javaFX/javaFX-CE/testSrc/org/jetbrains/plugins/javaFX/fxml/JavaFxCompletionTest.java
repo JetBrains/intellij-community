@@ -24,10 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * User: anna
- * Date: 1/17/13
- */
 public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
 
   @NotNull

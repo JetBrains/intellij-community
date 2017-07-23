@@ -43,7 +43,9 @@ public class CommandLineParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // LITERAL_STARTS_FROM_LETTER | LITERAL_STARTS_FROM_DIGIT | LITERAL_STARTS_FROM_SYMBOL
+  // LITERAL_STARTS_FROM_LETTER | LITERAL_STARTS_FROM_DIGIT | LITERAL_STARTS_FROM_SYMBOL |
+  // SPACED_LITERAL_STARTS_FROM_LETTER | SPACED_LITERAL_STARTS_FROM_DIGIT | SPACED_LITERAL_STARTS_FROM_SYMBOL |
+  // SINGLE_Q_SPACED_LITERAL_STARTS_FROM_LETTER | SINGLE_Q_SPACED_LITERAL_STARTS_FROM_DIGIT | SINGLE_Q_SPACED_LITERAL_STARTS_FROM_SYMBOL
   public static boolean argument(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "argument")) return false;
     boolean r;
@@ -51,6 +53,12 @@ public class CommandLineParser implements PsiParser, LightPsiParser {
     r = consumeToken(b, LITERAL_STARTS_FROM_LETTER);
     if (!r) r = consumeToken(b, LITERAL_STARTS_FROM_DIGIT);
     if (!r) r = consumeToken(b, LITERAL_STARTS_FROM_SYMBOL);
+    if (!r) r = consumeToken(b, SPACED_LITERAL_STARTS_FROM_LETTER);
+    if (!r) r = consumeToken(b, SPACED_LITERAL_STARTS_FROM_DIGIT);
+    if (!r) r = consumeToken(b, SPACED_LITERAL_STARTS_FROM_SYMBOL);
+    if (!r) r = consumeToken(b, SINGLE_Q_SPACED_LITERAL_STARTS_FROM_LETTER);
+    if (!r) r = consumeToken(b, SINGLE_Q_SPACED_LITERAL_STARTS_FROM_DIGIT);
+    if (!r) r = consumeToken(b, SINGLE_Q_SPACED_LITERAL_STARTS_FROM_SYMBOL);
     exit_section_(b, l, m, r, false, null);
     return r;
   }

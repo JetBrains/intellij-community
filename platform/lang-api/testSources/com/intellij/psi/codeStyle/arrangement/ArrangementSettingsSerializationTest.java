@@ -97,7 +97,7 @@ public class ArrangementSettingsSerializationTest {
   }
 
   private static StdArrangementSettings emptySettings() {
-    return new StdArrangementSettings(ContainerUtil.<ArrangementGroupingRule>emptyList(), ContainerUtil.<ArrangementSectionRule>emptyList());
+    return new StdArrangementSettings(ContainerUtil.emptyList(), ContainerUtil.emptyList());
   }
 
   private static StdArrangementRuleAliasToken visibilityToken() {

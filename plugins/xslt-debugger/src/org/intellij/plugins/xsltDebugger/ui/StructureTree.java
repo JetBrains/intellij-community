@@ -26,11 +26,6 @@ import org.intellij.plugins.xsltDebugger.ui.actions.NavigateAction;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 17.06.2007
- */
 public class StructureTree extends Tree implements TypeSafeDataProvider {
   public StructureTree(GeneratedStructureModel model) {
     super(model);

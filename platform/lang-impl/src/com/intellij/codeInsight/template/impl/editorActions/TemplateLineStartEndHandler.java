@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +52,7 @@ public abstract class TemplateLineStartEndHandler extends EditorActionHandler {
   }
 
   @Override
-  protected void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+  protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
     final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
     if (templateState != null && !templateState.isFinished()) {
       final TextRange range = templateState.getCurrentVariableRange();
@@ -59,7 +60,8 @@ public abstract class TemplateLineStartEndHandler extends EditorActionHandler {
       if (range != null && shouldStayInsideVariable(range, caretOffset)) {
         int selectionOffset = editor.getSelectionModel().getLeadSelectionOffset();
         int offsetToMove = myIsHomeHandler ? range.getStartOffset() : range.getEndOffset();
-        editor.getCaretModel().moveToOffset(offsetToMove);
+        LogicalPosition logicalPosition = editor.offsetToLogicalPosition(offsetToMove).leanForward(myIsHomeHandler);
+        editor.getCaretModel().moveToLogicalPosition(logicalPosition);
         EditorModificationUtil.scrollToCaret(editor);
         if (myWithSelection) {
           editor.getSelectionModel().setSelection(selectionOffset, offsetToMove);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,34 +15,121 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
+import com.intellij.ide.util.BrowseFilesListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.fileChooser.FileTextField;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBList;
+import com.intellij.util.JdomKt;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
+import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 
 public class ShowUpdateInfoDialogAction extends AnAction {
-  private boolean myShowBigData = false;
 
   public ShowUpdateInfoDialogAction() {
   }
 
   @Override
+  public void update(AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null);
+  }
+
+  @Override
   public void actionPerformed(AnActionEvent e) {
+    Project project = e.getProject();
+    if (project == null) return;
+    String title = "Updates.xml <channel> Text";
+    JBList list = new JBList("Manual Text", "Sample Text (short)", "Sample Text (long)");
+    JBPopupFactory.getInstance().createListPopupBuilder(list)
+      .setTitle(title)
+      .setFilteringEnabled(o -> (String)o)
+      .setItemChoosenCallback(() -> {
+        int index = list.getSelectedIndex();
+        Pair<String, VirtualFile> info = index == 0 ? getUserText(project, title) : Pair.create(getXML(index == 2), null);
+        showDialog(info.first, info.second);
+      })
+      .createPopup()
+      .showCenteredInCurrentWindow(project);
+  }
+
+  @NotNull
+  private static Pair<String, VirtualFile> getUserText(@NotNull Project project, @NotNull String title) {
+    JTextArea textArea = new JTextArea(10, 50);
+    UIUtil.addUndoRedoActions(textArea);
+    textArea.setWrapStyleWord(true);
+    textArea.setLineWrap(true);
+    JPanel panel = new JPanel(new BorderLayout(0, 10));
+    panel.add(ScrollPaneFactory.createScrollPane(textArea), BorderLayout.CENTER);
+    Disposable disposable = Disposer.newDisposable();
+    FileTextField fileField = FileChooserFactory.getInstance().createFileTextField(BrowseFilesListener.SINGLE_FILE_DESCRIPTOR, disposable);
+    TextFieldWithBrowseButton fileCompo = new TextFieldWithBrowseButton(fileField.getField());
+    FileChooserDescriptor fileDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
+    fileCompo.addBrowseFolderListener("Patch File", "Patch file", project, fileDescriptor);
+    panel.add(LabeledComponent.create(fileCompo, "Patch file:"), BorderLayout.SOUTH);
+    DialogBuilder builder = new DialogBuilder(project);
+    builder.addDisposable(disposable);
+    builder.setCenterPanel(panel);
+    builder.setPreferredFocusComponent(textArea);
+    builder.setTitle(title);
+    builder.addOkAction();
+    builder.addCancelAction();
+    return builder.showAndGet() ? Pair.create(textArea.getText(), fileField.getSelectedFile()) : Pair.empty();
+  }
+
+  protected void showDialog(@Nullable String text, @Nullable VirtualFile patchFile) {
+    String trim = StringUtil.trim(text);
+    if (StringUtil.isEmpty(trim)) return;
+
+    Element element;
     try {
-      myShowBigData = ! myShowBigData;
-      UpdateChannel channel = new UpdateChannel(JDOMUtil.loadDocument(getXML(myShowBigData)).getRootElement());
-      BuildInfo newBuild = channel.getBuilds().get(0);
-      PatchInfo patchInfo = new PatchInfo(
-        JDOMUtil.loadDocument("<patch from=\"" + ApplicationInfo.getInstance().getBuild().asString() + "\" size=\"from 733 to 800\"/>")
-          .getRootElement());
-      new UpdateInfoDialog(channel, newBuild, patchInfo, true, UpdateSettings.getInstance().canUseSecureConnection(),
-                           Collections.emptyList(), Collections.emptyList()).show();
+      element = JdomKt.loadElement(trim);
+      if (!"channel".equals(element.getName())) return;
     }
-    catch (Exception ignored) {
-      ignored.printStackTrace();
+    catch (Exception ex) {
+      Logger.getInstance(ShowUpdateInfoDialogAction.class).error(ex);
+      return;
     }
+    UpdateChannel channel = new UpdateChannel(element);
+    BuildInfo newBuild = ContainerUtil.getFirstItem(channel.getBuilds());
+    if (newBuild == null) return;
+    PatchInfo patch = ContainerUtil.getFirstItem(newBuild.getPatches());
+    UpdateInfoDialog dialog = new UpdateInfoDialog(channel, newBuild, patch, true, UpdateSettings.getInstance().canUseSecureConnection(),
+                                                   Collections.emptyList(), Collections.emptyList()) {
+      @NotNull
+      @Override
+      File doDownloadPatch(@NotNull ProgressIndicator indicator) throws IOException {
+        File file = patchFile == null ? null : VfsUtilCore.virtualToIoFile(patchFile);
+        return file != null ? file : super.doDownloadPatch(indicator);
+      }
+    };
+    dialog.setTitle("[TEST] " + dialog.getTitle());
+    dialog.show();
   }
 
 
@@ -119,10 +206,13 @@ public class ShowUpdateInfoDialogAction extends AnAction {
                                                 "        <patch from=\"145.1617\" size=\"from 42 to 58\"/>\n" +
                                                 "      </build>\n" +
                                                 "    </channel>\n";
+
   private static String getXML(boolean bigData) {
     StringBuilder sb = new StringBuilder(CHANNEL_XML_START);
     int count = bigData ? 4 : 1;
-    for (int i = 0; i < count; i++) { sb.append(PARAGRAPH); }
+    for (int i = 0; i < count; i++) {
+      sb.append(PARAGRAPH);
+    }
     sb.append(CHANNEL_XML_END);
     return sb.toString();
   }

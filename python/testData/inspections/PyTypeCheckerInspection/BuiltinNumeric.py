@@ -5,6 +5,6 @@ def test():
     float(False)
     complex(False)
     divmod(False, False)
-    divmod(<warning descr="Expected type 'Number', got 'str' instead">'foo'</warning>, <warning descr="Expected type 'Number', got 'unicode' instead">u'bar'</warning>)
+    divmod<warning descr="Unexpected type(s):(str, unicode)Possible types:(float, float)(int, int)">('foo', u'bar')</warning>
     pow(False, True)
-    round(False, <warning descr="Expected type 'Optional[Integral]', got 'str' instead">'foo'</warning>)
+    round<warning descr="Unexpected type(s):(bool, str)Possible types:(SupportsRound, int)(float, int)">(False, 'foo')</warning>

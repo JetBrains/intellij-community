@@ -17,6 +17,7 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.BuildNumber;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Calendar;
@@ -30,6 +31,7 @@ public abstract class ApplicationInfo {
   public abstract String getMicroVersion();
   public abstract String getPatchVersion();
   public abstract String getVersionName();
+  @Nullable
   public abstract String getHelpURL();
 
   /**
@@ -46,11 +48,12 @@ public abstract class ApplicationInfo {
    */
   public abstract String getShortCompanyName();
   public abstract String getCompanyURL();
+  @Nullable
   public abstract String getThirdPartySoftwareURL();
   public abstract String getJetbrainsTvUrl();
   public abstract String getEvalLicenseUrl();
   public abstract String getKeyConversionUrl();
-
+  @Nullable
   public abstract Rectangle getAboutLogoRect();
   public abstract boolean hasHelp();
   public abstract boolean hasContextHelp();

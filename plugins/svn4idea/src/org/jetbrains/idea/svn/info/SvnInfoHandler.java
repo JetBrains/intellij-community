@@ -33,12 +33,6 @@ import org.xml.sax.helpers.DefaultHandler;
 import java.io.File;
 import java.util.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/27/12
- * Time: 1:00 PM
- */
 public class SvnInfoHandler extends DefaultHandler {
   @Nullable private final File myBase;
   private final Consumer<org.jetbrains.idea.svn.info.Info> myInfoConsumer;
@@ -144,204 +138,39 @@ public class SvnInfoHandler extends DefaultHandler {
   }
 
   private void fillElements() {
-    myElementsMap.put("copy-from-url", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new CopyFromUrl();
-      }
-    });
-    myElementsMap.put("copy-from-rev", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new CopyFromRev();
-      }
-    });
-    myElementsMap.put("changelist", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new ChangeList();
-      }
-    });
-    myElementsMap.put("author", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new Author();
-      }
-    });
-    myElementsMap.put("checksum", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new Checksum();
-      }
-    });
-    myElementsMap.put("commit", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new Commit();
-      }
-    });
-    myElementsMap.put("conflict", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new Conflict();
-      }
-    });
-    myElementsMap.put("cur-base-file", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new CurBase();
-      }
-    });
-    myElementsMap.put("date", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new Date();
-      }
-    });
-    myElementsMap.put("depth", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new Depth();
-      }
-    });
-    myElementsMap.put("entry", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new Entry(myBase);
-      }
-    });
-    myElementsMap.put("info", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new Info();
-      }
-    });
-    myElementsMap.put("prev-base-file", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new PrevBase();
-      }
-    });
-    myElementsMap.put("prev-wc-file", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new PrevWc();
-      }
-    });
-    myElementsMap.put("prop-file", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new PropFile();
-      }
-    });
-    myElementsMap.put("repository", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new Repository();
-      }
-    });
-    myElementsMap.put("root", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new Root();
-      }
-    });
-    myElementsMap.put("schedule", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new Schedule();
-      }
-    });
-    myElementsMap.put("text-updated", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new TextUpdated();
-      }
-    });
-    myElementsMap.put("tree-conflict", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new TreeConflict();
-      }
-    });
-    myElementsMap.put("url", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new Url();
-      }
-    });
-    myElementsMap.put("relative-url", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new RelativeUrl();
-      }
-    });
-    myElementsMap.put("lock", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new LockElement();
-      }
-    });
-    myElementsMap.put("token", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new LockToken();
-      }
-    });
-    myElementsMap.put("owner", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new LockOwner();
-      }
-    });
-    myElementsMap.put("comment", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new LockComment();
-      }
-    });
-    myElementsMap.put("created", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new LockCreated();
-      }
-    });
-    myElementsMap.put("uuid", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new Uuid();
-      }
-    });
-    myElementsMap.put("version", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new Version();
-      }
-    });
-    myElementsMap.put("wc-info", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new WcInfo();
-      }
-    });
-    myElementsMap.put("moved-to", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new MovedPath();
-      }
-    });
-    myElementsMap.put("moved-from", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new MovedPath();
-      }
-    });
-    myElementsMap.put("wcroot-abspath", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new WcRoot();
-      }
-    });
+    myElementsMap.put("copy-from-url", () -> new CopyFromUrl());
+    myElementsMap.put("copy-from-rev", () -> new CopyFromRev());
+    myElementsMap.put("changelist", () -> new ChangeList());
+    myElementsMap.put("author", () -> new Author());
+    myElementsMap.put("checksum", () -> new Checksum());
+    myElementsMap.put("commit", () -> new Commit());
+    myElementsMap.put("conflict", () -> new Conflict());
+    myElementsMap.put("cur-base-file", () -> new CurBase());
+    myElementsMap.put("date", () -> new Date());
+    myElementsMap.put("depth", () -> new Depth());
+    myElementsMap.put("entry", () -> new Entry(myBase));
+    myElementsMap.put("info", () -> new Info());
+    myElementsMap.put("prev-base-file", () -> new PrevBase());
+    myElementsMap.put("prev-wc-file", () -> new PrevWc());
+    myElementsMap.put("prop-file", () -> new PropFile());
+    myElementsMap.put("repository", () -> new Repository());
+    myElementsMap.put("root", () -> new Root());
+    myElementsMap.put("schedule", () -> new Schedule());
+    myElementsMap.put("text-updated", () -> new TextUpdated());
+    myElementsMap.put("tree-conflict", () -> new TreeConflict());
+    myElementsMap.put("url", () -> new Url());
+    myElementsMap.put("relative-url", () -> new RelativeUrl());
+    myElementsMap.put("lock", () -> new LockElement());
+    myElementsMap.put("token", () -> new LockToken());
+    myElementsMap.put("owner", () -> new LockOwner());
+    myElementsMap.put("comment", () -> new LockComment());
+    myElementsMap.put("created", () -> new LockCreated());
+    myElementsMap.put("uuid", () -> new Uuid());
+    myElementsMap.put("version", () -> new Version());
+    myElementsMap.put("wc-info", () -> new WcInfo());
+    myElementsMap.put("moved-to", () -> new MovedPath());
+    myElementsMap.put("moved-from", () -> new MovedPath());
+    myElementsMap.put("wcroot-abspath", () -> new WcRoot());
   }
 
   public Map<File, org.jetbrains.idea.svn.info.Info> getResultsMap() {

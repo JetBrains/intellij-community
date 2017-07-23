@@ -54,24 +54,14 @@ public class SelectGroupingAction extends LabeledComboBoxAction {
   @Override
   protected DefaultActionGroup createPopupActionGroup(JComponent button) {
     return new DefaultActionGroup(
-      ContainerUtil.map(collectStrategies(), new NotNullFunction<ChangeListGroupingStrategy, DumbAwareAction>() {
-        @NotNull
-        @Override
-        public DumbAwareAction fun(@NotNull ChangeListGroupingStrategy strategy) {
-          return new SetGroupingAction(strategy);
-        }
-      }));
+      ContainerUtil.map(collectStrategies(),
+                        (NotNullFunction<ChangeListGroupingStrategy, DumbAwareAction>)strategy -> new SetGroupingAction(strategy)));
   }
 
   @NotNull
   @Override
   protected Condition<AnAction> getPreselectCondition() {
-    return new Condition<AnAction>() {
-      @Override
-      public boolean value(AnAction action) {
-        return ((SetGroupingAction)action).myStrategy.equals(myBrowser.getGroupingStrategy());
-      }
-    };
+    return action -> ((SetGroupingAction)action).myStrategy.equals(myBrowser.getGroupingStrategy());
   }
 
   @NotNull

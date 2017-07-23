@@ -18,9 +18,6 @@ package com.intellij.xdebugger.impl;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 
-/**
- * Created by avu on 22/05/14.
- */
 public abstract class XDebugProcessConfiguratorStarter extends XDebugProcessStarter {
   public abstract void configure(XDebugSessionData data);
 }

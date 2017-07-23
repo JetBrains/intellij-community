@@ -15,14 +15,27 @@
  */
 package com.siyeh.ig.junit;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
 public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspectionBase extends BaseInspection {
+  private static final String[] STATIC_CONFIGS = new String[] {
+    "org.junit.BeforeClass",
+    "org.junit.AfterClass",
+    "org.junit.jupiter.api.BeforeAll",
+    "org.junit.jupiter.api.AfterAll"
+  };
+
+  protected static boolean isJunit4Annotation(String annotation) {
+    return annotation.endsWith("Class");
+  }
+
   @Override
   @NotNull
   public String getID() {
@@ -40,7 +53,7 @@ public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspectionBase extend
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
-      "before.class.or.after.class.is.public.static.void.no.arg.problem.descriptor");
+      "before.class.or.after.class.is.public.static.void.no.arg.problem.descriptor", infos[1]);
   }
 
   @Override
@@ -53,7 +66,10 @@ public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspectionBase extend
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
       //note: no call to super;
-      if (!TestUtils.isJUnit4BeforeClassOrAfterClassMethod(method)) {
+      String annotation = Arrays.stream(STATIC_CONFIGS)
+        .filter(anno -> AnnotationUtil.isAnnotated(method, anno, true))
+        .findFirst().orElse(null);
+      if (annotation == null) {
         return;
       }
       final PsiType returnType = method.getReturnType();
@@ -66,11 +82,9 @@ public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspectionBase extend
       }
 
       final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() != 0 ||
-          !returnType.equals(PsiType.VOID) ||
-          !method.hasModifierProperty(PsiModifier.PUBLIC) ||
-          !method.hasModifierProperty(PsiModifier.STATIC)) {
-        registerMethodError(method, method);
+      if (isJunit4Annotation(annotation) && (parameterList.getParametersCount() != 0 || !method.hasModifierProperty(PsiModifier.PUBLIC)) ||
+          !returnType.equals(PsiType.VOID) || !method.hasModifierProperty(PsiModifier.STATIC)) {
+        registerMethodError(method, method, annotation);
       }
     }
   }

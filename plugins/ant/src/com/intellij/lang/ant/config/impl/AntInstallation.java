@@ -33,15 +33,11 @@ public class AntInstallation {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ant.impl.AntInstallation");
   public static final StringProperty HOME_DIR = new StringProperty("homeDir", "");
   public static final AbstractProperty<String> NAME = new StringProperty("name", "");
-  public static final ListProperty<AntClasspathEntry> CLASS_PATH = ListProperty.<AntClasspathEntry>create("classpath");
+  public static final ListProperty<AntClasspathEntry> CLASS_PATH = ListProperty.create("classpath");
   public static final Comparator<AntInstallation> NAME_COMPARATOR =
     (antInstallation, antInstallation1) -> String.CASE_INSENSITIVE_ORDER.compare(antInstallation.getName(), antInstallation1.getName());
 
-  public static final Convertor<AntInstallation, AntReference> REFERENCE_TO_ANT = new Convertor<AntInstallation, AntReference>() {
-    public AntReference convert(AntInstallation antInstallation) {
-      return antInstallation.getReference();
-    }
-  };
+  public static final Convertor<AntInstallation, AntReference> REFERENCE_TO_ANT = antInstallation -> antInstallation.getReference();
   public static final AbstractProperty<String> VERSION =
     new StringProperty("version", AntBundle.message("ant.unknown.version.string.presentation"));
   @NonNls private static final String PROPERTY_VERSION = "VERSION";

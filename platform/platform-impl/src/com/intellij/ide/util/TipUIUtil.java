@@ -32,6 +32,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.DefaultKeymap;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.ui.JBUI;
@@ -45,6 +46,7 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.StringReader;
@@ -94,7 +96,7 @@ public class TipUIUtil {
 
       StringBuffer text = new StringBuffer(ResourceUtil.loadText(url));
       updateShortcuts(text);
-      updateImages(text, tipLoader);
+      updateImages(text, tipLoader, browser);
       String replaced = text.toString().replace("&productName;", ApplicationNamesInfo.getInstance().getFullProductName());
       String major = ApplicationInfo.getInstance().getMajorVersion();
       replaced = replaced.replace("&majorVersion;", major);
@@ -111,19 +113,11 @@ public class TipUIUtil {
         if (succeed) LOG.warn(message);
         else LOG.error(message);
       }
-      adjustFontSize(((HTMLEditorKit)browser.getEditorKit()).getStyleSheet());
       browser.read(new StringReader(replaced), url);
     }
     catch (IOException e) {
       setCantReadText(browser, tip);
     }
-  }
-
-  private static final String TIP_HTML_TEXT_TAGS = "h1, p, pre, ul";
-
-  private static void adjustFontSize(StyleSheet styleSheet) {
-    int size = (int)UIUtil.getFontSize(UIUtil.FontSize.MINI);
-    styleSheet.addRule(TIP_HTML_TEXT_TAGS + " {font-size: " + size + "px;}");
   }
 
   private static void setCantReadText(JEditorPane browser, TipAndTrickBean bean) {
@@ -140,15 +134,14 @@ public class TipUIUtil {
     }
   }
 
-  private static void updateImages(StringBuffer text, ClassLoader tipLoader) {
+  private static void updateImages(StringBuffer text, ClassLoader tipLoader, JEditorPane browser) {
     final boolean dark = UIUtil.isUnderDarcula();
 //    if (!dark && !retina) {
 //      return;
 //    }
 
-    String suffix = "";
-    if (JBUI.isHiDPI()) suffix += "@2x";
-    if (dark) suffix += "_dark";
+    Component af = IdeFrameImpl.getActiveFrame();
+    Component comp = af != null ? af: browser;
     int index = text.indexOf("<img", 0);
     while (index != -1) {
       final int end = text.indexOf(">", index + 1);
@@ -159,19 +152,34 @@ public class TipUIUtil {
       if (endIndex != -1) {
         String path = img.substring(srcIndex + 5, endIndex);
         if (!path.endsWith("_dark") && !path.endsWith("@2x")) {
-          path += suffix + ".png";
+          boolean hidpi =  JBUI.isPixHiDPI(comp);
+          path += (hidpi ? "@2x" : "") + (dark ? "_dark" : "") + ".png";
           URL url = ResourceUtil.getResource(tipLoader, "/tips/", path);
           if (url != null) {
             String newImgTag = "<img src=\"" + path + "\" ";
-            if (UIUtil.isJDKManagedHiDPIScreen()) {  // [tav] todo: no screen available
-              try {
-                final BufferedImage image = ImageIO.read(url.openStream());
-                final int w = (int)(image.getWidth() / JBUI.sysScale());
-                final int h = (int)(image.getHeight() / JBUI.sysScale());
-                newImgTag += "width=\"" + w + "\" height=\"" + h + "\"";
-              } catch (Exception ignore) {
-                newImgTag += "width=\"400\" height=\"200\"";
+            try {
+              BufferedImage image = ImageIO.read(url.openStream());
+              int w = image.getWidth();
+              int h = image.getHeight();
+              if (UIUtil.isJreHiDPI(comp)) {
+                // compensate JRE scale
+                float sysScale = JBUI.sysScale(comp);
+                w = (int)(w / sysScale);
+                h = (int)(h / sysScale);
               }
+              else {
+                // compensate image scale
+                float imgScale = hidpi ? 2f : 1f;
+                w = (int)(w / imgScale);
+                h = (int)(h / imgScale);
+              }
+              // fit the user scale
+              w = (int)(JBUI.scale((float)w));
+              h = (int)(JBUI.scale((float)h));
+
+              newImgTag += "width=\"" + w + "\" height=\"" + h + "\"";
+            } catch (Exception ignore) {
+              newImgTag += "width=\"400\" height=\"200\"";
             }
             newImgTag += "/>";
             text.replace(index, end + 1, newImgTag);
@@ -236,13 +244,8 @@ public class TipUIUtil {
       }
     );
     URL resource = ResourceUtil.getResource(TipUIUtil.class, "/tips/css/", UIUtil.isUnderDarcula() ? "tips_darcula.css" : "tips.css");
-    final StyleSheet styleSheet = UIUtil.loadStyleSheet(resource);
-    HTMLEditorKit kit = new HTMLEditorKit() {
-      @Override
-      public StyleSheet getStyleSheet() {
-        return styleSheet != null ? styleSheet : super.getStyleSheet();
-      }
-    };
+    HTMLEditorKit kit = UIUtil.getHTMLEditorKit(false);
+    kit.getStyleSheet().addStyleSheet(UIUtil.loadStyleSheet(resource));
     browser.setEditorKit(kit);
     return browser;
   }

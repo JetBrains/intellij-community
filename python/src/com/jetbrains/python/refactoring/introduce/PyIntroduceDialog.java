@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
@@ -35,12 +36,6 @@ import java.awt.event.*;
 import java.util.Collection;
 import java.util.EnumSet;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: Aug 18, 2009
- * Time: 8:43:28 PM
- */
 public class PyIntroduceDialog extends DialogWrapper {
   private JPanel myContentPane;
   private JLabel myNameLabel;
@@ -96,9 +91,6 @@ public class PyIntroduceDialog extends DialogWrapper {
     });
 
     ((EditorTextField)myNameComboBox.getEditor().getEditorComponent()).addDocumentListener(new DocumentListener() {
-      public void beforeDocumentChange(DocumentEvent event) {
-      }
-
       public void documentChanged(DocumentEvent event) {
         updateControls();
       }
@@ -106,7 +98,9 @@ public class PyIntroduceDialog extends DialogWrapper {
 
     myContentPane.registerKeyboardAction(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        myNameComboBox.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(myNameComboBox, true);
+        });
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_N, KeyEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
@@ -167,7 +161,7 @@ public class PyIntroduceDialog extends DialogWrapper {
   private void updateControls() {
     final boolean nameValid = myValidator.isNameValid(getName(), getProject());
     setOKActionEnabled(nameValid);
-    setErrorText(!nameValid ? PyBundle.message("refactoring.introduce.name.error") : null);
+    setErrorText(!nameValid ? PyBundle.message("refactoring.introduce.name.error") : null, myNameComboBox);
   }
 
   public IntroduceHandler.InitPlace getInitPlace() {

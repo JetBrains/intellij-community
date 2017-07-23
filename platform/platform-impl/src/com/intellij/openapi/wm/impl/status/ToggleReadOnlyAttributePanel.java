@@ -18,7 +18,7 @@ package com.intellij.openapi.wm.impl.status;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -98,15 +98,13 @@ public class ToggleReadOnlyAttributePanel implements StatusBarWidget.Multiframe,
       }
       FileDocumentManager.getInstance().saveAllDocuments();
 
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        try {
-          ReadOnlyAttributeUtil.setReadOnlyAttribute(file, file.isWritable());
-          myStatusBar.updateWidget(ID());
-        }
-        catch (IOException e) {
-          Messages.showMessageDialog(getProject(), e.getMessage(), UIBundle.message("error.dialog.title"), Messages.getErrorIcon());
-        }
-      });
+      try {
+        WriteAction.run(() -> ReadOnlyAttributeUtil.setReadOnlyAttribute(file, file.isWritable()));
+        myStatusBar.updateWidget(ID());
+      }
+      catch (IOException e) {
+        Messages.showMessageDialog(getProject(), e.getMessage(), UIBundle.message("error.dialog.title"), Messages.getErrorIcon());
+      }
     };
   }
 

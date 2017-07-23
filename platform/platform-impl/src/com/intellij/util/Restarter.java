@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,14 @@
  */
 package com.intellij.util;
 
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.ide.actions.CreateDesktopEntryAction;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -40,26 +45,66 @@ public class Restarter {
   private Restarter() { }
 
   public static boolean isSupported() {
-    if (SystemInfo.isWindows) {
-      return JnaLoader.isLoaded() &&
-             new File(PathManager.getBinPath(), "restarter.exe").exists();
-    }
+    return ourRestartSupported.getValue();
+  }
 
-    if (SystemInfo.isMac) {
-      return PathManager.getHomePath().contains(".app") &&
-             new File(PathManager.getBinPath(), "restarter").canExecute();
-    }
+  private static final NotNullLazyValue<Boolean> ourRestartSupported = new AtomicNotNullLazyValue<Boolean>() {
+    @NotNull
+    @Override
+    protected Boolean compute() {
+      String problem;
 
-    if (SystemInfo.isUnix) {
-      return UnixProcessManager.getCurrentProcessId() > 0 &&
-             CreateDesktopEntryAction.getLauncherScript() != null &&
-             new File(PathManager.getBinPath(), "restart.py").canExecute();
-    }
+      if (SystemInfo.isWindows) {
+        if (!JnaLoader.isLoaded()) {
+          problem = "JNA not loaded";
+        }
+        else {
+          problem = checkRestarter("restarter.exe");
+        }
+      }
+      else if (SystemInfo.isMac) {
+        if (getMacOsAppDir() == null) {
+          problem = "not a bundle: " + PathManager.getHomePath();
+        }
+        else {
+          problem = checkRestarter("restarter");
+        }
+      }
+      else if (SystemInfo.isUnix) {
+        if (UnixProcessManager.getCurrentProcessId() <= 0) {
+          problem = "cannot detect process ID";
+        }
+        else if (CreateDesktopEntryAction.getLauncherScript() == null) {
+          problem = "cannot find launcher script in " + PathManager.getBinPath();
+        }
+        else if (PathEnvironmentVariableUtil.findInPath("python") == null) {
+          problem = "cannot find 'python' in PATH";
+        }
+        else {
+          problem = checkRestarter("restart.py");
+        }
+      }
+      else {
+        problem = "unknown platform: " + SystemInfo.OS_NAME;
+      }
 
-    return false;
+      if (problem == null) {
+        return true;
+      }
+      else {
+        Logger.getInstance(Restarter.class).info("not supported: " + problem);
+        return false;
+      }
+    }
+  };
+
+  private static String checkRestarter(String restarterName) {
+    File restarter = new File(PathManager.getBinPath(), restarterName);
+    return restarter.isFile() && restarter.canExecute() ? null : "not an executable file: " + restarter;
   }
 
   public static void scheduleRestart(@NotNull String... beforeRestart) throws IOException {
+    Logger.getInstance(Restarter.class).info("restart: " + Arrays.toString(beforeRestart));
     if (SystemInfo.isWindows) {
       restartOnWindows(beforeRestart);
     }
@@ -80,9 +125,9 @@ public class Restarter {
 
     int pid = kernel32.GetCurrentProcessId();
     IntByReference argc = new IntByReference();
-    Pointer argv_ptr = shell32.CommandLineToArgvW(kernel32.GetCommandLineW(), argc);
-    String[] argv = getRestartArgv(argv_ptr.getWideStringArray(0, argc.getValue()));
-    kernel32.LocalFree(argv_ptr);
+    Pointer argvPtr = shell32.CommandLineToArgvW(kernel32.GetCommandLineW(), argc);
+    String[] argv = getRestartArgv(argvPtr.getWideStringArray(0, argc.getValue()));
+    kernel32.LocalFree(argvPtr);
 
     // See https://blogs.msdn.microsoft.com/oldnewthing/20060515-07/?p=31203
     // argv[0] as the program name is only a convention, i.e. there is no guarantee
@@ -97,12 +142,13 @@ public class Restarter {
       argv[0] = Native.toString(buffer);
     }
 
-    doScheduleRestart(new File(PathManager.getBinPath(), "restarter.exe"), commands -> {
-      Collections.addAll(commands, String.valueOf(pid), String.valueOf(beforeRestart.length));
-      Collections.addAll(commands, beforeRestart);
-      Collections.addAll(commands, String.valueOf(argv.length));
-      Collections.addAll(commands, argv);
-    });
+    List<String> args = new ArrayList<>();
+    args.add(String.valueOf(pid));
+    args.add(String.valueOf(beforeRestart.length));
+    Collections.addAll(args, beforeRestart);
+    args.add(String.valueOf(argv.length));
+    Collections.addAll(args, argv);
+    runRestarter(new File(PathManager.getBinPath(), "restarter.exe"), args);
 
     // Since the process ID is passed through the command line, we want to make sure that we don't exit before the "restarter"
     // process has a chance to open the handle to our process, and that it doesn't wait for the termination of an unrelated
@@ -111,10 +157,11 @@ public class Restarter {
   }
 
   private static String[] getRestartArgv(String[] argv) {
+    String mainClass = System.getProperty("idea.main.class.name", "com.intellij.idea.Main");
+
     int countArgs = argv.length;
     for (int i = argv.length-1; i >=0; i--) {
-      if (argv[i].endsWith("com.intellij.idea.Main") ||
-          argv[i].endsWith(".exe")) {
+      if (argv[i].equals(mainClass) || argv[i].endsWith(".exe")) {
         countArgs = i + 1;
         if (argv[i].endsWith(".exe") && argv[i].indexOf(File.separatorChar) < 0) {
           //absolute path
@@ -123,20 +170,24 @@ public class Restarter {
         break;
       }
     }
+
     String[] restartArg = new String[countArgs];
     System.arraycopy(argv, 0, restartArg, 0, countArgs);
     return restartArg;
   }
 
   private static void restartOnMac(String... beforeRestart) throws IOException {
-    String homePath = PathManager.getHomePath();
-    int p = homePath.indexOf(".app");
-    if (p < 0) throw new IOException("Application bundle not found: " + homePath);
-    String bundlePath = homePath.substring(0, p + 4);
-    doScheduleRestart(new File(PathManager.getBinPath(), "restarter"), commands -> {
-      commands.add(bundlePath);
-      Collections.addAll(commands, beforeRestart);
-    });
+    File appDir = getMacOsAppDir();
+    if (appDir == null) throw new IOException("Application bundle not found: " + PathManager.getHomePath());
+    List<String> args = new ArrayList<>();
+    args.add(appDir.getPath());
+    Collections.addAll(args, beforeRestart);
+    runRestarter(new File(PathManager.getBinPath(), "restarter"), args);
+  }
+
+  private static File getMacOsAppDir() {
+    File appDir = new File(PathManager.getHomePath()).getParentFile();
+    return appDir != null && appDir.getName().endsWith(".app") && appDir.isDirectory() ? appDir : null;
   }
 
   private static void restartOnUnix(String... beforeRestart) throws IOException {
@@ -146,18 +197,16 @@ public class Restarter {
     int pid = UnixProcessManager.getCurrentProcessId();
     if (pid <= 0) throw new IOException("Invalid process ID: " + pid);
 
-    doScheduleRestart(new File(PathManager.getBinPath(), "restart.py"), commands -> {
-      commands.add(String.valueOf(pid));
-      commands.add(launcherScript);
-      Collections.addAll(commands, beforeRestart);
-    });
+    List<String> args = new ArrayList<>();
+    args.add(String.valueOf(pid));
+    args.add(launcherScript);
+    Collections.addAll(args, beforeRestart);
+    runRestarter(new File(PathManager.getBinPath(), "restart.py"), args);
   }
 
-  private static void doScheduleRestart(File restarterFile, Consumer<List<String>> argumentsBuilder) throws IOException {
-    List<String> commands = new ArrayList<>();
-    commands.add(createTempExecutable(restarterFile).getPath());
-    argumentsBuilder.consume(commands);
-    Runtime.getRuntime().exec(ArrayUtil.toStringArray(commands));
+  private static void runRestarter(File restarterFile, List<String> restarterArgs) throws IOException {
+    restarterArgs.add(0, createTempExecutable(restarterFile).getPath());
+    Runtime.getRuntime().exec(ArrayUtil.toStringArray(restarterArgs));
   }
 
   @NotNull
@@ -183,7 +232,7 @@ public class Restarter {
     return copy;
   }
 
-  @SuppressWarnings("SameParameterValue")
+  @SuppressWarnings({"SameParameterValue", "UnusedReturnValue"})
   private interface Kernel32 extends StdCallLibrary {
     int GetCurrentProcessId();
     WString GetCommandLineW();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -139,7 +140,9 @@ public class AntUIUtil {
             catch (BadLocationException ex) {
               LOG.error(ex);
             }
-            textField.requestFocus();
+            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+              IdeFocusManager.getGlobalInstance().requestFocus(textField, true);
+            });
           }
         }
       });
@@ -178,7 +181,7 @@ public class AntUIUtil {
       Sdk jdk = GlobalAntConfiguration.findJdk(jdkName);
       if (jdk == null) {
         if (myProjectJdkName.length() > 0) {
-          setIcon(AllIcons.General.Jdk);
+          setIcon(AllIcons.Nodes.PpJdk);
           append(AntBundle.message("project.jdk.project.jdk.name.list.column.value", myProjectJdkName),
                  selected && !(SystemInfo.isWinVistaOrNewer && UIManager.getLookAndFeel().getName().contains("Windows"))
                  ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES

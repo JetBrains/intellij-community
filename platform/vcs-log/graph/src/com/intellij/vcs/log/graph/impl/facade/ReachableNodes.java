@@ -31,10 +31,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.IntPredicate;
 
 public class ReachableNodes {
   @NotNull private final LiteLinearGraph myGraph;
-  @NotNull private final DfsUtil myDfsUtil = new DfsUtil();
   @NotNull private final Flags myTempFlags;
 
   public ReachableNodes(@NotNull LiteLinearGraph graph) {
@@ -50,36 +50,36 @@ public class ReachableNodes {
       return nodesVisibility;
     }
 
-    final UnsignedBitSet result = new UnsignedBitSet();
+    UnsignedBitSet result = new UnsignedBitSet();
     ReachableNodes getter = new ReachableNodes(LinearGraphUtils.asLiteLinearGraph(permanentGraph));
-    getter.walk(headNodeIndexes, new Consumer<Integer>() {
-      @Override
-      public void consume(Integer node) {
-        result.set(node, true);
-      }
+    getter.walk(headNodeIndexes, node -> result.set(node, true));
+
+    return result;
+  }
+
+  @NotNull
+  public Set<Integer> getContainingBranches(int nodeIndex, @NotNull Collection<Integer> branchNodeIndexes) {
+    Set<Integer> result = new HashSet<>();
+
+    walk(Collections.singletonList(nodeIndex), false, node -> {
+      if (branchNodeIndexes.contains(node)) result.add(node);
     });
 
     return result;
   }
 
-  public Set<Integer> getContainingBranches(int nodeIndex, @NotNull final Collection<Integer> branchNodeIndexes) {
-    final Set<Integer> result = new HashSet<>();
-
-    walk(Collections.singletonList(nodeIndex), false, new Consumer<Integer>() {
-      @Override
-      public void consume(Integer integer) {
-        if (branchNodeIndexes.contains(integer)) result.add(integer);
-      }
-    });
-
-    return result;
-  }
-
-  public void walk(@NotNull Collection<Integer> headIds, @NotNull final Consumer<Integer> consumer) {
+  public void walk(@NotNull Collection<Integer> headIds, @NotNull Consumer<Integer> consumer) {
     walk(headIds, true, consumer);
   }
 
-  private void walk(@NotNull Collection<Integer> startNodes, final boolean goDown, @NotNull final Consumer<Integer> consumer) {
+  private void walk(@NotNull Collection<Integer> startNodes, boolean goDown, @NotNull Consumer<Integer> consumer) {
+    walk(startNodes, goDown, node -> {
+      consumer.consume(node);
+      return true;
+    });
+  }
+
+  public void walk(@NotNull Collection<Integer> startNodes, boolean goDown, @NotNull IntPredicate consumer) {
     synchronized (myTempFlags) {
 
       myTempFlags.setAll(false);
@@ -87,21 +87,18 @@ public class ReachableNodes {
         if (start < 0) continue;
         if (myTempFlags.get(start)) continue;
         myTempFlags.set(start, true);
-        consumer.consume(start);
+        if (!consumer.test(start)) return;
 
-        myDfsUtil.nodeDfsIterator(start, new DfsUtil.NextNode() {
-          @Override
-          public int fun(int currentNode) {
+        DfsUtil.walk(start,  currentNode-> {
             for (int downNode : myGraph.getNodes(currentNode, goDown ? LiteLinearGraph.NodeFilter.DOWN : LiteLinearGraph.NodeFilter.UP)) {
               if (!myTempFlags.get(downNode)) {
                 myTempFlags.set(downNode, true);
-                consumer.consume(downNode);
+                if (!consumer.test(downNode)) return DfsUtil.NextNode.EXIT;
                 return downNode;
               }
             }
 
-            return NODE_NOT_FOUND;
-          }
+          return DfsUtil.NextNode.NODE_NOT_FOUND;
         });
       }
     }

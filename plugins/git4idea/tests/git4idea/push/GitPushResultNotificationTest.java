@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.test.UtilsKt;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitStandardRemoteBranch;
@@ -36,9 +37,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.intellij.vcs.test.UtilsKt.assertNotification;
 import static git4idea.push.GitPushNativeResult.Type.*;
 import static git4idea.push.GitPushRepoResult.convertFromNative;
-import static git4idea.test.GitTestUtil.assertNotification;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
@@ -95,10 +96,7 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
 
   public void test_success_with_update() {
     GitPushResultNotification notification = notification(singleResult(SUCCESS, "master", "origin/master", 2, GitUpdateResult.SUCCESS));
-    assertNotification(NotificationType.INFORMATION, "Push successful",
-                       "Pushed 2 commits to origin/master<br/>" +
-                       GitPushResultNotification.VIEW_FILES_UPDATED_DURING_THE_PUSH, notification);
-
+    UtilsKt.assertSuccessfulNotification("Push successful", "Pushed 2 commits to origin/master", notification);
   }
 
   public void test_success_and_resolved_conflicts() {
@@ -110,8 +108,8 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
     assertNotification(NotificationType.WARNING, "Push partially rejected",
                        "ultimate: pushed 1 commit to origin/master<br/>" +
                        "community: " + GitPushResultNotification.UPDATE_WITH_RESOLVED_CONFLICTS + "<br/>" +
-                       "contrib: " + GitPushResultNotification.UPDATE_WITH_RESOLVED_CONFLICTS + "<br/>" +
-                       GitPushResultNotification.VIEW_FILES_UPDATED_DURING_THE_PUSH, notification);
+                       "contrib: " + GitPushResultNotification.UPDATE_WITH_RESOLVED_CONFLICTS,
+                       notification);
 
   }
 

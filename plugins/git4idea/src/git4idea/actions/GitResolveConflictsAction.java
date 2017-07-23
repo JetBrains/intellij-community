@@ -31,7 +31,6 @@ import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -47,12 +46,7 @@ public class GitResolveConflictsAction extends GitAction {
     Project project = ObjectUtils.assertNotNull(event.getProject());
     GitVcs vcs = ObjectUtils.assertNotNull(GitVcs.getInstance(project));
 
-    final Set<VirtualFile> conflictedFiles = new TreeSet<>(new Comparator<VirtualFile>() {
-      @Override
-      public int compare(@NotNull VirtualFile f1, @NotNull VirtualFile f2) {
-        return f1.getPresentableUrl().compareTo(f2.getPresentableUrl());
-      }
-    });
+    final Set<VirtualFile> conflictedFiles = new TreeSet<>((f1, f2) -> f1.getPresentableUrl().compareTo(f2.getPresentableUrl()));
     for (Change change : ChangeListManager.getInstance(project).getAllChanges()) {
       if (change.getFileStatus() != FileStatus.MERGED_WITH_CONFLICTS) {
         continue;

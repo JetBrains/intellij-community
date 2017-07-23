@@ -27,7 +27,7 @@ import java.util.Map;
  * @author max
  */
 public class LayeredLexer extends DelegateLexer {
-  public static ThreadLocal<Boolean> ourDisableLayersFlag = new ThreadLocal<Boolean>();
+  public static ThreadLocal<Boolean> ourDisableLayersFlag = new ThreadLocal<>();
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.lexer.LayeredLexer");
   private static final int IN_LAYER_STATE = 1024; // TODO: Other value?
@@ -35,7 +35,7 @@ public class LayeredLexer extends DelegateLexer {
 
   private int myState;
 
-  private final Map<IElementType, Lexer> myStartTokenToLayerLexer = new HashMap<IElementType, Lexer>();
+  private final Map<IElementType, Lexer> myStartTokenToLayerLexer = new HashMap<>();
   private Lexer myCurrentLayerLexer;
   // In some cases IDEA-57933 layered lexer is not able to parse all the token, that triggered this lexer,
   // for this purposes we store left part of token in the following fields
@@ -43,8 +43,8 @@ public class LayeredLexer extends DelegateLexer {
   private int myLayerLeftPart = -1;
   private int myBaseTokenEnd = -1;
 
-  private final HashSet<Lexer> mySelfStoppingLexers = new HashSet<Lexer>(1);
-  private final HashMap<Lexer, IElementType[]> myStopTokens = new HashMap<Lexer,IElementType[]>(1);
+  private final HashSet<Lexer> mySelfStoppingLexers = new HashSet<>(1);
+  private final HashMap<Lexer, IElementType[]> myStopTokens = new HashMap<>(1);
 
 
   public LayeredLexer(Lexer baseLexer) {

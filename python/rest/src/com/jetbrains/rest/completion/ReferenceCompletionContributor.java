@@ -69,38 +69,41 @@ public class ReferenceCompletionContributor extends CompletionContributor {
            if (elements != null) {
              for (RestReference e : elements) {
                String name = e.getReferenceText();
-               if (! names.contains(name)) {
-                 if ((name.startsWith("[") && name.endsWith("]")) ||
-                        (name.startsWith("|") && name.endsWith("|")))
+               if (!names.contains(name)) {
+                 if ((name.startsWith("[") && name.endsWith("]")) || (name.startsWith("|") && name.endsWith("|"))) {
                    result.addElement(LookupElementBuilder.create(name));
-                 else if (name.equals("__"))
+                 }
+                 else if (name.equals("__")) {
                    result.addElement(LookupElementBuilder.create(name + ":"));
+                 }
                  else {
-                   if (name.startsWith("_")) name = "\\"+name;
+                   name = name.startsWith("_") ? "\\" + name : name;
                    result.addElement(LookupElementBuilder.create("_" + name + ":"));
                  }
                }
              }
            }
          }
+       });
+  }
 
-         private String getPrefix(int offset, PsiFile file) {
-           if (offset > 0) {
-             offset--;
-           }
-           final String text = file.getText();
-           StringBuilder prefixBuilder = new StringBuilder();
-           while(offset > 0 && (Character.isLetterOrDigit(text.charAt(offset)) || text.charAt(offset) == '_'
-                                  || text.charAt(offset) == '[') || text.charAt(offset) == '|') {
-             prefixBuilder.insert(0, text.charAt(offset));
-             if (text.charAt(offset) == '_' || text.charAt(offset) == '[' || text.charAt(offset) == '|') {
-               break;
-             }
-             offset--;
-           }
-           return prefixBuilder.toString();
-         }
-       }
-       );
+  public static String getPrefix(int offset, PsiFile file) {
+    if (offset > 0) {
+      offset--;
+    }
+    final String text = file.getText();
+    StringBuilder prefixBuilder = new StringBuilder();
+    while(offset > 0) {
+      final PsiElement element = file.findElementAt(offset);
+      if (element != null && element.getNode().getElementType() == RestTokenTypes.EXPLISIT_MARKUP_START)
+        break;
+      final char charAt = text.charAt(offset);
+      prefixBuilder.insert(0, charAt);
+      if (charAt == '_' || charAt == '[' || charAt == '|' || charAt == '\n') {
+        break;
+      }
+      offset--;
+    }
+    return prefixBuilder.toString();
   }
 }

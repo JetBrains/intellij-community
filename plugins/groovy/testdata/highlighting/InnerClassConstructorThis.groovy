@@ -1,6 +1,6 @@
-<info descr="null">class</info> <info descr="null">A</info> {
-<info descr="null">static</info> <info descr="null">private</info> <info descr="null">class</info> <info descr="null">B</info> {
-<info descr="null">int</info> <info descr="null">i</info>
+class <info descr="null">A</info> {
+static private class <info descr="null">B</info> {
+int <info descr="null">i</info>
 /*
  * Copyright 2000-2012 JetBrains s.r.o.
  *

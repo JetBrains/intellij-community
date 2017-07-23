@@ -112,11 +112,7 @@ public class VcsHistoryUtil {
     diffContent1.putUserData(DiffUserDataKeysEx.REVISION_INFO, getRevisionInfo(revision1));
     diffContent2.putUserData(DiffUserDataKeysEx.REVISION_INFO, getRevisionInfo(revision2));
 
-    WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-      public void run() {
-        DiffManager.getInstance().showDiff(project, request);
-      }
-    }, null, project);
+    WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> DiffManager.getInstance().showDiff(project, request), null, project);
   }
 
   @Nullable
@@ -178,7 +174,7 @@ public class VcsHistoryUtil {
     return revision instanceof CurrentRevision;
   }
 
-  private static boolean isEmpty(VcsFileRevision revision) {
+  public static boolean isEmpty(VcsFileRevision revision) {
     return revision == null || VcsFileRevision.NULL.equals(revision);
   }
 
@@ -200,12 +196,9 @@ public class VcsHistoryUtil {
         }
         catch (final VcsException e) {
           LOG.info(e);
-          WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-            public void run() {
-              Messages.showErrorDialog(VcsBundle.message("message.text.cannot.show.differences", e.getLocalizedMessage()),
-                                       VcsBundle.message("message.title.show.differences"));
-            }
-          }, null, project);
+          WaitForProgressToShow.runOrInvokeLaterAboveProgress(
+            () -> Messages.showErrorDialog(VcsBundle.message("message.text.cannot.show.differences", e.getLocalizedMessage()),
+                                         VcsBundle.message("message.title.show.differences")), null, project);
         }
         catch (IOException e) {
           LOG.info(e);

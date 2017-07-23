@@ -21,12 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 6/9/12
- * Time: 4:11 PM
- */
 public class NoteSerializable implements WorkingSetSerializable<NoteNode, NoteNode> {
 
   @Override

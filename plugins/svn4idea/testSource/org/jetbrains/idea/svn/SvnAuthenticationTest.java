@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
 
     SvnVcs vcs = SvnVcs.getInstance(myProject);
 
-    myAuthenticationManager = new SvnAuthenticationManager(myProject, configFile);
+    myAuthenticationManager = new SvnAuthenticationManager(vcs, configFile);
 
     myInteractiveProvider = new SvnTestInteractiveAuthentication(myAuthenticationManager);
     myAuthenticationManager.setAuthenticationProvider(new SvnAuthenticationProvider(vcs, myInteractiveProvider, myAuthenticationManager));
@@ -79,15 +79,12 @@ public class SvnAuthenticationTest extends PlatformTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          SvnAuthenticationTest.super.tearDown();
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        super.tearDown();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
 
@@ -175,31 +172,28 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     try {
       FileUtil.appendToFile(servers, "\nstore-plaintext-passwords=yes\n");
 
-      synchronousBackground(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
-            listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
-            listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.save));
+      synchronousBackground(() -> {
+        try {
+          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
+          listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
+          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.save));
 
-            commonScheme(url, false, null);
-            Assert.assertEquals(3, listener.getCnt());
-            //long start = System.currentTimeMillis();
-            //waitListenerStep(start, listener, 3);
+          commonScheme(url, false, null);
+          Assert.assertEquals(3, listener.getCnt());
+          //long start = System.currentTimeMillis();
+          //waitListenerStep(start, listener, 3);
 
-            SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
-            listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
-            commonScheme(url, false, null);
-            //start = System.currentTimeMillis();
-            //waitListenerStep(start, listener, 4);
-            Assert.assertEquals(4, listener.getCnt());
-          }
-          catch (SVNException e) {
-            exception[0] = e;
-          }
-          result[0] = true;
+          SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
+          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
+          commonScheme(url, false, null);
+          //start = System.currentTimeMillis();
+          //waitListenerStep(start, listener, 4);
+          Assert.assertEquals(4, listener.getCnt());
         }
+        catch (SVNException e) {
+          exception[0] = e;
+        }
+        result[0] = true;
       });
     } finally {
       FileUtil.delete(servers);
@@ -245,35 +239,32 @@ public class SvnAuthenticationTest extends PlatformTestCase {
 
     final SVNException[] exception = new SVNException[1];
     final Boolean[] result = new Boolean[1];
-    synchronousBackground(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
-          listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
+    synchronousBackground(() -> {
+      try {
+        listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
+        listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
 
-          commonScheme(url, false, null);
-          //long start = System.currentTimeMillis();
-          //waitListenerStep(start, listener, 2);
-          Assert.assertEquals(2, listener.getCnt());
+        commonScheme(url, false, null);
+        //long start = System.currentTimeMillis();
+        //waitListenerStep(start, listener, 2);
+        Assert.assertEquals(2, listener.getCnt());
 
-          savedOnceListener.assertNotSaved(url, ISVNAuthenticationManager.PASSWORD);
-          // cause is not cleared though
-          savedOnceListener.reset();
+        savedOnceListener.assertNotSaved(url, ISVNAuthenticationManager.PASSWORD);
+        // cause is not cleared though
+        savedOnceListener.reset();
 
-          SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
-          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
-          listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
-          commonScheme(url, false, null);
-          Assert.assertEquals(4, listener.getCnt());
-          //start = System.currentTimeMillis();
-          //waitListenerStep(start, listener, 4);
-        }
-        catch (SVNException e) {
-          exception[0] = e;
-        }
-        result[0] = true;
+        SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
+        listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
+        listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
+        commonScheme(url, false, null);
+        Assert.assertEquals(4, listener.getCnt());
+        //start = System.currentTimeMillis();
+        //waitListenerStep(start, listener, 4);
       }
+      catch (SVNException e) {
+        exception[0] = e;
+      }
+      result[0] = true;
     });
 
     Assert.assertTrue(result[0]);
@@ -311,32 +302,29 @@ public class SvnAuthenticationTest extends PlatformTestCase {
 
       final SVNException[] exception = new SVNException[1];
       final Boolean[] result = new Boolean[1];
-      synchronousBackground(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
-            listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
+      synchronousBackground(() -> {
+        try {
+          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
+          listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
 
-            commonScheme(url, false, null);
-            Assert.assertEquals(2, listener.getCnt());
-            Assert.assertEquals(1, myTestInteraction.getNumAuthWarn());
-            myTestInteraction.reset();
-            savedOnceListener.assertForAwt();
-            savedOnceListener.reset();
+          commonScheme(url, false, null);
+          Assert.assertEquals(2, listener.getCnt());
+          Assert.assertEquals(1, myTestInteraction.getNumAuthWarn());
+          myTestInteraction.reset();
+          savedOnceListener.assertForAwt();
+          savedOnceListener.reset();
 
-            SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
-            listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
-            listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
-            commonScheme(url, false, null);
-            Assert.assertEquals(4, listener.getCnt());
-            Assert.assertEquals(1, myTestInteraction.getNumAuthWarn());
-          }
-          catch (SVNException e) {
-            exception[0] = e;
-          }
-          result[0] = true;
+          SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
+          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
+          listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
+          commonScheme(url, false, null);
+          Assert.assertEquals(4, listener.getCnt());
+          Assert.assertEquals(1, myTestInteraction.getNumAuthWarn());
         }
+        catch (SVNException e) {
+          exception[0] = e;
+        }
+        result[0] = true;
       });
 
       Assert.assertTrue(result[0]);
@@ -372,32 +360,29 @@ public class SvnAuthenticationTest extends PlatformTestCase {
 
       final SVNException[] exception = new SVNException[1];
       final Boolean[] result = new Boolean[1];
-      synchronousBackground(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
-            listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
+      synchronousBackground(() -> {
+        try {
+          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
+          listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
 
-            commonScheme(url, false, null);
-            Assert.assertEquals(2, listener.getCnt());
-            Assert.assertEquals(1, myTestInteraction.getNumAuthWarn());
-            myTestInteraction.reset();
-            savedOnceListener.assertForAwt();
-            savedOnceListener.reset();
+          commonScheme(url, false, null);
+          Assert.assertEquals(2, listener.getCnt());
+          Assert.assertEquals(1, myTestInteraction.getNumAuthWarn());
+          myTestInteraction.reset();
+          savedOnceListener.assertForAwt();
+          savedOnceListener.reset();
 
-            SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
-            listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
-            listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
-            commonScheme(url, false, null);
-            Assert.assertEquals(4, listener.getCnt());
-            Assert.assertEquals(1, myTestInteraction.getNumAuthWarn());
-          }
-          catch (SVNException e) {
-            exception[0] = e;
-          }
-          result[0] = true;
+          SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
+          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
+          listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
+          commonScheme(url, false, null);
+          Assert.assertEquals(4, listener.getCnt());
+          Assert.assertEquals(1, myTestInteraction.getNumAuthWarn());
         }
+        catch (SVNException e) {
+          exception[0] = e;
+        }
+        result[0] = true;
       });
 
       Assert.assertTrue(result[0]);
@@ -439,34 +424,31 @@ public class SvnAuthenticationTest extends PlatformTestCase {
 
       final SVNException[] exception = new SVNException[1];
       final Boolean[] result = new Boolean[1];
-      synchronousBackground(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
-            listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
-            listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.without_pasword_save));
+      synchronousBackground(() -> {
+        try {
+          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
+          listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
+          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.without_pasword_save));
 
-            commonScheme(url, false, null);
-            Assert.assertEquals(3, listener.getCnt());
-            Assert.assertEquals(1, myTestInteraction.getNumPasswordsWarn());
-            myTestInteraction.reset();
-            savedOnceListener.assertForAwt();
-            savedOnceListener.reset();
+          commonScheme(url, false, null);
+          Assert.assertEquals(3, listener.getCnt());
+          Assert.assertEquals(1, myTestInteraction.getNumPasswordsWarn());
+          myTestInteraction.reset();
+          savedOnceListener.assertForAwt();
+          savedOnceListener.reset();
 
-            SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
-            listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
-            listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
-            listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.without_pasword_save));
-            commonScheme(url, false, null);
-            Assert.assertEquals(6, listener.getCnt());
-            Assert.assertEquals(1, myTestInteraction.getNumPasswordsWarn());
-          }
-          catch (SVNException e) {
-            exception[0] = e;
-          }
-          result[0] = true;
+          SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
+          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
+          listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
+          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.without_pasword_save));
+          commonScheme(url, false, null);
+          Assert.assertEquals(6, listener.getCnt());
+          Assert.assertEquals(1, myTestInteraction.getNumPasswordsWarn());
         }
+        catch (SVNException e) {
+          exception[0] = e;
+        }
+        result[0] = true;
       });
 
       Assert.assertTrue(result[0]);
@@ -502,34 +484,31 @@ public class SvnAuthenticationTest extends PlatformTestCase {
 
       final SVNException[] exception = new SVNException[1];
       final Boolean[] result = new Boolean[1];
-      synchronousBackground(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
-            listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
-            listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.without_pasword_save));
+      synchronousBackground(() -> {
+        try {
+          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
+          listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
+          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.without_pasword_save));
 
-            commonScheme(url, false, null);
-            Assert.assertEquals(3, listener.getCnt());
-            Assert.assertEquals(1, myTestInteraction.getNumPasswordsWarn());
-            myTestInteraction.reset();
-            savedOnceListener.assertForAwt();
-            savedOnceListener.reset();
+          commonScheme(url, false, null);
+          Assert.assertEquals(3, listener.getCnt());
+          Assert.assertEquals(1, myTestInteraction.getNumPasswordsWarn());
+          myTestInteraction.reset();
+          savedOnceListener.assertForAwt();
+          savedOnceListener.reset();
 
-            SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
-            listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
-            listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
-            listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.without_pasword_save));
-            commonScheme(url, false, null);
-            Assert.assertEquals(6, listener.getCnt());
-            Assert.assertEquals(1, myTestInteraction.getNumPasswordsWarn());
-          }
-          catch (SVNException e) {
-            exception[0] = e;
-          }
-          result[0] = true;
+          SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
+          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
+          listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
+          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.without_pasword_save));
+          commonScheme(url, false, null);
+          Assert.assertEquals(6, listener.getCnt());
+          Assert.assertEquals(1, myTestInteraction.getNumPasswordsWarn());
         }
+        catch (SVNException e) {
+          exception[0] = e;
+        }
+        result[0] = true;
       });
 
       Assert.assertTrue(result[0]);
@@ -572,34 +551,31 @@ public class SvnAuthenticationTest extends PlatformTestCase {
 
       final SVNException[] exception = new SVNException[1];
       final Boolean[] result = new Boolean[1];
-      synchronousBackground(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
-            listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
-            listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.without_pasword_save));
+      synchronousBackground(() -> {
+        try {
+          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
+          listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
+          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.without_pasword_save));
 
-            commonScheme(url, false, null);
-            Assert.assertEquals(3, listener.getCnt());
-            Assert.assertEquals(1, myTestInteraction.getNumPasswordsWarn());
-            myTestInteraction.reset();
-            savedOnceListener.assertForAwt();
-            savedOnceListener.reset();
+          commonScheme(url, false, null);
+          Assert.assertEquals(3, listener.getCnt());
+          Assert.assertEquals(1, myTestInteraction.getNumPasswordsWarn());
+          myTestInteraction.reset();
+          savedOnceListener.assertForAwt();
+          savedOnceListener.reset();
 
-            SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
-            listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
-            listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
-            listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.without_pasword_save));
-            commonScheme(url, false, null);
-            Assert.assertEquals(6, listener.getCnt());
-            Assert.assertEquals(1, myTestInteraction.getNumPasswordsWarn());
-          }
-          catch (SVNException e) {
-            exception[0] = e;
-          }
-          result[0] = true;
+          SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
+          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
+          listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
+          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.without_pasword_save));
+          commonScheme(url, false, null);
+          Assert.assertEquals(6, listener.getCnt());
+          Assert.assertEquals(1, myTestInteraction.getNumPasswordsWarn());
         }
+        catch (SVNException e) {
+          exception[0] = e;
+        }
+        result[0] = true;
       });
 
       Assert.assertTrue(result[0]);
@@ -635,34 +611,31 @@ public class SvnAuthenticationTest extends PlatformTestCase {
 
       final SVNException[] exception = new SVNException[1];
       final Boolean[] result = new Boolean[1];
-      synchronousBackground(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
-            listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
-            listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.without_pasword_save));
+      synchronousBackground(() -> {
+        try {
+          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
+          listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
+          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.without_pasword_save));
 
-            commonScheme(url, false, null);
-            Assert.assertEquals(3, listener.getCnt());
-            Assert.assertEquals(1, myTestInteraction.getNumSSLWarn());
-            myTestInteraction.reset();
-            savedOnceListener.assertForAwt();
-            savedOnceListener.reset();
+          commonScheme(url, false, null);
+          Assert.assertEquals(3, listener.getCnt());
+          Assert.assertEquals(1, myTestInteraction.getNumSSLWarn());
+          myTestInteraction.reset();
+          savedOnceListener.assertForAwt();
+          savedOnceListener.reset();
 
-            SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
-            listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
-            listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
-            listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.without_pasword_save));
-            commonScheme(url, false, null);
-            Assert.assertEquals(6, listener.getCnt());
-            Assert.assertEquals(1, myTestInteraction.getNumSSLWarn());
-          }
-          catch (SVNException e) {
-            exception[0] = e;
-          }
-          result[0] = true;
+          SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
+          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
+          listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
+          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.without_pasword_save));
+          commonScheme(url, false, null);
+          Assert.assertEquals(6, listener.getCnt());
+          Assert.assertEquals(1, myTestInteraction.getNumSSLWarn());
         }
+        catch (SVNException e) {
+          exception[0] = e;
+        }
+        result[0] = true;
       });
 
       Assert.assertTrue(result[0]);
@@ -695,61 +668,55 @@ public class SvnAuthenticationTest extends PlatformTestCase {
 
     final SVNException[] exception = new SVNException[1];
     final Boolean[] result = new Boolean[1];
-    synchronousBackground(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
-          listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
-          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.save));
+    synchronousBackground(() -> {
+      try {
+        listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
+        listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
+        listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.save));
 
-          commonScheme(url, false, null);
-          long start = System.currentTimeMillis();
-          waitListenerStep(start, listener, 3);
-          Assert.assertEquals(1, myTestInteraction.getNumPlaintextPrompt());
-          savedOnceListener.assertSaved(url, ISVNAuthenticationManager.PASSWORD);
-          savedOnceListener.reset();
-          myTestInteraction.reset();
+        commonScheme(url, false, null);
+        long start = System.currentTimeMillis();
+        waitListenerStep(start, listener, 3);
+        Assert.assertEquals(1, myTestInteraction.getNumPlaintextPrompt());
+        savedOnceListener.assertSaved(url, ISVNAuthenticationManager.PASSWORD);
+        savedOnceListener.reset();
+        myTestInteraction.reset();
 
-          UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                clearAuthCache();
-              }
-              catch (Exception e) {
-                throw new RuntimeException(e);
-              }
-            }
-          });
+        UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+          try {
+            clearAuthCache();
+          }
+          catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        });
 
-          myTestInteraction.setPlaintextAnswer(false);
-          SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
+        myTestInteraction.setPlaintextAnswer(false);
+        SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
 
-          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
-          listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
-          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.without_pasword_save));
-          commonScheme(url, false, null);
-          start = System.currentTimeMillis();
-          waitListenerStep(start, listener, 6);
-          Assert.assertEquals(1, myTestInteraction.getNumPlaintextPrompt());
+        listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
+        listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
+        listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.without_pasword_save));
+        commonScheme(url, false, null);
+        start = System.currentTimeMillis();
+        waitListenerStep(start, listener, 6);
+        Assert.assertEquals(1, myTestInteraction.getNumPlaintextPrompt());
 
-          savedOnceListener.reset();
-          myTestInteraction.reset();
-          SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
-          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
-          listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
-          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.without_pasword_save));
-          commonScheme(url, false, null);
-          start = System.currentTimeMillis();
-          waitListenerStep(start, listener, 9);
-          Assert.assertEquals(1, myTestInteraction.getNumPlaintextPrompt());
-        }
-        catch (SVNException e) {
-          exception[0] = e;
-        }
-        result[0] = true;
+        savedOnceListener.reset();
+        myTestInteraction.reset();
+        SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
+        listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
+        listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
+        listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.without_pasword_save));
+        commonScheme(url, false, null);
+        start = System.currentTimeMillis();
+        waitListenerStep(start, listener, 9);
+        Assert.assertEquals(1, myTestInteraction.getNumPlaintextPrompt());
       }
+      catch (SVNException e) {
+        exception[0] = e;
+      }
+      result[0] = true;
     });
 
     Assert.assertTrue(result[0]);
@@ -784,36 +751,33 @@ public class SvnAuthenticationTest extends PlatformTestCase {
 
     final SVNException[] exception = new SVNException[1];
     final Boolean[] result = new Boolean[1];
-    synchronousBackground(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
-          listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
-          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.without_pasword_save));
+    synchronousBackground(() -> {
+      try {
+        listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
+        listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
+        listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.without_pasword_save));
 
-          commonScheme(url, false, null);
-          long start = System.currentTimeMillis();
-          waitListenerStep(start, listener, 3);
-          Assert.assertEquals(1, myTestInteraction.getNumPlaintextPrompt());
-          // actually password not saved, but save was called
-          savedOnceListener.assertSaved(url, ISVNAuthenticationManager.PASSWORD);
-          savedOnceListener.reset();
-          myTestInteraction.reset();
+        commonScheme(url, false, null);
+        long start = System.currentTimeMillis();
+        waitListenerStep(start, listener, 3);
+        Assert.assertEquals(1, myTestInteraction.getNumPlaintextPrompt());
+        // actually password not saved, but save was called
+        savedOnceListener.assertSaved(url, ISVNAuthenticationManager.PASSWORD);
+        savedOnceListener.reset();
+        myTestInteraction.reset();
 
-          listener.addStep(new Trinity<>(ProviderType.persistent, url2, Type.request));
-          listener.addStep(new Trinity<>(ProviderType.interactive, url2, Type.request));
-          listener.addStep(new Trinity<>(ProviderType.persistent, url2, Type.without_pasword_save));
-          commonScheme(url2, false, "anotherRealm");
-          start = System.currentTimeMillis();
-          waitListenerStep(start, listener, 6);
-          Assert.assertEquals(1, myTestInteraction.getNumPlaintextPrompt());
-        }
-        catch (SVNException e) {
-          exception[0] = e;
-        }
-        result[0] = true;
+        listener.addStep(new Trinity<>(ProviderType.persistent, url2, Type.request));
+        listener.addStep(new Trinity<>(ProviderType.interactive, url2, Type.request));
+        listener.addStep(new Trinity<>(ProviderType.persistent, url2, Type.without_pasword_save));
+        commonScheme(url2, false, "anotherRealm");
+        start = System.currentTimeMillis();
+        waitListenerStep(start, listener, 6);
+        Assert.assertEquals(1, myTestInteraction.getNumPlaintextPrompt());
       }
+      catch (SVNException e) {
+        exception[0] = e;
+      }
+      result[0] = true;
     });
 
     Assert.assertTrue(result[0]);
@@ -844,62 +808,56 @@ public class SvnAuthenticationTest extends PlatformTestCase {
 
     final SVNException[] exception = new SVNException[1];
     final Boolean[] result = new Boolean[1];
-    synchronousBackground(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
-          listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
-          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.save));
+    synchronousBackground(() -> {
+      try {
+        listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
+        listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
+        listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.save));
 
-          commonScheme(url, false, null);
-          long start = System.currentTimeMillis();
-          waitListenerStep(start, listener, 3);
-          Assert.assertEquals(1, myTestInteraction.getNumSSLPlaintextPrompt());
-          savedOnceListener.assertSaved(url, ISVNAuthenticationManager.SSL);
-          savedOnceListener.reset();
-          myTestInteraction.reset();
+        commonScheme(url, false, null);
+        long start = System.currentTimeMillis();
+        waitListenerStep(start, listener, 3);
+        Assert.assertEquals(1, myTestInteraction.getNumSSLPlaintextPrompt());
+        savedOnceListener.assertSaved(url, ISVNAuthenticationManager.SSL);
+        savedOnceListener.reset();
+        myTestInteraction.reset();
 
-          UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                clearAuthCache();
-              }
-              catch (Exception e) {
-                throw new RuntimeException(e);
-              }
-            }
-          });
+        UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+          try {
+            clearAuthCache();
+          }
+          catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        });
 
-          myTestInteraction.setSSLPlaintextAnswer(false);
-          SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
+        myTestInteraction.setSSLPlaintextAnswer(false);
+        SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
 
-          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
-          listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
-          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.without_pasword_save));
-          commonScheme(url, false, null);
-          start = System.currentTimeMillis();
-          waitListenerStep(start, listener, 6);
-          Assert.assertEquals(1, myTestInteraction.getNumSSLPlaintextPrompt());
+        listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
+        listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
+        listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.without_pasword_save));
+        commonScheme(url, false, null);
+        start = System.currentTimeMillis();
+        waitListenerStep(start, listener, 6);
+        Assert.assertEquals(1, myTestInteraction.getNumSSLPlaintextPrompt());
 
-          SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
-          myTestInteraction.reset();
-          savedOnceListener.reset();
+        SvnConfiguration.RUNTIME_AUTH_CACHE.clear();
+        myTestInteraction.reset();
+        savedOnceListener.reset();
 
-          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
-          listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
-          listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.without_pasword_save));
-          commonScheme(url, false, null);
-          start = System.currentTimeMillis();
-          waitListenerStep(start, listener, 9);
-          Assert.assertEquals(1, myTestInteraction.getNumSSLPlaintextPrompt());
-        }
-        catch (SVNException e) {
-          exception[0] = e;
-        }
-        result[0] = true;
+        listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.request));
+        listener.addStep(new Trinity<>(ProviderType.interactive, url, Type.request));
+        listener.addStep(new Trinity<>(ProviderType.persistent, url, Type.without_pasword_save));
+        commonScheme(url, false, null);
+        start = System.currentTimeMillis();
+        waitListenerStep(start, listener, 9);
+        Assert.assertEquals(1, myTestInteraction.getNumSSLPlaintextPrompt());
       }
+      catch (SVNException e) {
+        exception[0] = e;
+      }
+      result[0] = true;
     });
 
     Assert.assertTrue(result[0]);
@@ -918,14 +876,11 @@ public class SvnAuthenticationTest extends PlatformTestCase {
   private static void synchronousBackground(final Runnable runnable) throws InterruptedException {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          runnable.run();
-        } finally {
-          semaphore.up();
-        }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        runnable.run();
+      } finally {
+        semaphore.up();
       }
     });
     semaphore.waitFor();

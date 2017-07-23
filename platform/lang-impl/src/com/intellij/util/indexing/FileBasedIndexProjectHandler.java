@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,19 +19,15 @@
  */
 package com.intellij.util.indexing;
 
+import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.roots.impl.ProjectRootManagerComponent;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -42,25 +38,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public class FileBasedIndexProjectHandler extends AbstractProjectComponent implements IndexableFileSet {
+public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndexProjectHandler");
 
   private final FileBasedIndex myIndex;
-  private final ProjectRootManagerEx myRootManager;
-  private final FileTypeManager myFileTypeManager;
+  private FileBasedIndexScanRunnableCollector myCollector;
 
-  public FileBasedIndexProjectHandler(FileBasedIndex index,
-                                      Project project,
-                                      ProjectRootManagerComponent rootManager,
-                                      FileTypeManager ftManager,
-                                      ProjectManager projectManager) {
-    super(project);
+  public FileBasedIndexProjectHandler(@NotNull Project project, FileBasedIndex index, FileBasedIndexScanRunnableCollector collector) {
     myIndex = index;
-    myRootManager = rootManager;
-    myFileTypeManager = ftManager;
+    myCollector = collector;
 
     if (ApplicationManager.getApplication().isInternal()) {
-      project.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+      project.getMessageBus().connect(this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
         @Override
         public void enteredDumbMode() { }
 
@@ -71,7 +60,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
       });
     }
 
-    final StartupManagerEx startupManager = (StartupManagerEx)StartupManager.getInstance(project);
+    StartupManager startupManager = StartupManager.getInstance(project);
     if (startupManager != null) {
       startupManager.registerPreStartupActivity(() -> {
         PushedFilePropertiesUpdater.getInstance(project).initializeProperties();
@@ -84,11 +73,12 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
         });
 
         myIndex.registerIndexableSet(this, project);
-        projectManager.addProjectManagerListener(project, new ProjectManagerAdapter() {
+        project.getMessageBus().connect(this).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
           private boolean removed;
+
           @Override
-          public void projectClosing(Project project1) {
-            if (!removed) {
+          public void projectClosing(Project eventProject) {
+            if (eventProject == project && !removed) {
               removed = true;
               myIndex.removeIndexableSet(FileBasedIndexProjectHandler.this);
             }
@@ -100,11 +90,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
 
   @Override
   public boolean isInSet(@NotNull final VirtualFile file) {
-    final ProjectFileIndex index = myRootManager.getFileIndex();
-    if (index.isInContent(file) || index.isInLibraryClasses(file) || index.isInLibrarySource(file)) {
-      return !myFileTypeManager.isFileIgnored(file);
-    }
-    return false;
+    return myCollector.shouldCollect(file);
   }
 
   @Override
@@ -122,7 +108,7 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
   }
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     // done mostly for tests. In real life this is no-op, because the set was removed on project closing
     myIndex.removeIndexableSet(this);
   }
@@ -142,10 +128,24 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
     return new DumbModeTask(project.getComponent(FileBasedIndexProjectHandler.class)) {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-        final Collection<VirtualFile> files = index.getFilesToUpdate(project);
+        long start = System.currentTimeMillis();
+        Collection<VirtualFile> files = index.getFilesToUpdate(project);
+        long calcDuration = System.currentTimeMillis() - start;
+
         indicator.setIndeterminate(false);
         indicator.setText(IdeBundle.message("progress.indexing.updating"));
-        reindexRefreshedFiles(indicator, files, project, index);
+        
+        LOG.info("Reindexing refreshed files: " + files.size() + " to update, calculated in " + calcDuration + "ms");
+        if (!files.isEmpty()) {
+          PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
+          reindexRefreshedFiles(indicator, files, project, index);
+          snapshot.logResponsivenessSinceCreation("Reindexing refreshed files");
+        }
+      }
+
+      @Override
+      public String toString() {
+        return getClass().getName() + "[" + index.dumpSomeChangedFiles() + "]";
       }
     };
   }

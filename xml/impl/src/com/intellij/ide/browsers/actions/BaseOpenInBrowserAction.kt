@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,12 +51,10 @@ private val LOG = Logger.getInstance(BaseOpenInBrowserAction::class.java)
 
 abstract class BaseOpenInBrowserAction : DumbAwareAction {
   @Suppress("unused")
-  protected constructor(browser: WebBrowser) : super(browser.name, null, browser.icon) {
-  }
+  protected constructor(browser: WebBrowser) : super(browser.name, null, browser.icon)
 
   @Suppress("unused")
-  protected constructor(text: String?, description: String?, icon: Icon?) : super(text, description, icon) {
-  }
+  protected constructor(text: String?, description: String?, icon: Icon?) : super(text, description, icon)
 
   companion object {
     @JvmStatic
@@ -82,7 +80,7 @@ abstract class BaseOpenInBrowserAction : DumbAwareAction {
           chooseUrl(urls)
               .done { url ->
                 ApplicationManager.getApplication().saveAll()
-                BrowserLauncher.getInstance().browse(url.toExternalForm(), browser, request.project)
+                BrowserLauncher.instance.browse(url.toExternalForm(), browser, request.project)
               }
         }
       }

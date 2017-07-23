@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 
 /**
@@ -474,5 +475,26 @@ class A implements T {}
 
 new A().foo
 ''', GroovyUnusedDeclarationInspection
+  }
+
+  void 'test no exception on super reference in trait without supertypes'() {
+    testHighlighting '''\
+trait SimpleTrait {
+  void foo() {
+    super.<warning descr="Cannot resolve symbol 'foo'">foo</warning>()
+  }
+}
+'''
+  }
+
+  void 'test private trait method'() {
+    testHighlighting '''\
+trait T {
+    private traitMethod() { 42 }
+}
+class SomeClass implements T {}
+
+new SomeClass().<warning descr="Access to 'traitMethod' exceeds its access rights">traitMethod</warning>()
+''', GroovyAccessibilityInspection
   }
 }

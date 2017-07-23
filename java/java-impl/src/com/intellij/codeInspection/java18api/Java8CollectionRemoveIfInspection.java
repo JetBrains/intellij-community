@@ -17,6 +17,7 @@ package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.util.IteratorDeclaration;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -25,17 +26,10 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.controlFlow.DefUseUtil;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import one.util.streamex.MoreCollectors;
-import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +46,7 @@ public class Java8CollectionRemoveIfInspection extends BaseJavaBatchLocalInspect
     }
     return new JavaElementVisitor() {
       void handleIteratorLoop(PsiLoopStatement statement, PsiJavaToken endToken, IteratorDeclaration declaration) {
-        if (endToken == null) return;
+        if (endToken == null || declaration == null || !declaration.isCollection()) return;
         PsiStatement body = statement.getBody();
         if(!(body instanceof PsiBlockStatement)) return;
         PsiStatement[] statements = ((PsiBlockStatement)body).getCodeBlock().getStatements();
@@ -114,24 +108,14 @@ public class Java8CollectionRemoveIfInspection extends BaseJavaBatchLocalInspect
       @Override
       public void visitForStatement(PsiForStatement statement) {
         super.visitForStatement(statement);
-        PsiStatement initialization = statement.getInitialization();
-        IteratorDeclaration declaration = IteratorDeclaration.extract(initialization);
-        if(declaration == null) return;
-        if(statement.getUpdate() != null) return;
-        if(!declaration.isHasNextCall(statement.getCondition())) return;
+        IteratorDeclaration declaration = IteratorDeclaration.fromLoop(statement);
         handleIteratorLoop(statement, statement.getRParenth(), declaration);
       }
 
       @Override
       public void visitWhileStatement(PsiWhileStatement statement) {
         super.visitWhileStatement(statement);
-        PsiElement previous = PsiTreeUtil.skipSiblingsBackward(statement, PsiComment.class, PsiWhiteSpace.class);
-        if(!(previous instanceof PsiDeclarationStatement)) return;
-        IteratorDeclaration declaration = IteratorDeclaration.extract((PsiStatement)previous);
-        if(declaration == null || !declaration.isHasNextCall(statement.getCondition())) return;
-        if(!ReferencesSearch.search(declaration.myIterator, declaration.myIterator.getUseScope()).forEach(ref -> {
-          return PsiTreeUtil.isAncestor(statement, ref.getElement(), true);
-        })) return;
+        IteratorDeclaration declaration = IteratorDeclaration.fromLoop(statement);
         handleIteratorLoop(statement, statement.getRParenth(), declaration);
       }
     };
@@ -151,14 +135,7 @@ public class Java8CollectionRemoveIfInspection extends BaseJavaBatchLocalInspect
       if(!(element instanceof PsiLoopStatement)) return;
       PsiLoopStatement loop = (PsiLoopStatement)element;
       IteratorDeclaration declaration;
-      PsiElement previous = null;
-      if(loop instanceof PsiForStatement) {
-        declaration = IteratorDeclaration.extract(((PsiForStatement)loop).getInitialization());
-      } else if(loop instanceof PsiWhileStatement) {
-        previous = PsiTreeUtil.skipSiblingsBackward(loop, PsiComment.class, PsiWhiteSpace.class);
-        if(!(previous instanceof PsiDeclarationStatement)) return;
-        declaration = IteratorDeclaration.extract((PsiStatement)previous);
-      } else return;
+      declaration = IteratorDeclaration.fromLoop(loop);
       if(declaration == null) return;
       PsiStatement body = loop.getBody();
       if(!(body instanceof PsiBlockStatement)) return;
@@ -192,7 +169,7 @@ public class Java8CollectionRemoveIfInspection extends BaseJavaBatchLocalInspect
         }
       }
       if (replacement == null) return;
-      if (previous != null) ct.delete(previous);
+      ct.delete(declaration.getIterator());
       PsiElement result = ct.replaceAndRestoreComments(loop, replacement);
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
       CodeStyleManager.getInstance(project).reformat(result);
@@ -201,76 +178,8 @@ public class Java8CollectionRemoveIfInspection extends BaseJavaBatchLocalInspect
     @NotNull
     private static String generateRemoveIf(IteratorDeclaration declaration, CommentTracker ct,
                                            PsiExpression condition, String paramName) {
-      return (declaration.myCollection == null ? "" : ct.text(declaration.myCollection) + ".") +
+      return (declaration.getIterable() == null ? "" : ct.text(declaration.getIterable()) + ".") +
              "removeIf(" + paramName + "->" + ct.text(condition) + ");";
-    }
-  }
-
-  private static class IteratorDeclaration {
-    private final @NotNull PsiLocalVariable myIterator;
-    private final @Nullable PsiExpression myCollection;
-
-    private IteratorDeclaration(@NotNull PsiLocalVariable iterator, @Nullable PsiExpression collection) {
-      myIterator = iterator;
-      myCollection = collection;
-    }
-
-    public boolean isHasNextCall(PsiExpression condition) {
-      return isIteratorMethodCall(condition, "hasNext");
-    }
-
-    @Nullable
-    public PsiElement findOnlyIteratorRef(PsiExpression parent) {
-      PsiElement element = PsiUtil.getVariableCodeBlock(myIterator, null);
-      PsiCodeBlock block =
-        element instanceof PsiCodeBlock ? (PsiCodeBlock)element : PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class);
-      if(block == null) return null;
-      return StreamEx.of(DefUseUtil.getRefs(block, myIterator, myIterator.getInitializer()))
-                  .filter(e -> PsiTreeUtil.isAncestor(parent, e, false))
-                  .collect(MoreCollectors.onlyOne()).orElse(null);
-    }
-
-    boolean isIteratorMethodCall(PsiElement candidate, String method) {
-      if(!(candidate instanceof PsiMethodCallExpression)) return false;
-      PsiMethodCallExpression call = (PsiMethodCallExpression)candidate;
-      if(call.getArgumentList().getExpressions().length != 0) return false;
-      PsiReferenceExpression expression = call.getMethodExpression();
-      if(!method.equals(expression.getReferenceName())) return false;
-      PsiExpression qualifier = expression.getQualifierExpression();
-      if(!(qualifier instanceof PsiReferenceExpression)) return false;
-      return ((PsiReferenceExpression)qualifier).isReferenceTo(myIterator);
-    }
-
-    public PsiVariable getNextElementVariable(PsiStatement statement) {
-      if(!(statement instanceof PsiDeclarationStatement)) return null;
-      PsiDeclarationStatement declaration = (PsiDeclarationStatement)statement;
-      if(declaration.getDeclaredElements().length != 1) return null;
-      PsiElement element = declaration.getDeclaredElements()[0];
-      if(!(element instanceof PsiLocalVariable)) return null;
-      PsiLocalVariable var = (PsiLocalVariable)element;
-      if(!isIteratorMethodCall(var.getInitializer(), "next")) return null;
-      return var;
-    }
-
-    @Contract("null -> null")
-    static IteratorDeclaration extract(PsiStatement statement) {
-      if(!(statement instanceof PsiDeclarationStatement)) return null;
-      PsiDeclarationStatement declaration = (PsiDeclarationStatement)statement;
-      if(declaration.getDeclaredElements().length != 1) return null;
-      PsiElement element = declaration.getDeclaredElements()[0];
-      if(!(element instanceof PsiLocalVariable)) return null;
-      PsiLocalVariable variable = (PsiLocalVariable)element;
-      PsiExpression initializer = variable.getInitializer();
-      if(!(initializer instanceof PsiMethodCallExpression)) return null;
-      PsiMethodCallExpression call = (PsiMethodCallExpression)initializer;
-      if(call.getArgumentList().getExpressions().length != 0) return null;
-      PsiReferenceExpression methodExpression = call.getMethodExpression();
-      if(!"iterator".equals(methodExpression.getReferenceName())) return null;
-      PsiMethod method = call.resolveMethod();
-      if(method == null || !InheritanceUtil.isInheritor(method.getContainingClass(), CommonClassNames.JAVA_UTIL_COLLECTION)) return null;
-      PsiType type = variable.getType();
-      if(!(type instanceof PsiClassType) || !((PsiClassType)type).rawType().equalsToText(CommonClassNames.JAVA_UTIL_ITERATOR)) return null;
-      return new IteratorDeclaration(variable, methodExpression.getQualifierExpression());
     }
   }
 }

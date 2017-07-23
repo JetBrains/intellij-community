@@ -3,7 +3,10 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.VcsLogRefs;
+import com.intellij.vcs.log.VcsRef;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,22 +18,22 @@ import java.util.stream.Stream;
 public class RefsModel implements VcsLogRefs {
   private static final Logger LOG = Logger.getInstance(RefsModel.class);
 
-  @NotNull private final VcsLogStorage myHashMap;
+  @NotNull private final VcsLogStorage myStorage;
   @NotNull private final Map<VirtualFile, CompressedRefs> myRefs;
   @NotNull private final TIntObjectHashMap<VcsRef> myBestRefForHead;
   @NotNull private final TIntObjectHashMap<VirtualFile> myRootForHead;
 
   public RefsModel(@NotNull Map<VirtualFile, CompressedRefs> refs,
                    @NotNull Set<Integer> heads,
-                   @NotNull VcsLogStorage hashMap,
+                   @NotNull VcsLogStorage storage,
                    @NotNull Map<VirtualFile, VcsLogProvider> providers) {
     myRefs = refs;
-    myHashMap = hashMap;
+    myStorage = storage;
 
     myBestRefForHead = new TIntObjectHashMap<>();
     myRootForHead = new TIntObjectHashMap<>();
     for (int head : heads) {
-      CommitId commitId = myHashMap.getCommitId(head);
+      CommitId commitId = myStorage.getCommitId(head);
       if (commitId != null) {
         VirtualFile root = commitId.getRoot();
         myRootForHead.put(head, root);
@@ -62,7 +65,7 @@ public class RefsModel implements VcsLogRefs {
   }
 
   public Collection<VcsRef> refsToCommit(int index) {
-    CommitId id = myHashMap.getCommitId(index);
+    CommitId id = myStorage.getCommitId(index);
     if (id == null) return Collections.emptyList();
     VirtualFile root = id.getRoot();
     return myRefs.get(root).refsToCommit(index);

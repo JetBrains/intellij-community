@@ -19,8 +19,14 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RefactoringListenerProvider;
+import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration<JavaRunConfigurationModule>
   implements CommonJavaRunConfigurationParameters, RefactoringListenerProvider, SMRunnerConsolePropertiesProvider {
@@ -37,4 +43,18 @@ public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration
 
   @NotNull
   public abstract String getFrameworkPrefix();
+
+  public abstract void bePatternConfiguration(List<PsiClass> classes, PsiMethod method);
+
+  public abstract void beMethodConfiguration(Location<PsiMethod> location);
+
+  public abstract void beClassConfiguration(PsiClass aClass);
+
+  public abstract boolean isConfiguredByElement(PsiElement element);
+
+  public String prepareParameterizedParameter(String paramSetName) {
+    return paramSetName;
+  }
+
+  public abstract TestSearchScope getTestSearchScope();
 }

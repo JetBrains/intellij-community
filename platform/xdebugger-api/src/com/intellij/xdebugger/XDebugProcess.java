@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public abstract class XDebugProcess {
   private ProcessHandler myProcessHandler;
 
   /**
-   * @param session pass <code>session</code> parameter of {@link XDebugProcessStarter#start} method to this constructor
+   * @param session pass {@code session} parameter of {@link XDebugProcessStarter#start} method to this constructor
    */
   protected XDebugProcess(@NotNull XDebugSession session) {
     mySession = session;
@@ -204,7 +204,7 @@ public abstract class XDebugProcess {
   }
 
   /**
-   * @deprecated Use {@link #runToPosition(XSuspendContext)} instead
+   * @deprecated Use {@link #runToPosition(XSourcePosition, XSuspendContext)} instead
    */
   @Deprecated
   public void runToPosition(@NotNull XSourcePosition position) {
@@ -213,7 +213,7 @@ public abstract class XDebugProcess {
 
   /**
    * Resume execution and call {@link XDebugSession#positionReached(XSuspendContext)}
-   * when <code>position</code> is reached.
+   * when {@code position} is reached.
    * Do not call this method directly. Use {@link XDebugSession#runToPosition} instead
    *
    * @param position position in source code

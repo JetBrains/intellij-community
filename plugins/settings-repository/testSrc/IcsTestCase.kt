@@ -15,13 +15,15 @@
  */
 package org.jetbrains.settingsRepository.test
 
-import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.configurationStore.SchemeManagerFactoryBase
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.writeChild
 import org.eclipse.jgit.lib.Repository
 import org.jetbrains.settingsRepository.IcsManager
 import org.jetbrains.settingsRepository.git.AddLoadedFile
-import org.jetbrains.settingsRepository.git.createGitRepository
+import org.jetbrains.settingsRepository.git.DeleteFile
+import org.jetbrains.settingsRepository.git.buildRepository
 import org.jetbrains.settingsRepository.git.edit
 import org.junit.Rule
 import java.nio.file.FileSystem
@@ -32,6 +34,11 @@ fun Repository.add(path: String, data: String) = add(path, data.toByteArray())
 fun Repository.add(path: String, data: ByteArray): Repository {
   workTreePath.writeChild(path, data)
   edit(AddLoadedFile(path, data))
+  return this
+}
+
+fun Repository.delete(path: String): Repository {
+  edit(DeleteFile(path))
   return this
 }
 
@@ -55,7 +62,7 @@ abstract class IcsTestCase {
     get() = fsRule.fs
 
   val icsManager by lazy(LazyThreadSafetyMode.NONE) {
-    val icsManager = IcsManager(tempDirManager.newPath())
+    val icsManager = IcsManager(tempDirManager.newPath(), lazy { SchemeManagerFactoryBase.TestSchemeManagerFactory(tempDirManager.newPath()) })
     icsManager.repositoryManager.createRepositoryIfNeed()
     icsManager.repositoryActive = true
     icsManager
@@ -65,3 +72,9 @@ abstract class IcsTestCase {
 }
 
 fun TemporaryDirectory.createRepository(directoryName: String? = null) = createGitRepository(newPath(directoryName))
+
+private fun createGitRepository(dir: Path): Repository {
+  val repository = buildRepository(workTree = dir)
+  repository.create()
+  return repository
+}

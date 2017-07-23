@@ -46,11 +46,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 13.08.2007
- */
 class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function<Define, ResolveResult>,
                                                                         LocalQuickFixProvider, EmptyResolveMessageProvider {
 

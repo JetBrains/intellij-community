@@ -20,7 +20,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
@@ -83,12 +82,7 @@ public class SvnKitCheckinClient extends BaseSvnClient implements CheckinClient 
 
   @NotNull
   private static CommitInfo[] convert(@NotNull SVNCommitInfo[] infos) {
-    return ContainerUtil.map(infos, new Function<SVNCommitInfo, CommitInfo>() {
-      @Override
-      public CommitInfo fun(SVNCommitInfo info) {
-        return new CommitInfo.Builder(info.getNewRevision(), info.getDate(), info.getAuthor())
-          .setError(info.getErrorMessage()).build();
-      }
-    }, new CommitInfo[0]);
+    return ContainerUtil.map(infos, info -> new CommitInfo.Builder(info.getNewRevision(), info.getDate(), info.getAuthor())
+      .setError(info.getErrorMessage()).build(), new CommitInfo[0]);
   }
 }

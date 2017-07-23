@@ -98,7 +98,7 @@ public abstract class ExecutableValidator {
    * @return true if process with the supplied executable completed without errors and with exit code 0.
    */
   protected boolean isExecutableValid(@NotNull String executable) {
-    return doCheckExecutable(executable, Collections.<String>emptyList());
+    return doCheckExecutable(executable, Collections.emptyList());
   }
 
   protected static boolean doCheckExecutable(@NotNull String executable, @NotNull List<String> processParameters) {

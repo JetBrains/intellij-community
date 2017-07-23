@@ -55,16 +55,16 @@ public class LabelIcon implements Icon {
     for (int i = myColors.length - 1; i >= 0; i--) {
       if (i != myColors.length - 1) {
         g2.setColor(myBgColor);
-        paintTag(g2, scale, Math.round(scale * 2) * i + 1, 0);
+        paintTag(g2, scale, scale * 2 * i + 1, 0);
       }
       g2.setColor(myColors[i]);
-      paintTag(g2, scale, Math.round(scale * 2) * i, 0);
+      paintTag(g2, scale, scale * 2 * i, 0);
     }
 
     config.restore();
   }
 
-  public void paintTag(Graphics2D g2, float scale, int x, int y) {
+  public void paintTag(Graphics2D g2, float scale, float x, float y) {
     Path2D.Float path = new Path2D.Float();
     path.moveTo(x + 1 * scale, y + 2 * scale);
     path.lineTo(x + 3 * scale, y + 2 * scale);
@@ -89,7 +89,8 @@ public class LabelIcon implements Icon {
   }
 
   public static int getWidth(int height, int labelsCount) {
-    return height + (height * (labelsCount - 1) / 4);
+    float scale = height / 8.0f;
+    return Math.round((7 + 2 * (labelsCount - 1)) * scale);
   }
 
   @Override

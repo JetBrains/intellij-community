@@ -93,7 +93,7 @@ public class HgRollbackEnvironment implements RollbackEnvironment {
       }
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(project, token);
+      token.finish();
     }
   }
 
@@ -104,7 +104,7 @@ public class HgRollbackEnvironment implements RollbackEnvironment {
       revert(files);
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(project, token);
+      token.finish();
     }
   }
 

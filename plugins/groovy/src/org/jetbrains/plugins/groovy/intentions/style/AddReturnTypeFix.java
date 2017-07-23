@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.intentions.style;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -57,9 +58,7 @@ public class AddReturnTypeFix implements IntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (editor == null) return false;
     int offset = editor.getCaretModel().getOffset();
-    GrMethod method = findMethod(file, offset);
-    if (method == null && offset > 0) method = findMethod(file, offset - 1);
-    return method != null && !method.isConstructor();
+    return findMethod(file, offset) != null;
   }
 
   @Nullable
@@ -85,13 +84,15 @@ public class AddReturnTypeFix implements IntentionAction {
     }
 
     final GrMethod method = PsiTreeUtil.getParentOfType(at, GrMethod.class, false, GrTypeDefinition.class, GrClosableBlock.class);
-    if (method != null && GrHighlightUtil.getMethodHeaderTextRange(method).contains(offset)) {
-      if (method.getReturnTypeElementGroovy() == null) {
-        return method;
-      }
-    }
+    if (method == null) return null;
 
-    return null;
+    final TextRange headerRange = GrHighlightUtil.getMethodHeaderTextRange(method);
+    if (!headerRange.contains(offset) && !headerRange.contains(offset - 1)) return null;
+
+    if (method.isConstructor()) return null;
+    if (method.getReturnTypeElementGroovy() != null) return null;
+
+    return method;
   }
 
   @Override

@@ -19,10 +19,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.junit.UseOfObsoleteAssertInspection;
 
-/**
- * User: anna
- * Date: 8/18/11
- */
 public class UseOfObsoleteAssertInspectionTest extends IGQuickFixesTestCase {
   @Override
   public void setUp() throws Exception {

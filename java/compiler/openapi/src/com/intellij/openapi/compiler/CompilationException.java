@@ -72,7 +72,7 @@ public class CompilationException extends Exception {
   }
 
   public CompilationException(String message) {
-    this(message, Collections.<Message>emptyList());
+    this(message, Collections.emptyList());
   }
 
   public CompilationException(String message, Collection<Message> messages) {

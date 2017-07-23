@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 26-Jun-2008
- */
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.components.*;
@@ -59,24 +55,21 @@ public class MasterDetailsStateService implements PersistentStateComponent<Maste
 
   public void setComponentState(@NotNull @NonNls String key, @NotNull MasterDetailsState state) {
     final Element element = XmlSerializer.serialize(state, mySerializationFilter);
-    if (element == null) {
-      myStates.remove(key);
-    }
-    else {
-      final ComponentState componentState = new ComponentState();
-      componentState.myKey = key;
-      componentState.mySettings = element;
-      myStates.put(key, componentState);
-    }
+    final ComponentState componentState = new ComponentState();
+    componentState.myKey = key;
+    componentState.mySettings = element;
+    myStates.put(key, componentState);
   }
 
+  @Override
   public States getState() {
     States states = new States();
     states.myStates.addAll(myStates.values());
-    Collections.sort(states.getStates(), (o1, o2) -> o1.myKey.compareTo(o2.myKey));
+    Collections.sort(states.getStates(), Comparator.comparing(o -> o.myKey));
     return states;
   }
 
+  @Override
   public void loadState(States states) {
     myStates.clear();
     for (ComponentState state : states.getStates()) {

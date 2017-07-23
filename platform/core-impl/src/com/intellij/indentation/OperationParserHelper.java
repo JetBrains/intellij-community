@@ -21,10 +21,6 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: Andrey.Vokin
- * Date: 3/23/12
- */
 public class OperationParserHelper {
   private static boolean parsePostfixOperation(@NotNull final BinaryOperationParser parser) {
     final PsiBuilder.Marker tempMarker = parser.mark();
@@ -191,6 +187,7 @@ public class OperationParserHelper {
      * Provides operation priority and operands
      * @return array of TokenSets
      */
+    @NotNull
     TokenSet[] getOperatorsByPriority();
 
     /**
@@ -211,6 +208,7 @@ public class OperationParserHelper {
      * Provides element types to finish binary operation element
      * @return array of Element Types
      */
+    @NotNull
     IElementType[] getOperationElementTypes();
   }
 

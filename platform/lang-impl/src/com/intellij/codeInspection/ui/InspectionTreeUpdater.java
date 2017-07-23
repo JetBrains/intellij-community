@@ -18,10 +18,8 @@ package com.intellij.codeInspection.ui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -37,12 +35,12 @@ public class InspectionTreeUpdater {
     myUpdateQueue = new MergingUpdateQueue("InspectionView", 100, true, view, view);
   }
 
-  public void updateWithPreviewPanel(@Nullable TreeNode node) {
+  public void updateWithPreviewPanel() {
     myDoUpdatePreviewPanel.set(true);
-    update(node, false);
+    update(false);
   }
 
-  public void update(@Nullable TreeNode node, boolean force) {
+  public void update(boolean force) {
     if (ApplicationManager.getApplication().isDispatchThread() && !force) {
       return;
     }

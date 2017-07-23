@@ -18,10 +18,5 @@ package org.intellij.plugins.relaxNG.compact.psi;
 
 import com.intellij.psi.PsiElement;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 10.08.2007
- */
 public interface RncElement extends PsiElement {
 }

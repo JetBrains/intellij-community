@@ -92,12 +92,8 @@ public class ExternalDependenciesManagerImpl extends ExternalDependenciesManager
       myDependencies.add(new DependencyOnPlugin(dependency.myId, dependency.myMinVersion, dependency.myMaxVersion, dependency.myChannel));
     }
     if (!oldDependencies.equals(myDependencies) && !myDependencies.isEmpty()) {
-      StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
-        @Override
-        public void run() {
-          CheckRequiredPluginsActivity.runCheck(myProject);
-        }
-      });
+      StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
+        (DumbAwareRunnable)() -> CheckRequiredPluginsActivity.runCheck(myProject));
     }
   }
 

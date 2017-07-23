@@ -46,7 +46,8 @@ public interface ClasspathStorageProvider {
 
   void detach(@NotNull Module module);
 
-  void moduleRenamed(@NotNull Module module, @NotNull String oldName, @NotNull String newName);
+  default void moduleRenamed(@NotNull Module module, @NotNull String oldName, @NotNull String newName) {
+  }
 
   @NotNull
   ClasspathConverter createConverter(@NotNull Module module);
@@ -54,7 +55,8 @@ public interface ClasspathStorageProvider {
   @Nullable
   String getContentRoot(@NotNull ModuleRootModel model);
 
-  void modulePathChanged(Module module, String path);
+  default void modulePathChanged(@NotNull Module module) {
+  }
 
   interface ClasspathConverter {
     @NotNull

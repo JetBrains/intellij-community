@@ -4,10 +4,12 @@
     <appStarter implementation="com.intellij.diff.applications.DiffApplication"/>
     <appStarter implementation="com.intellij.diff.applications.MergeApplication"/>
     <appStarter implementation="com.intellij.ui.win.RecentProjectApplication"/>
+    <appStarter implementation="com.intellij.openapi.command.impl.UpdatePluginsApp"/>
     <appStarter implementation="com.intellij.help.impl.KeymapGenerator"/>
     <appStarter implementation="com.intellij.help.impl.IntentionDump"/>
     <appStarter implementation="com.intellij.help.impl.InspectionDump"/>
     <appStarter implementation="com.intellij.help.impl.ShowProductVersion"/>
+    <appStarter implementation="com.intellij.ide.plugins.BundledPluginsLister"/>
 
     <applicationService serviceInterface="com.intellij.openapi.components.impl.stores.IComponentStore"
                         serviceImplementation="com.intellij.configurationStore.ApplicationStoreImpl"/>
@@ -33,8 +35,6 @@
                         serviceImplementation="com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.progress.ProgressManager"
                         serviceImplementation="com.intellij.openapi.progress.impl.ProgressManagerImpl"/>
-    <applicationService serviceInterface="com.intellij.openapi.application.TransactionGuard"
-                        serviceImplementation="com.intellij.openapi.application.TransactionGuardImpl"/>
 
     <applicationService serviceImplementation="com.intellij.ide.ui.customization.CustomActionsSchema"/>
 
@@ -108,10 +108,10 @@
     <colorAndFontDescriptorProvider implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
     <getDataRule key="diff_navigatable_array" implementationClass="com.intellij.diff.actions.impl.DiffNavigatableArrayRule"/>
 
-    <daemon.highlightInfoFilter implementation="com.intellij.diff.contents.DiffPsiFileSupport$HighlightFilter"/>
-    <daemon.intentionActionFilter implementation="com.intellij.diff.contents.DiffPsiFileSupport$IntentionFilter"/>
+    <daemon.highlightInfoFilter implementation="com.intellij.codeInsight.daemon.OutsidersPsiFileSupport$HighlightFilter"/>
+    <daemon.intentionActionFilter implementation="com.intellij.codeInsight.daemon.OutsidersPsiFileSupport$IntentionFilter"/>
     <defaultHighlightingSettingProvider id="GeneratedSourcesHighlightingSettingProvider"
-                                        implementation="com.intellij.diff.contents.DiffPsiFileSupport$HighlightingSettingProvider"/>
+                                        implementation="com.intellij.codeInsight.daemon.OutsidersPsiFileSupport$HighlightingSettingProvider"/>
 
     <applicationService serviceInterface="com.intellij.ui.SystemNotifications"
                         serviceImplementation="com.intellij.ui.SystemNotificationsImpl"/>
@@ -188,11 +188,16 @@
                         serviceImplementation="com.intellij.openapi.editor.colors.impl.TextAttributeKeyDefaultsProviderImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorColorsManager"
                         serviceImplementation="com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorColorPaletteFactory"
+                        serviceImplementation="com.intellij.openapi.options.colors.EditorColorPaletteFactoryImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.FileAppearanceService"
                         serviceImplementation="com.intellij.openapi.roots.ui.FileAppearanceServiceImpl"/>
 
     <applicationService serviceImplementation="com.intellij.internal.statistic.UsageTrigger"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.ToolbarClicksCollector"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.ShortcutsCollector"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.ActionsCollector"/>
 
     <applicationService serviceInterface="com.intellij.openapi.application.PathMacros"
                         serviceImplementation="com.intellij.application.options.PathMacrosImpl"/>
@@ -304,6 +309,7 @@
     <applicationConfigurable groupId="root" groupWeight="55" instance="com.intellij.ide.plugins.PluginManagerConfigurable" id="preferences.pluginManager"
                              displayName="Plugins"/>
     <actionFromOptionDescriptorProvider implementation="com.intellij.ide.plugins.InstalledPluginsManagerMain$PluginsActionFromOptionDescriptorProvider"/>
+    <customFileDropHandler implementation="com.intellij.ide.plugins.InstalledPluginsManagerMain$PluginDropHandler"/>
     <applicationConfigurable parentId="preferences.general" instance="com.intellij.util.net.HttpProxyConfigurable" id="http.proxy" displayName="HTTP Proxy"/>
     <applicationConfigurable groupId="tools" displayName="Server Certificates" id="http.certificates" instance="com.intellij.util.net.ssl.CertificateConfigurable"/>
 
@@ -326,6 +332,16 @@
                         serviceImplementation="com.intellij.openapi.actionSystem.impl.AbbreviationManagerImpl"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.editor.ex.EditorSettingsExternalizable"/>
+    <applicationService serviceImplementation="com.intellij.openapi.editor.colors.impl.AppEditorFontOptions"/>
+    <applicationConfigurable
+        groupId="editor"
+        groupWeight="189"
+        displayName="Font"
+        instance="com.intellij.application.options.editor.fonts.AppEditorFontConfigurable"
+    />
+    <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorFontCache"
+                        serviceImplementation="com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl"/>
+
     <applicationService serviceImplementation="com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings"/>
     <applicationService serviceImplementation="com.intellij.openapi.keymap.KeyboardSettingsExternalizable"/>
     <applicationService serviceImplementation="com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider"/>
@@ -333,10 +349,19 @@
     <scopeParserExtension implementation="com.intellij.psi.search.scope.packageSet.FilePackageSetParserExtension"/>
     <applicationService serviceInterface="com.intellij.openapi.ui.popup.StackingPopupDispatcher" serviceImplementation="com.intellij.ui.popup.StackingPopupDispatcherImpl"/>
 
-    <applicationService serviceImplementation="com.intellij.ide.RemoteDesktopDetector"/>
+    <applicationService serviceInterface="com.intellij.ide.RemoteDesktopService"
+                        serviceImplementation="com.intellij.ide.RemoteDesktopDetector"/>
+
+    <projectService serviceInterface="com.intellij.execution.RunManager" serviceImplementation="com.intellij.execution.impl.RunManagerImpl"/>
+    <projectService serviceImplementation="com.intellij.execution.impl.ProjectRunConfigurationManager"/>
 
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.http.HttpFileEditorProvider"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.hint.EscapeHandler" id="hide-hints"/>
+
+    <editorActionHandler action="EditorDelete" implementationClass="com.intellij.openapi.editor.actions.DeleteSelectionHandler" 
+                         id="delete.for.selection"/>
+    <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.openapi.editor.actions.DeleteSelectionHandler" 
+                         id="backspace.for.selection" order="after backspace.lookup"/>
 
     <projectConfigurable groupId="language" groupWeight="110" instance="com.intellij.javaee.ExternalResourceConfigurable" key="display.name.edit.external.resource"
                          bundle="messages.XmlBundle" id="preferences.externalResources">
@@ -355,13 +380,25 @@
     <statistics.usagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsOptionsUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.UsageTrigger$MyCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.ToolbarClicksCollector$ToolbarClicksUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.ShortcutsCollector$ShortcutUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.ActionsCollector$ActionUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.LaFUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.OsNameUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.OsVersionUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.UiInfoUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.JdkInfoUsageCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.JdkSettingsUsageCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.FontSizeInfoUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.BuildNumberUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.ScaleInfoUsageCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.IdeInitialConfigUsageCollectors$ConfigImport"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.IdeInitialConfigUsageCollectors$SkipSteps"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.IdeInitialConfigUsageCollectors$SelectedLAF"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.IdeInitialConfigUsageCollectors$SelectedKeymap"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.IdeInitialConfigUsageCollectors$DisabledPlugins"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.ideSettings.IdeInitialConfigUsageCollectors$DownloadedPlugins"/>
+    <statistics.usagesCollector implementation="com.intellij.openapi.editor.colors.impl.EditorColorSchemesUsagesCollector"/>
 
     <applicationConfigurable parentId="preferences.general" instance="com.intellij.internal.statistic.configurable.StatisticsConfigurable" id="usage.statistics"
                              displayName="Usage Statistics"/>
@@ -401,9 +438,9 @@
     <enterHandlerDelegate implementation="com.intellij.psi.codeStyle.autodetect.DetectedIndentNotifier"/>
 
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileEditorProvider"/>
+    <editorNotificationProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileNotificationProvider"/>
+    <fileDocumentSynchronizationVetoer implementation="com.intellij.openapi.fileEditor.impl.LargeFileSavingVetoer"/>
     <frameEditorComponentProvider implementation="com.intellij.openapi.wm.ex.DefaultFrameEditorComponentProvider"/>
-
-    <lang.lineWrapStrategy language="TEXT" implementationClass="com.intellij.openapi.editor.TextLineWrapPositionStrategy"/>
 
     <editorNotificationProvider implementation="com.intellij.openapi.editor.impl.ForcedSoftWrapsNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.ide.FileChangedNotificationProvider"/>
@@ -452,6 +489,8 @@
     <applicationService serviceInterface="com.intellij.remote.ext.CredentialsManager"
                         serviceImplementation="com.intellij.remote.ext.CredentialsManagerImpl"/>
 
+    <applicationService serviceImplementation="com.intellij.openapi.options.newEditor.SettingsDialogFactory"/>
+
     <postStartupActivity implementation="com.intellij.profile.codeInspection.ProjectInspectionProfileManager$ProjectInspectionProfileStartUpActivity"/>
 
     <additionalTextAttributes scheme="Default" file="idea/FindViewColorsScheme.xml"/>
@@ -459,5 +498,16 @@
 
     <credentialStore implementation="com.intellij.credentialStore.MacOsCredentialStoreFactory" os="mac"/>
     <credentialStore implementation="com.intellij.credentialStore.LinuxSecretCredentialStoreFactory" os="linux"/>
+
+    <projectService serviceImplementation="com.intellij.tasks.context.WorkingContextManager"/>
+
+    <!--context providers-->
+    <tasks.contextProvider implementation="com.intellij.tasks.context.OpenEditorsContextProvider"/>
+    <tasks.contextProvider implementation="com.intellij.tasks.context.ProjectViewContextProvider"/>
+    <tasks.contextProvider implementation="com.intellij.tasks.context.RunConfigurationsContextProvider"/>
+    <tasks.contextProvider implementation="com.intellij.tasks.context.XDebuggerBreakpointsContextProvider"/>
+    <tasks.contextProvider implementation="com.intellij.tasks.context.XDebuggerWatchesProvider"/>
+
+    <actionPromoter implementation="com.intellij.execution.testframework.TestTreeViewActionsPromoter"/>
   </extensions>
 </idea-plugin>

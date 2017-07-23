@@ -16,15 +16,13 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicGraphicsUtils;
 import javax.swing.plaf.basic.BasicLabelUI;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.StringTokenizer;
 
 /**
  * Based on Zafir Anjum example.
@@ -352,14 +350,7 @@ public class MultiLineLabelUI extends BasicLabelUI {
       return myLines;
     }
     myString = convertTabs(str, 2);
-
-    ArrayList list = new ArrayList();
-    StringTokenizer st = new StringTokenizer(str, "\n\r");
-    while (st.hasMoreTokens()) {
-      list.add(st.nextToken());
-    }
-
-    myLines = (String[])ArrayUtil.toStringArray(list);
+    myLines = StringUtil.splitByLines(myString, false);
     return myLines;
   }
 

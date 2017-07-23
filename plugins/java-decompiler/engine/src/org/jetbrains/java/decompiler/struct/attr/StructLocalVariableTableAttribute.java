@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,12 @@ import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /*
   u2 local_variable_table_length;
@@ -34,34 +37,70 @@ import java.util.Map;
   }
 */
 public class StructLocalVariableTableAttribute extends StructGeneralAttribute {
-
-  private Map<Integer, String> mapVarNames = Collections.emptyMap();
+  private List<LocalVariable> localVariables = Collections.emptyList();
 
   @Override
-  public void initContent(ConstantPool pool) throws IOException {
-    DataInputFullStream data = stream();
-
+  public void initContent(DataInputFullStream data, ConstantPool pool) throws IOException {
     int len = data.readUnsignedShort();
     if (len > 0) {
-      mapVarNames = new HashMap<>(len);
+      localVariables = new ArrayList<>(len);
+
       for (int i = 0; i < len; i++) {
-        data.discard(4);
+        int start_pc = data.readUnsignedShort();
+        int length = data.readUnsignedShort();
         int nameIndex = data.readUnsignedShort();
-        data.discard(2);
+        int descriptorIndex = data.readUnsignedShort();
         int varIndex = data.readUnsignedShort();
-        mapVarNames.put(varIndex, pool.getPrimitiveConstant(nameIndex).getString());
+        localVariables.add(new LocalVariable(start_pc,
+                                             length,
+                                             pool.getPrimitiveConstant(nameIndex).getString(),
+                                             pool.getPrimitiveConstant(descriptorIndex).getString(),
+                                             varIndex));
       }
     }
     else {
-      mapVarNames = Collections.emptyMap();
+      localVariables = Collections.emptyList();
     }
   }
 
-  public void addLocalVariableTable(StructLocalVariableTableAttribute attr) {
-    mapVarNames.putAll(attr.getMapVarNames());
+  public void add(StructLocalVariableTableAttribute attr) {
+    localVariables.addAll(attr.localVariables);
   }
 
-  public Map<Integer, String> getMapVarNames() {
-    return mapVarNames;
+  public String getName(int index, int visibleOffset) {
+    return matchingVars(index, visibleOffset).map(v -> v.name).findFirst().orElse(null);
+  }
+
+  public String getDescriptor(int index, int visibleOffset) {
+    return matchingVars(index, visibleOffset).map(v -> v.descriptor).findFirst().orElse(null);
+  }
+
+  private Stream<LocalVariable> matchingVars(int index, int visibleOffset) {
+    return localVariables.stream()
+      .filter(v -> v.index == index && (visibleOffset >= v.start_pc && visibleOffset < v.start_pc + v.length));
+  }
+
+  public boolean containsName(String name) {
+    return localVariables.stream().anyMatch(v -> v.name == name);
+  }
+
+  public Map<Integer, String> getMapParamNames() {
+    return localVariables.stream().filter(v -> v.start_pc == 0).collect(Collectors.toMap(v -> v.index, v -> v.name, (n1, n2) -> n2));
+  }
+
+  private static class LocalVariable {
+    final int start_pc;
+    final int length;
+    final String name;
+    final String descriptor;
+    final int index;
+
+    private LocalVariable(int start_pc, int length, String name, String descriptor, int index) {
+      this.start_pc = start_pc;
+      this.length = length;
+      this.name = name;
+      this.descriptor = descriptor;
+      this.index = index;
+    }
   }
 }

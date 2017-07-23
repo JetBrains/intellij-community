@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,17 +20,17 @@ import com.intellij.json.JsonLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.jsonSchema.impl.JsonSchemaResourcesRootsProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
+ * To make plugin github.com/BlueBoxWare/LibGDXPlugin happy
  * @author Irina.Chernushina on 4/1/2016.
  */
 public class JsonSchemaFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile {
-  public static JsonSchemaFileType INSTANCE = new JsonSchemaFileType();
+  public static final JsonSchemaFileType INSTANCE = new JsonSchemaFileType();
 
   public JsonSchemaFileType() {
     super(JsonLanguage.INSTANCE);
@@ -56,13 +56,12 @@ public class JsonSchemaFileType extends LanguageFileType implements FileTypeIden
 
   @Nullable
   @Override
-  public Icon getIcon() {//todo change icon
-    return AllIcons.FileTypes.Json;
+  public Icon getIcon() {
+    return AllIcons.FileTypes.JsonSchema;
   }
 
   @Override
   public boolean isMyFileType(@NotNull VirtualFile file) {
-    if (JsonSchemaResourcesRootsProvider.ourFiles.getValue().contains(file)) return true;
-    return JsonSchemaFileTypeManager.getInstance().isJsonSchemaFile(file);
+    return false;
   }
 }

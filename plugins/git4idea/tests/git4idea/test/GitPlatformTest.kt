@@ -15,19 +15,25 @@
  */
 package git4idea.test
 
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.AbstractVcsHelper
+import com.intellij.openapi.vcs.Executor
+import com.intellij.openapi.vcs.Executor.cd
+import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.VcsShowConfirmationOption
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
+import com.intellij.vcs.log.VcsFullCommitDetails
+import com.intellij.vcs.log.impl.VcsLogUtil
 import com.intellij.vcs.test.VcsPlatformTest
+import com.intellij.vcs.test.overrideService
 import git4idea.DialogManager
 import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.commands.Git
 import git4idea.commands.GitHandler
 import git4idea.config.GitVcsSettings
+import git4idea.log.GitLogProvider
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import java.io.File
@@ -39,24 +45,27 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   protected lateinit var myGit: TestGitImpl
   protected lateinit var myVcs: GitVcs
   protected lateinit var myDialogManager: TestDialogManager
-  protected lateinit var myVcsNotifier: TestVcsNotifier
+  protected lateinit var vcsHelper: MockVcsHelper
+  protected lateinit var logProvider: GitLogProvider
 
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
 
     myGitSettings = GitVcsSettings.getInstance(myProject)
-    myGitSettings.appSettings.pathToGit = GitExecutor.PathHolder.GIT_EXECUTABLE
+    myGitSettings.appSettings.setPathToGit(gitExecutable())
 
-    myDialogManager = ServiceManager.getService(DialogManager::class.java) as TestDialogManager
-    myVcsNotifier = ServiceManager.getService(myProject, VcsNotifier::class.java) as TestVcsNotifier
+    myDialogManager = service<DialogManager>() as TestDialogManager
+    vcsHelper = overrideService<AbstractVcsHelper, MockVcsHelper>(myProject)
 
     myGitRepositoryManager = GitUtil.getRepositoryManager(myProject)
-    myGit = GitTestUtil.overrideService(Git::class.java, TestGitImpl::class.java)
+    myGit = overrideService<Git, TestGitImpl>()
     myVcs = GitVcs.getInstance(myProject)!!
     myVcs.doActivate()
 
-    GitTestUtil.assumeSupportedGitVersion(myVcs)
+    logProvider = findGitLogProvider(myProject)
+
+    assumeSupportedGitVersion(myVcs)
     addSilently()
     removeSilently()
   }
@@ -64,9 +73,9 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   @Throws(Exception::class)
   override fun tearDown() {
     try {
-      if (wasInit { myDialogManager }) { myDialogManager.cleanup() }
-      if (wasInit { myVcsNotifier }) { myVcsNotifier.cleanup() }
-      myGit.reset()
+      if (wasInit { myDialogManager }) myDialogManager.cleanup()
+      if (wasInit { myGit }) myGit.reset()
+      if (wasInit { myGitSettings }) myGitSettings.appSettings.setPathToGit(null)
     }
     finally {
       super.tearDown()
@@ -80,19 +89,54 @@ abstract class GitPlatformTest : VcsPlatformTest() {
   }
 
   protected open fun createRepository(rootDir: String): GitRepository {
-    return GitTestUtil.createRepository(myProject, rootDir)
+    return createRepository(myProject, rootDir)
   }
 
   /**
    * Clones the given source repository into a bare parent.git and adds the remote origin.
    */
-  protected fun prepareRemoteRepo(source: GitRepository) {
-    val target = "parent.git"
-    val targetName = "origin"
-    Executor.cd(myProjectRoot)
-    GitExecutor.git("clone --bare '%s' %s", source.root.path, target)
-    GitExecutor.cd(source)
-    GitExecutor.git("remote add %s '%s'", targetName, "$myProjectRoot/$target")
+  protected fun prepareRemoteRepo(source: GitRepository, target: File = File(myTestRoot, "parent.git")): File {
+    cd(myTestRoot)
+    git("clone --bare '${source.root.path}' ${target.path}")
+    cd(source)
+    git("remote add origin '${target.path}'")
+    return target
+  }
+
+  /**
+   * Creates 3 repositories: a bare "parent" repository, and two clones of it.
+   *
+   * One of the clones - "bro" - is outside of the project.
+   * Another one is inside the project, is registered as a Git root, and is represented by [GitRepository].
+   *
+   * Parent and bro are created just inside the [testRoot](myTestRoot).
+   * The main clone is created at [repoRoot], which is assumed to be inside the project.
+   */
+  protected fun setupRepositories(repoRoot: String, parentName: String, broName: String): ReposTrinity {
+    val parentRepo = createParentRepo(parentName)
+    val broRepo = createBroRepo(broName, parentRepo)
+
+    val repository = createRepository(myProject, repoRoot)
+    cd(repository)
+    git("remote add origin " + parentRepo.path)
+    git("push --set-upstream origin master:master")
+
+    Executor.cd(broRepo.path)
+    git("pull")
+
+    return ReposTrinity(repository, parentRepo, broRepo)
+  }
+
+  private fun createParentRepo(parentName: String): File {
+    Executor.cd(myTestRoot)
+    git("init --bare $parentName.git")
+    return File(myTestRoot, parentName + ".git")
+  }
+
+  private fun createBroRepo(broName: String, parentRepo: File): File {
+    Executor.cd(myTestRoot)
+    git("clone " + parentRepo.name + " " + broName)
+    return File(myTestRoot, broName)
   }
 
   protected fun doActionSilently(op: VcsConfiguration.StandardConfirmation) {
@@ -113,29 +157,26 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     hookFile.setExecutable(true, false)
   }
 
-  protected fun assertSuccessfulNotification(title: String, message: String) : Notification {
-    return GitTestUtil.assertNotification(NotificationType.INFORMATION, title, message, myVcsNotifier.lastNotification)
+  protected fun readDetails(hashes: List<String>): List<VcsFullCommitDetails> = VcsLogUtil.getDetails(logProvider, myProjectRoot, hashes)
+
+  protected fun readDetails(hash: String) = readDetails(listOf(hash)).first()
+
+  protected fun `do nothing on merge`() {
+    vcsHelper.onMerge{}
   }
 
-  protected fun assertSuccessfulNotification(message: String) : Notification {
-    return assertSuccessfulNotification("", message)
+  protected fun `mark as resolved on merge`() {
+    vcsHelper.onMerge { git("add -u .") }
   }
 
-  protected fun assertWarningNotification(title: String, message: String) {
-    GitTestUtil.assertNotification(NotificationType.WARNING, title, message, myVcsNotifier.lastNotification)
+  protected fun `assert merge dialog was shown`() {
+    assertTrue("Merge dialog was not shown", vcsHelper.mergeDialogWasShown())
   }
 
-  protected fun assertErrorNotification(title: String, message: String) : Notification {
-    val notification = myVcsNotifier.lastNotification
-    assertNotNull("No notification was shown", notification)
-    GitTestUtil.assertNotification(NotificationType.ERROR, title, message, notification)
-    return notification
+  protected fun `assert commit dialog was shown`() {
+    assertTrue("Commit dialog was not shown", vcsHelper.commitDialogWasShown())
   }
 
-  protected fun assertNoNotification() {
-    val notification = myVcsNotifier.lastNotification
-    if (notification != null) {
-      fail("No notification is expected here, but this one was shown: ${notification.title}/${notification.content}");
-    }
-  }
+  protected data class ReposTrinity(val projectRepo: GitRepository, val parent: File, val bro: File)
+
 }

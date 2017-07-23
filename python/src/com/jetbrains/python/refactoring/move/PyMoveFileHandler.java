@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -332,7 +332,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
   private static Couple<PsiElement> getRelativeImportSourceRange(@NotNull PyFromImportStatement statement) {
     final PsiElement fromKeyword = statement.getFirstChild();
     assert fromKeyword.getNode().getElementType() == PyTokenTypes.FROM_KEYWORD;
-    final PsiElement elementAfterFrom = PsiTreeUtil.skipSiblingsForward(fromKeyword, PsiWhiteSpace.class);
+    final PsiElement elementAfterFrom = PsiTreeUtil.skipWhitespacesForward(fromKeyword);
     if (elementAfterFrom == null) {
       return null;
     }
@@ -344,7 +344,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
       PsiElement next = elementAfterFrom;
       do {
         lastDot = next;
-        next = PsiTreeUtil.skipSiblingsForward(next, PsiWhiteSpace.class);
+        next = PsiTreeUtil.skipWhitespacesForward(next);
       }
       while (next != null && next.getNode().getElementType() == PyTokenTypes.DOT);
       if (next instanceof PyReferenceExpression) {

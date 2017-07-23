@@ -22,12 +22,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Map;
 
-public abstract class MapBasedForwardIndex<Key, Value> extends AbstractForwardIndex<Key,Value> {
+public abstract class MapBasedForwardIndex<Key, Value, MapValueType> extends AbstractForwardIndex<Key,Value> {
   @NotNull
-  private volatile PersistentHashMap<Integer, Collection<Key>> myInputsIndex;
+  private volatile PersistentHashMap<Integer, MapValueType> myInputsIndex;
 
   protected MapBasedForwardIndex(IndexExtension<Key, Value, ?> indexExtension) throws IOException {
     super(indexExtension);
@@ -35,27 +34,25 @@ public abstract class MapBasedForwardIndex<Key, Value> extends AbstractForwardIn
   }
 
   @NotNull
-  public abstract PersistentHashMap<Integer, Collection<Key>> createMap() throws IOException;
+  public abstract PersistentHashMap<Integer, MapValueType> createMap() throws IOException;
 
   @NotNull
   @Override
-  public InputKeyIterator<Key, Value> getInputKeys(final int inputId) throws IOException {
-    return new CollectionInputKeyIterator<Key, Value>(myInputsIndex.get(inputId));
+  public InputDataDiffBuilder<Key, Value> getDiffBuilder(final int inputId) throws IOException {
+    return getDiffBuilder(inputId, getInput(inputId));
   }
 
-  @NotNull
-  public PersistentHashMap<Integer, Collection<Key>> getInputsIndex() {
-    return myInputsIndex;
+  protected abstract InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId, MapValueType mapValueType) throws IOException;
+  protected abstract MapValueType convertToMapValueType(int inputId, Map<Key, Value> map) throws IOException;
+
+  public MapValueType getInput(int inputId) throws IOException {
+    return myInputsIndex.get(inputId);
   }
 
   @Override
   public void putInputData(int inputId, @NotNull Map<Key, Value> data) throws IOException {
-    putData(inputId, data.keySet());
-  }
-
-  public void putData(int inputId, Collection<Key> keyCollection) throws IOException {
-    if (keyCollection.size() > 0) {
-      myInputsIndex.put(inputId, keyCollection);
+    if (!data.isEmpty()) {
+      myInputsIndex.put(inputId, convertToMapValueType(inputId, data));
     }
     else {
       myInputsIndex.remove(inputId);

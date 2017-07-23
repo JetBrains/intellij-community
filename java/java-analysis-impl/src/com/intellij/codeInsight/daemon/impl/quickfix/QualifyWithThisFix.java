@@ -23,9 +23,6 @@ import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* User: anna
-*/
 public class QualifyWithThisFix implements IntentionAction {
   private final PsiClass myContainingClass;
   private final PsiElement myExpression;

@@ -165,7 +165,7 @@ public class CompositePrintable implements Printable, Disposable {
     }
   }
 
-  private static final Logger LOG = Logger.getInstance("#" + PrintablesWrapper.class.getName());
+  private static final Logger LOG = Logger.getInstance(PrintablesWrapper.class);
 
   private class PrintablesWrapper {
 

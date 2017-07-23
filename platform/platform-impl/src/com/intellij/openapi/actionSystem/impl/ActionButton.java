@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.internal.statistic.ToolbarClicksCollector;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -43,8 +44,6 @@ import java.beans.PropertyChangeListener;
 import static java.awt.event.KeyEvent.VK_SPACE;
 
 public class ActionButton extends JComponent implements ActionButtonComponent, AnActionHolder, Accessible {
-
-  private static final Icon ourEmptyIcon = EmptyIcon.ICON_18;
 
   private JBDimension myMinimumButtonSize;
   private PropertyChangeListener myPresentationListener;
@@ -138,7 +137,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   private void performAction(MouseEvent e) {
-    AnActionEvent event = AnActionEvent.createFromInputEvent(e, myPlace, myPresentation, getDataContext());
+    AnActionEvent event = AnActionEvent.createFromInputEvent(e, myPlace, myPresentation, getDataContext(), false, true);
     if (!ActionUtil.lastUpdateAndCheckDumb(myAction, event, false)) {
       return;
     }
@@ -153,6 +152,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       }
       actionPerformed(event);
       manager.queueActionPerformedEvent(myAction, dataContext, event);
+      if (event.getInputEvent() instanceof MouseEvent) {
+        ToolbarClicksCollector.record(myAction, myPlace);
+      }
     }
   }
 
@@ -177,7 +179,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         }
       });
       popupMenu.setDataContextProvider(() -> this.getDataContext());
-      if (ActionPlaces.isToolbarPlace(event.getPlace())) {
+      if (event.isFromActionToolbar()) {
         popupMenu.getComponent().show(this, 0, getHeight());
       }
       else {
@@ -202,7 +204,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (myPresentationListener == null) {
       myPresentation.addPropertyChangeListener(myPresentationListener = this::presentationPropertyChanded);
     }
-    AnActionEvent e = new AnActionEvent(null, getDataContext(), myPlace, myPresentation, ActionManager.getInstance(), 0);
+    AnActionEvent e = AnActionEvent.createFromInputEvent(null, myPlace, myPresentation, getDataContext(), false, true);
     ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), myAction, e, false);
     updateToolTipText();
     updateIcon();
@@ -238,12 +240,12 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   /**
    * @return button's icon. Icon depends on action's state. It means that the method returns
-   *         disabled icon if action is disabled. If the action's icon is <code>null</code> then it returns
+   *         disabled icon if action is disabled. If the action's icon is {@code null} then it returns
    *         an empty icon.
    */
-  protected Icon getIcon() {
+  public Icon getIcon() {
     Icon icon = isButtonEnabled() ? myIcon : myDisabledIcon;
-    return icon == null ? ourEmptyIcon : icon;
+    return icon == null ? EmptyIcon.ICON_18 : icon;
   }
 
   public void updateIcon() {
@@ -271,16 +273,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     paintButtonLook(g);
 
     if (myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup()) {
-
-      int x = 5;
-      int y = 4;
-
-      if (getPopState() == PUSHED) {
-        x++;
-        y++;
-      }
-
-      AllIcons.General.Dropdown.paintIcon(this, g, JBUI.scale(x), JBUI.scale(y));
+      AllIcons.General.Dropdown.paintIcon(this, g, JBUI.scale(5), JBUI.scale(4));
     }
   }
 

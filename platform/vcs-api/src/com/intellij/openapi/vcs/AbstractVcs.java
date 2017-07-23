@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
-import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -37,7 +36,6 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.VcsSynchronousProgressWrapper;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
@@ -47,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * The base class for a version control system integrated with IDEA.
@@ -73,14 +72,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     myProject = project;
     myName = name;
     myKey = new VcsKey(myName);
-  }
-
-  // for tests only
-  protected AbstractVcs(@NotNull Project project, String name, VcsKey key) {
-    super();
-    myProject = project;
-    myName = name;
-    myKey = key;
   }
 
   // acts as adapter
@@ -132,9 +123,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   @Nullable
   public EditFileProvider getEditFileProvider() {
     return null;
-  }
-
-  public void directoryMappingChanged() {
   }
 
   public boolean markExternalChangesAsUpToDate() {
@@ -410,14 +398,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   }
 
   /**
-   * If VCS does not implement detection whether directory is versioned ({@link #isVersionedDirectory(VirtualFile)}),
-   * it should return {@code false}. Otherwise return {@code true}
-   */
-  public boolean supportsVersionedStateDetection() {
-    return true;
-  }
-
-  /**
    * Returns the configurable to be shown in the VCS directory mapping dialog which should be displayed
    * for configuring VCS-specific settings for the specified root, or null if no such configuration is required.
    * The VCS-specific settings are stored in {@link VcsDirectoryMapping#getRootSettings()}.
@@ -457,22 +437,19 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     return null;
   }
 
-  @Nullable
-  public ChangeListEditHandler getEditHandler() {
-    return null;
-  }
-
   public boolean allowsNestedRoots() {
     return false;
   }
 
-  public <S> List<S> filterUniqueRoots(final List<S> in, final Convertor<S, VirtualFile> convertor) {
-    new FilterDescendantVirtualFileConvertible(convertor, FilePathComparator.getInstance()).doFilter(in);
+  @NotNull
+  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
+    new FilterDescendantVirtualFileConvertible<>(convertor, FilePathComparator.getInstance()).doFilter(in);
     return in;
   }
 
-  public static <S> List<S> filterUniqueRootsDefault(final List<S> in, final Convertor<S, VirtualFile> convertor) {
-    new FilterDescendantVirtualFileConvertible(convertor, FilePathComparator.getInstance()).doFilter(in);
+  @NotNull
+  public static <S> List<S> filterUniqueRootsDefault(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
+    new FilterDescendantVirtualFileConvertible<>(convertor, FilePathComparator.getInstance()).doFilter(in);
     return in;
   }
 
@@ -496,11 +473,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
 
   public VcsType getType() {
     return VcsType.centralized;
-  }
-
-  // todo ?
-  public boolean checkImmediateParentsBeforeCommit() {
-    return false;
   }
 
   @Nullable
@@ -569,25 +541,14 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     setRollbackEnvironment(createRollbackEnvironment());
   }
 
-  /**
-   * @Deprecated to delete in 2017.3
-   */
-  @Deprecated
-  public boolean reportsIgnoredDirectories() {
-    return true;
-  }
-
   @Nullable
   public CommittedChangeList loadRevisions(final VirtualFile vf, final VcsRevisionNumber number) {
     final CommittedChangeList[] list = new CommittedChangeList[1];
-    final ThrowableRunnable<VcsException> runnable = new ThrowableRunnable<VcsException>() {
-      @Override
-      public void run() throws VcsException {
-        final Pair<CommittedChangeList, FilePath> pair =
-          getCommittedChangesProvider().getOneList(vf, number);
-        if (pair != null) {
-          list[0] = pair.getFirst();
-        }
+    final ThrowableRunnable<VcsException> runnable = () -> {
+      final Pair<CommittedChangeList, FilePath> pair =
+        getCommittedChangesProvider().getOneList(vf, number);
+      if (pair != null) {
+        list[0] = pair.getFirst();
       }
     };
     return VcsSynchronousProgressWrapper.wrap(runnable, getProject(), "Load revision contents") ? list[0] : null;
@@ -614,15 +575,13 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     return true;
   }
 
-  /**
-   * compares different presentations of revision number (ex. in Perforce)
-   */
-  public boolean revisionsSame(@NotNull final VcsRevisionNumber number1, @NotNull final VcsRevisionNumber number2) {
-    return number1.equals(number2);
-  }
-
   public CheckoutProvider getCheckoutProvider() {
     return null;
+  }
+
+  @Override
+  public String toString() {
+    return getName();
   }
 }
 

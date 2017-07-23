@@ -6,6 +6,9 @@
     <extensionPoint name="regExpModifierProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="org.intellij.lang.regexp.RegExpModifierProvider"/>
     </extensionPoint>
+    <extensionPoint name="regExpMatcherProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="org.intellij.lang.regexp.RegExpMatcherProvider"/>
+    </extensionPoint>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <lang.documentationProvider language="RegExp" implementationClass="org.intellij.lang.regexp.RegExpDocumentationProvider"/>
@@ -23,5 +26,30 @@
       <className>org.intellij.lang.regexp.intention.CheckRegExpIntentionAction</className>
       <category>RegExp</category>
     </intentionAction>
+
+    <localInspection groupName="RegExp" language="RegExp" shortName="RepeatedSpace" displayName="Consecutive spaces" enabledByDefault="true"
+                     level="WARNING" implementationClass="org.intellij.lang.regexp.inspection.RepeatedSpaceInspection"/>
+    <localInspection groupName="RegExp" language="RegExp" shortName="SingleCharAlternation" displayName="Single character alternation"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.intellij.lang.regexp.inspection.SingleCharAlternationInspection"/>
+    <localInspection groupName="RegExp" language="RegExp"  shortName="OctalEscape" displayName="Octal escape" enabledByDefault="true"
+                     level="INFORMATION" implementationClass="org.intellij.lang.regexp.inspection.OctalEscapeInspection"/>
+    <!--<localInspection groupName="RegExp" language="RegExp" shortName="ReDoS" displayName="Exponential backtracking" enabledByDefault="true"
+                     level="WARNING" implementationClass="org.intellij.lang.regexp.inspection.ReDoSInspection"/>-->
+    <localInspection groupName="RegExp" language="RegExp" shortName="DuplicateAlternationBranch"
+                     displayName="Duplicate branch in alternation" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.intellij.lang.regexp.inspection.DuplicateAlternationBranchInspection"/>
+    <localInspection groupName="RegExp" language="RegExp" shortName="EscapedMetaCharacter" displayName="Escaped meta character"
+                     enabledByDefault="true" level="INFORMATION"
+                     implementationClass="org.intellij.lang.regexp.inspection.EscapedMetaCharacterInspection"/>
+    <localInspection groupName="RegExp" language="RegExp" shortName="EmptyAlternationBranch" displayName="Empty branch in alternation"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.intellij.lang.regexp.inspection.EmptyAlternationBranchInspection"/>
+    <localInspection groupName="RegExp" language="RegExp" shortName="AnonymousGroup"
+                     displayName="Anonymous capturing group or numeric back reference" enabledByDefault="false" level="WARNING"
+                     implementationClass="org.intellij.lang.regexp.inspection.AnonymousGroupInspection"/>
+    <localInspection groupName="RegExp" language="RegExp" shortName="RedundantEscape"
+                     displayName="Redundant character escape" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.intellij.lang.regexp.inspection.RedundantEscapeInspection"/>
   </extensions>
 </idea-plugin>

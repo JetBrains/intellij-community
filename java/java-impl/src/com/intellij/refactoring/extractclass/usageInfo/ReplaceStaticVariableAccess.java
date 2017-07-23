@@ -30,7 +30,7 @@ public class ReplaceStaticVariableAccess extends FixableUsageInfo {
   private final PsiReferenceExpression expression;
   private final String delegateClass;
   private final boolean myEnumConstant;
-  private static final Logger LOGGER = Logger.getInstance("#" + ReplaceStaticVariableAccess.class.getName());
+  private static final Logger LOGGER = Logger.getInstance(ReplaceStaticVariableAccess.class);
 
   public ReplaceStaticVariableAccess(PsiReferenceExpression expression, String delegateClass, boolean enumConstant) {
     super(expression);

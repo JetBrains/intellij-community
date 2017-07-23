@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,11 @@ import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings;
 import org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedHighlightFilter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.HashSet;
@@ -58,8 +58,7 @@ public class GradleUnresolvedReferenceFilter extends GroovyUnresolvedHighlightFi
         PsiType type = ((GrReferenceExpression)reference).getType();
         if (type != null) {
           PsiClassType extType = createGenericType(GRADLE_API_EXTRA_PROPERTIES_EXTENSION, expression, null);
-          ConversionResult result = TypesUtil.canCast(extType, type, expression);
-          return result == ConversionResult.OK;
+          return TypeConversionUtil.areTypesConvertible(type, extType);
         }
       }
       return false;

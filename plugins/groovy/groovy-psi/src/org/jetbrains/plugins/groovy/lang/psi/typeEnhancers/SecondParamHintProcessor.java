@@ -24,9 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Created by Max Medvedev on 28/02/14
- */
 public class SecondParamHintProcessor extends ParamHintProcessor {
   public SecondParamHintProcessor() {
     super("groovy.transform.stc.SecondParam", 1, -1);

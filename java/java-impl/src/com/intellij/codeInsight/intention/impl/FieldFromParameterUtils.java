@@ -112,9 +112,9 @@ public final class FieldFromParameterUtils {
     for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(parameter.getDeclarationScope()), false)) {
       if (!(reference instanceof PsiReferenceExpression)) continue;
       final PsiReferenceExpression expression = (PsiReferenceExpression)reference;
-      if (!(expression.getParent() instanceof PsiAssignmentExpression)) continue;
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression.getParent();
-      if (assignmentExpression.getRExpression() != expression) continue;
+      PsiAssignmentExpression assignmentExpression = PsiTreeUtil.getParentOfType(expression, PsiAssignmentExpression.class, true, PsiClass.class);
+      if (assignmentExpression == null) continue;
+      if (!PsiTreeUtil.isAncestor(assignmentExpression.getRExpression(), expression, false)) continue;
       final PsiExpression lExpression = assignmentExpression.getLExpression();
       if (!(lExpression instanceof PsiReferenceExpression)) continue;
       final PsiElement element = ((PsiReferenceExpression)lExpression).resolve();

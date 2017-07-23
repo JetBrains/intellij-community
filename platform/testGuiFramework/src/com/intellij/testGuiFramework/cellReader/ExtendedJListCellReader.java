@@ -15,12 +15,16 @@
  */
 package com.intellij.testGuiFramework.cellReader;
 
+import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import org.fest.swing.cell.JListCellReader;
+import org.fest.swing.core.BasicRobot;
 import org.fest.swing.driver.BasicJListCellReader;
+import org.fest.swing.exception.ComponentLookupException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.swing.*;
+import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -36,10 +40,22 @@ public class ExtendedJListCellReader extends BasicJListCellReader implements JLi
   @Nullable
   @Override
   public String valueAt(@Nonnull JList list, int index) {
-    String readByBasicCellReader = super.valueAt(list, index);
-    if (readByBasicCellReader != null) return readByBasicCellReader;
 
     Object element = list.getModel().getElementAt(index);
+    Component cellRenComp = GuiTestUtil.getListCellRendererComponent(list, element, index);
+    if (cellRenComp instanceof JLabel) {
+      return ((JLabel)cellRenComp).getText();
+    }
+    else if (cellRenComp instanceof JPanel) {
+      try {
+        Component foundComp =
+          BasicRobot.robotWithNewAwtHierarchyWithoutScreenLock().finder().find((JPanel)cellRenComp, component -> component instanceof JLabel);
+        return ((JLabel)foundComp).getText();
+      }
+      catch (ComponentLookupException ignored) {
+      }
+    }
+
     Method getNameMethod = null;
     try {
       getNameMethod = element.getClass().getMethod("getName");

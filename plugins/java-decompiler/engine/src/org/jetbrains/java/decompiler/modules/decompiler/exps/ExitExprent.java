@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,7 +96,7 @@ public class ExitExprent extends Exprent {
       ClassNode node = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE));
 
       if (method != null && node != null) {
-        StructExceptionsAttribute attr = (StructExceptionsAttribute)method.methodStruct.getAttributes().getWithKey("Exceptions");
+        StructExceptionsAttribute attr = (StructExceptionsAttribute)method.methodStruct.getAttribute("Exceptions");
 
         if (attr != null) {
           String classname = null;

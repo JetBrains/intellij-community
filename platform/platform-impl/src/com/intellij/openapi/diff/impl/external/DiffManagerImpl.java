@@ -92,7 +92,6 @@ public class DiffManagerImpl extends DiffManager implements PersistentStateCompo
   private final List<DiffTool> myAdditionTools = new SmartList<>();
   public static final DiffTool INTERNAL_DIFF = new FrameDiffTool();
 
-  public static final Key<Boolean> EDITOR_IS_DIFF_KEY = new Key<>("EDITOR_IS_DIFF_KEY");
   private static final MarkupEditorFilter DIFF_EDITOR_FILTER = new MarkupEditorFilter() {
     @Override
     public boolean avaliableIn(Editor editor) {
@@ -129,7 +128,7 @@ public class DiffManagerImpl extends DiffManager implements PersistentStateCompo
     if (!ENABLE_FILES.value(myProperties) || !ENABLE_FOLDERS.value(myProperties) || !ENABLE_MERGE.value(myProperties)) {
       DiffTool[] embeddableTools = {
         INTERNAL_DIFF,
-        new MergeTool(),
+        MergeTool.INSTANCE,
         BinaryDiffTool.INSTANCE
       };
       standardTools = new DiffTool[]{
@@ -138,7 +137,7 @@ public class DiffManagerImpl extends DiffManager implements PersistentStateCompo
         ExtMergeFiles.INSTANCE,
         new MultiLevelDiffTool(Arrays.asList(embeddableTools)),
         INTERNAL_DIFF,
-        new MergeTool(),
+        MergeTool.INSTANCE,
         BinaryDiffTool.INSTANCE
       };
     }
@@ -148,7 +147,7 @@ public class DiffManagerImpl extends DiffManager implements PersistentStateCompo
         ExtCompareFiles.INSTANCE,
         ExtMergeFiles.INSTANCE,
         INTERNAL_DIFF,
-        new MergeTool(),
+        MergeTool.INSTANCE,
         BinaryDiffTool.INSTANCE
       };
     }

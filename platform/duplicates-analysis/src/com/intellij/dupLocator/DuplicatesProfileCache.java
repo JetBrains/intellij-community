@@ -10,13 +10,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Eugene.Kudelevsky
- * Date: May 18, 2009
- * Time: 7:39:35 PM
- * To change this template use File | Settings | File Templates.
- */
 public class DuplicatesProfileCache {
   private static final Map<DupInfo, TIntObjectHashMap<DuplicatesProfile>> ourProfileCache = new HashMap<>();
 

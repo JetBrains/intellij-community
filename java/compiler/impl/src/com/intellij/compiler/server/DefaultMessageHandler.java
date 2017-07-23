@@ -18,6 +18,7 @@ package com.intellij.compiler.server;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -25,7 +26,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -96,12 +96,9 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
     ProgressIndicatorUtils.scheduleWithWriteActionPriority(myTaskExecutor, new ReadTask() {
       @Override
       public Continuation runBackgroundProcess(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
-        return DumbService.getInstance(myProject).runReadActionInSmartMode(new Computable<Continuation>() {
-          @Override
-          public Continuation compute() {
-            doHandleConstantSearchTask(channel, sessionId, task);
-            return null;
-          }
+        return DumbService.getInstance(myProject).runReadActionInSmartMode(() -> {
+          doHandleConstantSearchTask(channel, sessionId, task);
+          return null;
         });
       }
 
@@ -140,11 +137,8 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
           "Searching for usages of changed/removed constants for class " + qualifiedName
         ).getCompileMessage());
 
-        final PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
-          public PsiClass[] compute() {
-            return JavaPsiFacade.getInstance(myProject).findClasses(qualifiedName, GlobalSearchScope.allScope(myProject));
-          }
-        });
+        final PsiClass[] classes = ReadAction
+          .compute(() -> JavaPsiFacade.getInstance(myProject).findClasses(qualifiedName, GlobalSearchScope.allScope(myProject)));
 
         try {
           if (isRemoved) {
@@ -167,20 +161,18 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
           }
           else {
             if (classes.length > 0) {
-              final Collection<PsiField> changedFields = ApplicationManager.getApplication().runReadAction(new Computable<Collection<PsiField>>() {
-                public Collection<PsiField> compute() {
-                  final List<PsiField> fields = new SmartList<>();
-                  for (PsiClass aClass : classes) {
-                    if (!aClass.isValid()) {
-                      return Collections.emptyList();
-                    }
-                    final PsiField changedField = aClass.findFieldByName(fieldName, false);
-                    if (changedField != null) {
-                      fields.add(changedField);
-                    }
+              final Collection<PsiField> changedFields = ReadAction.compute(() -> {
+                final List<PsiField> fields = new SmartList<>();
+                for (PsiClass aClass : classes) {
+                  if (!aClass.isValid()) {
+                    return Collections.emptyList();
                   }
-                  return fields;
+                  final PsiField changedField = aClass.findFieldByName(fieldName, false);
+                  if (changedField != null) {
+                    fields.add(changedField);
+                  }
                 }
+                return fields;
               });
               if (changedFields.isEmpty()) {
                 isSuccess.set(Boolean.FALSE);
@@ -313,12 +305,8 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   }
 
   private static boolean processIdentifiers(PsiSearchHelper helper, @NotNull final PsiElementProcessor<PsiIdentifier> processor, @NotNull final String identifier, @NotNull SearchScope searchScope, short searchContext) {
-    TextOccurenceProcessor processor1 = new TextOccurenceProcessor() {
-      @Override
-      public boolean execute(@NotNull PsiElement element, int offsetInElement) {
-        return !(element instanceof PsiIdentifier) || processor.execute((PsiIdentifier)element);
-      }
-    };
+    TextOccurenceProcessor processor1 =
+      (element, offsetInElement) -> !(element instanceof PsiIdentifier) || processor.execute((PsiIdentifier)element);
     SearchScope javaScope = searchScope instanceof GlobalSearchScope
                             ? GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)searchScope, JavaFileType.INSTANCE)
                             : searchScope;

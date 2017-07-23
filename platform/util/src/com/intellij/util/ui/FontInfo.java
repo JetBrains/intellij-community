@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,7 @@
  */
 package com.intellij.util.ui;
 
-import java.awt.Font;
-import java.awt.GraphicsEnvironment;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -181,9 +179,9 @@ public final class FontInfo {
       }
       int width = getFontWidth(font, Font.PLAIN);
       if (!plainOnly) {
-        if (width != getFontWidth(font, Font.BOLD)) width = 0;
-        if (width != getFontWidth(font, Font.ITALIC)) width = 0;
-        if (width != getFontWidth(font, Font.BOLD | Font.ITALIC)) width = 0;
+        if (width != 0 && width != getFontWidth(font, Font.BOLD)) width = 0;
+        if (width != 0 && width != getFontWidth(font, Font.ITALIC)) width = 0;
+        if (width != 0 && width != getFontWidth(font, Font.BOLD | Font.ITALIC)) width = 0;
       }
       return new FontInfo(name, font, width > 0);
     }

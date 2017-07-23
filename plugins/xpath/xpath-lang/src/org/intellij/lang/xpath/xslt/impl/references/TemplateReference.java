@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 06.05.2006
- * Time: 12:56:57
- */
 package org.intellij.lang.xpath.xslt.impl.references;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;

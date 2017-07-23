@@ -30,12 +30,9 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- */
 public class PsiOldInferenceHelper implements PsiInferenceHelper {
-    private static final Logger LOG = Logger.getInstance("#" + PsiOldInferenceHelper.class.getName());
-    public static final Pair<PsiType,ConstraintType> RAW_INFERENCE = new Pair<PsiType, ConstraintType>(null, ConstraintType.EQUALS);
+  private static final Logger LOG = Logger.getInstance(PsiOldInferenceHelper.class);
+    public static final Pair<PsiType,ConstraintType> RAW_INFERENCE = new Pair<>(null, ConstraintType.EQUALS);
     private final PsiManager myManager;
   
     public PsiOldInferenceHelper(PsiManager manager) {
@@ -145,13 +142,13 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
       if (lowerBound != PsiType.NULL) {
         if (!wildcardToCapture.isAssignableFrom(lowerBound)) return getFailedInferenceConstraint(typeParameter);
         if (wildcardToCapture.isSuper()) {
-          return new Pair<PsiType, ConstraintType>(wildcardToCapture, ConstraintType.SUPERTYPE);
+          return new Pair<>(wildcardToCapture, ConstraintType.SUPERTYPE);
         }
         lowerBound = GenericsUtil.getLeastUpperBound(lowerBound, wildcardToCapture, myManager);
       }
       else {
         if (upperBound != PsiType.NULL && !upperBound.isAssignableFrom(wildcardToCapture)) return getFailedInferenceConstraint(typeParameter);
-        return new Pair<PsiType, ConstraintType>(wildcardToCapture, ConstraintType.EQUALS);
+        return new Pair<>(wildcardToCapture, ConstraintType.EQUALS);
       }
     }
 
@@ -179,7 +176,8 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
   }
 
   private static Pair<PsiType, ConstraintType> getFailedInferenceConstraint(@NotNull PsiTypeParameter typeParameter) {
-    return new Pair<PsiType, ConstraintType>(JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter), ConstraintType.EQUALS);
+    return new Pair<>(JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter),
+                      ConstraintType.EQUALS);
   }
 
   @Override
@@ -512,7 +510,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
   }
 
   //represents the result of failed type inference: in case we failed inferring from parameters, do not perform inference from context
-  private static final Pair<PsiType, ConstraintType> FAILED_INFERENCE = new Pair<PsiType, ConstraintType>(PsiType.NULL, ConstraintType.EQUALS);
+  private static final Pair<PsiType, ConstraintType> FAILED_INFERENCE = new Pair<>(PsiType.NULL, ConstraintType.EQUALS);
 
   @Nullable
   private Pair<PsiType, ConstraintType> getSubstitutionForTypeParameterInner(PsiType param,

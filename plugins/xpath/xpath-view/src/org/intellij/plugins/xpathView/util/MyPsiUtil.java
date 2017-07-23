@@ -15,17 +15,17 @@
  */
 package org.intellij.plugins.xpathView.util;
 
+import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.LanguageAnnotators;
+import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationSession;
+import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.*;
-import com.intellij.lang.annotation.Annotator;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.LanguageAnnotators;
-import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,20 +42,12 @@ public class MyPsiUtil {
             contextNode = contextNode.getParent();
         }
 
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Returning context node: " + contextNode);
-        }
         assert contextNode == null || contextNode instanceof XmlElement;
         return (XmlElement)contextNode;
     }
 
     public static boolean isValidContextNode(@Nullable PsiElement contextNode) {
-        if (contextNode instanceof XmlTag) {
-            return true;
-        } else if (contextNode instanceof XmlDocument) {
-            return true;
-        }
-        return false;
+        return contextNode instanceof XmlTag || contextNode instanceof XmlDocument;
     }
 
     @NotNull

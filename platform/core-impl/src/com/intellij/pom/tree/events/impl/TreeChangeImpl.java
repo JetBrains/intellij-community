@@ -17,7 +17,6 @@
 package com.intellij.pom.tree.events.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.tree.events.ChangeInfo;
@@ -32,12 +31,9 @@ import java.util.*;
 
 public class TreeChangeImpl implements TreeChange {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.events.impl.TreeChangeImpl");
-  private final Map<ASTNode, ChangeInfo> myChanges = new THashMap<ASTNode, ChangeInfo>();
-  private final List<Pair<ASTNode,Integer>> mySortedChanges = new ArrayList<Pair<ASTNode, Integer>>(); // change, oldoffset
+  private final Map<ASTNode, ChangeInfo> myChanges = new THashMap<>();
+  private final List<Pair<ASTNode,Integer>> mySortedChanges = new ArrayList<>(); // change, oldoffset
   private final ASTNode myParent;
-
-  @SuppressWarnings("FieldMayBeFinal")
-  private static boolean ourDoChecks = ApplicationManager.getApplication().isEAP();
 
   public TreeChangeImpl(ASTNode parent) {
     myParent = parent;
@@ -126,21 +122,14 @@ public class TreeChangeImpl implements TreeChange {
     myChanges.put(child, info);
   }
 
-  private static boolean ourReportedDifferentAddChangeAtOffsetOptimization = false;
-
   private void addChangeAtOffset(final ASTNode child, final int nodeOffset) {
-    int optimizedIndex = haveNotCalculated;
-
     Pair<ASTNode, Integer> element = Pair.create(child, Integer.valueOf(nodeOffset));
 
     if (mySortedChanges.size() > 0) { // check adding at end
       Pair<ASTNode, Integer> pair = mySortedChanges.get(mySortedChanges.size() - 1);
       if (pair.getFirst() == child.getTreePrev() && pair.getSecond() <= nodeOffset) {
-        optimizedIndex = mySortedChanges.size();
-        if (!ourDoChecks) {
-          mySortedChanges.add(element);
-          return;
-        }
+        mySortedChanges.add(element);
+        return;
       }
     }
 
@@ -154,25 +143,8 @@ public class TreeChangeImpl implements TreeChange {
       index++;
     }
 
-    int insertionIndex = optimizedIndex != haveNotCalculated ? optimizedIndex:index;
-
-    if (insertionIndex == mySortedChanges.size()) mySortedChanges.add(element);
-    else mySortedChanges.add(insertionIndex, element);
-
-    if (optimizedIndex != haveNotCalculated && index != optimizedIndex && !ourReportedDifferentAddChangeAtOffsetOptimization) {
-      ASTNode prev = child.getTreePrev();
-      Pair<ASTNode, Integer> pair = mySortedChanges.get(index);
-      ChangeInfo prevChange = myChanges.get(prev);
-      ChangeInfo prevChange2 = myChanges.get(pair.getFirst());
-      LOG.error("Failed to calculate optimized index for add change at offset: prev node:"+prev + ", prev change:" + prevChange +
-                ",prev change length:" + (prevChange != null ? prevChange.getOldLength() : null) + ", prev text length:" + prev.getTextLength() +
-                ",prev offset:" + mySortedChanges.get(mySortedChanges.size() - 1).getSecond() +  ", node:" + child + ", nodeOffset:" +
-                nodeOffset + ", optimizedIndex:"+optimizedIndex + ", real index:" + index + ", same node:" + (pair.getFirst() == child) +
-                ", at place:"+ pair.getSecond() + ", node:" +pair.getFirst() + ", change:"+prevChange2 + ", prevChange oldLength:" +
-                (prevChange2 != null ? prevChange2.getOldLength():null) + ", prevchange length2:" + pair.getFirst().getTextLength() + "," +
-                toString());
-      ourReportedDifferentAddChangeAtOffsetOptimization = true;
-    }
+    if (index == mySortedChanges.size()) mySortedChanges.add(element);
+    else mySortedChanges.add(index, element);
   }
 
   private static boolean isAfter(final ASTNode what, final ASTNode afterWhat) {
@@ -348,8 +320,6 @@ public class TreeChangeImpl implements TreeChange {
 
   private static final int haveNotCalculated = -1;
 
-  private static boolean ourReportedDifferentOptimizedNodeOldOffset = false;
-
   private int getOptimizedNodeOldOffset(ASTNode child, ChangeInfo changeInfo) {
     // we usually add / remove ranges so old offset can be tried to calculate from change with previous sibling
     ASTNode prevSibling = child.getTreePrev();
@@ -366,16 +336,7 @@ public class TreeChangeImpl implements TreeChange {
                changeInfo.getChangeType() == ChangeInfo.ADD
               )
              ) {
-            int optimizedResult = pair.getSecond() + prevSiblingChange.getOldLength();
-            if (ourDoChecks && !ourReportedDifferentOptimizedNodeOldOffset) {
-              int oldOffset = calculateOldOffsetLinearly(child);
-              if (optimizedResult != oldOffset) {
-                LOG.error("Failed optimized node old offset check:"+changeInfo + ", previous:" + prevSibling + "," + prevSiblingChange);
-                ourReportedDifferentOptimizedNodeOldOffset = true;
-                optimizedResult = oldOffset;
-              }
-            }
-            return optimizedResult;
+            return pair.getSecond() + prevSiblingChange.getOldLength();
           }
         }
       }
@@ -430,11 +391,8 @@ public class TreeChangeImpl implements TreeChange {
 
   private int myLastOffsetInNewTree;
   private ASTNode myLastNode;
-  private static boolean ourReportedDifferentEnableGetNewOffset = false;
 
   private int getNewOffset(ASTNode node){
-    int optimizedResult = haveNotCalculated;
-
     ASTNode prev = node.getTreePrev();
     if (myLastNode == prev) {
       ChangeInfo prevChangeInfo = myChanges.get(prev);
@@ -446,59 +404,45 @@ public class TreeChangeImpl implements TreeChange {
           prevChangeInfo.getChangeType() == ChangeInfo.REMOVED &&
           changeInfo.getChangeType() == ChangeInfo.REMOVED
          ) {
-        optimizedResult = myLastOffsetInNewTree;
-
         myLastNode = node;
-        if (!ourDoChecks) return optimizedResult;
+        return myLastOffsetInNewTree;
       }
     }
 
     int currentOffsetInNewTree = 0;
-    try {
-      ASTNode current = myParent.getFirstChildNode();
-      int i = 0;
-      Pair<ASTNode, Integer> currentChange = i < mySortedChanges.size() ? mySortedChanges.get(i) : null;
-      int currentOldOffset = 0;
+    ASTNode current = myParent.getFirstChildNode();
+    int i = 0;
+    Pair<ASTNode, Integer> currentChange = i < mySortedChanges.size() ? mySortedChanges.get(i) : null;
+    int currentOldOffset = 0;
 
-      while(current != null) {
-        boolean counted = false;
+    while(current != null) {
+      boolean counted = false;
 
-        while(currentChange != null && currentOldOffset == currentChange.getSecond().intValue()){
-          if(currentChange.getFirst() == node) {
-            myLastNode = node;
-            myLastOffsetInNewTree = currentOffsetInNewTree;
-            return currentOffsetInNewTree;
-          }
-          if(current == currentChange.getFirst()){
-            final int textLength = current.getTextLength();
-            counted = true;
-            current = current.getTreeNext();
-            currentOffsetInNewTree += textLength;
-          }
-          final ChangeInfo changeInfo = myChanges.get(currentChange.getFirst());
-          currentOldOffset += changeInfo.getOldLength();
-          ++i;
-          currentChange = i < mySortedChanges.size() ? mySortedChanges.get(i) : null;
+      while(currentChange != null && currentOldOffset == currentChange.getSecond().intValue()){
+        if(currentChange.getFirst() == node) {
+          myLastNode = node;
+          myLastOffsetInNewTree = currentOffsetInNewTree;
+          return currentOffsetInNewTree;
         }
-
-        if(current == null) break;
-
-        if(!counted){
+        if(current == currentChange.getFirst()){
           final int textLength = current.getTextLength();
-          currentOldOffset += textLength;
+          counted = true;
           current = current.getTreeNext();
           currentOffsetInNewTree += textLength;
         }
+        final ChangeInfo changeInfo = myChanges.get(currentChange.getFirst());
+        currentOldOffset += changeInfo.getOldLength();
+        ++i;
+        currentChange = i < mySortedChanges.size() ? mySortedChanges.get(i) : null;
       }
-    }
-    finally {
-      if (optimizedResult != haveNotCalculated &&
-          optimizedResult != currentOffsetInNewTree &&
-          !ourReportedDifferentEnableGetNewOffset
-        ) {
-        LOG.error("Failed to calculate optimized getNewOffset:"+myChanges.get(node) + "," + prev + "," + myChanges.get(prev));
-        ourReportedDifferentEnableGetNewOffset = true;
-        currentOffsetInNewTree = optimizedResult; // always use optimized result
+
+      if(current == null) break;
+
+      if(!counted){
+        final int textLength = current.getTextLength();
+        currentOldOffset += textLength;
+        current = current.getTreeNext();
+        currentOffsetInNewTree += textLength;
       }
     }
 

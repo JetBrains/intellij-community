@@ -40,17 +40,21 @@ fun SourceResolver(rawSources: List<String>,
   return SourceResolver(rawSources, sourceContents) { canonicalizeUrl(it, baseUrl, trimFileScheme, baseUrlIsFile) }
 }
 
+interface SourceFileResolver {
+  fun resolve(sourceFile: VirtualFile?, map: ObjectIntHashMap<Url>): Int
+}
+
 class SourceResolver(private val rawSources: List<String>, internal val canonicalizedUrls: Array<Url>, private val sourceContents: List<String>?) {
+  companion object {
+    fun isAbsolute(path: String) = path.startsWith('/') || (SystemInfo.isWindows && (path.length > 2 && path[1] == ':'))
+  }
+
   private val canonicalizedUrlToSourceIndex: ObjectIntHashMap<Url> = if (SystemInfo.isFileSystemCaseSensitive) ObjectIntHashMap(rawSources.size) else ObjectIntHashMap(rawSources.size, Urls.getCaseInsensitiveUrlHashingStrategy())
 
   init {
     for (i in rawSources.indices) {
       canonicalizedUrlToSourceIndex.put(canonicalizedUrls[i], i)
     }
-  }
-
-  interface Resolver {
-    fun resolve(sourceFile: VirtualFile?, map: ObjectIntHashMap<Url>): Int
   }
 
   fun getSource(entry: MappingEntry): Url? {
@@ -81,59 +85,54 @@ class SourceResolver(private val rawSources: List<String>, internal val canonica
     return if (index < 0) null else rawSources[index]
   }
 
-  fun findMappings(sourceFile: VirtualFile?, sourceMap: SourceMap, resolver: Resolver): MappingList? {
-    val index = resolver.resolve(sourceFile, canonicalizedUrlToSourceIndex)
-    return if (index < 0) null else sourceMap.sourceIndexToMappings[index]
-  }
+  internal fun findSourceIndex(sourceFile: VirtualFile?, resolver: SourceFileResolver) = resolver.resolve(sourceFile, canonicalizedUrlToSourceIndex)
 
-  fun findMappings(sourceUrls: List<Url>, sourceMap: SourceMap, sourceFile: VirtualFile?): MappingList? {
+  fun findSourceIndex(sourceUrls: List<Url>, sourceFile: VirtualFile?, localFileUrlOnly: Boolean): Int {
     for (sourceUrl in sourceUrls) {
       val index = canonicalizedUrlToSourceIndex.get(sourceUrl)
       if (index != -1) {
-        return sourceMap.sourceIndexToMappings[index]
+        return index
       }
     }
 
     if (sourceFile != null) {
-      findByFile(sourceMap, sourceFile)?.let {
-        return it
-      }
+      return findSourceIndexByFile(sourceFile, localFileUrlOnly)
     }
-    return null
+    return -1
   }
 
-  fun findByFile(sourceMap: SourceMap, sourceFile: VirtualFile): MappingList? {
-    var index = canonicalizedUrlToSourceIndex.get(Urls.newFromVirtualFile(sourceFile).trimParameters())
-    if (index != -1) {
-      return sourceMap.sourceIndexToMappings[index]
+  internal fun findSourceIndexByFile(sourceFile: VirtualFile, localFileUrlOnly: Boolean): Int {
+    if (!localFileUrlOnly) {
+      val index = canonicalizedUrlToSourceIndex.get(Urls.newFromVirtualFile(sourceFile).trimParameters())
+      if (index != -1) {
+        return index
+      }
     }
 
-    if (sourceFile.isInLocalFileSystem) {
-      // local file url - without "file" scheme, just path
-      index = canonicalizedUrlToSourceIndex.get(Urls.newLocalFileUrl(sourceFile))
-      if (index != -1) {
-        return sourceMap.sourceIndexToMappings[index]
-      }
+    if (!sourceFile.isInLocalFileSystem) {
+      return -1
+    }
+
+    // local file url - without "file" scheme, just path
+    val index = canonicalizedUrlToSourceIndex.get(Urls.newLocalFileUrl(sourceFile))
+    if (index != -1) {
+      return index
     }
 
     // ok, search by canonical path
     val canonicalFile = sourceFile.canonicalFile
     if (canonicalFile != null && canonicalFile != sourceFile) {
       for (i in canonicalizedUrls.indices) {
-        val url = canonicalizedUrls[i]
+        val url = canonicalizedUrls.get(i)
         if (Urls.equalsIgnoreParameters(url, canonicalFile)) {
-          return sourceMap.sourceIndexToMappings[i]
+          return i
         }
       }
     }
-    return null
+    return -1
   }
 
   fun getUrlIfLocalFile(entry: MappingEntry) = canonicalizedUrls.getOrNull(entry.source)?.let { if (it.isInLocalFileSystem) it else null }
-
-  companion object {
-    fun isAbsolute(path: String) = path.firstOrNull() == '/' || (SystemInfo.isWindows && (path.length > 2 && path[1] == ':'))
-  }
 }
 
 fun canonicalizePath(url: String, baseUrl: Url, baseUrlIsFile: Boolean): String {
@@ -163,7 +162,11 @@ fun canonicalizeUrl(url: String, baseUrl: Url?, trimFileScheme: Boolean, baseUrl
   if (trimFileScheme && url.startsWith(StandardFileSystems.FILE_PROTOCOL_PREFIX)) {
     return Urls.newLocalFileUrl(FileUtil.toCanonicalPath(VfsUtilCore.toIdeaUrl(url, true).substring(StandardFileSystems.FILE_PROTOCOL_PREFIX.length), '/'))
   }
-  else if (baseUrl == null || url.contains(URLUtil.SCHEME_SEPARATOR) || url.startsWith("data:") || url.startsWith("blob:") || url.startsWith("javascript:")) {
+  else if (baseUrl == null || url.contains(URLUtil.SCHEME_SEPARATOR) || url.startsWith("data:") || url.startsWith("blob:") ||
+           url.startsWith("javascript:") || url.startsWith("webpack:")) {
+    // consider checking :/ instead of :// because scheme may be followed by path, not by authority
+    // https://tools.ietf.org/html/rfc3986#section-1.1.2
+    // be careful with windows paths: C:/Users
     return Urls.parseEncoded(url) ?: UrlImpl(url)
   }
   else {
@@ -177,6 +180,7 @@ fun doCanonicalize(url: String, baseUrl: Url, baseUrlIsFile: Boolean, asLocalFil
     return Urls.newLocalFileUrl(path)
   }
   else {
-    return UrlImpl(baseUrl.scheme, baseUrl.authority, path, null)
+    val split = path.split('?', limit = 2)
+    return UrlImpl(baseUrl.scheme, baseUrl.authority, split[0], if (split.size > 1) '?' + split[1] else null)
   }
 }

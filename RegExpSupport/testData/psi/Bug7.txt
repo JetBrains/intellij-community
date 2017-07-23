@@ -9,10 +9,10 @@ REGEXP_FILE
       RegExpCharImpl: <a>
         PsiElement(CHARACTER)('a')
       RegExpCharImpl: <\ >
-        PsiElement(CHARACTER)('\ ')
+        PsiElement(ESC_CTRL_CHARACTER)('\ ')
       RegExpCharImpl: <b>
         PsiElement(CHARACTER)('b')
       RegExpCharImpl: <\ >
-        PsiElement(CHARACTER)('\ ')
+        PsiElement(ESC_CTRL_CHARACTER)('\ ')
       RegExpCharImpl: <c>
         PsiElement(CHARACTER)('c')

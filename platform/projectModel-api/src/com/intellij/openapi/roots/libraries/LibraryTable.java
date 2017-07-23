@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.libraries;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +25,7 @@ import java.util.EventListener;
 import java.util.Iterator;
 
 /**
- * @see com.intellij.openapi.roots.libraries.LibraryTablesRegistrar#getLibraryTable(com.intellij.openapi.project.Project)
+ * @see LibraryTablesRegistrar#getLibraryTable(com.intellij.openapi.project.Project)
  * @author dsl
  */
 public interface LibraryTable {
@@ -47,7 +48,9 @@ public interface LibraryTable {
 
   LibraryTablePresentation getPresentation();
 
-  boolean isEditable();
+  default boolean isEditable() {
+    return true;
+  }
 
   /**
    * Returns the interface which allows to create or removed libraries from the table.
@@ -69,24 +72,35 @@ public interface LibraryTable {
 
     Library createLibrary(String name, @Nullable PersistentLibraryKind type);
 
+    Library createLibrary(String name, @Nullable PersistentLibraryKind type, @Nullable ProjectModelExternalSource externalSource);
+
     void removeLibrary(@NotNull Library library);
 
     void commit();
 
-    @NotNull Iterator<Library> getLibraryIterator();
+    @NotNull
+    Iterator<Library> getLibraryIterator();
 
     @Nullable
     Library getLibraryByName(@NotNull String name);
 
-    @NotNull Library[] getLibraries();
+    @NotNull
+    Library[] getLibraries();
 
     boolean isChanged();
   }
 
-  interface Listener extends EventListener{
-    void afterLibraryAdded (Library newLibrary);
-    void afterLibraryRenamed (Library library);
-    void beforeLibraryRemoved (Library library);
-    void afterLibraryRemoved (Library library);
+  interface Listener extends EventListener {
+    default void afterLibraryAdded(@NotNull Library newLibrary) {
+    }
+
+    default void afterLibraryRenamed(@NotNull Library library) {
+    }
+
+    default void beforeLibraryRemoved(@NotNull Library library) {
+    }
+
+    default void afterLibraryRemoved(@NotNull Library library) {
+    }
   }
 }

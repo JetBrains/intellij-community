@@ -40,14 +40,14 @@ class GroovyResolveCacheTest extends LightGroovyTestCase {
     int counter = 0
     PlatformTestUtil.registerExtension(AstTransformationSupport.EP_NAME, {
       counter++
-    } as AstTransformationSupport, testRootDisposable)
+    } as AstTransformationSupport, myFixture.testRootDisposable)
     def file = fixture.addFileToProject(
       '_.groovy', 'class Super { def foo() {} }'
     ) as GroovyFile
     def clazz = file.typeDefinitions.first()
 
     assert counter == 0
-    assert clazz.methods.size() == 1
+    assert clazz.methods.size() == 6
     assert counter == 1
 
     WriteCommandAction.runWriteCommandAction(project) {
@@ -55,7 +55,7 @@ class GroovyResolveCacheTest extends LightGroovyTestCase {
     }
 
     assert counter == 1
-    assert clazz.methods.size() == 0
+    assert clazz.methods.size() == 5
     assert counter == 2
   }
 
@@ -63,14 +63,14 @@ class GroovyResolveCacheTest extends LightGroovyTestCase {
     int counter = 0
     PlatformTestUtil.registerExtension(AstTransformationSupport.EP_NAME, {
       counter++
-    } as AstTransformationSupport, testRootDisposable)
+    } as AstTransformationSupport, myFixture.testRootDisposable)
     def file = fixture.addFileToProject(
       '_.groovy', 'class Super { def foo() { 1 } }'
     ) as GroovyFile
     def clazz = file.typeDefinitions.first()
 
     assert counter == 0
-    assert clazz.methods.size() == 1
+    assert clazz.methods.size() == 6
     assert (clazz.methods.first() as GrMethod).block.statements.size() == 1
     assert counter == 1
 
@@ -79,7 +79,7 @@ class GroovyResolveCacheTest extends LightGroovyTestCase {
     }
 
     assert counter == 1
-    assert clazz.methods.size() == 1
+    assert clazz.methods.size() == 6
     assert (clazz.methods.first() as GrMethod).block.statements.size() == 0
     assert counter == 1
   }

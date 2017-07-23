@@ -63,13 +63,9 @@ public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
   private void compile(final CompileScope scope) {
     try {
       CompilerTester tester = new CompilerTester(myProject, Arrays.asList(scope.getAffectedModules()));
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          new MavenResourceCompilerConfigurationGenerator(myProject, MavenProjectsManager.getInstance(myProject).getProjectsTreeForTests())
-            .generateBuildConfiguration(false);
-        }
-      });
+      UIUtil.invokeAndWaitIfNeeded(
+        (Runnable)() -> new MavenResourceCompilerConfigurationGenerator(myProject, MavenProjectsManager.getInstance(myProject).getProjectsTreeForTests())
+          .generateBuildConfiguration(false));
       try {
         List<CompilerMessage> messages = tester.make(scope);
         for (CompilerMessage message : messages) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,12 +46,12 @@ public abstract class LookupActionHandler extends EditorActionHandler {
   }
 
   @Override
-  public boolean executeInCommand(Editor editor, DataContext dataContext) {
+  public boolean executeInCommand(@NotNull Editor editor, DataContext dataContext) {
     return LookupManager.getActiveLookup(editor) == null;
   }
 
   @Override
-  public void doExecute(Editor editor, Caret caret, DataContext dataContext){
+  public void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext){
     LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(editor);
     if (lookup == null || !lookup.isAvailableToUser()) {
       Project project = editor.getProject();
@@ -148,7 +148,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
     @Override
     protected void executeInLookup(final LookupImpl lookup, DataContext context, Caret caret) {
-      if (!UISettings.getInstance().CYCLE_SCROLLING && !lookup.isFocused() && lookup.getList().getSelectedIndex() == 0) {
+      if (!UISettings.getInstance().getCycleScrolling() && !lookup.isFocused() && lookup.getList().getSelectedIndex() == 0) {
         myOriginalHandler.execute(lookup.getEditor(), caret, context);
         return;
       }

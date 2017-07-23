@@ -29,14 +29,6 @@ import com.intellij.util.Consumer;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 
-import java.util.List;
-
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 10/25/12
- * Time: 10:22 AM
- */
 public class SvnEditCommitMessageFromFileHistoryAction extends AnAction {
   public SvnEditCommitMessageFromFileHistoryAction() {
     super("Edit Revision Comment", "Edit revision comment. Previous message is rewritten.", AllIcons.Actions.Edit);
@@ -54,28 +46,24 @@ public class SvnEditCommitMessageFromFileHistoryAction extends AnAction {
     final SvnFileRevision svnFileRevision = (SvnFileRevision) revision;
     final Consumer<String> listener = VcsDataKeys.REMOTE_HISTORY_CHANGED_LISTENER.getData(e.getDataContext());
     SvnEditCommitMessageAction.askAndEditRevision(svnFileRevision.getRevision().getNumber(), svnFileRevision.getCommitMessage(),
-      (SvnRepositoryLocation) svnFileRevision.getChangedRepositoryPath(), project, new Consumer<String>() {
-      @Override
-      public void consume(final String newMessage) {
-        svnFileRevision.setCommitMessage(newMessage);
-        if (listener != null) {
-          listener.consume(newMessage);
-        }
-        ProjectLevelVcsManager.getInstance(project).getVcsHistoryCache().editCached(VcsUtil.getFilePath(revisionVirtualFile), vcsKey,
-          new Consumer<List<VcsFileRevision>>() {
-            @Override
-            public void consume(List<VcsFileRevision> revisions) {
-              for (VcsFileRevision fileRevision : revisions) {
-                if (! (fileRevision instanceof SvnFileRevision)) continue;
-                if (((SvnFileRevision) fileRevision).getRevision().getNumber() == svnFileRevision.getRevision().getNumber()) {
-                  ((SvnFileRevision) fileRevision).setCommitMessage(newMessage);
-                  break;
-                }
-              }
-            }
-          });
-      }
-    }, true);
+                                                  (SvnRepositoryLocation)svnFileRevision.getChangedRepositoryPath(), project,
+                                                  newMessage -> {
+                                                    svnFileRevision.setCommitMessage(newMessage);
+                                                    if (listener != null) {
+                                                      listener.consume(newMessage);
+                                                    }
+                                                    ProjectLevelVcsManager.getInstance(project).getVcsHistoryCache()
+                                                      .editCached(VcsUtil.getFilePath(revisionVirtualFile), vcsKey, revisions -> {
+                                                        for (VcsFileRevision fileRevision : revisions) {
+                                                          if (!(fileRevision instanceof SvnFileRevision)) continue;
+                                                          if (((SvnFileRevision)fileRevision).getRevision().getNumber() ==
+                                                              svnFileRevision.getRevision().getNumber()) {
+                                                            ((SvnFileRevision)fileRevision).setCommitMessage(newMessage);
+                                                            break;
+                                                          }
+                                                        }
+                                                      });
+                                                  }, true);
   }
 
   @Override

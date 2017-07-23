@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,15 +38,33 @@ public abstract class ProjectView {
   @NotNull
   public abstract ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus);
 
+  /**
+   * Changes currently selected view and subview (if any).
+   * <p>
+   * When default subview is requested:<br/>
+   * - if the view had never been selected then the first subview is selected <br/>
+   * - otherwise subview won't be changed
+   * <p>
+   * It's an error when a view has no subviews and {@code subId} is not null.
+   *
+   * @param viewId id of view to be selected
+   * @param subId  id of subview to be selected
+   * @return callback which will be set to {@link ActionCallback#setDone done} if new content was selected
+   * or to {@link ActionCallback#setRejected rejected} if content didn't change.
+   */
   @NotNull
-  public abstract ActionCallback changeViewCB(@NotNull String viewId, String subId);
+  public abstract ActionCallback changeViewCB(@NotNull String viewId, @Nullable("default subview") String subId);
 
   @Nullable
   public abstract PsiElement getParentOfCurrentSelection();
 
   // show pane identified by id using default(or currently selected) subId
   public abstract void changeView(@NotNull String viewId);
-  public abstract void changeView(@NotNull String viewId, String subId);
+
+  /**
+   * @see #changeViewCB(String, String)
+   */
+  public abstract void changeView(@NotNull String viewId, @Nullable String subId);
 
   public abstract void changeView();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.refactoring.extractclass.ExtractClassHandler;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
+import com.intellij.refactoring.introduceVariable.IntroduceFunctionalVariableHandler;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.refactoring.memberPullUp.JavaPullUpHandler;
 import com.intellij.refactoring.memberPushDown.JavaPushDownHandler;
@@ -67,7 +68,7 @@ public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
 
   @Override
   public boolean isMemberInplaceRenameAvailable(@NotNull PsiElement elementToRename, @Nullable PsiElement context) {
-    return elementToRename instanceof PsiMember;
+    return elementToRename instanceof PsiMember || elementToRename instanceof PsiJavaModule;
   }
 
   @Override
@@ -90,6 +91,11 @@ public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
   @Override
   public RefactoringActionHandler getIntroduceFunctionalParameterHandler() {
     return new IntroduceFunctionalParameterHandler();
+  }
+
+  @Override
+  public RefactoringActionHandler getIntroduceFunctionalVariableHandler() {
+    return new IntroduceFunctionalVariableHandler();
   }
 
   @Override

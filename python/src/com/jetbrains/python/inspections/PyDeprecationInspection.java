@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,15 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
 
 /**
  * @author yole
@@ -59,9 +62,7 @@ public class PyDeprecationInspection extends PyInspection {
         final PyExpression exceptClass = exceptPart.getExceptClass();
         if (exceptClass != null && "ImportError".equals(exceptClass.getText())) return;
       }
-      final PsiPolyVariantReference reference = node.getReference(getResolveContext());
-      if (reference == null) return;
-      final PsiElement resolveResult = reference.resolve();
+      final PsiElement resolveResult = node.getReference(getResolveContext()).resolve();
       final PyFromImportStatement importStatement = PsiTreeUtil.getParentOfType(node, PyFromImportStatement.class);
       if (importStatement != null) {
         final PsiElement element = importStatement.resolveImportSource();
@@ -77,6 +78,32 @@ public class PyDeprecationInspection extends PyInspection {
       if (deprecationMessage != null) {
         ASTNode nameElement = node.getNameElement();
         registerProblem(nameElement == null ? node : nameElement.getPsi(), deprecationMessage, ProblemHighlightType.LIKE_DEPRECATED);
+      }
+    }
+
+    @Override
+    public void visitPyFunction(PyFunction node) {
+      super.visitPyFunction(node);
+
+      final PyDecoratorList decoratorList = node.getDecoratorList();
+      if (LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON33) && decoratorList != null) {
+        Arrays
+          .stream(decoratorList.getDecorators())
+          .filter(
+            decorator -> PyKnownDecoratorUtil.asKnownDecorators(decorator, myTypeEvalContext).contains(KnownDecorator.ABC_ABSTRACTPROPERTY)
+          )
+          .forEach(
+            decorator -> {
+              final QualifiedName abcAbsPropertyQName = KnownDecorator.ABC_ABSTRACTPROPERTY.getQualifiedName();
+              final QualifiedName propertyQName = KnownDecorator.PROPERTY.getQualifiedName();
+              final QualifiedName abcAbsMethodQName = KnownDecorator.ABC_ABSTRACTMETHOD.getQualifiedName();
+
+              final String message = "'" + abcAbsPropertyQName + "' is deprecated since Python 3.3. " +
+                                     "Use '" + propertyQName + "' with '" + abcAbsMethodQName + "' instead.";
+
+              registerProblem(decorator, message, ProblemHighlightType.LIKE_DEPRECATED);
+            }
+          );
       }
     }
   }

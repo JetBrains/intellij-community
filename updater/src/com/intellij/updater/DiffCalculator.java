@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,15 @@ import java.io.File;
 import java.util.*;
 
 public class DiffCalculator {
-  public static Result calculate(Map<String, Long> oldChecksums, Map<String, Long> newChecksums, List<String> critical, boolean move) {
+  public static Result calculate(Map<String, Long> oldChecksums, Map<String, Long> newChecksums) {
+    return calculate(oldChecksums, newChecksums, Collections.emptyList(), Collections.emptyList(), false);
+  }
+
+  public static Result calculate(Map<String, Long> oldChecksums,
+                                 Map<String, Long> newChecksums,
+                                 List<String> critical,
+                                 List<String> optional,
+                                 boolean lookForMoved) {
     Result result = new Result();
     result.commonFiles = collect(oldChecksums, newChecksums, critical, true);
     result.filesToDelete = withAllRemoved(oldChecksums, newChecksums);
@@ -27,60 +35,71 @@ public class DiffCalculator {
     Map<String, Long> toUpdate = collect(oldChecksums, newChecksums, critical, false);
     Map<String, Long> toCreate = withAllRemoved(newChecksums, oldChecksums);
 
-    // Some creates become updates if found in different directories.
-    result.filesToCreate = new LinkedHashMap<>();
-    result.filesToUpdate = new LinkedHashMap<>();
+    result.filesToCreate = lookForMoved ? new LinkedHashMap<>() : toCreate;
 
+    result.filesToUpdate = new LinkedHashMap<>();
     for (Map.Entry<String, Long> update : toUpdate.entrySet()) {
-      result.filesToUpdate.put(update.getKey(), new Update(update.getKey(), update.getValue(), false));
+      if (Digester.isSymlink(update.getValue())) {
+        result.filesToDelete.put(update.getKey(), update.getValue());
+        result.filesToCreate.put(update.getKey(), Digester.INVALID);
+      }
+      else {
+        result.filesToUpdate.put(update.getKey(), new Update(update.getKey(), update.getValue(), false));
+      }
     }
 
-    if (move) {
-      Map<Long, String> byContent = inverse(result.filesToDelete);
+    if (lookForMoved) {
+      Map<Long, List<String>> byContent = groupFilesByContent(result.filesToDelete);
       Map<String, List<String>> byName = groupFilesByName(result.filesToDelete);
 
-      // Find first by content
       for (Map.Entry<String, Long> create : toCreate.entrySet()) {
-        boolean isDir = create.getKey().endsWith("/");
-        boolean isLink = create.getKey().endsWith(".dylib");
-        String source = byContent.get(create.getValue());
-        boolean found = false;
-        if (source != null && !isDir && !isLink) {
-          // Found a file with the same content use it, unless it's critical
-          if (!critical.contains(source)) {
-            result.filesToUpdate.put(create.getKey(), new Update(source, result.filesToDelete.get(source), true));
-            found = true;
+        if (Digester.isFile(create.getValue())) {
+          List<String> sameContent = byContent.get(create.getValue());
+          String source = findBestCandidateForMove(sameContent, create.getKey(), optional);
+          boolean move = true;
+
+          if (source == null) {
+            List<String> sameName = byName.get(new File(create.getKey()).getName());
+            source = findBestCandidateForMove(sameName, create.getKey(), optional);
+            move = false;
+          }
+
+          if (source != null && !critical.contains(source)) {
+            result.filesToUpdate.put(create.getKey(), new Update(source, result.filesToDelete.get(source), move));
+            continue;
           }
         }
-        else {
-          File fileToCreate = new File(create.getKey());
-          List<String> sameName = byName.get(fileToCreate.getName());
-          if (sameName != null && !isDir && !isLink) {
-            String best = findBestCandidateForMove(sameName, create.getKey());
-            // Found a file with the same name, if it's not critical use it, worst case as big as a create.
-            if (!critical.contains(best)) {
-              result.filesToUpdate.put(create.getKey(), new Update(best, result.filesToDelete.get(best), false));
-              found = true;
-            }
-          }
-        }
-        if (!found) {
-          // Fine, just create it.
-          result.filesToCreate.put(create.getKey(), create.getValue());
-        }
+
+        result.filesToCreate.put(create.getKey(), create.getValue());
       }
-    } else {
-      result.filesToCreate = toCreate;
     }
 
     return result;
   }
 
-  private static String findBestCandidateForMove(List<String> paths, String path) {
-    int common = 0;
+  private static int compareRootFolders(String[] dirs, String[] others) {
+    int matches = 0;
+    for (int i = 0; i < dirs.length && i < others.length; i++) {
+      if (dirs[i].equals(others[i])) {
+        matches = i + 1;
+      }
+      else {
+        break;
+      }
+    }
+    return matches;
+  }
+
+  private static String findBestCandidateForMove(List<String> paths, String path, List<String> optional) {
+    if (paths == null) return null;
+
+    boolean mandatory = !optional.contains(path);
     String best = "";
+
     String[] dirs = path.split("/");
+    int common = 0;
     for (String other : paths) {
+      if (mandatory && optional.contains(other)) continue;  // mandatory targets must not use optional sources
       String[] others = other.split("/");
       for (int i = 0; i < dirs.length && i < others.length; i++) {
         if (dirs[dirs.length - i - 1].equals(others[others.length - i - 1])) {
@@ -88,12 +107,32 @@ public class DiffCalculator {
             best = other;
             common = i + 1;
           }
-        } else {
+          // check root folders of candidates with the same matches
+          else if (i + 1 == common && compareRootFolders(dirs, best.split("/")) < compareRootFolders(dirs, other.split("/"))) {
+            best = other;
+          }
+        }
+        else {
           break;
         }
       }
     }
-    return best;
+
+    return !best.isEmpty() ? best : null;
+  }
+
+  public static Map<Long, List<String>> groupFilesByContent(Map<String, Long> map) {
+    Map<Long, List<String>> result = new HashMap<>();
+    for (Map.Entry<String, Long> entry : map.entrySet()) {
+      String path = entry.getKey();
+      if (!path.endsWith("/")) {
+        Long hash = entry.getValue();
+        List<String> paths = result.get(hash);
+        if (paths == null) result.put(hash, (paths = new LinkedList<>()));
+        paths.add(path);
+      }
+    }
+    return result;
   }
 
   private static Map<String, List<String>> groupFilesByName(Map<String, Long> toDelete) {
@@ -102,22 +141,11 @@ public class DiffCalculator {
       if (!path.endsWith("/")) {
         String name = new File(path).getName();
         List<String> paths = result.get(name);
-        if (paths == null) {
-          paths = new LinkedList<>();
-          result.put(name, paths);
-        }
+        if (paths == null) result.put(name, (paths = new LinkedList<>()));
         paths.add(path);
       }
     }
     return result;
-  }
-
-  public static Map<Long,String> inverse(Map<String, Long> map) {
-    Map<Long, String> inv = new LinkedHashMap<>();
-    for (Map.Entry<String, Long> entry : map.entrySet()) {
-      inv.put(entry.getValue(), entry.getKey());
-    }
-    return inv;
   }
 
   private static Map<String, Long> withAllRemoved(Map<String, Long> from, Map<String, Long> toRemove) {
@@ -134,10 +162,8 @@ public class DiffCalculator {
       String file = each.getKey();
       Long oldChecksum = older.get(file);
       Long newChecksum = newer.get(file);
-      if (oldChecksum != null && newChecksum != null) {
-        if ((oldChecksum.equals(newChecksum) && !critical.contains(file)) == equal) {
-          result.put(file, oldChecksum);
-        }
+      if (oldChecksum != null && newChecksum != null && (oldChecksum.equals(newChecksum) && !critical.contains(file)) == equal) {
+        result.put(file, oldChecksum);
       }
     }
     return result;

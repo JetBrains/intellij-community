@@ -1,4 +1,4 @@
-// "Replace Stream.collect(summingInt()) with Stream.mapToInt().sum()" "true"
+// "Replace 'collect(summingInt())' with 'mapToInt().sum()'" "true"
 
 import java.util.List;
 import java.util.stream.Collectors;

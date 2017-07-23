@@ -16,7 +16,6 @@
 package com.intellij.find;
 
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -63,11 +62,6 @@ public abstract class FindManager {
    * @param okHandler Will be executed after doOkAction
    */
   public abstract void showFindDialog(@NotNull FindModel model, @NotNull Runnable okHandler);
-
-  /**
-   * @see #showFindDialog(FindModel, Runnable) functionality but with "lightweight" popup and new UI instead of dialog
-   */
-  public abstract void showFindPopup(@NotNull FindModel model, DataContext dataContext);
 
   /**
    * Shows a replace prompt dialog for the specified replace operation.
@@ -140,12 +134,8 @@ public abstract class FindManager {
   public abstract int showMalformedReplacementPrompt(@NotNull FindModel model, String title, MalformedReplacementStringException exception);
 
   public static class MalformedReplacementStringException extends Exception {
-    public MalformedReplacementStringException(String s) {
-      super(s);    //To change body of overridden methods use File | Settings | File Templates.
-    }
-
     public MalformedReplacementStringException(String s, Throwable throwable) {
-      super(s, throwable);    //To change body of overridden methods use File | Settings | File Templates.
+      super(s, throwable);
     }
   }
 

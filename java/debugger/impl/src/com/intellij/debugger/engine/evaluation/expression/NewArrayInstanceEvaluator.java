@@ -115,16 +115,7 @@ class NewArrayInstanceEvaluator implements Evaluator {
       try {
         referenceType = context.isAutoLoadClasses()? debugProcess.loadClass(context, ex.className(), type.classLoader()) : null;
       }
-      catch (InvocationException e) {
-        throw EvaluateExceptionUtil.createEvaluateException(e);
-      }
-      catch (ClassNotLoadedException e) {
-        throw EvaluateExceptionUtil.createEvaluateException(e);
-      }
-      catch (IncompatibleThreadStateException e) {
-        throw EvaluateExceptionUtil.createEvaluateException(e);
-      }
-      catch (InvalidTypeException e) {
+      catch (InvocationException | InvalidTypeException | IncompatibleThreadStateException | ClassNotLoadedException e) {
         throw EvaluateExceptionUtil.createEvaluateException(e);
       }
       if (referenceType != null) {

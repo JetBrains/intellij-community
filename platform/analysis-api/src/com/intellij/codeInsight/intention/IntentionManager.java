@@ -135,6 +135,19 @@ public abstract class IntentionManager  {
   public abstract IntentionAction createFixAllIntention(InspectionToolWrapper toolWrapper, IntentionAction action);
 
   /**
+   * @return intention to start code cleanup on file
+   */
+  @NotNull
+  public abstract IntentionAction createCleanupAllIntention();
+
+  /**
+   * @return options for cleanup intention {@link #createCleanupAllIntention()}
+   * e.g. edit enabled cleanup inspections or starting cleanup on predefined scope
+   */
+  @NotNull
+  public abstract List<IntentionAction> getCleanupIntentionOptions();
+
+  /**
    * Wraps given action in a LocalQuickFix object.
    * @param action action to convert.
    * @return quick fix instance.

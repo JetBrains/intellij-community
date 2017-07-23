@@ -36,7 +36,7 @@ public class MigrateAssertToMatcherAssertTest extends JavaCodeInsightFixtureTest
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
-    moduleBuilder.addLibraryJars("test-env", PathManager.getHomePathFor(Assert.class) + "/lib", "junit-4.12.jar", "hamcrest-core-1.3.jar", "hamcrest-core-1.3.jar");
+    moduleBuilder.addLibraryJars("test-env", PathManager.getHomePathFor(Assert.class) + "/lib", "junit-4.12.jar", "hamcrest-core-1.3.jar");
   }
 
   public void testAll() {

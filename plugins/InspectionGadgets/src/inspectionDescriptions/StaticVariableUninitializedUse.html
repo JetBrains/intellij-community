@@ -1,6 +1,7 @@
 <html>
 <body>
 Reports <b>static</b> variables which are read prior to initialization.
+Equality checks with <b>null</b> are ignored by this inspection.
 <p>
 Note: This inspection uses a very conservative dataflow algorithm, and may report static variables
 used uninitialized incorrectly. Variables reported as initialized will always be initialized.

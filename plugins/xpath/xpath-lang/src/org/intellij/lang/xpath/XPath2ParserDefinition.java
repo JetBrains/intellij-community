@@ -28,11 +28,6 @@ import com.intellij.psi.tree.TokenSet;
 import org.intellij.lang.xpath.psi.impl.*;
 import org.jetbrains.annotations.NotNull;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 04.01.11
-*/
 public class XPath2ParserDefinition extends XPathParserDefinition {
   @NotNull
   @Override

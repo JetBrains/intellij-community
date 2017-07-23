@@ -35,7 +35,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -75,12 +74,7 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
       .setTitle("Select branch to compare")
       .setItemChoosenCallback(new OnBranchChooseRunnable(project, file, presentableRevisionName, list))
       .setAutoselectOnMouseMove(true)
-      .setFilteringEnabled(new Function<Object, String>() {
-        @Override
-        public String fun(Object o) {
-          return o.toString();
-        }
-      })
+      .setFilteringEnabled(o -> o.toString())
       .createPopup()
       .showCenteredInCurrentWindow(project);
   }
@@ -101,7 +95,7 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
     VirtualFile file = getIfSingle(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM));
 
     presentation.setVisible(project != null);
-    presentation.setEnabled(project != null && file != null && isEnabled(getRepositoryManager(project).getRepositoryForFile(file)));
+    presentation.setEnabled(project != null && file != null && isEnabled(getRepositoryManager(project).getRepositoryForFileQuick(file)));
   }
 
   private boolean isEnabled(@Nullable T repository) {

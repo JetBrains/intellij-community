@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.impl.source.PsiMethodImpl;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.*;
@@ -29,9 +29,7 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class InferenceFromSourceUtil {
-  static boolean shouldInferFromSource(@NotNull final PsiMethod method) {
-    if (method instanceof SyntheticElement || method instanceof LightElement) return false;
-
+  static boolean shouldInferFromSource(@NotNull PsiMethodImpl method) {
     return CachedValuesManager.getCachedValue(method, () -> CachedValueProvider.Result
       .create(calcShouldInferFromSource(method), method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
   }
@@ -92,7 +90,7 @@ public class InferenceFromSourceUtil {
   static boolean suppressNullable(PsiMethod method) {
     if (method.getParameterList().getParametersCount() == 0) return false;
 
-    for (MethodContract contract : ControlFlowAnalyzer.getMethodContracts(method)) {
+    for (StandardMethodContract contract : ControlFlowAnalyzer.getMethodContracts(method)) {
       if (contract.returnValue == MethodContract.ValueConstraint.NULL_VALUE) {
         return true;
       }

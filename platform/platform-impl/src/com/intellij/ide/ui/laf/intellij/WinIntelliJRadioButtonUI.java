@@ -16,7 +16,7 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -28,25 +28,27 @@ import java.awt.*;
 public class WinIntelliJRadioButtonUI extends DarculaRadioButtonUI {
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
+    AbstractButton b = (AbstractButton)c;
+    b.setRolloverEnabled(true);
     return new WinIntelliJRadioButtonUI();
   }
 
   @Override
   protected void paintIcon(JComponent c, Graphics2D g, Rectangle viewRect, Rectangle iconRect) {
-    final boolean selected = ((AbstractButton)c).isSelected();
-    final boolean enabled = c.isEnabled();
-    final Icon icon = MacIntelliJIconCache.getIcon("radio", selected, false, enabled);
+    AbstractButton b = (AbstractButton)c;
+    ButtonModel bm = b.getModel();
+    boolean focused = c.hasFocus() || bm.isRollover();
+    Icon icon = MacIntelliJIconCache.getIcon("radio", false, bm.isSelected(), focused, bm.isEnabled(), bm.isPressed());
+
     // Paint the radio button
-    final int x = (iconRect.width - icon.getIconWidth()) / 2;
-    final int y = (viewRect.height - icon.getIconHeight()) / 2;
+    int x = (iconRect.width - icon.getIconWidth()) / 2 + iconRect.x;
+    int y = (iconRect.height - icon.getIconHeight()) / 2 + iconRect.y;
     icon.paintIcon(c, g, x, y);
   }
 
   @Override
-  protected void paintFocus(Graphics g, Rectangle t, Dimension d) {
-    g.setColor(getFocusColor());
-    t.x -= 2; t.y -=1;
-    t.width += 3; t.height +=2;
-    UIUtil.drawDottedRectangle(g, t);
+  protected void drawText(AbstractButton b, Graphics2D g, String text, Rectangle textRect, FontMetrics fm) {
+    textRect.y -= JBUI.scale(1); // Move one pixel up
+    super.drawText(b, g, text, textRect, fm);
   }
 }

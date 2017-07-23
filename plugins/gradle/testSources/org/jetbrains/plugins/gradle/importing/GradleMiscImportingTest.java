@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.TestModuleProperties;
@@ -26,6 +27,8 @@ import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
 import java.util.Collection;
+
+import static com.intellij.util.containers.ContainerUtil.list;
 
 /**
  * @author Vladislav.Soroka
@@ -115,6 +118,20 @@ public class GradleMiscImportingTest extends GradleImportingTestCase {
     assertEquals("1.5", getBytecodeTargetLevel("project_main"));
     assertEquals("1.8", getBytecodeTargetLevel("project_test"));
 
+  }
+
+  @Test
+  public void testUnloadedModuleImport() throws Exception {
+    importProject(
+      "apply plugin: 'java'"
+    );
+    assertModules("project", "project_main", "project_test");
+
+    edt(() -> ModuleManager.getInstance(myProject).setUnloadedModules(list("project_main")));
+    assertModules("project", "project_test");
+
+    importProject();
+    assertModules("project", "project_test");
   }
 
   private LanguageLevel getLanguageLevelForModule(final String moduleName) {

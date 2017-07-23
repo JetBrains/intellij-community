@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,10 +56,6 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: 11-Jan-2006
- */
 public class ExportHTMLAction extends AnAction implements DumbAware {
   private final InspectionResultsView myView;
   @NonNls private static final String PROBLEMS = "problems";
@@ -172,9 +168,9 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       if (profileName != null) {
         element.setAttribute(InspectionApplication.PROFILE, profileName);
       }
-      JDOMUtil.writeParent(element,
-                             new File(outputDirectoryName, InspectionApplication.DESCRIPTIONS + InspectionApplication.XML_EXTENSION),
-                             CodeStyleSettingsManager.getSettings(null).getLineSeparator());
+      JDOMUtil.write(element,
+                     new File(outputDirectoryName, InspectionApplication.DESCRIPTIONS + InspectionApplication.XML_EXTENSION),
+                     CodeStyleSettingsManager.getSettings(null).getLineSeparator());
     }
     catch (IOException e) {
       ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(myView, e.getMessage()));

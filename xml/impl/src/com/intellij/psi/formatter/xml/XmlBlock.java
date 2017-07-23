@@ -316,7 +316,7 @@ public class XmlBlock extends AbstractXmlBlock {
   @Override
   public boolean isTextElement() {
     return myNode.getElementType() == XmlElementType.XML_TEXT || myNode.getElementType() == XmlTokenType.XML_DATA_CHARACTERS ||
-           myNode.getElementType() == XmlTokenType.XML_CHAR_ENTITY_REF;
+           myNode.getElementType() == XmlTokenType.XML_CHAR_ENTITY_REF || myNode.getElementType() == XmlElementType.XML_ENTITY_REF;
   }
 
   @Override

@@ -47,7 +47,7 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
       MultiMap<Repo, VcsFullCommitDetails> grouped = groupCommits(project, details, VcsShortCommitDetails::getRoot);
       if (grouped == null) return;
       actionPerformed(project, grouped);
-    }, null);
+    });
   }
 
   @Override

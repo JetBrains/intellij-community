@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
+import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -73,22 +74,24 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   @Override
-  protected void setUpInWriteAction() throws Exception {
-    super.setUpInWriteAction();
-    myProjectsManager = MavenProjectsManager.getInstance(myProject);
-    removeFromLocalRepository("test");
-  }
-
-  @Override
   protected void tearDown() throws Exception {
     try {
       Messages.setTestDialog(TestDialog.DEFAULT);
       removeFromLocalRepository("test");
-      FileUtil.delete(BuildManager.getInstance().getBuildSystemDirectory());
+      PathKt.delete(BuildManager.getInstance().getBuildSystemDirectory());
     }
     finally {
+      myProjectsManager = null;
+      myProjectsTree = null;
       super.tearDown();
     }
+  }
+
+  @Override
+  protected void setUpInWriteAction() throws Exception {
+    super.setUpInWriteAction();
+    myProjectsManager = MavenProjectsManager.getInstance(myProject);
+    removeFromLocalRepository("test");
   }
 
   protected void assertModules(String... expectedNames) {
@@ -410,13 +413,10 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
     readProjects(files, profiles);
 
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myProjectsManager.waitForResolvingCompletion();
-        myProjectsManager.scheduleImportInTests(files);
-        myProjectsManager.importProjects();
-      }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      myProjectsManager.waitForResolvingCompletion();
+      myProjectsManager.scheduleImportInTests(files);
+      myProjectsManager.importProjects();
     });
 
     for (MavenProject each : myProjectsTree.getProjects()) {
@@ -447,15 +447,12 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void waitForReadingCompletion() {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          myProjectsManager.waitForReadingCompletion();
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        myProjectsManager.waitForReadingCompletion();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
   }
@@ -474,24 +471,16 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void resolveDependenciesAndImport() {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myProjectsManager.waitForResolvingCompletion();
-        myProjectsManager.performScheduledImportInTests();
-      }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      myProjectsManager.waitForResolvingCompletion();
+      myProjectsManager.performScheduledImportInTests();
     });
   }
 
   protected void resolveFoldersAndImport() {
     myProjectsManager.scheduleFoldersResolveForAllProjects();
     myProjectsManager.waitForFoldersResolvingCompletion();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myProjectsManager.performScheduledImportInTests();
-      }
-    });
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> myProjectsManager.performScheduledImportInTests());
   }
 
   protected void resolvePlugins() {
@@ -507,12 +496,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     final MavenArtifactDownloader.DownloadResult[] unresolved = new MavenArtifactDownloader.DownloadResult[1];
 
     AsyncResult<MavenArtifactDownloader.DownloadResult> result = new AsyncResult<>();
-    result.doWhenDone(new Consumer<MavenArtifactDownloader.DownloadResult>() {
-      @Override
-      public void consume(MavenArtifactDownloader.DownloadResult unresolvedArtifacts) {
-        unresolved[0] = unresolvedArtifacts;
-      }
-    });
+    result.doWhenDone((Consumer<MavenArtifactDownloader.DownloadResult>)unresolvedArtifacts -> unresolved[0] = unresolvedArtifacts);
 
     myProjectsManager.scheduleArtifactsDownloading(projects, artifacts, true, true, result);
     myProjectsManager.waitForArtifactsDownloadingCompletion();
@@ -527,7 +511,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected void executeGoal(String relativePath, String goal) {
     VirtualFile dir = myProjectRoot.findFileByRelativePath(relativePath);
 
-    MavenRunnerParameters rp = new MavenRunnerParameters(true, dir.getPath(), Arrays.asList(goal), Collections.<String>emptyList());
+    MavenRunnerParameters rp = new MavenRunnerParameters(true, dir.getPath(), Arrays.asList(goal), Collections.emptyList());
     MavenRunnerSettings rs = new MavenRunnerSettings();
     MavenExecutor e = new MavenExternalExecutor(myProject, rp, getMavenGeneralSettings(), rs, new SoutMavenConsole());
 

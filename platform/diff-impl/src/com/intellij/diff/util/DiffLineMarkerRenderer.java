@@ -32,6 +32,7 @@ class DiffLineMarkerRenderer implements LineMarkerRendererEx {
   private final boolean myHideWithoutLineNumbers;
 
   private final boolean myEmptyRange;
+  private final boolean myFirstLine;
   private final boolean myLastLine;
 
   public DiffLineMarkerRenderer(@NotNull RangeHighlighter highlighter,
@@ -40,6 +41,7 @@ class DiffLineMarkerRenderer implements LineMarkerRendererEx {
                                 boolean resolved,
                                 boolean hideWithoutLineNumbers,
                                 boolean isEmptyRange,
+                                boolean isFirstLine,
                                 boolean isLastLine) {
     myHighlighter = highlighter;
     myDiffType = diffType;
@@ -47,6 +49,7 @@ class DiffLineMarkerRenderer implements LineMarkerRendererEx {
     myResolved = resolved;
     myHideWithoutLineNumbers = hideWithoutLineNumbers;
     myEmptyRange = isEmptyRange;
+    myFirstLine = isFirstLine;
     myLastLine = isLastLine;
   }
 
@@ -67,6 +70,11 @@ class DiffLineMarkerRenderer implements LineMarkerRendererEx {
       int endLine = editor.getDocument().getLineNumber(myHighlighter.getEndOffset()) + 1;
       y1 = DiffDrawUtil.lineToY(editor, startLine);
       y2 = myEmptyRange ? y1 : DiffDrawUtil.lineToY(editor, endLine);
+    }
+
+    if (myEmptyRange && myFirstLine) {
+      y1++;
+      y2++;
     }
 
     if (myHideWithoutLineNumbers && !editor.getSettings().isLineNumbersShown()) {

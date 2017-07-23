@@ -4,35 +4,26 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.AllowedApiFilterExtension;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
-import com.intellij.refactoring.typeMigration.TypeEvaluator;
-import com.intellij.refactoring.typeMigration.TypeMigrationReplacementUtil;
-import com.intellij.refactoring.typeMigration.rules.AtomicConversionRule;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.typeMigration.TypeMigrationVariableTypeFixProvider;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.*;
 
-import static com.intellij.psi.util.TypeConversionUtil.isBinaryOperatorApplicable;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
@@ -40,9 +31,10 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
  * @since 26-Aug-2009
  */
 public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction implements LowPriorityAction {
-  private static final Logger LOG = Logger.getInstance("#" + ConvertFieldToAtomicIntention.class.getName());
+  private static final Logger LOG = Logger.getInstance(ConvertFieldToAtomicIntention.class);
 
   private final Map<PsiType, String> myFromToMap = ContainerUtil.newHashMap();
+
   {
     myFromToMap.put(PsiType.INT, AtomicInteger.class.getName());
     myFromToMap.put(PsiType.LONG, AtomicLong.class.getName());
@@ -100,37 +92,90 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    final PsiVariable psiVariable = getVariable(element);
-    LOG.assertTrue(psiVariable != null);
+    final PsiVariable var = getVariable(element);
+    LOG.assertTrue(var != null);
 
-    final Query<PsiReference> refs = ReferencesSearch.search(psiVariable);
+    final PsiType fromType = var.getType();
+    PsiClassType toType = getMigrationTargetType(project, element, fromType);
+    if (toType == null) return;
 
-    final Set<PsiElement> elements = new HashSet<>();
-    elements.add(element);
-    for (PsiReference reference : refs) {
-      elements.add(reference.getElement());
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(var)) return;
+    addExplicitInitializer(var);
+    String toTypeCanonicalText = toType.getCanonicalText();
+    TypeMigrationVariableTypeFixProvider.runTypeMigrationOnVariable(var, toType, editor, false, false);
+    postProcessVariable(var, toTypeCanonicalText);
+  }
+
+  static void addExplicitInitializer(@NotNull PsiVariable var) {
+    PsiExpression currentInitializer = var.getInitializer();
+    if (currentInitializer != null) return;
+    final PsiType type = var.getType();
+    String initializerText = null;
+    if (PsiType.BOOLEAN.equals(type)) {
+      initializerText = "false";
     }
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(elements)) return;
+    else if (type instanceof PsiPrimitiveType) {
+      initializerText = "0";
+    }
+    if (initializerText != null) {
+      String finalInitializerText = initializerText;
+      WriteAction.run(() -> {
+        PsiExpression initializer = JavaPsiFacade.getElementFactory(var.getProject()).createExpressionFromText(finalInitializerText, var);
+        if (var instanceof PsiLocalVariable) {
+          ((PsiLocalVariable)var).setInitializer(initializer);
+        }
+        else if (var instanceof PsiField) {
+          ((PsiField)var).setInitializer(initializer);
+        }
+      });
+    }
+  }
 
-    psiVariable.normalizeDeclaration();
+  static void postProcessVariable(@NotNull PsiVariable var, @NotNull String toType) {
 
-    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    final PsiType fromType = psiVariable.getType();
-    PsiClassType toType;
+    Project project = var.getProject();
+    if (var instanceof PsiField || CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS) {
+      PsiModifierList modifierList = assertNotNull(var.getModifierList());
+      WriteAction.run(() -> {
+        if (var.getInitializer() == null) {
+          final PsiExpression newInitializer = JavaPsiFacade.getElementFactory(project).createExpressionFromText("new " + toType + "()", var);
+          if (var instanceof PsiLocalVariable) {
+            ((PsiLocalVariable)var).setInitializer(newInitializer);
+          }
+          else if (var instanceof PsiField) {
+            ((PsiField)var).setInitializer(newInitializer);
+          }
+          JavaCodeStyleManager.getInstance(var.getProject()).shortenClassReferences(var.getInitializer());
+        }
+
+        modifierList.setModifierProperty(PsiModifier.FINAL, true);
+        modifierList.setModifierProperty(PsiModifier.VOLATILE, false);
+
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(var);
+        CodeStyleManager.getInstance(project).reformat(var);
+      });
+    }
+  }
+
+  @Nullable
+  private PsiClassType getMigrationTargetType(@NotNull Project project,
+                                              @NotNull PsiElement element,
+                                              @NotNull PsiType fromType) {
+    JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+    PsiElementFactory factory = psiFacade.getElementFactory();
     final String atomicQualifiedName = myFromToMap.get(fromType);
     if (atomicQualifiedName != null) {
       final PsiClass atomicClass = psiFacade.findClass(atomicQualifiedName, GlobalSearchScope.allScope(project));
       if (atomicClass == null) {//show warning
-        return;
+        return null;
       }
-      toType = factory.createType(atomicClass);
+      return factory.createType(atomicClass);
     }
     else if (fromType instanceof PsiArrayType) {
       final PsiClass atomicReferenceArrayClass =
         psiFacade.findClass(AtomicReferenceArray.class.getName(), GlobalSearchScope.allScope(project));
       if (atomicReferenceArrayClass == null) {//show warning
-        return;
+        return null;
       }
       final Map<PsiTypeParameter, PsiType> substitutor = ContainerUtil.newHashMap();
       final PsiTypeParameter[] typeParameters = atomicReferenceArrayClass.getTypeParameters();
@@ -139,12 +184,12 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
         if (componentType instanceof PsiPrimitiveType) componentType = ((PsiPrimitiveType)componentType).getBoxedType(element);
         substitutor.put(typeParameters[0], componentType);
       }
-      toType = factory.createType(atomicReferenceArrayClass, factory.createSubstitutor(substitutor));
+      return factory.createType(atomicReferenceArrayClass, factory.createSubstitutor(substitutor));
     }
     else {
       final PsiClass atomicReferenceClass = psiFacade.findClass(AtomicReference.class.getName(), GlobalSearchScope.allScope(project));
       if (atomicReferenceClass == null) {//show warning
-        return;
+        return null;
       }
       final Map<PsiTypeParameter, PsiType> substitutor = ContainerUtil.newHashMap();
       final PsiTypeParameter[] typeParameters = atomicReferenceClass.getTypeParameters();
@@ -153,88 +198,12 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
         if (type instanceof PsiPrimitiveType) type = ((PsiPrimitiveType)fromType).getBoxedType(element);
         substitutor.put(typeParameters[0], type);
       }
-      toType = factory.createType(atomicReferenceClass, factory.createSubstitutor(substitutor));
-    }
-
-    try {
-      for (PsiReference reference : refs) {
-        PsiElement refElement = reference.getElement();
-        PsiElement psiElement = refElement;
-        if (psiElement instanceof PsiExpression) {
-          final PsiElement parent = psiElement.getParent();
-          if (parent instanceof PsiExpression && !(parent instanceof PsiReferenceExpression || parent instanceof PsiPolyadicExpression)) {
-            psiElement = parent;
-          }
-          if (psiElement instanceof PsiBinaryExpression) {
-            PsiBinaryExpression binary = (PsiBinaryExpression)psiElement;
-            if (isBinaryOpApplicable(binary.getOperationTokenType(), binary.getLOperand(), binary.getROperand(), refElement, toType)) {
-              continue;
-            }
-          }
-          else if (psiElement instanceof PsiAssignmentExpression) {
-            final PsiAssignmentExpression assignment = (PsiAssignmentExpression)psiElement;
-            final IElementType opSign = TypeConversionUtil.convertEQtoOperation(assignment.getOperationTokenType());
-            if (isBinaryOpApplicable(opSign, assignment.getLExpression(), assignment.getRExpression(), refElement, toType)) {
-              continue;
-            }
-          }
-          final TypeConversionDescriptor directConversion = AtomicConversionRule.findDirectConversion(psiElement, toType, fromType);
-          if (directConversion != null) {
-            TypeMigrationReplacementUtil.replaceExpression((PsiExpression)psiElement, project, directConversion, new TypeEvaluator(null, null));
-          }
-        }
-      }
-
-      PsiExpression initializer = psiVariable.getInitializer();
-      if (initializer != null) {
-        if (initializer instanceof PsiArrayInitializerExpression) {
-          PsiExpression normalizedExpr =
-            RefactoringUtil.createNewExpressionFromArrayInitializer((PsiArrayInitializerExpression)initializer, psiVariable.getType());
-          initializer = (PsiExpression)initializer.replace(normalizedExpr);
-        }
-        final TypeConversionDescriptor directConversion = AtomicConversionRule.wrapWithNewExpression(toType, fromType, initializer, element);
-        if (directConversion != null) {
-          TypeMigrationReplacementUtil.replaceExpression(initializer, project, directConversion, new TypeEvaluator(null, null));
-        }
-      }
-      else if (!assertNotNull(psiVariable.getModifierList()).hasModifierProperty(PsiModifier.FINAL)) {
-        final PsiExpression newInitializer = factory.createExpressionFromText("new " + toType.getCanonicalText() + "()", psiVariable);
-        if (psiVariable instanceof PsiLocalVariable) {
-          ((PsiLocalVariable)psiVariable).setInitializer(newInitializer);
-        }
-        else if (psiVariable instanceof PsiField) {
-          ((PsiField)psiVariable).setInitializer(newInitializer);
-        }
-        JavaCodeStyleManager.getInstance(project).shortenClassReferences(psiVariable.getInitializer());
-      }
-
-      PsiElement replaced = assertNotNull(psiVariable.getTypeElement()).replace(factory.createTypeElement(toType));
-      JavaCodeStyleManager.getInstance(project).shortenClassReferences(replaced);
-
-      if (psiVariable instanceof PsiField || CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS) {
-        final PsiModifierList modifierList = assertNotNull(psiVariable.getModifierList());
-        modifierList.setModifierProperty(PsiModifier.FINAL, true);
-        modifierList.setModifierProperty(PsiModifier.VOLATILE, false);
-      }
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
+      return factory.createType(atomicReferenceClass, factory.createSubstitutor(substitutor));
     }
   }
 
   @Override
   public boolean startInWriteAction() {
-    return true;
-  }
-
-  private static boolean isBinaryOpApplicable(@Nullable IElementType opSign,
-                                              @NotNull PsiExpression lExpr,
-                                              @Nullable PsiExpression rExpr,
-                                              @NotNull PsiElement varElement,
-                                              @NotNull PsiType migrationType) {
-    if (opSign == null || rExpr == null) return false;
-    PsiType lType = lExpr == varElement ? migrationType : lExpr.getType();
-    PsiType rType = rExpr == varElement ? migrationType : rExpr.getType();
-    return isBinaryOperatorApplicable(opSign, lType, rType, true);
+    return false;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,12 @@ package com.intellij.openapi.editor;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Producer;
@@ -35,6 +38,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class EditorModificationUtil {
+  public static final Key<String> READ_ONLY_VIEW_MESSAGE_KEY = Key.create("READ_ONLY_VIEW_MESSAGE_KEY");
+
   private EditorModificationUtil() { }
 
   public static void deleteSelectedText(Editor editor) {
@@ -95,17 +100,6 @@ public class EditorModificationUtil {
   }
 
   private static int insertStringAtCaretNoScrolling(Editor editor, @NotNull String s, boolean toProcessOverwriteMode, boolean toMoveCaret, int caretShift) {
-    final SelectionModel selectionModel = editor.getSelectionModel();
-    if (selectionModel.hasSelection()) {
-      VisualPosition startPosition = selectionModel.getSelectionStartPosition();
-      if (editor.isColumnMode() && editor.getCaretModel().supportsMultipleCarets() && startPosition != null) {
-        editor.getCaretModel().moveToVisualPosition(startPosition);
-      }
-      else {
-        editor.getCaretModel().moveToOffset(selectionModel.getSelectionStart(), true);
-      }
-    }
-
     // There is a possible case that particular soft wraps become hard wraps if the caret is located at soft wrap-introduced virtual
     // space, hence, we need to give editor a chance to react accordingly.
     editor.getSoftWrapModel().beforeDocumentChangeAtCaret();
@@ -117,6 +111,7 @@ public class EditorModificationUtil {
     }
 
     Document document = editor.getDocument();
+    SelectionModel selectionModel = editor.getSelectionModel();
     if (editor.isInsertMode() || !toProcessOverwriteMode) {
       if (selectionModel.hasSelection()) {
         oldOffset = selectionModel.getSelectionStart();
@@ -190,8 +185,7 @@ public class EditorModificationUtil {
     try {
       return (String)content.getTransferData(DataFlavor.stringFlavor);
     }
-    catch (UnsupportedFlavorException ignore) { }
-    catch (IOException ignore) { }
+    catch (UnsupportedFlavorException | IOException ignore) { }
 
     return null;
   }
@@ -323,7 +317,7 @@ public class EditorModificationUtil {
   }
 
   /**
-   * Inserts given string at each caret's position. Effective caret shift will be equal to <code>caretShift</code> for each caret.
+   * Inserts given string at each caret's position. Effective caret shift will be equal to {@code caretShift} for each caret.
    */
   public static void typeInStringAtCaretHonorMultipleCarets(final Editor editor, @NotNull final String str, final boolean toProcessOverwriteMode, final int caretShift)
     throws ReadOnlyFragmentModificationException
@@ -411,5 +405,18 @@ public class EditorModificationUtil {
       return false;
     }
     return true;
+  }
+
+  /**
+   * @return true when not viewer
+   *         false otherwise, additionally information hint with warning would be shown
+   */
+  public static boolean checkModificationAllowed(Editor editor) {
+    if (!editor.isViewer()) return true;
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() || editor instanceof TextComponentEditor) return false;
+
+    String data = READ_ONLY_VIEW_MESSAGE_KEY.get(editor);
+    HintManager.getInstance().showInformationHint(editor, data == null ? EditorBundle.message("editing.viewer.hint") : data);
+    return false;
   }
 }

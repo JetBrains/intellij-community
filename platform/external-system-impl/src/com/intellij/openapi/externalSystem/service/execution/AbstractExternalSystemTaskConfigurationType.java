@@ -12,6 +12,7 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.service.ui.DefaultExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -145,7 +146,8 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
       projectName = null;
     }
     else {
-      projectName = ExternalSystemApiUtil.getProjectRepresentationName(externalProjectPath, rootProjectPath);
+      final ExternalSystemUiAware uiAware = ExternalSystemUiUtil.getUiAware(externalSystemId);
+      projectName = uiAware.getProjectRepresentationName(project, externalProjectPath, rootProjectPath);
     }
     if (!StringUtil.isEmptyOrSpaces(projectName)) {
       buffer.append(projectName);

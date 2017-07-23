@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,9 +39,9 @@ import java.util.Map;
 public class GroovyConsoleStateService implements PersistentStateComponent<GroovyConsoleStateService.MyState> {
 
   public static class Entry {
-    public String url;
-    public String moduleName;
-    public String title;
+    public @Nullable String url;
+    public @Nullable String moduleName;
+    public @Nullable String title;
   }
 
   public static class MyState {
@@ -50,8 +50,7 @@ public class GroovyConsoleStateService implements PersistentStateComponent<Groov
 
   private final ModuleManager myModuleManager;
   private final VirtualFileManager myFileManager;
-  private final Map<VirtualFile, Pair<Module, String>> myFileModuleMap =
-    Collections.synchronizedMap(ContainerUtil.<VirtualFile, Pair<Module, String>>newHashMap());
+  private final Map<VirtualFile, Pair<Module, String>> myFileModuleMap = Collections.synchronizedMap(ContainerUtil.newHashMap());
 
   public GroovyConsoleStateService(ModuleManager manager, VirtualFileManager fileManager) {
     myModuleManager = manager;
@@ -82,11 +81,12 @@ public class GroovyConsoleStateService implements PersistentStateComponent<Groov
     synchronized (myFileModuleMap) {
       myFileModuleMap.clear();
       for (Entry entry : state.list) {
+        if (entry.url == null) continue;
         final VirtualFile file = myFileManager.findFileByUrl(entry.url);
-        final Module module = myModuleManager.findModuleByName(entry.moduleName);
-        if (file != null) {
-          myFileModuleMap.put(file, Pair.create(module, entry.title));
-        }
+        if (file == null) continue;
+        String moduleName = entry.moduleName;
+        final Module module = moduleName == null ? null : myModuleManager.findModuleByName(moduleName);
+        myFileModuleMap.put(file, Pair.create(module, entry.title));
       }
     }
   }

@@ -49,11 +49,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 18.07.2007
- */
 public class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidator.MyValidationMessageConsumer,RngSchemaValidator.MyValidationMessageConsumer> {
   private static final Logger LOG = Logger.getInstance(RngSchemaValidator.class.getName());
 

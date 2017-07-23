@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 05-Feb-2007
- */
 package com.intellij.lang.properties.psi;
 
 import com.intellij.codeInsight.CodeInsightBundle;

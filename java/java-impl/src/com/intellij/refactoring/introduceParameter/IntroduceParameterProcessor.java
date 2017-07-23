@@ -21,7 +21,6 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -52,7 +51,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntArrayList;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -337,7 +335,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
         String descr = RefactoringBundle.message("there.is.already.a.0.it.will.conflict.with.an.introduced.parameter",
                                                  RefactoringUIUtil.getDescription(variable, true));
 
-        conflict = Pair.<PsiElement, String>create(variable, CommonRefactoringUtil.capitalize(descr));
+        conflict = Pair.create(variable, CommonRefactoringUtil.capitalize(descr));
       }
     }
 
@@ -460,7 +458,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     }
 
     if (isReplaceDuplicates()) {
-      ApplicationManager.getApplication().invokeLater(() -> processMethodsDuplicates(), ModalityState.NON_MODAL, myProject.getDisposed());
+      ApplicationManager.getApplication().invokeLater(() -> processMethodsDuplicates(), myProject.getDisposed());
     }
   }
 
@@ -471,7 +469,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   private void processMethodsDuplicates() {
     final Runnable runnable = () -> {
       if (!myMethodToReplaceIn.isValid()) return;
-      MethodDuplicatesHandler.invokeOnScope(myProject, Collections.<PsiMember>singleton(myMethodToReplaceIn),
+      MethodDuplicatesHandler.invokeOnScope(myProject, Collections.singleton(myMethodToReplaceIn),
                                             new AnalysisScope(myMethodToReplaceIn.getContainingFile()), true);
     };
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(runnable), "Search method duplicates...", true, myProject);
@@ -582,16 +580,16 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
 
   private void removeParametersFromCall(final PsiExpressionList argList) {
     final PsiExpression[] exprs = argList.getExpressions();
-    myParametersToRemove.forEachDescending(new TIntProcedure() {
-      public boolean execute(final int paramNum) {
+    myParametersToRemove.forEachDescending(paramNum -> {
+      if (paramNum < exprs.length) {
         try {
           exprs[paramNum].delete();
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
         }
-        return true;
       }
+      return true;
     });
   }
 

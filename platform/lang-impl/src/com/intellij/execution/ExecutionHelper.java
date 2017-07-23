@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ public class ExecutionHelper {
     @NotNull final List<? extends Exception> errors,
     @NotNull final String tabDisplayName,
     @Nullable final VirtualFile file) {
-    showExceptions(myProject, errors, Collections.<Exception>emptyList(), tabDisplayName, file);
+    showExceptions(myProject, errors, Collections.emptyList(), tabDisplayName, file);
   }
 
   public static void showExceptions(
@@ -319,11 +319,11 @@ public class ExecutionHelper {
 
   private static void descriptorToFront(@NotNull final Project project, @NotNull final RunContentDescriptor descriptor) {
     ApplicationManager.getApplication().invokeLater(() -> {
-      ToolWindow toolWindow = ExecutionManager.getInstance(project).getContentManager().getToolWindowByDescriptor(descriptor);
+      RunContentManager manager = ExecutionManager.getInstance(project).getContentManager();
+      ToolWindow toolWindow = manager.getToolWindowByDescriptor(descriptor);
       if (toolWindow != null) {
         toolWindow.show(null);
-        //noinspection ConstantConditions
-        toolWindow.getContentManager().setSelectedContent(descriptor.getAttachedContent());
+        manager.selectRunContent(descriptor);
       }
     }, project.getDisposed());
   }
@@ -347,10 +347,10 @@ public class ExecutionHelper {
     executeExternalProcess(myProject, processHandler, mode, cmdline.getCommandLineString());
   }
 
-  public static void executeExternalProcess(@Nullable final Project myProject,
-                                            @NotNull final ProcessHandler processHandler,
-                                            @NotNull final ExecutionMode mode,
-                                            @NotNull final String presentableCmdline) {
+  private static void executeExternalProcess(@Nullable final Project myProject,
+                                             @NotNull final ProcessHandler processHandler,
+                                             @NotNull final ExecutionMode mode,
+                                             @NotNull final String presentableCmdline) {
     final String title = mode.getTitle() != null ? mode.getTitle() : "Please wait...";
     final Runnable process;
     if (mode.cancelable()) {

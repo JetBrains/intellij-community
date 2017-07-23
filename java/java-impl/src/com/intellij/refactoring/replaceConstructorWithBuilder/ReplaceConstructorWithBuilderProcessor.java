@@ -311,7 +311,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
     }
     
     if (myMoveDestination != null && myCreateNewBuilderClass) {
-      myMoveDestination.analyzeModuleConflicts(Collections.<PsiElement>emptyList(), conflicts, refUsages.get());
+      myMoveDestination.analyzeModuleConflicts(Collections.emptyList(), conflicts, refUsages.get());
     }
 
     final PsiMethod commonConstructor = getMostCommonConstructor();

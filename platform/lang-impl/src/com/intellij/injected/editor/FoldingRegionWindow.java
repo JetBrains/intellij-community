@@ -21,9 +21,6 @@ import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: cdr
- */
 class FoldingRegionWindow extends RangeMarkerWindow implements FoldRegion {
   private final EditorWindow myEditorWindow;
 

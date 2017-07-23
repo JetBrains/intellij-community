@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,10 +32,9 @@ import com.intellij.debugger.impl.SimpleStackFrameContext;
 import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.ui.impl.watch.LocalVariableDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiVariable;
@@ -92,7 +91,7 @@ class LocalVariableEvaluator implements Evaluator {
 
           // try to look in slots
           try {
-            Map<DecompiledLocalVariable, Value> vars = LocalVariablesUtil.fetchValues(frameProxy, process);
+            Map<DecompiledLocalVariable, Value> vars = LocalVariablesUtil.fetchValues(frameProxy, process, true);
             for (Map.Entry<DecompiledLocalVariable, Value> entry : vars.entrySet()) {
               DecompiledLocalVariable var = entry.getKey();
               if (var.getMatchedNames().contains(myLocalVariableName) || var.getDefaultName().equals(myLocalVariableName)) {
@@ -198,7 +197,7 @@ class LocalVariableEvaluator implements Evaluator {
     if (place == null) {
       return null;
     }
-    return ApplicationManager.getApplication().runReadAction((Computable<PsiVariable>)() ->
+    return ReadAction.compute(() ->
       JavaPsiFacade.getInstance(project).getResolveHelper().resolveReferencedVariable(name, place));
   }
 

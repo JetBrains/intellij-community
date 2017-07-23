@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Kirill Likhodedov
  */
-enum GitChangeType {
+public enum GitChangeType {
   MODIFIED('M'),
   ADDED('A'),
   COPIED('C'),

@@ -10,6 +10,31 @@ public class DuplicateCondition {
     } else if (<warning descr="Duplicate condition 'b'">b</warning>) {}
   }
 
+  void x2(boolean b, boolean c) {
+    if(<warning descr="Duplicate condition 'b'">b</warning> || c) {
+      System.out.println("ok");
+      return;
+    }
+    if(<warning descr="Duplicate condition 'b'">b</warning>) {
+      System.out.println("ok");
+    } else {
+      if(<warning descr="Duplicate condition 'b'">b</warning>) {
+        System.out.println("ok");
+      }
+    }
+  }
+
+  public void test(int x, int y) {
+    if(<warning descr="Duplicate condition 'x < y'">x < y</warning>) {
+      System.out.println("first");
+      return;
+    }
+    if(<warning descr="Duplicate condition 'y > x'">y > x</warning>) {
+      System.out.println("second");
+      return;
+    }
+  }
+
   public void foo()
   {
     if(<warning descr="Duplicate condition 'bar()'">bar()</warning>||<warning descr="Duplicate condition 'bar()'">bar()</warning>)

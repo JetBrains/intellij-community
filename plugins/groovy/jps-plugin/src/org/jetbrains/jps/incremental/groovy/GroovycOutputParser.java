@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,8 +45,8 @@ import java.util.Map;
 public class GroovycOutputParser {
   private static final String GROOVY_COMPILER_IN_OPERATION = "Groovy compiler in operation...";
   public static final String GRAPE_ROOT = "grape.root";
-  private final List<OutputItem> myCompiledItems = new ArrayList<OutputItem>();
-  private final List<CompilerMessage> compilerMessages = new ArrayList<CompilerMessage>();
+  private final List<OutputItem> myCompiledItems = new ArrayList<>();
+  private final List<CompilerMessage> compilerMessages = new ArrayList<>();
   private final StringBuffer stdErr = new StringBuffer();
   private final ModuleChunk myChunk;
   private final CompileContext myContext;
@@ -191,11 +190,7 @@ public class GroovycOutputParser {
   }
 
   private static List<String> splitAndTrim(String compiled) {
-    return ContainerUtil.map(StringUtil.split(compiled, GroovyRtConstants.SEPARATOR), new Function<String, String>() {
-      public String fun(String s) {
-        return s.trim();
-      }
-    });
+    return ContainerUtil.map(StringUtil.split(compiled, GroovyRtConstants.SEPARATOR), s -> s.trim());
   }
 
   public List<OutputItem> getSuccessfullyCompiled() {
@@ -214,7 +209,7 @@ public class GroovycOutputParser {
   }
 
   public List<CompilerMessage> getCompilerMessages() {
-    ArrayList<CompilerMessage> messages = new ArrayList<CompilerMessage>(compilerMessages);
+    ArrayList<CompilerMessage> messages = new ArrayList<>(compilerMessages);
     final StringBuffer unparsedBuffer = getStdErr();
     if (unparsedBuffer.length() != 0) {
       String msg = unparsedBuffer.toString();

@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 20-Jul-2006
- * Time: 18:26:01
- */
 package com.intellij.ide.severities;
 
 import com.intellij.lang.annotation.HighlightSeverity;

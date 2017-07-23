@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +53,7 @@ import java.util.NoSuchElementException;
 
 public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSearchSupply {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.SpeedSearchBase");
+
   private SearchPopup mySearchPopup;
   private JLayeredPane myPopupLayeredPane;
   protected final Comp myComponent;
@@ -63,7 +63,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   private SpeedSearchComparator myComparator = new SpeedSearchComparator(false);
   private boolean myClearSearchOnNavigateNoMatch = false;
 
-  @NonNls protected static final String ENTERED_PREFIX_PROPERTY_NAME = "enteredPrefix";
   private Disposable myListenerDisposable;
 
   public SpeedSearchBase(Comp component) {
@@ -231,7 +230,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       if (isMatchingElement(element, _s)) return element;
     }
 
-    if (UISettings.getInstance().CYCLE_SCROLLING) {
+    if (UISettings.getInstance().getCycleScrolling()) {
       final ListIterator<Object> i = getElementIterator(0);
       while (i.hasNext()) {
         final Object element = i.next();
@@ -259,7 +258,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       if (isMatchingElement(element, _s)) return element;
     }
 
-    if (UISettings.getInstance().CYCLE_SCROLLING) {
+    if (UISettings.getInstance().getCycleScrolling()) {
       final ListIterator<Object> i = getElementIterator(getElementCount());
       while (i.hasPrevious()) {
         final Object element = i.previous();
@@ -551,15 +550,17 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       project = null;
     }
     if (mySearchPopup != null) {
-      myPopupLayeredPane.remove(mySearchPopup);
-      myPopupLayeredPane.validate();
-      myPopupLayeredPane.repaint();
-      myPopupLayeredPane = null;
+      if (myPopupLayeredPane != null) {
+        myPopupLayeredPane.remove(mySearchPopup);
+        myPopupLayeredPane.validate();
+        myPopupLayeredPane.repaint();
+        myPopupLayeredPane = null;
+      }
 
       if (myListenerDisposable != null) {
         Disposer.dispose(myListenerDisposable);
+        myListenerDisposable = null;
       }
-      myListenerDisposable = null;
     }
     else if (searchPopup != null) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("ui.tree.speedsearch");

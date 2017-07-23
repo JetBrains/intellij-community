@@ -82,12 +82,9 @@ public class ReformatBeforeCheckinHandler extends CheckinHandler implements Chec
     final VcsConfiguration configuration = VcsConfiguration.getInstance(myProject);
     final Collection<VirtualFile> files = myPanel.getVirtualFiles();
 
-    final Runnable performCheckoutAction = new Runnable() {
-      @Override
-      public void run() {
-        FileDocumentManager.getInstance().saveAllDocuments();
-        finishAction.run();
-      }
+    final Runnable performCheckoutAction = () -> {
+      FileDocumentManager.getInstance().saveAllDocuments();
+      finishAction.run();
     };
 
     if (reformat(configuration, true) && !DumbService.isDumb(myProject)) {

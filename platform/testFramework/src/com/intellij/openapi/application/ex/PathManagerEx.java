@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: mike
- * Date: Aug 19, 2002
- * Time: 8:21:52 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.PathManager;
@@ -29,11 +21,9 @@ import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.module.impl.ModulePath;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.Parameterized;
 import com.intellij.testFramework.TestRunnerUtil;
-import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import junit.framework.TestCase;
@@ -58,7 +48,7 @@ public class PathManagerEx {
   /**
    * All IDEA project files may be logically divided by the following criteria:
    * <ul>
-   *   <li>files that are contained at <code>'community'</code> directory;</li>
+   *   <li>files that are contained at {@code 'community'} directory;</li>
    *   <li>all other files;</li>
    * </ul>
    * <p/>
@@ -84,35 +74,35 @@ public class PathManagerEx {
    */
   public enum TestDataLookupStrategy {
     /**
-     * Stands for algorithm that retrieves <code>'test data'</code> stored at the <code>'ultimate'</code> project level assuming
-     * that it's used from the test running in context of <code>'ultimate'</code> project as well.
+     * Stands for algorithm that retrieves {@code 'test data'} stored at the {@code 'ultimate'} project level assuming
+     * that it's used from the test running in context of {@code 'ultimate'} project as well.
      * <p/>
-     * Is assumed to be default strategy for all <code>'ultimate'</code> tests.
+     * Is assumed to be default strategy for all {@code 'ultimate'} tests.
      */
     ULTIMATE,
 
     /**
-     * Stands for algorithm that retrieves <code>'test data'</code> stored at the <code>'community'</code> project level assuming
-     * that it's used from the test running in context of <code>'community'</code> project as well.
+     * Stands for algorithm that retrieves {@code 'test data'} stored at the {@code 'community'} project level assuming
+     * that it's used from the test running in context of {@code 'community'} project as well.
      * <p/>
-     * Is assumed to be default strategy for all <code>'community'</code> tests.
+     * Is assumed to be default strategy for all {@code 'community'} tests.
      */
     COMMUNITY,
 
     /**
-     * Stands for algorithm that retrieves <code>'test data'</code> stored at the <code>'community'</code> project level assuming
-     * that it's used from the test running in context of <code>'ultimate'</code> project.
+     * Stands for algorithm that retrieves {@code 'test data'} stored at the {@code 'community'} project level assuming
+     * that it's used from the test running in context of {@code 'ultimate'} project.
      */
     COMMUNITY_FROM_ULTIMATE
   }
 
   /**
-   * It's assumed that test data location for both <code>community</code> and <code>ultimate</code> tests follows the same template:
+   * It's assumed that test data location for both {@code community} and {@code ultimate} tests follows the same template:
    * <code>'<IDEA_HOME>/<RELATIVE_PATH>'</code>.
    * <p/>
-   * <code>'IDEA_HOME'</code> here stands for path to IDEA installation; <code>'RELATIVE_PATH'</code> defines a path to
-   * test data relative to IDEA installation path. That relative path may be different for <code>community</code>
-   * and <code>ultimate</code> tests.
+   * {@code 'IDEA_HOME'} here stands for path to IDEA installation; {@code 'RELATIVE_PATH'} defines a path to
+   * test data relative to IDEA installation path. That relative path may be different for {@code community}
+   * and {@code ultimate} tests.
    * <p/>
    * This collection contains mappings from test group type to relative paths to use, i.e. it's possible to define more than one
    * relative path for the single test group. It's assumed that path definition algorithm iterates them and checks if
@@ -159,8 +149,8 @@ public class PathManagerEx {
    * <b>Note:</b> this method receives explicit class argument in order to solve the following limitation - we analyze calling
    * stack trace in order to guess test data lookup strategy ({@link #guessTestDataLookupStrategyOnClassLocation()}). However,
    * there is a possible case that super-class method is called on sub-class object. Stack trace shows super-class then.
-   * There is a possible situation that actual test is <code>'ultimate'</code> but its abstract super-class is
-   * <code>'community'</code>, hence, test data lookup is performed incorrectly. So, this method should be called from abstract
+   * There is a possible situation that actual test is {@code 'ultimate'} but its abstract super-class is
+   * {@code 'community'}, hence, test data lookup is performed incorrectly. So, this method should be called from abstract
    * base test class if its concrete sub-classes doesn't explicitly occur at stack trace.
    *
    *
@@ -185,7 +175,7 @@ public class PathManagerEx {
   /**
    * @return path to 'community' project home if {@code testClass} is located in the community project and path to 'ultimate' project otherwise
    */
-  public static String getHomePath(Class<? extends TestCase> testClass) {
+  public static String getHomePath(Class<?> testClass) {
     TestDataLookupStrategy strategy = isLocatedInCommunity() ? TestDataLookupStrategy.COMMUNITY : determineLookupStrategy(testClass);
     return strategy == TestDataLookupStrategy.COMMUNITY_FROM_ULTIMATE ? getCommunityHomePath() : PathManager.getHomePath();
   }
@@ -334,10 +324,7 @@ public class PathManagerEx {
     try {
       return Class.forName(className, true, classLoader);
     }
-    catch (NoClassDefFoundError e) {
-      return null;
-    }
-    catch (ClassNotFoundException e) {
+    catch (NoClassDefFoundError | ClassNotFoundException e) {
       return null;
     }
   }
@@ -410,14 +397,11 @@ public class PathManagerEx {
       Element element = JDomSerializationUtil.findComponent(JDOMUtil.load(modulesXml), ModuleManagerImpl.COMPONENT_NAME);
       assert element != null;
       for (ModulePath file : ModuleManagerImpl.getPathsToModuleFiles(element)) {
-        ourCommunityModules.add(FileUtil.getNameWithoutExtension(PathUtil.getFileName(file.getPath())));
+        ourCommunityModules.add(file.getModuleName());
       }
       return ourCommunityModules;
     }
-    catch (JDOMException e) {
-      throw new RuntimeException("Cannot read modules from " + modulesXml.getAbsolutePath(), e);
-    }
-    catch (IOException e) {
+    catch (JDOMException | IOException e) {
       throw new RuntimeException("Cannot read modules from " + modulesXml.getAbsolutePath(), e);
     }
   }
@@ -435,7 +419,7 @@ public class PathManagerEx {
    * Tries to check test data lookup strategy by target test data directories availability.
    * <p/>
    * Such an approach has a drawback that it doesn't work correctly at number of scenarios, e.g. when
-   * <code>'community'</code> test is executed under <code>'ultimate'</code> project.
+   * {@code 'community'} test is executed under {@code 'ultimate'} project.
    *
    * @return    test data lookup strategy based on target test data directories availability
    */

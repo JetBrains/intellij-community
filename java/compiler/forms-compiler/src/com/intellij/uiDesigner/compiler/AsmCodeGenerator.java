@@ -49,6 +49,8 @@ public class AsmCodeGenerator {
   private String myClassToBind;
   private byte[] myPatchedData;
 
+  private Method myGetFontMethod;
+
   private static final Map myContainerLayoutCodeGenerators = new HashMap();
   private static final Map myComponentLayoutCodeGenerators = new HashMap();
   private static final Map myPropertyCodeGenerators = new LinkedHashMap();  // need LinkedHashMap for deterministic iteration
@@ -57,6 +59,7 @@ public class AsmCodeGenerator {
   public static final String CREATE_COMPONENTS_METHOD_NAME = "createUIComponents";
   public static final String LOAD_LABEL_TEXT_METHOD = "$$$loadLabelText$$$";
   public static final String LOAD_BUTTON_TEXT_METHOD = "$$$loadButtonText$$$";
+  public static final String GET_FONT_METHOD_NAME = "$$$getFont$$$";
 
   private static final Type ourButtonGroupType = Type.getType(ButtonGroup.class);
   private static final Type ourBorderFactoryType = Type.getType(BorderFactory.class);
@@ -228,7 +231,7 @@ public class AsmCodeGenerator {
     return Type.getType("L" + className.replace('.', '/') + ";");
   }
 
-  class FormClassVisitor extends ClassVisitor {
+  class FormClassVisitor extends ClassVisitor implements GetFontMethodProvider {
     private String myClassName;
     private String mySuperName;
     private final Map myFieldDescMap = new HashMap();
@@ -310,6 +313,11 @@ public class AsmCodeGenerator {
       final String rootBinding = myRootContainer.getComponent(0).getBinding();
       if (rootBinding != null && myFieldDescMap.containsKey(rootBinding)) {
         buildGetRootComponenMethod();
+      }
+
+      if (myGetFontMethod != null) {
+        FontPropertyCodeGenerator
+          .buildGetFontMethod(new GeneratorAdapter(Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC, myGetFontMethod, null, null, cv));
       }
 
       for (Iterator iterator = myPropertyCodeGenerators.values().iterator(); iterator.hasNext();) {
@@ -553,7 +561,8 @@ public class AsmCodeGenerator {
         final PropertyCodeGenerator propGen = (PropertyCodeGenerator) myPropertyCodeGenerators.get(propertyClass);
 
         try {
-          if (propGen != null && propGen.generateCustomSetValue(lwComponent, componentClass, property, generator, componentLocal, myClassName)) {
+          if (propGen != null &&
+              propGen.generateCustomSetValue(lwComponent, componentClass, property, generator, this, componentLocal, myClassName)) {
             continue;
           }
         }
@@ -772,7 +781,16 @@ public class AsmCodeGenerator {
       }
     }
 
-    private Type getMainClassType() {
+    @Override
+    public Method getFontMethod() {
+      if (myGetFontMethod == null) {
+        myGetFontMethod = FontPropertyCodeGenerator.createGetFontMethod();
+      }
+      return myGetFontMethod;
+    }
+
+    @Override
+    public Type getMainClassType() {
       return Type.getType("L" + myClassName + ";");
     }
 
@@ -879,7 +897,7 @@ public class AsmCodeGenerator {
         generator.push((String) null);
       }
       else {
-        FontPropertyCodeGenerator.generatePushFont(generator, componentLocal, container, font, "getFont", null);
+        FontPropertyCodeGenerator.generatePushFont(generator, this, componentLocal, container, font, "getFont", null);
       }
       if (container.getBorderTitleColor() == null) {
         generator.push((String) null);

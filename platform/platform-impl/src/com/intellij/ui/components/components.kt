@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
 import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.util.FontUtil
 import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.SwingHelper.addHistoryOnExpansion
 import com.intellij.util.ui.UIUtil
@@ -59,6 +60,10 @@ fun Label(text: String, style: UIUtil.ComponentStyle? = null, fontColor: UIUtil.
     label.font = label.font.deriveFont(Font.BOLD)
   }
 
+  // surrounded by space to avoid false match
+  if (text.contains(" -> ")) {
+    label.text = text.replace(" -> ", " ${FontUtil.rightArrow(label.font)} ")
+  }
   return label
 }
 

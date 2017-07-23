@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,17 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.lang.ASTFactory;
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * A helper class to implement quick-fix which collects removed comments from the PSI and can restore them at once.
@@ -30,7 +35,7 @@ import java.util.List;
  * @author Tagir Valeev
  */
 public class CommentTracker {
-  private List<PsiElement> ignoredParents = new ArrayList<>();
+  private Set<PsiElement> ignoredParents = new HashSet<>();
   private List<PsiComment> comments = new ArrayList<>();
 
   /**
@@ -42,7 +47,7 @@ public class CommentTracker {
    */
   public @NotNull String text(@NotNull PsiElement element) {
     checkState();
-    ignoredParents.add(element);
+    addIgnored(element);
     return element.getText();
   }
 
@@ -56,7 +61,7 @@ public class CommentTracker {
    */
   public @NotNull <T extends PsiElement> T markUnchanged(@NotNull T element) {
     checkState();
-    ignoredParents.add(element);
+    addIgnored(element);
     return element;
   }
 
@@ -205,16 +210,15 @@ public class CommentTracker {
       PsiElement parent = anchor.getParent();
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(anchor.getProject());
       for(PsiComment comment : comments) {
+        if (shouldIgnore(comment)) continue;
         PsiElement added = parent.addBefore(factory.createCommentFromText(comment.getText(), anchor), anchor);
         PsiElement prevSibling = added.getPrevSibling();
-        if(prevSibling instanceof PsiWhiteSpace) {
-          PsiWhiteSpace whiteSpaceBefore = (PsiWhiteSpace)prevSibling;
+        if (prevSibling instanceof PsiWhiteSpace) {
+          ASTNode whiteSpaceBefore = normalizeWhiteSpace((PsiWhiteSpace)prevSibling);
           PsiElement prev = anchor.getPrevSibling();
+          parent.getNode().addChild(whiteSpaceBefore, anchor.getNode());
           if (prev instanceof PsiWhiteSpace) {
-            prev.replace(whiteSpaceBefore);
-          }
-          else {
-            parent.addBefore(whiteSpaceBefore, anchor);
+            prev.delete();
           }
         }
       }
@@ -222,10 +226,25 @@ public class CommentTracker {
     comments = null;
   }
 
+  @NotNull
+  private static ASTNode normalizeWhiteSpace(PsiWhiteSpace whiteSpace) {
+    String text = whiteSpace.getText();
+    int endLPos = text.lastIndexOf('\n');
+    if(text.lastIndexOf('\n', endLPos-1) >= 0) {
+      // has at least two line breaks
+      return ASTFactory.whitespace(text.substring(endLPos));
+    }
+    return ASTFactory.whitespace(text);
+  }
+
+  private boolean shouldIgnore(PsiComment comment) {
+    return ignoredParents.stream().anyMatch(p -> PsiTreeUtil.isAncestor(p, comment, false));
+  }
+
   private void grabComments(PsiElement element) {
     checkState();
     for(PsiComment comment : PsiTreeUtil.collectElementsOfType(element, PsiComment.class)) {
-      if(ignoredParents.stream().noneMatch(parent -> PsiTreeUtil.isAncestor(parent, comment, false))) {
+      if (!shouldIgnore(comment)) {
         comments.add(comment);
       }
     }
@@ -235,5 +254,92 @@ public class CommentTracker {
     if(comments == null) {
       throw new IllegalStateException(getClass().getSimpleName()+" has been already used");
     }
+  }
+
+  private void addIgnored(PsiElement element) {
+    if(element instanceof LeafPsiElement && !(element instanceof PsiComment)) return;
+    ignoredParents.add(element);
+  }
+
+  public static String textWithSurroundingComments(PsiElement element) {
+    Predicate<PsiElement> commentOrWhiteSpace = e -> e instanceof PsiComment || e instanceof PsiWhiteSpace;
+    List<PsiElement> prev = StreamEx.iterate(element.getPrevSibling(), commentOrWhiteSpace, PsiElement::getPrevSibling).toList();
+    List<PsiElement> next = StreamEx.iterate(element.getNextSibling(), commentOrWhiteSpace, PsiElement::getNextSibling).toList();
+    if(StreamEx.of(prev, next).flatCollection(Function.identity()).anyMatch(PsiComment.class::isInstance)) {
+      return StreamEx.ofReversed(prev).append(element).append(next).map(PsiElement::getText).joining();
+    }
+    return element.getText();
+  }
+
+  /**
+   * Returns a string containing all the comments (possibly with some white-spaces) between given elements
+   * (not including given elements themselves). This method also deletes all the comments actually used
+   * in the returned string.
+   *
+   * @param start start element
+   * @param end   end element, must strictly follow the start element and be located in the same file
+   *              (though possibly on another hierarchy level)
+   * @return a string containing all the comments between start and end.
+   */
+  @NotNull
+  public static String commentsBetween(@NotNull PsiElement start, @NotNull PsiElement end) {
+    PsiElement parent = PsiTreeUtil.findCommonParent(start, end);
+    if (parent == null) {
+      throw new IllegalStateException("Common parent is not found: [" + start + ".." + end + "]");
+    }
+    PsiElement cur = next(start, parent);
+    List<PsiComment> comments = new ArrayList<>();
+    while (cur != null && !PsiTreeUtil.isAncestor(cur, end, false)) {
+      comments.addAll(PsiTreeUtil.findChildrenOfType(cur, PsiComment.class));
+      if (cur instanceof PsiComment) {
+        comments.add((PsiComment)cur);
+      }
+      cur = next(cur, parent);
+    }
+    if (cur == null) {
+      throw new IllegalStateException("End is not reached: [" + start + ".." + end + "]");
+    }
+    PsiElement tail = prev(end, cur);
+    Deque<PsiComment> tailComments = new ArrayDeque<>();
+    while (tail != null) {
+      PsiTreeUtil.findChildrenOfType(tail, PsiComment.class).forEach(tailComments::addFirst);
+      if (cur instanceof PsiComment) {
+        comments.add((PsiComment)cur);
+      }
+      tail = prev(tail, cur);
+    }
+    comments.addAll(tailComments);
+    StringBuilder sb = new StringBuilder();
+    for (PsiComment comment : comments) {
+      PsiElement prev = prev(comment, parent);
+      if (prev instanceof PsiWhiteSpace) {
+        sb.append(prev.getText());
+      }
+      sb.append(comment.getText());
+      PsiElement next = next(comment, parent);
+      if (next instanceof PsiWhiteSpace) {
+        sb.append(next.getText());
+      }
+      comment.delete();
+    }
+    return sb.toString();
+  }
+
+  private static PsiElement next(PsiElement cur, PsiElement stopAtParent) {
+    if (cur == stopAtParent) return null;
+    PsiElement next = cur.getNextSibling();
+    if (next != null) return next;
+    PsiElement parent = cur.getParent();
+    if (parent == stopAtParent) return null;
+    return next(parent, stopAtParent);
+  }
+
+  private static PsiElement prev(PsiElement cur, PsiElement stopAtParent) {
+    if (cur == stopAtParent) return null;
+    PsiElement prev = cur.getPrevSibling();
+    if (prev != null) return prev;
+    PsiElement parent = cur.getParent();
+    if (parent == stopAtParent || parent == null) return null;
+    return prev(parent, stopAtParent);
   }
 }

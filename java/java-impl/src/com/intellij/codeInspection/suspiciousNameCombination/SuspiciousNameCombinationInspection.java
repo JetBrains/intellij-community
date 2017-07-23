@@ -17,13 +17,20 @@
 package com.intellij.codeInspection.suspiciousNameCombination;
 
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ui.ListTable;
+import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.AddEditDeleteListPanel;
+import com.intellij.ui.IdeBorderFactory;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.ui.UiUtils;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
+import java.awt.*;
+import java.util.Arrays;
 
 /**
  * @author yole
@@ -34,12 +41,22 @@ public class SuspiciousNameCombinationInspection extends SuspiciousNameCombinati
 
   @Override @Nullable
   public JComponent createOptionsPanel() {
-    return new MyOptionsPanel();
+    NameGroupsPanel nameGroupsPanel = new NameGroupsPanel();
+    ListTable table = new ListTable(new ListWrappingTableModel(
+      Arrays.asList(myIgnoredMethods.getClassNames(), myIgnoredMethods.getMethodNamePatterns()),
+      InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title"),
+      InspectionGadgetsBundle.message("result.of.method.call.ignored.method.column.title")));
+    JPanel tablePanel = UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.class"));
+    JPanel panel = new JPanel(new GridLayout(2, 1));
+    panel.add(nameGroupsPanel);
+    tablePanel.setBorder(IdeBorderFactory.createTitledBorder("Ignore methods", false));
+    panel.add(tablePanel);
+    return panel;
   }
 
-  private class MyOptionsPanel extends AddEditDeleteListPanel<String> {
+  private class NameGroupsPanel extends AddEditDeleteListPanel<String> {
 
-    public MyOptionsPanel() {
+    public NameGroupsPanel() {
       super(InspectionsBundle.message("suspicious.name.combination.options.title"), myNameGroups);
       myListModel.addListDataListener(new ListDataListener() {
         @Override
@@ -79,7 +96,7 @@ public class SuspiciousNameCombinationInspection extends SuspiciousNameCombinati
     private void saveChanges() {
       clearNameGroups();
       for(int i=0; i<myListModel.getSize(); i++) {
-        addNameGroup((String) myListModel.getElementAt(i));
+        addNameGroup(myListModel.getElementAt(i));
       }
     }
   }

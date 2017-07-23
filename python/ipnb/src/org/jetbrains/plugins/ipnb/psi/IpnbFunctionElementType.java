@@ -2,7 +2,6 @@ package org.jetbrains.plugins.ipnb.psi;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.stubs.IStubElementType;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.stubs.PyFunctionElementType;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
@@ -25,7 +24,7 @@ public class IpnbFunctionElementType extends PyFunctionElementType {
   }
 
   @Override
-  protected IStubElementType getStubElementType() {
-    return IpnbPyTokenTypes.IPNB_FUNCTION;
+  public boolean shouldCreateStub(ASTNode node) {
+    return false;
   }
 }

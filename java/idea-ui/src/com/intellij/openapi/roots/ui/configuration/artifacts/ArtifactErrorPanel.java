@@ -18,16 +18,18 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ConfigurationErrorQuickFix;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemType;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
@@ -36,14 +38,18 @@ import java.util.List;
  * @author nik
  */
 public class ArtifactErrorPanel {
-  private JPanel myMainPanel;
-  private JButton myFixButton;
-  private JLabel myErrorLabel;
+  private final JPanel myMainPanel;
+  private final JButton myFixButton;
+  private final JLabel myErrorLabel;
   private List<? extends ConfigurationErrorQuickFix> myCurrentQuickFixes;
   private String myErrorText;
 
   public ArtifactErrorPanel(final ArtifactEditorImpl artifactEditor) {
-    myErrorLabel.setIcon(AllIcons.RunConfigurations.ConfigurationWarning);
+    myMainPanel = new JPanel(new BorderLayout());
+    myErrorLabel = new JLabel();
+    myMainPanel.add(myErrorLabel, BorderLayout.CENTER);
+    myFixButton = new JButton();
+    myMainPanel.add(myFixButton, BorderLayout.EAST);
     new UiNotifyConnector(myMainPanel, new Activatable.Adapter() {
       @Override
       public void showNotify() {
@@ -86,9 +92,12 @@ public class ArtifactErrorPanel {
     artifactEditor.queueValidation();
   }
 
-  public void showError(@NotNull String message, @NotNull List<? extends ConfigurationErrorQuickFix> quickFixes) {
+  public void showError(@NotNull String message, @NotNull ProjectStructureProblemType.Severity severity,
+                        @NotNull List<? extends ConfigurationErrorQuickFix> quickFixes) {
     myErrorLabel.setVisible(true);
-    final String errorText = XmlStringUtil.wrapInHtml(message);
+    myErrorLabel.setIcon(severity == ProjectStructureProblemType.Severity.ERROR ? AllIcons.General.Error :
+                         severity == ProjectStructureProblemType.Severity.WARNING ? AllIcons.General.Warning : AllIcons.General.Information);
+    final String errorText = UIUtil.toHtml(message);
     if (myErrorLabel.isShowing()) {
       myErrorLabel.setText(errorText);
     }

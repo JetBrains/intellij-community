@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,11 @@ import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JavaSdkVersion
+import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
@@ -38,7 +40,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
@@ -47,15 +48,15 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.sun.tools.doclint.DocLint
 import java.io.File
 
-class JavadocHtmlLintAnnotator(private val manual: Boolean = false) :
-    ExternalAnnotator<JavadocHtmlLintAnnotator.Info, JavadocHtmlLintAnnotator.Result>() {
-
+class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info, JavadocHtmlLintAnnotator.Result>() {
   data class Info(val file: PsiFile)
   data class Anno(val row: Int, val col: Int, val error: Boolean, val message: String)
   data class Result(val annotations: List<Anno>)
 
+  override fun getPairedBatchInspectionShortName() = JavadocHtmlLintInspection.SHORT_NAME
+
   override fun collectInformation(file: PsiFile): Info? =
-      if (isJava8SourceFile(file) && "/**" in file.text && isToolEnabled(file)) Info(file) else null
+      if (isJava8SourceFile(file) && "/**" in file.text) Info(file) else null
 
   override fun doAnnotate(collectedInfo: Info): Result? {
     val file = collectedInfo.file.virtualFile!!
@@ -95,10 +96,7 @@ class JavadocHtmlLintAnnotator(private val manual: Boolean = false) :
         if (element != null && PsiTreeUtil.getParentOfType(element, PsiDocComment::class.java) != null) {
           val range = adjust(element, text, offset)
           val description = StringUtil.capitalize(message)
-          val annotation = when (error) {
-            true -> holder.createErrorAnnotation(range, description)
-            false -> holder.createWarningAnnotation(range, description)
-          }
+          val annotation = if (error) holder.createErrorAnnotation(range, description) else holder.createWarningAnnotation(range, description)
           registerFix(annotation)
         }
       }
@@ -106,12 +104,6 @@ class JavadocHtmlLintAnnotator(private val manual: Boolean = false) :
   }
 
   //<editor-fold desc="Helpers">
-
-  private val jdk = lazy {
-    var jdkHome = File(System.getProperty("java.home"))
-    if (jdkHome.name == "jre") jdkHome = jdkHome.parentFile
-    JavaSdk.getInstance().createJdk("(internal JDK)", jdkHome.path)
-  }
 
   private val key = lazy { HighlightDisplayKey.find(JavadocHtmlLintInspection.SHORT_NAME) }
 
@@ -121,9 +113,6 @@ class JavadocHtmlLintAnnotator(private val manual: Boolean = false) :
   private fun isJava8SourceFile(file: PsiFile) =
       file is PsiJavaFile && file.languageLevel.isAtLeast(LanguageLevel.JDK_1_8) &&
       file.virtualFile != null && ProjectFileIndex.SERVICE.getInstance(file.project).isInSourceContent(file.virtualFile)
-
-  private fun isToolEnabled(file: PsiFile) =
-      manual || InspectionProjectProfileManager.getInstance(file.project).currentProfile.isToolEnabled(key.value, file)
 
   private fun createTempFile(bytes: ByteArray): File {
     val tempFile = FileUtil.createTempFile(File(PathManager.getTempPath()), "javadocHtmlLint", ".java")
@@ -137,8 +126,10 @@ class JavadocHtmlLintAnnotator(private val manual: Boolean = false) :
     val jdk = findJdk(file, project)
     parameters.jdk = jdk
 
-    val toolsJar = File("${jdk.homePath}/lib/tools.jar")
-    if (toolsJar.exists()) parameters.classPath.add(toolsJar.path)
+    if (!JavaSdkUtil.isJdkAtLeast(jdk, JavaSdkVersion.JDK_1_9)) {
+      val toolsJar = FileUtil.findFirstThatExist("${jdk.homePath}/lib/tools.jar", "${jdk.homePath}/../lib/tools.jar")
+      if (toolsJar != null) parameters.classPath.add(toolsJar.path)
+    }
 
     parameters.charset = file.charset
     parameters.vmParametersList.addProperty("user.language", "en")
@@ -146,11 +137,7 @@ class JavadocHtmlLintAnnotator(private val manual: Boolean = false) :
     parameters.programParametersList.add(lintOptions)
     parameters.programParametersList.add(copy.path)
 
-    val cmd = parameters.toCommandLine()
-    val exeFile = File(cmd.exePath)
-    if (!exeFile.exists()) cmd.exePath = File(exeFile.parentFile.parentFile, "jre/bin/${exeFile.name}").path
-
-    return cmd
+    return parameters.toCommandLine()
   }
 
   private fun findJdk(file: VirtualFile, project: Project): Sdk {
@@ -165,13 +152,11 @@ class JavadocHtmlLintAnnotator(private val manual: Boolean = false) :
     val sdk = rootManager.projectSdk
     if (isJdk8(sdk)) return sdk!!
 
-    return jdk.value
+    return JavaAwareProjectJdkTableImpl.getInstanceEx().internalJdk
   }
 
   private fun isJdk8(sdk: Sdk?) =
-      sdk != null &&
-      sdk.sdkType is JavaSdk && (sdk.sdkType as JavaSdk).isOfVersionOrHigher(sdk, JavaSdkVersion.JDK_1_8) &&
-      JavaSdk.checkForJdk(File(sdk.homePath))
+    sdk != null && JavaSdkUtil.isJdkAtLeast(sdk, JavaSdkVersion.JDK_1_8) && JdkUtil.checkForJre(sdk.homePath!!)
 
   private fun parse(lines: List<String>): List<Anno> {
     val result = mutableListOf<Anno>()

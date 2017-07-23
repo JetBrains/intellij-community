@@ -1,0 +1,7 @@
+{
+  "anyOne": {
+    "a112": 9,
+    "b111": 9,
+    <warning descr="Property 'ccc' is not allowed">"ccc": true</warning>
+  }
+}

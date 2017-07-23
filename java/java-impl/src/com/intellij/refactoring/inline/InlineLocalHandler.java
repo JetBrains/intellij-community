@@ -34,9 +34,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.AnalysisCanceledException;
 import com.intellij.psi.controlFlow.DefUseUtil;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -46,6 +47,7 @@ import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
@@ -83,7 +85,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
 
     final List<PsiElement> innerClassesWithUsages = Collections.synchronizedList(new ArrayList<PsiElement>());
     final List<PsiElement> innerClassUsages = Collections.synchronizedList(new ArrayList<PsiElement>());
-    final PsiClass containingClass = PsiTreeUtil.getParentOfType(local, PsiClass.class);
+    final PsiElement containingClass = PsiTreeUtil.getParentOfType(local, PsiClass.class, PsiLambdaExpression.class);
     final Query<PsiReference> query = ReferencesSearch.search(local);
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       if (query.findFirst() == null){
@@ -125,12 +127,24 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       return;
     }
 
-    final PsiExpression defToInline = getDefToInline(local, innerClassesWithUsages.isEmpty() ? refExpr : innerClassesWithUsages.get(0), containerBlock);
-    if (defToInline == null){
-      final String key = refExpr == null ? "variable.has.no.initializer" : "variable.has.no.dominating.definition";
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message(key, localName));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
-      return;
+    final PsiExpression defToInline;
+    try {
+      defToInline = getDefToInline(local, innerClassesWithUsages.isEmpty() ? refExpr : innerClassesWithUsages.get(0), containerBlock, true);
+      if (defToInline == null){
+        final String key = refExpr == null ? "variable.has.no.initializer" : "variable.has.no.dominating.definition";
+        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message(key, localName));
+        CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
+        return;
+      }
+    }
+    catch (RuntimeException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof AnalysisCanceledException) {
+        CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("extract.method.control.flow.analysis.failed")),
+                                            REFACTORING_NAME, HelpID.INLINE_VARIABLE);
+        return;
+      }
+      throw e;
     }
 
     List<PsiElement> refsToInlineList = new ArrayList<>();
@@ -260,7 +274,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
           }
         });
 
-        if (inlineAll.get() && ReferencesSearch.search(local).findFirst() == null) {
+        if (inlineAll.get() && ReferencesSearch.search(local).findFirst() == null && editor != null) {
           QuickFixFactory.getInstance().createRemoveUnusedVariableFix(local).invoke(project, editor, local.getContainingFile());
         }
 
@@ -283,7 +297,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       }
     };
 
-    CommandProcessor.getInstance().executeCommand(project, runnable, RefactoringBundle.message("inline.command", localName), null);
+    CommandProcessor.getInstance().executeCommand(project, () -> PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(runnable), RefactoringBundle.message("inline.command", localName), null);
   }
 
   @Nullable
@@ -295,27 +309,13 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
         if (((PsiArrayAccessExpression)parent).getIndexExpression() == element) continue;
         if (defToInline instanceof PsiExpression && !(defToInline instanceof PsiNewExpression)) continue;
         element = parent;
-        parent = parent.getParent();
       }
 
-      if (parent instanceof PsiAssignmentExpression && element == ((PsiAssignmentExpression)parent).getLExpression()
-          || isUnaryWriteExpression(parent)) {
-
+      if (RefactoringUtil.isAssignmentLHS(element)) {
         return element;
       }
     }
     return null;
-  }
-
-  private static boolean isUnaryWriteExpression(PsiElement parent) {
-    IElementType tokenType = null;
-    if (parent instanceof PsiPrefixExpression) {
-      tokenType = ((PsiPrefixExpression)parent).getOperationTokenType();
-    }
-    if (parent instanceof PsiPostfixExpression) {
-      tokenType = ((PsiPostfixExpression)parent).getOperationTokenType();
-    }
-    return tokenType == JavaTokenType.PLUSPLUS || tokenType == JavaTokenType.MINUSMINUS;
   }
 
   private static boolean isSameDefinition(final PsiElement def, final PsiExpression defToInline) {
@@ -331,14 +331,15 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
   @Nullable
   static PsiExpression getDefToInline(final PsiVariable local,
                                       final PsiElement refExpr,
-                                      final PsiCodeBlock block) {
+                                      final PsiCodeBlock block,
+                                      final boolean rethrow) {
     if (refExpr != null) {
       PsiElement def;
       if (refExpr instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression) refExpr)) {
         def = refExpr;
       }
       else {
-        final PsiElement[] defs = DefUseUtil.getDefs(block, local, refExpr);
+        final PsiElement[] defs = DefUseUtil.getDefs(block, local, refExpr, rethrow);
         if (defs.length == 1) {
           def = defs[0];
         }

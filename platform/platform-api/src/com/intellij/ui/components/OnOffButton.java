@@ -24,62 +24,67 @@ import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicToggleButtonUI;
 import java.awt.*;
+import java.util.Locale;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class OnOffButton extends JToggleButton {
-  private String myOnText;
-  private String myOffText;
+  private String myOnText = "ON";
+  private String myOffText = "OFF";
+
   public OnOffButton() {
-    setUI(OnOffButtonUI.createUI(this));
-    setOpaque(false);
     setBorder(null);
+    setOpaque(false);
   }
 
   public String getOnText() {
-    return myOnText == null ? "ON" : myOnText;
+    return myOnText;
   }
 
+  @SuppressWarnings("unused")
   public void setOnText(String onText) {
     myOnText = onText;
   }
 
   public String getOffText() {
-    return myOffText == null ? "OFF" : myOffText;
+    return myOffText;
   }
 
+  @SuppressWarnings("unused")
   public void setOffText(String offText) {
     myOffText = offText;
   }
 
-  @Override
-  protected void paintComponent(Graphics g) {
-    super.paintComponent(g);
+  @Override public String getUIClassID() {
+    return "OnOffButtonUI";
   }
 
-  public static class OnOffButtonUI extends BasicToggleButtonUI {
-    private final OnOffButton myButton;
+  @Override public void updateUI() {
+    // Check that class name is in the UI table before creating UI delegate from it.
+    // If the custom class name is not listed (like for example in system LaFs) then
+    // use the default delegate.
+    Object uiClassName = UIManager.get(getUIClassID());
+    setUI(uiClassName == null ?
+          DefaultOnOffButtonUI.createUI(this) :
+          UIManager.getUI(this));
+  }
 
-    public OnOffButtonUI(OnOffButton checkBox) {
-      myButton = checkBox;
-    }
-
+  private static class DefaultOnOffButtonUI extends BasicToggleButtonUI {
     @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
     public static ComponentUI createUI(JComponent c) {
-      c.setOpaque(false);
       c.setAlignmentY(0.5f);
-      return new OnOffButtonUI((OnOffButton)c);
+      return new DefaultOnOffButtonUI();
     }
 
     @Override
     public Dimension getPreferredSize(JComponent c) {
       int vGap = JBUI.scale(4);
 
-      final OnOffButton button = (OnOffButton)c;
+      OnOffButton button = (OnOffButton)c;
       String text = button.getOffText().length() > button.getOnText().length() ? button.getOffText() : button.getOnText();
-      text = text.toUpperCase();
-      final FontMetrics fm = c.getFontMetrics(c.getFont());
+      text = text.toUpperCase(Locale.getDefault());
+      FontMetrics fm = c.getFontMetrics(c.getFont());
       int w = fm.stringWidth(text);
       int h = fm.getHeight();
       h += 2 * vGap;
@@ -89,14 +94,16 @@ public class OnOffButton extends JToggleButton {
 
     @Override
     public void paint(Graphics gr, JComponent c) {
+      if (!(c instanceof OnOffButton)) return;
+
       int toggleArc = JBUI.scale(3);
       int buttonArc = JBUI.scale(5);
       int vGap = JBUI.scale(4);
       int hGap = JBUI.scale(3);
       int border = 1;
 
-      final OnOffButton button = (OnOffButton)c;
-      final Dimension size = button.getSize();
+      OnOffButton button = (OnOffButton)c;
+      Dimension size = button.getSize();
       int w = size.width - 2 * vGap;
       int h = size.height - 2 * hGap;
       if (h % 2 == 1) {
@@ -104,8 +111,8 @@ public class OnOffButton extends JToggleButton {
       }
       Graphics2D g = ((Graphics2D)gr);
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      int xOff = (myButton.getWidth() - w) / 2;
-      int yOff = (myButton.getHeight() - h) / 2;
+      int xOff = (button.getWidth() - w) / 2;
+      int yOff = (button.getHeight() - h) / 2;
       g.translate(xOff, yOff);
       if (button.isSelected()) {
         g.setColor(new JBColor(new Color(74, 146, 73), new Color(77, 105, 76)));
@@ -124,7 +131,7 @@ public class OnOffButton extends JToggleButton {
         g.drawRoundRect(0, 0, w, h, buttonArc, buttonArc);
         g.setColor(UIUtil.getLabelDisabledForeground());
         g.drawString(button.getOffText(), h + vGap, h - vGap);
-        g.setColor(UIUtil.getBorderColor());
+        g.setColor(JBColor.border());
         g.setPaint(new GradientPaint(h, 0, new JBColor(Gray._158, Gray._100), 0, h, new JBColor(Gray._210, Gray._100)));
         g.fillRoundRect(0, 0, h, h, toggleArc, toggleArc);
         // g.setColor(UIUtil.getBorderColor());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -36,25 +35,20 @@ public class XslZenCodingFilter extends ZenCodingFilter {
   @Override
   public GenerationNode filterNode(@NotNull final GenerationNode node) {
     TemplateToken token = node.getTemplateToken();
-    if (token != null) {
-      XmlDocument document = token.getFile().getDocument();
-      if (document != null) {
-        final XmlTag tag = document.getRootTag();
-        if (tag != null) {
-          if (token.getAttributes().containsKey(SELECT_ATTR_NAME)) {
-            return node;
-          }
-          ApplicationManager.getApplication().runWriteAction(() -> {
-            if (isOurTag(tag, node.getChildren().size() > 0)) {
-              XmlAttribute attribute = tag.getAttribute(SELECT_ATTR_NAME);
-              if (attribute != null) {
-                attribute.delete();
-              }
-            }
-          });
-          return node;
-        }
+    final XmlTag tag = token != null ? token.getXmlTag() : null;
+    if (tag != null) {
+      if (token.getAttributes().containsKey(SELECT_ATTR_NAME)) {
+        return node;
       }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        if (isOurTag(tag, node.getChildren().size() > 0)) {
+          XmlAttribute attribute = tag.getAttribute(SELECT_ATTR_NAME);
+          if (attribute != null) {
+            attribute.delete();
+          }
+        }
+      });
+      return node;
     }
     return node;
   }

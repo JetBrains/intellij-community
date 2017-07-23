@@ -24,10 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 25.05.2007
- */
 public class WhileSurrounder extends GroovyManyStatementsSurrounder {
   @Override
   protected GroovyPsiElement doSurroundElements(PsiElement[] elements, PsiElement context) throws IncorrectOperationException {

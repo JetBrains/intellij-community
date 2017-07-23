@@ -17,15 +17,23 @@ package com.intellij.ui.switcher;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataKey;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 
-@Deprecated
 public interface QuickActionProvider {
-
   DataKey<QuickActionProvider> KEY = DataKey.create("QuickActionProvider");
 
-  String getName();
+  @NotNull
   List<AnAction> getActions(boolean originalProvider);
 
+  default boolean isCycleRoot() { return false; }
+
+  @Nullable
+  JComponent getComponent();
+
+  @Nullable
+  String getName();
 }

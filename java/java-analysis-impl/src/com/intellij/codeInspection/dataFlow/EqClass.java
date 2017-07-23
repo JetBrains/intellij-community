@@ -20,7 +20,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -70,13 +69,10 @@ class EqClass extends SortedIntSet {
 
   List<DfaValue> getMemberValues() {
     final List<DfaValue> result = new ArrayList<>(size());
-    forEach(new TIntProcedure() {
-      @Override
-      public boolean execute(int c1) {
-        DfaValue value = myFactory.getValue(c1);
-        result.add(value);
-        return true;
-      }
+    forEach(c1 -> {
+      DfaValue value = myFactory.getValue(c1);
+      result.add(value);
+      return true;
     });
     return result;
   }

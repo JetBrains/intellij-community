@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.internal.statistic.persistence;
 
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.ide.AppLifecycleListener;
 import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
@@ -24,25 +23,29 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 @State(
   name = "StatisticsApplicationUsages",
   storages = @Storage(value = "statistics.application.usages.xml", roamingType = RoamingType.DISABLED)
 )
-public class ApplicationStatisticsPersistenceComponent extends ApplicationStatisticsPersistence
-  implements ApplicationComponent, PersistentStateComponent<Element> {
-  private boolean persistOnClosing = !ApplicationManager.getApplication().isUnitTestMode();
+public class ApplicationStatisticsPersistenceComponent extends ApplicationStatisticsPersistence implements
+                                                                                                PersistentStateComponent<Element>,
+                                                                                                BaseComponent {
+  // 30 minutes considered enough for project indexing and other tasks
+  private static final int DELAY_IN_MIN = 30;
+  private static final Map<Project, Future> persistProjectStatisticsTasks = Collections.synchronizedMap(new HashMap<>());
 
   private static final String TOKENIZER = ",";
 
@@ -157,27 +160,21 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "ApplicationStatisticsPersistenceComponent";
-  }
-
-  @Override
   public void initComponent() {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
-      @Override
-      public void appClosing() {
-        persistOpenedProjects();
-        persistOnClosing = false;
-      }
-    });
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
 
-    ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
+    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectClosing(Project project) {
-        if (persistOnClosing && project != null) {
-          UsagesCollector.doPersistProjectUsages(project);
+      public void projectOpened(Project project) {
+        ScheduledFuture<?> future =
+          JobScheduler.getScheduler().schedule(() -> UsagesCollector.doPersistProjectUsages(project), DELAY_IN_MIN, TimeUnit.MINUTES);
+        persistProjectStatisticsTasks.put(project, future);
+      }
+
+      public void projectClosed(Project project) {
+        Future future = persistProjectStatisticsTasks.remove(project);
+        if (future != null) {
+          future.cancel(true);
         }
       }
     });
@@ -189,13 +186,12 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
     JobScheduler.getScheduler().scheduleWithFixedDelay(ApplicationStatisticsPersistenceComponent::persistOpenedProjects, 1, 1, TimeUnit.DAYS);
   }
 
-  private static void persistOpenedProjects() {
+  /**
+   * Collects statistics from all opened projects and persists it
+   */
+  public static void persistOpenedProjects() {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       UsagesCollector.doPersistProjectUsages(project);
     }
-  }
-
-  @Override
-  public void disposeComponent() {
   }
 }

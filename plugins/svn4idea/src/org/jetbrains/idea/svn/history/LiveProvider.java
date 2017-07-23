@@ -79,15 +79,13 @@ public class LiveProvider implements BunchProvider {
     final Ref<List<CommittedChangeList>> refToList = new Ref<>();
     final Ref<VcsException> exceptionRef = new Ref<>();
 
-    final Runnable loader = new Runnable() {
-      public void run() {
-        try {
-          refToList.set(
-              myLoader.loadInterval(youngRevision, SVNRevision.create(oldestRevision), desirableSize, includeYoungest, includeOldest));
-        }
-        catch (VcsException e) {
-          exceptionRef.set(e);
-        }
+    final Runnable loader = () -> {
+      try {
+        refToList
+          .set(myLoader.loadInterval(youngRevision, SVNRevision.create(oldestRevision), desirableSize, includeYoungest, includeOldest));
+      }
+      catch (VcsException e) {
+        exceptionRef.set(e);
       }
     };
 
@@ -95,14 +93,12 @@ public class LiveProvider implements BunchProvider {
     if (application.isUnitTestMode() || ! application.isDispatchThread()) {
       loader.run();
     } else {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          final ProgressIndicator ind = ProgressManager.getInstance().getProgressIndicator();
-          if (ind != null) {
-            ind.setText(SvnBundle.message("progress.live.provider.loading.revisions.details.text"));
-          }
-          loader.run();
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        final ProgressIndicator ind = ProgressManager.getInstance().getProgressIndicator();
+        if (ind != null) {
+          ind.setText(SvnBundle.message("progress.live.provider.loading.revisions.details.text"));
         }
+        loader.run();
       }, SvnBundle.message("progress.live.provider.loading.revisions.text"), false, myVcs.getProject());
     }
 

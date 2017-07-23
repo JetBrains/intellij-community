@@ -16,12 +16,12 @@
 package com.intellij.diff.merge;
 
 import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NotNull;
 
 public class TextMergeTool implements MergeTool {
   public static final TextMergeTool INSTANCE = new TextMergeTool();
 
-  public static final Logger LOG = Logger.getInstance(TextMergeTool.class);
+  private static final Logger LOG = Logger.getInstance(TextMergeTool.class);
 
   @NotNull
   @Override

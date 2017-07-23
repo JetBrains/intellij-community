@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.junit;
 
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
@@ -52,6 +53,11 @@ public class JUnit3Framework extends JavaTestFramework {
   @Override
   public boolean isTestMethod(PsiMethod method, PsiClass myClass) {
     return JUnitUtil.isTestMethod(MethodLocation.elementInClass(method, myClass));
+  }
+
+  @Override
+  public boolean isMyConfigurationType(ConfigurationType type) {
+    return type instanceof JUnitConfigurationType;
   }
 
   @NotNull
@@ -143,12 +149,13 @@ public class JUnit3Framework extends JavaTestFramework {
     return new FileTemplateDescriptor("JUnit3 TearDown Method.java");
   }
 
+  @NotNull
   public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit3 Test Method.java");
   }
 
   @Override
-  public boolean isTestMethod(PsiElement element) {
-    return element instanceof PsiMethod && JUnitUtil.getTestMethod(element) != null;
+  public boolean isTestMethod(PsiElement element, boolean checkAbstract) {
+    return element instanceof PsiMethod && JUnitUtil.getTestMethod(element, checkAbstract) != null;
   }
 }

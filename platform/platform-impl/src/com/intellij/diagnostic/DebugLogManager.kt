@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import org.apache.log4j.LogManager
  * Allows to apply & persist custom log debug categories which can be turned on by user via the [com.intellij.ide.actions.DebugLogConfigureAction].
  * Applies these custom categories on startup.
  */
-class DebugLogManager : ApplicationComponent.Adapter() {
+class DebugLogManager : ApplicationComponent {
   enum class DebugLogLevel { DEBUG, TRACE }
 
   fun getSavedCategories(): List<Pair<String, DebugLogLevel>> {

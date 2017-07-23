@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,9 +95,7 @@ public class ConvertUsagesUtil {
         if (group != null) {
           final String groupId = group.first;
           assert groupId != null;
-          if (groupId.length() < GroupDescriptor.MAX_ID_LENGTH) {
-            descriptors.putAll(convertValueString(GroupDescriptor.create(groupId), group.second));
-          }
+          descriptors.putAll(convertValueString(GroupDescriptor.create(groupId), group.second));
         }
       }
     }

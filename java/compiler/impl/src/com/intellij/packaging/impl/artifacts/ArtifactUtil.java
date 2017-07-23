@@ -451,7 +451,7 @@ public class ArtifactUtil {
                                        @NotNull PackagingElementResolvingContext context,
                                        @NotNull ParentElementProcessor processor,
                                        int maxLevel) {
-    return processParents(artifact, context, processor, FList.<Pair<Artifact, CompositePackagingElement<?>>>emptyList(), maxLevel,
+    return processParents(artifact, context, processor, FList.emptyList(), maxLevel,
                           new THashSet<>());
   }
 

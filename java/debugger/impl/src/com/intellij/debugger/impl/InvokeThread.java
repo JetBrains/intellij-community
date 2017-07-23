@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.VMDisconnectedException;
+import org.jetbrains.annotations.Debugger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.*;
@@ -92,9 +93,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
       try {
         myRequestFuture.get(timeout, TimeUnit.MILLISECONDS);
       }
-      catch (TimeoutException ignored) {
-      } 
-      catch (CancellationException ignored) {
+      catch (TimeoutException | CancellationException ignored) {
       }
     }
 
@@ -134,6 +133,9 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
   }
 
   private void run(final @NotNull WorkerThreadRequest threadRequest) {
+    String oldThreadName = Thread.currentThread().getName();
+    Thread.currentThread().setName("DebuggerManagerThread");
+
     try {
       DumbService.getInstance(myProject).setAlternativeResolveEnabled(true);
       while(true) {
@@ -184,6 +186,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
 
       LOG.debug("Request " + toString() + " exited");
       DumbService.getInstance(myProject).setAlternativeResolveEnabled(false);
+      Thread.currentThread().setName(oldThreadName);
     }
 
   }
@@ -193,7 +196,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     return request != null? request.getOwner() : null;
   }
 
-  public boolean schedule(E r) {
+  public boolean schedule(@Debugger.Capture E r) {
     if(LOG.isDebugEnabled()) {
       LOG.debug("schedule " + r + " in " + this);
     }

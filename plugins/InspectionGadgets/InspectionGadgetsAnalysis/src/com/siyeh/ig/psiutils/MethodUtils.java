@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -380,5 +380,12 @@ public class MethodUtils {
     final PsiReturnStatement returnStatement = (PsiReturnStatement)lastStatement;
     final PsiExpression returnValue = returnStatement.getReturnValue();
     return returnValue instanceof PsiThisExpression;
+  }
+
+  @Contract("null -> false")
+  public static boolean isStringLength(@Nullable PsiMethod method) {
+    if (method == null || !method.getName().equals("length") || method.getParameterList().getParametersCount() != 0) return false;
+    PsiClass aClass = method.getContainingClass();
+    return aClass != null && CommonClassNames.JAVA_LANG_STRING.equals(aClass.getQualifiedName());
   }
 }

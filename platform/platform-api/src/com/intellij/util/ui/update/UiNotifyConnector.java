@@ -51,17 +51,15 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
     if (isDisposed()) return;
 
     if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) > 0) {
-      final Runnable runnable = new DumbAwareRunnable() {
-        public void run() {
-          final Component c = myComponent.get();
-          if (isDisposed() || c == null) return;
+      final Runnable runnable = (DumbAwareRunnable)() -> {
+        final Component c = myComponent.get();
+        if (isDisposed() || c == null) return;
 
-          if (c.isShowing()) {
-            showNotify();
-          }
-          else {
-            hideNotify();
-          }
+        if (c.isShowing()) {
+          showNotify();
+        }
+        else {
+          hideNotify();
         }
       };
       final Application app = ApplicationManager.getApplication();
@@ -128,6 +126,10 @@ public class UiNotifyConnector implements Disposable, HierarchyListener{
   }
 
   public static void doWhenFirstShown(@NotNull JComponent c, @NotNull final Runnable runnable) {
+    doWhenFirstShown((Component)c, runnable);
+  }
+
+  public static void doWhenFirstShown(@NotNull Component c, @NotNull final Runnable runnable) {
     Activatable activatable = new Activatable() {
       public void showNotify() {
         runnable.run();

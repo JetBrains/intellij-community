@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -49,7 +48,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.TitledSeparator;
-import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -141,8 +139,7 @@ public class RunInspectionAction extends GotoActionBase {
     final BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog(
       "Run '" + toolWrapper.getDisplayName() + "'",
       AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
-      project, analysisScope, module != null ? module.getName() : null,
-      true, options, psiElement) {
+      project, analysisScope, module, true, options, psiElement) {
 
       private InspectionToolWrapper myUpdatedSettingsToolWrapper;
 
@@ -236,12 +233,7 @@ public class RunInspectionAction extends GotoActionBase {
     final Element options = new Element("copy");
     tool.getTool().writeSettings(options);
     final InspectionToolWrapper copiedTool = tool.createCopy();
-    try {
-      copiedTool.getTool().readSettings(options);
-    }
-    catch (InvalidDataException e) {
-      throw new RuntimeException(e);
-    }
+    copiedTool.getTool().readSettings(options);
     return copiedTool;
   }
 }

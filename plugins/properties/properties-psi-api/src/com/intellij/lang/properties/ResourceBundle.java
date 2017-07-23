@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Alexey
- * Date: 08.05.2005
- * Time: 0:17:52
- */
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -53,4 +47,6 @@ public abstract class ResourceBundle {
   public Project getProject() {
     return getDefaultPropertiesFile().getProject();
   }
+
+  public abstract boolean isValid();
 }

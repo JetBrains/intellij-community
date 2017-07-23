@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static org.jetbrains.java.decompiler.DecompilerTestFixture.assertFilesEqual;
 import static org.junit.Assert.assertTrue;
@@ -62,6 +63,7 @@ public class SingleClassesTest {
   @Test public void testEnum() { doTest("pkg/TestEnum"); }
   @Test public void testDebugSymbols() { doTest("pkg/TestDebugSymbols"); }
   @Test public void testInvalidMethodSignature() { doTest("InvalidMethodSignature"); }
+  @Test public void testAnonymousClassConstructor() { doTest("pkg/TestAnonymousClassConstructor"); }
   @Test public void testInnerClassConstructor() { doTest("pkg/TestInnerClassConstructor"); }
   @Test public void testInnerClassConstructor11() { doTest("v11/TestInnerClassConstructor"); }
   @Test public void testTryCatchFinally() { doTest("pkg/TestTryCatchFinally"); }
@@ -76,12 +78,15 @@ public class SingleClassesTest {
   @Test public void testInnerLocal() { doTest("pkg/TestInnerLocal"); }
   @Test public void testInnerLocalPkg() { doTest("pkg/TestInnerLocalPkg"); }
   @Test public void testInnerSignature() { doTest("pkg/TestInnerSignature"); }
+  @Test public void testAnonymousSignature() { doTest("pkg/TestAnonymousSignature"); }
+  @Test public void testLocalsSignature() { doTest("pkg/TestLocalsSignature"); }
   @Test public void testParameterizedTypes() { doTest("pkg/TestParameterizedTypes"); }
   @Test public void testShadowing() { doTest("pkg/TestShadowing", "pkg/Shadow", "ext/Shadow"); }
   @Test public void testStringConcat() { doTest("pkg/TestStringConcat"); }
   @Test public void testJava9StringConcat() { doTest("java9/TestJava9StringConcat"); }
   @Test public void testMethodReferenceSameName() { doTest("pkg/TestMethodReferenceSameName"); }
   @Test public void testMethodReferenceLetterClass() { doTest("pkg/TestMethodReferenceLetterClass"); }
+  @Test public void testConstructorReference() { doTest("pkg/TestConstructorReference"); }
   @Test public void testMemberAnnotations() { doTest("pkg/TestMemberAnnotations"); }
   @Test public void testMoreAnnotations() { doTest("pkg/MoreAnnotations"); }
   @Test public void testTypeAnnotations() { doTest("pkg/TypeAnnotations"); }
@@ -89,8 +94,31 @@ public class SingleClassesTest {
   @Test public void testExtendingSubclass() { doTest("pkg/TestExtendingSubclass"); }
   @Test public void testSyntheticAccess() { doTest("pkg/TestSyntheticAccess"); }
   @Test public void testIllegalVarName() { doTest("pkg/TestIllegalVarName"); }
+  @Test public void testIffSimplification() { doTest("pkg/TestIffSimplification"); }
   @Test public void testKotlinConstructor() { doTest("pkg/TestKotlinConstructorKt"); }
   @Test public void testAsserts() { doTest("pkg/TestAsserts"); }
+  @Test public void testLocalsNames() { doTest("pkg/TestLocalsNames"); }
+  @Test public void testAnonymousParamNames() { doTest("pkg/TestAnonymousParamNames"); }
+  @Test public void testAnonymousParams() { doTest("pkg/TestAnonymousParams"); }
+  @Test public void testAccessReplace() { doTest("pkg/TestAccessReplace"); }
+  @Test public void testStringLiterals() { doTest("pkg/TestStringLiterals"); }
+  @Test public void testPrimitives() { doTest("pkg/TestPrimitives"); }
+  @Test public void testClashName() { doTest("pkg/TestClashName", "pkg/SharedName1",
+          "pkg/SharedName2", "pkg/SharedName3", "pkg/SharedName4", "pkg/NonSharedName",
+          "pkg/TestClashNameParent", "ext/TestClashNameParent","pkg/TestClashNameIface", "ext/TestClashNameIface"); }
+  @Test public void testSwitchOnEnum() { doTest("pkg/TestSwitchOnEnum");}
+  @Test public void testVarArgCalls() { doTest("pkg/TestVarArgCalls"); }
+  @Test public void testLambdaParams() { doTest("pkg/TestLambdaParams"); }
+  @Test public void testInterfaceMethods() { doTest("pkg/TestInterfaceMethods"); }
+  @Test public void testConstType() { doTest("pkg/TestConstType"); }
+
+  // TODO: fix all below
+  //@Test public void testPackageInfo() { doTest("pkg/package-info"); }
+  //@Test public void testSwitchOnStrings() { doTest("pkg/TestSwitchOnStrings");}
+  //@Test public void testUnionType() { doTest("pkg/TestUnionType"); }
+  //@Test public void testInnerClassConstructor2() { doTest("pkg/TestInner2"); }
+  //@Test public void testInUse() { doTest("pkg/TestInUse"); }
+  //@Test public void testInterfaceSuper() { doTest("pkg/TestInterfaceSuper"); }
 
   private void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();

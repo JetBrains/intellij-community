@@ -18,15 +18,13 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binary
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
 import com.intellij.util.Function;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression;
 
-/**
- * Created by Max Medvedev on 12/20/13
- */
-public class GrBooleanExpressionTypeCalculator implements Function<GrBinaryFacade, PsiType>{
+public class GrBooleanExpressionTypeCalculator implements Function<GrOperatorExpression, PsiType>{
   public static final GrBooleanExpressionTypeCalculator INSTANCE = new GrBooleanExpressionTypeCalculator();
 
   @Override
-  public PsiType fun(GrBinaryFacade expression) {
+  public PsiType fun(GrOperatorExpression expression) {
     return GrBinaryExpressionUtil.getTypeByFQName(CommonClassNames.JAVA_LANG_BOOLEAN, expression);
   }
 }

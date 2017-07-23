@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,13 +41,12 @@ class Product(node: Element) {
 class UpdateChannel(node: Element) {
   companion object {
     const val LICENSING_EAP = "eap"
-    const val LICENSING_PRODUCTION = "production"
+    const val LICENSING_RELEASE = "release"
   }
 
   val id: String = node.getAttributeValue("id") ?: throw JDOMException("channel@id missing")
   val status: ChannelStatus = ChannelStatus.fromCode(node.getAttributeValue("status"))
-  val licensing: String = node.getAttributeValue("licensing", LICENSING_PRODUCTION)
-  val homePageUrl: String? = node.getAttributeValue("url")
+  val licensing: String = node.getAttributeValue("licensing", LICENSING_RELEASE)
   val evalDays: Int = node.getAttributeValue("evalDays")?.toInt() ?: 30
   val builds: List<BuildInfo> = node.getChildren("build").map(::BuildInfo)
 
@@ -73,6 +72,9 @@ class BuildInfo(node: Element) {
       null
     }
   }
+
+  val downloadUrl: String?
+    get() = buttons.find(ButtonInfo::isDownload)?.url
 
   override fun toString() = "${number}/${version}"
 }

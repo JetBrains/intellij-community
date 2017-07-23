@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,17 +20,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.ui.PlusMinus;
 import com.intellij.openapi.vcs.changes.ui.RemoteStatusChangeNodeDecorator;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vcs.update.UpdateFilesHelper;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.util.Consumer;
-import com.intellij.openapi.vcs.changes.ui.PlusMinus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 
@@ -76,39 +73,31 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
     myKinds = new HashMap<>();
 
     final VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
-    myControlledCycle = new ControlledCycle(project, new Getter<Boolean>() {
-      @Override
-      public Boolean get() {
-        final boolean shouldBeDone = vcsConfiguration.isChangedOnServerEnabled() && myVcsManager.hasActiveVcss();
+    myControlledCycle = new ControlledCycle(project, () -> {
+      final boolean shouldBeDone = vcsConfiguration.isChangedOnServerEnabled() && myVcsManager.hasActiveVcss();
 
-        if (shouldBeDone) {
-          boolean somethingChanged = myRemoteRevisionsNumbersCache.updateStep();
-          somethingChanged |= myRemoteRevisionsStateCache.updateStep();
-          if (somethingChanged) {
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
-              @Override
-              public void run() {
-                if (!myProject.isDisposed()) {
-                  myProject.getMessageBus().syncPublisher(REMOTE_VERSION_CHANGED).run();
-                }
-              }
-            });
-          }
+      if (shouldBeDone) {
+        boolean somethingChanged = myRemoteRevisionsNumbersCache.updateStep();
+        somethingChanged |= myRemoteRevisionsStateCache.updateStep();
+        if (somethingChanged) {
+          ApplicationManager.getApplication().runReadAction(() -> {
+            if (!myProject.isDisposed()) {
+              myProject.getMessageBus().syncPublisher(REMOTE_VERSION_CHANGED).run();
+            }
+          });
         }
-        return shouldBeDone;
       }
+      return shouldBeDone;
     }, "Finishing \"changed on server\" update", DEFAULT_REFRESH_INTERVAL);
 
     updateRoots();
 
     if ((! myProject.isDefault()) && vcsConfiguration.isChangedOnServerEnabled()) {
       ((ProjectLevelVcsManagerImpl) myVcsManager).addInitializationRequest(VcsInitObject.REMOTE_REVISIONS_CACHE,
-                                                                           new Runnable() {
-                                                                             public void run() {
-                                                                               // do not start if there're no vcses
-                                                                               if (! myVcsManager.hasActiveVcss() || ! vcsConfiguration. isChangedOnServerEnabled()) return;
-                                                                               myControlledCycle.startIfNotStarted(-1);
-                                                                             }
+                                                                           () -> {
+                                                                             // do not start if there're no vcses
+                                                                             if (! myVcsManager.hasActiveVcss() || ! vcsConfiguration. isChangedOnServerEnabled()) return;
+                                                                             myControlledCycle.startIfNotStarted();
                                                                            });
     }
   }
@@ -122,7 +111,7 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
     if ((! myProject.isDefault()) && myVcsManager.hasActiveVcss() && vcsConfiguration.isChangedOnServerEnabled()) {
       // will check whether is already started inside
       // interval is checked further, this is small and constant
-      myControlledCycle.startIfNotStarted(-1);
+      myControlledCycle.startIfNotStarted();
     } else {
       myControlledCycle.stop();
     }
@@ -140,25 +129,24 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
     }
   }
 
+  @Override
   public void directoryMappingChanged() {
     if (! VcsConfiguration.getInstance(myProject).isChangedOnServerEnabled()) {
       manageAlarm();
     } else {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            updateRoots();
-            myRemoteRevisionsNumbersCache.directoryMappingChanged();
-            myRemoteRevisionsStateCache.directoryMappingChanged();
-            manageAlarm();
-          } catch (ProcessCanceledException ignore) {
-          }
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        try {
+          updateRoots();
+          myRemoteRevisionsNumbersCache.directoryMappingChanged();
+          myRemoteRevisionsStateCache.directoryMappingChanged();
+          manageAlarm();
+        } catch (ProcessCanceledException ignore) {
         }
       });
     }
   }
 
+  @Override
   public void plus(final Pair<String, AbstractVcs> pair) {
     final AbstractVcs vcs = pair.getSecond();
     if (RemoteDifferenceStrategy.ASK_TREE_PROVIDER.equals(vcs.getRemoteDifferenceStrategy())) {
@@ -175,20 +163,18 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
     }
     final Collection<String> newForTree = new LinkedList<>();
     final Collection<String> newForUsual = new LinkedList<>();
-    UpdateFilesHelper.iterateAffectedFiles(updatedFiles, new Consumer<Couple<String>>() {
-      public void consume(final Couple<String> pair) {
-        final String vcsName = pair.getSecond();
-        RemoteDifferenceStrategy strategy = strategyMap.get(vcsName);
-        if (strategy == null) {
-          final AbstractVcs vcs = myVcsManager.findVcsByName(vcsName);
-          if (vcs == null) return;
-          strategy = vcs.getRemoteDifferenceStrategy();
-        }
-        if (RemoteDifferenceStrategy.ASK_TREE_PROVIDER.equals(strategy)) {
-          newForTree.add(pair.getFirst());
-        } else {
-          newForUsual.add(pair.getFirst());
-        }
+    UpdateFilesHelper.iterateAffectedFiles(updatedFiles, pair -> {
+      final String vcsName = pair.getSecond();
+      RemoteDifferenceStrategy strategy = strategyMap.get(vcsName);
+      if (strategy == null) {
+        final AbstractVcs vcs = myVcsManager.findVcsByName(vcsName);
+        if (vcs == null) return;
+        strategy = vcs.getRemoteDifferenceStrategy();
+      }
+      if (RemoteDifferenceStrategy.ASK_TREE_PROVIDER.equals(strategy)) {
+        newForTree.add(pair.getFirst());
+      } else {
+        newForUsual.add(pair.getFirst());
       }
     });
 
@@ -196,6 +182,7 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
     myRemoteRevisionsNumbersCache.invalidate(newForUsual);
   }
 
+  @Override
   public void minus(Pair<String, AbstractVcs> pair) {
     final AbstractVcs vcs = pair.getSecond();
     if (RemoteDifferenceStrategy.ASK_TREE_PROVIDER.equals(vcs.getRemoteDifferenceStrategy())) {

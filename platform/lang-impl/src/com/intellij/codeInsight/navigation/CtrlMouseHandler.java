@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -250,7 +250,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         EditorEventMulticaster eventMulticaster = editorFactory.getEventMulticaster();
         eventMulticaster.addEditorMouseListener(myEditorMouseAdapter, project);
         eventMulticaster.addEditorMouseMotionListener(myEditorMouseMotionListener, project);
-        eventMulticaster.addCaretListener(new CaretAdapter() {
+        eventMulticaster.addCaretListener(new CaretListener() {
           @Override
           public void caretPositionChanged(CaretEvent e) {
             if (myHint != null) {
@@ -828,6 +828,8 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
     @Nullable
     private ReadTask.Continuation doExecute(@NotNull PsiFile file, int offset) {
+      if (isTaskOutdated()) return null;
+
       final Info info;
       final DocInfo docInfo;
       try {
@@ -842,9 +844,13 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
       LOG.debug("Obtained info about element under cursor");
       return new ReadTask.Continuation(() -> {
-        if (myDisposed || myEditor.isDisposed() || !myEditor.getComponent().isShowing()) return;
+        if (isTaskOutdated()) return;
         showHint(info, docInfo);
       });
+    }
+
+    private boolean isTaskOutdated() {
+      return myDisposed || myProject.isDisposed() || myEditor.isDisposed() || !myEditor.getComponent().isShowing();
     }
 
     private void showHint(@NotNull Info info, @NotNull DocInfo docInfo) {
@@ -928,6 +934,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
 
     public void showHint(@NotNull LightweightHint hint) {
+      if (myEditor.isDisposed()) return;
       final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
       short constraint = HintManager.ABOVE;
       Point p = HintManagerImpl.getHintPosition(hint, myEditor, myPosition, constraint);
@@ -955,11 +962,11 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     List<RangeHighlighter> highlighters = new ArrayList<>();
     TextAttributes attributes = info.isNavigatable() 
                                 ? myEditorColorsManager.getGlobalScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR) 
-                                : new TextAttributes(null, HintUtil.INFORMATION_COLOR, null, null, Font.PLAIN);
+                                : new TextAttributes(null, HintUtil.getInformationColor(), null, null, Font.PLAIN);
     for (TextRange range : info.getRanges()) {
       TextAttributes attr = NavigationUtil.patchAttributesColor(attributes, range, editor);
       final RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
-                                                                                       HighlighterLayer.SELECTION + 1,
+                                                                                       HighlighterLayer.HYPERLINK, 
                                                                                        attr,
                                                                                        HighlighterTargetArea.EXACT_RANGE);
       highlighters.add(highlighter);
@@ -1161,14 +1168,16 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
       String elementName = e.getDescription().substring(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL.length());
 
-      final PsiElement targetElement = myProvider.getDocumentationElementForLink(PsiManager.getInstance(myProject), elementName, myContext);
-      if (targetElement != null) {
-        LightweightHint hint = myHint;
-        if (hint != null) {
-          hint.hide(true);
+      DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> {
+        PsiElement targetElement = myProvider.getDocumentationElementForLink(PsiManager.getInstance(myProject), elementName, myContext);
+        if (targetElement != null) {
+          LightweightHint hint = myHint;
+          if (hint != null) {
+            hint.hide(true);
+          }
+          myDocumentationManager.showJavaDocInfo(targetElement, myContext, null);
         }
-        myDocumentationManager.showJavaDocInfo(targetElement, myContext, null);
-      }
+      });
     }
   }
 }

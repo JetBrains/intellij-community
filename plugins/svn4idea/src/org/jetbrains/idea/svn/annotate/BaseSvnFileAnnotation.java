@@ -34,12 +34,6 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.util.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 6/20/12
- * Time: 11:33 AM
- */
 public abstract class BaseSvnFileAnnotation extends FileAnnotation {
   protected final String myContents;
   protected final VcsRevisionNumber myBaseRevision;
@@ -118,12 +112,12 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
     return myFirstRevisionNumber;
   }
 
-  public BaseSvnFileAnnotation(final SvnVcs vcs, final String contents, final VcsRevisionNumber baseRevision) {
+  public BaseSvnFileAnnotation(@NotNull SvnVcs vcs, final String contents, final VcsRevisionNumber baseRevision) {
     super(vcs.getProject());
     myVcs = vcs;
     myContents = contents;
     myBaseRevision = baseRevision;
-    myConfiguration = SvnConfiguration.getInstance(vcs.getProject());
+    myConfiguration = vcs.getSvnConfiguration();
     myShowMergeSources = myConfiguration.isShowMergeSourcesInAnnotate();
 
     myInfos = new MyPartiallyCreatedInfos();
@@ -176,11 +170,7 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
 
   public List<VcsFileRevision> getRevisions() {
     final List<VcsFileRevision> result = new ArrayList<>(myRevisionMap.values());
-    Collections.sort(result, new Comparator<VcsFileRevision>() {
-      public int compare(final VcsFileRevision o1, final VcsFileRevision o2) {
-        return o2.getRevisionNumber().compareTo(o1.getRevisionNumber());
-      }
-    });
+    Collections.sort(result, (o1, o2) -> o2.getRevisionNumber().compareTo(o1.getRevisionNumber()));
     return result;
   }
 

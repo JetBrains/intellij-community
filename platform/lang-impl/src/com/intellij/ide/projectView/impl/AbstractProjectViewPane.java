@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
@@ -51,6 +52,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -183,7 +185,9 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     TreePath treePath = new TreePath(node.getPath());
     myTree.expandPath(treePath);
     if (requestFocus) {
-      myTree.requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(myTree, true);
+      });
     }
     TreeUtil.selectPath(myTree, treePath);
   }
@@ -218,11 +222,16 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   private void doSelectModuleOrGroup(final Object toSelect, final boolean requestFocus) {
     ToolWindowManager windowManager=ToolWindowManager.getInstance(myProject);
     final Runnable runnable = () -> {
-      ProjectView projectView = ProjectView.getInstance(myProject);
       if (requestFocus) {
-        projectView.changeView(getId(), getSubId());
+        ProjectView projectView = ProjectView.getInstance(myProject);
+        if (projectView != null) {
+          projectView.changeView(getId(), getSubId());
+        }
       }
-      ((BaseProjectTreeBuilder)getTreeBuilder()).selectInWidth(toSelect, requestFocus, node -> node instanceof AbstractModuleNode || node instanceof ModuleGroupNode || node instanceof AbstractProjectNode);
+      BaseProjectTreeBuilder builder = (BaseProjectTreeBuilder)getTreeBuilder();
+      if (builder != null) {
+        builder.selectInWidth(toSelect, requestFocus, node -> node instanceof AbstractModuleNode || node instanceof ModuleGroupNode || node instanceof AbstractProjectNode);
+      }
     };
     if (requestFocus) {
       windowManager.getToolWindow(ToolWindowId.PROJECT_VIEW).activate(runnable);
@@ -299,9 +308,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   public abstract SelectInTarget createSelectInTarget();
 
   public final TreePath getSelectedPath() {
-    final TreePath[] paths = getSelectionPaths();
-    if (paths != null && paths.length == 1) return paths[0];
-    return null;
+    return myTree == null ? null : TreeUtil.getSelectedPathIfOne(myTree);
   }
 
   public final NodeDescriptor getSelectedDescriptor() {
@@ -316,14 +323,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   public final DefaultMutableTreeNode getSelectedNode() {
     TreePath path = getSelectedPath();
-    if (path == null) {
-      return null;
-    }
-    Object lastPathComponent = path.getLastPathComponent();
-    if (!(lastPathComponent instanceof DefaultMutableTreeNode)) {
-      return null;
-    }
-    return (DefaultMutableTreeNode)lastPathComponent;
+    return path == null ? null : ObjectUtils.tryCast(path.getLastPathComponent(), DefaultMutableTreeNode.class);
   }
 
   public final Object getSelectedElement() {
@@ -436,9 +436,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     List<Element> subPanes = element.getChildren(ELEMENT_SUBPANE);
     for (Element subPane : subPanes) {
       String subId = subPane.getAttributeValue(ATTRIBUTE_SUBID);
-      TreeState treeState = new TreeState();
-      treeState.readExternal(subPane);
-      if (!treeState.isEmpty()) myReadTreeState.put(subId, treeState);
+      TreeState treeState = TreeState.createFrom(subPane);
+      if (!treeState.isEmpty()) {
+        myReadTreeState.put(subId, treeState);
+      }
     }
   }
 
@@ -458,18 +459,26 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   protected void saveExpandedPaths() {
     if (myTree != null) {
       TreeState treeState = TreeState.createOn(myTree);
-      if (!treeState.isEmpty()) myReadTreeState.put(getSubId(), treeState);
+      if (!treeState.isEmpty()) {
+        myReadTreeState.put(getSubId(), treeState);
+      }
     }
   }
 
   public final void restoreExpandedPaths(){
     TreeState treeState = myReadTreeState.get(getSubId());
-    if (treeState != null && !treeState.isEmpty()) treeState.applyTo(myTree);
+    if (treeState != null && !treeState.isEmpty()) {
+      treeState.applyTo(myTree);
+    }
   }
 
   public void installComparator() {
+    installComparator(getTreeBuilder());
+  }
+
+  public void installComparator(AbstractTreeBuilder treeBuilder) {
     final ProjectView projectView = ProjectView.getInstance(myProject);
-    getTreeBuilder().setNodeDescriptorComparator(new GroupByTypeComparator(projectView, getId()));
+    treeBuilder.setNodeDescriptorComparator(new GroupByTypeComparator(projectView, getId()));
   }
 
   public JTree getTree() {
@@ -631,6 +640,14 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 //      treeBuilder.setCanYieldUpdate(true);
     }
     myTreeBuilder = treeBuilder;
+  }
+
+  public boolean supportsFoldersAlwaysOnTop() {
+    return true;
+  }
+
+  public boolean supportsSortByType() {
+    return true;
   }
 
   private class MyDragSource implements DnDSource {

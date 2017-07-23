@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,9 +37,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.List;
 
-/**
- * Created by Max Medvedev on 25/04/14
- */
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiTreeUtilKt.treeWalkUp;
+
 public class CompleteCodeReferenceElement {
   private static final Logger LOG = Logger.getInstance(CompleteCodeReferenceElement.class);
 
@@ -163,7 +162,7 @@ public class CompleteCodeReferenceElement {
           ResolverProcessor classProcessor = CompletionProcessor.createClassCompletionProcessor(myRef);
           processTypeParametersFromUnfinishedMethodOrField(classProcessor);
 
-          ResolveUtil.treeWalkUp(myRef, classProcessor, false);
+          treeWalkUp(myRef, classProcessor);
 
           for (LookupElement o : GroovyCompletionUtil.getCompletionVariants(classProcessor.getCandidates(), afterNew, myMatcher, myRef)) {
             myConsumer.consume(o);

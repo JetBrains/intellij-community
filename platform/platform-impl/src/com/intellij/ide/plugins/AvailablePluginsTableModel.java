@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 19-Aug-2006
- * Time: 14:54:29
- */
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.application.ex.ApplicationInfoEx;

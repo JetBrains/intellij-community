@@ -31,6 +31,8 @@ public class ResultOfObjectAllocationIgnoredInspectionTest extends LightInspecti
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new ResultOfObjectAllocationIgnoredInspection();
+    final ResultOfObjectAllocationIgnoredInspection inspection = new ResultOfObjectAllocationIgnoredInspection();
+    inspection.ignoredClasses.add("javax.swing.JFrame");
+    return inspection;
   }
 }

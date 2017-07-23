@@ -29,11 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.patterns.XmlPatterns.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 29.08.2007
- */
 public class FileReferenceUtil {
 
   public static PsiReference[] restrict(FileReferenceSet set, final Condition<PsiFile> cond) {

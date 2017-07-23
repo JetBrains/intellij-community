@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,15 +23,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.text.EditDistance;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.spellchecker.compress.CompressedDictionary;
 import com.intellij.spellchecker.dictionary.Dictionary;
 import com.intellij.spellchecker.dictionary.EditableDictionary;
-import com.intellij.spellchecker.dictionary.EditableDictionaryLoader;
 import com.intellij.spellchecker.dictionary.Loader;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.EditDistance;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,21 +55,8 @@ public class BaseSpellChecker implements SpellCheckerEngine {
 
   @Override
   public void loadDictionary(@NotNull Loader loader) {
-    if (loader instanceof EditableDictionaryLoader) {
-      final EditableDictionary dictionary = ((EditableDictionaryLoader)loader).getDictionary();
-      if (dictionary != null) {
-        addModifiableDictionary(dictionary);
-      }
-    }
-    else {
-      loadCompressedDictionary(loader);
-    }
-  }
-
-  private void loadCompressedDictionary(@NotNull Loader loader) {
     if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      final CompressedDictionary dictionary = CompressedDictionary.create(loader, transform);
-      addCompressedFixedDictionary(dictionary);
+      addCompressedFixedDictionary(CompressedDictionary.create(loader, transform));
     }
     else {
       loadDictionaryAsync(loader, this::addCompressedFixedDictionary);
@@ -129,7 +115,8 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     myDictionariesToLoad.add(Pair.create(loader, consumer));
   }
 
-  private void addModifiableDictionary(@NotNull EditableDictionary dictionary) {
+  @Override
+  public void addModifiableDictionary(@NotNull EditableDictionary dictionary) {
     dictionaries.add(dictionary);
   }
 
@@ -142,19 +129,19 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     return transform;
   }
 
-  private static void restore(char startFrom, int i, int j, Collection<? extends Dictionary> dictionaries, Collection<String> result) {
+  private static void restore(char startFrom, int j, Collection<? extends Dictionary> dictionaries, Collection<String> result) {
     for (Dictionary o : dictionaries) {
-      restore(startFrom, i, j, o, result);
+      restore(startFrom, j, o, result);
     }
   }
 
-  private static void restore(final char first, final int i, final int j, Dictionary dictionary, final Collection<String> result) {
+  private static void restore(final char first, final int j, Dictionary dictionary, final Collection<String> result) {
     if (dictionary instanceof CompressedDictionary) {
-      ((CompressedDictionary)dictionary).getWords(first, i, j, result);
+      ((CompressedDictionary)dictionary).getWords(first, 0, j, result);
     }
     else {
       dictionary.traverse(s -> {
-        if (!StringUtil.isEmpty(s) && s.charAt(0) == first && s.length() >= i && s.length() <= j) {
+        if (!StringUtil.isEmpty(s) && s.charAt(0) == first && s.length() >= 0 && s.length() <= j) {
           result.add(s);
         }
       });
@@ -200,8 +187,8 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     if (transformed == null) return Collections.emptyList();
 
     List<String> rawSuggestions = new ArrayList<>();
-    restore(transformed.charAt(0), 0, Integer.MAX_VALUE, bundledDictionaries, rawSuggestions);
-    restore(word.charAt(0), 0, Integer.MAX_VALUE, dictionaries, rawSuggestions);
+    restore(transformed.charAt(0), Integer.MAX_VALUE, bundledDictionaries, rawSuggestions);
+    restore(word.charAt(0), Integer.MAX_VALUE, dictionaries, rawSuggestions);
     if (rawSuggestions.isEmpty()) return Collections.emptyList();
 
     List<Suggestion> suggestions = new ArrayList<>(rawSuggestions.size());

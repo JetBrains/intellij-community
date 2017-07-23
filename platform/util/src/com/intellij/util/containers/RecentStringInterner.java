@@ -15,34 +15,24 @@
  */
 package com.intellij.util.containers;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-/**
-* User: Maxim.Mossienko
-* Date: 2/4/13
-* Time: 4:50 PM
-*/
 public class RecentStringInterner {
   private final int myStripeMask;
   private final SLRUCache<String, String>[] myInterns;
   private final Lock[] myStripeLocks;
-  // LowMemoryWatcher relies on field holding it
-  @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
-  private final LowMemoryWatcher myLowMemoryWatcher;
 
-  public RecentStringInterner() {
-    this(8192);
-  }
-
-  public RecentStringInterner(int capacity) {
+  public RecentStringInterner(@NotNull Disposable parentDisposable) {
     final int stripes = 16;
     //noinspection unchecked
     myInterns = new SLRUCache[stripes];
     myStripeLocks = new Lock[myInterns.length];
+    int capacity = 8192;
     for(int i = 0; i < myInterns.length; ++i) {
       myInterns[i] = new SLRUCache<String, String>(capacity / stripes, capacity / stripes) {
         @NotNull
@@ -61,12 +51,12 @@ public class RecentStringInterner {
 
     assert Integer.highestOneBit(stripes) == stripes;
     myStripeMask = stripes - 1;
-    myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
+    LowMemoryWatcher.register(new Runnable() {
       @Override
       public void run() {
         clear();
       }
-    });
+    }, parentDisposable);
   }
 
   public String get(String s) {

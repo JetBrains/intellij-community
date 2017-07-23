@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -38,7 +39,7 @@ import java.util.Set;
 
 public class MavenGeneralSettings implements Cloneable {
   private boolean workOffline = false;
-  private String mavenHome = MavenServerManager.BUNDLED_MAVEN_3;
+  private String mavenHome = ApplicationManager.getApplication().isUnitTestMode() ? MavenServerManager.BUNDLED_MAVEN_2 : MavenServerManager.BUNDLED_MAVEN_3;
   private String mavenSettingsFile = "";
   private String overriddenLocalRepository = "";
   private boolean printErrorStackTraces = false;

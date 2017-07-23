@@ -156,7 +156,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
       }
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(myProject,token);
+      token.finish();
     }
     LocalFileSystem lfs = LocalFileSystem.getInstance();
     HashSet<File> filesToRefresh = new HashSet<>();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -148,6 +150,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   private XSourcePosition mySourcePosition;
   private final List<XDebuggerTreeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final XValueMarkers<?,?> myValueMarkers;
+  private final TreeExpansionListener myTreeExpansionListener;
 
   public XDebuggerTree(final @NotNull Project project,
                        final @NotNull XDebuggerEditorsProvider editorsProvider,
@@ -210,15 +213,56 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     });
     registerShortcuts();
 
+    new AnAction() {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        TreePath[] paths = getSelectionPaths();
+        if (paths != null) {
+          for (TreePath path : paths) {
+            Object component = path.getLastPathComponent();
+            if (component instanceof XDebuggerTreeNode) {
+              XDebuggerTreeNodeHyperlink link = ((XDebuggerTreeNode)component).getLink();
+              if (link != null) {
+                // dummy event
+                link.onClick(new MouseEvent(XDebuggerTree.this, 0,0,0,0,0,1,false));
+              }
+            }
+          }
+        }
+      }
+    }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), this, this);
+
     setTransferHandler(DEFAULT_TRANSFER_HANDLER);
 
     addComponentListener(myMoveListener);
+
+
+    myTreeExpansionListener = new TreeExpansionListener() {
+      @Override
+      public void treeExpanded(TreeExpansionEvent event) {
+        handleExpansion(event, true);
+      }
+
+      @Override
+      public void treeCollapsed(TreeExpansionEvent event) {
+        handleExpansion(event, false);
+      }
+
+      private void handleExpansion(TreeExpansionEvent event, boolean expanded) {
+        final TreePath path = event.getPath();
+        final Object component = path != null ? path.getLastPathComponent() : null;
+        if (component instanceof XValueGroupNodeImpl) {
+          ((XValueGroupNodeImpl)component).onExpansion(expanded);
+        }
+      }
+    };
+    addTreeExpansionListener(myTreeExpansionListener);
   }
 
   public void updateEditor() {
     myAlarm.cancelAndRequest();
   }
-  
+
   public boolean isUnderRemoteDebug() {
     DataContext context = DataManager.getInstance().getDataContext(this);
     ExecutionEnvironment env = LangDataKeys.EXECUTION_ENVIRONMENT.getData(context);
@@ -346,6 +390,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     setLeadSelectionPath(null);
     setAnchorSelectionPath(null);
     removeComponentListener(myMoveListener);
+    removeTreeExpansionListener(myTreeExpansionListener);
     myListeners.clear();
   }
 

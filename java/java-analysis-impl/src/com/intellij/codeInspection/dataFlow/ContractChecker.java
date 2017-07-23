@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,44 +15,40 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.instructions.CheckReturnValueInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.Instruction;
-import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
 * @author peter
 */
 class ContractChecker extends DataFlowRunner {
   private final PsiMethod myMethod;
-  private final MethodContract myContract;
+  private final StandardMethodContract myContract;
   private final Set<PsiElement> myViolations = ContainerUtil.newHashSet();
   private final Set<PsiElement> myNonViolations = ContainerUtil.newHashSet();
   private final Set<PsiElement> myFailures = ContainerUtil.newHashSet();
 
-  private ContractChecker(PsiMethod method, MethodContract contract, final boolean onTheFly) {
-    super(false, true, onTheFly);
+  private ContractChecker(PsiMethod method, StandardMethodContract contract) {
+    super(false, true);
     myMethod = method;
     myContract = contract;
   }
 
-  static Map<PsiElement, String> checkContractClause(PsiMethod method,
-                                                     MethodContract contract,
-                                                     boolean ignoreAssertions, final boolean onTheFly) {
+  static Map<PsiElement, String> checkContractClause(PsiMethod method, StandardMethodContract contract, boolean ignoreAssertions) {
 
     PsiCodeBlock body = method.getBody();
     if (body == null) return Collections.emptyMap();
 
-    ContractChecker checker = new ContractChecker(method, contract, onTheFly);
+    ContractChecker checker = new ContractChecker(method, contract);
 
     PsiParameter[] parameters = method.getParameterList().getParameters();
     final DfaMemoryState initialState = checker.createMemoryState();
@@ -63,11 +59,11 @@ class ContractChecker extends DataFlowRunner {
       if (comparisonValue != null) {
         boolean negated = constraint.shouldUseNonEqComparison();
         DfaVariableValue dfaParam = factory.getVarFactory().createVariableValue(parameters[i], false);
-        initialState.applyCondition(factory.getRelationFactory().createRelation(dfaParam, comparisonValue, JavaTokenType.EQEQ, negated));
+        initialState.applyCondition(factory.createCondition(dfaParam, RelationType.equivalence(!negated), comparisonValue));
       }
     }
 
-    checker.analyzeMethod(body, new StandardInstructionVisitor(), ignoreAssertions, Arrays.asList(initialState));
+    checker.analyzeMethod(body, new StandardInstructionVisitor(), ignoreAssertions, Collections.singletonList(initialState));
     return checker.getErrors();
   }
 
@@ -101,6 +97,10 @@ class ContractChecker extends DataFlowRunner {
         ((MethodCallInstruction)instruction).getMethodType() == MethodCallInstruction.MethodType.REGULAR_METHOD_CALL &&
         myContract.returnValue == MethodContract.ValueConstraint.THROW_EXCEPTION) {
       ContainerUtil.addIfNotNull(myFailures, ((MethodCallInstruction)instruction).getCallExpression());
+      return DfaInstructionState.EMPTY_ARRAY;
+    }
+
+    if (instruction instanceof ConditionalGotoInstruction && memState.peek() == DfaUnknownValue.getInstance()) {
       return DfaInstructionState.EMPTY_ARRAY;
     }
 

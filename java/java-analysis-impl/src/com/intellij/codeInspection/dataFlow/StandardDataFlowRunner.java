@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,14 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 28, 2002
- * Time: 10:16:39 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.dataFlow;
 
 public class StandardDataFlowRunner extends DataFlowRunner {
 
   public StandardDataFlowRunner() {
-    this(false, true, false);
+    this(false, true);
   }
-  public StandardDataFlowRunner(boolean unknownMembersAreNullable, boolean honorFieldInitializers, boolean shouldCheckLimitTime) {
-    super(unknownMembersAreNullable, honorFieldInitializers, shouldCheckLimitTime);
+  public StandardDataFlowRunner(boolean unknownMembersAreNullable, boolean honorFieldInitializers) {
+    super(unknownMembersAreNullable, honorFieldInitializers);
   }
 }

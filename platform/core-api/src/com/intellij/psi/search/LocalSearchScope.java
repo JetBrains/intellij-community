@@ -15,12 +15,11 @@
  */
 package com.intellij.psi.search;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,7 +34,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public class LocalSearchScope extends SearchScope {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.search.LocalSearchScope");
@@ -68,8 +70,8 @@ public class LocalSearchScope extends SearchScope {
   public LocalSearchScope(@NotNull PsiElement[] scope, @Nullable final String displayName, final boolean ignoreInjectedPsi) {
     myIgnoreInjectedPsi = ignoreInjectedPsi;
     myDisplayName = displayName;
-    Set<PsiElement> localScope = new LinkedHashSet<PsiElement>(scope.length);
-    Set<VirtualFile> virtualFiles = new THashSet<VirtualFile>(scope.length);
+    Set<PsiElement> localScope = new LinkedHashSet<>(scope.length);
+    Set<VirtualFile> virtualFiles = new THashSet<>(scope.length);
     for (final PsiElement element : scope) {
       LOG.assertTrue(element != null, "null element");
       PsiFile containingFile = element.getContainingFile();
@@ -149,7 +151,7 @@ public class LocalSearchScope extends SearchScope {
 
   @NotNull
   private static LocalSearchScope intersection(@NotNull LocalSearchScope scope1, @NotNull LocalSearchScope scope2) {
-    List<PsiElement> result = new ArrayList<PsiElement>();
+    List<PsiElement> result = new ArrayList<>();
     for (final PsiElement element1 : scope1.myScope) {
       for (final PsiElement element2 : scope2.myScope) {
         final PsiElement element = intersectScopeElements(element1, element2);
@@ -226,7 +228,7 @@ public class LocalSearchScope extends SearchScope {
     PsiElement[] elements1 = getScope();
     PsiElement[] elements2 = scope2.getScope();
     boolean[] united = new boolean[elements2.length];
-    List<PsiElement> result = new ArrayList<PsiElement>();
+    List<PsiElement> result = new ArrayList<>();
     loop1:
     for (final PsiElement element1 : elements1) {
       for (int j = 0; j < elements2.length; j++) {
@@ -277,20 +279,19 @@ public class LocalSearchScope extends SearchScope {
     if (scope == EMPTY) {
       return EMPTY;
     }
-    return ApplicationManager.getApplication().runReadAction(new Computable<LocalSearchScope>() {
-      @Override
-      public LocalSearchScope compute() {
-        PsiElement[] elements = scope.getScope();
-        List<PsiElement> result = new ArrayList<PsiElement>(elements.length);
-        for (PsiElement element : elements) {
-          PsiFile containingFile = element.getContainingFile();
-          FileType fileType = containingFile.getFileType();
-          if (ArrayUtil.contains(fileType, fileTypes)) {
-            result.add(element);
-          }
+    return ReadAction.compute(() -> {
+      PsiElement[] elements = scope.getScope();
+      List<PsiElement> result = new ArrayList<>(elements.length);
+      for (PsiElement element : elements) {
+        PsiFile containingFile = element.getContainingFile();
+        FileType fileType = containingFile.getFileType();
+        if (ArrayUtil.contains(fileType, fileTypes)) {
+          result.add(element);
         }
-        return result.isEmpty() ? EMPTY : new LocalSearchScope(PsiUtilCore.toPsiElementArray(result), scope.getDisplayName(), scope.isIgnoreInjectedPsi());
       }
+      return result.isEmpty()
+             ? EMPTY
+             : new LocalSearchScope(PsiUtilCore.toPsiElementArray(result), scope.getDisplayName(), scope.isIgnoreInjectedPsi());
     });
 
 

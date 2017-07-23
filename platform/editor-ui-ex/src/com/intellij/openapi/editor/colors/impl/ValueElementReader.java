@@ -20,6 +20,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.Color;
 
@@ -32,6 +33,7 @@ import java.awt.Color;
  *
  * @author Sergey.Malenkov
  */
+@SuppressWarnings("UseJBColor")
 class ValueElementReader {
   @NonNls private static final String VALUE = "value";
   @NonNls private static final String MAC = "mac";
@@ -60,6 +62,7 @@ class ValueElementReader {
    * @param <T>     the result type
    * @return a value or {@code null} if it cannot be read
    */
+  @Nullable
   public <T> T read(Class<T> type, Element element) {
     T value = null;
     if (element != null) {

@@ -44,7 +44,7 @@ public class SchemaPrefixReference extends PsiReferenceBase<XmlElement> implemen
 
   /**
    *
-   * @param element XmlAttribute || XmlAttributeValue
+   * @param element XmlAttribute || XmlAttributeValue || XmlTag
    * @param range
    * @param name
    * @param reference

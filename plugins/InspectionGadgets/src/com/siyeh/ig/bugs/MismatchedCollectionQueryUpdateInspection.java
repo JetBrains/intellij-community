@@ -17,6 +17,7 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.ui.UiUtils;
@@ -29,15 +30,25 @@ public class MismatchedCollectionQueryUpdateInspection
 
   @Override
   public JComponent createOptionsPanel() {
-    final JPanel panel = new JPanel(new GridLayout(1, 2, UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
-    final ListTable table1 = new ListTable(new ListWrappingTableModel(queryNames, InspectionGadgetsBundle.message("query.column.name")));
-    final JPanel tablePanel1 = UiUtils.createAddRemovePanel(table1);
+    final ListTable queryNamesTable = new ListTable(new ListWrappingTableModel(queryNames, InspectionGadgetsBundle.message("query.column.name")));
+    final JPanel queryNamesPanel = UiUtils.createAddRemovePanel(queryNamesTable);
 
-    final ListTable table2 = new ListTable(new ListWrappingTableModel(updateNames, InspectionGadgetsBundle.message("update.column.name")));
-    final JPanel tablePanel2 = UiUtils.createAddRemovePanel(table2);
+    final ListTable updateNamesTable = new ListTable(new ListWrappingTableModel(updateNames, InspectionGadgetsBundle.message("update.column.name")));
+    final JPanel updateNamesPanel = UiUtils.createAddRemovePanel(updateNamesTable);
 
-    panel.add(tablePanel1);
-    panel.add(tablePanel2);
+    String ignoreClassesMessage = InspectionGadgetsBundle.message("ignored.class.names");
+    final ListTable ignoredClassesTable = new ListTable(new ListWrappingTableModel(ignoredClasses, ignoreClassesMessage));
+    final JPanel ignoredClassesPanel =
+      UiUtils.createAddRemoveTreeClassChooserPanel(ignoredClassesTable, ignoreClassesMessage, CommonClassNames.JAVA_UTIL_COLLECTION,
+                                                   CommonClassNames.JAVA_UTIL_MAP);
+
+    final JPanel namesPanel = new JPanel(new GridLayout(1, 2, UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
+    namesPanel.add(queryNamesPanel);
+    namesPanel.add(updateNamesPanel);
+
+    final JPanel panel = new JPanel(new GridLayout(2, 1, UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
+    panel.add(namesPanel);
+    panel.add(ignoredClassesPanel);
     return panel;
   }
 }

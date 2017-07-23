@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -250,12 +250,8 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    if (ALTERNATIVE_JRE_PATH_ENABLED){
-      if (ALTERNATIVE_JRE_PATH == null ||
-          ALTERNATIVE_JRE_PATH.length() == 0 ||
-          !JavaSdk.checkForJre(ALTERNATIVE_JRE_PATH)){
-        throw new RuntimeConfigurationWarning(ExecutionBundle.message("jre.not.valid.error.message", ALTERNATIVE_JRE_PATH));
-      }
+    if (ALTERNATIVE_JRE_PATH_ENABLED && (StringUtil.isEmptyOrSpaces(ALTERNATIVE_JRE_PATH) || !JdkUtil.checkForJre(ALTERNATIVE_JRE_PATH))) {
+      throw new RuntimeConfigurationWarning(ExecutionBundle.message("jre.not.valid.error.message", ALTERNATIVE_JRE_PATH));
     }
     getConfigurationModule().checkForWarning();
     if (HTML_USED) {
@@ -265,10 +261,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
       try {
         new URL(getHtmlURL().getUrl());
       }
-      catch (CantRunException ex) {
-        checkUrlIsValid(ex);
-      }
-      catch (MalformedURLException ex) {
+      catch (CantRunException | MalformedURLException ex) {
         checkUrlIsValid(ex);
       }
     }

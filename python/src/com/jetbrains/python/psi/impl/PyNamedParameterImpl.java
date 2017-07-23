@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -32,18 +31,20 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.codeInsight.PyTypingTypeProvider;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
 import com.jetbrains.python.psi.types.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author yole
@@ -85,11 +86,15 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
   }
 
+  @Override
+  @Nullable
   public PsiElement getNameIdentifier() {
     final ASTNode node = getNameIdentifierNode();
     return node == null ? null : node.getPsi();
   }
 
+  @Override
+  @NotNull
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     final ASTNode oldNameIdentifier = getNameIdentifierNode();
     if (oldNameIdentifier != null) {
@@ -104,6 +109,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     pyVisitor.visitPyNamedParameter(this);
   }
 
+  @Override
   public boolean isPositionalContainer() {
     final PyNamedParameterStub stub = getStub();
     if (stub != null) {
@@ -114,6 +120,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     }
   }
 
+  @Override
   public boolean isKeywordContainer() {
     final PyNamedParameterStub stub = getStub();
     if (stub != null) {
@@ -144,6 +151,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     return varargSeen;
   }
 
+  @Override
   @Nullable
   public PyExpression getDefaultValue() {
     final PyNamedParameterStub stub = getStub();
@@ -157,6 +165,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     return null;
   }
 
+  @Override
   public boolean hasDefaultValue() {
     final PyNamedParameterStub stub = getStub();
     if (stub != null) {
@@ -166,23 +175,15 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   }
 
   @NotNull
-  public String getRepr(boolean includeDefaultValue) {
-    StringBuilder sb = new StringBuilder();
-    if (isPositionalContainer()) sb.append("*");
-    else if (isKeywordContainer()) sb.append("**");
-    sb.append(getName());
-    final PyExpression defaultValue = getDefaultValue();
-    if (includeDefaultValue && defaultValue != null) {
-      String representation = PyUtil.getReadableRepr(defaultValue, true);
-      if (defaultValue instanceof PyStringLiteralExpression) {
-        final Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(defaultValue.getText());
-        if (quotes != null) {
-          representation = quotes.getFirst() + PyStringLiteralUtil.getStringValue(defaultValue) + quotes.getSecond();
-        }
-      }
-      sb.append("=").append(representation);
-    }
-    return sb.toString();
+  @Override
+  public String getRepr(boolean includeDefaultValue, @Nullable TypeEvalContext context) {
+    return PyCallableParameterImpl.psi(this).getPresentableText(includeDefaultValue, context);
+  }
+
+  @Override
+  @Nullable
+  public PyType getArgumentType(@NotNull TypeEvalContext context) {
+    return PyCallableParameterImpl.psi(this).getArgumentType(context);
   }
 
   @Override
@@ -190,19 +191,33 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     return getStubOrPsiChild(PyElementTypes.ANNOTATION);
   }
 
+  @Nullable
+  @Override
+  public String getAnnotationValue() {
+    return getAnnotationContentFromStubOrPsi(this);
+  }
+
+  @Override
+  @NotNull
   public Icon getIcon(final int flags) {
     return PlatformIcons.PARAMETER_ICON;
   }
 
+  @Override
+  @NotNull
   public PyNamedParameter getAsNamed() {
     return this;
   }
 
+  @Override
+  @Nullable
   public PyTupleParameter getAsTuple() {
     return null; // we're not a tuple
   }
 
-  public PyType getType(@NotNull final TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+  @Override
+  @Nullable
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PsiElement parent = getParentByStub();
     if (parent instanceof PyParameterList) {
       PyParameterList parameterList = (PyParameterList)parent;
@@ -243,26 +258,24 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
         // Guess the type from file-local calls
         if (context.allowCallContext(this)) {
           final List<PyType> types = new ArrayList<>();
-          processLocalCalls(func, call -> {
-            final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-            final PyArgumentList argumentList = call.getArgumentList();
-            if (argumentList != null) {
-              final PyCallExpression.PyArgumentsMapping mapping = call.mapArguments(resolveContext);
-              for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.getMappedParameters().entrySet()) {
-                if (entry.getValue() == this) {
-                  final PyExpression argument = entry.getKey();
-                  if (argument != null) {
-                    final PyType type = context.getType(argument);
-                    if (type != null) {
-                      types.add(type);
-                      return true;
-                    }
-                  }
-                }
-              }
+          final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+          final PyCallableParameter parameter = PyCallableParameterImpl.psi(this);
+
+          processLocalCalls(
+            func, call -> {
+              StreamEx
+                .of(call.multiMapArguments(resolveContext))
+                .flatCollection(mapping -> mapping.getMappedParameters().entrySet())
+                .filter(entry -> parameter.equals(entry.getValue()))
+                .map(Map.Entry::getKey)
+                .nonNull()
+                .map(context::getType)
+                .nonNull()
+                .forEach(types::add);
+              return true;
             }
-            return true;
-          });
+          );
+
           if (!types.isEmpty()) {
             return PyUnionType.createWeakType(PyUnionType.union(types));
           }
@@ -288,10 +301,14 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     final Set<String> result = new LinkedHashSet<>();
     final ScopeOwner owner = ScopeUtil.getScopeOwner(this);
     final String name = getName();
+    final Ref<Boolean> parameterWasReassigned = Ref.create(false);
+
     if (owner != null && name != null) {
       owner.accept(new PyRecursiveElementVisitor() {
         @Override
         public void visitPyElement(PyElement node) {
+          if (parameterWasReassigned.get()) return;
+
           if (node instanceof ScopeOwner && node != owner) {
             return;
           }
@@ -314,13 +331,11 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
             else {
               final PsiReference ref = expr.getReference();
               if (ref != null && ref.isReferenceTo(PyNamedParameterImpl.this)) {
-                final PyNamedParameter parameter = getParameterByCallArgument(expr, context);
-                if (parameter != null) {
-                  final PyType type = context.getType(parameter);
-                  if (type instanceof PyStructuralType) {
-                    result.addAll(((PyStructuralType)type).getAttributeNames());
-                  }
-                }
+                StreamEx.of(getParametersByCallArgument(expr, context))
+                  .nonNull()
+                  .map(parameter -> parameter.getType(context))
+                  .select(PyStructuralType.class)
+                  .forEach(type -> result.addAll(type.getAttributeNames()));
               }
             }
           }
@@ -329,6 +344,8 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
 
         @Override
         public void visitPyIfStatement(PyIfStatement node) {
+          if (parameterWasReassigned.get()) return;
+
           final PyExpression ifCondition = node.getIfPart().getCondition();
           if (ifCondition != null) {
             ifCondition.accept(this);
@@ -343,6 +360,8 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
 
         @Override
         public void visitPyCallExpression(PyCallExpression node) {
+          if (parameterWasReassigned.get()) return;
+
           Optional
             .ofNullable(node.getCallee())
             .filter(callee -> "len".equals(callee.getName()))
@@ -363,6 +382,8 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
 
         @Override
         public void visitPyForStatement(PyForStatement node) {
+          if (parameterWasReassigned.get()) return;
+
           Optional
             .of(node.getForPart())
             .map(PyForPart::getSource)
@@ -372,13 +393,25 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
 
           super.visitPyForStatement(node);
         }
+
+        @Override
+        public void visitPyTargetExpression(PyTargetExpression node) {
+          if (parameterWasReassigned.get()) return;
+
+          if (node.getReference().isReferenceTo(PyNamedParameterImpl.this)) {
+            parameterWasReassigned.set(true);
+          }
+          else {
+            super.visitPyTargetExpression(node);
+          }
+        }
       });
     }
     return result;
   }
 
-  @Nullable
-  private PyNamedParameter getParameterByCallArgument(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
+  @NotNull
+  private List<PyCallableParameter> getParametersByCallArgument(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
     final PyArgumentList argumentList = PsiTreeUtil.getParentOfType(element, PyArgumentList.class);
     if (argumentList != null) {
       boolean elementIsArgument = false;
@@ -397,20 +430,20 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
           if (firstQualifier != null) {
             final PsiReference ref = firstQualifier.getReference();
             if (ref != null && ref.isReferenceTo(this)) {
-              return null;
+              return Collections.emptyList();
             }
           }
         }
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-        final PyCallExpression.PyArgumentsMapping mapping = callExpression.mapArguments(resolveContext);
-        for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.getMappedParameters().entrySet()) {
-          if (entry.getKey() == element) {
-            return entry.getValue();
-          }
-        }
+        return callExpression.multiMapArguments(resolveContext)
+          .stream()
+          .flatMap(mapping -> mapping.getMappedParameters().entrySet().stream())
+          .filter(entry -> entry.getKey() == element)
+          .map(Map.Entry::getValue)
+          .collect(Collectors.toList());
       }
     }
-    return null;
+    return Collections.emptyList();
   }
 
   private static void processLocalCalls(@NotNull PyFunction function, @NotNull Processor<PyCallExpression> processor) {
@@ -488,14 +521,6 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   @Nullable
   @Override
   public String getTypeCommentAnnotation() {
-    final PyNamedParameterStub stub = getStub();
-    if (stub != null) {
-      return stub.getTypeComment();
-    }
-    final PsiComment comment = getTypeComment();
-    if (comment != null) {
-      return PyTypingTypeProvider.getTypeCommentValue(comment.getText());
-    }
-    return null;
+    return getTypeCommentAnnotationFromStubOrPsi(this);
   }
 }

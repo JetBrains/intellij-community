@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -36,7 +35,6 @@ import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageIn
 import com.intellij.refactoring.util.usageInfo.NoConstructorClassUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -75,13 +73,14 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidator;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.List;
 import java.util.Set;
+
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiTreeUtilKt.treeWalkUp;
 
 /**
  * @author Maxim.Medvedev
@@ -284,7 +283,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     final GrDocTag[] tags = docComment == null ? null : docComment.getTags();
 
 
-    
+    int newParamIndex = 0;
     for (JavaParameterInfo newParameter : newParameters) {
       //if old parameter name differs from base method parameter name we don't change it
       final String newName;
@@ -329,6 +328,14 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       }
 
       anchor = (GrParameter)parameterList.addAfter(grParameter, anchor);
+      if (newParamIndex < oldParameters.length) {
+        GrParameter oldParam = oldParameters[newParamIndex];
+        PsiElement prev = oldParam.getPrevSibling();
+        if (prev instanceof PsiWhiteSpace) {
+          parameterList.addBefore(prev, anchor);
+        }
+      }
+      newParamIndex++;
     }
 
     for (GrParameter oldParameter : toRemove) {
@@ -416,8 +423,9 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
     if (beforeMethodChange) {
       if (usageInfo instanceof OverriderUsageInfo) {
-        processPrimaryMethodInner(((JavaChangeInfo)changeInfo), (GrMethod)((OverriderUsageInfo)usageInfo).getOverridingMethod(),
-                                  ((OverriderUsageInfo)usageInfo).getBaseMethod());
+        PsiMethod method = ((OverriderUsageInfo)usageInfo).getOverridingMethod();
+        if (!(method instanceof GrMethod)) return true;
+        processPrimaryMethodInner(((JavaChangeInfo)changeInfo), (GrMethod)method, ((OverriderUsageInfo)usageInfo).getBaseMethod());
       }
     }
     else {
@@ -481,7 +489,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     invocation = (GrConstructorInvocation)block.addStatementBefore(invocation, getFirstStatement(block));
     processMethodUsage(invocation.getInvokedExpression(), changeInfo,
                        changeInfo.isParameterSetOrOrderChanged() || changeInfo.isParameterNamesChanged(),
-                       changeInfo.isExceptionSetChanged(), GrClosureSignatureUtil.ArgInfo.<PsiElement>empty_array(), substitutor);
+                       changeInfo.isExceptionSetChanged(), GrClosureSignatureUtil.ArgInfo.empty_array(), substitutor);
   }
 
   @Nullable
@@ -666,7 +674,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
           return size() < 2;
         }
       };
-      ResolveUtil.treeWalkUp(list, processor, false);
+      treeWalkUp(list, processor);
       if (processor.size() == 1) {
         final PsiVariable result = processor.getResult(0);
         return factory.createExpressionFromText(result.getName(), list);

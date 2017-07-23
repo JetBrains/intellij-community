@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -31,9 +33,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * User: Vassiliy.Kudryashov
- */
 public class JBCardLayout extends CardLayout {
   public enum SwipeDirection {FORWARD, BACKWARD, AUTO}
 
@@ -88,7 +87,8 @@ public class JBCardLayout extends CardLayout {
     mySwipeFrom = findVisible(parent);
     mySwipeTo = myMap.get(name);
     if (mySwipeTo == null) return;
-    if (mySwipeFrom == null || mySwipeFrom == mySwipeTo) {
+    Application app = ApplicationManager.getApplication();
+    if (mySwipeFrom == null || mySwipeFrom == mySwipeTo || (app != null && app.isUnitTestMode())) {
       super.show(parent, name);
       if (onDone != null) {
         onDone.run();

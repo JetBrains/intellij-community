@@ -7,7 +7,7 @@ def test_second_form():
 
 
 def test_second_form_fail():
-    for chunk in iter(<weak_warning descr="Expected type 'Union[Iterable, () -> object]' (matched generic type 'Union[Iterable[TypeVar('T')], () -> object]'), got 'int' instead">10</weak_warning>, ''):
+    for chunk in iter(<weak_warning descr="Expected type '() -> Any' (matched generic type '() -> TypeVar('_T')'), got 'int' instead">10</weak_warning>, ''):
         pass
 
 

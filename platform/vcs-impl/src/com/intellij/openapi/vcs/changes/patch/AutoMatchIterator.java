@@ -15,10 +15,9 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.Collection;
@@ -48,11 +47,8 @@ public class AutoMatchIterator {
         continue;
       }
       final String fileName = patch.getBeforeFileName();
-      final Collection<VirtualFile> files = ApplicationManager.getApplication().runReadAction(new Computable<Collection<VirtualFile>>() {
-        public Collection<VirtualFile> compute() {
-          return directoryDetector.findFiles(fileName);
-        }
-      });
+      final Collection<VirtualFile> files =
+        ReadAction.compute(() -> directoryDetector.findFiles(fileName));
       for (AutoMatchStrategy strategy : myStrategies) {
         strategy.acceptPatch(patch, files);
       }

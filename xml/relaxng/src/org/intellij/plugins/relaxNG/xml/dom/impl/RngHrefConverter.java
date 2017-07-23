@@ -27,11 +27,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 18.08.2007
- */
 public class RngHrefConverter extends Converter<XmlFile> implements CustomReferenceConverter<XmlFile> {
   @Override
   public XmlFile fromString(@Nullable @NonNls String s, ConvertContext context) {

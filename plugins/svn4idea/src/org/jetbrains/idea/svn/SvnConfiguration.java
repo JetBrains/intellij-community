@@ -17,7 +17,6 @@
 
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -370,16 +369,11 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     return myOptions;
   }
 
-  public SvnAuthenticationManager getAuthenticationManager(final SvnVcs svnVcs) {
+  public SvnAuthenticationManager getAuthenticationManager(@NotNull SvnVcs svnVcs) {
     if (myAuthManager == null) {
       // reloaded when configuration directory changes
-        myAuthManager = new SvnAuthenticationManager(svnVcs.getProject(), new File(getConfigurationDirectory()));
-      Disposer.register(svnVcs.getProject(), new Disposable() {
-        @Override
-        public void dispose() {
-          myAuthManager = null;
-        }
-      });
+      myAuthManager = new SvnAuthenticationManager(svnVcs, new File(getConfigurationDirectory()));
+      Disposer.register(svnVcs.getProject(), () -> myAuthManager = null);
       getInteractiveManager(svnVcs);
       // to init
       myAuthManager.setAuthenticationProvider(new SvnAuthenticationProvider(svnVcs, myInteractiveProvider, myAuthManager));
@@ -388,9 +382,9 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     return myAuthManager;
   }
 
-  public SvnAuthenticationManager getPassiveAuthenticationManager(Project project) {
+  public SvnAuthenticationManager getPassiveAuthenticationManager(@NotNull SvnVcs svnVcs) {
     if (myPassiveAuthManager == null) {
-      myPassiveAuthManager = new SvnAuthenticationManager(project, new File(getConfigurationDirectory()));
+      myPassiveAuthManager = new SvnAuthenticationManager(svnVcs, new File(getConfigurationDirectory()));
       myPassiveAuthManager.setAuthenticationProvider(new ISVNAuthenticationProvider() {
         @Override
         public SVNAuthentication requestClientAuthentication(String kind,
@@ -412,9 +406,9 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     return myPassiveAuthManager;
   }
 
-  public SvnAuthenticationManager getInteractiveManager(final SvnVcs svnVcs) {
+  public SvnAuthenticationManager getInteractiveManager(@NotNull SvnVcs svnVcs) {
     if (myInteractiveManager == null) {
-      myInteractiveManager = new SvnAuthenticationManager(svnVcs.getProject(), new File(getConfigurationDirectory()));
+      myInteractiveManager = new SvnAuthenticationManager(svnVcs, new File(getConfigurationDirectory()));
       myInteractiveManager.setRuntimeStorage(RUNTIME_AUTH_CACHE);
       myInteractiveProvider = new SvnInteractiveAuthenticationProvider(svnVcs, myInteractiveManager);
       myInteractiveManager.setAuthenticationProvider(myInteractiveProvider);

@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.service.resolve.dsl;
 
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
@@ -26,7 +27,6 @@ import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames;
 import org.jetbrains.plugins.gradle.service.resolve.GradleResolverUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -50,14 +50,14 @@ public class GradleDslAnnotator implements Annotator {
       PsiType psiType = GradleResolverUtil.getTypeOf(qualifier);
       if (psiType == null) return;
       if (InheritanceUtil.isInheritor(psiType, GradleCommonClassNames.GRADLE_API_NAMED_DOMAIN_OBJECT_COLLECTION)) {
-        final GroovyPsiManager psiManager = GroovyPsiManager.getInstance(element.getProject());
+        JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(element.getProject());
         PsiClass defaultGroovyMethodsClass =
-          psiManager.findClassWithCache(GroovyCommonClassNames.DEFAULT_GROOVY_METHODS, element.getResolveScope());
+          javaPsiFacade.findClass(GroovyCommonClassNames.DEFAULT_GROOVY_METHODS, element.getResolveScope());
         if (canBeMethodOf(referenceExpression.getReferenceName(), defaultGroovyMethodsClass)) return;
 
         final String qualifiedName = TypesUtil.getQualifiedName(psiType);
         final PsiClass containerClass =
-          qualifiedName != null ? psiManager.findClassWithCache(qualifiedName, element.getResolveScope()) : null;
+          qualifiedName != null ? javaPsiFacade.findClass(qualifiedName, element.getResolveScope()) : null;
         if (canBeMethodOf(referenceExpression.getReferenceName(), containerClass)) return;
 
         PsiElement nameElement = referenceExpression.getReferenceNameElement();

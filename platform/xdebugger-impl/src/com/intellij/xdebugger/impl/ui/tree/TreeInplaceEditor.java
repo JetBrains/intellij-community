@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,7 +87,9 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
 
     final JTree tree = getTree();
     tree.repaint();
-    tree.requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(tree, true);
+    });
   }
 
   protected void onHidden() {
@@ -126,7 +129,9 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
 
     inplaceEditorComponent.validate();
     inplaceEditorComponent.paintImmediately(0,0,inplaceEditorComponent.getWidth(),inplaceEditorComponent.getHeight());
-    getPreferredFocusedComponent().requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(getPreferredFocusedComponent(), true);
+    });
 
     final ComponentAdapter componentListener = new ComponentAdapter() {
       @Override
@@ -263,7 +268,10 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
         return;
       }
     }
-    cancelEditing();
+
+    if (id != MouseEvent.MOUSE_RELEASED) { // do not cancel on release outside of the component
+      cancelEditing();
+    }
   }
 
   @Nullable

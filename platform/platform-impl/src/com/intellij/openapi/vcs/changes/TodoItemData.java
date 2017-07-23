@@ -18,12 +18,6 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.search.TodoPattern;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/29/12
- * Time: 9:19 PM
- */
 public class TodoItemData {
   private final int myStartOffset;
   private final int myEndOffset;

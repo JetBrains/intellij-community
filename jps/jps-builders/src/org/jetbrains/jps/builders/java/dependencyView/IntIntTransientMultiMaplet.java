@@ -25,7 +25,7 @@ import gnu.trove.TIntProcedure;
  * Date: 08.03.11
  */
 class IntIntTransientMultiMaplet extends IntIntMultiMaplet {
-  private final TIntObjectHashMap<TIntHashSet> myMap = new TIntObjectHashMap<TIntHashSet>();
+  private final TIntObjectHashMap<TIntHashSet> myMap = new TIntObjectHashMap<>();
 
 
   @Override
@@ -56,12 +56,9 @@ class IntIntTransientMultiMaplet extends IntIntMultiMaplet {
       myMap.put(key, value);
     }
     else {
-      value.forEach(new TIntProcedure() {
-        @Override
-        public boolean execute(int value) {
-          x.add(value);
-          return true;
-        }
+      value.forEach(value1 -> {
+        x.add(value1);
+        return true;
       });
     }
   }
@@ -105,12 +102,9 @@ class IntIntTransientMultiMaplet extends IntIntMultiMaplet {
   public void removeAll(int key, TIntHashSet values) {
     final TIntHashSet collection = myMap.get(key);
     if (collection != null) {
-      values.forEach(new TIntProcedure() {
-        @Override
-        public boolean execute(int value) {
-          collection.remove(value);
-          return true;
-        }
+      values.forEach(value -> {
+        collection.remove(value);
+        return true;
       });
       if (collection.isEmpty()) {
         myMap.remove(key);

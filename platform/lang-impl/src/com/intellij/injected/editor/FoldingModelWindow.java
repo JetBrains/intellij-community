@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +35,7 @@ import java.util.List;
 /**
  * @author cdr
  */
-class FoldingModelWindow implements FoldingModelEx{
+class FoldingModelWindow implements FoldingModelEx, ModificationTracker {
   private final FoldingModelEx myDelegate;
   private final DocumentWindow myDocumentWindow;
   private final EditorWindow myEditorWindow;
@@ -69,19 +70,7 @@ class FoldingModelWindow implements FoldingModelEx{
 
   @Override
   public FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText) {
-    FoldRegion region = createFoldRegion(startOffset, endOffset, placeholderText, null, false);
-    if (region == null) return null;
-    if (!addFoldRegion(region)) {
-      region.dispose();
-      return null;
-    }
-
-    return region;
-  }
-
-  @Override
-  public boolean addFoldRegion(@NotNull final FoldRegion region) {
-    return myDelegate.addFoldRegion((FoldRegion)((FoldingRegionWindow)region).getDelegate());
+    return createFoldRegion(startOffset, endOffset, placeholderText, null, false);
   }
 
   @Override
@@ -165,6 +154,7 @@ class FoldingModelWindow implements FoldingModelEx{
     TextRange hostRange = myDocumentWindow.injectedToHost(new TextRange(startOffset, endOffset));
     if (hostRange.getLength() < 2) return null;
     FoldRegion hostRegion = myDelegate.createFoldRegion(hostRange.getStartOffset(), hostRange.getEndOffset(), placeholder, group, neverExpands);
+    if (hostRegion == null) return null;
     int startShift = Math.max(0, myDocumentWindow.hostToInjected(hostRange.getStartOffset()) - startOffset);
     int endShift = Math.max(0, endOffset - myDocumentWindow.hostToInjected(hostRange.getEndOffset()) - startShift);
     FoldingRegionWindow window = new FoldingRegionWindow(myDocumentWindow, myEditorWindow, hostRegion, startShift, endShift);
@@ -205,5 +195,10 @@ class FoldingModelWindow implements FoldingModelEx{
   @Override
   public void clearFoldRegions() {
     myDelegate.clearFoldRegions();
+  }
+
+  @Override
+  public long getModificationCount() {
+    return myDelegate instanceof ModificationTracker ? ((ModificationTracker)myDelegate).getModificationCount() : 0;
   }
 }

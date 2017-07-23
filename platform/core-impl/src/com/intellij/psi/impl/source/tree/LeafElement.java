@@ -69,7 +69,7 @@ public abstract class LeafElement extends TreeElement {
       String cachedText = SoftReference.dereference(getUserData(CACHED_TEXT));
       if (cachedText == null) {
         cachedText = text.toString();
-        putUserData(CACHED_TEXT, new SoftReference<String>(cachedText));
+        putUserData(CACHED_TEXT, new SoftReference<>(cachedText));
       }
       return cachedText;
     }

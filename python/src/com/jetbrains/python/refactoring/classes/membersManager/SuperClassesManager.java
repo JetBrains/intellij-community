@@ -45,7 +45,7 @@ class SuperClassesManager extends MembersManager<PyClass> {
   @NotNull
   @Override
   protected Collection<PyElement> getDependencies(@NotNull final MultiMap<PyClass, PyElement> usedElements) {
-    return Lists.<PyElement>newArrayList(usedElements.keySet());
+    return Lists.newArrayList(usedElements.keySet());
   }
 
   @NotNull
@@ -62,7 +62,7 @@ class SuperClassesManager extends MembersManager<PyClass> {
   @NotNull
   @Override
   protected List<PyElement> getMembersCouldBeMoved(@NotNull final PyClass pyClass) {
-    return Lists.<PyElement>newArrayList(Collections2.filter(Arrays.asList(pyClass.getSuperClasses(null)), NO_FAKE_SUPER_CLASSES));
+    return Lists.newArrayList(Collections2.filter(Arrays.asList(pyClass.getSuperClasses(null)), NO_FAKE_SUPER_CLASSES));
   }
 
   @Override
@@ -118,7 +118,7 @@ class SuperClassesManager extends MembersManager<PyClass> {
   private static class NoFakeSuperClasses extends NotNullPredicate<PyClass> {
     @Override
     protected boolean applyNotNull(@NotNull final PyClass input) {
-      return !PyNames.FAKE_OLD_BASE.equals(input.getName());
+      return !PyNames.TYPES_INSTANCE_TYPE.equals(input.getQualifiedName());
     }
   }
 }

@@ -9,9 +9,8 @@ REGEXP_FILE
           RegExpCharImpl: <b>
             PsiElement(CHARACTER)('b')
           PsiElement(ANDAND)('&&')
-          RegExpUnionImpl: <-b>
-            RegExpCharImpl: <->
-              PsiElement(MINUS)('-')
-            RegExpCharImpl: <b>
-              PsiElement(CHARACTER)('b')
+          RegExpCharImpl: <->
+            PsiElement(CHARACTER)('-')
+          RegExpCharImpl: <b>
+            PsiElement(CHARACTER)('b')
         PsiElement(CLASS_END)(']')

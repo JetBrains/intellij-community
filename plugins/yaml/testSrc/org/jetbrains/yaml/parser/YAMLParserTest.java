@@ -135,6 +135,13 @@ public class YAMLParserTest extends ParsingTestCase {
                "bar: \"baz\"");
   }
 
+  public void testRuby19105() throws Throwable {
+    doCodeTest("'Fn::Join':\n" +
+               "  - ''\n" +
+               "  - - Ref: hostedZoneName\n" +
+               "    - a");
+  }
+
   public void testRuby15345() throws IOException {
     doCodeTest("- !qualified.class.name\n" +
                "    propertyOne: bla bla\n" +
@@ -176,7 +183,7 @@ public class YAMLParserTest extends ParsingTestCase {
   public void testStringWithTag() throws IOException {
     doCodeTest("foo: ! \"tratata\"");
   }
-  
+
   public void testIncompleteKeyWithWhitespace() throws IOException {
     doCodeTest("logging:\n" +
                "  config:\n" +
@@ -201,23 +208,23 @@ public class YAMLParserTest extends ParsingTestCase {
   public void testAnsibleRoleElkMain() {
     doTest(true);
   }
-  
+
   public void testBlockMapping() {
     doTest(true);
   }
-  
+
   public void testIncompleteKeyInHierarchy() {
     doTest(true);
   }
-  
+
   public void testKeyValueWithEmptyLineAhead() {
     doTest(true);
   }
-  
+
   public void testMultipleDocsWithMappings() {
     doTest(true);
   }
-  
+
   public void testScalarsWithNewlines() {
     doTest(true);
   }

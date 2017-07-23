@@ -24,15 +24,13 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * User: ksafonov
- */
 public class ConfigImportSettings {
 
   public String getExecutableName() {
     return getProductName(ThreeState.NO);
   }
 
+  @NotNull
   public String[] getMainJarNames() {
     return new String[]{getProductName(ThreeState.NO)};
   }
@@ -66,10 +64,6 @@ public class ConfigImportSettings {
 
   protected String getEmptyHomeErrorText(String productWithVendor) {
     return ApplicationBundle.message("error.please.select.previous.installation.home", productWithVendor);
-  }
-
-  protected String getHomeLabel(String productName) {
-    return ApplicationBundle.message("editbox.installation.home", productName);
   }
 
   protected String getAutoImportLabel(File guessedOldConfig) {

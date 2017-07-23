@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,9 +55,9 @@ public class TabbedPaneWrapper  {
   /**
    * Creates tabbed pane wrapper with specified tab placement
    *
-   * @param tabPlacement tab placement. It one of the <code>SwingConstants.TOP</code>,
-   * <code>SwingConstants.LEFT</code>, <code>SwingConstants.BOTTOM</code> or
-   * <code>SwingConstants.RIGHT</code>.
+   * @param tabPlacement tab placement. It one of the {@code SwingConstants.TOP},
+   * {@code SwingConstants.LEFT}, {@code SwingConstants.BOTTOM} or
+   * {@code SwingConstants.RIGHT}.
    */
   public TabbedPaneWrapper(int tabPlacement, PrevNextActionsDescriptor installKeyboardNavigation, @NotNull Disposable parentDisposable) {
     final TabFactory factory;
@@ -79,10 +79,7 @@ public class TabbedPaneWrapper  {
 
     myTabbedPaneHolder = createTabbedPaneHolder();
     myTabbedPaneHolder.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
-    // Note: Ideally, we should always set "FocusCycleRoot" to "false", but,
-    // in the interest of backward compatibility, we only do so when a
-    // screen reader is active.
-    myTabbedPaneHolder.setFocusCycleRoot(!ScreenReader.isActive());
+    myTabbedPaneHolder.setFocusTraversalPolicyProvider(true);
     myTabbedPaneHolder.setFocusTraversalPolicy(new _MyFocusTraversalPolicy());
 
     assertIsDispatchThread();
@@ -177,7 +174,9 @@ public class TabbedPaneWrapper  {
     final boolean hadFocus = IJSwingUtilities.hasFocus2(myTabbedPaneHolder);
     myTabbedPane.setSelectedIndex(index);
     if (hadFocus && requestFocus) {
-      myTabbedPaneHolder.requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(myTabbedPaneHolder, true);
+      });
     }
   }
 
@@ -203,7 +202,9 @@ public class TabbedPaneWrapper  {
         myTabbedPane.revalidate();
       }
       if (hadFocus) {
-        myTabbedPaneHolder.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(myTabbedPaneHolder, true);
+        });
       }
     }
     finally {
@@ -383,7 +384,9 @@ public class TabbedPaneWrapper  {
       final JComponent preferredFocusedComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myComponent);
       if (preferredFocusedComponent != null) {
         if (!preferredFocusedComponent.requestFocusInWindow()) {
-          preferredFocusedComponent.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(preferredFocusedComponent, true);
+          });
         }
         return true;
       } else {
@@ -393,7 +396,9 @@ public class TabbedPaneWrapper  {
 
     public void requestFocus() {
       if (!myCustomFocus) {
-        super.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          super.requestFocus();
+        });
       } else {
         requestDefaultFocus();
       }
@@ -406,6 +411,11 @@ public class TabbedPaneWrapper  {
   }
 
   private final class _MyFocusTraversalPolicy extends IdeFocusTraversalPolicy{
+    @Override
+    public boolean isNoDefaultComponent() {
+      return false;
+    }
+
     public final Component getDefaultComponentImpl(final Container focusCycleRoot) {
       final JComponent component=getSelectedComponent();
       if(component!=null){
@@ -429,7 +439,9 @@ public class TabbedPaneWrapper  {
       final JComponent preferredFocusedComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myWrapper.myTabbedPane.getComponent());
       if (preferredFocusedComponent != null) {
         if (!preferredFocusedComponent.requestFocusInWindow()) {
-          preferredFocusedComponent.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(preferredFocusedComponent, true);
+          });
         }
         return true;
       } else {

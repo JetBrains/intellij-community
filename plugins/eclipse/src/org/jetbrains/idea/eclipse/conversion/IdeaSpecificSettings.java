@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 18-Dec-2009
- */
 package org.jetbrains.idea.eclipse.conversion;
 
+import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.openapi.components.ComponentSerializationUtil;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -62,7 +60,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
 
   @NonNls private static final String SRCROOT_ATTR = "srcroot";
   @NonNls private static final String SRCROOT_BIND_ATTR = "bind";
-  private static final Logger LOG = Logger.getInstance("#" + IdeaSpecificSettings.class.getName());
+  private static final Logger LOG = Logger.getInstance(IdeaSpecificSettings.class);
   @NonNls private static final String JAVADOCROOT_ATTR = "javadocroot_attr";
   public static final String INHERIT_JDK = "inheritJdk";
 
@@ -137,7 +135,8 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
 
   @Override
   protected void readLanguageLevel(Element root, ModifiableRootModel model) {
-    model.getModuleExtension(LanguageLevelModuleExtensionImpl.class).readExternal(root);
+    LanguageLevelModuleExtensionImpl component = model.getModuleExtension(LanguageLevelModuleExtensionImpl.class);
+    component.loadState(XmlSerializer.deserialize(root, ComponentSerializationUtil.getStateClass((component.getClass()))));
   }
 
   @Override
@@ -261,7 +260,8 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
 
     LanguageLevelModuleExtensionImpl languageLevelModuleExtension = model.getModuleExtension(LanguageLevelModuleExtensionImpl.class);
     if (languageLevelModuleExtension.getLanguageLevel() != null) {
-      languageLevelModuleExtension.writeExternal(root);
+      //noinspection ConstantConditions
+      XmlSerializer.serializeInto(languageLevelModuleExtension.getState(), root);
       isModified = true;
     }
 
@@ -439,10 +439,10 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
     }
   }
 
-  public static boolean appendModuleRelatedRoot(Element element, String classesUrl, final String rootName, ModuleRootModel model) {
+  public static void appendModuleRelatedRoot(Element element, String classesUrl, final String rootName, ModuleRootModel model) {
     VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(classesUrl);
     if (file == null) {
-      return false;
+      return;
     }
 
     final Project project = model.getModule().getProject();
@@ -452,16 +452,15 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
     }
     final Module module = ModuleUtilCore.findModuleForFile(file, project);
     if (module != null) {
-      return appendRelatedToModule(element, classesUrl, rootName, file, module);
+      appendRelatedToModule(element, classesUrl, rootName, file, module);
     }
     else if (ProjectRootManager.getInstance(project).getFileIndex().isExcluded(file)) {
       for (Module aModule : ModuleManager.getInstance(project).getModules()) {
         if (appendRelatedToModule(element, classesUrl, rootName, file, aModule)) {
-          return true;
+          return;
         }
       }
     }
-    return false;
   }
 
   private static boolean appendRelatedToModule(Element element, String classesUrl, String rootName, VirtualFile file, Module module) {

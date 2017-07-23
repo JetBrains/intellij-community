@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ public class GrBooleanTypeConverter extends GrTypeConverter {
 
   @Override
   public boolean isApplicableTo(@NotNull ApplicableTo position) {
-    return true;
+    return position != ApplicableTo.EXPLICIT_CAST;
   }
 
   @Nullable
@@ -43,7 +43,6 @@ public class GrBooleanTypeConverter extends GrTypeConverter {
       switch (currentPosition) {
         case METHOD_PARAMETER:
           return null;
-        case EXPLICIT_CAST:
         case ASSIGNMENT:
         case RETURN_VALUE:
           return ConversionResult.OK;

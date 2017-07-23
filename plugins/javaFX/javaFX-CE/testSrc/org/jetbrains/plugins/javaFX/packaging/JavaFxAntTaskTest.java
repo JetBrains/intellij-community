@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.plugins.javaFX.packaging;
 
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.ContainerUtil;
+import junit.framework.TestCase;
 
 import java.io.File;
 import java.util.Collections;
@@ -24,11 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * User: anna
- * Date: 3/28/13
- */
-public class JavaFxAntTaskTest extends UsefulTestCase{
+public class JavaFxAntTaskTest extends TestCase {
 
   private static final String PRELOADER_CLASS = "preloaderClass";
   private static final String TITLE = "title";
@@ -66,7 +63,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
            "<fx:fileset refid=\"all_jarDeployNoInfo\">\n" +
            "</fx:fileset>\n" +
            "</fx:resources>\n" +
-           "</fx:deploy>\n", Collections.<String, String>emptyMap());
+           "</fx:deploy>\n", Collections.emptyMap());
   }
 
   public void testJarDeployTitle() throws Exception {
@@ -352,7 +349,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
   }
 
   private void doTest(final String expected, Map<String, String> options) {
-    final String artifactName = getTestName(true);
+    final String artifactName = UsefulTestCase.getTestName(getName(), true);
     final String artifactFileName = artifactName + ".jar";
     final MockJavaFxPackager packager = new MockJavaFxPackager(artifactName + "/" + artifactFileName);
 
@@ -428,7 +425,6 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
     private List<JavaFxManifestAttribute> myCustomManifestAttributes;
     private JavaFxApplicationIcons myIcons;
     private JavaFxPackagerConstants.NativeBundles myNativeBundle = JavaFxPackagerConstants.NativeBundles.none;
-    ;
 
     private MockJavaFxPackager(String outputPath) {
       myOutputPath = outputPath;

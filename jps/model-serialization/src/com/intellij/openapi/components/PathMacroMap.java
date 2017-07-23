@@ -17,7 +17,6 @@ package com.intellij.openapi.components;
 
 import com.intellij.openapi.application.PathMacroFilter;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,11 +88,6 @@ public abstract class PathMacroMap {
   @NotNull
   public String substituteRecursively(@NotNull String text, boolean caseSensitive) {
     return substitute(text, caseSensitive);
-  }
-
-  @NotNull
-  protected static String quotePath(@NotNull String path) {
-    return FileUtil.toSystemIndependentName(path);
   }
 
   public abstract int hashCode();

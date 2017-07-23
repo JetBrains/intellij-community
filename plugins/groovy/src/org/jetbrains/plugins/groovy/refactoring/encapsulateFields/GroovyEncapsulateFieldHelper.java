@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.encapsulateFields.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +32,7 @@ import org.jetbrains.plugins.groovy.codeInspection.utils.JavaStylePropertiesUtil
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -151,7 +153,8 @@ public class GroovyEncapsulateFieldHelper extends EncapsulateFieldHelper {
         PsiClass accessObjectClass = getAccessObject(expr);
         final PsiResolveHelper helper = JavaPsiFacade.getInstance((expr).getProject()).getResolveHelper();
         if (helper.isAccessible(fieldDescriptor.getField(), newModifierList, expr, accessObjectClass, null)) {
-          if (expr.resolve() instanceof PsiMethod) {
+          GroovyResolveResult[] results = expr.multiResolve(false);
+          if (ContainerUtil.or(results, it -> it.isValidResult() && it.getElement() instanceof PsiMethod)) {
             addMemberOperator(expr, field);
           }
           return true;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -93,7 +92,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
       myBatchLevel -= 1;
       if (myChanged && myBatchLevel == 0) {
         try {
-          WriteAction.run(() -> fireChange());
+          WriteAction.run(this::fireChange);
         }
         finally {
           myChanged = false;
@@ -403,9 +402,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
     incModificationCount();
 
-    PsiManager psiManager = PsiManager.getInstance(myProject);
-    psiManager.dropResolveCaches();
-    ((PsiModificationTrackerImpl)psiManager.getModificationTracker()).incCounter();
+    PsiManager.getInstance(myProject).dropPsiCaches();
 
     fireRootsChangedEvent(fileTypes);
 
@@ -442,29 +439,32 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     return ModuleManager.getInstance(myProject);
   }
 
-  void subscribeToRootProvider(OrderEntry owner, final RootProvider provider) {
-    Set<OrderEntry> owners = myRegisteredRootProviders.get(provider);
-    if (owners == null) {
-      owners = new HashSet<>();
-      myRegisteredRootProviders.put(provider, owners);
-      provider.addRootSetChangedListener(myRootProviderChangeListener);
+  void subscribeToRootProvider(@NotNull OrderEntry owner, @NotNull RootProvider provider) {
+    synchronized (myRegisteredRootProviders) {
+      Set<OrderEntry> owners = myRegisteredRootProviders.get(provider);
+      if (owners == null) {
+        owners = new HashSet<>();
+        myRegisteredRootProviders.put(provider, owners);
+        provider.addRootSetChangedListener(myRootProviderChangeListener);
+      }
+      owners.add(owner);
     }
-    owners.add(owner);
   }
 
-  void unsubscribeFromRootProvider(OrderEntry owner, final RootProvider provider) {
-    Set<OrderEntry> owners = myRegisteredRootProviders.get(provider);
-    if (owners != null) {
-      owners.remove(owner);
-      if (owners.isEmpty()) {
-        provider.removeRootSetChangedListener(myRootProviderChangeListener);
-        myRegisteredRootProviders.remove(provider);
+  void unsubscribeFromRootProvider(@NotNull OrderEntry owner, @NotNull RootProvider provider) {
+    synchronized (myRegisteredRootProviders) {
+      Set<OrderEntry> owners = myRegisteredRootProviders.get(provider);
+      if (owners != null) {
+        owners.remove(owner);
+        if (owners.isEmpty()) {
+          provider.removeRootSetChangedListener(myRootProviderChangeListener);
+          myRegisteredRootProviders.remove(provider);
+        }
       }
     }
   }
 
-  void addListenerForTable(LibraryTable.Listener libraryListener,
-                           final LibraryTable libraryTable) {
+  void addListenerForTable(@NotNull LibraryTable.Listener libraryListener, @NotNull LibraryTable libraryTable) {
     synchronized (myLibraryTableListenersLock) {
       LibraryTableMultiListener multiListener = myLibraryTableMultiListeners.get(libraryTable);
       if (multiListener == null) {
@@ -476,8 +476,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
   }
 
-  void removeListenerForTable(LibraryTable.Listener libraryListener,
-                              final LibraryTable libraryTable) {
+  void removeListenerForTable(@NotNull LibraryTable.Listener libraryListener, @NotNull LibraryTable libraryTable) {
     synchronized (myLibraryTableListenersLock) {
       LibraryTableMultiListener multiListener = myLibraryTableMultiListeners.get(libraryTable);
       if (multiListener != null) {
@@ -497,19 +496,19 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     private final Set<LibraryTable.Listener> myListeners = new LinkedHashSet<>();
     private LibraryTable.Listener[] myListenersArray;
 
-    private synchronized void addListener(LibraryTable.Listener listener) {
+    private synchronized void addListener(@NotNull LibraryTable.Listener listener) {
       myListeners.add(listener);
       myListenersArray = null;
     }
 
-    private synchronized boolean removeListener(LibraryTable.Listener listener) {
+    private synchronized boolean removeListener(@NotNull LibraryTable.Listener listener) {
       myListeners.remove(listener);
       myListenersArray = null;
       return myListeners.isEmpty();
     }
 
     @Override
-    public void afterLibraryAdded(final Library newLibrary) {
+    public void afterLibraryAdded(@NotNull final Library newLibrary) {
       incModificationCount();
       mergeRootsChangesDuring(() -> {
         for (LibraryTable.Listener listener : getListeners()) {
@@ -526,7 +525,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
 
     @Override
-    public void afterLibraryRenamed(final Library library) {
+    public void afterLibraryRenamed(@NotNull final Library library) {
       incModificationCount();
       mergeRootsChangesDuring(() -> {
         for (LibraryTable.Listener listener : getListeners()) {
@@ -536,7 +535,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
 
     @Override
-    public void beforeLibraryRemoved(final Library library) {
+    public void beforeLibraryRemoved(@NotNull final Library library) {
       incModificationCount();
       mergeRootsChangesDuring(() -> {
         for (LibraryTable.Listener listener : getListeners()) {
@@ -546,7 +545,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
 
     @Override
-    public void afterLibraryRemoved(final Library library) {
+    public void afterLibraryRemoved(@NotNull final Library library) {
       incModificationCount();
       mergeRootsChangesDuring(() -> {
         for (LibraryTable.Listener listener : getListeners()) {
@@ -586,7 +585,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
 
     @Override
-    public void jdkAdded(final Sdk jdk) {
+    public void jdkAdded(@NotNull final Sdk jdk) {
       mergeRootsChangesDuring(() -> {
         for (ProjectJdkTable.Listener listener : getListeners()) {
           listener.jdkAdded(jdk);
@@ -595,7 +594,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
 
     @Override
-    public void jdkRemoved(final Sdk jdk) {
+    public void jdkRemoved(@NotNull final Sdk jdk) {
       mergeRootsChangesDuring(() -> {
         for (ProjectJdkTable.Listener listener : getListeners()) {
           listener.jdkRemoved(jdk);
@@ -604,7 +603,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
 
     @Override
-    public void jdkNameChanged(final Sdk jdk, final String previousName) {
+    public void jdkNameChanged(@NotNull final Sdk jdk, @NotNull final String previousName) {
       mergeRootsChangesDuring(() -> {
         for (ProjectJdkTable.Listener listener : getListeners()) {
           listener.jdkNameChanged(jdk, previousName);
@@ -629,11 +628,29 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     myJdkTableMultiListener.removeListener(jdkTableListener);
   }
 
+  void assertListenersAreDisposed() {
+    synchronized (myRegisteredRootProviders) {
+      if (!myRegisteredRootProviders.isEmpty()) {
+        StringBuilder details = new StringBuilder();
+        for (Map.Entry<RootProvider, Set<OrderEntry>> entry : myRegisteredRootProviders.entrySet()) {
+          details.append(" ").append(entry.getKey()).append(" referenced by ").append(entry.getValue().size()).append(" order entries:\n");
+          for (OrderEntry orderEntry : entry.getValue()) {
+            details.append("   ").append(orderEntry).append("\n");
+          }
+        }
+        LOG.error("Listeners for " + myRegisteredRootProviders.size() + " root providers aren't disposed:" + details);
+        for (RootProvider provider : myRegisteredRootProviders.keySet()) {
+          provider.removeRootSetChangedListener(myRootProviderChangeListener);
+        }
+      }
+    }
+  }
+
   private class RootProviderChangeListener implements RootProvider.RootSetChangedListener {
     private boolean myInsideRootsChange;
 
     @Override
-    public void rootSetChanged(final RootProvider wrapper) {
+    public void rootSetChanged(@NotNull final RootProvider wrapper) {
       if (myInsideRootsChange) return;
       myInsideRootsChange = true;
       try {
@@ -644,4 +661,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
       }
     }
   }
+
+  public void markRootsForRefresh() { }
 }

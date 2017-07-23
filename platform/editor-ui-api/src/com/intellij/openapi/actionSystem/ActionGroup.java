@@ -53,7 +53,7 @@ public abstract class ActionGroup extends AnAction {
   private Boolean myDumbAware;
 
   /**
-   * Creates a new <code>ActionGroup</code> with shortName set to <code>null</code> and
+   * Creates a new {@code ActionGroup} with shortName set to {@code null} and
    * popup set to false.
    */
   public ActionGroup(){
@@ -61,12 +61,12 @@ public abstract class ActionGroup extends AnAction {
   }
 
   /**
-   * Creates a new <code>ActionGroup</code> with the specified shortName
+   * Creates a new {@code ActionGroup} with the specified shortName
    * and popup.
    *
    * @param shortName Text that represents a short name for this action group
    *
-   * @param popup <code>true</code> if this group is a popup, <code>false</code>
+   * @param popup {@code true} if this group is a popup, {@code false}
    *  otherwise
    */
   public ActionGroup(String shortName, boolean popup){
@@ -95,7 +95,7 @@ public abstract class ActionGroup extends AnAction {
   /**
    * Returns the type of the group.
    *
-   * @return <code>true</code> if the group is a popup, <code>false</code> otherwise
+   * @return {@code true} if the group is a popup, {@code false} otherwise
    */
   public boolean isPopup(){
     return myPopup;
@@ -104,7 +104,7 @@ public abstract class ActionGroup extends AnAction {
   /**
    * Sets the type of the group.
    *
-   * @param popup If <code>true</code> the group will be shown as a popup in menus
+   * @param popup If {@code true} the group will be shown as a popup in menus
    */
   public final void setPopup(boolean popup){
     boolean oldPopup = myPopup;
@@ -127,7 +127,7 @@ public abstract class ActionGroup extends AnAction {
   /**
    * Returns the children of the group.
    *
-   * @return An array representing children of this group. All returned children must be not <code>null</code>.
+   * @return An array representing children of this group. All returned children must be not {@code null}.
    */
   @NotNull
   public abstract AnAction[] getChildren(@Nullable AnActionEvent e);

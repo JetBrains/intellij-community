@@ -16,7 +16,7 @@
 
 package com.intellij.execution.junit2.configuration;
 
-import com.intellij.application.options.ModulesComboBox;
+import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.MethodBrowser;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
@@ -94,7 +94,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   private LabeledComponent<EditorTextFieldWithBrowseButton> myCategory;
   // Fields
   private JPanel myWholePanel;
-  private LabeledComponent<ModulesComboBox> myModule;
+  private LabeledComponent<ModuleDescriptionsComboBox> myModule;
   private CommonJavaParametersPanel myCommonJavaParameters;
   private JRadioButton myWholeProjectScope;
   private JRadioButton mySingleModuleScope;
@@ -293,6 +293,13 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   }
 
   public void applyEditorTo(@NotNull final JUnitConfiguration configuration) {
+    configuration.setRepeatMode((String)myRepeatCb.getSelectedItem());
+    try {
+      configuration.setRepeatCount(Integer.parseInt(myRepeatCountField.getText()));
+    }
+    catch (NumberFormatException e) {
+      configuration.setRepeatCount(1);
+    }
     myModel.apply(getModuleSelector().getModule(), configuration);
     configuration.getPersistentData().setChangeList((String)myChangeListLabeledComponent.getComponent().getSelectedItem());
     applyHelpersTo(configuration);
@@ -311,13 +318,6 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
 
     myCommonJavaParameters.applyTo(configuration);
     configuration.setForkMode((String)myForkCb.getSelectedItem());
-    configuration.setRepeatMode((String)myRepeatCb.getSelectedItem());
-    try {
-      configuration.setRepeatCount(Integer.parseInt(myRepeatCountField.getText()));
-    }
-    catch (NumberFormatException e) {
-      configuration.setRepeatCount(1);
-    }
   }
 
   public void resetEditorFrom(@NotNull final JUnitConfiguration configuration) {
@@ -445,7 +445,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     return new DefaultComboBoxModel(RepeatCount.ONCE.equals(myRepeatCb.getSelectedItem()) ? FORK_MODE : FORK_MODE_ALL);
   }
 
-  public ModulesComboBox getModulesComponent() {
+  public ModuleDescriptionsComboBox getModulesComponent() {
     return myModule.getComponent();
   }
 

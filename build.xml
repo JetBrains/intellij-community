@@ -1,52 +1,28 @@
 <!--
- This build script compiles IntelliJ IDEA. Options include:
-    -Dout=/path/to/out/dir, defaults to ${basedir}/out
-    -Dbuild=123, defaults to SNAPSHOT
-    -Dtestpatterns=com.foo.*, defaults to empty string
-    -Dproduct=foo, defaults to idea
+ This build script compiles, build distribution archives and run tests in IntelliJ IDEA Community Edition. Build process can be customized
+ via options, see org.jetbrains.intellij.build.BuildOptions and org.jetbrains.intellij.build.TestingOptions classes for details. System properties
+ from these classes can be passed as Ant properties in the command line, e.g. run 'ant -Dintellij.build.output.root=/path/to/dir' to
+ specify custom output directory.
+
+ Note that this script is for building IntelliJ IDEA Community Edition only. If you want to build your own product based on IntelliJ Platform,
+ create a gant script for it, see javadoc for org.jetbrains.intellij.build for details.
  -->
-<project name="IntelliJ IDEA Community Edition" default="all">
+<project name="IntelliJ IDEA Community Edition" default="build">
   <property name="project.home" value="${basedir}"/>
 
-  <condition property="out.dir" value="${out}" else="${project.home}/out">
-    <isset property="out" />
-  </condition>
-
-  <condition property="build.number" value="${build}" else="SNAPSHOT">
-    <isset property="build" />
-  </condition>
-
-  <condition property="test.patterns" value="${testpatterns}" else="">
-    <isset property="testpatterns" />
-  </condition>
-
-  <condition property="product.name" value="${product}" else="idea">
-    <isset property="product" />
-  </condition>
-
-  <condition property="productPropertiesPath" value="${productPropertiesPath}" else="">
-    <isset property="productPropertiesPath" />
-  </condition>
-
-  <property name="tmp.dir" value="${out.dir}/tmp"/>
-
-  <target name="cleanup">
-    <delete dir="${out.dir}" failonerror="false"/>
-  </target>
-
   <target name="init">
-    <mkdir dir="${out.dir}"/>
-    <mkdir dir="${tmp.dir}"/>
-    <java classname="org.apache.tools.ant.Main" fork="true" failonerror="true" dir="${project.home}">
-      <sysproperty key="gant.script" value="${project.home}/build/scripts/download_kotlin.gant"/>
-      <classpath>
-        <fileset dir="${project.home}/lib/ant/lib">
-          <include name="*.jar"/>
-        </fileset>
-      </classpath>
-      <arg value="-f"/>
-      <arg value="${project.home}/build/gant.xml"/>
-    </java>
+    <condition property="gradle.executable" value="${project.home}/build/dependencies/gradlew.bat"
+               else="${project.home}/build/dependencies/gradlew">
+      <os family="windows"/>
+    </condition>
+    <exec executable="${gradle.executable}" dir="${project.home}/build/dependencies" failonerror="true">
+      <arg value="--no-daemon"/>
+      <arg value="setupKotlin"/>
+    </exec>
+    <propertyset id="intellij.build.properties">
+      <propertyref name="build.number"/>
+      <propertyref prefix="intellij.build."/>
+    </propertyset>
   </target>
 
   <macrodef name="call_gant">
@@ -55,15 +31,9 @@
       <java failonerror="true" jar="${project.home}/lib/ant/lib/ant-launcher.jar" fork="true">
         <jvmarg line="-Xmx812m -XX:MaxPermSize=152m"/>
         <sysproperty key="jna.nosys" value="true" />
-        <sysproperty key="out" value="${out.dir}" />
-        <sysproperty key="buildNumber" value="${build.number}" />
-        <sysproperty key="idea.test.patterns" value="${test.patterns}" />
-        <sysproperty key="product" value="${product.name}" />
-        <jvmarg value="-DproductPropertiesPath=${productPropertiesPath}" />
         <sysproperty key="java.awt.headless" value="true"/>
         <sysproperty key="gant.script" value="@{script}"/>
-        <sysproperty key="teamcity.build.tempDir" value="${tmp.dir}"/>
-        <sysproperty key="idea.test.group" value="ALL_EXCLUDE_DEFINED"/>
+        <syspropertyset refid="intellij.build.properties"/>
         <arg value="-f"/>
         <arg value="${project.home}/build/gant.xml"/>
       </java>
@@ -71,16 +41,19 @@
   </macrodef>
 
   <target name="build" depends="init">
-    <call_gant script="${project.home}/build/scripts/dist.gant"/>
+    <call_gant script="${project.home}/build/scripts/idea_community.gant"/>
   </target>
 
   <target name="test" depends="init">
-    <call_gant script="${project.home}/build/scripts/tests.gant"/>
+    <call_gant script="${project.home}/build/scripts/tests_in_community.gant"/>
   </target>
 
   <!-- The build task creates an updater.jar in ${out.dir}. This task bundles the updater and its dependencies into a single jar -->
   <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="${project.home}/build/lib/jarjar-1.0.jar"/>
   <target name="fullupdater" depends="build">
+    <condition property="out.dir" value="${intellij.build.output.root}" else="${project.home}/out">
+      <isset property="intellij.build.output.root"/>
+    </condition>
     <jarjar jarfile="${out.dir}/updater-full.jar">
       <zipfileset src="${out.dir}/updater.jar" />
       <zipfileset src="lib/log4j.jar" />
@@ -88,6 +61,4 @@
       <zipfileset src="lib/jna-utils.jar" />
     </jarjar>
   </target>
-
-  <target name="all" depends="cleanup,build"/>
 </project>

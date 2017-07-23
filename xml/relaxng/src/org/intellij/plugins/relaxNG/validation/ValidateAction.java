@@ -53,11 +53,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.concurrent.Future;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 19.11.2007
- */
 @SuppressWarnings({ "ComponentNotRegistered" })
 public class ValidateAction extends AnAction {
   private static final String CONTENT_NAME = "Validate RELAX NG";
@@ -197,10 +192,8 @@ public class ValidateAction extends AnAction {
       } catch (IOException e1) {
         eh.fatalError(new SAXParseException(e1.getMessage(), null, UriOrFile.fileToUri(schemaPath), -1, -1, e1));
       }
-    } catch (SAXException e1) {
+    } catch (SAXException | MalformedURLException e1) {
       // huh?
-      Logger.getInstance(ValidateAction.class.getName()).error(e1);
-    } catch (MalformedURLException e1) {
       Logger.getInstance(ValidateAction.class.getName()).error(e1);
     }
   }

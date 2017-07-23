@@ -4,10 +4,6 @@ import com.intellij.lang.properties.UnusedMessageFormatParameterInspection;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.InspectionTestCase;
 
-/**
- * User: anna
- * Date: 09-Sep-2005
- */
 public class UnusedMessageFormatParameterInspectionTest extends InspectionTestCase {
   private void doTest() throws Exception {
     doTest("unusedParameter/" + getTestName(true), new UnusedMessageFormatParameterInspection());

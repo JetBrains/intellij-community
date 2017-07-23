@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -289,9 +289,9 @@ public class VarDefinitionHelper {
       for (Integer index : childVars) {
         Integer count = mapCount.get(index);
         if (count == null) {
-          count = new Integer(0);
+          count = 0;
         }
-        mapCount.put(index, new Integer(count.intValue() + 1));
+        mapCount.put(index, count + 1);
       }
 
       condlst = getAllVars(currVars);
@@ -302,7 +302,7 @@ public class VarDefinitionHelper {
 
     // this statement
     for (VarExprent var : condlst) {
-      mapCount.put(new Integer(var.getIndex()), new Integer(2));
+      mapCount.put(var.getIndex(), 2);
     }
 
 

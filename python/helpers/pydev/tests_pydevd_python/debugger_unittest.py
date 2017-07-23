@@ -103,12 +103,13 @@ class ReaderThread(threading.Thread):
         self.sock = sock
         self.last_received = ''
         self.all_received = []
+        self._kill = False
 
     def run(self):
         last_printed = None
         try:
             buf = ''
-            while True:
+            while not self._kill:
                 l = self.sock.recv(1024)
                 if IS_PY3K:
                     l = l.decode('utf-8')
@@ -127,9 +128,13 @@ class ReaderThread(threading.Thread):
                             print('Test Reader Thread Received %s' % last_printed)
         except:
             pass  # ok, finished it
+        finally:
+            del self.all_received[:]
 
     def do_kill(self):
-        self.sock.close()
+        self._kill = True
+        if hasattr(self, 'sock'):
+            self.sock.close()
 
 
 class DebuggerRunner(object):
@@ -145,7 +150,7 @@ class DebuggerRunner(object):
         port = int(writer_thread.port)
 
         localhost = pydev_localhost.get_localhost()
-        return args + [
+        ret = args + [
             writer_thread.get_pydevd_file(),
             '--DEBUG_RECORD_SOCKET_READS',
             '--qt-support',
@@ -153,25 +158,40 @@ class DebuggerRunner(object):
             localhost,
             '--port',
             str(port),
-            '--file',
-        ] + writer_thread.get_command_line_args()
-        return args
+        ]
+
+        if writer_thread.IS_MODULE:
+            ret += ['--module']
+
+        ret = ret + ['--file'] + writer_thread.get_command_line_args()
+        return ret
 
     def check_case(self, writer_thread_class):
         writer_thread = writer_thread_class()
-        writer_thread.start()
-        while not hasattr(writer_thread, 'port'):
-            time.sleep(.01)
-        self.writer_thread = writer_thread
+        try:
+            writer_thread.start()
+            for _i in xrange(40000):
+                if hasattr(writer_thread, 'port'):
+                    break
+                time.sleep(.01)
+            self.writer_thread = writer_thread
 
-        args = self.get_command_line()
+            args = self.get_command_line()
 
-        args = self.add_command_line_args(args)
+            args = self.add_command_line_args(args)
 
-        if SHOW_OTHER_DEBUG_INFO:
-            print('executing', ' '.join(args))
+            if SHOW_OTHER_DEBUG_INFO:
+                print('executing', ' '.join(args))
 
-        return self.run_process(args, writer_thread)
+            ret = self.run_process(args, writer_thread)
+        finally:
+            writer_thread.do_kill()
+            writer_thread.log = []
+
+        stdout = ret['stdout']
+        stderr = ret['stderr']
+        writer_thread.additional_output_checks(''.join(stdout), ''.join(stderr))
+        return ret
 
     def create_process(self, args, writer_thread):
         process = subprocess.Popen(
@@ -187,78 +207,88 @@ class DebuggerRunner(object):
         process = self.create_process(args, writer_thread)
         stdout = []
         stderr = []
+        finish = [False]
 
-        def read(stream, buffer):
-            for line in stream.readlines():
-                if IS_PY3K:
-                    line = line.decode('utf-8')
+        try:
+            def read(stream, buffer):
+                for line in stream.readlines():
+                    if finish[0]:
+                        return
+                    if IS_PY3K:
+                        line = line.decode('utf-8')
 
-                if SHOW_STDOUT:
-                    sys.stdout.write('stdout: %s' % (line,))
-                buffer.append(line)
+                    if SHOW_STDOUT:
+                        sys.stdout.write('stdout: %s' % (line,))
+                    buffer.append(line)
 
-        start_new_thread(read, (process.stdout, stdout))
+            start_new_thread(read, (process.stdout, stdout))
 
 
-        if SHOW_OTHER_DEBUG_INFO:
-            print('Both processes started')
+            if SHOW_OTHER_DEBUG_INFO:
+                print('Both processes started')
 
-        # polls can fail (because the process may finish and the thread still not -- so, we give it some more chances to
-        # finish successfully).
-        check = 0
-        while True:
-            if process.poll() is not None:
-                break
-            else:
-                if writer_thread is not None:
-                    if not writer_thread.isAlive():
-                        if writer_thread.FORCE_KILL_PROCESS_WHEN_FINISHED_OK:
-                            process.kill()
-                            continue
+            # polls can fail (because the process may finish and the thread still not -- so, we give it some more chances to
+            # finish successfully).
+            check = 0
+            while True:
+                if process.poll() is not None:
+                    break
+                else:
+                    if writer_thread is not None:
+                        if not writer_thread.isAlive():
+                            if writer_thread.FORCE_KILL_PROCESS_WHEN_FINISHED_OK:
+                                process.kill()
+                                continue
 
+                            check += 1
+                            if check == 20:
+                                print('Warning: writer thread exited and process still did not.')
+                            if check == 100:
+                                process.kill()
+                                time.sleep(.2)
+                                self.fail_with_message(
+                                    "The other process should've exited but still didn't (timeout for process to exit).",
+                                    stdout, stderr, writer_thread
+                                )
+                time.sleep(.2)
+
+
+            if writer_thread is not None:
+                if not writer_thread.FORCE_KILL_PROCESS_WHEN_FINISHED_OK:
+                    poll = process.poll()
+                    if poll < 0:
+                        self.fail_with_message(
+                            "The other process exited with error code: " + str(poll), stdout, stderr, writer_thread)
+
+
+                    if stdout is None:
+                        self.fail_with_message(
+                            "The other process may still be running -- and didn't give any output.", stdout, stderr, writer_thread)
+
+                    check = 0
+                    while 'TEST SUCEEDED' not in ''.join(stdout):
                         check += 1
-                        if check == 20:
-                            print('Warning: writer thread exited and process still did not.')
-                        if check == 100:
-                            process.kill()
-                            time.sleep(.2)
-                            self.fail_with_message(
-                                "The other process should've exited but still didn't (timeout for process to exit).",
-                                stdout, stderr, writer_thread
-                            )
-            time.sleep(.2)
+                        if check == 50:
+                            self.fail_with_message("TEST SUCEEDED not found in stdout.", stdout, stderr, writer_thread)
+                        time.sleep(.1)
 
+                for _i in xrange(100):
+                    if not writer_thread.finished_ok:
+                        time.sleep(.1)
 
-        if writer_thread is not None:
-            if not writer_thread.FORCE_KILL_PROCESS_WHEN_FINISHED_OK:
-                poll = process.poll()
-                if poll < 0:
-                    self.fail_with_message(
-                        "The other process exited with error code: " + str(poll), stdout, stderr, writer_thread)
-
-
-                if stdout is None:
-                    self.fail_with_message(
-                        "The other process may still be running -- and didn't give any output.", stdout, stderr, writer_thread)
-
-                if 'TEST SUCEEDED' not in ''.join(stdout):
-                    self.fail_with_message("TEST SUCEEDED not found in stdout.", stdout, stderr, writer_thread)
-
-            for i in xrange(100):
                 if not writer_thread.finished_ok:
-                    time.sleep(.1)
-
-            if not writer_thread.finished_ok:
-                self.fail_with_message(
-                    "The thread that was doing the tests didn't finish successfully.", stdout, stderr, writer_thread)
+                    self.fail_with_message(
+                        "The thread that was doing the tests didn't finish successfully.", stdout, stderr, writer_thread)
+        finally:
+            finish[0] = True
 
         return {'stdout':stdout, 'stderr':stderr}
 
     def fail_with_message(self, msg, stdout, stderr, writerThread):
         raise AssertionError(msg+
-            "\nStdout: \n"+'\n'.join(stdout)+
-            "\nStderr:"+'\n'.join(stderr)+
-            "\nLog:\n"+'\n'.join(getattr(writerThread, 'log', [])))
+                             "\n\n===========================\nStdout: \n"+''.join(stdout)+
+                             "\n\n===========================\nStderr:"+''.join(stderr)+
+                             "\n\n===========================\nLog:\n"+'\n'.join(getattr(writerThread, 'log', [])))
 
 
 
@@ -268,6 +298,7 @@ class DebuggerRunner(object):
 class AbstractWriterThread(threading.Thread):
 
     FORCE_KILL_PROCESS_WHEN_FINISHED_OK = False
+    IS_MODULE = False
 
     def __init__(self):
         threading.Thread.__init__(self)
@@ -275,6 +306,9 @@ class AbstractWriterThread(threading.Thread):
         self.finished_ok = False
         self._next_breakpoint_id = 0
         self.log = []
+
+    def additional_output_checks(self, stdout, stderr):
+        pass
 
     def get_environ(self):
         return None
@@ -291,12 +325,17 @@ class AbstractWriterThread(threading.Thread):
         return [self.TEST_FILE]
 
     def do_kill(self):
+        if hasattr(self, 'server_socket'):
+            self.server_socket.close()
+
         if hasattr(self, 'reader_thread'):
             # if it's not created, it's not there...
             self.reader_thread.do_kill()
-        self.sock.close()
+        if hasattr(self, 'sock'):
+            self.sock.close()
 
     def write(self, s):
+        self.log.append('write: %s' % (s,))
 
         last = self.reader_thread.last_received
         if SHOW_WRITES_AND_READS:
@@ -313,16 +352,17 @@ class AbstractWriterThread(threading.Thread):
             time.sleep(0.1)
 
 
-    def start_socket(self):
+    def start_socket(self, port=0):
         if SHOW_WRITES_AND_READS:
             print('start_socket')
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind(('', 0))
+        s.bind(('', port))
         self.port = s.getsockname()[1]
         s.listen(1)
         if SHOW_WRITES_AND_READS:
             print('Waiting in socket.accept()')
+        self.server_socket = s
         newSock, addr = s.accept()
         if SHOW_WRITES_AND_READS:
             print('Test Writer Thread Socket:', newSock, addr)
@@ -359,7 +399,10 @@ class AbstractWriterThread(threading.Thread):
         thread_id = splitted[3]
         return thread_id
 
-    def wait_for_breakpoint_hit(self, reason='111', get_line=False):
+    def wait_for_breakpoint_hit(self, *args, **kwargs):
+        return self.wait_for_breakpoint_hit_with_suspend_type(*args, **kwargs)[:-1]
+
+    def wait_for_breakpoint_hit_with_suspend_type(self, reason='111', get_line=False, get_name=False):
         '''
             108 is over
             109 is return
@@ -375,22 +418,30 @@ class AbstractWriterThread(threading.Thread):
             last = self.reader_thread.last_received
             if i >= 10:
                 raise AssertionError('After %s seconds, a break with reason: %s was not hit. Found: %s' % \
-                    (i, reason, last))
+                                     (i, reason, last))
 
-        # we have something like <xml><thread id="12152656" stop_reason="111"><frame id="12453120" ...
+        # we have something like <xml><thread id="12152656" stop_reason="111"><frame id="12453120" name="encode" ...
         splitted = last.split('"')
+        suspend_type = splitted[7]
         thread_id = splitted[1]
-        frameId = splitted[7]
+        frameId = splitted[9]
+        name = splitted[11]
         if get_line:
-            self.log.append('End(0): wait_for_breakpoint_hit')
+            self.log.append('End(0): wait_for_breakpoint_hit: %s' % (last,))
             try:
-                return thread_id, frameId, int(splitted[13])
+                if not get_name:
+                    return thread_id, frameId, int(splitted[15]), suspend_type
+                else:
+                    return thread_id, frameId, int(splitted[15]), name, suspend_type
             except:
                 raise AssertionError('Error with: %s, %s, %s.\nLast: %s.\n\nAll: %s\n\nSplitted: %s' % (
                     thread_id, frameId, splitted[13], last, '\n'.join(self.reader_thread.all_received), splitted))
 
-        self.log.append('End(1): wait_for_breakpoint_hit')
-        return thread_id, frameId
+        self.log.append('End(1): wait_for_breakpoint_hit: %s' % (last,))
+        if not get_name:
+            return thread_id, frameId, suspend_type
+        else:
+            return thread_id, frameId, name, suspend_type
 
     def wait_for_custom_operation(self, expected):
         i = 0
@@ -401,7 +452,7 @@ class AbstractWriterThread(threading.Thread):
             time.sleep(1)
             if i >= 10:
                 raise AssertionError('After %s seconds, the custom operation not received. Last found:\n%s\nExpected (encoded)\n%s' %
-                    (i, self.reader_thread.last_received, expectedEncoded))
+                                     (i, self.reader_thread.last_received, expectedEncoded))
 
         return True
 
@@ -417,7 +468,7 @@ class AbstractWriterThread(threading.Thread):
             time.sleep(1)
             if i >= 10:
                 raise AssertionError('After %s seconds, the vars were not found. Last found:\n%s' %
-                    (i, self.reader_thread.last_received))
+                                     (i, self.reader_thread.last_received))
 
         return True
 
@@ -461,7 +512,7 @@ class AbstractWriterThread(threading.Thread):
             time.sleep(1)
             if i >= 10:
                 raise AssertionError('After %s seconds, %s. Last found:\n%s' %
-                    (i, error_msg, last))
+                                     (i, error_msg, last))
 
         return True
 
@@ -479,7 +530,7 @@ class AbstractWriterThread(threading.Thread):
             time.sleep(1)
             if i >= 10:
                 raise AssertionError('After %s seconds, the vars were not found. Last found:\n%s' %
-                    (i, self.reader_thread.last_received))
+                                     (i, self.reader_thread.last_received))
 
         return True
 
@@ -490,12 +541,15 @@ class AbstractWriterThread(threading.Thread):
     def write_version(self):
         self.write("501\t%s\t1.0\tWINDOWS\tID" % self.next_seq())
 
+    def get_main_filename(self):
+        return self.TEST_FILE
+
     def write_add_breakpoint(self, line, func):
         '''
             @param line: starts at 1
         '''
         breakpoint_id = self.next_breakpoint_id()
-        self.write("111\t%s\t%s\t%s\t%s\t%s\t%s\tNone\tNone" % (self.next_seq(), breakpoint_id, 'python-line', self.TEST_FILE, line, func))
+        self.write("111\t%s\t%s\t%s\t%s\t%s\t%s\tNone\tNone" % (self.next_seq(), breakpoint_id, 'python-line', self.get_main_filename(), line, func))
         self.log.append('write_add_breakpoint: %s line: %s func: %s' % (breakpoint_id, line, func))
         return breakpoint_id
 
@@ -503,8 +557,12 @@ class AbstractWriterThread(threading.Thread):
         self.write("122\t%s\t%s" % (self.next_seq(), exception))
         self.log.append('write_add_exception_breakpoint: %s' % (exception,))
 
+    def write_add_exception_breakpoint_with_policy(self, exception, notify_always, notify_on_terminate, ignore_libraries):
+        self.write("122\t%s\t%s" % (self.next_seq(), '\t'.join([exception, notify_always, notify_on_terminate, ignore_libraries])))
+        self.log.append('write_add_exception_breakpoint: %s' % (exception,))
+
     def write_remove_breakpoint(self, breakpoint_id):
-        self.write("112\t%s\t%s\t%s\t%s" % (self.next_seq(), 'python-line', self.TEST_FILE, breakpoint_id))
+        self.write("112\t%s\t%s\t%s\t%s" % (self.next_seq(), 'python-line', self.get_main_filename(), breakpoint_id))
 
     def write_change_variable(self, thread_id, frame_id, varname, value):
         self.write("117\t%s\t%s\t%s\t%s\t%s\t%s" % (self.next_seq(), thread_id, frame_id, 'FRAME', varname, value))

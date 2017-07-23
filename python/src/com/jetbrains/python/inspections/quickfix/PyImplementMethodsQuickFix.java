@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Set;
 
-/**
- * User: ktisha
- */
 public class PyImplementMethodsQuickFix extends LocalQuickFixOnPsiElement {
 
   private final Set<PyFunction> myToImplement;
@@ -67,7 +64,6 @@ public class PyImplementMethodsQuickFix extends LocalQuickFixOnPsiElement {
           list.add(new PyMethodMember(function));
         }
         PyOverrideImplementUtil.overrideMethods(editor, (PyClass)startElement, list, true);
-
       }
       else {
         PyOverrideImplementUtil
@@ -76,5 +72,10 @@ public class PyImplementMethodsQuickFix extends LocalQuickFixOnPsiElement {
                                                "Select Methods to Implement", true);
       }
     }
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 }

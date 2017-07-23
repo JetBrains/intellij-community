@@ -33,6 +33,7 @@ import java.awt.event.MouseMotionListener;
 @SuppressWarnings("ConstantConditions")
 class HeadlessDialog implements AbstractDialog {
   @NotNull private final DialogWrapper myWrapper;
+  private String myTitle;
 
   HeadlessDialog(@NotNull DialogWrapper wrapper) {
     myWrapper = wrapper;
@@ -113,7 +114,7 @@ class HeadlessDialog implements AbstractDialog {
 
   @Override
   public String getTitle() {
-    return null;
+    return myTitle;
   }
 
   @Override
@@ -141,6 +142,7 @@ class HeadlessDialog implements AbstractDialog {
 
   @Override
   public void setTitle(String title) {
+    myTitle = title;
   }
 
   @Override

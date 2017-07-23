@@ -55,10 +55,10 @@ public class FixedSizeButton extends JButton {
   }
 
   /**
-   * Creates the <code>FixedSizeButton</code> with specified size.
+   * Creates the {@code FixedSizeButton} with specified size.
    *
    * @throws IllegalArgumentException
-   *          if <code>size</code> isn't
+   *          if {@code size} isn't
    *          positive integer number.
    */
   public FixedSizeButton(int size) {
@@ -69,8 +69,8 @@ public class FixedSizeButton extends JButton {
   }
 
   /**
-   * Creates the <code>FixedSizeButton</code> which size is equals to
-   * <code>component.getPreferredSize().height</code>. It is very convenient
+   * Creates the {@code FixedSizeButton} which size is equals to
+   * {@code component.getPreferredSize().height}. It is very convenient
    * way to create "browse" like button near the text fields.
    */
   public FixedSizeButton(@NotNull JComponent component) {
@@ -88,10 +88,12 @@ public class FixedSizeButton extends JButton {
   public Dimension getPreferredSize() {
     if (myComponent != null) {
       int size = myComponent.getPreferredSize().height;
-      if (myComponent instanceof JComboBox && (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula())) {
+      if (myComponent instanceof JComboBox &&
+          !(UIUtil.isUnderDefaultMacTheme() || UIUtil.isUnderWin10LookAndFeel()) || UIUtil.isUnderDarcula()) {
         // JComboBox's preferred height is 2px greater than JTextField's one, because
         // javax.swing.DefaultListCellRenderer#getNoFocusBorder returns (1,1,1,1) border.
         // Decrement to have equal sizes for pretty look when stacked vertically
+        // Mac default border is computed correctly, so don't account for on Mac.
         size -= 2;
       }
       return new Dimension(size, size);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,14 @@ package com.siyeh.ig.errorhandling;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +77,7 @@ public class UnnecessaryInitCauseInspectionBase extends BaseInspection {
       }
       final PsiExpression qualifier = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
       final PsiNewExpression newExpression = findNewExpression(qualifier);
-      if (!isCauseConstructorAvailable(newExpression) || !canExpressionBeMovedBackwards(argument, newExpression)) {
+      if (!isCauseConstructorAvailable(newExpression, argument.getType()) || !canExpressionBeMovedBackwards(argument, newExpression)) {
         return;
       }
       registerMethodCallError(expression);
@@ -114,8 +113,8 @@ public class UnnecessaryInitCauseInspectionBase extends BaseInspection {
       return result.get().booleanValue();
     }
 
-    public static boolean isCauseConstructorAvailable(PsiNewExpression newExpression) {
-      if (newExpression == null) {
+    public static boolean isCauseConstructorAvailable(PsiNewExpression newExpression, PsiType causeType) {
+      if (newExpression == null || causeType == null) {
         return false;
       }
       final PsiMethod constructor = newExpression.resolveConstructor();
@@ -145,8 +144,7 @@ public class UnnecessaryInitCauseInspectionBase extends BaseInspection {
             }
           }
           final PsiParameter lastParameter = parameters[parameters.length - 1];
-          final PsiType type = lastParameter.getType();
-          if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_THROWABLE)) {
+          if (lastParameter.getType().isAssignableFrom(causeType)) {
             return true;
           }
         }

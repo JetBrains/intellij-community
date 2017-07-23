@@ -54,41 +54,27 @@ public class EmacsStyleIndentAction extends BaseCodeInsightAction implements Dum
 
     @Override
     public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
-      if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-      if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
-        return;
+      EmacsProcessingHandler emacsProcessingHandler = LanguageEmacsExtension.INSTANCE.forLanguage(file.getLanguage());
+      if (emacsProcessingHandler != null) {
+        EmacsProcessingHandler.Result result = emacsProcessingHandler.changeIndent(project, editor, file);
+        if (result == EmacsProcessingHandler.Result.STOP) {
+          return;
+        }
       }
 
-      WriteAction.run(() -> {
-        EmacsProcessingHandler emacsProcessingHandler = LanguageEmacsExtension.INSTANCE.forLanguage(file.getLanguage());
-        if (emacsProcessingHandler != null) {
-          EmacsProcessingHandler.Result result = emacsProcessingHandler.changeIndent(project, editor, file);
-          if (result == EmacsProcessingHandler.Result.STOP) {
-            return;
-          }
+      final Document document = editor.getDocument();
+      int startLine = document.getLineNumber(editor.getSelectionModel().getSelectionStart());
+      int endLine = document.getLineNumber(editor.getSelectionModel().getSelectionEnd());
+      for (int line = startLine; line <= endLine; line++) {
+        final int lineStart = document.getLineStartOffset(line);
+        final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+        final int newPos = codeStyleManager.adjustLineIndent(file, lineStart);
+        if (startLine == endLine && editor.getCaretModel().getOffset() < newPos) {
+          editor.getCaretModel().moveToOffset(newPos);
+          editor.getSelectionModel().removeSelection();
+          editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
         }
-
-        final Document document = editor.getDocument();
-        int startLine = document.getLineNumber(editor.getSelectionModel().getSelectionStart());
-        int endLine = document.getLineNumber(editor.getSelectionModel().getSelectionEnd());
-        for (int line = startLine; line <= endLine; line++) {
-          final int lineStart = document.getLineStartOffset(line);
-          final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-          final int newPos = codeStyleManager.adjustLineIndent(file, lineStart);
-          if (startLine == endLine && editor.getCaretModel().getOffset() < newPos) {
-            editor.getCaretModel().moveToOffset(newPos);
-            editor.getSelectionModel().removeSelection();
-            editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-          }
-        }
-      });
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return false;
+      }
     }
   }
 }

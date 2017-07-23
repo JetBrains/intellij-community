@@ -15,7 +15,10 @@
  */
 package com.jetbrains.python.console;
 
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
 import com.jetbrains.python.debugger.PositionConverterProvider;
 import com.jetbrains.python.debugger.PyDebugProcess;
@@ -54,12 +57,7 @@ public class PyConsoleDebugProcessHandler extends ProcessHandler implements Posi
       }
     });
 
-    processHandler.addColoredTextListener(new AnsiEscapeDecoder.ColoredTextAcceptor() {
-      @Override
-      public void coloredTextAvailable(String text, Key attributes) {
-        PyConsoleDebugProcessHandler.this.notifyTextAvailable(text, attributes);
-      }
-    });
+    processHandler.addColoredTextListener((text, attributes) -> PyConsoleDebugProcessHandler.this.notifyTextAvailable(text, attributes));
   }
 
   @Override

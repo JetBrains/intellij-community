@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,9 +33,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTuple;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleAssignmentExpression;
 
 import java.util.List;
 
@@ -43,8 +43,12 @@ public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
   private AnnotationHolder myHolder;
 
   @Override
-  protected void processTupleAssignment(@NotNull GrTupleExpression tupleExpression, @NotNull GrExpression initializer) {
+  public void visitTupleAssignmentExpression(@NotNull GrTupleAssignmentExpression expression) {
+    super.visitTupleAssignmentExpression(expression);
+
+    final GrExpression initializer = expression.getRValue();
     if (initializer instanceof GrListOrMap && !((GrListOrMap)initializer).isMap()) {
+      GrTuple tupleExpression = expression.getLValue();
       final GrListOrMap initializerList = (GrListOrMap)initializer;
       final GrExpression[] vars = tupleExpression.getExpressions();
       final GrExpression[] expressions = initializerList.getInitializers();
@@ -62,7 +66,7 @@ public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
         }
       }
     }
-    else {
+    else if (initializer != null) {
       registerError(
         initializer,
         GroovyBundle.message("multiple.assignments.without.list.expr"),
@@ -70,11 +74,6 @@ public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
         ProblemHighlightType.GENERIC_ERROR
       );
     }
-  }
-
-  @Override
-  public void visitAssignmentExpression(@NotNull GrAssignmentExpression assignment) {
-    super.visitAssignmentExpression(assignment);
   }
 
   @Override

@@ -23,7 +23,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import gnu.trove.THashMap
 import org.jetbrains.debugger.sourcemap.MappingEntry
-import org.jetbrains.debugger.sourcemap.MappingList
+import org.jetbrains.debugger.sourcemap.Mappings
 import org.jetbrains.debugger.sourcemap.SourceMap
 import org.jetbrains.rpc.LOG
 
@@ -34,7 +34,7 @@ private val OPERATOR_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1))
 val NAME_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1 + ".&:"))
 
 // generateVirtualFile only for debug purposes
-open class NameMapper(private val document: Document, private val transpiledDocument: Document, private val sourceMappings: MappingList, protected val sourceMap: SourceMap, private val transpiledFile: VirtualFile? = null) {
+open class NameMapper(private val document: Document, private val transpiledDocument: Document, private val sourceMappings: Mappings, protected val sourceMap: SourceMap, private val transpiledFile: VirtualFile? = null) {
   var rawNameToSource: MutableMap<String, String>? = null
     private set
 
@@ -50,7 +50,7 @@ open class NameMapper(private val document: Document, private val transpiledDocu
       return null
     }
 
-    val sourceEntry = sourceMappings.get(sourceEntryIndex)
+    val sourceEntry = sourceMappings.getByIndex(sourceEntryIndex)
     val next = sourceMappings.getNextOnTheSameLine(sourceEntryIndex, false)
     if (next != null && sourceMappings.getColumn(next) == sourceMappings.getColumn(sourceEntry)) {
       warnSeveralMapping(identifierOrNamedElement)
@@ -98,7 +98,7 @@ fun warnSeveralMapping(element: PsiElement) {
 
 private fun getGeneratedName(document: Document, sourceMap: SourceMap, sourceEntry: MappingEntry): CharSequence {
   val lineStartOffset = document.getLineStartOffset(sourceEntry.generatedLine)
-  val nextGeneratedMapping = sourceMap.mappings.getNextOnTheSameLine(sourceEntry)
+  val nextGeneratedMapping = sourceMap.generatedMappings.getNextOnTheSameLine(sourceEntry)
   val endOffset: Int
   if (nextGeneratedMapping == null) {
     endOffset = document.getLineEndOffset(sourceEntry.generatedLine)

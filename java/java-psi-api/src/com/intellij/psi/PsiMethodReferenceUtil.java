@@ -22,11 +22,8 @@ import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- */
 public class PsiMethodReferenceUtil {
-  private static final Logger LOG = Logger.getInstance("#" + PsiMethodReferenceUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance(PsiMethodReferenceUtil.class);
 
   public static boolean isSecondSearchPossible(PsiType[] parameterTypes,
                                                QualifierResolveResult qualifierResolveResult,
@@ -105,13 +102,6 @@ public class PsiMethodReferenceUtil {
           methodReturnType = ((PsiMethod)resolve).getReturnType();
           if (PsiType.VOID.equals(methodReturnType)) {
             return false;
-          }
-
-          PsiClass qContainingClass = getQualifierResolveResult(expression).getContainingClass();
-          if (qContainingClass != null && containingClass != null &&
-              isReceiverType(getFirstParameterType(functionalInterfaceType, expression), qContainingClass, subst)) {
-            subst = TypeConversionUtil.getClassSubstitutor(containingClass, qContainingClass, subst);
-            LOG.assertTrue(subst != null);
           }
 
           methodReturnType = subst.substitute(methodReturnType);
@@ -310,15 +300,15 @@ public class PsiMethodReferenceUtil {
       }
     }
 
-    if (!receiverReferenced && isStaticSelector && !isMethodStatic && !isConstructor) {
-      return "Non-static method cannot be referenced from a static context";
+    if (!receiverReferenced) {
+      if (isStaticSelector && !isMethodStatic && !isConstructor) {
+        return "Non-static method cannot be referenced from a static context";
+      }
+      if (!isStaticSelector && isMethodStatic) {
+        return "Static method referenced through non-static qualifier";
+      }
     }
-
-    if (!receiverReferenced && !isStaticSelector && isMethodStatic) {
-      return "Static method referenced through non-static qualifier";
-    }
-
-    if (receiverReferenced && isStaticSelector && isMethodStatic && !isConstructor) {
+    else if (isStaticSelector && isMethodStatic) {
       return "Static method referenced through receiver";
     }
 

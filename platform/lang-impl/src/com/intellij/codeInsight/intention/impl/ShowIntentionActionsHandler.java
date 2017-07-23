@@ -23,6 +23,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -92,6 +93,12 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       return;
     }
 
+    showIntentionHint(project, editor, file, intentions);
+  }
+
+  // added for override into Rider
+  @SuppressWarnings("WeakerAccess")
+  protected void showIntentionHint(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
     if (!intentions.isEmpty()) {
       IntentionHintComponent.showIntentionHint(project, file, editor, intentions, true);
     }
@@ -114,6 +121,8 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     boolean inProject = psiFile.getManager().isInProject(psiFile);
     try {
       Project project = psiFile.getProject();
+      if (action instanceof IntentionActionDelegate) action = ((IntentionActionDelegate)action).getDelegate();
+      if (action instanceof IntentionActionDelegate) action = ((IntentionActionDelegate)action).getDelegate();
       if (action instanceof SuppressIntentionActionFromFix) {
         final ThreeState shouldBeAppliedToInjectionHost = ((SuppressIntentionActionFromFix)action).isShouldBeAppliedToInjectionHost();
         if (editor instanceof EditorWindow && shouldBeAppliedToInjectionHost == ThreeState.YES) {

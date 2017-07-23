@@ -21,7 +21,10 @@ import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.graph.PermanentGraph;
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,14 +51,15 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
 
-    if (ui != null && ui.areGraphActionsEnabled()) {
+    if (ui != null && ui.areGraphActionsEnabled() && properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE)) {
       e.getPresentation().setEnabled(true);
       if (!ui.getFilterUi().getFilters().getDetailsFilters().isEmpty()) {
         e.getPresentation().setEnabled(false);
       }
 
-      if (ui.getBekType() == PermanentGraph.SortType.LinearBek) {
+      if (properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek) {
         e.getPresentation().setText(getPrefix() + MERGES);
         e.getPresentation().setDescription(getPrefix() + MERGES_DESCRIPTION);
       }
@@ -74,7 +78,10 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
       e.getPresentation().setIcon(null);
     }
     else {
-      e.getPresentation().setIcon(ui != null && ui.getBekType() == PermanentGraph.SortType.LinearBek ? getMergesIcon() : getBranchesIcon());
+      e.getPresentation().setIcon(
+        properties != null &&
+        properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE) &&
+        properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek ? getMergesIcon() : getBranchesIcon());
     }
   }
 

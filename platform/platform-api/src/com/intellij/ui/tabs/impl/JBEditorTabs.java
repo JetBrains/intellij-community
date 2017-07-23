@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,8 @@ import java.util.List;
  */
 public class JBEditorTabs extends JBTabsImpl {
   public static final String TABS_ALPHABETICAL_KEY = "tabs.alphabetical";
-  protected JBEditorTabsPainter myDarkPainter = new DarculaEditorTabsPainter();
-  protected JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter();
+  protected JBEditorTabsPainter myDarkPainter = new DarculaEditorTabsPainter(this);
+  protected JBEditorTabsPainter myDefaultPainter = new DefaultEditorTabsPainter(this);
 
 
   public JBEditorTabs(@Nullable Project project, @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
@@ -63,7 +63,7 @@ public class JBEditorTabs extends JBTabsImpl {
 
   @Override
   protected SingleRowLayout createSingleRowLayout() {
-    if (!UISettings.getInstance().HIDE_TABS_IF_NEED && supportsCompression()) {
+    if (!UISettings.getInstance().getHideTabsIfNeed() && supportsCompression()) {
       return new CompressibleSingleRowLayout(this);
     }
     else if (ApplicationManager.getApplication().isInternal() || Registry.is("editor.use.scrollable.tabs")) {
@@ -103,7 +103,7 @@ public class JBEditorTabs extends JBTabsImpl {
 
   @Override
   public boolean useSmallLabels() {
-    return UISettings.getInstance().USE_SMALL_LABELS_ON_TABS;
+    return UISettings.getInstance().getUseSmallLabelsOnTabs();
   }
 
   @Override
@@ -113,11 +113,10 @@ public class JBEditorTabs extends JBTabsImpl {
 
   @Override
   public boolean hasUnderline() {
-    return isSingleRow();
+    return isSingleRow() && !hasUnderlineSelection();
   }
 
-
-
+  @Override
   protected void doPaintInactive(Graphics2D g2d,
                                  boolean leftGhostExists,
                                  TabLabel label,
@@ -160,13 +159,18 @@ public class JBEditorTabs extends JBTabsImpl {
 
   @Override
   public int getActiveTabUnderlineHeight() {
-    return hasUnderline() ? super.getActiveTabUnderlineHeight() : 1;
+    return hasUnderline() ? super.getActiveTabUnderlineHeight() : hasUnderlineSelection() ? 0 : 1;
+  }
+
+  public boolean hasUnderlineSelection() {
+    return false;
   }
 
   protected JBEditorTabsPainter getPainter() {
     return UIUtil.isUnderDarcula() ? myDarkPainter : myDefaultPainter;
   }
 
+  @Override
   public boolean isAlphabeticalMode() {
     return Registry.is(TABS_ALPHABETICAL_KEY);
   }
@@ -204,8 +208,9 @@ public class JBEditorTabs extends JBTabsImpl {
     Rectangle beforeTabs;
     Rectangle afterTabs;
     if (vertical) {
-      beforeTabs = new Rectangle(insets.left, insets.top, getWidth(), minOffset - insets.top);
-      afterTabs = new Rectangle(insets.left, maxOffset, getWidth(),
+      int width = maxLength - insets.left - insets.right;
+      beforeTabs = new Rectangle(insets.left, insets.top, width, minOffset - insets.top);
+      afterTabs = new Rectangle(insets.left, maxOffset, width,
                                 r2.height - maxOffset - insets.top - insets.bottom);
     } else {
       int y = r2.y + insets.top;
@@ -232,6 +237,7 @@ public class JBEditorTabs extends JBTabsImpl {
     return getPainter().getEmptySpaceColor();
   }
 
+  @Override
   protected void paintSelectionAndBorder(Graphics2D g2d) {
     if (getSelectedInfo() == null || isHideTabs()) return;
 
@@ -243,9 +249,8 @@ public class JBEditorTabs extends JBTabsImpl {
     Insets insets = getTabsBorder().getEffectiveBorder();
 
     Color tabColor = label.getInfo().getTabColor();
-    final boolean isHorizontalTabs = isHorizontalTabs();
 
-    getPainter().paintSelectionAndBorder(g2d, r, selectedShape, insets, tabColor, isHorizontalTabs);
+    getPainter().paintSelectionAndBorder(g2d, r, selectedShape, insets, tabColor);
   }
 
   @Override
@@ -253,6 +258,7 @@ public class JBEditorTabs extends JBTabsImpl {
     return getPainter().getBackgroundColor();
   }
 
+  @Override
   public Color getForeground() {
     return UIUtil.getLabelForeground();
   }
@@ -283,8 +289,8 @@ public class JBEditorTabs extends JBTabsImpl {
     int lastX = shape.path.getWidth() - shape.path.deltaX(shape.insets.right);
 
     shape.path.lineTo(lastX, shape.labelBottomY);
-    shape.path.lineTo(lastX, shape.labelBottomY + shape.labelPath.deltaY(getActiveTabUnderlineHeight() - 1));
-    shape.path.lineTo(leftX, shape.labelBottomY + shape.labelPath.deltaY(getActiveTabUnderlineHeight() - 1));
+    shape.path.lineTo(lastX, shape.labelBottomY + shape.labelPath.deltaY(Math.max(0, getActiveTabUnderlineHeight() - 1)));
+    shape.path.lineTo(leftX, shape.labelBottomY + shape.labelPath.deltaY(Math.max(0, getActiveTabUnderlineHeight() - 1)));
 
     shape.path.closePath();
     shape.fillPath = shape.path.copy();

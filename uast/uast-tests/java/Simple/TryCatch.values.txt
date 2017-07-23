@@ -1,0 +1,42 @@
+UFile (package = ) [public class TryCatch {...]
+    UClass (name = TryCatch) [public class TryCatch {...}]
+        UMethod (name = foo) [public static fun foo(str: java.lang.String) : int {...}]
+            UParameter (name = str) [var str: java.lang.String]
+            UBlockExpression [{...}] = Nothing
+                UDeclarationsExpression [var sum: int = 0] = Undetermined
+                    ULocalVariable (name = sum) [var sum: int = 0]
+                        ULiteralExpression (value = 0) [0] = 0
+                UForEachExpression [for (part : str.split(" ")) {...}] = Undetermined
+                    UQualifiedReferenceExpression [str.split(" ")] = external split(" ")(" ")
+                        USimpleNameReferenceExpression (identifier = str) [str] = Undetermined
+                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [split(" ")] = external split(" ")(" ")
+                            UIdentifier (Identifier (split)) [UIdentifier (Identifier (split))]
+                            ULiteralExpression (value = " ") [" "] = " "
+                    UBlockExpression [{...}] = Undetermined
+                        UDeclarationsExpression [var b: int = 0] = Undetermined
+                            ULocalVariable (name = b) [var b: int = 0]
+                                ULiteralExpression (value = 0) [0] = 0
+                        UTryExpression [try {...] = Undetermined
+                            UBlockExpression [{...}] = 1
+                                UBinaryExpression (operator = =) [sum = sum + Integer.parseInt(part)] = Undetermined (depending on: (var sum = Undetermined))
+                                    USimpleNameReferenceExpression (identifier = sum) [sum] = (var sum = Undetermined)
+                                    UBinaryExpression (operator = +) [sum + Integer.parseInt(part)] = Undetermined (depending on: (var sum = Undetermined))
+                                        USimpleNameReferenceExpression (identifier = sum) [sum] = (var sum = Undetermined)
+                                        UQualifiedReferenceExpression [Integer.parseInt(part)] = external parseInt(part)(Undetermined)
+                                            USimpleNameReferenceExpression (identifier = Integer) [Integer] = external Integer()
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [parseInt(part)] = external parseInt(part)(Undetermined)
+                                                UIdentifier (Identifier (parseInt)) [UIdentifier (Identifier (parseInt))]
+                                                USimpleNameReferenceExpression (identifier = part) [part] = Undetermined
+                                UBinaryExpression (operator = =) [b = 1] = 1
+                                    USimpleNameReferenceExpression (identifier = b) [b] = (var b = 0)
+                                    ULiteralExpression (value = 1) [1] = 1
+                            UCatchClause (ex) [catch (e) {...}]
+                                UBlockExpression [{...}] = 1
+                                    UBinaryExpression (operator = =) [b = 1] = 1
+                                        USimpleNameReferenceExpression (identifier = b) [b] = Undetermined
+                                        ULiteralExpression (value = 1) [1] = 1
+                        UDeclarationsExpression [var c: int = b] = Undetermined
+                            ULocalVariable (name = c) [var c: int = b]
+                                USimpleNameReferenceExpression (identifier = b) [b] = (var b = Phi(1, 0))
+                UReturnExpression [return sum] = Nothing
+                    USimpleNameReferenceExpression (identifier = sum) [sum] = (var sum = Undetermined)

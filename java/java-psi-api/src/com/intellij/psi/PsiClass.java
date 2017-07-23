@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,26 +32,21 @@ import java.util.List;
  * @see PsiJavaFile#getClasses()
  */
 public interface PsiClass
-  extends PsiNameIdentifierOwner, PsiModifierListOwner, PsiDocCommentOwner, PsiTypeParameterListOwner, PsiTarget, PomRenameableTarget<PsiElement> {
+  extends PsiNameIdentifierOwner, PsiModifierListOwner, PsiDocCommentOwner, PsiTypeParameterListOwner,
+          PsiQualifiedNamedElement, PsiTarget, PomRenameableTarget<PsiElement> {
   /**
    * The empty array of PSI classes which can be reused to avoid unnecessary allocations.
    */
   @NotNull PsiClass[] EMPTY_ARRAY = new PsiClass[0];
 
-  ArrayFactory<PsiClass> ARRAY_FACTORY = new ArrayFactory<PsiClass>() {
-    @NotNull
-    @Override
-    public PsiClass[] create(final int count) {
-      return count == 0 ? EMPTY_ARRAY : new PsiClass[count];
-    }
-  };
+  ArrayFactory<PsiClass> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiClass[count];
 
   /**
    * Returns the fully qualified name of the class.
    *
    * @return the qualified name of the class, or null for anonymous and local classes, and for type parameters
    */
-  @Nullable @NonNls
+  @Nullable
   String getQualifiedName();
 
   /**
@@ -122,6 +117,7 @@ public interface PsiClass
    *
    * @return the list of interfaces.
    */
+  @NotNull
   PsiClass[] getInterfaces();
 
   /**
@@ -130,7 +126,8 @@ public interface PsiClass
    * @return the list of classes or interfaces. May return zero elements when jdk is
    *         not configured, so no java.lang.Object is found
    */
-  @NotNull PsiClass[] getSupers();
+  @NotNull
+  PsiClass[] getSupers();
 
   /**
    * Returns the list of class types for the classes and interfaces extended or

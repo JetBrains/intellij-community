@@ -23,10 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * User: anna
- * Date: 22-Mar-2006
- */
 public abstract class AdditionalTabComponent extends JPanel implements ComponentContainer, ComponentWithActions {
   protected AdditionalTabComponent(LayoutManager layout) {
     super(layout);

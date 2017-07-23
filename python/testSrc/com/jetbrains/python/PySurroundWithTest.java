@@ -83,6 +83,18 @@ public class PySurroundWithTest extends PyTestCase {
     doTest(surrounder);
   }
 
+  public void testSurroundCommentAtStart() throws Exception {
+    doTest(new PyWithIfSurrounder());
+  }
+
+  public void testSurroundCommentAtEnd() throws Exception {
+    doTest(new PyWithIfSurrounder());
+  }
+
+  public void testSurroundNewline() throws Exception {
+    doTest(new PyWithIfSurrounder());
+  }
+
   private void doTest(final Surrounder surrounder) throws Exception {
     String baseName = "/surround/" + getTestName(false);
     myFixture.configureByFile(baseName + ".py");

@@ -84,12 +84,6 @@
               </grid>
             </children>
           </grid>
-          <grid id="3e6fb" binding="myTabsPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
-            <constraints border-constraint="Center"/>
-            <properties/>
-            <border type="none"/>
-            <children/>
-          </grid>
           <grid id="16a45" layout-manager="BorderLayout" hgap="0" vgap="0">
             <constraints border-constraint="South"/>
             <properties/>
@@ -120,6 +114,25 @@
                     <properties/>
                   </component>
                 </children>
+              </grid>
+            </children>
+          </grid>
+          <grid id="9a9a6" layout-manager="BorderLayout" hgap="0" vgap="0">
+            <constraints border-constraint="Center"/>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <grid id="3e6fb" binding="myTabsPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+                <constraints border-constraint="Center"/>
+                <properties/>
+                <border type="none"/>
+                <children/>
+              </grid>
+              <grid id="7a082" binding="myAttachments" layout-manager="BorderLayout" hgap="0" vgap="0">
+                <constraints border-constraint="South"/>
+                <properties/>
+                <border type="none"/>
+                <children/>
               </grid>
             </children>
           </grid>

@@ -27,7 +27,7 @@ import java.util.List;
 public class GitLabelComparatorTest extends GitRefManagerTest {
 
   public void testEmpty() {
-    check(Collections.<VcsRef>emptyList(), Collections.<VcsRef>emptyList());
+    check(Collections.emptyList(), Collections.emptyList());
   }
 
   public void testSingle() throws IOException {

@@ -88,7 +88,7 @@ def convert_to_long_pathname(filename):
             filename = unicode(filename)
         rv = GetLongPathName(filename, buf, 260)
         if rv != 0 and rv <= 260:
-            return buf.value.encode(getfilesystemencoding())
+            return buf.value
     return filename
 
 

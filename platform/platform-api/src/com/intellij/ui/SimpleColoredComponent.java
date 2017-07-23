@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,12 +57,12 @@ import java.util.List;
  *
  * @author Vladimir Kondratyev
  */
-@SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "FieldAccessedSynchronizedAndUnsynchronized", "UnusedDeclaration"})
+@SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "FieldAccessedSynchronizedAndUnsynchronized"})
 public class SimpleColoredComponent extends JComponent implements Accessible, ColoredTextContainer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.SimpleColoredComponent");
 
   public static final Color SHADOW_COLOR = new JBColor(new Color(250, 250, 250, 140), Gray._0.withAlpha(50));
-  public static final Color STYLE_SEARCH_MATCH_BACKGROUND = SHADOW_COLOR; //api compatibility
+  @SuppressWarnings("unused") public static final Color STYLE_SEARCH_MATCH_BACKGROUND = SHADOW_COLOR; //api compatibility
   public static final int FRAGMENT_ICON = -2;
 
   private final List<String> myFragments;
@@ -73,7 +73,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   private TIntIntHashMap myFragmentAlignment;
 
   /**
-   * Component's icon. It can be <code>null</code>.
+   * Component's icon. It can be {@code null}.
    */
   private Icon myIcon;
   /**
@@ -97,7 +97,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   /**
    * This is the border around the text. For example, text can have a border
    * if the component represents a selected item in a focused JList.
-   * Border can be <code>null</code>.
+   * Border can be {@code null}.
    */
   private Border myBorder;
 
@@ -137,6 +137,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return new MyIterator();
   }
 
+  @SuppressWarnings("unused")
   public boolean isIconOnTheRight() {
     return myIconOnTheRight;
   }
@@ -153,7 +154,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   /**
    * Appends string fragments to existing ones. Appended string
-   * will have specified <code>attributes</code>.
+   * will have specified {@code attributes}.
    *
    * @param fragment   text fragment
    * @param attributes text attributes
@@ -178,7 +179,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   /**
    * Appends string fragments to existing ones. Appended string
-   * will have specified <code>attributes</code>.
+   * will have specified {@code attributes}.
    *
    * @param fragment   text fragment
    * @param attributes text attributes
@@ -197,7 +198,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
   }
 
-  private void revalidateAndRepaint() {
+  void revalidateAndRepaint() {
     if (myAutoInvalidate) {
       revalidate();
     }
@@ -252,7 +253,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   /**
-   * Clear all special attributes of <code>SimpleColoredComponent</code>.
+   * Clear all special attributes of {@code SimpleColoredComponent}.
    * They are icon, text fragments and their attributes, "paint focus border".
    */
   public void clear() {
@@ -272,7 +273,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   /**
-   * @return component's icon. This method returns <code>null</code>
+   * @return component's icon. This method returns {@code null}
    * if there is no icon.
    */
   public final Icon getIcon() {
@@ -320,7 +321,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
    * Sets a new gap between icon and text
    *
    * @param iconTextGap the gap between text and icon
-   * @throws IllegalArgumentException if the <code>iconTextGap</code>
+   * @throws IllegalArgumentException if the {@code iconTextGap}
    *                                            has a negative value
    */
   public void setIconTextGap(final int iconTextGap) {
@@ -343,7 +344,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   /**
    * Sets whether focus border is painted or not
    *
-   * @param paintFocusBorder <code>true</code> or <code>false</code>
+   * @param paintFocusBorder {@code true} or {@code false}
    */
   protected final void setPaintFocusBorder(final boolean paintFocusBorder) {
     myPaintFocusBorder = paintFocusBorder;
@@ -355,7 +356,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
    * Sets whether focus border extends to icon or not. If so then
    * component also extends the selection.
    *
-   * @param focusBorderAroundIcon <code>true</code> or <code>false</code>
+   * @param focusBorderAroundIcon {@code true} or {@code false}
    */
   protected final void setFocusBorderAroundIcon(final boolean focusBorderAroundIcon) {
     myFocusBorderAroundIcon = focusBorderAroundIcon;
@@ -406,16 +407,30 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     width += borderInsets.left;
 
     Font font = getBaseFont();
-    LOG.assertTrue(font != null);
 
     width += computeTextWidth(font, mainTextOnly);
     width += myIpad.right + borderInsets.right;
 
-    // Calculate height
+    // Take into account that the component itself can have a border
+    final Insets insets = getInsets();
+    if (insets != null) {
+      width += insets.left + insets.right;
+    }
+
+    int height = computePreferredHeight();
+
+    return new Dimension(width, height);
+  }
+
+  public final synchronized int computePreferredHeight() {
     int height = myIpad.top + myIpad.bottom;
+
+    Font font = getBaseFont();
 
     final FontMetrics metrics = getFontMetrics(font);
     int textHeight = Math.max(JBUI.scale(16), metrics.getHeight()); //avoid too narrow rows
+    
+    Insets borderInsets = myBorder != null ? myBorder.getBorderInsets(this) : JBUI.emptyInsets();
     textHeight += borderInsets.top + borderInsets.bottom;
 
     if (myIcon != null) {
@@ -428,11 +443,10 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     // Take into account that the component itself can have a border
     final Insets insets = getInsets();
     if (insets != null) {
-      width += insets.left + insets.right;
       height += insets.top + insets.bottom;
     }
 
-    return new Dimension(width, height);
+    return height;
   }
 
   private Rectangle computePaintArea() {
@@ -442,8 +456,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return area;
   }
 
-  private int computeTextWidth(@NotNull Font font, final boolean mainTextOnly) {
-    int result = 0;
+  private float computeTextWidth(@NotNull Font font, final boolean mainTextOnly) {
+    float result = 0;
     int baseSize = font.getSize();
     boolean wasSmaller = false;
     for (int i = 0; i < myAttributes.size(); i++) {
@@ -481,7 +495,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return layout;
   }
 
-  private void doDrawString(Graphics2D g, int fragmentIndex, int x, int y) {
+  private void doDrawString(Graphics2D g, int fragmentIndex, float x, float y) {
     String text = myFragments.get(fragmentIndex);
     if (StringUtil.isEmpty(text)) return;
     TextLayout layout = getTextLayout(fragmentIndex, g.getFont(), g.getFontRenderContext());
@@ -493,15 +507,16 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
   }
 
-  private int computeStringWidth(int fragmentIndex, Font font) {
+  private float computeStringWidth(int fragmentIndex, Font font) {
     String text = myFragments.get(fragmentIndex);
     if (StringUtil.isEmpty(text)) return 0;
-    TextLayout layout = getTextLayout(fragmentIndex, font, getFontMetrics(font).getFontRenderContext());
+    FontRenderContext fontRenderContext = getFontMetrics(font).getFontRenderContext();
+    TextLayout layout = getTextLayout(fragmentIndex, font, fontRenderContext);
     if (layout != null) {
-      return (int)layout.getAdvance();
+      return layout.getAdvance();
     }
     else {
-      return getFontMetrics(font).stringWidth(text);
+      return (float)font.getStringBounds(text, fontRenderContext).getWidth();
     }
   }
 
@@ -554,7 +569,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
    * @return the index of the fragment, {@link #FRAGMENT_ICON} if the icon is at the offset, or -1 if nothing is there.
    */
   public int findFragmentAt(int x) {
-    int curX = myIpad.left;
+    float curX = myIpad.left;
     if (myIcon != null && !myIconOnTheRight) {
       final int iconRight = myIcon.getIconWidth() + myIconTextGap;
       if (x < iconRight) {
@@ -575,7 +590,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       }
       wasSmaller = isSmaller;
 
-      final int curWidth = computeStringWidth(i, font);
+      final float curWidth = computeStringWidth(i, font);
       if (x >= curX && x < curX + curWidth) {
         return i;
       }
@@ -743,13 +758,13 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     paintIcon(g, icon, offset + myIpad.left);
   }
 
-  protected int doPaintText(Graphics2D g, int offset, boolean focusAroundIcon) {
+  protected int doPaintText(Graphics2D g, int textStart, boolean focusAroundIcon) {
     // If there is no icon, then we have to add left internal padding
-    if (offset == 0) {
-      offset = myIpad.left;
+    if (textStart == 0) {
+      textStart = myIpad.left;
     }
 
-    int textStart = offset;
+    float offset = textStart;
     if (myBorder != null) {
       offset += myBorder.getBorderInsets(this).left;
     }
@@ -759,7 +774,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     applyAdditionalHints(g);
     final Font baseFont = getBaseFont();
     g.setFont(baseFont);
-    offset += computeTextAlignShift(baseFont);
+    offset += computeTextAlignShift();
     int baseSize = baseFont.getSize();
     FontMetrics baseMetrics = g.getFontMetrics();
     Rectangle area = computePaintArea();
@@ -778,14 +793,14 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       g.setFont(font);
       final FontMetrics metrics = g.getFontMetrics(font);
 
-      final int fragmentWidth = computeStringWidth(i, font);
+      final float fragmentWidth = computeStringWidth(i, font);
 
       final int fragmentPadding = myFragmentPadding.get(i);
 
       final Color bgColor = attributes.isSearchMatch() ? null : attributes.getBgColor();
       if ((attributes.isOpaque() || isOpaque()) && bgColor != null) {
         g.setColor(bgColor);
-        g.fillRect(offset, 0, fragmentWidth, getHeight());
+        g.fillRect((int)offset, 0, (int)fragmentWidth, getHeight());
       }
 
       Color color = attributes.getFgColor();
@@ -799,7 +814,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
       final int fragmentAlignment = myFragmentAlignment.get(i);
 
-      final int endOffset;
+      final float endOffset;
       if (fragmentPadding > 0 &&
           fragmentPadding > fragmentWidth) {
         endOffset = fragmentPadding;
@@ -830,28 +845,28 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
       // 1. Strikeout effect
       if (attributes.isStrikeout() && !attributes.isSearchMatch()) {
-        EffectPainter.STRIKE_THROUGH.paint(g, offset, textBaseline, fragmentWidth, getCharHeight(g), font);
+        EffectPainter.STRIKE_THROUGH.paint(g, (int)offset, textBaseline, (int)fragmentWidth, getCharHeight(g), font);
       }
       // 2. Waved effect
       if (attributes.isWaved()) {
         if (attributes.getWaveColor() != null) {
           g.setColor(attributes.getWaveColor());
         }
-        EffectPainter.WAVE_UNDERSCORE.paint(g, offset, textBaseline + 1, fragmentWidth, Math.max(2, metrics.getDescent()), font);
+        EffectPainter.WAVE_UNDERSCORE.paint(g, (int)offset, textBaseline + 1, (int)fragmentWidth, Math.max(2, metrics.getDescent()), font);
       }
       // 3. Underline
       if (attributes.isUnderline()) {
-        EffectPainter.LINE_UNDERSCORE.paint(g, offset, textBaseline, fragmentWidth, metrics.getDescent(), font);
+        EffectPainter.LINE_UNDERSCORE.paint(g, (int)offset, textBaseline, (int)fragmentWidth, metrics.getDescent(), font);
       }
       // 4. Bold Dotted Line
       if (attributes.isBoldDottedLine()) {
         final int dottedAt = SystemInfo.isMac ? textBaseline : textBaseline + 1;
         final Color lineColor = attributes.getWaveColor();
-        UIUtil.drawBoldDottedLine(g, offset, offset + fragmentWidth, dottedAt, bgColor, lineColor, isOpaque());
+        UIUtil.drawBoldDottedLine(g, (int)offset, (int)(offset + fragmentWidth), dottedAt, bgColor, lineColor, isOpaque());
       }
 
       if (attributes.isSearchMatch()) {
-        searchMatches.add(new Object[]{offset, offset + fragmentWidth, textBaseline, myFragments.get(i), g.getFont(), attributes});
+        searchMatches.add(new Object[]{offset, offset + fragmentWidth, (float)textBaseline, myFragments.get(i), g.getFont(), attributes});
       }
 
       offset = endOffset;
@@ -869,12 +884,12 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
     // draw search matches after all
     for (final Object[] info : searchMatches) {
-      Integer x1 = (Integer)info[0];
-      Integer x2 = (Integer)info[1];
+      float x1 = (float)info[0];
+      float x2 = (float)info[1];
       UIUtil.drawSearchMatch(g, x1, x2, getHeight());
       g.setFont((Font)info[4]);
 
-      Integer baseline = (Integer)info[2];
+      float baseline = (float)info[2];
       String text = (String)info[3];
       if (shouldDrawMacShadow()) {
         g.setColor(SHADOW_COLOR);
@@ -885,10 +900,10 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       g.drawString(text, x1, baseline);
 
       if (((SimpleTextAttributes)info[5]).isStrikeout()) {
-        EffectPainter.STRIKE_THROUGH.paint(g, x1, baseline, x2 - x1, getCharHeight(g), g.getFont());
+        EffectPainter.STRIKE_THROUGH.paint(g, (int)x1, (int)baseline, (int)(x2 - x1), getCharHeight(g), g.getFont());
       }
     }
-    return offset;
+    return (int)offset;
   }
 
   private static int getCharHeight(Graphics g) {
@@ -896,7 +911,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return g.getFontMetrics().charWidth('a');
   }
 
-  private int computeTextAlignShift(@NotNull Font font) {
+  private int computeTextAlignShift() {
     if (myTextAlign == SwingConstants.LEFT || myTextAlign == SwingConstants.LEADING) {
       return 0;
     }
@@ -907,7 +922,6 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       return 0;
     }
 
-    int textWidth = computeTextWidth(font, false);
     if (myTextAlign == SwingConstants.CENTER) {
       return excessiveWidth / 2;
     }
@@ -953,7 +967,9 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   public static int getTextBaseLine(@NotNull FontMetrics metrics, final int height) {
-    return (height - metrics.getHeight()) / 2 + metrics.getAscent();
+    // adding leading to ascent, just like in editor (leads to bad presentation for certain fonts with Oracle JDK, see IDEA-167541)
+    return (height - metrics.getHeight()) / 2 + metrics.getAscent() +
+           (SystemInfo.isJetBrainsJvm ? metrics.getLeading() : 0);
   }
 
   private static void checkCanPaint(Graphics g) {

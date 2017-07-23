@@ -31,7 +31,7 @@ public class SSBasedInspectionCompiledPatternsCache {
       project.putUserData(COMPILED_OPTIONS_KEY, cache);
     }
 
-    return configurations.stream().collect(Collectors.toMap(Function.identity(), cache::get));
+    return configurations.stream().collect(Collectors.toMap(Function.identity(), cache::get, (c1, c2) -> c2));
   }
 
   private static boolean areConfigurationsInCache(@NotNull List<Configuration> configurations,

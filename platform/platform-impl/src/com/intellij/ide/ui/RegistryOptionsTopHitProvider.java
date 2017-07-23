@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.ui;
 
-import com.intellij.ide.ui.search.BooleanOptionDescription;
+import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -33,7 +33,7 @@ import java.util.List;
 public class RegistryOptionsTopHitProvider extends OptionsTopHitProvider {
   @NotNull
   @Override
-  public Collection<BooleanOptionDescription> getOptions(@Nullable Project project) {
+  public Collection<OptionDescription> getOptions(@Nullable Project project) {
     return Holder.ourValues;
   }
 
@@ -48,10 +48,10 @@ public class RegistryOptionsTopHitProvider extends OptionsTopHitProvider {
   }
 
   private static class Holder {
-    private static final List<BooleanOptionDescription> ourValues = initValues();
+    private static final List<OptionDescription> ourValues = initValues();
 
-    private static List<BooleanOptionDescription> initValues() {
-      final List<BooleanOptionDescription> result = new ArrayList<>();
+    private static List<OptionDescription> initValues() {
+      final List<OptionDescription> result = new ArrayList<>();
       for (RegistryValue value : Registry.getAll()) {
         if (value.isBoolean()) {
           final String key = value.getKey();
@@ -61,6 +61,8 @@ public class RegistryOptionsTopHitProvider extends OptionsTopHitProvider {
           } else {
             result.add(optionDescriptor);
           }
+        } else {
+          result.add(new RegistryTextOptionDescriptor(value));
         }
       }
       return result;

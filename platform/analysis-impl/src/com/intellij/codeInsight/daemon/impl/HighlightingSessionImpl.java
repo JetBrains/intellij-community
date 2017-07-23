@@ -17,7 +17,6 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -39,7 +38,6 @@ import java.util.concurrent.ConcurrentMap;
 
 public class HighlightingSessionImpl implements HighlightingSession {
   @NotNull private final PsiFile myPsiFile;
-  @Nullable private final Editor myEditor;
   @NotNull private final ProgressIndicator myProgressIndicator;
   private final EditorColorsScheme myEditorColorsScheme;
   @NotNull private final Project myProject;
@@ -48,11 +46,9 @@ public class HighlightingSessionImpl implements HighlightingSession {
   private final TransferToEDTQueue<Runnable> myEDTQueue;
 
   private HighlightingSessionImpl(@NotNull PsiFile psiFile,
-                                  @Nullable Editor editor,
                                   @NotNull DaemonProgressIndicator progressIndicator,
                                   EditorColorsScheme editorColorsScheme) {
     myPsiFile = psiFile;
-    myEditor = editor;
     myProgressIndicator = progressIndicator;
     myEditorColorsScheme = editorColorsScheme;
     myProject = psiFile.getProject();
@@ -76,7 +72,6 @@ public class HighlightingSessionImpl implements HighlightingSession {
 
   @NotNull
   static HighlightingSession getOrCreateHighlightingSession(@NotNull PsiFile psiFile,
-                                                            @Nullable Editor editor,
                                                             @NotNull DaemonProgressIndicator progressIndicator,
                                                             @Nullable EditorColorsScheme editorColorsScheme) {
     HighlightingSession session = getHighlightingSession(psiFile, progressIndicator);
@@ -86,21 +81,25 @@ public class HighlightingSessionImpl implements HighlightingSession {
         map = progressIndicator.putUserDataIfAbsent(HIGHLIGHTING_SESSION, ContainerUtil.newConcurrentMap());
       }
       session = ConcurrencyUtil.cacheOrGet(map, psiFile,
-                                           new HighlightingSessionImpl(psiFile, editor, progressIndicator, editorColorsScheme));
+                                           new HighlightingSessionImpl(psiFile, progressIndicator, editorColorsScheme));
     }
     return session;
   }
+
+  static void waitForAllSessionsHighlightInfosApplied(@NotNull DaemonProgressIndicator progressIndicator) {
+    ConcurrentMap<PsiFile, HighlightingSession> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
+    if (map != null) {
+      for (HighlightingSession session : map.values()) {
+        ((HighlightingSessionImpl)session).waitForHighlightInfosApplied();
+      }
+    }
+  }
+
 
   @NotNull
   @Override
   public PsiFile getPsiFile() {
     return myPsiFile;
-  }
-
-  @Nullable
-  @Override
-  public Editor getEditor() {
-    return myEditor;
   }
 
   @NotNull
@@ -127,7 +126,6 @@ public class HighlightingSessionImpl implements HighlightingSession {
   }
 
   void queueHighlightInfo(@NotNull HighlightInfo info,
-                          @NotNull TextRange priorityRange,
                           @NotNull TextRange restrictedRange,
                           int groupId) {
     myEDTQueue.offer(() -> {
@@ -138,9 +136,14 @@ public class HighlightingSessionImpl implements HighlightingSession {
     });
   }
 
-  void queueDisposeHighlighter(@Nullable RangeHighlighterEx highlighter) {
+  void queueDisposeHighlighterFor(@NotNull HighlightInfo info) {
+    RangeHighlighterEx highlighter = info.getHighlighter();
     if (highlighter == null) return;
-    myEDTQueue.offer(highlighter::dispose);
+    // that highlighter may have been reused for another info
+    myEDTQueue.offer(() -> {
+      Object actualInfo = highlighter.getErrorStripeTooltip();
+      if (actualInfo == info && info.getHighlighter() == highlighter) highlighter.dispose();
+    });
   }
 
   void waitForHighlightInfosApplied() {

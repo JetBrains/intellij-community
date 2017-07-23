@@ -21,7 +21,6 @@ import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntArrayList;
@@ -112,8 +111,8 @@ public class ByLine {
     /*
      * We want to fix invalid matching here:
      *
-     * .{        ..{
-     * ..{   vs  ...{
+     * .{        ..{
+     * ..{   vs  ...{
      * ...{
      *
      * first step will return matching (0,2)-(0,2). And we should adjust it to (1,3)-(0,2)
@@ -121,9 +120,9 @@ public class ByLine {
      *
      * From the other hand, we don't want to reduce number of IW-matched lines.
      *
-     * .{         ...{
-     * ..{    vs  ..{
-     * ...{       .{
+     * .{         ...{
+     * ..{    vs  ..{
+     * ...{       .{
      *
      * first step will return (0,3)-(0,3) and 'correcting' it to (0,1)-(2,3) is wrong (and it will break ByWord highlighting).
      *
@@ -306,7 +305,7 @@ public class ByLine {
   private static FairDiffIterable compareSmart(@NotNull List<Line> lines1,
                                                @NotNull List<Line> lines2,
                                                @NotNull ProgressIndicator indicator) {
-    int threshold = Registry.intValue("diff.unimportant.line.char.count");
+    int threshold = ComparisonUtil.getUnimportantLineCharCount();
     if (threshold == 0) return diff(lines1, lines2, indicator);
 
     Pair<List<Line>, TIntArrayList> bigLines1 = getBigLines(lines1, threshold);

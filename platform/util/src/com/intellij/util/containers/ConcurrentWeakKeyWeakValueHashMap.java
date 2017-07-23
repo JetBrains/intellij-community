@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Alexey
- * Date: 18.12.2006
- * Time: 20:18:31
- */
 package com.intellij.util.containers;
 
 import gnu.trove.TObjectHashingStrategy;
@@ -32,7 +26,7 @@ import java.lang.ref.WeakReference;
  * Concurrent map with weak keys and weak values.
  * Null keys are NOT allowed
  * Null values are NOT allowed
- * @deprecated Use {@link ContainerUtil#createConcurrentWeakKeyWeakValueMap()} instead
+ * Use {@link ContainerUtil#createConcurrentWeakKeyWeakValueMap()} to create this
  */
 class ConcurrentWeakKeyWeakValueHashMap<K, V> extends ConcurrentWeakKeySoftValueHashMap<K,V> {
   ConcurrentWeakKeyWeakValueHashMap(int initialCapacity,

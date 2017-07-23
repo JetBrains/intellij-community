@@ -17,11 +17,6 @@ package com.jetbrains.python.debugger.containerview;
 
 import javax.swing.table.TableCellRenderer;
 
-/**
- * Created by Yuli Fiterman on 5/10/2016.
- */
 public interface ColoredCellRenderer extends TableCellRenderer {
   void setColored(boolean colored);
-
-  boolean getColored();
 }

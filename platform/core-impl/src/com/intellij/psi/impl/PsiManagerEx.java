@@ -36,7 +36,6 @@ public abstract class PsiManagerEx extends PsiManager {
   @TestOnly
   public abstract void setAssertOnFileLoadingFilter(@NotNull VirtualFileFilter filter, @NotNull Disposable parentDisposable);
 
-  @TestOnly
   public abstract boolean isAssertOnFileLoading(@NotNull VirtualFile file);
 
   /**

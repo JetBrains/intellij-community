@@ -63,10 +63,6 @@ import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-/**
- * User: anna
- * Date: May 5, 2005
- */
 public class PrepareToDeployAction extends AnAction {
   @NonNls private static final String ZIP_EXTENSION = ".zip";
   @NonNls private static final String JAR_EXTENSION = ".jar";

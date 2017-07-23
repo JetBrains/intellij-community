@@ -21,54 +21,56 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * @author Nadya Zabrodina
- */
 class VcsRootConfiguration {
 
-  @NotNull private Collection<String> myMockRoots;
+  @NotNull private Collection<String> myVcsRoots;
   @NotNull private Collection<String> myContentRoots;
-  @NotNull private Collection<String> myRoots;
+  @NotNull private Collection<String> myMappings;
   @NotNull private Collection<String> myUnregErrors;
   @NotNull private Collection<String> myExtraErrors;
 
 
   public VcsRootConfiguration() {
-    myMockRoots = Collections.emptyList();
-    myRoots = Collections.emptyList();
+    myVcsRoots = Collections.emptyList();
+    myMappings = Collections.emptyList();
     myContentRoots = Collections.emptyList();
     myUnregErrors = Collections.emptyList();
     myExtraErrors = Collections.emptyList();
   }
 
-  public VcsRootConfiguration mock(@NotNull String... mockRoots) {
-    myMockRoots = Arrays.asList(mockRoots);
+  @NotNull
+  public VcsRootConfiguration vcsRoots(@NotNull String... vcsRoots) {
+    myVcsRoots = Arrays.asList(vcsRoots);
     return this;
   }
 
-  public VcsRootConfiguration roots(@NotNull String... roots) {
-    myRoots = Arrays.asList(roots);
+  @NotNull
+  public VcsRootConfiguration mappings(@NotNull String... mappings) {
+    myMappings = Arrays.asList(mappings);
     return this;
   }
 
+  @NotNull
   public VcsRootConfiguration contentRoots(@NotNull String... contentRoots) {
     myContentRoots = Arrays.asList(contentRoots);
     return this;
   }
 
+  @NotNull
   public VcsRootConfiguration unregErrors(@NotNull String... unregErrors) {
     myUnregErrors = Arrays.asList(unregErrors);
     return this;
   }
 
+  @NotNull
   public VcsRootConfiguration extraErrors(@NotNull String... extraErrors) {
     myExtraErrors = Arrays.asList(extraErrors);
     return this;
   }
 
   @NotNull
-  public Collection<String> getMockRoots() {
-    return myMockRoots;
+  public Collection<String> getVcsRoots() {
+    return myVcsRoots;
   }
 
   @NotNull
@@ -77,8 +79,8 @@ class VcsRootConfiguration {
   }
 
   @NotNull
-  public Collection<String> getRoots() {
-    return myRoots;
+  public Collection<String> getVcsMappings() {
+    return myMappings;
   }
 
   @NotNull

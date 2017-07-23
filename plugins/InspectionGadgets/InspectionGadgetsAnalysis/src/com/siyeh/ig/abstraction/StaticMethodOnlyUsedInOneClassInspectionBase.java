@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.siyeh.ig.abstraction;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -180,23 +179,62 @@ public class StaticMethodOnlyUsedInOneClassInspectionBase extends BaseInspection
     }
   }
 
-  private static boolean areReferenceTargetsAccessible(final PsiElement elementToCheck, final PsiElement place) {
-    return PsiTreeUtil.processElements(elementToCheck, new PsiElementProcessor() {
-      @Override
-      public boolean execute(@NotNull PsiElement element) {
-        if (!(element instanceof PsiJavaCodeReferenceElement)) {
-          return true;
-        }
-        final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)element;
-        final PsiElement target = referenceElement.resolve();
-        if (target == null) {
-          return false; // broken code
-        }
-        if (PsiTreeUtil.isAncestor(elementToCheck, target, false)) {
-          return true; // internal reference
-        }
-        return target instanceof PsiMember && PsiUtil.isAccessible((PsiMember)target, place, null);
+  static boolean areReferenceTargetsAccessible(final PsiElement elementToCheck, final PsiElement place) {
+    final AccessibleVisitor visitor = new AccessibleVisitor(elementToCheck, place);
+    elementToCheck.accept(visitor);
+    return visitor.isAccessible();
+  }
+
+  private static class AccessibleVisitor extends JavaRecursiveElementWalkingVisitor {
+    private final PsiElement myElementToCheck;
+    private final PsiElement myPlace;
+    private boolean myAccessible = true;
+
+    public AccessibleVisitor(PsiElement elementToCheck, PsiElement place) {
+      myElementToCheck = elementToCheck;
+      myPlace = place;
+    }
+
+    @Override
+    public void visitCallExpression(PsiCallExpression callExpression) {
+      if (!myAccessible) {
+        return;
       }
-    });
+      super.visitCallExpression(callExpression);
+      final PsiMethod method = callExpression.resolveMethod();
+      if (callExpression instanceof PsiNewExpression && method == null) {
+        final PsiNewExpression newExpression = (PsiNewExpression)callExpression;
+        final PsiJavaCodeReferenceElement reference = newExpression.getClassReference();
+        if (reference != null) {
+          checkElement(reference.resolve());
+        }
+      }
+      else {
+        checkElement(method);
+      }
+    }
+
+    @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+      if (!myAccessible) {
+        return;
+      }
+      super.visitReferenceExpression(expression);
+      checkElement(expression.resolve());
+    }
+
+    private void checkElement(PsiElement element) {
+      if (!(element instanceof PsiMember)) {
+        return;
+      }
+      if (PsiTreeUtil.isAncestor(myElementToCheck, element, false)) {
+        return; // internal reference
+      }
+      myAccessible =  PsiUtil.isAccessible((PsiMember)element, myPlace, null);
+    }
+
+    public boolean isAccessible() {
+      return myAccessible;
+    }
   }
 }

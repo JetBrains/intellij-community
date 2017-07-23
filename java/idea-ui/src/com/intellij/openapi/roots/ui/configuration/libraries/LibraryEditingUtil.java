@@ -94,23 +94,20 @@ public class LibraryEditingUtil {
         }
       }
     }
-    return new Predicate<Library>() {
-      @Override
-      public boolean apply(Library library) {
-        if (result.contains(library)) return false;
-        if (library instanceof LibraryImpl) {
-          final Library source = ((LibraryImpl)library).getSource();
-          if (source != null && result.contains(source)) return false;
-        }
-        PersistentLibraryKind<?> kind = ((LibraryEx)library).getKind();
-        if (kind != null) {
-          LibraryType type = LibraryType.findByKind(kind);
-          if (type != null && !type.isSuitableModule(rootModel.getModule(), facetsProvider)) {
-            return false;
-          }
-        }
-        return true;
+    return library -> {
+      if (result.contains(library)) return false;
+      if (library instanceof LibraryImpl) {
+        final Library source = ((LibraryImpl)library).getSource();
+        if (source != null && result.contains(source)) return false;
       }
+      PersistentLibraryKind<?> kind = ((LibraryEx)library).getKind();
+      if (kind != null) {
+        LibraryType type = LibraryType.findByKind(kind);
+        if (type != null && !type.isSuitableModule(rootModel.getModule(), facetsProvider)) {
+          return false;
+        }
+      }
+      return true;
     };
   }
 

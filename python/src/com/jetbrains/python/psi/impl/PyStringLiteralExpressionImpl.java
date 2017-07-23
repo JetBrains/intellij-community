@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -34,9 +35,7 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
 import org.intellij.lang.regexp.RegExpLanguageHost;
-import org.intellij.lang.regexp.psi.RegExpChar;
-import org.intellij.lang.regexp.psi.RegExpGroup;
-import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
+import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +44,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class PyStringLiteralExpressionImpl extends PyElementImpl implements PyStringLiteralExpression, RegExpLanguageHost {
+public class PyStringLiteralExpressionImpl extends PyElementImpl implements PyStringLiteralExpression, RegExpLanguageHost, PsiLiteralValue {
+  private static final Logger LOG = Logger.getInstance(PyStringLiteralExpressionImpl.class);
   public static final Pattern PATTERN_ESCAPE = Pattern
       .compile("\\\\(\n|\\\\|'|\"|a|b|f|n|r|t|v|([0-7]{1,3})|x([0-9a-fA-F]{1,2})" + "|N(\\{.*?\\})|u([0-9a-fA-F]{4})|U([0-9a-fA-F]{8}))");
          //        -> 1                        ->   2      <-->     3          <-     ->   4     <-->    5      <-   ->  6           <-<-
@@ -114,7 +114,9 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return valueTextRanges;
   }
 
+  // TODO replace all usages with PyStringLiteralUtil.getStringValue(String)
   public static TextRange getNodeTextRange(final String text) {
+    LOG.assertTrue(PyStringLiteralUtil.isStringLiteralToken(text), "Text of a single string literal node expected: " + text);
     int startOffset = getPrefixLength(text);
     int delimiterLength = 1;
     final String afterPrefix = text.substring(startOffset);
@@ -259,6 +261,12 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return stringValue;
   }
 
+  @Nullable
+  @Override
+  public Object getValue() {
+    return getStringValue();
+  }
+
   @Override
   public TextRange getStringValueTextRange() {
     List<TextRange> allRanges = getStringValueTextRanges();
@@ -351,7 +359,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
         if (intersection != null && !intersection.isEmpty()) {
           final String value = fragment.getSecond();
           final String intersectedValue;
-          if (value.length() == 1 || value.length() == intersection.getLength()) {
+          if (value.codePointCount(0, value.length()) == 1 || value.length() == intersection.getLength()) {
             intersectedValue = value;
           }
           else {
@@ -367,7 +375,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
     @Override
     public int getOffsetInHost(final int offsetInDecoded, @NotNull final TextRange rangeInsideHost) {
-      int offset = 0;
+      int offset = 0; // running offset in the decoded fragment
       int endOffset = -1;
       for (Pair<TextRange, String> fragment : myHost.getDecodedFragments()) {
         final TextRange encodedTextRange = fragment.getFirst();
@@ -379,13 +387,15 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
           if (valueLength == 0) {
             return -1;
           }
-          else if (valueLength == 1) {
+          // A long unicode escape of form \U01234567 can be decoded into a surrogate pair
+          else if (value.codePointCount(0, valueLength) == 1) {
             if (offset == offsetInDecoded) {
               return intersection.getStartOffset();
             }
-            offset++;
+            offset += valueLength;
           }
           else {
+            // Literal fragment without escapes: it's safe to use intersection length instead of value length
             if (offset + intersectionLength >= offsetInDecoded) {
               final int delta = offsetInDecoded - offset;
               return intersection.getStartOffset() + delta;
@@ -447,7 +457,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   }
 
   public boolean supportsNamedGroupSyntax(RegExpGroup group) {
-    return group.isPythonNamedGroup();
+    return group.getType() == RegExpGroup.Type.PYTHON_NAMED_GROUP;
   }
 
   @Override
@@ -455,9 +465,32 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return ref.isPythonNamedGroupRef();
   }
 
+  @NotNull
+  @Override
+  public EnumSet<RegExpGroup.Type> getSupportedNamedGroupTypes(RegExpElement context) {
+    return EnumSet.of(RegExpGroup.Type.PYTHON_NAMED_GROUP);
+  }
+
   @Override
   public boolean supportsExtendedHexCharacter(RegExpChar regExpChar) {
     return false;
+  }
+
+  @Override
+  public Lookbehind supportsLookbehind(@NotNull RegExpGroup lookbehindGroup) {
+    return Lookbehind.FIXED_LENGTH_ALTERNATION;
+  }
+
+  @Override
+  public Long getQuantifierValue(@NotNull RegExpNumber number) {
+    try {
+      final long result = Long.parseLong(number.getText());
+      if (result >= 0xFFFFFFFFL /* max unsigned int 32 bits */) return null;
+      return result;
+    }
+    catch (NumberFormatException e) {
+      return null;
+    }
   }
 
   @Override

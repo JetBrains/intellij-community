@@ -23,6 +23,7 @@ import com.intellij.ide.dnd.TransferableWrapper;
 import com.intellij.ide.projectView.impl.nodes.DropTargetNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -156,18 +157,16 @@ class ProjectViewDropTarget implements DnDNativeTarget {
     return path == null ? null : (TreeNode)path.getLastPathComponent();
   }
 
-  private boolean doDrop(@NotNull final TreeNode[] sourceNodes,
-                         @NotNull final TreeNode targetNode,
-                         final int dropAction) {
+  private void doDrop(@NotNull final TreeNode[] sourceNodes,
+                      @NotNull final TreeNode targetNode,
+                      final int dropAction) {
     TreeNode validTargetNode = getValidTargetNode(sourceNodes, targetNode, dropAction);
     if (validTargetNode != null) {
       final TreeNode[] filteredSourceNodes = removeRedundantSourceNodes(sourceNodes, validTargetNode, dropAction);
       if (filteredSourceNodes.length != 0) {
         getDropHandler(dropAction).doDrop(filteredSourceNodes, validTargetNode);
-        return true;
       }
     }
-    return false;
   }
 
   @Nullable
@@ -320,7 +319,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
         if (!sourceElement.isValid()) return;
       }
 
-      getActionHandler().invoke(myProject, sourceElements, new DataContext() {
+      DataContext context = new DataContext() {
         @Override
         @Nullable
         public Object getData(@NonNls String dataId) {
@@ -334,7 +333,9 @@ class ProjectViewDropTarget implements DnDNativeTarget {
             return externalDrop ? null : dataContext.getData(dataId);
           }
         }
-      });
+      };
+      TransactionGuard.getInstance().submitTransactionAndWait(
+        () -> getActionHandler().invoke(myProject, sourceElements, context));
     }
 
     private RefactoringActionHandler getActionHandler() {
@@ -390,6 +391,12 @@ class ProjectViewDropTarget implements DnDNativeTarget {
     private void doDrop(TreeNode targetNode, PsiElement[] sourceElements) {
       final PsiElement targetElement = getPsiElement(targetNode);
       if (targetElement == null) return;
+
+      if (DumbService.isDumb(myProject)) {
+        Messages.showMessageDialog(myProject, "Copy refactoring is not available while indexing is in progress", "Indexing", null);
+        return;
+      }
+
       final PsiDirectory psiDirectory;
       if (targetElement instanceof PsiDirectoryContainer) {
         final PsiDirectoryContainer directoryContainer = (PsiDirectoryContainer)targetElement;
@@ -404,7 +411,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
         LOG.assertTrue(containingFile != null);
         psiDirectory = containingFile.getContainingDirectory();
       }
-      CopyHandler.doCopy(sourceElements, psiDirectory);
+      TransactionGuard.getInstance().submitTransactionAndWait(() -> CopyHandler.doCopy(sourceElements, psiDirectory));
     }
 
     @Override

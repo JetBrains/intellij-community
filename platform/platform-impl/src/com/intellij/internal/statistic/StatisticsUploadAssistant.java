@@ -38,7 +38,7 @@ import java.util.Set;
 
 public class StatisticsUploadAssistant {
   public String getData() {
-    return getData(Collections.<String>emptySet());
+    return getData(Collections.emptySet());
   }
 
   public static boolean isShouldShowNotification() {

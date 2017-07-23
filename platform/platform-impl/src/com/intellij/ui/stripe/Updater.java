@@ -17,9 +17,7 @@ package com.intellij.ui.stripe;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ShortcutSet;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.util.ui.JBUI;
@@ -29,12 +27,12 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JScrollBar;
-import javax.swing.JScrollPane;
-import java.awt.Cursor;
-import java.awt.Graphics2D;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 /**
  * @author Sergey.Malenkov
@@ -119,7 +117,7 @@ public abstract class Updater<Painter extends ErrorStripePainter> implements Dis
   }
 
   protected ShortcutSet getNextErrorShortcut() {
-    return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts("GotoNextError"));
+    return getActiveKeymapShortcuts("GotoNextError");
   }
 
   public void selectNext(int index) {
@@ -127,7 +125,7 @@ public abstract class Updater<Painter extends ErrorStripePainter> implements Dis
   }
 
   protected ShortcutSet getPreviousErrorShortcut() {
-    return new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts("GotoPreviousError"));
+    return getActiveKeymapShortcuts("GotoPreviousError");
   }
 
   public void selectPrevious(int index) {
@@ -141,7 +139,7 @@ public abstract class Updater<Painter extends ErrorStripePainter> implements Dis
   }
 
   protected ErrorStripe getErrorStripe(Object object) {
-    return null;
+    return object instanceof ErrorStripe ? (ErrorStripe)object : null;
   }
 
   public final void update() {

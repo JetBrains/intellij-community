@@ -21,10 +21,6 @@ import org.jdom.Element;
 
 import java.util.List;
 
-/**
- * User: anna
- * Date: 22-Mar-2006
- */
 public abstract class LogFilterRegistrar implements PersistentStateComponent<Element> {
   public abstract void registerFilter(LogFilter filter);
 

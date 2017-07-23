@@ -43,25 +43,6 @@ import java.util.Set;
  * @author yole
  */
 public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getGroupDisplayName() {
-    return "Plugin DevKit";
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Incorrect dialog title capitalization";
-  }
-
   @NotNull
   @Override
   public String getShortName() {
@@ -191,16 +172,18 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
     List<String> words = StringUtil.split(value, " ");
     if (words.size() == 0) return true;
     if (Character.isLetter(words.get(0).charAt(0)) && !isCapitalizedWord(words.get(0))) return false;
+    if (words.size() == 1) return true;
+    int capitalized = 1;
     for (int i = 1, size = words.size(); i < size; i++) {
       String word = words.get(i);
       if (isCapitalizedWord(word)) {
         // check for abbreviations like SQL or I18n
         if (word.length() == 1 || !Character.isLowerCase(word.charAt(1)))
           continue;
-        return false;
+        capitalized++;
       }
     }
-    return true;
+    return capitalized / words.size() < 0.2; // allow reasonable amount of capitalized words
   }
 
   private static boolean isCapitalizedWord(String word) {

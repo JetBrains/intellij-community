@@ -17,9 +17,9 @@ public class TestTryCatchFinally {
    }// 36
 
    int foo(int var1) throws Exception {
-      if(var1 < 1) {// 39
+      if (var1 < 1) {// 39
          throw new RuntimeException();// 40
-      } else if(var1 < 5) {// 41
+      } else if (var1 < 5) {// 41
          return var1;// 42
       } else {
          throw new Exception();// 45

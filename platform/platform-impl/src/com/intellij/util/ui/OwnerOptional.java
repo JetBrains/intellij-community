@@ -30,7 +30,6 @@ import java.awt.*;
  */
 public class OwnerOptional {
 
-  @NotNull
   private static Window findOwnerByComponent(Component component) {
     if (component == null) component = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     if (component == null) {

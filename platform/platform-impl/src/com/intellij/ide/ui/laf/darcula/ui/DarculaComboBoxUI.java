@@ -16,6 +16,7 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.openapi.ui.ErrorBorderCapable;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
@@ -43,34 +44,32 @@ import java.awt.geom.Path2D;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("GtkPreferredJComboBoxRenderer")
-public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
-  private final JComboBox myComboBox;
+public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorBorderCapable {
 
   // Cached the size that the display needs to render the largest item
   private Dimension myDisplaySizeCache = JBUI.emptySize();
   private Insets myPadding;
 
-  public DarculaComboBoxUI(JComboBox comboBox) {
-    super();
-    myComboBox = comboBox;
-    myComboBox.setBorder(this);
-  }
+  public DarculaComboBoxUI() {}
 
-  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+  @SuppressWarnings("unused")
+  public DarculaComboBoxUI(JComboBox ignored) {}
+
+  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "unused"})
   public static ComponentUI createUI(final JComponent c) {
-    return new DarculaComboBoxUI(((JComboBox)c));
+    return new DarculaComboBoxUI();
   }
 
   @Override
   protected void installDefaults() {
     super.installDefaults();
+    comboBox.setBorder(this);
     myPadding = UIManager.getInsets("ComboBox.padding");
   }
 
-
   protected JButton createArrowButton() {
-    final Color bg = myComboBox.getBackground();
-    final Color fg = myComboBox.getForeground();
+    Color bg = comboBox.getBackground();
+    Color fg = comboBox.getForeground();
     JButton button = new BasicArrowButton(SwingConstants.SOUTH, bg, fg, fg, fg) {
 
       @Override
@@ -80,14 +79,12 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
 
         final int w = getWidth();
         final int h = getHeight();
-        if (!isTableCellEditor(myComboBox)) {
+        if (!isTableCellEditor(comboBox)) {
           g.setColor(getArrowButtonFillColor(UIUtil.getControlColor()));
           g.fillRect(0, 0, w, h);
         }
-        g.setColor(comboBox.isEnabled() ? new JBColor(Gray._255, getForeground()) : new JBColor(Gray._255, getBorderColor()));
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
-        g.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
+        g.setColor(new JBColor(Gray._255, comboBox.isEnabled() ? getForeground() : getBorderColor()));
+        config.setupRoundedBorderAntialiasing();
         final int tW = JBUI.scale(8);
         final int tH = JBUI.scale(6);
         final int xU = (w - tW) / 2;
@@ -105,7 +102,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
         path.closePath();
         g.fill(path);
         g.translate(-JBUI.scale(2), -JBUI.scale(1));
-        if (!isTableCellEditor(myComboBox)) {
+        if (!isTableCellEditor(comboBox)) {
           g.setColor(getArrowButtonFillColor(getBorderColor()));
           g.drawLine(0, -1, 0, h);
         }
@@ -125,8 +122,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
   }
 
   protected Color getArrowButtonFillColor(Color defaultColor) {
-    final Color color = myComboBox.hasFocus() ? UIManager.getColor("ComboBox.darcula.arrowFocusedFillColor")
-                        : UIManager.getColor("ComboBox.darcula.arrowFillColor");
+    Color color = UIManager.getColor(comboBox.hasFocus() ? "ComboBox.darcula.arrowFocusedFillColor" : "ComboBox.darcula.arrowFillColor");
     return color == null ? defaultColor : comboBox != null && !comboBox.isEnabled() ? new JBColor(getBorderColor(), UIUtil.getControlColor()) : color;
   }
 
@@ -327,63 +323,76 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
   }
 
   @Override
-  public void paintBorder(Component c, Graphics g2, int x, int y, int width, int height) {
+  public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     if (comboBox == null || arrowButton == null) {
       return; //NPE on LaF change
     }
 
-    hasFocus = false;
-    checkFocus();
-    final Graphics2D g = (Graphics2D)g2.create();
-    final Rectangle arrowButtonBounds = arrowButton.getBounds();
-    final int xxx = arrowButtonBounds.x - JBUI.scale(5);
-    final int H = height - JBUI.scale(2);
-    final int W = width - JBUI.scale(2);
+    Graphics2D g2 = (Graphics2D)g.create();
+    try {
+      checkFocus();
 
-    final Shape clip = g.getClip();
-    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
-    final int R = JBUI.scale(5);
-    if (hasFocus) {
-      g.clipRect(JBUI.scale(2), JBUI.scale(2), comboBox.getWidth()- JBUI.scale(4), comboBox.getHeight() - JBUI.scale(4));
-    }
-    final Color background = editor != null && comboBox.isEditable()
-                             ? editor.getBackground()
-                             : UIUtil.getPanelBackground();
-    g.setColor(background);
-    g.fillRoundRect(x + JBUI.scale(1), y + JBUI.scale(1), W, H, R, R);
-    g.setColor(getArrowButtonFillColor(arrowButton.getBackground()));
-    g.fillRoundRect(xxx, y + JBUI.scale(1), width - xxx, H, R, R);
-    g.setColor(background);
-    g.fillRect(xxx, y + JBUI.scale(1), JBUI.scale(5), H);
+      final Rectangle arrowButtonBounds = arrowButton.getBounds();
+      final int xxx = arrowButtonBounds.x - JBUI.scale(5);
+      final int H = height - JBUI.scale(2);
+      final int W = width - JBUI.scale(2);
 
-    final Color borderColor = getBorderColor();//ColorUtil.shift(UIUtil.getBorderColor(), 4);
-    g.setColor(getArrowButtonFillColor(borderColor));
-    int off = hasFocus ? 1 : 0;
-    g.drawLine(xxx + JBUI.scale(5), y + JBUI.scale(1) + off, xxx + JBUI.scale(5), height - JBUI.scale(2));
-
-    Rectangle r = rectangleForCurrentValue();
-    paintCurrentValueBackground(g, r, hasFocus);
-    paintCurrentValue(g, r, false);
-
-    if (hasFocus) {
-      g.setClip(clip);
-      DarculaUIUtil.paintFocusRing(g, JBUI.scale(2), JBUI.scale(2), width - JBUI.scale(4), height - JBUI.scale(4));
-    }
-    else {
-      g.setColor(borderColor);
-      g.drawRoundRect(JBUI.scale(1), JBUI.scale(1), width - JBUI.scale(2), height - JBUI.scale(2), R, R);
-      if (!UIUtil.isUnderDarcula() && comboBox.isEnabled()) {
-        g.setColor(getArrowButtonFillColor(getBorderColor()));
-        final int offX = xxx + JBUI.scale(5);
-        g.clipRect(offX, y, width - offX, height);
-        g.drawRoundRect(JBUI.scale(1), JBUI.scale(1), width - JBUI.scale(2), height - JBUI.scale(2), R, R);
+      final Shape clip = g2.getClip();
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+      final int R = JBUI.scale(5);
+      if (hasFocus) {
+        g2.clipRect(JBUI.scale(2), JBUI.scale(2), comboBox.getWidth()- JBUI.scale(4), comboBox.getHeight() - JBUI.scale(4));
       }
+      final Color background = editor != null && comboBox.isEditable()
+                               ? editor.getBackground()
+                               : UIUtil.getPanelBackground();
+      g2.setColor(background);
+      g2.fillRoundRect(x + JBUI.scale(1), y + JBUI.scale(1), W, H, R, R);
+      g2.setColor(getArrowButtonFillColor(arrowButton.getBackground()));
+      g2.fillRoundRect(xxx, y + JBUI.scale(1), width - xxx, H, R, R);
+      g2.setColor(background);
+      g2.fillRect(xxx, y + JBUI.scale(1), JBUI.scale(5), H);
+
+      final Color borderColor = getBorderColor();//ColorUtil.shift(UIUtil.getBorderColor(), 4);
+      g2.setColor(getArrowButtonFillColor(borderColor));
+      int off = hasFocus ? 1 : 0;
+      g2.drawLine(xxx + JBUI.scale(5), y + JBUI.scale(1) + off, xxx + JBUI.scale(5), height - JBUI.scale(2));
+
+      Rectangle r = rectangleForCurrentValue();
+      paintCurrentValueBackground(g2, r, hasFocus);
+      paintCurrentValue(g2, r, false);
+
+      Object eop = ((JComponent)c).getClientProperty("JComponent.error.outline");
+      if (hasFocus) {
+        g2.setClip(clip);
+        if (Registry.is("ide.inplace.errors.outline") && Boolean.parseBoolean(String.valueOf(eop))) {
+          DarculaUIUtil.paintErrorBorder(g2, width, height, 0, true, true);
+        } else {
+          DarculaUIUtil.paintFocusRing(g2, new Rectangle(JBUI.scale(2), JBUI.scale(2), width - JBUI.scale(4), height - JBUI.scale(4)));
+        }
+      }
+      else {
+        if (Registry.is("ide.inplace.errors.outline") && Boolean.parseBoolean(String.valueOf(eop))) {
+          DarculaUIUtil.paintErrorBorder(g2, width, height, 0, true, false);
+        } else {
+          g2.setColor(borderColor);
+          g2.drawRoundRect(JBUI.scale(1), JBUI.scale(1), width - JBUI.scale(2), height - JBUI.scale(2), R, R);
+          if (!UIUtil.isUnderDarcula() && comboBox.isEnabled()) {
+            g2.setColor(getArrowButtonFillColor(getBorderColor()));
+            final int offX = xxx + JBUI.scale(5);
+            g2.clipRect(offX, y, width - offX, height);
+            g2.drawRoundRect(JBUI.scale(1), JBUI.scale(1), width - JBUI.scale(2), height - JBUI.scale(2), R, R);
+          }
+        }
+      }
+    } finally {
+      g2.dispose();
     }
-    g.dispose();
   }
 
   protected void checkFocus() {
+    hasFocus = false;
     if (!comboBox.isEnabled()) {
       hasFocus = false;
       return;
@@ -392,7 +401,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
     hasFocus = hasFocus(comboBox);
     if (hasFocus) return;
 
-    final ComboBoxEditor ed = comboBox.getEditor();
+    ComboBoxEditor ed = comboBox.getEditor();
     editor = ed == null ? null : ed.getEditorComponent();
     if (editor != null) {
       hasFocus = hasFocus(editor);
@@ -400,12 +409,12 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
   }
 
   protected static boolean hasFocus(Component c) {
-    final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     return owner != null && SwingUtilities.isDescendingFrom(owner, c);
   }
 
   private Color getBorderColor() {
-    if (comboBox != null && myComboBox.isEnabled()) {
+    if (comboBox != null && comboBox.isEnabled()) {
       return new JBColor(Gray._150, Gray._100);
     }
     return new JBColor(Gray._150, Gray._88);

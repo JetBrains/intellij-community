@@ -17,6 +17,9 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsShortCommitDetails;
+import com.intellij.vcs.log.data.index.IndexDataGetter;
+import com.intellij.vcs.log.data.index.IndexedDetails;
+import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIntHashMap;
@@ -46,7 +49,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
 
   private static final int MAX_LOADING_TASKS = 10;
 
-  @NotNull protected final VcsLogStorage myHashMap;
+  @NotNull protected final VcsLogStorage myStorage;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
   @NotNull private final VcsCommitCache<Integer, T> myCache;
   @NotNull private final SequentialLimitedLifoExecutor<TaskDescriptor> myLoader;
@@ -57,14 +60,17 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   private long myCurrentTaskIndex = 0;
 
   @NotNull private final Collection<Runnable> myLoadingFinishedListeners = new ArrayList<>();
+  @NotNull private final VcsLogIndex myIndex;
 
-  AbstractDataGetter(@NotNull VcsLogStorage hashMap,
+  AbstractDataGetter(@NotNull VcsLogStorage storage,
                      @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
                      @NotNull VcsCommitCache<Integer, T> cache,
+                     @NotNull VcsLogIndex index,
                      @NotNull Disposable parentDisposable) {
-    myHashMap = hashMap;
+    myStorage = storage;
     myLogProviders = logProviders;
     myCache = cache;
+    myIndex = index;
     Disposer.register(parentDisposable, this);
     myLoader =
       new SequentialLimitedLifoExecutor<>(this, MAX_LOADING_TASKS, task -> {
@@ -167,8 +173,8 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
 
   private void sortCommitsByRow(@NotNull List<T> result, @NotNull final TIntIntHashMap rowsForCommits) {
     ContainerUtil.sort(result, (details1, details2) -> {
-      int row1 = rowsForCommits.get(myHashMap.getCommitIndex(details1.getId(), details1.getRoot()));
-      int row2 = rowsForCommits.get(myHashMap.getCommitIndex(details2.getId(), details2.getRoot()));
+      int row1 = rowsForCommits.get(myStorage.getCommitIndex(details1.getId(), details1.getRoot()));
+      int row2 = rowsForCommits.get(myStorage.getCommitIndex(details2.getId(), details2.getRoot()));
       return Comparing.compare(row1, row2);
     });
   }
@@ -214,11 +220,18 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     myLoader.queue(new TaskDescriptor(toLoad));
   }
 
+  @SuppressWarnings("unchecked")
   private void cacheCommit(final int commitId, long taskNumber) {
     // fill the cache with temporary "Loading" values to avoid producing queries for each commit that has not been cached yet,
     // even if it will be loaded within a previous query
     if (!myCache.isKeyCached(commitId)) {
-      myCache.put(commitId, (T)new LoadingDetails(() -> myHashMap.getCommitId(commitId), taskNumber));
+      IndexDataGetter dataGetter = myIndex.getDataGetter();
+      if (dataGetter != null) {
+        myCache.put(commitId, (T)new IndexedDetails(dataGetter, myStorage, commitId, taskNumber));
+      }
+      else {
+        myCache.put(commitId, (T)new LoadingDetails(() -> myStorage.getCommitId(commitId), taskNumber));
+      }
     }
   }
 
@@ -238,7 +251,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     TIntObjectHashMap<T> result = new TIntObjectHashMap<>();
     final MultiMap<VirtualFile, String> rootsAndHashes = MultiMap.create();
     commits.forEach(commit -> {
-      CommitId commitId = myHashMap.getCommitId(commit);
+      CommitId commitId = myStorage.getCommitId(commit);
       if (commitId != null) {
         rootsAndHashes.putValue(commitId.getRoot(), commitId.getHash().asString());
       }
@@ -250,7 +263,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
       if (logProvider != null) {
         List<? extends T> details = readDetails(logProvider, entry.getKey(), ContainerUtil.newArrayList(entry.getValue()));
         for (T data : details) {
-          int index = myHashMap.getCommitIndex(data.getId(), data.getRoot());
+          int index = myStorage.getCommitIndex(data.getId(), data.getRoot());
           result.put(index, data);
         }
         saveInCache(result);

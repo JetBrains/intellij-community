@@ -21,12 +21,11 @@
  */
 package com.intellij.compiler.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -110,14 +109,12 @@ public class ModuleCompileScope extends FileIndexCompileScope {
           else {
             // the same content root exists in several modules
             if (!candidateModule.equals(module)) {
-              candidateModule = ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
-                public Module compute() {
-                  final VirtualFile contentRootFile = VirtualFileManager.getInstance().findFileByUrl(contentRootUrl);
-                  if (contentRootFile != null) {
-                    return projectFileIndex.getModuleForFile(contentRootFile);
-                  }
-                  return null;
+              candidateModule = ReadAction.compute(() -> {
+                final VirtualFile contentRootFile = VirtualFileManager.getInstance().findFileByUrl(contentRootUrl);
+                if (contentRootFile != null) {
+                  return projectFileIndex.getModuleForFile(contentRootFile);
                 }
+                return null;
               });
             }
           }

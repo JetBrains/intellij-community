@@ -21,7 +21,6 @@ import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -206,12 +205,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   @Override
   public List<String> getUnappliedPatchNames() {
     final List<String> appliedPatches = HgUtil.getNamesWithoutHashes(getMQAppliedPatches());
-    return ContainerUtil.filter(getAllPatchNames(), new Condition<String>() {
-      @Override
-      public boolean value(String s) {
-        return !appliedPatches.contains(s);
-      }
-    });
+    return ContainerUtil.filter(getAllPatchNames(), s -> !appliedPatches.contains(s));
   }
 
   @Override
@@ -236,8 +230,8 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
         myOpenedBranches = HgBranchesCommand.collectNames(branchCommandResult);
       }
 
-      HgUtil.executeOnPooledThread(new Runnable() {
-        public void run() {
+      HgUtil.executeOnPooledThread(() -> {
+        if (!project.isDisposed()) {
           project.getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(project, getRoot());
         }
       }, project);

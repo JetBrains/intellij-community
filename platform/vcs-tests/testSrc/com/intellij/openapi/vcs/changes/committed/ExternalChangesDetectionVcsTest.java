@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,54 +54,49 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
 
   @Before
   public void setUp() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
-          myTempDirTestFixture = fixtureFactory.createTempDirTestFixture();
-          myTempDirTestFixture.setUp();
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
+        myTempDirTestFixture = fixtureFactory.createTempDirTestFixture();
+        myTempDirTestFixture.setUp();
 
-          myClientRoot = new File(myTempDirTestFixture.getTempDirPath(), "clientroot");
-          myClientRoot.mkdir();
+        myClientRoot = new File(myTempDirTestFixture.getTempDirPath(), "clientroot");
+        myClientRoot.mkdir();
 
-          initProject(myClientRoot, ExternalChangesDetectionVcsTest.this.getTestName());
+        initProject(myClientRoot, ExternalChangesDetectionVcsTest.this.getTestName());
 
-          myVcs = new MockAbstractVcs(myProject);
-          myVcs.setChangeProvider(new MyMockChangeProvider());
-          myVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
-          myVcsManager.registerVcs(myVcs);
-          myVcsManager.setDirectoryMapping("", myVcs.getName());
+        myVcs = new MockAbstractVcs(myProject);
+        myVcs.setChangeProvider(new MyMockChangeProvider());
+        myVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
+        myVcsManager.registerVcs(myVcs);
+        myVcsManager.setDirectoryMapping("", myVcs.getName());
 
-          myLFS = LocalFileSystem.getInstance();
-          myChangeListManager = ChangeListManager.getInstance(myProject);
-          myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+        myLFS = LocalFileSystem.getInstance();
+        myChangeListManager = ChangeListManager.getInstance(myProject);
+        myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
   }
 
   @After
   public void tearDown() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          myVcsManager.unregisterVcs(myVcs);
-
-          tearDownProject();
-          if (myTempDirTestFixture != null) {
-            myTempDirTestFixture.tearDown();
-            myTempDirTestFixture = null;
-          }
-          FileUtil.delete(myClientRoot);
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        myVcsManager.unregisterVcs(myVcs);
+        myVcs = null;
+        myVcsManager = null;
+        myChangeListManager = null;
+        myVcsDirtyScopeManager = null;
+        tearDownProject();
+        myTempDirTestFixture.tearDown();
+        myTempDirTestFixture = null;
+        FileUtil.delete(myClientRoot);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
   }
@@ -198,12 +193,9 @@ public class ExternalChangesDetectionVcsTest extends AbstractJunitVcsTestCase  {
       for (FilePath path : dirtyScope.getDirtyFiles()) {
         builder.processUnversionedFile(path.getVirtualFile());
       }
-      final Processor<VirtualFile> processor = new Processor<VirtualFile>() {
-        @Override
-        public boolean process(final VirtualFile vf) {
-          builder.processUnversionedFile(vf);
-          return true;
-        }
+      final Processor<VirtualFile> processor = vf -> {
+        builder.processUnversionedFile(vf);
+        return true;
       };
       for (FilePath dir : dirtyScope.getRecursivelyDirtyDirectories()) {
         VfsUtil.processFilesRecursively(dir.getVirtualFile(), processor);

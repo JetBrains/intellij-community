@@ -17,9 +17,8 @@ package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.util.treeView.TreeAnchorizer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -30,29 +29,13 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class PsiTreeAnchorizer extends TreeAnchorizer {
-  private static final Key<SmartPointerWrapper> PSI_ANCHORIZER_POINTER = Key.create("PSI_ANCHORIZER_POINTER");
-
   @Override
   public Object createAnchor(Object element) {
     if (element instanceof PsiElement) {
-      final PsiElement psiElement = (PsiElement)element;
-
-      return ApplicationManager.getApplication().runReadAction(new Computable<Object>() {
-        @Override
-        public Object compute() {
-          SmartPointerWrapper pointer = psiElement.getUserData(PSI_ANCHORIZER_POINTER);
-          if (!psiElement.isValid()) {
-            return pointer != null ? pointer : psiElement;
-          }
-
-          if (pointer == null || pointer.myPointer.getElement() != psiElement) {
-            Project project = psiElement.getProject();
-            SmartPsiElementPointer<PsiElement> psiElementPointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(psiElement);
-            pointer = new SmartPointerWrapper(psiElementPointer);
-            psiElement.putUserData(PSI_ANCHORIZER_POINTER, pointer);
-          }
-          return pointer;
-        }
+      PsiElement psi = (PsiElement)element;
+      return ReadAction.compute(() -> {
+        if (!psi.isValid()) return psi;
+        return new SmartPointerWrapper(SmartPointerManager.getInstance(psi.getProject()).createSmartPsiElementPointer(psi));
       });
     }
     return super.createAnchor(element);
@@ -61,12 +44,7 @@ public class PsiTreeAnchorizer extends TreeAnchorizer {
   @Nullable
   public Object retrieveElement(final Object pointer) {
     if (pointer instanceof SmartPointerWrapper) {
-      return ApplicationManager.getApplication().runReadAction(new Computable<Object>() {
-        @Override
-        public Object compute() {
-          return ((SmartPointerWrapper)pointer).myPointer.getElement();
-        }
-      });
+      return ReadAction.compute(() -> ((SmartPointerWrapper)pointer).myPointer.getElement());
     }
 
     return super.retrieveElement(pointer);

@@ -19,7 +19,6 @@ import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -39,6 +38,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class EditorEmptyTextPainter {
   public void paintEmptyText(@NotNull final JComponent splitters, @NotNull Graphics g) {
@@ -73,7 +74,7 @@ public class EditorEmptyTextPainter {
   }
 
   protected void appendSearchEverywhere(@NotNull UIUtil.TextPainter painter) {
-    Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE);
+    Shortcut[] shortcuts = getActiveKeymapShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE).getShortcuts();
     appendAction(painter, "Search Everywhere", shortcuts.length == 0 ?
                                                "Double " + (SystemInfo.isMac ? MacKeymapUtil.SHIFT : "Shift") :
                                                KeymapUtil.getShortcutsText(shortcuts));

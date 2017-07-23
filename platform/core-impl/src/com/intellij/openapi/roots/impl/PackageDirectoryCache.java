@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.util.registry.Registry;
@@ -35,22 +35,19 @@ public class PackageDirectoryCache {
   private final MultiMap<String, VirtualFile> myRootsByPackagePrefix;
   private final Map<String, PackageInfo> myDirectoriesByPackageNameCache = ContainerUtil.newConcurrentMap();
   private final Set<String> myNonExistentPackages = ContainerUtil.newConcurrentSet();
-  @SuppressWarnings("UnusedDeclaration")
-  private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
-    @Override
-    public void run() {
-      myNonExistentPackages.clear();
-    }
-  });
 
-  public PackageDirectoryCache(MultiMap<String, VirtualFile> rootsByPackagePrefix) {
+  public PackageDirectoryCache(@NotNull MultiMap<String, VirtualFile> rootsByPackagePrefix) {
     myRootsByPackagePrefix = rootsByPackagePrefix;
+  }
+
+  public void onLowMemory() {
+    myNonExistentPackages.clear();
   }
 
   @NotNull
   public List<VirtualFile> getDirectoriesByPackageName(@NotNull final String packageName) {
     PackageInfo info = getPackageInfo(packageName);
-    return info == null ? Collections.<VirtualFile>emptyList() : info.myPackageDirectories;
+    return info == null ? Collections.emptyList() : info.myPackageDirectories;
   }
 
   @Nullable
@@ -74,6 +71,7 @@ public class PackageDirectoryCache {
           }
           if (i < 0) break;
           i = packageName.lastIndexOf('.', i - 1);
+          ProgressManager.checkCanceled();
         }
       }
 
@@ -95,7 +93,7 @@ public class PackageDirectoryCache {
 
   public Set<String> getSubpackageNames(@NotNull final String packageName) {
     final PackageInfo info = getPackageInfo(packageName);
-    return info == null ? Collections.<String>emptySet() : Collections.unmodifiableSet(info.mySubPackages.getValue().keySet());
+    return info == null ? Collections.emptySet() : Collections.unmodifiableSet(info.mySubPackages.getValue().keySet());
   }
 
   private class PackageInfo {
@@ -120,8 +118,8 @@ public class PackageDirectoryCache {
     };
 
     PackageInfo(String qname, List<VirtualFile> packageDirectories) {
-      this.myQname = qname;
-      this.myPackageDirectories = packageDirectories;
+      myQname = qname;
+      myPackageDirectories = packageDirectories;
     }
 
     @NotNull

@@ -112,12 +112,8 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
     }
 
     if (myParameter != null) {
-      final Boolean sameUpperBounds = guard.doPreventingRecursion(myContext, true, new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          return Comparing.equal(myUpperBound, captured.myUpperBound);
-        }
-      });
+      final Boolean sameUpperBounds = guard.doPreventingRecursion(myContext, true,
+                                                                  () -> Comparing.equal(myUpperBound, captured.myUpperBound));
 
       if (sameUpperBounds == null || sameUpperBounds) {
         return true;

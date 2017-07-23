@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -270,7 +271,16 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
     final XmlCodeFoldingSettings foldingSettings = getFoldingSettings();
     return (psi instanceof XmlTag && foldingSettings.isCollapseXmlTags())
            || (psi instanceof XmlAttribute && (foldStyle((XmlAttribute)psi, foldingSettings) || foldSrc((XmlAttribute)psi, foldingSettings)))
-           || isEntity(psi) && foldingSettings.isCollapseEntities() && getEntityPlaceholder(psi) != null;
+           || isEntity(psi) && foldingSettings.isCollapseEntities() && hasEntityPlaceholder(psi);
+  }
+
+  private boolean hasEntityPlaceholder(PsiElement psi) {
+    try {
+      return getEntityPlaceholder(psi) != null;
+    }
+    catch (IndexNotReadyException e) {
+      return false;
+    }
   }
 
   private static boolean foldSrc(XmlAttribute psi, XmlCodeFoldingSettings settings) {

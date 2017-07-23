@@ -20,7 +20,6 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.LighterASTTokenNode;
 import com.intellij.lang.LighterLazyParseableNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.SmartList;
@@ -81,12 +80,12 @@ public class LightTreeUtil {
     for (int i = 0, size = children.size(); i < size; ++i) {
       LighterASTNode child = children.get(i);
       if (child.getTokenType() == type) {
-        if (result == null) result = new SmartList<LighterASTNode>();
+        if (result == null) result = new SmartList<>();
         result.add(child);
       }
     }
 
-    return result != null ? result: Collections.<LighterASTNode>emptyList();
+    return result != null ? result: Collections.emptyList();
   }
 
   @NotNull
@@ -97,12 +96,12 @@ public class LightTreeUtil {
     for (int i = 0, size = children.size(); i < size; ++i) {
       LighterASTNode child = children.get(i);
       if (types.contains(child.getTokenType())) {
-        if (result == null) result = new SmartList<LighterASTNode>();
+        if (result == null) result = new SmartList<>();
         result.add(child);
       }
     }
 
-    return result != null ? result: Collections.<LighterASTNode>emptyList();
+    return result != null ? result: Collections.emptyList();
   }
 
   @NotNull
@@ -167,12 +166,7 @@ public class LightTreeUtil {
   }
 
   private static LighterASTNode findChildAtOffset(final int offset, List<LighterASTNode> children) {
-    return ContainerUtil.find(children, new Condition<LighterASTNode>() {
-      @Override
-      public boolean value(LighterASTNode node) {
-        return containsOffset(node, offset);
-      }
-    });
+    return ContainerUtil.find(children, node -> containsOffset(node, offset));
   }
 
   private static boolean containsOffset(LighterASTNode node, int offset) {

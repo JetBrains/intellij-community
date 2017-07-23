@@ -16,7 +16,7 @@
 package org.jetbrains.jps.gant;
 
 /**
- * @author nik
+ * @deprecated see {@link JpsGantProjectBuilder} for details
  */
 public interface BuildInfoPrinter {
 

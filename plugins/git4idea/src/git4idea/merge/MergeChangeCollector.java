@@ -57,7 +57,7 @@ public class MergeChangeCollector {
   }
 
   /**
-   * Collects changed files during or after merge operation to the supplied <code>updates</code> container.
+   * Collects changed files during or after merge operation to the supplied {@code updates} container.
    */
   public void collect(final UpdatedFiles updates, List<VcsException> exceptions) {
     try {

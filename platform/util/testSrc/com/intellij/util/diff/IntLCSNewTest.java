@@ -71,9 +71,9 @@ public class IntLCSNewTest extends TestCase {
   }
 
   private static BitSet[] buildChange(int[] first, int[] second) throws FilesTooBigForDiffException {
-    IntLCS intLCS = new IntLCS(first, second);
-    intLCS.execute();
-    return intLCS.getChanges();
+    MyersLCS myersLCS = new MyersLCS(first, second);
+    myersLCS.execute();
+    return myersLCS.getChanges();
   }
 
   private static void checkChange(BitSet[] change, int[] expected1, int[] expected2) {

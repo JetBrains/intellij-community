@@ -22,10 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
-/**
- * User: anna
- * Date: 1/17/13
- */
 public abstract class JavaFxControllerBasedReferenceProvider extends PsiReferenceProvider {
   @NotNull
   @Override

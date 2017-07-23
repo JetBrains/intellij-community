@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,83 +16,85 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringHash;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Tag;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @see  #createOn(javax.swing.JTree)
- * @see #createOn(javax.swing.JTree, javax.swing.tree.DefaultMutableTreeNode)
+ * @see #createOn(JTree)
+ * @see #createOn(JTree, DefaultMutableTreeNode)
  *
- * @see #applyTo(javax.swing.JTree)
- * @see #applyTo(javax.swing.JTree, javax.swing.tree.DefaultMutableTreeNode)
+ * @see #applyTo(JTree)
+ * @see #applyTo(JTree, Object)
  */
 public class TreeState implements JDOMExternalizable {
-  @NonNls private static final String PATH = "PATH";
-  @NonNls private static final String SELECTED = "SELECTED";
-  @NonNls private static final String PATH_ELEMENT = "PATH_ELEMENT";
-  @NonNls private static final String USER_OBJECT = "USER_OBJECT";
-  @NonNls public static final String CALLBACK = "Callback";
+  private static final Logger LOG = Logger.getInstance(TreeState.class);
 
+  public static final Key<WeakReference<ActionCallback>> CALLBACK = Key.create("Callback");
+
+  private static final String EXPAND_TAG = "expand";
+  private static final String SELECT_TAG = "select";
+  private static final String PATH_TAG = "path";
+
+  private static final int NOT_MATCHED = 0;
+  private static final int ID_MATCHED = 1;
+  private static final int OBJECT_MATCHED = 2;
+
+  @Tag("item")
   static class PathElement {
-    public String myItemId;
-    public String myItemType;
+    @Attribute("name")
+    public String id;
+    @Attribute("type")
+    public String type;
+    @Attribute("user")
+    public String userStr;
 
-    private final int myItemIndex;
-    private Object myUserObject;
+    Object userObject;
+    final int index;
 
-    public PathElement(final String itemId, final String itemType, final int itemIndex, Object userObject) {
-      myItemId = itemId;
-      myItemType = itemType;
-
-      myItemIndex = itemIndex;
-      myUserObject = userObject;
+    /** @noinspection unused*/
+    PathElement() {
+      this(null, null, -1, null);
     }
 
-    public PathElement() {
-      myItemIndex = -1;
-      myUserObject = null;
+    PathElement(String itemId, String itemType, int itemIndex, Object userObject) {
+      id = itemId;
+      type = itemType;
+
+      index = itemIndex;
+      userStr = userObject instanceof String ? (String)userObject : null;
+      this.userObject = userObject;
     }
 
     @Override
     public String toString() {
-      return myItemId + ":" + myItemType;
-    }
-
-    public boolean matchedWith(NodeDescriptor nodeDescriptor) {
-      return Comparing.equal(myItemId, getDescriptorKey(nodeDescriptor)) &&
-             Comparing.equal(myItemType, getDescriptorType(nodeDescriptor));
-    }
-
-    public boolean matchedWithByObject(Object object) {
-      return myUserObject != null && myUserObject.equals(object);
-    }
-
-    public void readExternal(Element element) throws InvalidDataException {
-      DefaultJDOMExternalizer.readExternal(this, element);
-      myUserObject = element.getAttributeValue(USER_OBJECT);
-    }
-
-    public void writeExternal(Element element) throws WriteExternalException {
-      DefaultJDOMExternalizer.writeExternal(this, element);
-      if (myUserObject instanceof String){
-        element.setAttribute(USER_OBJECT, (String)myUserObject);
-      }
+      return id + ": " + type;
     }
   }
 
@@ -106,338 +108,274 @@ public class TreeState implements JDOMExternalizable {
     myScrollToSelection = true;
   }
 
-  public TreeState() {
-    this(new ArrayList<>(), new ArrayList<>());
-  }
-
   public boolean isEmpty() {
     return myExpandedPaths.isEmpty() && mySelectedPaths.isEmpty();
   }
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
-    readExternal(element, myExpandedPaths, PATH);
-    readExternal(element, mySelectedPaths, SELECTED);
+    readExternal(element, myExpandedPaths, EXPAND_TAG);
+    readExternal(element, mySelectedPaths, SELECT_TAG);
   }
 
-  private static void readExternal(Element element, List<List<PathElement>> list, String name) throws InvalidDataException {
+  private static void readExternal(Element root, List<List<PathElement>> list, String name) throws InvalidDataException {
     list.clear();
-    final List paths = element.getChildren(name);
-    for (final Object path : paths) {
-      Element xmlPathElement = (Element)path;
-      list.add(readPath(xmlPathElement));
+    for (Element element : root.getChildren(name)) {
+      for (Element child : element.getChildren(PATH_TAG)) {
+        PathElement[] path = XmlSerializer.deserialize(child, PathElement[].class);
+        list.add(ContainerUtil.immutableList(path));
+      }
     }
   }
 
-  private static List<PathElement> readPath(final Element xmlPathElement) throws InvalidDataException {
-    final ArrayList<PathElement> result = new ArrayList<>();
-    final List elements = xmlPathElement.getChildren(PATH_ELEMENT);
-    for (final Object element : elements) {
-      Element xmlPathElementElement = (Element)element;
-      final PathElement pathElement = new PathElement();
-      pathElement.readExternal(xmlPathElementElement);
-      result.add(pathElement);
-    }
-    return result;
-  }
-
+  @NotNull
   public static TreeState createOn(JTree tree, final DefaultMutableTreeNode treeNode) {
-    return new TreeState(createExpandedPaths(tree, treeNode), createSelectedPaths(tree, treeNode));
+    return new TreeState(createPaths(tree, TreeUtil.collectExpandedPaths(tree, new TreePath(treeNode.getPath()))),
+                         createPaths(tree, TreeUtil.collectSelectedPaths(tree, new TreePath(treeNode.getPath()))));
   }
 
+  @NotNull
   public static TreeState createOn(@NotNull JTree tree) {
-    return new TreeState(createPaths(tree), new ArrayList<>());
+    return new TreeState(createPaths(tree, TreeUtil.collectExpandedPaths(tree)), new ArrayList<>());
+  }
+
+  @NotNull
+  public static TreeState createFrom(@Nullable Element element) {
+    TreeState state = new TreeState(new ArrayList<>(), new ArrayList<>());
+    try {
+      if (element != null) {
+        state.readExternal(element);
+      }
+    }
+    catch (InvalidDataException e) {
+      LOG.warn(e);
+    }
+    return state;
   }
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
-    writeExternal(element, myExpandedPaths, PATH);
-    writeExternal(element, mySelectedPaths, SELECTED);
+    writeExternal(element, myExpandedPaths, EXPAND_TAG);
+    writeExternal(element, mySelectedPaths, SELECT_TAG);
   }
 
   private static void writeExternal(Element element, List<List<PathElement>> list, String name) throws WriteExternalException {
+    Element root = new Element(name);
     for (List<PathElement> path : list) {
-      final Element pathElement = new Element(name);
-      writeExternal(pathElement, path);
-      element.addContent(pathElement);
+      Element e = XmlSerializer.serialize(path.toArray());
+      e.setName(PATH_TAG);
+      root.addContent(e);
     }
-  }
-
-  private static void writeExternal(final Element pathXmlElement, final List<PathElement> path) throws WriteExternalException {
-    for (final PathElement aPath : path) {
-      final Element pathXmlElementElement = new Element(PATH_ELEMENT);
-      aPath.writeExternal(pathXmlElementElement);
-      pathXmlElement.addContent(pathXmlElementElement);
-    }
-  }
-
-  private static List<List<PathElement>> createPaths(final JTree tree) {
-    final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(tree);
-    return createPaths(tree, expandedPaths);
-  }
-
-  private static List<List<PathElement>> createExpandedPaths(JTree tree, final DefaultMutableTreeNode treeNode) {
-    final List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(tree, new TreePath(treeNode.getPath()));
-    return createPaths(tree, expandedPaths);
-  }
-
-  private static List<List<PathElement>> createSelectedPaths(JTree tree, final DefaultMutableTreeNode treeNode) {
-    final List<TreePath> selectedPaths
-      = TreeUtil.collectSelectedPaths(tree, new TreePath(treeNode.getPath()));
-    return createPaths(tree, selectedPaths);
+    element.addContent(root);
   }
 
   private static List<List<PathElement>> createPaths(JTree tree, List<TreePath> paths) {
     ArrayList<List<PathElement>> result = new ArrayList<>();
     for (TreePath path : paths) {
       if (tree.isRootVisible() || path.getPathCount() > 1) {
-        List<PathElement> list = createPath(path);
-        if (list != null) result.add(list);
+        ContainerUtil.addIfNotNull(result, createPath(tree.getModel(), path));
       }
     }
     return result;
   }
 
-  private static List<PathElement> createPath(final TreePath treePath) {
-    final ArrayList<PathElement> result = new ArrayList<>();
+  @NotNull
+  private static List<PathElement> createPath(@NotNull TreeModel model, @NotNull TreePath treePath) {
+    ArrayList<PathElement> result = new ArrayList<>();
+    Object prev = null;
     for (int i = 0; i < treePath.getPathCount(); i++) {
-      final Object pathComponent = treePath.getPathComponent(i);
-      if (pathComponent instanceof DefaultMutableTreeNode) {
-        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)pathComponent;
-        final TreeNode parent = node.getParent();
-
-        final Object userObject = node.getUserObject();
-        if (userObject instanceof NodeDescriptor) {
-          final NodeDescriptor nodeDescriptor = (NodeDescriptor)userObject;
-          //nodeDescriptor.update();
-          final int childIndex = parent != null ? parent.getIndex(node) : 0;
-          result.add(new PathElement(getDescriptorKey(nodeDescriptor), getDescriptorType(nodeDescriptor), childIndex, nodeDescriptor));
-        }
-        else {
-          result.add(new PathElement("", "", 0, userObject));
-        }
-      }
-      else {
-        return null;
-      }
+      Object cur = treePath.getPathComponent(i);
+      Object userObject = TreeUtil.getUserObject(cur);
+      int childIndex = prev == null ? 0 : model.getIndexOfChild(prev, cur);
+      PathElement pe = new PathElement(calcId(userObject), calcType(userObject), childIndex, userObject);
+      result.add(pe);
+      prev = cur;
     }
     return result;
   }
 
-  private static String getDescriptorKey(final NodeDescriptor nodeDescriptor) {
-    if (nodeDescriptor instanceof AbstractTreeNode) {
-      Object value;
-      if (nodeDescriptor instanceof NodeDescriptorProvidingKey) {
-        value = ((NodeDescriptorProvidingKey)nodeDescriptor).getKey();
+  @NotNull
+  private static String calcId(@Nullable Object userObject) {
+    if (userObject == null) return "";
+    Object value =
+      userObject instanceof NodeDescriptorProvidingKey ? ((NodeDescriptorProvidingKey)userObject).getKey() :
+      userObject instanceof AbstractTreeNode ? ((AbstractTreeNode)userObject).getValue() :
+      userObject;
+    if (value instanceof NavigationItem) {
+      try {
+        String name = ((NavigationItem)value).getName();
+        return name != null ? name : StringUtil.notNullize(value.toString());
       }
-      else {
-        value = ((AbstractTreeNode)nodeDescriptor).getValue();
-      }
-
-      if (value instanceof NavigationItem) {
-        try {
-          final String name = ((NavigationItem)value).getName();
-          return name != null ? name : value.toString();
-        }
-        catch (Exception e) {
-          //ignore for invalid psi element
-        }
+      catch (Exception ignored) {
       }
     }
-    return nodeDescriptor.toString();
+    return StringUtil.notNullize(userObject.toString());
   }
 
-  private static String getDescriptorType(final NodeDescriptor nodeDescriptor) {
-    return nodeDescriptor.getClass().getName();
+  @NotNull
+  private static String calcType(@Nullable Object userObject) {
+    if (userObject == null) return "";
+    String name = userObject.getClass().getName();
+    return Integer.toHexString(StringHash.murmur(name, 31)) + ":" + StringUtil.getShortName(name);
   }
 
-  public void applyTo(JTree tree) {
-    applyTo(tree, (DefaultMutableTreeNode)tree.getModel().getRoot());
+  public void applyTo(@NotNull JTree tree) {
+    applyTo(tree, tree.getModel().getRoot());
   }
 
-  private void applyExpanded(TreeFacade tree, Object root, ProgressIndicator indicator) {
-    indicator.checkCanceled();
-
-    if (!(root instanceof DefaultMutableTreeNode)) {
-      return;
-    }
-    final DefaultMutableTreeNode nodeRoot = (DefaultMutableTreeNode)root;
-    final TreeNode[] nodePath = nodeRoot.getPath();
-    if (nodePath.length > 0) {
-      for (final List<PathElement> path : myExpandedPaths) {
-        applyTo(nodePath.length - 1,path, root, tree, indicator);
-      }
-    }
-  }
-
-  public void applyTo(final JTree tree, final DefaultMutableTreeNode node) {
-    final TreeFacade facade = getFacade(tree);
+  public void applyTo(@NotNull JTree tree, @Nullable Object root) {
+    if (root == null) return;
+    TreeFacade facade = TreeFacade.getFacade(tree);
     ActionCallback callback = facade.getInitialized().doWhenDone(new TreeRunnable("TreeState.applyTo: on done facade init") {
       @Override
       public void perform() {
-        facade.batch(new Progressive() {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            applyExpanded(facade, node, indicator);
-          }
-        });
+        facade.batch(indicator -> applyExpandedTo(facade, new TreePath(root), indicator));
       }
     });
     if (tree.getSelectionCount() == 0) {
       callback.doWhenDone(new TreeRunnable("TreeState.applyTo: on done") {
         @Override
         public void perform() {
-          applySelected(tree, node);
+          if (tree.getSelectionCount() == 0) {
+            applySelectedTo(tree);
+          }
         }
       });
     }
   }
 
-  private void applySelected(final JTree tree, final DefaultMutableTreeNode node) {
-    TreeUtil.unselect(tree, node);
-    List<TreePath> selectionPaths = new ArrayList<>();
-    for (List<PathElement> pathElements : mySelectedPaths) {
-      applySelectedTo(pathElements, tree.getModel().getRoot(), tree, selectionPaths, myScrollToSelection);
-    }
+  private void applyExpandedTo(@NotNull TreeFacade tree, @NotNull TreePath rootPath, @NotNull ProgressIndicator indicator) {
+    indicator.checkCanceled();
+    if (rootPath.getPathCount() <= 0) return;
 
-    if (selectionPaths.size() > 1) {
-      for (TreePath path : selectionPaths) {
-        tree.addSelectionPath(path);
+    for (List<PathElement> path : myExpandedPaths) {
+      if (path.isEmpty()) continue;
+      int index = rootPath.getPathCount() - 1;
+      if (pathMatches(path.get(index), rootPath.getPathComponent(index)) == NOT_MATCHED) continue;
+      expandImpl(0, path, rootPath, tree, indicator);
+    }
+  }
+
+  private void applySelectedTo(@NotNull JTree tree) {
+    List<TreePath> selection = new ArrayList<>();
+    for (List<PathElement> path : mySelectedPaths) {
+      TreeModel model = tree.getModel();
+      TreePath treePath = new TreePath(model.getRoot());
+      for (int i = 1; treePath != null && i < path.size(); i++) {
+        treePath = findMatchedChild(model, treePath, path.get(i));
       }
+      ContainerUtil.addIfNotNull(selection, treePath);
+    }
+    if (selection.isEmpty()) return;
+    for (TreePath treePath : selection) {
+      tree.setSelectionPath(treePath);
+    }
+    if (myScrollToSelection) {
+      TreeUtil.showRowCentered(tree, tree.getRowForPath(selection.get(0)), true, true);
     }
   }
 
 
   @Nullable
-  private static DefaultMutableTreeNode findMatchedChild(DefaultMutableTreeNode parent, PathElement pathElement) {
-
-    for (int j = 0; j < parent.getChildCount(); j++) {
-      final TreeNode child = parent.getChildAt(j);
-      if (!(child instanceof DefaultMutableTreeNode)) continue;
-      final DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)child;
-      final Object userObject = childNode.getUserObject();
-      if (pathElement.matchedWithByObject(userObject)) return childNode;
+  private static TreePath findMatchedChild(@NotNull TreeModel model, @NotNull TreePath treePath, @NotNull PathElement pathElement) {
+    Object parent = treePath.getLastPathComponent();
+    int childCount = model.getChildCount(parent);
+    boolean idMatchedFound = false;
+    Object idMatchedChild = null;
+    for (int j = 0; j < childCount; j++) {
+      Object child = model.getChild(parent, j);
+      int match = pathMatches(pathElement, child);
+      if (match == OBJECT_MATCHED) {
+        return treePath.pathByAddingChild(child);
+      }
+      else if (match == ID_MATCHED && !idMatchedFound) {
+        idMatchedChild = child;
+        idMatchedFound = true;
+      }
+    }
+    if (idMatchedFound) {
+      return treePath.pathByAddingChild(idMatchedChild);
     }
 
-    for (int j = 0; j < parent.getChildCount(); j++) {
-      final TreeNode child = parent.getChildAt(j);
-      if (!(child instanceof DefaultMutableTreeNode)) continue;
-      final DefaultMutableTreeNode childNode = (DefaultMutableTreeNode)child;
-      final Object userObject = childNode.getUserObject();
-      if (!(userObject instanceof NodeDescriptor)) continue;
-      final NodeDescriptor nodeDescriptor = (NodeDescriptor)userObject;
-      if (pathElement.matchedWith(nodeDescriptor)) return childNode;
-    }
-
-    if (parent.getChildCount() > 0) {
-      int index = pathElement.myItemIndex;
-      if (index >= parent.getChildCount()) {
-        index = parent.getChildCount()-1;
-      }
-      index = Math.max(0, index);
-      final TreeNode child = parent.getChildAt(index);
-      if (child instanceof DefaultMutableTreeNode) {
-        return (DefaultMutableTreeNode) child;
-      }
+    if (childCount > 0) {
+      int index = Math.max(0, Math.min(pathElement.index, childCount - 1));
+      Object child = model.getChild(parent, index);
+      return treePath.pathByAddingChild(child);
     }
 
     return null;
   }
 
-  private static boolean applyTo(final int positionInPath,
-                                 final List<PathElement> path,
-                                 final Object root,
-                                 final TreeFacade tree,
-                                 final ProgressIndicator indicator) {
-    if (!(root instanceof DefaultMutableTreeNode)) return false;
+  @MagicConstant(intValues = {NOT_MATCHED, ID_MATCHED, OBJECT_MATCHED})
+  private static int pathMatches(@NotNull PathElement pe, Object child) {
+    Object userObject = TreeUtil.getUserObject(child);
+    if (pe.userObject != null && pe.userObject.equals(userObject)) return OBJECT_MATCHED;
+    return Comparing.equal(pe.id, calcId(userObject)) &&
+           Comparing.equal(pe.type, calcType(userObject)) ? ID_MATCHED : NOT_MATCHED;
+  }
 
-    final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)root;
-
-    final Object userObject = treeNode.getUserObject();
-    final PathElement pathElement = path.get(positionInPath);
-
-    if (userObject instanceof NodeDescriptor) {
-      if (!pathElement.matchedWith((NodeDescriptor)userObject)) return false;
-    }
-    else {
-      if (!pathElement.matchedWithByObject(userObject)) return false;
-    }
-
-    tree.expand(treeNode).doWhenDone(new TreeRunnable("TreeState.applyTo") {
+  private static void expandImpl(int positionInPath,
+                                 List<PathElement> path,
+                                 TreePath treePath,
+                                 TreeFacade tree,
+                                 ProgressIndicator indicator) {
+    tree.expand(treePath).doWhenDone(new TreeRunnable("TreeState.applyTo") {
       @Override
       public void perform() {
         indicator.checkCanceled();
 
-        if (positionInPath == path.size() - 1) {
-          return;
-        }
+        PathElement next = positionInPath == path.size() - 1 ? null : path.get(positionInPath + 1);
+        if (next == null) return;
 
-        for (int j = 0; j < treeNode.getChildCount(); j++) {
-          final TreeNode child = treeNode.getChildAt(j);
-          final boolean resultFromChild = applyTo(positionInPath + 1, path, child, tree, indicator);
-          if (resultFromChild) {
+        Object parent = treePath.getLastPathComponent();
+        TreeModel model = tree.tree.getModel();
+        int childCount = model.getChildCount(parent);
+        for (int j = 0; j < childCount; j++) {
+          Object child = tree.tree.getModel().getChild(parent, j);
+          if (pathMatches(next, child) != NOT_MATCHED) {
+            expandImpl(positionInPath + 1, path, treePath.pathByAddingChild(child), tree, indicator);
             break;
           }
         }
       }
     });
-
-
-    return true;
   }
 
-  private static void applySelectedTo(final List<PathElement> path,
-                                      Object root,
-                                      JTree tree,
-                                      final List<TreePath> outSelectionPaths, final boolean scrollToSelection) {
+  static abstract class TreeFacade {
 
-    for (int i = 1; i < path.size(); i++) {
-      if (!(root instanceof DefaultMutableTreeNode)) return;
+    final JTree tree;
 
-      root = findMatchedChild((DefaultMutableTreeNode)root, path.get(i));
+    TreeFacade(@NotNull JTree tree) {this.tree = tree;}
+
+    abstract ActionCallback getInitialized();
+
+    abstract ActionCallback expand(TreePath treePath);
+
+    abstract void batch(Progressive progressive);
+
+    static TreeFacade getFacade(JTree tree) {
+      AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(tree);
+      return builder != null ? new BuilderFacade(builder) : new JTreeFacade(tree);
     }
 
-    if (!(root instanceof DefaultMutableTreeNode)) return;
-
-    final TreePath pathInNewTree = new TreePath(((DefaultMutableTreeNode) root).getPath());
-    if (scrollToSelection) {
-      TreeUtil.selectPath(tree, pathInNewTree);
-    } else {
-      tree.setSelectionPath(pathInNewTree);
-    }
-    outSelectionPaths.add(pathInNewTree);
   }
 
-  interface TreeFacade {
-    ActionCallback getInitialized();
-    ActionCallback expand(DefaultMutableTreeNode node);
-
-    void batch(Progressive progressive);
-  }
-
-  private static TreeFacade getFacade(JTree tree) {
-    final AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(tree);
-    return builder != null ? new BuilderFacade(builder) : new JTreeFacade(tree);
-  }
-
-  public static class JTreeFacade implements TreeFacade {
-
-    private final JTree myTree;
+  static class JTreeFacade extends TreeFacade {
 
     JTreeFacade(JTree tree) {
-      myTree = tree;
+      super(tree);
     }
 
     @Override
-    public ActionCallback expand(DefaultMutableTreeNode node) {
-      myTree.expandPath(new TreePath(node.getPath()));
+    public ActionCallback expand(@NotNull TreePath treePath) {
+      tree.expandPath(treePath);
       return ActionCallback.DONE;
     }
 
     @Override
     public ActionCallback getInitialized() {
-      final WeakReference<ActionCallback> ref = (WeakReference<ActionCallback>)myTree.getClientProperty(CALLBACK);
-      final ActionCallback callback = SoftReference.dereference(ref);
+      WeakReference<ActionCallback> ref = UIUtil.getClientProperty(tree, CALLBACK);
+      ActionCallback callback = SoftReference.dereference(ref);
       if (callback != null) return callback;
       return ActionCallback.DONE;
     }
@@ -448,11 +386,12 @@ public class TreeState implements JDOMExternalizable {
     }
   }
 
-  static class BuilderFacade implements TreeFacade {
+  static class BuilderFacade extends TreeFacade {
 
     private final AbstractTreeBuilder myBuilder;
 
     BuilderFacade(AbstractTreeBuilder builder) {
+      super(ObjectUtils.notNull(builder.getTree()));
       myBuilder = builder;
     }
 
@@ -467,16 +406,13 @@ public class TreeState implements JDOMExternalizable {
     }
 
     @Override
-    public ActionCallback expand(DefaultMutableTreeNode node) {
-      final Object userObject = node.getUserObject();
+    public ActionCallback expand(TreePath treePath) {
+      Object userObject = TreeUtil.getUserObject(treePath.getLastPathComponent());
       if (!(userObject instanceof NodeDescriptor)) return ActionCallback.REJECTED;
 
       NodeDescriptor desc = (NodeDescriptor)userObject;
-
-      final Object element = myBuilder.getTreeStructureElement(desc);
-
-      final ActionCallback result = new ActionCallback();
-
+      Object element = myBuilder.getTreeStructureElement(desc);
+      ActionCallback result = new ActionCallback();
       myBuilder.expand(element, result.createSetDoneRunnable());
 
       return result;
@@ -489,36 +425,16 @@ public class TreeState implements JDOMExternalizable {
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder("TreeState(").append(myScrollToSelection).append(")");
-    append(sb, " expanded:", myExpandedPaths);
-    append(sb, " selected:", mySelectedPaths);
-    return sb.toString();
-  }
-
-  private static void append(StringBuilder sb, String prefix, Object object) {
-    if (prefix != null) {
-      sb.append(prefix);
+    Element st = new Element("TreeState");
+    String content;
+    try {
+      writeExternal(st);
+      content = JDOMUtil.writeChildren(st, "\n");
     }
-    if (object instanceof List) {
-      appendList(sb, (List)object);
+    catch (IOException e) {
+      content = ExceptionUtil.getThrowableText(e);
     }
-    else {
-      sb.append(object);
-    }
-  }
-
-  private static void appendList(StringBuilder sb, List list) {
-    if (list.isEmpty()) {
-      sb.append("{}");
-    }
-    else {
-      String prefix = "{";
-      for (Object object : list) {
-        append(sb, prefix, object);
-        prefix = ", ";
-      }
-      sb.append("}");
-    }
+    return "TreeState(" + myScrollToSelection + ")\n" + content;
   }
 }
 

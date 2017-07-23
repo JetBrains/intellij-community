@@ -71,7 +71,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   }
 
   protected CommandDescriptor myCurrentCommand;
-  private final Stack<CommandDescriptor> myInterruptedCommands = new Stack<CommandDescriptor>();
+  private final Stack<CommandDescriptor> myInterruptedCommands = new Stack<>();
   private final List<CommandListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private int myUndoTransparentCount;
 

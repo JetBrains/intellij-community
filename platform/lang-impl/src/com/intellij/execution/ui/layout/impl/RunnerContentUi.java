@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,11 +47,13 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.docking.impl.DockManagerImpl;
+import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
@@ -75,7 +77,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Collectors;
 
 public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Facade, ViewContextEx, PropertyChangeListener,
-                                        DockContainer.Dialog {
+                                        QuickActionProvider, DockContainer.Dialog {
   public static final DataKey<RunnerContentUi> KEY = DataKey.create("DebuggerContentUI");
   public static final Key<Boolean> LIGHTWEIGHT_CONTENT_MARKER = Key.create("LightweightContent");
 
@@ -134,6 +136,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   private int myAttractionCount;
   private ActionGroup myLeftToolbarActions;
+
+  private boolean myContentToolbarBefore = true;
 
   private JBTabs myCurrentOver;
   private Image myCurrentOverImg;
@@ -194,6 +198,24 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     myComponent.repaint();
   }
 
+  public void setLeftToolbarVisible(boolean value) {
+    myToolbar.setVisible(value);
+    myTabs.getComponent().setBorder(new EmptyBorder(0, value ? 1 : 0, 0, 0));
+
+    myComponent.revalidate();
+    myComponent.repaint();
+  }
+
+  public void setContentToolbarBefore(boolean value) {
+    myContentToolbarBefore = value;
+    for (GridImpl each : getGrids()) {
+      each.setToolbarBefore(value);
+    }
+
+    myContextActions.clear();
+    updateTabsUI(false);
+  }
+
   public void initUi() {
     if (myTabs != null) return;
 
@@ -220,12 +242,12 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     myTabs.getComponent().setBackground(myToolbar.getBackground());
     myTabs.getComponent().setBorder(new EmptyBorder(0, 1, 0, 0));
 
-    final NonOpaquePanel wrappper = new MyComponent(new BorderLayout(0, 0));
-    wrappper.add(myToolbar, BorderLayout.WEST);
-    wrappper.add(myTabs.getComponent(), BorderLayout.CENTER);
-    wrappper.setBorder(new EmptyBorder(-1, 0, 0, 0));
+    final NonOpaquePanel wrapper = new MyComponent(new BorderLayout(0, 0));
+    wrapper.add(myToolbar, BorderLayout.WEST);
+    wrapper.add(myTabs.getComponent(), BorderLayout.CENTER);
+    wrapper.setBorder(new EmptyBorder(-1, 0, 0, 0));
 
-    myComponent = wrappper;
+    myComponent = wrapper;
 
     myTabs.addListener(new TabsListener.Adapter() {
 
@@ -666,7 +688,9 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         GridImpl grid = (GridImpl)findGridFor(event.getContent());
         if (grid != null) {
           grid.remove(event.getContent());
-          grid.processRemoveFromUi();
+          if (grid.isEmpty()) {
+            grid.processRemoveFromUi();
+          }
           removeGridIfNeeded(grid);
         }
         updateTabsUI(false);
@@ -709,6 +733,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     if (grid != null || !createIfMissing) return grid;
 
     grid = new GridImpl(this, mySessionName);
+    grid.setToolbarBefore(myContentToolbarBefore);
 
     if (myCurrentOver != null || myOriginal != null) {
       Integer forcedDropIndex = content.getUserData(RunnerLayout.DROP_INDEX);
@@ -1351,7 +1376,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     }
   }
 
-  private class MyComponent extends NonOpaquePanel implements DataProvider {
+  private class MyComponent extends NonOpaquePanel implements DataProvider, QuickActionProvider {
     private boolean myWasEverAdded;
 
     public MyComponent(LayoutManager layout) {
@@ -1364,7 +1389,10 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     @Override
     @Nullable
     public Object getData(@NonNls final String dataId) {
-      if (CloseAction.CloseTarget.KEY.is(dataId)) {
+      if (QuickActionProvider.KEY.is(dataId)) {
+        return RunnerContentUi.this;
+      }
+      else if (CloseAction.CloseTarget.KEY.is(dataId)) {
         Content content = getContentManager().getSelectedContent();
         if (content != null && content.getManager().canCloseContents() && content.isCloseable()) {
           return new CloseAction.CloseTarget() {
@@ -1382,6 +1410,28 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         return ((DataProvider)originalContentComponent).getData(dataId);
       }
       return null;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return RunnerContentUi.this.getName();
+    }
+
+    @NotNull
+    @Override
+    public List<AnAction> getActions(boolean originalProvider) {
+      return RunnerContentUi.this.getActions(originalProvider);
+    }
+
+    @Override
+    public JComponent getComponent() {
+      return RunnerContentUi.this.getComponent();
+    }
+
+    @Override
+    public boolean isCycleRoot() {
+      return RunnerContentUi.this.isCycleRoot();
     }
 
     @Override
@@ -1669,6 +1719,23 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   @Override
   public RunnerLayoutUi getRunnerLayoutUi() {
     return myRunnerUi;
+  }
+
+  @NotNull
+  @Override
+  public String getName() {
+    return mySessionName;
+  }
+
+  @NotNull
+  @Override
+  public List<AnAction> getActions(boolean originalProvider) {
+    ArrayList<AnAction> result = new ArrayList<>();
+    if (myLeftToolbarActions != null) {
+      AnAction[] kids = myLeftToolbarActions.getChildren(null);
+      ContainerUtil.addAll(result, kids);
+    }
+    return result;
   }
 
   private int findFreeWindow() {

@@ -1,10 +1,13 @@
 <html>
 <body>
-Reports any parameters of <b>java.util.Comparator.compare()</b>
-which are not used. Most likely this is the result of a typing mistake and one parameter is compared
-with itself or the method is not implemented correctly.
+Reports problems found in <b>Comparator.compare()</b> implementations:
+<ul>
+  <li>Warns if parameter is not used. Most likely this is the result of a typing mistake and one parameter is compared
+    with itself or the method is not implemented correctly.</li>
+  <li>Warns if it's evident that comparator does not return 0 for same elements. Such comparator violates the contract
+    and result of sorting could be unpredictable if equal elements are encountered. In particular,
+    sorting method may fail with exception on some data sets.</li>
+</ul>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

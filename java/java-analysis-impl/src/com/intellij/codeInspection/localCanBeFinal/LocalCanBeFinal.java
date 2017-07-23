@@ -40,6 +40,7 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
   public boolean REPORT_PARAMETERS = true;
   public boolean REPORT_CATCH_PARAMETERS = true;
   public boolean REPORT_FOREACH_PARAMETERS = true;
+  public boolean REPORT_IMPLICIT_FINALS = true;
 
   private final LocalQuickFix myQuickFix;
   @NonNls public static final String SHORT_NAME = "LocalCanBeFinal";
@@ -57,6 +58,9 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
     }
     if (!REPORT_FOREACH_PARAMETERS) {
       node.addContent(new Element("option").setAttribute("name", "REPORT_FOREACH_PARAMETERS").setAttribute("value", "false"));
+    }
+    if (!REPORT_IMPLICIT_FINALS) {
+      node.addContent(new Element("option").setAttribute("name", "REPORT_IMPLICIT_FINALS").setAttribute("value", "false"));
     }
   }
 
@@ -281,7 +285,10 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
   }
 
   private boolean shouldBeIgnored(PsiVariable psiVariable) {
-    if (psiVariable.hasModifierProperty(PsiModifier.FINAL)) return true;
+    PsiModifierList modifierList = psiVariable.getModifierList();
+    if (modifierList == null) return true;
+    if (REPORT_IMPLICIT_FINALS && modifierList.hasModifierProperty(PsiModifier.FINAL)) return true;
+    if (modifierList.hasExplicitModifier(PsiModifier.FINAL)) return true;
     if (psiVariable instanceof PsiLocalVariable) {
       return !REPORT_VARIABLES;
     }
@@ -342,6 +349,7 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
     panel.addCheckbox(InspectionsBundle.message("inspection.local.can.be.final.option1"), "REPORT_PARAMETERS");
     panel.addCheckbox(InspectionsBundle.message("inspection.local.can.be.final.option2"), "REPORT_CATCH_PARAMETERS");
     panel.addCheckbox(InspectionsBundle.message("inspection.local.can.be.final.option3"), "REPORT_FOREACH_PARAMETERS");
+    panel.addCheckbox(InspectionsBundle.message("inspection.local.can.be.final.option4"), "REPORT_IMPLICIT_FINALS");
     return panel;
   }
 

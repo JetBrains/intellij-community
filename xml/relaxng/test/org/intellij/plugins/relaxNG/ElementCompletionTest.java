@@ -19,11 +19,6 @@ package org.intellij.plugins.relaxNG;
 import com.intellij.application.options.editor.WebEditorOptions;
 import org.intellij.plugins.testUtil.CopyFile;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 07.08.2007
-*/
 @CopyFile("element-completion.rng")
 public class ElementCompletionTest extends HighlightingTestBase {
   @Override

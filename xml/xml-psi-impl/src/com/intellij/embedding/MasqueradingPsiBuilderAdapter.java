@@ -22,6 +22,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.impl.DelegateMarker;
 import com.intellij.lang.impl.PsiBuilderAdapter;
 import com.intellij.lang.impl.PsiBuilderImpl;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.tree.IElementType;
@@ -106,7 +107,10 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     }
 
     if (delegate.getCurrentOffset() > myShrunkSequence.get(myLexPosition).realStart) {
-      LOG.error("delegate is ahead of my builder!");
+      LOG.error("delegate is ahead of my builder!",
+                new Attachment("offset = " + delegate.getCurrentOffset(), getOriginalText().toString()),
+                new Attachment("myShrunkSequence", myShrunkSequence.toString())
+      );
       return;
     }
 

@@ -39,7 +39,7 @@ public class GradleResourcesTargetType extends ModuleBasedBuildTargetType<Gradle
   private final boolean myIsTests;
 
   private GradleResourcesTargetType(final String typeId, boolean isTests) {
-    super(typeId);
+    super(typeId, true);
     myIsTests = isTests;
   }
 
@@ -50,7 +50,7 @@ public class GradleResourcesTargetType extends ModuleBasedBuildTargetType<Gradle
   @NotNull
   @Override
   public List<GradleResourcesTarget> computeAllTargets(@NotNull JpsModel model) {
-    final List<GradleResourcesTarget> targets = new ArrayList<GradleResourcesTarget>();
+    final List<GradleResourcesTarget> targets = new ArrayList<>();
     for (JpsModule module : model.getProject().getModules()) {
       if (JpsGradleExtensionService.getInstance().getExtension(module) != null) {
         targets.add(new GradleResourcesTarget(this, module));
@@ -62,7 +62,7 @@ public class GradleResourcesTargetType extends ModuleBasedBuildTargetType<Gradle
   @NotNull
   @Override
   public BuildTargetLoader<GradleResourcesTarget> createLoader(@NotNull JpsModel model) {
-    final Map<String, JpsModule> modules = new HashMap<String, JpsModule>();
+    final Map<String, JpsModule> modules = new HashMap<>();
     for (JpsModule module : model.getProject().getModules()) {
       modules.put(module.getName(), module);
     }

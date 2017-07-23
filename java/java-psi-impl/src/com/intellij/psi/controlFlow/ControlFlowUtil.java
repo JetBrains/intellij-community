@@ -21,10 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.containers.IntStack;
 import gnu.trove.THashMap;
@@ -82,14 +79,14 @@ public class ControlFlowUtil {
                                                   boolean reportVarsIfNonInitializingPathExists) {
     List<Instruction> instructions = flow.getInstructions();
     Collection<PsiVariable> writtenVariables = getWrittenVariables(flow, from, to, false);
-    ArrayList<PsiVariable> result = new ArrayList<PsiVariable>(1);
+    ArrayList<PsiVariable> result = new ArrayList<>(1);
 
     variables:
     for (PsiVariable psiVariable : writtenVariables) {
 
-      final List<SSAInstructionState> queue = new ArrayList<SSAInstructionState>();
+      final List<SSAInstructionState> queue = new ArrayList<>();
       queue.add(new SSAInstructionState(0, from));
-      Set<SSAInstructionState> processedStates = new THashSet<SSAInstructionState>();
+      Set<SSAInstructionState> processedStates = new THashSet<>();
 
       while (!queue.isEmpty()) {
         final SSAInstructionState state = queue.remove(0);
@@ -151,7 +148,7 @@ public class ControlFlowUtil {
     return result;
   }
 
-  private static boolean needVariableValueAt(final PsiVariable variable, final ControlFlow flow, final int offset) {
+  public static boolean needVariableValueAt(final PsiVariable variable, final ControlFlow flow, final int offset) {
     InstructionClientVisitor<Boolean> visitor = new InstructionClientVisitor<Boolean>() {
       final boolean[] neededBelow = new boolean[flow.getSize() + 1];
 
@@ -197,7 +194,7 @@ public class ControlFlowUtil {
   }
 
   public static Collection<PsiVariable> getWrittenVariables(ControlFlow flow, int start, int end, final boolean ignoreNotReachingWrites) {
-    final HashSet<PsiVariable> set = new HashSet<PsiVariable>();
+    final HashSet<PsiVariable> set = new HashSet<>();
     getWrittenVariables(flow, start, end, ignoreNotReachingWrites, set);
     return set;
   }
@@ -217,7 +214,7 @@ public class ControlFlowUtil {
   }
 
   public static List<PsiVariable> getUsedVariables(ControlFlow flow, int start, int end) {
-    ArrayList<PsiVariable> array = new ArrayList<PsiVariable>();
+    ArrayList<PsiVariable> array = new ArrayList<>();
     if (start < 0) return array;
     List<Instruction> instructions = flow.getInstructions();
     for (int i = start; i < end; i++) {
@@ -258,6 +255,49 @@ public class ControlFlowUtil {
     return false;
   }
 
+  private static int findSingleReadOffset(@NotNull ControlFlow flow, int startOffset, int endOffset, @NotNull PsiVariable variable) {
+    List<Instruction> instructions = flow.getInstructions();
+    if (startOffset < 0 || endOffset < 0 || endOffset > instructions.size()) return -1;
+
+    int readOffset = -1;
+    for (int i = startOffset; i < endOffset; i++) {
+      Instruction instruction = instructions.get(i);
+      if (instruction instanceof ReadVariableInstruction) {
+        if (((ReadVariableInstruction)instruction).variable == variable) {
+          if (readOffset < 0) {
+            readOffset = i;
+          }
+          else {
+            return -1;
+          }
+        }
+      }
+      else if (instruction instanceof WriteVariableInstruction) {
+        if (((WriteVariableInstruction)instruction).variable == variable) {
+          return -1;
+        }
+      }
+    }
+    return readOffset;
+  }
+
+  /**
+   * If the variable occurs only once in the element and it's read access return that occurrence
+   */
+  public static PsiReferenceExpression findSingleReadOccurrence(@NotNull ControlFlow flow,
+                                                                @NotNull PsiElement element,
+                                                                @NotNull PsiVariable variable) {
+    int readOffset = findSingleReadOffset(flow, flow.getStartOffset(element), flow.getEndOffset(element), variable);
+    if (readOffset >= 0) {
+      PsiElement readElement = flow.getElement(readOffset);
+      readElement = PsiTreeUtil.findFirstParent(readElement, false, e -> e == element || e instanceof PsiReferenceExpression);
+      if (readElement instanceof PsiReferenceExpression) {
+        return (PsiReferenceExpression)readElement;
+      }
+    }
+    return null;
+  }
+
   public static boolean isVariableReadInFinally(@NotNull ControlFlow flow,
                                                 @Nullable PsiElement startElement,
                                                 @NotNull PsiElement enclosingCodeFragment,
@@ -291,7 +331,7 @@ public class ControlFlowUtil {
 
   public static List<PsiVariable> getInputVariables(ControlFlow flow, int start, int end) {
     List<PsiVariable> usedVariables = getUsedVariables(flow, start, end);
-    ArrayList<PsiVariable> array = new ArrayList<PsiVariable>(usedVariables.size());
+    ArrayList<PsiVariable> array = new ArrayList<>(usedVariables.size());
     for (PsiVariable variable : usedVariables) {
       if (needVariableValueAt(variable, flow, start)) {
         array.add(variable);
@@ -300,9 +340,10 @@ public class ControlFlowUtil {
     return array;
   }
 
+  @NotNull
   public static PsiVariable[] getOutputVariables(ControlFlow flow, int start, int end, int[] exitPoints) {
     Collection<PsiVariable> writtenVariables = getWrittenVariables(flow, start, end, false);
-    ArrayList<PsiVariable> array = new ArrayList<PsiVariable>();
+    ArrayList<PsiVariable> array = new ArrayList<>();
     for (PsiVariable variable : writtenVariables) {
       for (int exitPoint : exitPoints) {
         if (needVariableValueAt(variable, flow, exitPoint)) {
@@ -326,7 +367,7 @@ public class ControlFlowUtil {
       exitPoints.add(end);
       return Collections.emptyList();
     }
-    final Collection<PsiStatement> exitStatements = new THashSet<PsiStatement>();
+    final Collection<PsiStatement> exitStatements = new THashSet<>();
     InstructionClientVisitor visitor = new InstructionClientVisitor() {
       @Override
       public void visitThrowToInstruction(ThrowToInstruction instruction, int offset, int nextOffset) {
@@ -471,7 +512,7 @@ public class ControlFlowUtil {
     class Worker {
       @NotNull
       private Map<PsiVariable, IntArrayList> getWritesOffsets() {
-        final Map<PsiVariable, IntArrayList> writeOffsets = new THashMap<PsiVariable, IntArrayList>();
+        final Map<PsiVariable, IntArrayList> writeOffsets = new THashMap<>();
         for (int i = flowStart; i < flowEnd; i++) {
           Instruction instruction = instructions.get(i);
           if (instruction instanceof WriteVariableInstruction) {
@@ -489,7 +530,7 @@ public class ControlFlowUtil {
 
       @NotNull
       private Map<PsiVariable, IntArrayList> getVisibleReadsOffsets(Map<PsiVariable, IntArrayList> writeOffsets, PsiCodeBlock tryBlock) {
-        final Map<PsiVariable, IntArrayList> visibleReadOffsets = new THashMap<PsiVariable, IntArrayList>();
+        final Map<PsiVariable, IntArrayList> visibleReadOffsets = new THashMap<>();
         for (PsiVariable variable : writeOffsets.keySet()) {
           if (!PsiTreeUtil.isAncestor(tryBlock, variable, true)) {
             visibleReadOffsets.put(variable, new IntArrayList());
@@ -514,7 +555,7 @@ public class ControlFlowUtil {
       @NotNull
       private Map<PsiVariable, Set<PsiElement>> getReachableAfterWrite(Map<PsiVariable, IntArrayList> writeOffsets,
                                                                        Map<PsiVariable, IntArrayList> visibleReadOffsets) {
-        final Map<PsiVariable, Set<PsiElement>> afterWrite = new THashMap<PsiVariable, Set<PsiElement>>();
+        final Map<PsiVariable, Set<PsiElement>> afterWrite = new THashMap<>();
         for (PsiVariable variable : visibleReadOffsets.keySet()) {
           final Function<Integer, BitSet> calculator = getReachableInstructionsCalculator();
           final BitSet collectedOffsets = new BitSet(flowEnd);
@@ -524,13 +565,13 @@ public class ControlFlowUtil {
             collectedOffsets.or(reachableOffsets);
           }
           Set<PsiElement> throwSources = afterWrite.get(variable);
-          if (throwSources == null) afterWrite.put(variable, throwSources = new THashSet<PsiElement>());
+          if (throwSources == null) afterWrite.put(variable, throwSources = new THashSet<>());
           for (int i = flowStart; i < flowEnd; i++) {
             if (collectedOffsets.get(i)) {
               throwSources.add(flow.getElement(i));
             }
           }
-          final List<PsiElement> subordinates = new ArrayList<PsiElement>();
+          final List<PsiElement> subordinates = new ArrayList<>();
           for (PsiElement element : throwSources) {
             if (throwSources.contains(element.getParent())) {
               subordinates.add(element);
@@ -597,13 +638,10 @@ public class ControlFlowUtil {
         };
         graph.buildFrom(flow);
 
-        return new Function<Integer, BitSet>() {
-          @Override
-          public BitSet fun(Integer startOffset) {
-            BitSet visitedOffsets = new BitSet(flowEnd);
-            graph.depthFirstSearch(startOffset, visitedOffsets);
-            return visitedOffsets;
-          }
+        return startOffset -> {
+          BitSet visitedOffsets = new BitSet(flowEnd);
+          graph.depthFirstSearch(startOffset, visitedOffsets);
+          return visitedOffsets;
         };
       }
     }
@@ -660,7 +698,7 @@ public class ControlFlowUtil {
   @NotNull
   private static List<PsiTryStatement> collectTryStatementStack(@Nullable PsiElement startElement,
                                                                 @NotNull PsiElement enclosingCodeFragment) {
-    final List<PsiTryStatement> stack = new ArrayList<PsiTryStatement>();
+    final List<PsiTryStatement> stack = new ArrayList<>();
     for (PsiTryStatement tryStatement = getEnclosingTryStatementHavingCatchOrFinally(startElement, enclosingCodeFragment);
          tryStatement != null;
          tryStatement = getEnclosingTryStatementHavingCatchOrFinally(tryStatement, enclosingCodeFragment)) {
@@ -815,7 +853,7 @@ public class ControlFlowUtil {
 
     ConvertReturnClientVisitor(final ControlFlow flow, final ReturnStatementsVisitor visitor) {
       super(flow);
-      myAffectedReturns = new ArrayList<PsiReturnStatement>();
+      myAffectedReturns = new ArrayList<>();
       myVisitor = visitor;
     }
 
@@ -968,6 +1006,7 @@ public class ControlFlowUtil {
     return visitor.getResult().booleanValue();
   }
 
+  @NotNull
   public static Object[] getAllWorldProblemsAtOnce(final ControlFlow flow) {
     InstructionClientVisitor[] visitors = {
       new ReturnPresentClientVisitor(flow),
@@ -1110,6 +1149,10 @@ public class ControlFlowUtil {
       for (int i = 0; i < processedInstructions.length; i++) {
         if (!processedInstructions[i]) {
           PsiElement element = myFlow.getElement(i);
+
+          final PsiElement unreachableParent = getUnreachableExpressionParent(element);
+          if (unreachableParent != null) return unreachableParent;
+
           if (element == null || !PsiUtil.isStatement(element)) continue;
           if (element.getParent() instanceof PsiExpression) continue;
 
@@ -1128,8 +1171,56 @@ public class ControlFlowUtil {
           final int startOffset = myFlow.getStartOffset(element);
           // this offset actually is a part of reachable statement
           if (0 <= startOffset && startOffset < processedInstructions.length && processedInstructions[startOffset]) continue;
-          return element;
+          final PsiElement enclosingStatement = getEnclosingUnreachableStatement(element);
+          return enclosingStatement != null ? enclosingStatement : element;
         }
+      }
+      return null;
+    }
+
+    @Nullable
+    private static PsiElement getUnreachableExpressionParent(@Nullable PsiElement element) {
+      if (element instanceof PsiExpression) {
+        final PsiElement expression = PsiTreeUtil.findFirstParent(element, e -> !(e.getParent() instanceof PsiParenthesizedExpression));
+        if (expression != null) {
+          final PsiElement parent = expression.getParent();
+          if (parent instanceof PsiExpressionStatement) {
+            return getUnreachableStatementParent(parent);
+          }
+          if (parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getCondition() == expression ||
+              parent instanceof PsiSwitchStatement && ((PsiSwitchStatement)parent).getExpression() == expression ||
+              parent instanceof PsiWhileStatement && ((PsiWhileStatement)parent).getCondition() == expression ||
+              parent instanceof PsiForeachStatement && ((PsiForeachStatement)parent).getIteratedValue() == expression) {
+            return parent;
+          }
+        }
+      }
+      return null;
+    }
+
+    @Nullable
+    private static PsiElement getEnclosingUnreachableStatement(@NotNull PsiElement statement) {
+      final PsiElement parent = statement.getParent();
+      if (parent instanceof PsiDoWhileStatement && ((PsiDoWhileStatement)parent).getBody() == statement) {
+        return parent;
+      }
+      if (parent instanceof PsiCodeBlock && PsiTreeUtil.getNextSiblingOfType(parent.getFirstChild(), PsiStatement.class) == statement) {
+        final PsiBlockStatement blockStatement = ObjectUtils.tryCast(parent.getParent(), PsiBlockStatement.class);
+        if (blockStatement != null) {
+          final PsiElement blockParent = blockStatement.getParent();
+          if (blockParent instanceof PsiDoWhileStatement && ((PsiDoWhileStatement)blockParent).getBody() == blockStatement) {
+            return blockParent;
+          }
+        }
+      }
+      return getUnreachableStatementParent(statement);
+    }
+
+    @Nullable
+    private static PsiElement getUnreachableStatementParent(@NotNull PsiElement statement) {
+      final PsiElement parent = statement.getParent();
+      if (parent instanceof PsiForStatement && ((PsiForStatement)parent).getInitialization() == statement) {
+        return parent;
       }
       return null;
     }
@@ -1365,7 +1456,7 @@ public class ControlFlowUtil {
    * @return a list of edges
    */
   public static List<ControlFlowEdge> getEdges(ControlFlow flow, int start) {
-    final List<ControlFlowEdge> list = new ArrayList<ControlFlowEdge>();
+    final List<ControlFlowEdge> list = new ArrayList<>();
     depthFirstSearch(flow, new InstructionClientVisitor<Void>() {
       @Override
       public void visitInstruction(Instruction instruction, int offset, int nextOffset) {
@@ -1647,7 +1738,7 @@ public class ControlFlowUtil {
     }
 
     public CopyOnWriteList() {
-      this(Collections.<VariableInfo>emptyList());
+      this(Collections.emptyList());
     }
 
     public CopyOnWriteList(VariableInfo... infos) {
@@ -1655,7 +1746,7 @@ public class ControlFlowUtil {
     }
 
     public CopyOnWriteList(Collection<VariableInfo> infos) {
-      list = new LinkedList<VariableInfo>(infos);
+      list = new LinkedList<>(infos);
     }
 
     public CopyOnWriteList addAll(CopyOnWriteList addList) {
@@ -1714,9 +1805,16 @@ public class ControlFlowUtil {
   }
 
   public static List<PsiReferenceExpression> getReadBeforeWrite(ControlFlow flow) {
-    final InstructionClientVisitor<List<PsiReferenceExpression>> visitor = new ReadBeforeWriteClientVisitor(flow, false);
+    return getReadBeforeWrite(flow, 0);
+  }
+
+  public static List<PsiReferenceExpression> getReadBeforeWrite(ControlFlow flow, int startOffset) {
+    if (startOffset < 0 || startOffset >= flow.getSize()) {
+      return Collections.emptyList();
+    }
+    final ReadBeforeWriteClientVisitor visitor = new ReadBeforeWriteClientVisitor(flow, false);
     depthFirstSearch(flow, visitor);
-    return visitor.getResult();
+    return visitor.getResult(startOffset);
   }
 
   private static class ReadBeforeWriteClientVisitor extends InstructionClientVisitor<List<PsiReferenceExpression>> {
@@ -1779,10 +1877,14 @@ public class ControlFlowUtil {
 
     @Override
     public List<PsiReferenceExpression> getResult() {
-      final CopyOnWriteList topReadVariables = readVariables[0];
+      return getResult(0);
+    }
+
+    public List<PsiReferenceExpression> getResult(int startOffset) {
+      final CopyOnWriteList topReadVariables = readVariables[startOffset];
       if (topReadVariables == null) return Collections.emptyList();
 
-      final List<PsiReferenceExpression> result = new ArrayList<PsiReferenceExpression>();
+      final List<PsiReferenceExpression> result = new ArrayList<>();
       List<VariableInfo> list = topReadVariables.getList();
       for (final VariableInfo variableInfo : list) {
         result.add((PsiReferenceExpression)variableInfo.expression);
@@ -2004,6 +2106,7 @@ public class ControlFlowUtil {
       }
     }
 
+    @NotNull
     int[] getNextOffsets(int offset) {
       return nextOffsets[offset] != null ? nextOffsets[offset] : ArrayUtil.EMPTY_INT_ARRAY;
     }

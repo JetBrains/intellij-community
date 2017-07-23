@@ -39,8 +39,6 @@ public class KeyboardSettingsExternalizable implements PersistentStateComponent<
   private static final String [] supportedNonEnglishLanguages = {"de", "fr", "it", "uk"};
 
   public static boolean isSupportedKeyboardLayout(@NotNull Component component) {
-    if (Registry.is("ide.keyboard.dvorak")) return true;
-    if (SystemInfo.isMac) return false;
     String keyboardLayoutLanguage = getLanguageForComponent(component);
     for (String language : supportedNonEnglishLanguages) {
       if (language.equals(keyboardLayoutLanguage)) {
@@ -69,7 +67,8 @@ public class KeyboardSettingsExternalizable implements PersistentStateComponent<
   }
 
   public static final class OptionSet {
-    public boolean USE_NON_ENGLISH_KEYBOARD = false;
+    public boolean PREFER_KEY_POSITION_OVER_CHAR_OPTION
+      = "true".equals(System.getProperty("com.jetbrains.use.old.keyevent.processing"));
   }
 
   private OptionSet myOptions = new OptionSet();
@@ -91,19 +90,19 @@ public class KeyboardSettingsExternalizable implements PersistentStateComponent<
 
   @Override
   public void loadState(OptionSet state) {
+    state.PREFER_KEY_POSITION_OVER_CHAR_OPTION
+      = state.PREFER_KEY_POSITION_OVER_CHAR_OPTION
+        || "true".equals(System.getProperty("com.jetbrains.use.old.keyevent.processing"));
+
     myOptions = state;
   }
 
-  public boolean isUkrainianKeyboard (Component c) {
-    return c!=null && "uk".equals(c.getInputContext().getLocale().getLanguage());
+  public boolean isPreferKeyPositionOverCharOption () {
+    return myOptions.PREFER_KEY_POSITION_OVER_CHAR_OPTION;
   }
 
-  public boolean isNonEnglishKeyboardSupportEnabled () {
-    return myOptions.USE_NON_ENGLISH_KEYBOARD;
-  }
-
-  public void setNonEnglishKeyboardSupportEnabled (boolean enabled) {
-    myOptions.USE_NON_ENGLISH_KEYBOARD = enabled;
+  public void setPreferKeyPositionOverCharOption (boolean enabled) {
+    myOptions.PREFER_KEY_POSITION_OVER_CHAR_OPTION = enabled;
   }
 
 }

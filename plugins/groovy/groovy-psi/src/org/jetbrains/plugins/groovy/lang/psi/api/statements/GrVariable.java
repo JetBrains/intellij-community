@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
  */
 public interface GrVariable extends PsiVariable, GrNamedElement {
   GrVariable[] EMPTY_ARRAY = new GrVariable[0];
-  ArrayFactory<GrVariable> ARRAY_FACTORY = GrVariable[]::new;
+  ArrayFactory<GrVariable> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new GrVariable[count];
 
   @Override
   @NotNull

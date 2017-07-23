@@ -18,6 +18,7 @@ package com.intellij.credentialStore;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,9 +67,11 @@ public class MasterPasswordDialog extends DialogWrapper {
       super.doOKAction();
     }
     else {
-      setErrorText(info.message + " " + StringUtil.repeat(".", myRetriesCount));
+      setErrorText(info.message + " " + StringUtil.repeat(".", myRetriesCount), myRootPanel);
       if (info.component != null) {
-        info.component.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(info.component, true);
+        });
       }
       if (++myRetriesCount > NUMBER_OF_RETRIES) {
         super.doCancelAction();

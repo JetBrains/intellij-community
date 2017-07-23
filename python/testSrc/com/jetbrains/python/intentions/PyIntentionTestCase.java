@@ -22,9 +22,6 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.NonNls;
 
-/**
- * User: ktisha
- */
 public abstract class PyIntentionTestCase extends PyTestCase {
   @Override
   @NonNls

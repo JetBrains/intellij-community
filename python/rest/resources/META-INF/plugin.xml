@@ -1,10 +1,8 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
   <name>ReStructuredText Support</name>
   <id>org.jetbrains.plugins.rest</id>
   <description>This plugin enables support for reStructuredText files (*.rst)</description>
   <vendor>JetBrains</vendor>
-  <version>136.SNAPSHOT</version>
-  <idea-version since-build="130.1"/>
   <depends>com.intellij.modules.lang</depends>
 
   <xi:include href="/META-INF/rest.xml" xpointer="xpointer(/idea-plugin/*)"/>

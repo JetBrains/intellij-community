@@ -94,6 +94,11 @@ public abstract class EditorFactory {
   public abstract Editor createEditor(@NotNull Document document, @Nullable Project project);
 
   /**
+   * Must be invoked in EDT.
+   */
+  public abstract Editor createEditor(@NotNull Document document, @Nullable Project project, @NotNull EditorKind kind);
+
+  /**
    * Creates an editor for the specified document associated with the specified project.
    *
    * Must be invoked in EDT.
@@ -124,6 +129,14 @@ public abstract class EditorFactory {
   public abstract Editor createEditor(@NotNull Document document, Project project, @NotNull VirtualFile file, boolean isViewer);
 
   /**
+   * Must be invoked in EDT.
+   * @param file     the file according to which the editor contents is highlighted.
+   * @param isViewer true if read-only editor should be created
+   */
+  public abstract Editor createEditor(@NotNull Document document, Project project, @NotNull VirtualFile file, boolean isViewer,
+                                      @NotNull EditorKind kind);
+
+  /**
    * Creates a read-only editor for the specified document associated with the specified project.
    *
    * Must be invoked in EDT.
@@ -135,6 +148,11 @@ public abstract class EditorFactory {
    * @see #releaseEditor(Editor)
    */
   public abstract Editor createViewer(@NotNull Document document, @Nullable Project project);
+
+  /**
+   * Must be invoked in EDT.
+   */
+  public abstract Editor createViewer(@NotNull Document document, @Nullable Project project, @NotNull EditorKind kind);
 
   /**
    * Disposes of the specified editor instance.
@@ -184,7 +202,7 @@ public abstract class EditorFactory {
 
   /**
    * Registers a listener for receiving notifications when editor instances are created and released
-   * and removes the listener when the <code>'parentDisposable'</code> gets disposed.
+   * and removes the listener when the {@code parentDisposable} gets disposed.
    *
    * @param listener         the listener instance.
    * @param parentDisposable the Disposable which triggers the removal of the listener

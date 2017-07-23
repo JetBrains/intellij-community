@@ -59,12 +59,7 @@ public final class DocumentUtil {
   }
 
   public static void writeInRunUndoTransparentAction(@NotNull final Runnable runnable) {
-    CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(runnable);
-      }
-    });
+    CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(runnable));
   }
 
   public static int getFirstNonSpaceCharOffset(@NotNull Document document, int line) {
@@ -115,5 +110,27 @@ public final class DocumentUtil {
 
   public static boolean isAtLineEnd(int offset, @NotNull Document document) {
     return offset >= 0 && offset <= document.getTextLength() && offset == document.getLineEndOffset(document.getLineNumber(offset));
+  }
+
+  public static int alignToCodePointBoundary(@NotNull Document document, int offset) {
+    return isInsideSurrogatePair(document, offset) ? offset - 1 : offset;
+  }
+
+  public static boolean isSurrogatePair(@NotNull Document document, int offset) {
+    CharSequence text = document.getImmutableCharSequence();
+    if (offset < 0 || (offset + 1) >= text.length()) return false;
+    return Character.isSurrogatePair(text.charAt(offset), text.charAt(offset + 1));
+  }
+
+  public static boolean isInsideSurrogatePair(@NotNull Document document, int offset) {
+    return isSurrogatePair(document, offset - 1);
+  }
+
+  public static int getPreviousCodePointOffset(@NotNull Document document, int offset) {
+    return offset - (isSurrogatePair(document, offset - 2) ? 2 : 1);
+  }
+
+  public static int getNextCodePointOffset(@NotNull Document document, int offset) {
+    return offset + (isSurrogatePair(document, offset) ? 2 : 1);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ public abstract class AbstractValueHint {
   private final Editor myEditor;
   private final ValueHintType myType;
   protected final Point myPoint;
-  private LightweightHint myCurrentHint;
+  protected LightweightHint myCurrentHint;
   private boolean myHintHidden;
   private TextRange myCurrentRange;
   private Runnable myHideRunnable;
@@ -89,24 +89,26 @@ public abstract class AbstractValueHint {
   protected abstract void evaluateAndShowHint();
 
   public boolean isKeepHint(Editor editor, Point point) {
-    if (myCurrentHint != null && myCurrentHint.canControlAutoHide()) {
-      return true;
-    }
+    return myType != ValueHintType.MOUSE_ALT_OVER_HINT;
 
-    if (myType == ValueHintType.MOUSE_ALT_OVER_HINT) {
-      return false;
-    }
-    else if (myType == ValueHintType.MOUSE_CLICK_HINT) {
-      if (myCurrentHint != null && myCurrentHint.isVisible()) {
-        return true;
-      }
-    }
-    else {
-      if (isInsideCurrentRange(editor, point)) {
-        return true;
-      }
-    }
-    return false;
+    //if (myCurrentHint != null && myCurrentHint.canControlAutoHide()) {
+    //  return true;
+    //}
+    //
+    //if (myType == ValueHintType.MOUSE_ALT_OVER_HINT) {
+    //  return false;
+    //}
+    //else if (myType == ValueHintType.MOUSE_CLICK_HINT) {
+    //  if (myCurrentHint != null && myCurrentHint.isVisible()) {
+    //    return true;
+    //  }
+    //}
+    //else {
+    //  if (isInsideCurrentRange(editor, point)) {
+    //    return true;
+    //  }
+    //}
+    //return false;
   }
 
   boolean isInsideCurrentRange(Editor editor, Point point) {
@@ -157,7 +159,7 @@ public abstract class AbstractValueHint {
       attributes = NavigationUtil.patchAttributesColor(attributes, myCurrentRange, myEditor);
 
       myHighlighter = myEditor.getMarkupModel().addRangeHighlighter(myCurrentRange.getStartOffset(), myCurrentRange.getEndOffset(),
-                                                                    HighlighterLayer.SELECTION + 1, attributes,
+                                                                    HighlighterLayer.HYPERLINK, attributes,
                                                                     HighlighterTargetArea.EXACT_RANGE);
       Component internalComponent = myEditor.getContentComponent();
       myStoredCursor = internalComponent.getCursor();
@@ -247,6 +249,7 @@ public abstract class AbstractValueHint {
 
   protected JComponent createExpandableHintComponent(final SimpleColoredText text, final Runnable expand) {
     final JComponent component = HintUtil.createInformationLabel(text, IconUtil.getAddIcon());
+    component.setCursor(hintCursor());
     addClickListenerToHierarchy(component, new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {

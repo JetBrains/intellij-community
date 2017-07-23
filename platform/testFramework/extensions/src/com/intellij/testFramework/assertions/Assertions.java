@@ -20,7 +20,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.util.List;
 
+@SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public final class Assertions extends org.assertj.core.api.Assertions {
   @NotNull
   public static JdomAssert assertThat(@Nullable Element element) {
@@ -28,8 +30,17 @@ public final class Assertions extends org.assertj.core.api.Assertions {
   }
 
   @NotNull
-  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static PathAssertEx assertThat(@Nullable Path actual) {
     return new PathAssertEx(actual);
+  }
+
+  @NotNull
+  public static StringAssertEx assertThat(@Nullable String actual) {
+    return new StringAssertEx(actual);
+  }
+
+  @NotNull
+  public static <ELEMENT> ListAssertEx<ELEMENT> assertThat(@Nullable List<? extends ELEMENT> actual) {
+    return new ListAssertEx<>(actual);
   }
 }

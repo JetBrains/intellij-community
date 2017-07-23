@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log;
 
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -60,12 +59,11 @@ public interface VcsLog {
    * After all details are loaded they are provided to the consumer in the EDT.
    *
    * @param consumer  called in EDT after all details are loaded.
-   * @param indicator progress indicator to use in loading process, can be null.
    */
-  void requestSelectedDetails(@NotNull Consumer<List<VcsFullCommitDetails>> consumer, @Nullable ProgressIndicator indicator);
+  void requestSelectedDetails(@NotNull Consumer<List<VcsFullCommitDetails>> consumer);
 
   /**
-   * Returns names of branches which contain the given commit, or null if this information is unavailable.
+   * Returns names of branches which contain the given commit, or null if this information is unavailable yet.
    */
   @Nullable
   Collection<String> getContainingBranches(@NotNull Hash commitHash, @NotNull VirtualFile root);

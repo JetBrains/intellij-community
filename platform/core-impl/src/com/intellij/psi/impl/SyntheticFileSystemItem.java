@@ -86,7 +86,7 @@ public abstract class SyntheticFileSystemItem extends PsiElementBase implements 
   @Override
   @NotNull
   public PsiElement[] getChildren() {
-    final PsiElementProcessor.CollectElements<PsiFileSystemItem> collector = new PsiElementProcessor.CollectElements<PsiFileSystemItem>();
+    final PsiElementProcessor.CollectElements<PsiFileSystemItem> collector = new PsiElementProcessor.CollectElements<>();
     processChildren(collector);
     return collector.toArray(new PsiFileSystemItem[0]);
   }

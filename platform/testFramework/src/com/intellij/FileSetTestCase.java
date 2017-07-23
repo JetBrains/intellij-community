@@ -62,7 +62,7 @@ public abstract class FileSetTestCase extends TestSuite {
   }
 
   protected void tearDown() {
-
+    myProject = null;
   }
 
   private void addAllTests() {

@@ -20,11 +20,6 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 22.08.2007
- */
 public class RngRenameTest extends HighlightingTestBase {
   @Override
   protected CodeInsightTestFixture createFixture(@NotNull IdeaTestFixtureFactory factory) {

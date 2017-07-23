@@ -20,13 +20,6 @@ import java.util.Iterator;
 import java.util.List;
 
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 10.06.2003
- * Time: 13:37:39
- * To change this template use Options | File Templates.
- */
 public class CandidatesGroup {
   public static final int UNKNOWN = -1;
   public static final int CONFLICT = 0;

@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 12.07.2006
- * Time: 13:51:49
- */
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ui.ColoredTreeCellRenderer;

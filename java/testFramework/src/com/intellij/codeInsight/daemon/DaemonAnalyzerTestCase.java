@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,6 @@ import com.intellij.testFramework.FileTreeAccessFilter;
 import com.intellij.testFramework.HighlightTestInfo;
 import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlSchemaProvider;
 import gnu.trove.TIntArrayList;
@@ -99,7 +98,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     startupManager.runPostStartupActivities();
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
 
-    if (isPerformanceTest()) {
+    if (isStressTest()) {
       IntentionManager.getInstance().getAvailableIntentionActions();  // hack to avoid slowdowns in PyExtensionFactory
       PathManagerEx.getTestDataPath(); // to cache stuff
       ReferenceProvidersRegistry.getInstance(); // pre-load tons of classes
@@ -153,7 +152,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   protected void disableInspectionTool(@NotNull String shortName){
     InspectionProfileImpl profile = InspectionProjectProfileManager.getInstance(getProject()).getCurrentProfile();
     if (profile.getInspectionTool(shortName, getProject()) != null) {
-      profile.disableTool(shortName, getProject());
+      profile.setToolEnabled(shortName, false);
     }
   }
 
@@ -356,12 +355,13 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     List<IntentionAction> actions = getIntentionActions(infos, editor, file);
     IntentionAction intentionAction = LightQuickFixTestCase.findActionWithText(actions, intentionActionName);
 
-    String message = String.format("Could not find action by name %s.\n" +
-                                   "Actions: [%s]\n" +
-                                   "HighlightInfos: [%s]", intentionActionName,
-                                   StringUtil.join(ContainerUtil.map(actions, c -> c.getText()), ", "),
-                                   StringUtil.join(infos, ", "));
-    assertNotNull(message, intentionAction);
+    if (intentionAction == null) {
+      fail(String.format("Could not find action by name %s.\n" +
+                         "Actions: [%s]\n" +
+                         "HighlightInfos: [%s]", intentionActionName,
+                         StringUtil.join(ContainerUtil.map(actions, c -> c.getText()), ", "),
+                         StringUtil.join(infos, ", ")));
+    }
     CodeInsightTestFixtureImpl.invokeIntention(intentionAction, file, editor, intentionActionName);
   }
 
@@ -375,7 +375,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   @NotNull
-  private static List<IntentionAction> getIntentionActions(@NotNull Collection<HighlightInfo> infos,
+  protected static List<IntentionAction> getIntentionActions(@NotNull Collection<HighlightInfo> infos,
                                                            @NotNull Editor editor,
                                                            @NotNull PsiFile file) {
 

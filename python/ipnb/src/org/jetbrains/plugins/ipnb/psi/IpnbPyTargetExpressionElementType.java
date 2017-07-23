@@ -35,4 +35,9 @@ public class IpnbPyTargetExpressionElementType extends PyTargetExpressionElement
   public PyTargetExpression createPsi(@NotNull final PyTargetExpressionStub stub) {
     return new IpnbPyTargetExpression(stub);
   }
+
+  @Override
+  public boolean shouldCreateStub(ASTNode node) {
+    return false;
+  }
 }

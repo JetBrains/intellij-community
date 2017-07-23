@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xmlb;
 
+import org.jdom.Element;
 import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,9 +31,14 @@ class TextBinding extends Binding {
 
   @Nullable
   @Override
-  public Object serialize(@NotNull Object o, @Nullable Object context, @NotNull SerializationFilter filter) {
+  public Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
     Object value = myAccessor.read(o);
     return value == null ? null : new Text(XmlSerializerImpl.convertToString(value));
+  }
+
+  @Override
+  public Object deserializeUnsafe(Object context, @NotNull Element element) {
+    return context;
   }
 
   void set(@NotNull Object context, @NotNull String value) {

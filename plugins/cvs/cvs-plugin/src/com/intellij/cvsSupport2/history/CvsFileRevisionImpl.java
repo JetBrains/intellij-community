@@ -135,7 +135,7 @@ public class CvsFileRevisionImpl extends CvsFileContent implements CvsFileRevisi
 
   public Collection<String> getTags() {
     if (myTags == null) {
-      myTags = myLogInformation == null ? Collections.<String>emptyList() : collectSymNamesForRevision();
+      myTags = myLogInformation == null ? Collections.emptyList() : collectSymNamesForRevision();
     }
     return myTags;
   }

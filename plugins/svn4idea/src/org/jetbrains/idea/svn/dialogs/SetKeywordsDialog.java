@@ -17,9 +17,7 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,12 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: Jun 21, 2006
- * Time: 6:37:41 PM
- */
 public class SetKeywordsDialog extends DialogWrapper {
 
   private static final List<String> KNOWN_KEYWORDS =
@@ -66,19 +58,9 @@ public class SetKeywordsDialog extends DialogWrapper {
 
   @Nullable
   public String getKeywords() {
-    List<JCheckBox> selectedKeywords = ContainerUtil.filter(myKeywordOptions, new Condition<JCheckBox>() {
-      @Override
-      public boolean value(@NotNull JCheckBox keywordOption) {
-        return keywordOption.isSelected();
-      }
-    });
+    List<JCheckBox> selectedKeywords = ContainerUtil.filter(myKeywordOptions, keywordOption -> keywordOption.isSelected());
 
-    return StringUtil.nullize(StringUtil.join(selectedKeywords, new Function<JCheckBox, String>() {
-      @Override
-      public String fun(@NotNull JCheckBox keywordOption) {
-        return keywordOption.getText();
-      }
-    }, " "));
+    return StringUtil.nullize(StringUtil.join(selectedKeywords, keywordOption -> keywordOption.getText(), " "));
   }
 
   @Nullable

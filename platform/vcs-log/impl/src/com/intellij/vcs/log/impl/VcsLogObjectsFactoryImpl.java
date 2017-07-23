@@ -3,7 +3,6 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.WeakInterner;
 import com.intellij.vcs.log.*;
 import org.jetbrains.annotations.NotNull;
 

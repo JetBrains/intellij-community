@@ -15,228 +15,299 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-import org.jetbrains.org.objectweb.asm.tree.MethodInsnNode;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-final class Method {
-  final String internalClassName;
-  final String methodName;
-  final String methodDesc;
+import java.util.*;
+import java.util.stream.Stream;
+
+/**
+ * Represents a lattice product of a constant {@link #value} and all {@link #ids}.
+ */
+final class Component {
+  static final Component[] EMPTY_ARRAY = new Component[0];
+  @NotNull Value value;
+  @NotNull final EKey[] ids;
+
+  Component(@NotNull Value value, @NotNull Set<EKey> ids) {
+    this(value, ids.toArray(new EKey[0]));
+  }
+
+  Component(@NotNull Value value, @NotNull EKey[] ids) {
+    this.value = value;
+    this.ids = ids;
+  }
 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    Method method = (Method) o;
-    return internalClassName.equals(method.internalClassName) && methodDesc.equals(method.methodDesc) && methodName.equals(method.methodName);
+
+    Component that = (Component)o;
+
+    return value == that.value && Arrays.equals(ids, that.ids);
   }
 
   @Override
   public int hashCode() {
-    int result = internalClassName.hashCode();
-    result = 31 * result + methodName.hashCode();
-    result = 31 * result + methodDesc.hashCode();
-    return result;
+    return 31 * value.hashCode() + Arrays.hashCode(ids);
   }
 
-  /**
-   * Primary constructor
-   *
-   * @param internalClassName class name in asm format
-   * @param methodName method name
-   * @param methodDesc method descriptor in asm format
-   */
-  Method(String internalClassName, String methodName, String methodDesc) {
-    this.internalClassName = internalClassName;
-    this.methodName = methodName;
-    this.methodDesc = methodDesc;
+  public boolean remove(@NotNull EKey id) {
+    boolean removed = false;
+    for (int i = 0; i < ids.length; i++) {
+      if (id.equals(ids[i])) {
+        ids[i] = null;
+        removed = true;
+      }
+    }
+    return removed;
   }
 
-  /**
-   * Convenient constructor to convert asm instruction into method key
-   *
-   * @param mNode asm node from which method key is extracted
-   */
-  Method(MethodInsnNode mNode) {
-    this.internalClassName = mNode.owner;
-    this.methodName = mNode.name;
-    this.methodDesc = mNode.desc;
-  }
-
-  @Override
-  public String toString() {
-    return internalClassName + ' ' + methodName + ' ' + methodDesc;
-  }
-}
-
-enum Value {
-  Bot, NotNull, Null, True, False, Pure, Top
-}
-
-interface Direction {
-  final class In implements Direction {
-    final int paramIndex;
-
-    static final int NOT_NULL_MASK = 0;
-    static final int NULLABLE_MASK = 1;
-    /**
-     * @see #NOT_NULL_MASK
-     * @see #NULLABLE_MASK
-     */
-    final int nullityMask;
-
-    In(int paramIndex, int nullityMask) {
-      this.paramIndex = paramIndex;
-      this.nullityMask = nullityMask;
+  public boolean isEmpty() {
+    for (EKey id : ids) {
+      if (id != null) return false;
     }
-
-    @Override
-    public String toString() {
-      return "In " + paramIndex;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      In in = (In)o;
-      if (paramIndex != in.paramIndex) return false;
-      if (nullityMask != in.nullityMask) return false;
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return 31 * paramIndex + nullityMask;
-    }
-
-    public int paramId() {
-      return paramIndex;
-    }
-  }
-
-  final class InOut implements Direction {
-    final int paramIndex;
-    final Value inValue;
-
-    InOut(int paramIndex, Value inValue) {
-      this.paramIndex = paramIndex;
-      this.inValue = inValue;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      InOut inOut = (InOut)o;
-
-      if (paramIndex != inOut.paramIndex) return false;
-      if (inValue != inOut.inValue) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = paramIndex;
-      result = 31 * result + inValue.ordinal();
-      return result;
-    }
-
-    @Override
-    public String toString() {
-      return "InOut " + paramIndex + " " + inValue.toString();
-    }
-
-    public int paramId() {
-      return paramIndex;
-    }
-
-    public int valueId() {
-      return inValue.ordinal();
-    }
-  }
-
-  Direction Out = new Direction() {
-    @Override
-    public String toString() {
-      return "Out";
-    }
-
-    @Override
-    public int hashCode() {
-      return -1;
-    }
-  };
-
-  Direction NullableOut = new Direction() {
-    @Override
-    public String toString() {
-      return "NullableOut";
-    }
-
-    @Override
-    public int hashCode() {
-      return -2;
-    }
-  };
-
-  Direction Pure = new Direction() {
-    @Override
-    public int hashCode() {
-      return -3;
-    }
-
-    @Override
-    public String toString() {
-      return "Pure";
-    }
-  };
-}
-
-final class Key {
-  final Method method;
-  final Direction direction;
-  final boolean stable;
-  final boolean negated;
-
-  Key(Method method, Direction direction, boolean stable) {
-    this.method = method;
-    this.direction = direction;
-    this.stable = stable;
-    this.negated = false;
-  }
-
-  Key(Method method, Direction direction, boolean stable, boolean negated) {
-    this.method = method;
-    this.direction = direction;
-    this.stable = stable;
-    this.negated = negated;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    Key key = (Key) o;
-
-    if (!direction.equals(key.direction)) return false;
-    if (!method.equals(key.method)) return false;
-    if (stable != key.stable) return false;
     return true;
   }
 
+  @NotNull
+  public Component copy() {
+    return new Component(value, ids.clone());
+  }
+}
+
+final class Equation {
+  @NotNull final EKey key;
+  @NotNull final Result result;
+
+  Equation(@NotNull EKey key, @NotNull Result result) {
+    this.key = key;
+    this.result = result;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Equation equation = (Equation)o;
+    return key.equals(equation.key) && result.equals(equation.result);
+  }
+
   @Override
   public int hashCode() {
-    int result = method.hashCode();
-    result = 31 * result + direction.hashCode();
-    result = 31 * result + (stable ? 1 : 0);
-    return result;
+    return 31 * key.hashCode() + result.hashCode();
   }
 
   @Override
   public String toString() {
-    return method + " " + direction + " " + stable;
+    return "Equation{" + "key=" + key + ", result=" + result + '}';
+  }
+}
+
+class Equations {
+  @NotNull final List<DirectionResultPair> results;
+  final boolean stable;
+
+  Equations(@NotNull List<DirectionResultPair> results, boolean stable) {
+    this.results = results;
+    this.stable = stable;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    Equations that = (Equations)o;
+    return stable == that.stable && results.equals(that.results);
+  }
+
+  @Override
+  public int hashCode() {
+    return 31 * results.hashCode() + (stable ? 1 : 0);
+  }
+
+  @NotNull
+  Equations update(Direction direction, Effects newResult) {
+    List<DirectionResultPair> newPairs = StreamEx.of(this.results)
+      .map(drp -> drp.updateForDirection(direction, newResult))
+      .nonNull()
+      .toList();
+    return new Equations(newPairs, this.stable);
+  }
+
+  Optional<Result> find(Direction direction) {
+    int key = direction.asInt();
+    return StreamEx.of(results).findFirst(pair -> pair.directionKey == key).map(pair -> pair.result);
+  }
+}
+
+class DirectionResultPair {
+  final int directionKey;
+  @NotNull
+  final Result result;
+
+  DirectionResultPair(int directionKey, @NotNull Result result) {
+    this.directionKey = directionKey;
+    this.result = result;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    DirectionResultPair that = (DirectionResultPair)o;
+    return directionKey == that.directionKey && result.equals(that.result);
+  }
+
+  @Override
+  public int hashCode() {
+    return 31 * directionKey + result.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return Direction.fromInt(directionKey) + "->" + result;
+  }
+
+  @Nullable
+  DirectionResultPair updateForDirection(Direction direction, Result newResult) {
+    if (this.directionKey == direction.asInt()) {
+      return newResult == null ? null : new DirectionResultPair(direction.asInt(), newResult);
+    }
+    else {
+      return this;
+    }
+  }
+}
+
+interface Result {
+  /**
+   * @return a stream of keys which should be solved to make this result final
+   */
+  default Stream<EKey> dependencies() {
+    return Stream.empty();
+  }
+}
+final class Final implements Result {
+  @NotNull final Value value;
+
+  Final(@NotNull Value value) {
+    this.value = value;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    return value == ((Final)o).value;
+  }
+
+  @Override
+  public int hashCode() {
+    return value.ordinal();
+  }
+
+  @Override
+  public String toString() {
+    return "Final[" + value + ']';
+  }
+}
+
+final class Pending implements Result {
+  @NotNull final Component[] delta; // sum
+
+  Pending(Collection<Component> delta) {
+    this(delta.toArray(Component.EMPTY_ARRAY));
+  }
+
+  Pending(@NotNull Component[] delta) {
+    this.delta = delta;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    return Arrays.equals(delta, ((Pending)o).delta);
+  }
+
+  @Override
+  public int hashCode() {
+    return Arrays.hashCode(delta);
+  }
+
+  @NotNull
+  Pending copy() {
+    Component[] copy = new Component[delta.length];
+    for (int i = 0; i < delta.length; i++) {
+      copy[i] = delta[i].copy();
+    }
+    return new Pending(copy);
+  }
+
+  @Override
+  public Stream<EKey> dependencies() {
+    return Arrays.stream(delta).flatMap(component -> Stream.of(component.ids));
+  }
+
+  @Override
+  public String toString() {
+    return "Pending["+delta.length+"]";
+  }
+}
+
+final class Effects implements Result {
+  static final Set<EffectQuantum> TOP_EFFECTS = Collections.singleton(EffectQuantum.TopEffectQuantum);
+
+  @NotNull final DataValue returnValue;
+  @NotNull final Set<EffectQuantum> effects;
+
+  Effects(@NotNull DataValue returnValue, @NotNull Set<EffectQuantum> effects) {
+    this.returnValue = returnValue;
+    this.effects = effects;
+  }
+
+  Effects combine(Effects other) {
+    if(this.equals(other)) return this;
+    Set<EffectQuantum> newEffects = new HashSet<>(this.effects);
+    newEffects.addAll(other.effects);
+    if(newEffects.contains(EffectQuantum.TopEffectQuantum)) {
+      newEffects = TOP_EFFECTS;
+    }
+    DataValue newReturnValue = this.returnValue.equals(other.returnValue) ? this.returnValue : DataValue.UnknownDataValue1;
+    return new Effects(newReturnValue, newEffects);
+  }
+
+  @Override
+  public Stream<EKey> dependencies() {
+    return Stream.concat(returnValue.dependencies(), effects.stream().flatMap(EffectQuantum::dependencies));
+  }
+
+  public boolean isTop() {
+    return returnValue == DataValue.UnknownDataValue1 && effects.equals(TOP_EFFECTS);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    Effects that = (Effects)o;
+    return this.returnValue.equals(that.returnValue) && this.effects.equals(that.effects);
+  }
+
+  @Override
+  public int hashCode() {
+    return effects.hashCode() * 31 + returnValue.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    Object effectsPresentation = effects.isEmpty() ? "Pure" : effects.size() == 1 ? effects.iterator().next() : effects.size();
+    return "Effects[" + effectsPresentation + "|" + returnValue + "]";
   }
 }

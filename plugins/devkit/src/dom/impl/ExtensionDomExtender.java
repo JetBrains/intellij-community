@@ -70,7 +70,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
           implementationAttribute.setDeclaringElement(extensionPoint);
         }
 
-        registerXmlb(registrar, interfaceClass, Collections.<With>emptyList());
+        registerXmlb(registrar, interfaceClass, Collections.emptyList());
       }
       else {
         final PsiClass beanClass = extensionPoint.getBeanClass().getValue();
@@ -273,7 +273,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
           registrar.registerCollectionChildrenExtension(new XmlName(classTagName), DomElement.class).addExtender(new DomExtender() {
             @Override
             public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
-              registerXmlb(registrar, psiClass, Collections.<With>emptyList());
+              registerXmlb(registrar, psiClass, Collections.emptyList());
             }
           });
         }

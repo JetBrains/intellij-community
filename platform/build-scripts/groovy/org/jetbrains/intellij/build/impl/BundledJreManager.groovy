@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ class BundledJreManager {
    * @return path to the directory containing 'jre' subdirectory with extracted JRE
    */
   String extractWinJre(JvmArchitecture arch) {
-    return extractJre("win", arch)
+    return extractJre("windows", arch)
   }
 
   /**
@@ -55,43 +55,48 @@ class BundledJreManager {
    * @return path to the directory containing 'jre' subdirectory with extracted JRE
    */
   String extractOracleWinJre(JvmArchitecture arch) {
-    return extractJre("win", arch, JreVendor.Oracle)
+    return extractJre("windows", arch, JreVendor.Oracle)
   }
 
   /**
    * Return path to a .tar.gz archive containing distribution of JRE for Mac OS which will be bundled with the product
    */
   String findMacJreArchive() {
-    return findJreArchive("mac")?.absolutePath
+    return findJreArchive("osx")?.absolutePath
   }
 
   /**
    * Return a .tar.gz archive containing distribution of JRE for Win OS which will be bundled with the product
    */
-  File findWinJreArchive() {
-    return findJreArchive("win")
+  File findWinJreArchive(JvmArchitecture arch) {
+    return findJreArchive("windows", arch)
   }
 
-  String archiveNameJre64(BuildContext buildContext) {
-    return "jre64-for-${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}.tar.gz"
+  String archiveNameJre(BuildContext buildContext) {
+    return "jre-for-${buildContext.buildNumber}.tar.gz"
   }
 
 
   @CompileDynamic
-  private String extractJre(String osDirName, JvmArchitecture arch = JvmArchitecture.x64, JreVendor vendor = JreVendor.JetBrains) {
+  private String extractJre(String osName, JvmArchitecture arch = JvmArchitecture.x64, JreVendor vendor = JreVendor.JetBrains) {
     String vendorSuffix = vendor == JreVendor.Oracle ? ".oracle" : ""
-    String targetDir = "$baseDirectoryForJre/jre.$osDirName$arch.fileSuffix$vendorSuffix"
+    String targetDir = arch == JvmArchitecture.x64 ?
+                       "$baseDirectoryForJre/jre.$osName$arch.fileSuffix$vendorSuffix" :
+                       "$baseDirectoryForJre/jre.${osName}32$vendorSuffix"
     if (new File(targetDir).exists()) {
       buildContext.messages.info("JRE is already extracted to $targetDir")
       return targetDir
     }
 
-    File archive = findJreArchive(osDirName, arch, vendor)
+    File archive = findJreArchive(osName, arch, vendor)
     if (archive == null) {
       return null
     }
     buildContext.messages.block("Extract $archive.name JRE") {
-      String destination = "$targetDir/jre"
+      String destination = "$targetDir/jre64"
+      if (osName == "windows" && arch == JvmArchitecture.x32) {
+        destination = "$targetDir/jre32"
+      }
       buildContext.messages.progress("Extracting JRE from '$archive.name' archive")
       if (SystemInfo.isWindows) {
         buildContext.ant.untar(src: archive.absolutePath, dest: destination, compression: 'gzip')
@@ -102,6 +107,8 @@ class BundledJreManager {
         buildContext.ant.exec(executable: "tar", dir: archive.parent) {
           arg(value: "-xf")
           arg(value: archive.name)
+          arg(value: "--strip")
+          arg(value: "1")
           arg(value: "--directory")
           arg(value: destination)
         }
@@ -110,20 +117,44 @@ class BundledJreManager {
     return targetDir
   }
 
-  private File findJreArchive(String osDirName, JvmArchitecture arch = JvmArchitecture.x64, JreVendor vendor = JreVendor.JetBrains) {
-    def jdkDir = new File(buildContext.paths.projectHome, "build/jdk/$osDirName")
-    String suffix = arch == JvmArchitecture.x32 ? "_x86" : "_x64"
+  private File findJreArchive(String osName, JvmArchitecture arch = JvmArchitecture.x64, JreVendor vendor = JreVendor.JetBrains) {
+    def dependenciesDir = new File(buildContext.paths.communityHome, 'build/dependencies')
+    def jreDir = new File(dependenciesDir, 'build/jbre')
+    def jreVersion = getExpectedJreVersion(osName, dependenciesDir)
+
+    String suffix = "${jreVersion}_$osName${arch == JvmArchitecture.x32 ? '_x86' : '_x64'}.tar.gz"
     String prefix = buildContext.productProperties.toolsJarRequired ? vendor.jreWithToolsJarNamePrefix : vendor.jreNamePrefix
-    Collection<File> jdkFiles = jdkDir.listFiles()?.findAll { it.name.startsWith(prefix) && it.name.endsWith("${suffix}.tar.gz") } ?: [] as List<File>
-    if (jdkFiles.size() > 1) {
-      buildContext.messages.warning("Cannot extract $osDirName JRE: several matching files are found ($jdkFiles)")
+    def jreArchive = new File(jreDir, "$prefix$suffix")
+
+    if (!jreArchive.file || !jreArchive.exists()) {
+      def errorMessage = "Cannot extract $osName JRE: file $jreArchive is not found (${jreDir.listFiles()})"
+      if (buildContext.options.isInDevelopmentMode) {
+        buildContext.messages.warning(errorMessage)
+      }
+      else {
+        buildContext.messages.error(errorMessage)
+      }
       return null
     }
-    if (jdkFiles.isEmpty()) {
-      buildContext.messages.warning("Cannot extract $osDirName JRE: no '${prefix}...${suffix}.tar.gz' files found in $jdkDir")
-      return null
+    return jreArchive
+  }
+
+  private Properties dependencyVersions
+  private String getExpectedJreVersion(String osName, File dependenciesDir) {
+    if (dependencyVersions == null) {
+      buildContext.gradle.run('Preparing dependencies file', 'dependenciesFile')
+
+      def stream = new File(dependenciesDir, 'build/dependencies.properties').newInputStream()
+      try {
+        Properties properties = new Properties()
+        properties.load(stream)
+        dependencyVersions = properties
+      }
+      finally {
+        stream.close()
+      }
     }
-    return jdkFiles.first()
+    return dependencyVersions.get("jreBuild_${osName}" as String, dependencyVersions.get("jdkBuild", ""))
   }
 
   private enum JreVendor {

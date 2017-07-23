@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,16 @@ import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.util.ThrowableRunnable;
 
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.InputEvent;
+import java.util.Arrays;
 
 public class EditorMultiCaretTest extends AbstractEditorTest {
   private boolean myStoredVirtualSpaceSetting;
@@ -274,6 +277,34 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
                       "four");
   }
 
+  public void testPastingAtDifferentNumberOfCarets() throws Exception {
+    initText("<selection>one<caret></selection>\n" +
+             "<selection>two<caret></selection>\n" +
+             "<selection>three<caret></selection>\n" +
+             "<selection>four<caret></selection>");
+    copy();
+    myEditor.getCaretModel().setCaretsAndSelections(Arrays.asList(new CaretState(new LogicalPosition(0, 0),
+                                                                                 new LogicalPosition(0, 0),
+                                                                                 new LogicalPosition(0, 0)),
+                                                                  new CaretState(new LogicalPosition(1, 0),
+                                                                                 new LogicalPosition(1, 0),
+                                                                                 new LogicalPosition(1, 0))));
+    paste();
+    checkResultByText("oneone\n" +
+                      "twotwo\n" +
+                      "three\n" +
+                      "four");
+  }
+
+  public void testPastingLineWithBreakFromOutside() throws Exception {
+    initText("<caret>\n" +
+             "<caret>");
+    CopyPasteManager.getInstance().setContents(new StringSelection("abc\n"));
+    paste();
+    checkResultByText("abc<caret>\n" +
+                      "abc<caret>");
+  }
+
   public void testEscapeAfterDragDown() throws Exception {
     initText("line1\n" +
              "line2");
@@ -440,5 +471,12 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
     finally {
       keymap.removeShortcut(IdeActions.ACTION_EDITOR_ADD_OR_REMOVE_CARET, shortcut);
     }
+  }
+
+  public void testTypingAdjacentSpaces() throws Exception {
+    initText("<caret>\t<caret>\t");
+    rightWithSelection();
+    type(' ');
+    checkResultByText(" <caret> <caret>");
   }
 }

@@ -156,7 +156,7 @@ class ConsoleGutterComponent extends JComponent implements MouseMotionListener {
 
     Graphics2D g2 = (Graphics2D)g;
     Object hint = g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-    if (!UIUtil.isJDKManagedHiDPIScreen(g2)) {
+    if (!UIUtil.isJreHiDPI(g2)) {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
     }
 

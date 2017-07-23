@@ -26,13 +26,9 @@ import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.BitUtil;
-import com.intellij.util.CompressionUtil;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
@@ -47,8 +43,9 @@ import java.awt.*;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.concurrent.ConcurrentMap;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -63,15 +60,16 @@ public class FSRecords {
   public static final boolean weHaveContentHashes = SystemProperties.getBooleanProperty("idea.share.contents", true);
   private static final boolean lazyVfsDataCleaning = SystemProperties.getBooleanProperty("idea.lazy.vfs.data.cleaning", true);
   static final boolean backgroundVfsFlush = SystemProperties.getBooleanProperty("idea.background.vfs.flush", true);
-  public static final boolean persistentAttributesList = SystemProperties.getBooleanProperty("idea.persistent.attr.list", true);
   private static final boolean inlineAttributes = SystemProperties.getBooleanProperty("idea.inline.vfs.attributes", true);
   static final boolean bulkAttrReadSupport = SystemProperties.getBooleanProperty("idea.bulk.attr.read", false);
   static final boolean useSnappyForCompression = SystemProperties.getBooleanProperty("idea.use.snappy.for.vfs", false);
   private static final boolean useSmallAttrTable = SystemProperties.getBooleanProperty("idea.use.small.attr.table.for.vfs", true);
   static final String VFS_FILES_EXTENSION = System.getProperty("idea.vfs.files.extension", ".dat");
+  private static final boolean ourStoreRootsSeparately = SystemProperties.getBooleanProperty("idea.store.roots.separately", false);
 
   private static final int VERSION = 21 + (weHaveContentHashes ? 0x10:0) + (IOUtil.ourByteBuffersUseNativeByteOrder ? 0x37:0) +
-                                     (persistentAttributesList ? 31 : 0) + (bulkAttrReadSupport ? 0x27:0) + (inlineAttributes ? 0x31 : 0) +
+                                     31 + (bulkAttrReadSupport ? 0x27:0) + (inlineAttributes ? 0x31 : 0) +
+                                     (ourStoreRootsSeparately ? 0x63 : 0) +
                                      (useSnappyForCompression ? 0x7f : 0) + (useSmallAttrTable ? 0x31 : 0) +
                                      (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 21:0);
 
@@ -161,20 +159,20 @@ public class FSRecords {
 
   public static class DbConnection {
     private static boolean ourInitialized;
-    private static final ConcurrentMap<String, Integer> myAttributeIds = ContainerUtil.newConcurrentMap();
 
     private static PersistentStringEnumerator myNames;
     private static Storage myAttributes;
     private static RefCountingStorage myContents;
     private static ResizeableMappedFile myRecords;
     private static PersistentBTreeEnumerator<byte[]> myContentHashesEnumerator;
+    private static File myRootsFile;
     private static final VfsDependentEnum<String> myAttributesList =
       new VfsDependentEnum<>("attrib", EnumeratorStringDescriptor.INSTANCE, 1);
     private static final TIntArrayList myFreeRecords = new TIntArrayList();
 
     private static boolean myDirty;
     private static ScheduledFuture<?> myFlushingFuture;
-    private static boolean myCorrupted;
+    @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private static boolean myCorrupted;
 
     private static final AttrPageAwareCapacityAllocationPolicy REASONABLY_SMALL = new AttrPageAwareCapacityAllocationPolicy();
 
@@ -246,6 +244,7 @@ public class FSRecords {
       final File contentsFile = new File(basePath, "content" + VFS_FILES_EXTENSION);
       final File contentsHashesFile = new File(basePath, "contentHashes" + VFS_FILES_EXTENSION);
       final File recordsFile = new File(basePath, "records" + VFS_FILES_EXTENSION);
+      myRootsFile = ourStoreRootsSeparately ? new File(basePath, "roots" + VFS_FILES_EXTENSION) : null;
 
       final File vfsDependentEnumBaseFile = VfsDependentEnum.getBaseFile();
 
@@ -281,7 +280,9 @@ public class FSRecords {
         myRecords = new ResizeableMappedFile(recordsFile, 20 * 1024, storageLockContext,
                                              PagedFileStorage.BUFFER_SIZE, aligned, IOUtil.ourByteBuffersUseNativeByteOrder);
 
-        if (myRecords.length() == 0) {
+        boolean initial = myRecords.length() == 0;
+
+        if (initial) {
           cleanRecord(0); // Clean header
           cleanRecord(1); // Create root record
           setCurrentVersion();
@@ -294,7 +295,7 @@ public class FSRecords {
         if (myRecords.getInt(HEADER_CONNECTION_STATUS_OFFSET) != SAFELY_CLOSED_MAGIC) {
           throw new IOException("FS repository wasn't safely shut down");
         }
-        markDirty();
+        if (initial) markDirty();
         scanFreeRecords();
       }
       catch (Exception e) { // IOException, IllegalArgumentException
@@ -309,6 +310,7 @@ public class FSRecords {
           deleted &= IOUtil.deleteAllFilesStartingWith(contentsHashesFile);
           deleted &= IOUtil.deleteAllFilesStartingWith(recordsFile);
           deleted &= IOUtil.deleteAllFilesStartingWith(vfsDependentEnumBaseFile);
+          deleted &= myRootsFile == null || IOUtil.deleteAllFilesStartingWith(myRootsFile);
 
           if (!deleted) {
             throw new IOException("Cannot delete filesystem storage files");
@@ -505,30 +507,33 @@ public class FSRecords {
     private static final int FIRST_ATTR_ID_OFFSET = bulkAttrReadSupport ? RESERVED_ATTR_ID : 0;
 
     private static int getAttributeId(@NotNull String attId) throws IOException {
-      if (persistentAttributesList) {
-        return myAttributesList.getId(attId) + FIRST_ATTR_ID_OFFSET;
-      }
-      Integer integer = myAttributeIds.get(attId);
-      if (integer != null) return integer.intValue();
-      int enumeratedId = myNames.enumerate(attId);
-      integer = myAttributeIds.putIfAbsent(attId, enumeratedId);
-      return integer == null ? enumeratedId:  integer.intValue();
+      return myAttributesList.getId(attId) + FIRST_ATTR_ID_OFFSET;
     }
 
+    private static final Object CORRUPTION_LOCK = new Object();
+
     private static void handleError(@NotNull Throwable e) throws RuntimeException, Error {
-      if (!ourIsDisposed) {
-        // No need to forcibly mark VFS corrupted if it is already shut down
-        if (!myCorrupted && w.tryLock()) { // avoid deadlock if r lock is occupied by current thread
-          w.unlock();
-          createBrokenMarkerFile(e);
-          myCorrupted = true;
-          force();
+      if (!ourIsDisposed) { // No need to forcibly mark VFS corrupted if it is already shut down
+        synchronized (CORRUPTION_LOCK) {  
+          if (!myCorrupted) {
+            createBrokenMarkerFile(e);
+            myCorrupted = true;
+            // avoid deadlock if r lock is occupied by current thread
+            if (canWriteWithoutDeadlock()) force();
+            else flush();
+          }
         }
       }
 
-      if (e instanceof Error) throw (Error)e;
-      if (e instanceof RuntimeException) throw (RuntimeException)e;
-      throw new RuntimeException(e);
+      ExceptionUtil.rethrow(e);
+    }
+
+    private static boolean canWriteWithoutDeadlock() {
+      if (w.tryLock()) {
+        w.unlock();
+        return true;
+      }
+      return false;
     }
 
     private static class AttrPageAwareCapacityAllocationPolicy extends CapacityAllocationPolicy {
@@ -724,11 +729,31 @@ public class FSRecords {
     setFlags(id, FREE_RECORD_FLAG, false);
   }
 
+  private static final int ROOT_RECORD_ID = 1;
+
+  @NotNull
   static int[] listRoots() {
     try {
       r.lock();
       try {
-        final DataInputStream input = readAttribute(1, ourChildrenAttr);
+        if (ourStoreRootsSeparately) {
+          TIntArrayList result = new TIntArrayList();
+
+          try {
+            try (LineNumberReader stream = new LineNumberReader(new BufferedReader(new InputStreamReader(new FileInputStream(DbConnection.myRootsFile))))) {
+              String str;
+              while((str = stream.readLine()) != null) {
+                int index = str.indexOf(' ');
+                int id = Integer.parseInt(str.substring(0, index));
+                result.add(id);
+              }
+            }
+          } catch (FileNotFoundException ignored) {}
+
+          return result.toNativeArray();
+        }
+
+        final DataInputStream input = readAttribute(ROOT_RECORD_ID, ourChildrenAttr);
         if (input == null) return ArrayUtil.EMPTY_INT_ARRAY;
 
         try {
@@ -751,7 +776,7 @@ public class FSRecords {
     }
     catch (Throwable e) {
       DbConnection.handleError(e);
-      return null;
+      return ArrayUtil.EMPTY_INT_ARRAY;
     }
   }
 
@@ -781,10 +806,31 @@ public class FSRecords {
     w.lock();
 
     try {
-      DbConnection.markDirty();
-      final int root = getNames().enumerate(rootUrl);
+      if (ourStoreRootsSeparately) {
+        try {
+          try (LineNumberReader stream = new LineNumberReader(new BufferedReader(new InputStreamReader(new FileInputStream(DbConnection.myRootsFile))))) {
+            String str;
+            while((str = stream.readLine()) != null) {
+              int index = str.indexOf(' ');
 
-      final DataInputStream input = readAttribute(1, ourChildrenAttr);
+              if (str.substring(index + 1).equals(rootUrl)) {
+                return Integer.parseInt(str.substring(0, index));
+              }
+            }
+          }
+        } catch (FileNotFoundException ignored) {}
+
+        DbConnection.markDirty();
+        try (Writer stream = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(DbConnection.myRootsFile, true)))) {
+          int id = createRecord();
+          stream.write(id + " " + rootUrl + "\n");
+          return id;
+        }
+      }
+
+      int root = getNames().tryEnumerate(rootUrl);
+
+      final DataInputStream input = readAttribute(ROOT_RECORD_ID, ourChildrenAttr);
       int[] names = ArrayUtil.EMPTY_INT_ARRAY;
       int[] ids = ArrayUtil.EMPTY_INT_ARRAY;
 
@@ -812,8 +858,11 @@ public class FSRecords {
         }
       }
 
+      DbConnection.markDirty();
+      root = getNames().enumerate(rootUrl);
+
       int id;
-      try (DataOutputStream output = writeAttribute(1, ourChildrenAttr)) {
+      try (DataOutputStream output = writeAttribute(ROOT_RECORD_ID, ourChildrenAttr)) {
         id = createRecord();
 
         int index = Arrays.binarySearch(ids, id);
@@ -839,7 +888,31 @@ public class FSRecords {
 
     try {
       DbConnection.markDirty();
-      final DataInputStream input = readAttribute(1, ourChildrenAttr);
+      if (ourStoreRootsSeparately) {
+        List<String> rootsThatLeft = new ArrayList<>();
+        try {
+          try (LineNumberReader stream = new LineNumberReader(new BufferedReader(new InputStreamReader(new FileInputStream(DbConnection.myRootsFile))))) {
+            String str;
+            while((str = stream.readLine()) != null) {
+              int index = str.indexOf(' ');
+              int rootId = Integer.parseInt(str.substring(0, index));
+              if (rootId != id) {
+                rootsThatLeft.add(str);
+              }
+            }
+          }
+        } catch (FileNotFoundException ignored) {}
+
+        try (Writer stream = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(DbConnection.myRootsFile)))) {
+          for(String line:rootsThatLeft) {
+            stream.write(line);
+            stream.write("\n");
+          }
+        }
+        return;
+      }
+
+      final DataInputStream input = readAttribute(ROOT_RECORD_ID, ourChildrenAttr);
       assert input != null;
       int[] names;
       int[] ids;
@@ -867,7 +940,7 @@ public class FSRecords {
       names = ArrayUtil.remove(names, index);
       ids = ArrayUtil.remove(ids, index);
 
-      try (DataOutputStream output = writeAttribute(1, ourChildrenAttr)) {
+      try (DataOutputStream output = writeAttribute(ROOT_RECORD_ID, ourChildrenAttr)) {
         saveNameIdSequenceWithDeltas(names, ids, output);
       }
     }
@@ -970,7 +1043,7 @@ public class FSRecords {
     return false;
   }
 
-  public static void updateList(int id, @NotNull int[] childIds) {
+  static void updateList(int id, @NotNull int[] childIds) {
     Arrays.sort(childIds);
     w.lock();
     try {
@@ -1017,7 +1090,7 @@ public class FSRecords {
     return ourLocalModificationCount; // This is volatile, only modified under Application.runWriteAction() lock.
   }
 
-  public static int getModCount() {
+  static int getModCount() {
     r.lock();
     try {
       return getRecords().getInt(HEADER_GLOBAL_MOD_COUNT_OFFSET);
@@ -1051,7 +1124,7 @@ public class FSRecords {
 
   // returns id, parent(id), parent(parent(id)), ...  (already cached id or rootId)
   @NotNull
-  public static TIntArrayList getParents(int id, @NotNull ConcurrentIntObjectMap<?> idCache) {
+  static TIntArrayList getParents(int id, @NotNull ConcurrentIntObjectMap<?> idCache) {
     TIntArrayList result = new TIntArrayList(10);
     r.lock();
     try {
@@ -1078,7 +1151,7 @@ public class FSRecords {
     return result;
   }
 
-  public static void setParent(int id, int parentId) {
+  static void setParent(int id, int parentId) {
     if (id == parentId) {
       LOG.error("Cyclic parent/child relations");
       return;
@@ -1097,7 +1170,7 @@ public class FSRecords {
     }
   }
 
-  public static int getNameId(int id) {
+  static int getNameId(int id) {
     try {
       r.lock();
       try {
@@ -1134,7 +1207,7 @@ public class FSRecords {
   }
 
   @NotNull
-  public static CharSequence getNameSequence(int id) {
+  static CharSequence getNameSequence(int id) {
     try {
       r.lock();
       try {
@@ -1182,7 +1255,7 @@ public class FSRecords {
     }
   }
 
-  public static int getFlags(int id) {
+  static int getFlags(int id) {
     r.lock();
     try {
       return getRecordInt(id, FLAGS_OFFSET);
@@ -1192,7 +1265,7 @@ public class FSRecords {
     }
   }
 
-  public static void setFlags(int id, int flags, final boolean markAsChange) {
+  static void setFlags(int id, int flags, final boolean markAsChange) {
     w.lock();
     try {
       if (markAsChange) {
@@ -1573,12 +1646,8 @@ public class FSRecords {
   private static final MessageDigest myDigest = ContentHashesUtil.createHashDigest();
 
   static void writeContent(int fileId, ByteSequence bytes, boolean readOnly) {
-    try {
-      new ContentOutputStream(fileId, readOnly).writeBytes(bytes);
-    }
-    catch (Throwable e) {
-      DbConnection.handleError(e);
-    }
+    //noinspection IOResourceOpenedButNotSafelyClosed
+    new ContentOutputStream(fileId, readOnly).writeBytes(bytes);
   }
 
   static int storeUnlinkedContent(byte[] bytes) {
@@ -1635,16 +1704,11 @@ public class FSRecords {
     public void close() throws IOException {
       super.close();
 
-      try {
-        final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
-        writeBytes(new ByteSequence(_out.getInternalBuffer(), 0, _out.size()));
-      }
-      catch (Throwable e) {
-        DbConnection.handleError(e);
-      }
+      final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
+      writeBytes(new ByteSequence(_out.getInternalBuffer(), 0, _out.size()));
     }
 
-    public void writeBytes(ByteSequence bytes) throws IOException {
+    private void writeBytes(ByteSequence bytes) {
       RefCountingStorage contentStorage = getContentStorage();
       w.lock();
       try {
@@ -1665,7 +1729,8 @@ public class FSRecords {
           if (page > 0) return;
           page = -page;
           fixedSize = true;
-        } else {
+        }
+        else {
           incModCount(myFileId);
           page = getContentRecordId(myFileId);
           if (page == 0 || contentStorage.getRefCount(page) > 1) {
@@ -1678,16 +1743,14 @@ public class FSRecords {
         if (useSnappyForCompression) {
           BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
           DataOutputStream outputStream = new DataOutputStream(out);
-          byte[] rawBytes = bytes.getBytes();
-          if (bytes.getOffset() != 0) {
-            rawBytes = new byte[bytes.getLength()];
-            System.arraycopy(bytes.getBytes(), bytes.getOffset(), rawBytes, 0, bytes.getLength());
-          }
-          CompressionUtil.writeCompressed(outputStream, rawBytes, bytes.getLength());
+          CompressionUtil.writeCompressed(outputStream, bytes.getBytes(), bytes.getOffset(), bytes.getLength());
           outputStream.close();
           bytes = new ByteSequence(out.getInternalBuffer(), 0, out.size());
         }
         contentStorage.writeBytes(page, bytes, fixedSize);
+      }
+      catch (Throwable e) {
+        DbConnection.handleError(e);
       }
       finally {
         w.unlock();
@@ -1695,7 +1758,6 @@ public class FSRecords {
     }
   }
 
-  private static final boolean DO_HARD_CONSISTENCY_CHECK = false;
   private static final boolean DUMP_STATISTICS = weHaveContentHashes;  // TODO: remove once not needed
   private static long totalContents;
   private static long totalReuses;
@@ -1729,38 +1791,12 @@ public class FSRecords {
       ++reuses;
       getContentStorage().acquireRecord(page);
       totalReuses += length;
-
-      if (DO_HARD_CONSISTENCY_CHECK) {
-        DataInputStream stream = doReadContentById(page);
-        int i = offset;
-        for(int c = 0; c < length; ++c) {
-          if (stream.available() == 0) {
-            assert false;
-          }
-          if (bytes[i++] != stream.readByte()) {
-            assert false;
-          }
-        }
-        if (stream.available() > 0) {
-          assert false;
-        }
-      }
+      
       return page;
     } else {
       int newRecord = getContentStorage().acquireNewRecord();
-      if (page != newRecord) {
-        assert false:"Unexpected content storage modification";
-      }
-      if (DO_HARD_CONSISTENCY_CHECK) {
-        if (hashesEnumerator.enumerate(digest) != page) {
-          assert false;
-        }
-
-        byte[] bytes1 = hashesEnumerator.valueOf(page);
-        if (!Arrays.equals(digest, bytes1)) {
-          assert false;
-        }
-      }
+      assert page == newRecord :"Unexpected content storage modification";
+      
       return -page;
     }
   }
@@ -1862,6 +1898,7 @@ public class FSRecords {
             if (attIdOnPage != encodedAttrId) {
               if (dataStream == null) {
                 unchangedPreviousDirectoryStream = new BufferExposingByteArrayOutputStream();
+                //noinspection IOResourceOpenedButNotSafelyClosed
                 dataStream = new DataOutputStream(unchangedPreviousDirectoryStream);
               }
               DataInputOutputUtil.writeINT(dataStream, attIdOnPage);
@@ -2013,7 +2050,7 @@ public class FSRecords {
         int attId = DataInputOutputUtil.readINT(dataInputStream);
 
         if (!validAttributeIds.contains(attId)) {
-          assert persistentAttributesList || !getNames().valueOf(attId).isEmpty();
+          //assert !getNames().valueOf(attId).isEmpty();
           validAttributeIds.add(attId);
         }
 

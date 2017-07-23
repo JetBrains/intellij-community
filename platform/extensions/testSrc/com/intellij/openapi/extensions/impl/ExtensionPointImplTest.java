@@ -62,7 +62,7 @@ public class ExtensionPointImplTest {
   @Test
   public void testRegisterUnregisterExtension() {
     final AreaInstance area = new AreaInstance() {};
-    final ExtensionPoint<Object> extensionPoint = new ExtensionPointImpl<Object>(
+    final ExtensionPoint<Object> extensionPoint = new ExtensionPointImpl<>(
       "an.extension.point", Object.class.getName(), ExtensionPoint.Kind.INTERFACE, buildExtensionArea(), area,
       new UndefinedPluginDescriptor());
 
@@ -264,7 +264,7 @@ public class ExtensionPointImplTest {
   }
 
   private static <T> ExtensionPoint<T> buildExtensionPoint(Class<T> aClass) {
-    return new ExtensionPointImpl<T>(
+    return new ExtensionPointImpl<>(
       ExtensionsImplTest.EXTENSION_POINT_NAME_1, aClass.getName(), ExtensionPoint.Kind.INTERFACE,
       buildExtensionArea(), null, new UndefinedPluginDescriptor());
   }

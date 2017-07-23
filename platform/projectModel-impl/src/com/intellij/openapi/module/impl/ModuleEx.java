@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,18 +23,27 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public interface ModuleEx extends Module {
-  /**
-   * @param path System-independent path.
-   */
-  void init(@NotNull String path, @Nullable Runnable beforeComponentCreation);
+  default void init(@Nullable Runnable beforeComponentCreation) {
+    if (beforeComponentCreation != null) {
+      beforeComponentCreation.run();
+    }
+  }
 
-  void moduleAdded();
+  default void moduleAdded() {
+  }
 
-  void projectOpened();
+  default void projectOpened() {
+  }
 
-  void projectClosed();
+  default void projectClosed() {
+  }
 
-  void rename(String newName);
+  default void rename(@NotNull String newName, boolean notifyStorage) {
+  }
 
   void clearScopesCache();
+
+  default long getOptionsModificationCount() {
+    return 0;
+  }
 }

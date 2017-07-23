@@ -1,0 +1,48 @@
+package pkg;
+
+import java.util.function.Function;
+
+public class TestLambdaParams {
+   public static void toCollection(Object var0) {
+      Object var1 = null;// 23
+      Function var2 = (var1x) -> {
+         return var0;
+      };// 24
+      Function var3 = (var1x) -> {
+         return var1;
+      };// 25
+      Function var4 = (var0x) -> {
+         return var0x;
+      };// 26
+   }// 27
+}
+
+class 'pkg/TestLambdaParams' {
+   method 'lambda$toCollection$0 (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;' {
+      1      8
+   }
+
+   method 'lambda$toCollection$1 (Ljava/lang/Class;Ljava/lang/Object;)Ljava/lang/Object;' {
+      1      11
+   }
+
+   method 'lambda$toCollection$2 (Ljava/lang/Object;)Ljava/lang/Object;' {
+      1      14
+   }
+
+   method 'toCollection (Ljava/lang/Object;)V' {
+      0      6
+      1      6
+      8      9
+      f      12
+      15      15
+      17      16
+   }
+}
+
+Lines mapping:
+23 <-> 7
+24 <-> 10
+25 <-> 13
+26 <-> 16
+27 <-> 17

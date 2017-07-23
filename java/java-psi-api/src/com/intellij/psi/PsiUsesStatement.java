@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,12 @@ package com.intellij.psi;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a {@code uses} statement of a Java module declaration.
+ * Represents a {@code uses} directive of a Java module declaration.
  *
  * @since 2016.3
  */
-public interface PsiUsesStatement extends PsiElement {
-  @Nullable
-  PsiJavaCodeReferenceElement getClassReference();
+public interface PsiUsesStatement extends PsiStatement {
+  PsiUsesStatement[] EMPTY_ARRAY = new PsiUsesStatement[0];
+
+  @Nullable PsiJavaCodeReferenceElement getClassReference();
 }

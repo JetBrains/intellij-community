@@ -15,17 +15,18 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionId;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface DocumentCommitProcessor {
   void commitSynchronously(@NotNull Document document, @NotNull Project project, @NotNull PsiFile psiFile);
   void commitAsynchronously(@NotNull final Project project,
-                                     @NotNull final Document document,
-                                     @NonNls @NotNull Object reason,
-                                     @NotNull ModalityState currentModalityState);
+                            @NotNull final Document document,
+                            @NonNls @NotNull Object reason,
+                            @Nullable TransactionId context);
 }

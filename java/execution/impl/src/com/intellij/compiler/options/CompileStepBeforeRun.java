@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
   }
 
   @Nullable
-  public MakeBeforeRunTask createTask(RunConfiguration configuration) {
+  public MakeBeforeRunTask createTask(@NotNull RunConfiguration configuration) {
     MakeBeforeRunTask task = null;
     if (shouldCreateTask(configuration)) {
       task = new MakeBeforeRunTask();

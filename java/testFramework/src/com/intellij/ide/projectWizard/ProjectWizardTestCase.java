@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,8 @@ import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,6 +49,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * @author Dmitry Avdeev
@@ -172,26 +173,23 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
 
   @Override
   public void tearDown() throws Exception {
-    if (myWizard != null) {
-      Disposer.dispose(myWizard.getDisposable());
-      myWizard = null;
-    }
-    if (myCreatedProject != null) {
-      myProjectManager.closeProject(myCreatedProject);
-      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(myCreatedProject));
-      myCreatedProject = null;
-    }
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      ProjectRootManager.getInstance(myProjectManager.getDefaultProject()).setProjectSdk(myOldDefaultProjectSdk);
-      for (Sdk sdk : mySdks) {
-        ProjectJdkTable.getInstance().removeJdk(sdk);
-      }
-    });
-    SelectTemplateSettings.getInstance().setLastTemplate(null, null);
     try {
-      UIUtil.dispatchAllInvocationEvents();
-      Thread.sleep(2000); //wait for JBCardLayout release timers
-      UIUtil.dispatchAllInvocationEvents();
+      if (myWizard != null) {
+        Disposer.dispose(myWizard.getDisposable());
+        myWizard = null;
+      }
+      if (myCreatedProject != null) {
+        myProjectManager.closeProject(myCreatedProject);
+        ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(myCreatedProject));
+        myCreatedProject = null;
+      }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        ProjectRootManager.getInstance(myProjectManager.getDefaultProject()).setProjectSdk(myOldDefaultProjectSdk);
+        for (Sdk sdk : mySdks) {
+          ProjectJdkTable.getInstance().removeJdk(sdk);
+        }
+      });
+      SelectTemplateSettings.getInstance().setLastTemplate(null, null);
     }
     finally {
       super.tearDown();
@@ -213,6 +211,10 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   private Module importFrom(String path,
                             @Nullable Project project, Consumer<Step> adjuster,
                             final ProjectImportProvider... providers) {
+    return computeInWriteSafeContext(() -> doImportModule(path, project, adjuster, providers));
+  }
+
+  private Module doImportModule(String path, @Nullable Project project, Consumer<Step> adjuster, ProjectImportProvider[] providers) {
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     assertNotNull("Can't find " + path, file);
     assertTrue(providers[0].canImport(file, project));
@@ -224,6 +226,13 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
       runWizard(adjuster);
     }
     return ContainerUtil.getFirstItem(ImportModuleAction.createFromWizard(project, myWizard));
+  }
+
+  private static <T> T computeInWriteSafeContext(Supplier<T> supplier) {
+    Ref<T> module = Ref.create();
+    ApplicationManager.getApplication().invokeLater(() -> module.set(supplier.get()));
+    UIUtil.dispatchAllInvocationEvents();
+    return module.get();
   }
 
   protected Sdk createSdk(String name, SdkTypeId sdkType) {

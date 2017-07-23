@@ -15,9 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions;
 
-/**
- * Created by Max Medvedev on 10/4/13
- */
 public enum ClassType {
   CLASS, ENUM, INTERFACE, ANNOTATION, TRAIT
 }

@@ -77,6 +77,7 @@ public class MetaRegistryTest extends LightPlatformTestCase {
       return myDeclaration;
     }
 
+    @NotNull
     @Override
     public Object[] getDependences() {
       return new Object[]{myDeclaration};

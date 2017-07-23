@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.folding.impl;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ProjectComponent;
@@ -35,7 +36,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.containers.WeakList;
@@ -48,7 +48,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
-public class CodeFoldingManagerImpl extends CodeFoldingManager implements ProjectComponent {
+public class CodeFoldingManagerImpl extends CodeFoldingManager implements ProjectComponent, Disposable {
   private final Project myProject;
 
   private final List<Document> myDocumentsWithFoldingInfo = new WeakList<>();
@@ -61,16 +61,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   }
 
   @Override
-  @NotNull
-  public String getComponentName() {
-    return "CodeFoldingManagerImpl";
-  }
-
-  @Override
-  public void initComponent() { }
-
-  @Override
-  public void disposeComponent() {
+  public void dispose() {
     for (Document document : myDocumentsWithFoldingInfo) {
       if (document != null) {
         document.putUserData(myFoldingInfoInDocumentKey, null);
@@ -222,7 +213,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     }
 
 
-    final FoldingUpdate.FoldingMap foldingMap = FoldingUpdate.getFoldingsFor(file, document, true);
+    final List<FoldingUpdate.RegionInfo> regionInfos = FoldingUpdate.getFoldingsFor(file, document, true);
 
     return editor -> {
       ApplicationManagerEx.getApplicationEx().assertIsDispatchThread();
@@ -232,11 +223,23 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
       if (isFoldingsInitializedInEditor(editor)) return;
       if (DumbService.isDumb(myProject) && !FoldingUpdate.supportsDumbModeFolding(editor)) return;
 
-      foldingModel.runBatchFoldingOperationDoNotCollapseCaret(new UpdateFoldRegionsOperation(myProject, editor, file, foldingMap,
+      foldingModel.runBatchFoldingOperationDoNotCollapseCaret(new UpdateFoldRegionsOperation(myProject, editor, file, regionInfos,
                                                                                              UpdateFoldRegionsOperation.ApplyDefaultStateMode.YES,
                                                                                              false, false));
       initFolding(editor);
     };
+  }
+
+  @Nullable
+  @Override
+  public Boolean isCollapsedByDefault(@NotNull FoldRegion region) {
+    return region.getUserData(UpdateFoldRegionsOperation.COLLAPSED_BY_DEFAULT);
+  }
+
+  @Override
+  public void scheduleAsyncFoldingUpdate(@NotNull Editor editor) {
+    editor.putUserData(FoldingUpdate.CODE_FOLDING_KEY, null);
+    DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 
   private void initFolding(@NotNull final Editor editor) {
@@ -254,10 +257,6 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
       editor.putUserData(FOLDING_STATE_KEY, Boolean.TRUE);
     });
-  }
-
-  @Override
-  public void projectClosed() {
   }
 
   @Override
@@ -295,12 +294,9 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
 
     final FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
     editor.getFoldingModel().runBatchFoldingOperation(() -> {
-      EditorFoldingInfo foldingInfo = EditorFoldingInfo.get(editor);
       for (FoldRegion region : regions) {
-        PsiElement element = foldingInfo.getPsiElement(region);
-        if (element != null) {
-          region.setExpanded(!FoldingPolicy.isCollapseByDefault(element));
-        }
+        Boolean collapsedByDefault = region.getUserData(UpdateFoldRegionsOperation.COLLAPSED_BY_DEFAULT);
+        if (collapsedByDefault != null) region.setExpanded(!collapsedByDefault);
       }
     });
   }

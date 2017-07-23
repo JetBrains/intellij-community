@@ -21,11 +21,6 @@ import com.intellij.util.xml.GenericAttributeValue;
 import org.intellij.plugins.relaxNG.model.Pattern;
 import org.intellij.plugins.relaxNG.xml.dom.RngDefine;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 19.08.2007
- */
 public abstract class RngDefineImpl extends RngDomElementBase implements RngDefine {
   @Override
   public void setName(String name) {

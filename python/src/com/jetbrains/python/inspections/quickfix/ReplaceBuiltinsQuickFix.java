@@ -23,12 +23,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: 19.02.2010
- * Time: 18:50:24
- */
 public class ReplaceBuiltinsQuickFix implements LocalQuickFix {
   @NotNull
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,11 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
-import com.intellij.psi.filters.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -36,10 +34,10 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.*;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.scope.ElementClassFilter;
+import com.intellij.psi.scope.DelegatingScopeProcessor;
+import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.ChildRoleBase;
@@ -53,12 +51,9 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase implements PsiReferenceExpression, SourceJavaCodeReference {
+public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements PsiReferenceExpression, SourceJavaCodeReference {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl");
 
   private volatile String myCachedQName;
@@ -137,7 +132,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   }
 
   private static List<PsiJavaCodeReferenceElement> getImportsFromClass(@NotNull PsiImportList importList, String className){
-    final List<PsiJavaCodeReferenceElement> array = new ArrayList<PsiJavaCodeReferenceElement>();
+    final List<PsiJavaCodeReferenceElement> array = new ArrayList<>();
     for (PsiImportStaticStatement staticStatement : importList.getImportStaticStatements()) {
       final PsiClass psiClass = staticStatement.resolveTargetClass();
       if (psiClass != null && Comparing.strEqual(psiClass.getQualifiedName(), className)) {
@@ -177,6 +172,12 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   }
 
   @Override
+  public String getReferenceName() {
+    PsiElement element = getReferenceNameElement();
+    return element != null ? element.getText() : null;
+  }
+
+  @Override
   public void clearCaches() {
     myCachedQName = null;
     myCachedNormalizedText = null;
@@ -213,7 +214,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
       PsiElement qualifier = expression.getQualifier();
       if (qualifier == null) return Collections.emptyList();
 
-      final List<ResolveResult[]> qualifiers = new SmartList<ResolveResult[]>();
+      final List<ResolveResult[]> qualifiers = new SmartList<>();
       final ResolveCache resolveCache = ResolveCache.getInstance(containingFile.getProject());
       qualifier.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
@@ -328,7 +329,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     if (qualifier instanceof PsiReferenceExpression && !(((PsiReferenceExpression)qualifier).resolve() instanceof PsiPackage)) {
       return JavaResolveResult.EMPTY_ARRAY;
     }
-    return new JavaResolveResult[]{new CandidateInfo(aPackage, PsiSubstitutor.EMPTY)};
+    return new JavaResolveResult[]{new CandidateInfo(aPackage, PsiSubstitutor.EMPTY, this, false)};
   }
 
   @NotNull
@@ -461,47 +462,109 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     return element.getManager().areElementsEquivalent(element, advancedResolve(true).getElement());
   }
 
+  @NotNull
+  @Override
+  public Object[] getVariants() {
+    // this reference's variants are rather obtained with processVariants()
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  @Override
+  public boolean isSoft() {
+    return false;
+  }
+
   @Override
   public void processVariants(@NotNull PsiScopeProcessor processor) {
-    OrFilter filter = new OrFilter();
-    filter.addFilter(ElementClassFilter.CLASS);
-    if (isQualified()) {
-      filter.addFilter(ElementClassFilter.PACKAGE_FILTER);
-    }
-    filter.addFilter(new AndFilter(ElementClassFilter.METHOD, new NotFilter(new ConstructorFilter()), new ElementFilter() {
-      @Override
-      public boolean isAcceptable(Object element, @Nullable PsiElement context) {
-        return LambdaUtil.isValidQualifier4InterfaceStaticMethodCall((PsiMethod)element, PsiReferenceExpressionImpl.this,
-                                                                     null, PsiUtil.getLanguageLevel(PsiReferenceExpressionImpl.this));
-      }
-
-      @Override
-      public boolean isClassAcceptable(Class hintClass) {
-        return true;
-      }
-    }));
-    filter.addFilter(ElementClassFilter.VARIABLE);
-
-    FilterScopeProcessor filterProcessor = new FilterScopeProcessor<CandidateInfo>(filter, processor) {
-      private final Set<String> myVarNames = new THashSet<String>();
+    DelegatingScopeProcessor filterProcessor = new DelegatingScopeProcessor(processor) {
+      private PsiElement myResolveContext;
+      private final Set<String> myVarNames = new THashSet<>();
 
       @Override
       public boolean execute(@NotNull final PsiElement element, @NotNull final ResolveState state) {
-        if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
-          myVarNames.add(((PsiVariable) element).getName());
-        }
-        else if (element instanceof PsiField && myVarNames.contains(((PsiVariable) element).getName())) {
-          return true;
-        }
-        else if (element instanceof PsiClass && seemsScrambled((PsiClass)element)) {
-          return true;
-        }
+        return !shouldProcess(element) || super.execute(element, state);
+      }
 
-        return super.execute(element, state);
+      private boolean shouldProcess(@NotNull PsiElement element) {
+        if (element instanceof PsiVariable) return ensureNonShadowedVariable((PsiVariable)element);
+        if (element instanceof PsiClass) return !seemsScrambled((PsiClass)element);
+        if (element instanceof PsiPackage) return isQualified();
+        if (element instanceof PsiMethod) return shouldProcessMethod((PsiMethod)element);
+        return false;
+      }
+
+      private boolean ensureNonShadowedVariable(@NotNull PsiVariable element) {
+        if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
+          myVarNames.add(element.getName());
+        }
+        if (element instanceof PsiField && myVarNames.contains(element.getName())) {
+          return false;
+        }
+        return true;
+      }
+
+      private boolean shouldProcessMethod(@NotNull PsiMethod method) {
+        PsiReferenceExpressionImpl ref = PsiReferenceExpressionImpl.this;
+        return !method.isConstructor() && hasValidQualifier(method, ref, myResolveContext);
+      }
+
+      @Override
+      public void handleEvent(@NotNull Event event, Object associated) {
+        if (event == JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT) {
+          myResolveContext = (PsiElement)associated;
+        }
+        super.handleEvent(event, associated);
       }
 
     };
     PsiScopesUtil.resolveAndWalk(filterProcessor, this, null, true);
+  }
+
+  @NotNull
+  @Override
+  public JavaResolveResult advancedResolve(boolean incompleteCode) {
+    JavaResolveResult[] results = multiResolve(incompleteCode);
+    return results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
+  }
+
+  /* see also HighlightMethodUtil.checkStaticInterfaceMethodCallQualifier() */
+  private static boolean hasValidQualifier(PsiMethod method, PsiReferenceExpression ref, PsiElement scope) {
+    PsiClass containingClass = method.getContainingClass();
+    if (containingClass != null && containingClass.isInterface() && method.hasModifierProperty(PsiModifier.STATIC)) {
+      if (!PsiUtil.getLanguageLevel(ref).isAtLeast(LanguageLevel.JDK_1_8)) {
+        return false;
+      }
+
+      PsiExpression qualifierExpression = ref.getQualifierExpression();
+      if (qualifierExpression == null && (scope instanceof PsiImportStaticStatement || PsiTreeUtil.isAncestor(containingClass, ref, true))) {
+        return true;
+      }
+
+      if (qualifierExpression instanceof PsiReferenceExpression) {
+        PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
+        if (resolve == containingClass) {
+          return true;
+        }
+
+        if (resolve instanceof PsiTypeParameter) {
+          Set<PsiClass> classes = new HashSet<>();
+          for (PsiClassType type : ((PsiTypeParameter)resolve).getExtendsListTypes()) {
+            final PsiClass aClass = type.resolve();
+            if (aClass != null) {
+              classes.add(aClass);
+            }
+          }
+
+          if (classes.size() == 1 && classes.contains(containingClass)) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    }
+
+    return true;
   }
 
   public static boolean seemsScrambled(@Nullable PsiClass aClass) {
@@ -516,19 +579,9 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     }
 
     if (seemsScrambled(aClass.getName())) {
-      List<PsiMethod> methods = ContainerUtil.filter(aClass.getMethods(), new Condition<PsiMethod>() {
-        @Override
-        public boolean value(PsiMethod method) {
-          return !method.hasModifierProperty(PsiModifier.PRIVATE);
-        }
-      });
+      List<PsiMethod> methods = ContainerUtil.filter(aClass.getMethods(), method -> !method.hasModifierProperty(PsiModifier.PRIVATE));
 
-      return !methods.isEmpty() && ContainerUtil.and(methods, new Condition<PsiMethod>() {
-        @Override
-        public boolean value(PsiMethod method) {
-          return seemsScrambled(method.getName());
-        }
-      });
+      return !methods.isEmpty() && ContainerUtil.and(methods, method -> seemsScrambled(method.getName()));
     }
 
     return false;
@@ -541,6 +594,18 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   @Override
   public PsiElement getReferenceNameElement() {
     return findChildByRoleAsPsiElement(ChildRole.REFERENCE_NAME);
+  }
+
+  @Override
+  public PsiReferenceParameterList getParameterList() {
+    return PsiTreeUtil.getChildOfType(this, PsiReferenceParameterList.class);
+  }
+
+  @NotNull
+  @Override
+  public PsiType[] getTypeParameters() {
+    PsiReferenceParameterList parameterList = getParameterList();
+    return parameterList != null ? parameterList.getTypeArguments() : PsiType.EMPTY_ARRAY;
   }
 
   @Override
@@ -658,9 +723,17 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
       super.deleteChildInternal(child);
       deleteChildInternal(dot);
     }
+    else if (child.getElementType() == JavaElementType.REFERENCE_PARAMETER_LIST) {
+      replaceChildInternal(child, createEmptyRefParameterList(getProject()));
+    }
     else {
       super.deleteChildInternal(child);
     }
+  }
+
+  public static TreeElement createEmptyRefParameterList(Project project) {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    return (TreeElement)Objects.requireNonNull(factory.createReferenceFromText("foo", null).getParameterList()).getNode();
   }
 
   @Override
@@ -714,6 +787,11 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
   }
 
   @Override
+  public PsiReference getReference() {
+    return this;
+  }
+
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitReferenceExpression(this);
@@ -723,8 +801,9 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     }
   }
 
-  public String toString() {
-    return "PsiReferenceExpression:" + getText();
+  @Override
+  public PsiElement getElement() {
+    return this;
   }
 
   @Override
@@ -738,6 +817,11 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
       return new TextRange(dot.getStartOffsetInParent() + dot.getTextLength(), getTextLength());
     }
     return new TextRange(nameChild.getStartOffsetInParent(), getTextLength());
+  }
+
+  @Override
+  public PsiElement resolve() {
+    return advancedResolve(false).getElement();
   }
 
   @Override
@@ -759,11 +843,21 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
     return getChildRole(getFirstChildNode()) == ChildRole.QUALIFIER;
   }
 
+  @Override
+  public String getQualifiedName() {
+    return getCanonicalText();
+  }
+
   private String getCachedNormalizedText() {
     String whiteSpaceAndComments = myCachedNormalizedText;
     if (whiteSpaceAndComments == null) {
       myCachedNormalizedText = whiteSpaceAndComments = JavaSourceUtil.getReferenceText(this);
     }
     return whiteSpaceAndComments;
+  }
+
+  @Override
+  public String toString() {
+    return "PsiReferenceExpression:" + getText();
   }
 }

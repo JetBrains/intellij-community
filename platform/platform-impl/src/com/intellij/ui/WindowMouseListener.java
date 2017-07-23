@@ -34,6 +34,7 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
   @JdkConstants.CursorType int myType;
   private Point myLocation;
   private Rectangle myViewBounds;
+  private boolean wasDragged;
 
   /**
    * @param content the window content to find a window, or {@code null} to use a component from a mouse event
@@ -101,6 +102,7 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
    */
   private void update(MouseEvent event, boolean start) {
     if (event.isConsumed()) return;
+    if (start) wasDragged = false; // reset dragged state when mouse pressed
     if (myLocation == null) {
       Component content = getContent(event);
       Component view = getView(content);
@@ -121,6 +123,7 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
    */
   private void process(MouseEvent event, boolean stop) {
     if (event.isConsumed()) return;
+    if (!stop) wasDragged = true; // set dragged state when mouse dragged
     if (myLocation != null && myViewBounds != null) {
       Component content = getContent(event);
       Component view = getView(content);
@@ -144,11 +147,12 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
       if (stop) {
         setCursor(content, getPredefinedCursor(DEFAULT_CURSOR));
         myLocation = null;
+        if (wasDragged) myViewBounds = null; // no mouse clicked when mouse released after mouse dragged
       }
       event.consume();
     }
     else if (stop && myViewBounds != null) {
-      myViewBounds = null; // consume second call
+      myViewBounds = null; // consume mouse clicked for consumed mouse released if no mouse dragged
       event.consume();
     }
   }

@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.util;
 
+import com.intellij.codeInsight.daemon.NonHideableIconGutterMark;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public abstract class DiffGutterRenderer extends GutterIconRenderer {
+public abstract class DiffGutterRenderer extends GutterIconRenderer implements NonHideableIconGutterMark {
   @NotNull private final Icon myIcon;
   @Nullable private final String myTooltip;
 

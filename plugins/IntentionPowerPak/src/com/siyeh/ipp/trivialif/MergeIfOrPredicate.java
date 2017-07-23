@@ -79,7 +79,7 @@ class MergeIfOrPredicate implements PsiElementPredicate {
     if (ControlFlowUtils.statementMayCompleteNormally(thenBranch)) {
       return false;
     }
-    final PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(ifStatement, PsiWhiteSpace.class);
+    final PsiElement nextStatement = PsiTreeUtil.skipWhitespacesForward(ifStatement);
     if (!(nextStatement instanceof PsiIfStatement)) {
       return false;
     }

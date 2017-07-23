@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -26,6 +27,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.log.VcsLogFileHistoryProvider;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,19 +63,25 @@ public class TabbedShowHistoryAction extends AbstractVcsAction {
   }
 
   private static boolean isEnabled(@NotNull Project project, @NotNull FilePath path, @NotNull VirtualFile fileOrParent) {
-    boolean result = false;
+    boolean fileInVcs = AbstractVcs.fileInVcsByFileStatus(project, fileOrParent);
+    if (!fileInVcs) return false;
+
     AbstractVcs vcs = ChangesUtil.getVcsForFile(fileOrParent, project);
+    if (vcs == null) return false;
 
-    if (vcs != null) {
-      VcsHistoryProvider provider = vcs.getVcsHistoryProvider();
+    return canShowNewFileHistory(project, path) || canShowOldFileHistory(vcs, path, fileOrParent);
+  }
 
-      result = provider != null &&
-               (provider.supportsHistoryForDirectories() || !path.isDirectory()) &&
-               AbstractVcs.fileInVcsByFileStatus(project, fileOrParent) &&
-               provider.canShowHistoryFor(fileOrParent);
-    }
+  private static boolean canShowOldFileHistory(@NotNull AbstractVcs vcs, @NotNull FilePath path, @NotNull VirtualFile fileOrParent) {
+    VcsHistoryProvider provider = vcs.getVcsHistoryProvider();
+    return provider != null &&
+           (provider.supportsHistoryForDirectories() || !path.isDirectory()) &&
+           provider.canShowHistoryFor(fileOrParent);
+  }
 
-    return result;
+  private static boolean canShowNewFileHistory(@NotNull Project project, @NotNull FilePath path) {
+    VcsLogFileHistoryProvider historyProvider = ServiceManager.getService(VcsLogFileHistoryProvider.class);
+    return historyProvider != null && historyProvider.canShowFileHistory(project, path);
   }
 
   @NotNull
@@ -102,13 +110,27 @@ public class TabbedShowHistoryAction extends AbstractVcsAction {
 
   @Override
   protected void actionPerformed(@NotNull VcsContext context) {
-    Project project = context.getProject();
+    Project project = assertNotNull(context.getProject());
     Pair<FilePath, VirtualFile> pair = getPathAndParentFile(context);
     FilePath path = assertNotNull(pair.first);
     VirtualFile fileOrParent = assertNotNull(pair.second);
     AbstractVcs vcs = assertNotNull(ChangesUtil.getVcsForFile(fileOrParent, project));
-    VcsHistoryProvider provider = assertNotNull(vcs.getVcsHistoryProvider());
 
+    if (canShowNewFileHistory(project, path)) {
+      showNewFileHistory(project, path);
+    }
+    else {
+      showOldFileHistory(project, vcs, path);
+    }
+  }
+
+  private static void showNewFileHistory(@NotNull Project project, @NotNull FilePath path) {
+    VcsLogFileHistoryProvider historyProvider = ServiceManager.getService(VcsLogFileHistoryProvider.class);
+    historyProvider.showFileHistory(project, path, null);
+  }
+
+  private static void showOldFileHistory(@NotNull Project project, @NotNull AbstractVcs vcs, @NotNull FilePath path) {
+    VcsHistoryProvider provider = assertNotNull(vcs.getVcsHistoryProvider());
     AbstractVcsHelper.getInstance(project).showFileHistory(provider, vcs.getAnnotationProvider(), path, null, vcs);
   }
 }

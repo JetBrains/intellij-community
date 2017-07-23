@@ -17,10 +17,11 @@ package org.intellij.plugins.intelliLang.inject.java.validation;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ui.JBUI;
+import com.siyeh.ig.psiutils.CollectionUtils;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.pattern.PatternValidator;
 import org.intellij.plugins.intelliLang.util.AnnotateFix;
@@ -31,58 +32,48 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.Arrays;
 import java.util.Set;
 
 public class LanguageMismatch extends LocalInspectionTool {
   public boolean CHECK_NON_ANNOTATED_REFERENCES = true;
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return PatternValidator.LANGUAGE_INJECTION;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Language Mismatch";
   }
 
+  @Override
   @Nullable
   public JComponent createOptionsPanel() {
-    final JCheckBox jCheckBox =
-        new JCheckBox("Flag usages of non-annotated elements where the usage context implies a certain language");
-    jCheckBox.setSelected(CHECK_NON_ANNOTATED_REFERENCES);
-    jCheckBox.addItemListener(new ItemListener() {
-      public void itemStateChanged(ItemEvent e) {
-        CHECK_NON_ANNOTATED_REFERENCES = jCheckBox.isSelected();
-      }
-    });
-    return JBUI.Panels.simplePanel().addToTop(jCheckBox);
+    return new SingleCheckboxOptionsPanel(
+      "Flag usages of non-annotated elements where the usage context implies a certain language", this, "CHECK_NON_ANNOTATED_REFERENCES");
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       final Pair<String, ? extends Set<String>> annotationName = Configuration.getProjectInstance(holder.getProject()).getAdvancedConfiguration().getLanguageAnnotationPair();
 
+      @Override
       public void visitExpression(PsiExpression expression) {
         checkExpression(expression, holder, annotationName);
       }
 
       @Override
-      public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
-        final PsiExpression expr = expression.getExpression();
-        if (expr != null) {
-          expr.accept(this);
-        }
-      }
-
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         final PsiElement element = expression.resolve();
         if (!(element instanceof PsiModifierListOwner)) {
@@ -93,7 +84,7 @@ public class LanguageMismatch extends LocalInspectionTool {
     };
   }
 
-  private void checkExpression(PsiExpression expression, ProblemsHolder holder, Pair<String, ? extends Set<String>> annotationName) {
+  void checkExpression(PsiExpression expression, ProblemsHolder holder, Pair<String, ? extends Set<String>> annotationName) {
     final PsiType type = expression.getType();
     if (type == null || !PsiUtilEx.isStringOrStringArray(type)) {
       return;
@@ -137,17 +128,21 @@ public class LanguageMismatch extends LocalInspectionTool {
                   return;
                 }
               }
+              if (declOwner instanceof PsiField && CollectionUtils.isConstantEmptyArray((PsiField)declOwner)) {
+                // don't warn about unannotated empty array constants.
+                return;
+              }
               // context implies language, but declaration isn't annotated
-              final PsiAnnotation annotation = annotations[annotations.length - 1];
-              final String initializer = annotation.getParameterList().getText();
-              final AnnotateFix fix = new AnnotateFix(declOwner, annotation.getQualifiedName(), initializer) {
-                @NotNull
-                public String getName() {
-                  return initializer == null ? super.getName() : super.getName() + initializer;
-                }
-              };
-
-              if (fix.canApply()) {
+              if (AnnotateFix.canApplyOn(declOwner)) {
+                final PsiAnnotation annotation = annotations[annotations.length - 1];
+                final String initializer = annotation.getParameterList().getText();
+                final AnnotateFix fix = new AnnotateFix(annotation.getQualifiedName(), initializer) {
+                  @Override
+                  @NotNull
+                  public String getName() {
+                    return initializer == null ? super.getName() : super.getName() + initializer;
+                  }
+                };
                 holder.registerProblem(expression, "Language problem: Found non-annotated reference where '" + expected + "' is expected",
                                        fix);
               }
@@ -161,6 +156,7 @@ public class LanguageMismatch extends LocalInspectionTool {
     }
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {

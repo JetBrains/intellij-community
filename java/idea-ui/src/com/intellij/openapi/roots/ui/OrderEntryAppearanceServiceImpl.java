@@ -49,7 +49,6 @@ import java.awt.*;
 import java.io.File;
 
 public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService {
-  private static final Icon EXCLUDE_FOLDER_ICON = IconLoader.getDisabledIcon(PlatformIcons.FOLDER_ICON);
 
   private static final String NO_JDK = ProjectBundle.message("jdk.missing.item");
 
@@ -162,7 +161,7 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
       return formatRelativePath(folder, PlatformIcons.FOLDER_ICON);
     }
     else if (folder instanceof ExcludeFolder) {
-      return formatRelativePath(folder, EXCLUDE_FOLDER_ICON);
+      return formatRelativePath(folder, IconLoader.getDisabledIcon(PlatformIcons.FOLDER_ICON));
     }
     else {
       throw new RuntimeException(folder.getClass().getName());

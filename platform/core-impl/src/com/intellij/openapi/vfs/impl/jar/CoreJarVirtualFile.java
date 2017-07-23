@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,47 +17,47 @@ package com.intellij.openapi.vfs.impl.jar;
 
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
-import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.List;
 
 /**
  * @author yole
  */
 public class CoreJarVirtualFile extends VirtualFile {
   private final CoreJarHandler myHandler;
-  private final String myName;
-  private final FileAttributes myEntry;
+  private final CharSequence myName;
+  private final long myLength;
+  private final long myTimestamp;
   private final VirtualFile myParent;
-  private List<VirtualFile> myChildren = null;
+  private VirtualFile[] myChildren = VirtualFile.EMPTY_ARRAY;
 
-  public CoreJarVirtualFile(@NotNull CoreJarHandler handler, @NotNull String name, @NotNull FileAttributes entry, @Nullable CoreJarVirtualFile parent) {
+  public CoreJarVirtualFile(@NotNull CoreJarHandler handler,
+                            @NotNull CharSequence name,
+                            long length,
+                            long timestamp,
+                            @Nullable CoreJarVirtualFile parent) {
     myHandler = handler;
     myName = name;
-    myEntry = entry;
+    myLength = length;
+    myTimestamp = timestamp;
     myParent = parent;
+  }
 
-    if (parent != null) {
-      if (parent.myChildren == null) {
-        parent.myChildren = new SmartList<VirtualFile>();
-      }
-      parent.myChildren.add(this);
-    }
+  void setChildren(VirtualFile[] children) {
+    myChildren = children;
   }
 
   @NotNull
   @Override
   public String getName() {
-    return myName;
+    return myName.toString();
   }
 
   @NotNull
@@ -91,7 +91,7 @@ public class CoreJarVirtualFile extends VirtualFile {
 
   @Override
   public boolean isDirectory() {
-    return myEntry.isDirectory();
+    return myLength < 0;
   }
 
   @Override
@@ -106,10 +106,7 @@ public class CoreJarVirtualFile extends VirtualFile {
 
   @Override
   public VirtualFile[] getChildren() {
-    if (myChildren == null) {
-      return VirtualFile.EMPTY_ARRAY;
-    }
-    return myChildren.toArray(new VirtualFile[myChildren.size()]);
+    return myChildren;
   }
 
   @NotNull
@@ -127,12 +124,12 @@ public class CoreJarVirtualFile extends VirtualFile {
 
   @Override
   public long getTimeStamp() {
-    return myEntry.lastModified;
+    return myTimestamp;
   }
 
   @Override
   public long getLength() {
-    return myEntry.length;
+    return myLength;
   }
 
   @Override

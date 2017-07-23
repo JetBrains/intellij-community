@@ -37,6 +37,7 @@ public class UsageViewNodeTextLocation extends ElementDescriptionLocation {
 
   public static final UsageViewNodeTextLocation INSTANCE = new UsageViewNodeTextLocation();
 
+  @NotNull
   @Override
   public ElementDescriptionProvider getDefaultProvider() {
     return DEFAULT_PROVIDER;

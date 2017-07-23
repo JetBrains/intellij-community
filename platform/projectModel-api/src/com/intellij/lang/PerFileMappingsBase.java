@@ -19,10 +19,12 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -71,13 +73,18 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   @Override
   @Nullable
   public T getMapping(@Nullable VirtualFile file) {
-    FilePropertyPusher<T> pusher = getFilePropertyPusher();
-    T t = getMappingInner(file, myMappings, pusher == null? null : pusher.getFileDataKey());
+    T t = getConfiguredMapping(file);
     return t == null? getDefaultMapping(file) : t;
   }
 
   @Nullable
-  protected static <T> T getMappingInner(@Nullable VirtualFile file, @Nullable Map<VirtualFile, T> mappings, @Nullable Key<T> pusherKey) {
+  public T getConfiguredMapping(@Nullable VirtualFile file) {
+    FilePropertyPusher<T> pusher = getFilePropertyPusher();
+    return getMappingInner(file, myMappings, pusher == null ? null : pusher.getFileDataKey());
+  }
+
+  @Nullable
+  protected T getMappingInner(@Nullable VirtualFile file, @Nullable Map<VirtualFile, T> mappings, @Nullable Key<T> pusherKey) {
     if (file instanceof VirtualFileWindow) {
       final VirtualFileWindow window = (VirtualFileWindow)file;
       file = window.getDelegate();
@@ -94,13 +101,24 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
       if (pushedValue != null) return pushedValue;
     }
     if (mappings == null) return null;
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (mappings) {
       T t = getMappingForHierarchy(file, mappings);
       if (t != null) return t;
       t = getMappingForHierarchy(originalFile, mappings);
       if (t != null) return t;
+      return getNotInHierarchy(file, mappings);
+    }
+  }
+
+  @Nullable
+  protected T getNotInHierarchy(@Nullable VirtualFile file, @NotNull Map<VirtualFile, T> mappings) {
+    if (getProject() == null || file == null ||
+        file.getFileSystem() instanceof NonPhysicalFileSystem ||
+        ProjectFileIndex.getInstance(getProject()).isInContent(file)) {
       return mappings.get(null);
     }
+    return null;
   }
 
   private static <T> T getMappingForHierarchy(@Nullable VirtualFile file, @NotNull Map<VirtualFile, T> mappings) {
@@ -109,16 +127,6 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
       if (t != null) return t;
     }
     return null;
-  }
-
-  @Override
-  public T chosenToStored(VirtualFile file, T value) {
-    return value;
-  }
-
-  @Override
-  public boolean isSelectable(T value) {
-    return true;
   }
 
   @Override
@@ -180,12 +188,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     }
   }
 
-  @Override
-  public Collection<T> getAvailableValues(VirtualFile file) {
-    return getAvailableValues();
-  }
-
-  protected abstract List<T> getAvailableValues();
+  public abstract List<T> getAvailableValues();
 
   @Nullable
   protected abstract String serialize(T t);

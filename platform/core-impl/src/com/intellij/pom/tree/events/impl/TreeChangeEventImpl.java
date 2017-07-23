@@ -38,9 +38,9 @@ import java.util.*;
  */
 public class TreeChangeEventImpl implements TreeChangeEvent{
   private static final Logger LOG = Logger.getInstance("#com.intellij.pom.tree.events.impl.TreeChangeEventImpl");
-  private final Map<ASTNode, TreeChange> myChangedElements = new THashMap<ASTNode, TreeChange>();
+  private final Map<ASTNode, TreeChange> myChangedElements = new THashMap<>();
   private List<ASTNode> myChangedInOrder;
-  private final List<Set<ASTNode>> myOfEqualDepth = new ArrayList<Set<ASTNode>>(10);
+  private final List<Set<ASTNode>> myOfEqualDepth = new ArrayList<>(10);
   private final PomModelAspect myAspect;
   private final FileElement myFileElement;
 
@@ -59,11 +59,11 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
   @NotNull
   public ASTNode[] getChangedElements() {
     if (myChangedInOrder == null) {
-      myChangedInOrder = new ArrayList<ASTNode>(myChangedElements.keySet());
+      myChangedInOrder = new ArrayList<>(myChangedElements.keySet());
 
-      Collections.sort(myChangedInOrder, new Comparator<ASTNode>() {
-        final Map<ASTNode, int[]> routeMap = new THashMap<ASTNode, int[]>(myChangedElements.size());
-        final TObjectIntHashMap<ASTNode> nodeIndex = new TObjectIntHashMap<ASTNode>(myChangedElements.size());
+      myChangedInOrder.sort(new Comparator<ASTNode>() {
+        final Map<ASTNode, int[]> routeMap = new THashMap<>(myChangedElements.size());
+        final TObjectIntHashMap<ASTNode> nodeIndex = new TObjectIntHashMap<>(myChangedElements.size());
 
         @Override
         public int compare(ASTNode o1, ASTNode o2) {
@@ -154,9 +154,9 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
   private void addToEqualsDepthList(final int depth, final ASTNode parent) {
     Set<ASTNode> treeElements = depth < myOfEqualDepth.size() ? myOfEqualDepth.get(depth) : null;
     if(treeElements == null){
-      treeElements = new HashSet<ASTNode>();
+      treeElements = new HashSet<>();
       while (depth > myOfEqualDepth.size()) {
-        myOfEqualDepth.add(new HashSet<ASTNode>());
+        myOfEqualDepth.add(new HashSet<>());
       }
       myOfEqualDepth.add(depth, treeElements);
     }
@@ -215,8 +215,9 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
     }
   }
 
+  @NotNull
   private static int[] getRoute(ASTNode node, TObjectIntHashMap<ASTNode> index){
-    final List<ASTNode> parents = new ArrayList<ASTNode>(20);
+    final List<ASTNode> parents = new ArrayList<>(20);
     while(node != null){
       ASTNode nodeTreeParent = node.getTreeParent();
       if (nodeTreeParent == null) break;
@@ -267,7 +268,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
   public void merge(@NotNull PomChangeSet blocked) {
     if(!(blocked instanceof TreeChangeEventImpl)) return;
     final TreeChangeEventImpl blockedTreeChange = (TreeChangeEventImpl)blocked;
-    final Map<ASTNode, TreeChange> changedElements = new HashMap<ASTNode, TreeChange>(blockedTreeChange.myChangedElements);
+    final Map<ASTNode, TreeChange> changedElements = new HashMap<>(blockedTreeChange.myChangedElements);
     {// merging conflicting changes
       final Iterator<Map.Entry<ASTNode, TreeChange>> iterator = changedElements.entrySet().iterator();
 

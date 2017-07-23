@@ -16,16 +16,16 @@
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.psi.codeStyle.CodeStyleConfigurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Set;
 
-public abstract class CodeStyleAbstractConfigurable implements Configurable, OptionsContainingConfigurable {
+public abstract class CodeStyleAbstractConfigurable implements CodeStyleConfigurable, OptionsContainingConfigurable {
   private CodeStyleAbstractPanel myPanel;
   private final CodeStyleSettings mySettings;
   private final CodeStyleSettings myCloneSettings;
@@ -55,8 +55,13 @@ public abstract class CodeStyleAbstractConfigurable implements Configurable, Opt
 
   @Override
   public void apply() throws ConfigurationException {
+    apply(mySettings);
+  }
+
+  @Override
+  public void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException {
     if (myPanel != null) {
-      myPanel.apply(mySettings);
+      myPanel.apply(settings);
     }
   }
 
@@ -65,11 +70,8 @@ public abstract class CodeStyleAbstractConfigurable implements Configurable, Opt
     reset(mySettings);
   }
 
-  public void resetFromClone(){
-    reset(myCloneSettings);
-  }
-
-  public void reset(CodeStyleSettings settings) {
+  @Override
+  public void reset(@NotNull CodeStyleSettings settings) {
     if (myPanel != null) {
       myPanel.reset(settings);
     }

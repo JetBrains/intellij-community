@@ -42,15 +42,14 @@ public class FlatSpeedSearchPopup extends PopupFactoryImpl.ActionGroupPopup {
   }
 
   @Override
-  public boolean shouldBeShowing(Object value) {
+  public final boolean shouldBeShowing(Object value) {
     if (!super.shouldBeShowing(value)) return false;
     if (!(value instanceof PopupFactoryImpl.ActionItem)) return true;
-    AnAction action = ((PopupFactoryImpl.ActionItem)value).getAction();
-    return (getSpeedSearch().isHoldingFilter() || !isSpeedsearchAction(action)) && shouldShow(action);
+    return shouldBeShowing(((PopupFactoryImpl.ActionItem)value).getAction());
   }
 
-  protected boolean shouldShow(@NotNull AnAction action) {
-    return true;
+  protected boolean shouldBeShowing(@NotNull AnAction action) {
+    return getSpeedSearch().isHoldingFilter() || !isSpeedsearchAction(action);
   }
 
   @NotNull

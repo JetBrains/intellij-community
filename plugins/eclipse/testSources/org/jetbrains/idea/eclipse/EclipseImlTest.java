@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 28-Nov-2008
- */
 package org.jetbrains.idea.eclipse;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,17 +31,18 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.util.JdomKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
 
 import java.io.File;
+import java.nio.file.Paths;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
@@ -79,7 +76,7 @@ public class EclipseImlTest extends IdeaTestCase {
     }
     String communityLib = FileUtil.toSystemIndependentName(PathManagerEx.findFileUnderCommunityHome("lib").getAbsolutePath());
     fileText = fileText.replaceAll("\\$" + JUNIT + "\\$", communityLib);
-    final Element classpathElement = JDOMUtil.loadDocument(fileText).getRootElement();
+    final Element classpathElement = JdomKt.loadElement(fileText);
     final Module module = WriteCommandAction.runWriteCommandAction(null, (Computable<Module>)() -> ModuleManager.getInstance(project)
       .newModule(new File(path) + File.separator + EclipseProjectFinder
         .findProjectName(path) + ModuleManagerImpl.IML_EXTENSION, StdModuleTypes.JAVA.getId()));
@@ -97,7 +94,7 @@ public class EclipseImlTest extends IdeaTestCase {
     PathMacroManager.getInstance(project).collapsePaths(actualImlElement);
     PathMacros.getInstance().removeMacro(JUNIT);
 
-    assertThat(actualImlElement).isEqualTo(new File(project.getBaseDir().getPath() + "/expected", "expected.iml"));
+    assertThat(actualImlElement).isEqualTo(Paths.get(project.getBaseDir().getPath(), "expected", "expected.iml"));
   }
 
   public void testWorkspaceOnly() throws Exception {

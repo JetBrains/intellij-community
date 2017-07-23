@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.SAXException;
 
+import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.xml.transform.OutputKeys;
@@ -71,11 +69,13 @@ public class ExportTestResultsAction extends DumbAwareAction {
   private String myToolWindowId;
   private RunConfiguration myRunConfiguration;
 
-  public static ExportTestResultsAction create(String toolWindowId, RunConfiguration runtimeConfiguration) {
+  public static ExportTestResultsAction create(String toolWindowId, RunConfiguration runtimeConfiguration, JComponent component) {
     ExportTestResultsAction action = new ExportTestResultsAction();
-    action.copyFrom(ActionManager.getInstance().getAction(ID));
+    AnAction sourceAction = ActionManager.getInstance().getAction(ID);
+    action.copyFrom(sourceAction);
     action.myToolWindowId = toolWindowId;
     action.myRunConfiguration = runtimeConfiguration;
+    action.registerCustomShortcutSet(sourceAction.getShortcutSet(), component);
     return action;
   }
 
@@ -116,11 +116,11 @@ public class ExportTestResultsAction extends DumbAwareAction {
       }
       filename = d.getFileName();
       showDialog = getOutputFile(config, project, filename).exists()
-                   && Messages.showOkCancelDialog(
-        project,
-        ExecutionBundle.message("export.test.results.file.exists.message", filename),
-        ExecutionBundle.message("export.test.results.file.exists.title"),
-        Messages.getQuestionIcon()
+                   && Messages.showOkCancelDialog(project,
+                                                  ExecutionBundle.message("export.test.results.file.exists.message", filename),
+                                                  ExecutionBundle.message("export.test.results.file.exists.title"),
+                                                  "Overwrite", "Cancel",
+                                                  Messages.getQuestionIcon()
       ) != Messages.OK;
     }
 
@@ -130,10 +130,6 @@ public class ExportTestResultsAction extends DumbAwareAction {
         @Override
         public boolean shouldStartInBackground() {
           return true;
-        }
-
-        @Override
-        public void processSentToBackground() {
         }
       }) {
         @Override
@@ -148,17 +144,7 @@ public class ExportTestResultsAction extends DumbAwareAction {
               return;
             }
           }
-          catch (IOException ex) {
-            LOG.warn(ex);
-            showBalloon(project, MessageType.ERROR, ExecutionBundle.message("export.test.results.failed", ex.getMessage()), null);
-            return;
-          }
-          catch (TransformerException ex) {
-            LOG.warn(ex);
-            showBalloon(project, MessageType.ERROR, ExecutionBundle.message("export.test.results.failed", ex.getMessage()), null);
-            return;
-          }
-          catch (SAXException ex) {
+          catch (IOException | SAXException | TransformerException ex) {
             LOG.warn(ex);
             showBalloon(project, MessageType.ERROR, ExecutionBundle.message("export.test.results.failed", ex.getMessage()), null);
             return;

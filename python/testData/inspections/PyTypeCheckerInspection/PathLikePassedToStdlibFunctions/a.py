@@ -28,11 +28,11 @@ class B:
 
 b = B()
 
-open(<warning descr="Expected type 'Union[str, PathLike]', got 'B' instead">b</warning>)
+open(<warning descr="Unexpected type(s):(B)Possible types:(Union[str, bytes, int])(Union[str, bytes, int, PathLike])">b</warning>)
 
-os.fspath(b)  # TODO fail
-os.fsencode(b)  # TODO fail
-os.fsdecode(b)  # TODO fail
+os.fspath(b)  # TODO fail after enabling pyi-stubs for `os` module
+os.fsencode(b)  # TODO fail after enabling pyi-stubs for `os` module
+os.fsdecode(b)  # TODO fail after enabling pyi-stubs for `os` module
 
 Path(<warning descr="Expected type 'Union[str, bytes, PathLike]', got 'B' instead">b</warning>)
 PurePath(<warning descr="Expected type 'Union[str, bytes, PathLike]', got 'B' instead">b</warning>)

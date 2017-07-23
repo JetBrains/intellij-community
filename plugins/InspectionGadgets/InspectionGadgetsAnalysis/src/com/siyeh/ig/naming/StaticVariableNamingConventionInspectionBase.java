@@ -63,6 +63,7 @@ public class StaticVariableNamingConventionInspectionBase extends ConventionInsp
     return DEFAULT_MAX_LENGTH;
   }
 
+  @NotNull
   @Override
   public JComponent[] createExtraOptions() {
     return new JComponent[]{

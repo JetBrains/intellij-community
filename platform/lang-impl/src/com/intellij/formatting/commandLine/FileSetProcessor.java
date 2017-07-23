@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.util.Set;
 
 public abstract class FileSetProcessor {
-  private static final Logger LOG = Logger.getInstance("#" + FileSetProcessor.class.getName());
+  private static final Logger LOG = Logger.getInstance(FileSetProcessor.class);
 
   private Set<File> myTopEntries = ContainerUtil.newHashSet();
   private Set<String> myFileMasks = ContainerUtil.newHashSet();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,9 +40,14 @@ import java.util.*;
  * @author yole
  */
 public class FilenameIndex {
+
+  /**
+   * @deprecated Not to be used.
+   */
   @Deprecated
   public @NonNls static final ID<String, Void> NAME = ID.create("FilenameIndex");
 
+  @NotNull
   public static String[] getAllFilenames(Project project) {
     Set<String> names = new THashSet<>();
     getService().processAllFileNames((String s) -> {
@@ -68,6 +73,7 @@ public class FilenameIndex {
     return getVirtualFilesByNameIgnoringCase(name, scope, project, null);
   }
 
+  @NotNull
   public static PsiFile[] getFilesByName(final Project project, final String name, final GlobalSearchScope scope) {
     return (PsiFile[])getFilesByName(project, name, scope, false);
   }
@@ -134,7 +140,7 @@ public class FilenameIndex {
       return true;
     }, scope, idFilter);
 
-    // values accessed outside of provessAllKeys
+    // values accessed outside of processAllKeys
     final Set<VirtualFile> files = new THashSet<>();
     for (String each : keys) {
       files.addAll(fileNameIndexService.getVirtualFilesByName(project, each, scope, idFilter));
@@ -142,6 +148,7 @@ public class FilenameIndex {
     return files;
   }
 
+  @NotNull
   public static PsiFileSystemItem[] getFilesByName(final Project project,
                                                    final String name,
                                                    @NotNull final GlobalSearchScope scope,

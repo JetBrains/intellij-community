@@ -39,6 +39,8 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.table.CommitSelectionListener;
+import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -49,8 +51,9 @@ import java.util.List;
 /**
  * @author Kirill Likhodedov
  */
-class DetailsPanel extends JPanel implements EditorColorsListener {
+public class DetailsPanel extends JPanel implements EditorColorsListener {
   private static final int MAX_ROWS = 50;
+  private static final int MIN_SIZE = 20;
 
   @NotNull private final VcsLogData myLogData;
 
@@ -64,9 +67,9 @@ class DetailsPanel extends JPanel implements EditorColorsListener {
   @NotNull private List<Integer> mySelection = ContainerUtil.emptyList();
   @NotNull private Set<VcsFullCommitDetails> myCommitDetails = Collections.emptySet();
 
-  DetailsPanel(@NotNull VcsLogData logData,
-               @NotNull VcsLogColorManager colorManager,
-               @NotNull Disposable parent) {
+  public DetailsPanel(@NotNull VcsLogData logData,
+                      @NotNull VcsLogColorManager colorManager,
+                      @NotNull Disposable parent) {
     myLogData = logData;
     myColorManager = colorManager;
 
@@ -201,9 +204,15 @@ class DetailsPanel extends JPanel implements EditorColorsListener {
     return (CommitPanel)myMainContentPanel.getComponent(2 * index);
   }
 
+  @Override
+  public Dimension getMinimumSize() {
+    Dimension minimumSize = super.getMinimumSize();
+    return new Dimension(Math.max(minimumSize.width, JBUI.scale(MIN_SIZE)), Math.max(minimumSize.height, JBUI.scale(MIN_SIZE)));
+  }
+
   private class CommitSelectionListenerForDetails extends CommitSelectionListener {
     public CommitSelectionListenerForDetails(VcsLogGraphTable graphTable) {
-      super(DetailsPanel.this.myLogData, graphTable, DetailsPanel.this.myLoadingPanel);
+      super(DetailsPanel.this.myLogData, graphTable);
     }
 
     @Override
@@ -252,6 +261,16 @@ class DetailsPanel extends JPanel implements EditorColorsListener {
     @Override
     protected List<Integer> getSelectionToLoad() {
       return mySelection;
+    }
+
+    @Override
+    protected void startLoading() {
+      myLoadingPanel.startLoading();
+    }
+
+    @Override
+    protected void stopLoading() {
+      myLoadingPanel.stopLoading();
     }
   }
 }

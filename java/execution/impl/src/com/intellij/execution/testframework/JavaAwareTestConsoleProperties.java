@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 20-Feb-2008
- */
 package com.intellij.execution.testframework;
 
 import com.intellij.debugger.DebuggerManagerEx;
@@ -32,6 +28,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.stacktrace.StackTraceLine;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.openapi.diff.LineTokenizer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
@@ -107,4 +104,8 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
     return null;
   }
 
+  @Override
+  public boolean isEditable() {
+    return Registry.is("editable.java.test.console");
+  }
 }

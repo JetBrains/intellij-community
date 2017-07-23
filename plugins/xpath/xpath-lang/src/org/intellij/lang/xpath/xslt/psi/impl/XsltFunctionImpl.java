@@ -38,11 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.xml.namespace.QName;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 11.01.11
-*/
 public class XsltFunctionImpl extends XsltElementImpl implements XsltFunction, ItemPresentation {
   private static final NotNullFunction<XmlTag,Parameter> PARAM_MAPPER = param -> {
     final XPathType type = XsltCodeInsightUtil.getDeclaredType(param);

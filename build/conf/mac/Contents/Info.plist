@@ -46,10 +46,7 @@
     <string>@@build@@</string>
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.developer-tools</string>
-    <key>CFBundleHelpBookName</key>
-    <string>JetBrains.@@help_id@@.help</string>
-    <key>CFBundleHelpBookFolder</key>
-    <string>@@help_id@@.help</string>
+    @@bundled_help_attributes@@
 
     <key>NSHighResolutionCapable</key>
     <true/>
@@ -85,9 +82,6 @@
         <key>idea.home.path</key>
         <string>$APP_PACKAGE/Contents</string>
       </dict>
-
-      <key>VMOptions</key>
-      <string>@@vmoptions@@ -XX:ErrorFile=$USER_HOME/java_error_in_@@executable@@_%p.log -XX:HeapDumpPath=$USER_HOME/java_error_in_@@executable@@.hprof -Xbootclasspath/a:../lib/boot.jar</string>
 
       <key>WorkingDirectory</key>
       <string>$APP_PACKAGE/Contents/bin</string>

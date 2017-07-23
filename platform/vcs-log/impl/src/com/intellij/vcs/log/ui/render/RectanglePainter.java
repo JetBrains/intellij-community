@@ -30,7 +30,7 @@ public class RectanglePainter {
   protected static final int TEXT_PADDING_X = JBUI.scale(5);
   public static final int TOP_TEXT_PADDING = JBUI.scale(2);
   public static final int BOTTOM_TEXT_PADDING = JBUI.scale(1);
-  private static final int LABEL_ARC = JBUI.scale(5);
+  public static final int LABEL_ARC = JBUI.scale(6);
 
   private final boolean mySquare;
 

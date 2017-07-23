@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,6 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.intellij.xdebugger.breakpoints.XBreakpointAdapter;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
@@ -68,6 +67,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
+
 public class DebuggerUIUtil {
   @NonNls public static final String FULL_VALUE_POPUP_DIMENSION_KEY = "XDebugger.FullValuePopup";
 
@@ -83,7 +84,9 @@ public class DebuggerUIUtil {
   }
 
   public static void focusEditorOnCheck(final JCheckBox checkbox, final JComponent component) {
-    final Runnable runnable = () -> component.requestFocus();
+    final Runnable runnable = () -> getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      getGlobalInstance().requestFocus(component, true);
+    });
     checkbox.addActionListener(e -> {
       if (checkbox.isSelected()) {
         SwingUtilities.invokeLater(runnable);
@@ -129,8 +132,8 @@ public class DebuggerUIUtil {
   }
 
   public static void showValuePopup(@NotNull XFullValueEvaluator evaluator, @NotNull MouseEvent event, @NotNull Project project, @Nullable Editor editor) {
-    EditorTextField textArea = new TextViewer("Evaluating...", project);
-    textArea.setBackground(HintUtil.INFORMATION_COLOR);
+    EditorTextField textArea = new TextViewer(XDebuggerUIConstants.EVALUATING_EXPRESSION_MESSAGE, project);
+    textArea.setBackground(HintUtil.getInformationColor());
 
     final FullValueEvaluationCallbackImpl callback = new FullValueEvaluationCallbackImpl(textArea);
     evaluator.startEvaluation(callback);
@@ -218,7 +221,7 @@ public class DebuggerUIUtil {
     final Balloon balloon = showBreakpointEditor(project, mainPanel, point, component, showMoreOptions, breakpoint);
     balloonRef.set(balloon);
 
-    final XBreakpointListener<XBreakpoint<?>> breakpointListener = new XBreakpointAdapter<XBreakpoint<?>>() {
+    final XBreakpointListener<XBreakpoint<?>> breakpointListener = new XBreakpointListener<XBreakpoint<?>>() {
       @Override
       public void breakpointRemoved(@NotNull XBreakpoint<?> removedBreakpoint) {
         if (removedBreakpoint.equals(breakpoint)) {

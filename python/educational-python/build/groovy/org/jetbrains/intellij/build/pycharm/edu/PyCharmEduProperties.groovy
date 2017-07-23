@@ -38,7 +38,7 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
 
   @Override
   String getSystemSelector(ApplicationInfoProperties applicationInfo) {
-    "PyCharmEdu${applicationInfo.majorVersion}0"
+    "PyCharmEdu${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart}"
   }
 
   @Override
@@ -63,11 +63,7 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
       }
 
       @Override
-      void copyAdditionalFiles(BuildContext context, String targetDirectory) {
-        super.copyAdditionalFiles(context, targetDirectory)
-        context.ant.copy(file: "$context.paths.projectHome/help/pycharm-eduhelp.jar", todir: "$targetDirectory/help",
-                         failonerror: false, quiet: true)
-      }
+      String getBaseDownloadUrlForJre() { "https://download.jetbrains.com/python" }
     }
   }
 
@@ -75,7 +71,7 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
   LinuxDistributionCustomizer createLinuxCustomizer(String projectHome) {
     return new LinuxDistributionCustomizer() {
       {
-        iconPngPath = "$pythonCommunityPath/resources/PyCharmCore128.png"
+        iconPngPath = "$pythonCommunityPath/educational-python/resources/PyCharmEdu128.png"
       }
 
       @Override
@@ -83,11 +79,6 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
         "pycharm-edu-${applicationInfo.isEAP ? buildNumber : applicationInfo.fullVersion}"
       }
 
-      @Override
-      void copyAdditionalFiles(BuildContext context, String targetDirectory) {
-        context.ant.copy(file: "$context.paths.projectHome/help/pycharm-eduhelp.jar", todir: "$targetDirectory/help",
-                         failonerror: false, quiet: true)
-      }
     }
   }
 
@@ -97,7 +88,6 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
       {
         icnsPath = "$pythonCommunityPath/educational-python/resources/PyCharmEdu.icns"
         bundleIdentifier = "com.jetbrains.pycharm"
-        helpId = "PE"
         dmgImagePath = "$pythonCommunityPath/educational-python/build/DMG_background.png"
       }
     }

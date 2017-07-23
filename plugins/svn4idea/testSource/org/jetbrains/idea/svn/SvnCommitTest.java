@@ -16,16 +16,17 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.NullableFunction;
 import com.intellij.vcsUtil.VcsUtil;
 import junit.framework.Assert;
-import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,12 +36,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/28/13
- * Time: 11:59 AM
- */
 public class SvnCommitTest extends Svn17TestCase {
   private SvnVcs myVcs;
   private VcsDirtyScopeManager myDirtyScopeManager;
@@ -444,14 +439,7 @@ public class SvnCommitTest extends Svn17TestCase {
       changes.add(change);
     }
     final HashSet<String> feedback = new HashSet<>();
-    final List<VcsException> exceptions = myVcs.getCheckinEnvironment().commit(changes, "test comment list",
-      new NullableFunction<Object, Object>() {
-        @Nullable
-        @Override
-        public Object fun(Object o) {
-          return null;
-        }
-      }, feedback);
+    final List<VcsException> exceptions = myVcs.getCheckinEnvironment().commit(changes, "test comment list", o -> null, feedback);
     if (exceptions !=null && ! exceptions.isEmpty()) {
       exceptions.get(0).printStackTrace();
     }

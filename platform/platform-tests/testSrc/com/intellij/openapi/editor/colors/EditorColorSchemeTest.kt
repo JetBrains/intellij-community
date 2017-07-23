@@ -19,11 +19,11 @@ import com.intellij.configurationStore.SchemeManagerFactoryBase
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
-import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
-import com.intellij.testFramework.assertions.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -54,16 +54,25 @@ class EditorColorSchemeTest {
     val scheme = manager.getScheme("Foo")
     assertThat(scheme.name).isEqualTo("Foo")
 
-    (scheme as AbstractColorsScheme).isSaveNeeded = true
+    (scheme as AbstractColorsScheme).setSaveNeeded(true)
 
     schemeManagerFactory.save()
 
     // JAVA_NUMBER is removed - see isParentOverwritingInheritance
     assertThat(removeSchemeMetaInfo(schemeFile.readText())).isEqualTo("""
     <scheme name="Foo" version="142" parent_scheme="Default">
+      <option name="FONT_SCALE" value="1.0" />
       <option name="EDITOR_FONT_SIZE" value="12" />
       <option name="EDITOR_FONT_NAME" value="${scheme.editorFontName}" />
     </scheme>""".trimIndent())
     assertThat(schemeFile.parent).hasChildren("Foo.icls")
+
+    // test reload
+    val schemeNamesBeforeReload = manager.schemeManager.allSchemes.map { it.name }
+    schemeManagerFactory.process {
+      it.reload()
+    }
+
+    assertThat(manager.schemeManager.allSchemes.map { it.name }).isEqualTo(schemeNamesBeforeReload)
   }
 }

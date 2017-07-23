@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 20.12.2006
- * Time: 15:24:28
- */
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
@@ -34,13 +28,13 @@ import com.intellij.util.PathUtilRt;
 import com.intellij.util.PatternUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class IgnoredFileBean {
   private final String myPath;
   private final String myFilenameIfFile;
   private final String myMask;
-  private final Matcher myMatcher;
+  @Nullable private final Pattern myPattern;
   private final IgnoreSettingsType myType;
   private final Project myProject;
   private volatile VirtualFile myCachedResolved;
@@ -51,7 +45,7 @@ public class IgnoredFileBean {
     myFilenameIfFile = IgnoreSettingsType.FILE.equals(type) ? PathUtilRt.getFileName(path) : null;
     myProject = project;
     myMask = null;
-    myMatcher = null;
+    myPattern = null;
   }
 
   Project getProject() {
@@ -61,12 +55,7 @@ public class IgnoredFileBean {
   IgnoredFileBean(String mask) {
     myType = IgnoreSettingsType.MASK;
     myMask = mask;
-    if (mask == null) {
-      myMatcher = null;
-    }
-    else {
-      myMatcher = PatternUtil.fromMask(mask).matcher("");
-    }
+    myPattern = mask != null ? PatternUtil.fromMask(mask) : null;
     myPath = null;
     myFilenameIfFile = null;
     myProject = null;
@@ -110,8 +99,7 @@ public class IgnoredFileBean {
 
   public boolean matchesFile(VirtualFile file) {
     if (myType == IgnoreSettingsType.MASK) {
-      myMatcher.reset(file.getName());
-      return myMatcher.matches();
+      return myPattern != null && myPattern.matcher(file.getName()).matches();
     }
     else {
       // quick check for 'file' == exact match pattern

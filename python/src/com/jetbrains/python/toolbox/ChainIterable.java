@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.toolbox;
 
-import com.google.common.collect.Iterators;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,7 +85,7 @@ public class ChainIterable<T> extends ChainedListBase<Iterable<T>> implements It
   private static class ChainIterator<T> implements Iterator<T> {
   
     private ChainedListBase<Iterable<T>> myLink; // link of the chain we're currently at
-    @NotNull private Iterator<T> myCurrent = Iterators.emptyIterator();
+    @NotNull private Iterator<T> myCurrent = ContainerUtil.emptyIterator();
   
     public ChainIterator(@Nullable ChainedListBase<Iterable<T>> initial) {
       myLink = initial;

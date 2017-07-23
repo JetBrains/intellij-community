@@ -43,7 +43,6 @@ import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -59,7 +58,7 @@ import java.util.*;
  * @since Oct 12, 2001
  */
 public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#" + UnusedDeclarationInspectionBase.class.getName());
+  private static final Logger LOG = Logger.getInstance(UnusedDeclarationInspectionBase.class);
 
   public boolean ADD_MAINS_TO_ENTRIES = true;
   public boolean ADD_APPLET_TO_ENTRIES = true;
@@ -333,16 +332,13 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
                   }
                 };
 
-                if (helper.processUsagesInNonJavaFiles(qualifiedName, processor, globalSearchScope)) {
-                  final PsiReference reference = ReferencesSearch.search(psiClass, globalSearchScope).findFirst();
-                  if (reference != null) {
+                helper.processUsagesInNonJavaFiles(qualifiedName, processor, globalSearchScope);
+
+                //references from java-like are already in graph or
+                //they would be checked during GlobalJavaInspectionContextImpl.performPostRunActivities
+                for (RefElement element : refElement.getInReferences()) {
+                  if (!(element instanceof RefJavaElement)) {
                     getEntryPointsManager(globalContext).addEntryPoint(refElement, false);
-                    for (PsiMethod method : psiClass.getMethods()) {
-                      final RefElement refMethod = refManager.getReference(method);
-                      if (refMethod != null) {
-                        getEntryPointsManager(globalContext).addEntryPoint(refMethod, false);
-                      }
-                    }
                   }
                 }
               }
@@ -358,7 +354,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
 
   public boolean isEntryPoint(@NotNull RefElement owner) {
     final PsiElement element = owner.getElement();
-    if (isImplicitUsage(element)) return true;
+    if (RefUtil.isImplicitUsage(element)) return true;
     if (element instanceof PsiModifierListOwner) {
       final EntryPointsManager entryPointsManager = EntryPointsManager.getInstance(element.getProject());
       if (entryPointsManager.isEntryPoint(element)) {
@@ -384,11 +380,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
 
     return false;
-  }
-
-  private static boolean isImplicitUsage(PsiElement element) {
-    return element instanceof PsiField ? RefUtil.isImplicitRead(element)
-                                       : RefUtil.isImplicitUsage(element);
   }
 
   public boolean isEntryPoint(@NotNull PsiElement element) {
@@ -419,7 +410,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         return true;
       }
     }
-    return isImplicitUsage(element);
+    return RefUtil.isImplicitUsage(element);
   }
 
   public boolean isGlobalEnabledInEditor() {
@@ -706,7 +697,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
   }
 
-  @TestOnly
   public List<EntryPoint> getExtensions() {
     return myExtensions;
   }

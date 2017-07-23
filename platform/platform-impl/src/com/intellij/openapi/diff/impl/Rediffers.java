@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
 
@@ -29,6 +28,7 @@ public class Rediffers {
   private final DiffPanelImpl myPanel;
   private final Alarm myAlarm = new Alarm();
   private final Runnable myUpdateRequest = new Runnable() {
+        @Override
         public void run() {
           if (myDisposed) return;
           updateNow();
@@ -60,6 +60,7 @@ public class Rediffers {
     myRediffers.put(source, rediff);
     rediff.startListen();
     source.addDisposable(new Disposable() {
+      @Override
       public void dispose() {
         contentRemoved(source);
       }
@@ -84,8 +85,7 @@ public class Rediffers {
       myDocument = document;
     }
 
-    public void beforeDocumentChange(DocumentEvent event) {}
-
+    @Override
     public void documentChanged(DocumentEvent event) {
       if (event.getOldLength() != event.getNewLength()) myPanel.invalidateDiff();
       requestRediff();
@@ -101,6 +101,7 @@ public class Rediffers {
       myLinstening = true;
     }
 
+    @Override
     public void dispose() {
       stopListen();
     }

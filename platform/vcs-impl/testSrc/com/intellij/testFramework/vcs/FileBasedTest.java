@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,6 @@ import com.intellij.util.ui.UIUtil;
 import org.junit.After;
 import org.junit.Before;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 7/19/12
- * Time: 8:25 PM
- */
 public abstract class FileBasedTest {
   protected LocalFileSystem myLocalFileSystem;
   protected IdeaProjectTestFixture myProjectFixture;
@@ -45,15 +39,13 @@ public abstract class FileBasedTest {
 
   @After
   public void tearDown() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          myProjectFixture.tearDown();
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+    myProject = null;
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        myProjectFixture.tearDown();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
   }

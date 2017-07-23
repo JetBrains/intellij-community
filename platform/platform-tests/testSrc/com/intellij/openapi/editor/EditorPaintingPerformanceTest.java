@@ -50,7 +50,7 @@ public class EditorPaintingPerformanceTest extends AbstractEditorTest {
         editor.getContentComponent().paintComponent(g);
         result[0] += g.getResult();
       }
-    }).cpuBound().assertTiming();
-    System.out.println(result[0]);
+    }).assertTiming();
+    LOG.debug(String.valueOf(result[0]));
   }
 }

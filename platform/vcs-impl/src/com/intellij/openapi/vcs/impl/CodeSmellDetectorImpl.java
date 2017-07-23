@@ -47,7 +47,10 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ui.MessageCategory;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author yole
@@ -62,44 +65,36 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
 
   @Override
   public void showCodeSmellErrors(@NotNull final List<CodeSmellInfo> smellList) {
-    Collections.sort(smellList, new Comparator<CodeSmellInfo>() {
-      @Override
-      public int compare(final CodeSmellInfo o1, final CodeSmellInfo o2) {
-        return o1.getTextRange().getStartOffset() - o2.getTextRange().getStartOffset();
+    Collections.sort(smellList, (o1, o2) -> o1.getTextRange().getStartOffset() - o2.getTextRange().getStartOffset());
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myProject.isDisposed()) return;
+      if (smellList.isEmpty()) {
+        return;
       }
-    });
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (myProject.isDisposed()) return;
-        if (smellList.isEmpty()) {
-          return;
+      final VcsErrorViewPanel errorTreeView = new VcsErrorViewPanel(myProject);
+      AbstractVcsHelperImpl helper = (AbstractVcsHelperImpl)AbstractVcsHelper.getInstance(myProject);
+      helper.openMessagesView(errorTreeView, VcsBundle.message("code.smells.error.messages.tab.name"));
+
+      FileDocumentManager fileManager = FileDocumentManager.getInstance();
+
+      for (CodeSmellInfo smellInfo : smellList) {
+        final VirtualFile file = fileManager.getFile(smellInfo.getDocument());
+        final OpenFileDescriptor navigatable =
+          new OpenFileDescriptor(myProject, file, smellInfo.getStartLine(), smellInfo.getStartColumn());
+        final String exportPrefix = NewErrorTreeViewPanel.createExportPrefix(smellInfo.getStartLine() + 1);
+        final String rendererPrefix =
+          NewErrorTreeViewPanel.createRendererPrefix(smellInfo.getStartLine() + 1, smellInfo.getStartColumn() + 1);
+        if (smellInfo.getSeverity() == HighlightSeverity.ERROR) {
+          errorTreeView.addMessage(MessageCategory.ERROR, new String[]{smellInfo.getDescription()}, file.getPresentableUrl(), navigatable,
+                                   exportPrefix, rendererPrefix, null);
+        }
+        else {//if (smellInfo.getSeverity() == HighlightSeverity.WARNING) {
+          errorTreeView.addMessage(MessageCategory.WARNING, new String[]{smellInfo.getDescription()}, file.getPresentableUrl(),
+                                   navigatable, exportPrefix, rendererPrefix, null);
         }
 
-        final VcsErrorViewPanel errorTreeView = new VcsErrorViewPanel(myProject);
-        AbstractVcsHelperImpl helper = (AbstractVcsHelperImpl)AbstractVcsHelper.getInstance(myProject);
-        helper.openMessagesView(errorTreeView, VcsBundle.message("code.smells.error.messages.tab.name"));
-
-        FileDocumentManager fileManager = FileDocumentManager.getInstance();
-
-        for (CodeSmellInfo smellInfo : smellList) {
-          final VirtualFile file = fileManager.getFile(smellInfo.getDocument());
-          final OpenFileDescriptor navigatable =
-            new OpenFileDescriptor(myProject, file, smellInfo.getStartLine(), smellInfo.getStartColumn());
-          final String exportPrefix = NewErrorTreeViewPanel.createExportPrefix(smellInfo.getStartLine() + 1);
-          final String rendererPrefix =
-            NewErrorTreeViewPanel.createRendererPrefix(smellInfo.getStartLine() + 1, smellInfo.getStartColumn() + 1);
-          if (smellInfo.getSeverity() == HighlightSeverity.ERROR) {
-            errorTreeView.addMessage(MessageCategory.ERROR, new String[]{smellInfo.getDescription()}, file.getPresentableUrl(), navigatable,
-                                     exportPrefix, rendererPrefix, null);
-          }
-          else {//if (smellInfo.getSeverity() == HighlightSeverity.WARNING) {
-            errorTreeView.addMessage(MessageCategory.WARNING, new String[]{smellInfo.getDescription()}, file.getPresentableUrl(),
-                                     navigatable, exportPrefix, rendererPrefix, null);
-          }
-
-        }
       }
     });
 
@@ -158,23 +153,15 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
         daemonIndicator.cancel();
       }
     });
-    ProgressManager.getInstance().runProcess(new Runnable() {
-      @Override
-      public void run() {
-        DumbService.getInstance(myProject).runReadActionInSmartMode(new Runnable() {
-          @Override
-          public void run() {
-            final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-            final Document document = FileDocumentManager.getInstance().getDocument(file);
-            if (psiFile == null || document == null) {
-              return;
-            }
-            List<HighlightInfo> infos = codeAnalyzer.runMainPasses(psiFile, document, daemonIndicator);
-            convertErrorsAndWarnings(infos, result, document);
-          }
-        });
+    ProgressManager.getInstance().runProcess(() -> DumbService.getInstance(myProject).runReadActionInSmartMode(() -> {
+      final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+      final Document document = FileDocumentManager.getInstance().getDocument(file);
+      if (psiFile == null || document == null) {
+        return;
       }
-    }, daemonIndicator);
+      List<HighlightInfo> infos = codeAnalyzer.runMainPasses(psiFile, document, daemonIndicator);
+      convertErrorsAndWarnings(infos, result, document);
+    }), daemonIndicator);
 
     return result;
   }

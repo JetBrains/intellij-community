@@ -1,22 +1,14 @@
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.codeInsight.completion.CompletionTestCase;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTest;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-import java.io.StringReader;
-import java.util.Collections;
-import java.util.List;
-
 /**
  * @author Irina.Chernushina on 10/1/2015.
  */
-public class JsonBySchemaCompletionTest extends CompletionTestCase {
+public class JsonBySchemaCompletionTest extends JsonBySchemaCompletionBaseTest {
   public void testTopLevel() throws Exception {
     testImpl("{\"properties\": {\"prima\": {}, \"proto\": {}, \"primus\": {}}}", "{<caret>}", "\"prima\"", "\"primus\"", "\"proto\"");
   }
@@ -133,6 +125,81 @@ public class JsonBySchemaCompletionTest extends CompletionTestCase {
              "\"r1\"", "\"r2\"");
   }
 
+  public void testSimpleNullCompletion() throws Exception {
+    final String schema = "{\n" +
+                          "  \"properties\": {\n" +
+                          "    \"null\": {\n" +
+                          "      \"type\": \"null\"\n" +
+                          "    }\n" +
+                          "  }\n" +
+                          "}";
+    testImpl(schema, "{\"null\": <caret>}", "null");
+  }
+
+  public void testNullCompletionInEnum() throws Exception {
+    final String schema = "{\n" +
+                          "  \"properties\": {\n" +
+                          "    \"null\": {\n" +
+                          "      \"type\": [\"null\", \"integer\"],\n" +
+                          "      \"enum\": [null, 1, 2]\n" +
+                          "    }\n" +
+                          "  }\n" +
+                          "}";
+    testImpl(schema, "{\"null\": <caret>}", "1", "2", "null");
+  }
+
+  public void testNullCompletionInTypeVariants() throws Exception {
+    final String schema = "{\n" +
+                          "  \"properties\": {\n" +
+                          "    \"null\": {\n" +
+                          "      \"type\": [\"null\", \"boolean\"]\n" +
+                          "    }\n" +
+                          "  }\n" +
+                          "}";
+    testImpl(schema, "{\"null\": <caret>}", "false", "null", "true");
+  }
+
+  public void testDescriptionFromDefinitionInCompletion() throws Exception {
+    final String schema = "{\n" +
+                          "  \"definitions\": {\n" +
+                          "    \"target\": {\n" +
+                          "      \"description\": \"Target description\"\n" +
+                          "    }\n" +
+                          "  },\n" +
+                          "  \"properties\": {\n" +
+                          "    \"source\": {\n" +
+                          "      \"$ref\": \"#/definitions/target\"\n" +
+                          "    }\n" +
+                          "  }\n" +
+                          "}";
+    testImpl(schema, "{<caret>}", "\"source\"");
+    Assert.assertEquals(1, myItems.length);
+    final LookupElementPresentation presentation = new LookupElementPresentation();
+    myItems[0].renderElement(presentation);
+    Assert.assertEquals("Target description", presentation.getTypeText());
+  }
+
+  public void testDescriptionFromTitleInCompletion() throws Exception {
+    final String schema = "{\n" +
+                          "  \"definitions\": {\n" +
+                          "    \"target\": {\n" +
+                          "      \"title\": \"Target title\",\n" +
+                          "      \"description\": \"Target description\"\n" +
+                          "    }\n" +
+                          "  },\n" +
+                          "  \"properties\": {\n" +
+                          "    \"source\": {\n" +
+                          "      \"$ref\": \"#/definitions/target\"\n" +
+                          "    }\n" +
+                          "  }\n" +
+                          "}";
+    testImpl(schema, "{<caret>}", "\"source\"");
+    Assert.assertEquals(1, myItems.length);
+    final LookupElementPresentation presentation = new LookupElementPresentation();
+    myItems[0].renderElement(presentation);
+    Assert.assertEquals("Target title", presentation.getTypeText());
+  }
+
   @NotNull
   private static String parcelShopSchema() {
     return "{\n" +
@@ -168,22 +235,9 @@ public class JsonBySchemaCompletionTest extends CompletionTestCase {
                           "}";
   }
 
+  @SuppressWarnings("TestMethodWithIncorrectSignature")
   private void testImpl(@NotNull final String schema, final @NotNull String text,
                         final @NotNull String... variants) throws Exception {
-    final int position = EditorTestUtil.getCaretPosition(text);
-    Assert.assertTrue(position > 0);
-    final String completionText = text.replace("<caret>", "IntelliJIDEARulezzz");
-
-    final PsiFile file = createFile(myModule, "tslint.json", completionText);
-    final PsiElement element = file.findElementAt(position);
-    Assert.assertNotNull(element);
-
-    final JsonSchemaObject schemaObject = new JsonSchemaReader(null).read(new StringReader(schema), null);
-    Assert.assertNotNull(schemaObject);
-
-    final List<LookupElement> foundVariants = JsonBySchemaObjectCompletionContributor.getCompletionVariants(schemaObject, element);
-    Collections.sort(foundVariants, (o1, o2) -> o1.getLookupString().compareTo(o2.getLookupString()));
-    myItems = foundVariants.toArray(new LookupElement[foundVariants.size()]);
-    assertStringItems(variants);
+    testBySchema(schema, text, ".json", variants);
   }
 }

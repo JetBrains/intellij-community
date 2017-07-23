@@ -19,7 +19,6 @@ import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.PlatformProjectOpenProcessor;
@@ -27,6 +26,9 @@ import com.intellij.platform.ProjectBaseDirectory;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
+
+import java.util.EnumSet;
 
 @State(
   name = "RecentDirectoryProjectsManager",
@@ -42,17 +44,20 @@ public class RecentDirectoryProjectsManager extends RecentProjectsManagerBase {
 
   @Override
   @Nullable
+  @SystemIndependent
   protected String getProjectPath(@NotNull Project project) {
     final ProjectBaseDirectory baseDir = ProjectBaseDirectory.getInstance(project);
     final VirtualFile baseDirVFile = baseDir.getBaseDir() != null ? baseDir.getBaseDir() : project.getBaseDir();
-    return baseDirVFile != null ? FileUtil.toSystemDependentName(baseDirVFile.getPath()) : null;
+    return baseDirVFile != null ? baseDirVFile.getPath() : null;
   }
 
   @Override
-  protected void doOpenProject(@NotNull String projectPath, Project projectToClose, boolean forceOpenInNewFrame) {
-    final VirtualFile projectDir = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(projectPath));
+  protected void doOpenProject(@NotNull @SystemIndependent String projectPath, Project projectToClose, boolean forceOpenInNewFrame) {
+    VirtualFile projectDir = LocalFileSystem.getInstance().findFileByPath(projectPath);
     if (projectDir != null) {
-      PlatformProjectOpenProcessor.doOpenProject(projectDir, projectToClose, forceOpenInNewFrame, -1, null, true);
+      EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.of(PlatformProjectOpenProcessor.Option.REOPEN);
+      if (forceOpenInNewFrame) options.add(PlatformProjectOpenProcessor.Option.FORCE_NEW_FRAME);
+      PlatformProjectOpenProcessor.doOpenProject(projectDir, projectToClose, -1, null, options);
     }
   }
 }

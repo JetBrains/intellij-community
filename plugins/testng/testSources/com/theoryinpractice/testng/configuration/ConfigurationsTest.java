@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,11 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 06-Jun-2007
- */
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
-import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
@@ -81,18 +77,15 @@ public class ConfigurationsTest {
 
   @AfterMethod
   public void tearDown() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          myProjectFixture.tearDown();
-          myProjectFixture = null;
-          myFixture.tearDown();
-          myFixture = null;
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        myProjectFixture.tearDown();
+        myProjectFixture = null;
+        myFixture.tearDown();
+        myFixture = null;
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
   }
@@ -102,7 +95,7 @@ public class ConfigurationsTest {
     final Project project = myProjectFixture.getProject();
     final PsiClass psiClass = findTestClass(project);
     final TestNGConfiguration configuration = createConfiguration(project);
-    configuration.setClassConfiguration(psiClass);
+    configuration.beClassConfiguration(psiClass);
     final String newName = "Testt1";
     final RenameRefactoring renameClass = RefactoringFactory.getInstance(project).createRename(psiClass, newName);
     renameClass.setSearchInComments(false);
@@ -138,7 +131,7 @@ public class ConfigurationsTest {
     final TestNGConfiguration configuration = createConfiguration(project);
 
     final PsiMethod method = findTestMethod(psiClass);
-    configuration.setMethodConfiguration(new PsiLocation<>(project, method));
+    configuration.beMethodConfiguration(new PsiLocation<>(project, method));
     final String newMethodName = "renamedTest";
     final RenameRefactoring renameMethod = RefactoringFactory.getInstance(project).createRename(method, newMethodName);
     renameMethod.setSearchInComments(false);
@@ -179,13 +172,13 @@ public class ConfigurationsTest {
     final TestNGConfigurationType type = (TestNGConfigurationType)configuration.getFactory().getType();
 
     //class config
-    configuration.setClassConfiguration(psiClass);
+    configuration.beClassConfiguration(psiClass);
     PsiMethod testMethod = findTestMethod(psiClass);
     Assert.assertTrue(type.isConfigurationByLocation(configuration, new PsiLocation(project, psiClass)));
     Assert.assertFalse(type.isConfigurationByLocation(configuration, new PsiLocation(project, testMethod)));
 
     //method config
-    configuration.setMethodConfiguration(new PsiLocation<>(project, testMethod));
+    configuration.beMethodConfiguration(new PsiLocation<>(project, testMethod));
     Assert.assertTrue(type.isConfigurationByLocation(configuration, new PsiLocation(project, testMethod)));
     Assert.assertFalse(type.isConfigurationByLocation(configuration, new PsiLocation(project, psiClass)));
   }
@@ -225,7 +218,7 @@ public class ConfigurationsTest {
   }
 
   private static TestNGConfiguration createConfiguration(final Project project) {
-    final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
+    final RunManager manager = RunManager.getInstance(project);
     final RunnerAndConfigurationSettings settings =
       manager.createRunConfiguration("testt", TestNGConfigurationType.getInstance().getConfigurationFactories()[0]);
     manager.addConfiguration(settings, false);

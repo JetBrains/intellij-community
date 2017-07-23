@@ -15,7 +15,7 @@
  */
 package org.jetbrains.io.fastCgi
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.Consumer
 import com.intellij.util.containers.ContainerUtil
@@ -32,7 +32,7 @@ import org.jetbrains.concurrency.errorIfNotMessage
 import org.jetbrains.io.*
 import java.util.concurrent.atomic.AtomicInteger
 
-val LOG = Logger.getInstance(FastCgiService::class.java)
+internal val LOG = logger<FastCgiService>()
 
 // todo send FCGI_ABORT_REQUEST if client channel disconnected
 abstract class FastCgiService(project: Project) : SingleConnectionNetService(project) {
@@ -196,7 +196,7 @@ private fun parseHeaders(response: HttpResponse, buffer: ByteBuf) {
       }
     }
 
-    if (builder.length == 0) {
+    if (builder.isEmpty()) {
       // end of headers
       return
     }

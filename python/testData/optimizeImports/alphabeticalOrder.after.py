@@ -4,10 +4,10 @@ from __future__ import unicode_literals
 import sys
 from datetime import timedelta
 
-import # broken
+import  # broken
 import a
 import b
-import foo # broken
+import foo  # broken
 import z
 from
 from a import C1

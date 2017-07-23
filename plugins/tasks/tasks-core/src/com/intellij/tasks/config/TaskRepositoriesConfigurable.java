@@ -23,10 +23,8 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,10 +33,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
@@ -62,15 +58,12 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
   private final Project myProject;
 
   private final Consumer<TaskRepository> myChangeListener;
+  private int count;
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
-  private final FactoryMap<TaskRepository, String> myRepoNames = new ConcurrentFactoryMap<TaskRepository, String>() {
+  private final Map<TaskRepository, String> myRepoNames = ConcurrentFactoryMap.createMap(repository->
+      Integer.toString(count++)
 
-    private int count;
-    @Override
-    protected String create(TaskRepository repository) {
-      return Integer.toString(count++);
-    }
-  };
+  );
   private final TaskManagerImpl myManager;
 
   public TaskRepositoriesConfigurable(final Project project) {
@@ -121,7 +114,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
         }
 
         JBPopupFactory.getInstance()
-          .createActionGroupPopup("Add server", group, DataManager.getInstance().getDataContext(anActionButton.getContextComponent()),
+          .createActionGroupPopup("Add Server", group, DataManager.getInstance().getDataContext(anActionButton.getContextComponent()),
                                   JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true).show(
           anActionButton.getPreferredPopupPoint());
       }

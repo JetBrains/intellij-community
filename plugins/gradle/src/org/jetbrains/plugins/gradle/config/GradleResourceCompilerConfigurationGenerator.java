@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,21 +25,23 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.ModuleAdapter;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.project.ProjectTypeService;
 import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.JdomKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xmlb.XmlSerializer;
 import gnu.trove.THashMap;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +80,7 @@ public class GradleResourceCompilerConfigurationGenerator {
     externalProjectDataCache = ExternalProjectDataCache.getInstance(project);
     assert externalProjectDataCache != null;
 
-    project.getMessageBus().connect(project).subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
+    project.getMessageBus().connect(project).subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
       public void moduleRemoved(@NotNull Project project, @NotNull Module module) {
         myModulesConfigurationHash.remove(module.getName());
@@ -127,8 +129,8 @@ public class GradleResourceCompilerConfigurationGenerator {
     // update with newly generated configuration
     projectConfig.moduleConfigurations.putAll(affectedGradleModuleConfigurations);
 
-    final Document document = new Document(new Element("gradle-project-configuration"));
-    XmlSerializer.serializeInto(projectConfig, document.getRootElement());
+    final Element element = new Element("gradle-project-configuration");
+    XmlSerializer.serializeInto(projectConfig, element);
     final boolean finalConfigurationUpdateRequired = configurationUpdateRequired;
     buildManager.runCommand(() -> {
       if (finalConfigurationUpdateRequired) {
@@ -136,7 +138,7 @@ public class GradleResourceCompilerConfigurationGenerator {
       }
       FileUtil.createIfDoesntExist(gradleConfigFile);
       try {
-        JDOMUtil.writeDocument(document, gradleConfigFile, "\n");
+        JdomKt.write(element, gradleConfigFile.toPath());
         myModulesConfigurationHash.putAll(affectedConfigurationHash);
       }
       catch (IOException e) {
@@ -175,13 +177,8 @@ public class GradleResourceCompilerConfigurationGenerator {
     final Map<String, GradleModuleResourceConfiguration> affectedGradleModuleConfigurations = ContainerUtil.newTroveMap();
 
     //noinspection MismatchedQueryAndUpdateOfCollection
-    final Map<String, ExternalProject> lazyExternalProjectMap = new FactoryMap<String, ExternalProject>() {
-      @Nullable
-      @Override
-      protected ExternalProject create(String gradleProjectPath) {
-        return externalProjectDataCache.getRootExternalProject(GradleConstants.SYSTEM_ID, new File(gradleProjectPath));
-      }
-    };
+    final Map<String, ExternalProject> lazyExternalProjectMap = FactoryMap.createMap(
+      gradleProjectPath -> externalProjectDataCache.getRootExternalProject(GradleConstants.SYSTEM_ID, new File(gradleProjectPath)));
 
     for (Module module : context.getCompileScope().getAffectedModules()) {
       if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) continue;
@@ -193,7 +190,7 @@ public class GradleResourceCompilerConfigurationGenerator {
 
       final ExternalProject externalRootProject = lazyExternalProjectMap.get(gradleProjectPath);
       if (externalRootProject == null) {
-        context.addMessage(CompilerMessageCategory.ERROR,
+        context.addMessage(CompilerMessageCategory.WARNING,
                            String.format("Unable to make the module: %s, related gradle configuration was not found. " +
                                          "Please, re-import the Gradle project and try again.",
                                          module.getName()), VfsUtilCore.pathToUrl(gradleProjectPath), -1, -1);
@@ -205,6 +202,9 @@ public class GradleResourceCompilerConfigurationGenerator {
         LOG.debug("Unable to find source sets config for module: " + module.getName());
         continue;
       }
+
+      VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(true);
+      if (sourceRoots.length == 0) continue;
 
       GradleModuleResourceConfiguration resourceConfig = new GradleModuleResourceConfiguration();
       resourceConfig.id = new ModuleVersion(

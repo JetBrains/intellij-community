@@ -19,12 +19,12 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
@@ -121,17 +121,17 @@ public class FormBuilder {
 
   public FormBuilder addVerticalGap(final int height) {
     if (height == -1) {
-      myPanel.add(new JLabel(), new GridBagConstraints(0, myLineCount++, 2, 1, 0, 1, CENTER, NONE, new Insets(0, 0, 0, 0), 0, 0));
+      myPanel.add(new JLabel(), new GridBagConstraints(0, myLineCount++, 2, 1, 0, 1, CENTER, NONE, JBUI.emptyInsets(), 0, 0));
       return this;
     }
 
     return addLabeledComponent((JLabel)null,
-                               new Box.Filler(new Dimension(0, height), new Dimension(0, height), new Dimension(Short.MAX_VALUE, height)));
+                               new Box.Filler(new JBDimension(0, height), new JBDimension(0, height), new JBDimension(Short.MAX_VALUE, height)));
   }
 
   public FormBuilder addTooltip(final String text) {
     final JBLabel label = new JBLabel(text, UIUtil.ComponentStyle.SMALL, UIUtil.FontColor.BRIGHTER);
-    label.setBorder(new EmptyBorder(0, 10, 0, 0));
+    label.setBorder(IdeBorderFactory.createEmptyBorder(0, 10, 0, 0));
     return addComponentToRightColumn(label, 1);
   }
 
@@ -168,7 +168,7 @@ public class FormBuilder {
       c.weighty = 0;
       c.fill = NONE;
       c.anchor = getLabelAnchor(false, fillVertically);
-      c.insets = new Insets(topInset, myIndent + myFormLeftIndent, DEFAULT_VGAP, 0);
+      c.insets = JBUI.insets(topInset, myIndent + myFormLeftIndent, DEFAULT_VGAP, 0);
 
       if (label != null) myPanel.add(label, c);
 
@@ -178,7 +178,7 @@ public class FormBuilder {
       c.weighty = getWeightY(fillVertically);
       c.fill = getFill(component, fillVertically);
       c.anchor = WEST;
-      c.insets = new Insets(label == null ? topInset : 0, myIndent + myFormLeftIndent, 0, 0);
+      c.insets = JBUI.insets(label == null ? topInset : 0, myIndent + myFormLeftIndent, 0, 0);
 
       myPanel.add(component, c);
 
@@ -192,7 +192,7 @@ public class FormBuilder {
       c.weighty = 0;
       c.fill = NONE;
       c.anchor = getLabelAnchor(true, fillVertically);
-      c.insets = new Insets(topInset, myIndent + myFormLeftIndent, 0, myHorizontalGap);
+      c.insets = JBUI.insets(topInset, myIndent + myFormLeftIndent, 0, myHorizontalGap);
 
       myPanel.add(label, c);
 
@@ -201,7 +201,7 @@ public class FormBuilder {
       c.weighty = getWeightY(fillVertically);
       c.fill = getFill(component, fillVertically);
       c.anchor = WEST;
-      c.insets = new Insets(topInset, myIndent, 0, 0);
+      c.insets = JBUI.insets(topInset, myIndent, 0, 0);
 
       myPanel.add(component, c);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,14 @@
  */
 package com.intellij.refactoring.memberPushDown;
 
+import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -40,30 +42,42 @@ import java.util.List;
 /**
  * @author dsl
  */
-public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHandler {
+public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHandler, ContextAwareActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("push.members.down.title");
 
+  @Override
+  public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
+    return !getElements(editor, file, Ref.create()).isEmpty();
+  }
+
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    ArrayList<PsiElement> elements = new ArrayList<>();
-    String errorMessage = null;
+
+    Ref<String> errorMessage = Ref.create();
+    List<PsiElement> elements = getElements(editor, file, errorMessage);
+    if (elements.isEmpty()) {
+      String message =
+        !errorMessage.isNull() ? errorMessage.get() : RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.push.members.from"));
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MEMBERS_PUSH_DOWN);
+    }
+    else {
+      invoke(project, elements.toArray(PsiElement.EMPTY_ARRAY), dataContext);
+    }
+  }
+
+  @NotNull
+  private static List<PsiElement> getElements(Editor editor, PsiFile file, Ref<String> errorMessage) {
+    List<PsiElement> elements = new ArrayList<>();
     for (Caret caret : editor.getCaretModel().getAllCarets()) {
       int offset = caret.getOffset();
       PsiElement element = file.findElementAt(offset);
       String errorFromElement = collectElementsUnderCaret(element, elements);
       if (errorFromElement != null) {
-        errorMessage = errorFromElement;
+        errorMessage.set(errorFromElement);
       }
     }
-
-    if (elements.isEmpty()) {
-      String message = errorMessage != null ? errorMessage
-                                            : RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.push.members.from"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MEMBERS_PUSH_DOWN);
-      return;
-    }
-
-    invoke(project, elements.toArray(PsiElement.EMPTY_ARRAY), dataContext);
+    return elements;
   }
 
   private static String collectElementsUnderCaret(PsiElement element, List<PsiElement> elements) {
@@ -83,6 +97,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
     }
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     PsiClass aClass = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(elements), PsiClass.class, false);
     if (aClass == null) return;
@@ -114,20 +129,8 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
     dialog.show();
   }
 
+  @Override
   public boolean isEnabledOnElements(PsiElement[] elements) {
-    /*
-    if (elements.length == 1) {
-      return elements[0] instanceof PsiClass || elements[0] instanceof PsiField || elements[0] instanceof PsiMethod;
-    }
-    else if (elements.length > 1){
-      for (int  idx = 0;  idx < elements.length;  idx++) {
-        PsiElement element = elements[idx];
-        if (!(element instanceof PsiField || element instanceof PsiMethod)) return false;
-      }
-      return true;
-    }
-    return false;
-    */
     // todo: multiple selection etc
     return elements.length == 1 && elements[0] instanceof PsiClass;
   }

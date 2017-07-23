@@ -15,7 +15,6 @@
   </action>
   <action id="$Cut">
     <keyboard-shortcut first-keystroke="shift DELETE"/>
-    <keyboard-shortcut first-keystroke="alt X"/>
   </action>
   <action id="EditorSplitLine">
     <keyboard-shortcut first-keystroke="control O"/>
@@ -291,6 +290,10 @@
   <action id="Console.Execute">
     <keyboard-shortcut first-keystroke="ENTER"/>
     <keyboard-shortcut first-keystroke="control M"/>
+  </action>
+  <action id="GotoAction">
+    <keyboard-shortcut first-keystroke="ESCAPE" second-keystroke="X" />
+    <keyboard-shortcut first-keystroke="alt X" />
   </action>
 
   <!--Disabled shortcuts-->

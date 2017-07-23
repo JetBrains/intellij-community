@@ -99,12 +99,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
         final List<Pair<String, Icon>> all =
           new ArrayList<>(ContainerUtil.map(variants, s -> Pair
             .create(ElementPresentationManager.getElementName(s), ElementPresentationManager.getIcon(s))));
-        all.addAll(ContainerUtil.map(resolvingConverter.getAdditionalVariants(context), new Function() {
-          @Override
-          public Object fun(Object s) {
-            return new Pair(s, null);
-          }
-        }));
+        all.addAll(ContainerUtil.map(resolvingConverter.getAdditionalVariants(context), (Function)s -> new Pair(s, null)));
         return all;
       }
       return Collections.emptyList();
@@ -112,21 +107,13 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
   }
 
   public static Factory<List<Pair<String, Icon>>> createPresentationFunction(final Factory<Collection<?>> variantFactory) {
-    return () -> ContainerUtil.map(variantFactory.create(), new Function<Object, Pair<String, Icon>>() {
-      @Override
-      public Pair<String, Icon> fun(final Object s) {
-        return Pair.create(ElementPresentationManager.getElementName(s), ElementPresentationManager.getIcon(s));
-      }
-    });
+    return () -> ContainerUtil.map(variantFactory.create(),
+                                   (Function<Object, Pair<String, Icon>>)s -> Pair.create(ElementPresentationManager.getElementName(s), ElementPresentationManager.getIcon(s)));
   }
 
   static Factory<List<Pair<String, Icon>>> createEnumFactory(final Class<? extends Enum> aClass) {
-    return () -> ContainerUtil.map2List(aClass.getEnumConstants(), new Function<Enum, Pair<String, Icon>>() {
-      @Override
-      public Pair<String, Icon> fun(final Enum s) {
-        return Pair.create(NamedEnumUtil.getEnumValueByElement(s), ElementPresentationManager.getIcon(s));
-      }
-    });
+    return () -> ContainerUtil.map2List(aClass.getEnumConstants(),
+                                        (Function<Enum, Pair<String, Icon>>)s -> Pair.create(NamedEnumUtil.getEnumValueByElement(s), ElementPresentationManager.getIcon(s)));
   }
 
   public static <T extends Enum> JComboBox createEnumComboBox(final Class<T> type) {

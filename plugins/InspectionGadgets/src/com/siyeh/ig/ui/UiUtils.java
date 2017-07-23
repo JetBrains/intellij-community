@@ -24,6 +24,7 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
@@ -120,13 +121,17 @@ public class UiUtils {
     selectionModel.setSelectionInterval(row, row);
     EventQueue.invokeLater(() -> {
       final ListWrappingTableModel tableModel = table.getModel();
-      table.requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(table, true);
+      });
       final Rectangle rectangle = table.getCellRect(row, column, true);
       table.scrollRectToVisible(rectangle);
       table.editCellAt(row, column);
       final TableCellEditor editor = table.getCellEditor();
       final Component component = editor.getTableCellEditorComponent(table, tableModel.getValueAt(row, column), true, row, column);
-      component.requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(component, true);
+      });
     });
   }
 

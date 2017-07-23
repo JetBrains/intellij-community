@@ -26,7 +26,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 
-class JavaWithForSurrounder extends JavaStatementsSurrounder{
+public class JavaWithForSurrounder extends JavaStatementsSurrounder{
   @Override
   public String getTemplateDescription() {
     return CodeInsightBundle.message("surround.with.for.template");

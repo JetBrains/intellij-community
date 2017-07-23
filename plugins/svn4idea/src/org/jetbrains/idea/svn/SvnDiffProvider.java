@@ -26,7 +26,6 @@ import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsRevisionDescription;
 import com.intellij.openapi.vcs.history.VcsRevisionDescriptionImpl;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,13 +39,14 @@ import org.jetbrains.idea.svn.info.InfoConsumer;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, DiffMixin {
 
@@ -64,7 +64,7 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
   @Nullable
   @Override
   public VcsRevisionNumber getCurrentRevision(@NotNull VirtualFile file) {
-    final Info svnInfo = myVcs.getInfo(VfsUtilCore.virtualToIoFile(file));
+    final Info svnInfo = myVcs.getInfo(virtualToIoFile(file));
 
     return getRevision(svnInfo);
   }
@@ -92,7 +92,7 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
     List<File> ioFiles = ContainerUtil.newArrayList();
 
     for (VirtualFile file : files) {
-      File ioFile = VfsUtilCore.virtualToIoFile(file);
+      File ioFile = virtualToIoFile(file);
       ioFiles.add(ioFile);
       items.put(ioFile.getAbsolutePath(), file);
 
@@ -118,18 +118,15 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
   @NotNull
   private static InfoConsumer createInfoHandler(@NotNull final Map<VirtualFile, VcsRevisionNumber> revisionMap,
                                                 @NotNull final Map<String, VirtualFile> fileMap) {
-    return new InfoConsumer() {
-      @Override
-      public void consume(Info info) throws SVNException {
-        if (info != null) {
-          VirtualFile file = fileMap.get(info.getFile().getAbsolutePath());
+    return info -> {
+      if (info != null) {
+        VirtualFile file = fileMap.get(info.getFile().getAbsolutePath());
 
-          if (file != null) {
-            revisionMap.put(file, getRevision(info));
-          }
-          else {
-            LOG.info("Could not find virtual file for path " + info.getFile().getAbsolutePath());
-          }
+        if (file != null) {
+          revisionMap.put(file, getRevision(info));
+        }
+        else {
+          LOG.info("Could not find virtual file for path " + info.getFile().getAbsolutePath());
         }
       }
     };
@@ -138,7 +135,7 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
   @Nullable
   @Override
   public VcsRevisionDescription getCurrentRevisionDescription(@NotNull VirtualFile file) {
-    return getCurrentRevisionDescription(VfsUtilCore.virtualToIoFile(file));
+    return getCurrentRevisionDescription(virtualToIoFile(file));
   }
 
   @Nullable
@@ -194,7 +191,7 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
   @NotNull
   @Override
   public ItemLatestState getLastRevision(@NotNull VirtualFile file) {
-    return getLastRevision(VfsUtilCore.virtualToIoFile(file));
+    return getLastRevision(virtualToIoFile(file));
   }
 
   @NotNull
@@ -208,7 +205,7 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
     }
 
     // not clear why we need it, with remote check..
-    Status svnStatus = getFileStatus(VfsUtilCore.virtualToIoFile(selectedFile), false);
+    Status svnStatus = getFileStatus(virtualToIoFile(selectedFile), false);
 
     return svnStatus != null && svnRevision.equals(svnStatus.getRevision())
            ? SvnContentRevision.createBaseRevision(myVcs, filePath, svnRevision)
@@ -237,9 +234,10 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
 
   @Nullable
   @Override
-  public VcsRevisionNumber getLatestCommittedRevision(VirtualFile vcsRoot) {
-    // todo
-    return null;
+  public VcsRevisionNumber getLatestCommittedRevision(@NotNull VirtualFile vcsRoot) {
+    Info info = myVcs.getInfo(virtualToIoFile(vcsRoot), SVNRevision.HEAD);
+
+    return info != null ? new SvnRevisionNumber(info.getCommittedRevision()) : null;
   }
 
   @NotNull

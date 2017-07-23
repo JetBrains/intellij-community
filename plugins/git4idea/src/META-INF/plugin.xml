@@ -37,6 +37,8 @@
       <add-to-group group-id="Vcs.Browse"/>
     </action>
 
+    <action class="git4idea.log.GitShowCommitInLogAction" id="Git.SelectInGitLog"/>
+
     <group id="GitFileActions">
       <reference ref="CheckinFiles"/>
       <action id="Git.Add" class="git4idea.actions.GitAdd" text="Add" icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned" />
@@ -49,7 +51,6 @@
       <action id="Git.CompareWithBranch" class="git4idea.actions.GitCompareWithBranchAction" text="Compare with Branch..." />
       <reference ref="Vcs.ShowTabbedFileHistory"/>
       <reference id="Vcs.ShowHistoryForBlock"/>
-      <reference id="Vcs.Show.Graph.History"/>
       <separator/>
       <reference id="ChangesView.Revert" />
       <action id="Git.ResolveConflicts" class="git4idea.actions.GitResolveConflictsAction" text="Resolve Conflicts..."/>
@@ -96,15 +97,24 @@
       <separator/>
     </group>
 
+    <group id="Git.FileHistory.ContextMenu">
+      <reference id="Git.SelectInGitLog"/>
+      <add-to-group group-id="Vcs.FileHistory.ContextMenu"/>
+    </group>
+
     <action class="git4idea.actions.GitCheckoutRevisionAction" id="Git.CheckoutRevision" text="Checkout Revision"/>
     <group class="git4idea.ui.branch.GitLogBranchOperationsActionGroup" id="Git.BranchOperationGroup"/>
     <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch" text="New Branch..."
             description="Create new branch starting from the selected commit"/>
     <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag" text="New Tag..."
             description="Create new tag pointing to this commit"/>
-    <action id="Git.Reset.In.Log" class="git4idea.reset.GitResetAction" text="Reset Current Branch to Here..." />
+    <action id="Git.Reset.In.Log" class="git4idea.reset.GitResetAction" text="Reset Current Branch to Here..." icon="AllIcons.Actions.Reset"/>
+    <action id="Git.Revert.In.Log" class="git4idea.revert.GitRevertAction" text="Revert"
+            description="Produce a new commit, which reverts the changes made in the original commit"/>
     <action id="Git.Uncommit" class="git4idea.reset.GitUncommitAction" text="Undo Commit..."
             description="Undo last commit and put its changes into selected changelist"/>
+    <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction" text="Reword..."
+            description="Change commit message" />
 
     <group id="Git.Log.ContextMenu">
       <separator/>
@@ -115,7 +125,10 @@
       <reference id="Git.BranchOperationGroup"/>
       <separator/>
       <reference id="Git.Reset.In.Log" />
+      <reference id="Git.Revert.In.Log" />
       <reference id="Git.Uncommit" />
+      <separator />
+      <reference id="Git.Reword.Commit" />
       <add-to-group group-id="Vcs.Log.ContextMenu" />
     </group>
 
@@ -138,6 +151,7 @@
     <vcsRepositoryCreator implementation="git4idea.repo.GitRepositoryCreator"/>
     <vcsPopupProvider implementation="git4idea.actions.GitQuickListContentProvider"/>
     <vcsCheckinHandlerFactory implementation="git4idea.checkin.GitCheckinHandlerFactory"/>
+    <checkinHandlerFactory implementation="git4idea.checkin.GitSkipHooksCommitHandlerFactory" order="last"/>
     <checkinHandlerFactory implementation="git4idea.checkin.UnresolvedMergeCheckFactory"/>
     <logProvider implementation="git4idea.log.GitLogProvider"/>
     <vcsChangesViewRefresher implementation="git4idea.changes.GitChangesViewRefresher" />
@@ -147,6 +161,7 @@
     <statistics.usagesCollector implementation="git4idea.GitStatisticsCollector" />
 
     <projectService serviceImplementation="git4idea.repo.GitRepositoryManager"/>
+    <projectService serviceImplementation="git4idea.ui.branch.GitBranchManager"/>
     <projectService
         serviceInterface="git4idea.annotate.GitAnnotationProvider"
         serviceImplementation="git4idea.annotate.GitAnnotationProvider"/>

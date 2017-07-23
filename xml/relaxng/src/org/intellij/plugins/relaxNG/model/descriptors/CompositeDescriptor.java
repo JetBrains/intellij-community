@@ -16,7 +16,6 @@
 
 package org.intellij.plugins.relaxNG.model.descriptors;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -35,7 +34,7 @@ public class CompositeDescriptor extends RngElementDescriptor {
 
   CompositeDescriptor(RngNsDescriptor nsDescriptor, DElementPattern pattern, List<DElementPattern> patterns) {
     super(nsDescriptor, pattern);
-    myPatterns = patterns.toArray(new DElementPattern[patterns.size()]);
+    myPatterns = ContainerUtil.reverse(patterns).toArray(new DElementPattern[patterns.size()]);
   }
 
   @Override

@@ -18,12 +18,12 @@ package com.intellij.psi;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -460,28 +460,15 @@ public abstract class PsiAnchor {
 
     @Override
     public PsiElement retrieve() {
-      return ApplicationManager.getApplication().runReadAction(new NullableComputable<PsiElement>() {
-        @Override
-        public PsiElement compute() {
-          return restoreFromStubIndex((PsiFileWithStubSupport)getFile(), myIndex, myElementType, false);
-        }
-      });
+      return ApplicationManager.getApplication().runReadAction(
+        (NullableComputable<PsiElement>)() -> restoreFromStubIndex((PsiFileWithStubSupport)getFile(), myIndex, myElementType, false));
     }
 
     public String diagnoseNull() {
-      final PsiFile file = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
-        @Override
-        public PsiFile compute() {
-          return getFile();
-        }
-      });
+      final PsiFile file = ReadAction.compute(() -> getFile());
       try {
-        PsiElement element = ApplicationManager.getApplication().runReadAction(new NullableComputable<PsiElement>() {
-          @Override
-          public PsiElement compute() {
-            return restoreFromStubIndex((PsiFileWithStubSupport)file, myIndex, myElementType, true);
-          }
-        });
+        PsiElement element = ApplicationManager.getApplication().runReadAction(
+          (NullableComputable<PsiElement>)() -> restoreFromStubIndex((PsiFileWithStubSupport)file, myIndex, myElementType, true));
         return "No diagnostics, element=" + element + "@" + (element == null ? 0 : System.identityHashCode(element));
       }
       catch (AssertionError e) {

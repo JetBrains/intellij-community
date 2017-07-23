@@ -17,17 +17,24 @@ package com.intellij.util.indexing.impl;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.Map;
 
+/**
+ * Represents a <a href="https://en.wikipedia.org/wiki/Search_engine_indexing#The_forward_index">forward index data structure</>:
+ * an index indented to hold a mappings of inputId-s to contained keys.
+ */
 @ApiStatus.Experimental
 public interface ForwardIndex<Key, Value> {
+  /**
+   * Creates a diff builder for given inputId.
+   */
   @NotNull
-  InputKeyIterator<Key, Value> getInputKeys(int inputId) throws IOException;
+  InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId) throws IOException;
 
+  /**
+   * Update data for inputId.
+   */
   void putInputData(int inputId, @NotNull Map<Key, Value> data) throws IOException;
 
   void flush();
@@ -35,9 +42,4 @@ public interface ForwardIndex<Key, Value> {
   void clear() throws IOException;
 
   void close() throws IOException;
-
-  @ApiStatus.Experimental
-  interface InputKeyIterator<Key, Value> extends Iterator<Key> {
-    boolean isAssociatedValueEqual(@Nullable Value value);
-  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 
 public class TemplateKindCombo extends ComboboxWithBrowseButton {
-
   public TemplateKindCombo() {
     //noinspection unchecked
     getComboBox().setRenderer(new ListCellRendererWrapper() {
@@ -103,7 +102,7 @@ public class TemplateKindCombo extends ComboboxWithBrowseButton {
     if (delta == 0 || size == 0) return;
     int next = getComboBox().getSelectedIndex() + delta;
     if (next < 0 || next >= size) {
-      if (!UISettings.getInstance().CYCLE_SCROLLING) {
+      if (!UISettings.getInstance().getCycleScrolling()) {
         return;
       }
       next = (next + size) % size;

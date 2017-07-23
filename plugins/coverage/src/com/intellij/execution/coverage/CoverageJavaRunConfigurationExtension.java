@@ -1,7 +1,3 @@
-/*
- * User: anna
- * Date: 27-Aug-2009
- */
 package com.intellij.execution.coverage;
 
 import com.intellij.coverage.*;

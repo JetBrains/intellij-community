@@ -22,9 +22,6 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- */
 public class PsiGraphInferenceHelper implements PsiInferenceHelper {
   private final PsiManager myManager;
 

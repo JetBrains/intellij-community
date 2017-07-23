@@ -15,19 +15,17 @@
  */
 package com.intellij.coverage;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -35,6 +33,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
@@ -56,7 +55,7 @@ import java.util.Map;
  */
 public class PackageAnnotator {
 
-  private static final Logger LOG = Logger.getInstance("#" + PackageAnnotator.class.getName());
+  private static final Logger LOG = Logger.getInstance(PackageAnnotator.class);
   private static final String DEFAULT_CONSTRUCTOR_NAME_SIGNATURE = "<init>()V";
 
   private final PsiPackage myPackage;
@@ -144,7 +143,7 @@ public class PackageAnnotator {
     final String qualifiedName = myPackage.getQualifiedName();
     boolean filtered = false;
     for (CoverageSuite coverageSuite : suite.getSuites()) {
-      if (((JavaCoverageSuite)coverageSuite).isPackageFiltered(qualifiedName)) {
+      if (coverageSuite instanceof JavaCoverageSuite && ((JavaCoverageSuite)coverageSuite).isPackageFiltered(qualifiedName)) {
         filtered = true;
         break;
       }
@@ -170,7 +169,7 @@ public class PackageAnnotator {
         File outputRoot = findRelativeFile(rootPackageVMName, output);
         if (outputRoot.exists()) {
           collectCoverageInformation(outputRoot, packageCoverageMap, flattenPackageCoverageMap, data, rootPackageVMName, annotator, module,
-                                     suite.isTrackTestFolders(), false);
+                                     suite, false);
         }
 
       }
@@ -183,7 +182,7 @@ public class PackageAnnotator {
           final File outputRoot = findRelativeFile(rootPackageVMName, testPackageRoot);
           if (outputRoot.exists()) {
             collectCoverageInformation(outputRoot, packageCoverageMap, flattenPackageCoverageMap, data, rootPackageVMName, annotator, module,
-                                         suite.isTrackTestFolders(), true);
+                                         suite, true);
           }
         }
       }
@@ -211,7 +210,7 @@ public class PackageAnnotator {
   public void annotateFilteredClass(PsiClass psiClass, CoverageSuitesBundle bundle, Annotator annotator) {
     final ProjectData data = bundle.getCoverageData();
     if (data == null) return;
-    final Module module = ModuleUtil.findModuleForPsiElement(psiClass);
+    final Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
     if (module != null) {
       final boolean isInTests = ProjectRootManager.getInstance(module.getProject()).getFileIndex()
         .isInTestSourceContent(psiClass.getContainingFile().getVirtualFile());
@@ -254,7 +253,7 @@ public class PackageAnnotator {
                                                        final String packageVMName,
                                                        final Annotator annotator,
                                                        final Module module,
-                                                       final boolean trackTestFolders,
+                                                       final CoverageSuitesBundle bundle,
                                                        final boolean isTestHierarchy) {
     final List<DirCoverageInfo> dirs = new ArrayList<>();
     final ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
@@ -280,7 +279,7 @@ public class PackageAnnotator {
         final String childPackageVMName = packageVMName.length() > 0 ? packageVMName + "/" + childName : childName;
         final DirCoverageInfo[] childCoverageInfo =
           collectCoverageInformation(child, packageCoverageMap, flattenPackageCoverageMap, projectInfo, childPackageVMName, annotator, module,
-                                     trackTestFolders, isTestHierarchy);
+                                     bundle, isTestHierarchy);
         if (childCoverageInfo != null) {
           for (int i = 0; i < childCoverageInfo.length; i++) {
             DirCoverageInfo coverageInfo = childCoverageInfo[i];
@@ -309,14 +308,14 @@ public class PackageAnnotator {
               JavaPsiFacade.getInstance(myManager.getProject()).findClass(toplevelClassSrcFQName, GlobalSearchScope.moduleScope(module));
             if (aClass == null || !aClass.isValid()) return Boolean.FALSE;
             psiClassRef.set(aClass);
-            containingFileRef.set(aClass.getNavigationElement().getContainingFile().getVirtualFile());
+            containingFileRef.set(PsiUtilCore.getVirtualFile(aClass.getNavigationElement()));
             if (containingFileRef.isNull()) {
               LOG.info("No virtual file found for: " + aClass);
               return null;
             }
             final ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
             return fileIndex.isUnderSourceRootOfType(containingFileRef.get(), JavaModuleSourceRootTypes.SOURCES)
-                   && (trackTestFolders || !fileIndex.isInTestSourceContent(containingFileRef.get()));
+                   && (bundle.isTrackTestFolders() || !fileIndex.isInTestSourceContent(containingFileRef.get()));
           });
           PackageCoverageInfo coverageInfoForClass = null;
           String classCoverageKey = classFqVMName.replace('/', '.');
@@ -331,13 +330,22 @@ public class PackageAnnotator {
               keepWithoutSource = true;
             }
           }
+          if (!ignoreClass) {
+            for (CoverageSuite suite : bundle.getSuites()) {
+              if (suite instanceof JavaCoverageSuite &&
+                  ((JavaCoverageSuite)suite).isClassFiltered(classCoverageKey, ((JavaCoverageSuite)suite).getExcludedClassNames())) {
+                ignoreClass = true;
+                break;
+              }
+            }
+          }
           if (ignoreClass) {
             continue;
           }
 
           if (isInSource != null && isInSource.booleanValue()) {
             for (DirCoverageInfo dirCoverageInfo : dirs) {
-              if (dirCoverageInfo.sourceRoot != null && VfsUtil.isAncestor(dirCoverageInfo.sourceRoot, containingFileRef.get(), false)) {
+              if (dirCoverageInfo.sourceRoot != null && VfsUtilCore.isAncestor(dirCoverageInfo.sourceRoot, containingFileRef.get(), false)) {
                 coverageInfoForClass = dirCoverageInfo;
                 classCoverageKey = toplevelClassSrcFQName;
                 break;
@@ -429,13 +437,17 @@ public class PackageAnnotator {
       boolean touchedClass = false;
       final Collection methodSigs = classData.getMethodSigs();
       for (final Object nameAndSig : methodSigs) {
+        final int covered = classData.getStatus((String)nameAndSig);
+        if (covered != LineCoverage.NONE) {
+          touchedClass = true;
+        }
+
         if (isGeneratedDefaultConstructor(psiClass, (String)nameAndSig)) {
           continue;
         }
-        final int covered = classData.getStatus((String)nameAndSig);
+
         if (covered != LineCoverage.NONE) {
           toplevelClassCoverageInfo.coveredMethodCount++;
-          touchedClass = true;
         }
         toplevelClassCoverageInfo.totalMethodCount++;
       }
@@ -490,11 +502,7 @@ public class PackageAnnotator {
     if (aClass == null) {
       return false;
     }
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      public Boolean compute() {
-        return aClass.getConstructors().length == 0;
-      }
-    });
+    return ReadAction.compute(() -> aClass.getConstructors().length == 0);
   }
 
   private static ClassCoverageInfo getOrCreateClassCoverageInfo(final Map<String, ClassCoverageInfo> toplevelClassCoverage,

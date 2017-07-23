@@ -31,12 +31,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.nio.charset.Charset;
 
-/**
- * @author Elena Shaverdova
- * @author Nikolay Matveev
- */
 public final class ScriptRunnerUtil {
 
   private static final Logger LOG = Logger.getInstance("com.intellij.execution.process.ScriptRunnerUtil");
@@ -100,17 +97,7 @@ public final class ScriptRunnerUtil {
                                          @Nullable VirtualFile scriptFile,
                                          String[] parameters,
                                          @Nullable Charset charset) throws ExecutionException {
-    exePath = PathEnvironmentVariableUtil.findAbsolutePathOnMac(exePath);
-    return doExecute(exePath, workingDirectory, scriptFile, parameters, charset);
-  }
-
-  @NotNull
-  private static OSProcessHandler doExecute(@NotNull String exePath,
-                                            @Nullable String workingDirectory,
-                                            @Nullable VirtualFile scriptFile,
-                                            String[] parameters,
-                                            @Nullable Charset charset) throws ExecutionException {
-    GeneralCommandLine commandLine = new GeneralCommandLine(exePath);
+    GeneralCommandLine commandLine = getBasicCommandLine(exePath);
     if (scriptFile != null) {
       commandLine.addParameter(scriptFile.getPresentableUrl());
     }
@@ -138,6 +125,28 @@ public final class ScriptRunnerUtil {
     }
 
     return processHandler;
+  }
+
+  @NotNull
+  private static GeneralCommandLine getBasicCommandLine(@NotNull String exePath) {
+    exePath = PathEnvironmentVariableUtil.toLocatableExePath(exePath);
+    exePath = PathEnvironmentVariableUtil.findExecutableInWindowsPath(exePath);
+    return new GeneralCommandLine(exePath);
+  }
+
+  public static boolean isExecutableInPath(@NotNull String exePath) {
+    String initialExePath = exePath;
+    GeneralCommandLine commandLine = getBasicCommandLine(exePath);
+    exePath = commandLine.getExePath();
+
+    if (!initialExePath.equals(exePath)) {
+      //it was resolved with PathEnvironmentVariableUtil.toLocatableExePath or PathEnvironmentVariableUtil.findExecutableInWindowsPath
+      return true;
+    }
+
+    String path = commandLine.getEffectiveEnvironment().get("PATH");
+    File file = PathEnvironmentVariableUtil.findInPath(exePath, path, null);
+    return file != null;
   }
 
   public static ScriptOutput executeScriptInConsoleWithFullOutput(String exePathString,

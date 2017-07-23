@@ -20,10 +20,6 @@ import com.intellij.packaging.artifacts.ArtifactPropertiesProvider;
 import com.intellij.packaging.artifacts.ArtifactType;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- * Date: 3/12/13
- */
 public class JavaFxArtifactPropertiesProvider extends ArtifactPropertiesProvider {
   protected JavaFxArtifactPropertiesProvider() {
     super("javafx-properties");

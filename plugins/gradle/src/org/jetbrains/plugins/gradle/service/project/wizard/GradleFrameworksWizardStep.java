@@ -65,12 +65,12 @@ public class GradleFrameworksWizardStep extends ModuleWizardStep implements Disp
     };
 
     myFrameworksPanel =
-      new AddSupportForFrameworksPanel(Collections.<FrameworkSupportInModuleProvider>emptyList(), model, true, null);
+      new AddSupportForFrameworksPanel(Collections.emptyList(), model, true, null);
 
     List<FrameworkSupportInModuleProvider> providers = ContainerUtil.newArrayList();
     Collections.addAll(providers, GradleFrameworkSupportProvider.EP_NAME.getExtensions());
 
-    myFrameworksPanel.setProviders(providers, Collections.<String>emptySet(), Collections.singleton(GradleJavaFrameworkSupportProvider.ID));
+    myFrameworksPanel.setProviders(providers, Collections.emptySet(), Collections.singleton(GradleJavaFrameworkSupportProvider.ID));
     Disposer.register(this, myFrameworksPanel);
     myFrameworksPanelPlaceholder.add(myFrameworksPanel.getMainPanel());
 

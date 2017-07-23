@@ -50,7 +50,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurable  {
   protected final String myLevel;
@@ -149,11 +152,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     for (Library library : libraries) {
       myRoot.add(new MyNode(new LibraryConfigurable(modelProvider, library, myContext, TREE_UPDATER)));
     }
-    TreeUtil.sort(myRoot, (o1, o2) -> {
-      MyNode node1 = (MyNode)o1;
-      MyNode node2 = (MyNode)o2;
-      return node1.getDisplayName().compareToIgnoreCase(node2.getDisplayName());
-    });
+    TreeUtil.sortRecursively(myRoot, (o1, o2) -> o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName()));
     ((DefaultTreeModel)myTree.getModel()).reload(myRoot);
   }
 
@@ -388,7 +387,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
         final LibrariesModifiableModel libsModel = configurable.getModelProvider().getModifiableModel();
         final Library lib = libsModel.createLibrary(newName, library.getKind());
         final LibraryEx.ModifiableModelEx model = (LibraryEx.ModifiableModelEx)libsModel.getLibraryEditor(lib).getModel();
-        LibraryEditingUtil.copyLibrary(library, Collections.<String, String>emptyMap(), model);
+        LibraryEditingUtil.copyLibrary(library, Collections.emptyMap(), model);
       }
     }
 

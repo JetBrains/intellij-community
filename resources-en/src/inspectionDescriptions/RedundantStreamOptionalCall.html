@@ -1,0 +1,13 @@
+<html>
+<body>
+Reports useless Stream or Optional calls like <code>map(x -> x)</code> or <code>filter(x -> true)</code>,
+useless <code>sorted</code> or <code>distinct</code>.
+<p>Note that a mapping operation in code like <code>streamOfIntegers.map(Integer::valueOf)</code> works as <code>requireNonNull</code>
+  check:
+  if stream contains a <code>null</code>, it will throw <code>NullPointerException</code>, thus it's not absolutely useless. Uncheck the
+  "Report useless boxing in Stream.map" checkbox if you don't want such cases to be reported.</p>
+<!-- tooltip end -->
+<p>This inspection only reports if the project or module is configured to use a language level of 8 or higher.</p>
+<p><small>New in 2017.1</small></p>
+</body>
+</html>

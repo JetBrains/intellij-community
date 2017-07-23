@@ -20,7 +20,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,7 +39,6 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MostlySingularMultiMap;
@@ -132,7 +130,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       PsiImportList[] nodes = stub.getChildrenByType(JavaStubElementTypes.IMPORT_LIST, PsiImportList.ARRAY_FACTORY);
       if (nodes.length == 1) return nodes[0];
       if (nodes.length == 0) return null;
-      reportStubAstMismatch(stub + "; " + stub.getChildrenStubs(), getStubTree(), PsiDocumentManager.getInstance(getProject()).getCachedDocument(this));
+      reportStubAstMismatch(stub + "; " + stub.getChildrenStubs(), getStubTree());
     }
 
     ASTNode node = calcTreeElement().findChildByType(JavaElementType.IMPORT_LIST);
@@ -145,7 +143,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     PsiImportList importList = getImportList();
     if (importList == null) return EMPTY_ARRAY;
 
-    List<PsiElement> array = new ArrayList<PsiElement>();
+    List<PsiElement> array = new ArrayList<>();
 
     PsiImportStatement[] statements = importList.getImportStatements();
     for (PsiImportStatement statement : statements) {
@@ -176,7 +174,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     PsiImportList importList = getImportList();
     if (importList == null) return PsiClass.EMPTY_ARRAY;
 
-    List<PsiClass> array = new ArrayList<PsiClass>();
+    List<PsiClass> array = new ArrayList<>();
     PsiImportStatement[] statements = importList.getImportStatements();
     for (PsiImportStatement statement : statements) {
       if (!statement.isOnDemand()) {
@@ -221,10 +219,10 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   private static class StaticImportFilteringProcessor implements PsiScopeProcessor {
     private final PsiScopeProcessor myDelegate;
     private boolean myIsProcessingOnDemand;
-    private final Collection<String> myHiddenFieldNames = new HashSet<String>();
-    private final Collection<String> myHiddenMethodNames = new HashSet<String>();
-    private final Collection<String> myHiddenTypeNames = new HashSet<String>();
-    private final Collection<PsiElement> myCollectedElements = new HashSet<PsiElement>();
+    private final Collection<String> myHiddenFieldNames = new HashSet<>();
+    private final Collection<String> myHiddenMethodNames = new HashSet<>();
+    private final Collection<String> myHiddenTypeNames = new HashSet<>();
+    private final Collection<PsiElement> myCollectedElements = new HashSet<>();
 
     public StaticImportFilteringProcessor(final PsiScopeProcessor delegate) {
       myDelegate = delegate;
@@ -254,8 +252,8 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
      *
      * A single-static-import declaration d in a compilation unit c of package p that imports a type named n shadows, throughout c, the declarations of:
      * - any static type named n imported by a static-import-on-demand declaration in c;
-     * - any top level type (§7.6) named n declared in another compilation unit (§7.3) of p;
-     * - any type named n imported by a type-import-on-demand declaration (§7.5.2) in c.
+     * - any top level type (p7.6) named n declared in another compilation unit (p7.3) of p;
+     * - any type named n imported by a type-import-on-demand declaration (p7.5.2) in c.
      */
     private void registerSingleStaticImportHiding(JavaResolveResult result, String referenceName) {
       getHiddenMembers(result.getElement()).add(referenceName);
@@ -480,13 +478,8 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     return JavaCodeStyleManager.getInstance(getProject()).addImport(this, aClass);
   }
 
-  private static final NotNullLazyKey<LanguageLevel, PsiJavaFileBaseImpl> LANGUAGE_LEVEL_KEY = NotNullLazyKey.create("LANGUAGE_LEVEL", new NotNullFunction<PsiJavaFileBaseImpl, LanguageLevel>() {
-    @Override
-    @NotNull
-    public LanguageLevel fun(PsiJavaFileBaseImpl file) {
-      return file.getLanguageLevelInner();
-    }
-  });
+  private static final NotNullLazyKey<LanguageLevel, PsiJavaFileBaseImpl> LANGUAGE_LEVEL_KEY = NotNullLazyKey.create("LANGUAGE_LEVEL",
+                                                                                                                     file -> file.getLanguageLevelInner());
 
   @Override
   @NotNull
@@ -506,6 +499,12 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     putUserData(LANGUAGE_LEVEL_KEY, null);
   }
 
+  @Override
+  public void setOriginalFile(@NotNull PsiFile originalFile) {
+    super.setOriginalFile(originalFile);
+    clearCaches();
+  }
+
   private LanguageLevel getLanguageLevelInner() {
     if (myOriginalFile instanceof PsiJavaFile) {
       return ((PsiJavaFile)myOriginalFile).getLanguageLevel();
@@ -523,7 +522,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       if (originalFile instanceof PsiJavaFile && originalFile != this) {
         return ((PsiJavaFile)originalFile).getLanguageLevel();
       }
-      return LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
+      return LanguageLevel.HIGHEST;
     }
 
     return JavaPsiImplementationHelper.getInstance(project).getEffectiveLanguageLevel(virtualFile);

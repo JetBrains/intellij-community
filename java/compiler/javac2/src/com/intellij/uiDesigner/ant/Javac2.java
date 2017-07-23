@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 25.07.2006
- * Time: 17:59:03
- */
 package com.intellij.uiDesigner.ant;
 
 /**

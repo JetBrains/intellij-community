@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 30.08.2006
- * Time: 13:02:12
- */
 package com.intellij.uiDesigner.lw;
 
 import com.intellij.uiDesigner.compiler.GridBagConverter;

@@ -49,15 +49,12 @@ public class PsiClassUtil {
 
   @NotNull
   public static Comparator<PsiClass> createScopeComparator(@NotNull final GlobalSearchScope scope) {
-    return new Comparator<PsiClass>() {
-      @Override
-      public int compare(PsiClass c1, PsiClass c2) {
-        VirtualFile file1 = PsiUtilCore.getVirtualFile(c1);
-        VirtualFile file2 = PsiUtilCore.getVirtualFile(c2);
-        if (file1 == null) return file2 == null ? 0 : -1;
-        if (file2 == null) return 1;
-        return scope.compare(file2, file1);
-      }
+    return (c1, c2) -> {
+      VirtualFile file1 = PsiUtilCore.getVirtualFile(c1);
+      VirtualFile file2 = PsiUtilCore.getVirtualFile(c2);
+      if (file1 == null) return file2 == null ? 0 : -1;
+      if (file2 == null) return 1;
+      return scope.compare(file2, file1);
     };
   }
 }

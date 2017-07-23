@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
 import java.util.*;
 
 public class ConfigFilesTreeBuilder {
@@ -108,7 +106,8 @@ public class ConfigFilesTreeBuilder {
             moduleNode.add(fileTypeNode);
             addChildrenFiles(psiFiles, fileTypeNode, new ArrayList<>(entry.getValue()));
           }
-        }  else {
+        }
+        else {
           addChildrenFiles(psiFiles, moduleNode, moduleFiles);
         }
       }
@@ -117,6 +116,7 @@ public class ConfigFilesTreeBuilder {
     List<VirtualFile> sortedJars = new ArrayList<>(jars.keySet());
     Collections.sort(sortedJars, (o1, o2) -> StringUtil.naturalCompare(o1.getName(), o2.getName()));
     for (VirtualFile file : sortedJars) {
+      if (!file.isValid()) continue;
       final List<PsiFile> list = new ArrayList<>(jars.get(file));
       final PsiFile jar = list.get(0).getManager().findFile(file);
       if (jar != null) {
@@ -133,7 +133,7 @@ public class ConfigFilesTreeBuilder {
   }
 
   private static String getFileTypeNodeName(FileType fileType) {
-    return fileType.getName() + " context files" ;
+    return fileType.getName() + " files";
   }
 
   private static boolean hasNonEmptyGroups(MultiMap<FileType, PsiFile> filesByType) {
@@ -203,22 +203,19 @@ public class ConfigFilesTreeBuilder {
   }
 
   public static void installSearch(JTree tree) {
-    new TreeSpeedSearch(tree, new Convertor<TreePath, String>() {
-      @Override
-      public String convert(final TreePath treePath) {
-        final Object object = ((DefaultMutableTreeNode)treePath.getLastPathComponent()).getUserObject();
-        if (object instanceof Module) {
-          return ((Module)object).getName();
-        }
-        else if (object instanceof PsiFile) {
-          return ((PsiFile)object).getName();
-        }
-        else if (object instanceof VirtualFile) {
-          return ((VirtualFile)object).getName();
-        }
-        else {
-          return "";
-        }
+    new TreeSpeedSearch(tree, treePath -> {
+      final Object object = ((DefaultMutableTreeNode)treePath.getLastPathComponent()).getUserObject();
+      if (object instanceof Module) {
+        return ((Module)object).getName();
+      }
+      else if (object instanceof PsiFile) {
+        return ((PsiFile)object).getName();
+      }
+      else if (object instanceof VirtualFile) {
+        return ((VirtualFile)object).getName();
+      }
+      else {
+        return "";
       }
     });
   }

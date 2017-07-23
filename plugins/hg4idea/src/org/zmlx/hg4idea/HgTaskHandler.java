@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,12 +74,7 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
     //be careful with equality names of branches/bookmarks =(
     Iterable<String> names =
       ContainerUtil.concat(HgUtil.getSortedNamesWithoutHashes(repository.getBookmarks()), repository.getOpenedBranches());
-    return ContainerUtil.map(names, new Function<String, TaskInfo>() {
-      @Override
-      public TaskInfo fun(String s) {
-        return new TaskInfo(s, Collections.singleton(repository.getPresentableUrl()));
-      }
-    });
+    return ContainerUtil.map(names, s -> new TaskInfo(s, Collections.singleton(repository.getPresentableUrl())));
   }
 
   @Override
@@ -89,23 +83,19 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
     FileDocumentManager.getInstance().saveAllDocuments();
     final UpdatedFiles updatedFiles = UpdatedFiles.create();
     for (final HgRepository repository : repositories) {
-      HgMergeCommand.mergeWith(repository, bookmarkRevisionArg, updatedFiles, new Runnable() {
-
-        @Override
-        public void run() {
-          Project project = repository.getProject();
-          VirtualFile repositoryRoot = repository.getRoot();
-          try {
-            new HgCommitCommand(project, repository, "Automated merge with " + branch).executeInCurrentThread();
-            HgBookmarkCommand.deleteBookmarkSynchronously(project, repositoryRoot, branch);
-          }
-          catch (HgCommandException e) {
-              HgErrorUtil.handleException(project, e);
-          }
-          catch (VcsException e) {
-            VcsNotifier.getInstance(project)
-              .notifyError("Exception during merge commit with " + branch, e.getMessage());
-          }
+      HgMergeCommand.mergeWith(repository, bookmarkRevisionArg, updatedFiles, () -> {
+        Project project = repository.getProject();
+        VirtualFile repositoryRoot = repository.getRoot();
+        try {
+          new HgCommitCommand(project, repository, "Automated merge with " + branch).executeInCurrentThread();
+          HgBookmarkCommand.deleteBookmarkSynchronously(project, repositoryRoot, branch);
+        }
+        catch (HgCommandException e) {
+            HgErrorUtil.handleException(project, e);
+        }
+        catch (VcsException e) {
+          VcsNotifier.getInstance(project)
+            .notifyError("Exception during merge commit with " + branch, e.getMessage());
         }
       });
     }

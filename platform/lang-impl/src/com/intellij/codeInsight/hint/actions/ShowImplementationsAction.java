@@ -38,8 +38,8 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.*;
@@ -64,7 +64,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   @NonNls public static final String CODEASSISTS_QUICKDEFINITION_LOOKUP_FEATURE = "codeassists.quickdefinition.lookup";
   @NonNls public static final String CODEASSISTS_QUICKDEFINITION_FEATURE = "codeassists.quickdefinition";
 
-  private static final Logger LOG = Logger.getInstance("#" + ShowImplementationsAction.class.getName());
+  private static final Logger LOG = Logger.getInstance(ShowImplementationsAction.class);
 
   private Reference<JBPopup> myPopupRef;
   private Reference<ImplementationsUpdaterTask> myTaskRef;
@@ -167,7 +167,12 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
     if (impls.length == 0 && ref instanceof PsiPolyVariantReference) {
       final PsiPolyVariantReference polyReference = (PsiPolyVariantReference)ref;
-      text = polyReference.getRangeInElement().substring(polyReference.getElement().getText());
+      PsiElement refElement = polyReference.getElement();
+      TextRange rangeInElement = polyReference.getRangeInElement();
+      String refElementText = refElement.getText();
+      LOG.assertTrue(rangeInElement.getEndOffset() <= refElementText.length(),
+                     "Ref:" + polyReference + "; refElement: " + refElement + "; refText:" + refElementText);
+      text = rangeInElement.substring(refElementText);
       final ResolveResult[] results = polyReference.multiResolve(false);
       final List<PsiElement> implsList = new ArrayList<>(results.length);
 
@@ -396,12 +401,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     // if the definition is the tree parent of the target element, filter out the target element
     for (int i = 1; i < targetElements.length; i++) {
       final PsiElement targetElement = targetElements[i];
-      if (ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          return PsiTreeUtil.isAncestor(targetElement, targetElements[0], true);
-        }
-      })) {
+      if (ReadAction.compute(() -> PsiTreeUtil.isAncestor(targetElement, targetElements[0], true))) {
         unique.remove(targetElements[0]);
         break;
       }

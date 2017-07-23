@@ -97,9 +97,6 @@
   <action id="Print">
     <keyboard-shortcut first-keystroke="control P"/>
   </action>
-  <action id="PropertyInspectorActions.AddProperty">
-    <keyboard-shortcut first-keystroke="alt INSERT"/>
-  </action>
   <action id="ImplementMethods">
     <keyboard-shortcut first-keystroke="shift control I"/>
   </action>
@@ -154,6 +151,9 @@
   </action>
   <action id="Stop">
     <keyboard-shortcut first-keystroke="shift F5"/>
+  </action>
+  <action id="StopBackgroundProcesses">
+    <keyboard-shortcut first-keystroke="shift control F5"/>
   </action>
   <action id="CommentByLineComment">
     <keyboard-shortcut first-keystroke="control SLASH"/>

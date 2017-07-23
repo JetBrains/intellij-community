@@ -85,6 +85,7 @@ public class GrDocInlinedTagImpl extends GroovyDocPsiElementImpl implements GrDo
     return findChildByClass(GrDocTagValueToken.class);
   }
 
+  @NotNull
   @Override
   public PsiElement[] getDataElements() {
     final List<PsiElement> list = findChildrenByType(VALUE_BIT_SET);

@@ -22,6 +22,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -31,6 +32,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +42,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class InitializeFinalFieldInConstructorFix implements IntentionAction {
+  private static final Logger LOG = Logger.getInstance(InitializeFinalFieldInConstructorFix.class);
   private final PsiField myField;
 
   public InitializeFinalFieldInConstructorFix(@NotNull PsiField field) {
@@ -96,22 +99,27 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
                                              @Nullable Editor editor) {
     if (constructors.isEmpty()) return;
 
-    final List<PsiExpression> rExpressions = new ArrayList<>(constructors.size());
     final LookupElement[] suggestedInitializers = AddVariableInitializerFix.suggestInitializer(field);
 
+    final List<PsiExpression> rExpressions = new ArrayList<>(constructors.size());
     for (PsiMethod constructor : constructors) {
       rExpressions.add(addFieldInitialization(constructor, suggestedInitializers, field, project));
     }
     AddVariableInitializerFix.runAssignmentTemplate(rExpressions, suggestedInitializers, editor);
   }
 
-  @Nullable
+  @NotNull
   private static PsiExpression addFieldInitialization(@NotNull PsiMethod constructor,
                                                       @NotNull LookupElement[] suggestedInitializers,
                                                       @NotNull PsiField field,
                                                       @NotNull Project project) {
     PsiCodeBlock methodBody = constructor.getBody();
-    if (methodBody == null) return null;
+    if (methodBody == null) {
+      //incomplete code
+      CreateFromUsageUtils.setupMethodBody(constructor);
+      methodBody = constructor.getBody();
+      LOG.assertTrue(methodBody != null);
+    }
 
     final String fieldName = field.getName();
     String stmtText = fieldName + " = " + suggestedInitializers[0].getPsiElement().getText() + ";";
@@ -125,7 +133,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
 
     final PsiExpressionStatement addedStatement = (PsiExpressionStatement)methodBody.add(codeStyleManager
       .reformat(factory.createStatementFromText(stmtText, methodBody)));
-    return ((PsiAssignmentExpression)addedStatement.getExpression()).getRExpression();
+    return ObjectUtils.notNull(((PsiAssignmentExpression)addedStatement.getExpression()).getRExpression());
   }
 
   private static boolean methodContainsParameterWithName(@NotNull PsiMethod constructor, @NotNull String name) {
@@ -161,6 +169,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
     return Collections.emptyList();
   }
 
+  @NotNull
   private static PsiMethodMember[] toPsiMethodMemberArray(@NotNull PsiMethod[] methods) {
     final PsiMethodMember[] result = new PsiMethodMember[methods.length];
     for (int i = 0; i < methods.length; i++) {
@@ -169,6 +178,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
     return result;
   }
 
+  @NotNull
   private static PsiMethod[] toPsiMethodArray(@NotNull List<PsiMethodMember> methodMembers) {
     final PsiMethod[] result = new PsiMethod[methodMembers.size()];
     int i = 0;
@@ -183,6 +193,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
     ApplicationManager.getApplication().runWriteAction(() -> defaultConstructorFix.invoke(project, editor, file));
   }
 
+  @NotNull
   private static PsiMethod[] filterIfFieldAlreadyAssigned(@NotNull PsiField field, @NotNull PsiMethod[] ctors) {
     final List<PsiMethod> result = new ArrayList<>(Arrays.asList(ctors));
     for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(ctors))) {

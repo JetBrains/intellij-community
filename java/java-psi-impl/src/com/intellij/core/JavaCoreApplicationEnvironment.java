@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,11 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings("UnusedDeclaration") // Upsource and Kotlin
 public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
   public JavaCoreApplicationEnvironment(@NotNull Disposable parentDisposable) {
-    super(parentDisposable);
+    this(parentDisposable, true);
+  }
+
+  public JavaCoreApplicationEnvironment(@NotNull Disposable parentDisposable, boolean unitTestMode) {
+    super(parentDisposable, unitTestMode);
 
     registerFileType(JavaClassFileType.INSTANCE, "class");
     registerFileType(JavaFileType.INSTANCE, "java");

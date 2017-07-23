@@ -33,10 +33,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 19-Apr-2006
- */
 public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlightingPassRegistrarEx {
   private final TIntObjectHashMap<PassConfig> myRegisteredPassFactories = new TIntObjectHashMap<>();
   private final List<DirtyScopeTrackingHighlightingPassFactory> myDirtyScopeTrackingFactories = new ArrayList<>();
@@ -116,48 +112,42 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     }
     final TIntObjectHashMap<TextEditorHighlightingPass> id2Pass = new TIntObjectHashMap<>();
     final TIntArrayList passesRefusedToCreate = new TIntArrayList();
-    myRegisteredPassFactories.forEachKey(new TIntProcedure() {
-      @Override
-      public boolean execute(int passId) {
-        if (ArrayUtil.find(passesToIgnore, passId) != -1) {
-          return true;
-        }
-        PassConfig passConfig = myRegisteredPassFactories.get(passId);
-        TextEditorHighlightingPassFactory factory = passConfig.passFactory;
-        final TextEditorHighlightingPass pass = factory.createHighlightingPass(psiFile, editor);
-
-        if (pass == null) {
-          passesRefusedToCreate.add(passId);
-        }
-        else {
-          // init with editor's colors scheme
-          pass.setColorsScheme(editor.getColorsScheme());
-
-          TIntArrayList ids = new TIntArrayList(passConfig.completionPredecessorIds.length);
-          for (int id : passConfig.completionPredecessorIds) {
-            if (myRegisteredPassFactories.containsKey(id)) ids.add(id);
-          }
-          pass.setCompletionPredecessorIds(ids.isEmpty() ? ArrayUtil.EMPTY_INT_ARRAY : ids.toNativeArray());
-          ids = new TIntArrayList(passConfig.startingPredecessorIds.length);
-          for (int id : passConfig.startingPredecessorIds) {
-            if (myRegisteredPassFactories.containsKey(id)) ids.add(id);
-          }
-          pass.setStartingPredecessorIds(ids.isEmpty() ? ArrayUtil.EMPTY_INT_ARRAY : ids.toNativeArray());
-          pass.setId(passId);
-          id2Pass.put(passId, pass);
-        }
+    myRegisteredPassFactories.forEachKey(passId -> {
+      if (ArrayUtil.find(passesToIgnore, passId) != -1) {
         return true;
       }
+      PassConfig passConfig = myRegisteredPassFactories.get(passId);
+      TextEditorHighlightingPassFactory factory = passConfig.passFactory;
+      final TextEditorHighlightingPass pass = factory.createHighlightingPass(psiFile, editor);
+
+      if (pass == null) {
+        passesRefusedToCreate.add(passId);
+      }
+      else {
+        // init with editor's colors scheme
+        pass.setColorsScheme(editor.getColorsScheme());
+
+        TIntArrayList ids = new TIntArrayList(passConfig.completionPredecessorIds.length);
+        for (int id : passConfig.completionPredecessorIds) {
+          if (myRegisteredPassFactories.containsKey(id)) ids.add(id);
+        }
+        pass.setCompletionPredecessorIds(ids.isEmpty() ? ArrayUtil.EMPTY_INT_ARRAY : ids.toNativeArray());
+        ids = new TIntArrayList(passConfig.startingPredecessorIds.length);
+        for (int id : passConfig.startingPredecessorIds) {
+          if (myRegisteredPassFactories.containsKey(id)) ids.add(id);
+        }
+        pass.setStartingPredecessorIds(ids.isEmpty() ? ArrayUtil.EMPTY_INT_ARRAY : ids.toNativeArray());
+        pass.setId(passId);
+        id2Pass.put(passId, pass);
+      }
+      return true;
     });
 
     DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
     final FileStatusMap statusMap = daemonCodeAnalyzer.getFileStatusMap();
-    passesRefusedToCreate.forEach(new TIntProcedure() {
-      @Override
-      public boolean execute(int passId) {
-        statusMap.markFileUpToDate(document, passId);
-        return true;
-      }
+    passesRefusedToCreate.forEach(passId -> {
+      statusMap.markFileUpToDate(document, passId);
+      return true;
     });
 
     return (List)Arrays.asList(id2Pass.getValues());
@@ -169,20 +159,17 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
                                                                 @NotNull final Document document,
                                                                 @NotNull final HighlightInfoProcessor highlightInfoProcessor) {
     final THashSet<TextEditorHighlightingPass> ids = new THashSet<>();
-    myRegisteredPassFactories.forEachKey(new TIntProcedure() {
-      @Override
-      public boolean execute(int passId) {
-        PassConfig passConfig = myRegisteredPassFactories.get(passId);
-        TextEditorHighlightingPassFactory factory = passConfig.passFactory;
-        if (factory instanceof MainHighlightingPassFactory) {
-          final TextEditorHighlightingPass pass = ((MainHighlightingPassFactory)factory).createMainHighlightingPass(psiFile, document, highlightInfoProcessor);
-          if (pass != null) {
-            ids.add(pass);
-            pass.setId(passId);
-          }
+    myRegisteredPassFactories.forEachKey(passId -> {
+      PassConfig passConfig = myRegisteredPassFactories.get(passId);
+      TextEditorHighlightingPassFactory factory = passConfig.passFactory;
+      if (factory instanceof MainHighlightingPassFactory) {
+        final TextEditorHighlightingPass pass = ((MainHighlightingPassFactory)factory).createMainHighlightingPass(psiFile, document, highlightInfoProcessor);
+        if (pass != null) {
+          ids.add(pass);
+          pass.setId(passId);
         }
-        return true;
       }
+      return true;
     });
     return new ArrayList<>(ids);
   }
@@ -190,38 +177,29 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
   private void checkForCycles() {
     final TIntObjectHashMap<TIntHashSet> transitivePredecessors = new TIntObjectHashMap<>();
 
-    myRegisteredPassFactories.forEachEntry(new TIntObjectProcedure<PassConfig>() {
-      @Override
-      public boolean execute(int passId, PassConfig config) {
-        TIntHashSet allPredecessors = new TIntHashSet(config.completionPredecessorIds);
-        allPredecessors.addAll(config.startingPredecessorIds);
-        transitivePredecessors.put(passId, allPredecessors);
-        allPredecessors.forEach(new TIntProcedure() {
-          @Override
-          public boolean execute(int predecessorId) {
-            PassConfig predecessor = myRegisteredPassFactories.get(predecessorId);
-            if (predecessor == null) return  true;
-            TIntHashSet transitives = transitivePredecessors.get(predecessorId);
-            if (transitives == null) {
-              transitives = new TIntHashSet();
-              transitivePredecessors.put(predecessorId, transitives);
-            }
-            transitives.addAll(predecessor.completionPredecessorIds);
-            transitives.addAll(predecessor.startingPredecessorIds);
-            return true;
-          }
-        });
-        return true;
-      }
-    });
-    transitivePredecessors.forEachKey(new TIntProcedure() {
-      @Override
-      public boolean execute(int passId) {
-        if (transitivePredecessors.get(passId).contains(passId)) {
-          throw new IllegalArgumentException("There is a cycle introduced involving pass " + myRegisteredPassFactories.get(passId).passFactory);
+    myRegisteredPassFactories.forEachEntry((passId, config) -> {
+      TIntHashSet allPredecessors = new TIntHashSet(config.completionPredecessorIds);
+      allPredecessors.addAll(config.startingPredecessorIds);
+      transitivePredecessors.put(passId, allPredecessors);
+      allPredecessors.forEach(predecessorId -> {
+        PassConfig predecessor = myRegisteredPassFactories.get(predecessorId);
+        if (predecessor == null) return  true;
+        TIntHashSet transitives = transitivePredecessors.get(predecessorId);
+        if (transitives == null) {
+          transitives = new TIntHashSet();
+          transitivePredecessors.put(predecessorId, transitives);
         }
+        transitives.addAll(predecessor.completionPredecessorIds);
+        transitives.addAll(predecessor.startingPredecessorIds);
         return true;
+      });
+      return true;
+    });
+    transitivePredecessors.forEachKey(passId -> {
+      if (transitivePredecessors.get(passId).contains(passId)) {
+        throw new IllegalArgumentException("There is a cycle introduced involving pass " + myRegisteredPassFactories.get(passId).passFactory);
       }
+      return true;
     });
   }
 

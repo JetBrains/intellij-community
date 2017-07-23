@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 public class JavaReadWriteAccessDetector extends ReadWriteAccessDetector {
   @Override
   public boolean isReadWriteAccessible(@NotNull final PsiElement element) {
-    return element instanceof PsiVariable && !(element instanceof ImplicitVariable) || element instanceof PsiClass;
+    return element instanceof PsiVariable && !(element instanceof ImplicitVariable) || element instanceof PsiClass || element instanceof PsiAnnotationMethod && !(element instanceof PsiCompiledElement);
   }
 
   @Override
@@ -49,7 +49,12 @@ public class JavaReadWriteAccessDetector extends ReadWriteAccessDetector {
   @NotNull
   @Override
   public Access getExpressionAccess(@NotNull final PsiElement expression) {
-    if (!(expression instanceof PsiExpression)) return Access.Read;
+    if (!(expression instanceof PsiExpression)) {
+      if (expression instanceof PsiNameValuePair || expression instanceof PsiIdentifier) {
+        return Access.Write;
+      }
+      return Access.Read;
+    }
     PsiExpression expr = (PsiExpression) expression;
     boolean readAccess = PsiUtil.isAccessedForReading(expr);
     boolean writeAccess = PsiUtil.isAccessedForWriting(expr);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.unused.defaultParameter;
 
+import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.compiler.RemoveElementQuickFix;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.FindSuperElementsHelper;
@@ -62,7 +62,7 @@ public class GrUnusedDefaultParameterInspection extends LocalInspectionTool impl
         if (isInitializerUnused(parameter, method)) {
           holder.registerProblem(
             expression, message("unused.default.parameter.message"), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-            new RemoveElementQuickFix(message("unused.default.parameter.fix"))
+            QuickFixFactory.getInstance().createDeleteFix(expression, message("unused.default.parameter.fix"))
           );
         }
       }
@@ -81,10 +81,10 @@ public class GrUnusedDefaultParameterInspection extends LocalInspectionTool impl
    *   def foo(a) {}
    *   def foo() {}
    * </pre>
-   * Initializer for '<code>a</code>' is used only when <code>foo</code> called without arguments,
-   * we do not care if <code>foo</code> is called with one, two ot three arguments.
+   * Initializer for '{@code a}' is used only when {@code foo} called without arguments,
+   * we do not care if {@code foo} is called with one, two ot three arguments.
    * <p>
-   * In case of <code>b</code> we search <code>foo()</code> or <code>foo(1)</code> calls.
+   * In case of {@code b} we search {@code foo()} or {@code foo(1)} calls.
    * <p>
    * The general idea: search usages of last N reflected methods where N is number of current parameter among other default parameters.
    */

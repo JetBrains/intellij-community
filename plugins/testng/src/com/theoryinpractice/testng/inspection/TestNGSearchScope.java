@@ -24,9 +24,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* User: anna
-*/
 public class TestNGSearchScope extends GlobalSearchScope {
 
   private final ProjectFileIndex myFileIndex;

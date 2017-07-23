@@ -105,7 +105,9 @@ public abstract class Animator implements Disposable {
   private void animationDone() {
     stopTicker();
 
-    SwingUtilities.invokeLater(() -> paintCycleEnd());
+    if (!isDisposed()) {
+      SwingUtilities.invokeLater(this::paintCycleEnd);
+    }
   }
 
   private void stopTicker() {
@@ -126,6 +128,10 @@ public abstract class Animator implements Disposable {
   }
 
   public void resume() {
+    if (isDisposed()) {
+      stopTicker();
+      return;
+    }
     if (skipAnimation()) {
       animationDone();
       return;

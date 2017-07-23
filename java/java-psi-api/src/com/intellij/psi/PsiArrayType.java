@@ -74,6 +74,9 @@ public class PsiArrayType extends PsiType.Stub {
 
   @Override
   public boolean isValid() {
+    for (PsiAnnotation annotation : getAnnotations()) {
+      if (!annotation.isValid()) return false;
+    }
     return myComponentType.isValid();
   }
 

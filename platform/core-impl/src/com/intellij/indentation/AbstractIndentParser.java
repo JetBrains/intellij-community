@@ -24,10 +24,6 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: Andrey.Vokin
- * Date: 3/20/12
- */
 public abstract class AbstractIndentParser implements PsiParser {
   protected PsiBuilder myBuilder;
 
@@ -40,8 +36,8 @@ public abstract class AbstractIndentParser implements PsiParser {
 
   @NotNull
   public ASTNode parse(IElementType root, PsiBuilder builder) {
-    myNewLines = new HashMap<PsiBuilder.Marker, Boolean>();
-    myIndents = new HashMap<PsiBuilder.Marker, Integer>();
+    myNewLines = new HashMap<>();
+    myIndents = new HashMap<>();
     myBuilder = builder;
     parseRoot(root);
     return myBuilder.getTreeBuilt();

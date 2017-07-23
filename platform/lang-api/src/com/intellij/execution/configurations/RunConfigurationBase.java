@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,16 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.diagnostic.logging.LogConsole;
+import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
@@ -33,6 +34,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Standard base class for run configuration implementations.
@@ -53,12 +56,14 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   private String myName = "";
   private final Icon myIcon;
 
-  private ArrayList<LogFileOptions> myLogFiles = new ArrayList<>();
-  private ArrayList<PredefinedLogFile> myPredefinedLogFiles = new ArrayList<>();
+  private List<LogFileOptions> myLogFiles = new SmartList<>();
+  private List<PredefinedLogFile> myPredefinedLogFiles = new SmartList<>();
   private boolean mySaveOutput = false;
   private boolean myShowConsoleOnStdOut = false;
   private boolean myShowConsoleOnStdErr = false;
   private String myFileOutputPath = null;
+
+  private List<BeforeRunTask> myBeforeRunTasks = Collections.emptyList();
 
   protected RunConfigurationBase(@NotNull Project project, @NotNull ConfigurationFactory factory, final String name) {
     myProject = project;
@@ -68,8 +73,15 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   }
 
   @Override
-  public int getUniqueID() {
-    return System.identityHashCode(this);
+  @NotNull
+  @Transient
+  public List<BeforeRunTask> getBeforeRunTasks() {
+    return myBeforeRunTasks;
+  }
+
+  @Override
+  public void setBeforeRunTasks(@NotNull List<BeforeRunTask> value) {
+    myBeforeRunTasks = value;
   }
 
   @Override
@@ -86,12 +98,6 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   @Override
   public final Project getProject() {
     return myProject;
-  }
-
-  @Override
-  @NotNull
-  public ConfigurationType getType() {
-    return myFactory.getType();
   }
 
   @Override
@@ -136,6 +142,8 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     runConfiguration.myShowConsoleOnStdOut = myShowConsoleOnStdOut;
     runConfiguration.myShowConsoleOnStdErr = myShowConsoleOnStdErr;
     copyCopyableDataTo(runConfiguration);
+
+    myBeforeRunTasks = myBeforeRunTasks.isEmpty() ? Collections.emptyList() : new SmartList<>(myBeforeRunTasks);
     return runConfiguration;
   }
 
@@ -148,11 +156,12 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     myPredefinedLogFiles.clear();
   }
 
-  public void addPredefinedLogFile(PredefinedLogFile predefinedLogFile) {
+  public void addPredefinedLogFile(@NotNull PredefinedLogFile predefinedLogFile) {
     myPredefinedLogFiles.add(predefinedLogFile);
   }
 
-  public ArrayList<PredefinedLogFile> getPredefinedLogFiles() {
+  @NotNull
+  public List<PredefinedLogFile> getPredefinedLogFiles() {
     return myPredefinedLogFiles;
   }
 
@@ -168,7 +177,8 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     return list;
   }
 
-  public ArrayList<LogFileOptions> getLogFiles() {
+  @NotNull
+  public List<LogFileOptions> getLogFiles() {
     return myLogFiles;
   }
 
@@ -304,16 +314,5 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   @Override
   public String toString() {
     return getType().getDisplayName() + ": " + getName();
-  }
-
-  @SuppressWarnings("deprecation")
-  @Override
-  public ConfigurationPerRunnerSettings createRunnerSettings(ConfigurationInfoProvider provider) {
-    return null;
-  }
-
-  @Override
-  public SettingsEditor<ConfigurationPerRunnerSettings> getRunnerSettingsEditor(ProgramRunner runner) {
-    return null;
   }
 }

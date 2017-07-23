@@ -17,13 +17,13 @@ package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.naming.ConventionInspection;
-import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 public class JUnitTestClassNamingConventionInspectionBase extends ConventionInspection {
   private static final int DEFAULT_MIN_LENGTH = 8;
@@ -66,6 +66,11 @@ public class JUnitTestClassNamingConventionInspectionBase extends ConventionInsp
     return new NamingConventionsVisitor();
   }
 
+  @Override
+  public boolean shouldInspect(PsiFile file) {
+    return file instanceof PsiClassOwner;
+  }
+
   private class NamingConventionsVisitor extends BaseInspectionVisitor {
     @Override
     public void visitElement(PsiElement element) {
@@ -85,8 +90,8 @@ public class JUnitTestClassNamingConventionInspectionBase extends ConventionInsp
         return;
       }
 
-      final TestFramework framework = TestFrameworks.detectFramework(aClass);
-      if (framework == null || !framework.getName().startsWith("JUnit") || !framework.isTestClass(aClass)) {
+      final Set<TestFramework> frameworks = TestFrameworks.detectApplicableFrameworks(aClass);
+      if (frameworks.stream().noneMatch(framework -> framework.getName().startsWith("JUnit") && framework.isTestClass(aClass))) {
         return;
       }
 

@@ -24,7 +24,9 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Allows to initiate 3-way merge operations for multiple versions of content of a particular virtual file.
+ * @deprecated use {@link com.intellij.diff.DiffRequestFactory} instead
  */
+@Deprecated
 public abstract class DiffRequestFactory {
   public static DiffRequestFactory getInstance() {
     return ServiceManager.getService(DiffRequestFactory.class);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -42,21 +42,35 @@ public abstract class GroovyNamedArgumentProvider {
   public static final ExtensionPointName<GroovyNamedArgumentProvider> EP_NAME =
     ExtensionPointName.create("org.intellij.groovy.namedArgumentProvider");
 
+  @SuppressWarnings("unused")
+  @Deprecated
   public void getNamedArguments(@NotNull GrCall call,
                                 @Nullable PsiElement resolve,
                                 @Nullable String argumentName,
                                 boolean forCompletion,
-                                Map<String, NamedArgumentDescriptor> result) {
+                                @NotNull Map<String, NamedArgumentDescriptor> result) {
     // no op
   }
 
+  @SuppressWarnings("unused")
+  @Deprecated
   public void getNamedArguments(@NotNull GrCall call,
                                 @Nullable PsiElement resolve,
                                 @Nullable GroovyResolveResult resolveResult,
                                 @Nullable String argumentName,
                                 boolean forCompletion,
-                                Map<String, NamedArgumentDescriptor> result) {
+                                @NotNull Map<String, NamedArgumentDescriptor> result) {
+    //noinspection deprecation
     getNamedArguments(call, resolve, argumentName, forCompletion, result);
+  }
+
+  public void getNamedArguments(@NotNull GrCall call,
+                                @NotNull GroovyResolveResult resolveResult,
+                                @Nullable String argumentName,
+                                boolean forCompletion,
+                                @NotNull Map<String, NamedArgumentDescriptor> result) {
+    //noinspection deprecation
+    getNamedArguments(call, resolveResult.getElement(), resolveResult, argumentName, forCompletion, result);
   }
 
   @NotNull
@@ -66,8 +80,8 @@ public abstract class GroovyNamedArgumentProvider {
 
   @Nullable
   public static Map<String, NamedArgumentDescriptor> getNamedArgumentsFromAllProviders(@NotNull GrCall call,
-                                                                                  @Nullable String argumentName,
-                                                                                  boolean forCompletion) {
+                                                                                       @Nullable String argumentName,
+                                                                                       boolean forCompletion) {
     Map<String, NamedArgumentDescriptor> namedArguments = new HashMap<String, NamedArgumentDescriptor>() {
       @Override
       public NamedArgumentDescriptor put(String key, NamedArgumentDescriptor value) {
@@ -85,12 +99,15 @@ public abstract class GroovyNamedArgumentProvider {
 
     if (callVariants.length == 0 || PsiUtil.isSingleBindingVariant(callVariants)) {
       for (GroovyNamedArgumentProvider namedArgumentProvider : EP_NAME.getExtensions()) {
-        namedArgumentProvider.getNamedArguments(call, null, null, argumentName, forCompletion, namedArguments);
+        namedArgumentProvider.getNamedArguments(call, EmptyGroovyResolveResult.INSTANCE, argumentName, forCompletion, namedArguments);
       }
     }
     else {
       boolean mapExpected = false;
       for (GroovyResolveResult result : callVariants) {
+        for (GroovyNamedArgumentProvider namedArgumentProvider : EP_NAME.getExtensions()) {
+          namedArgumentProvider.getNamedArguments(call, result, argumentName, forCompletion, namedArguments);
+        }
         PsiElement element = result.getElement();
         if (element instanceof GrAccessorMethod) continue;
 
@@ -106,7 +123,7 @@ public abstract class GroovyNamedArgumentProvider {
             if (methodInfo.getNamedArguments() != null || methodInfo.isNamedArgumentProviderDefined()) {
               if (methodInfo.isApplicable(method)) {
                 if (methodInfo.isNamedArgumentProviderDefined()) {
-                  methodInfo.getNamedArgProvider().getNamedArguments(call, element, result, argumentName, forCompletion, namedArguments);
+                  methodInfo.getNamedArgProvider().getNamedArguments(call, result, argumentName, forCompletion, namedArguments);
                 }
                 if (methodInfo.getNamedArguments() != null) {
                   namedArguments.putAll(methodInfo.getNamedArguments());
@@ -114,10 +131,6 @@ public abstract class GroovyNamedArgumentProvider {
               }
             }
           }
-        }
-
-        for (GroovyNamedArgumentProvider namedArgumentProvider : EP_NAME.getExtensions()) {
-          namedArgumentProvider.getNamedArguments(call, element, result, argumentName, forCompletion, namedArguments);
         }
 
         if (element instanceof GrVariable &&
@@ -140,6 +153,6 @@ public abstract class GroovyNamedArgumentProvider {
         ((GrParameter)parameter).getTypeElementGroovy() == null) {
       return true;
     }
-    return GroovyPsiManager.isInheritorCached(type, CommonClassNames.JAVA_UTIL_MAP);
+    return InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP);
   }
 }

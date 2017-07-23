@@ -27,16 +27,16 @@ import java.util.Iterator;
 import java.util.List;
 
 public class TopCommitsCache {
-  @NotNull private final VcsLogStorage myHashMap;
+  @NotNull private final VcsLogStorage myStorage;
   @NotNull private final ConcurrentIntObjectMap<VcsCommitMetadata> myCache = ContainerUtil.createConcurrentIntObjectMap();
   @NotNull private List<VcsCommitMetadata> mySortedDetails = ContainerUtil.newArrayList();
 
-  public TopCommitsCache(@NotNull VcsLogStorage hashMap) {
-    myHashMap = hashMap;
+  public TopCommitsCache(@NotNull VcsLogStorage storage) {
+    myStorage = storage;
   }
 
   private int getIndex(@NotNull VcsCommitMetadata metadata) {
-    return myHashMap.getCommitIndex(metadata.getId(), metadata.getRoot());
+    return myStorage.getCommitIndex(metadata.getId(), metadata.getRoot());
   }
 
   public void storeDetails(@NotNull List<? extends VcsCommitMetadata> sortedDetails) {

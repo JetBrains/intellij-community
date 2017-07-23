@@ -30,8 +30,8 @@ import java.util.Map;
  * Represents primitive types of Java language.
  */
 public class PsiPrimitiveType extends PsiType.Stub {
-  private static final Map<String, PsiPrimitiveType> ourQNameToUnboxed = new THashMap<String, PsiPrimitiveType>();
-  private static final Map<PsiPrimitiveType, String> ourUnboxedToQName = new THashMap<PsiPrimitiveType, String>();
+  private static final Map<String, PsiPrimitiveType> ourQNameToUnboxed = new THashMap<>();
+  private static final Map<PsiPrimitiveType, String> ourUnboxedToQName = new THashMap<>();
 
   private final String myName;
 
@@ -92,6 +92,9 @@ public class PsiPrimitiveType extends PsiType.Stub {
    */
   @Override
   public boolean isValid() {
+    for (PsiAnnotation annotation : getAnnotations()) {
+      if (!annotation.isValid()) return false;
+    }
     return true;
   }
 
@@ -139,6 +142,11 @@ public class PsiPrimitiveType extends PsiType.Stub {
     return unboxed.annotate(type.getAnnotationProvider());
   }
 
+  @Nullable
+  public static PsiPrimitiveType getOptionallyUnboxedType(PsiType type) {
+    return type instanceof PsiPrimitiveType ? (PsiPrimitiveType)type : getUnboxedType(type);
+  }
+
   public String getBoxedTypeName() {
     return ourUnboxedToQName.get(this);
   }
@@ -153,6 +161,7 @@ public class PsiPrimitiveType extends PsiType.Stub {
   @Nullable
   public PsiClassType getBoxedType(@NotNull PsiElement context) {
     PsiFile file = context.getContainingFile();
+    if (file == null) return null;
     LanguageLevel languageLevel = PsiUtil.getLanguageLevel(file);
     if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_5)) return null;
 

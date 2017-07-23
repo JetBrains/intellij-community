@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 20-Dec-2007
- */
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.module.Module;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +48,17 @@ public class RefDirectoryImpl extends RefElementImpl implements RefDirectory{
   @Override
   public void accept(@NotNull final RefVisitor visitor) {
     ApplicationManager.getApplication().runReadAction(() -> visitor.visitDirectory(this));
+  }
+
+  @Override
+  public boolean isValid() {
+    if (isDeleted()) return false;
+    return ReadAction.compute(() -> {
+      if (getRefManager().getProject().isDisposed()) return false;
+
+      VirtualFile directory = getVirtualFile();
+      return directory != null && directory.isValid();
+    });
   }
 
   @Nullable

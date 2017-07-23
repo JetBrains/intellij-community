@@ -344,10 +344,6 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     return null;
   }
 
-  public Icon getBigIcon() {
-    return getModuleType().getBigIcon();
-  }
-
   public Icon getNodeIcon() {
     return getModuleType().getNodeIcon(false);
   }

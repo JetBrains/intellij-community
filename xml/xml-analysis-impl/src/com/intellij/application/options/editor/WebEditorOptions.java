@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,10 +59,16 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
     myShowCssInlineColorPreview = showCssInlineColorPreview;
   }
 
+  /**
+   * @deprecated use LineMarkerSettings.getSettings().isEnabled(new ColorLineMarkerProvider())
+   */
   public boolean isShowCssColorPreviewInGutter() {
     return myShowCssColorPreviewInGutter;
   }
 
+  /**
+   * @deprecated use LineMarkerSettings.getSettings().isEnabled(new ColorLineMarkerProvider())
+   */
   public void setShowCssColorPreviewInGutter(final boolean showCssColorPreviewInGutter) {
     myShowCssColorPreviewInGutter = showCssColorPreviewInGutter;
   }

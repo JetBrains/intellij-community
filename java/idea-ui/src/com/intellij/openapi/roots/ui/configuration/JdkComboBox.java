@@ -16,13 +16,13 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.util.projectWizard.ProjectJdkListRenderer;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
@@ -43,13 +44,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Comparator;
+import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * @author Eugene Zhuravlev
  * @since May 18, 2005
  */
-public class JdkComboBox extends ComboBoxWithWidePopup {
+public class JdkComboBox extends ComboBoxWithWidePopup<JdkComboBox.JdkComboBoxItem> {
 
   private static final Icon EMPTY_ICON = JBUI.scale(EmptyIcon.create(1, 16));
 
@@ -78,9 +80,14 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
     myFilter = filter;
     mySdkTypeFilter = sdkTypeFilter;
     myCreationFilter = creationFilter;
-    setRenderer(new ProjectJdkListRenderer() {
+    setRenderer(new ColoredListCellRenderer<JdkComboBoxItem>() {
       @Override
-      public void doCustomize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList<? extends JdkComboBoxItem> list,
+                                           JdkComboBoxItem value,
+                                           int index,
+                                           boolean selected,
+                                           boolean hasFocus) {
+
         if (JdkComboBox.this.isEnabled()) {
           setIcon(EMPTY_ICON);    // to fix vertical size
           if (value instanceof InvalidJdkComboBoxItem) {
@@ -107,9 +114,11 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
             append(version == null ? type.getPresentableName() : version);
             append(" (" + home + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
+          else if (value != null) {
+            OrderEntryAppearanceService.getInstance().forJdk(value.getJdk(), false, selected, true).customize(this);
+          }
           else {
-            super.doCustomize(list, value != null ? ((JdkComboBoxItem)value).getJdk()
-                                                  : new NoneJdkComboBoxItem(), index, selected, hasFocus);
+            customizeCellRenderer(list, new NoneJdkComboBoxItem(), index, selected, hasFocus);
           }
         }
       }
@@ -159,7 +168,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
       @Override
       public void actionPerformed(ActionEvent e) {
         DefaultActionGroup group = new DefaultActionGroup();
-        jdksModel.createAddActions(group, JdkComboBox.this, jdk -> {
+        jdksModel.createAddActions(group, JdkComboBox.this, getSelectedJdk(), jdk -> {
           if (project != null) {
             final JdkListConfigurable configurable = JdkListConfigurable.getInstance(project);
             configurable.addJdkNode(jdk, false);
@@ -280,7 +289,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
     model.reload(firstItem, ProjectStructureConfigurable.getInstance(project).getProjectJdksModel(), mySdkTypeFilter, myFilter, false);
   }
 
-  private static class JdkComboBoxModel extends DefaultComboBoxModel {
+  private static class JdkComboBoxModel extends DefaultComboBoxModel<JdkComboBoxItem> {
     public JdkComboBoxModel(@NotNull final ProjectSdksModel jdksModel, @Nullable Condition<SdkTypeId> sdkTypeFilter,
                             @Nullable Condition<Sdk> sdkFilter, boolean addSuggested) {
       reload(null, jdksModel, sdkTypeFilter, sdkFilter, addSuggested);
@@ -307,63 +316,33 @@ public class JdkComboBox extends ComboBoxWithWidePopup {
 
     @NotNull
     private static Sdk[] sortSdks(@NotNull final Sdk[] sdks) {
-      final ContainerUtil.KeyOrderedMultiMap<MyComparatorWrapper, Sdk> comparatorToSdkMap = new ContainerUtil.KeyOrderedMultiMap<>();
-      for (Sdk sdk : sdks) {
-        final SdkTypeId sdkType = sdk.getSdkType();
-        comparatorToSdkMap.putValue(new MyComparatorWrapper(sdkType instanceof SdkType ? (SdkType)sdkType : null), sdk);
-      }
-
-      return comparatorToSdkMap.entrySet().stream().flatMap(entry -> entry.getValue().stream().sorted(entry.getKey().getComparator()))
-        .toArray(size -> new Sdk[size]);
+      Sdk[] clone = sdks.clone();
+      Arrays.sort(clone, (sdk1, sdk2) -> {
+        SdkType sdkType1 = (SdkType)sdk1.getSdkType();
+        SdkType sdkType2 = (SdkType)sdk2.getSdkType();
+        if (!sdkType1.getComparator().equals(sdkType2.getComparator())) return StringUtil.compare(sdkType1.getPresentableName(), sdkType2.getPresentableName(), true);
+        return sdkType1.getComparator().compare(sdk1, sdk2);
+      });
+      return clone;
     }
 
     protected void addSuggestedItems(@Nullable Condition<SdkTypeId> sdkTypeFilter, Sdk[] jdks) {
       SdkType[] types = SdkType.getAllTypes();
       for (SdkType type : types) {
         if (sdkTypeFilter == null || sdkTypeFilter.value(type) && ContainerUtil.find(jdks, sdk -> sdk.getSdkType() == type) == null) {
-          String homePath = type.suggestHomePath();
-          if (homePath != null && type.isValidSdkHome(homePath)) {
-            addElement(new SuggestedJdkItem(type, homePath));
+          Collection<String> paths = type.suggestHomePaths();
+          for (String path : paths) {
+            if (path != null && type.isValidSdkHome(path)) {
+              addElement(new SuggestedJdkItem(type, path));
+            }
           }
         }
       }
     }
-
-    private static class MyComparatorWrapper implements Comparable<MyComparatorWrapper> {
-      @Nullable
-      private SdkType mySdkType = null;
-
-      private MyComparatorWrapper(@Nullable final SdkType type) {
-        mySdkType = type;
-      }
-
-      @Nullable
-      private String getNameToCompare() {
-        return mySdkType == null ? null : mySdkType.getPresentableName();
-      }
-
-      @NotNull
-      private Comparator<Sdk> getComparator() {
-        return mySdkType == null ? SdkType.ALPHABETICAL_COMPARATOR : mySdkType.getComparator();
-      }
-
-      @Override
-      public int compareTo(@NotNull final MyComparatorWrapper comparatorWrapper) {
-        if (getComparator() == comparatorWrapper.getComparator()) return 0;
-
-        return StringUtil.compare(getNameToCompare(), comparatorWrapper.getNameToCompare(), true);
-      }
-    }
-
-    // implements javax.swing.ListModel
-    @Override
-    public JdkComboBoxItem getElementAt(int index) {
-      return (JdkComboBoxItem)super.getElementAt(index);
-    }
   }
 
   public static Condition<Sdk> getSdkFilter(@Nullable final Condition<SdkTypeId> filter) {
-    return filter == null ? Conditions.<Sdk>alwaysTrue() : (Condition<Sdk>)sdk -> filter.value(sdk.getSdkType());
+    return filter == null ? Conditions.alwaysTrue() : sdk -> filter.value(sdk.getSdkType());
   }
 
   public abstract static class JdkComboBoxItem {

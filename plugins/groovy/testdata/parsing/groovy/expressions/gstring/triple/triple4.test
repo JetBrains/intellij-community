@@ -1,0 +1,13 @@
+""""""
+"""\$"""
+"""\""""
+-----
+Groovy script
+  Literal
+    PsiElement(Gstring)('""""""')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(Gstring)('"""\$"""')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(Gstring)('"""\""""')

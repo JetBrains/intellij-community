@@ -29,12 +29,6 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: Aug 28, 2009
- * Time: 6:23:51 PM
- */
 public class PyWithTryExceptSurrounder extends PyStatementSurrounder {
   @Override
   @Nullable

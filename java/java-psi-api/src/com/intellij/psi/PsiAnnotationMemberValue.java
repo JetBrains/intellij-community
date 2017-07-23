@@ -29,11 +29,5 @@ public interface PsiAnnotationMemberValue extends PsiElement {
    */
   PsiAnnotationMemberValue[] EMPTY_ARRAY = new PsiAnnotationMemberValue[0];
 
-  ArrayFactory<PsiAnnotationMemberValue> ARRAY_FACTORY = new ArrayFactory<PsiAnnotationMemberValue>() {
-    @NotNull
-    @Override
-    public PsiAnnotationMemberValue[] create(final int count) {
-      return count == 0 ? EMPTY_ARRAY : new PsiAnnotationMemberValue[count];
-    }
-  };
+  ArrayFactory<PsiAnnotationMemberValue> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiAnnotationMemberValue[count];
 }

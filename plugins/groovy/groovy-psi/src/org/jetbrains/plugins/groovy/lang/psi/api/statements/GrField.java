@@ -28,7 +28,7 @@ import java.util.Map;
 /**
  * @author ven
  */
-public interface GrField extends GrVariable, GrMember, PsiField, GrTopLevelDefinition, GrDocCommentOwner {
+public interface GrField extends GrVariable, GrMember, PsiField, GrDocCommentOwner {
   GrField[] EMPTY_ARRAY = new GrField[0];
 
   boolean isProperty();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,13 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.BatchUpdateListener
-import com.intellij.openapi.components.impl.stores.DefaultStateSerializer
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.messages.MessageBus
 import org.jdom.Element
 import java.util.concurrent.atomic.AtomicReference
 
-private val LOG: Logger = Logger.getInstance(StateStorageBase::class.java)
+private val LOG = logger<StateStorageBase<*>>()
 
 abstract class StateStorageBase<T : Any> : StateStorage {
   private var mySavingDisabled = false
@@ -40,7 +39,7 @@ abstract class StateStorageBase<T : Any> : StateStorage {
   }
 
   open fun <S: Any> deserializeState(serializedState: Element?, stateClass: Class<S>, mergeInto: S?): S? {
-    return DefaultStateSerializer.deserializeState(serializedState, stateClass, mergeInto)
+    return com.intellij.configurationStore.deserializeState(serializedState, stateClass, mergeInto)
   }
 
   abstract fun getSerializedState(storageData: T, component: Any?, componentName: String, archive: Boolean = true): Element?

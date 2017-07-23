@@ -20,10 +20,6 @@ import com.intellij.psi.PsiForeachStatement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeCastExpression;
 
-/**
- * User: anna
- * Date: 8/1/12
- */
 public class ReplaceForEachLoopWithOptimizedIndexedForLoopIntention extends ReplaceForEachLoopWithIndexedForLoopIntention {
   @Override
   protected void createForLoopDeclaration(PsiForeachStatement statement,

@@ -26,6 +26,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleGrouperKt;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -99,7 +100,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
           if (!shouldShowModuleName()) {
             data.addText(directoryFile.getName() + " ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
           }
-          else if (Comparing.equal(module.getName(), directoryFile.getName())) {
+          else if (moduleNameMatchesDirectoryName(module, directoryFile, fi)) {
             data.addText(directoryFile.getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
           }
           else {
@@ -133,6 +134,28 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     data.setLocationString(ProjectViewDirectoryHelper.getInstance(project).getLocationString(psiDirectory, false, false));
 
     setupIcon(data, psiDirectory);
+  }
+
+  private static boolean moduleNameMatchesDirectoryName(Module module, VirtualFile directoryFile, ProjectFileIndex fileIndex) {
+    String moduleName = module.getName();
+    String directoryName = directoryFile.getName();
+    if (moduleName.equals(directoryName)) {
+      return true;
+    }
+    if (ModuleGrouperKt.isQualifiedModuleNamesEnabled() && moduleName.endsWith(directoryName)) {
+      int parentPrefixLength = moduleName.length() - directoryName.length() - 1;
+      if (parentPrefixLength > 0 && moduleName.charAt(parentPrefixLength) == '.') {
+        VirtualFile parentDirectory = directoryFile.getParent();
+        if (ProjectRootsUtil.isModuleContentRoot(parentDirectory, module.getProject())) {
+          Module parentModule = fileIndex.getModuleForFile(parentDirectory);
+          if (parentModule != null && parentModule.getName().length() == parentPrefixLength
+              && moduleName.startsWith(parentModule.getName())) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   protected void setupIcon(PresentationData data, PsiDirectory psiDirectory) {

@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -38,7 +39,17 @@ public class ExcludedEntriesConfiguration implements PersistentStateComponent<Ex
   @NonNls private static final String URL = "url";
   @NonNls private static final String INCLUDE_SUBDIRECTORIES = "includeSubdirectories";
   private final Collection<ExcludeEntryDescription> myExcludeEntryDescriptions = new LinkedHashSet<>();
+  @Nullable private final ExcludedEntriesListener myEventPublisher;
   private ExcludeEntryDescription[] myCachedDescriptions = null;
+
+  @SuppressWarnings("unused")
+  public ExcludedEntriesConfiguration() {
+    this(null);
+  }
+
+  public ExcludedEntriesConfiguration(@Nullable ExcludedEntriesListener eventPublisher) {
+    myEventPublisher = eventPublisher;
+  }
 
   @Override
   public synchronized ExcludeEntryDescription[] getExcludeEntryDescriptions() {
@@ -50,19 +61,29 @@ public class ExcludedEntriesConfiguration implements PersistentStateComponent<Ex
 
   @Override
   public synchronized void addExcludeEntryDescription(ExcludeEntryDescription description) {
-    myExcludeEntryDescriptions.add(description);
+    if (myExcludeEntryDescriptions.add(description) && myEventPublisher != null) {
+      myEventPublisher.onEntryAdded(description);
+    }
     myCachedDescriptions = null;
   }
 
   @Override
   public synchronized void removeExcludeEntryDescription(ExcludeEntryDescription description) {
-    myExcludeEntryDescriptions.remove(description);
+    if (myExcludeEntryDescriptions.remove(description) && myEventPublisher != null) {
+      myEventPublisher.onEntryRemoved(description);
+    }
     myCachedDescriptions = null;
   }
 
   @Override
   public synchronized void removeAllExcludeEntryDescriptions() {
+    ExcludeEntryDescription[] oldDescriptions = getExcludeEntryDescriptions();
     myExcludeEntryDescriptions.clear();
+    if (myEventPublisher != null) {
+      for (ExcludeEntryDescription description : oldDescriptions) {
+        myEventPublisher.onEntryRemoved(description);
+      }
+    }
     myCachedDescriptions = null;
   }
 

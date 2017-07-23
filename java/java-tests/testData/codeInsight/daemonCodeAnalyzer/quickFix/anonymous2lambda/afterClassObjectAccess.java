@@ -3,6 +3,6 @@ class Test {
   {
     ((Runnable) () -> {
 
-    }).getClass();;
+    }).getClass();
   }
 }

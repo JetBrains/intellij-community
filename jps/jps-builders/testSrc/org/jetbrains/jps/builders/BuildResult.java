@@ -22,7 +22,6 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -34,7 +33,10 @@ import org.jetbrains.jps.incremental.storage.OutputToTargetRegistry;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 
 import static org.junit.Assert.*;
 
@@ -49,9 +51,9 @@ public class BuildResult implements MessageHandler {
   private String myMappingsDump;
 
   public BuildResult() {
-    myErrorMessages = new ArrayList<BuildMessage>();
-    myWarnMessages = new ArrayList<BuildMessage>();
-    myInfoMessages = new ArrayList<BuildMessage>();
+    myErrorMessages = new ArrayList<>();
+    myWarnMessages = new ArrayList<>();
+    myInfoMessages = new ArrayList<>();
   }
 
   void storeMappingsDump(ProjectDescriptor pd) throws IOException {
@@ -71,25 +73,21 @@ public class BuildResult implements MessageHandler {
   }
 
   private static void dumpSourceToOutputMappings(ProjectDescriptor pd, PrintStream stream) throws IOException {
-    List<BuildTarget<?>> targets = new ArrayList<BuildTarget<?>>(pd.getBuildTargetIndex().getAllTargets());
-    Collections.sort(targets, new Comparator<BuildTarget<?>>() {
-      @Override
-      public int compare(BuildTarget<?> o1, BuildTarget<?> o2) {
-        return StringUtil.comparePairs(o1.getTargetType().getTypeId(), o1.getId(), o2.getTargetType().getTypeId(), o2.getId(), false);
-      }
-    });
-    final TIntObjectHashMap<BuildTarget<?>> id2Target = new TIntObjectHashMap<BuildTarget<?>>();
+    List<BuildTarget<?>> targets = new ArrayList<>(pd.getBuildTargetIndex().getAllTargets());
+    targets.sort(
+      (o1, o2) -> StringUtil.comparePairs(o1.getTargetType().getTypeId(), o1.getId(), o2.getTargetType().getTypeId(), o2.getId(), false));
+    final TIntObjectHashMap<BuildTarget<?>> id2Target = new TIntObjectHashMap<>();
     for (BuildTarget<?> target : targets) {
       id2Target.put(pd.dataManager.getTargetsState().getBuildTargetId(target), target);
     }
-    TIntObjectHashMap<String> hashCodeToOutputPath = new TIntObjectHashMap<String>();
+    TIntObjectHashMap<String> hashCodeToOutputPath = new TIntObjectHashMap<>();
     for (BuildTarget<?> target : targets) {
       stream.println("Begin Of SourceToOutput (target " + getTargetIdWithTypeId(target) + ")");
       SourceToOutputMapping map = pd.dataManager.getSourceToOutputMap(target);
-      List<String> sourcesList = new ArrayList<String>(map.getSources());
+      List<String> sourcesList = new ArrayList<>(map.getSources());
       Collections.sort(sourcesList);
       for (String source : sourcesList) {
-        List<String> outputs = new ArrayList<String>(ObjectUtils.notNull(map.getOutputs(source), Collections.<String>emptySet()));
+        List<String> outputs = new ArrayList<>(ObjectUtils.notNull(map.getOutputs(source), Collections.emptySet()));
         Collections.sort(outputs);
         for (String output : outputs) {
           hashCodeToOutputPath.put(FileUtil.pathHashCode(output), output);
@@ -102,20 +100,17 @@ public class BuildResult implements MessageHandler {
 
 
     OutputToTargetRegistry registry = pd.dataManager.getOutputToTargetRegistry();
-    List<Integer> keys = new ArrayList<Integer>(registry.getKeys());
+    List<Integer> keys = new ArrayList<>(registry.getKeys());
     Collections.sort(keys);
     stream.println("Begin Of OutputToTarget");
     for (Integer key : keys) {
       TIntHashSet targetsIds = registry.getState(key);
       if (targetsIds == null) continue;
-      final List<String> targetsNames = new ArrayList<String>();
-      targetsIds.forEach(new TIntProcedure() {
-        @Override
-        public boolean execute(int value) {
-          BuildTarget<?> target = id2Target.get(value);
-          targetsNames.add(target != null ? getTargetIdWithTypeId(target) : "<unknown " + value + ">");
-          return true;
-        }
+      final List<String> targetsNames = new ArrayList<>();
+      targetsIds.forEach(value -> {
+        BuildTarget<?> target = id2Target.get(value);
+        targetsNames.add(target != null ? getTargetIdWithTypeId(target) : "<unknown " + value + ">");
+        return true;
       });
       Collections.sort(targetsNames);
       stream.println(hashCodeToOutputPath.get(key) + " -> " + targetsNames);

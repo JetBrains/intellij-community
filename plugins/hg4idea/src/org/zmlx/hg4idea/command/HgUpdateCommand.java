@@ -92,7 +92,7 @@ public class HgUpdateCommand {
       }
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(project, token);
+      token.finish();
     }
 
     VfsUtil.markDirtyAndRefresh(false, true, false, repo);
@@ -101,13 +101,9 @@ public class HgUpdateCommand {
 
   public static int showDiscardChangesConfirmation(@NotNull final Project project, @NotNull final String confirmationMessage) {
     final AtomicInteger exitCode = new AtomicInteger();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        exitCode.set(Messages.showOkCancelDialog(project, confirmationMessage, "Uncommitted Changes Problem",
-                                                 "&Discard Changes", "&Cancel", Messages.getWarningIcon()));
-      }
-    });
+    UIUtil.invokeAndWaitIfNeeded(
+      (Runnable)() -> exitCode.set(Messages.showOkCancelDialog(project, confirmationMessage, "Uncommitted Changes Problem",
+                                                             "&Discard Changes", "&Cancel", Messages.getWarningIcon())));
     return exitCode.get();
   }
 

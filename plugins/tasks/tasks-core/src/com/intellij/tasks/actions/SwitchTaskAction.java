@@ -19,17 +19,22 @@ package com.intellij.tasks.actions;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.playback.commands.ActionCommand;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.tasks.ChangeListInfo;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskManager;
+import com.intellij.tasks.config.TaskSettings;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tools.SimpleActionGroup;
@@ -50,7 +55,61 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class SwitchTaskAction extends BaseTaskAction {
+public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
+  public JComponent createCustomComponent(final Presentation presentation) {
+    ComboBoxButton button = new ComboBoxButton(presentation) {
+      @Override
+      protected JBPopup createPopup(Runnable onDispose) {
+        return SwitchTaskAction.createPopup(DataManager.getInstance().getDataContext(this), onDispose, false);
+      }
+    };
+    button.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
+    return button;
+  }
+
+  @NotNull
+  @Override
+  protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+    return new DefaultActionGroup();
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    Presentation presentation = e.getPresentation();
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null || project.isDefault() || project.isDisposed()) {
+      presentation.setEnabled(false);
+      presentation.setText("");
+      presentation.setIcon(null);
+    }
+    else {
+      TaskManager taskManager = TaskManager.getManager(project);
+      LocalTask activeTask = taskManager.getActiveTask();
+      presentation.setVisible(true);
+      presentation.setEnabled(true);
+
+      if (isImplicit(activeTask) &&
+          taskManager.getAllRepositories().length == 0 &&
+          !TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO) {
+        presentation.setVisible(false);
+      }
+      else {
+        String s = getText(activeTask);
+        presentation.setText(s);
+        presentation.setIcon(activeTask.getIcon());
+        presentation.setDescription(activeTask.getSummary());
+      }
+    }
+  }
+
+  private static boolean isImplicit(LocalTask activeTask) {
+    return activeTask.isDefault() && Comparing.equal(activeTask.getCreated(), activeTask.getUpdated());
+  }
+
+  private static String getText(LocalTask activeTask) {
+    String text = activeTask.getPresentableName();
+    return StringUtil.first(text, 50, true);
+  }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
@@ -61,13 +120,13 @@ public class SwitchTaskAction extends BaseTaskAction {
     popup.showCenteredInCurrentWindow(project);
   }
 
-  public static ListPopupImpl createPopup(final DataContext dataContext,
-                                          @Nullable final Runnable onDispose,
-                                          boolean withTitle) {
+  private static ListPopupImpl createPopup(final DataContext dataContext,
+                                           @Nullable final Runnable onDispose,
+                                           boolean withTitle) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Ref<Boolean> shiftPressed = Ref.create(false);
     final Ref<JComponent> componentRef = Ref.create();
-    List<TaskListItem> items = project == null ? Collections.<TaskListItem>emptyList() :
+    List<TaskListItem> items = project == null ? Collections.emptyList() :
                                createPopupActionGroup(project, shiftPressed, PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext));
     final String title = withTitle ? "Switch to Task" : null;
     ListPopupStep<TaskListItem> step = new MultiSelectionListPopupStep<TaskListItem>(title, items) {

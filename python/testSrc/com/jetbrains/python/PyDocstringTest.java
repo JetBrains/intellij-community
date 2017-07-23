@@ -27,9 +27,6 @@ import com.jetbrains.python.fixtures.PyTestCase;
 
 import java.util.List;
 
-/**
- * User: ktisha
- */
 public class PyDocstringTest extends PyTestCase {
 
   @Override

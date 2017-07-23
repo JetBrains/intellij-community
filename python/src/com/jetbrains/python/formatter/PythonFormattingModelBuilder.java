@@ -38,7 +38,7 @@ import static com.jetbrains.python.PyTokenTypes.*;
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, CustomFormattingModelBuilder {
   private static final boolean DUMP_FORMATTING_AST = false;
-  public static final TokenSet STATEMENT_OR_DECLARATION = PythonDialectsTokenSetProvider.INSTANCE.getStatementTokens();
+  static final TokenSet STATEMENT_OR_DECLARATION = PythonDialectsTokenSetProvider.INSTANCE.getStatementTokens();
 
   @NotNull
   @Override
@@ -66,6 +66,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
     return null;
   }
 
+  @Override
   @NotNull
   public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
     return createModel(element, settings, FormattingMode.REFORMAT);
@@ -101,19 +102,23 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
       .afterInside(RARROW, ANNOTATION).spaces(1)
 
       .between(allButLambda(), PARAMETER_LIST).spaceIf(commonSettings.SPACE_BEFORE_METHOD_PARENTHESES)
-      
-      .betweenInside(COMMA, RBRACE, DICT_LITERAL_EXPRESSION).spaceIf(pySettings.SPACE_WITHIN_BRACES | commonSettings.SPACE_AFTER_COMMA, 
+
+      .betweenInside(COMMA, RBRACE, DICT_LITERAL_EXPRESSION).spaceIf(pySettings.SPACE_WITHIN_BRACES | commonSettings.SPACE_AFTER_COMMA,
                                                                      pySettings.DICT_NEW_LINE_BEFORE_RIGHT_BRACE)
       .afterInside(LBRACE, DICT_LITERAL_EXPRESSION).spaceIf(pySettings.SPACE_WITHIN_BRACES, pySettings.DICT_NEW_LINE_AFTER_LEFT_BRACE)
       .beforeInside(RBRACE, DICT_LITERAL_EXPRESSION).spaceIf(pySettings.SPACE_WITHIN_BRACES, pySettings.DICT_NEW_LINE_BEFORE_RIGHT_BRACE)
 
       .between(COMMA, RBRACE).spaceIf(pySettings.SPACE_WITHIN_BRACES | commonSettings.SPACE_AFTER_COMMA)
       .withinPair(LBRACE, RBRACE).spaceIf(pySettings.SPACE_WITHIN_BRACES)
-      
+
       .between(COMMA, RBRACKET).spaceIf(commonSettings.SPACE_WITHIN_BRACKETS | commonSettings.SPACE_AFTER_COMMA)
       .withinPair(LBRACKET, RBRACKET).spaceIf(commonSettings.SPACE_WITHIN_BRACKETS)
-      
+
       .before(COLON).spaceIf(pySettings.SPACE_BEFORE_PY_COLON)
+      .afterInside(LPAR, FROM_IMPORT_STATEMENT).spaces(0, pySettings.FROM_IMPORT_NEW_LINE_AFTER_LEFT_PARENTHESIS)
+      .betweenInside(COMMA, RPAR, FROM_IMPORT_STATEMENT).spaceIf(commonSettings.SPACE_AFTER_COMMA, 
+                                                                 pySettings.FROM_IMPORT_NEW_LINE_BEFORE_RIGHT_PARENTHESIS)
+      .beforeInside(RPAR, FROM_IMPORT_STATEMENT).spaces(0, pySettings.FROM_IMPORT_NEW_LINE_BEFORE_RIGHT_PARENTHESIS)
       .after(COMMA).spaceIf(commonSettings.SPACE_AFTER_COMMA)
       .before(COMMA).spaceIf(commonSettings.SPACE_BEFORE_COMMA)
       .between(FROM_KEYWORD, DOT).spaces(1)
@@ -121,9 +126,10 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
       .around(DOT).spaces(0)
       .aroundInside(AT, DECORATOR_CALL).none()
       .before(SEMICOLON).spaceIf(commonSettings.SPACE_BEFORE_SEMICOLON)
+      .betweenInside(LPAR, RPAR, ARGUMENT_LIST).spaceIf(commonSettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES)
       .withinPairInside(LPAR, RPAR, ARGUMENT_LIST).spaceIf(commonSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES)
+      .betweenInside(LPAR, RPAR, PARAMETER_LIST).spaceIf(commonSettings.SPACE_WITHIN_EMPTY_METHOD_PARENTHESES)
       .withinPairInside(LPAR, RPAR, PARAMETER_LIST).spaceIf(commonSettings.SPACE_WITHIN_METHOD_PARENTHESES)
-      .withinPairInside(LPAR, RPAR, FROM_IMPORT_STATEMENT).spaces(0)
       .withinPairInside(LPAR, RPAR, GENERATOR_EXPRESSION).spaces(0)
       .withinPairInside(LPAR, RPAR, PARENTHESIZED_EXPRESSION).spaces(0)
       .before(LBRACKET).spaceIf(pySettings.SPACE_BEFORE_LBRACKET)
@@ -158,14 +164,10 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
 
   private static TokenSet allButLambda() {
     final PythonLanguage pythonLanguage = PythonLanguage.getInstance();
-    return TokenSet.create(IElementType.enumerate(new IElementType.Predicate() {
-      @Override
-      public boolean matches(@NotNull IElementType type) {
-        return type != LAMBDA_KEYWORD && type.getLanguage().isKindOf(pythonLanguage);
-      }
-    }));
+    return TokenSet.create(IElementType.enumerate(type -> type != LAMBDA_KEYWORD && type.getLanguage().isKindOf(pythonLanguage)));
   }
 
+  @Override
   public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
     return null;
   }
@@ -175,12 +177,13 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
       for (int i = 0; i < indent; i++) {
         System.out.print(" ");
       }
-      System.out.println(node.toString() + " " + node.getTextRange().toString());
+      System.out.println(node + " " + node.getTextRange());
       printAST(node.getFirstChildNode(), indent + 2);
       node = node.getTreeNext();
     }
   }
 
+  @Override
   public boolean isEngagedToFormat(PsiElement context) {
     PsiFile file = context.getContainingFile();
     return file != null && file.getLanguage() == PythonLanguage.getInstance();

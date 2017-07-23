@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,24 +62,18 @@ public class HgDeleteModifyPromptHandler implements HgPromptHandler {
     final int[] chosen = new int[]{-1};
     try {
       EventQueue.invokeAndWait
-        (new Runnable() {
-          public void run() {
-            String[] choicePresentationArray = new String[choices.length];
-            for (int i = 0; i < choices.length; ++i) {
-              choicePresentationArray[i] = choices[i].toString();
-            }
-            chosen[0] = Messages
-              .showDialog(modifiedMessage, "Delete-Modify Conflict",
-                          choicePresentationArray, defaultChoice.getChosenIndex(),
-                          Messages.getQuestionIcon());
+        (() -> {
+          String[] choicePresentationArray = new String[choices.length];
+          for (int i = 0; i < choices.length; ++i) {
+            choicePresentationArray[i] = choices[i].toString();
           }
+          chosen[0] = Messages
+            .showDialog(modifiedMessage, "Delete-Modify Conflict",
+                        choicePresentationArray, defaultChoice.getChosenIndex(),
+                        Messages.getQuestionIcon());
         });
     }
-    catch (InterruptedException e) {
-      LOG.error(e);
-      return defaultChoice;
-    }
-    catch (InvocationTargetException e) {
+    catch (InterruptedException | InvocationTargetException e) {
       LOG.error(e);
       return defaultChoice;
     }

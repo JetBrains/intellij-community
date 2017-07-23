@@ -164,6 +164,12 @@ public class CmdlineProtoUtil {
       case INFO:
         builder.setKind(BuilderMessage.CompileMessage.Kind.INFO);
         break;
+      case JPS_INFO:
+        builder.setKind(BuilderMessage.CompileMessage.Kind.JPS_INFO);
+        break;
+      case OTHER:
+        builder.setKind(BuilderMessage.CompileMessage.Kind.OTHER);
+        break;
       default:
         builder.setKind(BuilderMessage.CompileMessage.Kind.PROGRESS);
     }

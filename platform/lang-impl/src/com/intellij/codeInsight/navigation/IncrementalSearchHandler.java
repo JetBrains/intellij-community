@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,10 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -162,7 +165,7 @@ public class IncrementalSearchHandler {
       }
     };
 
-    documentListener[0] = new DocumentAdapter() {
+    documentListener[0] = new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         if (!hint.isVisible()) return;
@@ -171,7 +174,7 @@ public class IncrementalSearchHandler {
     };
     document.addDocumentListener(documentListener[0]);
 
-    caretListener[0] = new CaretAdapter() {
+    caretListener[0] = new CaretListener() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         PerHintSearchData data = hint.getUserData(SEARCH_DATA_IN_HINT_KEY);
@@ -328,7 +331,7 @@ public class IncrementalSearchHandler {
   private static class MyLabel extends JLabel {
     public MyLabel(String text) {
       super(text);
-      this.setBackground(HintUtil.INFORMATION_COLOR);
+      this.setBackground(HintUtil.getInformationColor());
       this.setForeground(JBColor.foreground());
       this.setOpaque(true);
     }
@@ -390,7 +393,7 @@ public class IncrementalSearchHandler {
     }
 
     @Override
-    public void doExecute(Editor editor, Caret caret, DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext) {
       PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
       if (data == null || data.hint == null){
         myOriginalHandler.execute(editor, caret, dataContext);
@@ -416,7 +419,7 @@ public class IncrementalSearchHandler {
     }
 
     @Override
-    public void doExecute(Editor editor, Caret caret, DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext) {
       PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
       if (data == null || data.hint == null){
         myOriginalHandler.execute(editor, caret, dataContext);
@@ -449,7 +452,7 @@ public class IncrementalSearchHandler {
     }
 
     @Override
-    public void doExecute(Editor editor, Caret caret, DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext) {
       PerEditorSearchData data = editor.getUserData(SEARCH_DATA_IN_EDITOR_VIEW_KEY);
       if (data == null || data.hint == null){
         myOriginalHandler.execute(editor, caret, dataContext);

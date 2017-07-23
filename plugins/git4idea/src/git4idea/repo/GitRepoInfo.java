@@ -27,9 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author Kirill Likhodedov
- */
 public class GitRepoInfo {
 
   @Nullable private final GitLocalBranch myCurrentBranch;
@@ -39,6 +36,8 @@ public class GitRepoInfo {
   @NotNull private final Map<GitLocalBranch, Hash> myLocalBranches;
   @NotNull private final Map<GitRemoteBranch, Hash> myRemoteBranches;
   @NotNull private final Set<GitBranchTrackInfo> myBranchTrackInfos;
+  @NotNull private final Collection<GitSubmoduleInfo> mySubmodules;
+  @NotNull private final GitHooksInfo myHooksInfo;
 
   public GitRepoInfo(@Nullable GitLocalBranch currentBranch,
                      @Nullable String currentRevision,
@@ -46,7 +45,9 @@ public class GitRepoInfo {
                      @NotNull Collection<GitRemote> remotes,
                      @NotNull Map<GitLocalBranch, Hash> localBranches,
                      @NotNull Map<GitRemoteBranch, Hash> remoteBranches,
-                     @NotNull Collection<GitBranchTrackInfo> branchTrackInfos) {
+                     @NotNull Collection<GitBranchTrackInfo> branchTrackInfos,
+                     @NotNull Collection<GitSubmoduleInfo> submodules,
+                     @NotNull GitHooksInfo hooksInfo) {
     myCurrentBranch = currentBranch;
     myCurrentRevision = currentRevision;
     myState = state;
@@ -54,6 +55,8 @@ public class GitRepoInfo {
     myLocalBranches = new LinkedHashMap<>(localBranches);
     myRemoteBranches = new LinkedHashMap<>(remoteBranches);
     myBranchTrackInfos = new LinkedHashSet<>(branchTrackInfos);
+    mySubmodules = submodules;
+    myHooksInfo = hooksInfo;
   }
 
   @Nullable
@@ -97,6 +100,16 @@ public class GitRepoInfo {
     return myState;
   }
 
+  @NotNull
+  public Collection<GitSubmoduleInfo> getSubmodules() {
+    return mySubmodules;
+  }
+
+  @NotNull
+  public GitHooksInfo getHooksInfo() {
+    return myHooksInfo;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -111,6 +124,8 @@ public class GitRepoInfo {
     if (!myBranchTrackInfos.equals(info.myBranchTrackInfos)) return false;
     if (!areEqual(myLocalBranches, info.myLocalBranches)) return false;
     if (!areEqual(myRemoteBranches, info.myRemoteBranches)) return false;
+    if (!mySubmodules.equals(info.mySubmodules)) return false;
+    if (!myHooksInfo.equals(info.myHooksInfo)) return false;
 
     return true;
   }
@@ -124,14 +139,15 @@ public class GitRepoInfo {
     result = 31 * result + myLocalBranches.hashCode();
     result = 31 * result + myRemoteBranches.hashCode();
     result = 31 * result + myBranchTrackInfos.hashCode();
+    result = 31 * result + mySubmodules.hashCode();
+    result = 31 * result + myHooksInfo.hashCode();
     return result;
   }
 
   @Override
   public String toString() {
-    return String
-      .format("GitRepoInfo{current=%s, remotes=%s, localBranches=%s, remoteBranches=%s, trackInfos=%s}", myCurrentBranch, myRemotes,
-              myLocalBranches, myRemoteBranches, myBranchTrackInfos);
+    return String.format("GitRepoInfo{current=%s, remotes=%s, localBranches=%s, remoteBranches=%s, trackInfos=%s, submodules=%s, hooks=%s}",
+                         myCurrentBranch, myRemotes, myLocalBranches, myRemoteBranches, myBranchTrackInfos, mySubmodules, myHooksInfo);
   }
 
   private static <T extends GitBranch> boolean areEqual(Map<T, Hash> c1, Map<T, Hash> c2) {
@@ -159,7 +175,7 @@ public class GitRepoInfo {
       if (b1.getClass() != b2.getClass()) {
         return false;
       }
-      return b1.getKey().getName().equals(b2.getKey().getName()) && b2.getValue().equals(b2.getValue());
+      return b1.getKey().getName().equals(b2.getKey().getName()) && b1.getValue().equals(b2.getValue());
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.function.Supplier;
 
 /**
  * @author nik
@@ -68,6 +69,8 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   private final XDebuggerTreePanel myTreePanel;
   private EvaluationInputComponent myInputComponent;
   private final XDebugSession mySession;
+  private final Supplier<XDebuggerEvaluator> myEvaluatorSupplier;
+  private final Project myProject;
   private final XDebuggerEditorsProvider myEditorsProvider;
   private EvaluationMode myMode;
   private XSourcePosition mySourcePosition;
@@ -76,18 +79,40 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
   public XDebuggerEvaluationDialog(@NotNull XDebugSession session,
                                    @NotNull XDebuggerEditorsProvider editorsProvider,
-                                   @NotNull XDebuggerEvaluator evaluator,
                                    @NotNull XExpression text,
-                                   @Nullable XSourcePosition sourcePosition) {
-    super(WindowManager.getInstance().getFrame(session.getProject()), true);
+                                   @Nullable XSourcePosition sourcePosition,
+                                   boolean isCodeFragmentEvaluationSupported) {
+    this(session, null, session.getProject(), editorsProvider, text, sourcePosition, isCodeFragmentEvaluationSupported);
+  }
+
+  public XDebuggerEvaluationDialog(@NotNull XDebuggerEvaluator evaluator,
+                                   @NotNull Project project,
+                                   @NotNull XDebuggerEditorsProvider editorsProvider,
+                                   @NotNull XExpression text,
+                                   @Nullable XSourcePosition sourcePosition,
+                                   boolean isCodeFragmentEvaluationSupported) {
+    this(null, () -> evaluator, project, editorsProvider, text, sourcePosition, isCodeFragmentEvaluationSupported);
+  }
+
+  private XDebuggerEvaluationDialog(@Nullable XDebugSession session,
+                                    @Nullable Supplier<XDebuggerEvaluator> evaluatorSupplier,
+                                    @NotNull Project project,
+                                    @NotNull XDebuggerEditorsProvider editorsProvider,
+                                    @NotNull XExpression text,
+                                    @Nullable XSourcePosition sourcePosition,
+                                    boolean isCodeFragmentEvaluationSupported) {
+    super(WindowManager.getInstance().getFrame(project), true);
     mySession = session;
+    myEvaluatorSupplier = evaluatorSupplier;
+    myProject = project;
     myEditorsProvider = editorsProvider;
     mySourcePosition = sourcePosition;
+    myIsCodeFragmentEvaluationSupported = isCodeFragmentEvaluationSupported;
     setModal(false);
     setOKButtonText(XDebuggerBundle.message("xdebugger.button.evaluate"));
     setCancelButtonText(XDebuggerBundle.message("xdebugger.evaluate.dialog.close"));
 
-    mySession.addSessionListener(new XDebugSessionListener() {
+    if (mySession != null) mySession.addSessionListener(new XDebugSessionListener() {
       @Override
       public void sessionStopped() {
         ApplicationManager.getApplication().invokeLater(() -> close(CANCEL_EXIT_CODE));
@@ -104,8 +129,8 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       }
     }, myDisposable);
 
-    myTreePanel = new XDebuggerTreePanel(session.getProject(), editorsProvider, myDisposable, sourcePosition, XDebuggerActions.EVALUATE_DIALOG_TREE_POPUP_GROUP,
-                                         ((XDebugSessionImpl)session).getValueMarkers());
+    myTreePanel = new XDebuggerTreePanel(project, editorsProvider, myDisposable, sourcePosition, XDebuggerActions.EVALUATE_DIALOG_TREE_POPUP_GROUP,
+                                         session == null ? null : ((XDebugSessionImpl)session).getValueMarkers());
     myResultPanel = JBUI.Panels.simplePanel()
       .addToTop(new JLabel(XDebuggerBundle.message("xdebugger.evaluate.label.result")))
       .addToCenter(myTreePanel.getMainPanel());
@@ -117,7 +142,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       @Override
       public void update(AnActionEvent e) {
         Project project = e.getProject();
-        e.getPresentation().setEnabled(project != null && LookupManager.getInstance(project).getActiveLookup() == null);
+        e.getPresentation().setEnabled(session != null && project != null && LookupManager.getInstance(project).getActiveLookup() == null);
       }
 
       @Override
@@ -130,7 +155,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     new AnAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        IdeFocusManager.getInstance(mySession.getProject()).requestFocus(myTreePanel.getTree(), true);
+        IdeFocusManager.getInstance(project).requestFocus(myTreePanel.getTree(), true);
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.ALT_DOWN_MASK)), getRootPane(),
                                 myDisposable);
@@ -140,7 +165,6 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     myTreePanel.getTree().selectNodeOnLoad(rootFilter);
 
     EvaluationMode mode = XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().getEvaluationDialogMode();
-    myIsCodeFragmentEvaluationSupported = evaluator.isCodeFragmentEvaluationSupported();
     if (mode == EvaluationMode.CODE_FRAGMENT && !myIsCodeFragmentEvaluationSupported) {
       mode = EvaluationMode.EXPRESSION;
     }
@@ -158,6 +182,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   }
 
   private void updateSourcePosition() {
+    if (mySession == null) return;
     ApplicationManager.getApplication().invokeLater(() -> {
       mySourcePosition = mySession.getCurrentPosition();
       getInputEditor().setSourcePosition(mySourcePosition);
@@ -176,7 +201,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent e) {
         super.actionPerformed(e);
-        if ((e.getModifiers() & ADD_WATCH_MODIFIERS) == ADD_WATCH_MODIFIERS) {
+        if (mySession != null && (e.getModifiers() & ADD_WATCH_MODIFIERS) == ADD_WATCH_MODIFIERS) {
           addToWatches();
         }
       }
@@ -256,13 +281,13 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   }
 
   private EvaluationInputComponent createInputComponent(EvaluationMode mode, XExpression text) {
-    final Project project = mySession.getProject();
     text = XExpressionImpl.changeMode(text, mode);
     if (mode == EvaluationMode.EXPRESSION) {
-      return new ExpressionInputComponent(project, myEditorsProvider, mySourcePosition, text, myDisposable);
+      return new ExpressionInputComponent(myProject, myEditorsProvider, "evaluateExpression", mySourcePosition, text, myDisposable,
+                                          mySession != null);
     }
     else {
-      return new CodeFragmentInputComponent(project, myEditorsProvider, mySourcePosition, text,
+      return new CodeFragmentInputComponent(myProject, myEditorsProvider, mySourcePosition, text,
                                             getDimensionServiceKey() + ".splitter", myDisposable);
     }
   }
@@ -317,7 +342,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     inputEditor.saveTextInHistory();
     XExpression expression = inputEditor.getExpression();
 
-    XDebuggerEvaluator evaluator = mySession.getDebugProcess().getEvaluator();
+    XDebuggerEvaluator evaluator = mySession == null ? myEvaluatorSupplier.get() : mySession.getDebugProcess().getEvaluator();
     if (evaluator == null) {
       evaluationCallback.errorOccurred(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.not.evaluator"));
     }
@@ -327,7 +352,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   }
 
   public void evaluationDone() {
-    mySession.rebuildViews();
+    if (mySession != null) mySession.rebuildViews();
   }
 
   @Override

@@ -30,7 +30,6 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.difftool.SvnDiffSettingsHolder.SvnDiffSettings;
@@ -97,15 +96,12 @@ public class SvnDiffViewer implements DiffViewer {
     myPanel = new JPanel(new BorderLayout());
     myPanel.add(mySplitter, BorderLayout.CENTER);
     myPanel.add(myNotificationPanel, BorderLayout.SOUTH);
-    DataManager.registerDataProvider(myPanel, new DataProvider() {
-      @Override
-      public Object getData(@NonNls String dataId) {
-        DataProvider propertiesDataProvider = DataManagerImpl.getDataProviderEx(myPropertiesViewer.getComponent());
-        DataProvider contentDataProvider = DataManagerImpl.getDataProviderEx(myContentViewer.getComponent());
-        DataProvider defaultDP = myPropertiesViewerFocused ? propertiesDataProvider : contentDataProvider;
-        DataProvider fallbackDP = myPropertiesViewerFocused ? contentDataProvider : propertiesDataProvider;
-        return DiffUtil.getData(defaultDP, fallbackDP, dataId);
-      }
+    DataManager.registerDataProvider(myPanel, dataId -> {
+      DataProvider propertiesDataProvider = DataManagerImpl.getDataProviderEx(myPropertiesViewer.getComponent());
+      DataProvider contentDataProvider = DataManagerImpl.getDataProviderEx(myContentViewer.getComponent());
+      DataProvider defaultDP = myPropertiesViewerFocused ? propertiesDataProvider : contentDataProvider;
+      DataProvider fallbackDP = myPropertiesViewerFocused ? contentDataProvider : propertiesDataProvider;
+      return DiffUtil.getData(defaultDP, fallbackDP, dataId);
     });
 
     updatePropertiesPanel();
@@ -209,16 +205,16 @@ public class SvnDiffViewer implements DiffViewer {
   //
 
   private void updatePropertiesPanel() {
-    boolean wasFocused = myContext.isFocused();
-    if (!mySettings.isHideProperties()) {
-      mySplitter.setSecondComponent(myPropertiesViewer.getComponent());
-      myNotificationPanel.setContent(null);
-    }
-    else {
-      mySplitter.setSecondComponent(null);
-      myNotificationPanel.setContent(createNotification());
-    }
-    if (wasFocused) myContext.requestFocus();
+    DiffUtil.runPreservingFocus(myContext, () -> {
+      if (!mySettings.isHideProperties()) {
+        mySplitter.setSecondComponent(myPropertiesViewer.getComponent());
+        myNotificationPanel.setContent(null);
+      }
+      else {
+        mySplitter.setSecondComponent(null);
+        myNotificationPanel.setContent(createNotification());
+      }
+    });
   }
 
   @NotNull
@@ -234,10 +230,10 @@ public class SvnDiffViewer implements DiffViewer {
 
   @NotNull
   private static SvnDiffSettings initSettings(@NotNull DiffContext context) {
-    SvnDiffSettings settings = context.getUserData(SvnDiffSettingsHolder.KEY);
+    SvnDiffSettings settings = context.getUserData(SvnDiffSettings.KEY);
     if (settings == null) {
       settings = SvnDiffSettings.getSettings();
-      context.putUserData(SvnDiffSettingsHolder.KEY, settings);
+      context.putUserData(SvnDiffSettings.KEY, settings);
     }
     return settings;
   }

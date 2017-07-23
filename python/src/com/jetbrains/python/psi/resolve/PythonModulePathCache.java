@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.messages.MessageBusConnection;
+import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.sdk.PythonSdkType;
 
 /**
@@ -35,13 +37,21 @@ public class PythonModulePathCache extends PythonPathCache implements Disposable
 
   @SuppressWarnings({"UnusedDeclaration"})
   public PythonModulePathCache(final Module module) {
-    module.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    final MessageBusConnection connection = module.getMessageBus().connect();
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       public void rootsChanged(ModuleRootEvent event) {
         updateCacheForSdk(module);
         clearCache();
       }
     });
-    VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileAdapter(), this);
+    connection.subscribe(PyPackageManager.PACKAGE_MANAGER_TOPIC, sdk -> {
+      final Sdk moduleSdk = PythonSdkType.findPythonSdk(module);
+      if (sdk == moduleSdk) {
+        updateCacheForSdk(module);
+        clearCache();
+      }
+    });
+    VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), this);
     updateCacheForSdk(module);
   }
 

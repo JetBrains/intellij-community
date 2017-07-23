@@ -154,7 +154,7 @@ public abstract class AbstractVcsTestCase {
 
   protected void tearDownProject() throws Exception {
     if (myProject != null) {
-      ((ChangeListManagerImpl)ChangeListManager.getInstance(myProject)).stopEveryThingIfInTestMode();
+      ChangeListManagerImpl.getInstanceImpl(myProject).stopEveryThingIfInTestMode();
       CommittedChangesCache.getInstance(myProject).clearCaches(EmptyRunnable.INSTANCE);
       myProject = null;
     }

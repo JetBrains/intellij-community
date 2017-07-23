@@ -28,7 +28,6 @@ import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.changes.committed.*;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.JBUI;
 import icons.SvnIcons;
@@ -121,7 +120,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
       new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.NONE, JBUI.insets(1), 0, 0);
     gb.insets = JBUI.insets(20, 1, 1, 1);
     myPanel.add(new JLabel("Loading..."), gb);
-    
+
     myPanel.setPreferredSize(JBUI.size(200, 60));
 
     myManager.install(this);
@@ -148,16 +147,14 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
       final WCInfoWithBranches wcInfo = entry.getValue().getWcInfo();
       states.put(Couple.of(localPath, wcInfo.getUrl().toString()), entry.getValue().getInfo());
     }
-    createPanels(myLocation, new Runnable() {
-      public void run() {
-        for (Map.Entry<String, SvnMergeInfoRootPanelManual> entry : myMergePanels.entrySet()) {
-          final String localPath = entry.getKey();
-          final WCInfoWithBranches wcInfo = entry.getValue().getWcInfo();
-          final Couple<String> key = Couple.of(localPath, wcInfo.getUrl().toString());
-          final SvnMergeInfoRootPanelManual.InfoHolder infoHolder = states.get(key);
-          if (infoHolder !=  null) {
-            entry.getValue().initSelection(infoHolder);
-          }
+    createPanels(myLocation, () -> {
+      for (Map.Entry<String, SvnMergeInfoRootPanelManual> entry : myMergePanels.entrySet()) {
+        final String localPath = entry.getKey();
+        final WCInfoWithBranches wcInfo = entry.getValue().getWcInfo();
+        final Couple<String> key = Couple.of(localPath, wcInfo.getUrl().toString());
+        final SvnMergeInfoRootPanelManual.InfoHolder infoHolder = states.get(key);
+        if (infoHolder != null) {
+          entry.getValue().initSelection(infoHolder);
         }
       }
     });
@@ -185,7 +182,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     final ListMergeStatus status = getStatus(list, false);
     return (status == null) ? ListMergeStatus.ALIEN.getIcon() : status.getIcon();
   }
-  
+
   private void createPanels(final RepositoryLocation location, final Runnable afterRefresh) {
     final Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, "Subversion: loading working copies data..", false) {
       public void run(@NotNull final ProgressIndicator indicator) {
@@ -193,40 +190,43 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
         final Map<String, SvnMergeInfoRootPanelManual> panels = new HashMap<>();
         final Map<String, MergeInfoHolder> holders = new HashMap<>();
         final List<WCInfoWithBranches> roots = myDataLoader.loadRoots();
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            if (myDisposed) return;
-            final JPanel mainPanel = prepareData(panels, holders, roots);
+        SwingUtilities.invokeLater(() -> {
+          if (myDisposed) return;
+          final JPanel mainPanel = prepareData(panels, holders, roots);
 
-            myMergePanels.clear();
-            myHolders.clear();
-            myMergePanels.putAll(panels);
-            myHolders.putAll(holders);
-            
-            if (myPanelWrapper != null) {
-              myPanelWrapper.removeAll();
-              if (myMergePanels.isEmpty()) {
-                final JPanel emptyPanel = new JPanel(new GridBagLayout());
-                final GridBagConstraints gb =
-                  new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(5, 5, 0, 5), 0, 0);
-                final JLabel label = new JLabel("No Subversion 1.5 working copies\nof 1.5 repositories in the project");
-                label.setUI(new MultiLineLabelUI());
-                emptyPanel.add(label, gb);
-                gb.fill = GridBagConstraints.HORIZONTAL;
-                myPanelWrapper.add(emptyPanel, gb);
-              } else {
-                for (MergeInfoHolder holder : myHolders.values()) {
-                  holder.updateMixedRevisionsForPanel();
-                }
-                myPanelWrapper.add(mainPanel, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
+          myMergePanels.clear();
+          myHolders.clear();
+          myMergePanels.putAll(panels);
+          myHolders.putAll(holders);
+
+          if (myPanelWrapper != null) {
+            myPanelWrapper.removeAll();
+            if (myMergePanels.isEmpty()) {
+              final JPanel emptyPanel = new JPanel(new GridBagLayout());
+              final GridBagConstraints gb =
+                new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(5, 5, 0, 5), 0,
+                                       0);
+              final JLabel label = new JLabel("No Subversion 1.5 working copies\nof 1.5 repositories in the project");
+              label.setUI(new MultiLineLabelUI());
+              emptyPanel.add(label, gb);
+              gb.fill = GridBagConstraints.HORIZONTAL;
+              myPanelWrapper.add(emptyPanel, gb);
+            }
+            else {
+              for (MergeInfoHolder holder : myHolders.values()) {
+                holder.updateMixedRevisionsForPanel();
               }
-              myPanelWrapper.repaint();
-            } else {
-              myPanel = mainPanel;
+              myPanelWrapper.add(mainPanel,
+                                 new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
+                                                        new Insets(0, 0, 0, 0), 0, 0));
             }
-            if (afterRefresh != null) {
-              afterRefresh.run();
-            }
+            myPanelWrapper.repaint();
+          }
+          else {
+            myPanel = mainPanel;
+          }
+          if (afterRefresh != null) {
+            afterRefresh.run();
           }
         });
       }
@@ -235,8 +235,8 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   }
 
   public void refreshByLists(final List<CommittedChangeList> committedChangeLists) {
-    if (! committedChangeLists.isEmpty()) {
-      final SvnChangeList svnList = (SvnChangeList) committedChangeLists.get(0);
+    if (!committedChangeLists.isEmpty()) {
+      final SvnChangeList svnList = (SvnChangeList)committedChangeLists.get(0);
       final String wcPath = svnList.getWcPath();
       if (wcPath != null) {
         final MergeInfoHolder holder = getHolder(wcPath);
@@ -249,58 +249,53 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
   private void createToolbar() {
     final DefaultActionGroup svnGroup = createActions();
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, svnGroup, true);
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("SvnRootsAndBranches", svnGroup, true);
     myToolbarComponent = actionToolbar.getComponent();
   }
 
   private JPanel prepareData(final Map<String, SvnMergeInfoRootPanelManual> panels, final Map<String, MergeInfoHolder> holders,
                              List<WCInfoWithBranches> roots) {
-      final JPanel mainPanel = new JPanel(new GridBagLayout());
-      boolean onlyOneRoot = roots.size() == 1;
-      final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                                                           new Insets(0,0,0,0), 0, 0);
-      mainPanel.add(myToolbarComponent, gb);
-      ++ gb.gridy;
+    final JPanel mainPanel = new JPanel(new GridBagLayout());
+    boolean onlyOneRoot = roots.size() == 1;
+    final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
+                                                         new Insets(0, 0, 0, 0), 0, 0);
+    mainPanel.add(myToolbarComponent, gb);
+    ++gb.gridy;
 
-      for (final WCInfoWithBranches root : roots) {
-        if (root == null) {
-          continue;
+    for (final WCInfoWithBranches root : roots) {
+      if (root == null) {
+        continue;
+      }
+      final SvnMergeInfoRootPanelManual panel = new SvnMergeInfoRootPanelManual(myProject, wcInfoWithBranches -> {
+        final WCInfoWithBranches newInfo =
+          myDataLoader.reloadInfo(wcInfoWithBranches);
+        if (newInfo == null) {
+          // reload all items
+          myProject.getMessageBus()
+            .syncPublisher(SvnVcs.WC_CONVERTED).run();
+          // do not reload right now
+          return wcInfoWithBranches;
         }
-        final SvnMergeInfoRootPanelManual panel = new SvnMergeInfoRootPanelManual(myProject,
-                                                                                  new NotNullFunction<WCInfoWithBranches, WCInfoWithBranches>() {
-                                                                                    @NotNull
-                                                                                    public WCInfoWithBranches fun(@NotNull WCInfoWithBranches wcInfoWithBranches) {
-                                                                                      final WCInfoWithBranches newInfo =
-                                                                                        myDataLoader.reloadInfo(wcInfoWithBranches);
-                                                                                      if (newInfo == null) {
-                                                                                        // reload all items
-                                                                                        myProject.getMessageBus().syncPublisher(SvnVcs.WC_CONVERTED).run();
-                                                                                        // do not reload right now
-                                                                                        return wcInfoWithBranches;
-                                                                                      }
-                                                                                      return newInfo;
-                                                                                    }
-                                                                                  }, new Runnable() {
-            public void run() {
-              final MergeInfoHolder holder = getHolder(root.getPath());
-              if (holder != null) {
-                holder.refresh(false);
-              }
-            }
-          }, onlyOneRoot, root);
-        panels.put(root.getPath(), panel);
-        holders.put(root.getPath(), createHolder(panel));
+        return newInfo;
+      }, () -> {
+        final MergeInfoHolder holder = getHolder(root.getPath());
+        if (holder != null) {
+          holder.refresh(false);
+        }
+      }, onlyOneRoot, root);
+      panels.put(root.getPath(), panel);
+      holders.put(root.getPath(), createHolder(panel));
 
-        final JPanel contentPanel = panel.getContentPanel();
-        mainPanel.add(contentPanel, gb);
-        ++ gb.gridy;
+      final JPanel contentPanel = panel.getContentPanel();
+      mainPanel.add(contentPanel, gb);
+      ++gb.gridy;
+    }
+    if (panels.size() == 1) {
+      for (SvnMergeInfoRootPanelManual panel : panels.values()) {
+        panel.setOnlyOneRoot(true);
       }
-      if (panels.size() == 1) {
-        for (SvnMergeInfoRootPanelManual panel : panels.values()) {
-          panel.setOnlyOneRoot(true);
-        }
-      }
-      return mainPanel;
+    }
+    return mainPanel;
   }
 
   private DefaultActionGroup createActions() {
@@ -355,14 +350,14 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
       }
     }
 
-    if (! refreshers.isEmpty()) {
+    if (!refreshers.isEmpty()) {
       myManager.reportLoadedLists(new CommittedChangeListsListener() {
         public void onBeforeStartReport() {
         }
 
         public boolean report(final CommittedChangeList list) {
           if (list instanceof SvnChangeList) {
-            final SvnChangeList svnList = (SvnChangeList) list;
+            final SvnChangeList svnList = (SvnChangeList)list;
             final String wcPath = svnList.getWcPath();
             if (wcPath != null) {
               final CommittedChangeListsListener refresher = refreshers.get(ensureEndsWithSeparator(wcPath));
@@ -428,7 +423,8 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     public void setSelected(final AnActionEvent e, final boolean state) {
       if (state) {
         turnFromHereHighlighting();
-      } else {
+      }
+      else {
         turnOff();
       }
     }
@@ -485,7 +481,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
       return false;
     }
     for (CommittedChangeList list : listsList) {
-      if (! mergeEnabled(list, forMerge)) {
+      if (!mergeEnabled(list, forMerge)) {
         return false;
       }
     }
@@ -496,7 +492,8 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     final ListMergeStatus mergeStatus = getStatus(list, true);
     if ((mergeStatus == null) || (ListMergeStatus.ALIEN.equals(mergeStatus))) {
       return false;
-    } else if (ListMergeStatus.REFRESHING.equals(mergeStatus)) {
+    }
+    else if (ListMergeStatus.REFRESHING.equals(mergeStatus)) {
       return true;
     }
     if (forMerge) {
@@ -535,7 +532,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
       presentation.setDescription(myDescription);
       presentation.setEnabled(presentation.isEnabled() && mergeEnabled(checker.getSelectedLists(), myMarkAsMerged));
     }
-    
+
     @Nullable
     protected String getSelectedBranchUrl(SelectedCommittedStuffChecker checker) {
       final SvnMergeInfoRootPanelManual data = getPanelData(checker.getSelectedLists());
@@ -617,10 +614,10 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
   private SvnMergeInfoRootPanelManual getPanelData(final List<CommittedChangeList> listsList) {
     for (CommittedChangeList list : listsList) {
-      if (! (list instanceof SvnChangeList)) {
+      if (!(list instanceof SvnChangeList)) {
         return null;
       }
-      final SvnChangeList svnList = (SvnChangeList) list;
+      final SvnChangeList svnList = (SvnChangeList)list;
       final String wcPath = svnList.getWcPath();
       if (wcPath == null) {
         continue;
@@ -632,11 +629,11 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
   @Nullable
   public ListMergeStatus getStatus(final CommittedChangeList list, final boolean ignoreEnabled) {
-    if (! (list instanceof SvnChangeList)) {
+    if (!(list instanceof SvnChangeList)) {
       return null;
     }
 
-    final SvnChangeList svnList = (SvnChangeList) list;
+    final SvnChangeList svnList = (SvnChangeList)list;
     final String wcPath = svnList.getWcPath();
     MergeInfoHolder holder = null;
     if (wcPath == null) {
@@ -647,7 +644,8 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
           holder = getHolder(entry.getKey());
         }
       }
-    } else {
+    }
+    else {
       holder = getHolder(wcPath);
     }
     if (holder != null) {
@@ -679,7 +677,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
 
     public JComponent getFilterUI() {
-      if (! myInitialized) {
+      if (!myInitialized) {
         createPanels(myLocation, null);
       }
       myInitialized = true;
@@ -710,7 +708,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
     @NotNull
     public List<CommittedChangeList> filterChangeLists(final List<CommittedChangeList> changeLists) {
-      if ((! myFilterAlien.isSelected(null)) && (! myFilterNotMerged.isSelected(null)) && (! myFilterMerged.isSelected(null))) {
+      if ((!myFilterAlien.isSelected(null)) && (!myFilterNotMerged.isSelected(null)) && (!myFilterMerged.isSelected(null))) {
         return changeLists;
       }
 
@@ -719,17 +717,20 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
         final ListMergeStatus status = getStatus(list, true);
         if (ListMergeStatus.REFRESHING.equals(status)) {
           result.add(list);
-        } else if ((status == null) || ListMergeStatus.ALIEN.equals(status)) {
-          if (! myFilterAlien.isSelected(null)) {
+        }
+        else if ((status == null) || ListMergeStatus.ALIEN.equals(status)) {
+          if (!myFilterAlien.isSelected(null)) {
             result.add(list);
           }
-        } else if (ListMergeStatus.MERGED.equals(status) || ListMergeStatus.COMMON.equals(status)) {
-          if (! myFilterMerged.isSelected(null)) {
+        }
+        else if (ListMergeStatus.MERGED.equals(status) || ListMergeStatus.COMMON.equals(status)) {
+          if (!myFilterMerged.isSelected(null)) {
             result.add(list);
           }
-        } else {
+        }
+        else {
           // not merged
-          if (! myFilterNotMerged.isSelected(null)) {
+          if (!myFilterNotMerged.isSelected(null)) {
             result.add(list);
           }
         }

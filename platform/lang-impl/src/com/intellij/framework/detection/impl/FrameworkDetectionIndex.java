@@ -82,7 +82,7 @@ public class FrameworkDetectionIndex extends ScalarIndexExtension<Integer> {
             result.put(pair.getSecond(), null);
           }
         }
-        return result != null ? result : Collections.<Integer, Void>emptyMap();
+        return result != null ? result : Collections.emptyMap();
       }
     };
   }

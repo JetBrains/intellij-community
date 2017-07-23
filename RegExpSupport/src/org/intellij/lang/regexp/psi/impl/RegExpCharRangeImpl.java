@@ -17,35 +17,32 @@ package org.intellij.lang.regexp.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.TokenSet;
-import org.jetbrains.annotations.NotNull;
-
-import org.intellij.lang.regexp.RegExpElementTypes;
+import org.intellij.lang.regexp.psi.RegExpChar;
 import org.intellij.lang.regexp.psi.RegExpCharRange;
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class RegExpCharRangeImpl extends RegExpElementImpl implements RegExpCharRange {
-    private static final TokenSet E = TokenSet.create(RegExpElementTypes.CHAR, RegExpElementTypes.SIMPLE_CLASS);
 
     public RegExpCharRangeImpl(ASTNode astNode) {
         super(astNode);
     }
 
+    @Override
     @NotNull
-    public Endpoint getFrom() {
-        return (Endpoint)getCharNode(0);
-    }
-    @NotNull
-    public Endpoint getTo() {
-        return (Endpoint)getCharNode(1);
+    public RegExpChar getFrom() {
+        return (RegExpChar)getFirstChild();
     }
 
-    private PsiElement getCharNode(int idx) {
-        final ASTNode[] ch = getNode().getChildren(E);
-        assert ch.length == 2;
-        return ch[idx].getPsi();
+    @Override
+    @Nullable
+    public RegExpChar getTo() {
+        final PsiElement child = getLastChild();
+        return child instanceof RegExpChar ? (RegExpChar)child : null;
     }
 
+    @Override
     public void accept(RegExpElementVisitor visitor) {
         visitor.visitRegExpCharRange(this);
     }

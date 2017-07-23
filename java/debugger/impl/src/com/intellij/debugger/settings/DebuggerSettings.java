@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -25,16 +26,18 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.hash.LinkedHashMap;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
+import com.intellij.util.xmlb.SkipDefaultsSerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @State(
   name = "DebuggerSettings",
@@ -53,9 +56,6 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   @NonNls public static final String SUSPEND_THREAD = "SuspendThread";
   @NonNls public static final String SUSPEND_NONE = "SuspendNone";
 
-  @NonNls public static final String EVALUATE_FRAGMENT = "EvaluateFragment";
-  @NonNls public static final String EVALUATE_EXPRESSION = "EvaluateExpression";
-
   @NonNls public static final String RUN_HOTSWAP_ALWAYS = "RunHotswapAlways";
   @NonNls public static final String RUN_HOTSWAP_NEVER = "RunHotswapNever";
   @NonNls public static final String RUN_HOTSWAP_ASK = "RunHotswapAsk";
@@ -64,20 +64,19 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   @NonNls public static final String EVALUATE_FINALLY_NEVER = "EvaluateFinallyNever";
   @NonNls public static final String EVALUATE_FINALLY_ASK = "EvaluateFinallyAsk";
 
-  public boolean TRACING_FILTERS_ENABLED;
+  public boolean TRACING_FILTERS_ENABLED = true;
   public int DEBUGGER_TRANSPORT;
-  public boolean FORCE_CLASSIC_VM;
+  public boolean FORCE_CLASSIC_VM = true;
   public boolean DISABLE_JIT;
   public boolean SHOW_ALTERNATIVE_SOURCE = true;
   public boolean HOTSWAP_IN_BACKGROUND = true;
-  public boolean SKIP_SYNTHETIC_METHODS;
+  public boolean SKIP_SYNTHETIC_METHODS = true;
   public boolean SKIP_CONSTRUCTORS;
   public boolean SKIP_GETTERS;
-  public boolean SKIP_CLASSLOADERS;
+  public boolean SKIP_CLASSLOADERS = true;
 
-  public String EVALUATION_DIALOG_TYPE;
-  public String RUN_HOTSWAP_AFTER_COMPILE;
-  public boolean COMPILE_BEFORE_HOTSWAP;
+  public String RUN_HOTSWAP_AFTER_COMPILE = RUN_HOTSWAP_ASK;
+  public boolean COMPILE_BEFORE_HOTSWAP = true;
   public boolean HOTSWAP_HANG_WARNING_ENABLED = false;
 
   public volatile boolean WATCH_RETURN_VALUES = false;
@@ -90,6 +89,10 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   public boolean RESUME_ONLY_CURRENT_THREAD = false;
 
   private ClassFilter[] mySteppingFilters = ClassFilter.EMPTY_ARRAY;
+
+  private List<CapturePoint> myCapturePoints = new ArrayList<>();
+  public boolean CAPTURE_VARIABLES;
+  private final EventDispatcher<CapturePointsSettingsListener> myDispatcher = EventDispatcher.create(CapturePointsSettingsListener.class);
 
   private Map<String, ContentState> myContentStates = new LinkedHashMap<>();
 
@@ -114,7 +117,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   @Nullable
   @Override
   public Element getState() {
-    Element state = XmlSerializer.serialize(this, new SkipDefaultValuesSerializationFilters());
+    Element state = XmlSerializer.serialize(this, new SkipDefaultsSerializationFilter());
     try {
       DebuggerUtilsEx.writeFilters(state, "filter", mySteppingFilters);
     }
@@ -171,7 +174,8 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
       COMPILE_BEFORE_HOTSWAP == secondSettings.COMPILE_BEFORE_HOTSWAP &&
       HOTSWAP_HANG_WARNING_ENABLED == secondSettings.HOTSWAP_HANG_WARNING_ENABLED &&
       (RUN_HOTSWAP_AFTER_COMPILE != null ? RUN_HOTSWAP_AFTER_COMPILE.equals(secondSettings.RUN_HOTSWAP_AFTER_COMPILE) : secondSettings.RUN_HOTSWAP_AFTER_COMPILE == null) &&
-      DebuggerUtilsEx.filterEquals(mySteppingFilters, secondSettings.mySteppingFilters);
+      DebuggerUtilsEx.filterEquals(mySteppingFilters, secondSettings.mySteppingFilters) &&
+      myCapturePoints.equals(((DebuggerSettings)obj).myCapturePoints);
   }
 
   @Override
@@ -186,12 +190,44 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
       for (int idx = 0; idx < mySteppingFilters.length; idx++) {
         cloned.mySteppingFilters[idx] = mySteppingFilters[idx].clone();
       }
+      cloned.myCapturePoints = cloneCapturePoints();
       return cloned;
     }
     catch (CloneNotSupportedException e) {
       LOG.error(e);
     }
     return null;
+  }
+
+  List<CapturePoint> cloneCapturePoints() {
+    try {
+      ArrayList<CapturePoint> res = new ArrayList<>(myCapturePoints.size());
+      for (CapturePoint point : myCapturePoints) {
+        res.add(point.clone());
+      }
+      return res;
+    }
+    catch (CloneNotSupportedException e) {
+      LOG.error(e);
+    }
+    return Collections.emptyList();
+  }
+
+  @Tag("capture-points")
+  @AbstractCollection(surroundWithTag = false)
+  public List<CapturePoint> getCapturePoints() {
+    return myCapturePoints;
+  }
+
+  // for serialization, do not remove
+  @SuppressWarnings("unused")
+  public void setCapturePoints(List<CapturePoint> capturePoints) {
+    myCapturePoints = capturePoints;
+    myDispatcher.getMulticaster().capturePointsChanged();
+  }
+
+  public void addCapturePointsSettingsListener(CapturePointsSettingsListener listener, Disposable disposable) {
+    myDispatcher.addListener(listener, disposable);
   }
 
   public static class ContentState implements Cloneable {
@@ -209,14 +245,14 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
 
     public ContentState(Element element) {
       myType = element.getAttributeValue("type");
-      myMinimized = "true".equalsIgnoreCase(element.getAttributeValue("minimized"));
-      myMaximized = "true".equalsIgnoreCase(element.getAttributeValue("maximized"));
+      myMinimized = Boolean.parseBoolean(element.getAttributeValue("minimized"));
+      myMaximized = Boolean.parseBoolean(element.getAttributeValue("maximized"));
       mySelectedTab = element.getAttributeValue("selected");
       final String split = element.getAttributeValue("split");
       if (split != null) {
         mySplitProportion = Double.valueOf(split);
       }
-      myDetached = "true".equalsIgnoreCase(element.getAttributeValue("detached"));
+      myDetached = Boolean.parseBoolean(element.getAttributeValue("detached"));
       myHorizontalToolbar = !"false".equalsIgnoreCase(element.getAttributeValue("horizontal"));
     }
 
@@ -289,5 +325,9 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
     public ContentState clone() throws CloneNotSupportedException {
       return (ContentState)super.clone();
     }
+  }
+
+  public interface CapturePointsSettingsListener extends EventListener{
+    void capturePointsChanged();
   }
 }

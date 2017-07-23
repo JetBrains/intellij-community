@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl.commands;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Expirable;
 import com.intellij.openapi.wm.FocusCommand;
@@ -43,14 +44,14 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
   private final ToolWindowImpl myToolWindow;
   private final FocusWatcher myFocusWatcher;
 
-  private final boolean myForced;
+  private final Project myProject;
   private final Expirable myTimestamp;
 
-  public RequestFocusInToolWindowCmd(IdeFocusManager focusManager, final ToolWindowImpl toolWindow, final FocusWatcher focusWatcher, final Runnable finishCallBack, boolean forced) {
+  public RequestFocusInToolWindowCmd(IdeFocusManager focusManager, final ToolWindowImpl toolWindow, final FocusWatcher focusWatcher, final Runnable finishCallBack, Project project) {
     super(finishCallBack);
     myToolWindow = toolWindow;
     myFocusWatcher = focusWatcher;
-    myForced = forced;
+    myProject = project;
 
     myTimestamp = focusManager.getTimestamp(true);
   }
@@ -161,10 +162,11 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
               public ActionCallback run() {
                 return ActionCallback.DONE;
               }
-            }, myForced).doWhenProcessed(() -> updateToolWindow(c)).notify(result);
+            }, false).doWhenProcessed(() -> updateToolWindow(c)).notify(result);
           }
           else {
-            myManager.getFocusManager().requestFocus(new FocusCommand.ByComponent(c, myToolWindow.getComponent(), new Exception()), myForced)
+            myManager.getFocusManager().requestFocus(new FocusCommand.ByComponent(c, myToolWindow.getComponent(), myProject, new Exception()),
+                                                     false)
               .doWhenProcessed(() -> updateToolWindow(c)).notify(result);
           }
         }
@@ -197,7 +199,7 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
   }
 
   /**
-   * @return first active window from hierarchy with specified roots. Returns <code>null</code>
+   * @return first active window from hierarchy with specified roots. Returns {@code null}
    *         if there is no active window in the hierarchy.
    */
   private static Window getActiveWindow(final Window[] windows) {

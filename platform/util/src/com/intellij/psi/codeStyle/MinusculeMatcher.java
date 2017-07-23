@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,24 +99,6 @@ public class MinusculeMatcher implements Matcher {
     return Character.isWhitespace(c) || c == '_' || c == '-' || c == ':' || c == '+' || c == '.';
   }
 
-  private static boolean isWordStart(String text, int i) {
-    char c = text.charAt(i);
-    if (Character.isUpperCase(c)) {
-      if (i > 0 && Character.isUpperCase(text.charAt(i - 1))) {
-        // check that we're not in the middle of an all-caps word
-        return i + 1 < text.length() && Character.isLowerCase(text.charAt(i + 1));
-      }
-      return true;
-    }
-    if (Character.isDigit(c)) {
-      return true;
-    }
-    if (!Character.isLetter(c)) {
-      return false;
-    }
-    return i == 0 || !Character.isLetterOrDigit(text.charAt(i - 1));
-  }
-
   private static int nextWord(@NotNull String name, int start) {
     if (start < name.length() && Character.isDigit(name.charAt(start))) {
       return start + 1; //treat each digit as a separate hump
@@ -204,7 +186,7 @@ public class MinusculeMatcher implements Matcher {
 
     int startIndex = first.getStartOffset();
     boolean afterSeparator = StringUtil.indexOfAny(name, myHardSeparators, 0, startIndex) >= 0;
-    boolean wordStart = startIndex == 0 || isWordStart(name, startIndex) && !isWordStart(name, startIndex - 1);
+    boolean wordStart = startIndex == 0 || NameUtil.isWordStart(name, startIndex) && !NameUtil.isWordStart(name, startIndex - 1);
     boolean finalMatch = fragments.get(fragments.size() - 1).getEndOffset() == name.length();
 
     return (wordStart ? 1000 : 0) +
@@ -249,7 +231,7 @@ public class MinusculeMatcher implements Matcher {
         patternIndex += 2;
       }
     }
-    if (patternIndex < myMinNameLength) {
+    if (patternIndex < myMinNameLength * 2) {
       return null;
     }
 
@@ -289,7 +271,7 @@ public class MinusculeMatcher implements Matcher {
     if (patternIndex == myPattern.length) {
       boolean space = isPatternChar(patternIndex - 1, ' ');
       // the trailing space should match if the pattern ends with the last word part, or only its first hump character
-      if (space && nameIndex != name.length() && (patternIndex < 2 || !NameUtil.isWordStart(myPattern[patternIndex - 2]))) {
+      if (space && nameIndex != name.length() && (patternIndex < 2 || !isUpperCaseOrDigit(myPattern[patternIndex - 2]))) {
         int spaceIndex = name.indexOf(' ', nameIndex);
         if (spaceIndex >= 0) {
           return FList.<TextRange>emptyList().prepend(TextRange.from(spaceIndex, 1));
@@ -307,6 +289,10 @@ public class MinusculeMatcher implements Matcher {
     return matchSkippingWords(name, patternIndex, nameIndex, true, matchingState);
   }
 
+  private static boolean isUpperCaseOrDigit(char p) {
+    return Character.isUpperCase(p) || Character.isDigit(p);
+  }
+
   /**
    * Enumerates places in name that could be matched by the pattern at patternIndex position
    * and invokes {@link #matchFragment(String, int, int, MinusculeMatcher.MatchingState)} at those candidate positions
@@ -320,7 +306,7 @@ public class MinusculeMatcher implements Matcher {
     boolean star = isPatternChar(patternIndex - 1, '*');
     final char p = myPattern[patternIndex];
     while (true) {
-      int nextOccurrence = star ?
+      int nextOccurrence = star || isWordSeparator[patternIndex] ?
                            indexOfIgnoreCase(name, nameIndex + 1, p, patternIndex, matchingState.isAsciiName) :
                            indexOfWordStart(name, patternIndex, nameIndex);
       if (nextOccurrence < 0) {
@@ -338,7 +324,7 @@ public class MinusculeMatcher implements Matcher {
       // uppercase should match either uppercase or a word start
       if (!isUpperCase[patternIndex] ||
           Character.isUpperCase(name.charAt(nextOccurrence)) ||
-          isWordStart(name, nextOccurrence) ||
+          NameUtil.isWordStart(name, nextOccurrence) ||
           // accept uppercase matching lowercase if the whole prefix is uppercase and case sensitivity allows that
           !myHasHumps && myOptions != NameUtil.MatchingCaseSensitivity.ALL) {
         FList<TextRange> ranges = matchFragment(name, patternIndex, nextOccurrence, matchingState);
@@ -385,32 +371,20 @@ public class MinusculeMatcher implements Matcher {
 
     // exact middle matches have to be at least of length 3, to prevent too many irrelevant matches
     int minFragment = isPatternChar(patternIndex - 1, '*') && !isWildcard(patternIndex + 1) &&
-                      Character.isLetterOrDigit(name.charAt(nameIndex)) && !isWordStart(name, nameIndex)
+                      Character.isLetterOrDigit(name.charAt(nameIndex)) && !NameUtil.isWordStart(name, nameIndex)
                       ? 3 : 1;
     int i = 1;
     boolean ignoreCase = myOptions != NameUtil.MatchingCaseSensitivity.ALL;
     while (nameIndex + i < name.length() &&
            patternIndex + i < myPattern.length &&
            charEquals(myPattern[patternIndex+i], patternIndex+i, name.charAt(nameIndex + i), ignoreCase)) {
-      if (isUpperCase[patternIndex + i] && myHasHumps) {
-        // when an uppercase pattern letter matches lowercase name letter, try to find an uppercase (better) match further in the name
-        if (myPattern[patternIndex + i] != name.charAt(nameIndex + i)) {
-          if (i < minFragment) {
-            return null;
-          }
-          int nextWordStart = indexOfWordStart(name, patternIndex + i, nameIndex + i);
-          FList<TextRange> ranges = matchWildcards(name, patternIndex + i, nextWordStart, matchingState);
-          if (ranges != null) {
-            return prependRange(ranges, nameIndex, i);
-          }
-          // at least three consecutive uppercase letters shouldn't match lowercase
-          if (i > 1 && isUpperCase[patternIndex + i - 1] && isUpperCase[patternIndex + i - 2]) {
-            // but if there's a lowercase after them, it can match (in case shift was released a bit later)
-            if (nameIndex + i + 1 == name.length() ||
-                patternIndex + i + 1 < myPattern.length && !isLowerCase[patternIndex + i + 1]) {
-              return null;
-            }
-          }
+      if (isUppercasePatternVsLowercaseNameChar(name, patternIndex + i, nameIndex + i)) {
+        FList<TextRange> ranges = i < minFragment ? null : findUppercaseMatchFurther(name, patternIndex + i, nameIndex + i, matchingState);
+        if (ranges != null) {
+          return prependRange(ranges, nameIndex, i);
+        }
+        if (shouldProhibitCaseMismatch(name, patternIndex + i, nameIndex + i)) {
+          return null;
         }
       }
       i++;
@@ -434,6 +408,30 @@ public class MinusculeMatcher implements Matcher {
       i--;
     }
     return null;
+  }
+
+  private boolean isUppercasePatternVsLowercaseNameChar(String name, int patternIndex, int nameIndex) {
+    return isUpperCase[patternIndex] && myPattern[patternIndex] != name.charAt(nameIndex);
+  }
+
+  private FList<TextRange> findUppercaseMatchFurther(String name,
+                                                     int patternIndex,
+                                                     int nameIndex,
+                                                     MatchingState matchingState) {
+    int nextWordStart = indexOfWordStart(name, patternIndex, nameIndex);
+    return matchWildcards(name, patternIndex, nextWordStart, matchingState);
+  }
+
+  private boolean shouldProhibitCaseMismatch(String name, int patternIndex, int nameIndex) {
+    // at least three consecutive uppercase letters shouldn't match lowercase
+    if (myHasHumps && patternIndex >= 2 && isUpperCase[patternIndex - 1] && isUpperCase[patternIndex - 2]) {
+      // but if there's a lowercase after them, it can match (in case shift was released a bit later)
+      if (nameIndex + 1 == name.length() ||
+          patternIndex + 1 < myPattern.length && !isLowerCase[patternIndex + 1]) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private boolean isFirstCharMatching(@NotNull String name, int nameIndex, int patternIndex) {

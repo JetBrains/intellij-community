@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -50,7 +49,6 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
   public ClosureSyntheticParameter(GrClosableBlock closure) {
     super(GrClosableBlock.IT_PARAMETER_NAME, TypesUtil.getJavaLangObject(closure), closure);
     myClosure = closure;
-    setOptional(true);
   }
 
   @Override
@@ -89,16 +87,5 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
 
   public GrClosableBlock getClosure() {
     return myClosure;
-  }
-
-  @Override
-  public GrExpression getInitializerGroovy() {
-    return GroovyPsiElementFactory.getInstance(getProject()).createExpressionFromText("null");
-  }
-
-  @Nullable
-  @Override
-  public PsiElement getEllipsisDots() {
-    return null;
   }
 }

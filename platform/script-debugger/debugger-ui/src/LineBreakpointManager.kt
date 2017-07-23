@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
 import com.intellij.util.SmartList
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.putValue
 import com.intellij.util.containers.remove
 import com.intellij.xdebugger.XSourcePosition
@@ -29,7 +30,6 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.all
 import org.jetbrains.concurrency.nullPromise
 import org.jetbrains.concurrency.resolvedPromise
-import java.util.concurrent.atomic.AtomicBoolean
 
 private val IDE_TO_VM_BREAKPOINTS_KEY = Key.create<THashMap<XLineBreakpoint<*>, MutableList<Breakpoint>>>("ideToVmBreakpoints")
 
@@ -41,7 +41,7 @@ abstract class LineBreakpointManager(internal val debugProcess: DebugProcessImpl
 
   open fun isAnyFirstLineBreakpoint(breakpoint: Breakpoint) = false
 
-  private val breakpointResolvedListenerAdded = AtomicBoolean()
+  private val breakpointResolvedListenerAdded = ContainerUtil.createConcurrentWeakMap<Vm, Unit>()
 
   fun setBreakpoint(vm: Vm, breakpoint: XLineBreakpoint<*>) {
     val target = synchronized (lock) { IDE_TO_VM_BREAKPOINTS_KEY.get(vm)?.get(breakpoint) }
@@ -78,7 +78,7 @@ abstract class LineBreakpointManager(internal val debugProcess: DebugProcessImpl
         vmBreakpoints = list
         while (iterator.hasNext()) {
           val vmBreakpoint = iterator.next()
-          if ((vmToIdeBreakpoints.get(vmBreakpoint)?.size ?: -1) > 1) {
+          if (vmToIdeBreakpoints[vmBreakpoint]?.any { it != breakpoint } ?: false) {
             // we must not disable vm breakpoint - it is used for another ide breakpoints
             iterator.remove()
           }
@@ -86,13 +86,11 @@ abstract class LineBreakpointManager(internal val debugProcess: DebugProcessImpl
       }
       else {
         vmBreakpoints = IDE_TO_VM_BREAKPOINTS_KEY.get(vm)?.remove(breakpoint) ?: return nullPromise()
-        if (!vmBreakpoints.isEmpty()) {
-          for (vmBreakpoint in vmBreakpoints) {
-            vmToIdeBreakpoints.remove(vmBreakpoint, breakpoint)
-            if (vmToIdeBreakpoints.containsKey(vmBreakpoint)) {
-              // we must not remove vm breakpoint - it is used for another ide breakpoints
-              return nullPromise()
-            }
+        for (vmBreakpoint in vmBreakpoints) {
+          vmToIdeBreakpoints.remove(vmBreakpoint, breakpoint)
+          if (vmToIdeBreakpoints[vmBreakpoint]?.any { it != breakpoint } ?: false) {
+            // we must not remove vm breakpoint - it is used for another ide breakpoints
+            return nullPromise()
           }
         }
       }
@@ -140,7 +138,7 @@ abstract class LineBreakpointManager(internal val debugProcess: DebugProcessImpl
   }
 
   protected fun doSetBreakpoint(vm: Vm, breakpoint: XLineBreakpoint<*>?, location: Location, isTemporary: Boolean, promiseRef: Ref<Promise<out Breakpoint>>? = null): Breakpoint? {
-    if (breakpointResolvedListenerAdded.compareAndSet(false, true)) {
+    if (breakpointResolvedListenerAdded.put(vm, kotlin.Unit) == null) {
       vm.breakpointManager.addBreakpointListener(object : BreakpointListener {
         override fun resolved(breakpoint: Breakpoint) {
           synchronized (lock) { vmToIdeBreakpoints[breakpoint] }?.let {

@@ -35,7 +35,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,10 +57,11 @@ public class TestMethods extends TestMethod {
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = super.createDefaultJavaParameters();
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
-    RunConfigurationModule module = getConfiguration().getConfigurationModule();
-    final Project project = module.getProject();
-    final SourceScope scope = getSourceScope();
-    final GlobalSearchScope searchScope = scope != null ? scope.getGlobalSearchScope() : GlobalSearchScope.allScope(project);
+    final RunConfigurationModule configurationModule = getConfiguration().getConfigurationModule();
+    final Project project = configurationModule.getProject();
+    final Module module = configurationModule.getModule();
+    final GlobalSearchScope searchScope = module != null ? module.getModuleRuntimeScope(true)
+                                                         : GlobalSearchScope.allScope(project);
     addClassesListToJavaParameters(myFailedTests, testInfo -> testInfo != null ? getTestPresentation(testInfo, project, searchScope) : null, data.getPackageName(), true, javaParameters);
 
     return javaParameters;
@@ -89,9 +89,9 @@ public class TestMethods extends TestMethod {
                                                                                                                                : ((PsiMethod)element).getContainingClass();
       if (containingClass != null) {
         final String proxyName = testInfo.getName();
-        final String methodName = ((PsiMethod)element).getName();
+        final String methodWithSignaturePresentation = JUnitConfiguration.Data.getMethodPresentation(((PsiMethod)element));
         return JavaExecutionUtil.getRuntimeQualifiedName(containingClass) + "," +
-               (proxyName.contains(methodName) ? proxyName.substring(proxyName.indexOf(methodName)) : methodName);
+               (proxyName.contains(methodWithSignaturePresentation) ? proxyName.substring(proxyName.indexOf(methodWithSignaturePresentation)) : methodWithSignaturePresentation);
       }
     }
     return null;

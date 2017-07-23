@@ -16,6 +16,11 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.MultiValuesMap
+import com.intellij.openapi.util.Pair
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.ResourcesGenerator
+
+import java.util.function.Function
 
 /**
  * Described layout of a plugin in the product distribution
@@ -27,6 +32,7 @@ class PluginLayout extends BaseLayout {
   String directoryName
   final Set<String> optionalModules = new LinkedHashSet<>()
   private boolean doNotCreateSeparateJarForLocalizableResources
+  Function<BuildContext, String> versionEvaluator = { BuildContext context -> context.buildNumber } as Function<BuildContext, String>
 
   private PluginLayout(String mainModule) {
     this.mainModule = mainModule
@@ -48,6 +54,9 @@ class PluginLayout extends BaseLayout {
     body.delegate = spec
     body()
     layout.directoryName = spec.directoryName
+    if (spec.version != null) {
+      layout.versionEvaluator = { BuildContext context -> spec.version } as Function<BuildContext, String>
+    }
     spec.withModule(mainModuleName, spec.mainJarName)
     if (layout.doNotCreateSeparateJarForLocalizableResources) {
       layout.modulesWithLocalizableResourcesInCommonJar.clear()
@@ -55,6 +64,9 @@ class PluginLayout extends BaseLayout {
     return layout
   }
 
+  /**
+   * @return map from a JAR name to list of modules
+   */
   MultiValuesMap<String, String> getActualModules(Set<String> enabledPluginModules) {
     def result = new MultiValuesMap<String, String>(true)
     for (Map.Entry<String, Collection<String>> entry : moduleJars.entrySet()) {
@@ -70,13 +82,20 @@ class PluginLayout extends BaseLayout {
   static class PluginLayoutSpec extends BaseLayoutSpec {
     private final PluginLayout layout
     /**
-     * Name of the directory (under 'plugins' directory) where the plugin should be placed
+     * Custom name of the directory (under 'plugins' directory) where the plugin should be placed. By default the main module name is used.
+     * <strong>Don't set this property for new plugins</strong>; it is temporary added to keep layout of old plugins unchanged.
      */
     String directoryName
     /**
-     * Name of the main plugin JAR file
+     * Custom name of the main plugin JAR file. By default the main module name with 'jar' extension is used.
+     * <strong>Don't set this property for new plugins</strong>; it is temporary added to keep layout of old plugins unchanged.
      */
     String mainJarName
+
+    /**
+     * @deprecated use {@link #withCustomVersion(java.util.function.Function)} instead
+     */
+    String version
 
     PluginLayoutSpec(PluginLayout layout) {
       super(layout)
@@ -110,6 +129,13 @@ class PluginLayout extends BaseLayout {
     }
 
     /**
+     * Copy output produced by {@code generator} to the directory specified by {@code relativeOutputPath} under the plugin directory.
+     */
+    void withGeneratedResources(ResourcesGenerator generator, String relativeOutputPath) {
+      layout.resourceGenerators << Pair.create(generator, relativeOutputPath)
+    }
+
+    /**
      * Register an optional module which may be excluded from the plugin distribution in some products. These modules are included in plugin
      * distribution only if they are added to {@link org.jetbrains.intellij.build.ProductModulesLayout#bundledPluginModules} list.
      */
@@ -120,6 +146,14 @@ class PluginLayout extends BaseLayout {
 
     void withJpsModule(String moduleName) {
       withModule(moduleName, "jps/${moduleName}.jar")
+    }
+
+    /**
+     * By default version of a plugin is equal to the version of the IDE it's built with. This method allows to specify custom version evaluator.
+     * <strong>Don't use this for new plugins</strong>; it is temporary added to keep versioning scheme for some old plugins.
+     */
+    void withCustomVersion(Function<BuildContext, String> versionEvaluator) {
+      layout.versionEvaluator = versionEvaluator
     }
 
     /**

@@ -21,7 +21,7 @@ import com.intellij.credentialStore.kdbx.loadKdbx
 import com.intellij.credentialStore.windows.WindowsCryptUtils
 import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.diagnostic.catchAndLog
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.setOwnerPermissions
 import com.intellij.util.EncryptionSupport
@@ -33,7 +33,7 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.crypto.spec.SecretKeySpec
 
-private const val GROUP_NAME = "IntelliJ Platform"
+private const val GROUP_NAME = SERVICE_NAME_PREFIX
 
 internal val DB_FILE_NAME = "c.kdbx"
 
@@ -55,7 +55,7 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
 
   private val db: KeePassDatabase
 
-  private val masterKeyStorage = MasterKeyFileStorage(baseDirectory)
+  private val masterKeyStorage by lazy { MasterKeyFileStorage(baseDirectory) }
 
   private val needToSave: AtomicBoolean
 
@@ -63,21 +63,26 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
     if (keyToValue == null) {
       needToSave = AtomicBoolean(false)
 
-      val masterPassword = existingMasterPassword ?: masterKeyStorage.get()
-      if (masterPassword == null) {
-        LOG.catchAndLog {
-          if (this.dbFile.exists()) {
-            val renameTo = baseDirectory.resolve("old.c.kdbx")
-            LOG.warn("Credentials database file exists (${this.dbFile}), but no master password file. Moved to $renameTo")
-            this.dbFile.move(renameTo)
-          }
-        }
+      if (memoryOnly) {
         db = KeePassDatabase()
       }
       else {
-        db = loadKdbx(this.dbFile, KdbxPassword(masterPassword)) ?: KeePassDatabase()
-        if (existingMasterPassword != null) {
-          masterKeyStorage.set(existingMasterPassword)
+        val masterPassword = existingMasterPassword ?: masterKeyStorage.get()
+        if (masterPassword == null) {
+          LOG.runAndLogException {
+            if (this.dbFile.exists()) {
+              val renameTo = baseDirectory.resolve("old.c.kdbx")
+              LOG.warn("Credentials database file exists (${this.dbFile}), but no master password file. Moved to $renameTo")
+              this.dbFile.move(renameTo)
+            }
+          }
+          db = KeePassDatabase()
+        }
+        else {
+          db = loadKdbx(this.dbFile, KdbxPassword(masterPassword)) ?: KeePassDatabase()
+          if (existingMasterPassword != null) {
+            masterKeyStorage.set(existingMasterPassword)
+          }
         }
       }
     }
@@ -164,7 +169,7 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
     }
     else {
       val group = db.rootGroup.getOrCreateGroup(GROUP_NAME)
-      // should be the only credentials per service name — find without user name
+      // should be the only credentials per service name - find without user name
       val userName = attributes.userName ?: credentials.userName
       var entry = group.getEntry(attributes.serviceName, if (attributes.serviceName == SERVICE_NAME_PREFIX) userName else null)
       if (entry == null) {

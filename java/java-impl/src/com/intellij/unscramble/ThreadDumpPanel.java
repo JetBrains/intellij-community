@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAware;
@@ -135,7 +136,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     toolbarActions.add(new SortThreadsAction());
     toolbarActions.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EXPORT_TO_TEXT_FILE));
     toolbarActions.add(new MergeStacktracesAction());
-    add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, false).getComponent(), BorderLayout.WEST);
+    add(ActionManager.getInstance().createActionToolbar("ThreadDump", toolbarActions, false).getComponent(), BorderLayout.WEST);
 
     JPanel leftPanel = new JPanel(new BorderLayout());
     leftPanel.add(myFilterPanel, BorderLayout.NORTH);
@@ -152,7 +153,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
 
     final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(consoleView.getPreferredFocusableComponent()));
     if (editor != null) {
-      editor.getDocument().addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
+      editor.getDocument().addDocumentListener(new DocumentListener() {
         @Override
         public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
           String filter = myFilterField.getText();
@@ -180,7 +181,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     model.clear();
     int selectedIndex = 0;
     int index = 0;
-    List<ThreadState> threadStates = UISettings.getInstance().MERGE_EQUAL_STACKTRACES ? myMergedThreadDump : myThreadDump;
+    List<ThreadState> threadStates = UISettings.getInstance().getMergeEqualStackTraces() ? myMergedThreadDump : myThreadDump;
     for (ThreadState state : threadStates) {
       if (StringUtil.containsIgnoreCase(state.getStackTrace(), text) || StringUtil.containsIgnoreCase(state.getName(), text)) {
         //noinspection unchecked
@@ -389,12 +390,12 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return UISettings.getInstance().MERGE_EQUAL_STACKTRACES;
+      return UISettings.getInstance().getMergeEqualStackTraces();
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      UISettings.getInstance().MERGE_EQUAL_STACKTRACES = state;
+      UISettings.getInstance().setMergeEqualStackTraces(state);
       updateThreadList();
     }
   }

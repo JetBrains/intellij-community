@@ -15,114 +15,208 @@
  */
 package com.intellij.application.options.colors;
 
-import com.intellij.application.options.DefaultSchemeActions;
-import com.intellij.application.options.SaveSchemeDialog;
+import com.intellij.application.options.schemes.AbstractSchemeActions;
+import com.intellij.application.options.schemes.AbstractSchemesPanel;
+import com.intellij.application.options.schemes.SchemeNameGenerator;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
+import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.colors.impl.EmptyColorScheme;
-import com.intellij.openapi.editor.colors.impl.ReadOnlyColorsScheme;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
-public abstract class ColorSchemeActions extends DefaultSchemeActions<EditorColorsScheme> {
-  private final ColorAndFontOptions myOptions;
-  private JComponent myParentComponent;
+public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorColorsScheme> {
 
-  public ColorSchemeActions(@NotNull JComponent parentComponent, @NotNull ColorAndFontOptions options) {
-    myOptions = options;
-    myParentComponent = parentComponent;
+  protected ColorSchemeActions(@NotNull AbstractSchemesPanel<EditorColorsScheme, ?> schemesPanel) {
+    super(schemesPanel);
   }
 
   @Override
-  protected void doImport(@NotNull String importerName) {
+  protected Collection<String> getSchemeImportersNames() {
+    List<String> importersNames = new ArrayList<>();
+    for (ImportHandler importHandler : Extensions.getExtensions(ImportHandler.EP_NAME)) {
+      importersNames.add(importHandler.getTitle());
+    }
+    importersNames.addAll(super.getSchemeImportersNames());
+    return importersNames;
+  }
+
+  @Override
+  protected void importScheme(@NotNull String importerName) {
+    if (tryImportWithImportHandler(importerName)) {
+      return;
+    }
     final SchemeImporter<EditorColorsScheme> importer = SchemeImporterEP.getImporter(importerName, EditorColorsScheme.class);
     if (importer != null) {
-      VirtualFile importSource = SchemeImportUtil.selectImportSource(importer.getSourceExtensions(), myParentComponent, null);
+      VirtualFile importSource =
+        SchemeImportUtil.selectImportSource(importer.getSourceExtensions(), getSchemesPanel(), null, "Choose " + importerName);
       if (importSource != null) {
-        try {
-          EditorColorsScheme imported =
-            importer.importScheme(DefaultProjectFactory.getInstance().getDefaultProject(), importSource, myOptions.getSelectedScheme(),
-                                  name -> {
-                                    String newName = myOptions.getUniqueName(name != null ? name : "Unnamed");
-                                    AbstractColorsScheme newScheme = new EditorColorsSchemeImpl(EmptyColorScheme.INSTANCE);
-                                    newScheme.setName(newName);
-                                    newScheme.setDefaultMetaInfo(EmptyColorScheme.INSTANCE);
-                                    return newScheme;
-                                  });
-          if (imported != null) {
-            myOptions.addImportedScheme(imported);
-          }
+        if ("jar".equals(importSource.getExtension())) {
+          importFromJar(getSchemesPanel().getToolbar(), importer, importSource);
         }
-        catch (SchemeImportException e) {
-          SchemeImportUtil.showStatus(myParentComponent, "Import failed: " + e.getMessage(), MessageType.ERROR);
+        else {
+          doImport(importer, importSource);
         }
       }
     }
   }
 
+  private void doImport(@NotNull SchemeImporter<EditorColorsScheme> importer, @NotNull VirtualFile importSource) {
+    try {
+      EditorColorsScheme imported =
+        importer.importScheme(DefaultProjectFactory.getInstance().getDefaultProject(), importSource, getOptions().getSelectedScheme(),
+                              name -> {
+                                String newName = SchemeNameGenerator.getUniqueName(name != null ? name : "Unnamed",
+                                                                                   candidate -> getSchemesPanel().getModel()
+                                                                                     .containsScheme(candidate, false));
+                                AbstractColorsScheme newScheme = new EditorColorsSchemeImpl(EmptyColorScheme.INSTANCE);
+                                newScheme.setName(newName);
+                                newScheme.setDefaultMetaInfo(EmptyColorScheme.INSTANCE);
+                                return newScheme;
+                              });
+      if (imported != null) {
+        getOptions().addImportedScheme(imported);
+        getSchemesPanel()
+          .showStatus(
+            ApplicationBundle.message("settings.editor.scheme.import.success", importSource.getPresentableUrl(), imported.getName()),
+            MessageType.INFO);
+      }
+    }
+    catch (SchemeImportException e) {
+      handleError(e, importSource);
+    }
+  }
+
+  private void handleError(@NotNull SchemeImportException e, @NotNull VirtualFile importSource) {
+    String details = e.getMessage();
+    getSchemesPanel()
+      .showStatus(
+        ApplicationBundle.message("settings.editor.scheme.import.failure", importSource.getPresentableUrl()) +
+        (StringUtil.isEmpty(details) ? "" : "\n" + details),
+        MessageType.ERROR);
+  }
+
+  private void importFromJar(@NotNull Component componentAbove,
+                             @NotNull SchemeImporter<EditorColorsScheme> importer,
+                             @NotNull VirtualFile jarFile) {
+    try {
+      List<VirtualFile> schemeFiles = getSchemeFiles(jarFile);
+      if (schemeFiles.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
+        doImport(importer, schemeFiles.iterator().next());
+        return;
+      }
+      List<Pair<String, VirtualFile>> fileList = new ArrayList<>(schemeFiles.size());
+      for (VirtualFile file : schemeFiles) {
+        Element root = SchemeImportUtil.loadSchemeDom(file);
+        String name = StringUtil.trimStart(ColorSchemeImporter.getSchemeName(root), SchemeManager.EDITABLE_COPY_PREFIX);
+        fileList.add(Pair.create(name, file));
+      }
+      ListPopup popup = JBPopupFactory.getInstance().createListPopup
+        (new BaseListPopupStep<Pair<String, VirtualFile>>("Choose scheme to import", fileList) {
+          @NotNull
+          @Override
+          public String getTextFor(Pair<String, VirtualFile> item) {
+            return item.first;
+          }
+
+          @Override
+          public PopupStep onChosen(Pair<String, VirtualFile> selectedValue, boolean finalChoice) {
+            return doFinalStep(() -> doImport(importer, selectedValue.second));
+          }
+        });
+      popup.showUnderneathOf(componentAbove);
+    }
+    catch (SchemeImportException e) {
+      handleError(e, jarFile);
+    }
+  }
+
+  private static List<VirtualFile> getSchemeFiles(@NotNull VirtualFile jarFile) throws SchemeImportException {
+    List<VirtualFile> schemeFiles = new ArrayList<>();
+    for (VirtualFile file : jarFile.getChildren()) {
+      if (file.isDirectory() && "colors".equals(file.getName())) {
+        for (VirtualFile schemeFile : file.getChildren()) {
+          String ext = schemeFile.getExtension();
+          if ("icls".equals(ext) || "xml".equals(ext)) {
+            schemeFiles.add(schemeFile);
+          }
+        }
+        break;
+      }
+    }
+    if (schemeFiles.isEmpty()) {
+      throw new SchemeImportException("The are no color schemes in the chosen file.");
+    }
+    return schemeFiles;
+  }
+  
+  private boolean tryImportWithImportHandler(@NotNull String importerName) {
+     for (ImportHandler importHandler : Extensions.getExtensions(ImportHandler.EP_NAME)) {
+       if (importerName.equals(importHandler.getTitle())) {
+         importHandler.performImport(getSchemesPanel().getToolbar(), scheme -> {
+           if (scheme != null) getOptions().addImportedScheme(scheme);
+         });
+         return true;
+       }
+    }
+    return false;
+  }
+
   @Override
-  protected void doReset() {
-    EditorColorsScheme currentScheme = getCurrentScheme();
-    if (currentScheme != null) {
+  protected void resetScheme(@NotNull EditorColorsScheme scheme) {
       if (Messages
             .showOkCancelDialog(ApplicationBundle.message("color.scheme.reset.message"),
                                 ApplicationBundle.message("color.scheme.reset.title"), Messages.getQuestionIcon()) == Messages.OK) {
-        myOptions.resetSchemeToOriginal(currentScheme.getName());
+        getOptions().resetSchemeToOriginal(scheme.getName());
+      }
+  }
+
+  @Override
+  protected void duplicateScheme(@NotNull  EditorColorsScheme scheme, @NotNull String newName) {
+      getOptions().saveSchemeAs(scheme, newName);
+  }
+
+  @Override
+  protected void exportScheme(@NotNull EditorColorsScheme scheme, @NotNull String exporterName) {
+    EditorColorsScheme schemeToExport = scheme;
+    if (scheme instanceof AbstractColorsScheme) {
+      EditorColorsScheme parent = ((AbstractColorsScheme)scheme).getParentScheme();
+      if (!(parent instanceof DefaultColorsScheme)) {
+        schemeToExport = parent;
       }
     }
-  }
-
-  @Override
-  protected void doSaveAs() {
-    List<String> names = ContainerUtil.newArrayList(myOptions.getSchemeNames());
-    String selectedName = AbstractColorsScheme.getDisplayName(myOptions.getSelectedScheme());
-    SaveSchemeDialog dialog =
-      new SaveSchemeDialog(myParentComponent, ApplicationBundle.message("title.save.color.scheme.as"), names, selectedName);
-    if (dialog.showAndGet()) {
-      myOptions.saveSchemeAs(dialog.getSchemeName());
+    if (schemeToExport.getName().startsWith(SchemeManager.EDITABLE_COPY_PREFIX)) {
+      schemeToExport = (EditorColorsScheme)schemeToExport.clone();
+      schemeToExport.setName(SchemeManager.getDisplayName(schemeToExport));
     }
-  }
-
-  @Override
-  protected void doDelete() {
-    EditorColorsScheme currentScheme = getCurrentScheme();
-    if (currentScheme != null) {
-      myOptions.removeScheme(currentScheme.getName());
-    }
-  }
-
-  @Override
-  protected boolean isDeleteAvailable(@NotNull EditorColorsScheme scheme) {
-    return !ColorAndFontOptions.isReadOnly(scheme) && ColorAndFontOptions.canBeDeleted(scheme);
-  }
-  
-  @Override
-  protected boolean isResetAvailable(@NotNull EditorColorsScheme scheme) {
-    AbstractColorsScheme originalScheme =
-      scheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)scheme).getOriginal() : null;
-    return
-      !ColorAndFontOptions.isReadOnly(scheme) &&
-      scheme.getName().startsWith(SchemeManager.EDITABLE_COPY_PREFIX) &&
-      originalScheme instanceof ReadOnlyColorsScheme;
-  }
-
-  @Override
-  protected void doExport(@NotNull EditorColorsScheme scheme, @NotNull String exporterName) {
-    // Unsupported for now.
+    super.exportScheme(schemeToExport, exporterName);
   }
 
   @Override
   protected Class<EditorColorsScheme> getSchemeType() {
     return EditorColorsScheme.class;
   }
+  
+  @NotNull
+  protected abstract ColorAndFontOptions getOptions();
 }

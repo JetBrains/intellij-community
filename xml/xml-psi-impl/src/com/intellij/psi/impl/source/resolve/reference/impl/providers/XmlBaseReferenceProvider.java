@@ -20,7 +20,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlUtil;
@@ -70,6 +69,6 @@ public class XmlBaseReferenceProvider extends PsiReferenceProvider {
       tag = tag.getParentTag();
     }
     PsiDirectory directory = file.getContainingDirectory();
-    return directory == null ? Collections.<PsiFileSystemItem>emptyList() : Collections.<PsiFileSystemItem>singletonList(directory);
+    return directory == null ? Collections.emptyList() : Collections.singletonList(directory);
   }
 }

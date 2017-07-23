@@ -18,25 +18,28 @@ package com.jetbrains.python.psi.resolve;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.CachedValueProvider.Result;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author yole
@@ -91,16 +94,14 @@ public class QualifiedNameFinder {
   @Nullable
   public static String findShortestImportableName(Module module, @NotNull VirtualFile vfile) {
     final PythonPathCache cache = PythonModulePathCache.getInstance(module);
-    final List<QualifiedName> names = cache.getNames(vfile);
-    if (names != null) {
-      return names.toString();
+    List<QualifiedName> names = cache.getNames(vfile);
+    if (names == null) {
+      final PathChoosingVisitor visitor = new PathChoosingVisitor(vfile);
+      RootVisitorHost.visitRoots(module, false, visitor);
+      names = visitor.getResults();
+      cache.putNames(vfile, names);
     }
-    PathChoosingVisitor visitor = new PathChoosingVisitor(vfile);
-    RootVisitorHost.visitRoots(module, false, visitor);
-    final List<QualifiedName> results = visitor.getResults();
-    cache.putNames(vfile, results);
-    final QualifiedName qName = shortestQName(results);
-    return qName == null ? null : qName.toString();
+    return Objects.toString(shortestQName(names), null);
   }
 
   /**
@@ -114,7 +115,15 @@ public class QualifiedNameFinder {
    */
   @Nullable
   public static QualifiedName findCanonicalImportPath(@NotNull PsiElement symbol, @Nullable PsiElement foothold) {
-    PsiFileSystemItem srcfile = symbol instanceof PsiFileSystemItem ? (PsiFileSystemItem)symbol : symbol.getContainingFile();
+    return PyUtil.getParameterizedCachedValue(symbol, Couple.of(symbol, foothold), QualifiedNameFinder::doFindCanonicalImportPath);
+  }
+
+  @Nullable
+  private static QualifiedName doFindCanonicalImportPath(@NotNull Couple<PsiElement> param) {
+    final PsiElement symbol = param.getFirst();
+    final PsiElement foothold = param.getSecond();
+
+    final PsiFileSystemItem srcfile = PyPsiUtils.getFileSystemItem(symbol);
     if (srcfile == null) {
       return null;
     }
@@ -149,18 +158,31 @@ public class QualifiedNameFinder {
     }
     final QualifiedName qname = findShortestImportableQName(foothold != null ? foothold : symbol, virtualFile);
     if (qname != null) {
-      for (PyCanonicalPathProvider provider : Extensions.getExtensions(PyCanonicalPathProvider.EP_NAME)) {
-        final QualifiedName restored = provider.getCanonicalPath(qname, foothold);
-        if (restored != null) {
-          return restored;
-        }
-      }
+      final QualifiedName restored = canonizeQualifiedName(qname, foothold);
+      if (restored != null) return restored;
     }
     return qname;
   }
 
   @Nullable
+  public static QualifiedName canonizeQualifiedName(QualifiedName qname, PsiElement foothold) {
+    for (PyCanonicalPathProvider provider : Extensions.getExtensions(PyCanonicalPathProvider.EP_NAME)) {
+      final QualifiedName restored = provider.getCanonicalPath(qname, foothold);
+      if (restored != null) {
+        return restored;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
   public static String getQualifiedName(@NotNull PyElement element) {
+    return CachedValuesManager.getCachedValue(element, () ->
+      new Result<>(getQualifiedNameInner(element), PsiModificationTracker.MODIFICATION_COUNT));
+  }
+
+  @Nullable
+  private static String getQualifiedNameInner(@NotNull final PyElement element) {
     final String name = element.getName();
     if (name != null) {
       final ScopeOwner owner = ScopeUtil.getScopeOwner(element);

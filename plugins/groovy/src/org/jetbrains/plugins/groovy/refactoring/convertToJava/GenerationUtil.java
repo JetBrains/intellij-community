@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +33,9 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -40,6 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
@@ -55,10 +59,13 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProces
 import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidator;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
+
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyIndexPropertyUtil.advancedResolve;
 
 /**
  * @author Maxim.Medvedev
@@ -147,7 +154,7 @@ public class GenerationUtil {
                                                    @NotNull GrNamedArgument[] namedArgs,
                                                    @NotNull GrClosableBlock[] closureArgs,
                                                    @NotNull GroovyPsiElement psiContext) {
-    GroovyResolveResult call = GroovyResolveResult.EMPTY_RESULT;
+    GroovyResolveResult call = EmptyGroovyResolveResult.INSTANCE;
 
     final PsiType type;
     if (caller == null) {
@@ -157,7 +164,7 @@ public class GenerationUtil {
       type = caller.getType();
     }
     if (type != null) {
-      final PsiType[] argumentTypes = PsiUtil.getArgumentTypes(namedArgs, exprs, closureArgs, false, null, false);
+      final PsiType[] argumentTypes = PsiUtil.getArgumentTypes(namedArgs, exprs, closureArgs, false, null);
       final GroovyResolveResult[] candidates = ResolveUtil.getMethodCandidates(type, methodName, psiContext, argumentTypes);
       call = PsiImplUtil.extractUniqueResult(candidates);
     }
@@ -434,20 +441,40 @@ public class GenerationUtil {
         }
         builder.append('(');
       }
-      final PsiType iType = getDeclaredType(initializer, expressionContext);
 
-      //generate cast
-      if (original != null && iType != null && !TypesUtil.isAssignable(original, iType, initializer)) {
+      if (isCastNeeded(original, initializer, expressionContext)) {
         builder.append('(');
         TypeWriter.writeType(builder, original, initializer);
         builder.append(')');
       }
 
-      initializer.accept(new ExpressionGenerator(builder, expressionContext));
+      initializer.accept(new ExpressionGenerator(builder, expressionContext, original));
       if (wrapped) {
         builder.append(')');
       }
     }
+  }
+
+  private static boolean isCastNeeded(PsiType target, GrExpression initializer, ExpressionContext expressionContext) {
+    if (target == null) return false;
+    final PsiType iType = getDeclaredType(initializer, expressionContext);
+    if (iType == null) return false;
+    if (TypeConversionUtil.isAssignable(target, iType)) return false;
+
+    if (initializer instanceof GrLiteral) {
+      Object value = ((GrLiteral)initializer).getValue();
+      if (value instanceof BigDecimal && Double.isFinite(((BigDecimal)value).doubleValue())) {
+        return !TypeConversionUtil.isAssignable(target, PsiType.DOUBLE);
+      }
+      else if (value instanceof String && ((String)value).length() == 1) {
+        return !PsiType.CHAR.equals(PsiPrimitiveType.getOptionallyUnboxedType(target));
+      }
+    }
+    else if (initializer instanceof GrListOrMap && target instanceof PsiArrayType) {
+      GrListOrMap listOrMap = (GrListOrMap)initializer;
+      return listOrMap.isMap();
+    }
+    return true;
   }
 
   static void writeVariableSeparately(GrVariable variable, StringBuilder builder, ExpressionContext expressionContext) {
@@ -583,14 +610,8 @@ public class GenerationUtil {
       final GrExpression invokedExpression = ((GrMethodCall)expression).getInvokedExpression();
       return getDeclaredType(invokedExpression, context);
     }
-    else if (expression instanceof GrBinaryExpression) {
-      final GroovyResolveResult result = PsiImplUtil.extractUniqueResult(((GrBinaryExpression)expression).multiResolve(false));
-      if (result.getElement() instanceof PsiMethod) {
-        return getDeclaredType((PsiMethod)result.getElement(), result.getSubstitutor(), context);
-      }
-    }
     else if (expression instanceof GrIndexProperty) {
-      final GroovyResolveResult result = ((GrIndexProperty)expression).advancedResolve();
+      final GroovyResolveResult result = advancedResolve((GrIndexProperty)expression);
       if (result.getElement() instanceof PsiMethod) {
         return getDeclaredType((PsiMethod)result.getElement(), result.getSubstitutor(), context);
       }

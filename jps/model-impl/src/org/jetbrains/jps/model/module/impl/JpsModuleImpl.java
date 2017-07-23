@@ -19,7 +19,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
+import org.jetbrains.jps.model.ex.JpsElementCollectionRole;
 import org.jetbrains.jps.model.ex.JpsNamedCompositeElementBase;
+import org.jetbrains.jps.model.impl.JpsExcludePatternImpl;
 import org.jetbrains.jps.model.impl.JpsUrlListRole;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryCollection;
@@ -32,6 +34,7 @@ import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.module.*;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -41,6 +44,7 @@ public class JpsModuleImpl<P extends JpsElement> extends JpsNamedCompositeElemen
   private static final JpsUrlListRole CONTENT_ROOTS_ROLE = new JpsUrlListRole("content roots");
   private static final JpsUrlListRole EXCLUDED_ROOTS_ROLE = new JpsUrlListRole("excluded roots");
   private static final JpsElementChildRole<JpsDependenciesListImpl> DEPENDENCIES_LIST_CHILD_ROLE = JpsElementChildRoleBase.create("dependencies");
+  private static final JpsElementCollectionRole<JpsExcludePattern> EXCLUDE_PATTERNS_ROLE = JpsElementCollectionRole.create(JpsElementChildRoleBase.create("exclude patterns"));
   private final JpsModuleType<P> myModuleType;
   private final JpsLibraryCollection myLibraryCollection;
 
@@ -66,7 +70,7 @@ public class JpsModuleImpl<P extends JpsElement> extends JpsNamedCompositeElemen
   @NotNull
   @Override
   public JpsModuleImpl<P> createCopy() {
-    return new JpsModuleImpl<P>(this);
+    return new JpsModuleImpl<>(this);
   }
 
   @Override
@@ -119,7 +123,7 @@ public class JpsModuleImpl<P extends JpsElement> extends JpsNamedCompositeElemen
   @Override
   public <P extends JpsElement> JpsModuleSourceRoot addSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType<P> rootType,
                                                                   @NotNull P properties) {
-    final JpsModuleSourceRootImpl root = new JpsModuleSourceRootImpl<P>(url, rootType, properties);
+    final JpsModuleSourceRootImpl root = new JpsModuleSourceRootImpl<>(url, rootType, properties);
     addSourceRoot(root);
     return root;
   }
@@ -138,6 +142,29 @@ public class JpsModuleImpl<P extends JpsElement> extends JpsNamedCompositeElemen
         break;
       }
     }
+  }
+
+  @Override
+  public void addExcludePattern(@NotNull String baseDirUrl, @NotNull String pattern) {
+    myContainer.getOrSetChild(EXCLUDE_PATTERNS_ROLE).addChild(new JpsExcludePatternImpl(baseDirUrl, pattern));
+  }
+
+  @Override
+  public void removeExcludePattern(@NotNull String baseDirUrl, @NotNull String pattern) {
+    JpsElementCollection<JpsExcludePattern> child = myContainer.getChild(EXCLUDE_PATTERNS_ROLE);
+    if (child != null) {
+      for (JpsExcludePattern excludePattern : child.getElements()) {
+        if (excludePattern.getBaseDirUrl().equals(baseDirUrl) && excludePattern.getPattern().equals(pattern)) {
+          child.removeChild(excludePattern);
+        }
+      }
+    }
+  }
+
+  @Override
+  public List<JpsExcludePattern> getExcludePatterns() {
+    JpsElementCollection<JpsExcludePattern> child = myContainer.getChild(EXCLUDE_PATTERNS_ROLE);
+    return child != null ? child.getElements() : Collections.emptyList();
   }
 
   @NotNull

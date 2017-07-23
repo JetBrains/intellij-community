@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,14 +115,11 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
       public void fileCreated(@NotNull PsiFile file, @NotNull Document document) {
       }
     });
-    mySortedState = UISettings.getInstance().SORT_BOOKMARKS;
-    connection.subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
-      @Override
-      public void uiSettingsChanged(UISettings uiSettings) {
-        if (mySortedState != uiSettings.SORT_BOOKMARKS) {
-          mySortedState = uiSettings.SORT_BOOKMARKS;
-          EventQueue.invokeLater(() -> myBus.syncPublisher(BookmarksListener.TOPIC).bookmarksOrderChanged());
-        }
+    mySortedState = UISettings.getInstance().getSortBookmarks();
+    connection.subscribe(UISettingsListener.TOPIC, uiSettings -> {
+      if (mySortedState != uiSettings.getSortBookmarks()) {
+        mySortedState = uiSettings.getSortBookmarks();
+        EventQueue.invokeLater(() -> myBus.syncPublisher(BookmarksListener.TOPIC).bookmarksOrderChanged());
       }
     });
   }
@@ -218,7 +215,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
     for (Bookmark bookmark : myBookmarks) {
       if (bookmark.isValid()) answer.add(bookmark);
     }
-    if (UISettings.getInstance().SORT_BOOKMARKS) {
+    if (UISettings.getInstance().getSortBookmarks()) {
       Collections.sort(answer);
     }
     return answer;
@@ -282,19 +279,16 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
 
   @Override
   public void loadState(final Element state) {
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        BookmarksListener publisher = myBus.syncPublisher(BookmarksListener.TOPIC);
-        for (Bookmark bookmark : myBookmarks) {
-          bookmark.release();
-          publisher.bookmarkRemoved(bookmark);
-          unmap(bookmark.getDocument(), bookmark);
-        }
-        myBookmarks.clear();
-
-        readExternal(state);
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
+      BookmarksListener publisher = myBus.syncPublisher(BookmarksListener.TOPIC);
+      for (Bookmark bookmark : myBookmarks) {
+        bookmark.release();
+        publisher.bookmarkRemoved(bookmark);
+        unmap(bookmark.getDocument(), bookmark);
       }
+      myBookmarks.clear();
+
+      readExternal(state);
     });
   }
 
@@ -457,7 +451,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
     }
   }
 
-  private class MyDocumentListener extends DocumentAdapter {
+  private class MyDocumentListener implements DocumentListener {
     @Override
     public void beforeDocumentChange(DocumentEvent e) {
       for (Bookmark bookmark : myBookmarks) {

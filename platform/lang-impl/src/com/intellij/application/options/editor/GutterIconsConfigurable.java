@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,18 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.CheckBoxList;
+import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
+import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.hash.HashSet;
@@ -49,7 +54,9 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class GutterIconsConfigurable implements Configurable, Configurable.NoScroll {
+public class GutterIconsConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+  public static final String DISPLAY_NAME = "Gutter Icons";
+  public static final String ID = "editor.preferences.gutterIcons";
   private JPanel myPanel;
   private CheckBoxList<GutterIconDescriptor> myList;
   private JBCheckBox myShowGutterIconsJBCheckBox;
@@ -59,7 +66,7 @@ public class GutterIconsConfigurable implements Configurable, Configurable.NoScr
   @Nls
   @Override
   public String getDisplayName() {
-    return "Gutter Icons";
+    return DISPLAY_NAME;
   }
 
   @Nullable
@@ -214,8 +221,21 @@ public class GutterIconsConfigurable implements Configurable, Configurable.NoScr
     };
     myList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     myList.setBorder(BorderFactory.createEmptyBorder());
+    new ListSpeedSearch<>(myList, (Function<JCheckBox, String>)JCheckBox::getText);
   }
   
+  @NotNull
+  @Override
+  public String getId() {
+    return ID;
+  }
+
+  @Nullable
+  @Override
+  public Runnable enableSearch(String option) {
+    return () -> ObjectUtils.assertNotNull(SpeedSearchSupply.getSupply(myList, true)).findAndSelectElement(option);
+  }
+
   @TestOnly
   public List<GutterIconDescriptor> getDescriptors() { return myDescriptors; }
 }

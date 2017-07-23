@@ -20,77 +20,74 @@ package org.jetbrains.idea.svn.actions;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.conflict.ConflictClient;
 import org.jetbrains.idea.svn.dialogs.SelectFilesDialog;
-import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
-import org.jetbrains.idea.svn.status.StatusConsumer;
 import org.jetbrains.idea.svn.status.StatusType;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.TreeSet;
+
+import static com.intellij.util.containers.ContainerUtil.ar;
+import static com.intellij.util.containers.ContainerUtil.newTreeSet;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class MarkResolvedAction extends BasicAction {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.actions.MarkResolvedAction");
+  private static final Logger LOG = Logger.getInstance(MarkResolvedAction.class);
 
-  protected String getActionName(AbstractVcs vcs) {
-    return SvnBundle.message("action.name.mark.resolved");
+  @NotNull
+  @Override
+  protected String getActionName() {
+    return message("action.name.mark.resolved");
   }
 
+  @Override
   protected boolean needsAllFiles() {
     return false;
   }
 
-  protected boolean isEnabled(Project project, @NotNull SvnVcs vcs, VirtualFile file) {
-    if (file.isDirectory()) {
-      return SvnStatusUtil.isUnderControl(project, file);
-    }
-    final FileStatus fStatus = FileStatusManager.getInstance(project).getStatus(file);
-    return FileStatus.MERGED_WITH_CONFLICTS.equals(fStatus) || FileStatus.MERGED_WITH_BOTH_CONFLICTS.equals(fStatus) ||
-           FileStatus.MERGED_WITH_PROPERTY_CONFLICTS.equals(fStatus);
+  @Override
+  protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
+    FileStatus status = FileStatusManager.getInstance(vcs.getProject()).getStatus(file);
+
+    return file.isDirectory()
+           ? SvnStatusUtil.isUnderControl(vcs, file)
+           : FileStatus.MERGED_WITH_CONFLICTS.equals(status) ||
+             FileStatus.MERGED_WITH_BOTH_CONFLICTS.equals(status) ||
+             FileStatus.MERGED_WITH_PROPERTY_CONFLICTS.equals(status);
   }
 
-  protected boolean needsFiles() {
-    return true;
+  @Override
+  protected void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) throws VcsException {
+    batchPerform(vcs, ar(file), context);
   }
 
-  protected void perform(Project project, SvnVcs activeVcs, VirtualFile file, DataContext context)
-    throws VcsException {
-    batchPerform(project, activeVcs, new VirtualFile[]{file}, context);
-  }
-
-  protected void batchPerform(Project project, SvnVcs activeVcs, VirtualFile[] files, DataContext context)
-    throws VcsException {
-    SvnVcs vcs = SvnVcs.getInstance(project);
+  @Override
+  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) throws VcsException {
     ApplicationManager.getApplication().saveAll();
     Collection<String> paths = collectResolvablePaths(vcs, files);
     if (paths.isEmpty()) {
-      Messages.showInfoMessage(project, SvnBundle.message("message.text.no.conflicts.found"),
-                               SvnBundle.message("message.title.no.conflicts.found"));
+      Messages.showInfoMessage(vcs.getProject(), message("message.text.no.conflicts.found"), message("message.title.no.conflicts.found"));
       return;
     }
     String[] pathsArray = ArrayUtil.toStringArray(paths);
-    SelectFilesDialog dialog = new SelectFilesDialog(project, SvnBundle.message("label.select.files.and.directories.to.mark.resolved"),
-                                                     SvnBundle.message("dialog.title.mark.resolved"),
-                                                     SvnBundle.message("action.name.mark.resolved"), pathsArray, "vcs.subversion.resolve"
-    );
+    SelectFilesDialog dialog = new SelectFilesDialog(vcs.getProject(), message("label.select.files.and.directories.to.mark.resolved"),
+                                                     message("dialog.title.mark.resolved"), message("action.name.mark.resolved"),
+                                                     pathsArray, "vcs.subversion.resolve");
     if (!dialog.showAndGet()) {
       return;
     }
@@ -106,7 +103,7 @@ public class MarkResolvedAction extends BasicAction {
     }
     finally {
       for (VirtualFile file : files) {
-        VcsDirtyScopeManager.getInstance(project).fileDirty(file);
+        VcsDirtyScopeManager.getInstance(vcs.getProject()).fileDirty(file);
         file.refresh(true, false);
         if (file.getParent() != null) {
           file.getParent().refresh(true, false);
@@ -119,20 +116,19 @@ public class MarkResolvedAction extends BasicAction {
     return true;
   }
 
-  private static Collection<String> collectResolvablePaths(final SvnVcs vcs, VirtualFile[] files) {
-    final Collection<String> target = new TreeSet<>();
+  @NotNull
+  private static Collection<String> collectResolvablePaths(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files) {
+    Collection<String> result = newTreeSet();
+
     for (VirtualFile file : files) {
       try {
-        File path = new File(file.getPath());
+        File path = VfsUtilCore.virtualToIoFile(file);
         StatusClient client = vcs.getFactory(path).createStatusClient();
 
-        client.doStatus(path, SVNRevision.UNDEFINED, Depth.INFINITY, false, false, false, false, new StatusConsumer() {
-          @Override
-          public void consume(Status status) {
-            if (status.getContentsStatus() == StatusType.STATUS_CONFLICTED ||
-                status.getPropertiesStatus() == StatusType.STATUS_CONFLICTED) {
-              target.add(status.getFile().getAbsolutePath());
-            }
+        client.doStatus(path, SVNRevision.UNDEFINED, Depth.INFINITY, false, false, false, false, status -> {
+          if (status.getContentsStatus() == StatusType.STATUS_CONFLICTED ||
+              status.getPropertiesStatus() == StatusType.STATUS_CONFLICTED) {
+            result.add(status.getFile().getAbsolutePath());
           }
         }, null);
       }
@@ -140,6 +136,7 @@ public class MarkResolvedAction extends BasicAction {
         LOG.warn(e);
       }
     }
-    return target;
+
+    return result;
   }
 }

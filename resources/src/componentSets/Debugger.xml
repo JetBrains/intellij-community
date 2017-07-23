@@ -1,4 +1,10 @@
 <idea-plugin>
+  <application-components>
+    <component>
+      <implementation-class>com.intellij.debugger.memory.component.MemoryViewManager</implementation-class>
+    </component>
+  </application-components>
+
   <project-components>
     <component>
       <interface-class>com.intellij.debugger.ui.DebuggerPanelsManager</interface-class>
@@ -10,7 +16,7 @@
     </component>
     <component>
       <interface-class>com.intellij.debugger.ui.HotSwapUI</interface-class>
-      <implementation-class>com.intellij.debugger.ui.HotSwapUIImpl</implementation-class>      
+      <implementation-class>com.intellij.debugger.ui.HotSwapUIImpl</implementation-class>
     </component>
 
     <component>
@@ -18,6 +24,10 @@
       <implementation-class>com.intellij.debugger.impl.DebuggerManagerImpl</implementation-class>
       <option name="workspace" value="true"/>
       <loadForDefaultProject/>
+    </component>
+
+    <component>
+      <implementation-class>com.intellij.debugger.memory.component.InstancesTracker</implementation-class>
     </component>
   </project-components>
 

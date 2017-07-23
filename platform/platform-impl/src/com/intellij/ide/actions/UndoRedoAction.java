@@ -15,17 +15,20 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class UndoRedoAction extends DumbAwareAction {
   public UndoRedoAction() {
@@ -43,16 +46,6 @@ public abstract class UndoRedoAction extends DumbAwareAction {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
-
-    // do not allow global undo in dialogs
-    if (editor == null) {
-      final Boolean isModalContext = PlatformDataKeys.IS_MODAL_CONTEXT.getData(dataContext);
-      if (isModalContext != null && isModalContext) {
-        presentation.setEnabled(false);
-        return;
-      }
-    }
-
     UndoManager undoManager = getUndoManager(editor, dataContext);
     if (undoManager == null) {
       presentation.setEnabled(false);
@@ -67,6 +60,11 @@ public abstract class UndoRedoAction extends DumbAwareAction {
   }
 
   private static UndoManager getUndoManager(FileEditor editor, DataContext dataContext) {
+    final Boolean isModalContext = PlatformDataKeys.IS_MODAL_CONTEXT.getData(dataContext);
+    if (editor == null && isModalContext != null && isModalContext) {
+      return Registry.is("undo.use.for.swing.in.modal.context") ? SwingUndoManagerWrapper.fromContext(dataContext) : null;
+    }
+
     Project project = getProject(editor, dataContext);
     return project != null ? UndoManager.getInstance(project) : UndoManager.getGlobalInstance();
   }
@@ -87,4 +85,77 @@ public abstract class UndoRedoAction extends DumbAwareAction {
   protected abstract boolean isAvailable(FileEditor editor, UndoManager undoManager);
 
   protected abstract Pair<String, String> getActionNameAndDescription(FileEditor editor, UndoManager undoManager);
+
+  private static class SwingUndoManagerWrapper extends UndoManager{
+    private final javax.swing.undo.UndoManager mySwingUndoManager;
+
+    @Nullable
+    static UndoManager fromContext(DataContext dataContext) {
+      javax.swing.undo.UndoManager swingUndoManager = UIUtil.getUndoManager(PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext));
+      return swingUndoManager != null ? new SwingUndoManagerWrapper(swingUndoManager) : null;
+    }
+
+    public SwingUndoManagerWrapper(javax.swing.undo.UndoManager swingUndoManager) {
+      mySwingUndoManager = swingUndoManager;
+    }
+
+    @Override
+    public void undoableActionPerformed(@NotNull UndoableAction action) {
+    }
+
+    @Override
+    public void nonundoableActionPerformed(@NotNull DocumentReference ref, boolean isGlobal) {
+    }
+
+    @Override
+    public boolean isUndoInProgress() {
+      return false;
+    }
+
+    @Override
+    public boolean isRedoInProgress() {
+      return false;
+    }
+
+    @Override
+    public void undo(@Nullable FileEditor editor) {
+       mySwingUndoManager.undo();
+    }
+
+    @Override
+    public void redo(@Nullable FileEditor editor) {
+      mySwingUndoManager.redo();
+    }
+
+    @Override
+    public boolean isUndoAvailable(@Nullable FileEditor editor) {
+      return mySwingUndoManager.canUndo();
+    }
+
+    @Override
+    public boolean isRedoAvailable(@Nullable FileEditor editor) {
+      return mySwingUndoManager.canRedo();
+    }
+
+    @NotNull
+    @Override
+    public Pair<String, String> getUndoActionNameAndDescription(FileEditor editor) {
+      return getUndoOrRedoActionNameAndDescription( true);
+    }
+
+    @NotNull
+    @Override
+    public Pair<String, String> getRedoActionNameAndDescription(FileEditor editor) {
+      return getUndoOrRedoActionNameAndDescription( false);
+    }
+
+    @NotNull
+    private Pair<String, String> getUndoOrRedoActionNameAndDescription(boolean undo) {
+      String command = undo ? "undo" : "redo";
+      return Pair.create(
+        ActionsBundle.message("action." + command + ".text", "").trim(),
+        ActionsBundle.message("action." + command + ".description",
+                              ActionsBundle.message("action." + command + ".description.empty")).trim());
+    }
+  }
 }

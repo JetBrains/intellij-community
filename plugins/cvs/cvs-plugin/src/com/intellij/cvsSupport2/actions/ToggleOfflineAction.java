@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 04.09.2006
- * Time: 21:00:01
- */
 package com.intellij.cvsSupport2.actions;
 
 import com.intellij.CvsBundle;

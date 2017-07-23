@@ -15,16 +15,15 @@
  */
 package com.intellij.codeInspection.java15api;
 
-import com.intellij.ToolExtensionPoints;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -51,7 +50,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.lang.ref.Reference;
 import java.net.URL;
 import java.util.ArrayList;
@@ -64,8 +62,6 @@ import java.util.Set;
  */
 public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTool {
   public static final String SHORT_NAME = "Since15";
-  public static final ExtensionPointName<FileCheckingInspection> EP_NAME =
-    ExtensionPointName.create(ToolExtensionPoints.JAVA15_INSPECTION_TOOL);
 
   private static final String EFFECTIVE_LL = "effectiveLL";
 
@@ -98,7 +94,7 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
     ourDefaultMethods.add("java.util.Iterator#remove()");
   }
 
-  protected LanguageLevel myEffectiveLanguageLevel;
+  LanguageLevel myEffectiveLanguageLevel;
 
   @Nullable
   private static Set<String> getForbiddenApi(@NotNull LanguageLevel languageLevel) {
@@ -120,16 +116,9 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
       return;
     }
 
-    try {
-      BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream(), CharsetToolkit.UTF8_CHARSET));
-      try {
-        set.addAll(FileUtil.loadLines(reader));
-      }
-      finally {
-        reader.close();
-      }
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openStream(), CharsetToolkit.UTF8_CHARSET))) {
+      set.addAll(FileUtil.loadLines(reader));
     }
-    catch (UnsupportedEncodingException ignored) { }
     catch (IOException ignored) { }
   }
 
@@ -192,7 +181,6 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
   private class MyVisitor extends JavaElementVisitor {
     private final ProblemsHolder myHolder;
     private final boolean myOnTheFly;
-    private final ExtensionPoint<FileCheckingInspection> point = Extensions.getRootArea().getExtensionPoint(EP_NAME);
 
     public MyVisitor(final ProblemsHolder holder, boolean onTheFly) {
       myHolder = holder;
@@ -246,7 +234,8 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
         final Module module = ModuleUtilCore.findModuleForPsiElement(reference.getElement());
         if (module != null) {
           final LanguageLevel languageLevel = getEffectiveLanguageLevel(module);
-          if (isForbiddenApiUsage((PsiMember)resolved, languageLevel)) {
+          LanguageLevel sinceLanguageLevel = getLastIncompatibleLanguageLevel((PsiMember)resolved, languageLevel);
+          if (sinceLanguageLevel != null) {
             PsiClass psiClass = null;
             final PsiElement qualifier = reference.getQualifier();
             if (qualifier != null) {
@@ -263,7 +252,7 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
                 if (isIgnored(superClass)) return;
               }
             }
-            registerError(reference, languageLevel);
+            registerError(reference, sinceLanguageLevel);
           } else if (resolved instanceof PsiClass && isInProject(reference)&& !languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) {
             final PsiReferenceParameterList parameterList = reference.getParameterList();
             if (parameterList != null && parameterList.getTypeParameterElements().length > 0) {
@@ -309,8 +298,9 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
       if (module != null) {
         final LanguageLevel languageLevel = getEffectiveLanguageLevel(module);
         if (constructor instanceof PsiCompiledElement) {
-          if (isForbiddenApiUsage(constructor, languageLevel)) {
-            registerError(expression.getClassReference(), languageLevel);
+          LanguageLevel sinceLanguageLevel = getLastIncompatibleLanguageLevel(constructor, languageLevel);
+          if (sinceLanguageLevel != null) {
+            registerError(expression.getClassReference(), sinceLanguageLevel);
           }
         }
       }
@@ -322,12 +312,14 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
       PsiAnnotation annotation = !method.isConstructor() ? AnnotationUtil.findAnnotation(method, CommonClassNames.JAVA_LANG_OVERRIDE) : null;
       if (annotation != null) {
         final Module module = ModuleUtilCore.findModuleForPsiElement(annotation);
+        LanguageLevel sinceLanguageLevel = null;
         if (module != null) {
           final LanguageLevel languageLevel = getEffectiveLanguageLevel(module);
           final PsiMethod[] methods = method.findSuperMethods();
           for (PsiMethod superMethod : methods) {
             if (superMethod instanceof PsiCompiledElement) {
-              if (!isForbiddenApiUsage(superMethod, languageLevel)) {
+              sinceLanguageLevel = getLastIncompatibleLanguageLevel(superMethod, languageLevel);
+              if (sinceLanguageLevel == null) {
                 return;
               }
             }
@@ -336,7 +328,7 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
             }
           }
           if (methods.length > 0) {
-            registerError(annotation.getNameReferenceElement(), languageLevel);
+            registerError(annotation.getNameReferenceElement(), sinceLanguageLevel);
           }
         }
       }
@@ -350,55 +342,44 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
     private void registerError(PsiJavaCodeReferenceElement reference, LanguageLevel api) {
       if (reference != null && isInProject(reference)) {
         //noinspection DialogTitleCapitalization
-        myHolder.registerProblem(reference, InspectionsBundle.message("inspection.1.5.problem.descriptor", getShortName(api)));
-      }
-    }
-
-    @Override
-    public void visitFile(PsiFile file) {
-      for (FileCheckingInspection inspection : point.getExtensions()) {
-        ProblemDescriptor[] descriptors = inspection.checkFile(file, InspectionManager.getInstance(file.getProject()), myOnTheFly);
-        if (descriptors != null) {
-          for (ProblemDescriptor descriptor : descriptors) {
-            myHolder.registerProblem(descriptor);
-          }
-        }
+        myHolder.registerProblem(reference,
+                                 InspectionsBundle.message("inspection.1.5.problem.descriptor", getShortName(api)),
+                                 myOnTheFly ? new LocalQuickFix[] {(LocalQuickFix)QuickFixFactory.getInstance().createIncreaseLanguageLevelFix(LanguageLevel.values()[api.ordinal() + 1])} : null);
       }
     }
   }
 
   private static String getJdkName(LanguageLevel languageLevel) {
     final String presentableText = languageLevel.getPresentableText();
-    return presentableText.substring(0, presentableText.indexOf(" "));
+    return presentableText.substring(0, presentableText.indexOf(' '));
   }
 
-  public static boolean isForbiddenApiUsage(@NotNull PsiMember member, @NotNull LanguageLevel languageLevel) {
-    if (member instanceof PsiAnonymousClass) return false;
+  public static LanguageLevel getLastIncompatibleLanguageLevel(@NotNull PsiMember member, @NotNull LanguageLevel languageLevel) {
+    if (member instanceof PsiAnonymousClass) return null;
     PsiClass containingClass = member.getContainingClass();
-    if (containingClass instanceof PsiAnonymousClass) return false;
-    if (member instanceof PsiClass && !(member.getParent() instanceof PsiClass || member.getParent() instanceof PsiFile)) return false;
+    if (containingClass instanceof PsiAnonymousClass) return null;
+    if (member instanceof PsiClass && !(member.getParent() instanceof PsiClass || member.getParent() instanceof PsiFile)) return null;
 
-    return isForbiddenSignature(member, languageLevel) ||
-           containingClass != null && isForbiddenApiUsage(containingClass, languageLevel);
-
-  }
-
-  private static boolean isForbiddenSignature(@NotNull PsiMember member, @NotNull LanguageLevel languageLevel) {
     Set<String> forbiddenApi = getForbiddenApi(languageLevel);
     String signature = getSignature(member);
-    return forbiddenApi != null && signature != null && isForbiddenSignature(signature, languageLevel, forbiddenApi);
+    if (forbiddenApi != null && signature != null) {
+      LanguageLevel lastIncompatibleLanguageLevel = getLastIncompatibleLanguageLevelForSignature(signature, languageLevel, forbiddenApi);
+      if (lastIncompatibleLanguageLevel != null) return lastIncompatibleLanguageLevel;
+    }
+    return containingClass != null ? getLastIncompatibleLanguageLevel(containingClass, languageLevel) : null;
+
   }
 
-  private static boolean isForbiddenSignature(@NotNull String signature, @NotNull LanguageLevel languageLevel, @NotNull Set<String> forbiddenApi) {
+  private static LanguageLevel getLastIncompatibleLanguageLevelForSignature(@NotNull String signature, @NotNull LanguageLevel languageLevel, @NotNull Set<String> forbiddenApi) {
     if (forbiddenApi.contains(signature)) {
-      return true;
+      return languageLevel;
     }
     if (languageLevel.compareTo(ourHighestKnownLanguage) == 0) {
-      return false;
+      return null;
     }
     LanguageLevel nextLanguageLevel = LanguageLevel.values()[languageLevel.ordinal() + 1];
     Set<String> nextForbiddenApi = getForbiddenApi(nextLanguageLevel);
-    return nextForbiddenApi != null && isForbiddenSignature(signature, nextLanguageLevel, nextForbiddenApi);
+    return nextForbiddenApi != null ? getLastIncompatibleLanguageLevelForSignature(signature, nextLanguageLevel, nextForbiddenApi) : null;
   }
 
   /**

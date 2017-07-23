@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.util.Arrays;
-import java.util.Comparator;
 
 /**
  * Module chunk consists of interdependent modules.
@@ -134,7 +133,7 @@ public class ModuleChunk {
     if (encoding != null) {
       appendOption(options, "-encoding", encoding.name());
     }
-    
+
     final String languageLevel = getLanguageLevelOption(ApplicationManager.getApplication().runReadAction(new Computable<LanguageLevel>() {
       @Override
       public LanguageLevel compute() {
@@ -142,14 +141,14 @@ public class ModuleChunk {
       }
     }));
     appendOption(options, "-source", languageLevel);
-    
+
     String bytecodeTarget = CompilerConfiguration.getInstance(getProject()).getBytecodeTargetLevel(myMainModule);
     if (StringUtil.isEmpty(bytecodeTarget)) {
       // according to IDEA rule: if not specified explicitly, set target to be the same as source language level
       bytecodeTarget = languageLevel;
     }
     appendOption(options, "-target", bytecodeTarget);
-    
+
     return options.toString();
   }
 
@@ -173,18 +172,6 @@ public class ModuleChunk {
   }
 
   private static String getLanguageLevelOption(LanguageLevel level) {
-    if (level != null) {
-      switch (level) {
-        case JDK_1_3: return "1.3";
-        case JDK_1_4: return "1.4";
-        case JDK_1_5: return "1.5";
-        case JDK_1_6: return "1.6";
-        case JDK_1_7: return "1.7";
-        case JDK_1_8: return "8";
-        case JDK_1_9: return "9";
-      }
-    }
-    return null;
+    return level != null ? level.getCompilerComplianceDefaultOption() : null;
   }
-
 }

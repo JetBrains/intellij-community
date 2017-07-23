@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 28-Nov-2008
- */
 package org.jetbrains.idea.eclipse;
 
 import com.intellij.openapi.application.ApplicationManager;

@@ -152,6 +152,10 @@ public class CommonCodeStyleSettingsManager {
           CommonCodeStyleSettings clonedSettings = entry.getValue().clone(parentSettings);
           settingsManager.registerCommonSettings(entry.getKey(), clonedSettings);
         }
+        for (Map.Entry<String,Content> contentEntry : myUnknownSettingsMap.entrySet()) {
+          Content contentCopy = contentEntry.getValue().clone();
+          settingsManager.myUnknownSettingsMap.put(contentEntry.getKey(), contentCopy);
+        }
       }
       return settingsManager;
     }
@@ -230,5 +234,22 @@ public class CommonCodeStyleSettingsManager {
         CommonCodeStyleSettings.copyPublicFields(sourceIndentOptions, targetIndentOptions);
       }
     }
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof CommonCodeStyleSettingsManager) {
+      CommonCodeStyleSettingsManager other = (CommonCodeStyleSettingsManager)obj;
+      if (getCommonSettingsMap().size() != other.getCommonSettingsMap().size() ||
+          myUnknownSettingsMap.size() != other.myUnknownSettingsMap.size()) {
+        return false;
+      }
+      for (Language language : myCommonSettingsMap.keySet()) {
+        CommonCodeStyleSettings theseSettings = myCommonSettingsMap.get(language);
+        CommonCodeStyleSettings otherSettings = other.getCommonSettings(language);
+        if (!theseSettings.equals(otherSettings)) return false;
+      }
+    }
+    return true;
   }
 }

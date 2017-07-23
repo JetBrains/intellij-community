@@ -34,3 +34,12 @@ class E {
     return false;
   }
 }
+abstract class Condition {
+  static Condition equals(String value) {
+    return new Condition() {
+      // some implementation here
+    };
+  }
+
+  // more abstract methods
+}

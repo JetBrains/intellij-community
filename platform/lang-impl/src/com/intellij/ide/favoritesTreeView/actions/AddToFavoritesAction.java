@@ -45,10 +45,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * User: anna
- * Date: Feb 15, 2005
- */
 public class AddToFavoritesAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.favoritesTreeView.actions.AddToFavoritesAction");
 
@@ -93,7 +89,7 @@ public class AddToFavoritesAction extends AnAction implements DumbAware {
         nodesToAdd = createNodes(project, moduleContext, elements, inProjectView, ViewSettings.DEFAULT);
       }
     }
-    return nodesToAdd == null ? Collections.<AbstractTreeNode>emptyList() : nodesToAdd;
+    return nodesToAdd == null ? Collections.emptyList() : nodesToAdd;
   }
 
   @Override

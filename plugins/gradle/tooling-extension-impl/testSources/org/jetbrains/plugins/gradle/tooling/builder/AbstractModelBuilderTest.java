@@ -68,9 +68,16 @@ import static org.junit.Assume.assumeThat;
 public abstract class AbstractModelBuilderTest {
 
   public static final Object[][] SUPPORTED_GRADLE_VERSIONS = {
-    {"1.9"}, /*{"1.10"}, {"1.11"},*/ {"1.12"},
+    // temporary turn off testing against 1.x versions
+    // because incompatible platform guava library pollutes the classpath
+    // (and hence the guava from gradle plugin ignored)
+    // the issue affects only test and running IDEA using IDEA
+    // should be uncomment when the proper plugin classloader will be used for tests
+    //{"1.9"}, /*{"1.10"}, {"1.11"},*/ {"1.12"},
+    //
     {"2.0"}, /*{"2.1"}, {"2.2"} , {"2.3"}, {"2.4"}, */{"2.5"}, /*{"2.6"}, {"2.7"}, {"2.8"},*/ {"2.9"}, /*{"2.10"}, {"2.11"}, {"2.12"}, {"2.13"}, */{"2.14.1"},
-    {"3.0"}, {"3.1"}
+    {"3.0"}, /*{"3.1"}, {"3.2"}, {"3.3"}, {"3.4"},*/ {"3.5"},
+    {"4.0"}
   };
   public static final String BASE_GRADLE_VERSION = String.valueOf(SUPPORTED_GRADLE_VERSIONS[SUPPORTED_GRADLE_VERSIONS.length - 1][0]);
 
@@ -136,7 +143,8 @@ public abstract class AbstractModelBuilderTest {
 
     GradleConnector connector = GradleConnector.newConnector();
 
-    final URI distributionUri = new DistributionLocator().getDistributionFor(GradleVersion.version(gradleVersion));
+    GradleVersion _gradleVersion = GradleVersion.version(gradleVersion);
+    final URI distributionUri = new DistributionLocator().getDistributionFor(_gradleVersion);
     connector.useDistribution(distributionUri);
     connector.forProjectDirectory(testDir);
     int daemonMaxIdleTime = 10;
@@ -149,7 +157,10 @@ public abstract class AbstractModelBuilderTest {
     ProjectConnection connection = connector.connect();
 
     try {
-      final ProjectImportAction projectImportAction = new ProjectImportAction(false);
+      boolean isGradleProjectDirSupported = _gradleVersion.compareTo(GradleVersion.version("2.4")) >= 0;
+      boolean isCompositeBuildsSupported = isGradleProjectDirSupported && _gradleVersion.compareTo(GradleVersion.version("3.1")) >= 0;
+      final ProjectImportAction projectImportAction = new ProjectImportAction(false, isGradleProjectDirSupported,
+                                                                              isCompositeBuildsSupported);
       projectImportAction.addExtraProjectModelClasses(getModels());
       BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);
       File initScript = GradleExecutionHelper.generateInitScript(false, getToolingExtensionClasses());
@@ -167,7 +178,7 @@ public abstract class AbstractModelBuilderTest {
 
   @NotNull
   private Set<Class> getToolingExtensionClasses() {
-    final Set<Class> classes = ContainerUtil.<Class>set(
+    final Set<Class> classes = ContainerUtil.set(
       ExternalProject.class,
       // gradle-tooling-extension-api jar
       ProjectImportAction.class,
@@ -200,13 +211,10 @@ public abstract class AbstractModelBuilderTest {
     final DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getIdeaProject().getModules();
 
     final String filterKey = "to_filter";
-    final Map<String, T> map = ContainerUtil.map2Map(ideaModules, new Function<IdeaModule, Pair<String, T>>() {
-      @Override
-      public Pair<String, T> fun(IdeaModule module) {
-        final T value = allModels.getExtraProject(module, aClass);
-        final String key = value != null ? module.getGradleProject().getPath() : filterKey;
-        return Pair.create(key, value);
-      }
+    final Map<String, T> map = ContainerUtil.map2Map(ideaModules, (Function<IdeaModule, Pair<String, T>>)module -> {
+      final T value = allModels.getExtraProject(module, aClass);
+      final String key = value != null ? module.getGradleProject().getPath() : filterKey;
+      return Pair.create(key, value);
     });
 
     map.remove(filterKey);

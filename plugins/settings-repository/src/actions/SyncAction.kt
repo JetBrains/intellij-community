@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,10 @@ internal val NOTIFICATION_GROUP = NotificationGroup.balloonGroup(PLUGIN_NAME)
 
 internal abstract class SyncAction(private val syncType: SyncType) : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      return
+    }
+
     val repositoryManager = icsManager.repositoryManager
     e.presentation.isEnabledAndVisible = repositoryManager.isRepositoryExists() && repositoryManager.hasUpstream()
   }
@@ -40,7 +44,7 @@ internal abstract class SyncAction(private val syncType: SyncType) : DumbAwareAc
 
 fun syncAndNotify(syncType: SyncType, project: Project?, notifyIfUpToDate: Boolean = true) {
   try {
-    if (icsManager.sync(syncType, project) == null && !notifyIfUpToDate) {
+    if (!icsManager.syncManager.sync(syncType, project) && !notifyIfUpToDate) {
       return
     }
     NOTIFICATION_GROUP.createNotification(icsMessage("sync.done.message"), NotificationType.INFORMATION).notify(project)
@@ -63,13 +67,16 @@ internal class ConfigureIcsAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    if (icsManager.repositoryActive) {
+    val application = ApplicationManager.getApplication()
+    if (application.isUnitTestMode) {
+      return
+    }
+
+    if (icsManager.active) {
       e.presentation.isEnabledAndVisible = true
     }
     else {
-      val application = ApplicationManager.getApplication()
-      val provider = (application.stateStore.stateStorageManager as StateStorageManagerImpl).streamProvider
-      e.presentation.isEnabledAndVisible = provider == null || !provider.enabled
+      e.presentation.isEnabledAndVisible = !(application.stateStore.stateStorageManager as StateStorageManagerImpl).compoundStreamProvider.enabled
     }
     e.presentation.icon = null
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,14 @@
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.MouseShortcut;
+import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.testFramework.PlatformTestCase;
 
 import javax.swing.*;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -48,6 +52,7 @@ public class KeymapTest extends PlatformTestCase {
     myParent.addShortcut(ACTION_2, shortcut2);
 
     myChild = myParent.deriveKeymap("Child");
+    myChild.setCanModify(false);
     assertThat(myParent).isSameAs(myChild.getParent());
 
     myChild.addShortcut(ACTION_1, shortcutA);
@@ -149,6 +154,51 @@ public class KeymapTest extends PlatformTestCase {
 
     myChild.removeShortcut(ACTION_2, shortcut2);
     assertThat(myChild.getShortcuts(ACTION_2)).containsExactly(shortcutA, shortcutB);
+  }
+
+  public void testRemoveMouseShortcut() throws Exception {
+    myParent.clearOwnActionsIds();
+    myChild.clearOwnActionsIds();
+
+    MouseShortcut mouseShortcut = new MouseShortcut(1, InputEvent.BUTTON2_MASK, 1);
+    myParent.addShortcut(ACTION_2, mouseShortcut);
+    assertThat(myChild.getActionIds(mouseShortcut)).containsExactly(ACTION_2);
+    myChild.removeShortcut(ACTION_2, mouseShortcut);
+    assertThat(myChild.getActionIds(mouseShortcut)).isEmpty();
+  }
+  
+  // decided to not change order and keep old behavior
+  //public void testChangeMouseShortcut() throws Exception {
+  //  myParent.clearOwnActionsIds();
+  //  myChild.clearOwnActionsIds();
+  //
+  //  ActionManager actionManager = ActionManager.getInstance();
+  //  actionManager.registerAction(ACTION_2, new EmptyAction());
+  //  actionManager.registerAction(ACTION_1, new EmptyAction());
+  //  try {
+  //    MouseShortcut mouseShortcut = new MouseShortcut(1, InputEvent.BUTTON2_MASK, 1);
+  //    myParent.addShortcut(ACTION_2, mouseShortcut);
+  //    assertThat(myChild.getActionIds(mouseShortcut)).containsExactly(ACTION_2);
+  //
+  //    Keymap grandChild = myChild.deriveKeymap("GrandChild");
+  //    myChild.addShortcut(ACTION_2, mouseShortcut);
+  //
+  //    grandChild.addShortcut(ACTION_1, mouseShortcut);
+  //    assertThat(grandChild.getActionIds(mouseShortcut)).containsExactly(ACTION_1, ACTION_2);
+  //  }
+  //  finally {
+  //    actionManager.unregisterAction(ACTION_2);
+  //    actionManager.unregisterAction(ACTION_1);
+  //  }
+  //}
+
+  public void testChangingMouseShortcutInGrandChild() throws Exception {
+    MouseShortcut mouseShortcut = new MouseShortcut(MouseEvent.BUTTON1, 0, 1);
+    myParent.addShortcut(ACTION_2, mouseShortcut);
+    Keymap grandChild = myChild.deriveKeymap("GrandChild");
+    grandChild.removeShortcut(ACTION_2, mouseShortcut);
+    grandChild.addShortcut(ACTION_1, mouseShortcut);
+    assertThat(grandChild.getActionIds(mouseShortcut)).containsExactly(ACTION_1);
   }
 
   public void testRemovingShortcutLast() throws Exception {

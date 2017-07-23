@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl;
 
 import java.util.Collections;
@@ -35,17 +36,20 @@ public class AfterCallInstruction extends InstructionImpl {
     return super.toString() + "AFTER CALL " + myCall.num();
   }
 
+  @NotNull
   @Override
-  public Iterable<? extends Instruction> allPredecessors() {
+  public Iterable<Instruction> allPredecessors() {
     return Collections.singletonList(myReturnInstruction);
   }
 
+  @NotNull
   @Override
-  public Iterable<? extends Instruction> predecessors(CallEnvironment environment) {
+  public Iterable<Instruction> predecessors(@NotNull CallEnvironment environment) {
     environment.callStack(myReturnInstruction).push(myCall);
     return Collections.singletonList(myReturnInstruction);
   }
 
+  @NotNull
   @Override
   protected String getElementPresentation() {
     return "";

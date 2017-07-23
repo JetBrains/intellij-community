@@ -24,11 +24,12 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.BrowserCompatHostnameVerifier;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,7 +97,7 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
    * @deprecated To be removed in IDEA 18. Use specific host name verifiers from httpclient-4.x instead.
    */
   @Deprecated
-  public static final HostnameVerifier HOSTNAME_VERIFIER = SSLConnectionSocketFactory.BROWSER_COMPATIBLE_HOSTNAME_VERIFIER;
+  public static final HostnameVerifier HOSTNAME_VERIFIER = new BrowserCompatHostnameVerifier();
   
   /**
    * Used to check whether dialog is visible to prevent possible deadlock, e.g. when some external resource is loaded by
@@ -133,7 +134,7 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
       // Protocol.registerProtocol("https", CertificateManager.createDefault().createProtocol());
       if (Registry.is("ide.certificate.manager")) {
         SSLContext.setDefault(getSslContext());
-        LOG.debug("Default SSL context initialized");
+        LOG.info("Default SSL context initialized");
       }
     }
     catch (Exception e) {
@@ -339,6 +340,17 @@ public class CertificateManager implements PersistentStateComponent<CertificateM
       proceeded.countDown();
     }
     return accepted.get();
+  }
+
+  public <T, E extends Throwable> T runWithUntrustedCertificateStrategy(@NotNull final ThrowableComputable<T, E> computable,
+                                                                        @NotNull final UntrustedCertificateStrategy strategy) throws E {
+    myTrustManager.myUntrustedCertificateStrategy.set(strategy);
+    try {
+      return computable.compute();
+    }
+    finally {
+      myTrustManager.myUntrustedCertificateStrategy.remove();
+    }
   }
 
   @NotNull

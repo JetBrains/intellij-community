@@ -16,7 +16,6 @@
 package git4idea.repo;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -47,7 +46,7 @@ import java.util.*;
  * <p>
  *   This class is used by {@link git4idea.status.GitNewChangesCollector}.
  *   By keeping track of unversioned files in the Git repository we may invoke
- *   <code>'git status --porcelain --untracked-files=no'</code> which gives a significant speed boost: the command gets more than twice
+ *   {@code 'git status --porcelain --untracked-files=no'} which gives a significant speed boost: the command gets more than twice
  *   faster, because it doesn't need to seek for untracked files.
  * </p>
  *
@@ -108,7 +107,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
     myRoot = repository.getRoot();
     myChangeListManager = ChangeListManager.getInstance(myProject);
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
-    myGit = ServiceManager.getService(Git.class);
+    myGit = Git.getInstance();
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
 
     myRepositoryManager = GitUtil.getRepositoryManager(myProject);
@@ -199,7 +198,7 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   }
 
   /**
-   * @return <code>true</code> if untracked files list is initialized and being kept up-to-date, <code>false</code> if full refresh is needed.
+   * @return {@code true} if untracked files list is initialized and being kept up-to-date, {@code false} if full refresh is needed.
    */
   private boolean isReady() {
     synchronized (LOCK) {

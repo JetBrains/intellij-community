@@ -16,7 +16,6 @@
 package com.intellij.vcs.log.graph.linearBek;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.api.EdgeFilter;
@@ -51,7 +50,7 @@ public class LinearBekController extends CascadeController {
 
     long start = System.currentTimeMillis();
     myLinearBekGraphBuilder.collapseAll();
-    LOG.info("Linear bek took " + (System.currentTimeMillis() - start) / 1000.0 + " sec");
+    LOG.debug("Linear bek took " + (System.currentTimeMillis() - start) / 1000.0 + " sec");
   }
 
   @NotNull
@@ -104,12 +103,8 @@ public class LinearBekController extends CascadeController {
 
   @NotNull
   private List<GraphEdge> getAllAdjacentDottedEdges(GraphNode graphElement) {
-    return ContainerUtil.filter(myCompiledGraph.getAdjacentEdges(graphElement.getNodeIndex(), EdgeFilter.ALL), new Condition<GraphEdge>() {
-      @Override
-      public boolean value(GraphEdge graphEdge) {
-        return graphEdge.getType() == GraphEdgeType.DOTTED;
-      }
-    });
+    return ContainerUtil.filter(myCompiledGraph.getAdjacentEdges(graphElement.getNodeIndex(), EdgeFilter.ALL),
+                                graphEdge -> graphEdge.getType() == GraphEdgeType.DOTTED);
   }
 
   @NotNull
@@ -118,12 +113,9 @@ public class LinearBekController extends CascadeController {
       @Nullable
       @Override
       public Runnable getGraphUpdater() {
-        return new Runnable() {
-          @Override
-          public void run() {
-            myCompiledGraph.myDottedEdges.removeAll();
-            myCompiledGraph.myHiddenEdges.removeAll();
-          }
+        return () -> {
+          myCompiledGraph.myDottedEdges.removeAll();
+          myCompiledGraph.myHiddenEdges.removeAll();
         };
       }
     };
@@ -138,12 +130,7 @@ public class LinearBekController extends CascadeController {
       @Nullable
       @Override
       public Runnable getGraphUpdater() {
-        return new Runnable() {
-          @Override
-          public void run() {
-            workingGraph.applyChanges();
-          }
-        };
+        return () -> workingGraph.applyChanges();
       }
     };
   }
@@ -182,12 +169,7 @@ public class LinearBekController extends CascadeController {
   }
 
   private SortedSet<Integer> collectNodesToCollapse(GraphNode node) {
-    SortedSet<Integer> toCollapse = new TreeSet<>(new Comparator<Integer>() {
-      @Override
-      public int compare(Integer o1, Integer o2) {
-        return o2.compareTo(o1);
-      }
-    });
+    SortedSet<Integer> toCollapse = new TreeSet<>((o1, o2) -> o2.compareTo(o1));
     for (LinearBekGraphBuilder.MergeFragment f : collectFragmentsToCollapse(node)) {
       toCollapse.add(f.getParent());
       toCollapse.addAll(f.getTailsAndBody());

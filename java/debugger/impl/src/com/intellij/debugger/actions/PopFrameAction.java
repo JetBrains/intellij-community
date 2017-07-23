@@ -105,9 +105,7 @@ public class PopFrameAction extends DebuggerAction implements DumbAware {
       Messages.showMessageDialog(project, DebuggerBundle.message("error.native.method.exception"),
                                  UIUtil.removeMnemonic(ActionsBundle.actionText(DebuggerActions.POP_FRAME)), Messages.getErrorIcon());
     }
-    catch (InvalidStackFrameException ignored) {
-    }
-    catch(VMDisconnectedException ignored) {
+    catch (InvalidStackFrameException | VMDisconnectedException ignored) {
     }
   }
 

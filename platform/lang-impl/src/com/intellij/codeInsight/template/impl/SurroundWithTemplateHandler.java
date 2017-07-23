@@ -18,17 +18,16 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +42,7 @@ import java.util.Set;
 public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
   @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
-    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
+    if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     DefaultActionGroup group = createActionGroup(project, editor, file);
     if (group == null) return;
 
@@ -58,18 +57,15 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
   @Nullable
   public static DefaultActionGroup createActionGroup(Project project, Editor editor, PsiFile file) {
     if (!editor.getSelectionModel().hasSelection()) {
-      editor.getSelectionModel().selectLineAtCaret();
+      SurroundWithHandler.selectLogicalLineContentsAtCaret(editor);
       if (!editor.getSelectionModel().hasSelection()) return null;
     }
-    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     List<CustomLiveTemplate> customTemplates = TemplateManagerImpl.listApplicableCustomTemplates(editor, file, true);
     List<TemplateImpl> templates = TemplateManagerImpl.listApplicableTemplateWithInsertingDummyIdentifier(editor, file, true);
     if (templates.isEmpty() && customTemplates.isEmpty()) {
       HintManager.getInstance().showErrorHint(editor, CodeInsightBundle.message("templates.surround.no.defined"));
       return null;
     }
-
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(file)) return null;
 
     Set<Character> usedMnemonicsSet = new HashSet<>();
     DefaultActionGroup group = new DefaultActionGroup();
@@ -82,10 +78,5 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
       group.add(new WrapWithCustomTemplateAction(customTemplate, editor, file, usedMnemonicsSet));
     }
     return group;
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 }

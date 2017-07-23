@@ -15,40 +15,32 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.MethodCallData;
-import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.OptionsData;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection.Options;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 
-import static java.lang.String.format;
+import java.util.Objects;
 
 /**
  * e.g.
- * a.equals(b)  → (a == b)
- * !a.equals(b) → (a != b)
+ * a.equals(b)  -> (a == b)
+ * !a.equals(b) -> (a != b)
  */
 abstract class BinaryTransformation extends Transformation {
 
+  @NotNull
+  protected GrExpression getLhs(@NotNull GrMethodCall methodCall) {
+    return Objects.requireNonNull(getBase(methodCall));
+  }
+
+  @NotNull
+  protected GrExpression getRhs(@NotNull GrMethodCall methodCall) {
+    return getArgument(methodCall, 0);
+  }
+
   @Override
-  @Nullable
-  public String getReplacement(MethodCallData methodInfo, OptionsData optionsData) {
-    String lhs = getLhs(methodInfo);
-    String operator = getOperator(methodInfo, optionsData);
-    String rhs = getRhs(methodInfo);
-    if (lhs == null || operator == null || rhs == null) return null;
-
-    return format("%s %s %s", lhs, operator, rhs);
-  }
-
-  @Nullable
-  protected String getLhs(MethodCallData methodInfo) {
-    return methodInfo.getBase();
-  }
-
-  @Nullable
-  protected abstract String getOperator(MethodCallData methodInfo, OptionsData optionsData);
-
-  @Nullable
-  protected String getRhs(MethodCallData methodInfo) {
-    return methodInfo.getArgument(0);
+  public boolean couldApplyInternal(@NotNull GrMethodCall methodCall, @NotNull Options options) {
+    return getBase(methodCall) != null && checkArgumentsCount(methodCall, 1);
   }
 }

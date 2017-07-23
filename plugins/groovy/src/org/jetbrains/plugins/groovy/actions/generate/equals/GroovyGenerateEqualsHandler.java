@@ -18,11 +18,10 @@ package org.jetbrains.plugins.groovy.actions.generate.equals;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.generation.*;
 import com.intellij.codeInsight.generation.ui.GenerateEqualsWizard;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -39,10 +38,6 @@ import org.jetbrains.plugins.groovy.actions.generate.GroovyGenerationInfo;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 28.05.2008
- */
 public class GroovyGenerateEqualsHandler extends GenerateMembersHandlerBase {
 
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.actions.generate.equals.EqualsGenerateHandler");
@@ -78,18 +73,15 @@ public class GroovyGenerateEqualsHandler extends GenerateMembersHandlerBase {
       if (Messages.showYesNoDialog(project, text,
                                    GroovyCodeInsightBundle.message("generate.equals.and.hashcode.already.defined.title"),
                                    Messages.getQuestionIcon()) == Messages.YES) {
-        if (!ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            try {
-              equalsMethod.delete();
-              hashCodeMethod.delete();
-              return Boolean.TRUE;
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-              return Boolean.FALSE;
-            }
+        if (!WriteAction.compute(() -> {
+          try {
+            equalsMethod.delete();
+            hashCodeMethod.delete();
+            return Boolean.TRUE;
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+            return Boolean.FALSE;
           }
         }).booleanValue()) {
           return null;
@@ -142,9 +134,4 @@ public class GroovyGenerateEqualsHandler extends GenerateMembersHandlerBase {
     myHashCodeFields = null;
     myNonNullFields = null;
   }
-
-  @Override
-  public boolean startInWriteAction() {
-      return true;
-    } 
 }

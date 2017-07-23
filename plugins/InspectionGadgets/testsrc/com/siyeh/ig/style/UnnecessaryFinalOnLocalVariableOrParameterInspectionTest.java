@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,27 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class UnnecessaryFinalOnLocalVariableOrParameterInspectionTest extends IGInspectionTestCase {
+public class UnnecessaryFinalOnLocalVariableOrParameterInspectionTest extends LightInspectionTestCase {
+
+  @NotNull
   @Override
-  protected Sdk getTestProjectSdk() {
-    // effectively final rules are different in jdk 8
-    return IdeaTestUtil.getMockJdk17();
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_1_7;
   }
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/style/unnecessary_final_on_local_variable_or_parameter",
-           new UnnecessaryFinalOnLocalVariableOrParameterInspection());
+  public void testUnnecessaryFinalOnLocalVariableOrParameter() throws Exception {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new UnnecessaryFinalOnLocalVariableOrParameterInspection();
   }
 }

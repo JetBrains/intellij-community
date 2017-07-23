@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 import java.util.Set;
@@ -41,7 +42,7 @@ public class GistManagerImpl extends GistManager {
   private final AtomicInteger myReindexCount = new AtomicInteger(PropertiesComponent.getInstance().getInt(ourPropertyName, 0));
 
   public GistManagerImpl() {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         if (events.stream().anyMatch(this::shouldDropCache)) {
@@ -88,5 +89,11 @@ public class GistManagerImpl extends GistManager {
     // Clear all cache at once to simplify and speedup this operation.
     // It can be made per-file if cache recalculation ever becomes an issue.
     PropertiesComponent.getInstance().setValue(ourPropertyName, myReindexCount.incrementAndGet(), 0);
+  }
+
+  @TestOnly
+  public void resetReindexCount() {
+    myReindexCount.set(0);
+    PropertiesComponent.getInstance().unsetValue(ourPropertyName);
   }
 }

@@ -49,6 +49,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -149,8 +150,8 @@ public class FileDownloaderImpl implements FileDownloader {
   @NotNull
   @Override
   public List<Pair<File, DownloadableFileDescription>> download(@NotNull final File targetDir) throws IOException {
-    final List<Pair<File, DownloadableFileDescription>> downloadedFiles = new ArrayList<>();
-    final List<Pair<File, DownloadableFileDescription>> existingFiles = new ArrayList<>();
+    List<Pair<File, DownloadableFileDescription>> downloadedFiles = Collections.synchronizedList(new ArrayList<>());
+    List<Pair<File, DownloadableFileDescription>> existingFiles = Collections.synchronizedList(new ArrayList<>());
     ProgressIndicator parentIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (parentIndicator == null) {
       parentIndicator = new EmptyProgressIndicator();
@@ -227,11 +228,7 @@ public class FileDownloaderImpl implements FileDownloader {
       localFiles.addAll(existingFiles);
       return localFiles;
     }
-    catch (ProcessCanceledException e) {
-      deleteFiles(downloadedFiles);
-      throw e;
-    }
-    catch (IOException e) {
+    catch (ProcessCanceledException | IOException e) {
       deleteFiles(downloadedFiles);
       throw e;
     }

@@ -27,10 +27,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
-* User: anna
-* Date: 11/8/11
-*/
 public class StartMarkAction extends BasicUndoableAction {
   private static final Map<Project, StartMarkAction> ourCurrentMarks = new HashMap<>();
   private String myCommandName;

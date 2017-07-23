@@ -19,7 +19,6 @@ import com.intellij.ide.projectWizard.NewProjectWizardTestCase;
 import com.intellij.ide.projectWizard.ProjectTypeStep;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
-import com.intellij.ide.wizard.Step;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -28,7 +27,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleModuleBuilder;
 
 import java.util.List;
@@ -40,17 +38,14 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
 
   public void testGradleProject() throws Exception {
     final String projectName = "testProject";
-    Project project = createProject(new Consumer<Step>() {
-      @Override
-      public void consume(Step step) {
-        if (step instanceof ProjectTypeStep) {
-          assertTrue(((ProjectTypeStep)step).setSelectedTemplate("Gradle", null));
-          List<ModuleWizardStep> steps = myWizard.getSequence().getSelectedSteps();
-          assertEquals(5, steps.size());
-          final ProjectBuilder projectBuilder = myWizard.getProjectBuilder();
-          assertInstanceOf(projectBuilder, GradleModuleBuilder.class);
-          ((GradleModuleBuilder)projectBuilder).setName(projectName);
-        }
+    Project project = createProject(step -> {
+      if (step instanceof ProjectTypeStep) {
+        assertTrue(((ProjectTypeStep)step).setSelectedTemplate("Gradle", null));
+        List<ModuleWizardStep> steps = myWizard.getSequence().getSelectedSteps();
+        assertEquals(5, steps.size());
+        final ProjectBuilder projectBuilder = myWizard.getProjectBuilder();
+        assertInstanceOf(projectBuilder, GradleModuleBuilder.class);
+        ((GradleModuleBuilder)projectBuilder).setName(projectName);
       }
     });
 
@@ -74,14 +69,14 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
                  "\n" +
                  "apply plugin: 'java'\n" +
                  "\n" +
-                 "sourceCompatibility = 1.5\n" +
+                 "sourceCompatibility = 1.8\n" +
                  "\n" +
                  "repositories {\n" +
                  "    mavenCentral()\n" +
                  "}\n" +
                  "\n" +
                  "dependencies {\n" +
-                 "    testCompile group: 'junit', name: 'junit', version: '4.11'\n" +
+                 "    testCompile group: 'junit', name: 'junit', version: '4.12'\n" +
                  "}\n",
                  StringUtil.convertLineSeparators(VfsUtilCore.loadText(buildScript)));
   }

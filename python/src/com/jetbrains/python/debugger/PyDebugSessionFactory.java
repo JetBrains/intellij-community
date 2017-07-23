@@ -29,14 +29,12 @@ import org.jetbrains.annotations.Nullable;
  * @author Alexander Koshevoy
  */
 public abstract class PyDebugSessionFactory {
-  public static final ExtensionPointName<PyDebugSessionFactory> EP_NAME
-    = ExtensionPointName.create("Pythonid.debugSessionFactory");
+  public static final ExtensionPointName<PyDebugSessionFactory> EP_NAME = ExtensionPointName.create("Pythonid.debugSessionFactory");
 
   protected abstract boolean appliesTo(@NotNull Sdk sdk);
 
   @NotNull
-  public abstract XDebugSession createSession(@NotNull PyDebugRunner runner,
-                                              @NotNull PythonCommandLineState state,
+  public abstract XDebugSession createSession(@NotNull PythonCommandLineState state,
                                               @NotNull ExecutionEnvironment environment)
     throws ExecutionException;
 

@@ -39,12 +39,6 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/21/12
- * Time: 10:02 AM
- */
 public class SvnAnnotationIsClosedTest extends Svn17TestCase {
   private volatile boolean myIsClosed;
   private volatile boolean myIsClosed1;
@@ -76,12 +70,9 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
 
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
     final FileAnnotation annotation = createTestAnnotation(myVcs.getAnnotationProvider(), tree.myS1File);
-    annotation.setCloser(new Runnable() {
-      @Override
-      public void run() {
-        myIsClosed = true;
-        listener.unregisterAnnotation(tree.myS1File, annotation);
-      }
+    annotation.setCloser(() -> {
+      myIsClosed = true;
+      listener.unregisterAnnotation(tree.myS1File, annotation);
     });
     listener.registerAnnotation(tree.myS1File, annotation);
 
@@ -115,12 +106,9 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
 
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
     final FileAnnotation annotation = createTestAnnotation(myVcs.getAnnotationProvider(), tree.myS1File);
-    annotation.setCloser(new Runnable() {
-      @Override
-      public void run() {
-        myIsClosed = true;
-        listener.unregisterAnnotation(tree.myS1File, annotation);
-      }
+    annotation.setCloser(() -> {
+      myIsClosed = true;
+      listener.unregisterAnnotation(tree.myS1File, annotation);
     });
     listener.registerAnnotation(tree.myS1File, annotation);
 
@@ -143,12 +131,9 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
 
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
     final FileAnnotation annotation = createTestAnnotation(myVcs.getAnnotationProvider(), tree.myS1File);
-    annotation.setCloser(new Runnable() {
-      @Override
-      public void run() {
-        myIsClosed = true;
-        listener.unregisterAnnotation(tree.myS1File, annotation);
-      }
+    annotation.setCloser(() -> {
+      myIsClosed = true;
+      listener.unregisterAnnotation(tree.myS1File, annotation);
     });
     listener.registerAnnotation(tree.myS1File, annotation);
     VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1+\n2\n3\n4\n");
@@ -173,12 +158,9 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
 
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
     final FileAnnotation annotation = createTestAnnotation(myVcs.getAnnotationProvider(), tree.myS1File);
-    annotation.setCloser(new Runnable() {
-      @Override
-      public void run() {
-        myIsClosed = true;
-        listener.unregisterAnnotation(tree.myS1File, annotation);
-      }
+    annotation.setCloser(() -> {
+      myIsClosed = true;
+      listener.unregisterAnnotation(tree.myS1File, annotation);
     });
     listener.registerAnnotation(tree.myS1File, annotation);
     VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1+\n2\n3\n4\n");
@@ -208,12 +190,9 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
 
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
     final FileAnnotation annotation = createTestAnnotation(myVcs.getAnnotationProvider(), tree.myS1File);
-    annotation.setCloser(new Runnable() {
-      @Override
-      public void run() {
-        myIsClosed = true;
-        listener.unregisterAnnotation(tree.myS1File, annotation);
-      }
+    annotation.setCloser(() -> {
+      myIsClosed = true;
+      listener.unregisterAnnotation(tree.myS1File, annotation);
     });
     listener.registerAnnotation(tree.myS1File, annotation);
 
@@ -240,12 +219,9 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
 
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
     final FileAnnotation annotation = createTestAnnotation(myVcs.getAnnotationProvider(), tree.myS1File);
-    annotation.setCloser(new Runnable() {
-      @Override
-      public void run() {
-        myIsClosed = true;
-        listener.unregisterAnnotation(tree.myS1File, annotation);
-      }
+    annotation.setCloser(() -> {
+      myIsClosed = true;
+      listener.unregisterAnnotation(tree.myS1File, annotation);
     });
     listener.registerAnnotation(tree.myS1File, annotation);
 
@@ -268,12 +244,9 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
 
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
     final FileAnnotation annotation = createTestAnnotation(myVcs.getAnnotationProvider(), tree.myS1File);
-    annotation.setCloser(new Runnable() {
-      @Override
-      public void run() {
-        myIsClosed = true;
-        listener.unregisterAnnotation(tree.myS1File, annotation);
-      }
+    annotation.setCloser(() -> {
+      myIsClosed = true;
+      listener.unregisterAnnotation(tree.myS1File, annotation);
     });
     listener.registerAnnotation(tree.myS1File, annotation);
     VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1+\n2\n3\n4\n");
@@ -339,22 +312,16 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
     // then annotate both
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
     final FileAnnotation annotation = createTestAnnotation(myVcs.getAnnotationProvider(), vf1);
-    annotation.setCloser(new Runnable() {
-      @Override
-      public void run() {
-        myIsClosed = true;
-        listener.unregisterAnnotation(vf1, annotation);
-      }
+    annotation.setCloser(() -> {
+      myIsClosed = true;
+      listener.unregisterAnnotation(vf1, annotation);
     });
     listener.registerAnnotation(vf1, annotation);
 
     final FileAnnotation annotation1 = createTestAnnotation(myVcs.getAnnotationProvider(), vf2);
-    annotation1.setCloser(new Runnable() {
-      @Override
-      public void run() {
-        myIsClosed1 = true;
-        listener.unregisterAnnotation(vf1, annotation1);
-      }
+    annotation1.setCloser(() -> {
+      myIsClosed1 = true;
+      listener.unregisterAnnotation(vf1, annotation1);
     });
     listener.registerAnnotation(vf1, annotation1);
 

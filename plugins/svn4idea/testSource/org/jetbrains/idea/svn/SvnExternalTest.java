@@ -34,12 +34,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/12/12
- * Time: 10:24 AM
- */
 public class SvnExternalTest extends Svn17TestCase {
   private ChangeListManagerImpl clManager;
   private SvnVcs myVcs;
@@ -178,13 +172,8 @@ public class SvnExternalTest extends Svn17TestCase {
   }
 
   private void setNewDirectoryMappings(final File sourceDir) {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        ProjectLevelVcsManager.getInstance(myProject).setDirectoryMappings(
-          Arrays.asList(new VcsDirectoryMapping(FileUtil.toSystemIndependentName(sourceDir.getPath()), myVcs.getName())));
-      }
-    });
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> ProjectLevelVcsManager.getInstance(myProject).setDirectoryMappings(
+      Arrays.asList(new VcsDirectoryMapping(FileUtil.toSystemIndependentName(sourceDir.getPath()), myVcs.getName()))));
   }
 
   @Test

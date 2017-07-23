@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,10 +42,7 @@ public class MavenServerManagerTest extends MavenTestCase {
       try {
         result.get(10, TimeUnit.SECONDS);
       }
-      catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      }
-      catch (java.util.concurrent.ExecutionException e) {
+      catch (InterruptedException | java.util.concurrent.ExecutionException e) {
         throw new RuntimeException(e);
       }
       catch (TimeoutException e) {

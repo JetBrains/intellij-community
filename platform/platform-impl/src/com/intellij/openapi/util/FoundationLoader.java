@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,26 +17,12 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.ui.mac.foundation.Foundation;
-import org.jetbrains.annotations.NotNull;
 
-/**
- * User: spLeaner
- */
 public class FoundationLoader implements ApplicationComponent {
-
-  @NotNull
-  public String getComponentName() {
-    return "FoundationLoader";
-  }
-
+  @Override
   public void initComponent() {
     if (SystemInfo.isMac) {
       Foundation.init();
     }
   }
-
-  public void disposeComponent() {
-
-  }
-
 }

@@ -16,9 +16,8 @@
 package com.intellij.psi.search;
 
 import com.intellij.codeInsight.ContainerProvider;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
@@ -93,6 +92,7 @@ public class SearchRequestCollector {
           GlobalSearchScope searchCodeUsageEffectiveScope = ((GlobalSearchScope)searchScope).intersectWith(GlobalSearchScope.notScope(optimizedCodeUsageSearchScope));
           requests = ContainerUtil.list(new PsiSearchRequest(searchCodeUsageEffectiveScope, word, UsageSearchContext.IN_CODE, caseSensitive, containerName, processor),
                                         new PsiSearchRequest(searchScope, word, exceptCodeSearchContext, caseSensitive, containerName, processor));
+          break;
         }
       }
     }
@@ -114,7 +114,7 @@ public class SearchRequestCollector {
   }
 
   private static String getContainerName(@NotNull final PsiElement target) {
-    return ApplicationManager.getApplication().runReadAction((Computable<String>)() -> {
+    return ReadAction.compute(() -> {
       PsiElement container = getContainer(target);
       return container instanceof PsiNamedElement ? ((PsiNamedElement)container).getName() : null;
     });

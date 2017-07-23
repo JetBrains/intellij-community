@@ -1082,8 +1082,29 @@
   <item name="java.util.Map void putAll(java.util.Map&lt;? extends K,? extends V&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.NavigableSet E ceiling(E)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.NavigableSet E floor(E)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.NavigableSet E higher(E)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.NavigableSet E lower(E)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.NavigableSet E pollFirst()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.NavigableSet E pollLast()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name="java.util.NavigableSet java.util.Iterator&lt;E&gt; descendingIterator()">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.NavigableSet java.util.Iterator&lt;E&gt; iterator()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name="java.util.NavigableSet java.util.NavigableSet&lt;E&gt; descendingSet()">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -1097,18 +1118,32 @@
   <item name="java.util.NavigableSet java.util.NavigableSet&lt;E&gt; tailSet(E, boolean)">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.NavigableSet java.util.SortedSet&lt;E&gt; headSet(E)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.NavigableSet java.util.SortedSet&lt;E&gt; subSet(E, E)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.NavigableSet java.util.SortedSet&lt;E&gt; tailSet(E)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.util.Objects T requireNonNull(T)'>
     <annotation name='org.jetbrains.annotations.Contract'>
-      <val val="&quot;null-&gt;fail&quot;"/>
+      <val name="value" val="&quot;null-&gt;fail&quot;"/>
+      <val name="pure" val="true"/>
     </annotation>
   </item>
   <item name='java.util.Objects T requireNonNull(T, java.lang.String)'>
     <annotation name='org.jetbrains.annotations.Contract'>
-      <val val="&quot;null,_-&gt;fail&quot;"/>
+      <val name="value" val="&quot;null,_-&gt;fail&quot;"/>
+      <val name="pure" val="true"/>
     </annotation>
   </item>
   <item name='java.util.Optional T get()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name='java.util.Optional T orElse(T)'>
     <annotation name='org.jetbrains.annotations.Contract'>

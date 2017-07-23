@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,11 @@
  */
 package com.siyeh.ig.abstraction;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -70,6 +68,14 @@ public class OptionalUsedAsFieldOrParameterTypeInspection extends BaseInspection
     @Override
     public void visitParameter(PsiParameter parameter) {
       super.visitParameter(parameter);
+      final PsiElement scope = parameter.getDeclarationScope();
+      if (!(scope instanceof PsiMethod)) {
+        return;
+      }
+      final PsiMethod method = (PsiMethod)scope;
+      if (MethodUtils.hasSuper(method)) {
+        return;
+      }
       checkTypeElement(parameter.getTypeElement());
     }
 

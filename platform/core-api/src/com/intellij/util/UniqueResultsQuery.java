@@ -33,7 +33,7 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
   @NotNull private final Function<T, M> myMapper;
 
   public UniqueResultsQuery(@NotNull Query<T> original) {
-    this(original, ContainerUtil.<M>canonicalStrategy(), (Function<T, M>)FunctionUtil.<M>id());
+    this(original, ContainerUtil.canonicalStrategy(), (Function<T, M>)FunctionUtil.<M>id());
   }
 
   public UniqueResultsQuery(@NotNull Query<T> original, @NotNull TObjectHashingStrategy<M> hashingStrategy) {
@@ -53,13 +53,13 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
 
   @Override
   public boolean forEach(@NotNull final Processor<T> consumer) {
-    return process(Collections.synchronizedSet(new THashSet<M>(myHashingStrategy)), consumer);
+    return process(Collections.synchronizedSet(new THashSet<>(myHashingStrategy)), consumer);
   }
 
   @NotNull
   @Override
   public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<T> consumer) {
-    return processAsync(Collections.synchronizedSet(new THashSet<M>(myHashingStrategy)), consumer);
+    return processAsync(Collections.synchronizedSet(new THashSet<>(myHashingStrategy)), consumer);
   }
 
   private boolean process(@NotNull Set<M> processedElements, @NotNull Processor<T> consumer) {

@@ -168,7 +168,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
       final DomGenericInfoEx genericInfo = otherInvocationHandler.getGenericInfo();
       for (final AttributeChildDescriptionImpl description : genericInfo.getAttributeChildrenDescriptions()) {
-        description.getDomAttributeValue(this).setStringValue(description.getDomAttributeValue(other).getStringValue());
+        description.getDomAttributeValue(this).setStringValue(description.getDomAttributeValue(other).getRawText());
       }
       for (final DomFixedChildDescription description : genericInfo.getFixedChildrenDescriptions()) {
         final List<? extends DomElement> list = description.getValues(getProxy());
@@ -448,7 +448,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   protected final Converter getScalarConverter() {
     Converter converter = myScalarConverter;
     if (converter == null) {
-      converter = myScalarConverter = createConverter(ourGetValue);
+      myScalarConverter = converter = createConverter(ourGetValue);
     }
     return converter;
   }

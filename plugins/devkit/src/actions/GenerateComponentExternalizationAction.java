@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.actions;
 
+import com.intellij.codeInsight.actions.CodeInsightEditorAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -45,10 +46,7 @@ public class GenerateComponentExternalizationAction extends AnAction {
 
   @Override
   public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    if (project != null) {
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-    }
+    CodeInsightEditorAction.beforeActionPerformedUpdate(e);
     super.beforeActionPerformedUpdate(e);
   }
 

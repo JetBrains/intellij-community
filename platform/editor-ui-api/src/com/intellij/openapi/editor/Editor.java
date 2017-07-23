@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
 
 /**
  * Represents an instance of the IDEA text editor.
@@ -204,6 +205,12 @@ public interface Editor extends UserDataHolder {
   Point visualPositionToXY(@NotNull VisualPosition visible);
 
   /**
+   * Same as {@link #visualPositionToXY(VisualPosition)}, but returns potentially more precise result.
+   */
+  @NotNull
+  Point2D visualPositionToPoint2D(@NotNull VisualPosition pos);
+
+  /**
    * Maps a visual position in the editor (with folded lines and columns not included in the line and column count) to
    * a logical position (the line and column ignoring folding).
    *
@@ -217,7 +224,7 @@ public interface Editor extends UserDataHolder {
    * Maps an offset in the document to a logical position.
    * <p>
    * It's assumed that original position is associated with character immediately preceding given offset, so target logical position will 
-   * have {@link LogicalPosition#leansForward leansForward} value set to <code>false</code>.
+   * have {@link LogicalPosition#leansForward leansForward} value set to {@code false}.
    *
    * @param offset the offset in the document.
    * @return the corresponding logical position.
@@ -243,10 +250,10 @@ public interface Editor extends UserDataHolder {
    * Maps an offset in the document to a visual position.
    *
    * @param offset the offset in the document.
-   * @param leanForward if <code>true</code>, original position is associated with character after given offset, if <code>false</code> - 
+   * @param leanForward if {@code true}, original position is associated with character after given offset, if {@code false} -
    *                    with character before given offset. This can make a difference in bidirectional text (see {@link LogicalPosition},
    *                    {@link VisualPosition})
-   * @param beforeSoftWrap if <code>true</code>, visual position at line preceeding the wrap will be returned, otherwise - visual position
+   * @param beforeSoftWrap if {@code true}, visual position at line preceeding the wrap will be returned, otherwise - visual position
    *                       at line following the wrap.
    * @return the corresponding visual position.
    */
@@ -270,6 +277,48 @@ public interface Editor extends UserDataHolder {
    */
   @NotNull
   VisualPosition xyToVisualPosition(@NotNull Point p);
+
+  /**
+   * Same as {{@link #xyToVisualPosition(Point)}}, but allows to specify target point with higher precision.
+   */
+  @NotNull
+  VisualPosition xyToVisualPosition(@NotNull Point2D p);
+
+  /**
+   * @since 2017.2
+   */
+  @NotNull
+  default Point offsetToXY(int offset) {
+    return offsetToXY(offset, false, false);
+  }
+
+  /**
+   * @see #offsetToVisualPosition(int, boolean, boolean)
+   * @since 2017.2
+   */
+  @NotNull
+  default Point offsetToXY(int offset, boolean leanForward, boolean beforeSoftWrap) {
+    VisualPosition visualPosition = offsetToVisualPosition(offset, leanForward, beforeSoftWrap);
+    return visualPositionToXY(visualPosition);
+  }
+
+  /**
+   * @since 2017.2
+   */
+  @NotNull
+  default Point2D offsetToPoint2D(int offset) {
+    return offsetToPoint2D(offset, false, false);
+  }
+
+  /**
+   * @see #offsetToVisualPosition(int, boolean, boolean)
+   * @since 2017.2
+   */
+  @NotNull
+  default Point2D offsetToPoint2D(int offset, boolean leanForward, boolean beforeSoftWrap) {
+    VisualPosition visualPosition = offsetToVisualPosition(offset, leanForward, beforeSoftWrap);
+    return visualPositionToPoint2D(visualPosition);
+  }
 
   /**
    * Adds a listener for receiving notifications about mouse clicks in the editor and
@@ -360,17 +409,17 @@ public interface Editor extends UserDataHolder {
    * Set up a header component for this text editor. Please note this is used for textual find feature so your component will most
    * probably will be reset once the user presses Ctrl+F.
    *
-   * @param header a component to setup as header for this text editor or <code>null</code> to remove one.
+   * @param header a component to setup as header for this text editor or {@code null} to remove one.
    */
   void setHeaderComponent(@Nullable JComponent header);
 
   /**
-   * @return <code>true</code> if this editor has active header component set up by {@link #setHeaderComponent(JComponent)}
+   * @return {@code true} if this editor has active header component set up by {@link #setHeaderComponent(JComponent)}
    */
   boolean hasHeaderComponent();
 
   /**
-   * @return a component set by {@link #setHeaderComponent(JComponent)} or <code>null</code> if no header currently installed.
+   * @return a component set by {@link #setHeaderComponent(JComponent)} or {@code null} if no header currently installed.
    */
   @Nullable
   JComponent getHeaderComponent();
@@ -380,4 +429,7 @@ public interface Editor extends UserDataHolder {
 
   @NotNull
   InlayModel getInlayModel();
+
+  @NotNull
+  EditorKind getEditorKind();
 }

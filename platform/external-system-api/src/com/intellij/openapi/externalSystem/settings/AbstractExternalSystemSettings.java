@@ -16,7 +16,13 @@
 package com.intellij.openapi.externalSystem.settings;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
@@ -62,6 +68,10 @@ public abstract class AbstractExternalSystemSettings<
   @NotNull
   public Project getProject() {
     return myProject;
+  }
+
+  public boolean showSelectiveImportDialogOnInitialImport() {
+    return SystemProperties.is("external.system.show.selective.import.dialog");
   }
 
   /**
@@ -123,9 +133,9 @@ public abstract class AbstractExternalSystemSettings<
    * Un-links given external project from the current ide project.
    * 
    * @param linkedProjectPath  path of external project to be unlinked
-   * @return                   <code>true</code> if there was an external project with the given config path linked to the current
+   * @return                   {@code true} if there was an external project with the given config path linked to the current
    *                           ide project;
-   *                           <code>false</code> otherwise
+   *                           {@code false} otherwise
    */
   public boolean unlinkExternalProject(@NotNull String linkedProjectPath) {
     PS removed = myLinkedProjectsSettings.remove(linkedProjectPath);
@@ -138,13 +148,17 @@ public abstract class AbstractExternalSystemSettings<
   }
 
   public void setLinkedProjectsSettings(@NotNull Collection<PS> settings) {
+    setLinkedProjectsSettings(settings, null);
+  }
+
+  private void setLinkedProjectsSettings(@NotNull Collection<PS> settings, @Nullable ExternalSystemSettingsListener listener) {
     List<PS> added = ContainerUtilRt.newArrayList();
     Map<String, PS> removed = ContainerUtilRt.newHashMap(myLinkedProjectsSettings);
     myLinkedProjectsSettings.clear();
     for (PS current : settings) {
       myLinkedProjectsSettings.put(current.getExternalProjectPath(), current);
     }
-    
+
     for (PS current : settings) {
       PS old = removed.remove(current.getExternalProjectPath());
       if (old == null) {
@@ -152,15 +166,27 @@ public abstract class AbstractExternalSystemSettings<
       }
       else {
         if (current.isUseAutoImport() != old.isUseAutoImport()) {
+          if (listener != null) {
+            listener.onUseAutoImportChange(current.isUseAutoImport(), current.getExternalProjectPath());
+          }
           getPublisher().onUseAutoImportChange(current.isUseAutoImport(), current.getExternalProjectPath());
+        }
+        if (old.isCreateEmptyContentRootDirectories() != current.isCreateEmptyContentRootDirectories()) {
+          ExternalProjectsManager.getInstance(getProject()).getExternalProjectsWatcher().markDirty(current.getExternalProjectPath());
         }
         checkSettings(old, current);
       }
     }
     if (!added.isEmpty()) {
+      if (listener != null) {
+        listener.onProjectsLinked(added);
+      }
       getPublisher().onProjectsLinked(added);
     }
     if (!removed.isEmpty()) {
+      if (listener != null) {
+        listener.onProjectsUnlinked(removed.keySet());
+      }
       getPublisher().onProjectsUnlinked(removed.keySet());
     }
   }
@@ -192,10 +218,27 @@ public abstract class AbstractExternalSystemSettings<
   protected void loadState(@NotNull State<PS> state) {
     Set<PS> settings = state.getLinkedExternalProjectsSettings();
     if (settings != null) {
-      myLinkedProjectsSettings.clear();
-      for (PS projectSettings : settings) {
-        myLinkedProjectsSettings.put(projectSettings.getExternalProjectPath(), projectSettings);
-      }
+      setLinkedProjectsSettings(settings, new ExternalSystemSettingsListenerAdapter() {
+        @Override
+        public void onProjectsLinked(@NotNull Collection linked) {
+          for (Object o : linked) {
+            final ExternalProjectSettings settings = (ExternalProjectSettings)o;
+            for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {
+              AbstractExternalSystemSettings se = (AbstractExternalSystemSettings)manager.getSettingsProvider().fun(myProject);
+              ProjectSystemId externalSystemId = manager.getSystemId();
+              if (settings == se.getLinkedProjectSettings(settings.getExternalProjectPath())) {
+                ExternalProjectsManager.getInstance(myProject).refreshProject(
+                  settings.getExternalProjectPath(),
+                  new ImportSpecBuilder(myProject, externalSystemId)
+                    .useDefaultCallback()
+                    .use(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
+                    .build()
+                );
+              }
+            }
+          }
+        }
+      });
     }
   }
 

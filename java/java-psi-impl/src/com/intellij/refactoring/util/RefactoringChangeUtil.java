@@ -95,7 +95,13 @@ public class RefactoringChangeUtil {
         ((PsiThisExpression)expressionFromText.getQualifierExpression()).getQualifier().replace(factory.createClassReferenceElement(parentClass));
       }
       else {
-        expressionFromText = (PsiReferenceExpression)factory.createExpressionFromText("this." + member.getName(), null);
+        final PsiModifierListOwner staticElement = PsiUtil.getEnclosingStaticElement(referenceExpression, null);
+        if (staticElement != null && containingClass != null && !PsiTreeUtil.isAncestor(staticElement, containingClass, false)) {
+          return referenceExpression;
+        }
+        else {
+          expressionFromText = (PsiReferenceExpression)factory.createExpressionFromText("this." + member.getName(), null);
+        }
       }
     }
     else {
@@ -141,10 +147,10 @@ public class RefactoringChangeUtil {
    }
 
   public static PsiThisExpression createThisExpression(PsiManager manager, PsiClass qualifierClass) throws IncorrectOperationException {
-    return RefactoringChangeUtil.<PsiThisExpression>createQualifiedExpression(manager, qualifierClass, "this");
+    return RefactoringChangeUtil.createQualifiedExpression(manager, qualifierClass, "this");
   }
 
   public static PsiSuperExpression createSuperExpression(PsiManager manager, PsiClass qualifierClass) throws IncorrectOperationException {
-    return RefactoringChangeUtil.<PsiSuperExpression>createQualifiedExpression(manager, qualifierClass, "super");
+    return RefactoringChangeUtil.createQualifiedExpression(manager, qualifierClass, "super");
   }
 }

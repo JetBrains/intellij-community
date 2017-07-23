@@ -26,9 +26,6 @@ import org.jetbrains.annotations.NonNls;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
-* User: cdr
-*/
 public class PackageEntryTable implements JDOMExternalizable, Cloneable {
   private final List<PackageEntry> myEntries = new ArrayList<>();
 

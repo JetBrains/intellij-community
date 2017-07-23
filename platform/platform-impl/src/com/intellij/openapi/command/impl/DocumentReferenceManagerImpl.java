@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.reference.SoftReference;
@@ -32,6 +32,7 @@ import com.intellij.util.containers.WeakKeyWeakValueHashMap;
 import com.intellij.util.containers.WeakValueHashMap;
 import com.intellij.util.io.fs.FilePath;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
@@ -49,14 +50,8 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
   private final Map<FilePath, DocumentReference> myDeletedFilePathToRef = new WeakValueHashMap<>();
 
   @Override
-  @NotNull
-  public String getComponentName() {
-    return getClass().getSimpleName();
-  }
-
-  @Override
   public void initComponent() {
-    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
+    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {
         VirtualFile f = event.getFile();
@@ -105,10 +100,6 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
     return files;
   }
 
-  @Override
-  public void disposeComponent() {
-  }
-
   @NotNull
   @Override
   public DocumentReference create(@NotNull Document document) {
@@ -154,4 +145,11 @@ public class DocumentReferenceManagerImpl extends DocumentReferenceManager imple
   private static void assertInDispatchThread() {
     ApplicationManager.getApplication().assertIsDispatchThread();
   }
+
+  @TestOnly
+  public void cleanupForNextTest() {
+    myDeletedFilePathToRef.clear();
+    myDocToRef.clear();
+  }
+
 }

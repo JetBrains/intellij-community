@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,24 +20,22 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.util.JdomKt;
+import com.intellij.util.io.PathKt;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * User: anna
- * Date: Dec 20, 2004
- */
 public class InspectionProfileConvertor {
   private final Map<String, HighlightDisplayLevel> myDisplayLevelMap = new HashMap<>();
   @NonNls public static final String OLD_HIGHTLIGHTING_SETTINGS_PROFILE = "EditorHighlightingSettings";
@@ -93,27 +91,23 @@ public class InspectionProfileConvertor {
   }
 
   private static void renameOldDefaultsProfile() {
-    String directoryPath = PathManager.getConfigPath() + File.separator + InspectionProfileManager.INSPECTION_DIR;
-    File profileDirectory = new File(directoryPath);
-    if (!profileDirectory.exists()) {
+    Path directoryPath = Paths.get(PathManager.getConfigPath(), InspectionProfileManager.INSPECTION_DIR);
+    if (!PathKt.exists(directoryPath)) {
       return;
     }
 
-    File[] files = profileDirectory.listFiles(pathname -> pathname.getPath().endsWith(File.separator + DEFAULT_XML));
+    File[] files = directoryPath.toFile().listFiles(pathname -> pathname.getPath().endsWith(File.separator + DEFAULT_XML));
     if (files == null || files.length != 1 || !files[0].isFile() || files[0].length() == 0) {
       return;
     }
     try {
-      Element root = JDOMUtil.load(files[0]);
+      Element root = JdomKt.loadElement(files[0].toPath());
       if (root.getAttributeValue(VERSION_ATT) == null){
-        JDOMUtil.writeParent(root, new FileOutputStream(new File(profileDirectory, OLD_DEFAUL_PROFILE + XML_EXTENSION)), "\n");
+        JdomKt.write(root, directoryPath.resolve(OLD_DEFAUL_PROFILE + XML_EXTENSION));
         FileUtil.delete(files[0]);
       }
     }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-    catch (JDOMException e) {
+    catch (IOException | JDOMException e) {
       LOG.error(e);
     }
   }
@@ -132,7 +126,7 @@ public class InspectionProfileConvertor {
 
       //set up tools for default profile
       if (level != HighlightDisplayLevel.DO_NOT_SHOW) {
-        profile.enableTool(shortName, null, null);
+        profile.enableTool(shortName, null);
       }
 
       if (level == null || level == HighlightDisplayLevel.DO_NOT_SHOW) {

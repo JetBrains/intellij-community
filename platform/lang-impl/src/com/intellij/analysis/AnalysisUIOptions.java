@@ -29,10 +29,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-/**
- * User: anna
- * Date: 28-Feb-2006
- */
 @State(name = "AnalysisUIOptions", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOptions> {
   public static AnalysisUIOptions getInstance(Project project) {

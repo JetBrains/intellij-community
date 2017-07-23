@@ -75,6 +75,102 @@ class Usage {
     myFixture.checkHighlighting()
   }
 
+
+  void 'test cast argument'() {
+    myFixture.configureByText 'a.groovy', '''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+def m() {
+    List<String> l = []
+    l.findAll {
+        Object o -> false
+    }
+}
+'''
+    myFixture.checkHighlighting()
+  }
+
+
+  void 'test cast argument error'() {
+    myFixture.configureByText 'a.groovy', '''
+import groovy.transform.CompileStatic
+
+@CompileStatic
+def m() {
+    List<Object> l = []
+    l.findAll {
+        <error>Integer</error> o -> false
+    }
+}
+'''
+    myFixture.checkHighlighting()
+  }
+
+  void 'test several signatures'() {
+    myFixture.configureByText 'a.groovy', '''
+import groovy.transform.CompileStatic
+import groovy.transform.stc.ClosureParams
+import groovy.transform.stc.SimpleType
+
+def m1(String o, @ClosureParams(value=SimpleType.class, options="java.lang.String") Closure c) {}
+def m1(Double o, @ClosureParams(value=SimpleType.class, options="java.lang.Double") Closure c) {}
+
+@CompileStatic
+def m() {
+    def a;
+    m1(a) {
+        double d -> println(d)
+    }
+}
+'''
+    myFixture.checkHighlighting()
+  }
+
+
+  void 'test several signatures error'() {
+    myFixture.configureByText 'a.groovy', '''
+import groovy.transform.CompileStatic
+import groovy.transform.stc.ClosureParams
+import groovy.transform.stc.SimpleType
+
+def m1(String o, @ClosureParams(value=SimpleType.class, options="java.lang.String") Closure c) {}
+def m1(Double o, @ClosureParams(value=SimpleType.class, options="java.lang.Double") Closure c) {}
+
+@CompileStatic
+def m() {
+    def a;
+    m1(a) {
+        <error>long l</error> -> println(l)
+    }
+}
+'''
+    myFixture.checkHighlighting()
+  }
+
+  void 'test cast several arguments'() {
+    myFixture.configureByText 'a.groovy', '''
+import groovy.transform.CompileStatic
+import groovy.transform.stc.ClosureParams
+import groovy.transform.stc.SimpleType
+
+void forEachTyped(Map<String, Integer> self, @ClosureParams(value=SimpleType.class, options=["java.lang.String", "java.lang.Integer"]) Closure closure) {
+    self.each {
+        k, v -> closure(k, v)
+    };
+}
+
+@CompileStatic
+def m() {
+    Map<String,Integer> m = [:]
+    forEachTyped(m) {
+        String key, <error>String</error> value -> println( key + ' ' + value)
+    }
+}
+'''
+    myFixture.checkHighlighting()
+  }
+
   private void doTest(String dir = getTestName(true), String path = 'test.groovy') {
     myFixture.enableInspections(new GroovyAssignabilityCheckInspection(), new GrUnresolvedAccessInspection())
     myFixture.copyDirectoryToProject(dir, '.')

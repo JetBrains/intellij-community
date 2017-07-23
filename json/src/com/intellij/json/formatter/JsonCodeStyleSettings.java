@@ -19,6 +19,7 @@ public class JsonCodeStyleSettings extends CustomCodeStyleSettings {
 
   public boolean SPACE_AFTER_COLON = true;
   public boolean SPACE_BEFORE_COLON = false;
+  public boolean KEEP_TRAILING_COMMA = false;
 
   // TODO: check whether it's possible to migrate CustomCodeStyleSettings to newer com.intellij.util.xmlb.XmlSerializer
   /**

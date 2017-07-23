@@ -2,18 +2,14 @@ package org.jetbrains.plugins.ipnb.editor.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.ipnb.configuration.IpnbConnectionManager;
-import org.jetbrains.plugins.ipnb.configuration.IpnbSettings;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditablePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 
+import java.util.Collections;
 import java.util.List;
 
 public class IpnbRunAllCellsAction extends IpnbRunCellBaseAction {
@@ -28,39 +24,33 @@ public class IpnbRunAllCellsAction extends IpnbRunCellBaseAction {
     if (ipnbEditor != null) {
       final IpnbFilePanel ipnbFilePanel = ipnbEditor.getIpnbFilePanel();
       final List<IpnbEditablePanel> cells = ipnbFilePanel.getIpnbPanels();
-      final Project project = ipnbFilePanel.getProject();
-      final IpnbConnectionManager connectionManager = IpnbConnectionManager.getInstance(project);
-      final VirtualFile virtualFile = ipnbEditor.getVirtualFile();
-      final String path = virtualFile.getPath();
-      if (!connectionManager.hasConnection(path)) {
-        String url = IpnbSettings.getInstance(project).getURL();
-        if (StringUtil.isEmptyOrSpaces(url)) {
-          url = IpnbConnectionManager.showDialogUrl(url);
-        }
-        if (url == null) return;
-        IpnbSettings.getInstance(project).setURL(url);
-        final String finalUrl = url;
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          final boolean serverStarted = connectionManager.startIpythonServer(finalUrl, ipnbEditor);
-          if (!serverStarted) {
-            return;
-          }
-          UIUtil.invokeLaterIfNeeded(() -> connectionManager.startConnection(null, path, finalUrl, false));
-          runCells(cells, ipnbFilePanel);
-        });
-      }
-      else {
-        runCells(cells, ipnbFilePanel);
-      }
+      if (cells.isEmpty()) return;
+      runCells(Collections.unmodifiableList(cells), ipnbFilePanel);
     }
   }
 
   private static void runCells(List<IpnbEditablePanel> cells, IpnbFilePanel ipnbFilePanel) {
-    for (IpnbEditablePanel cell : cells) {
-      cell.runCell(true);
-      ipnbFilePanel.revalidate();
-      ipnbFilePanel.repaint();
-      ipnbFilePanel.requestFocus();
+    for (int i = 0; i < cells.size(); i++) {
+      IpnbEditablePanel cell = cells.get(i);
+      final int nextIndex = i + 1;
+      if (nextIndex < cells.size()) {
+        final IpnbEditablePanel nextCell = cells.get(nextIndex);
+        cell.onFinishExecutionAction(() -> nextCell.runCell(nextIndex != cells.size() - 1));
+      }
     }
+    final IpnbEditablePanel firstPanel = cells.get(0);
+    ipnbFilePanel.setSelectedCell(firstPanel, false);
+    firstPanel.runCell(true);
+
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() ->
+                                                                 IdeFocusManager.getGlobalInstance().requestFocus(ipnbFilePanel, true));
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    final DataContext context = e.getDataContext();
+    final IpnbFileEditor ipnbEditor = IpnbFileEditor.DATA_KEY.getData(context);
+    final Presentation presentation = e.getPresentation();
+    presentation.setEnabledAndVisible(ipnbEditor != null);
   }
 }

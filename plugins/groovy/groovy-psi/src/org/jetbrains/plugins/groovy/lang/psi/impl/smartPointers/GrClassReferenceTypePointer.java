@@ -28,9 +28,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 
-/**
- * Created by Max Medvedev on 10/25/13
- */
 public class GrClassReferenceTypePointer extends TypePointerBase<GrClassReferenceType> implements SmartTypePointer {
   private static final Logger LOG = Logger.getInstance(GrClassReferenceTypePointer.class);
 

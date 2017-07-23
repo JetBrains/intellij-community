@@ -69,12 +69,7 @@ public abstract class ArtifactRootDescriptor extends BuildRootDescriptor {
   @NotNull
   @Override
   public FileFilter createFileFilter() {
-    return new FileFilter() {
-      @Override
-      public boolean accept(File file) {
-        return myFilter.accept(file.getAbsolutePath());
-      }
-    };
+    return file -> myFilter.accept(file.getAbsolutePath());
   }
 
   @NotNull

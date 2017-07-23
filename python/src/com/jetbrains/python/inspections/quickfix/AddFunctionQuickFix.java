@@ -21,6 +21,7 @@ import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -72,6 +73,11 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
     return "Create function in module";
   }
 
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     try {
       final PsiElement problemElement = descriptor.getPsiElement();
@@ -116,11 +122,14 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
         }
       }
       // else: no arglist, use empty args
-      PyFunction function = builder.buildFunction(project, LanguageLevel.forElement(file));
 
-      // add to the bottom
-      function = (PyFunction) file.add(function);
-      showTemplateBuilder(function, file);
+      WriteAction.run(() -> {
+        PyFunction function = builder.buildFunction(project, LanguageLevel.forElement(file));
+
+        // add to the bottom
+        function = (PyFunction) file.add(function);
+        showTemplateBuilder(function, file);
+      });
     }
     catch (IncorrectOperationException ignored) {
       // we failed. tell about this

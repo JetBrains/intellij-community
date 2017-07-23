@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -48,7 +47,6 @@ import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import gnu.trove.THashSet;
@@ -59,7 +57,6 @@ import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.intellij.plugins.intelliLang.inject.config.InjectionPlace;
-import org.jdom.Document;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -291,9 +288,8 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
         if (wrapper == null) return;
         final Configuration configuration = new Configuration();
         configuration.setInjections(injections);
-        final Document document = new Document(configuration.getState());
         try {
-          JDOMUtil.writeDocument(document, wrapper.getFile(), "\n");
+          JdomKt.write(configuration.getState(), wrapper.getFile().toPath());
         }
         catch (IOException ex) {
           final String msg = ex.getLocalizedMessage();
@@ -713,7 +709,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
   }
 
   private void doImportAction(final DataContext dataContext) {
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, true, false, true, false) {
+    final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, true, false) {
       @Override
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
         return super.isFileVisible(file, showHiddenFiles) &&
@@ -743,11 +739,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
       }
       final CfgInfo info = getDefaultCfgInfo();
       final Map<String,Set<InjInfo>> currentMap =
-        ContainerUtil.classify(info.injectionInfos.iterator(), new Convertor<InjInfo, String>() {
-          public String convert(final InjInfo o) {
-            return o.injection.getSupportId();
-          }
-        });
+        ContainerUtil.classify(info.injectionInfos.iterator(), o -> o.injection.getSupportId());
       final List<BaseInjection> originalInjections = new ArrayList<>();
       final List<BaseInjection> newInjections = new ArrayList<>();
       //// remove duplicates
@@ -762,7 +754,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
       //myInjections.addAll(newInjections);
 
       for (String supportId : InjectorUtils.getActiveInjectionSupportIds()) {
-        ArrayList<InjInfo> list = new ArrayList<>(ObjectUtils.notNull(currentMap.get(supportId), Collections.<InjInfo>emptyList()));
+        ArrayList<InjInfo> list = new ArrayList<>(ObjectUtils.notNull(currentMap.get(supportId), Collections.emptyList()));
         final List<BaseInjection> currentInjections = getInjectionList(list);
         final List<BaseInjection> importingInjections = cfg.getInjections(supportId);
         if (currentInjections == null) {
@@ -885,12 +877,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
   }
 
   private static List<InjInfo> getInjInfoList(final CfgInfo[] infos) {
-    return ContainerUtil.concat(infos, new Function<CfgInfo, Collection<? extends InjInfo>>() {
-      @Override
-      public Collection<InjInfo> fun(final CfgInfo cfgInfo) {
-        return cfgInfo.injectionInfos;
-      }
-    });
+    return ContainerUtil.concat(infos, cfgInfo -> cfgInfo.injectionInfos);
   }
 
   private static List<BaseInjection> getInjectionList(final List<InjInfo> list) {

@@ -20,25 +20,27 @@
 package com.intellij.lang;
 
 import com.intellij.lang.annotation.ExternalAnnotator;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ExternalLanguageAnnotators extends LanguageExtension<ExternalAnnotator>{
+public class ExternalLanguageAnnotators extends LanguageExtension<ExternalAnnotator> {
+  public static final ExtensionPointName<LanguageExtensionPoint<ExternalAnnotator>> EP_NAME = ExtensionPointName.create("com.intellij.externalAnnotator");
+
   public static final ExternalLanguageAnnotators INSTANCE = new ExternalLanguageAnnotators();
 
   private ExternalLanguageAnnotators() {
-    super("com.intellij.externalAnnotator");
+    super(EP_NAME.getName());
   }
 
   @NotNull
   public static List<ExternalAnnotator> allForFile(@NotNull Language language, @NotNull final PsiFile file) {
     List<ExternalAnnotator> annotators = INSTANCE.allForLanguage(language);
-    final ExternalAnnotatorsFilter[] filters = Extensions.getExtensions(ExternalAnnotatorsFilter.EXTENSION_POINT_NAME);
+    ExternalAnnotatorsFilter[] filters = Extensions.getExtensions(ExternalAnnotatorsFilter.EXTENSION_POINT_NAME);
     return ContainerUtil.findAll(annotators, annotator -> {
       for (ExternalAnnotatorsFilter filter : filters) {
         if (filter.isProhibited(annotator, file)) {

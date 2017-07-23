@@ -19,16 +19,20 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBList;
 import org.fest.swing.core.GenericTypeMatcher;
+import org.fest.swing.core.MouseButton;
 import org.fest.swing.core.Robot;
 import org.fest.swing.driver.ComponentDriver;
 import org.fest.swing.edt.GuiQuery;
@@ -471,22 +475,30 @@ public class EditorFixture {
    *
    * @param offset the character offset.
    */
-  public EditorFixture moveTo(final int offset) {
+  public EditorFixture moveToAndClick(final int offset, MouseButton button) {
     assertThat(offset).isGreaterThanOrEqualTo(0);
     execute(new GuiTask() {
       @Override
       protected void executeInEDT() throws Throwable {
-        // TODO: Do this via mouse clicks!
         FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
         Editor editor = manager.getSelectedTextEditor();
-        if (editor != null) {
-          editor.getCaretModel().moveToOffset(offset);
-          editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-        }
+        assert editor != null;
+        VisualPosition visualPosition = editor.offsetToVisualPosition(offset);
+        Point point= editor.visualPositionToXY(visualPosition);
+        Component editorComponent = robot.finder().find(editor.getComponent(), component -> component instanceof EditorComponentImpl);
+        robot.click(editorComponent, point, button, 1);
       }
     });
 
     return this;
+  }
+
+  public EditorFixture moveTo(final int offset) {
+    return moveToAndClick(offset, MouseButton.LEFT_BUTTON);
+  }
+
+  public EditorFixture rightClick(final int offset) {
+    return moveToAndClick(offset, MouseButton.RIGHT_BUTTON);
   }
 
   /**
@@ -516,6 +528,35 @@ public class EditorFixture {
 
     return this;
   }
+
+  /**
+   * Returns a list of pairs for selection ranges. If there is only one selection than return
+   * list with one pair. And empty list if there is no selected range in editor.
+   *
+   * @throws EditorNotFoundException if no selected editor has been found
+   */
+  public List<Pair<Integer, Integer>> getSelection() {
+    return execute(new GuiQuery<List<Pair<Integer, Integer>>>() {
+      @Override
+      protected List<Pair<Integer, Integer>> executeInEDT() throws Throwable {
+        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
+        Editor editor = manager.getSelectedTextEditor();
+        if (editor != null) {
+          int[] starts = editor.getSelectionModel().getBlockSelectionStarts();
+          int[] ends = editor.getSelectionModel().getBlockSelectionEnds();
+          assert (starts.length == ends.length);
+          List<Pair<Integer, Integer>> result = new ArrayList<>(starts.length);
+          for (int i = 0; i < starts.length; i++) {
+            result.add(new Pair<>(starts[i], ends[i]));
+          }
+          return result;
+        }
+
+        throw new EditorNotFoundException("Unable to find selected editor to get selection");
+      }
+    });
+  }
+
 
   /**
    * Finds the next position (or if {@code searchFromTop} is true, from the beginning) of
@@ -925,6 +966,30 @@ public class EditorFixture {
     return this;
   }
 
+  /**
+   * An Editor could load files async, sometimes we should wait a bit when the virtual
+   * file for a current editor will be set.
+   *
+   * @return FileFixture for loaded virtual file
+   */
+  @NotNull
+  public FileFixture waitUntilFileIsLoaded() {
+    Ref<VirtualFile> virtualFileReference = new Ref<>();
+    pause(new Condition("Wait when virtual file is created...") {
+      @Override
+      public boolean test() {
+        virtualFileReference.set(execute(new GuiQuery<VirtualFile>() {
+          @Override
+          protected VirtualFile executeInEDT() throws Throwable {
+            return getCurrentFile();
+          }
+        }));
+        return virtualFileReference.get() != null;
+      }
+    }, THIRTY_SEC_TIMEOUT);
+    return new FileFixture(myFrame.getProject(), virtualFileReference.get());
+  }
+
   @NotNull
   private FileFixture getCurrentFileFixture() {
     VirtualFile currentFile = getCurrentFile();
@@ -1115,4 +1180,12 @@ public class EditorFixture {
    * tab should be opened
    */
   public enum Tab { EDITOR, DESIGN, DEFAULT }
+
+  public static class EditorNotFoundException extends Exception {
+
+    public EditorNotFoundException(String message) {
+      super(message);
+    }
+
+  }
 }

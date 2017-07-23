@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.vcs.ex;
 
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
@@ -36,7 +38,6 @@ import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
@@ -48,7 +49,6 @@ import static com.intellij.diff.util.DiffUtil.getLineCount;
 public class LineStatusTracker extends LineStatusTrackerBase {
   public enum Mode {DEFAULT, SMART, SILENT}
 
-  public static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.ex.LineStatusTracker");
   private static final Key<JPanel> PANEL_KEY = new Key<>("LineStatusTracker.CanNotCalculateDiffPanel");
 
   @NotNull private final VirtualFile myVirtualFile;
@@ -96,8 +96,8 @@ public class LineStatusTracker extends LineStatusTrackerBase {
   }
 
   @CalledInAwt
-  public boolean isSilentMode() {
-    return myMode == Mode.SILENT;
+  public boolean isAvailableAt(@NotNull Editor editor) {
+    return myMode != Mode.SILENT && editor.getSettings().isLineMarkerAreaShown() && !DiffUtil.isDiffEditor(editor);
   }
 
   @CalledInAwt
@@ -173,15 +173,12 @@ public class LineStatusTracker extends LineStatusTrackerBase {
   @Override
   @CalledInAwt
   protected void fireFileUnchanged() {
-    // later to avoid saving inside document change event processing.
-    TransactionGuard.getInstance().submitTransactionLater(getProject(), () -> {
-      FileDocumentManager.getInstance().saveDocument(myDocument);
-      List<Range> ranges = getRanges();
-      if (ranges == null || ranges.isEmpty()) {
-        // file was modified, and now it's not -> dirty local change
-        myVcsDirtyScopeManager.fileDirty(myVirtualFile);
-      }
-    });
+    if (GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
+      // later to avoid saving inside document change event processing.
+      TransactionGuard.getInstance().submitTransactionLater(getProject(), () -> {
+        FileDocumentManager.getInstance().saveDocument(myDocument);
+      });
+    }
   }
 
   @Override

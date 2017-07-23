@@ -87,6 +87,8 @@ public class PersistenceStressTest extends LightPlatformCodeInsightFixtureTestCa
       map.close();
     }
     myEnumerator.close();
+    myEnumerator = null;
+    myMaps.clear();
     super.tearDown();
   }
 

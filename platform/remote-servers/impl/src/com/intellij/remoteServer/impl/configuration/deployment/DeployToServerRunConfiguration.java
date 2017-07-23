@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author nik
  */
-public class DeployToServerRunConfiguration<S extends ServerConfiguration, D extends DeploymentConfiguration> extends RunConfigurationBase {
+public class DeployToServerRunConfiguration<S extends ServerConfiguration, D extends DeploymentConfiguration> extends RunConfigurationBase
+  implements LocatableConfiguration {
   private static final Logger LOG = Logger.getInstance(DeployToServerRunConfiguration.class);
   private static final String DEPLOYMENT_SOURCE_TYPE_ATTRIBUTE = "type";
   @NonNls public static final String SETTINGS_ELEMENT = "settings";
@@ -156,29 +157,39 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
   }
 
   @Override
+  public boolean isGeneratedName() {
+    return getDeploymentSource() != null && getDeploymentConfigurator().isGeneratedConfigurationName(getName(), getDeploymentSource());
+  }
+
+  @Nullable
+  @Override
+  public String suggestedName() {
+    return getDeploymentSource() == null ? null : getDeploymentConfigurator().suggestConfigurationName(getDeploymentSource());
+  }
+
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     super.readExternal(element);
     ConfigurationState state = XmlSerializer.deserialize(element, ConfigurationState.class);
     myServerName =  null;
     myDeploymentSource = null;
-    if (state != null) {
-      myServerName = state.myServerName;
-      final Element deploymentTag = state.myDeploymentTag;
-      if (deploymentTag != null) {
-        String typeId = deploymentTag.getAttributeValue(DEPLOYMENT_SOURCE_TYPE_ATTRIBUTE);
-        final DeploymentSourceType<?> type = findDeploymentSourceType(typeId);
-        if (type != null) {
-          myDeploymentSource = new ReadAction<DeploymentSource>() {
-            protected void run(final @NotNull Result<DeploymentSource> result) {
-              result.setResult(type.load(deploymentTag, getProject()));
-            }
-          }.execute().getResultObject();
-          myDeploymentConfiguration = myDeploymentConfigurator.createDefaultConfiguration(myDeploymentSource);
-          ComponentSerializationUtil.loadComponentState(myDeploymentConfiguration.getSerializer(), deploymentTag.getChild(SETTINGS_ELEMENT));
-        }
-        else {
-          LOG.warn("Cannot load deployment source for '" + getName() + "' run configuration: unknown deployment type '" + typeId + "'");
-        }
+    myServerName = state.myServerName;
+    final Element deploymentTag = state.myDeploymentTag;
+    if (deploymentTag != null) {
+      String typeId = deploymentTag.getAttributeValue(DEPLOYMENT_SOURCE_TYPE_ATTRIBUTE);
+      final DeploymentSourceType<?> type = findDeploymentSourceType(typeId);
+      if (type != null) {
+        myDeploymentSource = new ReadAction<DeploymentSource>() {
+          @Override
+          protected void run(final @NotNull Result<DeploymentSource> result) {
+            result.setResult(type.load(deploymentTag, getProject()));
+          }
+        }.execute().getResultObject();
+        myDeploymentConfiguration = myDeploymentConfigurator.createDefaultConfiguration(myDeploymentSource);
+        ComponentSerializationUtil.loadComponentState(myDeploymentConfiguration.getSerializer(), deploymentTag.getChild(SETTINGS_ELEMENT));
+      }
+      else {
+        LOG.warn("Cannot load deployment source for '" + getName() + "' run configuration: unknown deployment type '" + typeId + "'");
       }
     }
   }

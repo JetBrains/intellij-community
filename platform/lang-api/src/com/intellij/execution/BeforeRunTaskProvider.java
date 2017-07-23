@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Vladislav.Kaznacheev
- * Date: Jul 4, 2007
- * Time: 12:33:18 AM
- */
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;
@@ -29,6 +23,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -60,7 +55,7 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
    * @return 'before run' task for the configuration or null, if the task from this provider is not applicable to the specified configuration 
    */
   @Nullable
-  public abstract T createTask(RunConfiguration runConfiguration);
+  public abstract T createTask(@NotNull RunConfiguration runConfiguration);
 
   /**
    * @return {@code true} if task configuration is changed

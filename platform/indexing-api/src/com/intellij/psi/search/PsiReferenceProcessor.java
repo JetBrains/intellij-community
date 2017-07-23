@@ -16,6 +16,7 @@
 package com.intellij.psi.search;
 
 import com.intellij.psi.PsiReference;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,10 +36,12 @@ public interface PsiReferenceProcessor{
       this(new ArrayList<>());
     }
 
+    @NotNull
     public PsiReference[] toArray(){
       return myCollection.toArray(new PsiReference[myCollection.size()]);
     }
 
+    @NotNull
     public PsiReference[] toArray(PsiReference[] array){
       return myCollection.toArray(array);
     }

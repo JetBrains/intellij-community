@@ -15,31 +15,31 @@
  */
 package com.intellij.openapi.externalSystem.service.project.manage;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
 import com.intellij.openapi.externalSystem.model.project.OrderAware;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleOrderEntry;
-import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ModuleOrderEntryImpl;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Denis Zhdanov
@@ -48,7 +48,7 @@ import java.util.Set;
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public class ModuleDependencyDataService extends AbstractDependencyDataService<ModuleDependencyData, ModuleOrderEntry> {
 
-  private static final Logger LOG = Logger.getInstance("#" + ModuleDependencyDataService.class.getName());
+  private static final Logger LOG = Logger.getInstance(ModuleDependencyDataService.class);
 
   @NotNull
   @Override
@@ -98,8 +98,8 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
       processed.add(dependencyData);
 
       toRemove.remove(Pair.create(dependencyData.getInternalName(), dependencyData.getScope()));
-      final String moduleName = dependencyData.getInternalName();
-      Module ideDependencyModule = modelsProvider.findIdeModule(moduleName);
+      final ModuleData moduleData = dependencyData.getTarget();
+      Module ideDependencyModule = modelsProvider.findIdeModule(moduleData);
 
       ModuleOrderEntry orderEntry;
       if (module.equals(ideDependencyModule)) {
@@ -115,9 +115,9 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
         }
         orderEntry = modelsProvider.findIdeModuleDependency(dependencyData, module);
         if (orderEntry == null) {
-          orderEntry = ApplicationManager.getApplication().runReadAction((Computable<ModuleOrderEntry>)() ->
+          orderEntry = ReadAction.compute(() ->
             ideDependencyModule == null
-            ? modifiableRootModel.addInvalidModuleEntry(moduleName)
+            ? modifiableRootModel.addInvalidModuleEntry(moduleData.getInternalName())
             : modifiableRootModel.addModuleOrderEntry(ideDependencyModule));
         }
       }
@@ -141,5 +141,21 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
     }
 
     return orderEntryDataMap;
+  }
+
+  @Override
+  protected void removeData(@NotNull Collection<? extends ExportableOrderEntry> toRemove,
+                            @NotNull Module module,
+                            @NotNull IdeModifiableModelsProvider modelsProvider) {
+
+    // do not remove 'invalid' module dependencies on unloaded modules
+    List<? extends ExportableOrderEntry> filteredList = toRemove.stream().filter(o -> {
+      if (o instanceof ModuleOrderEntry) {
+        String moduleName = ((ModuleOrderEntry)o).getModuleName();
+        return ModuleManager.getInstance(module.getProject()).getUnloadedModuleDescription(moduleName) == null;
+      }
+      return true;
+    }).collect(Collectors.toList());
+    super.removeData(filteredList, module, modelsProvider);
   }
 }

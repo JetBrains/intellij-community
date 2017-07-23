@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Nov 16, 2001
- * Time: 12:50:45 AM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.reference;
 
 import com.intellij.util.PlatformIcons;
@@ -30,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class RefProjectImpl extends RefEntityImpl implements RefProject {
-  public RefProjectImpl(@NotNull RefManager refManager) {
+  RefProjectImpl(@NotNull RefManager refManager) {
     super(refManager.getProject().getName(), refManager);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.execution.actions.ExecutorProvider;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.NewRunConfigurationPopup;
@@ -48,7 +47,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -100,7 +98,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
   @Nullable
   @Override
   public JComponent createComponent() {
-    myModel = new ProjectStartupTasksTableModel(RunManagerEx.getInstanceEx(myProject));
+    myModel = new ProjectStartupTasksTableModel();
     myTable = new JBTable(myModel);
     myTable.getEmptyText().setText("Add run configurations with the + button");
     new TableSpeedSearch(myTable);
@@ -221,20 +219,17 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
       @Override
       public void perform(@NotNull final Project project, @NotNull final Executor executor, @NotNull DataContext context) {
         final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
-        final ConfigurationType[] factories = runManager.getConfigurationFactories();
         final Condition<ConfigurationType> filter = new Condition<ConfigurationType>() {
           private final RunnerRegistry myRegistry = RunnerRegistry.getInstance();
 
           @Override
           public boolean value(ConfigurationType configurationType) {
             ConfigurationFactory factory;
-            return !UnknownConfigurationType.INSTANCE.equals(configurationType) &&
-                   ((factory = runManager.getFactory(configurationType.getId(), null)) != null) &&
+            return ((factory = runManager.getFactory(configurationType.getId(), null)) != null) &&
                    myRegistry.getRunner(executor.getId(), runManager.getConfigurationTemplate(factory).getConfiguration()) != null;
           }
         };
-        final List<ConfigurationType> factoriesList = ContainerUtil.filter(Arrays.asList(factories), filter);
-        final ListPopup popup = NewRunConfigurationPopup.createAddPopup(factoriesList, "",
+        final ListPopup popup = NewRunConfigurationPopup.createAddPopup(ContainerUtil.filter(runManager.getConfigurationFactoriesWithoutUnknown(), filter), "",
                                                                         factory -> ApplicationManager.getApplication().invokeLater(() -> {
                                                                           final EditConfigurationsDialog dialog = new EditConfigurationsDialog(project, factory);
                                                                           if (dialog.showAndGet()) {
@@ -367,10 +362,6 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
     final ProjectStartupTaskManager projectStartupTaskManager = ProjectStartupTaskManager.getInstance(myProject);
     myModel.setData(projectStartupTaskManager.getSharedConfigurations(), projectStartupTaskManager.getLocalConfigurations());
     refreshDataUpdateSelection(null);
-  }
-
-  @Override
-  public void disposeUIResources() {
   }
 
   private void installRenderers() {

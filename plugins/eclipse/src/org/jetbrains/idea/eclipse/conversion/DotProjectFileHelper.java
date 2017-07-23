@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 16-Mar-2009
- */
 package org.jetbrains.idea.eclipse.conversion;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,7 +34,7 @@ import java.io.File;
 import java.io.IOException;
 
 public class DotProjectFileHelper {
-  private static final Logger LOG = Logger.getInstance("#" + DotProjectFileHelper.class.getName());
+  private static final Logger LOG = Logger.getInstance(DotProjectFileHelper.class);
 
   private DotProjectFileHelper() {
   }

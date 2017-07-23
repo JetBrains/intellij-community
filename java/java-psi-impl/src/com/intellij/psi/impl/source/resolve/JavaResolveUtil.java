@@ -122,9 +122,15 @@ public class JavaResolveUtil {
       if (memberClass == null) {
         return false;
       }
-      // if resolving supertype reference, skip its containing class with getContextClass
-      PsiClass contextClass = member instanceof PsiClass ? getContextClass(place)
-                                                         : PsiTreeUtil.getContextOfType(place, PsiClass.class, false);
+      PsiClass contextClass;
+      if (member instanceof PsiClass) {
+        // if resolving supertype reference, skip its containing class with getContextClass
+        contextClass = getContextClass(place);
+      }
+      else {
+        contextClass = PsiTreeUtil.getContextOfType(place, PsiClass.class, false);
+        if (isInClassAnnotationParameterList(place, contextClass)) return false;
+      }
       while (contextClass != null) {
         if (InheritanceUtil.isInheritorOrSelf(contextClass, memberClass, true)) {
           if (member instanceof PsiClass ||
@@ -156,7 +162,8 @@ public class JavaResolveUtil {
       if (fileResolveScope == null) {
         PsiClass placeTopLevelClass = getTopLevelClass(place, null);
         PsiClass memberTopLevelClass = getTopLevelClass(memberClass, null);
-        return manager.areElementsEquivalent(placeTopLevelClass, memberTopLevelClass);
+        return manager.areElementsEquivalent(placeTopLevelClass, memberTopLevelClass) &&
+               !isInClassAnnotationParameterList(place, placeTopLevelClass);
       }
       else {
         return fileResolveScope instanceof PsiClass &&
@@ -184,6 +191,16 @@ public class JavaResolveUtil {
     }
 
     return true;
+  }
+
+  private static boolean isInClassAnnotationParameterList(@NotNull PsiElement place, @Nullable PsiClass contextClass) {
+    if (contextClass != null) {
+      PsiAnnotation annotation = PsiTreeUtil.getContextOfType(place, PsiAnnotation.class, true);
+      if (annotation != null && contextClass.getModifierList() == annotation.getOwner()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean ignoreReferencedElementAccessibility(PsiFile placeFile) {

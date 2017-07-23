@@ -22,9 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-/**
- * Created by Max Medvedev on 8/15/13
- */
 public class GrContainerConverter extends GrTypeConverter {
   @Override
   public boolean isAllowedInMethodCall() {

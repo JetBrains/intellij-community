@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 02.11.2006
- * Time: 22:14:56
- */
 package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.ide.DeleteProvider;

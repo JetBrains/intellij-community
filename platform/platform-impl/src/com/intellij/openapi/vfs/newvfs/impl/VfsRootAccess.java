@@ -19,13 +19,13 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -62,7 +62,7 @@ public class VfsRootAccess {
         application.isUnitTestMode() &&
         application instanceof ApplicationImpl &&
         ((ApplicationImpl)application).isComponentsCreated() &&
-        !ApplicationInfoImpl.isInPerformanceTest()) {
+        !ApplicationInfoImpl.isInStressTest()) {
 
       if (delegate != LocalFileSystem.getInstance() && delegate != JarFileSystem.getInstance()) {
         return;
@@ -73,12 +73,7 @@ public class VfsRootAccess {
         return;
       }
 
-      Set<String> allowed = ApplicationManager.getApplication().runReadAction(new Computable<Set<String>>() {
-        @Override
-        public Set<String> compute() {
-          return allowedRoots();
-        }
-      });
+      Set<String> allowed = ReadAction.compute(VfsRootAccess::allowedRoots);
       boolean isUnder = allowed == null || allowed.isEmpty();
 
       if (!isUnder) {
@@ -141,6 +136,10 @@ public class VfsRootAccess {
     allowed.add(FileUtil.toSystemIndependentName(System.getProperty("java.io.tmpdir")));
     allowed.add(FileUtil.toSystemIndependentName(SystemProperties.getUserHome()));
 
+    // see IDEA-167037 The assertion "File accessed outside allowed root" is triggered by files symlinked from the the JDK installation folder
+    allowed.add("/etc"); // After recent update of Oracle JDK 1.8 under Ubuntu Certain files in the JDK installation are symlinked to /etc
+    allowed.add("/private/etc");
+
     for (final Project project : openProjects) {
       if (!project.isInitialized()) {
         return null; // all is allowed
@@ -161,6 +160,7 @@ public class VfsRootAccess {
     return allowed;
   }
 
+  @NotNull
   private static VirtualFile[] getAllRoots(@NotNull Project project) {
     insideGettingRoots = true;
     final Set<VirtualFile> roots = new THashSet<>();
@@ -177,12 +177,7 @@ public class VfsRootAccess {
   public static void allowRootAccess(@NotNull Disposable disposable, @NotNull final String... roots) {
     if (roots.length == 0) return;
     allowRootAccess(roots);
-    Disposer.register(disposable, new Disposable() {
-      @Override
-      public void dispose() {
-        disallowRootAccess(roots);
-      }
-    });
+    Disposer.register(disposable, () -> disallowRootAccess(roots));
   }
 
   @TestOnly

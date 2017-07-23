@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.reference.RefUtil;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
@@ -57,7 +58,8 @@ public class UnusedReturnValueLocalInspection extends BaseJavaLocalInspectionToo
         PsiType.VOID.equals(method.getReturnType()) ||
         myGlobal.IGNORE_BUILDER_PATTERN && PropertyUtil.isSimplePropertySetter(method) ||
         method.hasModifierProperty(PsiModifier.NATIVE) ||
-        MethodUtils.hasSuper(method)) return null;
+        MethodUtils.hasSuper(method) ||
+        RefUtil.isImplicitRead(method)) return null;
 
     final boolean[] atLeastOneUsageExists = new boolean[]{false};
     if (UnusedSymbolUtil.processUsages(manager.getProject(), method.getContainingFile(), method, new EmptyProgressIndicator(), null, u -> {

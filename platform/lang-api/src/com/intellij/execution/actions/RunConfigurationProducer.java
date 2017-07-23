@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import java.util.List;
  */
 public abstract class RunConfigurationProducer<T extends RunConfiguration> {
   public static final ExtensionPointName<RunConfigurationProducer> EP_NAME = ExtensionPointName.create("com.intellij.runConfigurationProducer");
-  private static final Logger LOG = Logger.getInstance("#" + RunConfigurationProducer.class.getName());
+  private static final Logger LOG = Logger.getInstance(RunConfigurationProducer.class);
 
   @NotNull
   public static List<RunConfigurationProducer<?>> getProducers(@NotNull Project project) {
@@ -145,7 +145,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
    * @return true if the other configuration should be discarded, false otherwise.
    * @see #isPreferredConfiguration(ConfigurationFromContext, ConfigurationFromContext)
    */
-  public boolean shouldReplace(ConfigurationFromContext self, ConfigurationFromContext other) {
+  public boolean shouldReplace(@NotNull ConfigurationFromContext self, @NotNull ConfigurationFromContext other) {
     return false;
   }
 
@@ -205,7 +205,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
   @Nullable
   public RunnerAndConfigurationSettings findExistingConfiguration(ConfigurationContext context) {
     final RunManager runManager = RunManager.getInstance(context.getProject());
-    final List<RunnerAndConfigurationSettings> configurations = runManager.getConfigurationSettingsList(myConfigurationFactory.getType());
+    final List<RunnerAndConfigurationSettings> configurations = getConfigurationSettingsList(runManager);
     for (RunnerAndConfigurationSettings configurationSettings : configurations) {
       if (isConfigurationFromContext((T) configurationSettings.getConfiguration(), context)) {
         return configurationSettings;
@@ -214,12 +214,26 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
     return null;
   }
 
+  /**
+   * @return list of configurations that may match this producer
+   */
+  @NotNull
+  protected List<RunnerAndConfigurationSettings> getConfigurationSettingsList(@NotNull RunManager runManager) {
+    return runManager.getConfigurationSettingsList(myConfigurationFactory.getType());
+  }
+
   protected RunnerAndConfigurationSettings cloneTemplateConfiguration(@NotNull final ConfigurationContext context) {
-    final RunConfiguration original = context.getOriginalConfiguration(myConfigurationFactory.getType());
+    return cloneTemplateConfigurationStatic(context, myConfigurationFactory);
+  }
+
+  @NotNull
+  protected static RunnerAndConfigurationSettings cloneTemplateConfigurationStatic(@NotNull final ConfigurationContext context,
+                                                                                   @NotNull final ConfigurationFactory configurationFactory) {
+    final RunConfiguration original = context.getOriginalConfiguration(configurationFactory.getType());
     if (original != null) {
-      return RunManager.getInstance(context.getProject()).createConfiguration(original.clone(), myConfigurationFactory);
+      return RunManager.getInstance(context.getProject()).createConfiguration(original.clone(), configurationFactory);
     }
-    return RunManager.getInstance(context.getProject()).createRunConfiguration("", myConfigurationFactory);
+    return RunManager.getInstance(context.getProject()).createRunConfiguration("", configurationFactory);
   }
 
   @NotNull

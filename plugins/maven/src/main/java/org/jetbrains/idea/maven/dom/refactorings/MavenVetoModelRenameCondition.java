@@ -17,11 +17,14 @@ package org.jetbrains.idea.maven.dom.refactorings;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper;
 
 public class MavenVetoModelRenameCondition implements Condition<PsiElement> {
   public boolean value(PsiElement target) {
-    return target instanceof MavenPsiElementWrapper || MavenDomUtil.isMavenFile(target);
+    if (target instanceof MavenPsiElementWrapper) return true;
+    PsiFile file = target.getContainingFile();
+    return MavenDomUtil.isProjectFile(file) || MavenDomUtil.isProfilesFile(file);
   }
 }

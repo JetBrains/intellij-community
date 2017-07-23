@@ -73,10 +73,13 @@ public class GitMultiRootBranchConfig extends DvcsMultiRootBranchConfig<GitRepos
   }
 
   /**
-   * Returns local branches which track the given remote branch. Usually there is 0 or 1 such branches.
+   * <p>Returns common local branches which track the given common remote branch.</p>
+   * <p>Usually, in "synchronous case" there is 0 (the remote branch is not being tracked) or 1 (it is tracked) such branches.</p>
+   * <p>If the remote branch is being tracked not in all repositories, or if its local tracking branches have different names
+   * in different repositories, it means that there is no common tracking branches, so an empty list is returned.</p>
    */
   @NotNull
-  public Collection<String> getTrackingBranches(@NotNull String remoteBranch) {
+  public Collection<String> getCommonTrackingBranches(@NotNull String remoteBranch) {
     Collection<String> trackingBranches = null;
     for (GitRepository repository : myRepositories) {
       Collection<String> tb = getTrackingBranches(repository, remoteBranch);
@@ -87,11 +90,11 @@ public class GitMultiRootBranchConfig extends DvcsMultiRootBranchConfig<GitRepos
         trackingBranches = ContainerUtil.intersection(trackingBranches, tb);
       }
     }
-    return trackingBranches == null ? Collections.<String>emptyList() : trackingBranches;
+    return trackingBranches == null ? Collections.emptyList() : trackingBranches;
   }
 
   @NotNull
-  public static Collection<String> getTrackingBranches(@NotNull GitRepository repository, @NotNull String remoteBranch) {
+  private static Collection<String> getTrackingBranches(@NotNull GitRepository repository, @NotNull String remoteBranch) {
     Collection<String> trackingBranches = new ArrayList<>(1);
     for (GitBranchTrackInfo trackInfo : repository.getBranchTrackInfos()) {
       if (remoteBranch.equals(trackInfo.getRemoteBranch().getNameForLocalOperations())) {

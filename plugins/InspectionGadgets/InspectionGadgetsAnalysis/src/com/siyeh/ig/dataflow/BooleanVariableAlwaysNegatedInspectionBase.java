@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2011-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,7 @@ class BooleanVariableAlwaysNegatedInspectionBase extends BaseInspection {
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "boolean.variable.always.inverted.display.name");
+    return InspectionGadgetsBundle.message("boolean.variable.always.inverted.display.name");
   }
 
   @NotNull
@@ -50,12 +49,16 @@ class BooleanVariableAlwaysNegatedInspectionBase extends BaseInspection {
   }
 
   @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new BooleanVariableAlwaysNegatedVisitor();
   }
 
-  private static class BooleanVariableAlwaysNegatedVisitor
-    extends BaseInspectionVisitor {
+  private static class BooleanVariableAlwaysNegatedVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitField(PsiField field) {
@@ -72,35 +75,34 @@ class BooleanVariableAlwaysNegatedInspectionBase extends BaseInspection {
     @Override
     public void visitLocalVariable(PsiLocalVariable variable) {
       super.visitLocalVariable(variable);
-      final PsiCodeBlock codeBlock =
-        PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
+      final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
       if (!isAlwaysInvertedBoolean(variable, codeBlock)) {
         return;
       }
       registerVariableError(variable, variable);
     }
 
-    private static boolean isAlwaysInvertedBoolean(PsiVariable field,
-                                                   PsiElement context) {
+    private static boolean isAlwaysInvertedBoolean(@NotNull PsiVariable field, PsiElement context) {
+      if (context == null) {
+        return false;
+      }
       final PsiType type = field.getType();
       if (!PsiType.BOOLEAN.equals(type)) {
         return false;
       }
-      final AlwaysNegatedVisitor visitor =
-        new AlwaysNegatedVisitor(field);
+      final AlwaysNegatedVisitor visitor = new AlwaysNegatedVisitor(field);
       context.accept(visitor);
       return visitor.isRead() && visitor.isAlwaysNegated();
     }
   }
 
-  private static class AlwaysNegatedVisitor
-    extends JavaRecursiveElementWalkingVisitor {
+  private static class AlwaysNegatedVisitor extends JavaRecursiveElementWalkingVisitor {
 
     private final PsiVariable variable;
     private boolean alwaysNegated = true;
     private boolean read;
 
-    private AlwaysNegatedVisitor(PsiVariable variable) {
+    AlwaysNegatedVisitor(PsiVariable variable) {
       this.variable = variable;
     }
 

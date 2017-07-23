@@ -1,0 +1,11 @@
+<html>
+<body>
+Replaces a <b>Collections.emptyList()</b> or <b>Collections.singletonList()</b> call with a call to <b>Arrays.asList()</b>.
+When the project or module uses language level 9 replaces with a call to <b>java.util.List.of()</b>, replaces
+a <b>Collections.emptySet()</b> or <b>Collections.singleton()</b> call with <b>java.util.Set.of()</b> and replaces
+a <b>Collections.emptyMap()</b> or <b>Collections.singletonMap()</b> call with <b>java.util.Map.of()</b>.
+When the project or module uses the Guava library and a language level below 9, replaces with
+<b>com.google.common.collect.ImmutableList</b>, <b>com.google.common.collect.ImmutableSet</b> and
+<b>com.google.common.collect.ImmutableMap</b> respectively.
+</body>
+</html>

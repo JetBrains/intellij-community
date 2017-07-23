@@ -147,16 +147,13 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
     PsiClass beanClass = psiFacade.findClass(PatternClassBean.class.getName(), GlobalSearchScope.allScope(project));
     if (beanClass != null) {
       GlobalSearchScope scope = GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScope.allScope(project), StdFileTypes.XML);
-      final TextOccurenceProcessor occurenceProcessor = new TextOccurenceProcessor() {
-        @Override
-        public boolean execute(@NotNull PsiElement element, int offsetInElement) {
-          XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
-          String className = tag == null ? null : tag.getAttributeValue("className");
-          if (StringUtil.isNotEmpty(className) && tag.getLocalName().endsWith("patternClass")) {
-            roots.add(className);
-          }
-          return true;
+      final TextOccurenceProcessor occurenceProcessor = (element, offsetInElement) -> {
+        XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
+        String className = tag == null ? null : tag.getAttributeValue("className");
+        if (StringUtil.isNotEmpty(className) && tag.getLocalName().endsWith("patternClass")) {
+          roots.add(className);
         }
+        return true;
       };
       final StringSearcher searcher = new StringSearcher("patternClass", true, true);
       CacheManager.SERVICE.getInstance(beanClass.getProject()).processFilesWithWord(psiFile -> {

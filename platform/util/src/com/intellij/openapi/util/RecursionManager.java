@@ -31,7 +31,7 @@ import java.util.*;
 /**
  * There are moments when a computation A requires the result of computation B, which in turn requires C, which (unexpectedly) requires A.
  * If there are no other ways to solve it, it helps to track all the computations in the thread stack and return some default value when
- * asked to compute A for the second time. {@link RecursionGuard#doPreventingRecursion(Object, Computable)} does precisely this.
+ * asked to compute A for the second time. {@link RecursionGuard#doPreventingRecursion(Object, boolean, Computable)} does precisely this.
  *
  * It's quite useful to cache some computation results to avoid performance problems. But not everyone realises that in the above situation it's
  * incorrect to cache the results of B and C, because they all are based on the default incomplete result of the A calculation. If the actual
@@ -40,7 +40,7 @@ import java.util.*;
  * situation the result of C would depend on the order of invocations of C and A, which can be hardly predictable in multi-threaded environments.
  *
  * Therefore if you use any kind of cache, it probably would make your program safer to cache only when it's safe to do this. See
- * {@link com.intellij.openapi.util.RecursionGuard#markStack()} and {@link com.intellij.openapi.util.RecursionGuard.StackStamp#mayCacheNow()}
+ * {@link RecursionGuard#markStack()} and {@link RecursionGuard.StackStamp#mayCacheNow()}
  * for the advice.
  *
  * @see RecursionGuard
@@ -72,6 +72,7 @@ public class RecursionManager {
    * @param id just some string to separate different recursion prevention policies from each other
    * @return a helper object which allow you to perform reentrancy-safe computations and check whether caching will be safe.
    */
+  @NotNull
   public static RecursionGuard createGuard(@NonNls final String id) {
     return new RecursionGuard() {
       @Override
@@ -325,7 +326,7 @@ public class RecursionManager {
 
       Set<MyKey> loop = new THashSet<MyKey>();
       boolean inLoop = false;
-      for (Map.Entry<MyKey, Integer> entry: progressMap.entrySet()) {
+      for (Map.Entry<MyKey, Integer> entry: new ArrayList<Map.Entry<MyKey, Integer>>(progressMap.entrySet())) {
         if (inLoop) {
           entry.setValue(reentrancyCount);
           loop.add(entry.getKey());

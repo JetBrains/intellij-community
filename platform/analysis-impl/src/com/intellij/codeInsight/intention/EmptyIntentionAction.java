@@ -27,10 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.List;
 
-/**
- * User: anna
- * Date: May 11, 2005
- */
 public final class EmptyIntentionAction extends AbstractEmptyIntentionAction implements LowPriorityAction, Iconable {
   private final String myName;
 

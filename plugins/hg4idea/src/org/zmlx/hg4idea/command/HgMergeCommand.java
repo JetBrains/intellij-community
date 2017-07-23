@@ -71,7 +71,7 @@ public class HgMergeCommand {
       return result;
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(project, token);
+      token.finish();
     }
   }
 
@@ -81,10 +81,7 @@ public class HgMergeCommand {
     try {
       HgUtil.markDirectoryDirty(project, repo.getRoot());
     }
-    catch (InvocationTargetException e) {
-      throwException(e);
-    }
-    catch (InterruptedException e) {
+    catch (InvocationTargetException | InterruptedException e) {
       throwException(e);
     }
 

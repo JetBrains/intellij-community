@@ -16,11 +16,14 @@
 
 package com.intellij.psi.impl;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.AppTopics;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.DocumentWindowImpl;
 import com.intellij.injected.editor.EditorWindowImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
@@ -32,7 +35,7 @@ import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.impl.ProjectImpl;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.core.impl.PomModelImpl;
@@ -51,6 +54,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 //todo listen & notifyListeners readonly events?
@@ -66,21 +70,21 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
     super(project, psiManager, bus, documentCommitThread);
     myDocumentCommitThread = documentCommitThread;
     editorFactory.getEventMulticaster().addDocumentListener(this, project);
-    MessageBusConnection busConnection = bus.connect();
-    busConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
+    MessageBusConnection connection = bus.connect();
+    connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
       @Override
       public void fileContentLoaded(@NotNull final VirtualFile virtualFile, @NotNull Document document) {
-        PsiFile psiFile = ApplicationManager.getApplication().runReadAction(
-          (Computable<PsiFile>)() -> myProject.isDisposed() || !virtualFile.isValid() ? null : getCachedPsiFile(virtualFile));
+        PsiFile psiFile = ReadAction.compute(() -> myProject.isDisposed() || !virtualFile.isValid() ? null : getCachedPsiFile(virtualFile));
         fireDocumentCreated(document, psiFile);
       }
     });
-    busConnection.subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
+    connection.subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
       @Override
       public void updateFinished(@NotNull Document doc) {
-        documentCommitThread.commitAsynchronously(project, doc, "Bulk update finished", ApplicationManager.getApplication().getDefaultModalityState());
+        documentCommitThread.commitAsynchronously(project, doc, "Bulk update finished", TransactionGuard.getInstance().getContextTransaction());
       }
     });
+    Disposer.register(project, () -> ((DocumentCommitThread)myDocumentCommitThread).cancelTasksOnProjectDispose(project));
   }
 
   @Nullable
@@ -105,7 +109,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
   public void documentChanged(DocumentEvent event) {
     super.documentChanged(event);
     // optimisation: avoid documents piling up during batch processing
-    if (FileDocumentManagerImpl.areTooManyDocumentsInTheQueue(myUncommittedDocuments)) {
+    if (isUncommited(event.getDocument()) && FileDocumentManagerImpl.areTooManyDocumentsInTheQueue(myUncommittedDocuments)) {
       if (myUnitTestMode) {
         myStopTrackingDocuments = true;
         try {
@@ -119,26 +123,41 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
         }
       }
       // must not commit during document save
-      if (PomModelImpl.isAllowPsiModification()) {
-        commitAllDocuments();
+      if (PomModelImpl.isAllowPsiModification()
+          // it can happen that document(forUseInNonAWTThread=true) outside write action caused this
+          && ApplicationManager.getApplication().isWriteAccessAllowed()) {
+        // commit one document to avoid OOME
+        for (Document document : myUncommittedDocuments) {
+          if (document != event.getDocument()) {
+            doCommitWithoutReparse(document);
+            break;
+          }
+        }
       }
     }
   }
 
+  @VisibleForTesting
+  public void doCommitWithoutReparse(@NotNull Document document) {
+    finishCommitInWriteAction(document, Collections.emptyList(), true, true);
+  }
+
   @Override
   protected void beforeDocumentChangeOnUnlockedDocument(@NotNull final FileViewProvider viewProvider) {
-    PostprocessReformattingAspect.getInstance(myProject).beforeDocumentChanged(viewProvider);
+    PostprocessReformattingAspect.getInstance(myProject).assertDocumentChangeIsAllowed(viewProvider);
     super.beforeDocumentChangeOnUnlockedDocument(viewProvider);
   }
+
 
   @Override
   protected boolean finishCommitInWriteAction(@NotNull Document document,
                                               @NotNull List<Processor<Document>> finishProcessors,
-                                              boolean synchronously) {
+                                              boolean synchronously, 
+                                              boolean forceNoPsiCommit) {
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) { // can be false for non-physical PSI
       EditorWindowImpl.disposeInvalidEditors();
     }
-    return super.finishCommitInWriteAction(document, finishProcessors, synchronously);
+    return super.finishCommitInWriteAction(document, finishProcessors, synchronously, forceNoPsiCommit);
   }
 
   @Override

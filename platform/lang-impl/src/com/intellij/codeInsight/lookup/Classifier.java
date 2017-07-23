@@ -29,7 +29,7 @@ public abstract class Classifier<T> {
   protected final Classifier<T> myNext;
   private final String myName;
 
-  protected Classifier(@Nullable Classifier<T> next, String name) {
+  protected Classifier(Classifier<T> next, String name) {
     myNext = next;
     myName = name;
   }

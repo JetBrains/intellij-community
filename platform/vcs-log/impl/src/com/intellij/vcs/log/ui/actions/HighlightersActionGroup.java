@@ -15,18 +15,22 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.VcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogHighlighterFactory;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+
+import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.VcsLogHighlighterProperty;
 
 public class HighlightersActionGroup extends ActionGroup {
   @NotNull
@@ -35,12 +39,11 @@ public class HighlightersActionGroup extends ActionGroup {
     List<AnAction> actions = ContainerUtil.newArrayList();
 
     if (e != null) {
-      VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-      if (ui != null) {
+      if (e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES) != null) {
         actions.add(new Separator("Highlight"));
-        for (VcsLogHighlighterFactory factory : Extensions.getExtensions(VcsLogUiImpl.LOG_HIGHLIGHTER_FACTORY_EP, e.getProject())) {
+        for (VcsLogHighlighterFactory factory : Extensions.getExtensions(AbstractVcsLogUi.LOG_HIGHLIGHTER_FACTORY_EP, e.getProject())) {
           if (factory.showMenuItem()) {
-            actions.add(new EnableHighlighterAction(ui, factory));
+            actions.add(new EnableHighlighterAction(factory));
           }
         }
       }
@@ -49,24 +52,17 @@ public class HighlightersActionGroup extends ActionGroup {
     return actions.toArray(new AnAction[actions.size()]);
   }
 
-  private static class EnableHighlighterAction extends ToggleAction implements DumbAware {
+  private static class EnableHighlighterAction extends BooleanPropertyToggleAction {
     @NotNull private final VcsLogHighlighterFactory myFactory;
-    @NotNull private final VcsLogUi myUi;
 
-    private EnableHighlighterAction(@NotNull VcsLogUi ui, @NotNull VcsLogHighlighterFactory factory) {
+    private EnableHighlighterAction(@NotNull VcsLogHighlighterFactory factory) {
       super(factory.getTitle());
-      myUi = ui;
       myFactory = factory;
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
-      return myUi.isHighlighterEnabled(myFactory.getId());
-    }
-
-    @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      myUi.setHighlighterEnabled(myFactory.getId(), state);
+    protected VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty() {
+      return VcsLogHighlighterProperty.get(myFactory.getId());
     }
   }
 }

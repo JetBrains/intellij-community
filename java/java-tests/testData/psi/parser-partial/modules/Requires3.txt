@@ -1,5 +1,9 @@
 PsiJavaFile:Requires3.java
+  PsiImportList
+    <empty list>
   PsiJavaModule:M
+    PsiModifierList:
+      <empty list>
     PsiKeyword:module('module')
     PsiWhiteSpace(' ')
     PsiJavaModuleReference
@@ -9,13 +13,12 @@ PsiJavaFile:Requires3.java
     PsiWhiteSpace(' ')
     PsiRequiresStatement
       PsiKeyword:requires('requires')
-      PsiErrorElement:Identifier expected
-        <empty list>
-    PsiWhiteSpace(' ')
-    PsiErrorElement:Module statement expected
-      PsiKeyword:private('private')
       PsiWhiteSpace(' ')
-      PsiIdentifier:X('X')
-    PsiJavaToken:SEMICOLON(';')
+      PsiModifierList:private
+        PsiKeyword:private('private')
+      PsiWhiteSpace(' ')
+      PsiJavaModuleReference
+        PsiIdentifier:X('X')
+      PsiJavaToken:SEMICOLON(';')
     PsiWhiteSpace(' ')
     PsiJavaToken:RBRACE('}')

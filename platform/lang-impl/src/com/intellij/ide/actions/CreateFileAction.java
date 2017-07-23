@@ -20,6 +20,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.DumbAware;
@@ -80,7 +81,12 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
   @NotNull
   protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
     MkDirs mkdirs = new MkDirs(newName, directory);
-    return new PsiElement[]{mkdirs.directory.createFile(getFileName(mkdirs.newName))};
+    return new PsiElement[]{WriteAction.compute(() -> mkdirs.directory.createFile(getFileName(mkdirs.newName)))};
+  }
+
+  public static PsiDirectory findOrCreateSubdirectory(@NotNull PsiDirectory parent, @NotNull String subdirName) {
+    final PsiDirectory sub = parent.findSubdirectory(subdirName);
+    return sub == null ? WriteAction.compute(() -> parent.createSubdirectory(subdirName)) : sub;
   }
 
   public static class MkDirs {
@@ -109,8 +115,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
             directory = parentDirectory;
           }
           else if (!".".equals(dir)){
-            final PsiDirectory sub = directory.findSubdirectory(dir);
-            directory = sub == null ? directory.createSubdirectory(dir) : sub;
+            directory = findOrCreateSubdirectory(directory, dir);
           }
           firstToken = false;
         }

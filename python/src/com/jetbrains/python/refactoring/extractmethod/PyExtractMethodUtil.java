@@ -25,7 +25,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,6 +40,7 @@ import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.AbstractVariableData;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -497,8 +497,8 @@ public class PyExtractMethodUtil {
       final PsiElement target = parent instanceof PyClass ? ((PyClass)parent).getStatementList() : parent;
       final PsiElement insertionAnchor = PyPsiUtils.getParentRightBefore(anchor, target);
       assert insertionAnchor != null;
-      final Couple<PsiComment> comments = PyPsiUtils.getPrecedingComments(insertionAnchor);
-      result = insertionAnchor.getParent().addBefore(generatedMethod, comments != null ? comments.getFirst() : insertionAnchor);
+      final List<PsiComment> comments = PyPsiUtils.getPrecedingComments(insertionAnchor);
+      result = insertionAnchor.getParent().addBefore(generatedMethod, !comments.isEmpty() ? comments.get(0) : insertionAnchor);
     }
     // to ensure correct reformatting, mark the entire method as generated
     result.accept(new PsiRecursiveElementVisitor() {
@@ -623,9 +623,9 @@ public class PyExtractMethodUtil {
     }
 
     final boolean isMethod = PyPsiUtils.isMethodContext(element);
-    final ExtractMethodDecorator decorator = new ExtractMethodDecorator() {
+    final ExtractMethodDecorator<Object> decorator = new ExtractMethodDecorator<Object>() {
       @NotNull
-      public String createMethodSignature(final String methodName, @NotNull final AbstractVariableData[] variableDatas) {
+      public String createMethodSignature(@NotNull ExtractMethodSettings<Object> settings) {
         final StringBuilder builder = new StringBuilder();
         if (isClassMethod) {
           builder.append("cls");
@@ -633,7 +633,7 @@ public class PyExtractMethodUtil {
         else if (isMethod && !isStaticMethod) {
           builder.append("self");
         }
-        for (AbstractVariableData variableData : variableDatas) {
+        for (AbstractVariableData variableData : settings.getAbstractVariableData()) {
           if (variableData.passAsParameter) {
             if (builder.length() != 0) {
               builder.append(", ");
@@ -642,15 +642,16 @@ public class PyExtractMethodUtil {
           }
         }
         builder.insert(0, "(");
-        builder.insert(0, methodName);
+        builder.insert(0, settings.getMethodName());
         builder.insert(0, "def ");
         builder.append(")");
         return builder.toString();
       }
     };
 
-    final AbstractExtractMethodDialog dialog = new AbstractExtractMethodDialog(project, "method_name", fragment, validator, decorator,
-                                                                               PythonFileType.INSTANCE) {
+    final AbstractExtractMethodDialog<?> dialog = new AbstractExtractMethodDialog<Object>(project, "method_name", fragment,
+                                                                                          ArrayUtil.EMPTY_OBJECT_ARRAY, validator,
+                                                                                          decorator, PythonFileType.INSTANCE) {
       @Override
       protected String getHelpId() {
         return "python.reference.extractMethod";

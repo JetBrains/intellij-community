@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Allows a component hosting actions to provide context information to the actions. When a specific
  * data item is requested, the component hierarchy is walked up from the currently focused component,
- * and every component implementing the <code>DataProvider</code> interface is queried for the data
+ * and every component implementing the {@code DataProvider} interface is queried for the data
  * until one of them returns the data. Data items can also be mapped to each other - for example,
  * if a data provider provides an item for {@link CommonDataKeys#NAVIGATABLE}, an item for
  * {@link CommonDataKeys#NAVIGATABLE_ARRAY} can be generated from it automatically.

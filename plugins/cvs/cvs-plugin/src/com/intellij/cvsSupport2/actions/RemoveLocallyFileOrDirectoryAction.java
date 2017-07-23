@@ -99,7 +99,7 @@ public class RemoveLocallyFileOrDirectoryAction extends ActionOnSelectedElement 
   private static List<FilePath> filesToFilePaths(final ArrayList<File> files) {
     final List<FilePath> result = new ArrayList<>();
     for(File f: files) {
-      result.add(VcsContextFactory.SERVICE.getInstance().createFilePathOnDeleted(f, false));
+      result.add(VcsContextFactory.SERVICE.getInstance().createFilePathOn(f, false));
     }
     return result;
   }

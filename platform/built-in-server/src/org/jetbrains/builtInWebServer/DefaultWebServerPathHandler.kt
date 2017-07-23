@@ -15,7 +15,7 @@
  */
 package org.jetbrains.builtInWebServer
 
-import com.intellij.openapi.diagnostic.catchAndLog
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.endsWithName
@@ -37,7 +37,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.regex.Pattern
 
-private val chromeVersionFromUserAgent = Pattern.compile(" Chrome/([\\d.]+) ")
+val chromeVersionFromUserAgent: Pattern = Pattern.compile(" Chrome/([\\d.]+) ")
 
 private class DefaultWebServerPathHandler : WebServerPathHandler() {
   override fun process(path: String,
@@ -55,7 +55,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
     val pathToFileManager = WebServerPathToFileManager.getInstance(project)
     var pathInfo = pathToFileManager.pathToInfoCache.getIfPresent(path)
     if (pathInfo == null || !pathInfo.isValid) {
-      pathInfo = pathToFileManager.doFindByRelativePath(path)
+      pathInfo = pathToFileManager.doFindByRelativePath(path, defaultPathQuery)
       if (pathInfo == null) {
         HttpResponseStatus.NOT_FOUND.send(channel, request, extraHeaders = extraHeaders)
         return true
@@ -120,7 +120,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
 
     val canonicalPath = if (indexUsed) "$path/${pathInfo.name}" else path
     for (fileHandler in WebServerFileHandler.EP_NAME.extensions) {
-      LOG.catchAndLog {
+      LOG.runAndLogException {
         if (fileHandler.process(pathInfo!!, canonicalPath, project, request, channel, if (isCustomHost) null else projectName, extraHeaders)) {
           return true
         }

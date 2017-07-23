@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,31 +135,32 @@ public class LinkConstant extends PooledConstant {
   }
 
   private void resolveDescriptor(String descr) {
+    int parenth = descr.indexOf(')');
+    if (descr.length() < 2 || parenth < 0 || descr.charAt(0) != '(') {
+      throw new IllegalArgumentException("Invalid descriptor: " + descr);
+    }
 
-    String[] arr = descr.split("[()]");
-    String par = arr[1];
-
-    int index = 0, counter = 0;
-    int len = par.length();
-
-    while (index < len) {
-
-      char c = par.charAt(index);
-      if (c == 'L') {
-        index = par.indexOf(";", index);
-      }
-      else if (c == '[') {
+    int counter = 0;
+    if (parenth > 1) { // params
+      int index = 1;
+      while (index < parenth) {
+        char c = descr.charAt(index);
+        if (c == 'L') {
+          index = descr.indexOf(";", index);
+        }
+        else if (c == '[') {
+          index++;
+          continue;
+        }
+        counter++;
         index++;
-        continue;
       }
-
-      counter++;
-      index++;
     }
 
     paramCount = counter;
-    isVoid = "V".equals(arr[2]);
-    returnCategory2 = ("D".equals(arr[2]) || "J".equals(arr[2]));
-  }
+    char retChar = descr.charAt(parenth + 1);
+    isVoid = retChar == 'V';
+    returnCategory2 = (retChar == 'D') || (retChar == 'J');
+   }
 }
 

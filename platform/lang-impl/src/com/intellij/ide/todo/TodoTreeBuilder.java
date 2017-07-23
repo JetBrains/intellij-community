@@ -44,6 +44,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
@@ -80,7 +81,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
 
   protected final PsiTodoSearchHelper mySearchHelper;
   /**
-   * If this flag is false then the updateTree() method does nothing. But when
+   * If this flag is false then the refresh() method does nothing. But when
    * the flag becomes true and myDirtyFileSet isn't empty the update is invoked.
    * This is done for optimization reasons: if TodoPane is not visible then
    * updates isn't invoked.
@@ -344,8 +345,8 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    */
   private void markFileAsDirty(@NotNull PsiFile psiFile) {
     VirtualFile vFile = psiFile.getVirtualFile();
-    if (vFile != null) { // If PSI file isn't valid then its VirtualFile can be null
-        myDirtyFileSet.add(vFile);
+    if (vFile != null && !(vFile instanceof LightVirtualFile)) { // If PSI file isn't valid then its VirtualFile can be null
+      myDirtyFileSet.add(vFile);
     }
   }
 
@@ -437,9 +438,12 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    * @return first {@code SmartTodoItemPointer} that is the children (in depth) of the specified {@code element}.
    *         If {@code element} itself is a {@code TodoItem} then the method returns the {@code element}.
    */
-  public TodoItemNode getFirstPointerForElement(Object element) {
+  public TodoItemNode getFirstPointerForElement(@Nullable Object element) {
     if (element instanceof TodoItemNode) {
       return (TodoItemNode)element;
+    }
+    else if (element == null) {
+      return null;
     }
     else {
       Object[] children = getTreeStructure().getChildElements(element);

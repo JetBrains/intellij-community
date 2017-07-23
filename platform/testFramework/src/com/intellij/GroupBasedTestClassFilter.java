@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,24 @@
  */
 package com.intellij;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Encapsulates logic of filtering test classes (classes that contain test-cases).
  * <p/>
- * We want to have such facility in order to be able to execute different sets of tests like <code>'fast tests'</code>,
- * <code>'problem tests'</code> etc.
+ * We want to have such facility in order to be able to execute different sets of tests like {@code 'fast tests'},
+ * {@code 'problem tests'} etc.
  * <p/>
  * I.e. assumed usage scenario is to create object of this class with necessary filtering criteria and use it's
  * {@link TestClassesFilter#matches(String, String)} method for determining if particular test should be executed.
@@ -40,7 +44,7 @@ import java.util.regex.Pattern;
  *     {@link PatternListTestClassFilter#PatternListTestClassFilter(List) PatternListTestClassFilter};
  *   </li>
  *   <li>
- *     Read class name filters (at regexp format) from the given stream - see {@link #createOn(java.io.Reader, java.util.List)};
+ *     Read class name filters (at regexp format) from the given stream - see {@link #createOn(Reader, List)};
  *   </li>
  * </ul>
  */
@@ -52,37 +56,33 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
    */
   public static final String ALL_EXCLUDE_DEFINED = "ALL_EXCLUDE_DEFINED";
 
-  private final MultiMap<String, Pattern> myPatterns = MultiMap.create();
-  private final List<Pattern> myAllPatterns = new ArrayList<>();
-  private final List<Pattern> myTestGroupPatterns;
-  private boolean myContainsAllExcludeDefinedGroup;
+  private final List<Group> myGroups = ContainerUtil.newSmartList();
+  private final Set<String> myTestGroupNames;
 
   public GroupBasedTestClassFilter(MultiMap<String, String> filters, List<String> testGroupNames) {
     //empty group means all patterns from each defined group should be excluded
-    myContainsAllExcludeDefinedGroup = containsAllExcludeDefinedGroup(testGroupNames);
+    myTestGroupNames = ContainerUtil.newTroveSet(testGroupNames);
 
     for (String groupName : filters.keySet()) {
-      addPatterns(groupName, filters.get(groupName));
+      Collection<String> groupFilters = filters.get(groupName);
+      List<Pattern> includePatterns = compilePatterns(ContainerUtil.filter(groupFilters, s -> !s.startsWith("-")));
+      List<Pattern> excludedPatterns = compilePatterns(groupFilters.stream()
+                                                         .filter(s -> s.startsWith("-") && s.length() > 1)
+                                                         .map(s -> s.substring(1))
+                                                         .collect(Collectors.toList()));
+      myGroups.add(new Group(groupName, includePatterns, excludedPatterns));
     }
-
-    myTestGroupPatterns = collectPatternsFor(testGroupNames);
-  }
-
-  private void addPatterns(String groupName, Collection<String> filterList) {
-    List<Pattern> patterns = compilePatterns(filterList);
-    myPatterns.putValues(groupName, patterns);
-    myAllPatterns.addAll(patterns);
   }
 
   /**
-   * Creates <code>TestClassesFilter</code> object assuming that the given stream contains grouped test class filters
+   * Creates {@code TestClassesFilter} object assuming that the given stream contains grouped test class filters
    * at the following format:
    * <p/>
    * <ul>
    *   <li>
-   *      every line that starts with <code>'['</code> symbol and ends with <code>']'</code> symbol defines start
+   *      every line that starts with {@code '['} symbol and ends with {@code ']'} symbol defines start
    *      of the new test group. That means that all test class filters that follows this line belongs to the same
-   *      test group which name is defined by the text contained between <code>'['</code> and <code>']'</code>
+   *      test group which name is defined by the text contained between {@code '['} and {@code ']'}
    *   </li>
    *   <li>every line that is not a test-group definition is considered to be a test class filter at regexp format;</li>
    * </ul>
@@ -99,7 +99,7 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
    * <p/>
    * It defines two test groups:
    * <ul>
-   *   <li><b>CVS</b> group with the single test class name pattern <code>'com.intellij.cvsSupport2.*'</code>;</li>
+   *   <li><b>CVS</b> group with the single test class name pattern {@code 'com.intellij.cvsSupport2.*'};</li>
    *   <li>
    *     <b>STRESS_TESTS</b> group with the following test class name patterns:
    *     <ul>
@@ -143,40 +143,43 @@ public class GroupBasedTestClassFilter extends TestClassesFilter {
 
   /**
    * Allows to check if given class name belongs to the test group with the given name based on filtering rules encapsulated
-   * at the current {@link GroupBasedTestClassFilter} object. I.e. this method returns <code>true</code> if given test class name
+   * at the current {@link GroupBasedTestClassFilter} object. I.e. this method returns {@code true} if given test class name
    * is matched with any test class name filter configured for the test group with the given name.
    * <p/>
    * <b>Note:</b> there is a special case processing when given group name is {@link #ALL_EXCLUDE_DEFINED}. This method
-   * returns <code>true</code> only if all registered patterns (for all test groups) don't match given test class name.
+   * returns {@code true} only if all registered patterns (for all test groups) don't match given test class name.
    *
    * @param className   target test class name to check
    * @param moduleName
-   * @return            <code>true</code> if given test group name is defined (not <code>null</code>) and test class with given
+   * @return            {@code true} if given test group name is defined (not {@code null}) and test class with given
    *                    name belongs to the test group with given name;
-   *                    <code>true</code> if given group if undefined or equal to {@link #ALL_EXCLUDE_DEFINED} and given test
+   *                    {@code true} if given group if undefined or equal to {@link #ALL_EXCLUDE_DEFINED} and given test
    *                    class name is not matched by all registered patterns;
-   *                    <code>false</code> otherwise
+   *                    {@code false} otherwise
    */
   @Override
   public boolean matches(String className, String moduleName) {
-    if (matchesAnyPattern(myTestGroupPatterns, className)) {
-      return true;
-    }
-    if (myContainsAllExcludeDefinedGroup && !matchesAnyPattern(myAllPatterns, className)) {
-      return true;
-    }
-    return false;
+    if (myGroups.stream().filter(g -> myTestGroupNames.contains(g.name)).anyMatch(g -> g.matches(className))) return true;
+    return containsAllExcludeDefinedGroup(myTestGroupNames) && myGroups.stream().noneMatch(g -> g.matches(className));
   }
 
-  private static boolean containsAllExcludeDefinedGroup(List<String> groupNames) {
+  private static boolean containsAllExcludeDefinedGroup(Set<String> groupNames) {
     return groupNames.isEmpty() || groupNames.contains(ALL_EXCLUDE_DEFINED);
   }
 
-  private List<Pattern> collectPatternsFor(List<String> groupNames) {
-    List<Pattern> patterns = new ArrayList<>();
-    for (String groupName : groupNames) {
-      patterns.addAll(myPatterns.get(groupName));
+  private static class Group {
+    private final String name;
+    private final List<Pattern> included;
+    private final List<Pattern> excluded;
+
+    private Group(String name, List<Pattern> included, List<Pattern> excluded) {
+      this.name = name;
+      this.excluded = excluded;
+      this.included = included;
     }
-    return patterns;
+    
+    private boolean matches(String className) {
+      return !matchesAnyPattern(excluded, className) && matchesAnyPattern(included, className);
+    }
   }
 }

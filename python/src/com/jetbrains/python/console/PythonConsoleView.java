@@ -26,6 +26,7 @@ import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -52,7 +53,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.JBSplitter;
 import com.intellij.util.TimeoutUtil;
@@ -83,7 +86,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private static final Logger LOG = Logger.getInstance(PythonConsoleView.class);
   private final ConsolePromptDecorator myPromptView;
 
-  private PydevConsoleExecuteActionHandler myExecuteActionHandler;
+  private PythonConsoleExecuteActionHandler myExecuteActionHandler;
   private PyConsoleSourceHighlighter mySourceHighlighter;
   private boolean myIsIPythonOutput;
   private final PyHighlighter myPyHighlighter;
@@ -139,18 +142,19 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     }
   }
 
-  public void setExecutionHandler(@NotNull PydevConsoleExecuteActionHandler consoleExecuteActionHandler) {
+  public void setExecutionHandler(@NotNull PythonConsoleExecuteActionHandler consoleExecuteActionHandler) {
     myExecuteActionHandler = consoleExecuteActionHandler;
   }
 
-  public PydevConsoleExecuteActionHandler getExecuteActionHandler() {
+  public PythonConsoleExecuteActionHandler getExecuteActionHandler() {
     return myExecuteActionHandler;
   }
 
   public void setConsoleEnabled(boolean flag) {
     if (myExecuteActionHandler != null) {
       myExecuteActionHandler.setEnabled(flag);
-    } else {
+    }
+    else {
       myInitialized.doWhenDone(() -> myExecuteActionHandler.setEnabled(flag));
     }
   }
@@ -167,7 +171,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   public void inputReceived() {
     // If user's input was entered while debug console was turned off, we shouldn't wait for it anymore
     if (myExecuteActionHandler != null) {
-      myExecuteActionHandler.inputReceived();
+      myExecuteActionHandler.getConsoleCommunication().notifyInputReceived();
     }
   }
 
@@ -208,17 +212,27 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
 
   public void executeInConsole(final String code) {
-    final String codeToExecute = code.endsWith("\n") ? code : code + "\n";
-
     TransactionGuard.submitTransaction(this, () -> {
-      String text = getConsoleEditor().getDocument().getText();
-      ApplicationManager.getApplication().runWriteAction(() -> setInputText(codeToExecute));
+      final String codeToExecute = code.endsWith("\n") || myExecuteActionHandler.checkSingleLine(code) ? code : code + "\n";
+      DocumentEx document = getConsoleEditor().getDocument();
+      String oldText = document.getText();
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        setInputText(codeToExecute);
+        PsiDocumentManager.getInstance(getProject()).commitDocument(document);
+        PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
+        if (psiFile != null) {
+          CommandProcessor.getInstance().runUndoTransparentAction(() ->
+                                                                    CodeStyleManager.getInstance(getProject())
+                                                                      .adjustLineIndent(psiFile,
+                                                                                        new TextRange(0, psiFile.getTextLength())));
+        }
+      });
       int oldOffset = getConsoleEditor().getCaretModel().getOffset();
-      getConsoleEditor().getCaretModel().moveToOffset(codeToExecute.length());
+      getConsoleEditor().getCaretModel().moveToOffset(document.getTextLength());
       myExecuteActionHandler.runExecuteAction(this);
 
-      if (!StringUtil.isEmpty(text)) {
-        ApplicationManager.getApplication().runWriteAction(() -> setInputText(text));
+      if (!StringUtil.isEmpty(oldText)) {
+        ApplicationManager.getApplication().runWriteAction(() -> setInputText(oldText));
         getConsoleEditor().getCaretModel().moveToOffset(oldOffset);
       }
     });

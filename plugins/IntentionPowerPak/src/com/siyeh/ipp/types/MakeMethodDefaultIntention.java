@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,13 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class MakeMethodDefaultIntention extends BaseElementAtCaretIntentionAction {
+
+  private String text = "Make method default";
+
   @NotNull
   @Override
   public String getText() {
-    return "Make method default";
+    return text;
   }
 
   @NotNull
@@ -44,7 +47,10 @@ public class MakeMethodDefaultIntention extends BaseElementAtCaretIntentionActio
       if (psiMethod != null && PsiUtil.isLanguageLevel8OrHigher(psiMethod)) {
         if (psiMethod.getBody() == null && !psiMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
           final PsiClass containingClass = psiMethod.getContainingClass();
-          return containingClass != null && containingClass.isInterface();
+          if (containingClass != null && containingClass.isInterface() && !containingClass.isAnnotationType()) {
+            text = "Make '" + psiMethod.getName() + "()' default";
+            return true;
+          }
         }
       }
       return false;

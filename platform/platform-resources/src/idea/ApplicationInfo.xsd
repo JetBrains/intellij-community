@@ -190,14 +190,65 @@
     </xs:attribute>
   </xs:complexType>
   <xs:complexType name="aboutType">
-    <xs:attribute type="xs:string" name="url" use="required"/>
-    <xs:attribute type="xs:string" name="foreground"/>
-    <xs:attribute type="xs:string" name="copyrightForeground"/>
-    <xs:attribute type="xs:string" name="linkColor"/>
-    <xs:attribute type="xs:int" name="logoX"/>
-    <xs:attribute type="xs:int" name="logoY"/>
-    <xs:attribute type="xs:int" name="logoW"/>
-    <xs:attribute type="xs:int" name="logoH"/>
+    <xs:attribute type="xs:string" name="url" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          Path inside a JAR file (in PRODUCT_HOME/lib directory) to a file containing image for 'About' popup.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="foreground">
+      <xs:annotation>
+        <xs:documentation>
+          Foreground color (6 hex digits, in 'rrggbb' format) which will be used to print main text (version, build number, information
+          about JRE, etc) on 'About' popup. If not specified black color will be used.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="copyrightForeground">
+      <xs:annotation>
+        <xs:documentation>
+          Foreground color (6 hex digits, in 'rrggbb' format) which will be used to print 'Copyright' text on 'About' popup. If not specified
+          black color will be used.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="linkColor">
+      <xs:annotation>
+        <xs:documentation>
+          Foreground color (6 hex digits, in 'rrggbb' format) which will be used to paint links on 'About' popup.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:int" name="logoX">
+      <xs:annotation>
+        <xs:documentation>
+          The X coordinate of the top left corner of the company logo on 'About' popup. Clicking on the logo will open the company site in browser.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:int" name="logoY">
+      <xs:annotation>
+        <xs:documentation>
+          The Y coordinate of the top left corner of the company logo on 'About' popup. Clicking on the logo will open the company site in
+          browser.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:int" name="logoW">
+      <xs:annotation>
+        <xs:documentation>
+          Width of the company logo on 'About' popup. Clicking on the logo will open the company site in browser.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:int" name="logoH">
+      <xs:annotation>
+        <xs:documentation>
+          Height of the company logo on 'About' popup. Clicking on the logo will open the company site in browser.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
   <xs:complexType name="iconType">
     <xs:attribute type="xs:string" name="size12"/>

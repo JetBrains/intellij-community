@@ -1,11 +1,11 @@
 class Test {
 
         interface II {
-            int _();
+            int m();
         }
 
         interface IL {
-            long _();
+            long m();
         }
 
         void m0(II im) { }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,10 +39,10 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
 public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWithText {
@@ -61,7 +61,7 @@ public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWith
       }
     }
 
-    return new ArrayList<>();
+    return ContainerUtil.emptyList();
   }
 
   private boolean isArchive() {
@@ -102,7 +102,7 @@ public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWith
   private boolean isNavigatableLibraryRoot() {
     VirtualFile jarRoot = getJarRoot();
     final Project project = getProject();
-    if (jarRoot != null && ProjectRootsUtil.isLibraryRoot(jarRoot, project)) {
+    if (jarRoot != null && project != null && ProjectRootsUtil.isLibraryRoot(jarRoot, project)) {
       final OrderEntry orderEntry = LibraryUtil.findLibraryEntry(jarRoot, project);
       return orderEntry != null && ProjectSettingsService.getInstance(project).canOpenLibraryOrSdkSettings(orderEntry);
     }
@@ -122,7 +122,7 @@ public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWith
   public void navigate(boolean requestFocus) {
     final VirtualFile jarRoot = getJarRoot();
     final Project project = getProject();
-    if (requestFocus && jarRoot != null && ProjectRootsUtil.isLibraryRoot(jarRoot, project)) {
+    if (requestFocus && jarRoot != null && project != null && ProjectRootsUtil.isLibraryRoot(jarRoot, project)) {
       final OrderEntry orderEntry = LibraryUtil.findLibraryEntry(jarRoot, project);
       if (orderEntry != null) {
         ProjectSettingsService.getInstance(project).openLibraryOrSdkSettings(orderEntry);

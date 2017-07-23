@@ -36,10 +36,6 @@ public class GenerateSuperMethodCallAction extends BaseCodeInsightAction {
     if (!(file instanceof PsiJavaFile)) {
       return false;
     }
-    PsiMethod method = GenerateSuperMethodCallHandler.canInsertSuper(editor, file);
-    if (method == null) {
-      return false;
-    }
-    return true;
+    return GenerateSuperMethodCallHandler.canInsertSuper(editor, file) != null;
   }
 }

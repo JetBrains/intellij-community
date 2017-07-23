@@ -17,7 +17,6 @@ package com.jetbrains.python.psi.types;
 
 import com.google.common.collect.Sets;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -58,7 +57,8 @@ public class PyImportedModuleType implements PyType {
     final PsiElement resolved = myImportedModule.resolve();
     if (resolved != null) {
       final PsiFile containingFile = location != null ? location.getContainingFile() : null;
-      List<PsiElement> elements = Collections.singletonList(ResolveImportUtil.resolveChild(resolved, name, containingFile, false, true));
+      List<PsiElement> elements = Collections.singletonList(ResolveImportUtil.resolveChild(resolved, name, containingFile, false, true,
+                                                                                           false));
       final PyImportElement importElement = myImportedModule.getImportElement();
       final PyFile resolvedFile = PyUtil.as(resolved, PyFile.class);
       if (location != null && importElement != null && PyUtil.inSameFile(location, importElement) &&

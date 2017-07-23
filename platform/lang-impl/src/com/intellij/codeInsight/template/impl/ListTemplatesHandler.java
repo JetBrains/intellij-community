@@ -56,10 +56,6 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
-    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
-    if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) {
-      return;
-    }
     EditorUtil.fillVirtualSpaceUntilCaret(editor);
 
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
@@ -216,11 +212,6 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     lookup.addLookupListener(new MyLookupAdapter(file));
     lookup.refreshUi(false, true);
     lookup.showLookup();
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 
   private static String computeDescriptionMatchingPrefix(Document document, int offset) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,13 +32,7 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner {
    */
   PsiAnnotation[] EMPTY_ARRAY = new PsiAnnotation[0];
 
-  ArrayFactory<PsiAnnotation> ARRAY_FACTORY = new ArrayFactory<PsiAnnotation>() {
-    @NotNull
-    @Override
-    public PsiAnnotation[] create(final int count) {
-      return count == 0 ? EMPTY_ARRAY : new PsiAnnotation[count];
-    }
-  };
+  ArrayFactory<PsiAnnotation> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiAnnotation[count];
 
   @NonNls String DEFAULT_REFERENCED_METHOD_NAME = "value";
 
@@ -47,7 +41,7 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner {
    */
   enum TargetType {
     // see java.lang.annotation.ElementType
-    TYPE, FIELD, METHOD, PARAMETER, CONSTRUCTOR, LOCAL_VARIABLE, ANNOTATION_TYPE, PACKAGE, TYPE_USE, TYPE_PARAMETER,
+    TYPE, FIELD, METHOD, PARAMETER, CONSTRUCTOR, LOCAL_VARIABLE, ANNOTATION_TYPE, PACKAGE, TYPE_USE, TYPE_PARAMETER, MODULE,
     // auxiliary value, used when it's impossible to determine annotation's targets
     UNKNOWN;
 

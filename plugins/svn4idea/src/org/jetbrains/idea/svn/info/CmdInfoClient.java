@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,12 +41,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/27/12
- * Time: 12:59 PM
- */
 public class CmdInfoClient extends BaseSvnClient implements InfoClient {
 
   private static final Logger LOG = Logger.getInstance(CmdInfoClient.class);
@@ -104,15 +97,12 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
       return;
     }
 
-    final SvnInfoHandler infoHandler = new SvnInfoHandler(base, new Consumer<Info>() {
-      @Override
-      public void consume(Info info) {
-        try {
-          handler.consume(info);
-        }
-        catch (SVNException e) {
-          throw new SvnExceptionWrapper(e);
-        }
+    final SvnInfoHandler infoHandler = new SvnInfoHandler(base, info -> {
+      try {
+        handler.consume(info);
+      }
+      catch (SVNException e) {
+        throw new SvnExceptionWrapper(e);
       }
     });
 
@@ -128,15 +118,7 @@ public class CmdInfoClient extends BaseSvnClient implements InfoClient {
     catch (SvnExceptionWrapper e) {
       LOG.info("info output " + result);
       throw new SvnBindException(e.getCause());
-    } catch (IOException e) {
-      LOG.info("info output " + result);
-      throw new SvnBindException(e);
-    }
-    catch (ParserConfigurationException e) {
-      LOG.info("info output " + result);
-      throw new SvnBindException(e);
-    }
-    catch (SAXException e) {
+    } catch (IOException | SAXException | ParserConfigurationException e) {
       LOG.info("info output " + result);
       throw new SvnBindException(e);
     }

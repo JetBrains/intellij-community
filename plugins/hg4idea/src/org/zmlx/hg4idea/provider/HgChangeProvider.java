@@ -32,8 +32,10 @@ import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.util.HgUtil;
 
+import java.awt.*;
 import java.io.File;
 import java.util.*;
+import java.util.List;
 
 public class HgChangeProvider implements ChangeProvider {
 
@@ -42,7 +44,8 @@ public class HgChangeProvider implements ChangeProvider {
 
   public static final FileStatus COPIED = FileStatusFactory.getInstance().createFileStatus("COPIED", "Copied", FileStatus.ADDED.getColor());
   public static final FileStatus RENAMED = FileStatusFactory.getInstance().createFileStatus("RENAMED", "Renamed",
-                                                                                            JBColor.CYAN.darker().darker());
+                                                                                            new JBColor(JBColor.CYAN.darker().darker(),
+                                                                                                        new Color(0x3a8484)));
 
   private static final EnumMap<HgFileStatusEnum, HgChangeProcessor> PROCESSORS =
     new EnumMap<>(HgFileStatusEnum.class);
@@ -157,7 +160,7 @@ public class HgChangeProvider implements ChangeProvider {
 
   /**
    * Finds modified but unsaved files in the given list of dirty files and notifies the builder about MODIFIED changes.
-   * Changes contained in <code>alreadyProcessed</code> are skipped - they have already been processed as modified, or else.
+   * Changes contained in {@code alreadyProcessed} are skipped - they have already been processed as modified, or else.
    */
   public void processUnsavedChanges(ChangelistBuilder builder, Set<FilePath> dirtyFiles, Collection<HgChange> alreadyProcessed) {
     // exclude already processed

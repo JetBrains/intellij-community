@@ -30,7 +30,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -167,7 +166,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
 
   @Override
   public boolean isReferenceTo(PsiElement element) {
-    return (element instanceof PsiClass || element instanceof PsiPackage) && super.isReferenceTo(element);
+    return (element instanceof PsiMember || element instanceof PsiPackage) && super.isReferenceTo(element);
   }
 
   @Override
@@ -268,6 +267,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return context == null ? JavaPsiFacade.getInstance(getElement().getProject()).findPackage("") : context;
   }
 
+  @Nullable
   public String[] getExtendClassNames() {
     return JavaClassReferenceProvider.EXTEND_CLASS_NAMES.getValue(getOptions());
   }

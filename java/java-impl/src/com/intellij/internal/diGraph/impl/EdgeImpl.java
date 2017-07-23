@@ -20,13 +20,6 @@ import com.intellij.internal.diGraph.Node;
 import com.intellij.internal.diGraph.analyzer.MarkedEdge;
 import com.intellij.internal.diGraph.analyzer.Mark;
 
-/**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: 21.06.2003
- * Time: 23:38:12
- * To change this template use Options | File Templates.
- */
 public class EdgeImpl implements MarkedEdge {
   NodeImpl myBeg;
   NodeImpl myEnd;

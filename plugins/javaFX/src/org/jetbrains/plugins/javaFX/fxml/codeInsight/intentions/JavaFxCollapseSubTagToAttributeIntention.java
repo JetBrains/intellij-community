@@ -31,10 +31,6 @@ import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassTagDescriptorBase;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyTagDescriptor;
 
-/**
- * User: anna
- * Date: 2/22/13
- */
 public class JavaFxCollapseSubTagToAttributeIntention extends PsiElementBaseIntentionAction{
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {

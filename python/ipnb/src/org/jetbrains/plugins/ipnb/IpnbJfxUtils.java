@@ -3,24 +3,25 @@ package org.jetbrains.plugins.ipnb;
 import com.github.rjeschke.txtmark.Configuration;
 import com.github.rjeschke.txtmark.Processor;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.python.PythonHelpersLocator;
+import com.sun.javafx.application.PlatformImpl;
 import com.sun.javafx.webkit.Accessor;
 import com.sun.webkit.WebPage;
 import com.sun.webkit.graphics.WCSize;
-import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.markdown4j.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -60,16 +61,19 @@ public class IpnbJfxUtils {
                                                  "                }\n" +
                                                  "            });\n" +
                                                  "</script><script type=\"text/javascript\"\n" +
-                                                 " src=\"" +
-                                                 IpnbFileType.class.getResource("/MathJax/MathJax.js") +
+                                                 " src=\" %s" +
                                                  "?config=TeX-AMS_HTML-full\">\n" +
                                                  " </script>" + ourBody;
   private static final String ourPrefix = ourStyle + ourBody;
   private static final String ourPostfix = "</div></body></html>";
   private static URL ourStyleUrl;
 
-  public static JComponent createHtmlPanel(@NotNull final String source, int width) {
 
+  private static void runFX(@NotNull Runnable r) {
+    IdeEventQueue.unsafeNonblockingExecute(r);
+  }
+
+  public static JComponent createHtmlPanel(@NotNull final String source, int width) {
     final JFXPanel javafxPanel = new JFXPanel() {
       @Override
       protected void processMouseWheelEvent(MouseWheelEvent e) {
@@ -78,9 +82,7 @@ public class IpnbJfxUtils {
         parent.dispatchEvent(parentEvent);
       }
     };
-    javafxPanel.setBackground(IpnbEditorUtil.getBackground());
-
-    Platform.runLater(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> runFX(() -> PlatformImpl.runLater(() -> {
       final WebView webView = new WebView();
       webView.setContextMenuEnabled(false);
       webView.setOnDragDetected(event -> {
@@ -90,7 +92,12 @@ public class IpnbJfxUtils {
 
       final boolean hasMath = source.contains("$");
       if (hasMath) {
-        engine.setOnStatusChanged(event -> adjustHeight(webView, javafxPanel, source));
+        engine.setOnStatusChanged(event -> {
+          final String data = event.getData();
+          if (data != null && data.isEmpty()) {
+            adjustHeight(webView, javafxPanel, source);
+          }
+        });
       }
       else {
         engine.getLoadWorker().stateProperty().addListener((observable, oldValue, newValue) -> {
@@ -99,10 +106,10 @@ public class IpnbJfxUtils {
           }
         });
       }
-      final BorderPane pane = new BorderPane(webView);
       final String prefix;
       if (hasMath) {
-        prefix = String.format(ourMathJaxPrefix, width - 500, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
+        prefix = String.format(ourMathJaxPrefix, width - 500, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize(),
+                               PythonHelpersLocator.getHelperFile("/MathJax/MathJax.js").toURI());
       }
       else {
         prefix = String.format(ourPrefix, width - 500);
@@ -110,17 +117,18 @@ public class IpnbJfxUtils {
       final String content = prefix + convertToHtml(source) + ourPostfix;
       engine.loadContent(content);
 
-      final Scene scene = new Scene(pane, 0, 0);
+      final Scene scene = new Scene(webView, 0, 0);
 
       javafxPanel.setScene(scene);
       updateLaf(LafManager.getInstance().getCurrentLookAndFeel() instanceof DarculaLookAndFeelInfo,
                 engine, javafxPanel);
-    });
+    })));
 
     return javafxPanel;
   }
 
   private static String convertToHtml(@NotNull String source) {
+    if (source.trim().startsWith("<iframe")) return source;
     final String result = wrapMath(source);
 
     final ExtDecorator decorator = new ExtDecorator();
@@ -149,7 +157,7 @@ public class IpnbJfxUtils {
     boolean single;
     int end = StringUtil.indexOf(source, "$");
     single = end + 1 >= source.length() || source.charAt(end + 1) != '$';
-    while (end > 0) {
+    while (end >= 0) {
       String substring = source.substring(start, end);
       if (start != 0) {
         result.append(escapeMath(inMath, single));
@@ -242,9 +250,7 @@ public class IpnbJfxUtils {
         int width = wcsize.getIntWidth();
         if (width < javafxPanel.getWidth()) width = javafxPanel.getWidth();
         if (height <= 0 || width <= 0) return;
-        webView.setPrefWidth(wcsize.getWidth());
-        webView.setMinWidth(wcsize.getWidth());
-        int count = 1;
+        int count = 0;
         if (source.contains("```")) {
           count += 1;
         }
@@ -252,6 +258,9 @@ public class IpnbJfxUtils {
 
         if (source.contains("\\frac")) {
           count += 1;
+        }
+        if (source.contains("\\limits")) {
+          count += 2;
         }
         while (source.contains("$$")) {
           if (inMath) {
@@ -268,13 +277,13 @@ public class IpnbJfxUtils {
           source = source.substring(source.indexOf("$$") + 2);
         }
 
-        int finalHeight = height + count * EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize();
-        int finalWidth = width;
-        UIUtil.invokeLaterIfNeeded(() -> {
-          final Dimension size = new Dimension(finalWidth, finalHeight);
+        final Dimension size = new Dimension(
+          width, height + count * EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
+
+        ApplicationManager.getApplication().invokeLater(()->{
           javafxPanel.setPreferredSize(size);
-          javafxPanel.setMinimumSize(size);
           javafxPanel.revalidate();
+          javafxPanel.repaint();
         });
       }
     }
@@ -287,11 +296,11 @@ public class IpnbJfxUtils {
   }
 
   private static void updateLafDarcula(WebEngine engine, JFXPanel jfxPanel) {
-    Platform.runLater(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> runFX(() -> PlatformImpl.runLater(() -> {
       ourStyleUrl = IpnbFileType.class.getResource("/style/javaFXBrowserDarcula.css");
       engine.setUserStyleSheetLocation(ourStyleUrl.toExternalForm());
       jfxPanel.getScene().getStylesheets().add(ourStyleUrl.toExternalForm());
       engine.reload();
-    });
+    })));
   }
 }

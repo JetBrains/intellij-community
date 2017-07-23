@@ -51,7 +51,7 @@ public class CollectHighlightsUtil {
                                                     final int endOffset,
                                                     boolean includeAllParents) {
     PsiElement commonParent = findCommonParent(root, startOffset, endOffset);
-    if (commonParent == null) return new ArrayList<PsiElement>();
+    if (commonParent == null) return new ArrayList<>();
     final List<PsiElement> list = getElementsToHighlight(commonParent, startOffset, endOffset);
 
     PsiElement parent = commonParent;
@@ -69,15 +69,15 @@ public class CollectHighlightsUtil {
 
   @NotNull
   private static List<PsiElement> getElementsToHighlight(@NotNull PsiElement parent, final int startOffset, final int endOffset) {
-    final List<PsiElement> result = new ArrayList<PsiElement>();
+    final List<PsiElement> result = new ArrayList<>();
     final int currentOffset = parent.getTextRange().getStartOffset();
     final Condition<PsiElement>[] filters = Extensions.getExtensions(EP_NAME);
 
     int offset = currentOffset;
 
     final TIntStack starts = new TIntStack(STARTING_TREE_HEIGHT);
-    final Stack<PsiElement> elements = new Stack<PsiElement>(STARTING_TREE_HEIGHT);
-    final Stack<PsiElement> children = new Stack<PsiElement>(STARTING_TREE_HEIGHT);
+    final Stack<PsiElement> elements = new Stack<>(STARTING_TREE_HEIGHT);
+    final Stack<PsiElement> children = new Stack<>(STARTING_TREE_HEIGHT);
     PsiElement element = parent;
 
     PsiElement child = PsiUtilCore.NULL_PSI_ELEMENT;

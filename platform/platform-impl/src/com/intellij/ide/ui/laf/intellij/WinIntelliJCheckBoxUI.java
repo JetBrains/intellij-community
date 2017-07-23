@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,29 +30,48 @@ public class WinIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
+    AbstractButton b = (AbstractButton)c;
+    b.setRolloverEnabled(true);
     return new WinIntelliJCheckBoxUI();
   }
 
   @Override
   protected void drawCheckIcon(JComponent c, Graphics2D g, JCheckBox b, Rectangle iconRect, boolean selected, boolean enabled) {
-    final Color color = enabled ? b.getForeground() : getBorderColor1(false, false);
-    g.setColor(color);
-    final Icon icon = MacIntelliJIconCache.getIcon("checkBox", selected, false, enabled);
-    Rectangle r = new Rectangle(iconRect.x + JBUI.scale(2), iconRect.y + JBUI.scale(2), iconRect.width - JBUI.scale(4), iconRect.height - JBUI.scale(4));
-    icon.paintIcon(c, g, r.x, r.y);
+    ButtonModel bm = b.getModel();
+    boolean focused = c.hasFocus() || bm.isRollover() || isCellRollover(b);
+    boolean pressed = bm.isPressed() || isCellPressed(b);
+
+    String iconName = isIndeterminate(b) ? "checkBoxIndeterminate" : "checkBox";
+    Icon icon = MacIntelliJIconCache.getIcon(iconName, false, selected || isIndeterminate(b), focused, enabled, pressed);
+
+    int x = (iconRect.width - icon.getIconWidth()) / 2 + iconRect.x;
+    int y = (iconRect.height - icon.getIconHeight()) / 2 + iconRect.y;
+    icon.paintIcon(c, g, x, y);
   }
 
   @Override
   protected void drawText(JComponent c, Graphics2D g, JCheckBox b, FontMetrics fm, Rectangle textRect, String text) {
+    textRect.y -= JBUI.scale(1); // Move one pixel up
     super.drawText(c, g, b, fm, textRect, text);
-    if (b.hasFocus()) {
-      g.setColor(b.getForeground());
-      UIUtil.drawDottedRectangle(g, textRect.x - 2, textRect.y - 1, textRect.width + textRect.x + 1, textRect.height + 3);
-    }
+  }
+
+  private static boolean isCellRollover(JCheckBox checkBox) {
+    Rectangle cellPosition = (Rectangle)checkBox.getClientProperty(UIUtil.CHECKBOX_ROLLOVER_PROPERTY);
+    return cellPosition != null && cellPosition.getBounds().equals(checkBox.getBounds());
+  }
+
+  private static boolean isCellPressed(JCheckBox checkBox) {
+    Rectangle cellPosition = (Rectangle)checkBox.getClientProperty(UIUtil.CHECKBOX_PRESSED_PROPERTY);
+    return cellPosition != null && cellPosition.getBounds().equals(checkBox.getBounds());
   }
 
   @Override
   public Icon getDefaultIcon() {
     return JBUI.scale(EmptyIcon.create(18)).asUIResource();
+  }
+
+  @Override
+  protected boolean fillBackgroundForIndeterminateSameAsForSelected() {
+    return false;
   }
 }

@@ -22,8 +22,8 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ig.psiutils.MethodMatcher;
+import com.siyeh.ig.psiutils.TestUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +38,9 @@ public class TestMethodWithoutAssertionInspectionBase extends BaseInspection {
       .add(JUnitCommonClassNames.ORG_JUNIT_ASSERT, "assert.*|fail.*")
       .add(JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT, "assert.*|fail.*")
       .add(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS, "assert.*|fail.*")
+      .add("org.assertj.core.api.Assertions", "assertThat")
+      .add("com.google.common.truth.Truth", "assert.*")
+      .add("com.google.common.truth.Truth8", "assert.*")
       .add("org.mockito.Mockito", "verify.*")
       .add("org.mockito.InOrder", "verify")
       .add("org.junit.rules.ExpectedException", "expect.*")

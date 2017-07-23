@@ -20,6 +20,7 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +60,7 @@ public class PluginClassLoader extends UrlClassLoader {
 
   @Override
   public Class loadClass(@NotNull String name, final boolean resolve) throws ClassNotFoundException {
-    Class c = tryLoadingClass(name, resolve);
+    Class c = tryLoadingClass(name, resolve, null);
     if (c == null) {
       throw new ClassNotFoundException(name + " " + this);
     }
@@ -69,11 +70,14 @@ public class PluginClassLoader extends UrlClassLoader {
   // Changed sequence in which classes are searched, this is essential if plugin uses library,
   // a different version of which is used in IDEA.
   @Nullable
-  private Class tryLoadingClass(@NotNull String name, final boolean resolve) {
-    Class c = loadClassInsideSelf(name);
+  private Class tryLoadingClass(@NotNull String name, final boolean resolve, @Nullable Set<ClassLoader> visited) {
+    Class c = null;
+    if (!mustBeLoadedByPlatform(name)) {
+      c = loadClassInsideSelf(name);
+    }
 
     if (c == null) {
-      c = loadClassFromParents(name);
+      c = loadClassFromParents(name, visited);
     }
 
     if (c != null) {
@@ -86,11 +90,26 @@ public class PluginClassLoader extends UrlClassLoader {
     return null;
   }
 
+  private static boolean mustBeLoadedByPlatform(String className) {
+    //some commonly used classes from kotlin-runtime must be loaded by the platform classloader. Otherwise if a plugin bundles its own version
+    // of kotlin-runtime.jar it won't be possible to call platform's methods with these types in signatures from such a plugin.
+    //We assume that these classes don't change between Kotlin versions so it's safe to always load them from platform's kotlin-runtime.
+    return className.startsWith("kotlin.") && (className.startsWith("kotlin.jvm.functions.")
+                                               || className.equals("kotlin.sequences.Sequence")
+                                               || className.equals("kotlin.Pair")
+                                               || className.equals("kotlin.Triple"));
+  }
+
   @Nullable
-  private Class loadClassFromParents(final String name) {
+  private Class loadClassFromParents(final String name, Set<ClassLoader> visited) {
     for (ClassLoader parent : myParents) {
+      if (visited == null) visited = ContainerUtilRt.newHashSet(this);
+      if (!visited.add(parent)) {
+        continue;
+      }
+
       if (parent instanceof PluginClassLoader) {
-        Class c = ((PluginClassLoader)parent).tryLoadingClass(name, false);
+        Class c = ((PluginClassLoader)parent).tryLoadingClass(name, false, visited);
         if (c != null) {
           return c;
         }
@@ -118,10 +137,7 @@ public class PluginClassLoader extends UrlClassLoader {
     try {
       c = _findClass(name);
     }
-    catch (IncompatibleClassChangeError e) {
-      throw new PluginException("While loading class " + name + ": " + e.getMessage(), e, myPluginId);
-    }
-    catch (UnsupportedClassVersionError e) {
+    catch (IncompatibleClassChangeError | UnsupportedClassVersionError e) {
       throw new PluginException("While loading class " + name + ": " + e.getMessage(), e, myPluginId);
     }
     if (c != null) {
@@ -233,14 +249,14 @@ public class PluginClassLoader extends UrlClassLoader {
 
   @Override
   public String toString() {
-    return "PluginClassLoader[" + myPluginId + ", " + myPluginVersion + "]";
+    return "PluginClassLoader[" + myPluginId + ", " + myPluginVersion + "] "+super.toString();
   }
 
   private static class DeepEnumeration implements Enumeration<URL> {
     private final Enumeration<URL>[] myEnumerations;
-    private int myIndex = 0;
+    private int myIndex;
 
-    public DeepEnumeration(Enumeration<URL>[] enumerations) {
+    DeepEnumeration(@NotNull Enumeration<URL>[] enumerations) {
       myEnumerations = enumerations;
     }
 

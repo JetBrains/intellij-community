@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -234,7 +234,7 @@ public class FStringParser {
 
     private ParseResult(@NotNull List<Integer> singleRightBraces, @NotNull List<Fragment> fragments) {
       mySingleRightBraces = singleRightBraces;
-      myFragments = ContainerUtil.sorted(fragments, (f1, f2) -> f1.getLeftBraceOffset() - f2.getLeftBraceOffset());;
+      myFragments = ContainerUtil.sorted(fragments, (f1, f2) -> f1.getLeftBraceOffset() - f2.getLeftBraceOffset());
     }
 
     @NotNull

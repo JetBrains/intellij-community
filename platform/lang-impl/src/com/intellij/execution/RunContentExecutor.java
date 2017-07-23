@@ -92,8 +92,8 @@ public class RunContentExecutor implements Disposable {
     return this;
   }
 
-  private ConsoleView createConsole(@NotNull Project project) {
-    TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
+  private ConsoleView createConsole() {
+    TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(myProject);
     consoleBuilder.filters(myFilterList);
     final ConsoleView console = consoleBuilder.getConsole();
 
@@ -126,13 +126,13 @@ public class RunContentExecutor implements Disposable {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     // Use user-provided console if exist. Create new otherwise
-    ConsoleView view = (myUserProvidedConsole != null ? myUserProvidedConsole :  createConsole(myProject));
+    ConsoleView view = (myUserProvidedConsole != null ? myUserProvidedConsole :  createConsole());
     view.attachToProcess(myProcess);
     if (myAfterCompletion != null) {
       myProcess.addProcessListener(new ProcessAdapter() {
         @Override
         public void processTerminated(ProcessEvent event) {
-          SwingUtilities.invokeLater(myAfterCompletion);
+          ApplicationManager.getApplication().invokeLater(myAfterCompletion);
         }
       });
     }
@@ -153,7 +153,7 @@ public class RunContentExecutor implements Disposable {
   }
 
   private static JComponent createToolbar(ActionGroup actions) {
-    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actions, false);
+    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("RunContentExecutor", actions, false);
     return actionToolbar.getComponent();
   }
 

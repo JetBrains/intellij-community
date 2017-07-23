@@ -46,12 +46,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 10/23/12
- * Time: 7:23 PM
- */
 public class SvnEditCommitMessageAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {

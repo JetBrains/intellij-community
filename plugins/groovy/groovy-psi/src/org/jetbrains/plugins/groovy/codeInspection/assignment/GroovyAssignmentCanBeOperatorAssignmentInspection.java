@@ -53,19 +53,6 @@ public class GroovyAssignmentCanBeOperatorAssignmentInspection
   public boolean ignoreObscureOperators = false;
 
   @Override
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
-    return ASSIGNMENT_ISSUES;
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return "Assignment replaceable with operator assignment";
-  }
-
-  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final GrAssignmentExpression assignmentExpression =

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
+import org.jetbrains.java.decompiler.modules.decompiler.ClasspathHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
@@ -39,6 +40,7 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
 import org.jetbrains.java.decompiler.util.TextUtil;
 
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -216,9 +218,16 @@ public class InvocationExprent extends Exprent {
     tracer.addMapping(bytecode);
 
     if (isStatic) {
+      if (isBoxingCall()) {
+        // process general "boxing" calls, e.g. 'Object[] data = { true }' or 'Byte b = 123'
+        // here 'byte' and 'short' values do not need an explicit narrowing type cast
+        ExprProcessor.getCastedExprent(lstParameters.get(0), descriptor.params[0], buf, indent, false, false, false, tracer);
+        return buf;
+      }
+
       ClassNode node = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
       if (node == null || !classname.equals(node.classStruct.qualifiedName)) {
-        buf.append(DecompilerContext.getImportCollector().getShortName(ExprProcessor.buildJavaClassName(classname)));
+        buf.append(DecompilerContext.getImportCollector().getShortNameInClassContext(ExprProcessor.buildJavaClassName(classname)));
       }
     }
     else {
@@ -257,6 +266,12 @@ public class InvocationExprent extends Exprent {
         }
         else if (instance != null) {
           TextBuffer res = instance.toJava(indent, tracer);
+
+          if (isUnboxingCall()) {
+            // we don't print the unboxing call - no need to bother with the instance wrapping / casting
+            buf.append(res);
+            return buf;
+          }
 
           VarType rightType = instance.getExprType();
           VarType leftType = new VarType(CodeConstants.TYPE_OBJECT, 0, classname);
@@ -336,18 +351,32 @@ public class InvocationExprent extends Exprent {
 
     BitSet setAmbiguousParameters = getAmbiguousParameters();
 
+    // omit 'new Type[] {}' for the last parameter of a vararg method call
+    if (lstParameters.size() == descriptor.params.length && isVarArgCall()) {
+      Exprent lastParam = lstParameters.get(lstParameters.size() - 1);
+      if (lastParam.type == EXPRENT_NEW && lastParam.getExprType().arrayDim >= 1) {
+        ((NewExprent) lastParam).setVarArgParam(true);
+      }
+    }
+
     boolean firstParameter = true;
     int start = isEnum ? 2 : 0;
     for (int i = start; i < lstParameters.size(); i++) {
       if (sigFields == null || sigFields.get(i) == null) {
-        if (!firstParameter) {
-          buf.append(", ");
-        }
-
         TextBuffer buff = new TextBuffer();
         boolean ambiguous = setAmbiguousParameters.get(i);
-        ExprProcessor.getCastedExprent(lstParameters.get(i), descriptor.params[i], buff, indent, true, ambiguous, tracer);
-        buf.append(buff);
+
+        Exprent param = unboxIfNeeded(lstParameters.get(i));
+        // 'byte' and 'short' literals need an explicit narrowing type cast when used as a parameter
+        ExprProcessor.getCastedExprent(param, descriptor.params[i], buff, indent, true, ambiguous, true, tracer);
+
+        // the last "new Object[0]" in the vararg call is not printed
+        if (buff.length() > 0) {
+          if (!firstParameter) {
+            buf.append(", ");
+          }
+          buf.append(buff);
+        }
 
         firstParameter = false;
       }
@@ -356,6 +385,103 @@ public class InvocationExprent extends Exprent {
     buf.append(")");
 
     return buf;
+  }
+
+  public static Exprent unboxIfNeeded(Exprent param) {
+    // "unbox" invocation parameters, e.g. 'byteSet.add((byte)123)' or 'new ShortContainer((short)813)'
+    if (param.type == Exprent.EXPRENT_INVOCATION && ((InvocationExprent)param).isBoxingCall()) {
+      param = ((InvocationExprent)param).lstParameters.get(0);
+    }
+    return param;
+  }
+
+  private boolean isVarArgCall() {
+    StructClass cl = DecompilerContext.getStructContext().getClass(classname);
+    if (cl != null) {
+      StructMethod mt = cl.getMethod(InterpreterUtil.makeUniqueKey(name, stringDescriptor));
+      if (mt != null) {
+        return mt.hasModifier(CodeConstants.ACC_VARARGS);
+      }
+    }
+    else {
+      // TODO: tap into IDEA indices to access libraries methods details
+
+      // try to check the class on the classpath
+      Method mtd = ClasspathHelper.findMethod(classname, name, descriptor);
+      return mtd != null && mtd.isVarArgs();
+    }
+    return false;
+  }
+
+  private boolean isBoxingCall() {
+    if (isStatic && "valueOf".equals(name) && lstParameters.size() == 1) {
+      int paramType = lstParameters.get(0).getExprType().type;
+
+      // special handling for ambiguous types
+      if (lstParameters.get(0).type == Exprent.EXPRENT_CONST) {
+        // 'Integer.valueOf(1)' has '1' type detected as TYPE_BYTECHAR
+        // 'Integer.valueOf(40_000)' has '40_000' type detected as TYPE_CHAR
+        // so we check the type family instead
+        if (lstParameters.get(0).getExprType().typeFamily == CodeConstants.TYPE_FAMILY_INTEGER) {
+          if (classname.equals("java/lang/Integer")) {
+            return true;
+          }
+        }
+
+        if (paramType == CodeConstants.TYPE_BYTECHAR || paramType == CodeConstants.TYPE_SHORTCHAR) {
+          if (classname.equals("java/lang/Character")) {
+            return true;
+          }
+        }
+      }
+
+      return classname.equals(getClassNameForPrimitiveType(paramType));
+    }
+
+    return false;
+  }
+
+  // TODO: move to CodeConstants ???
+  private static String getClassNameForPrimitiveType(int type) {
+    switch (type) {
+      case CodeConstants.TYPE_BOOLEAN:
+        return "java/lang/Boolean";
+      case CodeConstants.TYPE_BYTE:
+      case CodeConstants.TYPE_BYTECHAR:
+        return "java/lang/Byte";
+      case CodeConstants.TYPE_CHAR:
+        return "java/lang/Character";
+      case CodeConstants.TYPE_SHORT:
+      case CodeConstants.TYPE_SHORTCHAR:
+        return "java/lang/Short";
+      case CodeConstants.TYPE_INT:
+        return "java/lang/Integer";
+      case CodeConstants.TYPE_LONG:
+        return "java/lang/Long";
+      case CodeConstants.TYPE_FLOAT:
+        return "java/lang/Float";
+      case CodeConstants.TYPE_DOUBLE:
+        return "java/lang/Double";
+    }
+    return null;
+  }
+
+  private static final Map<String, String> UNBOXING_METHODS;
+
+  static {
+    UNBOXING_METHODS = new HashMap<>();
+    UNBOXING_METHODS.put("booleanValue", "java/lang/Boolean");
+    UNBOXING_METHODS.put("byteValue", "java/lang/Byte");
+    UNBOXING_METHODS.put("shortValue", "java/lang/Short");
+    UNBOXING_METHODS.put("intValue", "java/lang/Integer");
+    UNBOXING_METHODS.put("longValue", "java/lang/Long");
+    UNBOXING_METHODS.put("floatValue", "java/lang/Float");
+    UNBOXING_METHODS.put("doubleValue", "java/lang/Double");
+    UNBOXING_METHODS.put("charValue", "java/lang/Character");
+  }
+
+  private boolean isUnboxingCall() {
+    return !isStatic && lstParameters.size() == 0 && classname.equals(UNBOXING_METHODS.get(name));
   }
 
   private BitSet getAmbiguousParameters() {

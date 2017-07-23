@@ -1,6 +1,7 @@
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityData;
@@ -14,7 +15,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +34,18 @@ public class RefreshExternalProjectAction extends ExternalSystemNodeAction<Abstr
     super(AbstractExternalEntityData.class);
     getTemplatePresentation().setText(ExternalSystemBundle.message("action.refresh.project.text", "external"));
     getTemplatePresentation().setDescription(ExternalSystemBundle.message("action.refresh.project.description", "external"));
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    if(this.getClass() != RefreshExternalProjectAction.class) return;
+
+    ProjectSystemId systemId = getSystemId(e);
+    final String systemIdName = systemId != null ? systemId.getReadableName() : "external";
+    Presentation presentation = e.getPresentation();
+    presentation.setText(ExternalSystemBundle.message("action.refresh.project.text", systemIdName));
+    presentation.setDescription(ExternalSystemBundle.message("action.refresh.project.description", systemIdName));
   }
 
   @Override

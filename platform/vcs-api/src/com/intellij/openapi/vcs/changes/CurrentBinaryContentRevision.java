@@ -18,11 +18,8 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
-
-import java.io.IOException;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -34,14 +31,7 @@ public class CurrentBinaryContentRevision extends CurrentContentRevision impleme
 
   @Nullable
   public byte[] getBinaryContent() throws VcsException {
-    final VirtualFile vFile = getVirtualFile();
-    if (vFile == null) return null;
-    try {
-      return vFile.contentsToByteArray();
-    }
-    catch (IOException e) {
-      throw new VcsException(e);
-    }
+    return getContentAsBytes();
   }
 
   @NonNls

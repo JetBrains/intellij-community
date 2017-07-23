@@ -25,10 +25,6 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 1/10/13
- */
 public class JavaFxPropertyTagDescriptor implements XmlElementDescriptor {
   private final PsiClass myPsiClass;
   private final String myName;
@@ -176,7 +172,7 @@ public class JavaFxPropertyTagDescriptor implements XmlElementDescriptor {
   public PsiElement getDeclaration() {
     if (myPsiClass == null) return null;
     if (myStatic) return JavaFxPsiUtil.findStaticPropertySetter(myName, myPsiClass);
-    return JavaFxPsiUtil.collectWritableProperties(myPsiClass).get(myName);
+    return JavaFxPsiUtil.getWritableProperties(myPsiClass).get(myName);
   }
 
   @Override
@@ -195,6 +191,7 @@ public class JavaFxPropertyTagDescriptor implements XmlElementDescriptor {
   @Override
   public void init(PsiElement element) {}
 
+  @NotNull
   @Override
   public Object[] getDependences() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;

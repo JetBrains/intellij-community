@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
  */
 package com.intellij.core;
 
+import com.intellij.configurationStore.DefaultStateSerializerKt;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.components.impl.stores.DefaultStateSerializer;
 import com.intellij.openapi.components.impl.stores.DirectoryStorageUtil;
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil;
 import com.intellij.openapi.module.ModuleManager;
@@ -26,7 +26,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import org.jdom.Element;
@@ -37,6 +36,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Map;
 import java.util.TreeMap;
+
+import static com.intellij.util.JdomKt.loadElement;
 
 /**
  * @author yole
@@ -80,7 +81,7 @@ public class CoreProjectLoader {
     VirtualFile libraries = dotIdea.findChild("libraries");
     if (libraries != null) {
       Map<String, Element> data = DirectoryStorageUtil.loadFrom(libraries, PathMacroManager.getInstance(project));
-      Element libraryTable = DefaultStateSerializer.deserializeState(DirectoryStorageUtil.getCompositeState(data, new ProjectLibraryTable.LibraryStateSplitter()), Element.class, null);
+      Element libraryTable = DefaultStateSerializerKt.deserializeState(DirectoryStorageUtil.getCompositeState(data, new ProjectLibraryTable.LibraryStateSplitter()), Element.class, null);
       ((LibraryTableBase) ProjectLibraryTable.getInstance(project)).loadState(libraryTable);
     }
 
@@ -90,6 +91,6 @@ public class CoreProjectLoader {
 
   @NotNull
   public static TreeMap<String, Element> loadStorageFile(@NotNull ComponentManager componentManager, @NotNull VirtualFile modulesXml) throws JDOMException, IOException {
-    return FileStorageCoreUtil.load(JDOMUtil.load(modulesXml.getInputStream()), PathMacroManager.getInstance(componentManager), false);
+    return FileStorageCoreUtil.load(loadElement(modulesXml.getInputStream()), PathMacroManager.getInstance(componentManager), false);
   }
 }

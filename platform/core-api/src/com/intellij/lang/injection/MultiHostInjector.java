@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Sep 10, 2007
- * Time: 1:58:39 PM
- */
 package com.intellij.lang.injection;
 
 import com.intellij.psi.PsiElement;

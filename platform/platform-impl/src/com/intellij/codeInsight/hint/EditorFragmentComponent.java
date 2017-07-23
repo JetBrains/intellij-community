@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
@@ -47,17 +48,17 @@ public class EditorFragmentComponent extends JPanel {
   private static final int LINE_BORDER_THICKNESS = 1;
   private static final int EMPTY_BORDER_THICKNESS = 2;
 
-  private EditorFragmentComponent(EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
+  private EditorFragmentComponent(Component component, EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
     editor.setPurePaintingMode(true);
     try {
-      doInit(editor, startLine, endLine, showFolding, showGutter);
+      doInit(component, editor, startLine, endLine, showFolding, showGutter);
     }
     finally {
       editor.setPurePaintingMode(false);
     }
   }
 
-  private void doInit(EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
+  private void doInit(Component anchorComponent, EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
     Document doc = editor.getDocument();
     final int endOffset = endLine < doc.getLineCount() ? doc.getLineEndOffset(endLine) : doc.getTextLength();
     boolean newRendering = editor instanceof EditorImpl;
@@ -85,7 +86,8 @@ public class EditorFragmentComponent extends JPanel {
       editor.getScrollingModel().scrollHorizontally(0);
     }
 
-    final BufferedImage textImage = UIUtil.createImage(this, textImageWidth, textImageHeight, BufferedImage.TYPE_INT_RGB);
+    final BufferedImage textImage = UIUtil.createImage(anchorComponent == null ? editor.getContentComponent() : anchorComponent,
+                                                       textImageWidth, textImageHeight, BufferedImage.TYPE_INT_RGB);
     Graphics textGraphics = textImage.getGraphics();
     EditorUIUtil.setupAntialiasing(textGraphics);
 
@@ -150,11 +152,7 @@ public class EditorFragmentComponent extends JPanel {
     setLayout(new BorderLayout());
     add(component);
 
-    final Color borderColor = editor.getColorsScheme().getColor(EditorColors.SELECTED_TEARLINE_COLOR);
-
-    Border outsideBorder = JBUI.Borders.customLine(borderColor, LINE_BORDER_THICKNESS);
-    Border insideBorder = JBUI.Borders.empty(EMPTY_BORDER_THICKNESS, EMPTY_BORDER_THICKNESS);
-    setBorder(BorderFactory.createCompoundBorder(outsideBorder, insideBorder));
+    setBorder(createEditorFragmentBorder(editor));
   }
 
   private static int getWidthLimit(@NotNull Editor editor) {
@@ -166,7 +164,7 @@ public class EditorFragmentComponent extends JPanel {
   }
 
   /**
-   * @param y <code>y</code> coordinate in layered pane coordinate system.
+   * @param y {@code y} coordinate in layered pane coordinate system.
    */
   @Nullable
   public static LightweightHint showEditorFragmentHintAt(Editor editor,
@@ -224,14 +222,38 @@ public class EditorFragmentComponent extends JPanel {
     return hint;
   }
 
+  /**
+   * @param component Should be provided if editor is not currently displayable.
+   *                  Makes for correct rendering on multi-monitor configurations.
+   */
+  public static EditorFragmentComponent createEditorFragmentComponent(Component component, Editor editor,
+                                                                      int startLine,
+                                                                      int endLine,
+                                                                      boolean showFolding, boolean showGutter) {
+    return createEditorFragmentComponent(component, editor, startLine, endLine, showFolding, showGutter, true);
+  }
+  
   public static EditorFragmentComponent createEditorFragmentComponent(Editor editor,
                                                                       int startLine,
                                                                       int endLine,
                                                                       boolean showFolding, boolean showGutter) {
     return createEditorFragmentComponent(editor, startLine, endLine, showFolding, showGutter, true);
   }
-  
+
   public static EditorFragmentComponent createEditorFragmentComponent(Editor editor,
+                                                                      int startLine,
+                                                                      int endLine,
+                                                                      boolean showFolding, boolean showGutter,
+                                                                      boolean useCaretRowBackground) {
+    return createEditorFragmentComponent(null, editor, startLine, endLine, showFolding, showGutter, useCaretRowBackground);
+  }
+
+  /**
+   * @param component Should be provided if editor is not currently displayable.
+   *                  Makes for correct rendering on multi-monitor configurations.
+   */
+  public static EditorFragmentComponent createEditorFragmentComponent(Component component,
+                                                                      Editor editor,
                                                                       int startLine,
                                                                       int endLine,
                                                                       boolean showFolding, boolean showGutter,
@@ -240,7 +262,7 @@ public class EditorFragmentComponent extends JPanel {
     final Color old = editorEx.getBackgroundColor();
     Color backColor = getBackgroundColor(editor, useCaretRowBackground);
     editorEx.setBackgroundColor(backColor);
-    EditorFragmentComponent fragmentComponent = new EditorFragmentComponent(editorEx, startLine, endLine,
+    EditorFragmentComponent fragmentComponent = new EditorFragmentComponent(component, editorEx, startLine, endLine,
                                                                             showFolding, showGutter);
     fragmentComponent.setBackground(backColor);
 
@@ -274,6 +296,14 @@ public class EditorFragmentComponent extends JPanel {
       color = colorsScheme.getDefaultBackground();
     }
     return color;
+  }
+
+  @NotNull
+  public static CompoundBorder createEditorFragmentBorder(@NotNull Editor editor) {
+    Color borderColor = editor.getColorsScheme().getColor(EditorColors.SELECTED_TEARLINE_COLOR);
+    Border outsideBorder = JBUI.Borders.customLine(borderColor, LINE_BORDER_THICKNESS);
+    Border insideBorder = JBUI.Borders.empty(EMPTY_BORDER_THICKNESS, EMPTY_BORDER_THICKNESS);
+    return BorderFactory.createCompoundBorder(outsideBorder, insideBorder);
   }
 
   private static class MyComponentHint extends LightweightHint {

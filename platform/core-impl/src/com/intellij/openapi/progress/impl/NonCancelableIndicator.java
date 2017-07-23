@@ -43,6 +43,7 @@ class NonCancelableIndicator implements NonCancelableSection, StandardProgressIn
 
   @Override
   public final void checkCanceled() {
+    CoreProgressManager.runCheckCanceledHooks(this);
   }
 
   @Override

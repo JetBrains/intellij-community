@@ -44,9 +44,6 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-/**
- * User: Vassiliy.Kudryashov
- */
 public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvider<Object>
   implements BreakpointPanelProvider.BreakpointsListener {
 

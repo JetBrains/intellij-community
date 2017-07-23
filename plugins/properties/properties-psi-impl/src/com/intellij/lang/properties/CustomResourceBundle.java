@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -41,7 +42,7 @@ public class CustomResourceBundle extends ResourceBundle {
   private CustomResourceBundle(final List<PropertiesFile> files, final @NotNull String baseName) {
     LOG.assertTrue(!files.isEmpty());
     myFiles = new ArrayList<>(files);
-    Collections.sort(myFiles, (f1, f2) -> f1.getName().compareTo(f2.getName()));
+    Collections.sort(myFiles, Comparator.comparing(PropertiesFile::getName));
     myBaseName = baseName;
   }
 
@@ -61,6 +62,7 @@ public class CustomResourceBundle extends ResourceBundle {
   @NotNull
   @Override
   public PropertiesFile getDefaultPropertiesFile() {
+    //noinspection ConstantConditions
     return ContainerUtil.getFirstItem(myFiles);
   }
 
@@ -83,6 +85,16 @@ public class CustomResourceBundle extends ResourceBundle {
       }
     }
     return baseDir;
+  }
+
+  @Override
+  public boolean isValid() {
+    for (PropertiesFile file : myFiles) {
+      if (!file.getContainingFile().isValid()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public boolean equals(final Object o) {

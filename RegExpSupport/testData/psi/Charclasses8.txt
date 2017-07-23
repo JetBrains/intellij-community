@@ -11,10 +11,9 @@ REGEXP_FILE
           PsiElement(ANDAND)('&&')
           RegExpClassImpl: <[cd]>
             PsiElement(CLASS_BEGIN)('[')
-            RegExpUnionImpl: <cd>
-              RegExpCharImpl: <c>
-                PsiElement(CHARACTER)('c')
-              RegExpCharImpl: <d>
-                PsiElement(CHARACTER)('d')
+            RegExpCharImpl: <c>
+              PsiElement(CHARACTER)('c')
+            RegExpCharImpl: <d>
+              PsiElement(CHARACTER)('d')
             PsiElement(CLASS_END)(']')
         PsiElement(CLASS_END)(']')

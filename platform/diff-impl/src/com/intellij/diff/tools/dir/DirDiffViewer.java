@@ -31,7 +31,6 @@ import com.intellij.ide.diff.VirtualFileDiffElement;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diff.impl.dir.DirDiffFrame;
@@ -107,7 +106,7 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
     // we return ActionGroup to avoid registering of actions shortcuts
     // * they are already registered inside DirDiffPanel
     // * this fixes conflict between FilterPanel and SynchronizeDiff action for the 'Enter' shortcut
-    components.toolbarActions =  Collections.<AnAction>singletonList(new DefaultActionGroup(myDirDiffPanel.getActions()));
+    components.toolbarActions =  Collections.singletonList(new DefaultActionGroup(myDirDiffPanel.getActions()));
     components.statusPanel = myDirDiffPanel.extractFilterPanel();
     return components;
   }

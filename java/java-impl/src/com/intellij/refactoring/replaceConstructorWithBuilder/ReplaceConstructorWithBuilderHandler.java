@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 07-May-2008
- */
 package com.intellij.refactoring.replaceConstructorWithBuilder;
 
 import com.intellij.openapi.actionSystem.DataContext;

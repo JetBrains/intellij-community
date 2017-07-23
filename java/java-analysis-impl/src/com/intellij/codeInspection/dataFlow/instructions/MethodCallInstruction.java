@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 26, 2002
- * Time: 10:48:52 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.dataFlow.instructions;
 
 import com.intellij.codeInspection.dataFlow.*;
@@ -31,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -71,9 +64,9 @@ public class MethodCallInstruction extends Instruction {
     myArgRequiredNullability = Collections.emptyMap();
   }
 
-  public MethodCallInstruction(@NotNull PsiCall call, @Nullable DfaValue precalculatedReturnValue, List<MethodContract> contracts) {
+  public MethodCallInstruction(@NotNull PsiCall call, @Nullable DfaValue precalculatedReturnValue, List<? extends MethodContract> contracts) {
     myContext = call;
-    myContracts = contracts;
+    myContracts = Collections.unmodifiableList(contracts);
     myMethodType = MethodType.REGULAR_METHOD_CALL;
     myCall = call;
     final PsiExpressionList argList = call.getArgumentList();
@@ -105,7 +98,21 @@ public class MethodCallInstruction extends Instruction {
     for (int i = 0; i < checkedCount; i++) {
       map.put(myArgs[i], DfaPsiUtil.getElementNullability(substitutor.substitute(parameters[i].getType()), parameters[i]));
     }
+
+    if (myVarArgCall) {
+      PsiType lastParamType = substitutor.substitute(parameters[parameters.length - 1].getType());
+      if (isEllipsisWithNotNullElements(lastParamType)) {
+        for (int i = parameters.length - 1; i < myArgs.length; i++) {
+          map.put(myArgs[i], Nullness.NOT_NULL);
+        }
+      }
+    }
     return map;
+  }
+
+  private static boolean isEllipsisWithNotNullElements(PsiType lastParamType) {
+    return lastParamType instanceof PsiEllipsisType &&
+           DfaPsiUtil.getElementNullability(((PsiEllipsisType)lastParamType).getComponentType(), null) == Nullness.NOT_NULL;
   }
 
   public static boolean isVarArgCall(PsiMethod method, PsiSubstitutor substitutor, PsiExpression[] args, PsiParameter[] parameters) {
@@ -130,7 +137,8 @@ public class MethodCallInstruction extends Instruction {
 
   private boolean isPureCall() {
     if (myTargetMethod == null) return false;
-    return ControlFlowAnalyzer.isPure(myTargetMethod);
+    return ControlFlowAnalyzer.isPure(myTargetMethod) ||
+           Arrays.stream(SpecialField.values()).anyMatch(sf -> sf.isMyAccessor(myTargetMethod));
   }
 
   @Nullable

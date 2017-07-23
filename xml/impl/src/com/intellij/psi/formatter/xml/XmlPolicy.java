@@ -21,7 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 
@@ -42,16 +41,6 @@ public class XmlPolicy extends XmlFormattingPolicy{
 
   @Override
   public boolean insertLineBreakBeforeTag(final XmlTag xmlTag) {
-    return false;
-  }
-
-  @Override
-  public boolean insertLineBreakBeforeFirstAttribute(XmlAttribute attribute) {
-    return false;
-  }
-
-  @Override
-  public boolean insertLineBreakAfterLastAttribute(XmlAttribute attribute) {
     return false;
   }
 

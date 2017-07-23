@@ -24,7 +24,6 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,25 +83,20 @@ public class JavaSourceRootDetectionUtil {
     lexer.advance();
     skipWhiteSpaceAndComments(lexer);
 
-    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    try {
-      while(true){
-        if (lexer.getTokenType() != JavaTokenType.IDENTIFIER) break;
-        buffer.append(text, lexer.getTokenStart(), lexer.getTokenEnd());
-        lexer.advance();
-        skipWhiteSpaceAndComments(lexer);
-        if (lexer.getTokenType() != JavaTokenType.DOT) break;
-        buffer.append('.');
-        lexer.advance();
-        skipWhiteSpaceAndComments(lexer);
-      }
-      String packageName = buffer.toString();
-      if (packageName.length() == 0 || StringUtil.endsWithChar(packageName, '.')) return null;
-      return packageName;
+    final StringBuilder buffer = new StringBuilder();
+    while(true){
+      if (lexer.getTokenType() != JavaTokenType.IDENTIFIER) break;
+      buffer.append(text, lexer.getTokenStart(), lexer.getTokenEnd());
+      lexer.advance();
+      skipWhiteSpaceAndComments(lexer);
+      if (lexer.getTokenType() != JavaTokenType.DOT) break;
+      buffer.append('.');
+      lexer.advance();
+      skipWhiteSpaceAndComments(lexer);
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
-    }
+    String packageName = buffer.toString();
+    if (packageName.length() == 0 || StringUtil.endsWithChar(packageName, '.')) return null;
+    return packageName;
   }
 
   public static void skipWhiteSpaceAndComments(Lexer lexer){

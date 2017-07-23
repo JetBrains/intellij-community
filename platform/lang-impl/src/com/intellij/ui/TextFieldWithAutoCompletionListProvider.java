@@ -28,7 +28,6 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.textCompletion.TextCompletionProvider;
 import com.intellij.util.textCompletion.TextCompletionValueDescriptor;
@@ -39,7 +38,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -139,7 +137,7 @@ public abstract class TextFieldWithAutoCompletionListProvider<T> extends Default
   }
 
   public void setItems(@Nullable final Collection<T> variants) {
-    myVariants = (variants != null) ? variants : Collections.<T>emptyList();
+    myVariants = (variants != null) ? variants : Collections.emptyList();
   }
 
   @NotNull

@@ -162,6 +162,12 @@ public class TempFileSystem extends LocalFileSystemBase {
     return fsItem.list();
   }
 
+  @NotNull
+  @Override
+  public String getCanonicallyCasedName(@NotNull VirtualFile file) {
+    return file.getName();
+  }
+
   @Override
   public boolean isDirectory(@NotNull final VirtualFile file) {
     return convert(file) instanceof FSDir;
@@ -353,7 +359,7 @@ public class TempFileSystem extends LocalFileSystemBase {
     throw new IncorrectOperationException();
   }
 
-  @Nullable
+  @NotNull
   @Override
   protected String normalize(@NotNull String path) {
     return path;

@@ -17,7 +17,6 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -54,12 +53,7 @@ public final class HgErrorUtil {
   @Nullable
   private static String getAbortLine(@NotNull HgCommandResult result) {
     final List<String> errorLines = result.getErrorLines();
-    return ContainerUtil.find(errorLines, new Condition<String>() {
-      @Override
-      public boolean value(String s) {
-        return isAbortLine(s);
-      }
-    });
+    return ContainerUtil.find(errorLines, s -> isAbortLine(s));
   }
 
   public static boolean isAncestorMergeError(@Nullable HgCommandResult result) {
@@ -70,12 +64,7 @@ public final class HgErrorUtil {
 
   public static boolean isNothingToRebase(@Nullable HgCommandResult result) {
     if (result == null) return false;
-    return ContainerUtil.exists(result.getOutputLines(), new Condition<String>() {
-      @Override
-      public boolean value(String s) {
-        return StringUtil.contains(s, NOTHING_TO_REBASE_WARNING);
-      }
-    });
+    return ContainerUtil.exists(result.getOutputLines(), s -> StringUtil.contains(s, NOTHING_TO_REBASE_WARNING));
   }
 
   public static boolean isAuthorizationError(@Nullable HgCommandResult result) {
@@ -174,10 +163,7 @@ public final class HgErrorUtil {
     try {
       HgUtil.markDirectoryDirty(project, repository);
     }
-    catch (InvocationTargetException e) {
-      handleException(project, e);
-    }
-    catch (InterruptedException e) {
+    catch (InvocationTargetException | InterruptedException e) {
       handleException(project, e);
     }
   }

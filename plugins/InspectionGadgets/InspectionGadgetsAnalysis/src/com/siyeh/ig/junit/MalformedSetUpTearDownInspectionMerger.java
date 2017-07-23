@@ -16,6 +16,7 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.ex.InspectionElementsMerger;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
@@ -27,11 +28,13 @@ public class MalformedSetUpTearDownInspectionMerger extends InspectionElementsMe
     return "MalformedSetUpTearDown";
   }
 
+  @NotNull
   @Override
   public String[] getSourceToolNames() {
     return new String[] { "TeardownIsPublicVoidNoArg", "SetupIsPublicVoidNoArg" };
   }
 
+  @NotNull
   @Override
   public String[] getSuppressIds() {
     return new String[] { "TearDownWithIncorrectSignature", "SetUpWithIncorrectSignature" };

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,7 +67,7 @@ public class KeywordArgumentCompletionUtil {
 
         final PyNamedTupleType namedTupleType = PyUtil.as(calleeType, PyNamedTupleType.class);
         if (namedTupleType != null) {
-          for (String name : namedTupleType.getElementNames()) {
+          for (String name : namedTupleType.getFields().keySet()) {
             ret.add(
               PyUtil.createNamedParameterLookup(name, element.getProject())
             );
@@ -142,19 +143,14 @@ public class KeywordArgumentCompletionUtil {
     visited.add(callable);
 
     final TypeEvalContext context = TypeEvalContext.codeCompletion(callable.getProject(), callable.getContainingFile());
-
-    final List<PyParameter> parameters = PyUtil.getParameters(callable, context);
-    for (final PyParameter parameter : parameters) {
-      parameter.getName();
-    }
-
+    final List<PyCallableParameter> parameters = callable.getParameters(context);
 
     if (callable instanceof PyFunction) {
       addKeywordArgumentVariantsForFunction(callExpr, ret, visited, (PyFunction)callable, parameters, context);
     }
     else {
       final Collection<String> parameterNames = new ArrayList<>();
-      for (final PyParameter parameter : parameters) {
+      for (final PyCallableParameter parameter : parameters) {
         final String name = parameter.getName();
         if (name != null) {
           parameterNames.add(name);
@@ -176,15 +172,17 @@ public class KeywordArgumentCompletionUtil {
                                                             @NotNull final List<LookupElement> ret,
                                                             @NotNull final Collection<PyCallable> visited,
                                                             @NotNull final PyFunction function,
-                                                            @NotNull final List<PyParameter> parameters,
+                                                            @NotNull final List<PyCallableParameter> parameters,
                                                             @NotNull final TypeEvalContext context) {
     boolean needSelf = function.getContainingClass() != null && function.getModifier() != PyFunction.Modifier.STATICMETHOD;
     final KwArgParameterCollector collector = new KwArgParameterCollector(needSelf, ret);
 
+    StreamEx
+      .of(parameters)
+      .map(PyCallableParameter::getParameter)
+      .nonNull()
+      .forEach(parameter -> parameter.accept(collector));
 
-    for (PyParameter parameter : parameters) {
-      parameter.accept(collector);
-    }
     if (collector.hasKwArgs()) {
       for (PyKeywordArgumentProvider provider : Extensions.getExtensions(PyKeywordArgumentProvider.EP_NAME)) {
         final List<String> arguments = provider.getKeywordArguments(function, callExpr);
@@ -193,10 +191,7 @@ public class KeywordArgumentCompletionUtil {
         }
       }
       KwArgFromStatementCallCollector fromStatementCallCollector = new KwArgFromStatementCallCollector(ret, collector.getKwArgs());
-      final PyStatementList statementList = function.getStatementList();
-      if (statementList != null) {
-        statementList.acceptChildren(fromStatementCallCollector);
-      }
+      function.getStatementList().acceptChildren(fromStatementCallCollector);
 
       //if (collector.hasOnlySelfAndKwArgs()) {
       // nothing interesting besides self and **kwargs, let's look at superclass (PY-778)
@@ -256,10 +251,6 @@ public class KeywordArgumentCompletionUtil {
 
     public boolean hasKwArgs() {
       return myHasKwArgs;
-    }
-
-    public boolean hasOnlySelfAndKwArgs() {
-      return myCount == 2 && myHasSelf && myHasKwArgs;
     }
   }
 

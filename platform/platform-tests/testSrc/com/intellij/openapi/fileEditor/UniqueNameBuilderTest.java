@@ -21,6 +21,25 @@ public class UniqueNameBuilderTest extends TestCase {
     builder.addPath("B", "/Users/yole/idea/bar/buy/index.html");
     assertEquals("foo/\u2026/index.html", builder.getShortPath("A"));
   }
+  
+  public void testThreeLevel() {
+    UniqueNameBuilder<String> builder = new UniqueNameBuilder<>("", "/", 100);
+    builder.addPath("A", "/Users/yole/idea/foo/before/somedir/index.html");
+    builder.addPath("A2", "/Users/yole/idea/foo/after/somedir/index.html");
+    builder.addPath("A3", "/Users/yole/fabrique/foo/before/somedir/index.html");
+    builder.addPath("B", "/Users/yole/idea/bar/before/somedir/index.html");
+    builder.addPath("B2", "/Users/yole/idea/bar/after/somedir/index.html");
+    builder.addPath("B3", "/Users/yole/fabrique/bar/after/somedir/index.html");
+
+    assertEquals("idea/foo/before/\u2026/index.html", builder.getShortPath("A"));
+
+    assertEquals("idea/foo/after/\u2026/index.html", builder.getShortPath("A2"));
+    assertEquals("fabrique/foo/before/\u2026/index.html", builder.getShortPath("A3"));
+    
+    assertEquals("idea/bar/before/\u2026/index.html", builder.getShortPath("B"));
+    assertEquals("idea/bar/after/\u2026/index.html", builder.getShortPath("B2"));
+    assertEquals("fabrique/bar/after/\u2026/index.html", builder.getShortPath("B3"));
+  }
 
   public void testSeparator() {
     UniqueNameBuilder<String> builder = new UniqueNameBuilder<>("", "\\", 100);
@@ -56,7 +75,9 @@ public class UniqueNameBuilderTest extends TestCase {
     builder.addPath("A", "/Users/yole/idea/pycharm/download/index.html");
     builder.addPath("B", "/Users/yole/idea/pycharm/documentation/index.html");
     builder.addPath("C", "/Users/yole/idea/fabrique/download/index.html");
-    assertEquals("pycharm/\u2026/index.html", builder.getShortPath("A"));
+    assertEquals("pycharm/download/index.html", builder.getShortPath("A"));
+    assertEquals("pycharm/documentation/index.html", builder.getShortPath("B"));
+    assertEquals("fabrique/download/index.html", builder.getShortPath("C"));
   }
 
   public void testShortenNamesUnique2() {

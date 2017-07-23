@@ -26,6 +26,8 @@ public abstract class DefaultModuleConfigurationEditorFactory {
 
   public abstract ModuleConfigurationEditor createOutputEditor(ModuleConfigurationState state);
 
+  public abstract String getOutputEditorDisplayName();
+
   public static DefaultModuleConfigurationEditorFactory getInstance() {
     return ServiceManager.getService(DefaultModuleConfigurationEditorFactory.class);
   }

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: ddt
- * Date: 22-Mai-2013
- */
 package com.siyeh.ig.junit;
 
 import com.intellij.openapi.application.PluginPathManager;

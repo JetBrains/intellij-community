@@ -30,6 +30,7 @@ import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.*;
@@ -158,7 +159,7 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
         }
         try {
           final PsiStatement statement = elementFactory
-            .createStatementFromText(canonicalText + " v = new " + erasedText + "<>()", parameters.getOriginalFile());
+            .createStatementFromText(canonicalText + " v = new " + erasedText + "<>()", parameters.getPosition());
           final PsiVariable declaredVar = (PsiVariable)((PsiDeclarationStatement)statement).getDeclaredElements()[0];
           final PsiNewExpression initializer = (PsiNewExpression)declaredVar.getInitializer();
           final boolean hasDefaultConstructorOrNoGenericsOne = PsiDiamondTypeImpl.hasDefaultConstructor(psiClass) ||
@@ -186,34 +187,30 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
   }
 
   private static boolean areInferredTypesApplicable(@NotNull PsiType[] types, PsiElement position) {
-    final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(position, PsiMethodCallExpression.class, false, PsiStatement.class);
-    if (methodCallExpression != null) {
-      if (PsiUtil.isLanguageLevel8OrHigher(methodCallExpression)) {
-        final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(position, PsiNewExpression.class, false);
-        if (newExpression != null) {
-          PsiElement parent = newExpression;
-          while (parent.getParent() instanceof PsiParenthesizedExpression) {
-            parent = parent.getParent();
-          }
-          final int idx = ArrayUtil.find(methodCallExpression.getArgumentList().getExpressions(), parent);
-          if (idx > -1) {
-            final JavaResolveResult resolveResult = methodCallExpression.resolveMethodGenerics();
-            final PsiMethod method = (PsiMethod)resolveResult.getElement();
-            if (method != null) {
-              final PsiParameter[] parameters = method.getParameterList().getParameters();
-              if (idx < parameters.length) {
-                final PsiType expectedType = resolveResult.getSubstitutor().substitute(parameters[idx].getType());
-                final PsiClass aClass = PsiUtil.resolveClassInType(expectedType);
-                if (aClass != null) {
-                  final PsiClassType inferredArg = JavaPsiFacade.getElementFactory(method.getProject()).createType(aClass, types);
-                  return TypeConversionUtil.isAssignable(expectedType, inferredArg);
-                }
-              }
+    final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(position, PsiNewExpression.class, false);
+    if (!PsiUtil.isLanguageLevel8OrHigher(position)) {
+      return newExpression != null && PsiTypesUtil.getExpectedTypeByParent(newExpression) != null;
+    }
+    final PsiCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(newExpression, PsiCallExpression.class, false, PsiStatement.class);
+    if (methodCallExpression != null && PsiUtil.isLanguageLevel8OrHigher(methodCallExpression)) {
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(newExpression.getParent());
+      PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+      final int idx = argumentList != null ? ArrayUtil.find(argumentList.getExpressions(), parent) : -1;
+      if (idx > -1) {
+        final JavaResolveResult resolveResult = methodCallExpression.resolveMethodGenerics();
+        final PsiMethod method = (PsiMethod)resolveResult.getElement();
+        if (method != null) {
+          final PsiParameter[] parameters = method.getParameterList().getParameters();
+          if (idx < parameters.length) {
+            final PsiType expectedType = resolveResult.getSubstitutor().substitute(parameters[idx].getType());
+            final PsiClass aClass = PsiUtil.resolveClassInType(expectedType);
+            if (aClass != null) {
+              final PsiClassType inferredArg = JavaPsiFacade.getElementFactory(method.getProject()).createType(aClass, types);
+              return TypeConversionUtil.isAssignable(expectedType, inferredArg);
             }
           }
         }
       }
-      return false;
     }
     return true;
   }

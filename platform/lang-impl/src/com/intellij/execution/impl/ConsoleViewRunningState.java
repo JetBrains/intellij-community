@@ -44,7 +44,8 @@ public class ConsoleViewRunningState extends ConsoleState {
     }
   };
 
-  public ConsoleViewRunningState(final ConsoleViewImpl console, final ProcessHandler processHandler,
+  public ConsoleViewRunningState(final ConsoleViewImpl console,
+                                 final ProcessHandler processHandler,
                                  final ConsoleState finishedStated,
                                  final boolean attachToStdOut,
                                  final boolean attachToStdIn) {
@@ -61,7 +62,7 @@ public class ConsoleViewRunningState extends ConsoleState {
     // attach to process stdin
     if (attachToStdIn) {
       final OutputStream processInput = myProcessHandler.getProcessInput();
-      myUserInputWriter = processInput != null ? createOutputStreamWriter(processInput, processHandler) : null;
+      myUserInputWriter = processInput == null ? null : createOutputStreamWriter(processInput, processHandler);
     }
     else {
       myUserInputWriter = null;

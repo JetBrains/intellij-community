@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package org.jetbrains.idea.svn.mergeinfo;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.ContainerUtil;
@@ -111,12 +110,8 @@ public class BranchInfo {
         result = SvnMergeInfoCache.MergeCheckResult.COMMON;
       }
       else {
-        result = ContainerUtil.getOrCreate(myAlreadyCalculatedMap, list.getNumber(), new Factory<SvnMergeInfoCache.MergeCheckResult>() {
-          @Override
-          public SvnMergeInfoCache.MergeCheckResult create() {
-            return checkAlive(list, branchPath);
-          }
-        });
+        result = ContainerUtil.getOrCreate(myAlreadyCalculatedMap, list.getNumber(),
+                                           (Factory<SvnMergeInfoCache.MergeCheckResult>)() -> checkAlive(list, branchPath));
       }
       return result;
     }
@@ -163,11 +158,7 @@ public class BranchInfo {
         try {
           mergeCheckResult = checkPathGoingUp(list.getNumber(), -1, branchPath, localPathInBranch, path, true);
         }
-        catch (VcsException e) {
-          LOG.info(e);
-          mergeCheckResult = SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
-        }
-        catch (SVNException e) {
+        catch (VcsException | SVNException e) {
           LOG.info(e);
           mergeCheckResult = SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
         }
@@ -331,29 +322,20 @@ public class BranchInfo {
                                                                       final boolean self) throws SvnBindException {
     SvnMergeInfoCache.MergeCheckResult result;
     Map<String, SVNMergeRangeList> mergedPathsMap = parseMergeInfo(value);
-    String mergedPathAffectingTrunkUrl = ContainerUtil.find(mergedPathsMap.keySet(), new Condition<String>() {
-      @Override
-      public boolean value(String path) {
-        return trunkRelativeUrl.startsWith(path);
-      }
-    });
+    String mergedPathAffectingTrunkUrl = ContainerUtil.find(mergedPathsMap.keySet(), path -> trunkRelativeUrl.startsWith(path));
 
     if (mergedPathAffectingTrunkUrl != null) {
       SVNMergeRangeList mergeRangeList = mergedPathsMap.get(mergedPathAffectingTrunkUrl);
 
       fillMergedRevisions(pathWithRevisionNumber, mergeRangeList);
 
-      boolean isAskedRevisionMerged = ContainerUtil.or(mergeRangeList.getRanges(), new Condition<SVNMergeRange>() {
-        @Override
-        public boolean value(@NotNull SVNMergeRange range) {
-          return isInRange(range, revisionAsked) && (range.isInheritable() || self);
-        }
-      });
+      boolean isAskedRevisionMerged =
+        ContainerUtil.or(mergeRangeList.getRanges(), range -> isInRange(range, revisionAsked) && (range.isInheritable() || self));
 
       result = SvnMergeInfoCache.MergeCheckResult.getInstance(isAskedRevisionMerged);
     }
     else {
-      myPathMergedMap.put(pathWithRevisionNumber, Collections.<Long>emptySet());
+      myPathMergedMap.put(pathWithRevisionNumber, Collections.emptySet());
       result = SvnMergeInfoCache.MergeCheckResult.NOT_MERGED;
     }
 

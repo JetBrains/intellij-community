@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public @interface Storage {
 
   /**
    * Relative to component container configuration root path.
-   * Consider to use shorthand form - <code>@Storage("yourName.xml")</code> (when you need to specify only file path).
+   * Consider to use shorthand form - {@code @Storage("yourName.xml")} (when you need to specify only file path).
    */
   @NonNls
   String value() default "";
@@ -50,7 +50,7 @@ public @interface Storage {
   RoamingType roamingType() default RoamingType.DEFAULT;
 
   /**
-   * Class must have constructor {@code (ComponentManager componentManager, StateStorageManager storageManager)}.
+   * Class must have constructor {@code (String fileSpec, ComponentManager componentManager, StateStorageManager storageManager)}.
    * {@code componentManager} parameter can have more concrete type - e.g. Module (if storage intended to support only one type).
    */
   Class<? extends StateStorage> storageClass() default StateStorage.class;

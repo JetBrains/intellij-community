@@ -28,6 +28,7 @@ public class VcsLogProperties {
 
   @NotNull public static final VcsLogProperty<Boolean> LIGHTWEIGHT_BRANCHES = new VcsLogProperty<>(false);
   @NotNull public static final VcsLogProperty<Boolean> SUPPORTS_INDEXING = new VcsLogProperty<>(false);
+  @NotNull public static final VcsLogProperty<Boolean> CASE_INSENSITIVE_REGEX = new VcsLogProperty<>(true);
 
   @NotNull
   public static <T> T get(@NotNull VcsLogProvider provider, VcsLogProperty<T> property) {

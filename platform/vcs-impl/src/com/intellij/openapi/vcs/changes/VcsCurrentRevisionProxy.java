@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-public class VcsCurrentRevisionProxy implements ContentRevision {
+public class VcsCurrentRevisionProxy implements ByteBackedContentRevision {
   @NotNull private final DiffProvider myDiffProvider;
   @NotNull private final VirtualFile myFile;
   @NotNull private final Project myProject;
@@ -59,7 +59,13 @@ public class VcsCurrentRevisionProxy implements ContentRevision {
 
   @Nullable
   public String getContent() throws VcsException {
-    return getVcsRevision().getContent();
+    return ContentRevisionCache.getAsString(getContentAsBytes(), getFile(), myFile.getCharset());
+  }
+
+  @Nullable
+  @Override
+  public byte[] getContentAsBytes() throws VcsException {
+    return getVcsRevision().second;
   }
 
   @NotNull
@@ -70,7 +76,7 @@ public class VcsCurrentRevisionProxy implements ContentRevision {
   @NotNull
   public VcsRevisionNumber getRevisionNumber() {
     try {
-      return getVcsRevision().getRevisionNumber();
+      return getVcsRevision().first;
     }
     catch(VcsException ex) {
       return VcsRevisionNumber.NULL;
@@ -78,51 +84,24 @@ public class VcsCurrentRevisionProxy implements ContentRevision {
   }
 
   @NotNull
-  private ContentRevision getVcsRevision() throws VcsException {
-    final FilePath file = getFile();
-    final Pair<VcsRevisionNumber, byte[]> pair;
+  private Pair<VcsRevisionNumber, byte[]> getVcsRevision() throws VcsException {
     try {
-      pair = ContentRevisionCache.getOrLoadCurrentAsBytes(myProject, file, myVcsKey,
+      return ContentRevisionCache.getOrLoadCurrentAsBytes(myProject, getFile(), myVcsKey,
                                                           new CurrentRevisionProvider() {
-                                                             @Override
-                                                             public VcsRevisionNumber getCurrentRevision() throws VcsException {
-                                                               return getCurrentRevisionNumber();
-                                                             }
+                                                            @Override
+                                                            public VcsRevisionNumber getCurrentRevision() throws VcsException {
+                                                              return getCurrentRevisionNumber();
+                                                            }
 
-                                                             @Override
-                                                             public Pair<VcsRevisionNumber, byte[]> get() throws VcsException, IOException {
-                                                               return loadContent();
-                                                             }
-                                                           });
+                                                            @Override
+                                                            public Pair<VcsRevisionNumber, byte[]> get() throws VcsException, IOException {
+                                                              return loadContent();
+                                                            }
+                                                          });
     }
     catch (IOException e) {
       throw new VcsException(e);
     }
-
-    return new ByteBackedContentRevision() {
-      @Override
-      public String getContent() throws VcsException {
-        return ContentRevisionCache.getAsString(getContentAsBytes(), file, null);
-      }
-
-      @Nullable
-      @Override
-      public byte[] getContentAsBytes() throws VcsException {
-        return pair.getSecond();
-      }
-
-      @NotNull
-      @Override
-      public FilePath getFile() {
-        return file;
-      }
-
-      @NotNull
-      @Override
-      public VcsRevisionNumber getRevisionNumber() {
-        return pair.getFirst();
-      }
-    };
   }
 
   @NotNull
@@ -145,6 +124,15 @@ public class VcsCurrentRevisionProxy implements ContentRevision {
       throw new VcsException("Failed to create content for current revision");
     }
 
-    return Pair.create(currentRevision, contentRevision.getContent().getBytes(myFile.getCharset()));
+    byte[] bytes;
+    if (contentRevision instanceof ByteBackedContentRevision) {
+      bytes = ((ByteBackedContentRevision)contentRevision).getContentAsBytes();
+    }
+    else {
+      String content = contentRevision.getContent();
+      if (content == null) throw new VcsException("Can't get revision content");
+      bytes = content.getBytes(myFile.getCharset());
+    }
+    return Pair.create(currentRevision, bytes);
   }
 }

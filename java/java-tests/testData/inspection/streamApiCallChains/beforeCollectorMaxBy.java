@@ -1,4 +1,4 @@
-// "Replace Stream.collect(maxBy()) with Stream.max() (may change semantics when result is null)" "true"
+// "Replace 'collect(maxBy())' with 'max()' (may change semantics when result is null)" "true"
 
 import java.util.List;
 import java.util.stream.Collectors;

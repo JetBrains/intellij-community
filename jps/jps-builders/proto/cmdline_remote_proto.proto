@@ -126,6 +126,8 @@ message Message {
         WARNING = 2;
         INFO = 3;
         PROGRESS = 4;
+        JPS_INFO = 5;
+        OTHER = 6;
       }
       required Kind kind = 1;
       optional string text = 2;

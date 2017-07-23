@@ -117,7 +117,7 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
     if (!useGreclipse(context)) return ModuleLevelBuilder.ExitCode.NOTHING_DONE;
 
     try {
-      final List<File> toCompile = myHelper.collectChangedFiles(context, dirtyFilesHolder, false, true, Ref.create(false));
+      List<File> toCompile = myHelper.collectChangedFiles(context, dirtyFilesHolder, false, Ref.create(false));
       if (toCompile.isEmpty()) {
         return ExitCode.NOTHING_DONE;
       }
@@ -248,7 +248,7 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
                                                 ModuleChunk chunk,
                                                 List<File> srcFiles,
                                                 String mainOutputDir, @Nullable ProcessorConfigProfile profile, GreclipseSettings settings) {
-    final List<String> args = new ArrayList<String>();
+    final List<String> args = new ArrayList<>();
 
     args.add("-cp");
     args.add(getClasspathString(chunk));
@@ -284,7 +284,7 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
   }
 
   private static String getClasspathString(ModuleChunk chunk) {
-    final Set<String> cp = new LinkedHashSet<String>();
+    final Set<String> cp = new LinkedHashSet<>();
     for (File file : ProjectPaths.getCompilationClasspathFiles(chunk, chunk.containsTests(), false, false)) {
       if (file.exists()) {
         cp.add(FileUtil.toCanonicalPath(file.getPath()));

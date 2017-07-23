@@ -17,7 +17,6 @@ package git4idea;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
@@ -38,28 +37,17 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
-/**
- * Git content revision
- */
-public class GitContentRevision implements ByteBackedContentRevision {
-  /**
-   * the file path
-   */
-  @NotNull protected final FilePath myFile;
-  /**
-   * the revision number
-   */
-  @NotNull protected final GitRevisionNumber myRevision;
-  /**
-   * the context project
-   */
-  @NotNull protected final Project myProject;
-  /**
-   * The charset for the file
-   */
-  @Nullable private Charset myCharset;
+import static com.intellij.openapi.vcs.impl.ContentRevisionCache.UniqueType.REPOSITORY_CONTENT;
 
-  protected GitContentRevision(@NotNull FilePath file, @NotNull GitRevisionNumber revision, @NotNull Project project,
+public class GitContentRevision implements ByteBackedContentRevision {
+  @NotNull protected final FilePath myFile;
+  @NotNull private final GitRevisionNumber myRevision;
+  @NotNull private final Project myProject;
+  @Nullable private final Charset myCharset;
+
+  protected GitContentRevision(@NotNull FilePath file,
+                               @NotNull GitRevisionNumber revision,
+                               @NotNull Project project,
                                @Nullable Charset charset) {
     myProject = project;
     myFile = file;
@@ -81,14 +69,7 @@ public class GitContentRevision implements ByteBackedContentRevision {
       return null;
     }
     try {
-      return ContentRevisionCache
-        .getOrLoadAsBytes(myProject, myFile, myRevision, GitVcs.getKey(), ContentRevisionCache.UniqueType.REPOSITORY_CONTENT,
-                          new Throwable2Computable<byte[], VcsException, IOException>() {
-                            @Override
-                            public byte[] compute() throws VcsException, IOException {
-                              return loadContent();
-                            }
-                          });
+      return ContentRevisionCache.getOrLoadAsBytes(myProject, myFile, myRevision, GitVcs.getKey(), REPOSITORY_CONTENT, this::loadContent);
     }
     catch (IOException e) {
       throw new VcsException(e);
@@ -130,27 +111,25 @@ public class GitContentRevision implements ByteBackedContentRevision {
    * @param path           an path inside with possibly escape sequences
    * @param revisionNumber a revision number, if null the current revision will be created
    * @param project        the context project
-   * @param isDeleted      if true, the file is deleted
    * @param unescapePath
    * @return a created revision
-   * @throws com.intellij.openapi.vcs.VcsException
-   *          if there is a problem with creating revision
+   * @throws VcsException if there is a problem with creating revision
    */
-  public static ContentRevision createRevision(VirtualFile vcsRoot,
-                                               String path,
+  @NotNull
+  public static ContentRevision createRevision(@NotNull VirtualFile vcsRoot,
+                                               @NotNull String path,
                                                @Nullable VcsRevisionNumber revisionNumber,
                                                Project project,
-                                               boolean isDeleted, final boolean canBeDeleted, boolean unescapePath) throws VcsException {
-    final FilePath file;
-    if (project.isDisposed()) {
-      file = VcsUtil.getFilePath(makeAbsolutePath(vcsRoot, path, unescapePath), false);
-    } else {
-      file = createPath(vcsRoot, path, isDeleted, canBeDeleted, unescapePath);
-    }
+                                               boolean canBeDeleted,
+                                               boolean unescapePath) throws VcsException {
+    FilePath file = createPath(vcsRoot, path, canBeDeleted, unescapePath);
     return createRevision(file, revisionNumber, project);
   }
-  
-  private static ContentRevision createRevision(@NotNull FilePath filePath, @Nullable VcsRevisionNumber revisionNumber, @NotNull Project project) {
+
+  @NotNull
+  private static ContentRevision createRevision(@NotNull FilePath filePath,
+                                                @Nullable VcsRevisionNumber revisionNumber,
+                                                @NotNull Project project) {
     if (revisionNumber != null && revisionNumber != VcsRevisionNumber.NULL) {
       return createRevisionImpl(filePath, (GitRevisionNumber)revisionNumber, project, null);
     }
@@ -159,24 +138,30 @@ public class GitContentRevision implements ByteBackedContentRevision {
     }
   }
 
-  public static ContentRevision createRevisionForTypeChange(@NotNull Project project, @NotNull VirtualFile vcsRoot,
-                                                            @NotNull String path, @Nullable VcsRevisionNumber revisionNumber,
+  @NotNull
+  public static ContentRevision createRevisionForTypeChange(@NotNull Project project,
+                                                            @NotNull VirtualFile vcsRoot,
+                                                            @NotNull String path,
+                                                            @Nullable VcsRevisionNumber revisionNumber,
                                                             boolean unescapePath) throws VcsException {
-    final FilePath filePath;
+    FilePath filePath;
     if (revisionNumber == null) {
       File file = new File(makeAbsolutePath(vcsRoot, path, unescapePath));
       VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
       filePath = virtualFile == null ? VcsUtil.getFilePath(file, false) : VcsUtil.getFilePath(virtualFile);
     } else {
-      filePath = createPath(vcsRoot, path, false, false, unescapePath);
+      filePath = createPath(vcsRoot, path, false, unescapePath);
     }
     return createRevision(filePath, revisionNumber, project);
   }
 
-  public static FilePath createPath(@NotNull VirtualFile vcsRoot, @NotNull String path,
-                                    boolean isDeleted, boolean canBeDeleted, boolean unescapePath) throws VcsException {
-    final String absolutePath = makeAbsolutePath(vcsRoot, path, unescapePath);
-    FilePath file = isDeleted ? VcsUtil.getFilePathForDeletedFile(absolutePath, false) : VcsUtil.getFilePath(absolutePath, false);
+  @NotNull
+  public static FilePath createPath(@NotNull VirtualFile vcsRoot,
+                                    @NotNull String path,
+                                    boolean canBeDeleted,
+                                    boolean unescapePath) throws VcsException {
+    String absolutePath = makeAbsolutePath(vcsRoot, path, unescapePath);
+    FilePath file = VcsUtil.getFilePath(absolutePath, false);
     if (canBeDeleted && (! SystemInfo.isFileSystemCaseSensitive) && VcsFilePathUtil.caseDiffers(file.getPath(), absolutePath)) {
       // as for deleted file
       file = VcsUtil.getFilePath(absolutePath, false);
@@ -184,24 +169,25 @@ public class GitContentRevision implements ByteBackedContentRevision {
     return file;
   }
 
+  @NotNull
   private static String makeAbsolutePath(@NotNull VirtualFile vcsRoot, @NotNull String path, boolean unescapePath) throws VcsException {
-    final String unescapedPath = unescapePath ? GitUtil.unescapePath(path) : path;
+    String unescapedPath = unescapePath ? GitUtil.unescapePath(path) : path;
     return vcsRoot.getPath() + "/" + unescapedPath;
   }
 
-  public static ContentRevision createRevision(@NotNull final VirtualFile file, @Nullable final VcsRevisionNumber revisionNumber,
-                                               @NotNull final Project project) {
-    return createRevision(file, revisionNumber, project, null);
+  @NotNull
+  public static ContentRevision createRevision(@NotNull VirtualFile file,
+                                               @Nullable VcsRevisionNumber revisionNumber,
+                                               @NotNull Project project) {
+    FilePath filePath = VcsUtil.getFilePath(file);
+    return createRevision(filePath, revisionNumber, project, null);
   }
 
-  public static ContentRevision createRevision(@NotNull final VirtualFile file, @Nullable final VcsRevisionNumber revisionNumber,
-                                               @NotNull final Project project, @Nullable final Charset charset) {
-    final FilePath filePath = VcsUtil.getFilePath(file);
-    return createRevision(filePath, revisionNumber, project, charset);
-  }
-
-  public static ContentRevision createRevision(@NotNull final FilePath filePath, @Nullable final VcsRevisionNumber revisionNumber,
-                                               @NotNull final Project project, @Nullable final Charset charset) {
+  @NotNull
+  public static ContentRevision createRevision(@NotNull FilePath filePath,
+                                               @Nullable VcsRevisionNumber revisionNumber,
+                                               @NotNull Project project,
+                                               @Nullable Charset charset) {
     if (revisionNumber != null && revisionNumber != VcsRevisionNumber.NULL) {
       return createRevisionImpl(filePath, (GitRevisionNumber)revisionNumber, project, charset);
     }
@@ -210,8 +196,11 @@ public class GitContentRevision implements ByteBackedContentRevision {
     }
   }
 
-  private static GitContentRevision createRevisionImpl(@NotNull FilePath path, @NotNull GitRevisionNumber revisionNumber,
-                                                       @NotNull Project project, @Nullable final Charset charset) {
+  @NotNull
+  private static GitContentRevision createRevisionImpl(@NotNull FilePath path,
+                                                       @NotNull GitRevisionNumber revisionNumber,
+                                                       @NotNull Project project,
+                                                       @Nullable Charset charset) {
     if (path.getFileType().isBinary()) {
       return new GitBinaryContentRevision(path, revisionNumber, project);
     } else {

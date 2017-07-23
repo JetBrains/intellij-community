@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.sdk;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.intellij.execution.ExecutionException;
 import com.intellij.facet.ui.FacetValidatorsManager;
@@ -63,13 +62,8 @@ public class CreateVirtualEnvDialog extends AbstractCreateVirtualEnvDialog {
 
     setTitle(PyBundle.message("sdk.create.venv.dialog.title"));
 
-    Iterables.removeIf(allSdks, new Predicate<Sdk>() {
-      @Override
-      public boolean apply(Sdk s) {
-        return PythonSdkType.isInvalid(s) || PythonSdkType.isVirtualEnv(s) || RemoteSdkCredentialsHolder.isRemoteSdk(s.getHomePath()) ||
-               PythonSdkType.isCondaVirtualEnv(s);
-      }
-    });
+    Iterables.removeIf(allSdks, s -> PythonSdkType.isInvalid(s) || PythonSdkType.isVirtualEnv(s) || RemoteSdkCredentialsHolder.isRemoteSdk(s.getHomePath()) ||
+                                 PythonSdkType.isCondaVirtualEnv(s));
     List<Sdk> sortedSdks = new ArrayList<>(allSdks);
     Collections.sort(sortedSdks, new PreferredSdkComparator());
     updateSdkList(allSdks, sortedSdks.isEmpty() ? null : sortedSdks.get(0));
@@ -188,7 +182,7 @@ public class CreateVirtualEnvDialog extends AbstractCreateVirtualEnvDialog {
     super.checkValid();
     if (mySdkCombo.getSelectedItem() == null) {
       setOKActionEnabled(false);
-      setErrorText(PyBundle.message("sdk.create.venv.dialog.error.no.base.interpreter"));
+      setErrorText(PyBundle.message("sdk.create.venv.dialog.error.no.base.interpreter"), mySdkCombo);
     }
   }
 

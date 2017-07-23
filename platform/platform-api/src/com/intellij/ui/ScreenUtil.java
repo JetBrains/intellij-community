@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.Patches;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -525,74 +526,5 @@ public class ScreenUtil {
     if (crossX >= bounds.x && crossX < bounds.x + bounds.width) return true;
 
     return false;
-  }
-
-  /**
-   * Transforms the bounds provided in the device space to the user space of the screen device they fit to.
-   *
-   * @param bounds the bounds to transform
-   * @return the transformed bounds
-   */
-  public static Rectangle boundsFromDeviceSpace(@NotNull Rectangle bounds) {
-    Rectangle b = bounds.getBounds();
-    try {
-      for (GraphicsDevice gd : GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()) {
-        Rectangle screenBounds = screenBoundsToDeviceSpace(gd);
-        float screenScale = screenScale(gd);
-        Rectangle2D.Float screen2d = new Rectangle2D.Float(screenBounds.x, screenBounds.y, screenBounds.width, screenBounds.height);
-        Point2D.Float center2d = new Point2D.Float(b.x + b.width / 2, b.y + b.height / 2);
-        if (screen2d.contains(center2d)) {
-          float toScale = UIUtil.isJDKManagedHiDPI() ? 1 : JBUI.sysScale();
-          scaleRect(b, toScale / screenScale);
-        }
-      }
-    }
-    catch (HeadlessException ignore) {
-    }
-    return b;
-  }
-
-  /**
-   * Transforms the bounds provided in the user space of the graphics device to the device space.
-   *
-   * @param g the graphics representing the device
-   * @param bounds the bounds to transform
-   * @return the transformed bounds
-   */
-  public static Rectangle boundsToDeviceSpace(Graphics2D g, @NotNull Rectangle bounds) {
-    Rectangle b = bounds.getBounds();
-    try {
-      if (g != null) {
-        float screenScale = screenScale(g.getDeviceConfiguration().getDevice());
-        float fromScale = UIUtil.isJDKManagedHiDPI() ? 1 : JBUI.sysScale();
-        scaleRect(b, screenScale / fromScale);
-      }
-    }
-    catch (HeadlessException ignore) {
-    }
-    return b;
-  }
-
-  private static Rectangle scaleRect(Rectangle r, float scale) {
-    r.setBounds((int)Math.floor(r.x * scale), (int)Math.floor(r.y * scale),
-                (int)Math.ceil(r.width * scale), (int)Math.ceil(r.height * scale));
-    return r;
-  }
-
-  private static float screenScale(GraphicsDevice gd) {
-    if (UIUtil.isJDKManagedHiDPI()) {
-      return JBUI.sysScale(gd);
-    }
-    if (gd == GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice()) {
-      // for the default device the scale is known
-      return JBUI.sysScale();
-    }
-    // [tav] todo: for other devices we don't know the _real_ scale...
-    return 1;
-  }
-
-  private static Rectangle screenBoundsToDeviceSpace(GraphicsDevice gd) {
-    Rectangle screenBounds = gd.getDefaultConfiguration().getBounds();
-    return UIUtil.isJDKManagedHiDPI() ? scaleRect(screenBounds, screenScale(gd)) : screenBounds;
   }
 }

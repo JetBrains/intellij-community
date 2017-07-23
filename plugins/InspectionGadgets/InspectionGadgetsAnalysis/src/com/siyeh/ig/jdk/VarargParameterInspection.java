@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,11 +28,13 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -115,8 +117,7 @@ public class VarargParameterInspection extends BaseInspection {
           modifyCall(reference, typeText, parameters.length - 1);
         }
         final PsiType arrayType = type.toArrayType();
-        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(lastParameter.getProject());
-        final PsiTypeElement newTypeElement = factory.createTypeElement(arrayType);
+        final PsiTypeElement newTypeElement = JavaPsiFacade.getElementFactory(lastParameter.getProject()).createTypeElement(arrayType);
         final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, "java.lang.SafeVarargs");
         if (annotation != null) {
           annotation.delete();
@@ -126,25 +127,28 @@ public class VarargParameterInspection extends BaseInspection {
     }
 
     public static void modifyCall(PsiReference reference, String arrayTypeText, int indexOfFirstVarargArgument) {
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)reference.getElement();
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)referenceExpression.getParent();
-      final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+      final PsiElement element = reference.getElement();
+      final PsiCall call = (PsiCall)(element instanceof PsiCall ? element : element.getParent());
+      final PsiExpressionList argumentList = call.getArgumentList();
+      if (argumentList == null) {
+        return;
+      }
       final PsiExpression[] arguments = argumentList.getExpressions();
-      @NonNls final StringBuilder builder = new StringBuilder("new ");
-      builder.append(arrayTypeText);
-      builder.append("[]{");
+      if (arguments.length > indexOfFirstVarargArgument && ExpressionUtils.isNullLiteral(arguments[indexOfFirstVarargArgument]) &&
+          indexOfFirstVarargArgument + 1 == arguments.length) {
+        return;
+      }
+      @NonNls final StringBuilder builder = new StringBuilder("new ").append(arrayTypeText).append("[]{");
       if (arguments.length > indexOfFirstVarargArgument) {
         final PsiExpression firstArgument = arguments[indexOfFirstVarargArgument];
-        final String firstArgumentText = firstArgument.getText();
-        builder.append(firstArgumentText);
+        builder.append(firstArgument.getText());
         for (int i = indexOfFirstVarargArgument + 1; i < arguments.length; i++) {
           builder.append(',').append(arguments[i].getText());
         }
       }
       builder.append('}');
-      final Project project = referenceExpression.getProject();
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final PsiExpression arrayExpression = factory.createExpressionFromText(builder.toString(), referenceExpression);
+      final Project project = element.getProject();
+      final PsiExpression arrayExpression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(builder.toString(), element);
       if (arguments.length > indexOfFirstVarargArgument) {
         final PsiExpression firstArgument = arguments[indexOfFirstVarargArgument];
         argumentList.deleteChildRange(firstArgument, arguments[arguments.length - 1]);
@@ -167,11 +171,10 @@ public class VarargParameterInspection extends BaseInspection {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() < 1) {
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      if (parameters.length == 0) {
         return;
       }
-      final PsiParameter[] parameters = parameterList.getParameters();
       final PsiParameter lastParameter = parameters[parameters.length - 1];
       if (lastParameter.isVarArgs()) {
         registerMethodError(method);

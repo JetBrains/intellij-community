@@ -33,7 +33,7 @@ public class StubIndexState {
 
   public StubIndexState(@NotNull Collection<StubIndexKey<?, ?>> keys) {
     for (StubIndexKey key : keys) {
-      registeredIndices.add(key.toString());
+      registeredIndices.add(key.getName());
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,9 +32,9 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.JdomKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -189,13 +188,13 @@ public class MavenResourceCompilerConfigurationGenerator {
 
     addNonMavenResources(projectConfig);
 
-    final Document document = new Document(new Element("maven-project-configuration"));
-    XmlSerializer.serializeInto(projectConfig, document.getRootElement());
+    final Element element = new Element("maven-project-configuration");
+    XmlSerializer.serializeInto(projectConfig, element);
     buildManager.runCommand(() -> {
       buildManager.clearState(myProject);
       FileUtil.createIfDoesntExist(mavenConfigFile);
       try {
-        JDOMUtil.writeDocument(document, mavenConfigFile, "\n");
+        JdomKt.write(element, mavenConfigFile.toPath());
 
         DataOutputStream crcOutput = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(crcFile)));
         try {
@@ -342,8 +341,6 @@ public class MavenResourceCompilerConfigurationGenerator {
     boolean filterWebXml = Boolean.parseBoolean(warCfg.getChildTextTrim("filteringDeploymentDescriptors"));
     Element webResources = warCfg.getChild("webResources");
 
-    if (webResources == null && !filterWebXml) return;
-
     String webArtifactName = MavenUtil.getArtifactName("war", module, true);
 
     MavenWebArtifactConfiguration artifactResourceCfg = projectCfg.webArtifactConfigs.get(webArtifactName);
@@ -355,6 +352,23 @@ public class MavenResourceCompilerConfigurationGenerator {
     else {
       LOG.error("MavenWebArtifactConfiguration already exists.");
     }
+
+    String packagingIncludes = warCfg.getChildTextTrim("packagingIncludes");
+    if (packagingIncludes != null) {
+      artifactResourceCfg.packagingIncludes.addAll(StringUtil.split(packagingIncludes, ","));
+    }
+
+    String packagingExcludes = warCfg.getChildTextTrim("packagingExcludes");
+    if (packagingExcludes != null) {
+      artifactResourceCfg.packagingExcludes.addAll(StringUtil.split(packagingExcludes, ","));
+    }
+
+    String warSourceDirectory = warCfg.getChildTextTrim("warSourceDirectory");
+    if (warSourceDirectory == null) warSourceDirectory = "src/main/webapp";
+    if (!FileUtil.isAbsolute(warSourceDirectory)) {
+      warSourceDirectory = mavenProject.getDirectory() + '/' + warSourceDirectory;
+    }
+    artifactResourceCfg.warSourceDirectory = FileUtil.toSystemIndependentName(StringUtil.trimEnd(warSourceDirectory, '/'));
 
     if (webResources != null) {
       for (Element resource : webResources.getChildren("resource")) {
@@ -397,7 +411,7 @@ public class MavenResourceCompilerConfigurationGenerator {
 
     if (filterWebXml) {
       ResourceRootConfiguration r = new ResourceRootConfiguration();
-      r.directory = mavenProject.getDirectory() + "/src/main/webapp";
+      r.directory = warSourceDirectory;
       r.includes = Collections.singleton("WEB-INF/web.xml");
       r.isFiltered = true;
       r.targetPath = "";

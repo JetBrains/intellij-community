@@ -27,12 +27,13 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.function.BiConsumer;
 
 /**
  * Methods in this class are used to equip long background processes which take read actions with a special listener
@@ -60,20 +61,27 @@ public class ProgressIndicatorUtils {
     return progress;
   }
 
+  @NotNull
+  public static CompletableFuture<?> submitWithWriteActionPriority(@NotNull ReadTask task) {
+    return scheduleWithWriteActionPriority(new ProgressIndicatorBase(), task);
+  }
+
   public static void scheduleWithWriteActionPriority(@NotNull ReadTask task) {
-    scheduleWithWriteActionPriority(new ProgressIndicatorBase(), task);
+    submitWithWriteActionPriority(task);
   }
 
-  public static void scheduleWithWriteActionPriority(@NotNull ProgressIndicator progressIndicator, @NotNull ReadTask readTask) {
-    scheduleWithWriteActionPriority(progressIndicator, PooledThreadExecutor.INSTANCE, readTask);
+  @NotNull
+  public static CompletableFuture<?> scheduleWithWriteActionPriority(@NotNull ProgressIndicator progressIndicator, @NotNull ReadTask readTask) {
+    return scheduleWithWriteActionPriority(progressIndicator, PooledThreadExecutor.INSTANCE, readTask);
   }
 
-  public static void scheduleWithWriteActionPriority(@NotNull Executor executor, @NotNull ReadTask task) {
-    scheduleWithWriteActionPriority(new ProgressIndicatorBase(), executor, task);
+  @NotNull
+  public static CompletableFuture<?> scheduleWithWriteActionPriority(@NotNull Executor executor, @NotNull ReadTask task) {
+    return scheduleWithWriteActionPriority(new ProgressIndicatorBase(), executor, task);
   }
 
   /**
-   * Same as {@link #runInReadActionWithWriteActionPriority(Runnable)}, optionally allowing to pass a {@link ProgressIndicatorUtils}
+   * Same as {@link #runInReadActionWithWriteActionPriority(Runnable)}, optionally allowing to pass a {@link ProgressIndicator}
    * instance, which can be used to cancel action externally.
    */
   public static boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action, 
@@ -148,21 +156,22 @@ public class ProgressIndicatorUtils {
     return wasCancelled.get() != Boolean.TRUE;
   }
 
-  public static void scheduleWithWriteActionPriority(@NotNull final ProgressIndicator progressIndicator,
-                                                     @NotNull final Executor executor,
-                                                     @NotNull final ReadTask readTask) {
-    final Application application = ApplicationManager.getApplication();
+  @NotNull
+  public static CompletableFuture<?> scheduleWithWriteActionPriority(@NotNull final ProgressIndicator progressIndicator,
+                                                                     @NotNull final Executor executor,
+                                                                     @NotNull final ReadTask readTask) {
     // invoke later even if on EDT
     // to avoid tasks eagerly restarting immediately, allocating many pooled threads
     // which get cancelled too soon when a next write action arrives in the same EDT batch
     // (can happen when processing multiple VFS events or writing multiple files on save)
 
-    // use SwingUtilities instead of application.invokeLater
-    // to tolerate any immediate modality changes (e.g. https://youtrack.jetbrains.com/issue/IDEA-135180)
-
-    //noinspection SSBasedInspection
-    EdtInvocationManager.getInstance().invokeLater(() -> {
-      if (application.isDisposed()) return;
+    CompletableFuture<?> future = new CompletableFuture<>();
+    Application application = ApplicationManager.getApplication();
+    application.invokeLater(() -> {
+      if (application.isDisposed() || progressIndicator.isCanceled() || future.isCancelled()) {
+        future.complete(null);
+        return;
+      }
       final ApplicationAdapter listener = new ApplicationAdapter() {
         @Override
         public void beforeWriteActionStart(@NotNull Object action) {
@@ -173,35 +182,44 @@ public class ProgressIndicatorUtils {
         }
       };
       application.addApplicationListener(listener);
+      future.whenComplete((BiConsumer<Object, Throwable>)(o, throwable) -> application.removeApplicationListener(listener));
       try {
         executor.execute(new Runnable() {
           @Override
           public void run() {
-            boolean continued = false;
+            final ReadTask.Continuation continuation;
             try {
-              final ReadTask.Continuation continuation = runUnderProgress(progressIndicator, readTask);
-              continued = continuation != null;
-              if (continuation != null) {
-                application.invokeLater(new Runnable() {
-                  @Override
-                  public void run() {
-                    application.removeApplicationListener(listener);
+              continuation = runUnderProgress(progressIndicator, readTask);
+            }
+            catch (Throwable e) {
+              future.completeExceptionally(e);
+              throw e;
+            }
+            if (continuation == null) {
+              future.complete(null);
+            }
+            else if (!future.isCancelled()) {
+              application.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  if (future.isCancelled()) return;
+
+                  application.removeApplicationListener(listener); // remove listener early to prevent firing it during continuation execution
+                  try {
                     if (!progressIndicator.isCanceled()) {
                       continuation.getAction().run();
                     }
                   }
-
-                  @Override
-                  public String toString() {
-                    return "continuation of " + readTask;
+                  finally {
+                    future.complete(null);
                   }
-                }, continuation.getModalityState());
-              }
-            }
-            finally {
-              if (!continued) {
-                application.removeApplicationListener(listener);
-              }
+                }
+
+                @Override
+                public String toString() {
+                  return "continuation of " + readTask;
+                }
+              }, continuation.getModalityState());
             }
           }
 
@@ -212,10 +230,11 @@ public class ProgressIndicatorUtils {
         });
       }
       catch (RuntimeException | Error e) {
-        application.removeApplicationListener(listener);
+        future.completeExceptionally(e);
         throw e;
       }
-    });
+    }, ModalityState.any()); // 'any' to tolerate immediate modality changes (e.g. https://youtrack.jetbrains.com/issue/IDEA-135180)
+    return future;
   }
 
   private static ReadTask.Continuation runUnderProgress(@NotNull final ProgressIndicator progressIndicator, @NotNull final ReadTask task) {

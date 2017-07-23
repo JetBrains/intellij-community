@@ -68,11 +68,11 @@ public class BuildRunner {
   }
 
   public void setFilePaths(List<String> filePaths) {
-    myFilePaths = filePaths != null? filePaths : Collections.<String>emptyList();
+    myFilePaths = filePaths != null? filePaths : Collections.emptyList();
   }
 
   public void setBuilderParams(Map<String, String> builderParams) {
-    myBuilderParams = builderParams != null? builderParams : Collections.<String, String>emptyMap();
+    myBuilderParams = builderParams != null? builderParams : Collections.emptyMap();
   }
 
   public ProjectDescriptor load(MessageHandler msgHandler, File dataStorageRoot, BuildFSState fsState) throws IOException {
@@ -127,7 +127,7 @@ public class BuildRunner {
                        MessageHandler msgHandler,
                        BuildType buildType,
                        List<TargetTypeBuildScope> scopes, final boolean includeDependenciesToScope) throws Exception {
-    for (int attempt = 0; attempt < 2; attempt++) {
+    for (int attempt = 0; attempt < 2 && !cs.isCanceled(); attempt++) {
       final boolean forceClean = myForceCleanCaches && myFilePaths.isEmpty();
       final CompileScope compileScope = createCompilationScope(pd, scopes, myFilePaths, forceClean, includeDependenciesToScope);
       final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), myBuilderParams, cs, constantSearch, Utils.IS_TEST_MODE);
@@ -162,9 +162,9 @@ public class BuildRunner {
 
   private static CompileScope createCompilationScope(ProjectDescriptor pd, List<TargetTypeBuildScope> scopes, Collection<String> paths,
                                                      final boolean forceClean, final boolean includeDependenciesToScope) throws Exception {
-    Set<BuildTargetType<?>> targetTypes = new HashSet<BuildTargetType<?>>();
-    Set<BuildTargetType<?>> targetTypesToForceBuild = new HashSet<BuildTargetType<?>>();
-    Set<BuildTarget<?>> targets = new HashSet<BuildTarget<?>>();
+    Set<BuildTargetType<?>> targetTypes = new HashSet<>();
+    Set<BuildTargetType<?>> targetTypesToForceBuild = new HashSet<>();
+    Set<BuildTarget<?>> targets = new HashSet<>();
     Map<BuildTarget<?>, Set<File>> files;
 
     final TargetTypeRegistry typeRegistry = TargetTypeRegistry.getInstance();
@@ -206,14 +206,14 @@ public class BuildRunner {
           break;
         }
       }
-      files = new HashMap<BuildTarget<?>, Set<File>>();
+      files = new HashMap<>();
       for (String path : paths) {
         final File file = new File(path);
         final Collection<BuildRootDescriptor> descriptors = pd.getBuildRootIndex().findAllParentDescriptors(file, null);
         for (BuildRootDescriptor descriptor : descriptors) {
           Set<File> fileSet = files.get(descriptor.getTarget());
           if (fileSet == null) {
-            fileSet = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+            fileSet = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
             files.put(descriptor.getTarget(), fileSet);
           }
           final boolean added = fileSet.add(file);
@@ -243,9 +243,9 @@ public class BuildRunner {
       }
     };
 
-    List<BuildTarget<?>> current = new ArrayList<BuildTarget<?>>(targets);
+    List<BuildTarget<?>> current = new ArrayList<>(targets);
     while (!current.isEmpty()) {
-      List<BuildTarget<?>> next = new ArrayList<BuildTarget<?>>();
+      List<BuildTarget<?>> next = new ArrayList<>();
       for (BuildTarget<?> target : current) {
         for (BuildTarget<?> depTarget : target.computeDependencies(descriptor.getBuildTargetIndex(), dummyIndex)) {
           if (!targets.contains(depTarget) && !targetTypes.contains(depTarget.getTargetType())) {

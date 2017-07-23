@@ -17,14 +17,18 @@ package com.intellij.util.concurrency;
 
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.LoggedErrorProcessor;
+import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.*;
@@ -34,6 +38,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class BoundedTaskExecutorTest extends TestCase {
+  static {
+    Logger.setFactory(TestLoggerFactory.class);
+  }
+
+  private static final Logger LOG = Logger.getInstance(BoundedTaskExecutorTest.class);
+  
   @Override
   protected void tearDown() throws Exception {
     try {
@@ -70,7 +80,7 @@ public class BoundedTaskExecutorTest extends TestCase {
 
   public void testReallyBound() throws InterruptedException, ExecutionException {
     for (int maxTasks=1; maxTasks<5;maxTasks++) {
-      System.out.println("maxTasks = " + maxTasks);
+      LOG.debug("maxTasks = " + maxTasks);
       ExecutorService backendExecutor = Executors.newCachedThreadPool(ConcurrencyUtil.newNamedThreadFactory("maxTasks = " + maxTasks));
       BoundedTaskExecutor executor = new BoundedTaskExecutor(getName(), backendExecutor, maxTasks);
       AtomicInteger running = new AtomicInteger();
@@ -389,7 +399,7 @@ public class BoundedTaskExecutorTest extends TestCase {
 
   public void testNoExtraThreadsAreEverCreated() throws ExecutionException, InterruptedException {
     for (int nMaxThreads=1; nMaxThreads<10; nMaxThreads++) {
-      System.out.println("nMaxThreads = " + nMaxThreads);
+      LOG.debug("nMaxThreads = " + nMaxThreads);
       ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(),nMaxThreads);
       int N = 1000000;
       Set<Thread> workers = ContainerUtil.newConcurrentSet();
@@ -453,7 +463,7 @@ public class BoundedTaskExecutorTest extends TestCase {
 
   public void testAwaitTerminationDoesWait() throws InterruptedException {
     for (int maxTasks=1; maxTasks<10; maxTasks++) {
-      System.out.println("maxTasks = " + maxTasks);
+      LOG.debug("maxTasks = " + maxTasks);
       ExecutorService executor = new BoundedTaskExecutor(getName(),PooledThreadExecutor.INSTANCE, maxTasks);
       int N = 1000;
       StringBuffer log = new StringBuffer(N*4);
@@ -489,5 +499,35 @@ public class BoundedTaskExecutorTest extends TestCase {
     assertTrue(executor2.awaitTermination(100, TimeUnit.SECONDS));
     assertTrue(future.isDone());
     assertFalse(future.isCancelled());
+  }
+
+  public void testErrorsThrownInFiredAndForgottenTaskMustBeLogged() throws ExecutionException, InterruptedException {
+    ExecutorService executor = new BoundedTaskExecutor(getName(),PooledThreadExecutor.INSTANCE, 1);
+    LoggedErrorProcessor oldInstance = LoggedErrorProcessor.getInstance();
+    try {
+      List<Throwable> errors = Collections.synchronizedList(new ArrayList<>());
+      LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
+        @Override
+        public void processError(String message, Throwable t, String[] details, @NotNull org.apache.log4j.Logger logger) {
+          errors.add(t);
+        }
+      });
+      AtomicBoolean executed = new AtomicBoolean();
+      executor.execute(() -> {
+        try {
+          throw new Error("error "+getName());
+        }
+        finally {
+          executed.set(true);
+        }
+      });
+      while (!executed.get()) {}
+      TimeoutUtil.sleep(100); // that tiny moment between throwing new Error() and catching it in BoundedTaskExecutor.wrapAndExecute()
+      assertTrue(errors.toString(), errors.stream().anyMatch(t -> ("error " + getName()).equals(t.getMessage())));
+    }
+    finally {
+      LoggedErrorProcessor.setNewInstance(oldInstance);
+      executor.shutdownNow();
+    }
   }
 }

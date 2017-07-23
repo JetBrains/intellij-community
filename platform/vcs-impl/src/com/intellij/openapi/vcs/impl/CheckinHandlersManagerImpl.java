@@ -44,13 +44,13 @@ public class CheckinHandlersManagerImpl extends CheckinHandlersManager {
   public List<BaseCheckinHandlerFactory> getRegisteredCheckinHandlerFactories(AbstractVcs<?>[] allActiveVcss) {
     final List<BaseCheckinHandlerFactory> list =
       new ArrayList<>(myRegisteredBeforeCheckinHandlers.size() + allActiveVcss.length);
-    list.addAll(myRegisteredBeforeCheckinHandlers);
     for (AbstractVcs vcs : allActiveVcss) {
       final Collection<VcsCheckinHandlerFactory> factories = myVcsMap.get(vcs.getKeyInstanceMethod());
       if (!factories.isEmpty()) {
         list.addAll(factories);
       }
     }
+    list.addAll(myRegisteredBeforeCheckinHandlers);
     return list;
   }
 }

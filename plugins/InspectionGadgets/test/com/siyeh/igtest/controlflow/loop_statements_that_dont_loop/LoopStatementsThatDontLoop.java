@@ -55,7 +55,7 @@ public class LoopStatementsThatDontLoop
             throw new Exception();
         }
 
-        <warning descr="'for' statement does not loop">for</warning>(<error descr="Unreachable statement">;</error> ;)
+        <error descr="Unreachable statement"><warning descr="'for' statement does not loop">for</warning></error>(; ;)
         {
             return;
         }

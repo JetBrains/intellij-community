@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyParameterListStub;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,10 +50,12 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
     pyVisitor.visitPyParameterList(this);
   }
 
+  @Override
   public PyParameter[] getParameters() {
     return getStubOrPsiChildren(PythonDialectsTokenSetProvider.INSTANCE.getParameterTokens(), new PyParameter[0]);
   }
 
+  @Override
   public void addParameter(final PyNamedParameter param) {
     PsiElement paren = getLastChild();
     if (paren != null && ")".equals(paren.getText())) {
@@ -82,6 +85,7 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
     }
   }
 
+  @Override
   public boolean hasPositionalContainer() {
     for (PyParameter parameter: getParameters()) {
       if (parameter instanceof PyNamedParameter && ((PyNamedParameter) parameter).isPositionalContainer()) {
@@ -91,6 +95,7 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
     return false;
   }
 
+  @Override
   public boolean hasKeywordContainer() {
     for (PyParameter parameter: getParameters()) {
       if (parameter instanceof PyNamedParameter && ((PyNamedParameter) parameter).isKeywordContainer()) {
@@ -115,35 +120,10 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
     return result.get();
   }
 
-  public String getPresentableText(final boolean includeDefaultValue) {
-    final StringBuilder target = new StringBuilder();
-    final String COMMA = ", ";
-    target.append("(");
-    ParamHelper.walkDownParamArray(
-      getParameters(),
-      new ParamHelper.ParamWalker() {
-        public void enterTupleParameter(PyTupleParameter param, boolean first, boolean last) {
-          target.append("(");
-        }
-
-        public void leaveTupleParameter(PyTupleParameter param, boolean first, boolean last) {
-          target.append(")");
-          if (!last) target.append(COMMA);
-        }
-
-        public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) {
-          target.append(param.getRepr(includeDefaultValue));
-          if (!last) target.append(COMMA);
-        }
-
-        public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
-          target.append('*');
-          if (!last) target.append(COMMA);
-        }
-      }
-    );
-    target.append(")");
-    return target.toString();
+  @Override
+  @NotNull
+  public String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context) {
+    return ParamHelper.getPresentableText(getParameters(), includeDefaultValue, context);
   }
 
   @Nullable

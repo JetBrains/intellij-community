@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.jetbrains.python.psi.impl.references;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -31,6 +31,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author vlan
@@ -51,9 +53,6 @@ public class PyOperatorReference extends PyReferenceImpl {
         res = resolveMember(expr.getRightExpression(), name);
       }
       else {
-        if (PyNames.DIV.equals(name) && isTrueDivEnabled(myElement)) {
-          resolveLeftAndRightOperators(res, expr, PyNames.TRUEDIV);
-        }
         resolveLeftAndRightOperators(res, expr, name);
       }
     }
@@ -94,7 +93,7 @@ public class PyOperatorReference extends PyReferenceImpl {
   @Nullable
   public PyExpression getReceiver() {
     if (myElement instanceof PyBinaryExpression) {
-      return ((PyBinaryExpression)myElement).getLeftExpression();
+      return getBinaryOperatorReceiver((PyBinaryExpression)myElement);
     }
     else if (myElement instanceof PySubscriptionExpression) {
       return ((PySubscriptionExpression)myElement).getOperand();
@@ -105,17 +104,21 @@ public class PyOperatorReference extends PyReferenceImpl {
     return null;
   }
 
-  private static String leftToRightOperatorName(String name) {
-    return name.replaceFirst("__([a-z]+)__", "__r$1__");
+  @Nullable
+  private static PyExpression getBinaryOperatorReceiver(PyBinaryExpression expr) {
+    final PyExpression leftOperand = expr.getLeftExpression();
+    // Chained comparisons
+    if (PyTokenTypes.COMPARISON_OPERATIONS.contains(expr.getOperator())) {
+      final PyBinaryExpression leftBinaryExpr = as(leftOperand, PyBinaryExpression.class);
+      if (leftBinaryExpr != null && PyTokenTypes.COMPARISON_OPERATIONS.contains(leftBinaryExpr.getOperator())) {
+        return leftBinaryExpr.getRightExpression();
+      }
+    }
+    return leftOperand;
   }
 
-  private static boolean isTrueDivEnabled(@NotNull PyElement anchor) {
-    final PsiFile file = anchor.getContainingFile();
-    if (file instanceof PyFile) {
-      final PyFile pyFile = (PyFile)file;
-      return FutureFeature.DIVISION.requiredAt(pyFile.getLanguageLevel()) || pyFile.hasImportFromFuture(FutureFeature.DIVISION);
-    }
-    return false;
+  private static String leftToRightOperatorName(String name) {
+    return name.replaceFirst("__([a-z]+)__", "__r$1__");
   }
 
   private void resolveLeftAndRightOperators(List<RatedResolveResult> res, PyBinaryExpression expr, String name) {
@@ -123,7 +126,7 @@ public class PyOperatorReference extends PyReferenceImpl {
     typeEvalContext.trace("Trying to resolve left operator");
     typeEvalContext.traceIndent();
     try {
-      res.addAll(resolveMember(expr.getLeftExpression(), name));
+      res.addAll(resolveMember(getBinaryOperatorReceiver(expr), name));
     }
     finally {
       typeEvalContext.traceUnindent();

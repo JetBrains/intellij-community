@@ -17,7 +17,6 @@ package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.*;
@@ -32,7 +31,6 @@ import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.elements.JpsArtifactOutputPackagingElement;
-import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -52,26 +50,23 @@ public class ArtifactBuildTarget extends ArtifactBasedBuildTarget {
 
   @Override
   public Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry, final TargetOutputIndex outputIndex) {
-    final LinkedHashSet<BuildTarget<?>> dependencies = new LinkedHashSet<BuildTarget<?>>();
+    final LinkedHashSet<BuildTarget<?>> dependencies = new LinkedHashSet<>();
     final JpsArtifact artifact = getArtifact();
-    JpsArtifactUtil.processPackagingElements(artifact.getRootElement(), new Processor<JpsPackagingElement>() {
-      @Override
-      public boolean process(JpsPackagingElement element) {
-        if (element instanceof JpsArtifactOutputPackagingElement) {
-          JpsArtifact included = ((JpsArtifactOutputPackagingElement)element).getArtifactReference().resolve();
-          if (included != null && !included.equals(artifact)) {
-            if (!StringUtil.isEmpty(included.getOutputPath())) {
-              dependencies.add(new ArtifactBuildTarget(included));
-              return false;
-            }
+    JpsArtifactUtil.processPackagingElements(artifact.getRootElement(), element -> {
+      if (element instanceof JpsArtifactOutputPackagingElement) {
+        JpsArtifact included = ((JpsArtifactOutputPackagingElement)element).getArtifactReference().resolve();
+        if (included != null && !included.equals(artifact)) {
+          if (!StringUtil.isEmpty(included.getOutputPath())) {
+            dependencies.add(new ArtifactBuildTarget(included));
+            return false;
           }
         }
-        dependencies.addAll(LayoutElementBuildersRegistry.getInstance().getDependencies(element, outputIndex));
-        return true;
       }
+      dependencies.addAll(LayoutElementBuildersRegistry.getInstance().getDependencies(element, outputIndex));
+      return true;
     });
     if (!dependencies.isEmpty()) {
-      final List<BuildTarget<?>> additional = new SmartList<BuildTarget<?>>();
+      final List<BuildTarget<?>> additional = new SmartList<>();
       for (BuildTarget<?> dependency : dependencies) {
         if (dependency instanceof ModuleBasedTarget<?>) {
           final ModuleBasedTarget target = (ModuleBasedTarget)dependency;
@@ -123,6 +118,6 @@ public class ArtifactBuildTarget extends ArtifactBasedBuildTarget {
   @Override
   public Collection<File> getOutputRoots(CompileContext context) {
     String outputFilePath = getArtifact().getOutputFilePath();
-    return outputFilePath != null && !StringUtil.isEmpty(outputFilePath) ? Collections.singleton(new File(FileUtil.toSystemDependentName(outputFilePath))) : Collections.<File>emptyList();
+    return outputFilePath != null && !StringUtil.isEmpty(outputFilePath) ? Collections.singleton(new File(FileUtil.toSystemDependentName(outputFilePath))) : Collections.emptyList();
   }
 }

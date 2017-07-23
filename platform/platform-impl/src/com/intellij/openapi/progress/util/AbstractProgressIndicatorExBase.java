@@ -15,13 +15,10 @@
  */
 package com.intellij.openapi.progress.util;
 
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
@@ -30,56 +27,7 @@ import java.util.List;
 
 public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBase implements ProgressIndicatorEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressIndicatorBase");
-  private static final IndicatorAction CHECK_CANCELED_ACTION = new IndicatorAction() {
-    @Override
-    public void execute(@NotNull ProgressIndicatorEx each) {
-      each.checkCanceled();
-    }
-  };
-  private static final IndicatorAction STOP_ACTION = new IndicatorAction() {
-    @Override
-    public void execute(@NotNull final ProgressIndicatorEx each) {
-      each.stop();
-    }
-  };
-  private static final IndicatorAction START_ACTION = new IndicatorAction() {
-    @Override
-    public void execute(@NotNull final ProgressIndicatorEx each) {
-      each.start();
-    }
-  };
-  private static final IndicatorAction CANCEL_ACTION = new IndicatorAction() {
-    @Override
-    public void execute(@NotNull final ProgressIndicatorEx each) {
-      each.cancel();
-    }
-  };
-  private static final IndicatorAction PUSH_ACTION = new IndicatorAction() {
-    @Override
-    public void execute(@NotNull final ProgressIndicatorEx each) {
-      each.pushState();
-    }
-  };
-  private static final IndicatorAction POP_ACTION = new IndicatorAction() {
-    @Override
-    public void execute(@NotNull final ProgressIndicatorEx each) {
-      each.popState();
-    }
-  };
-  private static final IndicatorAction STARTNC_ACTION = new IndicatorAction() {
-    @Override
-    public void execute(@NotNull final ProgressIndicatorEx each) {
-      each.startNonCancelableSection();
-    }
-  };
-  private static final IndicatorAction FINISHNC_ACTION = new IndicatorAction() {
-    @Override
-    public void execute(@NotNull final ProgressIndicatorEx each) {
-      each.finishNonCancelableSection();
-    }
-  };
-  protected final boolean myReusable;
-  private volatile boolean myModalityEntered;
+  private final boolean myReusable;
   private volatile List<ProgressIndicatorEx> myStateDelegates;
   private volatile WeakList<TaskInfo> myFinished;
   private volatile boolean myWasStarted;
@@ -97,62 +45,22 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
   public void start() {
     synchronized (this) {
       super.start();
-      delegateRunningChange(START_ACTION);
+      delegateRunningChange(ProgressIndicator::start);
     }
     myWasStarted = true;
-
-    enterModality();
   }
 
-  protected final void enterModality() {
-    if (myModalityProgress == this) {
-      ModalityState modalityState = ModalityState.defaultModalityState();
-      if (!myModalityEntered &&
-          !ApplicationManager.getApplication().isDispatchThread() &&
-          !((TransactionGuardImpl)TransactionGuard.getInstance()).isWriteSafeModality(modalityState)) {
-        // exceptions here should be assigned to Peter
-        LOG.error("Non-modal progress should be started in a write-safe context: an action or modality-aware invokeLater. See also TransactionGuard documentation.");
-      }
-      GuiUtils.invokeLaterIfNeeded(this::doEnterModality, modalityState);
-    }
-  }
-
-  private void doEnterModality() {
-    if (!myModalityEntered) {
-      LaterInvocator.enterModal(this);
-      myModalityEntered = true;
-    }
-  }
 
   @Override
   public void stop() {
     super.stop();
-    delegateRunningChange(STOP_ACTION);
-    exitModality();
-  }
-
-  protected final void exitModality() {
-    if (myModalityProgress == this) {
-      GuiUtils.invokeLaterIfNeeded(this::doExitModality, ModalityState.defaultModalityState());
-    }
-  }
-
-  private void doExitModality() {
-    if (myModalityEntered) {
-      myModalityEntered = false;
-      LaterInvocator.leaveModal(this);
-    }
+    delegateRunningChange(ProgressIndicator::stop);
   }
 
   @Override
   public void cancel() {
     super.cancel();
-    delegateRunningChange(CANCEL_ACTION);
-  }
-
-  @Override
-  public boolean isCanceled() {
-    return super.isCanceled();
+    delegateRunningChange(ProgressIndicator::cancel);
   }
 
   @Override
@@ -168,12 +76,7 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
     }
     if (!finished.addIfAbsent(task)) return;
 
-    delegateRunningChange(new IndicatorAction() {
-      @Override
-      public void execute(@NotNull final ProgressIndicatorEx each) {
-        each.finish(task);
-      }
-    });
+    delegateRunningChange(each -> each.finish(task));
   }
 
   @Override
@@ -198,71 +101,56 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
   public final void checkCanceled() {
     super.checkCanceled();
 
-    delegate(CHECK_CANCELED_ACTION);
+    delegate(ProgressIndicator::checkCanceled);
   }
 
   @Override
   public void setText(final String text) {
     super.setText(text);
 
-    delegateProgressChange(new IndicatorAction() {
-      @Override
-      public void execute(@NotNull final ProgressIndicatorEx each) {
-        each.setText(text);
-      }
-    });
+    delegateProgressChange(each -> each.setText(text));
   }
 
   @Override
   public void setText2(final String text) {
     super.setText2(text);
 
-    delegateProgressChange(new IndicatorAction() {
-      @Override
-      public void execute(@NotNull final ProgressIndicatorEx each) {
-        each.setText2(text);
-      }
-    });
+    delegateProgressChange(each -> each.setText2(text));
   }
 
   @Override
   public void setFraction(final double fraction) {
     super.setFraction(fraction);
 
-    delegateProgressChange(new IndicatorAction() {
-      @Override
-      public void execute(@NotNull final ProgressIndicatorEx each) {
-        each.setFraction(fraction);
-      }
-    });
+    delegateProgressChange(each -> each.setFraction(fraction));
   }
 
   @Override
   public synchronized void pushState() {
     super.pushState();
 
-    delegateProgressChange(PUSH_ACTION);
+    delegateProgressChange(ProgressIndicator::pushState);
   }
 
   @Override
   public synchronized void popState() {
     super.popState();
 
-    delegateProgressChange(POP_ACTION);
+    delegateProgressChange(ProgressIndicator::popState);
   }
 
   @Override
   public void startNonCancelableSection() {
     super.startNonCancelableSection();
 
-    delegateProgressChange(STARTNC_ACTION);
+    delegateProgressChange(ProgressIndicator::startNonCancelableSection);
   }
 
   @Override
   public void finishNonCancelableSection() {
     super.finishNonCancelableSection();
 
-    delegateProgressChange(FINISHNC_ACTION);
+    delegateProgressChange(ProgressIndicator::finishNonCancelableSection);
   }
 
   @Override
@@ -274,12 +162,7 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
   public void setIndeterminate(final boolean indeterminate) {
     super.setIndeterminate(indeterminate);
 
-    delegateProgressChange(new IndicatorAction() {
-      @Override
-      public void execute(@NotNull final ProgressIndicatorEx each) {
-        each.setIndeterminate(indeterminate);
-      }
-    });
+    delegateProgressChange(each -> each.setIndeterminate(indeterminate));
   }
 
   @Override
@@ -325,23 +208,11 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
   }
 
   @Override
-  public boolean isModalityEntered() {
-    return myModalityEntered;
-  }
-
-  @Override
-  public synchronized void initStateFrom(@NotNull final ProgressIndicator indicator) {
-    super.initStateFrom(indicator);
-    if (indicator instanceof ProgressIndicatorEx) {
-      myModalityEntered = ((ProgressIndicatorEx)indicator).isModalityEntered();
-    }
-  }
-
-  @Override
   public boolean wasStarted() {
     return myWasStarted;
   }
 
+  @FunctionalInterface
   protected interface IndicatorAction {
     void execute(@NotNull ProgressIndicatorEx each);
   }

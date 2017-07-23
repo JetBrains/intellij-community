@@ -165,7 +165,7 @@ public class ReplaceOptions implements JDOMExternalizable {
   }
 
   public Collection<ReplacementVariableDefinition> getReplacementVariableDefinitions() {
-    return variableDefs != null ? variableDefs.values() : Collections.<ReplacementVariableDefinition>emptyList();
+    return variableDefs != null ? variableDefs.values() : Collections.emptyList();
   }
 
   public void clearVariableDefinitions() {

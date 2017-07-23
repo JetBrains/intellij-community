@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,7 @@ package com.intellij.openapi.module.impl;
 import com.intellij.openapi.module.ConfigurationErrorDescription;
 import com.intellij.openapi.module.ConfigurationErrorType;
 import com.intellij.openapi.project.ProjectBundle;
-
-import java.io.File;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
@@ -30,13 +29,14 @@ public class ModuleLoadingErrorDescription extends ConfigurationErrorDescription
   private final ModulePath myModulePath;
   private final ModuleManagerImpl myModuleManager;
 
-  private ModuleLoadingErrorDescription(final String description, final ModulePath modulePath, ModuleManagerImpl moduleManager,
-                                        final String elementName) {
-    super(elementName, description, INVALID_MODULE);
+  ModuleLoadingErrorDescription(String description, @NotNull ModulePath modulePath, @NotNull ModuleManagerImpl moduleManager) {
+    super(modulePath.getModuleName(), description, INVALID_MODULE);
+
     myModulePath = modulePath;
     myModuleManager = moduleManager;
   }
 
+  @NotNull
   public ModulePath getModulePath() {
     return myModulePath;
   }
@@ -49,17 +49,5 @@ public class ModuleLoadingErrorDescription extends ConfigurationErrorDescription
   @Override
   public String getIgnoreConfirmationMessage() {
     return ProjectBundle.message("module.remove.from.project.confirmation", getElementName());
-  }
-
-  public static ModuleLoadingErrorDescription create(final String description, final ModulePath modulePath,
-                                                     ModuleManagerImpl moduleManager) {
-    String path = modulePath.getPath();
-    int start = path.lastIndexOf(File.separatorChar)+1;
-    int finish = path.lastIndexOf('.');
-    if (finish == -1 || finish <= start) {
-      finish = path.length();
-    }
-    final String moduleName = path.substring(start, finish);
-    return new ModuleLoadingErrorDescription(description, modulePath, moduleManager, moduleName);
   }
 }

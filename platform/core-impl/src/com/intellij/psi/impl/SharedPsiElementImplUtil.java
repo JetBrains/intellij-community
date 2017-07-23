@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public class SharedPsiElementImplUtil {
     if (element == null || element instanceof OuterLanguageElement) return null;
     offset = thisElement.getTextRange().getStartOffset() + offset - element.getTextRange().getStartOffset();
 
-    List<PsiReference> referencesList = new ArrayList<PsiReference>();
+    List<PsiReference> referencesList = new ArrayList<>();
     while (element != null) {
       addReferences(offset, element, referencesList);
       if (element instanceof PsiFile) break;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.codeInspection.LocalInspectionTool;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,14 +23,7 @@ public class StringConcatenationInLoopsInspectionFixTest extends LightQuickFixPa
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    // Instantiation via LocalInspectionEP is necessary as tool ID lacks ending -s (shortName is StringConcatenationInLoop)
-    // which results in error when registering suppress actions
-    LocalInspectionEP ep = new LocalInspectionEP();
-    ep.id = "StringConcatenationInLoop";
-    ep.implementationClass = StringConcatenationInLoopsInspection.class.getName();
-    LocalInspectionTool tool = (LocalInspectionTool)ep.instantiateTool();
-
-    return new LocalInspectionTool[]{tool};
+    return new LocalInspectionTool[]{new StringConcatenationInLoopsInspection()};
   }
 
   public void test() throws Exception { doAllTests(); }

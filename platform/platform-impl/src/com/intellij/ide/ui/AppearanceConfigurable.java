@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
+import com.intellij.ide.actions.QuickChangeLookAndFeel;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,9 +34,10 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.FontComboBox;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -95,8 +96,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myAntialiasingInIDE.setModel(new DefaultComboBoxModel(AntialiasingType.values()));
     myComponent.myAntialiasingInEditor.setModel(new DefaultComboBoxModel(AntialiasingType.values()));
 
-    myComponent.myAntialiasingInIDE.setSelectedItem(settings.IDE_AA_TYPE);
-    myComponent.myAntialiasingInEditor.setSelectedItem(settings.EDITOR_AA_TYPE);
+    myComponent.myAntialiasingInIDE.setSelectedItem(settings.getIdeAAType());
+    myComponent.myAntialiasingInEditor.setSelectedItem(settings.getEditorAAType());
     myComponent.myAntialiasingInIDE.setRenderer(new AAListCellRenderer(false));
     myComponent.myAntialiasingInEditor.setRenderer(new AAListCellRenderer(true));
 
@@ -152,114 +153,118 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
   public void apply() {
     initComponent();
     UISettings settings = UISettings.getInstance();
-    int _fontSize = getIntValue(myComponent.myFontSizeCombo, settings.FONT_SIZE);
-    int _presentationFontSize = getIntValue(myComponent.myPresentationModeFontSize, settings.PRESENTATION_MODE_FONT_SIZE);
+    int _fontSize = getIntValue(myComponent.myFontSizeCombo, settings.getFontSize());
+    int _presentationFontSize = getIntValue(myComponent.myPresentationModeFontSize, settings.getPresentationModeFontSize());
     boolean update = false;
     boolean shouldUpdateUI = false;
     String _fontFace = myComponent.myFontCombo.getFontName();
     LafManager lafManager = LafManager.getInstance();
-    if (_fontSize != settings.FONT_SIZE || !Comparing.equal(settings.FONT_FACE, _fontFace)) {
-      settings.FONT_SIZE = _fontSize;
-      settings.FONT_FACE = _fontFace;
+    if (_fontSize != settings.getFontSize() || !Comparing.equal(settings.getFontFace(), _fontFace)) {
+      settings.setFontSize(_fontSize);
+      settings.setFontFace(_fontFace);
       shouldUpdateUI = true;
       update = true;
     }
 
-    if (_presentationFontSize != settings.PRESENTATION_MODE_FONT_SIZE) {
-      settings.PRESENTATION_MODE_FONT_SIZE = _presentationFontSize;
+    if (_presentationFontSize != settings.getPresentationModeFontSize()) {
+      settings.setPresentationModeFontSize(_presentationFontSize);
       shouldUpdateUI = true;
     }
 
-    if (myComponent.myAntialiasingInIDE.getSelectedItem() != settings.IDE_AA_TYPE) {
-      settings.IDE_AA_TYPE = (AntialiasingType)myComponent.myAntialiasingInIDE.getSelectedItem();
+    if (myComponent.myAntialiasingInIDE.getSelectedItem() != settings.getIdeAAType()) {
+      settings.setIdeAAType((AntialiasingType)myComponent.myAntialiasingInIDE.getSelectedItem());
       for (Window w : Window.getWindows()) {
         for (JComponent c : UIUtil.uiTraverser(w).filter(JComponent.class)) {
-          c.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, AntialiasingType.getAAHintForSwingComponent());
+          GraphicsUtil.setAntialiasingType(c, AntialiasingType.getAAHintForSwingComponent());
         }
       }
       shouldUpdateUI = true;
     }
 
-    if (myComponent.myAntialiasingInEditor.getSelectedItem() != settings.EDITOR_AA_TYPE) {
-      settings.EDITOR_AA_TYPE = (AntialiasingType)myComponent.myAntialiasingInEditor.getSelectedItem();
+    if (myComponent.myAntialiasingInEditor.getSelectedItem() != settings.getEditorAAType()) {
+      settings.setEditorAAType((AntialiasingType)myComponent.myAntialiasingInEditor.getSelectedItem());
       shouldUpdateUI = true;
     }
 
-    settings.ANIMATE_WINDOWS = myComponent.myAnimateWindowsCheckBox.isSelected();
-    update |= settings.SHOW_TOOL_WINDOW_NUMBERS != myComponent.myWindowShortcutsCheckBox.isSelected();
-    settings.SHOW_TOOL_WINDOW_NUMBERS = myComponent.myWindowShortcutsCheckBox.isSelected();
-    update |= settings.HIDE_TOOL_STRIPES != !myComponent.myShowToolStripesCheckBox.isSelected();
-    settings.HIDE_TOOL_STRIPES = !myComponent.myShowToolStripesCheckBox.isSelected();
-    update |= settings.SHOW_ICONS_IN_MENUS != myComponent.myCbDisplayIconsInMenu.isSelected();
-    settings.SHOW_ICONS_IN_MENUS = myComponent.myCbDisplayIconsInMenu.isSelected();
-    update |= settings.SHOW_MEMORY_INDICATOR != myComponent.myShowMemoryIndicatorCheckBox.isSelected();
-    settings.SHOW_MEMORY_INDICATOR = myComponent.myShowMemoryIndicatorCheckBox.isSelected();
-    update |= settings.ALLOW_MERGE_BUTTONS != myComponent.myAllowMergeButtons.isSelected();
-    settings.ALLOW_MERGE_BUTTONS = myComponent.myAllowMergeButtons.isSelected();
-    update |= settings.CYCLE_SCROLLING != myComponent.myCycleScrollingCheckBox.isSelected();
-    settings.CYCLE_SCROLLING = myComponent.myCycleScrollingCheckBox.isSelected();
-    if (settings.OVERRIDE_NONIDEA_LAF_FONTS != myComponent.myOverrideLAFFonts.isSelected()) {
+    settings.setAnimateWindows(myComponent.myAnimateWindowsCheckBox.isSelected());
+    update |= settings.getShowToolWindowsNumbers() != myComponent.myWindowShortcutsCheckBox.isSelected();
+    settings.setShowToolWindowsNumbers(myComponent.myWindowShortcutsCheckBox.isSelected());
+    update |= settings.getHideToolStripes() != !myComponent.myShowToolStripesCheckBox.isSelected();
+    settings.setHideToolStripes(!myComponent.myShowToolStripesCheckBox.isSelected());
+    update |= settings.getShowIconsInMenus() != myComponent.myCbDisplayIconsInMenu.isSelected();
+    settings.setShowIconsInMenus(myComponent.myCbDisplayIconsInMenu.isSelected());
+    update |= settings.getShowMemoryIndicator() != myComponent.myShowMemoryIndicatorCheckBox.isSelected();
+    settings.setShowMemoryIndicator(myComponent.myShowMemoryIndicatorCheckBox.isSelected());
+    update |= settings.getAllowMergeButtons() != myComponent.myAllowMergeButtons.isSelected();
+    settings.setAllowMergeButtons(myComponent.myAllowMergeButtons.isSelected());
+    update |= settings.getCycleScrolling() != myComponent.myCycleScrollingCheckBox.isSelected();
+    settings.setCycleScrolling(myComponent.myCycleScrollingCheckBox.isSelected());
+    if (settings.getOverrideLafFonts() != myComponent.myOverrideLAFFonts.isSelected()) {
       shouldUpdateUI = true;
       update = true;
     }
-    settings.OVERRIDE_NONIDEA_LAF_FONTS = myComponent.myOverrideLAFFonts.isSelected();
-    settings.MOVE_MOUSE_ON_DEFAULT_BUTTON = myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected();
-    settings.HIDE_NAVIGATION_ON_FOCUS_LOSS = myComponent.myHideNavigationPopupsCheckBox.isSelected();
-    settings.DND_WITH_PRESSED_ALT_ONLY = myComponent.myAltDNDCheckBox.isSelected();
+    settings.setOverrideLafFonts(myComponent.myOverrideLAFFonts.isSelected());
+    settings.setMoveMouseOnDefaultButton(myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected());
+    settings.setHideNavigationOnFocusLoss(myComponent.myHideNavigationPopupsCheckBox.isSelected());
+    settings.setDndWithPressedAltOnly(myComponent.myAltDNDCheckBox.isSelected());
 
-    update |= settings.DISABLE_MNEMONICS != myComponent.myDisableMnemonics.isSelected();
-    settings.DISABLE_MNEMONICS = myComponent.myDisableMnemonics.isSelected();
+    update |= settings.getDisableMnemonics() != myComponent.myDisableMnemonics.isSelected();
+    settings.setDisableMnemonics(myComponent.myDisableMnemonics.isSelected());
 
-    update |= settings.USE_SMALL_LABELS_ON_TABS != myComponent.myUseSmallLabelsOnTabs.isSelected();
-    settings.USE_SMALL_LABELS_ON_TABS = myComponent.myUseSmallLabelsOnTabs.isSelected();
+    update |= settings.getUseSmallLabelsOnTabs() != myComponent.myUseSmallLabelsOnTabs.isSelected();
+    settings.setUseSmallLabelsOnTabs(myComponent.myUseSmallLabelsOnTabs.isSelected());
 
-    update |= settings.WIDESCREEN_SUPPORT != myComponent.myWidescreenLayoutCheckBox.isSelected();
-    settings.WIDESCREEN_SUPPORT = myComponent.myWidescreenLayoutCheckBox.isSelected();
+    update |= settings.getWideScreenSupport() != myComponent.myWidescreenLayoutCheckBox.isSelected();
+    settings.setWideScreenSupport(myComponent.myWidescreenLayoutCheckBox.isSelected());
 
-    update |= settings.LEFT_HORIZONTAL_SPLIT != myComponent.myLeftLayoutCheckBox.isSelected();
-    settings.LEFT_HORIZONTAL_SPLIT = myComponent.myLeftLayoutCheckBox.isSelected();
+    update |= settings.getLeftHorizontalSplit() != myComponent.myLeftLayoutCheckBox.isSelected();
+    settings.setLeftHorizontalSplit(myComponent.myLeftLayoutCheckBox.isSelected());
 
-    update |= settings.RIGHT_HORIZONTAL_SPLIT != myComponent.myRightLayoutCheckBox.isSelected();
-    settings.RIGHT_HORIZONTAL_SPLIT = myComponent.myRightLayoutCheckBox.isSelected();
+    update |= settings.getRightHorizontalSplit() != myComponent.myRightLayoutCheckBox.isSelected();
+    settings.setRightHorizontalSplit(myComponent.myRightLayoutCheckBox.isSelected());
 
-    update |= settings.NAVIGATE_TO_PREVIEW != (myComponent.myNavigateToPreviewCheckBox.isVisible() && myComponent.myNavigateToPreviewCheckBox.isSelected());
-    settings.NAVIGATE_TO_PREVIEW = myComponent.myNavigateToPreviewCheckBox.isSelected();
+    update |= settings.getSmoothScrolling() != myComponent.mySmoothScrollingCheckBox.isSelected();
+    settings.setSmoothScrolling(myComponent.mySmoothScrollingCheckBox.isSelected());
+
+    update |= settings.getNavigateToPreview() != (myComponent.myNavigateToPreviewCheckBox.isVisible() && myComponent.myNavigateToPreviewCheckBox.isSelected());
+    settings.setNavigateToPreview(myComponent.myNavigateToPreviewCheckBox.isSelected());
 
     ColorBlindness blindness = myComponent.myColorBlindnessPanel.getColorBlindness();
     boolean updateEditorScheme = false;
-    if (settings.COLOR_BLINDNESS != blindness) {
-      settings.COLOR_BLINDNESS = blindness;
+    if (settings.getColorBlindness() != blindness) {
+      settings.setColorBlindness(blindness);
       update = true;
       ServiceKt.getStateStore(ApplicationManager.getApplication()).reloadState(DefaultColorSchemesManager.class);
       updateEditorScheme = true;
     }
 
-    update |= settings.DISABLE_MNEMONICS_IN_CONTROLS != myComponent.myDisableMnemonicInControlsCheckBox.isSelected();
-    settings.DISABLE_MNEMONICS_IN_CONTROLS = myComponent.myDisableMnemonicInControlsCheckBox.isSelected();
+    update |= settings.getDisableMnemonicsInControls() != myComponent.myDisableMnemonicInControlsCheckBox.isSelected();
+    settings.setDisableMnemonicsInControls(myComponent.myDisableMnemonicInControlsCheckBox.isSelected());
 
-    update |= settings.SHOW_ICONS_IN_QUICK_NAVIGATION != myComponent.myHideIconsInQuickNavigation.isSelected();
-    settings.SHOW_ICONS_IN_QUICK_NAVIGATION = myComponent.myHideIconsInQuickNavigation.isSelected();
+    update |= settings.getShowIconInQuickNavigation() != myComponent.myHideIconsInQuickNavigation.isSelected();
+    settings.setShowIconInQuickNavigation(myComponent.myHideIconsInQuickNavigation.isSelected());
 
     if (!Comparing.equal(myComponent.myLafComboBox.getSelectedItem(), lafManager.getCurrentLookAndFeel())) {
-      final UIManager.LookAndFeelInfo lafInfo = (UIManager.LookAndFeelInfo)myComponent.myLafComboBox.getSelectedItem();
-      if (lafManager.checkLookAndFeel(lafInfo)) {
-        update = shouldUpdateUI = true;
-        final boolean wasDarcula = UIUtil.isUnderDarcula();
-        lafManager.setCurrentLookAndFeel(lafInfo);
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(() -> {
-          if (UIUtil.isUnderDarcula()) {
-            DarculaInstaller.install();
-          } else if (wasDarcula) {
-            DarculaInstaller.uninstall();
-          }
-        });
-      }
+      UIManager.LookAndFeelInfo lafInfo = (UIManager.LookAndFeelInfo)myComponent.myLafComboBox.getSelectedItem();
+      update = true;
+      shouldUpdateUI = false;
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(() -> QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafInfo));
     }
-
 
     if (shouldUpdateUI) {
       lafManager.updateUI();
+      shouldUpdateUI = false;
+    }
+    // reset to default when unchecked
+    if (!myComponent.myOverrideLAFFonts.isSelected()) {
+      assert !shouldUpdateUI;
+      int defSize = JBUI.Fonts.label().getSize();
+      settings.setFontSize(defSize);
+      myComponent.myFontSizeCombo.getModel().setSelectedItem(String.valueOf(defSize));
+      String defName = JBUI.Fonts.label().getFontName();
+      settings.setFontFace(defName);
+      myComponent.myFontCombo.setFontName(defName);
     }
 
     if (WindowManagerEx.getInstanceEx().isAlphaModeSupported()) {
@@ -270,12 +275,12 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       catch (NumberFormatException ignored) {
       }
       float ratio = myComponent.myAlphaModeRatioSlider.getValue() / 100f;
-      if (myComponent.myEnableAlphaModeCheckBox.isSelected() != settings.ENABLE_ALPHA_MODE ||
-          delay != -1 && delay != settings.ALPHA_MODE_DELAY || ratio != settings.ALPHA_MODE_RATIO) {
+      if (myComponent.myEnableAlphaModeCheckBox.isSelected() != settings.getEnableAlphaMode() ||
+          delay != -1 && delay != settings.getAlphaModeDelay() || ratio != settings.getAlphaModeRatio()) {
         update = true;
-        settings.ENABLE_ALPHA_MODE = myComponent.myEnableAlphaModeCheckBox.isSelected();
-        settings.ALPHA_MODE_DELAY = delay;
-        settings.ALPHA_MODE_RATIO = ratio;
+        settings.setEnableAlphaMode(myComponent.myEnableAlphaModeCheckBox.isSelected());
+        settings.setAlphaModeDelay(delay);
+        settings.setAlphaModeRatio(ratio);
       }
     }
     int tooltipDelay = Math.min(myComponent.myInitialTooltipDelaySlider.getValue(), 5000);
@@ -321,8 +326,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     initComponent();
     UISettings settings = UISettings.getInstance();
 
-    if (settings.OVERRIDE_NONIDEA_LAF_FONTS) {
-      myComponent.myFontCombo.setFontName(settings.FONT_FACE);
+    if (settings.getOverrideLafFonts()) {
+      myComponent.myFontCombo.setFontName(settings.getFontFace());
     } else {
       myComponent.myFontCombo.setFontName(UIUtil.getLabelFont().getFamily());
     }
@@ -330,49 +335,50 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     //myComponent.myAntialiasingCheckBox.setSelected(settings.ANTIALIASING_IN_IDE);
     //myComponent.myLCDRenderingScopeCombo.setSelectedItem(settings.LCD_RENDERING_SCOPE);
 
-    myComponent.myAntialiasingInIDE.setSelectedItem(settings.IDE_AA_TYPE);
-    myComponent.myAntialiasingInEditor.setSelectedItem(settings.EDITOR_AA_TYPE);
+    myComponent.myAntialiasingInIDE.setSelectedItem(settings.getIdeAAType());
+    myComponent.myAntialiasingInEditor.setSelectedItem(settings.getEditorAAType());
 
-    myComponent.myFontSizeCombo.setSelectedItem(Integer.toString(settings.FONT_SIZE));
-    myComponent.myPresentationModeFontSize.setSelectedItem(Integer.toString(settings.PRESENTATION_MODE_FONT_SIZE));
-    myComponent.myAnimateWindowsCheckBox.setSelected(settings.ANIMATE_WINDOWS);
-    myComponent.myWindowShortcutsCheckBox.setSelected(settings.SHOW_TOOL_WINDOW_NUMBERS);
-    myComponent.myShowToolStripesCheckBox.setSelected(!settings.HIDE_TOOL_STRIPES);
-    myComponent.myCbDisplayIconsInMenu.setSelected(settings.SHOW_ICONS_IN_MENUS);
-    myComponent.myShowMemoryIndicatorCheckBox.setSelected(settings.SHOW_MEMORY_INDICATOR);
-    myComponent.myAllowMergeButtons.setSelected(settings.ALLOW_MERGE_BUTTONS);
-    myComponent.myCycleScrollingCheckBox.setSelected(settings.CYCLE_SCROLLING);
+    myComponent.myFontSizeCombo.setSelectedItem(Integer.toString(settings.getFontSize()));
+    myComponent.myPresentationModeFontSize.setSelectedItem(Integer.toString(settings.getPresentationModeFontSize()));
+    myComponent.myAnimateWindowsCheckBox.setSelected(settings.getAnimateWindows());
+    myComponent.myWindowShortcutsCheckBox.setSelected(settings.getShowToolWindowsNumbers());
+    myComponent.myShowToolStripesCheckBox.setSelected(!settings.getHideToolStripes());
+    myComponent.myCbDisplayIconsInMenu.setSelected(settings.getShowIconsInMenus());
+    myComponent.myShowMemoryIndicatorCheckBox.setSelected(settings.getShowMemoryIndicator());
+    myComponent.myAllowMergeButtons.setSelected(settings.getAllowMergeButtons());
+    myComponent.myCycleScrollingCheckBox.setSelected(settings.getCycleScrolling());
 
-    myComponent.myHideIconsInQuickNavigation.setSelected(settings.SHOW_ICONS_IN_QUICK_NAVIGATION);
-    myComponent.myMoveMouseOnDefaultButtonCheckBox.setSelected(settings.MOVE_MOUSE_ON_DEFAULT_BUTTON);
-    myComponent.myHideNavigationPopupsCheckBox.setSelected(settings.HIDE_NAVIGATION_ON_FOCUS_LOSS);
-    myComponent.myAltDNDCheckBox.setSelected(settings.DND_WITH_PRESSED_ALT_ONLY);
+    myComponent.myHideIconsInQuickNavigation.setSelected(settings.getShowIconInQuickNavigation());
+    myComponent.myMoveMouseOnDefaultButtonCheckBox.setSelected(settings.getMoveMouseOnDefaultButton());
+    myComponent.myHideNavigationPopupsCheckBox.setSelected(settings.getHideNavigationOnFocusLoss());
+    myComponent.myAltDNDCheckBox.setSelected(settings.getDndWithPressedAltOnly());
     myComponent.myLafComboBox.setSelectedItem(LafManager.getInstance().getCurrentLookAndFeel());
-    myComponent.myOverrideLAFFonts.setSelected(settings.OVERRIDE_NONIDEA_LAF_FONTS);
-    myComponent.myDisableMnemonics.setSelected(settings.DISABLE_MNEMONICS);
-    myComponent.myUseSmallLabelsOnTabs.setSelected(settings.USE_SMALL_LABELS_ON_TABS);
-    myComponent.myWidescreenLayoutCheckBox.setSelected(settings.WIDESCREEN_SUPPORT);
-    myComponent.myLeftLayoutCheckBox.setSelected(settings.LEFT_HORIZONTAL_SPLIT);
-    myComponent.myRightLayoutCheckBox.setSelected(settings.RIGHT_HORIZONTAL_SPLIT);
-    myComponent.myNavigateToPreviewCheckBox.setSelected(settings.NAVIGATE_TO_PREVIEW);
+    myComponent.myOverrideLAFFonts.setSelected(settings.getOverrideLafFonts());
+    myComponent.myDisableMnemonics.setSelected(settings.getDisableMnemonics());
+    myComponent.myUseSmallLabelsOnTabs.setSelected(settings.getUseSmallLabelsOnTabs());
+    myComponent.myWidescreenLayoutCheckBox.setSelected(settings.getWideScreenSupport());
+    myComponent.myLeftLayoutCheckBox.setSelected(settings.getLeftHorizontalSplit());
+    myComponent.myRightLayoutCheckBox.setSelected(settings.getRightHorizontalSplit());
+    myComponent.mySmoothScrollingCheckBox.setSelected(settings.getSmoothScrolling());
+    myComponent.myNavigateToPreviewCheckBox.setSelected(settings.getNavigateToPreview());
     myComponent.myNavigateToPreviewCheckBox.setVisible(false);//disabled for a while
-    myComponent.myColorBlindnessPanel.setColorBlindness(settings.COLOR_BLINDNESS);
-    myComponent.myDisableMnemonicInControlsCheckBox.setSelected(settings.DISABLE_MNEMONICS_IN_CONTROLS);
+    myComponent.myColorBlindnessPanel.setColorBlindness(settings.getColorBlindness());
+    myComponent.myDisableMnemonicInControlsCheckBox.setSelected(settings.getDisableMnemonicsInControls());
 
     boolean alphaModeEnabled = WindowManagerEx.getInstanceEx().isAlphaModeSupported();
     if (alphaModeEnabled) {
-      myComponent.myEnableAlphaModeCheckBox.setSelected(settings.ENABLE_ALPHA_MODE);
+      myComponent.myEnableAlphaModeCheckBox.setSelected(settings.getEnableAlphaMode());
     }
     else {
       myComponent.myEnableAlphaModeCheckBox.setSelected(false);
     }
     myComponent.myEnableAlphaModeCheckBox.setEnabled(alphaModeEnabled);
-    myComponent.myAlphaModeDelayTextField.setText(Integer.toString(settings.ALPHA_MODE_DELAY));
-    myComponent.myAlphaModeDelayTextField.setEnabled(alphaModeEnabled && settings.ENABLE_ALPHA_MODE);
-    int ratio = (int)(settings.ALPHA_MODE_RATIO * 100f);
+    myComponent.myAlphaModeDelayTextField.setText(Integer.toString(settings.getAlphaModeDelay()));
+    myComponent.myAlphaModeDelayTextField.setEnabled(alphaModeEnabled && settings.getEnableAlphaMode());
+    int ratio = (int)(settings.getAlphaModeRatio() * 100f);
     myComponent.myAlphaModeRatioSlider.setValue(ratio);
     myComponent.myAlphaModeRatioSlider.setToolTipText(ratio + "%");
-    myComponent.myAlphaModeRatioSlider.setEnabled(alphaModeEnabled && settings.ENABLE_ALPHA_MODE);
+    myComponent.myAlphaModeRatioSlider.setEnabled(alphaModeEnabled && settings.getEnableAlphaMode());
     myComponent.myInitialTooltipDelaySlider.setValue(Registry.intValue("ide.tooltip.initialDelay"));
     myComponent.updateCombo();
   }
@@ -396,42 +402,43 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     UISettings settings = UISettings.getInstance();
 
     boolean isModified = false;
-    isModified |= !Comparing.equal(myComponent.myFontCombo.getFontName(), settings.FONT_FACE) && myComponent.myOverrideLAFFonts.isSelected();
-    isModified |= !Comparing.equal(myComponent.myFontSizeCombo.getEditor().getItem(), Integer.toString(settings.FONT_SIZE));
+    isModified |= !Comparing.equal(myComponent.myFontCombo.getFontName(), settings.getFontFace()) && myComponent.myOverrideLAFFonts.isSelected();
+    isModified |= !Comparing.equal(myComponent.myFontSizeCombo.getEditor().getItem(), Integer.toString(settings.getFontSize()));
 
-    isModified |= myComponent.myAntialiasingInIDE.getSelectedItem() != settings.IDE_AA_TYPE;
-    isModified |= myComponent.myAntialiasingInEditor.getSelectedItem() != settings.EDITOR_AA_TYPE;
+    isModified |= myComponent.myAntialiasingInIDE.getSelectedItem() != settings.getIdeAAType();
+    isModified |= myComponent.myAntialiasingInEditor.getSelectedItem() != settings.getEditorAAType();
 
-    isModified |= myComponent.myAnimateWindowsCheckBox.isSelected() != settings.ANIMATE_WINDOWS;
-    isModified |= myComponent.myWindowShortcutsCheckBox.isSelected() != settings.SHOW_TOOL_WINDOW_NUMBERS;
-    isModified |= myComponent.myShowToolStripesCheckBox.isSelected() == settings.HIDE_TOOL_STRIPES;
-    isModified |= myComponent.myCbDisplayIconsInMenu.isSelected() != settings.SHOW_ICONS_IN_MENUS;
-    isModified |= myComponent.myShowMemoryIndicatorCheckBox.isSelected() != settings.SHOW_MEMORY_INDICATOR;
-    isModified |= myComponent.myAllowMergeButtons.isSelected() != settings.ALLOW_MERGE_BUTTONS;
-    isModified |= myComponent.myCycleScrollingCheckBox.isSelected() != settings.CYCLE_SCROLLING;
+    isModified |= myComponent.myAnimateWindowsCheckBox.isSelected() != settings.getAnimateWindows();
+    isModified |= myComponent.myWindowShortcutsCheckBox.isSelected() != settings.getShowToolWindowsNumbers();
+    isModified |= myComponent.myShowToolStripesCheckBox.isSelected() == settings.getHideToolStripes();
+    isModified |= myComponent.myCbDisplayIconsInMenu.isSelected() != settings.getShowIconsInMenus();
+    isModified |= myComponent.myShowMemoryIndicatorCheckBox.isSelected() != settings.getShowMemoryIndicator();
+    isModified |= myComponent.myAllowMergeButtons.isSelected() != settings.getAllowMergeButtons();
+    isModified |= myComponent.myCycleScrollingCheckBox.isSelected() != settings.getCycleScrolling();
 
-    isModified |= myComponent.myOverrideLAFFonts.isSelected() != settings.OVERRIDE_NONIDEA_LAF_FONTS;
+    isModified |= myComponent.myOverrideLAFFonts.isSelected() != settings.getOverrideLafFonts();
 
-    isModified |= myComponent.myDisableMnemonics.isSelected() != settings.DISABLE_MNEMONICS;
-    isModified |= myComponent.myDisableMnemonicInControlsCheckBox.isSelected() != settings.DISABLE_MNEMONICS_IN_CONTROLS;
+    isModified |= myComponent.myDisableMnemonics.isSelected() != settings.getDisableMnemonics();
+    isModified |= myComponent.myDisableMnemonicInControlsCheckBox.isSelected() != settings.getDisableMnemonicsInControls();
 
-    isModified |= myComponent.myUseSmallLabelsOnTabs.isSelected() != settings.USE_SMALL_LABELS_ON_TABS;
-    isModified |= myComponent.myWidescreenLayoutCheckBox.isSelected() != settings.WIDESCREEN_SUPPORT;
-    isModified |= myComponent.myLeftLayoutCheckBox.isSelected() != settings.LEFT_HORIZONTAL_SPLIT;
-    isModified |= myComponent.myRightLayoutCheckBox.isSelected() != settings.RIGHT_HORIZONTAL_SPLIT;
-    isModified |= myComponent.myNavigateToPreviewCheckBox.isSelected() != settings.NAVIGATE_TO_PREVIEW;
-    isModified |= myComponent.myColorBlindnessPanel.getColorBlindness() != settings.COLOR_BLINDNESS;
+    isModified |= myComponent.myUseSmallLabelsOnTabs.isSelected() != settings.getUseSmallLabelsOnTabs();
+    isModified |= myComponent.myWidescreenLayoutCheckBox.isSelected() != settings.getWideScreenSupport();
+    isModified |= myComponent.myLeftLayoutCheckBox.isSelected() != settings.getLeftHorizontalSplit();
+    isModified |= myComponent.myRightLayoutCheckBox.isSelected() != settings.getRightHorizontalSplit();
+    isModified |= myComponent.mySmoothScrollingCheckBox.isSelected() != settings.getSmoothScrolling();
+    isModified |= myComponent.myNavigateToPreviewCheckBox.isSelected() != settings.getNavigateToPreview();
+    isModified |= myComponent.myColorBlindnessPanel.getColorBlindness() != settings.getColorBlindness();
 
-    isModified |= myComponent.myHideIconsInQuickNavigation.isSelected() != settings.SHOW_ICONS_IN_QUICK_NAVIGATION;
+    isModified |= myComponent.myHideIconsInQuickNavigation.isSelected() != settings.getShowIconInQuickNavigation();
 
-    isModified |= !Comparing.equal(myComponent.myPresentationModeFontSize.getEditor().getItem(), Integer.toString(settings.PRESENTATION_MODE_FONT_SIZE));
+    isModified |= !Comparing.equal(myComponent.myPresentationModeFontSize.getEditor().getItem(), Integer.toString(settings.getPresentationModeFontSize()));
 
-    isModified |= myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected() != settings.MOVE_MOUSE_ON_DEFAULT_BUTTON;
-    isModified |= myComponent.myHideNavigationPopupsCheckBox.isSelected() != settings.HIDE_NAVIGATION_ON_FOCUS_LOSS;
-    isModified |= myComponent.myAltDNDCheckBox.isSelected() != settings.DND_WITH_PRESSED_ALT_ONLY;
+    isModified |= myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected() != settings.getMoveMouseOnDefaultButton();
+    isModified |= myComponent.myHideNavigationPopupsCheckBox.isSelected() != settings.getHideNavigationOnFocusLoss();
+    isModified |= myComponent.myAltDNDCheckBox.isSelected() != settings.getDndWithPressedAltOnly();
     isModified |= !Comparing.equal(myComponent.myLafComboBox.getSelectedItem(), LafManager.getInstance().getCurrentLookAndFeel());
     if (WindowManagerEx.getInstanceEx().isAlphaModeSupported()) {
-      isModified |= myComponent.myEnableAlphaModeCheckBox.isSelected() != settings.ENABLE_ALPHA_MODE;
+      isModified |= myComponent.myEnableAlphaModeCheckBox.isSelected() != settings.getEnableAlphaMode();
       int delay = -1;
       try {
         delay = Integer.parseInt(myComponent.myAlphaModeDelayTextField.getText());
@@ -439,13 +446,12 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       catch (NumberFormatException ignored) {
       }
       if (delay != -1) {
-        isModified |= delay != settings.ALPHA_MODE_DELAY;
+        isModified |= delay != settings.getAlphaModeDelay();
       }
       float ratio = myComponent.myAlphaModeRatioSlider.getValue() / 100f;
-      isModified |= ratio != settings.ALPHA_MODE_RATIO;
+      isModified |= ratio != settings.getAlphaModeRatio();
     }
-    int tooltipDelay = -1;
-    tooltipDelay = myComponent.myInitialTooltipDelaySlider.getValue();
+    int tooltipDelay = myComponent.myInitialTooltipDelaySlider.getValue();
     isModified |=  tooltipDelay != Registry.intValue("ide.tooltip.initialDelay");
 
     return isModified;
@@ -494,6 +500,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     private JCheckBox myRightLayoutCheckBox;
     private JSlider myInitialTooltipDelaySlider;
     private ComboBox myPresentationModeFontSize;
+    private JCheckBox mySmoothScrollingCheckBox;
     private JCheckBox myNavigateToPreviewCheckBox;
     private ColorBlindnessPanel myColorBlindnessPanel;
     private JComboBox myAntialiasingInIDE;
@@ -527,10 +534,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
   }
 
   private static class AAListCellRenderer extends ListCellRendererWrapper<AntialiasingType> {
-    private static final SwingUtilities2.AATextInfo SUBPIXEL_HINT = new SwingUtilities2.AATextInfo(
-      RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB, UIUtil.getLcdContrastValue());
-    private static final SwingUtilities2.AATextInfo GREYSCALE_HINT = new SwingUtilities2.AATextInfo(
-      RenderingHints.VALUE_TEXT_ANTIALIAS_ON, UIUtil.getLcdContrastValue());
+    private static final Object SUBPIXEL_HINT = GraphicsUtil.createAATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+    private static final Object GREYSCALE_HINT = GraphicsUtil.createAATextInfo(RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
     private final boolean useEditorAASettings;
 
@@ -542,13 +547,13 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     @Override
     public void customize(JList list, AntialiasingType value, int index, boolean selected, boolean hasFocus) {
       if (value == AntialiasingType.SUBPIXEL) {
-        setClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, SUBPIXEL_HINT);
+        GraphicsUtil.generatePropertiesForAntialiasing(SUBPIXEL_HINT, this::setClientProperty);
       }
       else if (value == AntialiasingType.GREYSCALE) {
-        setClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, GREYSCALE_HINT);
+        GraphicsUtil.generatePropertiesForAntialiasing(GREYSCALE_HINT, this::setClientProperty);
       }
       else if (value == AntialiasingType.OFF) {
-        setClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, null);
+        GraphicsUtil.generatePropertiesForAntialiasing(null, this::setClientProperty);
       }
 
       if (useEditorAASettings) {

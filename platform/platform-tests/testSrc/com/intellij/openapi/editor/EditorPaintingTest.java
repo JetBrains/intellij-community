@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
@@ -36,6 +34,7 @@ import com.intellij.testFramework.MockFontLayoutService;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.ui.Graphics2DDelegate;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.imageio.ImageIO;
@@ -108,7 +107,21 @@ public class EditorPaintingTest extends AbstractEditorTest {
     addRangeHighlighter(1, 2, 0, TextAttributes.ERASE_MARKER);
     checkResult();
   }
-  
+
+  public void testInlayAtEmptyLine() throws Exception {
+    initText("\n");
+    myEditor.getInlayModel().addInlineElement(0, new MyInlayRenderer());
+    checkResult();
+  }
+
+  public void testMultilineBorderWithInlays() throws Exception {
+    initText("abc\ndef");
+    myEditor.getInlayModel().addInlineElement(1, new MyInlayRenderer());
+    myEditor.getInlayModel().addInlineElement(6, new MyInlayRenderer());
+    addBorderHighlighter(0, 7, 0, Color.red);
+    checkResult();
+  }
+
   private static void setUniformEditorHighlighter(TextAttributes attributes) {
     ((EditorEx)myEditor).setHighlighter(new UniformHighlighter(attributes));
   }
@@ -267,6 +280,14 @@ public class EditorPaintingTest extends AbstractEditorTest {
       }
     }
 
+    @Override
+    public void drawString(String str, float x, float y) {
+      for (int i = 0; i < str.length(); i++) {
+        drawChar(str.charAt(i), (int)x, (int)y);
+        x += BitmapFont.CHAR_WIDTH;
+      }
+    }
+
     private void drawChar(char c, int x, int y) {
       (((getFont().getStyle() & Font.BOLD) == 0) ? myPlainFont : myBoldFont).draw(myDelegate, c, x, y);
     }
@@ -344,21 +365,9 @@ public class EditorPaintingTest extends AbstractEditorTest {
     }
 
     @Override
-    public void setText(@NotNull CharSequence text) {}
-
-    @Override
     public void setEditor(@NotNull HighlighterClient editor) {
       myDocument = editor.getDocument();
     }
-
-    @Override
-    public void setColorScheme(@NotNull EditorColorsScheme scheme) {}
-
-    @Override
-    public void beforeDocumentChange(DocumentEvent event) {}
-
-    @Override
-    public void documentChanged(DocumentEvent event) {}
 
     private class Iterator implements HighlighterIterator {
       private int myOffset;
@@ -406,6 +415,17 @@ public class EditorPaintingTest extends AbstractEditorTest {
       public Document getDocument() {
         return myDocument;
       }
+    }
+  }
+
+  private static class MyInlayRenderer implements EditorCustomElementRenderer {
+    @Override
+    public int calcWidthInPixels(@NotNull Editor editor) { return 10; }
+
+    @Override
+    public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
+      g.setColor(JBColor.CYAN);
+      g.drawRect(r.x, r.y, r.width - 1, r.height - 1);
     }
   }
 }

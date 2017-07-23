@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,41 +25,29 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 class CommentOnLineWithSourcePredicate implements PsiElementPredicate {
 
   public boolean satisfiedBy(PsiElement element) {
-    //final PsiFile file = element.getContainingFile();
-    //if (file instanceof JspFile){
-    //    return false;
-    //}
-    if (!(element instanceof PsiComment)) {
+    if (!(element instanceof PsiComment) || element instanceof PsiDocComment || element.getTextOffset() == 0) {
       return false;
     }
-    if (element instanceof PsiDocComment) {
-      return false;
-    }
-
     final PsiComment comment = (PsiComment)element;
     if (comment instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)comment)) {
       return false;
     }
     final IElementType type = comment.getTokenType();
-    if (!JavaTokenType.C_STYLE_COMMENT.equals(type) &&
-        !JavaTokenType.END_OF_LINE_COMMENT.equals(type)) {
+    if (!JavaTokenType.C_STYLE_COMMENT.equals(type) && !JavaTokenType.END_OF_LINE_COMMENT.equals(type)) {
       return false; // can't move JSP comments
     }
     final PsiElement prevSibling = PsiTreeUtil.prevLeaf(element);
-    if (!(prevSibling instanceof PsiWhiteSpace)) {
-      return true;
+    if (prevSibling == null || prevSibling.getTextLength() == 0) {
+      return false;
     }
-    final String prevSiblingText = prevSibling.getText();
-    if (prevSiblingText.indexOf((int)'\n') < 0 &&
-        prevSiblingText.indexOf((int)'\r') < 0) {
+    if (!isLineBreakWhiteSpace(prevSibling)) {
       return true;
     }
     final PsiElement nextSibling = PsiTreeUtil.nextLeaf(element);
-    if (!(nextSibling instanceof PsiWhiteSpace)) {
-      return true;
-    }
-    final String nextSiblingText = nextSibling.getText();
-    return nextSiblingText.indexOf((int)'\n') < 0 &&
-           nextSiblingText.indexOf((int)'\r') < 0;
+    return !isLineBreakWhiteSpace(nextSibling);
+  }
+
+  static boolean isLineBreakWhiteSpace(PsiElement element) {
+    return element instanceof PsiWhiteSpace && element.getText().indexOf('\n') >= 0;
   }
 }

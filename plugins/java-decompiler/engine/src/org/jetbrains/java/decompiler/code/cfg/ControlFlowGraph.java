@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -256,7 +256,7 @@ public class ControlFlowGraph implements CodeConstants {
     for (int i = 0; i < len; i++) {
 
       // exception blocks
-      if (excSet.contains(new Integer(i))) {
+      if (excSet.contains(i)) {
         inststates[i] = 1;
       }
 
@@ -404,7 +404,7 @@ public class ControlFlowGraph implements CodeConstants {
 
   private void setSubroutineEdges() {
 
-    final Map<BasicBlock, BasicBlock> subroutines = new HashMap<>();
+    final Map<BasicBlock, BasicBlock> subroutines = new LinkedHashMap<>();
 
     for (BasicBlock block : blocks) {
 

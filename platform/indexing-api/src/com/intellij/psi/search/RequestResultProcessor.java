@@ -69,7 +69,17 @@ public abstract class RequestResultProcessor {
   /**
    * A variant of {@link RequestResultProcessor} that processes all text occurrences at once, e.g. for performance purposes.
    */
+  @SuppressWarnings("unused")
   public static abstract class BulkResultProcessor extends RequestResultProcessor {
+
+    public BulkResultProcessor() {
+      super();
+    }
+
+    public BulkResultProcessor(@NotNull Object... equality) {
+      super(equality);
+    }
+
     @Override
     public boolean processTextOccurrence(@NotNull PsiElement element, int offsetInElement, @NotNull Processor<PsiReference> consumer) {
       return processTextOccurrences(element, new int[]{offsetInElement}, consumer);

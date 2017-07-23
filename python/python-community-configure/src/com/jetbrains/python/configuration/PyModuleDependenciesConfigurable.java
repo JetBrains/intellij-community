@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.ToolbarDecorator;
-import com.intellij.util.Function;
 import com.intellij.util.ui.EditableListModelDecorator;
 import org.jetbrains.annotations.Nullable;
 
@@ -117,9 +116,5 @@ public class PyModuleDependenciesConfigurable implements UnnamedConfigurable {
   @Override
   public void reset() {
     resetModel();
-  }
-
-  @Override
-  public void disposeUIResources() {
   }
 }

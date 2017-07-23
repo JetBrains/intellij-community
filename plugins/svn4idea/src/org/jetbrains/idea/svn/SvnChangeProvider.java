@@ -15,14 +15,13 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NotNullFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -31,7 +30,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
@@ -52,6 +50,8 @@ import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
 import java.io.File;
 import java.util.*;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+
 /**
  * @author max
  * @author yole
@@ -60,13 +60,7 @@ public class SvnChangeProvider implements ChangeProvider {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnChangeProvider");
   public static final String PROPERTY_LAYER = "Property";
 
-  private static final NotNullFactory<Map<String, File>> NAME_TO_FILE_MAP_FACTORY = new NotNullFactory<Map<String, File>>() {
-    @NotNull
-    @Override
-    public Map<String, File> create() {
-      return ContainerUtil.newHashMap();
-    }
-  };
+  private static final NotNullFactory<Map<String, File>> NAME_TO_FILE_MAP_FACTORY = () -> ContainerUtil.newHashMap();
 
   @NotNull private final SvnVcs myVcs;
   @NotNull private final VcsContextFactory myFactory;
@@ -133,7 +127,7 @@ public class SvnChangeProvider implements ChangeProvider {
     for (NestedCopyInfo info : pointInfos) {
       if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat()) && ! NestedCopyType.switched.equals(info.getType())) {
         final VirtualFile root = info.getFile();
-        lfs.refreshIoFiles(Collections.singletonList(SvnUtil.getWcDb(new File(root.getPath()))), true, false, null);
+        lfs.refreshIoFiles(Collections.singletonList(SvnUtil.getWcDb(virtualToIoFile(root))), true, false, null);
       }
     }
   }
@@ -177,12 +171,7 @@ public class SvnChangeProvider implements ChangeProvider {
       }
     }
 
-    return new ISVNStatusFileProvider() {
-      @Override
-      public Map<String, File> getChildrenFiles(File parent) {
-        return result.get(parent.getAbsolutePath());
-      }
-    };
+    return parent -> result.get(parent.getAbsolutePath());
   }
 
   private void processCopiedAndDeleted(@NotNull SvnChangeProviderContext context, @Nullable VcsDirtyScope dirtyScope) throws SVNException {
@@ -259,7 +248,7 @@ public class SvnChangeProvider implements ChangeProvider {
           status = null;
         }
         if (status != null && status.is(StatusType.STATUS_DELETED)) {
-          final FilePath filePath = myFactory.createFilePathOnDeleted(wcPath, false);
+          final FilePath filePath = myFactory.createFilePathOn(wcPath, false);
           final SvnContentRevision beforeRevision = SvnContentRevision.createBaseRevision(myVcs, filePath, status.getRevision());
           final ContentRevision afterRevision = CurrentContentRevision.create(copiedFile.getFilePath());
           context.getBuilder().processChangeInList(context.createMovedChange(beforeRevision, afterRevision, copiedStatus, status),
@@ -286,12 +275,9 @@ public class SvnChangeProvider implements ChangeProvider {
     final Change change = context
       .createMovedChange(createBeforeRevision(deletedFile, true), CurrentContentRevision.create(oldPath), copiedStatus,
                          deletedFile.getStatus());
-    final boolean isUnder = dirtyScope == null ? true : ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        return ChangeListManagerImpl.isUnder(change, dirtyScope);
-      }
-    });
+    final boolean isUnder = dirtyScope == null
+                            ? true
+                            : ReadAction.compute(() -> ChangeListManagerImpl.isUnder(change, dirtyScope));
     if (isUnder) {
       context.getBuilder().removeRegisteredChangeFor(oldPath);
       context.getBuilder().processChangeInList(change, clName, SvnVcs.getKey());
@@ -313,7 +299,8 @@ public class SvnChangeProvider implements ChangeProvider {
     return true;
   }
 
+  @Override
   public void doCleanup(@NotNull List<VirtualFile> files) {
-    new CleanupWorker(VfsUtilCore.toVirtualFileArray(files), myVcs.getProject(), "action.Subversion.cleanup.progress.title").execute();
+    new CleanupWorker(myVcs, files).execute();
   }
 }

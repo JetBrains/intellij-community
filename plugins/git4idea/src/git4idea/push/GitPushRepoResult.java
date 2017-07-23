@@ -15,7 +15,6 @@
  */
 package git4idea.push;
 
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
@@ -48,12 +47,7 @@ class GitPushRepoResult {
     NOT_PUSHED;
   }
 
-  static Comparator<Type> TYPE_COMPARATOR = new Comparator<Type>() {
-    @Override
-    public int compare(Type o1, Type o2) {
-      return o1.ordinal() - o2.ordinal();
-    }
-  };
+  static Comparator<Type> TYPE_COMPARATOR = (o1, o2) -> o1.ordinal() - o2.ordinal();
 
   @NotNull private final Type myType;
   private final int myCommits;
@@ -70,12 +64,7 @@ class GitPushRepoResult {
                                              int commits,
                                              @NotNull GitLocalBranch source,
                                              @NotNull GitRemoteBranch target) {
-    List<String> tags = ContainerUtil.map(tagResults, new Function<GitPushNativeResult, String>() {
-      @Override
-      public String fun(GitPushNativeResult result) {
-        return result.getSourceRef();
-      }
-    });
+    List<String> tags = ContainerUtil.map(tagResults, result1 -> result1.getSourceRef());
     return new GitPushRepoResult(convertType(result), commits, source.getFullName(), target.getFullName(),
                                  target.getRemote().getName(), tags, null, null);
   }
@@ -83,13 +72,13 @@ class GitPushRepoResult {
   @NotNull
   static GitPushRepoResult error(@NotNull GitLocalBranch source, @NotNull GitRemoteBranch target, @NotNull String error) {
     return new GitPushRepoResult(Type.ERROR, -1, source.getFullName(), target.getFullName(),
-                                 target.getRemote().getName(), Collections.<String>emptyList(), error, null);
+                                 target.getRemote().getName(), Collections.emptyList(), error, null);
   }
 
   @NotNull
   static GitPushRepoResult notPushed(GitLocalBranch source, GitRemoteBranch target) {
     return new GitPushRepoResult(Type.NOT_PUSHED, -1, source.getFullName(), target.getFullName(),
-                                 target.getRemote().getName(), Collections.<String>emptyList(), null, null);
+                                 target.getRemote().getName(), Collections.emptyList(), null, null);
   }
 
   @NotNull

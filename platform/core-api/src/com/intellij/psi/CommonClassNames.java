@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,6 +110,7 @@ public interface CommonClassNames {
   @NonNls String JAVA_UTIL_STREAM_DOUBLE_STREAM = "java.util.stream.DoubleStream";
   @NonNls String JAVA_UTIL_STREAM_COLLECTORS = "java.util.stream.Collectors";
   @NonNls String JAVA_UTIL_FUNCTION_PREDICATE = "java.util.function.Predicate";
+  @NonNls String JAVA_UTIL_FUNCTION_CONSUMER = "java.util.function.Consumer";
   @NonNls String JAVA_UTIL_FUNCTION_FUNCTION = "java.util.function.Function";
   @NonNls String JAVA_UTIL_FUNCTION_BIFUNCTION = "java.util.function.BiFunction";
 

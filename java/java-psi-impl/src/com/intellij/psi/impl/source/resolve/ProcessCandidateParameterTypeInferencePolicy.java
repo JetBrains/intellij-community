@@ -30,10 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 7/18/12
- */
 public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParameterTypeInferencePolicy {
   public static final ProcessCandidateParameterTypeInferencePolicy INSTANCE = new ProcessCandidateParameterTypeInferencePolicy();
 
@@ -103,12 +99,8 @@ public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParamet
       }
       if (parameter != null) {
         final PsiParameter finalParameter = parameter;
-        PsiType type = PsiResolveHelper.ourGuard.doPreventingRecursion(innerMethodCall, true, new Computable<PsiType>() {
-          @Override
-          public PsiType compute() {
-            return substitutor.substitute(finalParameter.getType());
-          }
-        });
+        PsiType type = PsiResolveHelper.ourGuard.doPreventingRecursion(innerMethodCall, true,
+                                                                       () -> substitutor.substitute(finalParameter.getType()));
         final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(finalParameter);
         final Pair<PsiType, ConstraintType> constraint =
           new PsiOldInferenceHelper(element.getManager()).getSubstitutionForTypeParameterConstraint(typeParameter, innerReturnType, type, false, languageLevel);

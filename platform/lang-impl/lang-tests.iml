@@ -6,7 +6,7 @@
       <sourceFolder url="file://$MODULE_DIR$/testSources" isTestSource="true" />
     </content>
     <orderEntry type="module" module-name="boot" />
-    <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="lang-api" exported="" />
     <orderEntry type="module" module-name="vcs-api" />

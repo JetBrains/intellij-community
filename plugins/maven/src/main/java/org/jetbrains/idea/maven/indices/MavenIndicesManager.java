@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,16 +24,18 @@ import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.JdomKt;
+import com.intellij.util.io.PathKt;
 import gnu.trove.THashSet;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -44,6 +46,7 @@ import org.jetbrains.idea.maven.utils.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 
 public class MavenIndicesManager implements Disposable {
@@ -62,7 +65,7 @@ public class MavenIndicesManager implements Disposable {
     IDLE, WAITING, UPDATING
   }
 
-  private volatile File myTestIndicesDir;
+  private volatile Path myTestIndicesDir;
 
   private volatile MavenIndexerWrapper myIndexer;
   private volatile MavenIndices myIndices;
@@ -79,7 +82,7 @@ public class MavenIndicesManager implements Disposable {
   }
 
   @TestOnly
-  public void setTestIndexDir(File indicesDir) {
+  public void setTestIndexDir(Path indicesDir) {
     myTestIndicesDir = indicesDir;
   }
 
@@ -98,13 +101,15 @@ public class MavenIndicesManager implements Disposable {
     myIndexer = MavenServerManager.getInstance().createIndexer();
 
     myDownloadListener = new MavenServerDownloadListener() {
+      @Override
       public void artifactDownloaded(File file, String relativePath) {
         addArtifact(file, relativePath);
       }
     };
     MavenServerManager.getInstance().addDownloadListener(myDownloadListener);
 
-    myIndices = new MavenIndices(myIndexer, getIndicesDir(), new MavenIndex.IndexListener() {
+    myIndices = new MavenIndices(myIndexer, getIndicesDir().toFile(), new MavenIndex.IndexListener() {
+      @Override
       public void indexIsBroken(MavenIndex index) {
         scheduleUpdate(null, Collections.singletonList(index), false);
       }
@@ -113,16 +118,18 @@ public class MavenIndicesManager implements Disposable {
     loadUserArchetypes();
   }
 
-  private File getIndicesDir() {
+  @NotNull
+  private Path getIndicesDir() {
     return myTestIndicesDir == null
            ? MavenUtil.getPluginSystemDir("Indices")
            : myTestIndicesDir;
   }
 
+  @Override
   public void dispose() {
     doShutdown();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      FileUtil.delete(getIndicesDir());
+      PathKt.delete(getIndicesDir());
     }
   }
 
@@ -209,11 +216,11 @@ public class MavenIndicesManager implements Disposable {
     return StringUtil.split(name, "/");
   }
 
-  public void scheduleUpdate(Project project, List<MavenIndex> indices) {
-    scheduleUpdate(project, indices, true);
+  public Promise<Void> scheduleUpdate(Project project, List<MavenIndex> indices) {
+    return scheduleUpdate(project, indices, true);
   }
 
-  private void scheduleUpdate(final Project projectOrNull, List<MavenIndex> indices, final boolean fullUpdate) {
+  private Promise<Void> scheduleUpdate(final Project projectOrNull, List<MavenIndex> indices, final boolean fullUpdate) {
     final List<MavenIndex> toSchedule = new ArrayList<>();
 
     synchronized (myUpdatingIndicesLock) {
@@ -224,16 +231,25 @@ public class MavenIndicesManager implements Disposable {
 
       myWaitingIndices.addAll(toSchedule);
     }
-    if (toSchedule.isEmpty()) return;
+    if (toSchedule.isEmpty()) {
+      return Promises.resolvedPromise();
+    }
+
+    final AsyncPromise<Void> promise = new AsyncPromise<>();
     myUpdatingQueue.run(new Task.Backgroundable(projectOrNull, IndicesBundle.message("maven.indices.updating"), true) {
+      @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           doUpdateIndices(projectOrNull, toSchedule, fullUpdate, new MavenProgressIndicator(indicator));
         }
         catch (MavenProcessCanceledException ignore) {
         }
+        finally {
+          promise.setResult(null);
+        }
       }
     });
+    return promise;
   }
 
   private void doUpdateIndices(final Project projectOrNull, List<MavenIndex> indices, boolean fullUpdate, MavenProgressIndicator indicator)
@@ -257,7 +273,7 @@ public class MavenIndicesManager implements Disposable {
         }
 
         try {
-          getIndicesObject().updateOrRepair(each, fullUpdate, fullUpdate ? getMavenSettings(projectOrNull, indicator) : null, indicator);
+          MavenIndices.updateOrRepair(each, fullUpdate, fullUpdate ? getMavenSettings(projectOrNull, indicator) : null, indicator);
           if (projectOrNull != null) {
             MavenRehighlighter.rehighlight(projectOrNull);
           }
@@ -332,15 +348,15 @@ public class MavenIndicesManager implements Disposable {
 
   private void loadUserArchetypes() {
     try {
-      File file = getUserArchetypesFile();
-      if (!file.exists()) return;
-
-      Element root = JDOMUtil.load(file);
+      Path file = getUserArchetypesFile();
+      if (!PathKt.exists(file)) {
+        return;
+      }
 
       // Store artifact to set to remove duplicate created by old IDEA (https://youtrack.jetbrains.com/issue/IDEA-72105)
       Collection<MavenArchetype> result = new LinkedHashSet<>();
 
-      List<Element> children = root.getChildren(ELEMENT_ARCHETYPE);
+      List<Element> children = JdomKt.loadElement(file).getChildren(ELEMENT_ARCHETYPE);
       for (int i = children.size() - 1; i >= 0; i--) {
         Element each = children.get(i);
 
@@ -364,10 +380,7 @@ public class MavenIndicesManager implements Disposable {
 
       myUserArchetypes = listResult;
     }
-    catch (IOException e) {
-      MavenLog.LOG.warn(e);
-    }
-    catch (JDOMException e) {
+    catch (IOException | JDOMException e) {
       MavenLog.LOG.warn(e);
     }
   }
@@ -388,16 +401,15 @@ public class MavenIndicesManager implements Disposable {
       root.addContent(childElement);
     }
     try {
-      File file = getUserArchetypesFile();
-      file.getParentFile().mkdirs();
-      JDOMUtil.writeDocument(new Document(root), file, "\n");
+      JdomKt.write(root, getUserArchetypesFile());
     }
     catch (IOException e) {
       MavenLog.LOG.warn(e);
     }
   }
 
-  private File getUserArchetypesFile() {
-    return new File(getIndicesDir(), "UserArchetypes.xml");
+  @NotNull
+  private Path getUserArchetypesFile() {
+    return getIndicesDir().resolve("UserArchetypes.xml");
   }
 }

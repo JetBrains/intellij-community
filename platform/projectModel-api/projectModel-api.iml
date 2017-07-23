@@ -10,5 +10,6 @@
     <orderEntry type="module" module-name="core-api" exported="" />
     <orderEntry type="module" module-name="jps-model-api" exported="" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="library" name="Xerces" level="project" />
   </component>
 </module>

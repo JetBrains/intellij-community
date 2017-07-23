@@ -19,10 +19,9 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
@@ -44,56 +43,38 @@ public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, Anno
     final PsiClass annClass = p.getAnnotationClass();
     assert annClass.isAnnotationType() : "Annotation type should be passed to annotated packages search";
 
-    final String annotationFQN = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        return annClass.getQualifiedName();
-      }
-    });
+    final String annotationFQN = ReadAction.compute(() -> annClass.getQualifiedName());
     assert annotationFQN != null;
 
-    final PsiManager psiManager = ApplicationManager.getApplication().runReadAction(new Computable<PsiManager>() {
-      @Override
-      public PsiManager compute() {
-        return annClass.getManager();
-      }
-    });
+    final PsiManager psiManager = ReadAction.compute(() -> annClass.getManager());
     final GlobalSearchScope useScope = (GlobalSearchScope)p.getScope();
 
-    final String annotationShortName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        return annClass.getName();
-      }
-    });
+    final String annotationShortName = ReadAction.compute(() -> annClass.getName());
     assert annotationShortName != null;
 
     final Collection<PsiAnnotation> annotations = JavaAnnotationIndex.getInstance().get(annotationShortName, psiManager.getProject(),
                                                                                         useScope);
 
     for (final PsiAnnotation annotation : annotations) {
-      boolean accepted = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>(){
-        @Override
-        public Boolean compute() {
-          PsiModifierList modList = (PsiModifierList)annotation.getParent();
-          final PsiElement owner = modList.getParent();
-          if (owner instanceof PsiClass) {
-            PsiClass candidate = (PsiClass)owner;
-            if ("package-info".equals(candidate.getName())) {
-              LOG.assertTrue(candidate.isValid());
-              final PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
-              if (ref != null && psiManager.areElementsEquivalent(ref.resolve(), annClass) &&
-                  useScope.contains(candidate.getContainingFile().getVirtualFile())) {
-                final String qname = candidate.getQualifiedName();
-                if (qname != null && !consumer.process(JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(
-                  qname.substring(0, qname.lastIndexOf('.'))))) {
-                  return false;
-                }
+      boolean accepted = ReadAction.compute(() -> {
+        PsiModifierList modList = (PsiModifierList)annotation.getParent();
+        final PsiElement owner = modList.getParent();
+        if (owner instanceof PsiClass) {
+          PsiClass candidate = (PsiClass)owner;
+          if ("package-info".equals(candidate.getName())) {
+            LOG.assertTrue(candidate.isValid());
+            final PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
+            if (ref != null && psiManager.areElementsEquivalent(ref.resolve(), annClass) &&
+                useScope.contains(candidate.getContainingFile().getVirtualFile())) {
+              final String qname = candidate.getQualifiedName();
+              if (qname != null && !consumer.process(JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(
+                qname.substring(0, qname.lastIndexOf('.'))))) {
+                return false;
               }
             }
           }
-          return true;
         }
+        return true;
       });
       if (!accepted) return false;
     }

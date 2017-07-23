@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ class BuildOptions {
   Set<String> buildStepsToSkip = System.getProperty("intellij.build.skip.build.steps", "").split(",") as Set<String>
   /** generate actual searchableOptions.xml file. If it is skipped the version of this file located in sources will be used, it may be outdated. */
   static final SEARCHABLE_OPTIONS_INDEX_STEP = "search_index"
+  static final PROVIDED_MODULES_LIST_STEP = "provided_modules_list"
   static final SOURCES_ARCHIVE_STEP = "sources_archive"
   /** product DMG file for Mac OS X. If it is skipped only sit archive will be produced. */
   static final MAC_DMG_STEP = "mac_dmg"
@@ -66,6 +67,12 @@ class BuildOptions {
    */
   public static final String BUILD_DMG_WITHOUT_BUNDLED_JRE = "intellij.build.dmg.without.bundled.jre"
   boolean buildDmgWithoutBundledJre = SystemProperties.getBooleanProperty(BUILD_DMG_WITHOUT_BUNDLED_JRE, SystemProperties.getBooleanProperty("artifact.mac.no.jdk", false))
+
+  /**
+   * Pass 'true' to this system property to produce .snap packages.
+   * A build configuration should have "docker.version >= 17" in requirements.
+   */
+  boolean buildUnixSnaps = SystemProperties.getBooleanProperty("intellij.build.unix.snaps", false)
 
   /**
    * Path to a zip file containing 'production' and 'test' directories with compiled classes of the project modules inside.
@@ -93,4 +100,12 @@ class BuildOptions {
    * change the output directory.
    */
   String outputRootPath = System.getProperty("intellij.build.output.root")
+
+  /**
+   * If {@code true} the build is running in 'Development mode' i.e. its artifacts aren't supposed to be used in production. In development
+   * mode build scripts won't fail if some non-mandatory dependencies are missing and will just show warnings.
+   * <p>By default 'development mode' is enabled if build is not running under continuous integration server (TeamCity).</p>
+   */
+  boolean isInDevelopmentMode = SystemProperties.getBooleanProperty("intellij.build.dev.mode",
+                                                                    System.getProperty("teamcity.buildType.id") == null)
 }

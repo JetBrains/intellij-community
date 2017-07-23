@@ -77,19 +77,19 @@ public abstract class Difference {
       };
     }
 
-    final Set<T> added = new HashSet<T>(now);
+    final Set<T> added = new HashSet<>(now);
 
     added.removeAll(past);
 
-    final Set<T> removed = new HashSet<T>(past);
+    final Set<T> removed = new HashSet<>(past);
 
     removed.removeAll(now);
 
     final Set<Pair<T, D>> changed;
     if (canContainChangedElements(past, now)) {
-      changed = new HashSet<Pair<T, D>>();
-      final Set<T> intersect = new HashSet<T>(past);
-      final Map<T, T> nowMap = new HashMap<T, T>();
+      changed = new HashSet<>();
+      final Set<T> intersect = new HashSet<>(past);
+      final Map<T, T> nowMap = new HashMap<>();
 
       for (T s : now) {
         if (intersect.contains(s)) {

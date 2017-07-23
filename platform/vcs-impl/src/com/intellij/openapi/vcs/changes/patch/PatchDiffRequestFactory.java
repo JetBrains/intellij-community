@@ -25,15 +25,12 @@ import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -44,6 +41,7 @@ import com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchMergeRequest;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,41 +61,29 @@ public class PatchDiffRequestFactory {
   }
 
   @NotNull
+  @CalledInAny
   public static DiffRequest createConflictDiffRequest(@Nullable Project project,
                                                       @Nullable VirtualFile file,
                                                       @NotNull TextFilePatch patch,
                                                       @NotNull String afterTitle,
-                                                      @NotNull final Getter<ApplyPatchForBaseRevisionTexts> textsGetter,
-                                                      @NotNull String name,
-                                                      @NotNull UserDataHolder context,
-                                                      @NotNull ProgressIndicator indicator)
+                                                      @NotNull final ApplyPatchForBaseRevisionTexts texts,
+                                                      @NotNull String name)
     throws DiffRequestProducerException {
     if (file == null) throw new DiffRequestProducerException("Can't show diff for '" + name + "'");
     if (file.getFileType().isBinary()) throw new DiffRequestProducerException("Can't show diff for binary file '" + name + "'");
 
-    final Ref<ApplyPatchForBaseRevisionTexts> textsRef = new Ref<>();
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        textsRef.set(textsGetter.get());
-      }
-    }, indicator.getModalityState());
-    ApplyPatchForBaseRevisionTexts texts = textsRef.get();
-
-    if (texts.getLocal() == null) throw new DiffRequestProducerException("Can't show diff for '" + file.getPresentableUrl() + "'");
-
     if (texts.getBase() == null) {
-      String localContent = texts.getLocal().toString();
+      String localContent = texts.getLocal();
 
       final GenericPatchApplier applier = new GenericPatchApplier(localContent, patch.getHunks());
       applier.execute();
 
       final AppliedTextPatch appliedTextPatch = AppliedTextPatch.create(applier.getAppliedInfo());
-      return createBadDiffRequest(project, file, localContent, appliedTextPatch, null, null, null, null);
+      return createBadDiffRequest(project, file, localContent, appliedTextPatch, null, null, "Current Version", null);
     }
     else {
-      String localContent = texts.getLocal().toString();
-      String baseContent = texts.getBase().toString();
+      String localContent = texts.getLocal();
+      String baseContent = texts.getBase();
       String patchedContent = texts.getPatched();
 
       return createDiffRequest(project, file, ContainerUtil.list(localContent, baseContent, patchedContent), null,

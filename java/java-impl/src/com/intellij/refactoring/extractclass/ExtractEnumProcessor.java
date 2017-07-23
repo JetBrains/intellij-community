@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 08-Jun-2010
- */
 package com.intellij.refactoring.extractclass;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
@@ -150,8 +146,9 @@ public class ExtractEnumProcessor {
       rules.setBoundScope(GlobalSearchScope.projectScope(myProject));
       myTypeMigrationProcessor = new TypeMigrationProcessor(myProject,
                                                             PsiUtilCore.toPsiElementArray(myEnumConstants),
-                                                            Functions.<PsiElement, PsiType>constant(JavaPsiFacade.getElementFactory(myProject).createType(myClass)),
-                                                            rules);
+                                                            Functions.constant(JavaPsiFacade.getElementFactory(myProject).createType(myClass)),
+                                                            rules,
+                                                            true);
       for (UsageInfo usageInfo : myTypeMigrationProcessor.findUsages()) {
         final PsiElement migrateElement = usageInfo.getElement();
         if (migrateElement instanceof PsiField) {

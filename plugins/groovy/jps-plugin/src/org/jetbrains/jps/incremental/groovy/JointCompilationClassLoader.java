@@ -25,8 +25,8 @@ import org.jetbrains.annotations.NotNull;
 class JointCompilationClassLoader extends UrlClassLoader {
   @NotNull private final Builder myBuilder;
   @NotNull private ClassPath myClassPath;
-  
-  public JointCompilationClassLoader(@NotNull Builder builder) {
+
+  JointCompilationClassLoader(@NotNull Builder builder) {
     super(builder);
     myBuilder = builder;
     myClassPath = super.getClassPath();

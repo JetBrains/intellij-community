@@ -32,10 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
 import java.util.*;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 02.06.2009
- */
 public class GrNamedArgumentSearchVisitor extends GroovyRecursiveElementVisitor {
 
   public static final NamedArgumentDescriptor CODE_NAMED_ARGUMENTS_DESCR = NamedArgumentDescriptor.SIMPLE_AS_LOCAL_VAR;

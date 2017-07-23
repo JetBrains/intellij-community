@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.java.AbstractJavaBlock;
 import com.intellij.psi.formatter.java.JavaFormatterUtil;
 import com.intellij.psi.formatter.java.wrap.JavaWrapManager;
-import com.intellij.psi.formatter.java.wrap.ReservedWrapsProvider;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
@@ -41,7 +40,7 @@ import static com.intellij.psi.impl.PsiImplUtil.isTypeAnnotation;
 
 /**
  * Encapsulates the implementation of
- * {@link JavaWrapManager#arrangeChildWrap(ASTNode, ASTNode, CommonCodeStyleSettings, Wrap, ReservedWrapsProvider)}.
+ * {@link JavaWrapManager#arrangeChildWrap(ASTNode, ASTNode, CommonCodeStyleSettings, JavaCodeStyleSettings, Wrap, AbstractJavaBlock)}.
  * <p/>
  * Thread-safe.
  *
@@ -96,22 +95,10 @@ public class JavaChildWrapArranger {
       return Wrap.createWrap(settings.THROWS_KEYWORD_WRAP, true);
     }
 
-    else if (nodeType == JavaElementType.EXTENDS_LIST || nodeType == JavaElementType.IMPLEMENTS_LIST) {
-      if (role == ChildRole.REFERENCE_IN_LIST) {
-        return suggestedWrap;
-      }
-      else {
-        return null;
-      }
-    }
-
-    else if (nodeType == JavaElementType.THROWS_LIST) {
-      if (role == ChildRole.REFERENCE_IN_LIST) {
-        return suggestedWrap;
-      }
-      else {
-        return null;
-      }
+    else if (nodeType == JavaElementType.EXTENDS_LIST ||
+             nodeType == JavaElementType.IMPLEMENTS_LIST ||
+             nodeType == JavaElementType.THROWS_LIST) {
+      return role == ChildRole.REFERENCE_IN_LIST ? suggestedWrap : null;
     }
 
     else if (nodeType == JavaElementType.CONDITIONAL_EXPRESSION) {
@@ -173,8 +160,12 @@ public class JavaChildWrapArranger {
 
     else if (nodeType == JavaElementType.MODIFIER_LIST) {
       if (childType == JavaElementType.ANNOTATION) {
+        ASTNode prev = FormatterUtil.getPreviousNonWhitespaceSibling(child);
+        if (prev instanceof PsiKeyword) {
+          return null;
+        }
+
         if (isTypeAnnotationOrFalseIfDumb(child)) {
-          ASTNode prev = FormatterUtil.getPreviousNonWhitespaceSibling(child);
           if (prev == null || prev.getElementType() != JavaElementType.ANNOTATION || isTypeAnnotationOrFalseIfDumb(prev)) {
             return Wrap.createWrap(WrapType.NONE, false);
           }
@@ -247,10 +238,7 @@ public class JavaChildWrapArranger {
     }
 
     else if (nodeType == JavaElementType.DO_WHILE_STATEMENT) {
-      if (role == ChildRole.LOOP_BODY) {
-        return Wrap.createWrap(WrapType.NORMAL, true);
-      }
-      else if (role == ChildRole.WHILE_KEYWORD) {
+      if (role == ChildRole.LOOP_BODY || role == ChildRole.WHILE_KEYWORD) {
         return Wrap.createWrap(WrapType.NORMAL, true);
       }
     }

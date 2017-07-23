@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.codeInspection.naming;
 import com.intellij.codeInspection.ui.ConventionOptionsPanel;
 import com.intellij.openapi.util.InvalidDataException;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
@@ -28,13 +27,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class ConventionInspection extends BaseInspection {
-
-  @Override
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
-    return "Naming Conventions";
-  }
 
   /**
    * public fields for the DefaultJDomExternalizer

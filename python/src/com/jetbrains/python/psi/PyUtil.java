@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,13 +70,9 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.completion.OverwriteEqualsInsertHandler;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.magicLiteral.PyMagicLiteralTools;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
+import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -86,6 +82,7 @@ import com.jetbrains.python.refactoring.classes.PyDependenciesComparator;
 import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.sdk.PythonSdkType;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -298,7 +295,7 @@ public class PyUtil {
   public static List<PyClass> getAllSuperClasses(@NotNull PyClass pyClass) {
     List<PyClass> superClasses = new ArrayList<>();
     for (PyClass ancestor : pyClass.getAncestorClasses(null)) {
-      if (!PyNames.FAKE_OLD_BASE.equals(ancestor.getName())) {
+      if (!PyNames.TYPES_INSTANCE_TYPE.equals(ancestor.getQualifiedName())) {
         superClasses.add(ancestor);
       }
     }
@@ -580,7 +577,7 @@ public class PyUtil {
         return name;
       }
     }
-    return element.getNode().getText();
+    return element.getNode() != null ? element.getNode().getText() : element.getText();
   }
 
   public static boolean isOwnScopeComprehension(@NotNull PyComprehensionElement comprehension) {
@@ -638,7 +635,7 @@ public class PyUtil {
     }
     else {
       final PsiReference reference = element.getReference();
-      return reference != null ? Collections.singletonList(reference.resolve()) : Collections.<PsiElement>emptyList();
+      return reference != null ? Collections.singletonList(reference.resolve()) : Collections.emptyList();
     }
   }
 
@@ -649,34 +646,35 @@ public class PyUtil {
 
   @NotNull
   public static List<PsiElement> filterTopPriorityResults(@NotNull ResolveResult[] resolveResults) {
-    if (resolveResults.length == 0) {
-      return Collections.emptyList();
-    }
-    final List<PsiElement> filtered = new ArrayList<>();
-    final int maxRate = getMaxRate(resolveResults);
-    for (ResolveResult resolveResult : resolveResults) {
-      final int rate = resolveResult instanceof RatedResolveResult ? ((RatedResolveResult)resolveResult).getRate() : 0;
-      if (rate >= maxRate) {
-        final PsiElement element = resolveResult.getElement();
-        if (element != null) {
-          filtered.add(element);
-        }
-      }
-    }
-    return filtered;
+    if (resolveResults.length == 0) return Collections.emptyList();
+
+    final int maxRate = getMaxRate(Arrays.asList(resolveResults));
+    return StreamEx
+      .of(resolveResults)
+      .filter(resolveResult -> getRate(resolveResult) >= maxRate)
+      .map(ResolveResult::getElement)
+      .nonNull()
+      .toList();
   }
 
-  private static int getMaxRate(@NotNull ResolveResult[] resolveResults) {
-    int maxRate = Integer.MIN_VALUE;
-    for (ResolveResult resolveResult : resolveResults) {
-      if (resolveResult instanceof RatedResolveResult) {
-        final int rate = ((RatedResolveResult)resolveResult).getRate();
-        if (rate > maxRate) {
-          maxRate = rate;
-        }
-      }
-    }
-    return maxRate;
+  @NotNull
+  public static <E extends ResolveResult> List<E> filterTopPriorityResults(@NotNull List<E> resolveResults) {
+    if (resolveResults.isEmpty()) return Collections.emptyList();
+
+    final int maxRate = getMaxRate(resolveResults);
+    return ContainerUtil.filter(resolveResults, resolveResult -> getRate(resolveResult) >= maxRate);
+  }
+
+  private static int getMaxRate(@NotNull List<? extends ResolveResult> resolveResults) {
+    return resolveResults
+      .stream()
+      .mapToInt(PyUtil::getRate)
+      .max()
+      .orElse(Integer.MIN_VALUE);
+  }
+
+  private static int getRate(@NotNull ResolveResult resolveResult) {
+    return resolveResult instanceof RatedResolveResult ? ((RatedResolveResult)resolveResult).getRate() : 0;
   }
 
   /**
@@ -845,20 +843,21 @@ public class PyUtil {
     });
   }
 
-  public static <T, P> T getParameterizedCachedValue(@NotNull PsiElement element, @NotNull P param, @NotNull NotNullFunction<P, T> f) {
-    final Map<P, T> cache = CachedValuesManager.getCachedValue(element, new CachedValueProvider<Map<P, T>>() {
-      @Nullable
-      @Override
-      public Result<Map<P, T>> compute() {
-        return Result.create(Maps.newHashMap(), PsiModificationTracker.MODIFICATION_COUNT);
-      }
+  public static <T, P> T getParameterizedCachedValue(@NotNull PsiElement element, @Nullable P param, @NotNull NullableFunction<P, T> f) {
+    final CachedValuesManager manager = CachedValuesManager.getManager(element.getProject());
+    final Map<Optional<P>, Optional<T>> cache = CachedValuesManager.getCachedValue(element, manager.getKeyForClass(f.getClass()), () -> {
+      // concurrent hash map is a null-hostile collection
+      return CachedValueProvider.Result.create(Maps.newConcurrentMap(), PsiModificationTracker.MODIFICATION_COUNT);
     });
-    T result = cache.get(param);
-    if (result == null) {
-      result = f.fun(param);
-      cache.put(param, result);
+    // Don't use ConcurrentHashMap#computeIfAbsent(), it blocks if the function tries to update the cache recursively for the same key 
+    // during computation. We can accept here that some values will be computed several times due to non-atomic updates.
+    final Optional<P> wrappedParam = Optional.ofNullable(param);
+    Optional<T> value = cache.get(wrappedParam);
+    if (value == null) {
+      value = Optional.ofNullable(f.fun(param));
+      cache.put(wrappedParam, value);
     }
-    return result;
+    return value.orElse(null);
   }
 
   /**
@@ -908,8 +907,79 @@ public class PyUtil {
     return as(PyPsiUtils.getPrevNonWhitespaceSibling(statementList), PsiComment.class);
   }
 
+  public static boolean isPy2ReservedWord(@NotNull PyReferenceExpression node) {
+    if (LanguageLevel.forElement(node).isOlderThan(LanguageLevel.PYTHON30)) {
+      if (!node.isQualified()) {
+        final String name = node.getName();
+        if (PyNames.NONE.equals(name) || PyNames.FALSE.equals(name) || PyNames.TRUE.equals(name)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Retrieve the document from {@link PsiDocumentManager} using the anchor PSI element and pass it to the consumer function
+   * first releasing it from pending PSI modifications it with {@link PsiDocumentManager#doPostponedOperationsAndUnblockDocument(Document)}
+   * and then committing in try/finally block, so that subsequent operations over the PSI can be performed.
+   */
+  public static void updateDocumentUnblockedAndCommitted(@NotNull PsiElement anchor, @NotNull Consumer<Document> consumer) {
+    final PsiDocumentManager manager = PsiDocumentManager.getInstance(anchor.getProject());
+    final Document document = manager.getDocument(anchor.getContainingFile());
+    if (document != null) {
+      manager.doPostponedOperationsAndUnblockDocument(document);
+      try {
+        consumer.consume(document);
+      }
+      finally {
+        manager.commitDocument(document);
+      }
+    }
+  }
+
+  @Nullable
+  public static PyType getReturnTypeToAnalyzeAsCallType(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
+    if (isInit(function)) {
+      final PyClass cls = function.getContainingClass();
+      if (cls != null) {
+        for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+          final PyType providedClassType = provider.getGenericType(cls, context);
+          if (providedClassType != null) {
+            return providedClassType;
+          }
+        }
+
+        final PyInstantiableType classType = as(context.getType(cls), PyInstantiableType.class);
+        if (classType != null) {
+          return classType.toInstance();
+        }
+      }
+    }
+
+    return context.getReturnType(function);
+  }
+
+  /**
+   * Create a new expressions fragment from the given text, setting the specified element as its context,
+   * and return the contained expression of the first expression statement in it.
+   *
+   * @param expressionText text of the expression
+   * @param context        context element used to resolve symbols in the expression
+   * @return instance of {@link PyExpression} as described
+   *
+   * @see PyExpressionCodeFragment
+   */
+  @Nullable
+  public static PyExpression createExpressionFromFragment(@NotNull String expressionText, @NotNull PsiElement context) {
+    final PyExpressionCodeFragmentImpl codeFragment = new PyExpressionCodeFragmentImpl(context.getProject(), "dummy.py", expressionText, false);
+    codeFragment.setContext(context);
+    final PyExpressionStatement statement = as(codeFragment.getFirstChild(), PyExpressionStatement.class);
+    return statement != null ? statement.getExpression() : null;
+  }
+
   public static class KnownDecoratorProviderHolder {
-    public static PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
+    public static final PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
 
     private KnownDecoratorProviderHolder() {
     }
@@ -929,9 +999,13 @@ public class PyUtil {
   public static PsiElement turnDirIntoInit(@Nullable PsiElement target) {
     if (target instanceof PsiDirectory) {
       final PsiDirectory dir = (PsiDirectory)target;
-      final PsiFile file = dir.findFile(PyNames.INIT_DOT_PY);
-      if (file != null) {
-        return file; // ResolveImportUtil will extract directory part as needed, everyone else are better off with a file.
+      final PsiFile initStub = dir.findFile(PyNames.INIT_DOT_PYI);
+      if (initStub != null) {
+        return initStub;
+      }
+      final PsiFile initFile = dir.findFile(PyNames.INIT_DOT_PY);
+      if (initFile != null) {
+        return initFile; // ResolveImportUtil will extract directory part as needed, everyone else are better off with a file.
       }
       else {
         return null;
@@ -1357,45 +1431,6 @@ public class PyUtil {
     return (PyFile)psi;
   }
 
-  /**
-   * counts elements in iterable
-   *
-   * @param expression to count containing elements (iterable)
-   * @return element count
-   */
-  public static int getElementsCount(PyExpression expression, TypeEvalContext evalContext) {
-    int valuesLength = -1;
-    PyType type = evalContext.getType(expression);
-    if (type instanceof PyTupleType) {
-      valuesLength = ((PyTupleType)type).getElementCount();
-    }
-    else if (type instanceof PyNamedTupleType) {
-      valuesLength = ((PyNamedTupleType)type).getElementCount();
-    }
-    else if (expression instanceof PySequenceExpression) {
-      valuesLength = ((PySequenceExpression)expression).getElements().length;
-    }
-    else if (expression instanceof PyStringLiteralExpression) {
-      valuesLength = ((PyStringLiteralExpression)expression).getStringValue().length();
-    }
-    else if (expression instanceof PyNumericLiteralExpression) {
-      valuesLength = 1;
-    }
-    else if (expression instanceof PyCallExpression) {
-      PyCallExpression call = (PyCallExpression)expression;
-      if (call.isCalleeText("dict")) {
-        valuesLength = call.getArguments().length;
-      }
-      else if (call.isCalleeText("tuple")) {
-        PyExpression[] arguments = call.getArguments();
-        if (arguments.length > 0 && arguments[0] instanceof PySequenceExpression) {
-          valuesLength = ((PySequenceExpression)arguments[0]).getElements().length;
-        }
-      }
-    }
-    return valuesLength;
-  }
-
   @Nullable
   public static PsiElement findPrevAtOffset(PsiFile psiFile, int caretOffset, Class... toSkip) {
     PsiElement element;
@@ -1563,75 +1598,10 @@ public class PyUtil {
     return element;
   }
 
-  @NotNull
-  public static List<List<PyParameter>> getOverloadedParametersSet(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
-    final List<List<PyParameter>> parametersSet = getOverloadedParametersSet(context.getType(callable), context);
-    return parametersSet != null ? parametersSet : Collections.singletonList(Arrays.asList(callable.getParameterList().getParameters()));
-  }
-
-  @Nullable
-  private static List<PyParameter> getParametersOfCallableType(@NotNull PyCallableType type, @NotNull TypeEvalContext context) {
-    final List<PyCallableParameter> callableTypeParameters = type.getParameters(context);
-    if (callableTypeParameters != null) {
-      boolean allParametersDefined = true;
-      final List<PyParameter> parameters = new ArrayList<>();
-      for (PyCallableParameter callableParameter : callableTypeParameters) {
-        final PyParameter parameter = callableParameter.getParameter();
-        if (parameter == null) {
-          allParametersDefined = false;
-          break;
-        }
-        parameters.add(parameter);
-      }
-      if (allParametersDefined) {
-        return parameters;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static List<List<PyParameter>> getOverloadedParametersSet(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    if (type instanceof PyUnionType) {
-      type = ((PyUnionType)type).excludeNull(context);
-    }
-
-    if (type instanceof PyCallableType) {
-      final List<PyParameter> results = getParametersOfCallableType((PyCallableType)type, context);
-      if (results != null) {
-        return Collections.singletonList(results);
-      }
-    }
-    else if (type instanceof PyUnionType) {
-      final List<List<PyParameter>> results = new ArrayList<>();
-      final Collection<PyType> members = ((PyUnionType)type).getMembers();
-      for (PyType member : members) {
-        if (member instanceof PyCallableType) {
-          final List<PyParameter> parameters = getParametersOfCallableType((PyCallableType)member, context);
-          if (parameters != null) {
-            results.add(parameters);
-          }
-        }
-      }
-      if (!results.isEmpty()) {
-        return results;
-      }
-    }
-
-    return null;
-  }
-
-  @NotNull
-  public static List<PyParameter> getParameters(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
-    final List<List<PyParameter>> parametersSet = getOverloadedParametersSet(callable, context);
-    assert !parametersSet.isEmpty();
-    return parametersSet.get(0);
-  }
-
   public static boolean isSignatureCompatibleTo(@NotNull PyCallable callable, @NotNull PyCallable otherCallable,
                                                 @NotNull TypeEvalContext context) {
-    final List<PyParameter> parameters = getParameters(callable, context);
-    final List<PyParameter> otherParameters = getParameters(otherCallable, context);
+    final List<PyCallableParameter> parameters = callable.getParameters(context);
+    final List<PyCallableParameter> otherParameters = otherCallable.getParameters(context);
     final int optionalCount = optionalParametersCount(parameters);
     final int otherOptionalCount = optionalParametersCount(otherParameters);
     final int requiredCount = requiredParametersCount(callable, parameters);
@@ -1647,9 +1617,9 @@ public class PyUtil {
     return requiredCount <= otherRequiredCount && parameters.size() >= otherParameters.size() && optionalCount >= otherOptionalCount;
   }
 
-  private static int optionalParametersCount(@NotNull List<PyParameter> parameters) {
+  private static int optionalParametersCount(@NotNull List<PyCallableParameter> parameters) {
     int n = 0;
-    for (PyParameter parameter : parameters) {
+    for (PyCallableParameter parameter : parameters) {
       if (parameter.hasDefaultValue()) {
         n++;
       }
@@ -1657,11 +1627,11 @@ public class PyUtil {
     return n;
   }
 
-  private static int requiredParametersCount(@NotNull PyCallable callable, @NotNull List<PyParameter> parameters) {
+  private static int requiredParametersCount(@NotNull PyCallable callable, @NotNull List<PyCallableParameter> parameters) {
     return parameters.size() - optionalParametersCount(parameters) - specialParametersCount(callable, parameters);
   }
 
-  private static int specialParametersCount(@NotNull PyCallable callable, @NotNull List<PyParameter> parameters) {
+  private static int specialParametersCount(@NotNull PyCallable callable, @NotNull List<PyCallableParameter> parameters) {
     int n = 0;
     if (hasPositionalContainer(parameters)) {
       n++;
@@ -1674,7 +1644,7 @@ public class PyUtil {
     }
     else {
       if (parameters.size() > 0) {
-        final PyParameter first = parameters.get(0);
+        final PyCallableParameter first = parameters.get(0);
         if (PyNames.CANONICAL_SELF.equals(first.getName())) {
           n++;
         }
@@ -1683,18 +1653,18 @@ public class PyUtil {
     return n;
   }
 
-  private static boolean hasPositionalContainer(@NotNull List<PyParameter> parameters) {
-    for (PyParameter parameter : parameters) {
-      if (parameter instanceof PyNamedParameter && ((PyNamedParameter)parameter).isPositionalContainer()) {
+  private static boolean hasPositionalContainer(@NotNull List<PyCallableParameter> parameters) {
+    for (PyCallableParameter parameter : parameters) {
+      if (parameter.isPositionalContainer()) {
         return true;
       }
     }
     return false;
   }
 
-  private static boolean hasKeywordContainer(@NotNull List<PyParameter> parameters) {
-    for (PyParameter parameter : parameters) {
-      if (parameter instanceof PyNamedParameter && ((PyNamedParameter)parameter).isKeywordContainer()) {
+  private static boolean hasKeywordContainer(@NotNull List<PyCallableParameter> parameters) {
+    for (PyCallableParameter parameter : parameters) {
+      if (parameter.isKeywordContainer()) {
         return true;
       }
     }
@@ -1772,17 +1742,9 @@ public class PyUtil {
     return expectedName.equals(symbolName);
   }
 
-  /**
-   * Checks that given class is the root of class hierarchy, i.e. it's either {@code object} or
-   * special {@link PyNames#FAKE_OLD_BASE} class for old-style classes.
-   *
-   * @param cls    Python class to check
-   * @see PyBuiltinCache
-   * @see PyNames#FAKE_OLD_BASE
-   */
   public static boolean isObjectClass(@NotNull PyClass cls) {
-    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(cls);
-    return cls == builtinCache.getClass(PyNames.OBJECT) || cls == builtinCache.getClass(PyNames.FAKE_OLD_BASE);
+    final String name = cls.getQualifiedName();
+    return PyNames.OBJECT.equals(name) || PyNames.TYPES_INSTANCE_TYPE.equals(name);
   }
 
   public static boolean isInScratchFile(@NotNull PsiElement element) {
@@ -1856,24 +1818,30 @@ public class PyUtil {
       return true;
     }
     else if (statements.length == 1) {
-      if (isStringLiteral(statements[0]) || isPassOrRaiseOrEmptyReturn(statements[0])) {
+      if (isStringLiteral(statements[0]) || isPassOrRaiseOrEmptyReturnOrEllipsis(statements[0])) {
         return true;
       }
     }
     else if (statements.length == 2) {
-      if (isStringLiteral(statements[0]) && (isPassOrRaiseOrEmptyReturn(statements[1]))) {
+      if (isStringLiteral(statements[0]) && (isPassOrRaiseOrEmptyReturnOrEllipsis(statements[1]))) {
         return true;
       }
     }
     return false;
   }
 
-  private static boolean isPassOrRaiseOrEmptyReturn(PyStatement stmt) {
+  private static boolean isPassOrRaiseOrEmptyReturnOrEllipsis(PyStatement stmt) {
     if (stmt instanceof PyPassStatement || stmt instanceof PyRaiseStatement) {
       return true;
     }
     if (stmt instanceof PyReturnStatement && ((PyReturnStatement)stmt).getExpression() == null) {
       return true;
+    }
+    if (stmt instanceof PyExpressionStatement) {
+      final PyExpression expression = ((PyExpressionStatement)stmt).getExpression();
+      if (expression instanceof PyNoneLiteralExpression && ((PyNoneLiteralExpression)expression).isEllipsis()) {
+        return true;
+      }
     }
     return false;
   }

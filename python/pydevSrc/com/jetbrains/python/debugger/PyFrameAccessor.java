@@ -2,6 +2,7 @@ package com.jetbrains.python.debugger;
 
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XValueChildrenList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -31,4 +32,6 @@ public interface PyFrameAccessor {
   XSourcePosition getSourcePositionForType(String type);
 
   default void showNumericContainer(PyDebugValue value) {}
+
+  default void addFrameListener(@NotNull PyFrameListener listener) {}
 }

@@ -67,11 +67,6 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   }
 
   @Override
-  public Icon getBigIcon() {
-    return getJavaModuleIcon();
-  }
-
-  @Override
   public Icon getNodeIcon(boolean isOpened) {
     return getJavaModuleNodeIconClosed();
   }
@@ -81,10 +76,6 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   public ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep settingsStep, @NotNull final ModuleBuilder moduleBuilder) {
     return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(settingsStep, moduleBuilder,
                                                                          moduleBuilder::isSuitableSdkType);
-  }
-
-  private static Icon getJavaModuleIcon() {
-    return AllIcons.Modules.Types.JavaModule;
   }
 
   private static Icon getJavaModuleNodeIconClosed() {

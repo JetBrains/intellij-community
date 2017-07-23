@@ -19,13 +19,8 @@ import com.intellij.diff.DiffManager;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
@@ -40,9 +35,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public class ShowDiffAction extends AnAction implements DumbAware {
-  private static final Logger LOG = Logger.getInstance(ShowDiffAction.class);
+public class ShowDiffAction implements AnActionExtensionProvider {
+  @Override
+  public boolean isActive(@NotNull AnActionEvent e) {
+    return true;
+  }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
     Project project = e.getData(CommonDataKeys.PROJECT);
@@ -66,6 +65,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
     return false;
   }
 
+  @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final Change[] changes = e.getData(VcsDataKeys.CHANGES);
@@ -77,42 +77,41 @@ public class ShowDiffAction extends AnAction implements DumbAware {
 
     // this trick is essential since we are under some conditions to refresh changes;
     // but we can only rely on callback after refresh
-    final Runnable performer = new Runnable() {
-      public void run() {
-        Change[] convertedChanges;
-        if (needsConversion) {
-          convertedChanges = loadFakeRevisions(project, changes);
-        }
-        else {
-          convertedChanges = changes;
-        }
-
-        if (convertedChanges == null || convertedChanges.length == 0) {
-          return;
-        }
-
-        Change selectedChane = null;
-        List<Change> result = null;
-
-        if (convertedChanges.length == 1) {
-          selectedChane = convertedChanges[0];
-          ChangeList changeList = ((ChangeListManagerImpl)ChangeListManager.getInstance(project)).getIdentityChangeList(selectedChane);
-          if (changeList != null) {
-            result = changesInList != null ? changesInList : new ArrayList<>(changeList.getChanges());
-          }
-        }
-        if (result == null) result = ContainerUtil.newArrayList(convertedChanges);
-
-        //ContainerUtil.sort(result, ChangesComparator.getInstance(false));
-        int index = selectedChane == null ? 0 : Math.max(0, ContainerUtil.indexOfIdentity(result, selectedChane));
-
-        showDiffForChange(project, result, index);
+    final Runnable performer = () -> {
+      Change[] convertedChanges;
+      if (needsConversion) {
+        convertedChanges = loadFakeRevisions(project, changes);
       }
+      else {
+        convertedChanges = changes;
+      }
+
+      if (convertedChanges == null || convertedChanges.length == 0) {
+        return;
+      }
+
+      Change selectedChane = null;
+      List<Change> result = null;
+
+      if (convertedChanges.length == 1) {
+        selectedChane = convertedChanges[0];
+        ChangeList changeList = ChangeListManagerImpl.getInstanceImpl(project).getIdentityChangeList(selectedChane);
+        if (changeList != null) {
+          result = changesInList != null ? changesInList : new ArrayList<>(changeList.getChanges());
+        }
+      }
+      if (result == null) result = ContainerUtil.newArrayList(convertedChanges);
+
+      //ContainerUtil.sort(result, ChangesComparator.getInstance(false));
+      int index = selectedChane == null ? 0 : Math.max(0, ContainerUtil.indexOfIdentity(result, selectedChane));
+
+      showDiffForChange(project, result, index);
     };
 
     if (needsConversion) {
       ChangeListManager.getInstance(project).invokeAfterUpdate(performer, InvokeAfterUpdateMode.BACKGROUND_CANCELLABLE,
-                                                               ActionsBundle.actionText("ChangesView.Diff"), ModalityState.current());
+                                                               ActionsBundle.actionText(IdeActions.ACTION_SHOW_DIFF_COMMON),
+                                                               ModalityState.current());
     }
     else {
       performer.run();

@@ -23,17 +23,24 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.fixtures.PyMultiFileResolveTestCase;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyImportResolver;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -96,6 +103,23 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     assertTrue(element instanceof PsiFile);
     assertEquals("myfile.py", ((PsiFile)element).getName());
     assertEquals("mypackage", ((PsiFile)element).getContainingDirectory().getName());
+  }
+
+  public void testCustomPackageIdentifier() {
+    PlatformTestUtil.registerExtension(PyCustomPackageIdentifier.EP_NAME, new PyCustomPackageIdentifier() {
+      @Override
+      public boolean isPackage(PsiDirectory directory) {
+        return true;
+      }
+
+      @Override
+      public boolean isPackageFile(PsiFile file) {
+        return false;
+      }
+    }, getTestRootDisposable());
+    PsiElement element = doResolve();
+    assertTrue(element instanceof PsiFile);
+    assertEquals("myfile.py", ((PyFile)element).getName());
   }
 
   public void testImportAs() {
@@ -451,6 +475,28 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     });
   }
 
+  // PY-22522
+  public void testBothForeignAndSourceRootImportResultsReturned() {
+    myFixture.copyDirectoryToProject("bothForeignAndSourceRootImportResultsReturned", "");
+
+    VirtualFile vf = myFixture.findFileInTempDir("ext/m1.py");
+    final PsiFile extSource = myFixture.getPsiManager().findFile(vf);
+    PyImportResolver foreignResolver = (name, context, withRoots) -> name.toString().equals("m1") ? extSource : null;
+    PlatformTestUtil.registerExtension(PyImportResolver.EP_NAME, foreignResolver, getTestRootDisposable());
+
+    withSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root")), () -> {
+      final PsiFile psiFile = myFixture.configureByFile("a.py");
+      final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
+      assertInstanceOf(ref, PsiPolyVariantReference.class);
+      final List<PsiElement> elements = PyUtil.multiResolveTopPriority((PsiPolyVariantReference)ref);
+      assertEquals(2, elements.size());
+      final Set<String> parentNames = elements.stream()
+        .filter(e -> e instanceof PyFile)
+        .map(e -> ((PyFile)e).getVirtualFile().getParent().getName()).collect(Collectors.toSet());
+      assertContainsElements(parentNames, "root", "ext");
+    });
+  }
+
   private void withSourceRoots(@NotNull List<VirtualFile> sourceRoots, @NotNull Runnable f) {
     final Module module = myFixture.getModule();
     for (VirtualFile root : sourceRoots) {
@@ -494,5 +540,16 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     }
     return fileSystemItems.map(f -> VfsUtilCore.getRelativeLocation(f.getVirtualFile(), root)).collect(Collectors.toList());
     
+  }
+
+  public void testCustomMemberTargetClass(){
+    prepareTestDirectory();
+    PyCustomMember customMember = new PyCustomMember("Clazz").resolvesToClass("pkg.mod1.Clazz");
+    PsiFile context = myFixture.configureByText("a.py", "");
+    PsiElement resolved = customMember.resolve(context);
+    assertInstanceOf(resolved, PyTypedElement.class);
+    PyTypedElement pyTypedElement = (PyTypedElement) resolved;
+    PyType type = TypeEvalContext.codeAnalysis(myFixture.getProject(), context).getType(pyTypedElement);
+    assertInstanceOf(type, PyClassType.class);
   }
 }

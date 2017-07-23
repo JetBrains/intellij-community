@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
@@ -32,7 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ControlFlowBuilderUtil;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
@@ -42,6 +40,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.*;
+
+import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.OrderUtil.reversedPostOrder;
 
 /**
  * @author ven
@@ -59,7 +59,7 @@ public class ReachingDefinitionsCollector {
     final DefinitionMap dfaResult = inferDfaResult(flow);
 
     final LinkedHashSet<Integer> fragmentInstructions = getFragmentInstructions(first, last, flow);
-    final int[] postorder = ControlFlowBuilderUtil.postorder(flow);
+    final int[] postorder = reversedPostOrder(flow);
     LinkedHashSet<Integer> reachableFromFragmentReads = getReachable(fragmentInstructions, flow, dfaResult, postorder);
     LinkedHashSet<Integer> fragmentReads = filterReads(fragmentInstructions, flow);
 
@@ -379,12 +379,9 @@ public class ReachingDefinitionsCollector {
         @Override
         public boolean execute(int i, TIntHashSet defs) {
           buffer.append(i).append(" -> ");
-          defs.forEach(new TIntProcedure() {
-            @Override
-            public boolean execute(int i) {
-              buffer.append(i).append(" ");
-              return true;
-            }
+          defs.forEach(i1 -> {
+            buffer.append(i1).append(" ");
+            return true;
           });
           return true;
         }
@@ -440,7 +437,7 @@ public class ReachingDefinitionsCollector {
   }
 
   @NotNull
-  private static DefinitionMap postprocess(@NotNull final ArrayList<DefinitionMap> dfaResult,
+  private static DefinitionMap postprocess(@NotNull final List<DefinitionMap> dfaResult,
                                            @NotNull Instruction[] flow,
                                            @NotNull ReachingDefinitionsDfaInstance dfaInstance) {
     DefinitionMap result = new DefinitionMap();

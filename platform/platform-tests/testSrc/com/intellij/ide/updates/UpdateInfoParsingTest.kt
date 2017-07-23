@@ -67,7 +67,7 @@ class UpdateInfoParsingTest {
           <channel id="IDEA10EAP" name="IntelliJ IDEA X EAP" status="eap" licensing="eap" url="http://confluence.jetbrains.net/display/IDEADEV/IDEA+X+EAP">
             <build number="98.520" version="10" releaseDate="20110403">
               <message>IntelliJ IDEA X RC is available. Please visit hhttp://confluence.jetbrains.net/display/IDEADEV/IDEA+X+EAP to learn more.</message>
-              <!-- <patch from="98.486" size="1"/> -->
+              <button name="Download" url="http://www.jetbrains.com/idea" download="true"/>
             </build>
           </channel>
         </product>
@@ -80,12 +80,12 @@ class UpdateInfoParsingTest {
     val channel = product.channels.find { it.id == "IDEA10EAP" }!!
     assertEquals(ChannelStatus.EAP, channel.status)
     assertEquals(UpdateChannel.LICENSING_EAP, channel.licensing)
-    assertNotNull(channel.homePageUrl)
     assertEquals(1, channel.builds.size)
 
     val build = channel.builds[0]
     assertEquals(BuildNumber.fromString("98.520"), build.number)
     assertEquals("2011-04-03", SimpleDateFormat("yyyy-MM-dd").format(build.releaseDate))
+    assertNotNull(build.downloadUrl)
     assertEquals(0, build.patches.size)
 
     assertEquals(1, product.channels.find { it.id == "idea90" }!!.builds[0].patches.size)

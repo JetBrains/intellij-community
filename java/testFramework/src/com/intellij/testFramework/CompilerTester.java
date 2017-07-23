@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,9 @@ import org.junit.Assert;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -183,10 +186,10 @@ public class CompilerTester {
       PlatformTestUtil.saveProject(getProject());
       CompilerTestUtil.saveApplicationSettings();
       for (Module module : myModules) {
-        File ioFile = new File(module.getModuleFilePath());
-        if (!ioFile.exists()) {
+        Path ioFile = Paths.get(module.getModuleFilePath());
+        if (!Files.exists(ioFile)) {
           getProject().save();
-          assert ioFile.exists() : "File does not exist: " + ioFile.getPath();
+          assert Files.exists(ioFile) : "File does not exist: " + ioFile.toString();
         }
       }
       runnable.consume(callback);

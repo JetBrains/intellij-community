@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,11 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import org.junit.Before
 import org.junit.Test
-import kotlin.properties.Delegates
 import kotlin.test.assertEquals
 
 class ArchiveFileSystemPerformanceTest : BareTestFixtureTestCase() {
-  private var fs: ArchiveFileSystem by Delegates.notNull()
-  private var entry: VirtualFile by Delegates.notNull()
+  private lateinit var fs: ArchiveFileSystem
+  private lateinit var entry: VirtualFile
 
   @Before fun setUp() {
     fs = StandardFileSystems.jar() as ArchiveFileSystem
@@ -34,19 +33,19 @@ class ArchiveFileSystemPerformanceTest : BareTestFixtureTestCase() {
 
   @Test fun getRootByEntry() {
     val root = fs.getRootByEntry(entry)!!
-    PlatformTestUtil.startPerformanceTest("ArchiveFileSystem.getRootByEntry()", 50, {
+    PlatformTestUtil.startPerformanceTest("ArchiveFileSystem.getRootByEntry()", 100, {
       for (i in 0..100000) {
         assertEquals(root, fs.getRootByEntry(entry))
       }
-    }).cpuBound().useLegacyScaling().assertTiming()
+    }).assertTiming()
   }
 
   @Test fun getLocalByEntry() {
     val local = fs.getLocalByEntry(entry)!!
-    PlatformTestUtil.startPerformanceTest("ArchiveFileSystem.getLocalByEntry()", 50, {
+    PlatformTestUtil.startPerformanceTest("ArchiveFileSystem.getLocalByEntry()", 20, {
       for (i in 0..100000) {
         assertEquals(local, fs.getLocalByEntry(entry))
       }
-    }).cpuBound().useLegacyScaling().assertTiming()
+    }).assertTiming()
   }
 }

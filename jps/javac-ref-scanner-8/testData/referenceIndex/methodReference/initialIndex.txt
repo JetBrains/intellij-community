@@ -3,15 +3,16 @@ java.lang.Object -> MethodReference
 java.lang.Runnable -> fun_expr(id=0)
 
 Backward References:
-MethodReference in MethodReference
-MethodReference.<init>(0) in MethodReference
-MethodReference.main(1) in MethodReference
-java.lang.Object.<init>(0) in MethodReference
-java.lang.String in MethodReference
-java.lang.Thread in MethodReference
-java.util.Collections in MethodReference
-java.util.Collections.emptyList(0) in MethodReference
+MethodReference in MethodReference occurrences = 1
+MethodReference.main(1) in MethodReference occurrences = 1
+java.lang.String in MethodReference occurrences = 1
+java.lang.Thread in MethodReference occurrences = 1
+java.lang.Thread.<init>(1) in MethodReference occurrences = 1
+java.util.Collections in MethodReference occurrences = 2
+java.util.Collections.emptyList(0) in MethodReference occurrences = 1
 
 Class Definitions:
 MethodReference in MethodReference
 fun_expr(id=0) in MethodReference
+
+Members Signatures:

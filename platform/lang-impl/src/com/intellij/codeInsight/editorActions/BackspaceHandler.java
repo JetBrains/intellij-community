@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,10 +74,10 @@ public class BackspaceHandler extends EditorWriteActionHandler {
 
     if (editor.getSelectionModel().hasSelection()) return false;
 
-    int offset = editor.getCaretModel().getOffset() - 1;
+    int offset = DocumentUtil.getPreviousCodePointOffset(editor.getDocument(), editor.getCaretModel().getOffset());
     if (offset < 0) return false;
     CharSequence chars = editor.getDocument().getCharsSequence();
-    char c = chars.charAt(offset);
+    int c = Character.codePointAt(chars, offset);
 
     final Editor injectedEditor = TypedHandler.injectedEditorIfCharTypedIsSignificant(c, editor, file);
     final Editor originalEditor = editor;
@@ -85,14 +86,14 @@ public class BackspaceHandler extends EditorWriteActionHandler {
       if (isOffsetInsideInjected(injectedEditor, injectedOffset)) {
         file = PsiDocumentManager.getInstance(project).getPsiFile(injectedEditor.getDocument());
         editor = injectedEditor;
-        offset = injectedOffset - 1;
+        offset = DocumentUtil.getPreviousCodePointOffset(injectedEditor.getDocument(), injectedOffset);
       }
     }
 
     final BackspaceHandlerDelegate[] delegates = Extensions.getExtensions(BackspaceHandlerDelegate.EP_NAME);
-    if (!toWordStart) {
+    if (!toWordStart && Character.isBmpCodePoint(c)) {
       for(BackspaceHandlerDelegate delegate: delegates) {
-        delegate.beforeCharDeleted(c, file, editor);
+        delegate.beforeCharDeleted((char)c, file, editor);
       }
     }
 
@@ -104,9 +105,9 @@ public class BackspaceHandler extends EditorWriteActionHandler {
 
     myOriginalHandler.execute(originalEditor, caret, dataContext);
 
-    if (!toWordStart) {
+    if (!toWordStart && Character.isBmpCodePoint(c)) {
       for(BackspaceHandlerDelegate delegate: delegates) {
-        if (delegate.charDeleted(c, file, editor)) {
+        if (delegate.charDeleted((char)c, file, editor)) {
           return true;
         }
       }
@@ -117,7 +118,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     chars = editor.getDocument().getCharsSequence();
     if ((c == '(' || c == '[' || c == '{') && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
       char c1 = chars.charAt(offset);
-      if (c1 != getRightChar(c)) return true;
+      if (c1 != getRightChar((char)c)) return true;
 
       HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
       BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType, iterator);
@@ -202,6 +203,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
       int offset = editor.getCaretModel().getOffset();
       editor.getSelectionModel().setSelection(targetOffset, offset);
       EditorModificationUtil.deleteSelectedText(editor);
+      editor.getCaretModel().moveToLogicalPosition(pos);
     }
     else if (pos.column > logicalPosition.column) {
       EditorModificationUtil.insertStringAtCaret(editor, StringUtil.repeatSymbol(' ', pos.column - logicalPosition.column));

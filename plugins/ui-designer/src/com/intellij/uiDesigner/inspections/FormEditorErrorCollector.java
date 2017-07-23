@@ -37,12 +37,12 @@ import java.util.List;
  */
 public class FormEditorErrorCollector extends FormErrorCollector {
   private final GuiEditor myEditor;
-  private final RadComponent myComponent;
-  private List<ErrorInfo> myResults = null;
+  @NotNull private final RadComponent myComponent;
+  private List<ErrorInfo> myResults;
   private final InspectionProfile myProfile;
   private final PsiFile myFormPsiFile;
 
-  public FormEditorErrorCollector(final GuiEditor editor, final RadComponent component) {
+  FormEditorErrorCollector(final GuiEditor editor, @NotNull RadComponent component) {
     myEditor = editor;
     myComponent = component;
 
@@ -55,9 +55,10 @@ public class FormEditorErrorCollector extends FormErrorCollector {
     return myResults == null ? null : myResults.toArray(new ErrorInfo[myResults.size()]);
   }
 
-  public void addError(@NotNull final String inspectionId, final IComponent component, @Nullable IProperty prop,
+  @Override
+  public void addError(@NotNull final String inspectionId, @NotNull final IComponent component, @Nullable IProperty prop,
                        @NotNull String errorMessage,
-                       EditorQuickFixProvider... editorQuickFixProviders) {
+                       @NotNull EditorQuickFixProvider... editorQuickFixProviders) {
     if (myResults == null) {
       myResults = new ArrayList<>();
     }

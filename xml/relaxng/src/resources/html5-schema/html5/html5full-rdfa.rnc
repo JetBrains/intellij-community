@@ -1,10 +1,10 @@
 default namespace = "http://www.w3.org/1999/xhtml"
 include "common.rnc" {
-		XMLonly = notAllowed
-		HTMLonly = empty
-		v5only = empty
-		nonHTMLizable = notAllowed
-		nonRoundtrippable = notAllowed
+        XMLonly = notAllowed
+        HTMLonly = empty
+        v5only = empty
+        nonHTMLizable = notAllowed
+        nonRoundtrippable = notAllowed
 }
 include "common-ext.rnc"
 
@@ -30,12 +30,13 @@ include "data.rnc"
 include "legacy.rnc"
 include "aria.rnc"
 include "meta.rnc" {
-		html.inner =
-			(	head.elem
-			,	(	body.elem
-				|	frameset.elem
-				)
-			)
+        html.inner =
+            (    head.elem
+            ,    (    body.elem
+                 |    frameset.elem
+                 )
+            )
 }
 include "meta-ext.rnc"
+include "microdata.rnc"
 include "rdfa.rnc"

@@ -17,9 +17,7 @@ package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
@@ -33,6 +31,9 @@ import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 
 import java.io.File;
 import java.util.*;
+
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static com.intellij.util.containers.ContainerUtil.map;
 
 public class SvnBranchConfigurationNew {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew");
@@ -64,12 +65,7 @@ public class SvnBranchConfigurationNew {
 
   public List<String> getBranchUrls() {
     final ArrayList<String> result = new ArrayList<>(myBranchMap.keySet());
-    final List<String> cutList = ObjectsConvertor.convert(result, new Convertor<String, String>() {
-      @Override
-      public String convert(String s) {
-        return cutEndSlash(s);
-      }
-    });
+    List<String> cutList = map(result, SvnBranchConfigurationNew::cutEndSlash);
     Collections.sort(cutList);
     return cutList;
   }
@@ -215,7 +211,7 @@ public class SvnBranchConfigurationNew {
 
     public boolean accept(final String url) throws SVNException {
       if (myRootUrl != null) {
-        final File baseDir = new File(myRoot.getPath());
+        final File baseDir = virtualToIoFile(myRoot);
         final String baseUrl = myRootUrl.getPath();
 
         final SVNURL branchUrl = SVNURL.parseURIEncoded(url);

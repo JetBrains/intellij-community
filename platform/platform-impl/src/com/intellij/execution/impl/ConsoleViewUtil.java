@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
-import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -40,20 +40,21 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.execution.ui.ConsoleViewContentType.registerNewConsoleViewType;
-
 /**
  * @author peter
  */
 public class ConsoleViewUtil {
 
+  /**
+   * @deprecated use {@link com.intellij.openapi.editor.EditorKind}
+   */
+  @Deprecated
   public static final Key<Boolean> EDITOR_IS_CONSOLE_VIEW = Key.create("EDITOR_IS_CONSOLE_VIEW");
   public static final Key<Boolean> EDITOR_IS_CONSOLE_HISTORY_VIEW = Key.create("EDITOR_IS_CONSOLE_HISTORY_VIEW");
 
@@ -64,14 +65,13 @@ public class ConsoleViewUtil {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document document = ((EditorFactoryImpl)editorFactory).createDocument(true);
     UndoUtil.disableUndoFor(document);
-    EditorEx editor = (EditorEx) editorFactory.createViewer(document, project);
+    EditorEx editor = (EditorEx) editorFactory.createViewer(document, project, EditorKind.CONSOLE);
     setupConsoleEditor(editor, foldingOutlineShown, lineMarkerAreaShown);
     return editor;
   }
 
   public static void setupConsoleEditor(@NotNull final EditorEx editor, final boolean foldingOutlineShown, final boolean lineMarkerAreaShown) {
     ApplicationManager.getApplication().runReadAction(() -> {
-      editor.setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.CONSOLE);
 
       final EditorSettings editorSettings = editor.getSettings();
       editorSettings.setLineMarkerAreaShown(lineMarkerAreaShown);
@@ -85,16 +85,29 @@ public class ConsoleViewUtil {
       editorSettings.setCaretRowShown(false);
       editor.getGutterComponentEx().setPaintBackground(false);
 
-      editor.putUserData(EDITOR_IS_CONSOLE_VIEW, true);
-
       final DelegateColorScheme scheme = updateConsoleColorScheme(editor.getColorsScheme());
-      if (UISettings.getInstance().PRESENTATION_MODE) {
-        scheme.setEditorFontSize(UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE);
+      if (UISettings.getInstance().getPresentationMode()) {
+        scheme.setEditorFontSize(UISettings.getInstance().getPresentationModeFontSize());
       }
       editor.setColorsScheme(scheme);
+      editor.setHighlighter(new NullEditorHighlighter());
     });
   }
 
+  private static class NullEditorHighlighter extends EmptyEditorHighlighter {
+    private static final TextAttributes NULL_ATTRIBUTES = new TextAttributes();
+
+    NullEditorHighlighter() {
+      super(NULL_ATTRIBUTES);
+    }
+
+    @Override
+    public void setAttributes(TextAttributes attributes) {}
+
+    @Override
+    public void setColorScheme(@NotNull EditorColorsScheme scheme) {}
+  }
+  
   @NotNull
   public static DelegateColorScheme updateConsoleColorScheme(@NotNull EditorColorsScheme scheme) {
     return new DelegateColorScheme(scheme) {
@@ -139,7 +152,7 @@ public class ConsoleViewUtil {
   }
 
   public static boolean isConsoleViewEditor(@NotNull Editor editor) {
-    return editor.getUserData(EDITOR_IS_CONSOLE_VIEW) == Boolean.TRUE;
+    return editor.getUserData(EDITOR_IS_CONSOLE_VIEW) == Boolean.TRUE || editor.getEditorKind() == (EditorKind.CONSOLE);
   }
 
   public static boolean isReplaceActionEnabledForConsoleViewEditor(@NotNull Editor editor) {
@@ -161,10 +174,7 @@ public class ConsoleViewUtil {
       });
     }
     static final Map<Key, List<TextAttributesKey>> textAttributeKeys = ContainerUtil.newConcurrentMap();
-    static final Map<Key, TextAttributes> mergedTextAttributes = new ConcurrentFactoryMap<Key, TextAttributes>() {
-      @Nullable
-      @Override
-      protected TextAttributes create(Key contentKey) {
+    static final Map<Key, TextAttributes> mergedTextAttributes = ConcurrentFactoryMap.createMap(contentKey-> {
         EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
         TextAttributes result = scheme.getAttributes(HighlighterColors.TEXT);
         for (TextAttributesKey key : textAttributeKeys.get(contentKey)) {
@@ -175,11 +185,9 @@ public class ConsoleViewUtil {
         }
         return result;
       }
-    };
+    );
 
-    static final Map<List<TextAttributesKey>, Key> keys = new ConcurrentFactoryMap<List<TextAttributesKey>, Key>() {
-      @Override
-      protected Key create(List<TextAttributesKey> keys) {
+    static final Map<List<TextAttributesKey>, Key> keys = ConcurrentFactoryMap.createMap(keys-> {
         StringBuilder keyName = new StringBuilder("ConsoleViewUtil_");
         for (TextAttributesKey key : keys) {
           keyName.append("_").append(key.getExternalName());
@@ -193,10 +201,10 @@ public class ConsoleViewUtil {
           }
         };
 
-        registerNewConsoleViewType(newKey, contentType);
+        ConsoleViewContentType.registerNewConsoleViewType(newKey, contentType);
         return newKey;
       }
-    };
+    );
   }
 
   public static void printWithHighlighting(@NotNull ConsoleView console, @NotNull String text, @NotNull SyntaxHighlighter highlighter) {

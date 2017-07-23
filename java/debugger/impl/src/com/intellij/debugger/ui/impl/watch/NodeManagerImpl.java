@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.impl.nodes.NodeComparator;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
@@ -27,9 +28,11 @@ import com.intellij.debugger.ui.tree.NodeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.HashMap;
+import com.sun.jdi.InternalException;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import com.sun.jdi.ReferenceType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
@@ -57,6 +60,7 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
     return ourNodeComparator;
   }
 
+  @NotNull
   public DebuggerTreeNodeImpl createNode(NodeDescriptor descriptor, EvaluationContext evaluationContext) {
     ((NodeDescriptorImpl)descriptor).setContext((EvaluationContextImpl)evaluationContext);
     return DebuggerTreeNodeImpl.createNode(getTree(), (NodeDescriptorImpl)descriptor, (EvaluationContextImpl)evaluationContext);
@@ -70,6 +74,7 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
     return DebuggerTreeNodeImpl.createNodeNoUpdate(getTree(), descriptor);
   }
 
+  @NotNull
   public DebuggerTreeNodeImpl createMessageNode(String message) {
     return DebuggerTreeNodeImpl.createNodeNoUpdate(getTree(), new MessageDescriptor(message));
   }
@@ -110,7 +115,10 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
     }
     try {
       final Location location = frame.location();
-      final Method method = location.method();
+      final Method method = DebuggerUtilsEx.getMethod(location);
+      if (method == null) {
+        return null;
+      }
       final ReferenceType referenceType = location.declaringType();
       final StringBuilder builder = StringBuilderSpinAllocator.alloc();
       try {
@@ -120,18 +128,19 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
         StringBuilderSpinAllocator.dispose(builder);
       }
     }
-    catch (EvaluateException e) {
-      return null;
+    catch (EvaluateException ignored) {
     }
+    catch (InternalException ie) {
+      if (ie.errorCode() != 23) { // INVALID_METHODID
+        throw ie;
+      }
+    }
+    return null;
   }
 
   public void dispose() {
-    clearHistory();
-    super.dispose();
-  }
-
-  public void clearHistory() {
     myHistories.clear();
+    super.dispose();
   }
 
   private DebuggerTree getTree() {

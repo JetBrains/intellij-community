@@ -76,6 +76,7 @@ public class JarFileSystemImpl extends JarFileSystem {
     return super.extractPresentableUrl(StringUtil.trimEnd(path, JAR_SEPARATOR));
   }
 
+  @NotNull
   @Override
   protected String normalize(@NotNull String path) {
     final int jarSeparatorIndex = path.indexOf(JAR_SEPARATOR);

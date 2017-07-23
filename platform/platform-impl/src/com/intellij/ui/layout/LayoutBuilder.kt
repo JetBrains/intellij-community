@@ -26,9 +26,7 @@ import javax.swing.ButtonGroup
 import javax.swing.JLabel
 
 class LayoutBuilder(val `$`: LayoutBuilderImpl, val buttonGroup: ButtonGroup? = null) {
-  inline fun row(label: String, init: Row.() -> Unit) {
-    row(label = Label(label), init = init)
-  }
+  inline fun row(label: String, init: Row.() -> Unit) = row(label = Label(label), init = init)
 
   inline fun row(label: JLabel? = null, separated: Boolean = false, init: Row.() -> Unit): Row {
     val row = `$`.newRow(label, buttonGroup, separated)

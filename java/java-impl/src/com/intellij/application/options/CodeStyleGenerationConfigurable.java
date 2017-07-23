@@ -20,13 +20,13 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.codeStyle.CodeStyleConfigurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.JavaVisibilityPanel;
@@ -34,12 +34,13 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SortedListModel;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.JBInsets;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Comparator;
 
-public class CodeStyleGenerationConfigurable implements Configurable {
+public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
   private final JavaVisibilityPanel myJavaVisibilityPanel;
   JPanel myPanel;
   private JTextField myFieldPrefixField;
@@ -84,7 +85,7 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     final Condition<PsiClass> isApplicable = aClass -> aClass.isAnnotationType();
     //noinspection Convert2Diamond
     myRepeatAnnotationsModel = new SortedListModel<String>(Comparator.naturalOrder());
-    myOverridePanel.add(SpecialAnnotationsUtil.createSpecialAnnotationsListControl("Annotations to Repeat", false, isApplicable, myRepeatAnnotationsModel), gc);
+    myOverridePanel.add(SpecialAnnotationsUtil.createSpecialAnnotationsListControl("Annotations to Copy", false, isApplicable, myRepeatAnnotationsModel), gc);
     return myPanel;
   }
 
@@ -99,7 +100,7 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     return "reference.settingsdialog.IDE.globalcodestyle.codegen";
   }
 
-  public void reset(CodeStyleSettings settings) {
+  public void reset(@NotNull CodeStyleSettings settings) {
     myCbPreferLongerNames.setSelected(settings.PREFER_LONGER_NAMES);
 
     myFieldPrefixField.setText(settings.FIELD_NAME_PREFIX);
@@ -133,7 +134,7 @@ public class CodeStyleGenerationConfigurable implements Configurable {
     reset(mySettings);
   }
 
-  public void apply(CodeStyleSettings settings) throws ConfigurationException {
+  public void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException {
     settings.PREFER_LONGER_NAMES = myCbPreferLongerNames.isSelected();
 
     settings.FIELD_NAME_PREFIX = setPrefixSuffix(myFieldPrefixField.getText(), true);

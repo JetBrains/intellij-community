@@ -16,6 +16,7 @@
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -163,6 +164,15 @@ public abstract class JavaTestFramework implements TestFramework {
 
 
   public boolean acceptNestedClasses() {
+    return false;
+  }
+
+  @Override
+  public boolean isTestMethod(PsiElement element) {
+    return isTestMethod(element, true);
+  }
+
+  public boolean isMyConfigurationType(ConfigurationType type) {
     return false;
   }
 }

@@ -40,7 +40,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
   }
 
   public MethodCandidatesProcessor(@NotNull PsiElement place, PsiFile placeFile) {
-    super(new PsiConflictResolver[]{DuplicateConflictResolver.INSTANCE}, new SmartList<CandidateInfo>(), place, placeFile);
+    super(new PsiConflictResolver[]{DuplicateConflictResolver.INSTANCE}, new SmartList<>(), place, placeFile);
   }
 
   @Override
@@ -69,7 +69,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
       if (acceptVarargs() && method.isVarArgs() && PsiUtil.isLanguageLevel8OrHigher(myPlace)) {
         add(createCandidateInfo(method, substitutor, staticProblem, isAccessible, true));
       }
-      myHasAccessibleStaticCorrectCandidate |= isAccessible && !staticProblem;
+      myHasAccessibleStaticCorrectCandidate |= isAccessible;// && !staticProblem;
     }
   }
 

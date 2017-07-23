@@ -92,6 +92,7 @@ public class NewProjectUtil {
     }
 
     final ProjectBuilder projectBuilder = dialog.getProjectBuilder();
+    LOG.debug("builder " + projectBuilder);
 
     try {
       File projectDir = new File(projectFilePath).getParentFile();

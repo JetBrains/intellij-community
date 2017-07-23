@@ -16,8 +16,8 @@
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
-import com.intellij.openapi.module.LanguageLevelUtil;
+import com.intellij.codeInspection.java15api.Java15APIUsageInspectionBase;
+import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
@@ -35,6 +35,7 @@ import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
@@ -46,7 +47,8 @@ public class Java15FormInspection extends BaseFormInspection {
     super("Since15");
   }
 
-  protected void checkComponentProperties(Module module, final IComponent component, final FormErrorCollector collector) {
+  @Override
+  protected void checkComponentProperties(Module module, @NotNull final IComponent component, final FormErrorCollector collector) {
     final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
     final PsiManager psiManager = PsiManager.getInstance(module.getProject());
     final PsiClass aClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(component.getComponentClassName(), scope);
@@ -57,9 +59,9 @@ public class Java15FormInspection extends BaseFormInspection {
     for(final IProperty prop: component.getModifiedProperties()) {
       final PsiMethod getter = PropertyUtil.findPropertyGetter(aClass, prop.getName(), false, true);
       if (getter == null) continue;
-      final LanguageLevel languageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
-      if (Java15APIUsageInspection.isForbiddenApiUsage(getter, languageLevel)) {
-        registerError(component, collector, prop, "@since " + Java15APIUsageInspection.getShortName(languageLevel));
+      final LanguageLevel languageLevel = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
+      if (Java15APIUsageInspectionBase.getLastIncompatibleLanguageLevel(getter, languageLevel) != null) {
+        registerError(component, collector, prop, "@since " + Java15APIUsageInspectionBase.getShortName(languageLevel));
       }
     }
   }
@@ -69,22 +71,19 @@ public class Java15FormInspection extends BaseFormInspection {
                              final IProperty prop,
                              @NonNls final String api) {
     collector.addError(getID(), component, prop, InspectionsBundle.message("inspection.1.5.problem.descriptor", api),
-                       new EditorQuickFixProvider() {
-                         public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
-                           return new RemovePropertyFix(editor, component, (Property)prop);
-                         }
-                       });
+                       (EditorQuickFixProvider)(editor, component1) -> new RemovePropertyFix(editor, component1, (Property)prop));
   }
 
   private static class RemovePropertyFix extends QuickFix {
     private final Property myProperty;
 
-    public RemovePropertyFix(GuiEditor editor, RadComponent component, Property property) {
+    RemovePropertyFix(GuiEditor editor, RadComponent component, Property property) {
       super(editor, UIDesignerBundle.message("remove.property.quickfix"), component);
       myProperty = property;
     }
 
 
+    @Override
     public void run() {
       ResetValueAction.doResetValue(Collections.singletonList(myComponent), myProperty, myEditor);
     }

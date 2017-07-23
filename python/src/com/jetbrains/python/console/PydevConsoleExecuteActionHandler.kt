@@ -39,13 +39,13 @@ import java.awt.Font
  */
 open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageConsoleView,
                                             processHandler: ProcessHandler,
-                                            val consoleCommunication: ConsoleCommunication) : ProcessBackedConsoleExecuteActionHandler(processHandler, false), ConsoleCommunicationListener {
+                                            final override val consoleCommunication: ConsoleCommunication) : PythonConsoleExecuteActionHandler(processHandler, false), ConsoleCommunicationListener {
 
   private val project = myConsoleView.project
   private val myEnterHandler = PyConsoleEnterHandler()
   private var myIpythonInputPromptCount = 1
 
-  var isEnabled = false
+  override var isEnabled = false
     set(value) {
       field = value
       updateConsoleState()
@@ -55,11 +55,9 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
     this.consoleCommunication.addCommunicationListener(this)
   }
 
-
   override fun processLine(text: String) {
     executeMultiLine(text)
   }
-
 
   private fun executeMultiLine(text: String) {
     val commandText = if (!text.endsWith("\n")) {
@@ -71,10 +69,9 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
     sendLineToConsole(ConsoleCommunication.ConsoleCodeFragment(commandText, checkSingleLine(text)))
   }
 
-  private fun checkSingleLine(text: String): Boolean {
+  override fun checkSingleLine(text: String): Boolean {
     val pyFile: PyFile =PyElementGenerator.getInstance(project).createDummyFile(myConsoleView.virtualFile.getUserData(LanguageLevel.KEY), text) as PyFile
     return PsiTreeUtil.findChildOfAnyType(pyFile, PyStatementList::class.java) == null && pyFile.statements.size < 2
-
   }
 
   private fun sendLineToConsole(code: ConsoleCommunication.ConsoleCodeFragment) {
@@ -89,7 +86,6 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
 
     consoleComm.execInterpreter(code) {}
   }
-
 
   private fun updateConsoleState() {
     if (!isEnabled) {
@@ -111,18 +107,6 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
     }
   }
 
-  fun inputReceived() {
-    if (consoleCommunication is PythonDebugConsoleCommunication) {
-      if (consoleCommunication.waitingForInput) {
-        consoleCommunication.waitingForInput = false
-        val console = myConsoleView
-        if (PyConsoleUtil.INPUT_PROMPT.equals(console.prompt) || PyConsoleUtil.HELP_PROMPT.equals(console.prompt)) {
-          console.prompt = PyConsoleUtil.ORDINARY_PROMPT
-        }
-      }
-    }
-  }
-
   private fun inPrompt() {
     if (ipythonEnabled) {
       ipythonInPrompt()
@@ -137,8 +121,6 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
       myConsoleView.prompt = PyConsoleUtil.ORDINARY_PROMPT
       PyConsoleUtil.scrollDown(myConsoleView.currentEditor)
     }
-
-
   }
 
   private val ipythonEnabled: Boolean
@@ -179,21 +161,18 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
       myConsoleView.prompt = prompt
       PyConsoleUtil.scrollDown(myConsoleView.currentEditor)
     }
-
-
   }
 
   override fun commandExecuted(more: Boolean) = updateConsoleState()
 
-  override fun inputRequested() = updateConsoleState()
-
+  override fun inputRequested() {
+    isEnabled = true
+  }
 
   val pythonIndent: Int
     get() = CodeStyleSettingsManager.getSettings(project).getIndentSize(PythonFileType.INSTANCE)
 
-
-
-  val cantExecuteMessage: String
+  override val cantExecuteMessage: String
     get() {
       if (!isEnabled) {
         return consoleIsNotEnabledMessage
@@ -220,9 +199,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
     }
   }
 
-
   private fun doRunExecuteAction(console: LanguageConsoleView) {
-
     val doc = myConsoleView.editorDocument
     val endMarker = doc.createRangeMarker(doc.textLength, doc.textLength)
     endMarker.isGreedyToLeft = false
@@ -244,12 +221,11 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
         processLine(myConsoleView.consoleEditor.document.text)
       }
     }
-
   }
 
   private fun copyToHistoryAndExecute(console: LanguageConsoleView) = super.runExecuteAction(console)
 
-  fun canExecuteNow(): Boolean = !consoleCommunication.isExecuting || consoleCommunication.isWaitingForInput
+  override fun canExecuteNow(): Boolean = !consoleCommunication.isExecuting || consoleCommunication.isWaitingForInput
 
   protected open val consoleIsNotEnabledMessage: String
     get() = notEnabledMessage

@@ -15,12 +15,6 @@
  */
 package com.intellij.xml.index;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 7/4/12
- * Time: 7:14 PM
- */
 public class SchemaTypeInfo implements Comparable<SchemaTypeInfo> {
   private final String myTagName;
   private final String myNamespaceUri;

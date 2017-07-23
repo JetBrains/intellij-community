@@ -88,6 +88,10 @@ public abstract class TargetElementEvaluatorEx2 implements TargetElementEvaluato
     return true;  
   }
 
+  /**
+   * @return a scope where element's implementations (Goto/Show Implementations) should be searched.
+   * If null is returned, default (module-with-dependents) scope will be used.
+   */
   @Nullable
   public SearchScope getSearchScope(Editor editor, @NotNull PsiElement element) {
     return null;

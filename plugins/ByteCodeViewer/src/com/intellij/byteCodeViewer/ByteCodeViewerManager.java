@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
@@ -44,7 +45,7 @@ import java.io.StringWriter;
 public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerComponent> {
   private static final ExtensionPointName<ClassSearcher> CLASS_SEARCHER_EP = ExtensionPointName.create("ByteCodeViewer.classSearcher");
 
-  private static final Logger LOG = Logger.getInstance("#" + ByteCodeViewerManager.class.getName());
+  private static final Logger LOG = Logger.getInstance(ByteCodeViewerManager.class);
 
   private static final String TOOLWINDOW_ID = "Byte Code Viewer";
   private static final String SHOW_BYTECODE_IN_TOOL_WINDOW = "BYTE_CODE_TOOL_WINDOW";
@@ -206,7 +207,24 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
     while (containingClass instanceof PsiTypeParameter) {
       containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class);
     }
-    if (containingClass == null) return null;
+
+    if (containingClass == null) {
+      PsiFile containingFile = psiElement.getContainingFile();
+      if (containingFile instanceof PsiClassOwner) {
+        PsiClass[] classes = ((PsiClassOwner)containingFile).getClasses();
+        if (classes.length == 1) return classes[0];
+
+        TextRange textRange = psiElement.getTextRange();
+        if (textRange != null) {
+          for (PsiClass aClass : classes) {
+            PsiElement navigationElement = aClass.getNavigationElement();
+            TextRange classRange = navigationElement != null ? navigationElement.getTextRange() : null;
+            if (classRange != null && classRange.contains(textRange)) return aClass;
+          }
+        }
+      }
+      return null;
+    }
 
     return containingClass;
   }

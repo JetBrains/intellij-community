@@ -22,10 +22,6 @@ import org.jetbrains.jps.model.serialization.artifact.JpsArtifactPropertiesSeria
 
 import java.util.List;
 
-/**
- * User: anna
- * Date: 3/13/13
- */
 public class JpsJavaFxPreloaderArtifactPropertiesSerializer extends JpsArtifactPropertiesSerializer<JpsJavaFxPreloaderArtifactProperties> {
   public JpsJavaFxPreloaderArtifactPropertiesSerializer() {
     super("javafx-preloader", JpsJavaFxPreloaderArtifactType.INSTANCE);
@@ -58,12 +54,7 @@ public class JpsJavaFxPreloaderArtifactPropertiesSerializer extends JpsArtifactP
     if (state == null) {
       return;
     }
-    final Element element = XmlSerializer.serialize(properties);
-
-    if (element == null) {
-      return;
-    }
-    state.setOptions(element);
+    state.setOptions(XmlSerializer.serialize(properties));
   }
 
   private static ArtifactPropertiesState findApplicationProperties(List<ArtifactPropertiesState> stateList) {

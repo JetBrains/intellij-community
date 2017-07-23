@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,8 @@ public class CoreModuleManager extends ModuleManagerImpl {
   private final Disposable myParentDisposable;
 
   public CoreModuleManager(Project project, Disposable parentDisposable) {
-    super(project, project.getMessageBus());
+    super(project);
+
     myParentDisposable = parentDisposable;
   }
 
@@ -54,7 +55,7 @@ public class CoreModuleManager extends ModuleManagerImpl {
       assert vFile != null;
       ModuleRootManagerImpl.ModuleRootManagerState state = new ModuleRootManagerImpl.ModuleRootManagerState();
       state.readExternal(CoreProjectLoader.loadStorageFile(module, vFile).get("NewModuleRootManager"));
-      ((ModuleRootManagerImpl) ModuleRootManager.getInstance(module)).loadState(state);
+      ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).loadState(state);
     }
     catch (JDOMException e) {
       throw new IOException(e);

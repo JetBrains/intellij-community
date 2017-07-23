@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -165,7 +165,7 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
 
       List<PsiJavaModule> transitiveModules = StreamEx
         .of(dependencyModule.getRequires().iterator())
-        .filter(PsiRequiresStatement::isPublic)
+        .filter(statement -> statement.hasModifierProperty(PsiModifier.TRANSITIVE))
         .filter(requiresStatement -> !directDependencies.contains(requiresStatement.getModuleName()))
         .map(Java9RedundantRequiresStatementInspection::resolveRequiredModule)
         .nonNull()
@@ -173,14 +173,14 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
 
       return StreamEx.of(transitiveModules)
         .filter(transitiveModule -> isReexported(currentModule, transitiveModule))
-        .map(transitiveModule -> transitiveModule.getModuleName())
+        .map(transitiveModule -> transitiveModule.getName())
         .toSet();
     }
 
     private boolean isReexported(@NotNull PsiJavaModule currentModule, @NotNull PsiJavaModule transitiveModule) {
       return StreamEx
         .of(transitiveModule.getExports().iterator())
-        .map(PsiExportsStatement::getPackageName)
+        .map(PsiPackageAccessibilityStatement::getPackageName)
         .nonNull()
         .filter(myImportedPackages::contains)
         .anyMatch(packageName -> JavaModuleGraphUtil.exports(transitiveModule, packageName, currentModule));
@@ -204,7 +204,7 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
         PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(currentModule.getProject()).getParserFacade();
         for (String dependencyName : reexportedDependencies) {
           PsiJavaModule tempModule =
-            parserFacade.createModuleFromText("module " + currentModule.getModuleName() + " { requires " + dependencyName + "; }");
+            parserFacade.createModuleFromText("module " + currentModule.getName() + " { requires " + dependencyName + "; }");
           Iterable<PsiRequiresStatement> tempModuleRequires = tempModule.getRequires();
           PsiRequiresStatement requiresStatement = tempModuleRequires.iterator().next();
           currentModule.addAfter(requiresStatement, addingPlace);
@@ -239,7 +239,7 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
         if (importList != null) {
           RefModule refModule = refFile.getModule();
           if (refModule != null) {
-            Set<String> packageNames = getImportedPackages(refModule);
+            Set<String> packageNames = getImportedPackages(refModule, refFile);
             if (packageNames != DONT_COLLECT_PACKAGES) {
               PsiImportStatementBase[] statements = importList.getAllImportStatements();
               for (PsiImportStatementBase statement : statements) {
@@ -270,10 +270,10 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
     }
 
     @NotNull
-    private static Set<String> getImportedPackages(@NotNull RefModule refModule) {
+    private static Set<String> getImportedPackages(@NotNull RefModule refModule, @NotNull RefFile refFile) {
       Set<String> importedPackages = refModule.getUserData(IMPORTED_JAVA_PACKAGES);
       if (importedPackages == null) {
-        PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByModule(refModule.getModule());
+        PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(refFile.getElement());
         importedPackages = javaModule != null ? new THashSet<>() : DONT_COLLECT_PACKAGES;
         refModule.putUserData(IMPORTED_JAVA_PACKAGES, importedPackages);
       }

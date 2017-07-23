@@ -15,23 +15,21 @@ import java.rmi.RemoteException;
 
 /**
  * Intercepts calls to the target {@link RemoteExternalSystemProjectResolver} and
- * {@link ExternalSystemTaskNotificationListener#onQueued(ExternalSystemTaskId, String) updates 'queued' task status}.
+ * {@link ExternalSystemTaskNotificationListener#onStart(ExternalSystemTaskId, String) updates 'queued' task status}.
  * <p/>
  * Thread-safe.
- * 
+ *
  * @author Denis Zhdanov
  * @since 2/8/12 7:21 PM
  */
 public class ExternalSystemProjectResolverWrapper<S extends ExternalSystemExecutionSettings>
   extends AbstractRemoteExternalSystemServiceWrapper<S, RemoteExternalSystemProjectResolver<S>>
-  implements RemoteExternalSystemProjectResolver<S>
-{
+  implements RemoteExternalSystemProjectResolver<S> {
 
   @NotNull private final RemoteExternalSystemProgressNotificationManager myProgressManager;
 
   public ExternalSystemProjectResolverWrapper(@NotNull RemoteExternalSystemProjectResolver<S> delegate,
-                                              @NotNull RemoteExternalSystemProgressNotificationManager progressManager)
-  {
+                                              @NotNull RemoteExternalSystemProgressNotificationManager progressManager) {
     super(delegate);
     myProgressManager = progressManager;
   }
@@ -39,16 +37,12 @@ public class ExternalSystemProjectResolverWrapper<S extends ExternalSystemExecut
   @Nullable
   @Override
   public DataNode<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
-                                                    @NotNull String projectPath,
-                                                    boolean isPreviewMode,
-                                                    @Nullable S settings)
-    throws ExternalSystemException, IllegalArgumentException, IllegalStateException, RemoteException
-  {
-    myProgressManager.onQueued(id, projectPath);
+                                                  @NotNull String projectPath,
+                                                  boolean isPreviewMode,
+                                                  @Nullable S settings)
+    throws ExternalSystemException, IllegalArgumentException, IllegalStateException, RemoteException {
     try {
-      DataNode<ProjectData> projectDataNode = getDelegate().resolveProjectInfo(id, projectPath, isPreviewMode, settings);
-      myProgressManager.onSuccess(id);
-      return projectDataNode;
+      return getDelegate().resolveProjectInfo(id, projectPath, isPreviewMode, settings);
     }
     catch (ExternalSystemException e) {
       myProgressManager.onFailure(id, e);
@@ -57,9 +51,6 @@ public class ExternalSystemProjectResolverWrapper<S extends ExternalSystemExecut
     catch (Exception e) {
       myProgressManager.onFailure(id, e);
       throw new ExternalSystemException(e);
-    }
-    finally {
-      myProgressManager.onEnd(id);
     }
   }
 

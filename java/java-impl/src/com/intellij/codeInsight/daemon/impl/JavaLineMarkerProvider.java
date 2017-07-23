@@ -206,7 +206,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
     Map<PsiMethod, FindSuperElementsHelper.SiblingInfo> map = FindSuperElementsHelper.getSiblingInheritanceInfos(methods);
     return ContainerUtil.map(map.keySet(), method -> {
       PsiElement range = getMethodRange(method);
-      ArrowUpLineMarkerInfo upInfo = new ArrowUpLineMarkerInfo(range, AllIcons.Gutter.ImplementingMethod, MarkerType.SIBLING_OVERRIDING_METHOD,
+      ArrowUpLineMarkerInfo upInfo = new ArrowUpLineMarkerInfo(range, AllIcons.Gutter.SiblingInheritedMethod, MarkerType.SIBLING_OVERRIDING_METHOD,
                                                                Pass.LINE_MARKERS);
       return NavigateAction.setNavigateAction(upInfo, "Go to super method", IdeActions.ACTION_GOTO_SUPER);
     });
@@ -254,7 +254,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
         range = aClass;
       }
       MarkerType type = MarkerType.SUBCLASSED_CLASS;
-      LineMarkerInfo info = new LineMarkerInfo<>(range, range.getTextRange(),
+      LineMarkerInfo<PsiElement> info = new LineMarkerInfo<>(range, range.getTextRange(),
                                                  icon, Pass.LINE_MARKERS, type.getTooltip(),
                                                  type.getNavigationHandler(),
                                                  GutterIconRenderer.Alignment.RIGHT);
@@ -315,6 +315,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
     return "Java line markers";
   }
 
+  @NotNull
   @Override
   public Option[] getOptions() {
     return new Option[] {myLambdaOption, myOverriddenOption, myImplementedOption, myOverridingOption, myImplementingOption};

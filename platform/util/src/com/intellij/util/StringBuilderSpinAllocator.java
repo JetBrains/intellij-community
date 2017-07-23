@@ -18,6 +18,7 @@ package com.intellij.util;
 
 /**
  * StringBuilderSpinAllocator reuses StringBuilder instances performing non-blocking allocation and dispose.
+ * @deprecated Simple allocation is faster than this (according to StringBuilderSpinAllocatorTester)
  */
 public class StringBuilderSpinAllocator {
 

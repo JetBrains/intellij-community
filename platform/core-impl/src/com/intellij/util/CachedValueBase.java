@@ -41,33 +41,33 @@ public abstract class CachedValueBase<T> {
     T value = result == null ? null : result.getValue();
     Object[] dependencies = getDependencies(result);
     if (dependencies == null) {
-      return new Data<T>(value, null, null);
+      return new Data<>(value, null, null);
     }
 
     TLongArrayList timeStamps = new TLongArrayList(dependencies.length);
-    List<Object> deps = new ArrayList<Object>(dependencies.length);
+    List<Object> deps = new ArrayList<>(dependencies.length);
     collectDependencies(timeStamps, deps, dependencies);
 
-    return new Data<T>(value, ArrayUtil.toObjectArray(deps), timeStamps.toNativeArray());
+    return new Data<>(value, ArrayUtil.toObjectArray(deps), timeStamps.toNativeArray());
   }
 
   @Nullable
   private synchronized Data<T> cacheOrGetData(@Nullable Data<T> expected, @Nullable Data<T> updatedValue) {
-    if (expected != getData()) return null;
+    if (expected != getRawData()) return null;
 
     if (updatedValue != null) {
-      myData = new SoftReference<Data<T>>(updatedValue);
+      myData = new SoftReference<>(updatedValue);
       return updatedValue;
     }
     return expected;
   }
 
   private synchronized void setData(@Nullable Data<T> data) {
-    myData = new SoftReference<Data<T>>(data);
+    myData = new SoftReference<>(data);
   }
 
   private synchronized boolean compareAndClearData(Data<T> expected) {
-    if (getData() == expected) {
+    if (getRawData() == expected) {
       myData = null;
       return true;
     }
@@ -101,7 +101,7 @@ public abstract class CachedValueBase<T> {
 
   @Nullable
   private Data<T> getUpToDateOrNull(boolean dispose) {
-    final Data<T> data = getData();
+    final Data<T> data = getRawData();
 
     if (data != null) {
       if (isUpToDate(data)) {
@@ -115,7 +115,7 @@ public abstract class CachedValueBase<T> {
   }
 
   @Nullable
-  private Data<T> getData() {
+  final Data<T> getRawData() {
     return SoftReference.dereference(myData);
   }
 
@@ -223,7 +223,7 @@ public abstract class CachedValueBase<T> {
 
     if (stamp.mayCacheNow()) {
       while (true) {
-        Data<T> alreadyComputed = getData();
+        Data<T> alreadyComputed = getRawData();
         boolean reuse = alreadyComputed != null && isUpToDate(alreadyComputed);
         Data<T> toReturn = cacheOrGetData(alreadyComputed, reuse ? null : data);
         if (toReturn != null) {

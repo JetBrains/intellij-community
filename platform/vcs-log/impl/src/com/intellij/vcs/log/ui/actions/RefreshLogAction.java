@@ -19,47 +19,49 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.RefreshAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
-import com.intellij.vcs.log.data.VcsLogFilterer;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsLogUtil;
-import com.intellij.vcs.log.ui.VcsLogDataKeys;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.visible.VisiblePackRefresher;
 
 public class RefreshLogAction extends RefreshAction {
   private static final Logger LOG = Logger.getInstance(RefreshLogAction.class);
 
   public RefreshLogAction() {
-    super("Refresh", "Re-read Commits From Disk for All VCS Roots and Rebuild Log", AllIcons.Actions.Refresh);
+    super("Refresh", "Check for new commits and refresh Log if necessary", AllIcons.Actions.Refresh);
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
     VcsLogUtil.triggerUsage(e);
 
-    VcsLogManager logManager = e.getRequiredData(VcsLogDataKeys.LOG_MANAGER);
+    VcsLogManager logManager = e.getRequiredData(VcsLogInternalDataKeys.LOG_MANAGER);
 
     // diagnostic for possible refresh problems
-    VcsLogUi ui = e.getRequiredData(com.intellij.vcs.log.VcsLogDataKeys.VCS_LOG_UI);
-    if (ui instanceof VcsLogUiImpl) {
-      VcsLogFilterer filterer = ((VcsLogUiImpl)ui).getFilterer();
-      if (!filterer.isValid()) {
+    VcsLogUi ui = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
+    if (ui instanceof AbstractVcsLogUi) {
+      VisiblePackRefresher refresher = ((AbstractVcsLogUi)ui).getRefresher();
+      if (!refresher.isValid()) {
         String message = "Trying to refresh invalid log tab.";
         if (!logManager.getDataManager().getProgress().isRunning()) {
           LOG.error(message);
-        } else {
+        }
+        else {
           LOG.warn(message);
         }
-        filterer.setValid(true);
+        refresher.setValid(true);
       }
     }
 
-    logManager.getDataManager().refreshSoftly();
+    logManager.getDataManager().refreshSoftly(VcsLogUtil.getVisibleRoots(ui));
   }
 
   @Override
   public void update(AnActionEvent e) {
-    VcsLogManager logManager = e.getData(VcsLogDataKeys.LOG_MANAGER);
-    e.getPresentation().setEnabledAndVisible(logManager != null && e.getData(com.intellij.vcs.log.VcsLogDataKeys.VCS_LOG_UI) != null);
+    VcsLogManager logManager = e.getData(VcsLogInternalDataKeys.LOG_MANAGER);
+    e.getPresentation().setEnabledAndVisible(logManager != null && e.getData(VcsLogDataKeys.VCS_LOG_UI) != null);
   }
 }

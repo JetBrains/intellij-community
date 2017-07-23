@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,16 +33,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WelcomeScreen;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
@@ -53,8 +50,8 @@ import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
@@ -78,8 +75,11 @@ import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
+
+import static com.intellij.util.ui.update.UiNotifyConnector.doWhenFirstShown;
 
 /**
  * @author Konstantin Bulenkov
@@ -87,6 +87,8 @@ import java.util.function.Consumer;
 public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, AccessibleContextAccessor {
   public static final String BOTTOM_PANEL = "BOTTOM_PANEL";
   private static final String ACTION_GROUP_KEY = "ACTION_GROUP_KEY";
+  public static final int DEFAULT_HEIGHT = 460;
+  public static final int MAX_DEFAULT_WIDTH = 777;
   private BalloonLayout myBalloonLayout;
   private final FlatWelcomeScreen myScreen;
   private boolean myDisposed;
@@ -109,25 +111,29 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     setContentPane(myScreen.getWelcomePanel());
     setTitle(getWelcomeFrameTitle());
     AppUIUtil.updateWindowIcon(this);
-    final int width = RecentProjectsManager.getInstance().getRecentProjectsActions(false).length == 0 ? 666 : 777;
-    setSize(JBUI.size(width, 460));
+    final int width = RecentProjectsManager.getInstance().getRecentProjectsActions(false).length == 0 ? 666 : MAX_DEFAULT_WIDTH;
+    getRootPane().setPreferredSize(JBUI.size(width, DEFAULT_HEIGHT));
     setResizable(false);
-    //int x = bounds.x + (bounds.width - getWidth()) / 2;
-    //int y = bounds.y + (bounds.height - getHeight()) / 2;
+
+    Dimension size = getPreferredSize();
     Point location = DimensionService.getInstance().getLocation(WelcomeFrame.DIMENSION_KEY, null);
     Rectangle screenBounds = ScreenUtil.getScreenRectangle(location != null ? location : new Point(0, 0));
-    setLocation(new Point(
-      screenBounds.x + (screenBounds.width - getWidth()) / 2,
-      screenBounds.y + (screenBounds.height - getHeight()) / 3
-    ));
+    setBounds(
+      screenBounds.x + (screenBounds.width - size.width) / 2,
+      screenBounds.y + (screenBounds.height - size.height) / 3,
+      size.width,
+      size.height
+    );
+    // at this point a window insets may be unavailable,
+    // so we need resize window when it is shown
+    doWhenFirstShown(this, this::pack);
 
-    //setLocation(x, y);
-    ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(Project project) {
         Disposer.dispose(FlatWelcomeFrame.this);
       }
-    }, this);
+    });
 
     myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8), myScreen.myEventListener, myScreen.myEventLocation);
 
@@ -156,7 +162,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   }
 
   private static void saveLocation(Rectangle location) {
-    Point middle = new Point(location.x + location.width / 2, location.y = location.height / 2);
+    Point middle = new Point(location.x + location.width / 2, location.y + location.height / 2);
     DimensionService.getInstance().setLocation(WelcomeFrame.DIMENSION_KEY, middle, null);
   }
 
@@ -198,8 +204,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     return "Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName();
   }
 
-  @Nullable
-  public static JComponent getPreferredFocusedComponent(@NotNull Pair<JPanel, JBList> pair) {
+  @NotNull
+  public static JComponent getPreferredFocusedComponent(@NotNull Pair<JPanel, JBList<AnAction>> pair) {
     if (pair.second.getModel().getSize() == 1) {
       JBTextField textField = UIUtil.uiTraverser(pair.first).filter(JBTextField.class).first();
       if (textField != null) {
@@ -470,10 +476,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     private AnAction wrapGroups(AnAction action) {
       if (action instanceof ActionGroup && ((ActionGroup)action).isPopup()) {
-        final Pair<JPanel, JBList> panel = createActionGroupPanel((ActionGroup)action, mySlidingPanel, () -> goBack());
+        final Pair<JPanel, JBList<AnAction>> panel = createActionGroupPanel((ActionGroup)action, mySlidingPanel, () -> goBack(), this);
         final Runnable onDone = () -> {
           setTitle("New Project");
-          final JBList list = panel.second;
+          final JBList<AnAction> list = panel.second;
           ScrollingUtil.ensureSelectionExists(list);
           final ListSelectionListener[] listeners =
             ((DefaultListSelectionModel)list.getSelectionModel()).getListeners(ListSelectionListener.class);
@@ -482,10 +488,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           for (ListSelectionListener listener : listeners) {
             listener.valueChanged(new ListSelectionEvent(list, list.getSelectedIndex(), list.getSelectedIndex(), true));
           }
-          JComponent toFocus = FlatWelcomeFrame.getPreferredFocusedComponent(panel);
-          if (toFocus != null) {
-            toFocus.requestFocus();
-          }
+          JComponent toFocus = getPreferredFocusedComponent(panel);
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(toFocus, true));
         };
         final String name = action.getClass().getName();
         mySlidingPanel.add(name, panel.first);
@@ -602,7 +606,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           } else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
             if (focusListOnLeft) {
               if (list != null) {
-                list.requestFocus();
+                IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(list, true));
               }
             } else {
               focusPrev(comp);
@@ -633,7 +637,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       if (policy != null) {
         Component prev = policy.getComponentBefore(FlatWelcomeFrame.this, comp);
         if (prev != null) {
-          prev.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(prev, true));
         }
       }
     }
@@ -643,7 +647,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       if (policy != null) {
         Component next = policy.getComponentAfter(FlatWelcomeFrame.this, comp);
         if (next != null) {
-          next.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(next, true));
         }
       }
     }
@@ -777,20 +781,31 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     return getRootPane();
   }
 
-  public static void notifyFrameClosed(JFrame frame) {
-    saveLocation(frame.getBounds());
-  }
-
   public static class WelcomeScreenActionsPanel {
     private JPanel root;
     private JPanel actions;
   }
-  
-  public static Pair<JPanel, JBList> createActionGroupPanel(final ActionGroup action, final JComponent parent, final Runnable backAction) {
+
+  public static Pair<JPanel, JBList<AnAction>> createActionGroupPanel(final ActionGroup action,
+                                                                      final JComponent parent,
+                                                                      final Runnable backAction,
+                                                                      @NotNull Disposable parentDisposable) {
     JPanel actionsListPanel = new JPanel(new BorderLayout());
     actionsListPanel.setBackground(getProjectsBackground());
     final List<AnAction> groups = flattenActionGroups(action);
-    final JBList<AnAction> list = new JBList<>(groups);
+    final DefaultListModel<AnAction> model = JBList.createDefaultListModel(groups);
+    final JBList<AnAction> list = new JBList<>(model);
+    for (AnAction group : groups) {
+      if (group instanceof Disposable) {
+        Disposer.register(parentDisposable, (Disposable)group);
+      }
+    }
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        model.clear();
+      }
+    });
 
     list.setBackground(getProjectsBackground());
     list.setCellRenderer(new GroupedItemsListRenderer<AnAction>(new ListItemDescriptorAdapter<AnAction>() {
@@ -808,11 +823,11 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
        @Override
        public boolean hasSeparatorAboveOf(AnAction value) {
-         int index = groups.indexOf(value);
+         int index = model.indexOf(value);
          final String parentGroupName = getParentGroupName(value);
 
          if (index < 1) return parentGroupName != null;
-         AnAction upper = groups.get(index - 1);
+         AnAction upper = model.get(index - 1);
          if (getParentGroupName(upper) == null && parentGroupName != null) return true;
 
          return !Comparing.equal(getParentGroupName(upper), parentGroupName);
@@ -849,7 +864,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     actionsListPanel.add(pane, BorderLayout.CENTER);
 
     int width = (int)Math.min(Math.round(list.getPreferredSize().getWidth()), 200);
-    pane.setPreferredSize(JBUI.size(width, -1));
+    pane.setPreferredSize(JBUI.size(width + 14, -1));
 
     boolean singleProjectGenerator = list.getModel().getSize() == 1;
 
@@ -862,7 +877,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     if (back != null && !singleProjectGenerator) {
       actionsListPanel.add(back, BorderLayout.SOUTH);
     }
-    
+
+    final HashMap<Object, JPanel> panelsMap = ContainerUtil.newHashMap();
     ListSelectionListener selectionListener = e -> {
       if (e.getValueIsAdjusting()) {
         // Update when a change has been finalized.
@@ -874,7 +890,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       }
       Object value = list.getSelectedValue();
       if (value instanceof AbstractActionWithPanel) {
-        JPanel panel = ((AbstractActionWithPanel)value).createPanel();
+        final JPanel panel = panelsMap.computeIfAbsent(value, o -> ((AbstractActionWithPanel)value).createPanel());
+        ((AbstractActionWithPanel)value).onPanelSelected();
+
         panel.setBorder(JBUI.Borders.empty(7, 10));
         selected.set(panel);
         main.add(selected.get());
@@ -924,7 +942,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       return button;
     }
     JLabel back = new JLabel(AllIcons.Actions.Back);
-    back.setBorder(JBUI.Borders.empty(3, 7, 10, 7));
+    back.setBorder(JBUI.Borders.empty(3, 7, 3, 7));
     back.setHorizontalAlignment(SwingConstants.LEFT);
     new ClickListener() {
       @Override
@@ -936,10 +954,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     return back;
   }
 
-  public static void installQuickSearch(JBList list) {
-    new ListSpeedSearch(list, (Convertor<Object, String>)o -> {
+  public static void installQuickSearch(JBList<AnAction> list) {
+    new ListSpeedSearch<>(list, (Function<AnAction, String>)o -> {
       if (o instanceof AbstractActionWithPanel) { //to avoid dependency mess with ProjectSettingsStepBase
-        return ((AbstractActionWithPanel)o).getTemplatePresentation().getText();
+        return o.getTemplatePresentation().getText();
       }
       return null;
     });

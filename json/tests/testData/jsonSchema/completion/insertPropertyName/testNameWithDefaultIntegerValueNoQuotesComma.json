@@ -1,0 +1,4 @@
+{
+  withIntegerDefault<caret>
+  "someOtherProperty": 112
+}

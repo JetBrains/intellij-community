@@ -29,10 +29,6 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -69,13 +65,11 @@ public class ShareDialog extends RepositoryBrowserDialog {
     super.init();
     setTitle("Select Share Target");
     setOKButtonText("Share");
-    getRepositoryBrowser().addChangeListener(new TreeSelectionListener() {
-      public void valueChanged(TreeSelectionEvent e) {
-        if (getOKAction() != null) {
-          final String selectedURL = getRepositoryBrowser().getSelectedURL();
-          updateOptionsTexts(selectedURL);
-          getOKAction().setEnabled(selectedURL != null);
-        }
+    getRepositoryBrowser().addChangeListener(e -> {
+      if (getOKAction() != null) {
+        final String selectedURL = getRepositoryBrowser().getSelectedURL();
+        updateOptionsTexts(selectedURL);
+        getOKAction().setEnabled(selectedURL != null);
       }
     });
     getOKAction().setEnabled(getRepositoryBrowser().getSelectedURL() != null);
@@ -162,6 +156,7 @@ public class ShareDialog extends RepositoryBrowserDialog {
     return wrapper;
   }
 
+  @NotNull
   public ShareTarget getShareTarget() {
     if (myExisting.isSelected()) {
       return ShareTarget.useSelected;
@@ -228,12 +223,7 @@ public class ShareDialog extends RepositoryBrowserDialog {
     gb.insets.top = 5;
     panel.add(myTrunk, gb);
     myCreateStandard = new JCheckBox("Create /tags and /branches");
-    myTrunk.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        myCreateStandard.setEnabled(myTrunk.isSelected());
-      }
-    });
+    myTrunk.addChangeListener(e -> myCreateStandard.setEnabled(myTrunk.isSelected()));
     myCreateStandard.setSelected(true);
     ++ gb.gridy;
     gb.insets.top = 0;

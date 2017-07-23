@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,16 +28,15 @@ import java.util.Arrays;
  * @author Vladimir Kondratyev
  */
 public final class TextEditorState implements FileEditorState {
+  CaretState[] CARETS;
 
-  public CaretState[] CARETS;
-
-  public int RELATIVE_CARET_POSITION; // distance from primary caret to the top of editor's viewable area in pixels
+  int RELATIVE_CARET_POSITION; // distance from primary caret to the top of editor's viewable area in pixels
 
   /**
    * State which describes how editor is folded.
-   * This field can be <code>null</code>.
+   * This field can be {@code null}.
    */
-  private           CodeFoldingState           myFoldingState;
+  private CodeFoldingState myFoldingState;
   @Nullable private Producer<CodeFoldingState> myDelayedFoldInfoProducer;
 
   private static final int MIN_CHANGE_DISTANCE = 4;
@@ -54,12 +53,12 @@ public final class TextEditorState implements FileEditorState {
    *
    * @param producer  delayed folding info producer
    */
-  public void setDelayedFoldState(@NotNull Producer<CodeFoldingState> producer) {
+  void setDelayedFoldState(@NotNull Producer<CodeFoldingState> producer) {
     myDelayedFoldInfoProducer = producer;
   }
 
   @Nullable
-  public CodeFoldingState getFoldingState() {
+  CodeFoldingState getFoldingState() {
     // Assuming single-thread access here.
     if (myFoldingState == null && myDelayedFoldInfoProducer != null) {
       myFoldingState = myDelayedFoldInfoProducer.produce();
@@ -70,7 +69,7 @@ public final class TextEditorState implements FileEditorState {
     return myFoldingState;
   }
 
-  public void setFoldingState(@Nullable CodeFoldingState foldingState) {
+  void setFoldingState(@Nullable CodeFoldingState foldingState) {
     myFoldingState = foldingState;
     myDelayedFoldInfoProducer = null;
   }
@@ -117,14 +116,15 @@ public final class TextEditorState implements FileEditorState {
     return Arrays.toString(CARETS);
   }
 
-  public static class CaretState {
-    public int   LINE;
-    public int   COLUMN;
-    public boolean LEAN_FORWARD;
-    public int   SELECTION_START_LINE;
-    public int   SELECTION_START_COLUMN;
-    public int   SELECTION_END_LINE;
-    public int   SELECTION_END_COLUMN;
+  static class CaretState {
+    int   LINE;
+    int   COLUMN;
+    boolean LEAN_FORWARD;
+    int   VISUAL_COLUMN_ADJUSTMENT;
+    int   SELECTION_START_LINE;
+    int   SELECTION_START_COLUMN;
+    int   SELECTION_END_LINE;
+    int   SELECTION_END_COLUMN;
 
     public boolean equals(Object o) {
       if (!(o instanceof CaretState)) {
@@ -136,6 +136,7 @@ public final class TextEditorState implements FileEditorState {
       if (COLUMN != caretState.COLUMN) return false;
       if (LINE != caretState.LINE) return false;
       if (LEAN_FORWARD != caretState.LEAN_FORWARD) return false;
+      if (VISUAL_COLUMN_ADJUSTMENT != caretState.VISUAL_COLUMN_ADJUSTMENT) return false;
       if (SELECTION_START_LINE != caretState.SELECTION_START_LINE) return false;
       if (SELECTION_START_COLUMN != caretState.SELECTION_START_COLUMN) return false;
       if (SELECTION_END_LINE != caretState.SELECTION_END_LINE) return false;

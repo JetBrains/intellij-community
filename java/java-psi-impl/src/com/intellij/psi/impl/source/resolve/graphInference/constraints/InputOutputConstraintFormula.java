@@ -25,10 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: 9/25/13
- */
 public abstract class InputOutputConstraintFormula implements ConstraintFormula {
 
   public abstract PsiExpression getExpression();
@@ -46,7 +42,7 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
     if (psiExpression instanceof PsiFunctionalExpression) {
       final InferenceVariable inferenceVariable = session.getInferenceVariable(type);
       if (inferenceVariable != null) {
-        final HashSet<InferenceVariable> result = new HashSet<InferenceVariable>();
+        final HashSet<InferenceVariable> result = new HashSet<>();
         result.add(inferenceVariable);
         return result;
       }
@@ -59,7 +55,7 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
         final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
         if (interfaceMethod != null) {
 
-          final Set<InferenceVariable> result = new HashSet<InferenceVariable>();
+          final Set<InferenceVariable> result = new HashSet<>();
           final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, resolveResult);
           if (psiExpression instanceof PsiLambdaExpression && !((PsiLambdaExpression)psiExpression).hasFormalParameterTypes() || 
               psiExpression instanceof PsiMethodReferenceExpression && !((PsiMethodReferenceExpression)psiExpression).isExact()) {
@@ -103,7 +99,7 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
 
   @Nullable
   public Set<InferenceVariable> getOutputVariables(Set<InferenceVariable> inputVariables, InferenceSession session) {
-    final HashSet<InferenceVariable> mentionedVariables = new HashSet<InferenceVariable>();
+    final HashSet<InferenceVariable> mentionedVariables = new HashSet<>();
     session.collectDependencies(getT(), mentionedVariables);
     if (inputVariables != null) {
       mentionedVariables.removeAll(inputVariables);

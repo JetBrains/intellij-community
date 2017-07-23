@@ -50,33 +50,51 @@ if [ -x "$READLINK" ]; then
   done
 fi
 
-IDE_BIN_HOME=`dirname "$SCRIPT_LOCATION"`
-if [ "$IDE_BIN_HOME" = "." ]; then
-  IDE_HOME=".."
-else
-  IDE_HOME=`dirname "$IDE_BIN_HOME"`
-fi
+cd "`dirname "$SCRIPT_LOCATION"`"
+IDE_BIN_HOME=`pwd`
+IDE_HOME=`dirname "$IDE_BIN_HOME"`
+cd "$OLDPWD"
 
 # ---------------------------------------------------------------------
 # Locate a JDK installation directory which will be used to run the IDE.
-# Try (in order): @@product_uc@@_JDK, @@vm_options@@.jdk, ../jre, JDK_HOME, JAVA_HOME, "java" in PATH.
+# Try (in order): @@product_uc@@_JDK, @@vm_options@@.jdk, ./jre64, JDK_HOME, JAVA_HOME, "java" in PATH.
 # ---------------------------------------------------------------------
 if [ -n "$@@product_uc@@_JDK" -a -x "$@@product_uc@@_JDK/bin/java" ]; then
   JDK="$@@product_uc@@_JDK"
-elif [ -s "$HOME/.@@system_selector@@/config/@@vm_options@@.jdk" ]; then
-  JDK=`"$CAT" $HOME/.@@system_selector@@/config/@@vm_options@@.jdk`
-  if [ ! -d "$JDK" ]; then
-    JDK="$IDE_HOME/$JDK"
+fi
+
+if [ -z "$JDK" -a -s "$HOME/.@@system_selector@@/config/@@vm_options@@.jdk" ]; then
+  USER_JRE=`"$CAT" $HOME/.@@system_selector@@/config/@@vm_options@@.jdk`
+  if [ ! -d "$USER_JRE" ]; then
+    USER_JRE="$IDE_HOME/$USER_JRE"
   fi
-elif [ -x "$IDE_HOME/jre/jre/bin/java" ] && "$IDE_HOME/jre/jre/bin/java" -version > /dev/null 2>&1 ; then
-  JDK="$IDE_HOME/jre"
-elif [ -n "$JDK_HOME" -a -x "$JDK_HOME/bin/java" ]; then
+  if [ -x "$USER_JRE/bin/java" ]; then
+    JDK="$USER_JRE"
+  fi
+fi
+
+if [ -z "$JDK" -a "$OS_TYPE" = "Linux" ] ; then
+  BUNDLED_JRE="$IDE_HOME/jre64"
+  if [ ! -d "$BUNDLED_JRE" ]; then
+    BUNDLED_JRE="$IDE_HOME/jre"
+  fi
+  if [ -x "$BUNDLED_JRE/bin/java" ] && "$BUNDLED_JRE/bin/java" -version > /dev/null 2>&1 ; then
+    JDK="$BUNDLED_JRE"
+  fi
+fi
+
+if [ -z "$JDK" -a -n "$JDK_HOME" -a -x "$JDK_HOME/bin/java" ]; then
   JDK="$JDK_HOME"
-elif [ -n "$JAVA_HOME" -a -x "$JAVA_HOME/bin/java" ]; then
+fi
+
+if [ -z "$JDK" -a  -n "$JAVA_HOME" -a -x "$JAVA_HOME/bin/java" ]; then
   JDK="$JAVA_HOME"
-else
-  JAVA_BIN_PATH=`which java`
-  if [ -n "$JAVA_BIN_PATH" ]; then
+fi
+
+if [ -z "$JDK" ]; then
+  JDK_PATH=`which java`
+
+  if [ -n "$JDK_PATH" ]; then
     if [ "$OS_TYPE" = "FreeBSD" -o "$OS_TYPE" = "MidnightBSD" ]; then
       JAVA_LOCATION=`JAVAVM_DRYRUN=yes java | "$GREP" '^JAVA_HOME' | "$CUT" -c11-`
       if [ -x "$JAVA_LOCATION/bin/java" ]; then
@@ -93,33 +111,29 @@ else
         JDK="$JAVA_LOCATION"
       fi
     fi
+  fi
 
-    if [ -z "$JDK" -a -x "$READLINK" -a -x "$XARGS" -a -x "$DIRNAME" ]; then
-      JAVA_LOCATION=`"$READLINK" -f "$JAVA_BIN_PATH"`
-      case "$JAVA_LOCATION" in
-        */jre/bin/java)
-          JAVA_LOCATION=`echo "$JAVA_LOCATION" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME"`
-          if [ ! -d "$JAVA_LOCATION/bin" ]; then
-            JAVA_LOCATION="$JAVA_LOCATION/jre"
-          fi
-          ;;
-        *)
-          JAVA_LOCATION=`echo "$JAVA_LOCATION" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME"`
-          ;;
-      esac
-      if [ -x "$JAVA_LOCATION/bin/java" ]; then
-        JDK="$JAVA_LOCATION"
-      fi
+  if [ -z "$JDK" -a -x "$READLINK" -a -x "$XARGS" -a -x "$DIRNAME" ]; then
+    JAVA_LOCATION=`"$READLINK" -f "$JDK_PATH"`
+    case "$JAVA_LOCATION" in
+      */jre/bin/java)
+        JAVA_LOCATION=`echo "$JAVA_LOCATION" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME"`
+        if [ ! -d "$JAVA_LOCATION/bin" ]; then
+          JAVA_LOCATION="$JAVA_LOCATION/jre"
+        fi
+        ;;
+      *)
+        JAVA_LOCATION=`echo "$JAVA_LOCATION" | "$XARGS" "$DIRNAME" | "$XARGS" "$DIRNAME"`
+        ;;
+    esac
+    if [ -x "$JAVA_LOCATION/bin/java" ]; then
+      JDK="$JAVA_LOCATION"
     fi
   fi
 fi
 
 JAVA_BIN="$JDK/bin/java"
-if [ ! -x "$JAVA_BIN" ]; then
-  JAVA_BIN="$JDK/jre/bin/java"
-fi
-
-if [ -z "$JDK" ] || [ ! -x "$JAVA_BIN" ]; then
+if [ -z "$JDK" -o ! -x "$JAVA_BIN" ]; then
   message "No JDK found. Please validate either @@product_uc@@_JDK, JDK_HOME or JAVA_HOME environment variable points to valid JDK installation."
   exit 1
 fi
@@ -142,9 +156,12 @@ VM_OPTIONS_FILE=""
 if [ -n "$@@product_uc@@_VM_OPTIONS" -a -r "$@@product_uc@@_VM_OPTIONS" ]; then
   # explicit
   VM_OPTIONS_FILE="$@@product_uc@@_VM_OPTIONS"
-elif [ -r "$HOME/.@@system_selector@@/@@vm_options@@$BITS.vmoptions" ]; then
+elif [ -r "$IDE_HOME.vmoptions" ]; then
+  # Toolbox
+  VM_OPTIONS_FILE="$IDE_HOME.vmoptions"
+elif [ -r "$HOME/.@@system_selector@@/config/@@vm_options@@$BITS.vmoptions" ]; then
   # user-overridden
-  VM_OPTIONS_FILE="$HOME/.@@system_selector@@/@@vm_options@@$BITS.vmoptions"
+  VM_OPTIONS_FILE="$HOME/.@@system_selector@@/config/@@vm_options@@$BITS.vmoptions"
 elif [ -r "$IDE_BIN_HOME/@@vm_options@@$BITS.vmoptions" ]; then
   # default, standard installation
   VM_OPTIONS_FILE="$IDE_BIN_HOME/@@vm_options@@$BITS.vmoptions"
@@ -164,9 +181,9 @@ fi
 IS_EAP="@@isEap@@"
 if [ "$IS_EAP" = "true" ]; then
   OS_NAME=`echo "$OS_TYPE" | "$TR" '[:upper:]' '[:lower:]'`
-  AGENT_LIB="yjpagent-$OS_NAME$BITS"
-  if [ -r "$IDE_BIN_HOME/lib$AGENT_LIB.so" ]; then
-    AGENT="-agentlib:$AGENT_LIB=disablealloc,delay=10000,sessionname=@@system_selector@@"
+  AGENT_PATH="$IDE_BIN_HOME/libyjpagent-$OS_NAME$BITS.so"
+  if [ -r "$AGENT_PATH" ]; then
+    AGENT="-agentpath:$AGENT_PATH=disablealloc,delay=10000,probe_disable=*,sessionname=@@system_selector@@"
   fi
 fi
 
@@ -179,7 +196,7 @@ fi
 # Run the IDE.
 # ---------------------------------------------------------------------
 IFS="$(printf '\n\t')"
-LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH" "$JAVA_BIN" \
+"$JAVA_BIN" \
   ${AGENT} \
   "-Xbootclasspath/a:$IDE_HOME/lib/boot.jar" \
   -classpath "$CLASSPATH" \

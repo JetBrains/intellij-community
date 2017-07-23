@@ -34,11 +34,9 @@ import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl;
 import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
@@ -228,9 +226,7 @@ public class GenerateMembersUtil {
         final PsiParameter[] parameters = ((PsiMethod)member).getParameterList().getParameters();
         final boolean generateFinals = CodeStyleSettingsManager.getSettings(aClass.getProject()).GENERATE_FINAL_PARAMETERS;
         for (final PsiParameter parameter : parameters) {
-          final PsiModifierList modifierList = parameter.getModifierList();
-          assert modifierList != null;
-          modifierList.setModifierProperty(PsiModifier.FINAL, generateFinals);
+          PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, generateFinals);
         }
       }
     }
@@ -297,7 +293,7 @@ public class GenerateMembersUtil {
       if (target instanceof PsiClass) {
         final PsiMethod[] methods = ((PsiClass)target).findMethodsBySignature(sourceMethod, true);
         for (PsiMethod psiMethod : methods) {
-          if (psiMethod != null && psiMethod != sourceMethod) {
+          if (psiMethod != null && psiMethod != sourceMethod && !MethodSignatureUtil.isSuperMethod(psiMethod, sourceMethod)) {
             PsiClass aSuper = psiMethod.getContainingClass();
             if (aSuper != null && aSuper != target) {
               PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(aSuper, (PsiClass)target, PsiSubstitutor.EMPTY);
@@ -455,7 +451,11 @@ public class GenerateMembersUtil {
         paramName = generator.generateUniqueName(paramName);
       }
       generator.addExistingName(paramName);
-      result[i] = factory.createParameter(paramName, GenericsUtil.getVariableTypeByExpressionType(substituted), target);
+      PsiType expressionType = GenericsUtil.getVariableTypeByExpressionType(substituted);
+      if (expressionType instanceof PsiArrayType && substituted instanceof PsiEllipsisType) {
+        expressionType = new PsiEllipsisType(((PsiArrayType)expressionType).getComponentType());
+      }
+      result[i] = factory.createParameter(paramName, expressionType, target);
     }
     return result;
   }
@@ -598,6 +598,16 @@ public class GenerateMembersUtil {
     }
   }
 
+  public static void copyAnnotations(@NotNull PsiModifierList source, @NotNull PsiModifierList target, String... skipAnnotations) {
+    for (PsiAnnotation annotation : source.getAnnotations()) {
+      String qualifiedName = annotation.getQualifiedName();
+      if (qualifiedName == null || ArrayUtil.contains(qualifiedName, skipAnnotations) || target.findAnnotation(qualifiedName) != null) {
+        continue;
+      }
+      target.add(annotation);
+    }
+  }
+
   //java bean getters/setters
   public static PsiMethod generateSimpleGetterPrototype(@NotNull PsiField field) {
     return generatePrototype(field, PropertyUtil.generateGetterPrototype(field));
@@ -691,7 +701,7 @@ public class GenerateMembersUtil {
     return generatePrototype(field, result);
   }
 
-  @Nullable
+  @NotNull
   private static PsiMethod generatePrototype(@NotNull PsiField field, PsiMethod result) {
     return setVisibility(field, annotateOnOverrideImplement(field.getContainingClass(), result));
   }

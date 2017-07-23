@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util.io;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.util.Collection;
 import java.util.Locale;
 import java.util.Set;
 import java.util.jar.JarFile;
@@ -201,11 +203,28 @@ public class IoTestUtil {
   }
 
   @NotNull
-  public static File createTestJar(@NotNull File jarFile, @NotNull String... data) {
+  public static File createTestJar(@NotNull File jarFile, @NotNull String... namesAndTexts) {
     try (ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(jarFile))) {
-      for (int i = 0; i < data.length; i += 2) {
-        stream.putNextEntry(new ZipEntry(data[i]));
-        stream.write(data[i + 1].getBytes(CharsetToolkit.UTF8_CHARSET));
+      for (int i = 0; i < namesAndTexts.length; i += 2) {
+        stream.putNextEntry(new ZipEntry(namesAndTexts[i]));
+        if (namesAndTexts[i + 1] != null) stream.write(namesAndTexts[i + 1].getBytes(CharsetToolkit.UTF8_CHARSET));
+        stream.closeEntry();
+      }
+      return jarFile;
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @NotNull
+  public static File createTestJar(@NotNull File jarFile, @NotNull Collection<Pair<String,byte[]>> namesAndContents) {
+    try (ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(jarFile))) {
+      for (Pair<String, byte[]> p : namesAndContents) {
+        String name = p.first;
+        byte[] content = p.second;
+        stream.putNextEntry(new ZipEntry(name));
+        stream.write(content);
         stream.closeEntry();
       }
       return jarFile;
@@ -223,7 +242,9 @@ public class IoTestUtil {
           String path = FileUtil.toSystemIndependentName(ObjectUtils.assertNotNull(FileUtil.getRelativePath(root, file)));
           try {
             stream.putNextEntry(new ZipEntry(path));
-            stream.write(FileUtil.loadFileBytes(file));
+            try (InputStream is = new FileInputStream(file)) {
+              FileUtil.copy(is, stream);
+            }
             stream.closeEntry();
           }
           catch (IOException e) {

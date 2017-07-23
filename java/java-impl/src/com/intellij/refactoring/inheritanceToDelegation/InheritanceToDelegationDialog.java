@@ -241,7 +241,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     gbc.gridwidth = 1;
     gbc.insets = JBUI.insets(4, 0, 4, 4);
 
-    myMemberSelectionPanel = new MemberSelectionPanel(RefactoringBundle.message("delegate.members"), Collections.<MemberInfo>emptyList(), null);
+    myMemberSelectionPanel = new MemberSelectionPanel(RefactoringBundle.message("delegate.members"), Collections.emptyList(), null);
     panel.add(myMemberSelectionPanel, gbc);
     MyMemberInfoModel memberInfoModel = new InheritanceToDelegationDialog.MyMemberInfoModel();
     myMemberSelectionPanel.getTable().setMemberInfoModel(memberInfoModel);
@@ -271,11 +271,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     @NonNls final String suggestion = "My" + targetClass.getName();
     myInnerClassNameField.setSuggestions(new String[]{suggestion});
 
-    myDataChangedListener = new NameSuggestionsField.DataChanged() {
-      public void dataChanged() {
-        validateButtons();
-      }
-    };
+    myDataChangedListener = () -> validateButtons();
     myInnerClassNameField.addDataChangedListener(myDataChangedListener);
     myFieldNameField.addDataChangedListener(myDataChangedListener);
 

@@ -21,6 +21,10 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * External system integration provides 'auto-import' feature, i.e. it listens for external system config files changes
  * and automatically runs external project refresh and sync.
@@ -47,9 +51,13 @@ public interface ExternalSystemAutoImportAware {
    * 
    * @param changedFileOrDirPath  changed file/dir path
    * @param project               current project
-   * @return                      <code>null</code> if target change should not trigger external project refresh;
+   * @return                      {@code null} if target change should not trigger external project refresh;
    *                              path to config file of an external project which should be refreshed
    */
   @Nullable
   String getAffectedExternalProjectPath(@NotNull String changedFileOrDirPath, @NotNull Project project);
+
+  default List<File> getAffectedExternalProjectFiles(String projectPath, @NotNull Project project) {
+    return Collections.emptyList();
+  }
 }

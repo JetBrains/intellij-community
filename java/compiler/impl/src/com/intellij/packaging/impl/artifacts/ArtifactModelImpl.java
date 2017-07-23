@@ -15,6 +15,7 @@
  */
 package com.intellij.packaging.impl.artifacts;
 
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.util.EventDispatcher;
@@ -68,9 +69,16 @@ public class ArtifactModelImpl extends ArtifactModelBase implements ModifiableAr
 
   @NotNull
   public ModifiableArtifact addArtifact(@NotNull String name, @NotNull ArtifactType artifactType, CompositePackagingElement<?> rootElement) {
+    return addArtifact(name, artifactType, rootElement, null);
+  }
+
+  @Override
+  @NotNull
+  public ModifiableArtifact addArtifact(@NotNull String name, @NotNull ArtifactType artifactType, CompositePackagingElement<?> rootElement,
+                                        @Nullable ProjectModelExternalSource externalSource) {
     final String uniqueName = generateUniqueName(name);
     final String outputPath = ArtifactUtil.getDefaultArtifactOutputPath(uniqueName, myArtifactManager.getProject());
-    final ArtifactImpl artifact = new ArtifactImpl(uniqueName, artifactType, false, rootElement, outputPath, myDispatcher);
+    final ArtifactImpl artifact = new ArtifactImpl(uniqueName, artifactType, false, rootElement, outputPath, externalSource, myDispatcher);
     myOriginalArtifacts.add(artifact);
     myArtifact2ModifiableCopy.put(artifact, artifact);
     myModifiable2Original.put(artifact, artifact);

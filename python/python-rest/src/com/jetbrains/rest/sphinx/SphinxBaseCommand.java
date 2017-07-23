@@ -126,7 +126,7 @@ public class SphinxBaseCommand {
   }
 
   private ProcessHandler createProcess(Module module) throws ExecutionException {
-    GeneralCommandLine commandLine = createCommandLine(module, Collections.<String>emptyList());
+    GeneralCommandLine commandLine = createCommandLine(module, Collections.emptyList());
     ProcessHandler handler = PythonProcessRunner.createProcess(commandLine, false);
     ProcessTerminatedListener.attach(handler);
     return handler;
@@ -150,7 +150,7 @@ public class SphinxBaseCommand {
         cmd.setExePath(executablePath);
       }
       else {
-        cmd = PythonHelper.LOAD_ENTRY_POINT.newCommandLine(sdkHomePath, Lists.<String>newArrayList());
+        cmd = PythonHelper.LOAD_ENTRY_POINT.newCommandLine(sdkHomePath, Lists.newArrayList());
       }
     }
 

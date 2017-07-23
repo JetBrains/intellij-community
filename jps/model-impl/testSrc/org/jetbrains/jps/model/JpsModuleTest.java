@@ -52,6 +52,14 @@ public class JpsModuleTest extends JpsModelTestCase {
     assertSameElements(ContainerUtil.newArrayList(modules), module);
   }
 
+  public void testExcludedPatterns() {
+    JpsModule module = myProject.addModule("m", JpsJavaModuleType.INSTANCE);
+    module.addExcludePattern("file://url", "*.class");
+    JpsExcludePattern pattern = assertOneElement(module.getExcludePatterns());
+    assertEquals("file://url", pattern.getBaseDirUrl());
+    assertEquals("*.class", pattern.getPattern());
+  }
+
   public void testModifiableModel() {
     final JpsModule module = myProject.addModule("m", JpsJavaModuleType.INSTANCE);
     final JpsModuleSourceRoot root0 = module.addSourceRoot("url1", JavaSourceRootType.SOURCE);

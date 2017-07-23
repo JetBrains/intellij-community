@@ -23,13 +23,6 @@ import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiWhileStatement;
 import com.intellij.util.IncorrectOperationException;
 
-/**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Sep 5, 2003
- * Time: 7:24:03 PM
- * To change this template use Options | File Templates.
- */
 public class MissingWhileBodyFixer implements Fixer {
   @Override
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {

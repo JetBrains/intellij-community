@@ -125,7 +125,7 @@ public class ModelDiff {
 
     @Override
     public int translateSelection(int row) {
-      return idx > row ? row : row + 1;
+      return idx > row ? row : row + elements.size();
     }
     @Override
     public String toString() {

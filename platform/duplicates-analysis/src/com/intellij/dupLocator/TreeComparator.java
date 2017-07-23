@@ -5,13 +5,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: Mar 26, 2004
- * Time: 3:48:37 PM
- * To change this template use File | Settings | File Templates.
- */
 public class TreeComparator {
   private TreeComparator() {
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,11 +68,11 @@ public class LookupCellRenderer implements ListCellRenderer {
   private final FontMetrics myBoldMetrics;
 
   public static final Color BACKGROUND_COLOR = new JBColor(() -> (JBColor.isBright() ? new Color(235, 244, 254) : JBColor.background()));
-  private static final Color FOREGROUND_COLOR = JBColor.foreground();
+  public static final Color FOREGROUND_COLOR = JBColor.foreground();
   private static final Color GRAYED_FOREGROUND_COLOR = new JBColor(Gray._160, Gray._110);
   private static final Color SELECTED_BACKGROUND_COLOR = new Color(0, 82, 164);
-  private static final Color SELECTED_NON_FOCUSED_BACKGROUND_COLOR = new JBColor(0x6e8ea2, 0x55585a);
-  private static final Color SELECTED_FOREGROUND_COLOR = new JBColor(() -> (JBColor.isBright() ? JBColor.WHITE : JBColor.foreground()));
+  public static final Color SELECTED_NON_FOCUSED_BACKGROUND_COLOR = new JBColor(0x6e8ea2, 0x55585a);
+  public static final Color SELECTED_FOREGROUND_COLOR = new JBColor(() -> (JBColor.isBright() ? JBColor.WHITE : JBColor.foreground()));
   private static final Color SELECTED_GRAYED_FOREGROUND_COLOR = new JBColor(() -> (JBColor.isBright() ? JBColor.WHITE: JBColor.foreground()));
 
   static final Color PREFIX_FOREGROUND_COLOR = new JBColor(0xb000b0, 0xd17ad6);
@@ -147,16 +148,19 @@ public class LookupCellRenderer implements ListCellRenderer {
       if (item.isValid()) {
         try {
           item.renderElement(presentation);
+
+          //In Darcula: default monospaced bold fonts are very similar to their regular versions.
+          //We need to tune foreground colors here to tell bold elements from regular
+          if (presentation.isItemTextBold() && UIUtil.isUnderDarcula()) {
+            presentation.setItemTextForeground(ColorUtil.brighter(presentation.getItemTextForeground(), 2));
+          }
         }
         catch (ProcessCanceledException e) {
           LOG.info(e);
           presentation.setItemTextForeground(JBColor.RED);
           presentation.setItemText("Error occurred, see the log in Help | Show Log");
         }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-        catch (Error e) {
+        catch (Exception | Error e) {
           LOG.error(e);
         }
       } else {
@@ -269,7 +273,8 @@ public class LookupCellRenderer implements ListCellRenderer {
       }
 
       String trimmed = trimLabelText(fragment.text, allowedWidth, fontMetrics);
-      myTailComponent.append(trimmed, new SimpleTextAttributes(style, getTailTextColor(isSelected, fragment, foreground, nonFocusedSelection)));
+      int fragmentStyle = fragment.isItalic() ? style | SimpleTextAttributes.STYLE_ITALIC : style;
+      myTailComponent.append(trimmed, new SimpleTextAttributes(fragmentStyle, getTailTextColor(isSelected, fragment, foreground, nonFocusedSelection)));
       allowedWidth -= RealLookupElementPresentation.getStringWidth(trimmed, fontMetrics);
     }
   }
@@ -461,7 +466,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     Set<Font> fonts = ContainerUtil.newHashSet();
     FontPreferences fontPreferences = myLookup.getFontPreferences();
     for (int i = 0; i < sampleString.length(); i++) {
-      fonts.add(ComplementaryFontsRegistry.getFontAbleToDisplay(sampleString.charAt(i), Font.PLAIN, fontPreferences).getFont());
+      fonts.add(ComplementaryFontsRegistry.getFontAbleToDisplay(sampleString.charAt(i), Font.PLAIN, fontPreferences, null).getFont());
     }
 
     eachFont: for (Font font : fonts) {

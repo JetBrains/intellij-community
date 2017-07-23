@@ -1,7 +1,3 @@
-/*
- * User: anna
- * Date: 19-Aug-2009
- */
 package com.intellij.refactoring;
 
 import com.intellij.psi.PsiType;
@@ -103,5 +99,9 @@ public class TypeMigrationByAtomicRuleTest extends TypeMigrationTestBase{
 
   public void testChainedInitialization() {
     doTestFieldType("a", myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicInteger", null));
+  }
+
+  public void testLiteralMigration() {
+    doTestFieldType("a", myJavaFacade.getElementFactory().createTypeFromText("java.util.concurrent.atomic.AtomicLong", null));
   }
 }

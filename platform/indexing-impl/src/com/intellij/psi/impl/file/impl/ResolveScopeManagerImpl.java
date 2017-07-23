@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,13 @@
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.TestSourcesFilter;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.*;
@@ -31,44 +30,24 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.AdditionalIndexableFileSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import static com.intellij.util.containers.ContainerUtil.newTroveSet;
 
 public class ResolveScopeManagerImpl extends ResolveScopeManager {
   private final Project myProject;
   private final ProjectRootManager myProjectRootManager;
   private final PsiManager myManager;
 
-  private final Map<VirtualFile, GlobalSearchScope> myDefaultResolveScopesCache = new FactoryMap<VirtualFile, GlobalSearchScope>() {
-
-    @Override
-    protected Map<VirtualFile, GlobalSearchScope> createMap() {
-      return ContainerUtil.createConcurrentWeakKeySoftValueMap();
-    }
-
-    @Override
-    protected GlobalSearchScope create(@NotNull VirtualFile key) {
-      GlobalSearchScope scope = null;
-      for(ResolveScopeProvider resolveScopeProvider: ResolveScopeProvider.EP_NAME.getExtensions()) {
-        scope = resolveScopeProvider.getResolveScope(key, myProject);
-        if (scope != null) break;
-      }
-      if (scope == null) scope = getInherentResolveScope(key);
-      for (ResolveScopeEnlarger enlarger : ResolveScopeEnlarger.EP_NAME.getExtensions()) {
-        final SearchScope extra = enlarger.getAdditionalResolveScope(key, myProject);
-        if (extra != null) {
-          scope = scope.union(extra);
-        }
-      }
-
-      return scope;
-    }
-  };
+  private final Map<VirtualFile, GlobalSearchScope> myDefaultResolveScopesCache;
   private final AdditionalIndexableFileSet myAdditionalIndexableFileSet;
 
   public ResolveScopeManagerImpl(Project project, ProjectRootManager projectRootManager, PsiManager psiManager) {
@@ -77,6 +56,26 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
     myManager = psiManager;
     myAdditionalIndexableFileSet = new AdditionalIndexableFileSet(project);
 
+    myDefaultResolveScopesCache = ConcurrentFactoryMap.createMap(key-> {
+        GlobalSearchScope scope = null;
+        for(ResolveScopeProvider resolveScopeProvider: ResolveScopeProvider.EP_NAME.getExtensions()) {
+          scope = resolveScopeProvider.getResolveScope(key, myProject);
+          if (scope != null) break;
+        }
+        if (scope == null) scope = getInherentResolveScope(key);
+        for (ResolveScopeEnlarger enlarger : ResolveScopeEnlarger.EP_NAME.getExtensions()) {
+          final SearchScope extra = enlarger.getAdditionalResolveScope(key, myProject);
+          if (extra != null) {
+            scope = scope.union(extra);
+          }
+        }
+
+        return scope;
+      },
+
+                                                                 ContainerUtil::createConcurrentWeakKeySoftValueMap
+
+    );
     ((PsiManagerImpl) psiManager).registerRunnableToRunOnChange(myDefaultResolveScopesCache::clear);
   }
 
@@ -150,7 +149,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
   @Override
   public GlobalSearchScope getDefaultResolveScope(final VirtualFile vFile) {
     final PsiFile psiFile = myManager.findFile(vFile);
-    assert psiFile != null;
+    assert psiFile != null : "directory=" + vFile.isDirectory() + "; " + myProject;
     return getResolveScopeFromProviders(vFile);
   }
 
@@ -184,7 +183,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
     if (module == null) {
       VirtualFile notNullVFile = virtualFile != null ? virtualFile : vDirectory;
       final List<OrderEntry> entries = projectFileIndex.getOrderEntriesForFile(notNullVFile);
-      if (entries.isEmpty() && myAdditionalIndexableFileSet.isInSet(notNullVFile)) {
+      if (entries.isEmpty() && (myAdditionalIndexableFileSet.isInSet(notNullVFile) || isFromAdditionalLibraries(notNullVFile))) {
         return allScope;
       }
 
@@ -201,5 +200,21 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
       return resolveService.restrictByBackwardIds(virtualFile, scope);
     }
     return scope;
+  }
+
+  private boolean isFromAdditionalLibraries(@NotNull final VirtualFile file) {
+    for (final AdditionalLibraryRootsProvider provider : Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME)) {
+      for (final SyntheticLibrary library : provider.getAdditionalProjectLibraries(myProject)) {
+        if (VfsUtilCore.isUnder(file, asSet(library.getSourceRoots())) && !VfsUtilCore.isUnder(file, library.getExcludedRoots())) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  @NotNull
+  private static Set<VirtualFile> asSet(final Collection<VirtualFile> collection) {
+    return collection instanceof Set ? (Set)collection : newTroveSet(collection);
   }
 }

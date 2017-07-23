@@ -29,18 +29,15 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Map;
 
 /**
  * @author nik
  */
 public abstract class EnhancerProcessHandlerBase extends BaseOSProcessHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.appengine.enhancement.EnhancerProcessHandler");
-  private FactoryMap<Key, EnhancerOutputParser> myParsers = new FactoryMap<Key, EnhancerOutputParser>() {
-    @Override
-    protected EnhancerOutputParser create(Key key) {
-      return new EnhancerOutputParser(ProcessOutputTypes.STDERR.equals(key));
-    }
-  };
+  private Map<Key, EnhancerOutputParser> myParsers =
+    FactoryMap.createMap(key -> new EnhancerOutputParser(ProcessOutputTypes.STDERR.equals(key)));
 
   public EnhancerProcessHandlerBase(Process process, @NotNull String commandLine, Charset charset) {
     super(process, commandLine, charset);

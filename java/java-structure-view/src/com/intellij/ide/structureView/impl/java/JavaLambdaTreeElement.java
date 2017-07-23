@@ -18,18 +18,14 @@ package com.intellij.ide.structureView.impl.java;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.PsiLambdaNameHelper;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.util.*;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 public class JavaLambdaTreeElement extends JavaClassTreeElementBase<PsiLambdaExpression> {
   public static final JavaLambdaTreeElement[] EMPTY_ARRAY = {};
@@ -68,7 +64,7 @@ public class JavaLambdaTreeElement extends JavaClassTreeElementBase<PsiLambdaExp
   public String getLocationString() {
     if (myFunctionalName == null) {
       PsiLambdaExpression lambdaExpression = getElement();
-      if (lambdaExpression != null) {
+      if (lambdaExpression != null && !DumbService.isDumb(lambdaExpression.getProject())) {
         final PsiType interfaceType = lambdaExpression.getFunctionalInterfaceType();
         if (interfaceType != null) {
           myFunctionalName = interfaceType.getPresentableText();

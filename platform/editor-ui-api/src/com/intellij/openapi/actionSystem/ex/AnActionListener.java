@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: May 15, 2002
- * Time: 9:58:27 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -36,7 +28,7 @@ public interface AnActionListener {
   void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event);
 
   /**
-   * Note that using <code>dataContext</code> in implementing methods is unsafe - it could have been invalidated by the performed action.
+   * Note that using {@code dataContext} in implementing methods is unsafe - it could have been invalidated by the performed action.
    */
   default void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
   }

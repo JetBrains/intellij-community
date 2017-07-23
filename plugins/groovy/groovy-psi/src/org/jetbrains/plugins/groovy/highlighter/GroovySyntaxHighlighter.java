@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase {
 
   public static final TextAttributesKey LINE_COMMENT = createTextAttributesKey("Line comment", DefaultLanguageHighlighterColors.LINE_COMMENT);
   public static final TextAttributesKey ANNOTATION = createTextAttributesKey("Annotation", JavaHighlightingColors.ANNOTATION_NAME_ATTRIBUTES);
+  public static final TextAttributesKey ANNOTATION_ATTRIBUTE_NAME = createTextAttributesKey("Anotation attribute name", JavaHighlightingColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES);
   public static final TextAttributesKey LOCAL_VARIABLE = createTextAttributesKey("Groovy var", JavaHighlightingColors.LOCAL_VARIABLE_ATTRIBUTES);
   public static final TextAttributesKey REASSIGNED_LOCAL_VARIABLE = createTextAttributesKey("Groovy reassigned var", JavaHighlightingColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES);
   public static final TextAttributesKey PARAMETER = createTextAttributesKey("Groovy parameter", JavaHighlightingColors.PARAMETER_ATTRIBUTES);
@@ -60,7 +61,13 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase {
   public static final TextAttributesKey BLOCK_COMMENT = createTextAttributesKey("Block comment", JavaHighlightingColors.JAVA_BLOCK_COMMENT);
   public static final TextAttributesKey DOC_COMMENT_CONTENT = createTextAttributesKey("Groovydoc comment", JavaHighlightingColors.DOC_COMMENT);
   public static final TextAttributesKey DOC_COMMENT_TAG = createTextAttributesKey("Groovydoc tag", JavaHighlightingColors.DOC_COMMENT_TAG);
-  public static final TextAttributesKey CLASS_REFERENCE = createTextAttributesKey("Class", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
+
+  public static final TextAttributesKey CLASS_REFERENCE = createTextAttributesKey("Class", JavaHighlightingColors.CLASS_NAME_ATTRIBUTES);
+  public static final TextAttributesKey ABSTRACT_CLASS_NAME = createTextAttributesKey("Abstract class name", CLASS_REFERENCE);
+  public static final TextAttributesKey ANONYMOUS_CLASS_NAME = createTextAttributesKey("Anonymous class name", CLASS_REFERENCE);
+  public static final TextAttributesKey INTERFACE_NAME = createTextAttributesKey("Interface name", JavaHighlightingColors.INTERFACE_NAME_ATTRIBUTES);
+  public static final TextAttributesKey TRAIT_NAME = createTextAttributesKey("Trait name", INTERFACE_NAME);
+  public static final TextAttributesKey ENUM_NAME = createTextAttributesKey("Enum name", CLASS_REFERENCE);
   public static final TextAttributesKey TYPE_PARAMETER = createTextAttributesKey("Type parameter", JavaHighlightingColors.TYPE_PARAMETER_NAME_ATTRIBUTES);
 
   public static final TextAttributesKey INSTANCE_PROPERTY_REFERENCE = createTextAttributesKey("Instance property reference ID", JavaHighlightingColors.INSTANCE_FIELD_ATTRIBUTES);
@@ -125,7 +132,7 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase {
     GroovyTokenTypes.mRBRACK
   );
 
-  static final TokenSet tOperators = TokenSet.orSet(TokenSets.BINARY_OP_SET, TokenSets.UNARY_OP_SET, TokenSets.ASSIGN_OP_SET);
+  static final TokenSet tOperators = TokenSet.orSet(TokenSets.BINARY_OP_SET, TokenSets.UNARY_OP_SET, TokenSets.ASSIGNMENTS);
 
   static {
     fillMap(ATTRIBUTES, tLINE_COMMENTS, LINE_COMMENT);
@@ -144,6 +151,7 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase {
     fillMap(ATTRIBUTES, VALID_STRING_ESCAPE, StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN);
     fillMap(ATTRIBUTES, INVALID_STRING_ESCAPE, StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN);
     fillMap(ATTRIBUTES, INVALID_STRING_ESCAPE, StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN);
+    fillMap(ATTRIBUTES, TokenSets.KEYWORDS, KEYWORD);
   }
 
   static {

@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -72,7 +73,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     myMergedUsageInfos = usageInfo;
 
     Point data =
-    ApplicationManager.getApplication().runReadAction((Computable<Point>)() -> {
+    ReadAction.compute(() -> {
       PsiElement element = getElement();
       PsiFile psiFile = usageInfo.getFile();
       Document document = psiFile == null ? null : PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
@@ -144,9 +145,9 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
       return false;
     }
     for (UsageInfo usageInfo : getMergedInfos()) {
-      if (!usageInfo.isValid()) return false;
+      if (usageInfo.isValid()) return true;
     }
-    return true;
+    return false;
   }
 
   @Override
@@ -408,7 +409,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   }
 
   @NotNull
-  private UsageInfo[] getMergedInfos() {
+  public UsageInfo[] getMergedInfos() {
     Object infos = myMergedUsageInfos;
     return infos instanceof UsageInfo ? new UsageInfo[]{(UsageInfo)infos} : (UsageInfo[])infos;
   }

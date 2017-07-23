@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 
-/**
- * Created by Max Medvedev on 19/05/14
- */
 public class GrTraitField extends GrLightField implements PsiMirrorElement {
   private static final Logger LOG = Logger.getInstance(GrTraitField.class);
 

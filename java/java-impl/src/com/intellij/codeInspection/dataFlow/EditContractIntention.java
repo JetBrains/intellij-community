@@ -24,7 +24,6 @@ import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
@@ -93,7 +92,7 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
       protected void textChanged(DocumentEvent e) {
         String error = getErrorMessage(contractText.getText(), method);
         builder.setOkActionEnabled(error == null);
-        builder.setErrorText(error);
+        builder.setErrorText(error, contractText);
       }
     });
     if (builder.showAndGet()) {
@@ -129,7 +128,7 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
         manager.annotateExternally(method, ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT, method.getContainingFile(),
                                    mockAnno.getParameterList().getAttributes());
       }
-      catch (ProcessCanceledException ignored) {}
+      catch (ExternalAnnotationsManager.CanceledConfigurationException ignored) {}
     }
     DaemonCodeAnalyzer.getInstance(project).restart();
   }

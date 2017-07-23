@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,36 @@
  */
 package com.intellij.ui.speedSearch;
 
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.codeStyle.AllOccurrencesMatcher;
+import com.intellij.psi.codeStyle.FixingLayoutMatcher;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.text.Matcher;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.KeyEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 
-public class SpeedSearch {
-  private final static String ALLOWED_SPECIAL_SYMBOLS = " *_-\"'/.$>:";
+public class SpeedSearch extends SpeedSearchSupply {
+  private static final String ALLOWED_SPECIAL_SYMBOLS = " *_-\"'/.$>:";
+
+  private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
+  private final boolean myMatchAllOccurrences;
 
   private String myString = "";
   private boolean myEnabled;
   private Matcher myMatcher;
+
+  public SpeedSearch() {
+    this(false);
+  }
+
+  public SpeedSearch(boolean matchAllOccurrences) {
+    myMatchAllOccurrences = matchAllOccurrences;
+  }
 
   public void type(String letter) {
     updatePattern(myString + letter);
@@ -101,17 +119,66 @@ public class SpeedSearch {
   }
 
   public void updatePattern(final String string) {
+    String prevString = myString;
     myString = string;
     try {
-      myMatcher = NameUtil.buildMatcher("*" + string, 0, true, false);
+      String pattern = "*" + string;
+      NameUtil.MatchingCaseSensitivity caseSensitivity = NameUtil.MatchingCaseSensitivity.NONE;
+      String separators = "";
+      myMatcher = myMatchAllOccurrences ? new AllOccurrencesMatcher(pattern, caseSensitivity, separators)
+                                        : new FixingLayoutMatcher(pattern, caseSensitivity, separators);
     }
     catch (Exception e) {
       myMatcher = null;
     }
+    fireStateChanged(prevString);
   }
 
   @Nullable
   public Matcher getMatcher() {
     return myMatcher;
+  }
+
+  @Nullable
+  @Override
+  public Iterable<TextRange> matchingFragments(@NotNull String text) {
+    if (myMatcher instanceof MinusculeMatcher) {
+      return ((MinusculeMatcher)myMatcher).matchingFragments(text);
+    }
+    return null;
+  }
+
+  @Override
+  public void refreshSelection() {
+  }
+
+  @Override
+  public boolean isPopupActive() {
+    return isHoldingFilter();
+  }
+
+  @Nullable
+  @Override
+  public String getEnteredPrefix() {
+    return myString;
+  }
+
+  @Override
+  public void addChangeListener(@NotNull PropertyChangeListener listener) {
+    myChangeSupport.addPropertyChangeListener(listener);
+  }
+
+  @Override
+  public void removeChangeListener(@NotNull PropertyChangeListener listener) {
+    myChangeSupport.removePropertyChangeListener(listener);
+  }
+
+  private void fireStateChanged(String prevString) {
+    myChangeSupport.firePropertyChange(SpeedSearchSupply.ENTERED_PREFIX_PROPERTY_NAME, prevString, getEnteredPrefix());
+  }
+
+  @Override
+  public void findAndSelectElement(@NotNull String searchQuery) {
+
   }
 }

@@ -16,12 +16,11 @@
 
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -46,21 +45,18 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
   @Override
   public String getPresentableRelativePathFor(final VirtualFile file) {
     if (file == null) return "";
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        boolean hideExcludedFiles = Registry.is("ide.hide.excluded.files");
-        ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    return ReadAction.compute(() -> {
+      boolean hideExcludedFiles = Registry.is("ide.hide.excluded.files");
+      ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
 
-        Module module = fileIndex.getModuleForFile(file, hideExcludedFiles);
-        VirtualFile contentRoot = fileIndex.getContentRootForFile(file, hideExcludedFiles);
-        if (module == null || contentRoot == null) return file.getPresentableUrl();
+      Module module = fileIndex.getModuleForFile(file, hideExcludedFiles);
+      VirtualFile contentRoot = fileIndex.getContentRootForFile(file, hideExcludedFiles);
+      if (module == null || contentRoot == null) return file.getPresentableUrl();
 
-        String relativePath = VfsUtilCore.getRelativePath(file, contentRoot, File.separatorChar);
-        assert relativePath != null;
+      String relativePath = VfsUtilCore.getRelativePath(file, contentRoot, File.separatorChar);
+      assert relativePath != null;
 
-        return getPresentableRelativePathFor(module, contentRoot, relativePath);
-      }
+      return getPresentableRelativePathFor(module, contentRoot, relativePath);
     });
   }
 
@@ -74,28 +70,25 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
     final VirtualFile toParent = getParentFile(toPath);
 
     if (fromParent != null && toParent != null) {
-      String moduleResult = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        @Override
-        public String compute() {
-          final boolean hideExcludedFiles = Registry.is("ide.hide.excluded.files");
-          ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+      String moduleResult = ReadAction.compute(() -> {
+        final boolean hideExcludedFiles = Registry.is("ide.hide.excluded.files");
+        ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
 
-          Module fromModule = fileIndex.getModuleForFile(fromParent, hideExcludedFiles);
-          Module toModule = fileIndex.getModuleForFile(toParent, hideExcludedFiles);
-          if (fromModule == null || toModule == null || fromModule.equals(toModule)) return null;
+        Module fromModule = fileIndex.getModuleForFile(fromParent, hideExcludedFiles);
+        Module toModule = fileIndex.getModuleForFile(toParent, hideExcludedFiles);
+        if (fromModule == null || toModule == null || fromModule.equals(toModule)) return null;
 
-          VirtualFile fromContentRoot = fileIndex.getContentRootForFile(fromParent, hideExcludedFiles);
-          if (fromContentRoot == null) return null;
+        VirtualFile fromContentRoot = fileIndex.getContentRootForFile(fromParent, hideExcludedFiles);
+        if (fromContentRoot == null) return null;
 
-          String relativePath = VfsUtilCore.getRelativePath(fromParent, fromContentRoot, File.separatorChar);
-          assert relativePath != null;
+        String relativePath = VfsUtilCore.getRelativePath(fromParent, fromContentRoot, File.separatorChar);
+        assert relativePath != null;
 
-          relativePath += File.separatorChar;
-          if (!fromPath.getName().equals(toPath.getName())) {
-            relativePath += fromPath.getName();
-          }
-          return getPresentableRelativePathFor(fromModule, fromContentRoot, relativePath);
+        relativePath += File.separatorChar;
+        if (!fromPath.getName().equals(toPath.getName())) {
+          relativePath += fromPath.getName();
         }
+        return getPresentableRelativePathFor(fromModule, fromContentRoot, relativePath);
       });
       if (moduleResult != null) return moduleResult;
     }

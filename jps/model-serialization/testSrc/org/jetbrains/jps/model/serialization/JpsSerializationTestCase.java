@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.jetbrains.jps.model.serialization;
 
-import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -23,10 +22,12 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsModelTestCase;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -78,18 +79,23 @@ public abstract class JpsSerializationTestCase extends JpsModelTestCase {
   }
 
   protected Map<String, String> getPathVariables() {
-    Map<String, String> variables = new HashMap<String, String>();
-    variables.put(PathMacrosImpl.APPLICATION_HOME_MACRO_NAME, PathManager.getHomePath());
-    variables.put(PathMacrosImpl.USER_HOME_MACRO_NAME, SystemProperties.getUserHome());
+    Map<String, String> variables = new HashMap<>();
+    variables.put(PathMacroUtil.APPLICATION_HOME_DIR, PathManager.getHomePath());
+    variables.put(PathMacroUtil.USER_HOME_NAME, SystemProperties.getUserHome());
     return variables;
   }
 
-  protected String getTestDataFileAbsolutePath(String relativePath) {
+  protected String getTestDataFileAbsolutePath(@NotNull String relativePath) {
     return PathManagerEx.findFileUnderProjectHome(relativePath, getClass()).getAbsolutePath();
   }
 
-  protected static Element loadModuleRootTag(File imlFile) {
-    JpsMacroExpander expander = JpsProjectLoader.createModuleMacroExpander(Collections.<String, String>emptyMap(), imlFile);
+  @NotNull
+  protected Path getTestDataAbsoluteFile(@NotNull String relativePath) {
+    return Paths.get(getTestDataFileAbsolutePath(relativePath));
+  }
+
+  protected static Element loadModuleRootTag(@NotNull Path imlFile) {
+    JpsMacroExpander expander = JpsProjectLoader.createModuleMacroExpander(Collections.emptyMap(), imlFile);
     return JpsLoaderBase.loadRootElement(imlFile, expander);
   }
 }

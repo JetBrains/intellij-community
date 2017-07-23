@@ -46,7 +46,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
 
   public void execute(@NotNull RefreshSessionImpl session) {
     if (session.isAsynchronous()) {
-      queueSession(session, session.getModalityState(), session.getTransaction());
+      queueSession(session, session.getTransaction());
     }
     else {
       Application app = ApplicationManager.getApplication();
@@ -61,13 +61,13 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
                     "this will cause a deadlock if there are any events to fire.");
           return;
         }
-        queueSession(session, ModalityState.defaultModalityState(), TransactionGuard.getInstance().getContextTransaction());
+        queueSession(session, TransactionGuard.getInstance().getContextTransaction());
         session.waitFor();
       }
     }
   }
 
-  private void queueSession(@NotNull final RefreshSessionImpl session, @NotNull final ModalityState modality, @Nullable TransactionId transaction) {
+  private void queueSession(@NotNull RefreshSessionImpl session, @Nullable TransactionId transaction) {
     myQueue.submit(() -> {
       myRefreshIndicator.start();
       try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Doing file refresh. " + session)) {
@@ -75,11 +75,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
       }
       finally {
         myRefreshIndicator.stop();
-        Application app = ApplicationManager.getApplication();
-        // invokeLater might be not necessary once transactions are enforced
-        app.invokeLater(
-          () -> TransactionGuard.getInstance().submitTransaction(app, transaction, session::fireEvents),
-          modality);
+        TransactionGuard.getInstance().submitTransaction(ApplicationManager.getApplication(), transaction, session::fireEvents);
       }
     });
     myEventCounter.eventHappened(session);
@@ -123,7 +119,7 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
   @NotNull
   @Override
   public RefreshSession createSession(boolean async, boolean recursively, @Nullable Runnable finishRunnable, @NotNull ModalityState state) {
-    return new RefreshSessionImpl(async, recursively, finishRunnable, state);
+    return new RefreshSessionImpl(async, recursively, finishRunnable, ((TransactionGuardImpl)TransactionGuard.getInstance()).getModalityTransaction(state));
   }
 
   @Override

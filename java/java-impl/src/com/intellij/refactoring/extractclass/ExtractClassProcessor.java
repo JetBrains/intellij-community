@@ -25,7 +25,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -40,6 +39,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.extractclass.usageInfo.*;
@@ -93,7 +93,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
                                List<PsiClass> innerClasses,
                                String newPackageName,
                                String newClassName) {
-    this(sourceClass, fields, methods, innerClasses, newPackageName, null, newClassName, null, false, Collections.<MemberInfo>emptyList());
+    this(sourceClass, fields, methods, innerClasses, newPackageName, null, newClassName, null, false, Collections.emptyList());
   }
 
   public ExtractClassProcessor(PsiClass sourceClass,
@@ -630,7 +630,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
       if (element instanceof PsiReferenceExpression) {
         final PsiReferenceExpression exp = (PsiReferenceExpression)element;
-        if (RefactoringUtil.isPlusPlusOrMinusMinus(exp.getParent())) {
+        if (PsiUtil.isIncrementDecrementOperation(exp.getParent())) {
           usages.add(isStatic
                      ? new ReplaceStaticVariableIncrementDecrement(exp, qualifiedName)
                      : new ReplaceInstanceVariableIncrementDecrement(exp, delegateFieldName, setter, getter, field.getName()));

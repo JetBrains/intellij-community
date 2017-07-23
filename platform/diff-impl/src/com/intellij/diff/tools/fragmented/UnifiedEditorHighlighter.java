@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -31,10 +30,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 class UnifiedEditorHighlighter implements EditorHighlighter {
-  public static final Logger LOG = UnifiedDiffViewer.LOG;
+  private static final Logger LOG = Logger.getInstance(UnifiedEditorHighlighter.class);
 
   @NotNull private final Document myDocument;
   @NotNull private final List<Element> myPieces;
@@ -132,7 +132,7 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
   @NotNull
   @Override
   public HighlighterIterator createIterator(int startOffset) {
-    int index = Collections.binarySearch(myPieces, new Element(startOffset, 0, null, null), (o1, o2) -> o1.getStart() - o2.getStart());
+    int index = Collections.binarySearch(myPieces, new Element(startOffset, 0, null, null), Comparator.comparingInt(Element::getStart));
     // index: (-insertion point - 1), where insertionPoint is the index of the first element greater than the key
     // and we need index of the first element that is less or equal (floorElement)
     if (index < 0) index = Math.max(-index - 2, 0);
@@ -145,18 +145,6 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
 
   @Override
   public void setEditor(@NotNull HighlighterClient editor) {
-  }
-
-  @Override
-  public void setText(@NotNull CharSequence text) {
-  }
-
-  @Override
-  public void beforeDocumentChange(DocumentEvent event) {
-  }
-
-  @Override
-  public void documentChanged(DocumentEvent event) {
   }
 
   private static class ProxyIterator implements HighlighterIterator {

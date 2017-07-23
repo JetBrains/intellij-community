@@ -45,19 +45,27 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
                                                        presentableName: String?,
                                                        roamingType: RoamingType,
                                                        isUseOldFileNameSanitize: Boolean,
-                                                       streamProvider: StreamProvider?): SchemeManager<T> {
+                                                       streamProvider: StreamProvider?,
+                                                       directoryPath: Path?,
+                                                       autoSave: Boolean): SchemeManager<T> {
     val path = checkPath(directoryName)
     val manager = SchemeManagerImpl(path,
                                     processor,
-                                    streamProvider ?: (componentManager?.stateStore?.stateStorageManager as? StateStorageManagerImpl)?.streamProvider,
-                                    pathToFile(path),
+                                    streamProvider ?: (componentManager?.stateStore?.stateStorageManager as? StateStorageManagerImpl)?.compoundStreamProvider,
+                                    directoryPath ?: pathToFile(path),
                                     roamingType,
                                     presentableName,
                                     isUseOldFileNameSanitize,
                                     componentManager?.messageBus)
-    @Suppress("UNCHECKED_CAST")
-    managers.add(manager as SchemeManagerImpl<Scheme, out Scheme>)
+    if (autoSave) {
+      @Suppress("UNCHECKED_CAST")
+      managers.add(manager as SchemeManagerImpl<Scheme, out Scheme>)
+    }
     return manager
+  }
+
+  override fun dispose(schemeManager: SchemeManager<*>) {
+    managers.remove(schemeManager)
   }
 
   open fun checkPath(originalPath: String): String {

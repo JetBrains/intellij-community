@@ -17,9 +17,10 @@ package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.ClassLoaderUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
@@ -42,7 +43,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.*;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 /**
@@ -52,6 +56,7 @@ class InProcessGroovyc implements GroovycFlavor {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.groovy.InProcessGroovyc");
   private static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all(-(.*))?\\.jar");
   private static final Pattern GROOVY_JAR_PATTERN = Pattern.compile("groovy(-(.*))?\\.jar");
+  private static final Pattern GROOVY_ECLIPSE_BATCH_PATTERN = Pattern.compile("groovy-eclipse-batch-(.*)\\.jar");
   private static final ThreadPoolExecutor ourExecutor = ConcurrencyUtil.newSingleThreadExecutor("Groovyc");
   private static SoftReference<Pair<String, ClassLoader>> ourParentLoaderCache;
   private static final UrlClassLoader.CachePool ourLoaderCachePool = UrlClassLoader.createCachePool();
@@ -71,7 +76,7 @@ class InProcessGroovyc implements GroovycFlavor {
                                         final GroovycOutputParser parser) throws Exception {
     boolean jointPossible = forStubs && !myHasStubExcludes;
     final LinkedBlockingQueue<String> mailbox = jointPossible && SystemProperties.getBooleanProperty("groovyc.joint.compilation", true)
-                                                ? new LinkedBlockingQueue<String>() : null;
+                                                ? new LinkedBlockingQueue<>() : null;
 
     final JointCompilationClassLoader loader = createCompilationClassLoader(compilationClassPath);
     if (loader == null) {
@@ -79,12 +84,9 @@ class InProcessGroovyc implements GroovycFlavor {
       return null;
     }
 
-    final Future<Void> future = ourExecutor.submit(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        runGroovycInThisProcess(loader, forStubs, settings, tempFile, parser, mailbox);
-        return null;
-      }
+    final Future<Void> future = ourExecutor.submit(() -> {
+      runGroovycInThisProcess(loader, forStubs, settings, tempFile, parser, mailbox);
+      return null;
     });
     if (mailbox == null) {
       future.get();
@@ -212,21 +214,19 @@ class InProcessGroovyc implements GroovycFlavor {
 
   @Nullable
   private static ClassLoader obtainParentLoader(Collection<String> compilationClassPath) throws MalformedURLException {
-    if (!"true".equals(System.getProperty("groovyc.reuse.compiler.classes", "true"))) {
+    if (!SystemInfo.IS_AT_LEAST_JAVA9 && !"true".equals(System.getProperty("groovyc.reuse.compiler.classes", "true"))) {
       return null;
     }
 
-    List<String> groovyJars = ContainerUtil.findAll(compilationClassPath, new Condition<String>() {
-      @Override
-      public boolean value(String s) {
-        String fileName = StringUtil.getShortName(s, '/');
-        return GROOVY_ALL_JAR_PATTERN.matcher(fileName).matches() || GROOVY_JAR_PATTERN.matcher(fileName).matches();
-      }
+    List<String> groovyJars = ContainerUtil.findAll(compilationClassPath, s -> {
+      String fileName = StringUtil.getShortName(s, '/');
+      return GROOVY_ALL_JAR_PATTERN.matcher(fileName).matches() || GROOVY_JAR_PATTERN.matcher(fileName).matches();
     });
+    ContainerUtil.retainAll(groovyJars, s -> !GROOVY_ECLIPSE_BATCH_PATTERN.matcher(StringUtil.getShortName(s, '/')).matches());
 
     LOG.debug("Groovy jars: " + groovyJars);
 
-    if (groovyJars.size() != 1 || !GROOVY_ALL_JAR_PATTERN.matcher(groovyJars.get(0)).matches()) {
+    if (groovyJars.size() != 1 || !GROOVY_ALL_JAR_PATTERN.matcher(StringUtil.getShortName(groovyJars.get(0), '/')).matches()) {
       // avoid complications caused by caching classes from several groovy versions in classpath
       return null;
     }
@@ -267,15 +267,19 @@ class InProcessGroovyc implements GroovycFlavor {
         return false;
       }
     };
-    UrlClassLoader groovyAllLoader = UrlClassLoader.build().
-      urls(toUrls(ContainerUtil.concat(GroovyBuilder.getGroovyRtRoots(), Collections.singletonList(groovyAll)))).allowLock().
-        useCache(ourLoaderCachePool, new UrlClassLoader.CachingCondition() {
-          @Override
-          public boolean shouldCacheData(
-            @NotNull URL url) {
-            return true;
-          }
-        }).get();
+    UrlClassLoader.Builder builder = UrlClassLoader.build();
+    builder.urls(toUrls(ContainerUtil.concat(GroovyBuilder.getGroovyRtRoots(), Collections.singletonList(groovyAll))));
+    builder.allowLock();
+    builder.useCache(ourLoaderCachePool, new UrlClassLoader.CachingCondition() {
+              @Override
+              public boolean shouldCacheData(
+                @NotNull URL url) {
+                return true;
+              }
+            });
+    ClassLoaderUtil.addPlatformLoaderParentIfOnJdk9(builder);
+    UrlClassLoader groovyAllLoader = builder.get();
+
     ClassLoader wrapper = new URLClassLoader(new URL[0], groovyAllLoader) {
       @Override
       protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
@@ -297,7 +301,7 @@ class InProcessGroovyc implements GroovycFlavor {
       }
     };
 
-    ourParentLoaderCache = new SoftReference<Pair<String, ClassLoader>>(Pair.create(groovyAll, wrapper));
+    ourParentLoaderCache = new SoftReference<>(Pair.create(groovyAll, wrapper));
     return wrapper;
   }
 

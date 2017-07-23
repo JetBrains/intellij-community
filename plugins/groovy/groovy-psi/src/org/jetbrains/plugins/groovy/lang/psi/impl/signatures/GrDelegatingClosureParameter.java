@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 
-/**
- * Created by Max Medvedev on 14/03/14
- */
 public class GrDelegatingClosureParameter implements GrClosureParameter {
   private final GrClosureParameter myDelegate;
 

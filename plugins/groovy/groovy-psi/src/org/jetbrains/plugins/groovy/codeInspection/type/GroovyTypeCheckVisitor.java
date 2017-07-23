@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -258,15 +258,11 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     return true;
   }
 
-  private void checkIndexProperty(@NotNull CallInfo<? extends GrIndexProperty> info) {
-    if (hasErrorElements(info.getArgumentList())) return;
-
+  private void checkIndexProperty(@NotNull CallInfo<GrIndexProperty> info) {
     if (!checkCannotInferArgumentTypes(info)) return;
 
-    final PsiType type = info.getQualifierInstanceType();
     final PsiType[] types = info.getArgumentTypes();
-
-    if (checkSimpleArrayAccess(info, type, types)) return;
+    if (types == null) return;
 
     final GroovyResolveResult[] results = info.multiResolve();
     final GroovyResolveResult resolveResult = info.advancedResolve();
@@ -629,7 +625,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
   protected void processAssignmentWithinMultipleAssignment(@NotNull GrExpression lhs,
                                                            @NotNull GrExpression rhs,
-                                                           @NotNull GrExpression context) {
+                                                           @NotNull PsiElement context) {
     final PsiType targetType = lhs.getType();
     final PsiType actualType = rhs.getType();
     if (targetType == null || actualType == null) return;
@@ -644,8 +640,14 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     );
   }
 
-  protected void processTupleAssignment(@NotNull GrTupleExpression tupleExpression,
-                                        @NotNull GrExpression initializer) {
+  @Override
+  public void visitTupleAssignmentExpression(@NotNull GrTupleAssignmentExpression expression) {
+    super.visitTupleAssignmentExpression(expression);
+
+    GrExpression initializer = expression.getRValue();
+    if (initializer == null) return;
+
+    GrTuple tupleExpression = expression.getLValue();
     GrExpression[] lValues = tupleExpression.getExpressions();
     if (initializer instanceof GrListOrMap) {
       GrExpression[] initializers = ((GrListOrMap)initializer).getInitializers();
@@ -653,7 +655,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
         GrExpression lValue = lValues[i];
         if (initializers.length <= i) break;
         GrExpression rValue = initializers[i];
-        processAssignmentWithinMultipleAssignment(lValue, rValue, tupleExpression);
+        processAssignmentWithinMultipleAssignment(lValue, rValue, expression);
       }
     }
     else {
@@ -808,7 +810,6 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     super.visitAssignmentExpression(assignment);
 
     final GrExpression lValue = assignment.getLValue();
-    if (lValue instanceof GrIndexProperty) return;
     if (!PsiUtil.mightBeLValue(lValue)) return;
 
     final IElementType opToken = assignment.getOperationTokenType();
@@ -822,16 +823,11 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
       return;
     }
 
-    if (lValue instanceof GrTupleExpression) {
-      processTupleAssignment(((GrTupleExpression)lValue), rValue);
-    }
-    else {
-      PsiType lValueNominalType = lValue.getNominalType();
-      final PsiType targetType = PsiImplUtil.isSpreadAssignment(lValue) ? extractIterableTypeParameter(lValueNominalType, false)
-                                                                        : lValueNominalType;
-      if (targetType != null) {
-        processAssignment(targetType, rValue, lValue, "cannot.assign", assignment, ApplicableTo.ASSIGNMENT);
-      }
+    PsiType lValueNominalType = lValue.getNominalType();
+    final PsiType targetType = PsiImplUtil.isSpreadAssignment(lValue) ? extractIterableTypeParameter(lValueNominalType, false)
+                                                                      : lValueNominalType;
+    if (targetType != null) {
+      processAssignment(targetType, rValue, lValue, "cannot.assign", assignment, ApplicableTo.ASSIGNMENT);
     }
   }
 
@@ -873,7 +869,17 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   @Override
   public void visitIndexProperty(@NotNull GrIndexProperty expression) {
     super.visitIndexProperty(expression);
-    checkIndexProperty(new GrIndexPropertyInfo(expression));
+    if (hasErrorElements(expression)) return;
+
+    if (GroovyIndexPropertyUtil.isClassLiteral(expression)) return;
+    if (GroovyIndexPropertyUtil.isSimpleArrayAccess(expression)) return;
+
+    if (expression.getRValueReference() != null) {
+      checkIndexProperty(new GrIndexPropertyInfo(expression, true));
+    }
+    if (expression.getLValueReference() != null) {
+      checkIndexProperty(new GrIndexPropertyInfo(expression, false));
+    }
   }
 
   /**
@@ -930,7 +936,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
       if (signatures.size() > 1) {
         final PsiType[] fittingSignature = ContainerUtil.find(signatures, types -> {
           for (int i = 0; i < types.length; i++) {
-            if (!typesAreEqual(types[i], paramTypes.get(i), parameterList)) {
+            if (!TypesUtil.isAssignableByMethodCallConversion(paramTypes.get(i), types[i], parameterList)) {
               return false;
             }
           }
@@ -952,7 +958,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
           if (typeElement == null) continue;
           PsiType expected = types[i];
           PsiType actual = paramTypes.get(i);
-          if (!typesAreEqual(expected, actual, parameterList)) {
+          if (!TypesUtil.isAssignableByMethodCallConversion(actual, expected, parameterList)) {
             registerError(
               typeElement,
               GroovyInspectionBundle.message("expected.type.0", expected.getCanonicalText(false), actual.getCanonicalText(false)),

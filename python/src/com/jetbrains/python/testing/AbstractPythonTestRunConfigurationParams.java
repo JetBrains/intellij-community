@@ -16,10 +16,8 @@
 package com.jetbrains.python.testing;
 
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * User: catherine
- */
 public interface AbstractPythonTestRunConfigurationParams {
   AbstractPythonRunConfigurationParams getBaseParams();
 
@@ -30,13 +28,13 @@ public interface AbstractPythonTestRunConfigurationParams {
   void setFolderName(String folderName);
 
   String getScriptName();
-  void setScriptName(String scriptName);
+  void setScriptName(@NotNull String scriptName);
 
   String getMethodName();
   void setMethodName(String methodName);
 
-  AbstractPythonTestRunConfiguration.TestType getTestType();
-  void setTestType(AbstractPythonTestRunConfiguration.TestType testType);
+  AbstractPythonLegacyTestRunConfiguration.TestType getTestType();
+  void setTestType(AbstractPythonLegacyTestRunConfiguration.TestType testType);
 
   boolean usePattern();
   void usePattern(boolean isPureUnittest);

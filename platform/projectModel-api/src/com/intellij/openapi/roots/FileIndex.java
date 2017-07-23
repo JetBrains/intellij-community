@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.Set;
@@ -30,22 +32,42 @@ import java.util.Set;
  */
 public interface FileIndex {
   /**
-   * Iterates all files and directories under content roots skipping excluded and ignored files and directories.
+   * Processes all files and directories under content roots skipping excluded and ignored files and directories.
    *
-   * @param iterator the iterator receiving the files.
    * @return false if files processing was stopped ({@link ContentIterator#processFile(VirtualFile)} returned false)
    */
-  boolean iterateContent(@NotNull ContentIterator iterator);
+  boolean iterateContent(@NotNull ContentIterator processor);
 
   /**
-   * Iterates all files and directories in the content under directory <code>dir</code> (including the directory itself) skipping excluded
-   * and ignored files and directories. Does not iterate anything if <code>dir</code> is not in the content.
+   * Same as {@link #iterateContent(ContentIterator)} but allows to pass {@code filter} to
+   * provide filtering in condition for directories.
+   * <p>
+   * If {@code filter} returns false on a directory, the directory won't be processed, but iteration will go on.
+   * <p>
+   * {@code null} filter means that all directories should be processed.
    *
-   * @param dir      the directory the contents of which is iterated.
-   * @param iterator the iterator receiving the files.
    * @return false if files processing was stopped ({@link ContentIterator#processFile(VirtualFile)} returned false)
    */
-  boolean iterateContentUnderDirectory(@NotNull VirtualFile dir, @NotNull ContentIterator iterator);
+  boolean iterateContent(@NotNull ContentIterator processor, @Nullable VirtualFileFilter filter);
+
+  /**
+   * Processes all files and directories in the content under directory {@code dir} (including the directory itself) skipping excluded
+   * and ignored files and directories. Does nothing if {@code dir} is not in the content.
+   *
+   * @return false if files processing was stopped ({@link ContentIterator#processFile(VirtualFile)} returned false)
+   */
+  boolean iterateContentUnderDirectory(@NotNull VirtualFile dir, @NotNull ContentIterator processor);
+
+  /**
+   * Same as {@link #iterateContentUnderDirectory(VirtualFile, ContentIterator)} but allows to pass additional {@code customFilter} to
+   * the iterator, in case you need to skip some file system branches using your own logic. If {@code customFilter} returns false on
+   * a directory, it won't be processed, but iteration will go on.
+   * <p>
+   * {@code null} filter means that all directories should be processed.
+   */
+  boolean iterateContentUnderDirectory(@NotNull VirtualFile dir,
+                                       @NotNull ContentIterator processor,
+                                       @Nullable VirtualFileFilter customFilter);
 
   /**
    * Returns {@code true} if {@code fileOrDir} is a file or directory under a content root of this project or module and not excluded or
@@ -54,13 +76,10 @@ public interface FileIndex {
   boolean isInContent(@NotNull VirtualFile fileOrDir);
 
   /**
-   * Returns {@code true} if {@code fileOrDir} is a file located under a sources, tests or resources root and not excluded or ignored.
+   * Returns {@code true} if {@code file} is a file located under a sources, tests or resources root and not excluded or ignored.
    * <p/>
    * Note that sometimes a file can belong to the content and be a source file but not belong to sources of the content.
    * This happens if sources of some library are located under the content (so they belong to the project content but not as sources).
-   *
-   * @param file the file to check.
-   * @return true if the file is a source file in the content sources, false otherwise.
    */
   boolean isContentSourceFile(@NotNull VirtualFile file);
 
@@ -78,8 +97,6 @@ public interface FileIndex {
    * you'd better use {@link TestSourcesFilter#isTestSources(VirtualFile, Project)} instead
    * which includes {@link ProjectFileIndex#isInTestSourceContent(VirtualFile)} invocation.
    *
-   * @param fileOrDir the file or directory to check.
-   * @return true if the file or directory belongs to a test source root, false otherwise.
    * @see TestSourcesFilter#isTestSources(VirtualFile, Project)
    */
   boolean isInTestSourceContent(@NotNull VirtualFile fileOrDir);

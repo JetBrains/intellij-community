@@ -23,12 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/3/11
- * Time: 12:50 PM
- */
 public interface VcsContentAnnotation {
   @Nullable
   VcsRevisionNumber fileRecentlyChanged(final VirtualFile vf);

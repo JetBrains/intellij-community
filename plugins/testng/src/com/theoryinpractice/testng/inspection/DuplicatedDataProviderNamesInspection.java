@@ -43,7 +43,8 @@ public class DuplicatedDataProviderNamesInspection extends BaseJavaLocalInspecti
     final String dataProviderFqn = DataProvider.class.getCanonicalName();
 
     final MultiMap<String, PsiMethod> dataProvidersByName = new MultiMap<>();
-    for (PsiMethod method : aClass.getMethods()) {
+    for (HierarchicalMethodSignature signature : aClass.getVisibleSignatures()) { //include only visible signatures to hide overridden methods
+      PsiMethod method = signature.getMethod();
       final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, dataProviderFqn);
       if (annotation != null) {
         final PsiAnnotationMemberValue value = annotation.findAttributeValue(NAME_ATTRIBUTE);
@@ -61,6 +62,7 @@ public class DuplicatedDataProviderNamesInspection extends BaseJavaLocalInspecti
     for (Map.Entry<String, Collection<PsiMethod>> entry : dataProvidersByName.entrySet()) {
       if (entry.getValue().size() > 1) {
         for (PsiMethod method : entry.getValue()) {
+          if (method.getContainingClass() != aClass) continue; //don't highlight methods in super class
           final String description = String.format("Data provider with name '%s' already exists in context", entry.getKey());
           final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, dataProviderFqn);
           LOG.assertTrue(annotation != null);
@@ -68,7 +70,7 @@ public class DuplicatedDataProviderNamesInspection extends BaseJavaLocalInspecti
           LOG.assertTrue(nameElement != null);
           PsiElement problemElement = PsiTreeUtil.isAncestor(aClass, nameElement, false) ? nameElement : method.getNameIdentifier();
           LOG.assertTrue(problemElement != null);
-          descriptors.add(manager.createProblemDescriptor(problemElement, description, true, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.ERROR));
+          descriptors.add(manager.createProblemDescriptor(problemElement, description, isOnTheFly, LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.ERROR));
         }
       }
     }

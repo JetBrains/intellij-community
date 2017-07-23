@@ -18,11 +18,11 @@ package com.intellij.execution.testframework.sm;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -30,7 +30,6 @@ import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,7 +38,6 @@ import java.util.List;
  * @author Roman Chernyatchik
  */
 public class FileUrlProvider implements SMTestLocator, DumbAware {
-  private static final Logger LOG = Logger.getInstance(FileUrlProvider.class.getName());
 
   public static final FileUrlProvider INSTANCE = new FileUrlProvider();
 
@@ -50,28 +48,29 @@ public class FileUrlProvider implements SMTestLocator, DumbAware {
       return Collections.emptyList();
     }
 
-    final String normalizedPath = path.replace(File.separatorChar, '/');
-
-    final int lineNoSeparatorIndex = normalizedPath.lastIndexOf(':');
-
     final String filePath;
     final int lineNumber;
-    // if line is specified
-    if (lineNoSeparatorIndex > 3) {   // on Windows, paths start with /C: and that colon is not a line number separator 
-      final String lineNumStr = normalizedPath.substring(lineNoSeparatorIndex + 1);
-      int lineNum = 0;
-      try {
-        lineNum = Integer.parseInt(lineNumStr);
-      } catch (NumberFormatException e) {
-        LOG.warn(protocol + ": Malformed location path: " + path, e);
-      }
+    final int columnNumber;
 
-      filePath = normalizedPath.substring(0, lineNoSeparatorIndex);
-      lineNumber = lineNum;
+    int lastColonIndex = path.lastIndexOf(':');
+    if (lastColonIndex > 3) {   // on Windows, paths start with /C: and that colon is not a line number separator
+      int lastValue = StringUtil.parseInt(path.substring(lastColonIndex + 1), -1);
+      int penultimateColonIndex = path.lastIndexOf(':', lastColonIndex - 1);
+      if (penultimateColonIndex > 3) {
+        int penultimateValue = StringUtil.parseInt(path.substring(penultimateColonIndex + 1, lastColonIndex), -1);
+        filePath = path.substring(0, penultimateColonIndex);
+        lineNumber = penultimateValue;
+        columnNumber = lineNumber <= 0 ? -1 : lastValue;
+      }
+      else {
+        filePath = path.substring(0, lastColonIndex);
+        lineNumber = lastValue;
+        columnNumber = -1;
+      }
     } else {
-      // unknown line
-      lineNumber = 1;
-      filePath = normalizedPath;
+      filePath = path;
+      lineNumber = -1;
+      columnNumber = -1;
     }
     // Now we should search file with most suitable path
     // here path may be absolute or relative
@@ -81,24 +80,35 @@ public class FileUrlProvider implements SMTestLocator, DumbAware {
       return Collections.emptyList();
     }
 
-    if (lineNumber < 0) {
-      LOG.warn("Tests location provider: line number should be >= 1. Path: " + path);
-    }
-
     final List<Location> locations = new ArrayList<>(2);
     for (VirtualFile file : virtualFiles) {
-      locations.add(createLocationFor(project, file, lineNumber < 1 ? 1 : lineNumber));
+      locations.add(createLocationFor(project, file, lineNumber, columnNumber));
     }
     return locations;
   }
 
   @Nullable
-  public static Location createLocationFor(Project project, @NotNull VirtualFile virtualFile, int lineNum) {
-    assert lineNum > 0;
+  public static Location createLocationFor(@NotNull Project project, @NotNull VirtualFile virtualFile, int lineNum) {
+    return createLocationFor(project, virtualFile, lineNum, -1);
+  }
 
+  /**
+   * @param project     Project instance
+   * @param virtualFile VirtualFile instance to locate
+   * @param lineNum     one-based line number to locate inside {@code virtualFile},
+   *                    a non-positive line number doesn't change text caret position inside the file
+   * @param columnNum   one-based column number to locate inside {@code virtualFile},
+   *                    a non-positive column number doesn't change text caret position inside the file
+   * @return Location instance, or null if not found
+   */
+  @Nullable
+  public static Location createLocationFor(@NotNull Project project, @NotNull VirtualFile virtualFile, int lineNum, int columnNum) {
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
     if (psiFile == null) {
       return null;
+    }
+    if (lineNum <= 0) {
+      return PsiLocation.fromPsiElement(psiFile);
     }
 
     final Document doc = PsiDocumentManager.getInstance(project).getDocument(psiFile);
@@ -106,19 +116,14 @@ public class FileUrlProvider implements SMTestLocator, DumbAware {
       return null;
     }
 
-    final int lineCount = doc.getLineCount();
-    final int lineStartOffset;
-    final int endOffset;
-    if (lineNum <= lineCount) {
-      lineStartOffset = doc.getLineStartOffset(lineNum - 1);
-      endOffset = doc.getLineEndOffset(lineNum - 1);
-    } else {
-      // unknown line
-      lineStartOffset = 0;
-      endOffset = doc.getTextLength();
+    if (lineNum > doc.getLineCount()) {
+      return PsiLocation.fromPsiElement(psiFile);
     }
+    
+    final int lineStartOffset = doc.getLineStartOffset(lineNum - 1);
+    final int endOffset = doc.getLineEndOffset(lineNum - 1);
 
-    int offset = lineStartOffset;
+    int offset = Math.min(lineStartOffset + Math.max(columnNum - 1, 0), endOffset);
     PsiElement elementAtLine = null;
     while (offset <= endOffset) {
       elementAtLine = psiFile.findElementAt(offset);

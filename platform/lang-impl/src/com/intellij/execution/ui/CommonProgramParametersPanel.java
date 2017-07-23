@@ -18,6 +18,7 @@ package com.intellij.execution.ui;
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
+import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.PathMacros;
@@ -38,6 +39,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,16 +127,17 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     button.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        List<String> macros = new SmartList<>(PathMacros.getInstance().getUserMacroNames());
+        List<String> macros = new SmartList<>(ContainerUtil.map(PathMacros.getInstance().getUserMacroNames(), s -> "$" + s + "$"));
         if (myModuleContext != null || myHasModuleMacro) {
-          macros.add(PathMacroUtil.MODULE_DIR_MACRO_NAME);
+          macros.add("$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$");
+          macros.add(ProgramParametersConfigurator.MODULE_WORKING_DIR);
         }
 
         final JList list = new JBList(ArrayUtil.toStringArray(macros));
         JBPopupFactory.getInstance().createListPopupBuilder(list).setItemChoosenCallback(() -> {
           final Object value = list.getSelectedValue();
           if (value instanceof String) {
-            textAccessor.setText('$' + ((String)value) + '$');
+            textAccessor.setText((String)value);
           }
         }).setMovable(false).setResizable(false).createPopup().showUnderneathOf(button);
       }

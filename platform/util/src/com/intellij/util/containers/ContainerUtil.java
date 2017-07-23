@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,7 +100,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Pair<K, V> first, @NotNull Pair<K, V>... entries) {
+  public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Pair<K, ? extends V> first, @NotNull Pair<K, ? extends V>... entries) {
     return ContainerUtilRt.newLinkedHashMap(first, entries);
   }
 
@@ -599,11 +599,11 @@ public class ContainerUtil extends ContainerUtilRt {
     return res;
   }
 
-  public static <T> boolean processSortedListsInOrder(@NotNull List<T> list1,
-                                                      @NotNull List<T> list2,
-                                                      @NotNull Comparator<? super T> comparator,
-                                                      boolean mergeEqualItems,
-                                                      @NotNull Processor<T> processor) {
+  public static <T> void processSortedListsInOrder(@NotNull List<T> list1,
+                                                   @NotNull List<T> list2,
+                                                   @NotNull Comparator<? super T> comparator,
+                                                   boolean mergeEqualItems,
+                                                   @NotNull Consumer<T> processor) {
     int index1 = 0;
     int index2 = 0;
     while (index1 < list1.size() || index2 < list2.size()) {
@@ -627,15 +627,13 @@ public class ContainerUtil extends ContainerUtilRt {
           index2++;
         }
         if (c == 0 && !mergeEqualItems) {
-          if (!processor.process(e)) return false;
+          processor.consume(e);
           index2++;
           e = element2;
         }
       }
-      if (!processor.process(e)) return false;
+      processor.consume(e);
     }
-
-    return true;
   }
 
   @NotNull
@@ -645,65 +643,12 @@ public class ContainerUtil extends ContainerUtilRt {
                                              @NotNull Comparator<? super T> comparator,
                                              boolean mergeEqualItems) {
     final List<T> result = new ArrayList<T>(list1.size() + list2.size());
-    processSortedListsInOrder(list1, list2, comparator, mergeEqualItems, new Processor<T>() {
+    processSortedListsInOrder(list1, list2, comparator, mergeEqualItems, new Consumer<T>() {
       @Override
-      public boolean process(T t) {
+      public void consume(T t) {
         result.add(t);
-        return true;
       }
     });
-    return result;
-  }
-
-  @NotNull
-  @Contract(pure=true)
-  public static <T> List<T> mergeSortedArrays(@NotNull T[] list1, @NotNull T[] list2, @NotNull Comparator<? super T> comparator, boolean mergeEqualItems, @Nullable Processor<? super T> filter) {
-    int index1 = 0;
-    int index2 = 0;
-    List<T> result = new ArrayList<T>(list1.length + list2.length);
-
-    while (index1 < list1.length || index2 < list2.length) {
-      if (index1 >= list1.length) {
-        T t = list2[index2++];
-        if (filter != null && !filter.process(t)) continue;
-        result.add(t);
-      }
-      else if (index2 >= list2.length) {
-        T t = list1[index1++];
-        if (filter != null && !filter.process(t)) continue;
-        result.add(t);
-      }
-      else {
-        T element1 = list1[index1];
-        if (filter != null && !filter.process(element1)) {
-          index1++;
-          continue;
-        }
-        T element2 = list2[index2];
-        if (filter != null && !filter.process(element2)) {
-          index2++;
-          continue;
-        }
-        int c = comparator.compare(element1, element2);
-        if (c < 0) {
-          result.add(element1);
-          index1++;
-        }
-        else if (c > 0) {
-          result.add(element2);
-          index2++;
-        }
-        else {
-          result.add(element1);
-          if (!mergeEqualItems) {
-            result.add(element2);
-          }
-          index1++;
-          index2++;
-        }
-      }
-    }
-
     return result;
   }
 
@@ -896,19 +841,26 @@ public class ContainerUtil extends ContainerUtilRt {
     return null;
   }
 
+  @Nullable
+  public static <T, V extends T> V findLast(@NotNull List<V> list, @NotNull Condition<T> condition) {
+    int index = lastIndexOf(list, condition);
+    if (index < 0) return null;
+    return list.get(index);
+  }
+
   @NotNull
   @Contract(pure=true)
-  public static <T, KEY, VALUE> Map<KEY, VALUE> map2Map(@NotNull T[] collection, @NotNull Function<T, Pair<KEY, VALUE>> mapper) {
+  public static <T, K, V> Map<K, V> map2Map(@NotNull T[] collection, @NotNull Function<T, Pair<K, V>> mapper) {
     return map2Map(Arrays.asList(collection), mapper);
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <T, KEY, VALUE> Map<KEY, VALUE> map2Map(@NotNull Collection<? extends T> collection,
-                                                        @NotNull Function<T, Pair<KEY, VALUE>> mapper) {
-    final Map<KEY, VALUE> set = new THashMap<KEY, VALUE>(collection.size());
+  public static <T, K, V> Map<K, V> map2Map(@NotNull Collection<? extends T> collection,
+                                            @NotNull Function<T, Pair<K, V>> mapper) {
+    final Map<K, V> set = new THashMap<K, V>(collection.size());
     for (T t : collection) {
-      Pair<KEY, VALUE> pair = mapper.fun(t);
+      Pair<K, V> pair = mapper.fun(t);
       set.put(pair.first, pair.second);
     }
     return set;
@@ -916,18 +868,18 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  public static <T, KEY, VALUE> Map<KEY, VALUE> map2MapNotNull(@NotNull T[] collection,
-                                                               @NotNull Function<T, Pair<KEY, VALUE>> mapper) {
+  public static <T, K, V> Map<K, V> map2MapNotNull(@NotNull T[] collection,
+                                                   @NotNull Function<T, Pair<K, V>> mapper) {
     return map2MapNotNull(Arrays.asList(collection), mapper);
   }
 
   @NotNull
   @Contract(pure = true)
-  public static <T, KEY, VALUE> Map<KEY, VALUE> map2MapNotNull(@NotNull Collection<? extends T> collection,
-                                                               @NotNull Function<T, Pair<KEY, VALUE>> mapper) {
-    final Map<KEY, VALUE> set = new THashMap<KEY, VALUE>(collection.size());
+  public static <T, K, V> Map<K, V> map2MapNotNull(@NotNull Collection<? extends T> collection,
+                                                   @NotNull Function<T, Pair<K, V>> mapper) {
+    final Map<K, V> set = new THashMap<K, V>(collection.size());
     for (T t : collection) {
-      Pair<KEY, VALUE> pair = mapper.fun(t);
+      Pair<K, V> pair = mapper.fun(t);
       if (pair != null) {
         set.put(pair.first, pair.second);
       }
@@ -937,9 +889,9 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <KEY, VALUE> Map<KEY, VALUE> map2Map(@NotNull Collection<Pair<KEY, VALUE>> collection) {
-    final Map<KEY, VALUE> result = new THashMap<KEY, VALUE>(collection.size());
-    for (Pair<KEY, VALUE> pair : collection) {
+  public static <K, V> Map<K, V> map2Map(@NotNull Collection<Pair<K, V>> collection) {
+    final Map<K, V> result = new THashMap<K, V>(collection.size());
+    for (Pair<K, V> pair : collection) {
       result.put(pair.first, pair.second);
     }
     return result;
@@ -1224,6 +1176,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <T, E> Iterable<Pair<T, E>> zip(@NotNull final Iterable<T> iterable1, @NotNull final Iterable<E> iterable2) {
     return new Iterable<Pair<T, E>>() {
+      @NotNull
       @Override
       public Iterator<Pair<T, E>> iterator() {
         return new Iterator<Pair<T, E>>() {
@@ -1416,9 +1369,12 @@ public class ContainerUtil extends ContainerUtilRt {
     };
   }
 
+  @SuppressWarnings({"unchecked", "LambdaUnfriendlyMethodOverload"})
   @NotNull
   @Contract(pure=true)
   public static <T> Iterable<T> concat(@NotNull final Iterable<? extends T>... iterables) {
+    if (iterables.length == 0) return emptyIterable();
+    if (iterables.length == 1) return (Iterable<T>)iterables[0];
     return new Iterable<T>() {
       @NotNull
       @Override
@@ -1428,8 +1384,7 @@ public class ContainerUtil extends ContainerUtilRt {
           Iterable<? extends T> iterable = iterables[i];
           iterators[i] = iterable.iterator();
         }
-        @SuppressWarnings("unchecked") Iterator<T> i = concatIterators(iterators);
-        return i;
+        return concatIterators(iterators);
       }
     };
   }
@@ -1556,6 +1511,14 @@ public class ContainerUtil extends ContainerUtilRt {
       }
     }
     return result.isEmpty() ? ContainerUtil.<T>emptyList() : result;
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <E extends Enum<E>> EnumSet<E> intersection(@NotNull EnumSet<E> collection1, @NotNull EnumSet<E> collection2) {
+    EnumSet<E> result = EnumSet.copyOf(collection1);
+    result.retainAll(collection2);
+    return result;
   }
 
   @Nullable
@@ -1832,12 +1795,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T,V> List<V> map(@NotNull Collection<? extends T> iterable, @NotNull Function<T, V> mapping) {
-    if (iterable.isEmpty()) return emptyList();
-    List<V> result = new ArrayList<V>(iterable.size());
-    for (T t : iterable) {
-      result.add(mapping.fun(t));
-    }
-    return result;
+    return ContainerUtilRt.map2List(iterable, mapping);
   }
 
   /**
@@ -2053,6 +2011,15 @@ public class ContainerUtil extends ContainerUtilRt {
     return false;
   }
 
+  @Contract(pure=true)
+  public static <T> int count(@NotNull Iterable<T> iterable, @NotNull Condition<? super T> condition) {
+    int count = 0;
+    for (final T t : iterable) {
+      if (condition.value(t)) count++;
+    }
+    return count;
+  }
+
   @NotNull
   @Contract(pure=true)
   public static <T> List<T> unfold(@Nullable T t, @NotNull NullableFunction<T, T> next) {
@@ -2163,57 +2130,6 @@ public class ContainerUtil extends ContainerUtilRt {
     for (int i = 0; i < n; i++, a++, b++) {
       swapElements(x, a, b);
     }
-  }
-
-  /**
-   * Merge sorted points, which are sorted by x and with equal x by y.
-   * Result is put to x1 y1.
-   */
-  public static void mergeSortedArrays(@NotNull TIntArrayList x1,
-                                       @NotNull TIntArrayList y1,
-                                       @NotNull TIntArrayList x2,
-                                       @NotNull TIntArrayList y2) {
-    TIntArrayList newX = new TIntArrayList();
-    TIntArrayList newY = new TIntArrayList();
-
-    int i = 0;
-    int j = 0;
-
-    while (i < x1.size() && j < x2.size()) {
-      if (x1.get(i) < x2.get(j) || x1.get(i) == x2.get(j) && y1.get(i) < y2.get(j)) {
-        newX.add(x1.get(i));
-        newY.add(y1.get(i));
-        i++;
-      }
-      else if (x1.get(i) > x2.get(j) || x1.get(i) == x2.get(j) && y1.get(i) > y2.get(j)) {
-        newX.add(x2.get(j));
-        newY.add(y2.get(j));
-        j++;
-      }
-      else { //equals
-        newX.add(x1.get(i));
-        newY.add(y1.get(i));
-        i++;
-        j++;
-      }
-    }
-
-    while (i < x1.size()) {
-      newX.add(x1.get(i));
-      newY.add(y1.get(i));
-      i++;
-    }
-
-    while (j < x2.size()) {
-      newX.add(x2.get(j));
-      newY.add(y2.get(j));
-      j++;
-    }
-
-    x1.clear();
-    y1.clear();
-    x1.add(newX.toNativeArray());
-    y1.add(newY.toNativeArray());
   }
 
 
@@ -2407,17 +2323,6 @@ public class ContainerUtil extends ContainerUtilRt {
     return result;
   }
 
-  @Contract(pure=true)
-  public static <T> boolean processRecursively(final T root, @NotNull PairProcessor<T, List<T>> processor) {
-    final LinkedList<T> list = new LinkedList<T>();
-    list.add(root);
-    while (!list.isEmpty()) {
-      final T o = list.removeFirst();
-      if (!processor.process(o, list)) return false;
-    }
-    return true;
-  }
-
   @Contract("null -> null; !null -> !null")
   public static <T> List<T> trimToSize(@Nullable List<T> list) {
     if (list == null) return null;
@@ -2500,7 +2405,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectSoftValueMap() {
     //noinspection deprecation
-    return new ConcurrentSoftValueIntObjectHashMap<V>();
+    return new ConcurrentIntKeySoftValueHashMap<V>();
   }
 
   @NotNull
@@ -2527,7 +2432,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <V> ConcurrentIntObjectMap<V> createConcurrentIntObjectWeakValueMap() {
     //noinspection deprecation
-    return new ConcurrentWeakValueIntObjectHashMap<V>();
+    return new ConcurrentIntKeyWeakValueHashMap<V>();
   }
 
   @NotNull
@@ -2633,7 +2538,7 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @Deprecated
   public static <T> void addIfNotNull(@Nullable T element, @NotNull Collection<T> result) {
-    ContainerUtilRt.addIfNotNull(element, result);
+    addIfNotNull(result,element);
   }
 
   public static <T> void addIfNotNull(@NotNull Collection<T> result, @Nullable T element) {
@@ -2752,6 +2657,11 @@ public class ContainerUtil extends ContainerUtilRt {
   public static <T> Set<T> notNullize(@Nullable Set<T> set) {
     //noinspection unchecked
     return set == null ? Collections.<T>emptySet() : set;
+  }
+
+  @Contract(pure = true)
+  public static <T> boolean startsWith(@NotNull List<T> list, @NotNull List<T> prefix) {
+    return list.size() >= prefix.size() && list.subList(0, prefix.size()).equals(prefix);
   }
 
   @Nullable

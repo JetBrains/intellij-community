@@ -20,7 +20,6 @@ import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntBuildListener;
 import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.execution.ExecutionHandler;
-import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.lang.ant.dom.AntDomTarget;
 import com.intellij.lang.ant.resources.AntActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -61,7 +60,7 @@ public class RunTargetAction extends AnAction {
       antTarget.first, new String[] {antTarget.second.getName().getValue() },
       null,
       e.getDataContext(),
-      Collections.<BuildFileProperty>emptyList(),
+      Collections.emptyList(),
       AntBuildListener.NULL);
   }
 

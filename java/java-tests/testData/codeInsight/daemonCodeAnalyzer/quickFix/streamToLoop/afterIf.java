@@ -5,18 +5,14 @@ import java.util.List;
 
 public class Main {
   private static void test(List<String> list) {
-      boolean found = false;
       for (String x : list) {
           if (x != null) {
               if (x.startsWith("x")) {
-                  found = true;
+                  System.out.println("Ok!");
                   break;
               }
           }
       }
-      if(found) {
-      System.out.println("Ok!");
-    }
   }
 
   public static void main(String[] args) {

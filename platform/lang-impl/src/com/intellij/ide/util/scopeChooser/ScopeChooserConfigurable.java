@@ -23,16 +23,16 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.IconUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -51,13 +51,11 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
-/**
- * User: anna
- * Date: 01-Jul-2006
- */
 public class ScopeChooserConfigurable extends MasterDetailsComponent implements SearchableConfigurable {
   @NonNls public static final String SCOPE_CHOOSER_CONFIGURABLE_UI_KEY = "ScopeChooserConfigurable.UI";
   public static final String PROJECT_SCOPES = "project.scopes";
@@ -118,13 +116,10 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     loadComponentState();
 
     final List<String> order = getScopesState().myOrder;
-    TreeUtil.sort(myRoot, new Comparator<DefaultMutableTreeNode>() {
-      @Override
-      public int compare(final DefaultMutableTreeNode o1, final DefaultMutableTreeNode o2) {
-        final int idx1 = order.indexOf(((MyNode)o1).getDisplayName());
-        final int idx2 = order.indexOf(((MyNode)o2).getDisplayName());
-        return idx1 - idx2;
-      }
+    TreeUtil.sortRecursively(myRoot, (o1, o2) -> {
+      final int idx1 = order.indexOf(o1.getDisplayName());
+      final int idx2 = order.indexOf(o2.getDisplayName());
+      return idx1 - idx2;
     });
 
     if (getScopesState().myOrder.size() != myRoot.getChildCount()) {
@@ -251,12 +246,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     });
     super.initTree();
     myTree.setShowsRootHandles(false);
-    new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
-      @Override
-      public String convert(final TreePath treePath) {
-        return ((MyNode)treePath.getLastPathComponent()).getDisplayName();
-      }
-    }, true);
+    new TreeSpeedSearch(myTree, treePath -> ((MyNode)treePath.getLastPathComponent()).getDisplayName(), true);
 
     myTree.getEmptyText().setText(IdeBundle.message("scopes.no.scoped"));
   }
@@ -362,7 +352,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     return getHelpTopic();
   }
 
-  private class MyAddAction extends ActionGroup implements ActionGroupWithPreselection {
+  private class MyAddAction extends ActionGroup implements ActionGroupWithPreselection, DumbAware {
 
     private AnAction[] myChildren;
     private final boolean myFromPopup;
@@ -389,15 +379,15 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
       if (myChildren == null) {
         myChildren = new AnAction[2];
-        myChildren[0] = new AnAction(IdeBundle.message("add.local.scope.action.text"), IdeBundle.message("add.local.scope.action.text"),
-                                     myLocalScopesManager.getIcon()) {
+        myChildren[0] = new DumbAwareAction(IdeBundle.message("add.local.scope.action.text"), IdeBundle.message("add.local.scope.action.text"),
+                                            myLocalScopesManager.getIcon()) {
           @Override
           public void actionPerformed(AnActionEvent e) {
             createScope(true, IdeBundle.message("add.scope.dialog.title"), null);
           }
         };
-        myChildren[1] = new AnAction(IdeBundle.message("add.shared.scope.action.text"), IdeBundle.message("add.shared.scope.action.text"),
-                                     mySharedScopesManager.getIcon()) {
+        myChildren[1] = new DumbAwareAction(IdeBundle.message("add.shared.scope.action.text"), IdeBundle.message("add.shared.scope.action.text"),
+                                            mySharedScopesManager.getIcon()) {
           @Override
           public void actionPerformed(AnActionEvent e) {
             createScope(false, IdeBundle.message("add.scope.dialog.title"), null);

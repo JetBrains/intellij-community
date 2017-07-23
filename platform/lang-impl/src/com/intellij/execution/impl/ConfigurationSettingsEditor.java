@@ -135,23 +135,13 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     SettingsEditor<RunnerAndConfigurationSettings> wrappedRunEditor = null;
     if (configEditor != null) {
       wrappedConfigEditor = wrapEditor(configEditor,
-                                       new Convertor<RunnerAndConfigurationSettings, ConfigurationPerRunnerSettings>() {
-                                         @Override
-                                         public ConfigurationPerRunnerSettings convert(RunnerAndConfigurationSettings configurationSettings) {
-                                           return configurationSettings.getConfigurationSettings(runner);
-                                         }
-                                       },
+                                       configurationSettings -> configurationSettings.getConfigurationSettings(runner),
                                        runner);
     }
 
     if (runnerEditor != null) {
       wrappedRunEditor = wrapEditor(runnerEditor,
-                                    new Convertor<RunnerAndConfigurationSettings, RunnerSettings>() {
-                                      @Override
-                                      public RunnerSettings convert(RunnerAndConfigurationSettings configurationSettings) {
-                                        return configurationSettings.getRunnerSettings(runner);
-                                      }
-                                    },
+                                    configurationSettings -> configurationSettings.getRunnerSettings(runner),
                                     runner);
     }
 

@@ -65,7 +65,7 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
         customHandlers.add(handlerFactory.createHandler(module));
       }
     }
-    return customHandlers == null ? Collections.<OrderEnumerationHandler>emptyList() : customHandlers;
+    return customHandlers == null ? Collections.emptyList() : customHandlers;
   }
 
   @Override

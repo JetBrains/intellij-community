@@ -34,8 +34,6 @@ import org.tmatesoft.svn.core.internal.wc.admin.SVNWCAccess;
 import org.tmatesoft.svn.core.internal.wc17.SVNReporter17;
 import org.tmatesoft.svn.core.internal.wc17.SVNWCContext;
 import org.tmatesoft.svn.core.io.ISVNEditor;
-import org.tmatesoft.svn.core.io.ISVNReporter;
-import org.tmatesoft.svn.core.io.ISVNReporterBaton;
 import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
@@ -125,11 +123,9 @@ public class SvnKitDiffClient extends BaseSvnClient implements DiffClient {
         targetRepository = myVcs.getSvnKitManager().createRepository(myTarget2.getURL());
         diffEditor = new SvnDiffEditor(sourceRepository, targetRepository, -1, false);
         final ISVNEditor cancellableEditor = SVNCancellableEditor.newInstance(diffEditor, new SvnKitProgressCanceller(), null);
-        sourceRepository.diff(myTarget2.getURL(), rev, rev, null, true, true, false, new ISVNReporterBaton() {
-          public void report(ISVNReporter reporter) throws SVNException {
-            reporter.setPath("", null, rev, false);
-            reporter.finishReport();
-          }
+        sourceRepository.diff(myTarget2.getURL(), rev, rev, null, true, true, false, reporter -> {
+          reporter.setPath("", null, rev, false);
+          reporter.finishReport();
         }, cancellableEditor);
 
         return diffEditor.getChangesMap().values();

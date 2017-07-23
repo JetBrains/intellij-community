@@ -25,6 +25,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,10 +38,13 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameJavaMemberProcessor");
 
   public static void qualifyMember(PsiMember member, PsiElement occurence, String newName) throws IncorrectOperationException {
-    qualifyMember(occurence, newName, member.getContainingClass(), member.hasModifierProperty(PsiModifier.STATIC));
+    final PsiClass containingClass = member.getContainingClass();
+    if (containingClass != null) {
+      qualifyMember(occurence, newName, containingClass, member.hasModifierProperty(PsiModifier.STATIC));
+    }
   }
 
-  protected static void qualifyMember(final PsiElement occurence, final String newName, final PsiClass containingClass, final boolean isStatic)
+  protected static void qualifyMember(final PsiElement occurence, final String newName, @NotNull final PsiClass containingClass, final boolean isStatic)
       throws IncorrectOperationException {
     PsiManager psiManager = occurence.getManager();
     PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
@@ -63,12 +67,13 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
     final String name = member.getName();
     PsiReferenceExpression ref = (PsiReferenceExpression) factory.createExpressionFromText(name, context);
     PsiElement resolved = ref.resolve();
-    if (manager.areElementsEquivalent(resolved, member)) return ref;
-    return createQualifiedMemberReference(context, name, member.getContainingClass(), member.hasModifierProperty(PsiModifier.STATIC));
+    final PsiClass containingClass = member.getContainingClass();
+    if (manager.areElementsEquivalent(resolved, member) || containingClass == null) return ref;
+    return createQualifiedMemberReference(context, name, containingClass, member.hasModifierProperty(PsiModifier.STATIC));
   }
 
   protected static PsiReferenceExpression createQualifiedMemberReference(final PsiElement context, final String name,
-                                                                         final PsiClass containingClass, final boolean isStatic) throws IncorrectOperationException {
+                                                                         @NotNull final PsiClass containingClass, final boolean isStatic) throws IncorrectOperationException {
     PsiReferenceExpression ref;
     final PsiJavaCodeReferenceElement qualifier;
 

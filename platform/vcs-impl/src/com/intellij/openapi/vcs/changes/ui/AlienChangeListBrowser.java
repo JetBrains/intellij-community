@@ -44,7 +44,7 @@ public class AlienChangeListBrowser extends ChangesBrowser {
   @Override
   public void rebuildList() {
     // dont change lists
-    myViewer.setChangesToDisplay(myChanges ==  null ? Collections.<Change>emptyList() : myChanges);
+    myViewer.setChangesToDisplay(myChanges ==  null ? Collections.emptyList() : myChanges);
   }
 
   protected void setInitialSelection(final List<? extends ChangeList> changeLists, final List<Change> changes, final ChangeList initialListSelection) {

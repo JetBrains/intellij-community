@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver.External
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
@@ -36,13 +37,15 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiJavaModuleReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UAnnotation;
+import org.jetbrains.uast.UImportStatement;
+import org.jetbrains.uast.UastContextKt;
 
 import java.io.File;
 import java.util.*;
@@ -219,13 +222,13 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   }
 
   private static ThreeState isReferenceToAnnotation(final PsiElement psiElement) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(psiElement)) {
+    if (psiElement.getLanguage() == JavaLanguage.INSTANCE && !PsiUtil.isLanguageLevel5OrHigher(psiElement)) {
       return ThreeState.NO;
     }
-    if (PsiTreeUtil.getParentOfType(psiElement, PsiAnnotation.class) != null) {
+    if (UastContextKt.getUastParentOfType(psiElement, UAnnotation.class) != null) {
       return ThreeState.YES;
     }
-    if (PsiTreeUtil.getParentOfType(psiElement, PsiImportStatement.class) != null) {
+    if (UastContextKt.getUastParentOfType(psiElement, UImportStatement.class) != null) {
       return ThreeState.UNSURE;
     }
     return ThreeState.NO;

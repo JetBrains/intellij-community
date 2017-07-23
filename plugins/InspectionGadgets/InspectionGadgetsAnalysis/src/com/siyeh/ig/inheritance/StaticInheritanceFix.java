@@ -19,14 +19,13 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.search.SearchScope;
@@ -40,9 +39,6 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: cdr
- */
 class StaticInheritanceFix extends InspectionGadgetsFix {
   private final boolean myReplaceInWholeProject;
 
@@ -86,12 +82,7 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         for (final PsiField field : allFields) {
-          SearchScope scope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
-                      @Override
-                      public SearchScope compute() {
-                        return implementingClass.getUseScope();
-                      }
-                    });
+          SearchScope scope = ReadAction.compute(() -> implementingClass.getUseScope());
           final Query<PsiReference> search = ReferencesSearch.search(field, scope, false);
           for (PsiReference reference : search) {
             if (!(reference instanceof PsiReferenceExpression)) {
@@ -100,19 +91,16 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
             final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)reference;
             if (!myReplaceInWholeProject) {
               boolean isInheritor =
-              ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-                @Override
-                public Boolean compute() {
-                  boolean isInheritor = false;
+                ReadAction.compute(() -> {
+                  boolean isInheritor1 = false;
                   PsiClass aClass = PsiTreeUtil.getParentOfType(referenceExpression, PsiClass.class);
                   while (aClass != null) {
-                    isInheritor = InheritanceUtil.isInheritorOrSelf(aClass, implementingClass, true);
-                    if (isInheritor) break;
+                    isInheritor1 = InheritanceUtil.isInheritorOrSelf(aClass, implementingClass, true);
+                    if (isInheritor1) break;
                     aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
                   }
-                  return isInheritor;
-                }
-              });
+                  return isInheritor1;
+                });
               if (!isInheritor) continue;
             }
             final Runnable runnable = () -> {

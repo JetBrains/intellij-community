@@ -137,7 +137,7 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
       parent = myImportElement.getParent();
     }
     if (myImportable instanceof PyFunction) {
-      sb.append(((PyFunction)myImportable).getParameterList().getPresentableText(false));
+      sb.append("()");
     }
     else if (myImportable instanceof PyClass) {
       final List<String> supers = ContainerUtil.mapNotNull(((PyClass)myImportable).getSuperClasses(null),

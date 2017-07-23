@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
@@ -46,7 +47,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
@@ -54,6 +54,10 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiTreeUtilKt.treeWalkUp;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.collapseProperties;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.collapseReflectedMethods;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -334,7 +338,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
             // because inner annotations are not permitted and it can cause infinite recursion
             PsiElement placeToStartWalking = isAnnotationRef(ref) ? getContainingFileSkippingStubFiles(ref) : ref;
             if (placeToStartWalking != null) {
-              ResolveUtil.treeWalkUp(placeToStartWalking, processor, false);
+              treeWalkUp(placeToStartWalking, processor);
               GroovyResolveResult[] candidates = processor.getCandidates();
               if (candidates.length > 0) return candidates;
             }
@@ -355,30 +359,28 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
           else if (classResult.length == 0) {
             return _resolve(ref, manager, ReferenceKind.PACKAGE_FQ);
           }
-          
+
           return classResult;
         }
         case STATIC_MEMBER_FQ: {
           final GrCodeReferenceElement qualifier = ref.getQualifier();
-          if (qualifier != null) {
-            final PsiElement resolved = qualifier.resolve();
-            if (resolved instanceof PsiClass) {
-              final PsiClass clazz = (PsiClass)resolved;
-              PsiResolveHelper helper = JavaPsiFacade.getInstance(clazz.getProject()).getResolveHelper();
-              List<GroovyResolveResult> result = new ArrayList<>();
+          if (qualifier == null) break;
 
-              processFields(ref, refName, clazz, helper, result);
-              processMethods(ref, refName, clazz, helper, result);
-              processInnerClasses(ref, refName, clazz, helper, result);
+          final PsiElement resolved = qualifier.resolve();
+          if (!(resolved instanceof PsiClass)) break;
 
-              if (result.isEmpty()) {
-                processAccessors(ref, refName, clazz, helper, result);
-              }
+          final PsiClass clazz = (PsiClass)resolved;
+          final PsiResolveHelper helper = JavaPsiFacade.getInstance(clazz.getProject()).getResolveHelper();
 
-              return result.toArray(new GroovyResolveResult[result.size()]);
-            }
-          }
-          break;
+          List<GroovyResolveResult> result = new ArrayList<>();
+          processFields(ref, refName, clazz, helper, result);
+          processMethods(ref, refName, clazz, helper, result);
+          processInnerClasses(ref, refName, clazz, helper, result);
+          processAccessors(ref, refName, clazz, helper, result);
+          result = collapseReflectedMethods(result);
+
+          final List<GroovyResolveResult> valid = ContainerUtil.filter(result, ResolveResult::isValidResult);
+          return (valid.isEmpty() ? result : valid).toArray(GroovyResolveResult.EMPTY_ARRAY);
         }
       }
 
@@ -434,15 +436,15 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
                                          PsiClass clazz,
                                          PsiResolveHelper helper,
                                          List<GroovyResolveResult> result) {
+      final List<GroovyResolveResult> propertyResults = new ArrayList<>();
       final String booleanGetter = GroovyPropertyUtils.getGetterNameBoolean(refName);
       final String nonBooleanGetter = GroovyPropertyUtils.getGetterNameNonBoolean(refName);
       final String setter = GroovyPropertyUtils.getSetterName(refName);
 
-      processMethods(ref, booleanGetter, clazz, helper, result);
-      if (!result.isEmpty()) return;
-      processMethods(ref, nonBooleanGetter, clazz, helper, result);
-      if (!result.isEmpty()) return;
-      processMethods(ref, setter, clazz, helper, result);
+      processMethods(ref, booleanGetter, clazz, helper, propertyResults);
+      processMethods(ref, nonBooleanGetter, clazz, helper, propertyResults);
+      processMethods(ref, setter, clazz, helper, propertyResults);
+      result.addAll(collapseProperties(propertyResults));
     }
 
     private static void processInnerClasses(GrCodeReferenceElementImpl ref,
@@ -474,7 +476,9 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
                                        List<GroovyResolveResult> result) {
       final PsiMethod[] methods = clazz.findMethodsByName(refName, true);
       for (PsiMethod method : methods) {
-        result.add(new GroovyResolveResultImpl(method, helper.isAccessible(method, ref, null)));
+        if (method.hasModifierProperty(PsiModifier.STATIC)) {
+          result.add(new GroovyResolveResultImpl(method, helper.isAccessible(method, ref, null)));
+        }
       }
     }
   }
@@ -484,12 +488,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   @Override
   @NotNull
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    final ResolveResult[] results = TypeInferenceHelper.getCurrentContext().multiResolve(this, incompleteCode, RESOLVER);
-    if (results.length == 0) {
-      return GroovyResolveResult.EMPTY_ARRAY;
-    }
-
-    return (GroovyResolveResult[])results;
+    return TypeInferenceHelper.getCurrentContext().multiResolve(this, incompleteCode, RESOLVER);
   }
 
   @NotNull

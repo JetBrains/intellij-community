@@ -9,30 +9,19 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import org.jetbrains.annotations.NotNull;
-
 import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.psi.XsltApplyTemplates;
-import org.intellij.lang.xpath.xslt.psi.XsltCallTemplate;
-import org.intellij.lang.xpath.xslt.psi.XsltElementFactory;
-import org.intellij.lang.xpath.xslt.psi.XsltParameter;
-import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
-import org.intellij.lang.xpath.xslt.psi.XsltTemplateInvocation;
-import org.intellij.lang.xpath.xslt.psi.XsltWithParam;
+import org.intellij.lang.xpath.xslt.psi.*;
+import org.intellij.lang.xpath.xslt.quickfix.AbstractFix;
 import org.intellij.lang.xpath.xslt.quickfix.AddParameterFix;
 import org.intellij.lang.xpath.xslt.quickfix.AddWithParamFix;
 import org.intellij.lang.xpath.xslt.quickfix.RemoveParamFix;
-import org.intellij.lang.xpath.xslt.quickfix.AbstractFix;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 24.01.2008
-*/
 public class TemplateInvocationInspection extends XsltInspection {
 
   @NotNull
@@ -52,6 +41,7 @@ public class TemplateInvocationInspection extends XsltInspection {
 
     @NotNull
     public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+      if (!(holder.getFile() instanceof XmlFile)) return PsiElementVisitor.EMPTY_VISITOR;
         final XsltElementFactory xsltElementFactory = XsltElementFactory.getInstance();
         return new XmlElementVisitor() {
             @Override

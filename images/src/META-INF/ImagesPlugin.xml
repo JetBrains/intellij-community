@@ -1,6 +1,9 @@
 <idea-plugin>
 
   <vendor>JetBrains</vendor>
+  <extensionPoints>
+    <extensionPoint name="images.themeFilter" interface="org.intellij.images.thumbnail.actions.ThemeFilter"/>
+  </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <search.topHitProvider implementation="org.intellij.images.options.impl.ImagesOptionsTopHitProvider"/>
@@ -19,6 +22,8 @@
     <fileLookupInfoProvider implementation="org.intellij.images.completion.ImageLookupInfoProvider"/>
     <documentationProvider implementation="org.intellij.images.fileTypes.ImageDocumentationProvider"/>
 
+    <projectService serviceInterface="org.intellij.images.search.ImageTagManager"
+                    serviceImplementation="org.intellij.images.search.ImageTagManager"/>
     <statistics.usagesCollector implementation="org.intellij.images.statistics.BackgroundImagesUsageCollector"/>
   </extensions>
 
@@ -28,6 +33,11 @@
             icon="ImagesIcons.EditExternally"
             text="Open Image in External Editor">
       <keyboard-shortcut first-keystroke="control alt F4" keymap="$default"/>
+      <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>
+    </action>
+    <action class="org.intellij.images.actions.ConvertSvgToPngAction"
+            id="Images.ConvertSvgToPng"
+            text="Convert to PNG">
       <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>
     </action>
     <action class="org.intellij.images.actions.ShowThumbnailsAction"
@@ -110,7 +120,31 @@
       </action>
       <separator/>
       <reference id="Images.ToggleTransparencyChessboard"/>
+      <action class="org.intellij.images.thumbnail.actions.ToggleFileSizeAction"
+              id="Images.Thumbnails.ToggleFileSize"
+              text="File Size"
+              description="Toggle whether to show the image size information"
+              icon="AllIcons.FileTypes.Any_type">
+      </action> 
+      <action class="org.intellij.images.thumbnail.actions.ToggleFileNameAction"
+              id="Images.Thumbnails.ToggleFileName"
+              text="File Size"
+              description="Toggle whether to show the image name"
+              icon="AllIcons.Actions.ShowImportStatements">
+      </action>
       <separator/>
+      
+      <action class="org.intellij.images.thumbnail.actions.FilterByThemeComboBoxAction"
+              internal="true"
+              id="Images.Thumbnails.FilterByTheme"
+              text="Filter by Theme"
+              description="Filter images by theme"/>
+      <action class="org.intellij.images.thumbnail.actions.FilterByTagComboBoxAction"
+              internal="true"
+              id="Images.Thumbnails.FilterByTag"
+              text="Filter by Tag"
+              description="Filter images by tag"/>
+
       <action class="org.intellij.images.thumbnail.actions.HideThumbnailsAction"
               id="Images.Thumbnails.Hide"
               text="Hide"
@@ -124,6 +158,8 @@
               id="Images.Thumbnails.EnterAction">
         <keyboard-shortcut first-keystroke="ENTER" keymap="$default"/>
       </action>
+      <action class="org.intellij.images.thumbnail.actions.AddTagGroup" id="Images.Thumbnails.AddTagGroup" text="Add Tag"/>
+      <action class="org.intellij.images.thumbnail.actions.RemoveTagGroup" id="Images.Thumbnails.RemoveTagGroup" text="Remove Tag"/>
       <separator/>
       <reference id="Images.ThumbnailsToolbar"/>
       <separator/>

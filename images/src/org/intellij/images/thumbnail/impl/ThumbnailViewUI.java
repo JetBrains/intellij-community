@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -39,8 +40,10 @@ import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBList;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.options.*;
+import org.intellij.images.search.TagFilter;
 import org.intellij.images.thumbnail.ThumbnailView;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions;
+import org.intellij.images.thumbnail.actions.ThemeFilter;
 import org.intellij.images.ui.ImageComponent;
 import org.intellij.images.ui.ImageComponentDecorator;
 import org.intellij.images.ui.ThumbnailComponent;
@@ -58,7 +61,10 @@ import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
 
 final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     private final VirtualFileListener vfsListener = new VFSListener();
@@ -113,6 +119,8 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             imageComponent.setTransparencyChessboardCellSize(chessboardOptions.getCellSize());
             imageComponent.setTransparencyChessboardWhiteColor(chessboardOptions.getWhiteColor());
             imageComponent.setTransparencyChessboardBlankColor(chessboardOptions.getBlackColor());
+            imageComponent.setFileNameVisible(editorOptions.isFileNameVisible());
+            imageComponent.setFileSizeVisible(editorOptions.isFileSizeVisible());
 
             options.addPropertyChangeListener(optionsListener);
 
@@ -169,8 +177,14 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
                 Arrays.sort(virtualFiles, VIRTUAL_FILE_COMPARATOR);
 
                 model.ensureCapacity(model.size() + virtualFiles.length + 1);
+                ThemeFilter filter = thumbnailView.getFilter();
+                TagFilter tagFilter = thumbnailView.getTagFilter();
                 for (VirtualFile virtualFile : virtualFiles) {
-                    model.addElement(virtualFile);
+                    if (filter == null || filter.accepts(virtualFile)) {
+                        if (tagFilter == null || tagFilter.accepts(virtualFile)) {
+                            model.addElement(virtualFile);
+                        }
+                    }
                 }
                 if (model.size() > 0) {
                     list.setSelectedIndex(0);
@@ -190,6 +204,28 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         createUI();
         cellRenderer.getImageComponent().setTransparencyChessboardVisible(visible);
         list.repaint();
+    }
+    
+    public void setFileNameVisible(boolean visible) {
+        createUI();
+        cellRenderer.getImageComponent().setFileNameVisible(visible);
+        list.repaint();
+    }
+    
+    public boolean isFileNameVisible() {
+        createUI();
+        return cellRenderer.getImageComponent().isFileNameVisible();
+    }
+    
+    public void setFileSizeVisible(boolean visible) {
+        createUI();
+        cellRenderer.getImageComponent().setFileSizeVisible(visible);
+        list.repaint();
+    }
+    
+    public boolean isFileSizeVisible() {
+        createUI();
+        return cellRenderer.getImageComponent().isFileSizeVisible();
     }
 
     public void setSelected(VirtualFile file, boolean selected) {
@@ -235,7 +271,14 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             if (value instanceof VirtualFile) {
                 VirtualFile file = (VirtualFile) value;
                 setFileName(file.getName());
-                setToolTipText(IfsUtil.getReferencePath(thumbnailView.getProject(), file));
+                String toolTipText = IfsUtil.getReferencePath(thumbnailView.getProject(), file);
+                if (!isFileSizeVisible()) {
+                    String description = getImageComponent().getDescription();
+                    if (description != null) {
+                        toolTipText += " [" + description + "]";
+                    }
+                }
+                setToolTipText(toolTipText);
                 setDirectory(file.isDirectory());
                 if (file.isDirectory()) {
                     int imagesCount = 0;
@@ -260,13 +303,13 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
                     } catch (Exception e) {
                         // Ignore
                         ImageComponent imageComponent = getImageComponent();
-                        imageComponent.getDocument().setValue(null);
+                        imageComponent.getDocument().setValue((BufferedImage)null);
                     }
                 }
 
             } else {
                 ImageComponent imageComponent = getImageComponent();
-                imageComponent.getDocument().setValue(null);
+                imageComponent.getDocument().setValue((BufferedImage)null);
                 setFileName(null);
                 setFileSize(0);
                 setToolTipText(null);
@@ -520,7 +563,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         }
     }
 
-    private final class VFSListener extends VirtualFileAdapter {
+    private final class VFSListener implements VirtualFileListener {
         public void contentsChanged(@NotNull VirtualFileEvent event) {
             VirtualFile file = event.getFile();
             if (list != null) {
@@ -575,7 +618,9 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
     private class FocusRequester extends MouseAdapter {
         public void mouseClicked(MouseEvent e) {
-            requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(ThumbnailViewUI.this, true);
+          });
         }
     }
 }

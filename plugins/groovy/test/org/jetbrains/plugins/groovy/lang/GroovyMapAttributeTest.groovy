@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -469,11 +469,12 @@ class Test {
 
   private doTestCompletionWithinMap(String text, String text2 = null) {
     PlatformTestUtil.registerExtension GroovyNamedArgumentProvider.EP_NAME, new GroovyNamedArgumentProvider() {
+      @NotNull
       @Override
       Map<String, NamedArgumentDescriptor> getNamedArguments(@NotNull GrListOrMap literal) {
         ['foo': NamedArgumentDescriptor.SIMPLE_NORMAL, 'bar': NamedArgumentDescriptor.SIMPLE_NORMAL]
       }
-    }, testRootDisposable
+    }, myFixture.testRootDisposable
 
     myFixture.with {
       configureByText '_.groovy', text

@@ -39,9 +39,6 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
-/**
- * User: anna
- */
 public abstract class InplaceIntroduceParameterUI extends IntroduceParameterSettingsUI {
   private JComboBox myReplaceFieldsCb;
   private boolean myHasWriteAccess;

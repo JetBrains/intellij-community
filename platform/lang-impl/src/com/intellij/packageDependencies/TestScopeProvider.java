@@ -38,6 +38,6 @@ public class TestScopeProvider extends CustomScopesProviderEx {
   @Override
   @NotNull
   public List<NamedScope> getCustomScopes() {
-    return Collections.<NamedScope>singletonList(myTestsScope);
+    return Collections.singletonList(myTestsScope);
   }
 }

@@ -32,6 +32,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -145,7 +146,6 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
 
     final ArrangementRemoveConditionAction action = new ArrangementRemoveConditionAction();
     Icon buttonIcon = action.getTemplatePresentation().getIcon();
-    Dimension buttonSize = new Dimension(buttonIcon.getIconWidth(), buttonIcon.getIconHeight());
     if (closeCallback == null) {
       myCloseButton = null;
       myCloseButtonBounds = null;
@@ -155,10 +155,10 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
         action,
         action.getTemplatePresentation().clone(),
         ArrangementConstants.MATCHING_RULES_CONTROL_PLACE,
-        buttonSize)
+        JBUI.emptySize())
       {
         @Override
-        protected Icon getIcon() {
+        public Icon getIcon() {
           return myCloseButtonHovered ? action.getTemplatePresentation().getHoveredIcon() : action.getTemplatePresentation().getIcon();
         }
       };

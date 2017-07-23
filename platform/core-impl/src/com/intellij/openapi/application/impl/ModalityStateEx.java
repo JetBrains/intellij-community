@@ -27,7 +27,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class ModalityStateEx extends ModalityState {
-  private final WeakList myModalEntities = new WeakList();
+  private final WeakList<Object> myModalEntities = new WeakList<>();
 
   @SuppressWarnings("unused")
   public ModalityStateEx() { } // used by reflection to initialize NON_MODAL
@@ -37,11 +37,7 @@ public class ModalityStateEx extends ModalityState {
   }
 
   private List<Object> getModalEntities() {
-    ArrayList<Object> result = new ArrayList<Object>();
-    for (Object entity : myModalEntities) {
-      result.add(entity);
-    }
-    return result;
+    return myModalEntities.toStrongList();
   }
 
   @NotNull
@@ -52,7 +48,7 @@ public class ModalityStateEx extends ModalityState {
   @NotNull
   ModalityStateEx appendEntity(@NotNull Object anEntity){
     List<Object> modalEntities = getModalEntities();
-    List<Object> list = new ArrayList<Object>(modalEntities.size() + 1);
+    List<Object> list = new ArrayList<>(modalEntities.size() + 1);
     list.addAll(modalEntities);
     list.add(anEntity);
     return new ModalityStateEx(list.toArray());
@@ -71,8 +67,7 @@ public class ModalityStateEx extends ModalityState {
 
   @NonNls
   public String toString() {
-    List<Object> modalEntities = getModalEntities();
-    return modalEntities.isEmpty() ? "ModalityState.NON_MODAL" : "ModalityState:" + StringUtil.join(modalEntities, ", ");
+    return this == NON_MODAL ? "ModalityState.NON_MODAL" : "ModalityState:" + StringUtil.join(getModalEntities(), ", ");
   }
 
   @Override
@@ -81,7 +76,7 @@ public class ModalityStateEx extends ModalityState {
     if (!(o instanceof ModalityStateEx)) return false;
 
     List<Object> entities = getModalEntities();
-    if (entities.isEmpty()) return false; // e.g. NON_MODAL isn't equal to ANY
+    if (entities.isEmpty()) return false; //e.g. NON_MODAL isn't equal to ANY
 
     return entities.equals(((ModalityStateEx)o).getModalEntities());
   }

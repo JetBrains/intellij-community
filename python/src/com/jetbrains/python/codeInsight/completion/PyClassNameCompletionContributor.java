@@ -72,7 +72,7 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
       final PsiFile originalFile = parameters.getOriginalFile();
       addVariantsFromIndex(result, originalFile, PyClassNameIndex.KEY,
                            parent instanceof PyStringLiteralExpression ? STRING_LITERAL_INSERT_HANDLER : IMPORTING_INSERT_HANDLER,
-                           Conditions.<PyClass>alwaysTrue(), PyClass.class);
+                           Conditions.alwaysTrue(), PyClass.class);
       addVariantsFromIndex(result, originalFile, PyFunctionNameIndex.KEY,
                            getFunctionInsertHandler(parent), IS_TOPLEVEL, PyFunction.class);
       addVariantsFromIndex(result, originalFile, PyVariableNameIndex.KEY,

@@ -21,11 +21,6 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 24.05.2007
- */
 public interface RemoteBreakpointManager extends Remote {
   RemoteBreakpoint setBreakpoint(File file, int line) throws RemoteException;
 

@@ -14,7 +14,6 @@ package org.zmlx.hg4idea.provider;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
@@ -42,7 +41,7 @@ public class HgDiffProvider implements DiffProvider {
       return null;
     }
 
-    FilePath filePath = ObjectsConvertor.VIRTUAL_FILEPATH.convert(file);
+    FilePath filePath = VcsUtil.getFilePath(file);
     return new HgWorkingCopyRevisionsCommand(project).parents(vcsRoot, filePath).first;
   }
 

@@ -22,9 +22,6 @@ import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: catherine
- */
 @State(name = "ReSTService")
 public class ReSTService implements PersistentStateComponent<ReSTService> {
   public String DOC_DIR = "";

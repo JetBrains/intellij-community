@@ -27,18 +27,50 @@ import java.awt.image.*;
  */
 public class ImageUtil {
   public static BufferedImage toBufferedImage(@NotNull Image image) {
+    return toBufferedImage(image, false);
+  }
+
+  public static BufferedImage toBufferedImage(@NotNull Image image, boolean inUserSize) {
     if (image instanceof JBHiDPIScaledImage) {
       Image img = ((JBHiDPIScaledImage)image).getDelegate();
+      float scale = ((JBHiDPIScaledImage)image).getScale();
       if (img != null) {
         image = img;
+        if (inUserSize) {
+          image = scaleImage(image, 1 / scale);
+        }
       }
     }
     if (image instanceof BufferedImage) {
       return (BufferedImage)image;
     }
 
+    final int width = image.getWidth(null);
+    final int height = image.getHeight(null);
+    if (width <= 0 || height <= 0) {
+      // avoiding NPE
+      return new BufferedImage(Math.max(width, 1), Math.max(height, 1), BufferedImage.TYPE_INT_ARGB) {
+        @Override
+        public int getWidth() {
+          return Math.max(width, 0);
+        }
+        @Override
+        public int getHeight() {
+          return Math.max(height, 0);
+        }
+        @Override
+        public int getWidth(ImageObserver observer) {
+          return Math.max(width, 0);
+        }
+        @Override
+        public int getHeight(ImageObserver observer) {
+          return Math.max(height, 0);
+        }
+      };
+    }
+
     @SuppressWarnings("UndesirableClassUsage")
-    BufferedImage bufferedImage = new BufferedImage(image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_ARGB);
+    BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
     Graphics2D g = bufferedImage.createGraphics();
     g.drawImage(image, 0, 0, null);
     g.dispose();

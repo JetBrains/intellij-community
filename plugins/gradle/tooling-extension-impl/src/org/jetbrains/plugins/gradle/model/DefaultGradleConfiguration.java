@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.gradle.model;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
@@ -26,15 +27,22 @@ public class DefaultGradleConfiguration implements GradleConfiguration {
   private String myName;
   private String myDescription;
   private boolean myVisible;
+  private boolean myScriptClasspathConfiguration;
 
   public DefaultGradleConfiguration(String name, String description, boolean visible) {
+    this(name, description, visible, false);
+  }
+
+  public DefaultGradleConfiguration(@NotNull String name, @Nullable String description, boolean visible, boolean scriptClasspathConfiguration) {
     myName = name;
     myDescription = description;
     myVisible = visible;
+    myScriptClasspathConfiguration = scriptClasspathConfiguration;
   }
 
   public DefaultGradleConfiguration(GradleConfiguration configuration) {
-    this(configuration.getName(), configuration.getDescription(), configuration.isVisible());
+    this(configuration.getName(), configuration.getDescription(), configuration.isVisible(),
+         configuration.isScriptClasspathConfiguration());
   }
 
   @NotNull
@@ -43,7 +51,7 @@ public class DefaultGradleConfiguration implements GradleConfiguration {
     return myName;
   }
 
-  @NotNull
+  @Nullable
   @Override
   public String getDescription() {
     return myDescription;
@@ -52,5 +60,10 @@ public class DefaultGradleConfiguration implements GradleConfiguration {
   @Override
   public boolean isVisible() {
     return myVisible;
+  }
+
+  @Override
+  public boolean isScriptClasspathConfiguration() {
+    return myScriptClasspathConfiguration;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ConcurrentMap;
 
@@ -116,7 +115,7 @@ public abstract class CachedValuesManager {
    * @return The cached value
    */
   public <T, D extends UserDataHolder> T getCachedValue(@NotNull D dataHolder, @NotNull CachedValueProvider<T> provider) {
-    return getCachedValue(dataHolder, this.<T>getKeyForClass(provider.getClass()), provider, false);
+    return getCachedValue(dataHolder, this.getKeyForClass(provider.getClass()), provider, false);
   }
 
   /**
@@ -124,25 +123,28 @@ public abstract class CachedValuesManager {
    * @return The cached value
    */
   public static <T> T getCachedValue(@NotNull final PsiElement psi, @NotNull final CachedValueProvider<T> provider) {
-    Key<CachedValue<T>> key = getKeyForClass(provider.getClass(), globalKeyForProvider);
+    return getCachedValue(psi, CachedValuesManager.getKeyForClass(provider.getClass(), globalKeyForProvider), provider);
+  }
+
+  /**
+   * Create a cached value with the given provider and non-tracked return value, store it in PSI element's user data. If it's already stored, reuse it.
+   * @return The cached value
+   */
+  public static <T> T getCachedValue(@NotNull final PsiElement psi, @NotNull Key<CachedValue<T>> key, @NotNull final CachedValueProvider<T> provider) {
     CachedValue<T> value = psi.getUserData(key);
     if (value != null) {
       return value.getValue();
     }
 
-    return getManager(psi.getProject()).getCachedValue(psi, key, new CachedValueProvider<T>() {
-      @Nullable
-      @Override
-      public Result<T> compute() {
-        Result<T> result = provider.compute();
-        if (result != null && !psi.isPhysical()) {
-          PsiFile file = psi.getContainingFile();
-          if (file != null) {
-            return Result.create(result.getValue(), ArrayUtil.append(result.getDependencyItems(), file, ArrayUtil.OBJECT_ARRAY_FACTORY));
-          }
+    return getManager(psi.getProject()).getCachedValue(psi, key, () -> {
+      CachedValueProvider.Result<T> result = provider.compute();
+      if (result != null && !psi.isPhysical()) {
+        PsiFile file = psi.getContainingFile();
+        if (file != null) {
+          return CachedValueProvider.Result.create(result.getValue(), ArrayUtil.append(result.getDependencyItems(), file, ArrayUtil.OBJECT_ARRAY_FACTORY));
         }
-        return result;
       }
+      return result;
     }, false);
   }
 
@@ -160,7 +162,7 @@ public abstract class CachedValuesManager {
     assert name != null : providerClass + " doesn't have a name; can't be used for cache value provider";
     Key<CachedValue> key = keyForProvider.get(name);
     if (key == null) {
-      key = ConcurrencyUtil.cacheOrGet(keyForProvider, name, Key.<CachedValue>create(name));
+      key = ConcurrencyUtil.cacheOrGet(keyForProvider, name, Key.create(name));
     }
     //noinspection unchecked
     return (Key)key;

@@ -224,14 +224,14 @@ public class MavenProject {
   private Map<String, String> collectModulePathsAndNames(MavenModel mavenModel, String baseDir) {
     String basePath = baseDir + "/";
     Map<String, String> result = new LinkedHashMap<>();
-    for (Map.Entry<String, String> each : collectModulesRelativePathsAndNames(mavenModel).entrySet()) {
+    for (Map.Entry<String, String> each : collectModulesRelativePathsAndNames(mavenModel, basePath).entrySet()) {
       result.put(new Path(basePath + each.getKey()).getPath(), each.getValue());
     }
     return result;
   }
 
-  private Map<String, String> collectModulesRelativePathsAndNames(MavenModel mavenModel) {
-    String pomFileName = MavenConstants.POM_EXTENSION + '.' + StringUtil.notNullize(myFile.getExtension());
+  private Map<String, String> collectModulesRelativePathsAndNames(MavenModel mavenModel, String basePath) {
+    String extension = StringUtil.notNullize(myFile.getExtension());
     LinkedHashMap<String, String> result = new LinkedHashMap<>();
     for (String name : mavenModel.getModules()) {
       name = name.trim();
@@ -242,8 +242,16 @@ public class MavenProject {
       // module name can be relative and contain either / of \\ separators
 
       name = FileUtil.toSystemIndependentName(name);
-      if (!name.endsWith("/")) name += "/";
-      name += pomFileName;
+      if (!name.endsWith('.' + extension)) {
+        if (!name.endsWith("/")) name += "/";
+        name += MavenConstants.POM_EXTENSION + '.' + extension;
+      }
+      else {
+        String systemDependentName = FileUtil.toSystemDependentName(basePath + name);
+        if (new File(systemDependentName).isDirectory()) {
+          name += "/" + MavenConstants.POM_XML;
+        }
+      }
 
       result.put(name, originalName);
     }

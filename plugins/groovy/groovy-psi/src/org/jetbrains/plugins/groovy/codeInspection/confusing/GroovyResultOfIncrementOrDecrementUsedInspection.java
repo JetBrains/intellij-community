@@ -30,13 +30,6 @@ public class GroovyResultOfIncrementOrDecrementUsedInspection extends BaseInspec
   @Override
   @Nls
   @NotNull
-  public String getGroupDisplayName() {
-    return CONFUSING_CODE_CONSTRUCTS;
-  }
-
-  @Override
-  @Nls
-  @NotNull
   public String getDisplayName() {
     return "Result of increment or decrement used";
   }

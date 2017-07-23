@@ -75,7 +75,7 @@ public class SvnKitBrowseClient extends BaseSvnClient implements BrowseClient {
   private SVNLogClient getLogClient() {
     ISVNAuthenticationManager authManager = myIsActive
                                             ? myVcs.getSvnConfiguration().getInteractiveManager(myVcs)
-                                            : myVcs.getSvnConfiguration().getPassiveAuthenticationManager(myVcs.getProject());
+                                            : myVcs.getSvnConfiguration().getPassiveAuthenticationManager(myVcs);
 
     return myVcs.getSvnKitManager().createLogClient(authManager);
   }

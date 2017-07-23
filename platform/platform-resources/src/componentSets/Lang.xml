@@ -81,6 +81,11 @@
     </component>
 
     <component>
+      <interface-class>com.intellij.execution.impl.ProjectRunConfigurationInitializer</interface-class>
+      <implementation-class>com.intellij.execution.impl.ProjectRunConfigurationInitializer</implementation-class>
+    </component>
+
+    <component>
       <interface-class>com.intellij.codeInsight.folding.CodeFoldingManager</interface-class>
       <implementation-class>com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl</implementation-class>
     </component>
@@ -152,6 +157,10 @@
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.CodeFoldingPassFactory</implementation-class>
+      <skipForDefaultProject/>
+    </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.hints.ParameterHintsPassFactory</implementation-class>
       <skipForDefaultProject/>
     </component>
     <component>

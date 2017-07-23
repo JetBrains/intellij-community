@@ -6,25 +6,13 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/test-features" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/test-stepdefs" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/gen" isTestSource="false" generated="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="vcs-api" />
-    <orderEntry type="module-library">
-      <library name="trilead-ssh2">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/trilead-ssh2.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/trilead-ssh2-src.zip!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
+    <orderEntry type="library" name="trilead-ssh2" level="project" />
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="vcs-impl" />
@@ -38,22 +26,10 @@
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="git4idea-rt" />
     <orderEntry type="module" module-name="images" />
-    <orderEntry type="module-library">
-      <library name="ini4j-0.5.2-patched">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/ini4j/ini4j-0.5.2-patched.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/ini4j/ini4j-0.5.2-patched-sources.zip!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="library" scope="TEST" name="Groovy" level="project" />
     <orderEntry type="module" module-name="dvcs-impl" exported="" />
     <orderEntry type="library" scope="TEST" name="cucumber-core" level="project" />
     <orderEntry type="library" name="JSch" level="project" />
-    <orderEntry type="module" module-name="cucumber-test-runner" scope="TEST" />
     <orderEntry type="module" module-name="vcs-log-api" />
     <orderEntry type="module" module-name="vcs-log-impl" />
     <orderEntry type="module" module-name="vcs-log-graph" />
@@ -66,5 +42,8 @@
     <orderEntry type="module" module-name="vcs-tests" scope="TEST" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="library" exported="" scope="TEST" name="cucumber-testing" level="project" />
+    <orderEntry type="module" module-name="testGuiFramework" scope="TEST" />
+    <orderEntry type="library" name="ini4j" level="project" />
+    <orderEntry type="module" module-name="tasks-platform-impl" />
   </component>
 </module>

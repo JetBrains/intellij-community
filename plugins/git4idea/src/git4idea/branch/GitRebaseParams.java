@@ -17,6 +17,7 @@ package git4idea.branch;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import git4idea.rebase.GitRebaseEditorHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,20 +33,37 @@ public class GitRebaseParams {
   @NotNull private final String myUpstream;
   private final boolean myInteractive;
   private final boolean myPreserveMerges;
+  @Nullable private final GitRebaseEditorHandler myEditorHandler;
+
+  @NotNull
+  public static GitRebaseParams editCommits(@NotNull String base, @NotNull GitRebaseEditorHandler editorHandler, boolean preserveMerges) {
+    return new GitRebaseParams(null, null, base, true, preserveMerges, editorHandler);
+  }
 
   public GitRebaseParams(@NotNull String upstream) {
     this(null, null, upstream, false, false);
   }
+
   public GitRebaseParams(@Nullable String branch,
                          @Nullable String newBase,
                          @NotNull String upstream,
                          boolean interactive,
                          boolean preserveMerges) {
+    this(branch, newBase, upstream, interactive, preserveMerges, null);
+  }
+
+  private GitRebaseParams(@Nullable String branch,
+                          @Nullable String newBase,
+                          @NotNull String upstream,
+                          boolean interactive,
+                          boolean preserveMerges,
+                          @Nullable GitRebaseEditorHandler editorHandler) {
     myBranch = nullize(branch, true);
     myNewBase = nullize(newBase, true);
     myUpstream = upstream;
     myInteractive = interactive;
     myPreserveMerges = preserveMerges;
+    myEditorHandler = editorHandler;
   }
 
   @NotNull
@@ -89,5 +107,10 @@ public class GitRebaseParams {
   @Nullable
   public String getBranch() {
     return myBranch;
+  }
+
+  @Nullable
+  public GitRebaseEditorHandler getEditorHandler() {
+    return myEditorHandler;
   }
 }

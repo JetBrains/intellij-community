@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,126 +14,132 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Feb 6, 2002
- * Time: 10:01:02 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Trinity;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-
-import static com.intellij.psi.JavaTokenType.*;
+import java.util.Map;
 
 public class DfaRelationValue extends DfaValue {
+  @Override
+  public DfaRelationValue createNegated() {
+    return myFactory.getRelationFactory().createCanonicalRelation(myLeftOperand, myRelation.getNegated(), myRightOperand);
+  }
+
   private DfaValue myLeftOperand;
   private DfaValue myRightOperand;
-  private IElementType myRelation;
-  private boolean myIsNegated;
+  private RelationType myRelation;
 
-  public static class Factory {
-    private final DfaRelationValue mySharedInstance;
-    private final HashMap<String,ArrayList<DfaRelationValue>> myStringToObject;
-    private final DfaValueFactory myFactory;
+  public enum RelationType {
+    LE("<="), LT("<"), GE(">="), GT(">"), EQ("=="), NE("!="),
+    /**
+     * Value on the left belongs to the class of values defined on the right.
+     * Currently used to represent:
+     * - instanceof (DfaValue IS DfaTypeValue)
+     * - optional presense (DfaValue IS DfaOptionalValue)
+     */
+    IS("is"),
+    /**
+     * Value on the left does not belong to the class of values defined on the right (opposite to IS).
+     */
+    IS_NOT("isn't");
 
-    Factory(DfaValueFactory factory) {
-      myFactory = factory;
-      mySharedInstance = new DfaRelationValue(factory);
-      myStringToObject = new HashMap<>();
+    private final String myName;
+
+    RelationType(String name) {
+      myName = name;
     }
 
-    public DfaRelationValue createRelation(DfaValue dfaLeft, DfaValue dfaRight, IElementType relation, boolean negated) {
-      if (PLUS == relation) return null;
+    @NotNull
+    public RelationType getNegated() {
+      switch (this) {
+        case LE:
+          return GT;
+        case LT:
+          return GE;
+        case GE:
+          return LT;
+        case GT:
+          return LE;
+        case EQ:
+          return NE;
+        case NE:
+          return EQ;
+        case IS:
+          return IS_NOT;
+        case IS_NOT:
+          return IS;
+      }
+      throw new InternalError("Unexpected enum value: " + this);
+    }
 
-      if (dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaUnboxedValue
-          || dfaRight instanceof DfaVariableValue || dfaRight instanceof DfaBoxedValue || dfaRight instanceof DfaUnboxedValue) {
-        if (!(dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaUnboxedValue)) {
-          return createRelation(dfaRight, dfaLeft, getSymmetricOperation(relation), negated);
-        }
-
-        return createCanonicalRelation(relation, negated, dfaLeft, dfaRight);
-      }
-      if (dfaLeft instanceof DfaTypeValue && ((DfaTypeValue)dfaLeft).isNotNull() && dfaRight instanceof DfaConstValue) {
-        return createCanonicalRelation(relation, negated, dfaLeft, dfaRight);
-      }
-      else if (dfaRight instanceof DfaTypeValue && ((DfaTypeValue)dfaRight).isNotNull() && dfaLeft instanceof DfaConstValue) {
-        return createCanonicalRelation(relation, negated, dfaRight, dfaLeft);
-      }
-      else {
-        return null;
+    @Nullable
+    public RelationType getFlipped() {
+      switch (this) {
+        case LE:
+          return GE;
+        case LT:
+          return GT;
+        case GE:
+          return LE;
+        case GT:
+          return LT;
+        case EQ:
+        case NE:
+          return this;
+        default:
+          return null;
       }
     }
 
-    private DfaRelationValue createCanonicalRelation(IElementType relation,
-                                                     boolean negated,
-                                                     @NotNull final DfaValue dfaLeft,
-                                                     @NotNull final DfaValue dfaRight) {
-      // To canonical form.
-      if (NE == relation) {
-        relation = EQEQ;
-        negated = !negated;
-      }
-      else if (LT == relation) {
-        relation = GE;
-        negated = !negated;
-      }
-      else if (LE == relation) {
-        relation = GT;
-        negated = !negated;
-      }
-
-      mySharedInstance.myLeftOperand = dfaLeft;
-      mySharedInstance.myRightOperand = dfaRight;
-      mySharedInstance.myRelation = relation;
-      mySharedInstance.myIsNegated = negated;
-
-      String id = mySharedInstance.toString();
-      ArrayList<DfaRelationValue> conditions = myStringToObject.get(id);
-      if (conditions == null) {
-        conditions = new ArrayList<>();
-        myStringToObject.put(id, conditions);
-      }
-      else {
-        for (DfaRelationValue rel : conditions) {
-          if (rel.hardEquals(mySharedInstance)) return rel;
-        }
-      }
-
-      DfaRelationValue result = new DfaRelationValue(dfaLeft, dfaRight, relation, negated, myFactory);
-      conditions.add(result);
-      return result;
+    @Override
+    public String toString() {
+      return myName;
     }
 
+    @Nullable
+    public static RelationType fromElementType(IElementType type) {
+      if(JavaTokenType.EQEQ.equals(type)) {
+        return EQ;
+      }
+      if(JavaTokenType.NE.equals(type)) {
+        return NE;
+      }
+      if(JavaTokenType.LT.equals(type)) {
+        return LT;
+      }
+      if(JavaTokenType.GT.equals(type)) {
+        return GT;
+      }
+      if(JavaTokenType.LE.equals(type)) {
+        return LE;
+      }
+      if(JavaTokenType.GE.equals(type)) {
+        return GE;
+      }
+      if(JavaTokenType.INSTANCEOF_KEYWORD.equals(type)) {
+        return IS;
+      }
+      return null;
+    }
+
+    public static RelationType equivalence(boolean equal) {
+      return equal ? EQ : NE;
+    }
   }
 
-  public static IElementType getSymmetricOperation(IElementType sign) {
-    if (LT == sign) return GT;
-    if (GE == sign) return LE;
-    if (GT == sign) return LT;
-    if (LE == sign) return GE;
-    return sign;
-  }
-
-  private DfaRelationValue(DfaValueFactory factory) {
-    super(factory);
-  }
-
-  private DfaRelationValue(DfaValue myLeftOperand, DfaValue myRightOperand, IElementType myRelation, boolean myIsNegated,
+  private DfaRelationValue(DfaValue leftOperand, DfaValue rightOperand, RelationType relationType,
                            DfaValueFactory factory) {
     super(factory);
-    this.myLeftOperand = myLeftOperand;
-    this.myRightOperand = myRightOperand;
-    this.myRelation = myRelation;
-    this.myIsNegated = myIsNegated;
+    this.myLeftOperand = leftOperand;
+    this.myRightOperand = rightOperand;
+    this.myRelation = relationType;
   }
 
   public DfaValue getLeftOperand() {
@@ -144,35 +150,59 @@ public class DfaRelationValue extends DfaValue {
     return myRightOperand;
   }
 
-  public boolean isNegated() {
-    return myIsNegated;
-  }
+  public static class Factory {
+    private final Map<Trinity<DfaValue, DfaValue, RelationType>, DfaRelationValue> myValues;
+    private final DfaValueFactory myFactory;
 
-  @Override
-  public DfaValue createNegated() {
-    return myFactory.getRelationFactory().createRelation(myLeftOperand, myRightOperand, myRelation, !myIsNegated);
-  }
+    Factory(DfaValueFactory factory) {
+      myFactory = factory;
+      myValues = new HashMap<>();
+    }
 
-  private boolean hardEquals(DfaRelationValue rel) {
-    return Comparing.equal(rel.myLeftOperand,myLeftOperand)
-      && Comparing.equal(rel.myRightOperand,myRightOperand) &&
-      rel.myRelation == myRelation &&
-      rel.myIsNegated == myIsNegated;
+    public DfaRelationValue createRelation(DfaValue dfaLeft, RelationType relationType, DfaValue dfaRight) {
+      if ((relationType == RelationType.IS || relationType == RelationType.IS_NOT) && dfaRight instanceof DfaOptionalValue) {
+        return createCanonicalRelation(dfaLeft, relationType, dfaRight);
+      }
+      if (dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaUnboxedValue
+          || dfaRight instanceof DfaVariableValue || dfaRight instanceof DfaBoxedValue || dfaRight instanceof DfaUnboxedValue) {
+        if (!(dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaUnboxedValue)) {
+          RelationType flipped = relationType.getFlipped();
+          return flipped == null ? null : createCanonicalRelation(dfaRight, flipped, dfaLeft);
+        }
+        return createCanonicalRelation(dfaLeft, relationType, dfaRight);
+      }
+      if (dfaLeft instanceof DfaTypeValue && dfaRight instanceof DfaConstValue) {
+        return createCanonicalRelation(DfaUnknownValue.getInstance(), relationType, dfaRight);
+      }
+      else if (dfaRight instanceof DfaTypeValue && dfaLeft instanceof DfaConstValue) {
+        return createCanonicalRelation(DfaUnknownValue.getInstance(), relationType, dfaLeft);
+      }
+      return null;
+    }
+
+    @NotNull
+    private DfaRelationValue createCanonicalRelation(@NotNull final DfaValue dfaLeft,
+                                                     @NotNull RelationType relationType,
+                                                     @NotNull final DfaValue dfaRight) {
+      return myValues.computeIfAbsent(Trinity.create(dfaLeft, dfaRight, relationType),
+                                      k -> new DfaRelationValue(dfaLeft, dfaRight, relationType, myFactory));
+    }
   }
 
   public boolean isEquality() {
-    return myRelation == EQEQ && !myIsNegated;
+    return myRelation == RelationType.EQ;
   }
 
   public boolean isNonEquality() {
-    return myRelation == EQEQ && myIsNegated || myRelation == GT && !myIsNegated || myRelation == GE && myIsNegated;
+    return myRelation == RelationType.NE || myRelation == RelationType.GT || myRelation == RelationType.LT;
   }
 
-  public boolean isInstanceOf() {
-    return myRelation == INSTANCEOF_KEYWORD;
+  @NotNull
+  public RelationType getRelation() {
+    return myRelation;
   }
 
   @NonNls public String toString() {
-    return (isNegated() ? "not " : "") + myLeftOperand + " " + myRelation + " " + myRightOperand;
+    return myLeftOperand + " " + myRelation + " " + myRightOperand;
   }
 }

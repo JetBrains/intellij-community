@@ -54,7 +54,7 @@ public class MarkDirtyTest extends IncrementalTestCase {
   }
   
   public void testRecompileTwinDependencies() {
-    doTest().assertFailed();
+    doTest().assertSuccessful();
   }
 
   public void testDoNotMarkDirtyCompiledChunks() {

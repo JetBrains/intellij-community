@@ -15,9 +15,8 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -57,16 +56,14 @@ public class VcsGuess {
   }
 
   private boolean isFileInIndex(@Nullable final FilePath filePath, @NotNull final VirtualFile validParent) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      public Boolean compute() {
-        if (myProject.isDisposed()) return false;
-        boolean inContent = myVcsManager.isFileInContent(validParent);
-        if (inContent) return true;
-        if (filePath != null) {
-          return isFileInBaseDir(filePath, myProject.getBaseDir()) && !myVcsManager.isIgnored(validParent);
-        }
-        return false;
+    return ReadAction.compute(() -> {
+      if (myProject.isDisposed()) return false;
+      boolean inContent = myVcsManager.isFileInContent(validParent);
+      if (inContent) return true;
+      if (filePath != null) {
+        return isFileInBaseDir(filePath, myProject.getBaseDir()) && !myVcsManager.isIgnored(validParent);
       }
+      return false;
     });
   }
 

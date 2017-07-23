@@ -25,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-/**
-* User: spLeaner
-*/
 public interface ConfigurationErrors {
   Topic<ConfigurationErrors> TOPIC = Topic.create("Configuration Error", ConfigurationErrors.class, Topic.BroadcastDirection.NONE);
 

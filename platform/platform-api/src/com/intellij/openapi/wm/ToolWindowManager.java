@@ -27,7 +27,7 @@ import javax.swing.event.HyperlinkListener;
 
 /**
  * If you want to register a toolwindow, which will be enabled during the dumb mode, please use {@link ToolWindowManager}'s
- * registration methods which have 'canWorkInDumMode' parameter.
+ * registration methods which have 'canWorkInDumbMode' parameter.
  */
 public abstract class ToolWindowManager {
 
@@ -39,15 +39,15 @@ public abstract class ToolWindowManager {
 
   /**
    * Register specified tool window into IDE window system.
-   * @param id <code>id</code> of tool window to be registered.
-   * @param component <code>component</code> which represents tool window content.
+   * @param id {@code id} of tool window to be registered.
+   * @param component {@code component} which represents tool window content.
    * May be null. Content can be further added via content manager for this tool window (See {@link ToolWindow#getContentManager()})
    * @param anchor the default anchor for first registration. It uses only first time the
-   * tool window with the specified <code>id</code> is being registered into the window system.
+   * tool window with the specified {@code id} is being registered into the window system.
    * After the first registration window's anchor is stored in project file
-   * and <code>anchor</code> is ignored.
+   * and {@code anchor} is ignored.
    * @exception IllegalArgumentException if the same window is already installed or one
-   * of the parameters is <code>null</code>.
+   * of the parameters is {@code null}.
    * @return tool window
    * @deprecated  {@link ToolWindowManager#registerToolWindow(String, boolean, ToolWindowAnchor)}
    */
@@ -129,26 +129,26 @@ public abstract class ToolWindowManager {
   public abstract void activateEditorComponent();
 
   /**
-   * @return <code>true</code> if and only if editor component is active.
+   * @return {@code true} if and only if editor component is active.
    */
   public abstract boolean isEditorComponentActive();
 
   /**
-   * @return array of <code>id</code>s of all registered tool windows.
+   * @return array of {@code id}s of all registered tool windows.
    */
   @NotNull
   public abstract String[] getToolWindowIds();
 
   /**
-   * @return <code>ID</code> of currently active tool window or <code>null</code> if there is no active
+   * @return {@code ID} of currently active tool window or {@code null} if there is no active
    * tool window.
    */
   @Nullable
   public abstract String getActiveToolWindowId();
 
   /**
-   * @return registered tool window with specified <code>id</code>. If there is no registered
-   * tool window with specified <code>id</code> then the method returns <code>null</code>.
+   * @return registered tool window with specified {@code id}. If there is no registered
+   * tool window with specified {@code id} then the method returns {@code null}.
    */
   public abstract ToolWindow getToolWindow(String id);
 

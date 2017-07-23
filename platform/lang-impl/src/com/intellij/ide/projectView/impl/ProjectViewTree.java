@@ -16,6 +16,7 @@
 
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
@@ -27,22 +28,25 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FileColorManager;
-import com.intellij.ui.JBTreeWithHintProvider;
+import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.tabs.FileColorManagerImpl;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class ProjectViewTree extends JBTreeWithHintProvider {
+public abstract class ProjectViewTree extends DnDAwareTree {
   private final Project myProject;
 
   protected ProjectViewTree(Project project, TreeModel model) {
@@ -60,9 +64,19 @@ public abstract class ProjectViewTree extends JBTreeWithHintProvider {
     cellRenderer.setIconOpaque(false);
     setCellRenderer(cellRenderer);
     cellRenderer.setTransparentIconBackground(true);
+
+    HintUpdateSupply.installDataContextHintUpdateSupply(this);
   }
 
-  public abstract DefaultMutableTreeNode getSelectedNode();
+  /**
+   * Not every tree employs {@link DefaultMutableTreeNode} so
+   * use {@link #getSelectionPaths()} or {@link TreeUtil#getSelectedPathIfOne(JTree)} directly.
+   */
+  @Deprecated
+  public DefaultMutableTreeNode getSelectedNode() {
+    TreePath path = TreeUtil.getSelectedPathIfOne(this);
+    return path == null ? null : ObjectUtils.tryCast(path.getLastPathComponent(), DefaultMutableTreeNode.class);
+  }
 
   public Project getProject() {
     return myProject;
@@ -70,26 +84,16 @@ public abstract class ProjectViewTree extends JBTreeWithHintProvider {
 
   @Override
   public final int getToggleClickCount() {
-    final DefaultMutableTreeNode selectedNode = getSelectedNode();
-    if (selectedNode != null) {
-      final Object object = selectedNode.getUserObject();
-      if (object instanceof NodeDescriptor) {
-        NodeDescriptor descriptor = (NodeDescriptor)object;
-        if (!descriptor.expandOnDoubleClick()) {
-          return -1;
-        }
+    TreePath path = getSelectionPath();
+    Object object = path == null ? null : TreeUtil.getUserObject(path.getLastPathComponent());
+    if (object instanceof NodeDescriptor) {
+      NodeDescriptor descriptor = (NodeDescriptor)object;
+      if (!descriptor.expandOnDoubleClick()) {
+        return -1;
       }
     }
     return super.getToggleClickCount();
   }
-
-  //@Override
-  //public Color getBackground() {
-  //  if (!UIUtil.isUnderDarcula()) {
-  //    return super.getBackground();
-  //  }
-  //  return new ColorUIResource(0x414750);
-  //}
 
   @Override
   public boolean isFileColorsEnabled() {
@@ -97,11 +101,12 @@ public abstract class ProjectViewTree extends JBTreeWithHintProvider {
   }
 
   public static boolean isFileColorsEnabledFor(JTree tree) {
-    final boolean enabled = FileColorManagerImpl._isEnabled() && FileColorManagerImpl._isEnabledForProjectView();
-    final boolean opaque = tree.isOpaque();
+    boolean enabled = FileColorManagerImpl._isEnabled() && FileColorManagerImpl._isEnabledForProjectView();
+    boolean opaque = tree.isOpaque();
     if (enabled && opaque) {
       tree.setOpaque(false);
-    } else if (!enabled && !opaque) {
+    }
+    else if (!enabled && !opaque) {
       tree.setOpaque(true);
     }
     return enabled;
@@ -132,15 +137,18 @@ public abstract class ProjectViewTree extends JBTreeWithHintProvider {
 
       if (file != null) {
         color = FileColorManager.getInstance(project).getFileColor(file);
-      } else if (psi instanceof PsiDirectory) {
+      }
+      else if (psi instanceof PsiDirectory) {
         color = FileColorManager.getInstance(project).getFileColor(((PsiDirectory)psi).getVirtualFile());
-      } else if (psi instanceof PsiDirectoryContainer) {
+      }
+      else if (psi instanceof PsiDirectoryContainer) {
         final PsiDirectory[] dirs = ((PsiDirectoryContainer)psi).getDirectories();
         for (PsiDirectory dir : dirs) {
           Color c = FileColorManager.getInstance(project).getFileColor(dir.getVirtualFile());
           if (c != null && color == null) {
             color = c;
-          } else if (c != null) {
+          }
+          else if (c != null) {
             color = null;
             break;
           }

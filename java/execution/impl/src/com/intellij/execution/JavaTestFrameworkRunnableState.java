@@ -19,6 +19,7 @@ import com.intellij.ExtensionPoints;
 import com.intellij.debugger.impl.GenericDebuggerRunnerSettings;
 import com.intellij.diagnostic.logging.OutputFileUtil;
 import com.intellij.execution.configurations.*;
+import com.intellij.execution.impl.ConsoleBuffer;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -74,7 +75,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   ModuleBasedConfiguration<JavaRunConfigurationModule>
   & CommonJavaRunConfigurationParameters
   & SMRunnerConsolePropertiesProvider> extends JavaCommandLineState implements RemoteConnectionCreator {
-  private static final Logger LOG = Logger.getInstance("#" + JavaTestFrameworkRunnableState.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaTestFrameworkRunnableState.class);
   protected ServerSocket myServerSocket;
   protected File myTempFile;
   protected File myWorkingDirsFile = null;
@@ -125,14 +126,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   @NotNull
   @Override
   public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
-    return startSMRunner(executor);
-  }
-
-  /**
-   * to be removed in 2017.1, compatibility with jtreg plugin
-   */
-  @Deprecated
-  protected ExecutionResult startSMRunner(Executor executor) throws ExecutionException {
     final RunnerSettings runnerSettings = getRunnerSettings();
 
     final SMTRunnerConsoleProperties testConsoleProperties = getConfiguration().createTestConsoleProperties(executor);
@@ -228,6 +221,10 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       javaParameters.getProgramParametersList().addAll(getNamedParams(parameters));
     }
 
+    if (ConsoleBuffer.useCycleBuffer()) {
+      javaParameters.getVMParametersList().addProperty("idea.test.cyclic.buffer.size", String.valueOf(ConsoleBuffer.getCycleBufferSize()));
+    }
+
     return javaParameters;
   }
 
@@ -283,7 +280,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       final File tempFile = FileUtil.createTempFile("command.line", "", true);
       final PrintWriter writer = new PrintWriter(tempFile, CharsetToolkit.UTF8);
       try {
-        if (JdkUtil.useDynamicClasspath(getConfiguration().getProject())) {
+        if (JdkUtil.useDynamicClasspath(getConfiguration().getProject()) && forkPerModule()) {
           writer.println("use classpath jar");
         }
         else {

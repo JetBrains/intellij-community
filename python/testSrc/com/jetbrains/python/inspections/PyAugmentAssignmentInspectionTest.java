@@ -18,9 +18,6 @@ package com.jetbrains.python.inspections;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 
-/**
- * User: ktisha
- */
 public class PyAugmentAssignmentInspectionTest extends PyTestCase {
 
   public void testMult() {

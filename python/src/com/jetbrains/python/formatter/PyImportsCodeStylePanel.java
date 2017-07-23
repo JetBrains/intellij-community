@@ -113,7 +113,7 @@ public class PyImportsCodeStylePanel extends CodeStyleAbstractPanel {
     mySortNamesInFromImports.setSelected(pySettings.OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS);
     mySortNamesInFromImports.setEnabled(mySortImports.isSelected());
     mySortImportsByTypeFirst.setSelected(pySettings.OPTIMIZE_IMPORTS_SORT_BY_TYPE_FIRST);
-    mySortImportsByTypeFirst.setSelected(mySortImports.isSelected());
+    mySortImportsByTypeFirst.setEnabled(mySortImports.isSelected());
     myJoinFromImportsWithSameSource.setSelected(pySettings.OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE);
   }
 }

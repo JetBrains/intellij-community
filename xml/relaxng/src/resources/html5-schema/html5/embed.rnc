@@ -23,6 +23,7 @@ namespace local = ""
 		&	img.attrs.usemap?
 		&	img.attrs.ismap?
 		&	img.attrs.border? # obsolete
+		&	referrerpolicy?
 		&	embedded.content.attrs.crossorigin?
 		&	(	common.attrs.aria.implicit.img
 			|	common.attrs.aria
@@ -151,21 +152,22 @@ namespace local = ""
 				common.data.integer.non-negative
 			}
 		embed.attrs.other = # REVISIT common.attrs
-			attribute local:* - ( src 
-			                    | type 
-			                    | height 
-			                    | width 
-			                    | id 
+			attribute local:* - ( src
+			                    | type
+			                    | height
+			                    | width
+			                    | id
+			                    | is
 			                    | class
-			                    | title 
-			                    | dir 
-			                    | lang 
-			                    | translate 
-			                    | style 
-			                    | tabindex 
-			                    | contextmenu 
-			                    | contenteditable 
-			                    | draggable 
+			                    | title
+			                    | dir
+			                    | lang
+			                    | translate
+			                    | style
+			                    | tabindex
+			                    | contextmenu
+			                    | contenteditable
+			                    | draggable
 			                    | dropzone
 			                    | hidden
 			                    | onabort
@@ -235,21 +237,26 @@ namespace local = ""
 			                    | aria-atomic
 			                    | aria-busy
 			                    | aria-controls
+			                    | aria-current
+			                    | aria-details
 			                    | aria-describedby
 			                    | aria-disabled
 			                    | aria-dropeffect
+			                    | aria-errormessage
 			                    | aria-expanded
 			                    | aria-flowto
 			                    | aria-grabbed
 			                    | aria-haspopup
 			                    | aria-hidden
 			                    | aria-invalid
+			                    | aria-keyshortcuts
 			                    | aria-label
 			                    | aria-labelledby
 			                    | aria-live
 			                    | aria-owns
 			                    | aria-relevant
 			                    | aria-required
+			                    | aria-roledescription
 			                    | spellcheck
 			                    | accesskey
 			                    | itemref
@@ -317,7 +324,7 @@ namespace local = ""
                                             | its-storage-encoding
                                             | its-line-break-type
                                             | its-annotators-ref
-			                    ) 
+			                    )
 			{
 				string
 			}
@@ -430,6 +437,8 @@ namespace local = ""
 		&	iframe.attrs.height?
 		&	iframe.attrs.sandbox?
 		&	iframe.attrs.allowfullscreen?
+		&	iframe.attrs.allowusermedia?
+		&	referrerpolicy?
 		&	(	common.attrs.aria.landmark.application
 			|	common.attrs.aria.landmark.document
 			|	common.attrs.aria.role.img
@@ -464,8 +473,12 @@ namespace local = ""
 			attribute allowfullscreen {
 				w:string "allowfullscreen" | w:string ""
 			} & v5only
+		iframe.attrs.allowusermedia =
+			attribute allowusermedia {
+				w:string "allowusermedia" | w:string ""
+			} & v5only
 	iframe.inner =
-		( ( text & HTMLonly ) | empty )
+		empty
 
 	common.elem.phrasing |= iframe.elem
 

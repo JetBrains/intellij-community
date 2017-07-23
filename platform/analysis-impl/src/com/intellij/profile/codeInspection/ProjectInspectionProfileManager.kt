@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.util.xmlb.annotations.OptionTag
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.concurrency.runAsync
@@ -98,8 +99,7 @@ class ProjectInspectionProfileManager(val project: Project,
                               name: String,
                               attributeProvider: Function<String, String?>,
                               isBundled: Boolean): InspectionProfileImpl {
-      val profile = InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@ProjectInspectionProfileManager,
-                                          InspectionProfileImpl.getBaseProfile(), dataHolder)
+      val profile = InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@ProjectInspectionProfileManager, dataHolder)
       profile.isProjectLevel = true
       return profile
     }
@@ -165,7 +165,7 @@ class ProjectInspectionProfileManager(val project: Project,
 
   fun isCurrentProfileInitialized() = currentProfile.wasInitialized()
 
-  override fun schemeRemoved(scheme: InspectionProfile) {
+  override fun schemeRemoved(scheme: InspectionProfileImpl) {
     scheme.cleanup(project)
   }
 
@@ -174,8 +174,10 @@ class ProjectInspectionProfileManager(val project: Project,
     override fun runActivity(project: Project) {
       getInstance(project).apply {
         initialLoadSchemesFuture.done {
-          currentProfile.initInspectionTools(project)
-          fireProfilesInitialized()
+          if (!project.isDisposed) {
+            currentProfile.initInspectionTools(project)
+            fireProfilesInitialized()
+          }
         }
 
         scopeListener = NamedScopesHolder.ScopeListener {
@@ -189,6 +191,7 @@ class ProjectInspectionProfileManager(val project: Project,
         Disposer.register(project, Disposable {
           scopeManager.removeScopeListener(scopeListener!!)
           localScopesHolder.removeScopeListener(scopeListener!!)
+          (initialLoadSchemesFuture as? AsyncPromise<*>)?.cancel()
         })
       }
     }
@@ -272,7 +275,7 @@ class ProjectInspectionProfileManager(val project: Project,
   @Synchronized fun useApplicationProfile(name: String) {
     schemeManager.currentSchemeName = null
     state.useProjectProfile = false
-    // yes, we reuse the same field - useProjectProfile field will be used to distinguish — is it app or project level
+    // yes, we reuse the same field - useProjectProfile field will be used to distinguish - is it app or project level
     // to avoid data format change
     state.projectProfile = name
   }
@@ -293,8 +296,7 @@ class ProjectInspectionProfileManager(val project: Project,
     if (currentScheme == null) {
       currentScheme = schemeManager.allSchemes.firstOrNull()
       if (currentScheme == null) {
-        currentScheme = InspectionProfileImpl(PROJECT_DEFAULT_PROFILE_NAME, InspectionToolRegistrar.getInstance(), this,
-                                              InspectionProfileImpl.getBaseProfile(), null)
+        currentScheme = InspectionProfileImpl(PROJECT_DEFAULT_PROFILE_NAME, InspectionToolRegistrar.getInstance(), this)
         currentScheme.copyFrom(applicationProfileManager.currentProfile)
         currentScheme.isProjectLevel = true
         currentScheme.name = PROJECT_DEFAULT_PROFILE_NAME

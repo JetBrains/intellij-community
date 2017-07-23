@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,10 @@ package org.jetbrains.idea.devkit.actions;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.actions.CreateElementActionBase;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -42,6 +40,7 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.ChooseModulesDialog;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
@@ -61,11 +60,13 @@ public abstract class GeneratePluginClassAction extends CreateElementActionBase 
     super(text, description, icon);
   }
 
-  @NotNull protected final PsiElement[] invokeDialog(Project project, PsiDirectory directory) {
+  @NotNull
+  protected final PsiElement[] invokeDialog(Project project, PsiDirectory directory) {
     try {
       final PsiElement[] psiElements = invokeDialogImpl(project, directory);
       return psiElements == CANCELED ? PsiElement.EMPTY_ARRAY : psiElements;
-    } finally {
+    }
+    finally {
       myFilesToPatch.clear();
     }
   }
@@ -82,12 +83,12 @@ public abstract class GeneratePluginClassAction extends CreateElementActionBase 
 
     final Presentation presentation = e.getPresentation();
     if (presentation.isEnabled()) {
-      final DataContext context = e.getDataContext();
+      final Project project = e.getProject();
       final Module module = e.getData(LangDataKeys.MODULE);
-      if (PluginModuleType.isPluginModuleOrDependency(module)) {
+      if (project != null && module != null &&
+          PsiUtil.isPluginModule(module)) {
         final IdeView view = e.getData(LangDataKeys.IDE_VIEW);
-        final Project project = e.getProject();
-        if (view != null && project != null) {
+        if (view != null) {
           // from com.intellij.ide.actions.CreateClassAction.update()
           ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
           PsiDirectory[] dirs = view.getDirectories();
@@ -100,8 +101,7 @@ public abstract class GeneratePluginClassAction extends CreateElementActionBase 
         }
       }
 
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
+      presentation.setEnabledAndVisible(false);
     }
   }
 
@@ -127,16 +127,20 @@ public abstract class GeneratePluginClassAction extends CreateElementActionBase 
     return fileIndex.getModuleForFile(vFile);
   }
 
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
   @NotNull
   protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
     final Project project = directory.getProject();
     final Module module = getModule(directory);
 
     if (module != null) {
-      if (ModuleType.get(module) == PluginModuleType.getInstance()) {
-        addPluginModule(module);
-      }
-      else {
+      addPluginModule(module);
+
+      if (myFilesToPatch.isEmpty()) {
         final List<Module> candidateModules = PluginModuleType.getCandidateModules(module);
         final Iterator<Module> it = candidateModules.iterator();
         while (it.hasNext()) {
@@ -175,8 +179,9 @@ public abstract class GeneratePluginClassAction extends CreateElementActionBase 
 
     DescriptorUtil.patchPluginXml(this, klass, myFilesToPatch.toArray(new XmlFile[myFilesToPatch.size()]));
 
-    return new PsiElement[] {klass};
+    return new PsiElement[]{klass};
   }
 
-  @NonNls protected abstract String getClassTemplateName();
+  @NonNls
+  protected abstract String getClassTemplateName();
 }

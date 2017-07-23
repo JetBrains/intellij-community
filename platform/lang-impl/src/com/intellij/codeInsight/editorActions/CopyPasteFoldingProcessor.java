@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,16 +46,20 @@ public class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTra
     final FoldRegion[] regions = editor.getFoldingModel().getAllFoldRegions();
     for (final FoldRegion region : regions) {
       if (!region.isValid()) continue;
+      int refOffset = 0;
       for (int j = 0; j < startOffsets.length; j++) {
+        refOffset += startOffsets[j];
         if (startOffsets[j] <= region.getStartOffset() && region.getEndOffset() <= endOffsets[j]) {
           list.add(
             new FoldingData(
-              region.getStartOffset() - startOffsets[j],
-              region.getEndOffset() - startOffsets[j],
+              region.getStartOffset() - refOffset, // offsets should be relative to clipboard contents start
+              region.getEndOffset() - refOffset,
               region.isExpanded()
             )
           );
+          break;
         }
+        refOffset -= endOffsets[j] + 1; // 1 accounts for line break inserted between contents corresponding to different carets
       }
     }
 
@@ -72,10 +76,7 @@ public class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTra
         foldingData = (FoldingTransferableData)content.getTransferData(flavor);
       }
     }
-    catch (UnsupportedFlavorException e) {
-      // do nothing
-    }
-    catch (IOException e) {
+    catch (UnsupportedFlavorException | IOException e) {
       // do nothing
     }
 

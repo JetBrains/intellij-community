@@ -47,7 +47,7 @@ public class ContentEntriesEditor extends JavaContentEntriesEditor {
 
   @Override
   protected void addAdditionalSettingsToPanel(final JPanel mainPanel) {
-    myLanguageLevelConfigurable = new LanguageLevelConfigurable(myProject) {
+    myLanguageLevelConfigurable = new LanguageLevelConfigurable(myProject, this::fireConfigurationChanged) {
       @NotNull
       @Override
       public LanguageLevelModuleExtensionImpl getLanguageLevelExtension() {

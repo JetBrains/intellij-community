@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 Bas Leijdekkers
+ * Copyright 2011-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,8 @@ class AnnotateOverriddenMethodsPredicate implements PsiElementPredicate {
       method = (PsiMethod)grandParent;
     }
     if (DeclarationSearchUtils.isTooExpensiveToSearch(method, true)) {
-      return false;
+      // skip expensive check and just offer the intention when it might not be needed
+      return true;
     }
     final Collection<PsiMethod> overridingMethods =
       OverridingMethodsSearch.search(method).findAll();

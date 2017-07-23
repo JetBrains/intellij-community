@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.source.codeStyle.PostFormatProcessorHelper;
 import com.intellij.psi.impl.source.codeStyle.PreFormatProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -45,33 +46,36 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
       CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(psiElement.getProject());
       CodeStyleSettings.QuoteStyle quoteStyle = settings.HTML_QUOTE_STYLE;
       if (quoteStyle != CodeStyleSettings.QuoteStyle.None && settings.HTML_ENFORCE_QUOTES) {
-        HtmlQuotesConverter converter = new HtmlQuotesConverter(quoteStyle, psiElement, range);
+        PostFormatProcessorHelper postFormatProcessorHelper = new PostFormatProcessorHelper(settings);
+        postFormatProcessorHelper.setResultTextRange(range);
+        HtmlQuotesConverter converter = new HtmlQuotesConverter(quoteStyle, psiElement, postFormatProcessorHelper);
         Document document = converter.getDocument();
         if (document != null) {
           DocumentUtil.executeInBulk(document, true, converter);
         }
-        return converter.getTextRange();
+        return postFormatProcessorHelper.getResultTextRange();
       }
     }
     return range;
   }
 
 
-  private static class HtmlQuotesConverter extends XmlRecursiveElementVisitor implements Runnable {
-    private TextRange myTextRange;
+  public static class HtmlQuotesConverter extends XmlRecursiveElementVisitor implements Runnable {
+    private TextRange myOriginalRange;
     private final Document myDocument;
     private final PsiDocumentManager myDocumentManager;
-    private final PsiElement myElement;
-    private int myDelta = 0;
+    private final PostFormatProcessorHelper myPostProcessorHelper;
+    private final PsiElement myContext;
     private final char myQuoteChar;
 
-    private HtmlQuotesConverter(CodeStyleSettings.QuoteStyle style,
-                                @NotNull PsiElement element,
-                                @NotNull TextRange textRange) {
-      Project project = element.getProject();
-      PsiFile file = element.getContainingFile();
-      myElement = element;
-      myTextRange = new TextRange(textRange.getStartOffset(), textRange.getEndOffset());
+    public HtmlQuotesConverter(@NotNull CodeStyleSettings.QuoteStyle style,
+                               @NotNull PsiElement context,
+                               @NotNull PostFormatProcessorHelper postFormatProcessorHelper) {
+      myPostProcessorHelper = postFormatProcessorHelper;
+      Project project = context.getProject();
+      PsiFile file = context.getContainingFile();
+      myContext = context;
+      myOriginalRange = postFormatProcessorHelper.getResultTextRange();
       myDocumentManager = PsiDocumentManager.getInstance(project);
       myDocument = myDocumentManager.getDocument(file);
       switch (style) {
@@ -86,17 +90,14 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
       }
     }
 
-    public TextRange getTextRange() {
-      return myTextRange.grown(myDelta);
-    }
-
     public Document getDocument() {
       return myDocument;
     }
 
     @Override
     public void visitXmlAttributeValue(XmlAttributeValue value) {
-      if (myTextRange.contains(value.getTextRange())) {
+      //use original range to check because while we are modifying document, element ranges returned from getTextRange() are not updated.
+      if (myOriginalRange.contains(value.getTextRange())) {
         PsiElement child = value.getFirstChild();
         if (child != null &&
             !containsQuoteChars(value) // For now we skip values containing quotes to be inserted/replaced
@@ -119,10 +120,9 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
             newValue = surroundWithQuotes(value);
           }
           if (newValue != null) {
-            int startOffset = value.getTextRange().getStartOffset() + myDelta;
-            int endOffset = value.getTextRange().getEndOffset() + myDelta;
-            myDocument.replaceString(startOffset, endOffset, newValue);
-            myDelta += newValue.length() - value.getTextLength();
+            TextRange range = myPostProcessorHelper.mapRange(value.getTextRange());
+            myDocument.replaceString(range.getStartOffset(), range.getEndOffset(), newValue);
+            myPostProcessorHelper.updateResultRange(value.getTextLength(), newValue.length());
           }
         }
       }
@@ -164,9 +164,15 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
     public void run() {
       if (myDocument != null) {
         myDocumentManager.doPostponedOperationsAndUnblockDocument(myDocument);
-        myElement.accept(this);
+        myContext.accept(this);
         myDocumentManager.commitDocument(myDocument);
       }
+    }
+
+    public static void runOnElement(@NotNull CodeStyleSettings.QuoteStyle quoteStyle, @NotNull PsiElement element) {
+      PostFormatProcessorHelper postFormatProcessorHelper = new PostFormatProcessorHelper(null);
+      postFormatProcessorHelper.setResultTextRange(element.getTextRange());
+      new HtmlQuotesConverter(quoteStyle, element, postFormatProcessorHelper).run();
     }
   }
 }

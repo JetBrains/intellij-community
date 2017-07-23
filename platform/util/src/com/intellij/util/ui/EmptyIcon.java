@@ -17,6 +17,7 @@
 package com.intellij.util.ui;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.UIResource;
@@ -43,7 +44,7 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
 
   protected final int width;
   protected final int height;
-  private boolean myUseCache;
+  private final boolean myUseCache;
 
   static {
     JBUI.addPropertyChangeListener(JBUI.USER_SCALE_FACTOR_PROPERTY, new PropertyChangeListener() {
@@ -96,7 +97,7 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
   private EmptyIcon(int width, int height, boolean useCache) {
     this.width = width;
     this.height = height;
-    this.myUseCache = useCache;
+    myUseCache = useCache;
   }
 
   protected EmptyIcon(EmptyIcon icon) {
@@ -106,6 +107,7 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
     myUseCache = icon.myUseCache;
   }
 
+  @NotNull
   @Override
   protected EmptyIcon copy() {
     return new EmptyIcon(this);
@@ -114,7 +116,7 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
   @Override
   public EmptyIcon withJBUIPreScaled(boolean preScaled) {
     if (myUseCache && isJBUIPreScaled() != preScaled) {
-      Integer key = key(width, height, isJBUIPreScaled());
+      Integer key = key(width, height);
       if (key != null) cache.remove(key); // rather useless to keep it in cache
       return create(width, height, preScaled);
     }
@@ -122,8 +124,8 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
   }
 
   private static EmptyIcon create(int width, int height, boolean preScaled) {
-    Integer key = key(width, height, preScaled);
-    EmptyIcon icon = (key != null) ? cache.get(key) : null;
+    Integer key = key(width, height);
+    EmptyIcon icon = key != null ? cache.get(key) : null;
     if (icon == null) {
       icon = new EmptyIcon(width, height, true);
       icon.setJBUIPreScaled(preScaled);
@@ -132,8 +134,9 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
     return icon;
   }
 
-  private static Integer key(int width, int height, boolean preScaled) {
-    return (width == height && width < 129) ? preScaled ? width : JBUI.scale(width) : null;
+  @Nullable
+  private static Integer key(int width, int height) {
+    return width == height && width < 129 ? width : null;
   }
 
   @Override
@@ -157,8 +160,8 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
 
     final EmptyIcon icon = (EmptyIcon)o;
 
-    if (scaleVal(height, Scale.EFFECTIVE) != icon.scaleVal(height, Scale.EFFECTIVE)) return false;
-    if (scaleVal(width, Scale.EFFECTIVE) != icon.scaleVal(width, Scale.EFFECTIVE)) return false;
+    if (scaleVal(height, Scale.EFFECTIVE) != icon.scaleVal(icon.height, Scale.EFFECTIVE)) return false;
+    if (scaleVal(width, Scale.EFFECTIVE) != icon.scaleVal(icon.width, Scale.EFFECTIVE)) return false;
 
     return true;
   }
@@ -179,6 +182,7 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
       super(icon);
     }
 
+    @NotNull
     @Override
     protected EmptyIconUIResource copy() {
       return new EmptyIconUIResource(this);

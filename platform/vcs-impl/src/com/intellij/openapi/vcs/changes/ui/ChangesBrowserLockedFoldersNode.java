@@ -16,19 +16,16 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Optional;
-
+import static com.intellij.openapi.vcs.changes.ChangesUtil.processVirtualFilesByVcs;
 import static com.intellij.ui.SimpleTextAttributes.*;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
-import static java.util.stream.Collectors.groupingBy;
 
 public class ChangesBrowserLockedFoldersNode extends ChangesBrowserNode implements TreeLinkMouseListener.HaveTooltip {
 
@@ -63,14 +60,12 @@ public class ChangesBrowserLockedFoldersNode extends ChangesBrowserNode implemen
     }
 
     public void run() {
-      ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(myProject);
-
-      myNode.getFilesUnderStream()
-        .collect(groupingBy(manager::getVcsFor))
-        .forEach((vcs, files) -> Optional.ofNullable(vcs)
-          .map(AbstractVcs::getChangeProvider)
-          .ifPresent(provider -> provider.doCleanup(files))
-        );
+      processVirtualFilesByVcs(myProject, myNode.getAllFilesUnder(), (vcs, files) -> {
+        ChangeProvider provider = vcs.getChangeProvider();
+        if (provider != null) {
+          provider.doCleanup(files);
+        }
+      });
     }
   }
 }

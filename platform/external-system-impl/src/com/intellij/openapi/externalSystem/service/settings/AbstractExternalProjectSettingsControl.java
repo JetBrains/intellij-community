@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,6 +80,7 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
   
   protected abstract void fillExtraControls(@NotNull PaintAwarePanel content, int indentLevel);
 
+  @Override
   public boolean isModified() {
     boolean result = false;
     if (!myCustomizer.isUseAutoImportBoxHidden() && myUseAutoImportBox != null) {
@@ -93,6 +94,7 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
 
   protected abstract boolean isExtraSettingModified();
 
+  @Override
   public void reset() {
     reset(false);
   }
@@ -101,7 +103,13 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
     if (!myCustomizer.isUseAutoImportBoxHidden() && myUseAutoImportBox != null) {
       myUseAutoImportBox.setSelected(getInitialSettings().isUseAutoImport());
     }
-    if (!myCustomizer.isCreateEmptyContentRootDirectoriesBoxHidden() && myCreateEmptyContentRootDirectoriesBox != null) {
+    if(isDefaultModuleCreation) {
+      if(myCreateEmptyContentRootDirectoriesBox != null) {
+        myCreateEmptyContentRootDirectoriesBox.getParent().remove(myCreateEmptyContentRootDirectoriesBox);
+        myCreateEmptyContentRootDirectoriesBox = null;
+      }
+    }
+    if (!isDefaultModuleCreation && !myCustomizer.isCreateEmptyContentRootDirectoriesBoxHidden() && myCreateEmptyContentRootDirectoriesBox != null) {
       myCreateEmptyContentRootDirectoriesBox.setSelected(getInitialSettings().isCreateEmptyContentRootDirectories());
     }
     resetExtraSettings(isDefaultModuleCreation);
@@ -127,6 +135,7 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
 
   protected abstract void applyExtraSettings(@NotNull S settings);
 
+  @Override
   public void disposeUIResources() {
     ExternalSystemUiUtil.disposeUi(this);
   }

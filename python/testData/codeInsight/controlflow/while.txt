@@ -17,7 +17,7 @@
 16(17) element: PyAssignmentStatement
 17(18) WRITE ACCESS: c
 18(19) element: PyWhileStatement
-19(20,31) READ ACCESS: c3
+19(20,30) READ ACCESS: c3
 20(21) element: PyStatementList. Condition: c3:true
 21(22) element: PyAssignmentStatement
 22(23) WRITE ACCESS: m
@@ -25,10 +25,9 @@
 24(25,28) READ ACCESS: m
 25(26) element: PyStatementList. Condition: m:true
 26(27) ASSERTTYPE ACCESS: m
-27(33) element: PyBreakStatement
-28(29) ASSERTTYPE ACCESS: m
-29(30) element: PyAssignmentStatement
-30(18) WRITE ACCESS: n
-31(32) element: PyAssignmentStatement
-32(33) WRITE ACCESS: o
-33() element: null
+27(32) element: PyBreakStatement
+28(29) element: PyAssignmentStatement
+29(18) WRITE ACCESS: n
+30(31) element: PyAssignmentStatement
+31(32) WRITE ACCESS: o
+32() element: null

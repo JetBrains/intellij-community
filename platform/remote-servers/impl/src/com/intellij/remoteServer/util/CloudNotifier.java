@@ -19,7 +19,10 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.ui.MessageType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Optional;
 
 /**
  * @author michael.golubev
@@ -37,9 +40,16 @@ public class CloudNotifier {
   }
 
   public Notification showMessage(String message, MessageType messageType, @Nullable NotificationListener listener) {
-    NotificationGroup notificationGroup = NotificationGroup.balloonGroup(myNotificationDisplayId);
+    NotificationGroup notificationGroup = findOrCreateBaloonGroup(myNotificationDisplayId);
     Notification notification = notificationGroup.createNotification("", message, messageType.toNotificationType(), listener);
     notification.notify(null);
     return notification;
+  }
+
+  @NotNull
+  private static NotificationGroup findOrCreateBaloonGroup(@NotNull String displayId) {
+    return Optional
+      .ofNullable(NotificationGroup.findRegisteredGroup(displayId))
+      .orElse(NotificationGroup.balloonGroup(displayId));
   }
 }

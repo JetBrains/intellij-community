@@ -86,12 +86,7 @@ public class CompiledClass extends UserDataHolderBase{
 
   @NotNull
   public List<String> getSourceFilesPaths() {
-    return ContainerUtil.map(mySourceFiles, new Function<File, String>() {
-      @Override
-      public String fun(File file) {
-        return file.getPath();
-      }
-    });
+    return ContainerUtil.map(mySourceFiles, file -> file.getPath());
   }
 
   /**

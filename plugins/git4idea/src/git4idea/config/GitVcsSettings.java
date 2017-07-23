@@ -15,6 +15,8 @@
  */
 package git4idea.config;
 
+import com.intellij.dvcs.branch.DvcsBranchInfo;
+import com.intellij.dvcs.branch.DvcsBranchSettings;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -27,6 +29,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import git4idea.GitRemoteBranch;
 import git4idea.GitUtil;
@@ -34,11 +37,12 @@ import git4idea.push.GitPushTagMode;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.reset.GitResetMode;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.dvcs.branch.DvcsBranchUtil.find;
 
 /**
  * Git VCS settings
@@ -73,16 +77,22 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public Map<String, String> RECENT_BRANCH_BY_REPOSITORY = new HashMap<>();
     public String RECENT_COMMON_BRANCH = null;
     public boolean AUTO_COMMIT_ON_CHERRY_PICK = false;
+    public boolean AUTO_COMMIT_ON_REVERT = false;
     public boolean WARN_ABOUT_CRLF = true;
     public boolean WARN_ABOUT_DETACHED_HEAD = true;
     public GitResetMode RESET_MODE = null;
     public boolean FORCE_PUSH_ALLOWED = true;
     public GitPushTagMode PUSH_TAGS = null;
     public boolean SIGN_OFF_COMMIT = false;
+    public boolean SET_USER_NAME_GLOBALLY = true;
+    public boolean SWAP_SIDES_IN_COMPARE_BRANCHES = false;
 
     @AbstractCollection(surroundWithTag = false)
     @Tag("push-targets")
     public List<PushTargetInfo> PUSH_TARGETS = ContainerUtil.newArrayList();
+
+    @Property(surroundWithTag = false, flat = true)
+    public DvcsBranchSettings FAVORITE_BRANCH_SETTINGS = new DvcsBranchSettings();
   }
 
   public GitVcsSettings(GitVcsApplicationSettings appSettings) {
@@ -200,6 +210,14 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     return myState.AUTO_COMMIT_ON_CHERRY_PICK;
   }
 
+  public void setAutoCommitOnRevert(boolean autoCommit) {
+    myState.AUTO_COMMIT_ON_REVERT = autoCommit;
+  }
+
+  public boolean isAutoCommitOnRevert() {
+    return myState.AUTO_COMMIT_ON_REVERT;
+  }
+
   public boolean warnAboutCrlf() {
     return myState.WARN_ABOUT_CRLF;
   }
@@ -250,7 +268,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     myState.SIGN_OFF_COMMIT = state;
   }
 
-
   /**
    * Provides migration from project settings.
    * This method is to be removed in IDEA 13: it should be moved to {@link GitVcsApplicationSettings}
@@ -265,50 +282,46 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
   @Nullable
   public GitRemoteBranch getPushTarget(@NotNull GitRepository repository, @NotNull String sourceBranch) {
-    Iterator<PushTargetInfo> iterator = myState.PUSH_TARGETS.iterator();
-    PushTargetInfo targetInfo = find(iterator, repository, sourceBranch);
-    if (targetInfo == null) {
-      return null;
-    }
+    PushTargetInfo targetInfo = find(myState.PUSH_TARGETS, repository, sourceBranch);
+    if (targetInfo == null) return null;
     GitRemote remote = GitUtil.findRemoteByName(repository, targetInfo.targetRemoteName);
-    if (remote == null) {
-      return null;
-    }
+    if (remote == null) return null;
     return GitUtil.findOrCreateRemoteBranch(repository, remote, targetInfo.targetBranchName);
   }
 
   public void setPushTarget(@NotNull GitRepository repository, @NotNull String sourceBranch,
                             @NotNull String targetRemote, @NotNull String targetBranch) {
     String repositoryPath = repository.getRoot().getPath();
-    List<PushTargetInfo> targets = new ArrayList<>(myState.PUSH_TARGETS);
-    Iterator<PushTargetInfo> iterator = targets.iterator();
-    PushTargetInfo existingInfo = find(iterator, repository, sourceBranch);
+    PushTargetInfo existingInfo = find(myState.PUSH_TARGETS, repository, sourceBranch);
     if (existingInfo != null) {
-      iterator.remove();
+      myState.PUSH_TARGETS.remove(existingInfo);
     }
-    PushTargetInfo newInfo = new PushTargetInfo(repositoryPath, sourceBranch, targetRemote, targetBranch);
-    targets.add(newInfo);
-    myState.PUSH_TARGETS = targets;
+    myState.PUSH_TARGETS.add(new PushTargetInfo(repositoryPath, sourceBranch, targetRemote, targetBranch));
   }
 
-  @Nullable
-  @Contract(pure = false)
-  private static PushTargetInfo find(@NotNull Iterator<PushTargetInfo> iterator,
-                                     @NotNull GitRepository repository,
-                                     @NotNull String sourceBranch) {
-    while (iterator.hasNext()) {
-      PushTargetInfo targetInfo = iterator.next();
-      if (targetInfo.repoPath.equals(repository.getRoot().getPath()) && targetInfo.sourceName.equals(sourceBranch)) {
-        return targetInfo;
-      }
-    }
-    return null;
+  @NotNull
+  public DvcsBranchSettings getFavoriteBranchSettings() {
+    return myState.FAVORITE_BRANCH_SETTINGS;
+  }
+
+  public boolean shouldSetUserNameGlobally() {
+    return myState.SET_USER_NAME_GLOBALLY;
+  }
+
+  public void setUserNameGlobally(boolean value) {
+    myState.SET_USER_NAME_GLOBALLY = value;
+  }
+
+  public boolean shouldSwapSidesInCompareBranches() {
+    return myState.SWAP_SIDES_IN_COMPARE_BRANCHES;
+  }
+
+  public void setSwapSidesInCompareBranches(boolean value) {
+    myState.SWAP_SIDES_IN_COMPARE_BRANCHES = value;
   }
 
   @Tag("push-target-info")
-  private static class PushTargetInfo {
-    @Attribute(value = "repo") public String repoPath;
-    @Attribute(value = "source") public String sourceName;
+  private static class PushTargetInfo extends DvcsBranchInfo {
     @Attribute(value = "target-remote") public String targetRemoteName;
     @Attribute(value = "target-branch") public String targetBranchName;
 
@@ -318,10 +331,28 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     }
 
     PushTargetInfo(@NotNull String repositoryPath, @NotNull String source, @NotNull String targetRemote, @NotNull String targetBranch) {
-      repoPath = repositoryPath;
-      sourceName = source;
+      super(repositoryPath, source);
       targetRemoteName = targetRemote;
       targetBranchName = targetBranch;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      if (!super.equals(o)) return false;
+
+      PushTargetInfo info = (PushTargetInfo)o;
+
+      if (targetRemoteName != null ? !targetRemoteName.equals(info.targetRemoteName) : info.targetRemoteName != null) return false;
+      if (targetBranchName != null ? !targetBranchName.equals(info.targetBranchName) : info.targetBranchName != null) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(super.hashCode(), targetRemoteName, targetBranchName);
     }
   }
 }

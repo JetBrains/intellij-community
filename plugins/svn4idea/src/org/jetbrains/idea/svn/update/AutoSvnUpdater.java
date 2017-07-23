@@ -35,12 +35,6 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import javax.swing.*;
 import java.util.LinkedHashMap;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/16/12
- * Time: 5:05 PM
- */
 public class AutoSvnUpdater extends AbstractCommonUpdateAction {
   private final Project myProject;
   private final FilePath[] myRoots;

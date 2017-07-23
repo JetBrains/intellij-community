@@ -47,7 +47,7 @@ public class Annotation {
       return false;
     }
 
-    if (ReferenceElement.parse(builder, false, true, true, false, false) == ReferenceElement.ReferenceElementResult.FAIL) {
+    if (ReferenceElement.parse(builder, false, false, true, false, false) == ReferenceElement.ReferenceElementResult.FAIL) {
       builder.error("Annotation name expected");
       annMarker.drop();
       return false;
@@ -60,21 +60,5 @@ public class Annotation {
 
     annMarker.done(GroovyElementTypes.ANNOTATION);
     return true;
-  }
-
-  public static void parseAnnotationOptional(PsiBuilder builder, GroovyParser parser) {
-    PsiBuilder.Marker annOptMarker = builder.mark();
-
-    boolean hasAnnotations = false;
-    while (parse(builder, parser)) {
-      ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
-      hasAnnotations = true;
-    }
-
-    if (hasAnnotations) {
-      annOptMarker.done(GroovyElementTypes.MODIFIERS);
-    } else {
-      annOptMarker.rollbackTo();
-    }
   }
 }

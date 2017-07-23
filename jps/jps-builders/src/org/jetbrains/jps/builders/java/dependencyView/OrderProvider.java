@@ -42,7 +42,7 @@ class OrderProvider {
     }
   }
   private final DependencyContext myContext;
-  private final List<Entry> myList = new LinkedList<Entry>();
+  private final List<Entry> myList = new LinkedList<>();
 
   OrderProvider(final DependencyContext context) {
       myContext = context;

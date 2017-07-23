@@ -58,7 +58,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.mvc.MvcFramework;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.util.ArrayList;
@@ -234,11 +233,6 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     return new ProjectViewTree(myProject, treeModel) {
       public String toString() {
         return myDescriptor.getFramework().getDisplayName() + " " + super.toString();
-      }
-
-      @Override
-      public DefaultMutableTreeNode getSelectedNode() {
-        return MvcProjectViewPane.this.getSelectedNode();
       }
     };
   }

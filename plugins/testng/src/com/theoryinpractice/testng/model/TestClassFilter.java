@@ -18,11 +18,12 @@ package com.theoryinpractice.testng.model;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.ide.util.ClassFilter;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.theoryinpractice.testng.util.TestNGUtil;
 
@@ -64,38 +65,35 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope
     }
 
     public boolean isAccepted(final PsiClass psiClass) {
-      return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          if(!ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(psiClass)) return false;
-          //PsiManager manager = PsiManager.getInstance(project);
-          //if(manager.getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) return true;
-          boolean hasTest = TestNGUtil.hasTest(psiClass);
-          if (hasTest) {
-            if (checkClassCanBeInstantiated) {
-              final PsiMethod[] constructors = psiClass.getConstructors();
-              if (constructors.length > 0) {
-                boolean canBeInstantiated = false;
-                for (PsiMethod constructor : constructors) {
-                  if (constructor.getParameterList().getParametersCount() == 0) {
-                    canBeInstantiated = true;
-                    break;
-                  }
-                  if (AnnotationUtil.isAnnotated(constructor, Arrays.asList(GUICE_INJECTION, FACTORY_INJECTION), true)) {
-                    canBeInstantiated = true;
-                    break;
-                  }
-                }
-                if (!canBeInstantiated && !AnnotationUtil.isAnnotated(psiClass, GUICE, false)){
-                  return false;
+      return ReadAction.compute(() -> {
+        if (!ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(psiClass)) return false;
+        //PsiManager manager = PsiManager.getInstance(project);
+        //if(manager.getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) < 0) return true;
+        boolean hasTest = TestNGUtil.hasTest(psiClass);
+        if (hasTest) {
+          if (checkClassCanBeInstantiated) {
+            final PsiMethod[] constructors = psiClass.getConstructors();
+            if (constructors.length > 0) {
+              boolean canBeInstantiated = false;
+              for (PsiMethod constructor : constructors) {
+                PsiParameter[] parameters = constructor.getParameterList().getParameters();
+                if (parameters.length == 0 ||
+                    AnnotationUtil.isAnnotated(constructor, Arrays.asList(GUICE_INJECTION, FACTORY_INJECTION), true) ||
+                    parameters.length == 1 && parameters[0].getType().equalsToText(CommonClassNames.JAVA_LANG_STRING)
+                  ) {
+                  canBeInstantiated = true;
+                  break;
                 }
               }
+              if (!canBeInstantiated && !AnnotationUtil.isAnnotated(psiClass, GUICE, false)) {
+                return false;
+              }
             }
-            return true;
           }
-
-          return includeConfig && TestNGUtil.hasConfig(psiClass, TestNGUtil.CONFIG_ANNOTATIONS_FQN_NO_TEST_LEVEL); 
+          return true;
         }
+
+        return includeConfig && TestNGUtil.hasConfig(psiClass, TestNGUtil.CONFIG_ANNOTATIONS_FQN_NO_TEST_LEVEL);
       });
     }
 

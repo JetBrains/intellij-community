@@ -17,9 +17,6 @@ package com.intellij.codeInsight.documentation;
 
 import junit.framework.TestCase;
 
-/**
- * User: Vassiliy.Kudryashov
- */
 public class AbstractExternalFilterTest extends TestCase {
   private static final String chineseFlexDocExample =
     "<head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"><meta http-equiv=\"X-UA-Compatible\" content=\"IE=9\">";

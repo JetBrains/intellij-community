@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
@@ -119,8 +118,7 @@ public class InspectionListCellRenderer extends DefaultListCellRenderer {
     }
     else {
       // E.g. "..." item
-      return value == ChooseByNameBase.NON_PREFIX_SEPARATOR ? ChooseByNameBase.renderNonPrefixSeparatorComponent(UIUtil.getListBackground()) :
-             super.getListCellRendererComponent(list, value, index, sel, focus);
+      return super.getListCellRendererComponent(list, value, index, sel, focus);
     }
 
     return panel;

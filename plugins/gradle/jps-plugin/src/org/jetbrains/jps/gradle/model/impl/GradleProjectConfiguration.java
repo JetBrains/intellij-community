@@ -31,5 +31,5 @@ public class GradleProjectConfiguration {
   @Tag("resource-processing")
   @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false, entryTagName = "gradle-module",
                  keyAttributeName = "name")
-  public Map<String, GradleModuleResourceConfiguration> moduleConfigurations = new THashMap<String, GradleModuleResourceConfiguration>();
+  public Map<String, GradleModuleResourceConfiguration> moduleConfigurations = new THashMap<>();
 }

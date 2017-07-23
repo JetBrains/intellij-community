@@ -18,25 +18,28 @@ package git4idea.changes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsOutgoingChangesProvider;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
-import com.intellij.util.containers.Convertor;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitBranch;
 import git4idea.GitBranchesSearcher;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
-import git4idea.commands.GitSimpleHandler;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.SHAHash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.util.Functions.identity;
+import static com.intellij.util.containers.ContainerUtil.map;
 
 public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<CommittedChangeList> {
   private final static Logger LOG = Logger.getInstance("#git4idea.changes.GitOutgoingChangesProvider");
@@ -57,17 +60,9 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
     if (base == null) {
       return new Pair<>(null, Collections.<CommittedChangeList>emptyList());
     }
-    final List<GitCommittedChangeList> lists = GitUtil.getLocalCommittedChanges(myProject, vcsRoot, new Consumer<GitSimpleHandler>() {
-      public void consume(final GitSimpleHandler handler) {
-        handler.addParameters(base.asString() + "..HEAD");
-      }
-    });
-    return new Pair<>(base, ObjectsConvertor.convert(lists, new Convertor<GitCommittedChangeList, CommittedChangeList>() {
-      @Override
-      public CommittedChangeList convert(GitCommittedChangeList o) {
-        return o;
-      }
-    }));
+    final List<GitCommittedChangeList> lists = GitUtil.getLocalCommittedChanges(myProject, vcsRoot,
+                                                                                handler -> handler.addParameters(base.asString() + "..HEAD"));
+    return new Pair<>(base, map(lists, identity()));
   }
 
   @Nullable

@@ -16,7 +16,7 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.FrozenDocument;
@@ -31,9 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
-* User: cdr
-*/
 public class SelfElementInfo extends SmartPointerElementInfo {
   private static final FileDocumentManager ourFileDocManager = FileDocumentManager.getInstance();
   private volatile Identikit myIdentikit;
@@ -56,7 +53,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     setRange(range);
   }
 
-  protected void switchToAnchor(@NotNull PsiElement element) {
+  void switchToAnchor(@NotNull PsiElement element) {
     Pair<Identikit.ByAnchor, PsiElement> pair = Identikit.withAnchor(element, myIdentikit.getFileLanguage());
     if (pair != null) {
       assert pair.first.hashCode() == myIdentikit.hashCode();
@@ -89,8 +86,8 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     return myEndOffset;
   }
 
-  boolean isForInjected() {
-    return myForInjected;
+  boolean isGreedy() {
+    return myForInjected || myIdentikit.isForPsiFile();
   }
 
   @Override
@@ -131,20 +128,17 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Nullable
-  public static PsiFile restoreFileFromVirtual(@NotNull final VirtualFile virtualFile, @NotNull final Project project, @Nullable final Language language) {
-    return ApplicationManager.getApplication().runReadAction(new NullableComputable<PsiFile>() {
-      @Override
-      public PsiFile compute() {
-        if (project.isDisposed()) return null;
-        VirtualFile child = restoreVFile(virtualFile);
-        if (child == null || !child.isValid()) return null;
-        PsiFile file = PsiManager.getInstance(project).findFile(child);
-        if (file != null && language != null) {
-          return file.getViewProvider().getPsi(language);
-        }
-
-        return file;
+  public static PsiFile restoreFileFromVirtual(@NotNull VirtualFile virtualFile, @NotNull Project project, @NotNull Language language) {
+    return ReadAction.compute(() -> {
+      if (project.isDisposed()) return null;
+      VirtualFile child = restoreVFile(virtualFile);
+      if (child == null || !child.isValid()) return null;
+      PsiFile file = PsiManager.getInstance(project).findFile(child);
+      if (file != null) {
+        return file.getViewProvider().getPsi(language == Language.ANY ? file.getViewProvider().getBaseLanguage() : language);
       }
+
+      return null;
     });
   }
 
@@ -152,15 +146,13 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   public static PsiDirectory restoreDirectoryFromVirtual(final VirtualFile virtualFile, @NotNull final Project project) {
     if (virtualFile == null) return null;
 
-    return ApplicationManager.getApplication().runReadAction(new Computable<PsiDirectory>() {
-      @Override
-      public PsiDirectory compute() {
-        VirtualFile child = restoreVFile(virtualFile);
-        if (child == null || !child.isValid()) return null;
-        PsiDirectory file = PsiManager.getInstance(project).findDirectory(child);
-        if (file == null || !file.isValid()) return null;
-        return file;
-      }
+    return ReadAction.compute(() -> {
+      if (project.isDisposed()) return null;
+      VirtualFile child = restoreVFile(virtualFile);
+      if (child == null || !child.isValid()) return null;
+      PsiDirectory file = PsiManager.getInstance(project).findDirectory(child);
+      if (file == null || !file.isValid()) return null;
+      return file;
     });
   }
 
@@ -190,27 +182,15 @@ public class SelfElementInfo extends SmartPointerElementInfo {
       final SelfElementInfo otherInfo = (SelfElementInfo)other;
       if (!getVirtualFile().equals(other.getVirtualFile()) || myIdentikit != otherInfo.myIdentikit) return false;
 
-      return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          Segment range1 = getPsiRange();
-          Segment range2 = otherInfo.getPsiRange();
-          return range1 != null && range2 != null
-                 && range1.getStartOffset() == range2.getStartOffset()
-                 && range1.getEndOffset() == range2.getEndOffset();
-        }
+      return ReadAction.compute(() -> {
+        Segment range1 = getPsiRange();
+        Segment range2 = otherInfo.getPsiRange();
+        return range1 != null && range2 != null
+               && range1.getStartOffset() == range2.getStartOffset()
+               && range1.getEndOffset() == range2.getEndOffset();
       });
     }
-    return areRestoredElementsEqual(other);
-  }
-
-  protected boolean areRestoredElementsEqual(@NotNull final SmartPointerElementInfo other) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        return Comparing.equal(restoreElement(), other.restoreElement());
-      }
-    });
+    return false;
   }
 
   @Override

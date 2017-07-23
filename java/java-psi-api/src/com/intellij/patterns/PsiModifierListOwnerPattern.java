@@ -39,11 +39,7 @@ public class PsiModifierListOwnerPattern<T extends PsiModifierListOwner, Self ex
   public Self withModifiers(final String... modifiers) {
     return with(new PatternCondition<T>("withModifiers") {
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
-        return ContainerUtil.and(modifiers, new Condition<String>() {
-          public boolean value(final String s) {
-            return t.hasModifierProperty(s);
-          }
-        });
+        return ContainerUtil.and(modifiers, s -> t.hasModifierProperty(s));
       }
     });
   }
@@ -51,11 +47,7 @@ public class PsiModifierListOwnerPattern<T extends PsiModifierListOwner, Self ex
   public Self withoutModifiers(final String... modifiers) {
     return with(new PatternCondition<T>("withoutModifiers") {
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
-        return ContainerUtil.and(modifiers, new Condition<String>() {
-          public boolean value(final String s) {
-            return !t.hasModifierProperty(s);
-          }
-        });
+        return ContainerUtil.and(modifiers, s -> !t.hasModifierProperty(s));
       }
     });
   }

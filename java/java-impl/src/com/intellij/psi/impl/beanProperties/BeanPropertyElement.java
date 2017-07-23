@@ -89,6 +89,7 @@ public class BeanPropertyElement extends FakePsiElement implements PsiMetaOwner,
 
   }
 
+  @NotNull
   @Override
   public Object[] getDependences() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;

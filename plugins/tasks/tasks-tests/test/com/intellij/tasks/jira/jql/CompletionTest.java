@@ -51,7 +51,7 @@ public class CompletionTest extends CodeInsightFixtureTestCase {
   }
 
   private void checkCompletionVariants(String... variants) {
-    checkCompletionVariants(ContainerUtil.<String>emptyList(), variants);
+    checkCompletionVariants(ContainerUtil.emptyList(), variants);
   }
 
   public void testBeginningOfLine() throws Exception {
@@ -122,7 +122,7 @@ public class CompletionTest extends CodeInsightFixtureTestCase {
 
   public void testFunctionArguments() throws Exception {
     // only literals accepted so we can't assume anything
-    checkCompletionVariants(ContainerUtil.<String>emptyList());
+    checkCompletionVariants(ContainerUtil.emptyList());
   }
 
   public void testAfterNotKeywordInNotClause() throws Exception {

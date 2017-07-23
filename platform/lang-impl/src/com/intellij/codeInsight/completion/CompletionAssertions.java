@@ -22,15 +22,14 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
-import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
@@ -38,7 +37,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -46,7 +44,6 @@ import java.util.List;
  * @author peter
  */
 class CompletionAssertions {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionAssertions");
 
   static void assertCommitSuccessful(Editor editor, PsiFile psiFile) {
     Document document = editor.getDocument();
@@ -81,9 +78,7 @@ class CompletionAssertions {
     if (node != null) {
       message += "\nnode.length=" + node.getTextLength();
       String nodeText = node.getText();
-      if (nodeText != null) {
-        message += "\nnode.text.length=" + nodeText.length();
-      }
+      message += "\nnode.text.length=" + nodeText.length();
     }
     VirtualFile virtualFile = viewProvider.getVirtualFile();
     message += "\nvirtualFile=" + virtualFile;
@@ -91,9 +86,9 @@ class CompletionAssertions {
     message += "\n" + DebugUtil.currentStackTrace();
 
     throw new LogEventException("Commit unsuccessful", message,
-                                       new Attachment(virtualFile.getPath() + "_file.txt", fileText),
-                                       createAstAttachment(psiFile, psiFile),
-                                       new Attachment("docText.txt", document.getText()));
+                                new Attachment(virtualFile.getPath() + "_file.txt", StringUtil.notNullize(fileText)),
+                                createAstAttachment(psiFile, psiFile),
+                                new Attachment("docText.txt", document.getText()));
   }
 
   static void checkEditorValid(Editor editor) {
@@ -170,9 +165,23 @@ class CompletionAssertions {
     }
   }
 
+  static void assertCorrectOriginalFile(String prefix, PsiFile file, PsiFile copy) {
+    if (copy.getOriginalFile() != file) {
+      throw new AssertionError(prefix + " copied file doesn't have correct original: noOriginal=" + (copy.getOriginalFile() == copy) +
+                               "\n file " + fileInfo(file) +
+                               "\n copy " + fileInfo(copy));
+    }
+  }
+
+  private static String fileInfo(PsiFile file) {
+    return file + " of " + file.getClass() +
+           " in " + file.getViewProvider() + ", languages=" + file.getViewProvider().getLanguages() +
+           ", physical=" + file.isPhysical();
+  }
+
   static class WatchingInsertionContext extends InsertionContext {
     private RangeMarkerEx tailWatcher;
-    String invalidateTrace;
+    Throwable invalidateTrace;
     DocumentEvent killer;
     private RangeMarkerSpy spy;
 
@@ -199,12 +208,8 @@ class CompletionAssertions {
       spy = new RangeMarkerSpy(tailWatcher) {
         @Override
         protected void invalidated(DocumentEvent e) {
-          if (ApplicationManager.getApplication().isUnitTestMode()) {
-            LOG.error("Tail offset invalidated, say thanks to the "+ e);
-          }
-
           if (invalidateTrace == null) {
-            invalidateTrace = DebugUtil.currentStackTrace();
+            invalidateTrace = new Throwable();
             killer = e;
           }
         }
@@ -222,7 +227,7 @@ class CompletionAssertions {
     @Override
     public int getTailOffset() {
       if (!getOffsetMap().containsOffset(TAIL_OFFSET) && invalidateTrace != null) {
-        throw new TailInvalidException(invalidateTrace);
+        throw new RuntimeExceptionWithAttachments("Tail offset invalid", new Attachment("invalidated", invalidateTrace));
       }
 
       int offset = super.getTailOffset();
@@ -234,18 +239,4 @@ class CompletionAssertions {
     }
   }
 
-  private static class TailInvalidException extends IllegalStateException implements ExceptionWithAttachments {
-    private final String myInvalidationTrace;
-
-    TailInvalidException(@NotNull String invalidationTrace) {
-      super("Tail offset invalid");
-      myInvalidationTrace = invalidationTrace;
-    }
-
-    @NotNull
-    @Override
-    public Attachment[] getAttachments() {
-      return new Attachment[]{new Attachment("invalidated.trace", myInvalidationTrace)};
-    }
-  }
 }

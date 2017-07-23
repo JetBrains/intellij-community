@@ -32,13 +32,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * Created by IntelliJ IDEA.
- * User: zajac
- * Date: 18.06.11
- * Time: 9:45
- * To change this template use File | Settings | File Templates.
- */
 public class XBreakpointActionsPanel extends XBreakpointPropertiesSubPanel {
   public static final String LOG_EXPRESSION_HISTORY_ID = "breakpointLogExpression";
 

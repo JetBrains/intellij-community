@@ -225,3 +225,17 @@ class NotADup {
     }
   }
 }
+class Poly {
+  Poly rotateRight() {
+    return this;
+  }
+
+  public Poly rotate(boolean rotateRight) {
+    // Code inspection claims that the following if statement has identical branches, but that is incorrect.
+    if (rotateRight) {
+      return rotateRight();
+    } else {
+      return rotateRight().rotateRight().rotateRight();
+    }
+  }
+}

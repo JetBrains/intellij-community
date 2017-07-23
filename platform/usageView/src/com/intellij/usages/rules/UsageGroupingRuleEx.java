@@ -18,13 +18,22 @@ package com.intellij.usages.rules;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageTarget;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
- * @author yole
+ * @deprecated override {@link UsageGroupingRule#getParentGroupsFor(Usage, UsageTarget[])} instead.
  */
 public interface UsageGroupingRuleEx extends UsageGroupingRule {
   @Nullable
   UsageGroup groupUsage(@NotNull Usage usage, @NotNull UsageTarget[] targets);
+
+  @NotNull
+  @Override
+  default List<UsageGroup> getParentGroupsFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
+    return ContainerUtil.createMaybeSingletonList(groupUsage(usage, targets));
+  }
 }

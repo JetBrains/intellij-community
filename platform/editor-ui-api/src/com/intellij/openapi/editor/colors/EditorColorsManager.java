@@ -29,6 +29,8 @@ public abstract class EditorColorsManager {
 
   @NonNls public static final String DEFAULT_SCHEME_NAME = "Default";
 
+  @NonNls public static final String COLOR_SCHEME_FILE_EXTENSION = ".icls";
+
   public static EditorColorsManager getInstance() {
     return ServiceManager.getService(EditorColorsManager.class);
   }

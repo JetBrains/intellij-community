@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGd
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrTypeDefinitionImpl;
@@ -66,9 +65,6 @@ import java.util.*;
  */
 public class GrClassImplUtil {
   private static final Logger LOG = Logger.getInstance(GrClassImplUtil.class);
-
-  private static final Condition<PsiClassType> IS_GROOVY_OBJECT =
-    psiClassType -> TypesUtil.isClassType(psiClassType, GroovyCommonClassNames.GROOVY_OBJECT);
 
   private GrClassImplUtil() {
   }
@@ -124,44 +120,6 @@ public class GrClassImplUtil {
     else {
       return JavaPsiFacade.getInstance(grType.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, grType.getResolveScope());
     }
-  }
-
-  @NotNull
-  public static PsiClassType[] getExtendsListTypes(@NotNull GrTypeDefinition grType, @NotNull PsiClassType[] extendsTypes) {
-    if (grType.isInterface()) {
-      return extendsTypes;
-    }
-
-    for (PsiClassType type : extendsTypes) {
-      final PsiClass superClass = type.resolve();
-      if (superClass instanceof GrTypeDefinition && !superClass.isInterface() ||
-          superClass != null && GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT.equals(superClass.getQualifiedName())) {
-        return extendsTypes;
-      }
-    }
-
-    PsiClass grObSupport = GroovyPsiManager.getInstance(grType.getProject())
-      .findClassWithCache(GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT, grType.getResolveScope());
-    if (grObSupport != null) {
-      final PsiClassType type = JavaPsiFacade.getInstance(grType.getProject()).getElementFactory().createType(grObSupport);
-      return ArrayUtil.append(extendsTypes, type, PsiClassType.ARRAY_FACTORY);
-    }
-    return extendsTypes;
-  }
-
-  @NotNull
-  public static PsiClassType[] getImplementsListTypes(@NotNull GrTypeDefinition grType, @NotNull PsiClassType[] implementsTypes) {
-    final Collection<PsiClassType> result = ContainerUtil.newLinkedHashSet();
-    final PsiClassType[] extendsTypes = getReferenceListTypes(grType.getExtendsClause());
-    result.addAll(Arrays.asList(implementsTypes));
-    if (!grType.isInterface() && !ContainerUtil.or(implementsTypes, IS_GROOVY_OBJECT) && !ContainerUtil.or(extendsTypes, IS_GROOVY_OBJECT)) {
-      result.add(getGroovyObjectType(grType));
-    }
-    return result.toArray(new PsiClassType[result.size()]);
-  }
-
-  public static PsiClassType getGroovyObjectType(@NotNull PsiElement context) {
-    return TypesUtil.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_OBJECT, context);
   }
 
   @NotNull
@@ -221,6 +179,7 @@ public class GrClassImplUtil {
   }
 
 
+  @NotNull
   public static PsiClass[] getInterfaces(GrTypeDefinition grType) {
     final PsiClassType[] implementsListTypes = grType.getImplementsListTypes();
     List<PsiClass> result = new ArrayList<>(implementsListTypes.length);
@@ -599,7 +558,11 @@ public class GrClassImplUtil {
   }
 
   public static PsiField[] getAllFields(GrTypeDefinition grType) {
-    Map<String, CandidateInfo> fieldsMap = CollectClassMembersUtil.getAllFields(grType);
+    return getAllFields(grType, true);
+  }
+
+  public static PsiField[] getAllFields(GrTypeDefinition grType, boolean includeSynthetic) {
+    Map<String, CandidateInfo> fieldsMap = CollectClassMembersUtil.getAllFields(grType, includeSynthetic);
     return ContainerUtil.map2Array(fieldsMap.values(), PsiField.class, entry -> (PsiField)entry.getElement());
   }
 

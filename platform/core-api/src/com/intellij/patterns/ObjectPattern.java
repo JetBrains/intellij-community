@@ -71,13 +71,13 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   @SuppressWarnings("unchecked")
   public final ElementPatternCondition<T> getCondition() {
     if (myConditions == null) {
-      return new ElementPatternCondition<T>(myInitialCondition);
+      return new ElementPatternCondition<>(myInitialCondition);
     }
     if (myConditions instanceof PatternCondition) {
       PatternCondition<? super T> singleCondition = (PatternCondition)myConditions;
-      return new ElementPatternCondition<T>(myInitialCondition, Collections.<PatternCondition<? super T>>singletonList(singleCondition));
+      return new ElementPatternCondition<>(myInitialCondition, Collections.singletonList(singleCondition));
     }
-    return new ElementPatternCondition<T>(myInitialCondition, (List)myConditions);
+    return new ElementPatternCondition<>(myInitialCondition, (List)myConditions);
   }
 
   @NotNull
@@ -125,7 +125,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
       list = Collections.singletonList(values[0]);
     }
     else if (length >= 11) {
-      list = new HashSet<T>(Arrays.asList(values));
+      list = new HashSet<>(Arrays.asList(values));
     }
     else {
       list = Arrays.asList(values);
@@ -163,6 +163,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
 
   @NotNull
   public Self isNull() {
+    //noinspection Convert2Diamond (would break compilation: IDEA-168317)
     return adapt(new ElementPatternCondition<T>(new InitialPatternCondition(Object.class) {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o == null;
@@ -172,6 +173,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
 
   @NotNull
   public Self notNull() {
+    //noinspection Convert2Diamond (would break compilation: IDEA-168317)
     return adapt(new ElementPatternCondition<T>(new InitialPatternCondition(Object.class) {
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return o != null;

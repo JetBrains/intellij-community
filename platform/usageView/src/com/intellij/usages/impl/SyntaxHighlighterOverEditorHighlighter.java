@@ -32,9 +32,6 @@ import com.intellij.psi.impl.search.LexerEditorHighlighterLexer;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* Created by Maxim.Mossienko on 7/31/2014.
-*/
 public class SyntaxHighlighterOverEditorHighlighter implements SyntaxHighlighter {
   private final Lexer lexer;
   private LayeredHighlighterIterator layeredHighlighterIterator;

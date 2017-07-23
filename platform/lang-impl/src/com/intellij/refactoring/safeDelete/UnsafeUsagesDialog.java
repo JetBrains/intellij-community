@@ -58,6 +58,7 @@ public class UnsafeUsagesDialog extends DialogWrapper {
     JPanel panel = new JPanel(new BorderLayout());
     myMessagePane = new JEditorPane(UIUtil.HTML_MIME, "");
     myMessagePane.setEditable(false);
+    myMessagePane.setEditorKit(UIUtil.getHTMLEditorKit());
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myMessagePane);
     scrollPane.setPreferredSize(JBUI.size(500, 400));
     panel.add(new JLabel(RefactoringBundle.message("the.following.problems.were.found")), BorderLayout.NORTH);

@@ -26,16 +26,19 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.PomTargetPsiElement;
-import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.graph.*;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Dmitry Batkovich
@@ -166,18 +169,16 @@ public class ResourceBundlePropertiesUpdateManager {
 
   @Nullable
   private static Pair<List<String>, Boolean> keysOrder(final ResourceBundle resourceBundle) {
+    final List<PropertiesOrder> propertiesOrders =
+      resourceBundle.getPropertiesFiles().stream().map(PropertiesOrder::new).collect(Collectors.toList());
+
     final boolean[] isAlphaSorted = new boolean[]{true};
     final Graph<String> generator = GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<String>() {
       @Override
       public Collection<String> getNodes() {
         final Set<String> nodes = new LinkedHashSet<>();
-        for (PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {
-          for (IProperty property : propertiesFile.getProperties()) {
-            final String key = property.getKey();
-            if (key != null) {
-              nodes.add(key);
-            }
-          }
+        for (PropertiesOrder order : propertiesOrders) {
+          nodes.addAll(order.myKeys);
         }
         return nodes;
       }
@@ -185,23 +186,16 @@ public class ResourceBundlePropertiesUpdateManager {
       @Override
       public Iterator<String> getIn(String n) {
         final Collection<String> siblings = new LinkedHashSet<>();
-        for (PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {
-          for (IProperty property : propertiesFile.findPropertiesByKey(n)) {
-            PsiElement sibling = property.getPsiElement().getNextSibling();
-            while (sibling instanceof PsiWhiteSpace || sibling instanceof PsiComment) {
-              sibling = sibling.getNextSibling();
+
+        for (PropertiesOrder order : propertiesOrders) {
+          for (String nextKey : order.getNext(n)) {
+            if (isAlphaSorted[0] && String.CASE_INSENSITIVE_ORDER.compare(n, nextKey) > 0) {
+              isAlphaSorted[0] = false;
             }
-            if (sibling instanceof IProperty) {
-              final String key = ((IProperty)sibling).getKey();
-              if (key != null) {
-                if (isAlphaSorted[0] && String.CASE_INSENSITIVE_ORDER.compare(n, key) > 0) {
-                  isAlphaSorted[0] = false;
-                }
-                siblings.add(key);
-              }
-            }
+            siblings.add(nextKey);
           }
         }
+
         return siblings.iterator();
       }
     }));
@@ -229,5 +223,47 @@ public class ResourceBundlePropertiesUpdateManager {
 
   public boolean isSorted() {
     return myOrdered;
+  }
+
+  private static class PropertiesOrder {
+    List<String> myKeys;
+    Map<String, IntArrayList> myKeyIndices;
+
+    public PropertiesOrder(@NotNull PropertiesFile file) {
+      final List<IProperty> properties = file.getProperties();
+      myKeys = new ArrayList<>(properties.size());
+      myKeyIndices = FactoryMap.createMap(k->new IntArrayList(1),()->new THashMap<>(properties.size()));
+
+      int index = 0;
+      for (IProperty property : properties) {
+        final String key = property.getKey();
+        if (key != null) {
+          myKeys.add(key);
+          myKeyIndices.get(key).add(index);
+        }
+        index++;
+      }
+    }
+
+    @NotNull
+    public List<String> getNext(@NotNull String key) {
+      List<String> nextProperties = null;
+      if (myKeyIndices.containsKey(key)) {
+        final IntArrayList indices = myKeyIndices.get(key);
+        for (int i = 0; i < indices.size(); i++) {
+          final int searchIdx = indices.getQuick(i) + 1;
+          if (searchIdx < myKeys.size()) {
+            final String nextProperty = myKeys.get(searchIdx);
+            if (nextProperty != null) {
+              if (nextProperties == null) {
+                nextProperties = new SmartList<>();
+              }
+              nextProperties.add(nextProperty);
+            }
+          }
+        }
+      }
+      return nextProperties == null ? Collections.emptyList() : nextProperties;
+    }
   }
 }

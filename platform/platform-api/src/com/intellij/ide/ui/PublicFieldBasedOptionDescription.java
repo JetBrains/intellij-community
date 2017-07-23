@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,9 +41,7 @@ public abstract class PublicFieldBasedOptionDescription extends BooleanOptionDes
       final Field field = getInstance().getClass().getField(myFieldName);
       return field.getBoolean(getInstance());
     }
-    catch (NoSuchFieldException ignore) {
-    }
-    catch (IllegalAccessException ignore) {
+    catch (NoSuchFieldException | IllegalAccessException ignore) {
     }
     return false;
   }
@@ -54,9 +52,7 @@ public abstract class PublicFieldBasedOptionDescription extends BooleanOptionDes
       final Field field = getInstance().getClass().getField(myFieldName);
       field.setBoolean(getInstance(), enabled);
     }
-    catch (NoSuchFieldException ignore) {
-    }
-    catch (IllegalAccessException ignore) {
+    catch (NoSuchFieldException | IllegalAccessException ignore) {
     }
     fireUpdated();
   }

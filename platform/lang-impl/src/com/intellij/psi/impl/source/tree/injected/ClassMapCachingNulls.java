@@ -27,13 +27,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class ClassMapCachingNulls<T> {
+class ClassMapCachingNulls<T> {
   private final Map<Class, T[]> myBackingMap;
   private final T[] myEmptyArray;
   private final List<T> myOrderingArray;
   private final Map<Class, T[]> myMap = ContainerUtil.newConcurrentMap();
 
-  public ClassMapCachingNulls(@NotNull Map<Class, T[]> backingMap, T[] emptyArray, @NotNull List<T> orderingArray) {
+  ClassMapCachingNulls(@NotNull Map<Class, T[]> backingMap, T[] emptyArray, @NotNull List<T> orderingArray) {
     myBackingMap = backingMap;
     myEmptyArray = emptyArray;
     myOrderingArray = orderingArray;
@@ -103,7 +103,7 @@ public class ClassMapCachingNulls<T> {
     return value;
   }
 
-  public Map<Class, T[]> getBackingMap() {
+  Map<Class, T[]> getBackingMap() {
     return myBackingMap;
   }
 

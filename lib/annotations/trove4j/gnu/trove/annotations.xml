@@ -53,6 +53,9 @@
   <item name='gnu.trove.TIntHashingStrategy'>
     <annotation name='java.lang.FunctionalInterface'/>
   </item>
+  <item name='gnu.trove.TIntObjectHashMap int[] keys()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='gnu.trove.TIntProcedure'>
     <annotation name='java.lang.FunctionalInterface'/>
   </item>

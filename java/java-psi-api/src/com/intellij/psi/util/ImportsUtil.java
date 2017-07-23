@@ -25,10 +25,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 9/1/11
- */
 public class ImportsUtil {
   private ImportsUtil() {
   }
@@ -36,7 +32,7 @@ public class ImportsUtil {
   public static List<PsiJavaCodeReferenceElement> collectReferencesThrough(PsiFile file,
                                                                            @Nullable final PsiJavaCodeReferenceElement refExpr,
                                                                            final PsiImportStaticStatement staticImport) {
-    final List<PsiJavaCodeReferenceElement> expressionToExpand = new ArrayList<PsiJavaCodeReferenceElement>();
+    final List<PsiJavaCodeReferenceElement> expressionToExpand = new ArrayList<>();
     file.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReferenceElement(PsiJavaCodeReferenceElement expression) {
@@ -58,12 +54,7 @@ public class ImportsUtil {
     if (refExpr != null) {
       expressionToExpand.add(refExpr);
     }
-    Collections.sort(expressionToExpand, new Comparator<PsiJavaCodeReferenceElement>() {
-      @Override
-      public int compare(PsiJavaCodeReferenceElement o1, PsiJavaCodeReferenceElement o2) {
-        return o2.getTextOffset() - o1.getTextOffset();
-      }
-    });
+    expressionToExpand.sort((o1, o2) -> o2.getTextOffset() - o1.getTextOffset());
     for (PsiJavaCodeReferenceElement expression : expressionToExpand) {
       expand(expression, staticImport);
     }

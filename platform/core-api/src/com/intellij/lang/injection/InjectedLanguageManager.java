@@ -14,15 +14,10 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Jun 8, 2007
- * Time: 8:41:25 PM
- */
 package com.intellij.lang.injection;
 
 import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -35,6 +30,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 
@@ -58,15 +54,18 @@ public abstract class InjectedLanguageManager {
   public abstract int injectedToHost(@NotNull PsiElement injectedContext, int injectedOffset);
 
   /**
-   * Test-only method.
-   * @see com.intellij.lang.injection.MultiHostInjector#MULTIHOST_INJECTOR_EP_NAME
+   * @deprecated use {@link com.intellij.lang.injection.MultiHostInjector#MULTIHOST_INJECTOR_EP_NAME extension point} for production and
+   * {@link #registerMultiHostInjector(MultiHostInjector, Disposable)} for tests
    */
   @Deprecated
   public abstract void registerMultiHostInjector(@NotNull MultiHostInjector injector);
 
+  @TestOnly
+  public abstract void registerMultiHostInjector(@NotNull MultiHostInjector injector, @NotNull Disposable parentDisposable);
+
   /**
-   * Test-only method.
-   * @see com.intellij.lang.injection.MultiHostInjector#MULTIHOST_INJECTOR_EP_NAME
+   * @deprecated use {@link com.intellij.lang.injection.MultiHostInjector#MULTIHOST_INJECTOR_EP_NAME extension point} for production and
+   * {@link #registerMultiHostInjector(MultiHostInjector, Disposable)} for tests
    */
   @Deprecated
   public abstract boolean unregisterMultiHostInjector(@NotNull MultiHostInjector injector);

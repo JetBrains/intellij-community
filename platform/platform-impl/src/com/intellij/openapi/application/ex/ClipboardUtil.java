@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,25 +18,48 @@ package com.intellij.openapi.application.ex;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.util.function.Supplier;
 
 public class ClipboardUtil {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.Clipboard");
 
-  public static <E> E handleClipboardSafely(Supplier<E> supplier, Supplier<E> onFail) {
+  public static <E> E handleClipboardSafely(@NotNull Supplier<E> supplier, @NotNull Supplier<E> onFail) {
     try {
-      return supplier.get();
-    }catch (IllegalStateException e) {
+      return useLegacyMergeSort(supplier);
+    }
+    catch (IllegalStateException e) {
       if (SystemInfo.isWindows) {
         LOG.debug("Clipboard is busy");
-      } else {
+      }
+      else {
         LOG.warn(e);
       }
-      return onFail.get();
+    }
+    catch (NullPointerException e) {
+      LOG.warn("Java bug #6322854", e);
+    }
+    catch (IllegalArgumentException e) {
+      LOG.warn("Java bug #7173464", e);
+    }
+    return onFail.get();
+  }
+
+  private static final String USE_LEGACY_MERGE_SORT_PROPERTY_NAME = "java.util.Arrays.useLegacyMergeSort";
+
+  private static <T> T useLegacyMergeSort(Supplier<T> supplier) {
+    String originalValue = System.getProperty(USE_LEGACY_MERGE_SORT_PROPERTY_NAME);
+    System.setProperty(USE_LEGACY_MERGE_SORT_PROPERTY_NAME, "true");
+    try {
+      return supplier.get();
+    }
+    finally {
+      if (originalValue != null) {
+        System.setProperty(USE_LEGACY_MERGE_SORT_PROPERTY_NAME, originalValue);
+      }
     }
   }
 

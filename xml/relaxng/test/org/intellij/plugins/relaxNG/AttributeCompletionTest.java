@@ -18,11 +18,6 @@ package org.intellij.plugins.relaxNG;
 
 import org.intellij.plugins.testUtil.CopyFile;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 07.08.2007
-*/
 @CopyFile("*.rng")
 public class AttributeCompletionTest extends HighlightingTestBase {
   @Override

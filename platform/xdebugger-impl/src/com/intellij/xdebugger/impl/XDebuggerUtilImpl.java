@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Caret;
@@ -37,7 +38,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -100,6 +100,15 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @Override
   public void toggleLineBreakpoint(@NotNull final Project project, @NotNull final VirtualFile file, final int line, boolean temporary) {
+    toggleAndReturnLineBreakpoint(project, file, line, temporary);
+  }
+
+  @NotNull
+  public Promise<XLineBreakpoint> toggleAndReturnLineBreakpoint(@NotNull final Project project,
+                                                                @NotNull final VirtualFile file,
+                                                                final int line,
+                                                                boolean temporary) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     XLineBreakpointType<?> typeWinner = null;
     for (XLineBreakpointType<?> type : getLineBreakpointTypes()) {
       if (type.canPutAt(file, line, project) && (typeWinner == null || type.getPriority() > typeWinner.getPriority())) {
@@ -107,8 +116,9 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       }
     }
     if (typeWinner != null) {
-      toggleLineBreakpoint(project, typeWinner, file, line, temporary);
+      return toggleAndReturnLineBreakpoint(project, typeWinner, file, line, temporary);
     }
+    return rejectedPromise();
   }
 
   @Override
@@ -122,10 +132,20 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                                                      @NotNull final VirtualFile file,
                                                                      final int line,
                                                                      final boolean temporary) {
+    toggleAndReturnLineBreakpoint(project, type, file, line, temporary);
+  }
+
+  @NotNull
+  public <P extends XBreakpointProperties> Promise<XLineBreakpoint> toggleAndReturnLineBreakpoint(@NotNull final Project project,
+                                                                                                  @NotNull final XLineBreakpointType<P> type,
+                                                                                                  @NotNull final VirtualFile file,
+                                                                                                  final int line,
+                                                                                                  final boolean temporary) {
     XSourcePositionImpl position = XSourcePositionImpl.create(file, line);
     if (position != null) {
-      toggleAndReturnLineBreakpoint(project, type, position, temporary, null, true);
+      return toggleAndReturnLineBreakpoint(project, type, position, temporary, null, true);
     }
+    return rejectedPromise();
   }
 
   @NotNull
@@ -233,7 +253,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                   @Override
                   public PopupStep onChosen(final XLineBreakpointType.XLineBreakpointVariant selectedValue, boolean finalChoice) {
                     selectionListener.clearHighlighter();
-                    ApplicationManager.getApplication().runWriteAction(() -> {
+                    WriteAction.run(() -> {
                       P properties = (P)selectedValue.createProperties();
                       res.setResult(breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary));
                     });
@@ -343,7 +363,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
       private XSourcePosition getDelegate() {
         if (myDelegate == null) {
-          myDelegate = ApplicationManager.getApplication().runReadAction((Computable<XSourcePosition>)() -> {
+          myDelegate = ReadAction.compute(() -> {
             PsiElement elem = pointer.getElement();
             return XSourcePositionImpl.createByOffset(pointer.getVirtualFile(), elem != null ? elem.getTextOffset() : -1);
           });

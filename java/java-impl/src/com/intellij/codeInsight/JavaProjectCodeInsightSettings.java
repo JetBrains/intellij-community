@@ -23,7 +23,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.PatternUtil;
-import com.intellij.util.containers.ConcurrentWeakFactoryMap;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
@@ -34,6 +34,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,13 +44,8 @@ import java.util.regex.Pattern;
 @State(name = "JavaProjectCodeInsightSettings", storages = @Storage("codeInsightSettings.xml"))
 public class JavaProjectCodeInsightSettings implements PersistentStateComponent<JavaProjectCodeInsightSettings> {
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private static final ConcurrentWeakFactoryMap<String, Pattern> ourPatterns = new ConcurrentWeakFactoryMap<String, Pattern>() {
-    @Nullable
-    @Override
-    protected Pattern create(String key) {
-      return PatternUtil.fromMask(key);
-    }
-  };
+  private static final ConcurrentMap<String, Pattern> ourPatterns = ConcurrentFactoryMap.createWeakMap(PatternUtil::fromMask);
+
 
   @Tag("excluded-names")
   @AbstractCollection(surroundWithTag = false, elementTag = "name", elementValueAttribute = "")
@@ -84,7 +80,7 @@ public class JavaProjectCodeInsightSettings implements PersistentStateComponent<
       return excluded.length();
     }
 
-    if (excluded.indexOf('*') > 0) {
+    if (excluded.indexOf('*') >= 0) {
       Matcher matcher = ourPatterns.get(excluded).matcher(name);
       if (matcher.lookingAt()) {
         return matcher.end();

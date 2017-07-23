@@ -24,6 +24,17 @@ import javax.swing.*;
 import java.util.List;
 
 /**
+ * Implement this extension point to provide a custom icon and description for specific libraries in Project Structure dialog. Belonging
+ * to a specific kind is determined automatically by classes roots of a library using {@link #detect(List)} method, if you need to specify
+ * it explicitly use {@link LibraryType} extension point instead. <br>
+ * The implementation should be registered in plugin.xml:
+ * <pre>
+ * &lt;extensions defaultExtensionNs="com.intellij"&gt;
+ * &nbsp;&nbsp;&lt;library.presentationProvider implementation="qualified-class-name"/&gt;
+ * &lt;/extensions&gt;
+ * </pre>
+ *
+ * @see LibraryType
  * @author nik
  */
 public abstract class LibraryPresentationProvider<P extends LibraryProperties> {
@@ -40,9 +51,8 @@ public abstract class LibraryPresentationProvider<P extends LibraryProperties> {
   }
 
   /**
-   * @deprecated override {@link #getIcon(LibraryProperties)}.
+   * @deprecated override {@link #getIcon(LibraryProperties)} instead
    */
-
   @Deprecated
   @Nullable
   public Icon getIcon() {
@@ -50,16 +60,22 @@ public abstract class LibraryPresentationProvider<P extends LibraryProperties> {
   }
 
   @Nullable
-  public Icon getIcon(@Nullable LibraryProperties properties) {
+  public Icon getIcon(@Nullable P properties) {
     //noinspection deprecation
     return getIcon();
   }
 
+  /**
+   * @return description of a library to be shown in 'Library Editor' in 'Project Structure' dialog
+   */
   @Nullable
   public String getDescription(@NotNull P properties) {
     return null;
   }
 
+  /**
+   * Returns non-null value if a library with classes roots {@code classesRoots} is of a kind described by this provider.
+   */
   @Nullable
   public abstract P detect(@NotNull List<VirtualFile> classesRoots);
 }

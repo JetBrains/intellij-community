@@ -185,7 +185,7 @@ public class SemServiceImpl extends SemService{
         }
       }
     }
-    return result == null ? Collections.<SemElement>emptyList() : Collections.unmodifiableList(result);
+    return result == null ? Collections.emptyList() : Collections.unmodifiableList(result);
   }
 
   @Override
@@ -242,7 +242,7 @@ public class SemServiceImpl extends SemService{
 
   @Override
   public <T extends SemElement> void setCachedSemElement(SemKey<T> key, @NotNull PsiElement psi, @Nullable T semElement) {
-    getOrCreateChunk(psi).putSemElements(key, ContainerUtil.<SemElement>createMaybeSingletonList(semElement));
+    getOrCreateChunk(psi).putSemElements(key, ContainerUtil.createMaybeSingletonList(semElement));
   }
 
   @Override

@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.frame.MainFrame;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +41,8 @@ public class FocusTextFilterAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    VcsLogUtil.triggerUsage(e);
+
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     MainFrame mainFrame = ((VcsLogUiImpl)e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI)).getMainFrame();
     if (mainFrame.getTextFilter().getTextEditor().hasFocus()) {

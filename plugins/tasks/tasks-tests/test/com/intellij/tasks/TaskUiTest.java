@@ -18,9 +18,8 @@ package com.intellij.tasks;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
-import com.intellij.tasks.actions.SwitchTaskCombo;
+import com.intellij.tasks.actions.SwitchTaskAction;
 import com.intellij.tasks.config.TaskSettings;
-import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 
@@ -32,7 +31,7 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
 
   public void testTaskComboVisible() throws Exception {
 
-    SwitchTaskCombo combo = null;
+    SwitchTaskAction combo = null;
     ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR);
     ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(ActionPlaces.MAIN_TOOLBAR, group, true);
     AnAction[] children = group.getChildren(new TestActionEvent());
@@ -40,8 +39,8 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
       if (child instanceof ActionGroup) {
         AnAction[] actions = ((ActionGroup)child).getChildren(new TestActionEvent());
         for (AnAction action : actions) {
-          if (action instanceof SwitchTaskCombo) {
-            combo = (SwitchTaskCombo)action;
+          if (action instanceof SwitchTaskAction) {
+            combo = (SwitchTaskAction)action;
           }
         }
       }

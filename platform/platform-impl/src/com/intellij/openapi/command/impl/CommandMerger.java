@@ -44,11 +44,11 @@ public class CommandMerger {
   private EditorAndState myStateAfter;
   private UndoConfirmationPolicy myUndoConfirmationPolicy = UndoConfirmationPolicy.DEFAULT;
 
-  public CommandMerger(@NotNull UndoManagerImpl manager) {
+  CommandMerger(@NotNull UndoManagerImpl manager) {
     myManager = manager;
   }
 
-  public CommandMerger(@NotNull UndoManagerImpl manager, boolean isTransparent) {
+  CommandMerger(@NotNull UndoManagerImpl manager, boolean isTransparent) {
     myManager = manager;
     myTransparent = isTransparent;
   }

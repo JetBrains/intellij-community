@@ -22,10 +22,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.CaretAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -56,6 +53,7 @@ public abstract class MultiCaretCodeInsightAction extends AnAction {
     if (hostEditor == null) {
       return;
     }
+    if (!EditorModificationUtil.checkModificationAllowed(hostEditor)) return;
     PsiFile hostFile = PsiDocumentManager.getInstance(project).getPsiFile(hostEditor.getDocument());
     if (hostFile != null && !FileModificationService.getInstance().prepareFileForWrite(hostFile)) return;
 
@@ -78,10 +76,7 @@ public abstract class MultiCaretCodeInsightAction extends AnAction {
 
   @Override
   public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    if (project != null) {
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-    }
+    CodeInsightEditorAction.beforeActionPerformedUpdate(e);
     super.beforeActionPerformedUpdate(e);
   }
 

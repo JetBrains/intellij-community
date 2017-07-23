@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
     Document document = documentManager.getDocument(file);
     if (document == null) return;
     PsiElement[] elements = {anchorStatement};
-    PsiElement prev = PsiTreeUtil.skipSiblingsBackward(anchorStatement, PsiWhiteSpace.class);
+    PsiElement prev = PsiTreeUtil.skipWhitespacesBackward(anchorStatement);
     if (prev instanceof PsiComment && JavaSuppressionUtil.getSuppressedInspectionIdsIn(prev) != null) {
       elements = new PsiElement[]{prev, anchorStatement};
     }
@@ -77,7 +77,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
       document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(),newText);
 
       editor.getCaretModel().moveToOffset(textRange.getEndOffset() + newText.length());
-      
+
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
       new MergeIfAndIntention().invoke(project, editor, file);

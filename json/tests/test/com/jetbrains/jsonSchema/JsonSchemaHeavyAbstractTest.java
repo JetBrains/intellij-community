@@ -20,35 +20,39 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Irina.Chernushina on 12/5/2016.
  */
 public abstract class JsonSchemaHeavyAbstractTest extends CompletionTestCase {
   private FileTypeManager myFileTypeManager;
-  private List<JsonSchemaMappingsConfigurationBase.SchemaInfo> mySchemas;
+  private Map<String, UserDefinedJsonSchemaConfiguration> mySchemas;
+  protected boolean myDoCompletion = true;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
     myFileTypeManager = FileTypeManager.getInstance();
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json"));
-    mySchemas = new ArrayList<>();
+    //WriteCommandAction.runWriteCommandAction(getProject(), () -> myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json"));
+    mySchemas = new HashMap<>();
+    myDoCompletion = true;
   }
 
   @Override
   public void tearDown() throws Exception {
     try {
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json"));
+      //WriteCommandAction.runWriteCommandAction(getProject(), () -> myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json"));
       final JsonSchemaMappingsProjectConfiguration instance = JsonSchemaMappingsProjectConfiguration.getInstance(getProject());
-      for (JsonSchemaMappingsConfigurationBase.SchemaInfo schema : mySchemas) {
-        instance.removeSchema(schema);
-      }
+      instance.setState(Collections.emptyMap());
     } finally {
       super.tearDown();
     }
@@ -67,10 +71,25 @@ public abstract class JsonSchemaHeavyAbstractTest extends CompletionTestCase {
   protected void skeleton(@NotNull final Callback callback)  throws Exception {
     callback.configureFiles();
     callback.registerSchemes();
+    JsonSchemaMappingsProjectConfiguration.getInstance(getProject()).setState(mySchemas);
     JsonSchemaService.Impl.get(getProject()).reset();
     doHighlighting();
-    complete();
+    if (myDoCompletion) complete();
     callback.doCheck();
+  }
+
+  @NotNull
+  protected static String getModuleDir(@NotNull final Project project) {
+    String moduleDir = null;
+    VirtualFile[] children = project.getBaseDir().getChildren();
+    for (VirtualFile child : children) {
+      if (child.isDirectory()) {
+        moduleDir = child.getName();
+        break;
+      }
+    }
+    Assert.assertNotNull(moduleDir);
+    return moduleDir;
   }
 
   protected interface Callback {
@@ -79,8 +98,7 @@ public abstract class JsonSchemaHeavyAbstractTest extends CompletionTestCase {
     void doCheck();
   }
 
-  protected void addSchema(@NotNull final JsonSchemaMappingsConfigurationBase.SchemaInfo schema) {
-    JsonSchemaMappingsProjectConfiguration.getInstance(getProject()).addSchema(schema);
-    mySchemas.add(schema);
+  protected void addSchema(@NotNull final UserDefinedJsonSchemaConfiguration schema) {
+    mySchemas.put(schema.getName(), schema);
   }
 }

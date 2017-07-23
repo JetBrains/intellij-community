@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -32,7 +33,7 @@ import java.util.List;
  * cases you will be using this implementation but note that there are
  * cases (for example "Recent files" dialog) where children are determined
  * on rules different than just positional constraints, that's when you need
- * to implement your own <code>ActionGroup</code>.
+ * to implement your own {@code ActionGroup}.
  *
  * @see Constraints
  *
@@ -45,6 +46,7 @@ import java.util.List;
  */
 public class DefaultActionGroup extends ActionGroup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.DefaultActionGroup");
+  private static final String CANT_ADD_ITSELF = "Cannot add a group to itself";
   /**
    * Contains instances of AnAction
    */
@@ -75,23 +77,31 @@ public class DefaultActionGroup extends ActionGroup {
    * @since 13.0
    */
   public DefaultActionGroup(@NotNull List<? extends AnAction> actions) {
-    this(null, false);
-    addActions(actions);
+    this(null, actions);
   }
 
-  public DefaultActionGroup(@NotNull String name, @NotNull List<? extends AnAction> actions) {
+  public DefaultActionGroup(@Nullable String name, @NotNull List<? extends AnAction> actions) {
+    this(name, actions, true);
+  }
+
+  public DefaultActionGroup(@Nullable String name, @NotNull List<? extends AnAction> actions, boolean validate) {
     this(name, false);
-    addActions(actions);
+    addActions(actions, validate);
   }
 
-  private void addActions(@NotNull List<? extends AnAction> actions) {
-    for (AnAction action : actions) {
-      add(action);
-    }
-  }
-
-  public DefaultActionGroup(String shortName, boolean popup) {
+  public DefaultActionGroup(@Nullable String shortName, boolean popup) {
     super(shortName, popup);
+  }
+
+  private void addActions(@NotNull List<? extends AnAction> actions, boolean validate) {
+    if (validate) {
+      HashSet<Object> actionSet = new HashSet<>();
+      for (AnAction action : actions) {
+        if (action == this) throw new IllegalArgumentException(CANT_ADD_ITSELF);
+        if (!(action instanceof Separator) && !actionSet.add(action)) throw new ActionDuplicationException(action);
+      }
+    }
+    mySortedChildren.addAll(actions);
   }
 
   /**
@@ -142,18 +152,12 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   public final ActionInGroup addAction(@NotNull AnAction action, @NotNull Constraints constraint, @NotNull ActionManager actionManager) {
-    if (action == this) {
-      throw new IllegalArgumentException("Cannot add a group to itself");
-    }
+    if (action == this) throw new IllegalArgumentException(CANT_ADD_ITSELF);
     // Check that action isn't already registered
     if (!(action instanceof Separator)) {
-      if (mySortedChildren.contains(action)) {
-        throw new IllegalArgumentException("cannot add an action twice: " + action);
-      }
+      if (mySortedChildren.contains(action)) throw new ActionDuplicationException(action);
       for (Pair<AnAction, Constraints> pair : myPairs) {
-        if (action.equals(pair.first)) {
-          throw new IllegalArgumentException("cannot add an action twice: " + action);
-        }
+        if (action.equals(pair.first)) throw new ActionDuplicationException(action);
       }
     }
 
@@ -275,7 +279,7 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   /**
-   * Copies content from <code>group</code>.
+   * Copies content from {@code group}.
    * @param other group to copy from
    */
   public void copyFromGroup(@NotNull DefaultActionGroup other) {
@@ -408,5 +412,11 @@ public class DefaultActionGroup extends ActionGroup {
 
   public void addSeparator(@Nullable String separatorText) {
     add(new Separator(separatorText));
+  }
+
+  private static class ActionDuplicationException extends IllegalArgumentException {
+    public ActionDuplicationException(@NotNull AnAction action) {
+      super("cannot add an action twice: " + action);
+    }
   }
 }

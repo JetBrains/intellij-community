@@ -20,11 +20,6 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.DefaultProgramRunner;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: Maxim.Mossienko
- * Date: 26.06.2010
- * Time: 19:59:57
- */
 public class XsltRunner extends DefaultProgramRunner {
   @Override
   @NotNull

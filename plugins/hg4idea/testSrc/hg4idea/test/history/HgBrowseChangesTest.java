@@ -15,7 +15,7 @@
  */
 package hg4idea.test.history;
 
-import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
+import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -106,7 +106,7 @@ public class HgBrowseChangesTest extends HgPlatformTest {
   }
 
   private void doTest() throws HgCommandException, VcsException {
-    CachingCommittedChangesProvider provider = myVcs.getCachingCommittedChangesProvider();
+    CommittedChangesProvider provider = myVcs.getCommittedChangesProvider();
     assert provider != null;
     //noinspection unchecked
     List<CommittedChangeList> revisions =

@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.completion.simple;
 
 import com.intellij.codeInsight.TailType;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
@@ -35,6 +36,11 @@ public abstract class ParenthesesTailType extends TailType {
     if (isSpaceBeforeParentheses(styleSettings, editor, tailOffset)) {
       tailOffset = insertChar(editor, tailOffset, ' ');
     }
+    Document document = editor.getDocument();
+    if (tailOffset < document.getTextLength() && document.getCharsSequence().charAt(tailOffset) == '(') {
+      return moveCaret(editor, tailOffset, 1);
+    }
+
     tailOffset = insertChar(editor, tailOffset, '(');
     if (isSpaceWithinParentheses(styleSettings, editor, tailOffset)) {
       tailOffset = insertChar(editor, tailOffset, ' ');

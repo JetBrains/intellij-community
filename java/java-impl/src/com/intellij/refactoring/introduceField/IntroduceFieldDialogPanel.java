@@ -29,10 +29,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemListener;
 
-/**
- * User: anna
- * Date: 4/8/11
- */
 public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
   private JRadioButton myRbInConstructor;
   private JRadioButton myRbInCurrentMethod;

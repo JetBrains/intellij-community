@@ -547,7 +547,7 @@ public final class YYYYYYY extends UserDataHolderBase implements EditorEx, Highl
     myGutterComponent = new EditorGutterComponentImpl(this);
     initComponent();
     myScrollingModel = new ScrollingModelImpl(this);
-    if (UISettings.getInstance().PRESENTATION_MODE) {
+    if (UISettings.getInstance().getPresentationMode()) {
       setFontSize(UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE);
     }
 
@@ -6902,7 +6902,7 @@ public final class YYYYYYY extends UserDataHolderBase implements EditorEx, Highl
   }
 
   boolean isInPresentationMode() {
-    return UISettings.getInstance().PRESENTATION_MODE && EditorUtil.isRealFileEditor(this);
+    return UISettings.getInstance().getPresentationMode() && EditorUtil.isRealFileEditor(this);
   }
 
   @Override
@@ -6996,7 +6996,7 @@ public final class YYYYYYY extends UserDataHolderBase implements EditorEx, Highl
                                       toolWindowIsNotEmpty();
       //noinspection ConstantConditions
       Component header = myHeaderPanel == null ? null : ArrayUtil.getFirstElement(myHeaderPanel.getComponents());
-      boolean paintTop = thereIsSomethingAbove && header == null && UISettings.getInstance().EDITOR_TAB_PLACEMENT != SwingConstants.TOP;
+      boolean paintTop = thereIsSomethingAbove && header == null && UISettings.getInstance().getEditorTabPlacement() != SwingConstants.TOP;
       return splitters == null ? super.getBorderInsets(c) : new Insets(paintTop ? 1 : 0, 0, 0, 0);
     }
 

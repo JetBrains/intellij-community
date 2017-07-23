@@ -27,7 +27,6 @@ import org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -38,18 +37,13 @@ public class JpsArtifactServiceImpl extends JpsArtifactService {
   @Override
   public List<JpsArtifact> getArtifacts(@NotNull JpsProject project) {
     JpsElementCollection<JpsArtifact> collection = project.getContainer().getChild(JpsArtifactRole.ARTIFACT_COLLECTION_ROLE);
-    return collection != null ? collection.getElements() : Collections.<JpsArtifact>emptyList();
+    return collection != null ? collection.getElements() : Collections.emptyList();
   }
 
   @Override
   public List<JpsArtifact> getSortedArtifacts(@NotNull JpsProject project) {
-    List<JpsArtifact> artifacts = new ArrayList<JpsArtifact>(getArtifacts(project));
-    Collections.sort(artifacts, new Comparator<JpsArtifact>() {
-      @Override
-      public int compare(JpsArtifact o1, JpsArtifact o2) {
-        return o1.getName().compareToIgnoreCase(o2.getName());
-      }
-    });
+    List<JpsArtifact> artifacts = new ArrayList<>(getArtifacts(project));
+    artifacts.sort((o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
     return artifacts;
   }
 
@@ -67,7 +61,7 @@ public class JpsArtifactServiceImpl extends JpsArtifactService {
   @Override
   public <P extends JpsElement> JpsArtifact createArtifact(@NotNull String name, @NotNull JpsCompositePackagingElement rootElement,
                                                            @NotNull JpsArtifactType<P> type, @NotNull P properties) {
-    return new JpsArtifactImpl<P>(name, rootElement, type, properties);
+    return new JpsArtifactImpl<>(name, rootElement, type, properties);
   }
 
   @Override

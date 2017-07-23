@@ -13,15 +13,12 @@ RUN_PATH = u'$RUN_PATH$'
 CONFIG_PATH = u'$CONFIG_PATH$'
 SYSTEM_PATH = u'$SYSTEM_PATH$'
 
-if sys.version_info[0] * 10 + sys.version_info[1] < 27:
-    print('error: Python 2.7 or newer is required')
-    exit(1)
-
 
 def print_usage(cmd):
     print(('Usage:\n' +
            '  {0} -h | -? | --help\n' +
-           '  {0} [-l|--line line] file[:line]\n' +
+           '  {0} [project_dir]\n' +
+           '  {0} [-l|--line line] [project_dir|--temp-project] file[:line]\n' +
            '  {0} diff <left> <right>\n' +
            '  {0} merge <local> <remote> [base] <merged>').format(cmd))
 
@@ -34,9 +31,7 @@ def process_args(argv):
         if arg == '-h' or arg == '-?' or arg == '--help':
             print_usage(argv[0])
             exit(0)
-        elif arg == 'diff' and i == 0:
-            args.append(arg)
-        elif arg == 'merge' and i == 0:
+        elif i == 0 and (arg == 'diff' or arg == 'merge' or arg == '--temp-project'):
             args.append(arg)
         elif arg == '-l' or arg == '--line':
             args.append(arg)
@@ -45,16 +40,14 @@ def process_args(argv):
             args.append(arg)
             skip_next = False
         else:
+            path = arg
             if ':' in arg:
                 file_path, line_number = arg.rsplit(':', 1)
                 if line_number.isdigit():
                     args.append('-l')
                     args.append(line_number)
-                    args.append(os.path.abspath(file_path))
-                else:
-                    args.append(os.path.abspath(arg))
-            else:
-                args.append(os.path.abspath(arg))
+                    path = file_path
+            args.append(os.path.abspath(path))
 
     return args
 
@@ -65,8 +58,9 @@ def try_activate_instance(args):
     if not (os.path.exists(port_path) and os.path.exists(token_path)):
         return False
 
-    with open(port_path) as pf, open(token_path) as tf:
+    with open(port_path) as pf:
         port = int(pf.read())
+    with open(token_path) as tf:
         token = tf.read()
 
     s = socket.socket()
@@ -80,7 +74,7 @@ def try_activate_instance(args):
     while True:
         try:
             path_len = struct.unpack('>h', s.recv(2))[0]
-            path = s.recv(path_len)
+            path = s.recv(path_len).decode('utf-8')
             if os.path.abspath(path) == os.path.abspath(CONFIG_PATH):
                 found = True
                 break
@@ -89,6 +83,7 @@ def try_activate_instance(args):
 
     if found:
         cmd = 'activate ' + token + '\0' + os.getcwd() + '\0' + '\0'.join(args)
+        if sys.version_info.major >= 3: cmd = cmd.encode('utf-8')
         encoded = struct.pack('>h', len(cmd)) + cmd
         s.send(encoded)
         time.sleep(0.5)  # don't close the socket immediately

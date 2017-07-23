@@ -29,7 +29,7 @@ import org.jetbrains.jps.model.JpsElementType;
  * @author nik
  */
 public abstract class JpsElementTypeBase<P extends JpsElement>implements JpsElementType<P> {
-  private final JpsElementChildRole<P> myPropertiesRole = new JpsElementChildRole<P>();
+  private final JpsElementChildRole<P> myPropertiesRole = new JpsElementChildRole<>();
 
   @NotNull
   @Override

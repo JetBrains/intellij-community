@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.java.decompiler.struct.attr;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.AnnotationExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.TypeAnnotation;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
+import org.jetbrains.java.decompiler.util.DataInputFullStream;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -29,9 +30,7 @@ public class StructTypeAnnotationAttribute extends StructGeneralAttribute {
   private List<TypeAnnotation> annotations = Collections.emptyList();
 
   @Override
-  public void initContent(ConstantPool pool) throws IOException {
-    DataInputStream data = stream();
-
+  public void initContent(DataInputFullStream data, ConstantPool pool) throws IOException {
     int len = data.readUnsignedShort();
     if (len > 0) {
       annotations = new ArrayList<>(len);

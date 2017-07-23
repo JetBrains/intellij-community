@@ -17,6 +17,7 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeTooltipManager;
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.*;
 import com.intellij.util.Consumer;
@@ -33,14 +34,42 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.MouseListener;
 
+import static com.intellij.openapi.editor.colors.EditorColorsUtil.getGlobalOrDefaultColor;
+import static com.intellij.util.ObjectUtils.notNull;
+
 public class HintUtil {
+  /** @deprecated use getInformationColor() */
+  @Deprecated
   public static final Color INFORMATION_COLOR = new JBColor(new Color(253, 254, 226), new Color(0x4d4f51));
+  /** @deprecated use getQuestionColor() */
+  @Deprecated
   public static final Color QUESTION_COLOR = new JBColor(new Color(181, 208, 251), new Color(55, 108, 137));
+  /** @deprecated use getErrorColor() */
+  @Deprecated
   public static final Color ERROR_COLOR = new JBColor(new Color(255, 220, 220), new Color(0x781732));
+
+  public static final ColorKey INFORMATION_COLOR_KEY = ColorKey.createColorKey("INFORMATION_HINT", INFORMATION_COLOR);
+  public static final ColorKey QUESTION_COLOR_KEY = ColorKey.createColorKey("QUESTION_HINT", QUESTION_COLOR);
+  public static final ColorKey ERROR_COLOR_KEY = ColorKey.createColorKey("ERROR_HINT", ERROR_COLOR);
 
   public static final Color QUESTION_UNDERSCORE_COLOR = JBColor.foreground();
 
   private HintUtil() {
+  }
+
+  @NotNull
+  public static Color getInformationColor() {
+    return notNull(getGlobalOrDefaultColor(INFORMATION_COLOR_KEY), INFORMATION_COLOR_KEY.getDefaultColor());
+  }
+
+  @NotNull
+  public static Color getQuestionColor() {
+    return notNull(getGlobalOrDefaultColor(QUESTION_COLOR_KEY), QUESTION_COLOR_KEY.getDefaultColor());
+  }
+
+  @NotNull
+  public static Color getErrorColor() {
+    return notNull(getGlobalOrDefaultColor(ERROR_COLOR_KEY), ERROR_COLOR_KEY.getDefaultColor());
   }
 
   public static JComponent createInformationLabel(@NotNull String text) {
@@ -50,21 +79,9 @@ public class HintUtil {
   public static JComponent createInformationLabel(@NotNull String text,
                                                   @Nullable HyperlinkListener hyperlinkListener,
                                                   @Nullable MouseListener mouseListener,
-                                                  @Nullable Ref<Consumer<String>> updatedTextConsumer)
-  {
+                                                  @Nullable Ref<Consumer<String>> updatedTextConsumer) {
     HintHint hintHint = getInformationHint();
-
-    final HintLabel label = new HintLabel();
-    label.setText(text, hintHint);
-    label.setIcon(null);
-
-    if (!hintHint.isAwtTooltip()) {
-      label.setBorder(createHintBorder());
-      label.setForeground(JBColor.foreground());
-      label.setFont(getBoldFont());
-      label.setBackground(INFORMATION_COLOR);
-      label.setOpaque(true);
-    }
+    HintLabel label = createLabel(text, null, hintHint.getTextBackground(), hintHint);
 
     if (hyperlinkListener != null) {
       label.myPane.addHyperlinkListener(hyperlinkListener);
@@ -88,7 +105,7 @@ public class HintUtil {
   @NotNull
   public static HintHint getInformationHint() {
     //noinspection UseJBColor
-    return new HintHint().setTextBg(INFORMATION_COLOR)
+    return new HintHint().setTextBg(getInformationColor())
       .setTextFg(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : Color.black)
       .setFont(getBoldFont())
       .setAwtTooltip(true);
@@ -108,29 +125,24 @@ public class HintUtil {
   }
 
   public static JComponent createQuestionLabel(String text) {
-    HintHint hintHint = new HintHint().setTextBg(QUESTION_COLOR)
+    final Icon icon = AllIcons.General.Help_small;
+    return createQuestionLabel(text, icon);
+  }
+
+  public static JComponent createQuestionLabel(String text, Icon icon) {
+    Color bg = getQuestionColor();
+    HintHint hintHint = new HintHint().setTextBg(bg)
       .setTextFg(JBColor.foreground())
       .setFont(getBoldFont())
       .setAwtTooltip(true);
 
-    HintLabel label = new HintLabel();
-    label.setText(text, hintHint);
-    label.setIcon(AllIcons.General.Help_small);
-
-    if (!hintHint.isAwtTooltip()) {
-      label.setBorder(createHintBorder());
-      label.setForeground(JBColor.foreground());
-      label.setFont(getBoldFont());
-      label.setBackground(QUESTION_COLOR);
-      label.setOpaque(true);
-    }
-    return label;
+    return createLabel(text, icon, bg, hintHint);
   }
 
   @NotNull
   public static SimpleColoredComponent createInformationComponent() {
     SimpleColoredComponent component = new SimpleColoredComponent();
-    component.setBackground(INFORMATION_COLOR);
+    component.setBackground(getInformationColor());
     component.setForeground(JBColor.foreground());
     component.setFont(getBoldFont());
     return component;
@@ -145,23 +157,28 @@ public class HintUtil {
   }
 
   public static JComponent createErrorLabel(String text) {
-    HintHint hintHint = new HintHint().setTextBg(ERROR_COLOR)
+    Color bg = getErrorColor();
+    HintHint hintHint = new HintHint().setTextBg(bg)
       .setTextFg(JBColor.foreground())
       .setFont(getBoldFont())
       .setAwtTooltip(true);
+
+    return createLabel(text, null, bg, hintHint);
+  }
+
+  @NotNull
+  private static HintLabel createLabel(String text, @Nullable Icon icon, @NotNull Color color, @NotNull HintHint hintHint) {
     HintLabel label = new HintLabel();
     label.setText(text, hintHint);
-    label.setIcon(null);
+    label.setIcon(icon);
 
     if (!hintHint.isAwtTooltip()) {
-      label.setBorder(createHintBorder()
-      );
+      label.setBorder(createHintBorder());
       label.setForeground(JBColor.foreground());
       label.setFont(getBoldFont());
-      label.setBackground(ERROR_COLOR);
+      label.setBackground(color);
       label.setOpaque(true);
     }
-
     return label;
   }
 

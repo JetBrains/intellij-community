@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,8 +27,8 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -42,27 +41,24 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.Place;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
@@ -79,7 +75,7 @@ import java.util.Set;
 /**
 * @author Gregory Shrago
 */
-public class QuickEditHandler extends DocumentAdapter implements Disposable {
+public class QuickEditHandler implements Disposable, DocumentListener {
   private final Project myProject;
   private final QuickEditAction myAction;
 
@@ -230,7 +226,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
       .setHideOnAction(false)
       .setFillColor(UIUtil.getControlColor())
       .createBalloon();
-    new AnAction() {
+    new DumbAwareAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
         balloon.hide();
@@ -302,7 +298,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
       RangeMarker origMarker = myOrigDocument.createRangeMarker(rangeInsideHost.shiftRight(host.getTextRange().getStartOffset()));
       SmartPsiElementPointer<PsiLanguageInjectionHost> elementPointer = smartPointerManager.createSmartPsiElementPointer(host);
       Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer> markers =
-        Trinity.<RangeMarker, RangeMarker, SmartPsiElementPointer>create(origMarker, rangeMarker, elementPointer);
+        Trinity.create(origMarker, rangeMarker, elementPointer);
       myMarkers.add(markers);
 
       origMarker.setGreedyToRight(true);
@@ -341,19 +337,16 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
 
 
   private void commitToOriginal(final DocumentEvent e) {
-    VirtualFile origVirtualFile = PsiUtilCore.getVirtualFile(myNewFile.getContext());
     myCommittingToOriginal = true;
     try {
-      if (origVirtualFile == null || !ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(origVirtualFile).hasReadonlyFiles()) {
-        PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(() -> {
-          if (myAltFullRange != null) {
-            altCommitToOriginal(e);
-            return;
-          }
-          commitToOriginalInner();
-        });
-        PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myOrigDocument);
-      }
+      PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(() -> {
+        if (myAltFullRange != null) {
+          altCommitToOriginal(e);
+          return;
+        }
+        commitToOriginalInner();
+      });
+      PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myOrigDocument);
     }
     finally {
       myCommittingToOriginal = false;
@@ -364,12 +357,9 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
     final String text = myNewDocument.getText();
     final Map<PsiLanguageInjectionHost, Set<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer>>> map = ContainerUtil
       .classify(myMarkers.iterator(),
-                new Convertor<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer>, PsiLanguageInjectionHost>() {
-                  @Override
-                  public PsiLanguageInjectionHost convert(final Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer> o) {
-                    final PsiElement element = o.third.getElement();
-                    return (PsiLanguageInjectionHost)element;
-                  }
+                o -> {
+                  final PsiElement element = o.third.getElement();
+                  return (PsiLanguageInjectionHost)element;
                 });
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     documentManager.commitDocument(myOrigDocument); // commit here and after each manipulator update

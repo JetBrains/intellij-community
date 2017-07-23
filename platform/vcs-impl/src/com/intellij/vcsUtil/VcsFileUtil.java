@@ -15,15 +15,19 @@
  */
 package com.intellij.vcsUtil;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
@@ -33,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -378,5 +383,71 @@ public class VcsFileUtil {
     }
 
     return null;
+  }
+
+  public static void addFilesToVcsWithConfirmation(@NotNull Project project, VirtualFile... virtualFiles) {
+    addFilesToVcsWithConfirmation(project, Arrays.asList(virtualFiles));
+  }
+
+  /**
+   * Finds all VCSs related to the passed files, suggests user to add files to the respected VCSs honoring addition and silence settings
+   * and adds them if user or settings confirmed addition. Because of potentially long operation of collecting files it's highly recommended
+   * to invoke it on the pooled thread. Method works synchronously.
+   *
+   * @param project      project we work in
+   * @param virtualFiles collection of virtual files to add; directories being added recursively
+   */
+  public static void addFilesToVcsWithConfirmation(@NotNull Project project,
+                                                   @NotNull Collection<VirtualFile> virtualFiles) {
+    if (virtualFiles.isEmpty()) {
+      return;
+    }
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    Multimap<AbstractVcs, VirtualFile> vcsMap = ArrayListMultimap.create();
+    for (VirtualFile createdFile : virtualFiles) {
+      AbstractVcs vcs = vcsManager.getVcsFor(createdFile);
+      if (vcs == null) {
+        continue;
+      }
+      VfsUtil.processFileRecursivelyWithoutIgnored(createdFile, (virtualFile) -> vcsMap.put(vcs, virtualFile));
+    }
+
+    for (AbstractVcs vcs : vcsMap.keySet()) {
+      VcsShowConfirmationOption addOption =
+        vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, vcs);
+      if (addOption.getValue() == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) return;
+      List<VirtualFile> filesList = new ArrayList<>(vcsMap.get(vcs));
+      if (addOption.getValue() == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
+        performAdditions(vcs, filesList);
+      }
+      else {
+        AbstractVcsHelper helper = AbstractVcsHelper.getInstance(project);
+
+        Ref<Collection<VirtualFile>> filesToAdd = Ref.create();
+
+        ApplicationManager.getApplication().invokeAndWait(() -> filesToAdd.set(
+          helper
+            .selectFilesToProcess(
+              new ArrayList<>(filesList),
+              VcsBundle.message("confirmation.title.add.files.to", vcs.getDisplayName()),
+              null,
+              VcsBundle.message("confirmation.title.add.file.to", vcs.getDisplayName()),
+              null,
+              addOption))
+        );
+
+        if (!filesToAdd.isNull()) {
+          performAdditions(vcs, new ArrayList<>(filesToAdd.get()));
+        }
+      }
+    }
+  }
+
+  private static void performAdditions(@NotNull AbstractVcs vcs,
+                                       @NotNull List<VirtualFile> value) {
+    CheckinEnvironment checkinEnvironment = vcs.getCheckinEnvironment();
+    if (checkinEnvironment != null) {
+      checkinEnvironment.scheduleUnversionedFilesForAddition(value);
+    }
   }
 }

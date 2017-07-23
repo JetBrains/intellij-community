@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.browse.BrowseClient;
-import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -65,10 +64,7 @@ public class BranchesLoader implements Runnable {
       List<SvnBranchItem> branches = loadBranches();
       myBunch.updateBranches(myRoot, myUrl, new InfoStorage<>(branches, myInfoReliability));
     }
-    catch (VcsException e) {
-      showError(e);
-    }
-    catch (SVNException e) {
+    catch (VcsException | SVNException e) {
       showError(e);
     }
   }
@@ -96,13 +92,9 @@ public class BranchesLoader implements Runnable {
 
   @NotNull
   private static DirectoryEntryConsumer createConsumer(@NotNull final List<SvnBranchItem> result) {
-    return new DirectoryEntryConsumer() {
-
-      @Override
-      public void consume(final DirectoryEntry entry) throws SVNException {
-        if (entry.getDate() != null) {
-          result.add(new SvnBranchItem(entry.getUrl().toDecodedString(), entry.getDate(), entry.getRevision()));
-        }
+    return entry -> {
+      if (entry.getDate() != null) {
+        result.add(new SvnBranchItem(entry.getUrl().toDecodedString(), entry.getDate(), entry.getRevision()));
       }
     };
   }

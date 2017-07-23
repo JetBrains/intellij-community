@@ -22,6 +22,7 @@ import com.intellij.ui.tabs.impl.ShapeTransform;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.ui.tabs.impl.TabLayout;
 
+import javax.swing.*;
 import java.awt.*;
 
 public abstract class SingleRowLayoutStrategy {
@@ -112,8 +113,9 @@ public abstract class SingleRowLayoutStrategy {
     }
 
     public int getToFitLength(final SingleRowPassInfo data) {
-      if (data.hToolbar != null) {
-        return myTabs.getWidth() - data.insets.left - data.insets.right - data.hToolbar.getMinimumSize().width;  
+      JComponent hToolbar = data.hToolbar.get();
+      if (hToolbar != null) {
+        return myTabs.getWidth() - data.insets.left - data.insets.right - hToolbar.getMinimumSize().width;
       } else {
         return myTabs.getWidth() - data.insets.left - data.insets.right;
       }
@@ -192,29 +194,38 @@ public abstract class SingleRowLayoutStrategy {
       if (myTabs.isHideTabs()) {
         myTabs.layoutComp(data, 0, 0, 0, 0);
       } else {
-        final int vToolbarWidth = data.vToolbar != null ? data.vToolbar.getPreferredSize().width : 0;
-        final int x = vToolbarWidth > 0 ? vToolbarWidth + 1 : 0;
-        final int hToolbarHeight = !myTabs.isSideComponentOnTabs() && data.hToolbar != null ? data.hToolbar.getPreferredSize().height : 0;
+        JComponent vToolbar = data.vToolbar.get();
+        final int vToolbarWidth = vToolbar != null ? vToolbar.getPreferredSize().width : 0;
+        final int vSeparatorWidth = vToolbarWidth > 0 ? 1 : 0;
+        final int x = vToolbarWidth > 0 ? vToolbarWidth + vSeparatorWidth : 0;
+        JComponent hToolbar = data.hToolbar.get();
+        final int hToolbarHeight = !myTabs.isSideComponentOnTabs() && hToolbar != null ? hToolbar.getPreferredSize().height : 0;
         final int y = myTabs.myHeaderFitSize.height + (myTabs.isEditorTabs() ? 0 : 1) +
                       (hToolbarHeight > 0 ? hToolbarHeight - 2 : 0);
 
-        if (data.hToolbar != null) {
-          final Rectangle compBounds = myTabs.layoutComp(x, y, data.comp, 0, 0);
+        JComponent comp = data.comp.get();
+        if (hToolbar != null) {
+          final Rectangle compBounds = myTabs.layoutComp(x, y, comp, 0, 0);
           if (myTabs.isSideComponentOnTabs()) {
-            int toolbarX = data.moreRect != null ? (int)data.moreRect.getMaxX() + myTabs.getToolbarInset() : (data.position + myTabs.getToolbarInset());
+            int toolbarX = (data.moreRect != null ? (int)data.moreRect.getMaxX() : data.position) + myTabs.getToolbarInset();
             final Rectangle rec =
               new Rectangle(toolbarX, data.insets.top + 1, myTabs.getSize().width - data.insets.left - toolbarX, myTabs.myHeaderFitSize.height);
-            myTabs.layout(data.hToolbar, rec);
+            myTabs.layout(hToolbar, rec);
           } else {
-            final int toolbarHeight = data.hToolbar.getPreferredSize().height - 2;
-            myTabs.layout(data.hToolbar, compBounds.x, compBounds.y - toolbarHeight - 1, compBounds.width, toolbarHeight);
+            final int toolbarHeight = hToolbar.getPreferredSize().height - 2;
+            myTabs.layout(hToolbar, compBounds.x, compBounds.y - toolbarHeight - 1, compBounds.width, toolbarHeight);
           }
-        } else if (data.vToolbar != null) {
-          final Rectangle compBounds = myTabs.layoutComp(x, y, data.comp, 0, 0);
-          final int toolbarWidth = data.vToolbar.getPreferredSize().width;
-          myTabs.layout(data.vToolbar, compBounds.x - toolbarWidth - 1, compBounds.y, toolbarWidth, compBounds.height);
+        } else if (vToolbar != null) {
+          if (myTabs.isSideComponentBefore()) {
+            final Rectangle compBounds = myTabs.layoutComp(x, y, comp, 0, 0);
+            myTabs.layout(vToolbar, compBounds.x - vToolbarWidth - vSeparatorWidth, compBounds.y, vToolbarWidth, compBounds.height);
+          } else {
+            int width = vToolbarWidth > 0 ? myTabs.getWidth() - vToolbarWidth - vSeparatorWidth : myTabs.getWidth();
+            final Rectangle compBounds = myTabs.layoutComp(new Rectangle(0, y, width, myTabs.getHeight()), comp, 0, 0);
+            myTabs.layout(vToolbar, compBounds.x + compBounds.width + vSeparatorWidth, compBounds.y, vToolbarWidth, compBounds.height);
+          }
         } else {
-          myTabs.layoutComp(x, y, data.comp, 0, 0);
+          myTabs.layoutComp(x, y, comp, 0, 0);
         }
       }
     }

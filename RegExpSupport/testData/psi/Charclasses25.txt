@@ -5,13 +5,12 @@ REGEXP_FILE
         PsiElement(CHARACTER)('a')
       RegExpClassImpl: <[\t---]>
         PsiElement(CLASS_BEGIN)('[')
-        RegExpUnionImpl: <\t--->
-          RegExpCharRangeImpl: <\t-->
-            RegExpCharImpl: <\t>
-              PsiElement(ESC_CTRL_CHARACTER)('\t')
-            PsiElement(MINUS)('-')
-            RegExpCharImpl: <->
-              PsiElement(MINUS)('-')
+        RegExpCharRangeImpl: <\t-->
+          RegExpCharImpl: <\t>
+            PsiElement(ESC_CTRL_CHARACTER)('\t')
+          PsiElement(MINUS)('-')
           RegExpCharImpl: <->
             PsiElement(MINUS)('-')
+        RegExpCharImpl: <->
+          PsiElement(MINUS)('-')
         PsiElement(CLASS_END)(']')

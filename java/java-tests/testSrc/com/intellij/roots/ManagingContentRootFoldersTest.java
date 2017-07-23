@@ -50,6 +50,7 @@ public class ManagingContentRootFoldersTest extends IdeaTestCase {
       myModel.dispose();
     }
     myModel = null;
+    entry = null;
     super.tearDown();
   }
 

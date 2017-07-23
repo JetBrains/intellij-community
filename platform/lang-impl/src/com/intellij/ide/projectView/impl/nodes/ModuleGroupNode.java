@@ -26,10 +26,12 @@ import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -52,12 +54,13 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
   @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
-    final Collection<ModuleGroup> childGroups = getValue().childGroups(getProject());
+    ModuleGrouper grouper = ModuleGrouper.instanceFor(getProject());
+    final Collection<ModuleGroup> childGroups = getValue().childGroups(grouper);
     final List<AbstractTreeNode> result = new ArrayList<>();
     for (final ModuleGroup childGroup : childGroups) {
       result.add(createModuleGroupNode(childGroup));
     }
-    Collection<Module> modules = getValue().modulesInGroup(getProject(), false);
+    Collection<Module> modules = getValue().modulesInGroup(grouper, false);
     try {
       for (Module module : modules) {
         result.add(createModuleNode(module));
@@ -86,8 +89,24 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    return someChildContainsFile(file, false);
+    List<Module> modules = getModulesByFile(file);
+    List<String> thisGroupPath = getValue().getGroupPathList();
+    ModuleGrouper grouper = ModuleGrouper.instanceFor(getProject());
+    for (Module module : modules) {
+      if (ContainerUtil.startsWith(grouper.getGroupPath(module), thisGroupPath)) {
+        return true;
+      }
+    }
+    return false;
   }
+
+  @Override
+  public boolean validate() {
+    return getValue() != null;
+  }
+
+  @NotNull
+  protected abstract List<Module> getModulesByFile(@NotNull VirtualFile file);
 
   @Override
   public void update(PresentationData presentation) {

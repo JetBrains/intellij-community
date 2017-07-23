@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ package com.intellij.debugger.actions;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.impl.DebuggerTreePanel;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
@@ -41,7 +40,6 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,12 +110,6 @@ public abstract class DebuggerAction extends AnAction {
     }
   }
 
-  @Nullable
-  public static DebuggerStateManager getContextManager(DataContext dataContext) {
-    DebuggerTreePanel panel = getPanel(dataContext);
-    return panel == null ? null : panel.getContextManager();
-  }
-
   public static boolean isContextView(AnActionEvent e) {
     return DebuggerActions.EVALUATION_DIALOG_POPUP.equals(e.getPlace()) ||
            DebuggerActions.FRAME_PANEL_POPUP.equals(e.getPlace()) ||
@@ -162,12 +154,8 @@ public abstract class DebuggerAction extends AnAction {
   public static void refreshViews(final AnActionEvent e) {
     XDebuggerTree tree = XDebuggerTree.getTree(e.getDataContext());
     if (tree != null) {
-    refreshViews(XDebugView.getSession(tree));
+      refreshViews(XDebugView.getSession(tree));
     }
-  }
-
-  public static void refreshViews(@NotNull XValueNodeImpl node) {
-    refreshViews(XDebugView.getSession(node.getTree()));
   }
 
   public static void refreshViews(@Nullable XDebugSession session) {

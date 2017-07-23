@@ -145,6 +145,10 @@ public class ExpectedHighlightingData {
     registerHighlightingType(END_LINE_WARNING_MARKER, new ExpectedHighlightingSet(HighlightSeverity.WARNING, true, false));
   }
 
+  public boolean hasLineMarkers() {
+    return !myLineMarkerInfos.isEmpty();
+  }
+
   public void init() {
     new WriteCommandAction(null) {
       @Override
@@ -220,7 +224,7 @@ public class ExpectedHighlightingData {
       endOffset -= endTag.length();
 
       LineMarkerInfo markerInfo = new LineMarkerInfo<PsiElement>(myFile, new TextRange(startOffset, endOffset), null, Pass.LINE_MARKERS,
-                                                                 new ConstantFunction<>(descr), null,
+                                                                 new ConstantFunction<>(StringUtil.unescapeStringCharacters(descr)), null,
                                                                  GutterIconRenderer.Alignment.RIGHT);
 
       myLineMarkerInfos.put(document.createRangeMarker(startOffset, endOffset), markerInfo);
@@ -374,7 +378,7 @@ public class ExpectedHighlightingData {
     }
 
     for (LineMarkerInfo expectedLineMarker : myLineMarkerInfos.values()) {
-      if (!markerInfos.isEmpty() && !containsLineMarker(expectedLineMarker, markerInfos)) {
+      if (markerInfos.isEmpty() || !containsLineMarker(expectedLineMarker, markerInfos)) {
         if (!failMessage.isEmpty()) failMessage += '\n';
         failMessage += fileName + "Line marker was not highlighted " +
                        rangeString(text, expectedLineMarker.startOffset, expectedLineMarker.endOffset)

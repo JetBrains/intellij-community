@@ -50,10 +50,10 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
                                @NotNull ProblemHighlightType highlightType,
                                boolean isAfterEndOfLine,
                                @Nullable TextRange rangeInElement,
-                               final boolean tooltip,
+                               final boolean showTooltip,
                                boolean onTheFly) {
     super(fixes, descriptionTemplate);
-    myShowTooltip = tooltip;
+    myShowTooltip = showTooltip;
     PsiFile startContainingFile = startElement.getContainingFile();
     LOG.assertTrue(startContainingFile != null && startContainingFile.isValid() || startElement.isValid(), startElement);
     PsiFile endContainingFile = startElement == endElement ? startContainingFile : endElement.getContainingFile();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,15 @@ package com.intellij.debugger.impl;
 import java.util.EventListener;
 
 public interface DebuggerManagerListener extends EventListener{
-  void sessionCreated(DebuggerSession session);
-  void sessionAttached(DebuggerSession session);
-  void sessionDetached(DebuggerSession session);
-  void sessionRemoved(DebuggerSession session);
+  default void sessionCreated(DebuggerSession session) {
+  }
+
+  default void sessionAttached(DebuggerSession session) {
+  }
+
+  default void sessionDetached(DebuggerSession session) {
+  }
+
+  default void sessionRemoved(DebuggerSession session) {
+  }
 }

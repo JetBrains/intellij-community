@@ -24,7 +24,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.PomTarget;
@@ -50,34 +49,36 @@ public class PropertiesImplUtil extends PropertiesUtil {
 
   @NotNull
   public static ResourceBundleWithCachedFiles getResourceBundleWithCachedFiles(@NotNull final PropertiesFile representative) {
-    final PsiFile containingFile = representative.getContainingFile();
-    if (!containingFile.isValid()) {
-      return ResourceBundleWithCachedFiles.EMPTY;
-    }
-    final ResourceBundleManager manager = ResourceBundleManager.getInstance(representative.getProject());
-    final CustomResourceBundle customResourceBundle =
-      manager.getCustomResourceBundle(representative);
-    if (customResourceBundle != null) {
-      return new ResourceBundleWithCachedFiles(customResourceBundle, customResourceBundle.getPropertiesFiles());
-    }
+    return ReadAction.compute(() -> {
+      final PsiFile containingFile = representative.getContainingFile();
+      if (!containingFile.isValid()) {
+        return ResourceBundleWithCachedFiles.EMPTY;
+      }
+      final ResourceBundleManager manager = ResourceBundleManager.getInstance(representative.getProject());
+      final CustomResourceBundle customResourceBundle =
+        manager.getCustomResourceBundle(representative);
+      if (customResourceBundle != null) {
+        return new ResourceBundleWithCachedFiles(customResourceBundle, customResourceBundle.getPropertiesFiles());
+      }
 
-    final VirtualFile virtualFile = representative.getVirtualFile();
-    if (virtualFile == null) {
-      return ResourceBundleWithCachedFiles.EMPTY;
-    }
-    if (manager.isDefaultDissociated(virtualFile)) {
-      return new ResourceBundleWithCachedFiles(new ResourceBundleImpl(representative), Collections.singletonList(representative));
-    }
+      final VirtualFile virtualFile = representative.getVirtualFile();
+      if (virtualFile == null) {
+        return ResourceBundleWithCachedFiles.EMPTY;
+      }
+      if (manager.isDefaultDissociated(virtualFile)) {
+        return new ResourceBundleWithCachedFiles(new ResourceBundleImpl(representative), Collections.singletonList(representative));
+      }
 
 
-    final String baseName = manager.getBaseName(containingFile);
-    final String extension = containingFile.getVirtualFile().getExtension();
-    final PsiDirectory directory = ReadAction.compute(() -> containingFile.getContainingDirectory());
-    if (directory == null) return ResourceBundleWithCachedFiles.EMPTY;
-    final ResourceBundleWithCachedFiles bundle = getResourceBundle(baseName, extension, directory);
-    return bundle == null
-           ? new ResourceBundleWithCachedFiles(new ResourceBundleImpl(representative), Collections.singletonList(representative))
-           : bundle;
+      final String baseName = manager.getBaseName(containingFile);
+      final String extension = containingFile.getVirtualFile().getExtension();
+      final PsiDirectory directory = containingFile.getContainingDirectory();
+      if (directory == null) return ResourceBundleWithCachedFiles.EMPTY;
+      final ResourceBundleWithCachedFiles bundle = getResourceBundle(baseName, extension, directory);
+      return bundle == null
+             ? new ResourceBundleWithCachedFiles(new ResourceBundleImpl(representative), Collections.singletonList(representative))
+             : bundle;
+    });
   }
 
   @NotNull
@@ -87,19 +88,14 @@ public class PropertiesImplUtil extends PropertiesUtil {
 
   @Nullable
   private static ResourceBundleWithCachedFiles getResourceBundle(@NotNull final String baseName,
-                                                                @Nullable final String extension,
-                                                                @NotNull final PsiDirectory baseDirectory) {
+                                                                 @Nullable final String extension,
+                                                                 @NotNull final PsiDirectory baseDirectory) {
     final ResourceBundleManager bundleBaseNameManager = ResourceBundleManager.getInstance(baseDirectory.getProject());
     final List<PropertiesFile> bundleFiles = Stream
-      .of(ReadAction.compute(new ThrowableComputable<PsiFile[], RuntimeException>() {
-        @Override
-        public PsiFile[] compute() throws RuntimeException {
-          return baseDirectory.isValid() ? baseDirectory.getFiles() : PsiFile.EMPTY_ARRAY;
-        }
-      }))
-      .filter(f -> Comparing.strEqual(f.getVirtualFile().getExtension(), extension))
-      .filter(PropertiesImplUtil::isPropertiesFile)
-      .filter(f -> Comparing.equal(bundleBaseNameManager.getBaseName(f), baseName))
+      .of(baseDirectory.isValid() ? baseDirectory.getFiles() : PsiFile.EMPTY_ARRAY)
+      .filter(f -> Comparing.strEqual(f.getVirtualFile().getExtension(), extension) &&
+                   isPropertiesFile(f) &&
+                   Comparing.equal(bundleBaseNameManager.getBaseName(f), baseName))
       .map(PropertiesImplUtil::getPropertiesFile)
       .collect(Collectors.toList());
     if (bundleFiles.isEmpty()) return null;

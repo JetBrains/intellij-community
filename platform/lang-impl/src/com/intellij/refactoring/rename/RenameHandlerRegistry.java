@@ -20,6 +20,7 @@ import com.intellij.ide.TitledHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -47,14 +48,13 @@ import java.util.TreeMap;
 public class RenameHandlerRegistry {
   public static final Key<Boolean> SELECT_ALL = Key.create("rename.selectAll");
   private final Set<RenameHandler> myHandlers  = new HashSet<>();
-  private static final RenameHandlerRegistry INSTANCE = new RenameHandlerRegistry();
   private final PsiElementRenameHandler myDefaultElementRenameHandler;
 
   public static RenameHandlerRegistry getInstance() {
-    return INSTANCE;
+    return ServiceManager.getService(RenameHandlerRegistry.class);
   }
 
-  private RenameHandlerRegistry() {
+  protected RenameHandlerRegistry() {
     // should be checked last
     myDefaultElementRenameHandler = new PsiElementRenameHandler();
   }
@@ -73,14 +73,10 @@ public class RenameHandlerRegistry {
   public RenameHandler getRenameHandler(DataContext dataContext) {
     final Map<String, RenameHandler> availableHandlers = new TreeMap<>();
     for (RenameHandler renameHandler : Extensions.getExtensions(RenameHandler.EP_NAME)) {
-      if (renameHandler.isRenaming(dataContext)) {
-        availableHandlers.put(getHandlerTitle(renameHandler), renameHandler);
-      }
+      checkHandler(renameHandler, dataContext, availableHandlers);
     }
     for (RenameHandler renameHandler : myHandlers) {
-      if (renameHandler.isRenaming(dataContext)) {
-        availableHandlers.put(getHandlerTitle(renameHandler), renameHandler);
-      }
+      checkHandler(renameHandler, dataContext, availableHandlers);
     }
     if (availableHandlers.size() == 1) return availableHandlers.values().iterator().next();
     for (Iterator<Map.Entry<String, RenameHandler>> iterator = availableHandlers.entrySet().iterator(); iterator.hasNext(); ) {
@@ -101,6 +97,12 @@ public class RenameHandlerRegistry {
       throw new ProcessCanceledException();
     }
     return myDefaultElementRenameHandler.isRenaming(dataContext) ? myDefaultElementRenameHandler : null;
+  }
+
+  private static void checkHandler(RenameHandler renameHandler, DataContext dataContext, Map<String, RenameHandler> availableHandlers) {
+    if (renameHandler.isRenaming(dataContext)) {
+      availableHandlers.put(getHandlerTitle(renameHandler), renameHandler);
+    }
   }
 
   private static String getHandlerTitle(RenameHandler renameHandler) {

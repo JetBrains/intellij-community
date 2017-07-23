@@ -47,10 +47,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 21-Feb-2006
- */
 public class RunInspectionIntention implements IntentionAction, HighPriorityAction {
   private final static Logger LOG = Logger.getInstance(RunInspectionIntention.class);
 
@@ -101,7 +97,7 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
       AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
       project,
       customScope,
-      module != null ? module.getName() : null,
+      module,
       true, AnalysisUIOptions.getInstance(project), context);
     if (!dlg.showAndGet()) {
       return;
@@ -136,12 +132,11 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
                                                     @NotNull InspectionManagerEx managerEx,
                                                     @Nullable PsiElement psiElement) {
     InspectionProfileImpl rootProfile = InspectionProfileManager.getInstance().getCurrentProfile();
-    LinkedHashSet<InspectionToolWrapper> allWrappers = new LinkedHashSet<>();
+    LinkedHashSet<InspectionToolWrapper<?, ?>> allWrappers = new LinkedHashSet<>();
     allWrappers.add(toolWrapper);
     rootProfile.collectDependentInspections(toolWrapper, allWrappers, managerEx.getProject());
-    List<InspectionToolWrapper> toolWrappers = allWrappers.size() == 1 ? Collections.singletonList(allWrappers.iterator().next()) : new ArrayList<>(allWrappers);
-    InspectionProfileImpl model = InspectionProfileImpl.createSimple(toolWrapper.getDisplayName(), managerEx.getProject(),
-                                                                     toolWrappers);
+    List<InspectionToolWrapper<?, ?>> toolWrappers = allWrappers.size() == 1 ? Collections.singletonList(allWrappers.iterator().next()) : new ArrayList<>(allWrappers);
+    InspectionProfileImpl model = InspectionProfileKt.createSimple(toolWrapper.getDisplayName(), managerEx.getProject(), toolWrappers);
     try {
       Element element = new Element("toCopy");
       for (InspectionToolWrapper wrapper : toolWrappers) {
@@ -151,9 +146,7 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
         tw.getTool().readSettings(element);
       }
     }
-    catch (WriteExternalException ignored) {
-    }
-    catch (InvalidDataException ignored) {
+    catch (WriteExternalException | InvalidDataException ignored) {
     }
     model.setSingleTool(toolWrapper.getShortName());
     return model;

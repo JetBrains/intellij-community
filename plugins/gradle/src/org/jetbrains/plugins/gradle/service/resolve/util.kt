@@ -24,7 +24,6 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GrMethodCallInfo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils
@@ -62,8 +61,7 @@ fun processDeclarations(aClass: PsiClass,
       val typeToDelegate = closure?.let { getDelegatesToInfo(it)?.typeToDelegate }
       if (typeToDelegate != null) {
         val fqNameToDelegate = TypesUtil.getQualifiedName(typeToDelegate) ?: return true
-        val classToDelegate = GroovyPsiManager.getInstance(place.project).findClassWithCache(fqNameToDelegate,
-                                                                                             place.resolveScope) ?: return true
+        val classToDelegate = JavaPsiFacade.getInstance(place.project).findClass(fqNameToDelegate, place.resolveScope) ?: return true
         if (classToDelegate !== aClass) {
           val parent = place.parent
           if (parent is GrMethodCall) {
@@ -73,7 +71,7 @@ fun processDeclarations(aClass: PsiClass,
       }
     }
 
-    val lValue: Boolean = place is GrReferenceExpression && PsiUtil.isLValue(place);
+    val lValue: Boolean = place is GrReferenceExpression && PsiUtil.isLValue(place)
     if (!lValue) {
       val isSetterCandidate = name.startsWith("set")
       val isGetterCandidate = name.startsWith("get")

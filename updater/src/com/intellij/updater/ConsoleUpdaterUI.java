@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,28 +23,31 @@ import java.util.Map;
 public class ConsoleUpdaterUI implements UpdaterUI {
   private String myStatus;
 
+  @Override
   public void startProcess(String title) {
     System.out.println(title);
     Runner.logger().info("title: " + title);
   }
 
-  public void setProgress(int percentage) {
-  }
+  @Override
+  public void setProgress(int percentage) { }
 
-  public void setProgressIndeterminate() {
-  }
+  @Override
+  public void setProgressIndeterminate() { }
 
+  @Override
   public void setStatus(String status) {
     System.out.println(myStatus = status);
     Runner.logger().info("status: " + status);
   }
 
+  @Override
   public void showError(Throwable e) {
     e.printStackTrace();
   }
 
-  public void checkCancelled() throws OperationCancelledException {
-  }
+  @Override
+  public void checkCancelled() throws OperationCancelledException { }
 
   @Override
   public void setDescription(String oldBuildDesc, String newBuildDesc) {
@@ -57,23 +60,25 @@ public class ConsoleUpdaterUI implements UpdaterUI {
     return false;
   }
 
+  @Override
   public Map<String, ValidationResult.Option> askUser(List<ValidationResult> validationResults) throws OperationCancelledException {
-    if (!validationResults.isEmpty()) {
-      System.out.println("Validation info:");
+    boolean hasErrors = false, hasConflicts = false;
 
-      for (ValidationResult item : validationResults) {
-        System.out.println(String.format("  %s  %s: %s", item.kind, item.path, item.message));
-      }
+    System.out.println("Validation info:");
+    for (ValidationResult item : validationResults) {
+      System.out.println(String.format("  %s  %s: %s", item.kind, item.path, item.message));
+      if (item.kind == ValidationResult.Kind.ERROR) hasErrors = true;
+      if (item.kind == ValidationResult.Kind.CONFLICT) hasConflicts = true;
+    }
 
-      if (validationResults.stream().anyMatch(it -> it.kind == ValidationResult.Kind.ERROR)) {
-        System.out.println("Invalid files were detected. Failing.");
-        throw new OperationCancelledException();
-      }
+    if (hasErrors) {
+      System.out.println("Invalid files were detected. Failing.");
+      throw new OperationCancelledException();
+    }
 
-      if (validationResults.stream().anyMatch(it -> it.kind == ValidationResult.Kind.CONFLICT)) {
-        System.out.println("Conflicting files were detected. Failing.");
-        throw new OperationCancelledException();
-      }
+    if (hasConflicts) {
+      System.out.println("Conflicting files were detected. Failing.");
+      throw new OperationCancelledException();
     }
 
     return Collections.emptyMap();

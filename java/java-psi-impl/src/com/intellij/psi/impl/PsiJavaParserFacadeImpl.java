@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,13 +147,13 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   private static final JavaParserUtil.ParserWrapper MODULE = new JavaParserUtil.ParserWrapper() {
     @Override
     public void parse(final PsiBuilder builder) {
-      ModuleParser.parseModule(builder);
+      JavaParser.INSTANCE.getModuleParser().parse(builder);
     }
   };
 
   private static final Map<String, PsiPrimitiveType> PRIMITIVE_TYPES;
   static {
-    PRIMITIVE_TYPES = new HashMap<String, PsiPrimitiveType>();
+    PRIMITIVE_TYPES = new HashMap<>();
     PRIMITIVE_TYPES.put(PsiType.BYTE.getCanonicalText(), PsiType.BYTE);
     PRIMITIVE_TYPES.put(PsiType.CHAR.getCanonicalText(), PsiType.CHAR);
     PRIMITIVE_TYPES.put(PsiType.DOUBLE.getCanonicalText(), PsiType.DOUBLE);

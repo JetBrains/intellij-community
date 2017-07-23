@@ -18,9 +18,6 @@ package com.intellij.util.indexing.containers;
 import com.intellij.util.indexing.ValueContainer;
 import gnu.trove.TIntProcedure;
 
-/**
-* Created by Maxim.Mossienko on 5/27/2014.
-*/
 public class SortedIdSet implements Cloneable, RandomAccessIntContainer {
   private int[] mySet;
   private int mySetLength;

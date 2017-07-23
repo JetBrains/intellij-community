@@ -48,6 +48,7 @@ public abstract class SerializableInspectionBase extends BaseInspection {
     super.writeSettings(node);
   }
 
+  @NotNull
   protected JComponent[] createAdditionalOptions() {
     return EMPTY_COMPONENT_ARRAY;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.internal.statistic.persistence.ApplicationStatisticsPersiste
 import com.intellij.internal.statistic.persistence.CollectedUsages;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ObjectIntHashMap;
 import gnu.trove.THashSet;
@@ -38,14 +37,8 @@ public abstract class AbstractApplicationUsagesCollector extends UsagesCollector
     try {
       persistProjectUsages(project, new CollectedUsages(getProjectUsages(project), System.currentTimeMillis()));
     }
-    catch (ProcessCanceledException e) {
+    catch (Exception e) {
       LOG.info(e);
-    }
-    catch (CollectUsagesException e) {
-      LOG.info(e);
-    }
-    catch (Exception usageCollectorException) {
-      LOG.info(usageCollectorException);
     }
   }
 
@@ -77,7 +70,11 @@ public abstract class AbstractApplicationUsagesCollector extends UsagesCollector
         }
       }
     }
+    return toUsageDescriptors(result);
+  }
 
+  @NotNull
+  private static Set<UsageDescriptor> toUsageDescriptors(@NotNull ObjectIntHashMap<String> result) {
     if (result.isEmpty()){
       return Collections.emptySet();
     }
@@ -91,6 +88,29 @@ public abstract class AbstractApplicationUsagesCollector extends UsagesCollector
         }
       });
       return descriptors;
+    }
+  }
+
+  @NotNull
+  public static Set<UsageDescriptor> merge(@NotNull Set<UsageDescriptor> first, @NotNull Set<UsageDescriptor> second) {
+    if (first.isEmpty()) {
+      return second;
+    }
+
+    if (second.isEmpty()) {
+      return first;
+    }
+
+    final ObjectIntHashMap<String> merged = new ObjectIntHashMap<>();
+    addAll(merged, first);
+    addAll(merged, second);
+    return toUsageDescriptors(merged);
+  }
+
+  private static void addAll(@NotNull ObjectIntHashMap<String> result, @NotNull Set<UsageDescriptor> usages) {
+    for (UsageDescriptor usage : usages) {
+      final String key = usage.getKey();
+      result.put(key, result.get(key, 0) + usage.getValue());
     }
   }
 

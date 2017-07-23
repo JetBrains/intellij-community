@@ -16,43 +16,70 @@
 package org.intellij.lang.regexp;
 
 import com.intellij.lexer.FlexAdapter;
+import com.intellij.lexer.Lexer;
+import com.intellij.lexer.LookAheadLexer;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
 
-public class RegExpLexer extends FlexAdapter {
+public class RegExpLexer extends LookAheadLexer {
+
+  public RegExpLexer(EnumSet<RegExpCapability> capabilities) {
+    super(new FlexRegExpLexer(capabilities));
+  }
+
+  @Override
+  protected void lookAhead(@NotNull Lexer baseLexer) {
+    final IElementType tokenType = baseLexer.getTokenType();
+    if (!RegExpTT.CHARACTERS.contains(tokenType) && tokenType != RegExpTT.RBRACE) {
+      advanceLexer(baseLexer);
+      if (baseLexer.getTokenType() == RegExpTT.MINUS) {
+        advanceAs(baseLexer, RegExpTT.CHARACTER);
+      }
+    }
+    else {
+      super.lookAhead(baseLexer);
+    }
+  }
+
+  static class FlexRegExpLexer extends FlexAdapter {
 
     private static final int COMMENT_MODE = 1 << 14;
     private static final int NESTED_STATES = 1 << 15;
     private static final int CAPTURING_GROUPS = 1 << 16;
     private final EnumSet<RegExpCapability> myCapabilities;
 
-    public RegExpLexer(EnumSet<RegExpCapability> capabilities) {
-        super(new _RegExLexer(capabilities));
-        myCapabilities = capabilities;
+    public FlexRegExpLexer(EnumSet<RegExpCapability> capabilities) {
+      super(new _RegExLexer(capabilities));
+      myCapabilities = capabilities;
     }
 
+    @Override
     public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
-        getFlex().commentMode = (initialState & COMMENT_MODE) != 0 || myCapabilities.contains(RegExpCapability.COMMENT_MODE);
-        super.start(buffer, startOffset, endOffset, initialState & ~COMMENT_MODE);
+      getFlex().commentMode = (initialState & COMMENT_MODE) != 0 || myCapabilities.contains(RegExpCapability.COMMENT_MODE);
+      super.start(buffer, startOffset, endOffset, initialState & ~COMMENT_MODE);
     }
 
+    @Override
     public _RegExLexer getFlex() {
-        return (_RegExLexer)super.getFlex();
+      return (_RegExLexer)super.getFlex();
     }
 
+    @Override
     public int getState() {
-        final _RegExLexer flex = getFlex();
-        int state = super.getState();
-        if (flex.commentMode) {
-            state |= COMMENT_MODE;
-        }
-        if (!flex.states.isEmpty()) {
-            state |= NESTED_STATES;
-        }
-        if (flex.capturingGroupCount != 0) {
-            state |= CAPTURING_GROUPS;
-        }
-        return state;
+      final _RegExLexer flex = getFlex();
+      int state = super.getState();
+      if (flex.commentMode) {
+        state |= COMMENT_MODE;
+      }
+      if (!flex.states.isEmpty()) {
+        state |= NESTED_STATES;
+      }
+      if (flex.capturingGroupCount != 0) {
+        state |= CAPTURING_GROUPS;
+      }
+      return state;
     }
+  }
 }

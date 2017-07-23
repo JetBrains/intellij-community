@@ -1,7 +1,7 @@
 <html>
 <body>
-Write your description here.
+<p>Write your description here.</p>
 <!-- tooltip end -->
-Text after this comment will not be shown in tooltips.
+<p>Text after this comment will only be shown in the settings of the inspection.</p>
 </body>
 </html>

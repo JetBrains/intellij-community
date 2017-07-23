@@ -23,16 +23,13 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * User: anna
- * Date: Mar 3, 2005
- */
 public class AddToFavoritesActionGroup extends ActionGroup implements DumbAware {
 
   @Override
@@ -62,6 +59,11 @@ public class AddToFavoritesActionGroup extends ActionGroup implements DumbAware 
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setVisible(AddToFavoritesAction.canCreateNodes(e));
+    try {
+      e.getPresentation().setVisible(AddToFavoritesAction.canCreateNodes(e));
+    }
+    catch (IndexNotReadyException e1) {
+      e.getPresentation().setVisible(false);
+    }
   }
 }

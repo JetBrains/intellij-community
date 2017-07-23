@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 14.11.2006
- * Time: 19:04:28
- */
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -40,8 +34,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +59,8 @@ public class CreatePatchConfigurationPanel {
   private JLabel myWarningLabel;
   private final Project myProject;
   @Nullable private File myCommonParentDir;
+  private JBRadioButton myToClipboardButton;
+  private JBRadioButton myToFileButton;
 
   public CreatePatchConfigurationPanel(@NotNull final Project project) {
     myProject = project;
@@ -85,6 +84,7 @@ public class CreatePatchConfigurationPanel {
       }
     });
 
+    myToFileButton.addChangeListener(e -> myFileNameField.setEnabled(myToFileButton.isSelected()));
     myFileNameField.setTextFieldPreferredWidth(TEXT_FIELD_WIDTH);
     myBasePathField.setTextFieldPreferredWidth(TEXT_FIELD_WIDTH);
     myBasePathField.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFolderDescriptor()));
@@ -115,9 +115,22 @@ public class CreatePatchConfigurationPanel {
     myReversePatchCheckbox = new JCheckBox(VcsBundle.message("create.patch.reverse.checkbox"));
     myEncoding = new ComboBox<>();
     myWarningLabel = new JLabel();
+    myToFileButton = new JBRadioButton(VcsBundle.message("create.patch.file.path"), true);
+
+    if (UIUtil.isUnderWin10LookAndFeel()) {
+      myToFileButton.setBorder(JBUI.Borders.emptyRight(UIUtil.DEFAULT_HGAP));
+    }
+
+    myToClipboardButton = new JBRadioButton(VcsBundle.message("create.patch.to.clipboard"));
+    ButtonGroup group = new ButtonGroup();
+    group.add(myToFileButton);
+    group.add(myToClipboardButton);
+    JPanel toFilePanel = JBUI.Panels.simplePanel().addToLeft(myToFileButton).addToCenter(myFileNameField);
 
     myMainPanel = FormBuilder.createFormBuilder()
-      .addLabeledComponent(VcsBundle.message("create.patch.file.path"), myFileNameField)
+      .addComponent(toFilePanel)
+      .addComponent(myToClipboardButton)
+      .addVerticalGap(5)
       .addLabeledComponent("&Base path:", myBasePathField)
       .addComponent(myReversePatchCheckbox)
       .addLabeledComponent(VcsBundle.message("create.patch.encoding"), myEncoding)
@@ -156,6 +169,14 @@ public class CreatePatchConfigurationPanel {
 
   public void setReversePatch(boolean reverse) {
     myReversePatchCheckbox.setSelected(reverse);
+  }
+
+  public boolean isToClipboard() {
+    return myToClipboardButton.isSelected();
+  }
+
+  public void setToClipboard(boolean toClipboard) {
+    myToClipboardButton.setSelected(toClipboard);
   }
 
   public boolean isOkToExecute() {

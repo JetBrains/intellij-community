@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,7 +100,7 @@ public class VBStyleCollection<E, K> extends ArrayList<E> {
 
   public void addWithKeyAndIndex(int index, E element, K key) {
     addToListIndex(index, 1);
-    map.put(key, new Integer(index));
+    map.put(key, index);
     super.add(index, element);
     lstKeys.add(index, key);
   }
@@ -164,12 +164,12 @@ public class VBStyleCollection<E, K> extends ArrayList<E> {
 
     K key = lstKeys.get(index1);
     if (key != null) {
-      map.put(key, new Integer(index1));
+      map.put(key, index1);
     }
 
     key = lstKeys.get(index2);
     if (key != null) {
-      map.put(key, new Integer(index2));
+      map.put(key, index2);
     }
   }
 
@@ -197,7 +197,7 @@ public class VBStyleCollection<E, K> extends ArrayList<E> {
     for (int i = lstKeys.size() - 1; i >= index; i--) {
       K obj = lstKeys.get(i);
       if (obj != null) {
-        map.put(obj, new Integer(i + diff));
+        map.put(obj, i + diff);
       }
     }
   }

@@ -5,6 +5,7 @@ import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -14,8 +15,8 @@ import com.intellij.vcs.log.graph.EdgePrintElement;
 import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.PaintParameters;
-import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
-import com.intellij.vcs.log.ui.tables.GraphTableModel;
+import com.intellij.vcs.log.ui.table.GraphTableModel;
+import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,28 +101,36 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     return 0;
   }
 
+  private int getGraphWidth(int row) {
+    GraphCommitCell cell = getValue(myGraphTable.getModel().getValueAt(row, GraphTableModel.COMMIT_COLUMN));
+    return myTemplateComponent.getGraphWidth(cell.getPrintElements());
+  }
+
   public int getTooltipXCoordinate(int row) {
     int referencesWidth = getReferencesWidth(row);
     if (referencesWidth != 0) {
+      if (myComponent.getReferencePainter().isLeftAligned()) return getGraphWidth(row) + referencesWidth / 2;
       return getColumnWidth() - referencesWidth / 2;
     }
     return getColumnWidth() / 2;
   }
 
   private int getColumnWidth() {
-    return myGraphTable.getColumnModel().getColumn(GraphTableModel.COMMIT_COLUMN).getWidth();
+    return myGraphTable.getColumnByModelIndex(GraphTableModel.COMMIT_COLUMN).getWidth();
   }
 
   public void setCompactReferencesView(boolean compact) {
     myComponent.getReferencePainter().setCompact(compact);
+    myTemplateComponent.getReferencePainter().setCompact(compact);
   }
 
   public void setShowTagsNames(boolean showTagNames) {
     myComponent.getReferencePainter().setShowTagNames(showTagNames);
+    myTemplateComponent.getReferencePainter().setShowTagNames(showTagNames);
   }
 
   private static class MyComponent extends SimpleColoredRenderer {
-    private static final int FREE_SPACE = 20;
+    private static final int DISPLAYED_MESSAGE_PART = 80;
     @NotNull private final VcsLogData myLogData;
     @NotNull private final VcsLogGraphTable myGraphTable;
     @NotNull private final GraphCellPainter myPainter;
@@ -190,27 +199,35 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       append(""); // appendTextPadding wont work without this
       if (myReferencePainter.isLeftAligned()) {
         myReferencePainter.customizePainter(this, refs, getBackground(), baseForeground, isSelected,
-                                            0 /*left aligned painter does not use available width*/);
+                                            getAvailableWidth(column, myGraphImage.getWidth()));
 
         appendTextPadding(myGraphImage.getWidth() + myReferencePainter.getSize().width + LabelPainter.RIGHT_PADDING);
-        appendText(cell, style);
+        appendText(cell, style, isSelected);
       }
       else {
         appendTextPadding(myGraphImage.getWidth());
-        appendText(cell, style);
+        appendText(cell, style, isSelected);
         myReferencePainter.customizePainter(this, refs, getBackground(), baseForeground, isSelected,
-                                            getAvailableWidth(column));
+                                            getAvailableWidth(column, myGraphImage.getWidth()));
       }
     }
 
-    private void appendText(@NotNull GraphCommitCell cell, @NotNull SimpleTextAttributes style) {
-      myIssueLinkRenderer.appendTextWithLinks(StringUtil.replace(cell.getText(), "\t", " "), style);
+    private void appendText(@NotNull GraphCommitCell cell, @NotNull SimpleTextAttributes style, boolean isSelected) {
+      myIssueLinkRenderer.appendTextWithLinks(StringUtil.replace(cell.getText(), "\t", " ").trim(), style);
+      SpeedSearchUtil.applySpeedSearchHighlighting(myGraphTable, this, false, isSelected);
     }
 
-    private int getAvailableWidth(int column) {
-      int columnWidth = myGraphTable.getColumnModel().getColumn(column).getWidth();
-      return Math.min(columnWidth - super.getPreferredSize().width,
-                      myReferencePainter.isCompact() ? columnWidth / 3 : Math.max(columnWidth - FREE_SPACE, 0));
+    private int getAvailableWidth(int column, int graphWidth) {
+      int textAndLabelsWidth = myGraphTable.getColumnModel().getColumn(column).getWidth() - graphWidth;
+      int freeSpace = textAndLabelsWidth - super.getPreferredSize().width;
+      int allowedSpace;
+      if (myReferencePainter.isCompact()) {
+        allowedSpace = Math.min(freeSpace, textAndLabelsWidth / 3);
+      }
+      else {
+        allowedSpace = Math.max(freeSpace, Math.max(textAndLabelsWidth / 2, textAndLabelsWidth - JBUI.scale(DISPLAYED_MESSAGE_PART)));
+      }
+      return Math.max(0, allowedSpace);
     }
 
     private int calculateHeight() {

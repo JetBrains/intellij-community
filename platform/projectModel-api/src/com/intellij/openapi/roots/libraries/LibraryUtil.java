@@ -20,11 +20,11 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.StringTokenizer;
@@ -163,6 +163,9 @@ public class LibraryUtil {
     final String name = library.getName();
     if (name != null) {
       return name;
+    }
+    if (library instanceof LibraryEx && ((LibraryEx)library).isDisposed()) {
+      return "Disposed Library";
     }
     String[] urls = library.getUrls(OrderRootType.CLASSES);
     if (urls.length > 0) {

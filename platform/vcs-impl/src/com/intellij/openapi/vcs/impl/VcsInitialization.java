@@ -38,12 +38,13 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Future;
+import java.util.function.Predicate;
 
 public class VcsInitialization implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.VcsInitialization");
 
   private final List<Pair<VcsInitObject, Runnable>> myList = new ArrayList<>();
-  private final Object myLock;
+  private final Object myLock = new Object();
   @NotNull private final Project myProject;
 
   // the initialization lifecycle: IDLE -(on startup completion)-> RUNNING -(on all tasks executed or project canceled)-> FINISHED
@@ -55,7 +56,7 @@ public class VcsInitialization implements Disposable {
 
   VcsInitialization(@NotNull final Project project) {
     myProject = project;
-    myLock = new Object();
+    if (project.isDefault()) return;
 
     StartupManager.getInstance(project).registerPostStartupActivity((DumbAwareRunnable)() -> {
       if (project.isDisposed()) return;
@@ -118,34 +119,45 @@ public class VcsInitialization implements Disposable {
   private void cancelBackgroundInitialization() {
     // do not leave VCS initialization run in background when the project is closed
     Future<?> future = myFuture;
+    LOG.debug("cancelBackgroundInitialization() future=" + future +" from "+Thread.currentThread()+" with write access="+ApplicationManager.getApplication().isWriteAccessAllowed());
     if (future != null) {
       future.cancel(false);
       if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
         // dispose happens without prior project close (most likely light project case in tests)
         // get out of write action and wait there
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(this::waitForCompletion);
+        SwingUtilities.invokeLater(this::waitNotRunning);
       }
       else {
-        waitForCompletion();
+        waitNotRunning();
       }
     }
   }
 
-  void waitForCompletion() {
+  void waitNotRunning() {
+    waitFor(status -> status != Status.RUNNING);
+  }
+
+  void waitFinished() {
+    waitFor(status -> status == Status.FINISHED);
+  }
+
+  private void waitFor(@NotNull Predicate<Status> predicate) {
+    LOG.debug("waitFor() status=" + myStatus);
     // have to wait for task completion to avoid running it in background for closed project
     long start = System.currentTimeMillis();
     Status status = null;
     while (System.currentTimeMillis() < start + 10000) {
       synchronized (myLock) {
-        if ((status=myStatus) != Status.RUNNING) {
+        status = myStatus;
+        if (predicate.test(status)) {
           break;
         }
       }
       TimeoutUtil.sleep(10);
     }
     if (status == Status.RUNNING) {
-      LOG.error("Failed to wait for completion of VCS initialization for project "+ myProject,
+      LOG.error("Failed to wait for completion of VCS initialization for project " + myProject,
                 new Attachment("thread dump", ThreadDumper.dumpThreadsToString()));
     }
   }

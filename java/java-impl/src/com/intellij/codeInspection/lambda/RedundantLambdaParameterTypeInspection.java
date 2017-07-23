@@ -23,17 +23,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
-import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- */
 public class RedundantLambdaParameterTypeInspection extends BaseJavaBatchLocalInspectionTool {
-  public static final Logger LOG = Logger.getInstance("#" + RedundantLambdaParameterTypeInspection.class.getName());
+  public static final Logger LOG = Logger.getInstance(RedundantLambdaParameterTypeInspection.class);
 
   @NotNull
   @Override
@@ -58,7 +52,7 @@ public class RedundantLambdaParameterTypeInspection extends BaseJavaBatchLocalIn
       if (parameter.getTypeElement() == null) return false;
     }
     if (parameters.length == 0) return false;
-    final PsiType functionalInterfaceType = LambdaUtil.getFunctionalInterfaceType(expression, true);
+    final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
     if (functionalInterfaceType != null) {
       final PsiElement lambdaParent = expression.getParent();
       if (lambdaParent instanceof PsiExpressionList) {
@@ -70,35 +64,14 @@ public class RedundantLambdaParameterTypeInspection extends BaseJavaBatchLocalIn
           final int idx = LambdaUtil.getLambdaIdx((PsiExpressionList)lambdaParent, expression);
           if (idx < 0) return false;
 
-          final PsiTypeParameter[] typeParameters = method.getTypeParameters();
-          final PsiExpression[] arguments = ((PsiExpressionList)lambdaParent).getExpressions();
-          final JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(parameterList.getProject());
-          arguments[idx] = javaPsiFacade.getElementFactory().createExpressionFromText(
-            "(" + StringUtil.join(expression.getParameterList().getParameters(), PsiParameter::getName, ", ") + ") -> {}", expression);
-          final PsiParameter[] methodParams = method.getParameterList().getParameters();
-          final PsiSubstitutor substitutor = javaPsiFacade.getResolveHelper()
-            .inferTypeArguments(typeParameters, methodParams, arguments, ((MethodCandidateInfo)resolveResult).getSiteSubstitutor(),
-                                gParent, DefaultParameterTypeInferencePolicy.INSTANCE);
-
-          for (PsiTypeParameter parameter : typeParameters) {
-            final PsiType psiType = substitutor.substitute(parameter);
-            if (psiType == null || dependsOnTypeParams(psiType, expression, parameter)) return false;
+          PsiCallExpression copy = (PsiCallExpression)gParent.copy();
+          PsiLambdaExpression lambdaToStripTypeParameters = (PsiLambdaExpression)copy.getArgumentList().getExpressions()[idx];
+          for (PsiParameter parameter : lambdaToStripTypeParameters.getParameterList().getParameters()) {
+            parameter.getTypeElement().delete();
           }
 
-          final PsiType paramType;
-          if (idx < methodParams.length) {
-            paramType = methodParams[idx].getType();
-          }
-          else {
-            final PsiParameter lastParam = methodParams[methodParams.length - 1];
-            if (!lastParam.isVarArgs()) return false;
-            paramType = ((PsiEllipsisType)lastParam.getType()).getComponentType();
-          }
-          return functionalInterfaceType.isAssignableFrom(substitutor.substitute(paramType));
+          return functionalInterfaceType.equals(lambdaToStripTypeParameters.getFunctionalInterfaceType());
         }
-      }
-      if (!LambdaUtil.isLambdaFullyInferred(expression, functionalInterfaceType)) {
-        return false;
       }
       return true;
     }
@@ -119,13 +92,6 @@ public class RedundantLambdaParameterTypeInspection extends BaseJavaBatchLocalIn
         .createExpressionFromText(text + "->{}", lambdaExpression);
       lambdaExpression.getParameterList().replace(expression.getParameterList());
     }
-  }
-
-  private static boolean dependsOnTypeParams(PsiType type,
-                                             PsiLambdaExpression expr,
-                                             PsiTypeParameter param2Check) {
-    return LambdaUtil.depends(type, new LambdaUtil.TypeParamsChecker(expr, PsiUtil
-      .resolveGenericsClassInType(LambdaUtil.getFunctionalInterfaceType(expr, false)).getElement()), param2Check);
   }
 
   private static class LambdaParametersFix implements LocalQuickFix {

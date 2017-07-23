@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 
 class CommandProcessorImpl extends CoreCommandProcessor {
@@ -40,10 +41,7 @@ class CommandProcessorImpl extends CoreCommandProcessor {
       }
       else if (throwable != null) {
         failed = true;
-        if (throwable instanceof Error) {
-          throw (Error)throwable;
-        }
-        else if (throwable instanceof RuntimeException) throw (RuntimeException)throwable;
+        ExceptionUtil.rethrowUnchecked(throwable);
         CommandLog.LOG.error(throwable);
       }
       else {
@@ -51,7 +49,15 @@ class CommandProcessorImpl extends CoreCommandProcessor {
       }
     }
     finally {
-      super.finishCommand(project, command, throwable);
+      try {
+        super.finishCommand(project, command, throwable);
+      }
+      catch (Throwable e) {
+        if (throwable != null) {
+          e.addSuppressed(throwable);
+        }
+        throw e;
+      }
     }
     if (failed) {
       if (project != null) {

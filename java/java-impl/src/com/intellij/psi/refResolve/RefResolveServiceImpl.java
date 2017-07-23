@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -171,16 +171,11 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   }
 
   private void initListeners(@NotNull MessageBus messageBus, @NotNull PsiManager psiManager) {
-    messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
+    messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         fileCount.set(0);
-        List<VirtualFile> files = ContainerUtil.mapNotNull(events, new Function<VFileEvent, VirtualFile>() {
-          @Override
-          public VirtualFile fun(VFileEvent event) {
-            return event.getFile();
-          }
-        });
+        List<VirtualFile> files = ContainerUtil.mapNotNull(events, (Function<VFileEvent, VirtualFile>)event -> event.getFile());
         queue(files, "VFS events " + events.size());
       }
     });
@@ -636,10 +631,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     try {
       forward = calcForwardRefs(file, indicator);
     }
-    catch (IndexNotReadyException e) {
-      return null;
-    }
-    catch (ApplicationUtil.CannotRunReadActionException e) {
+    catch (IndexNotReadyException | ApplicationUtil.CannotRunReadActionException e) {
       return null;
     }
     catch (ProcessCanceledException e) {

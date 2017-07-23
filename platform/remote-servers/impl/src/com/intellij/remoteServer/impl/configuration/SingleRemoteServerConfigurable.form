@@ -23,7 +23,10 @@
       </vspacer>
       <component id="a6f66" class="com.intellij.ui.components.JBLabel" binding="myConnectionStatusLabel">
         <constraints>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="1" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false">
+            <minimum-size width="10" height="-1"/>
+            <preferred-size width="10" height="-1"/>
+          </grid>
         </constraints>
         <properties>
           <text value=" "/>

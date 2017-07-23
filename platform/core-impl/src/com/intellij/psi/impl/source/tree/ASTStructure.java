@@ -43,12 +43,6 @@ public class ASTStructure implements FlyweightCapableTreeStructure<ASTNode> {
   }
 
   @Override
-  @NotNull
-  public ASTNode prepareForGetChildren(@NotNull final ASTNode astNode) {
-    return astNode;
-  }
-
-  @Override
   public int getChildren(@NotNull final ASTNode astNode, @NotNull final Ref<ASTNode[]> into) {
     ASTNode child = astNode.getFirstChildNode();
     if (child == null) return 0;

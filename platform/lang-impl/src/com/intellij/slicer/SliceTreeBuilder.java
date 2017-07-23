@@ -18,11 +18,14 @@ package com.intellij.slicer;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -36,7 +39,7 @@ public class SliceTreeBuilder extends AbstractTreeBuilder {
   public final boolean dataFlowToThis;
   volatile boolean analysisInProgress;
 
-  static final Comparator<NodeDescriptor> SLICE_NODE_COMPARATOR = (o1, o2) -> {
+  public static final Comparator<NodeDescriptor> SLICE_NODE_COMPARATOR = (o1, o2) -> {
     if (!(o1 instanceof SliceNode) || !(o2 instanceof SliceNode)) {
       return AlphaComparator.INSTANCE.compare(o1, o2);
     }
@@ -101,5 +104,11 @@ public class SliceTreeBuilder extends AbstractTreeBuilder {
 
     analysisInProgress = true;
     provider.startAnalyzeNullness(getTreeStructure(), () -> analysisInProgress = false);
+  }
+
+  @Nullable
+  @Override
+  protected ProgressIndicator createProgressIndicator() {
+    return new ProgressIndicatorBase(true);
   }
 }

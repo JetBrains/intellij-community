@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -159,7 +160,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
         semaphore.down();
         evalContext.getDebugProcess().getManagerThread().invoke(new SuspendContextCommandImpl(evalContext.getSuspendContext()) {
           @Override
-          public void contextAction() throws Exception {
+          public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
             // re-setting the context will cause value recalculation
             try {
               setContext(myStoredEvaluationContext);
@@ -238,28 +239,19 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
         Method method = refType.concreteMethodByName("getStackTrace", "()[Ljava/lang/StackTraceElement;");
         if (method != null) {
           final DebugProcessImpl process = evaluationContext.getDebugProcess();
-          process.invokeMethod(evaluationContext, exceptionObj, method, Collections.emptyList());
-          
+          Value trace = process.invokeMethod(evaluationContext, exceptionObj, method, Collections.emptyList());
+
           // print to console as well
-          
-          final Field traceField = refType.fieldByName("stackTrace");
-          final Value trace = traceField != null? exceptionObj.getValue(traceField) : null; 
           if (trace instanceof ArrayReference) {
-            final ArrayReference traceArray = (ArrayReference)trace;
-            final Type componentType = ((ArrayType)traceArray.referenceType()).componentType();
-            if (componentType instanceof ClassType) {
-              process.printToConsole(DebuggerUtils.getValueAsString(evaluationContext, exceptionObj));
-              process.printToConsole("\n");
-              for (Value stackElement : traceArray.getValues()) {
-                process.printToConsole("\tat ");
-                process.printToConsole(DebuggerUtils.getValueAsString(evaluationContext, stackElement));
-                process.printToConsole("\n");
-              }
+            ArrayReference traceArray = (ArrayReference)trace;
+            process.printToConsole(DebuggerUtils.getValueAsString(evaluationContext, exceptionObj) + "\n");
+            for (Value stackElement : traceArray.getValues()) {
+              process.printToConsole("\tat " + DebuggerUtils.getValueAsString(evaluationContext, stackElement) + "\n");
             }
           }
         }
       }
-      catch (EvaluateException | ClassNotLoadedException ignored) {
+      catch (EvaluateException ignored) {
       }
       catch (Throwable e) {
         LOG.info(e); // catch all exceptions to ensure the method returns gracefully
@@ -335,6 +327,16 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       @Override
       public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
         return null;
+      }
+
+      @Override
+      public NodeRenderer getRenderer(DebugProcessImpl debugProcess) {
+        return ValueDescriptorImpl.this.getRenderer(debugProcess);
+      }
+
+      @Override
+      public <T> T getUserData(Key<T> key) {
+        return ValueDescriptorImpl.this.getUserData(key);
       }
     };
     descriptor.myFullValue = true;
@@ -607,5 +609,9 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       }
     }
     return "";
+  }
+
+  public EvaluationContextImpl getStoredEvaluationContext() {
+    return myStoredEvaluationContext;
   }
 }

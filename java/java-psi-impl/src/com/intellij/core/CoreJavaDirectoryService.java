@@ -62,7 +62,7 @@ public class CoreJavaDirectoryService extends JavaDirectoryService {
       if (file instanceof PsiClassOwner && file.getViewProvider().getLanguages().size() == 1) {
         PsiClass[] psiClasses = ((PsiClassOwner)file).getClasses();
         if (psiClasses.length == 0) continue;
-        if (classes == null) classes = new ArrayList<PsiClass>();
+        if (classes == null) classes = new ArrayList<>();
         ContainerUtil.addAll(classes, psiClasses);
       }
     }

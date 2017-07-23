@@ -66,9 +66,6 @@
   <action id="EditorJoinLines">
     <keyboard-shortcut first-keystroke="control shift J"/>
   </action>
-  <action id="EditorChooseLookupItemCompleteStatement">
-    <keyboard-shortcut first-keystroke="control shift ENTER"/>
-  </action>
   <action id="EditorChooseLookupItemDot">
     <keyboard-shortcut first-keystroke="control PERIOD"/></action>
   <action id="EditorCompleteStatement">
@@ -79,6 +76,9 @@
   </action>
   <action id="EditorLookupUp"><keyboard-shortcut first-keystroke="control UP"/></action>
   <action id="EditorLookupDown"><keyboard-shortcut first-keystroke="control DOWN"/></action>
+
+  <action id="MethodOverloadSwitchUp"><keyboard-shortcut first-keystroke="control UP"/></action>
+  <action id="MethodOverloadSwitchDown"><keyboard-shortcut first-keystroke="control DOWN"/></action>
 
   <action id="ReformatCode">
     <keyboard-shortcut first-keystroke="control alt L"/>
@@ -501,6 +501,9 @@
   </action>
   <action id="Stop">
     <keyboard-shortcut first-keystroke="control F2"/>
+  </action>
+  <action id="StopBackgroundProcesses">
+    <keyboard-shortcut first-keystroke="control shift F2"/>
   </action>
   <action id="EditorTextStartWithSelection">
     <keyboard-shortcut first-keystroke="control shift HOME"/>
@@ -1019,7 +1022,7 @@
     <keyboard-shortcut first-keystroke="alt shift A" />
   </action>
   <action id="ShelveChanges.UnshelveWithDialog">
-    <keyboard-shortcut first-keystroke="ctrl shift U" />
+    <keyboard-shortcut first-keystroke="control shift U" />
   </action>
 
   <action id="Console.Open"><keyboard-shortcut first-keystroke="control shift F10"/></action>
@@ -1040,5 +1043,14 @@
 
   <action id="EditorMatchBrace">
     <keyboard-shortcut first-keystroke="control shift M" />
+  </action>
+
+  <action id="QuickActionPopup">
+    <keyboard-shortcut first-keystroke="control alt ENTER"/>
+  </action>
+
+  <action id="Git.Reword.Commit">
+    <keyboard-shortcut first-keystroke="F2" />
+    <keyboard-shortcut first-keystroke="Shift F6"/>
   </action>
 </keymap>

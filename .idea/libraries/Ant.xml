@@ -1,29 +1,12 @@
 <component name="libraryTable">
   <library name="Ant">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/ant/lib/ant-commons-net.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/ant/lib/ant-jmf.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/ant/lib/ant-apache-resolver.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/ant/lib/ant-jai.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/ant/lib/ant-apache-bsf.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/ant/lib/ant-commons-logging.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/ant/lib/ant-junit.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/ant/lib/ant-jsch.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/ant/lib/ant-apache-bcel.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/ant/lib/ant.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/ant/lib/ant-netrexx.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/ant/lib/ant-apache-oro.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/ant/lib/ant-antlr.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/ant/lib/ant-jdepend.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/ant/lib/ant-launcher.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/ant/lib/ant-apache-regexp.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/ant/lib/ant-apache-log4j.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/ant/lib/ant-swing.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/ant/lib/ant-javamail.jar!/" />
+      <root url="file://$PROJECT_DIR$/lib/ant/lib"/>
     </CLASSES>
-    <JAVADOC />
+    <JAVADOC/>
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/ant/src/bundled_ant_src.zip!/bundled_ant_src/main" />
+      <root url="jar://$PROJECT_DIR$/lib/ant/src/bundled_ant_src.zip!/bundled_ant_src/main"/>
     </SOURCES>
+    <jarDirectory url="file://$PROJECT_DIR$/lib/ant/lib" recursive="false"/>
   </library>
 </component>

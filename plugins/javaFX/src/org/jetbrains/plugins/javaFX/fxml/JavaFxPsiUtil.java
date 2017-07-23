@@ -55,12 +55,9 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-/**
- * User: anna
- */
 public class JavaFxPsiUtil {
 
-  private static final Logger LOG = Logger.getInstance("#" + JavaFxPsiUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaFxPsiUtil.class);
 
   public static XmlProcessingInstruction createSingleImportInstruction(String qualifiedName, Project project) {
     final String importText = "<?import " + qualifiedName + "?>";
@@ -863,14 +860,13 @@ public class JavaFxPsiUtil {
   }
 
   @NotNull
-  public static Map<String, PsiMember> collectReadableProperties(@Nullable PsiClass psiClass) {
+  public static Map<String, PsiMember> getReadableProperties(@Nullable PsiClass psiClass) {
     if (psiClass != null) {
       return CachedValuesManager.getCachedValue(psiClass, () ->
         CachedValueProvider.Result.create(prepareReadableProperties(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
     }
     return Collections.emptyMap();
   }
-
 
   @NotNull
   private static Map<String, PsiMember> prepareReadableProperties(@NotNull PsiClass psiClass) {
@@ -887,7 +883,7 @@ public class JavaFxPsiUtil {
   }
 
   @NotNull
-  public static Map<String, PsiMember> collectWritableProperties(@Nullable PsiClass psiClass) {
+  public static Map<String, PsiMember> getWritableProperties(@Nullable PsiClass psiClass) {
     if (psiClass != null) {
       return CachedValuesManager.getCachedValue(psiClass, () ->
         CachedValueProvider.Result.create(prepareWritableProperties(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
@@ -899,16 +895,11 @@ public class JavaFxPsiUtil {
   private static Map<String, PsiMember> prepareWritableProperties(@NotNull PsiClass psiClass) {
     // todo search for setter in corresponding builder class, e.g. MyDataBuilder.setText() + MyData.getText(), reuse logic from hasBuilder()
     final Map<String, PsiMember> acceptableMembers = new THashMap<>();
-    for (PsiMethod constructor : psiClass.getConstructors()) {
-      if (!constructor.hasModifierProperty(PsiModifier.PUBLIC)) continue;
-      final PsiParameter[] parameters = constructor.getParameterList().getParameters();
-      for (PsiParameter parameter : parameters) {
-        String propertyName = getPropertyNameFromNamedArgAnnotation(parameter);
-        if (propertyName != null && !acceptableMembers.containsKey(propertyName)) {
-          final PsiField field = psiClass.findFieldByName(propertyName, true);
-          if (field != null && !field.hasModifierProperty(PsiModifier.STATIC)) {
-            acceptableMembers.put(propertyName, field);
-          }
+    for (String propertyName : prepareConstructorNamedArgProperties(psiClass)) {
+      if (!acceptableMembers.containsKey(propertyName)) {
+        final PsiField field = psiClass.findFieldByName(propertyName, true);
+        if (field != null && !field.hasModifierProperty(PsiModifier.STATIC)) {
+          acceptableMembers.put(propertyName, field);
         }
       }
     }
@@ -964,6 +955,35 @@ public class JavaFxPsiUtil {
       }
     }
     return null;
+  }
+
+  /**
+   * Unlike normal properties (fields, getters/setters) named constructor parameters can be declared many times, possibly with different types
+   */
+  @NotNull
+  public static Set<String> getConstructorNamedArgProperties(@Nullable PsiClass psiClass) {
+    if (psiClass != null) {
+      return CachedValuesManager.getCachedValue(psiClass, () -> CachedValueProvider.Result.create(
+        prepareConstructorNamedArgProperties(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+    }
+    return Collections.emptySet();
+  }
+
+  @NotNull
+  private static Set<String> prepareConstructorNamedArgProperties(@NotNull PsiClass psiClass) {
+    final Set<String> properties = new THashSet<>();
+    for (PsiMethod constructor : psiClass.getConstructors()) {
+      if (constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
+        final PsiParameter[] parameters = constructor.getParameterList().getParameters();
+        for (PsiParameter parameter : parameters) {
+          final String propertyName = getPropertyNameFromNamedArgAnnotation(parameter);
+          if (!StringUtil.isEmpty(propertyName)) {
+            properties.add(propertyName);
+          }
+        }
+      }
+    }
+    return properties;
   }
 
   @Nullable

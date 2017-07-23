@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.PlaceInProjectStructure;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElementUsage;
 import com.intellij.openapi.ui.Messages;
@@ -32,6 +33,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.ui.ListCellRendererWithRightAlignedComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +41,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
 
 /**
  * @author nik
@@ -81,8 +82,18 @@ public abstract class FindUsagesInProjectStructureActionBase extends AnAction im
       new BaseListPopupStep<ProjectStructureElementUsage>(ProjectBundle.message("dependencies.used.in.popup.title"), usagesArray) {
         @Override
         public PopupStep onChosen(final ProjectStructureElementUsage selected, final boolean finalChoice) {
-          selected.getPlace().navigate();
+          PlaceInProjectStructure place = selected.getPlace();
+          if (place.canNavigate()) {
+            place.navigate();
+          }
           return FINAL_CHOICE;
+        }
+
+        @Override
+        public boolean isSelectable(ProjectStructureElementUsage value) {
+          //todo[nik] currently non-selectable items in popup don't work in dialogs (IDEA-174448)
+          //return value.getPlace().canNavigate();
+          return true;
         }
 
         @NotNull
@@ -104,6 +115,7 @@ public abstract class FindUsagesInProjectStructureActionBase extends AnAction im
           protected void customize(ProjectStructureElementUsage value) {
             setLeftText(value.getPresentableName());
             setIcon(value.getIcon());
+            setLeftForeground(value.getPlace().canNavigate() ? UIUtil.getLabelTextForeground() : UIUtil.getLabelDisabledForeground());
             setRightForeground(Color.GRAY);
             setRightText(value.getPresentableLocationInElement());
           }

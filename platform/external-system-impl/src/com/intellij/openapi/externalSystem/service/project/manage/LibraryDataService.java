@@ -44,7 +44,7 @@ import java.util.*;
 @Order(ExternalSystemConstants.BUILTIN_LIBRARY_DATA_SERVICE_ORDER)
 public class LibraryDataService extends AbstractProjectDataService<LibraryData, Library> {
 
-  private static final Logger LOG = Logger.getInstance("#" + LibraryDataService.class.getName());
+  private static final Logger LOG = Logger.getInstance(LibraryDataService.class);
   @NotNull public static final NotNullFunction<String, File> PATH_TO_FILE = path -> new File(path);
 
   @NotNull private final ExternalLibraryPathTypeMapper myLibraryPathTypeMapper;
@@ -78,7 +78,7 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
       syncPaths(toImport, library, modelsProvider);
       return;
     }
-    library = modelsProvider.createLibrary(libraryName);
+    library = modelsProvider.createLibrary(libraryName, ExternalSystemApiUtil.toExternalSource(toImport.getOwner()));
     final Library.ModifiableModel libraryModel = modelsProvider.getModifiableLibraryModel(library);
     registerPaths(toImport.isUnresolved(), libraryFiles, libraryModel, libraryName);
   }
@@ -164,7 +164,7 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
     final LibraryTable.ModifiableModel librariesModel = modelsProvider.getModifiableProjectLibrariesModel();
     for (Library library : librariesModel.getLibraries()) {
       if (!ExternalSystemApiUtil.isExternalSystemLibrary(library, projectData.getOwner())) continue;
-      if (isOrphanProjectLibrary(library, modelsProvider)) {
+      if (isOrphanProjectLibrary(library, modelsProvider) && !modelsProvider.isSubstituted(library.getName())) {
         orphanIdeLibraries.add(library);
       }
     }

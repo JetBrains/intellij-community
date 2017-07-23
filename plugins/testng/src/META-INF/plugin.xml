@@ -25,9 +25,6 @@
       <localInspection groupPath="Java" language="JAVA" shortName="ConvertJavadoc" displayName="Convert TestNG Javadoc to 1.5 annotations" groupName="TestNG"
                        enabledByDefault="false" level="WARNING"
                        implementationClass="com.theoryinpractice.testng.inspection.ConvertJavadocInspection"/>
-      <localInspection groupPath="Java" language="JAVA" shortName="ConvertAnnotations" displayName="Convert TestNG annotations to javadocs" groupName="TestNG"
-                       enabledByDefault="false" level="WARNING"
-                       implementationClass="com.theoryinpractice.testng.inspection.ConvertAnnotationInspection"/>
       <localInspection groupPath="Java" language="JAVA" shortName="dependsOnMethodTestNG" displayName="dependsOnMethods problem" groupName="TestNG" enabledByDefault="true"
                        level="WARNING" implementationClass="com.theoryinpractice.testng.inspection.DependsOnMethodInspection"/>
       <localInspection groupPath="Java" language="JAVA" shortName="groupsTestNG" displayName="Groups problem" groupName="TestNG" enabledByDefault="true" level="WARNING"

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -181,18 +181,9 @@ public abstract class CodeStyleManager  {
    *
    * @param document   the document to reformat.
    * @param offset the offset the line at which should be reformatted.
-   * @param mode   the current formatting mode to be used when adjusting line indent.
    * @throws IncorrectOperationException if the file is read-only.
-   * @see FormattingMode
    */
-  public abstract int adjustLineIndent(@NotNull Document document, int offset, FormattingMode mode);
-
-  /**
-   * The same as {@link #adjustLineIndent(Document, int, FormattingMode)} but uses {@link FormattingMode#ADJUST_INDENT} as formatting mode.
-   */
-  public final int adjustLineIndent(@NotNull Document document, int offset) {
-    return adjustLineIndent(document, offset, FormattingMode.ADJUST_INDENT);
-  }
+  public abstract int adjustLineIndent(@NotNull Document document, int offset);
 
   /**
    * @deprecated this method is not intended to be used by plugins.
@@ -277,5 +268,53 @@ public abstract class CodeStyleManager  {
 
   public abstract <T> T performActionWithFormatterDisabled(Computable<T> r);
 
-  public abstract FormattingMode getCurrentFormattingMode();
+  /**
+   * Calculates minimum spacing, allowed by formatting model (in columns) for a block starting at given offset,
+   * relative to its previous sibling block.
+   * Returns {@code -1}, if required block cannot be found at provided offset,
+   * or spacing cannot be calculated due to some other reason.
+   */
+  public int getSpacing(@NotNull PsiFile file, int offset) {
+    return -1;
+  }
+
+  /**
+   * Calculates minimum number of line feeds that should precede block starting at given offset, as dictated by formatting model.
+   * Returns {@code -1}, if required block cannot be found at provided offset,
+   * or spacing cannot be calculated due to some other reason.
+   */
+  public int getMinLineFeeds(@NotNull PsiFile file, int offset) {
+    return -1;
+  }
+
+  /**
+   * Retrieves the current formatting mode.
+   * 
+   * @param project The current project used to obtain {@code CodeStyleManager} instance.
+   * @return The current formatting mode.
+   * @see FormattingMode
+   */
+  public static FormattingMode getCurrentFormattingMode(@NotNull Project project) {
+    if (!project.isDisposed()) {
+      CodeStyleManager instance = getInstance(project);
+      if (instance instanceof FormattingModeAwareIndentAdjuster) {
+        return ((FormattingModeAwareIndentAdjuster)instance).getCurrentFormattingMode();
+      }
+    }
+    return FormattingMode.REFORMAT;
+  }
+
+  /**
+   * Run the given runnable disabling doc comment formatting.
+   * @param file     The file for which doc comment formatting should be temporarily disabled.
+   * @param runnable The runnable to run.
+   */
+  public void runWithDocCommentFormattingDisabled(@NotNull PsiFile file, @NotNull Runnable runnable) {
+    runnable.run();
+  }
+
+  @NotNull
+  public DocCommentSettings getDocCommentSettings(@NotNull PsiFile file) {
+    return DocCommentSettings.DEFAULTS;
+  }
 }

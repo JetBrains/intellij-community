@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Jul 20, 2007
- * Time: 2:57:38 PM
- */
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -50,7 +44,7 @@ public abstract class AddAnnotationIntention extends BaseIntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiModifierListOwner owner = AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset());
-    if (owner == null || !ExternalAnnotationsManagerImpl.areExternalAnnotationsApplicable(owner)) {
+    if (owner == null || owner.getModifierList() == null || !ExternalAnnotationsManagerImpl.areExternalAnnotationsApplicable(owner)) {
       return false;
     }
     Pair<String, String[]> annotations = getAnnotations(project);

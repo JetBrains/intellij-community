@@ -52,6 +52,7 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.remote.RemoteProcessControl;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
@@ -117,6 +118,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private boolean myWaitingForConnection = false;
   private PyStackFrame myConsoleContextFrame = null;
   private PyReferrersLoader myReferrersProvider;
+  private final List<PyFrameListener> myFrameListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private boolean isCythonWarningShown = false;
 
   public PyDebugProcess(@NotNull XDebugSession session,
                         @NotNull ServerSocket serverSocket,
@@ -212,12 +215,15 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
             getSession().positionReached(createSuspendContext(threadInfo));
           }
         }
+        for (PyFrameListener listener : myFrameListeners) {
+          listener.frameChanged();
+        }
       }
     });
   }
 
   private MultiProcessDebugger createMultiprocessDebugger(ServerSocket serverSocket) {
-    MultiProcessDebugger debugger = new MultiProcessDebugger(this, serverSocket, 10000);
+    MultiProcessDebugger debugger = new MultiProcessDebugger(this, serverSocket, getConnectTimeout());
     debugger.addOtherDebuggerCloseListener(new MultiProcessDebugger.DebuggerProcessListener() {
       @Override
       public void threadsClosed(Set<String> threadIds) {
@@ -307,10 +313,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
           if (myProcessHandler != null) {
             myProcessHandler.destroyProcess();
           }
-          if (!myClosing) {
-            invokeLater(
-              () -> Messages.showErrorDialog("Unable to establish connection with debugger:\n" + e.getMessage(), getConnectionTitle()));
-          }
+          LOG.error(e);
         }
       }
     });
@@ -374,6 +377,14 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       else {
         consoleView.inputReceived();
       }
+    }
+  }
+
+  @Override
+  public void showCythonWarning() {
+    if (!isCythonWarningShown) {
+      PyCythonExtensionWarning.showCythonExtensionWarning(getSession().getProject());
+      isCythonWarningShown = true;
     }
   }
 
@@ -992,7 +1003,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   public PyStackFrame createStackFrame(PyStackFrameInfo frameInfo) {
     return new PyStackFrame(getSession().getProject(), this, frameInfo,
-                            getPositionConverter().convertFromPython(frameInfo.getPosition()));
+                            getPositionConverter().convertFromPython(frameInfo.getPosition(), frameInfo.getName()));
   }
 
   @Override
@@ -1147,6 +1158,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   @Override
   public void showNumericContainer(PyDebugValue value) {
     PyViewNumericContainerAction.showNumericViewer(getProject(), value);
+  }
+
+  @Override
+  public void addFrameListener(@NotNull PyFrameListener listener) {
+    myFrameListeners.add(listener);
   }
 
   @Nullable

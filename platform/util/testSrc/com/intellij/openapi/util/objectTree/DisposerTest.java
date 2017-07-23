@@ -16,6 +16,8 @@
 package com.intellij.openapi.util.objectTree;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.DefaultLogger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.TestCase;
@@ -41,6 +43,7 @@ public class DisposerTest extends TestCase {
 
   @Override
   protected void setUp() throws Exception {
+    super.setUp();
     //if(!Disposer.getTree().isEmpty()) {
     //  Disposer.assertIsEmpty();
     //  fail("Clean leftovers from previous tests");
@@ -59,9 +62,12 @@ public class DisposerTest extends TestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    Disposer.dispose(myRoot);
-    //assertTrue(Disposer.getTree().isEmpty());
-    super.tearDown();
+    try {
+      Disposer.dispose(myRoot);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testDisposalAndAbsenceOfReferences() throws Exception {
@@ -104,6 +110,7 @@ public class DisposerTest extends TestCase {
     Disposer.register(selfDisposable, myFolder1);
     Disposer.register(myFolder1, myFolder2);
 
+    //noinspection SSBasedInspection
     selfDisposable.dispose();
 
     assertDisposed(selfDisposable);
@@ -115,6 +122,7 @@ public class DisposerTest extends TestCase {
 
   public void testDirectCallOfUnregisteredSelfDisposable() throws Exception {
     SelDisposable selfDisposable = new SelDisposable("root");
+    //noinspection SSBasedInspection
     selfDisposable.dispose();
   }
 
@@ -302,13 +310,13 @@ public class DisposerTest extends TestCase {
 
 
   public void testMustNotRegisterWithAlreadyDisposed() {
-    Disposable disposable = Disposer.newDisposable();
+    Disposable disposable = newDisposable();
     Disposer.register(myRoot, disposable);
 
     Disposer.dispose(disposable);
 
     try {
-      Disposer.register(disposable, Disposer.newDisposable());
+      Disposer.register(disposable, newDisposable());
       fail("Must not be able to register with already disposed parent");
     }
     catch (IncorrectOperationException ignored) {
@@ -317,11 +325,41 @@ public class DisposerTest extends TestCase {
   }
 
   public void testRegisterThenDisposeThenRegisterAgain() {
-    Disposable disposable = Disposer.newDisposable();
+    Disposable disposable = newDisposable();
     Disposer.register(myRoot, disposable);
 
     Disposer.dispose(disposable);
     Disposer.register(myRoot, disposable);
-    Disposer.register(disposable, Disposer.newDisposable());
+    Disposer.register(disposable, newDisposable());
+  }
+
+  public void testDisposeDespiteExceptions() {
+    DefaultLogger.disableStderrDumping(myRoot);
+
+    Disposable parent = newDisposable();
+    Disposable first = newDisposable();
+    Disposable last = newDisposable();
+
+    Disposer.register(parent, first);
+    Disposer.register(parent, () -> { throw new AssertionError("Expected"); });
+    Disposer.register(parent, () -> { throw new ProcessCanceledException() {
+      @Override
+      public String getMessage() {
+        return "Expected";
+      }
+    }; });
+    Disposer.register(parent, last);
+
+    try {
+      Disposer.dispose(parent);
+      fail("Should throw");
+    }
+    catch (Throwable e) {
+      assertEquals("Expected", e.getMessage());
+    }
+    
+    assertTrue(Disposer.isDisposed(parent));
+    assertTrue(Disposer.isDisposed(first));
+    assertTrue(Disposer.isDisposed(last));
   }
 }

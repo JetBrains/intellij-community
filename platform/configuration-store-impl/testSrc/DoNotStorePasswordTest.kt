@@ -7,7 +7,6 @@ import com.intellij.openapi.components.impl.ServiceManagerImpl
 import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.testFramework.ProjectRule
-import com.intellij.util.PairProcessor
 import com.intellij.util.xmlb.XmlSerializerUtil
 import org.jdom.Attribute
 import org.jdom.Element
@@ -15,7 +14,7 @@ import org.junit.ClassRule
 import org.junit.Test
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
-import java.util.Collection
+import java.util.function.BiPredicate
 
 class DoNotStorePasswordTest {
   companion object {
@@ -26,15 +25,15 @@ class DoNotStorePasswordTest {
 
   @Test
   fun printPasswordComponents() {
-    val processor = PairProcessor<Class<*>, PluginDescriptor> { aClass, pluginDescriptor ->
+    val processor = BiPredicate<Class<*>, PluginDescriptor?> { aClass, pluginDescriptor ->
       val stateAnnotation = StoreUtil.getStateSpec(aClass)
       if (stateAnnotation == null || stateAnnotation.name.isNullOrEmpty()) {
-        return@PairProcessor true
+        return@BiPredicate true
       }
 
       for (i in aClass.genericInterfaces) {
         if (checkType(i)) {
-          return@PairProcessor true
+          return@BiPredicate true
         }
       }
 
@@ -53,11 +52,11 @@ class DoNotStorePasswordTest {
 
     @Suppress("DEPRECATION")
     for (c in app.getComponentInstancesOfType(PersistentStateComponent::class.java)) {
-      processor.process(c.javaClass, null)
+      processor.test(c.javaClass, null)
     }
     @Suppress("DEPRECATION")
     for (c in (projectRule.project as ComponentManagerImpl).getComponentInstancesOfType(PersistentStateComponent::class.java)) {
-      processor.process(c.javaClass, null)
+      processor.test(c.javaClass, null)
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,13 +23,13 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 public class ClassPathStorageUtil {
   @NonNls public static final String DEFAULT_STORAGE = "default";
 
-  public static boolean isDefaultStorage(@NotNull Module module) {
-    return getStorageType(module).equals(DEFAULT_STORAGE);
-  }
-
   @NotNull
   public static String getStorageType(@NotNull Module module) {
     String id = module.getOptionValue(JpsProjectLoader.CLASSPATH_ATTRIBUTE);
     return id == null ? DEFAULT_STORAGE : id;
+  }
+
+  public static boolean isClasspathStorage(@NotNull Module module) {
+    return module.getOptionValue(JpsProjectLoader.CLASSPATH_ATTRIBUTE) != null;
   }
 }

@@ -98,9 +98,19 @@ class WinExeInstallerBuilder {
                         " \"${box}/nsiconf/idea.nsi\"")
     }
     else if (SystemInfoRt.isLinux) {
-      ant.exec(command: "makensis" +
-                        " '-X!AddPluginDir \"${box}/NSIS/Plugins\"'" +
-                        " '-X!AddIncludeDir \"${box}/NSIS/Include\"'" +
+      String installScriptPath = "$box/install_nsis3.sh"
+      buildContext.ant.copy(file: "$communityHome/build/conf/install_nsis3.sh", tofile: installScriptPath)
+      buildContext.ant.fixcrlf(file: installScriptPath, eol: "unix")
+      ant.exec(executable: "chmod") {
+        arg(line: " u+x \"$installScriptPath\"")
+      }
+      ant.exec(command: "\"$installScriptPath\"" +
+                        " \"${buildContext.paths.communityHome}\"")
+
+      ant.exec(command: "\"${buildContext.paths.communityHome}/build/tools/nsis/nsis-3.01/bin/makensis\"" +
+      " '-X!AddPluginDir \"${box}/NSIS/Plugins/x86-unicode\"'" +
+      " '-X!AddIncludeDir \"${box}/NSIS/Include\"'" +
+                 " -DNSIS_DIR=\"${box}/NSIS\"" +
                         " -DCOMMUNITY_DIR=\"$communityHome\"" +
                         " -DIPR=\"${customizer.associateIpr}\"" +
                         " -DOUT_FILE=\"${outFileName}\"" +
@@ -131,8 +141,8 @@ class WinExeInstallerBuilder {
 
     def extensionsList = customizer.fileAssociations
     def fileAssociations = extensionsList.isEmpty() ? "NoAssociation" : extensionsList.join(",")
-    def linkToJre64 = customizer.getBaseDownloadUrlForJre64() != null ?
-                      "${customizer.getBaseDownloadUrlForJre64()}/${buildContext.bundledJreManager.archiveNameJre64(buildContext)}" :
+    def linkToJre = customizer.getBaseDownloadUrlForJre() != null ?
+                      "${customizer.getBaseDownloadUrlForJre()}/${buildContext.bundledJreManager.archiveNameJre(buildContext)}" :
                       null
     new File(box, "nsiconf/strings.nsi").text = """
 !define MANUFACTURER "${buildContext.applicationInfo.shortCompanyName}"
@@ -146,7 +156,7 @@ class WinExeInstallerBuilder {
 !define PRODUCT_HEADER_FILE "headerlogo.bmp"
 !define ASSOCIATION "$fileAssociations"
 !define UNINSTALL_WEB_PAGE "${customizer.getUninstallFeedbackPageUrl(buildContext.applicationInfo) ?: "feedback_web_page"}"
-!define LINK_TO_JRE64 "$linkToJre64"
+!define LINK_TO_JRE "$linkToJre"
 
 ; if SHOULD_SET_DEFAULT_INSTDIR != 0 then default installation directory will be directory where highest-numbered IDE build has been installed
 ; set to 1 for release build

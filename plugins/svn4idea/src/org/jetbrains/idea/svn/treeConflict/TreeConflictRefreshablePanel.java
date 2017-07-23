@@ -88,7 +88,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
                                       Change change) {
     myVcs = SvnVcs.getInstance(project);
     assert change instanceof ConflictedSvnChange;
-    myChange = (ConflictedSvnChange) change;
+    myChange = (ConflictedSvnChange)change;
     myPath = ChangesUtil.getFilePath(myChange);
     myRightRevisionsList = new TLongArrayList();
 
@@ -102,23 +102,23 @@ public class TreeConflictRefreshablePanel implements Disposable {
     if (d1.isTextConflict() != d2.isTextConflict()) return false;
     if (d1.isTreeConflict() != d2.isTreeConflict()) return false;
 
-    if (! d1.getOperation().equals(d2.getOperation())) return false;
-    if (! d1.getConflictAction().equals(d2.getConflictAction())) return false;
-    if (! Comparing.equal(d1.getConflictReason(), d2.getConflictReason())) return false;
-    if (! Comparing.equal(d1.getPath(), d2.getPath())) return false;
-    if (! Comparing.equal(d1.getNodeKind(), d2.getNodeKind())) return false;
-    if (! compareConflictVersion(d1.getSourceLeftVersion(), d2.getSourceLeftVersion())) return false;
-    if (! compareConflictVersion(d1.getSourceRightVersion(), d2.getSourceRightVersion())) return false;
+    if (!d1.getOperation().equals(d2.getOperation())) return false;
+    if (!d1.getConflictAction().equals(d2.getConflictAction())) return false;
+    if (!Comparing.equal(d1.getConflictReason(), d2.getConflictReason())) return false;
+    if (!Comparing.equal(d1.getPath(), d2.getPath())) return false;
+    if (!Comparing.equal(d1.getNodeKind(), d2.getNodeKind())) return false;
+    if (!compareConflictVersion(d1.getSourceLeftVersion(), d2.getSourceLeftVersion())) return false;
+    if (!compareConflictVersion(d1.getSourceRightVersion(), d2.getSourceRightVersion())) return false;
     return true;
   }
 
   private static boolean compareConflictVersion(ConflictVersion v1, ConflictVersion v2) {
     if (v1 == null && v2 == null) return true;
     if (v1 == null || v2 == null) return false;
-    if (! v1.getKind().equals(v2.getKind())) return false;
-    if (! v1.getPath().equals(v2.getPath())) return false;
+    if (!v1.getKind().equals(v2.getKind())) return false;
+    if (!v1.getPath().equals(v2.getPath())) return false;
     if (v1.getPegRevision() != v2.getPegRevision()) return false;
-    if (! Comparing.equal(v1.getRepositoryRoot(), v2.getRepositoryRoot())) return false;
+    if (!Comparing.equal(v1.getRepositoryRoot(), v2.getRepositoryRoot())) return false;
     return true;
   }
 
@@ -174,7 +174,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
 
   private static boolean isDifferentURLs(TreeConflictDescription description) {
     return description.getSourceLeftVersion() != null && description.getSourceRightVersion() != null &&
-                ! Comparing.equal(description.getSourceLeftVersion().getPath(), description.getSourceRightVersion().getPath());
+           !Comparing.equal(description.getSourceLeftVersion().getPath(), description.getSourceRightVersion().getPath());
   }
 
   @NotNull
@@ -224,7 +224,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
     name.setFont(name.getFont().deriveFont(Font.BOLD));
     gb.insets.top = 5;
     main.add(name, gb);
-    ++ gb.gridy;
+    ++gb.gridy;
     gb.insets.top = 10;
     appendDescription(myChange.getBeforeDescription(), main, gb, data.getBefore(), myPath.isDirectory());
     appendDescription(myChange.getAfterDescription(), main, gb, data.getAfter(), myPath.isDirectory());
@@ -240,7 +240,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
     JLabel descriptionLbl = new JLabel(description.toPresentableString());
     descriptionLbl.setForeground(JBColor.RED);
     main.add(descriptionLbl, gb);
-    ++ gb.gridy;
+    ++gb.gridy;
     //buttons
     gb.insets.top = 0;
     addResolveButtons(description, main, gb);
@@ -269,7 +269,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
     gb.insets.left = -4;
     main.add(wrapper, gb);
     gb.insets.left = 1;
-    ++ gb.gridy;
+    ++gb.gridy;
   }
 
   private ActionListener createRight(final TreeConflictDescription description) {
@@ -295,7 +295,8 @@ public class TreeConflictRefreshablePanel implements Disposable {
             public void onSuccess() {
               super.onSuccess();
               if (executedOk()) {
-                VcsBalloonProblemNotifier.showOverChangesView(myProject, "Theirs accepted for " + filePath(paths.myMainPath), MessageType.INFO);
+                VcsBalloonProblemNotifier
+                  .showOverChangesView(myProject, "Theirs accepted for " + filePath(paths.myMainPath), MessageType.INFO);
               }
             }
           });
@@ -310,11 +311,13 @@ public class TreeConflictRefreshablePanel implements Disposable {
       if (ConflictAction.ADD.equals(description.getConflictAction())) {
         mainPath = myChange.getAfterRevision().getFile();
         additionalPath = myChange.getBeforeRevision().getFile();
-      } else {
+      }
+      else {
         mainPath = myChange.getBeforeRevision().getFile();
         additionalPath = myChange.getAfterRevision().getFile();
       }
-    } else {
+    }
+    else {
       mainPath = myChange.getBeforeRevision() != null ? myChange.getBeforeRevision().getFile() : myChange.getAfterRevision().getFile();
     }
     return new Paths(mainPath, additionalPath);
@@ -353,7 +356,8 @@ public class TreeConflictRefreshablePanel implements Disposable {
             public void onSuccess() {
               super.onSuccess();
               if (executedOk()) {
-                VcsBalloonProblemNotifier.showOverChangesView(myProject, "Yours accepted for " + filePath(paths.myMainPath), MessageType.INFO);
+                VcsBalloonProblemNotifier
+                  .showOverChangesView(myProject, "Yours accepted for " + filePath(paths.myMainPath), MessageType.INFO);
               }
             }
           });
@@ -377,12 +381,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
   }
 
   private ActionListener createMergeTheirsForFile(final TreeConflictDescription description) {
-    return new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        new MergeFromTheirsResolver(myVcs, description, myChange, myCommittedRevision).execute();
-      }
-    };
+    return e -> new MergeFromTheirsResolver(myVcs, description, myChange, myCommittedRevision).execute();
   }
 
   @NotNull
@@ -408,11 +407,11 @@ public class TreeConflictRefreshablePanel implements Disposable {
                        ConflictSidePresentation before,
                        ConflictVersion leftVersion, final String name, boolean directory) {
     final String leftPresentation = leftVersion == null ? name + ": (" + (directory ? "directory" : "file") +
-      (myChange.getBeforeRevision() == null ? ") added" : ") unversioned") :
+                                                          (myChange.getBeforeRevision() == null ? ") added" : ") unversioned") :
                                     name + ": " + FileUtil.toSystemIndependentName(ConflictVersion.toPresentableString(leftVersion));
     gb.insets.top = 10;
     main.add(new JLabel(leftPresentation), gb);
-    ++ gb.gridy;
+    ++gb.gridy;
     gb.insets.top = 0;
 
     if (before != null) {
@@ -421,7 +420,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
         //gb.fill = GridBagConstraints.HORIZONTAL;
         main.add(panel, gb);
         //gb.fill = GridBagConstraints.NONE;
-        ++ gb.gridy;
+        ++gb.gridy;
       }
     }
   }
@@ -495,7 +494,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
       mySessionAdapter = new VcsAppendableHistoryPartnerAdapter();
       /*mySessionAdapter.reportCreatedEmptySession(new SvnHistorySession(myVcs, Collections.<VcsFileRevision>emptyList(),
         myPath, SvnUtil.checkRepositoryVersion15(myVcs, version.getPath()), null, true));*/
-      myProvider = (SvnHistoryProvider) myVcs.getVcsHistoryProvider();
+      myProvider = (SvnHistoryProvider)myVcs.getVcsHistoryProvider();
     }
 
     public void setListToReportLoaded(TLongArrayList listToReportLoaded) {
@@ -515,7 +514,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
       if (myListToReportLoaded != null && session != null) {
         List<VcsFileRevision> list = session.getRevisionList();
         for (VcsFileRevision revision : list) {
-          myListToReportLoaded.add(((SvnRevisionNumber) revision.getRevisionNumber()).getRevision().getNumber());
+          myListToReportLoaded.add(((SvnRevisionNumber)revision.getRevisionNumber()).getRevision().getNumber());
         }
       }
     }
@@ -536,9 +535,9 @@ public class TreeConflictRefreshablePanel implements Disposable {
         return EmptyConflictSide.getInstance().createPanel();
       }
       VcsFileRevision last = null;
-      if (! list.isEmpty() && myPeg == null && list.size() == LIMIT ||
+      if (!list.isEmpty() && myPeg == null && list.size() == LIMIT ||
           myPeg != null && myPeg.getNumber() > 0 &&
-          myPeg.equals(((SvnRevisionNumber) list.get(list.size() - 1).getRevisionNumber()).getRevision())) {
+          myPeg.equals(((SvnRevisionNumber)list.get(list.size() - 1).getRevisionNumber()).getRevision())) {
         last = list.remove(list.size() - 1);
       }
       myFileHistoryPanel = new FileHistoryPanelImpl(myVcs, myPath, session, myProvider, null, new FileHistoryRefresherI() {

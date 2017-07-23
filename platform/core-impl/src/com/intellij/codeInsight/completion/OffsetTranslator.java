@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -31,21 +31,21 @@ import java.util.LinkedList;
 /**
  * @author peter
  */
-public class OffsetTranslator implements Disposable {
+class OffsetTranslator implements Disposable {
   static final Key<OffsetTranslator> RANGE_TRANSLATION = Key.create("completion.rangeTranslation");
 
   private final PsiFile myOriginalFile;
   private final Document myCopyDocument;
-  private final LinkedList<DocumentEvent> myTranslation = new LinkedList<DocumentEvent>();
+  private final LinkedList<DocumentEvent> myTranslation = new LinkedList<>();
 
-  public OffsetTranslator(final Document originalDocument, final PsiFile originalFile, Document copyDocument) {
+  OffsetTranslator(final Document originalDocument, final PsiFile originalFile, Document copyDocument) {
     myOriginalFile = originalFile;
     myCopyDocument = copyDocument;
     myCopyDocument.putUserData(RANGE_TRANSLATION, this);
     Disposer.register(originalFile.getProject(), this);
 
-    final LinkedList<DocumentEvent> sinceCommit = new LinkedList<DocumentEvent>();
-    originalDocument.addDocumentListener(new DocumentAdapter() {
+    final LinkedList<DocumentEvent> sinceCommit = new LinkedList<>();
+    originalDocument.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         if (isUpToDate()) {
@@ -56,14 +56,14 @@ public class OffsetTranslator implements Disposable {
       }
     }, this);
     
-    myCopyDocument.addDocumentListener(new DocumentAdapter() {
+    myCopyDocument.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         if (isUpToDate()) {
           myTranslation.addFirst(e);
         }
       }
-    });
+    }, this);
 
     originalFile.getProject().getMessageBus().connect(this).subscribe(PsiModificationTracker.TOPIC, new PsiModificationTracker.Listener() {
       long lastModCount = originalFile.getViewProvider().getModificationStamp();
@@ -90,7 +90,7 @@ public class OffsetTranslator implements Disposable {
   }
 
   @Nullable
-  public Integer translateOffset(Integer offset) {
+  Integer translateOffset(Integer offset) {
     for (DocumentEvent event : myTranslation) {
       offset = translateOffset(offset, event);
       if (offset == null) {

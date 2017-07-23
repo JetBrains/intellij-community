@@ -16,52 +16,24 @@
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
-import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectImpl
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.PathUtil
 import com.intellij.util.io.readText
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
 import org.intellij.lang.annotations.Language
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Paths
-
-fun createProjectAndUseInLoadComponentStateMode(tempDirManager: TemporaryDirectory, directoryBased: Boolean = false, task: (Project) -> Unit) {
-  createOrLoadProject(tempDirManager, task, directoryBased = directoryBased)
-}
-
-fun loadAndUseProject(tempDirManager: TemporaryDirectory, projectCreator: ((VirtualFile) -> String), task: (Project) -> Unit) {
-  createOrLoadProject(tempDirManager, task, projectCreator, false)
-}
-
-private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Project) -> Unit, projectCreator: ((VirtualFile) -> String)? = null, directoryBased: Boolean) {
-  runInEdtAndWait {
-    val filePath: String
-    if (projectCreator == null) {
-      filePath = tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}").systemIndependentPath
-    }
-    else {
-      filePath = runWriteAction { projectCreator(tempDirManager.newVirtualDirectory()) }
-    }
-
-    val project = if (projectCreator == null) createHeavyProject(filePath, true) else ProjectManagerEx.getInstanceEx().loadProject(filePath)!!
-    project.runInLoadComponentStateMode {
-      project.use(task)
-    }
-  }
-}
 
 internal class ProjectStoreTest {
   companion object {
@@ -107,9 +79,16 @@ internal class ProjectStoreTest {
       file.write(file.readText().replace("""<option name="value" value="foo" />""", """<option name="value" value="newValue" />"""))
 
       project.baseDir.refresh(false, true)
-      (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedAlarm()
+      (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedProjectFileAlarm()
 
       assertThat(testComponent.state).isEqualTo(TestState("newValue"))
+      
+      testComponent.state!!.value = "s".repeat(FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1024)
+      project.saveStore()
+      
+      // we should save twice (first call - virtual file size is not yet set)
+      testComponent.state!!.value = "b".repeat(FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1024)
+      project.saveStore()
     }
   }
 
@@ -180,7 +159,7 @@ internal class ProjectStoreTest {
     // test exact string - xml prolog, line separators, indentation and so on must be exactly the same
     // todo get rid of default component states here
     assertThat(file.readText()).startsWith(iprFileContent.replace("customValue", "foo").replace("</project>", ""))
-
+    
     return testComponent
   }
 }

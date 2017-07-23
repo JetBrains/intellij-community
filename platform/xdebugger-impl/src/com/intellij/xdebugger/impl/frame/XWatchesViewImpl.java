@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,7 +135,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
             ((event.getModifiers() & (InputEvent.SHIFT_MASK | InputEvent.ALT_MASK | InputEvent.CTRL_MASK | InputEvent.META_MASK)) !=0) ) {
           return false;
         }
-        boolean sameRow = isAboveSelectedItem(event, watchTree);
+        boolean sameRow = isAboveSelectedItem(event, watchTree, false);
         if (!sameRow || clickCount > 1) {
           editAlarm.cancelAllRequests();
           return false;
@@ -156,7 +156,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     final ClickListener mouseEmptySpaceListener = new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent event) {
-        if (!isAboveSelectedItem(event, watchTree)) {
+        if (!isAboveSelectedItem(event, watchTree, true)) {
           myRootNode.addNewWatch();
           return true;
         }
@@ -204,9 +204,12 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     super.dispose();
   }
 
-  private static boolean isAboveSelectedItem(MouseEvent event, XDebuggerTree watchTree) {
+  private static boolean isAboveSelectedItem(MouseEvent event, XDebuggerTree watchTree, boolean fullWidth) {
     Rectangle bounds = watchTree.getRowBounds(watchTree.getLeadSelectionRow());
     if (bounds != null) {
+      if (fullWidth) {
+        bounds.x = 0;
+      }
       bounds.width = watchTree.getWidth();
       if (bounds.contains(event.getPoint())) {
         return true;
@@ -240,10 +243,9 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   }
 
   @Override
-  protected XValueContainerNode createNewRootNode(@Nullable XStackFrame stackFrame) {
+  protected XValueContainerNode doCreateNewRootNode(@Nullable XStackFrame stackFrame) {
     WatchesRootNode node = new WatchesRootNode(getTree(), this, getExpressions(), stackFrame, myWatchesInVariables);
     myRootNode = node;
-    getTree().setRoot(node, false);
     return node;
   }
 

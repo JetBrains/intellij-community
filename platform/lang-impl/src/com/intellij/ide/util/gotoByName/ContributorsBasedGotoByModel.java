@@ -43,9 +43,7 @@ import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -65,18 +63,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
 
   @Override
   public ListCellRenderer getListCellRenderer() {
-    return new NavigationItemListCellRenderer() {
-      @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        if (value == ChooseByNameBase.NON_PREFIX_SEPARATOR) {
-          Object previousElement = index > 0 ? list.getModel().getElementAt(index - 1) : null;
-          return ChooseByNameBase.renderNonPrefixSeparatorComponent(getBackgroundColor(previousElement));
-        }
-        else {
-          return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        }
-      }
-    };
+    return new NavigationItemListCellRenderer();
   }
 
   public boolean sameNamesForProjectAndLibraries() {
@@ -121,10 +108,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
             }
           }
         }
-        catch (ProcessCanceledException ex) {
-          // index corruption detected, ignore
-        }
-        catch (IndexNotReadyException ex) {
+        catch (ProcessCanceledException | IndexNotReadyException ex) {
           // index corruption detected, ignore
         }
         catch (Exception ex) {

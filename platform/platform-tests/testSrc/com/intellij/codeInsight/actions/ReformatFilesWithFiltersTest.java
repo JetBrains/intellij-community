@@ -61,6 +61,9 @@ public class ReformatFilesWithFiltersTest extends LightPlatformTestCase {
       LanguageFormatting.INSTANCE.removeExplicitExtension(PlainTextLanguage.INSTANCE, myMockPlainTextFormattingModelBuilder);
     }
     if (myWorkingDirectory != null) TestFileStructure.delete(myWorkingDirectory.getVirtualFile());
+    myRealCodeStyleManger = null;
+    myMockCodeStyleManager = null;
+    myMockPlainTextFormattingModelBuilder = null;
     super.tearDown();
   }
 

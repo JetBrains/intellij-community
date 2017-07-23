@@ -10,8 +10,6 @@ PsiJavaFile:StaticImport1.java
           PsiJavaCodeReferenceElement:java.util
             PsiJavaCodeReferenceElement:java
               PsiIdentifier:java('java')
-              PsiReferenceParameterList
-                <empty list>
             PsiJavaToken:DOT('.')
             PsiIdentifier:util('util')
             PsiReferenceParameterList

@@ -23,10 +23,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: zolotov
- * Date: 2/4/13
- */
 public class SingleLineEmmetFilter extends ZenCodingFilter {
   @NotNull
   @Override

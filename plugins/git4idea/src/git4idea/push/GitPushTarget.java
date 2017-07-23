@@ -17,7 +17,6 @@ package git4idea.push;
 
 import com.intellij.dvcs.push.PushTarget;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
@@ -109,12 +108,7 @@ public class GitPushTarget implements PushTarget {
 
   @Nullable
   private static GitRemote findRemote(@NotNull Collection<GitRemote> remotes, @NotNull final String candidate) {
-    return ContainerUtil.find(remotes, new Condition<GitRemote>() {
-      @Override
-      public boolean value(GitRemote remote) {
-        return remote.getName().equals(candidate);
-      }
-    });
+    return ContainerUtil.find(remotes, remote -> remote.getName().equals(candidate));
   }
 
   @Nullable

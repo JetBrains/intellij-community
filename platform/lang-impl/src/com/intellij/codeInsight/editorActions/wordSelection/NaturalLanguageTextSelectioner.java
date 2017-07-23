@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,11 @@
 package com.intellij.codeInsight.editorActions.wordSelection;
 
 import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
+import com.intellij.codeInsight.editorActions.SelectWordUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPlainText;
@@ -27,7 +29,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -59,6 +60,7 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
     if (prev < 0 || next < 0) {
       return null;
     }
+    if (StringUtil.contains(text, prev + 1, start, endChar) || StringUtil.contains(text, end, next, startChar)) return null;
     if (prev + 1 < start || next > end) {
       return new TextRange(prev + 1, next);
     }
@@ -117,23 +119,32 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
 
   @Override
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+    ArrayList<TextRange> result = new ArrayList<>();
+
+    addWordRange(editorText, cursorOffset, result);
+
     TextRange range = expandSelection(e, editorText, cursorOffset, cursorOffset);
-    if (range == null) {
-      return Collections.emptyList();
+    if (range != null) {
+      result.add(range);
+      while (true) {
+        TextRange next = expandSelection(e, editorText, range.getStartOffset(), range.getEndOffset());
+        if (next == null || range.contains(next)) {
+          break;
+        }
+        result.add(next);
+        range = next;
+      }
     }
 
-    ArrayList<TextRange> result = new ArrayList<>();
-    result.add(range);
-    while (true) {
-      TextRange next = expandSelection(e, editorText, range.getStartOffset(), range.getEndOffset());
-      if (next == null || range.contains(next)) {
-        break;
-      }
-      result.add(next);
-      range = next;
-    }
     return result;
  }
+
+  private static void addWordRange(CharSequence editorText, int cursorOffset, ArrayList<TextRange> result) {
+    SelectWordUtil.addWordSelection(false, editorText, cursorOffset, result,
+                                    ch -> Character.isJavaIdentifierPart(ch) || ch == '\'');
+    SelectWordUtil.addWordSelection(false, editorText, cursorOffset, result,
+                                    ch -> Character.isJavaIdentifierPart(ch) || ch == '\'' || ch == '-');
+  }
 
   @Nullable
   private static TextRange expandSelection(PsiElement e, CharSequence editorText, int selStart, int selEnd) {

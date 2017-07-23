@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 /**
- * Basic interface for requesting sending focus commands to <code>IdeFocusManager</code>
+ * Basic interface for requesting sending focus commands to {@code IdeFocusManager}
  */
 public interface FocusRequestor extends Disposable {
 

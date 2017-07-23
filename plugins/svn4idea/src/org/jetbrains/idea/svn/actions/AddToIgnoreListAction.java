@@ -18,68 +18,67 @@ package org.jetbrains.idea.svn.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.ignore.IgnoreInfoGetter;
 import org.jetbrains.idea.svn.ignore.SvnPropertyService;
 
+import static org.jetbrains.idea.svn.SvnBundle.message;
+
 public class AddToIgnoreListAction extends BasicAction {
   private String myActionName;
   private final boolean myUseCommonExtension;
-  private final IgnoreInfoGetter myInfoGetter;
+  @NotNull private final IgnoreInfoGetter myInfoGetter;
 
-  public AddToIgnoreListAction(final IgnoreInfoGetter infoGetter, final boolean useCommonExtension) {
+  public AddToIgnoreListAction(@NotNull IgnoreInfoGetter infoGetter, boolean useCommonExtension) {
     myInfoGetter = infoGetter;
     myUseCommonExtension = useCommonExtension;
   }
 
-  public void setActionText(final String name) {
+  public void setActionText(String name) {
     myActionName = name;
   }
 
-  protected String getActionName(final AbstractVcs vcs) {
-    return SvnBundle.message("action.name.ignore.files");
-  }
-
-  public void update(final AnActionEvent e) {
-    final Presentation presentation = e.getPresentation();
-    presentation.setVisible(true);
-    presentation.setEnabled(true);
-
-    presentation.setText(myActionName, false);
-    presentation.setDescription(SvnBundle.message((myUseCommonExtension) ? "action.Subversion.Ignore.MatchExtension.description" :
-                                                  "action.Subversion.Ignore.ExactMatch.description", myActionName));
+  @NotNull
+  @Override
+  protected String getActionName() {
+    return message("action.name.ignore.files");
   }
 
   @Override
-  protected void doVcsRefresh(Project project, VirtualFile file) {
-    final VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
-    if (file != null && (file.getParent() != null)) {
+  public void update(@NotNull AnActionEvent e) {
+    Presentation presentation = e.getPresentation();
+
+    presentation.setEnabledAndVisible(true);
+    presentation.setText(myActionName, false);
+    presentation.setDescription(message(
+      myUseCommonExtension ? "action.Subversion.Ignore.MatchExtension.description" : "action.Subversion.Ignore.ExactMatch.description",
+      myActionName));
+  }
+
+  @Override
+  protected void doVcsRefresh(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
+    VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(vcs.getProject());
+    if (file.getParent() != null) {
       vcsDirtyScopeManager.fileDirty(file.getParent());
     }
   }
 
-  protected boolean isEnabled(final Project project, final SvnVcs vcs, final VirtualFile file) {
+  @Override
+  protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
     return true;
   }
 
-  protected boolean needsFiles() {
-    return true;
+  @Override
+  protected void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) throws VcsException {
   }
 
-  protected void perform(final Project project, final SvnVcs activeVcs, final VirtualFile file, final DataContext context)
-      throws VcsException {
-
-  }
-
-  protected void batchPerform(final Project project, final SvnVcs activeVcs, final VirtualFile[] file, final DataContext context)
-      throws VcsException {
-    SvnPropertyService.doAddToIgnoreProperty(activeVcs, project, myUseCommonExtension, file, myInfoGetter);
+  @Override
+  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) throws VcsException {
+    SvnPropertyService.doAddToIgnoreProperty(vcs, myUseCommonExtension, files, myInfoGetter);
   }
 
   protected boolean isBatchAction() {

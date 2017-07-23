@@ -1,11 +1,12 @@
 <component name="ArtifactManager">
   <artifact name="standalone-jps">
-    <output-path>$PROJECT_DIR$/out/artifacts/standalone_jps</output-path>
+    <output-path>$PROJECT_DIR$/build/lib/jps</output-path>
     <root id="root">
       <element id="archive" name="util.jar">
         <element id="module-output" name="util" />
         <element id="module-output" name="util-rt" />
         <element id="module-output" name="annotations" />
+        <element id="module-output" name="annotations-common" />
       </element>
       <element id="archive" name="jps-model.jar">
         <element id="module-output" name="jps-model-api" />
@@ -19,11 +20,10 @@
         <element id="module-output" name="java-runtime" />
         <element id="module-output" name="jps-builders" />
         <element id="module-output" name="jps-standalone-builder" />
-        <element id="module-output" name="jps-plugin-system" />
+        <element id="module-output" name="instrumentation-util-8" />
       </element>
       <element id="archive" name="groovy-jps-plugin.jar">
         <element id="module-output" name="groovy-jps-plugin" />
-        <element id="module-output" name="groovy-rt-constants" />
       </element>
       <element id="archive" name="groovy_rt.jar">
         <element id="module-output" name="groovy_rt" />
@@ -33,6 +33,12 @@
       </element>
       <element id="archive" name="antlayout.jar">
         <element id="module-output" name="antlayout" />
+      </element>
+      <element id="archive" name="groovy-rt-constants.jar">
+        <element id="module-output" name="groovy-rt-constants" />
+      </element>
+      <element id="archive" name="jps-builders-6.jar">
+        <element id="module-output" name="jps-builders-6" />
       </element>
     </root>
   </artifact>

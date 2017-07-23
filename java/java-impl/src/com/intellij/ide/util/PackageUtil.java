@@ -16,6 +16,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.CreateFileAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -281,7 +282,8 @@ public class PackageUtil {
     return psiDirectory;
   }
 
-  private static PsiDirectory[] filterSourceDirectories(PsiDirectory baseDir, Project project, PsiDirectory[] moduleDirectories) {
+  @NotNull
+  private static PsiDirectory[] filterSourceDirectories(PsiDirectory baseDir, Project project, @NotNull PsiDirectory[] moduleDirectories) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     if (fileIndex.isInTestSourceContent(baseDir.getVirtualFile())) {
       List<PsiDirectory> result = new ArrayList<>();
@@ -295,6 +297,7 @@ public class PackageUtil {
     return moduleDirectories;
   }
 
+  @NotNull
   private static PsiDirectory[] getPackageDirectoriesInModule(PsiPackage rootPackage, Module module) {
     return rootPackage.getDirectories(GlobalSearchScope.moduleScope(module));
   }
@@ -393,10 +396,6 @@ public class PackageUtil {
 
   @NotNull
   public static PsiDirectory findOrCreateSubdirectory(@NotNull PsiDirectory directory, @NotNull String directoryName) {
-    PsiDirectory subDirectory = directory.findSubdirectory(directoryName);
-    if (subDirectory == null) {
-      subDirectory = directory.createSubdirectory(directoryName);
-    }
-    return subDirectory;
+    return CreateFileAction.findOrCreateSubdirectory(directory, directoryName);
   }
 }

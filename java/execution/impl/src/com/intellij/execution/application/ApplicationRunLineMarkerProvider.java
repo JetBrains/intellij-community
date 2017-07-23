@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiMethodUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -35,13 +35,13 @@ import org.jetbrains.annotations.Nullable;
 public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
   @Nullable
   @Override
-  public Info getInfo(final PsiElement e) {
+  public Info getInfo(@NotNull final PsiElement e) {
     if (isIdentifier(e)) {
       PsiElement element = e.getParent();
       if (element instanceof PsiClass && PsiMethodUtil.findMainInClass((PsiClass)element) != null ||
           element instanceof PsiMethod && "main".equals(((PsiMethod)element).getName()) && PsiMethodUtil.isMainMethod((PsiMethod)element)) {
-        final AnAction[] actions = ExecutorAction.getActions(0);
-        return new Info(AllIcons.RunConfigurations.TestState.Run, element1 -> StringUtil.join(ContainerUtil.mapNotNull(actions, action -> getText(action, element1)), "\n"), actions);
+        final AnAction[] actions = ExecutorAction.getActions();
+        return new Info(AllIcons.RunConfigurations.TestState.Run, actions, element1 -> StringUtil.join(ContainerUtil.mapNotNull(actions, action -> getText(action, element1)), "\n"));
       }
     }
     return null;

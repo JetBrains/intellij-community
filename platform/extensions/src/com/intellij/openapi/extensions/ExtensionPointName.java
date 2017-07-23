@@ -32,7 +32,7 @@ public class ExtensionPointName<T> {
 
   @NotNull
   public static <T> ExtensionPointName<T> create(@NotNull @NonNls final String name) {
-    return new ExtensionPointName<T>(name);
+    return new ExtensionPointName<>(name);
   }
 
   @NotNull

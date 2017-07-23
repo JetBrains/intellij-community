@@ -17,24 +17,24 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
+import com.intellij.codeInsight.lookup.PresentableLookupValue;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.paths.PsiDynaReference;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.ObjectPattern;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,29 +47,13 @@ import static com.intellij.patterns.StandardPatterns.not;
 /**
  * @deprecated see {@link CompletionContributor}
  */
+@SuppressWarnings("deprecation")
 public class CompletionData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionData");
   public static final ObjectPattern.Capture<Character> NOT_JAVA_ID = not(character().javaIdentifierPart());
-  private final Set<Class> myFinalScopes = new HashSet<>();
   private final List<CompletionVariant> myCompletionVariants = new ArrayList<>();
 
   protected CompletionData(){ }
-
-  protected final void declareFinalScope(Class scopeClass){
-    myFinalScopes.add(scopeClass);
-  }
-
-  protected boolean isScopeFinal(Class scopeClass){
-    if(myFinalScopes.contains(scopeClass))
-      return true;
-
-    for (final Class myFinalScope : myFinalScopes) {
-      if (ReflectionUtil.isAssignable(myFinalScope, scopeClass)) {
-        return true;
-      }
-    }
-    return false;
-  }
 
   private boolean isScopeAcceptable(PsiElement scope){
 
@@ -108,9 +92,9 @@ public class CompletionData {
     ContainerUtil.addAll(set, findVariants(position, file));
   }
 
-  void completeKeywordsBySet(final Set<LookupElement> set, Set<CompletionVariant> variants, final PsiElement position){
+  void completeKeywordsBySet(final Set<LookupElement> set, Set<CompletionVariant> variants){
     for (final CompletionVariant variant : variants) {
-      variant.addKeywords(set, position, this);
+      variant.addKeywords(set, this);
     }
   }
 
@@ -137,7 +121,7 @@ public class CompletionData {
             }
           }
         }
-        if(breakFlag || isScopeFinal(scope.getClass()))
+        if(breakFlag)
           break;
         scope = scope.getContext();
         if (scope instanceof PsiDirectory) break;
@@ -149,7 +133,7 @@ public class CompletionData {
     @Override
     void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupElement> set, final PsiFile file,
                                         final CompletionData completionData) {
-      completeReference(reference, position, set, TailType.NONE, file, TrueFilter.INSTANCE, this);
+      completeReference(reference, position, set, TailType.NONE, TrueFilter.INSTANCE, this);
     }
   };
 
@@ -274,18 +258,15 @@ public class CompletionData {
     set.add(ret);
   }
 
-  protected void completeReference(final PsiReference reference, final PsiElement position, final Set<LookupElement> set, final TailType tailType,
-                                   final PsiFile file,
-                                   final ElementFilter filter,
-                                   final CompletionVariant variant) {
+  protected void completeReference(PsiReference reference, PsiElement position, Set<LookupElement> set, TailType tailType, ElementFilter filter, CompletionVariant variant) {
     if (reference instanceof PsiMultiReference) {
       for (PsiReference ref : getReferences((PsiMultiReference)reference)) {
-        completeReference(ref, position, set, tailType, file, filter, variant);
+        completeReference(ref, position, set, tailType, filter, variant);
       }
     }
     else if (reference instanceof PsiDynaReference) {
       for (PsiReference ref : ((PsiDynaReference<?>)reference).getReferences()) {
-        completeReference(ref, position, set, tailType, file, filter, variant);
+        completeReference(ref, position, set, tailType, filter, variant);
       }
     }
     else{
@@ -328,24 +309,11 @@ public class CompletionData {
     return references;
   }
 
-  void addKeywords(final Set<LookupElement> set, final PsiElement position, final CompletionVariant variant, final Object comp, final TailType tailType) {
-    if (comp instanceof String) {
-      addKeyword(set, tailType, comp, variant);
-    }
-    else {
-      final CompletionContext context = position.getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
-      if (comp instanceof ContextGetter) {
-        final Object[] elements = ((ContextGetter)comp).get(position, context);
-        for (Object element : elements) {
-          addLookupItem(set, tailType, element, variant);
-        }
-      }
-    }
-  }
+  void addKeywords(Set<LookupElement> set, CompletionVariant variant, Object comp, TailType tailType) {
+    if (!(comp instanceof String)) return;
 
-  private void addKeyword(Set<LookupElement> set, final TailType tailType, final Object comp, final CompletionVariant variant) {
     for (final LookupElement item : set) {
-      if (item.getObject().toString().equals(comp.toString())) {
+      if (item.getObject().toString().equals(comp)) {
         return;
       }
     }

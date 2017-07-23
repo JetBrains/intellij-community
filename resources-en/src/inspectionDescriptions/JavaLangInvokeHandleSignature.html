@@ -1,0 +1,31 @@
+<html>
+<body>
+This inspection detects the case where the signature of a MethodHandle or the type of a VarHandle doesn't match the actual method or field.
+<p>It also checks that the arguments provided to MethodHandle.invoke(), VarHandle.set(), etc match the method signature/field type.
+  <!-- tooltip end -->
+
+<p>Examples:</p>
+<pre><code>
+  MethodHandle mh = MethodHandles.lookup().findVirtual(
+      MyClass.class, "foo", MethodType.methodType(void.class, int.class));
+  <i>// the argument should be an <b>int</b> value</i>
+  mh.invoke(myObj, "<b>abc</b>");
+</code></pre>
+<br>
+<pre><code>
+  <i>// the argument should be <b>String</b>.class</i>
+  VarHandle vh = MethodHandles.lookup().findVarHandle(
+      MyClass.class, "text", <b>int</b>.class);
+</code></pre>
+<br>
+<pre><code>
+  VarHandle vh = MethodHandles.lookup().findVarHandle(
+      MyClass.class, "text", String.class);
+  <i>// the argument should be a <b>String</b> value</i>
+  vh.set(myObj, <b>42</b>);
+</code></pre>
+<p>
+  <small>New in 2017.2</small>
+</p>
+</body>
+</html>

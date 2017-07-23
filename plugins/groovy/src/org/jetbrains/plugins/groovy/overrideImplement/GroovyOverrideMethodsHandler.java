@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,20 @@
  */
 package org.jetbrains.plugins.groovy.overrideImplement;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.lang.LanguageCodeInsightActionHandler;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.util.GroovyOverrideImplementExploreUtil;
+import org.jetbrains.plugins.groovy.util.GroovyOverrideImplementUtil;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 11.09.2007
- */
 public class GroovyOverrideMethodsHandler implements LanguageCodeInsightActionHandler {
   @Override
   public boolean isValidFor(Editor editor, PsiFile psiFile) {
@@ -39,7 +37,7 @@ public class GroovyOverrideMethodsHandler implements LanguageCodeInsightActionHa
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
+    if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     PsiClass aClass = OverrideImplementUtil.getContextClass(project, editor, file, true);
     if (aClass instanceof GrTypeDefinition) {
       GrTypeDefinition typeDefinition = (GrTypeDefinition)aClass;

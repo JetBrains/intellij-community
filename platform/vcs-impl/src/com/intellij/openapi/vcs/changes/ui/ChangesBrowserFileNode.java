@@ -40,20 +40,18 @@ public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> impl
     super(userObject);
     myName = StringUtil.toLowerCase(userObject.getName());
     myProject = project;
-    if (userObject.isDirectory()) {
-      myDirectoryCount = 1;
-    }
-    else {
-      myCount = 1;
-    }
+  }
+
+  @Override
+  protected boolean isFile() {
+    return !getUserObject().isDirectory();
   }
 
   @Override
   protected boolean isDirectory() {
     return getUserObject().isDirectory() &&
-           FileStatusManager.getInstance(myProject).getStatus(getUserObject()) != FileStatus.NOT_CHANGED;
+           (isLeaf() || FileStatusManager.getInstance(myProject).getStatus(getUserObject()) != FileStatus.NOT_CHANGED);
   }
-
 
   @Override
   public void render(final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
@@ -64,7 +62,7 @@ public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> impl
       assert parentFile != null;
       renderer.append(spaceAndThinSpace() + FileUtil.getLocationRelativeToUserHome(parentFile.getPresentableUrl()), SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
-    else if (getCount() != 1 || getDirectoryCount() != 0) {
+    else if (getFileCount() != 1 || getDirectoryCount() != 0) {
       appendCount(renderer);
     }
     if (file.isDirectory()) {
@@ -86,7 +84,7 @@ public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> impl
   }
 
   public int getSortWeight() {
-    return 7;
+    return VIRTUAL_FILE_SORT_WEIGHT;
   }
 
   @Override

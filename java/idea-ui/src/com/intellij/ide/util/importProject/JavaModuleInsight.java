@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,32 +15,25 @@
  */
 package com.intellij.ide.util.importProject;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.ide.util.projectWizard.importSources.DetectedSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
 import com.intellij.lang.java.JavaParserDefinition;
-import com.intellij.lang.java.parser.ModuleParser;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.DummyHolder;
-import com.intellij.psi.impl.source.DummyHolderFactory;
-import com.intellij.psi.impl.source.JavaDummyElement;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -107,8 +100,7 @@ public class JavaModuleInsight extends ModuleInsight {
 
       addModules(StreamEx.of(moduleInfos.values()).map(info -> info.descriptor).toList());
     }
-    catch (ProcessCanceledException ignored) {
-    }
+    catch (ProcessCanceledException ignored) { }
     finally {
       myProgress.popState();
     }
@@ -122,23 +114,19 @@ public class JavaModuleInsight extends ModuleInsight {
   }
 
   private ModuleInfo scanModuleInfoFile(@NotNull File directory) {
-    File file = new File(directory, "module-info.java");
+    File file = new File(directory, PsiJavaModule.MODULE_INFO_FILE);
     myProgress.setText2(file.getName());
     try {
-      final char[] chars = FileUtil.loadFileText(file);
-      String text = new String(chars);
+      String text = FileUtil.loadFile(file);
 
+      PsiFileFactory factory = PsiFileFactory.getInstance(ProjectManager.getInstance().getDefaultProject());
       ModuleInfo moduleInfo = ReadAction.compute(() -> {
-        Project project = ProjectManager.getInstance().getDefaultProject();
-        PsiManager manager = PsiManager.getInstance(project);
-        JavaDummyElement dummyElement = new JavaDummyElement(text, builder -> ModuleParser.parseModule(builder), LanguageLevel.JDK_1_9);
-        DummyHolder holder = DummyHolderFactory.createHolder(manager, dummyElement, null);
-        PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement());
-        PsiJavaModule javaModule = PsiTreeUtil.getChildOfType(element, PsiJavaModule.class);
+        PsiFile psiFile = factory.createFileFromText(PsiJavaModule.MODULE_INFO_FILE, JavaFileType.INSTANCE, text);
+        PsiJavaModule javaModule = psiFile instanceof PsiJavaFile ? ((PsiJavaFile)psiFile).getModuleDeclaration() : null;
         if (javaModule == null) {
           throw new IncorrectOperationException("Incorrect module declaration '" + file.getPath() + "'");
         }
-        ModuleInfo info = new ModuleInfo(javaModule.getModuleName());
+        ModuleInfo info = new ModuleInfo(javaModule.getName());
         javaModule.accept(new ModuleInfoVisitor(info));
         return info;
       });
@@ -224,32 +212,27 @@ public class JavaModuleInsight extends ModuleInsight {
 
   @Nullable
   private static String readPackageName(final CharSequence text, final Lexer lexer) {
-    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    try {
-      while (true) {
-        if (lexer.getTokenType() != JavaTokenType.IDENTIFIER && lexer.getTokenType() != JavaTokenType.ASTERISK) {
-          break;
-        }
-        buffer.append(text, lexer.getTokenStart(), lexer.getTokenEnd());
-
-        advanceLexer(lexer);
-        if (lexer.getTokenType() != JavaTokenType.DOT) {
-          break;
-        }
-        buffer.append('.');
-
-        advanceLexer(lexer);
+    final StringBuilder buffer = new StringBuilder();
+    while (true) {
+      if (lexer.getTokenType() != JavaTokenType.IDENTIFIER && lexer.getTokenType() != JavaTokenType.ASTERISK) {
+        break;
       }
+      buffer.append(text, lexer.getTokenStart(), lexer.getTokenEnd());
 
-      String packageName = buffer.toString();
-      if (packageName.length() == 0 || StringUtil.endsWithChar(packageName, '.') || StringUtil.startsWithChar(packageName, '*')) {
-        return null;
+      advanceLexer(lexer);
+      if (lexer.getTokenType() != JavaTokenType.DOT) {
+        break;
       }
-      return packageName;
+      buffer.append('.');
+
+      advanceLexer(lexer);
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
+
+    String packageName = buffer.toString();
+    if (packageName.length() == 0 || StringUtil.endsWithChar(packageName, '.') || StringUtil.startsWithChar(packageName, '*')) {
+      return null;
     }
+    return packageName;
   }
 
   private static void advanceLexer(final Lexer lexer) {
@@ -259,8 +242,7 @@ public class JavaModuleInsight extends ModuleInsight {
 
   @Override
   protected void scanLibraryForDeclaredPackages(File file, Consumer<String> result) throws IOException {
-    final ZipFile zip = new ZipFile(file);
-    try {
+    try (ZipFile zip = new ZipFile(file)) {
       final Enumeration<? extends ZipEntry> entries = zip.entries();
       while (entries.hasMoreElements()) {
         final String entryName = entries.nextElement().getName();
@@ -273,9 +255,6 @@ public class JavaModuleInsight extends ModuleInsight {
         }
       }
     }
-    finally {
-      zip.close();
-    }
   }
 
   protected ModuleDescriptor createModuleDescriptor(final File moduleContentRoot, final Collection<DetectedSourceRoot> sourceRoots) {
@@ -287,20 +266,24 @@ public class JavaModuleInsight extends ModuleInsight {
   }
 
   private static class ModuleInfo {
-    @NotNull final String name;
+    final String name;
     final Set<String> requiresModules = new HashSet<>();
     final Set<String> exportsPackages = new HashSet<>();
 
     File directory;
     ModuleDescriptor descriptor;
 
-    private ModuleInfo(@NotNull String name) {this.name = name;}
+    private ModuleInfo(@NotNull String name) {
+      this.name = name;
+    }
   }
 
   private static class ModuleInfoVisitor extends JavaRecursiveElementVisitor {
     private final ModuleInfo myInfo;
 
-    public ModuleInfoVisitor(ModuleInfo info) {myInfo = info;}
+    public ModuleInfoVisitor(ModuleInfo info) {
+      myInfo = info;
+    }
 
     @Override
     public void visitRequiresStatement(PsiRequiresStatement statement) {
@@ -313,13 +296,15 @@ public class JavaModuleInsight extends ModuleInsight {
     }
 
     @Override
-    public void visitExportsStatement(PsiExportsStatement statement) {
-      super.visitExportsStatement(statement);
-      PsiJavaCodeReferenceElement reference = statement.getPackageReference();
-      if (reference != null) {
-        String qualifiedName = reference.getQualifiedName();
-        if (qualifiedName != null) {
-          myInfo.exportsPackages.add(qualifiedName);
+    public void visitPackageAccessibilityStatement(PsiPackageAccessibilityStatement statement) {
+      super.visitPackageAccessibilityStatement(statement);
+      if (statement.getRole() == PsiPackageAccessibilityStatement.Role.EXPORTS) {
+        PsiJavaCodeReferenceElement reference = statement.getPackageReference();
+        if (reference != null) {
+          String qualifiedName = reference.getQualifiedName();
+          if (qualifiedName != null) {
+            myInfo.exportsPackages.add(qualifiedName);
+          }
         }
       }
     }

@@ -61,10 +61,13 @@ public class StandardManifestHeaderParsers implements HeaderParserProvider {
     myParsers.put("Magic", StandardHeaderParser.INSTANCE);
     myParsers.put(ClassReferenceParser.PREMAIN_CLASS, ClassReferenceParser.INSTANCE);
     myParsers.put(ClassReferenceParser.AGENT_CLASS, ClassReferenceParser.INSTANCE);
+    myParsers.put(ClassReferenceParser.LAUNCHER_AGENT_CLASS, ClassReferenceParser.INSTANCE);
     myParsers.put("Boot-Class-Path", StandardHeaderParser.INSTANCE);
     myParsers.put("Can-Redefine-Classes", StandardHeaderParser.INSTANCE);
     myParsers.put("Can-Retransform-Classes", StandardHeaderParser.INSTANCE);
     myParsers.put("Can-Set-Native-Method-Prefix", StandardHeaderParser.INSTANCE);
+    myParsers.put("Automatic-Module-Name", StandardHeaderParser.INSTANCE);
+    myParsers.put("Multi-Release", StandardHeaderParser.INSTANCE);
   }
 
   @NotNull

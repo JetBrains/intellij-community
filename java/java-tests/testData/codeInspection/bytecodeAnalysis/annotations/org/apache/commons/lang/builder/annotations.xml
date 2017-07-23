@@ -1,4 +1,9 @@
 <root>
+    <item name='org.apache.commons.lang.builder.CompareToBuilder CompareToBuilder()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.builder.CompareToBuilder int reflectionCompare(java.lang.Object, java.lang.Object, boolean, java.lang.Class) 3'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -132,6 +137,11 @@
     </item>
     <item name='org.apache.commons.lang.builder.CompareToBuilder void reflectionAppend(java.lang.Object, java.lang.Object, java.lang.Class, org.apache.commons.lang.builder.CompareToBuilder, boolean, java.lang.String[]) 2'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.EqualsBuilder EqualsBuilder()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.builder.EqualsBuilder boolean isEquals()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -297,6 +307,16 @@
     <item name='org.apache.commons.lang.builder.EqualsBuilder void reflectionAppend(java.lang.Object, java.lang.Object, java.lang.Class, org.apache.commons.lang.builder.EqualsBuilder, boolean, java.lang.String[]) 2'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.lang.builder.HashCodeBuilder HashCodeBuilder()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.builder.HashCodeBuilder HashCodeBuilder(int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.builder.HashCodeBuilder int reflectionHashCode(int, int, java.lang.Object) 2'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -458,6 +478,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.builder.ReflectionToStringBuilder java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.builder.ReflectionToStringBuilder java.lang.String toString(java.lang.Object, org.apache.commons.lang.builder.ToStringStyle) 1'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -498,6 +523,11 @@
     </item>
     <item name='org.apache.commons.lang.builder.ReflectionToStringBuilder void appendFieldsIn(java.lang.Class) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.StandardToStringStyle StandardToStringStyle()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.builder.StandardToStringStyle boolean isArrayContentDetail()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -664,6 +694,9 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.lang.builder.ToStringBuilder java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.builder.ToStringBuilder java.lang.StringBuffer getStringBuffer()'>
@@ -839,6 +872,11 @@
     </item>
     <item name='org.apache.commons.lang.builder.ToStringBuilder void setDefaultStyle(org.apache.commons.lang.builder.ToStringStyle) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle ToStringStyle()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle boolean isArrayContentDetail()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -1246,6 +1284,11 @@
     </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle void setSummaryObjectStartText(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.lang.builder.ToStringStyle.DefaultToStringStyle DefaultToStringStyle()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.builder.ToStringStyle.DefaultToStringStyle java.lang.Object readResolve()'>
         <annotation name='org.jetbrains.annotations.Contract'>

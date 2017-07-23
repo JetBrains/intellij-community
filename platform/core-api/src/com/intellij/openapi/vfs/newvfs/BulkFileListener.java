@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +20,19 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author max
- */
 public interface BulkFileListener {
+  /**
+   * @deprecated obsolete, implement {@link BulkFileListener} directly (to be removed in IDEA 2019)
+   */
   class Adapter implements BulkFileListener {
-    @Override public void before(@NotNull List<? extends VFileEvent> events) { }
-    @Override public void after(@NotNull List<? extends VFileEvent> events) { }
+    @Override
+    public void before(@NotNull List<? extends VFileEvent> events) { }
+
+    @Override
+    public void after(@NotNull List<? extends VFileEvent> events) { }
   }
 
-  void before(@NotNull List<? extends VFileEvent> events);
-  void after(@NotNull List<? extends VFileEvent> events);
+  default void before(@NotNull List<? extends VFileEvent> events) { }
+
+  default void after(@NotNull List<? extends VFileEvent> events) { }
 }

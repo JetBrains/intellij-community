@@ -6,7 +6,7 @@ class Test {
       newMethod(doubles[0] / i);
   }
 
-    private void newMethod(double v) {
-        double progressResult = v;
+    private void newMethod(double progressResult1) {
+        double progressResult = progressResult1;
     }
 }

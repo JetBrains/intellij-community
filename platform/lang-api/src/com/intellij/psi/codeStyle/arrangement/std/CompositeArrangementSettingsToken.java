@@ -48,7 +48,7 @@ public class CompositeArrangementSettingsToken {
    * @param token  token to wrap
    */
   public CompositeArrangementSettingsToken(@NotNull ArrangementSettingsToken token) {
-    this(token, deduceRole(token), Collections.<CompositeArrangementSettingsToken>emptyList());
+    this(token, deduceRole(token), Collections.emptyList());
   }
 
   /**

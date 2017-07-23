@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,31 +17,46 @@ package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformat
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.MethodCallData;
-import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.OptionsData;
-import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.ReplacementData;
+import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection.Options;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isSuperExpression;
 
 public abstract class Transformation {
 
+  public boolean couldApply(@NotNull GrMethodCall methodCall, @NotNull Options options) {
+    return couldApplyInternal(methodCall, options) && (!options.withoutAdditionalParentheses() || !needParentheses(methodCall, options));
+  }
+
+  protected abstract boolean couldApplyInternal(@NotNull GrMethodCall methodCall, @NotNull Options options);
+
+  protected abstract boolean needParentheses(@NotNull GrMethodCall methodCall, @NotNull Options options);
+
+  public abstract void apply(@NotNull GrMethodCall methodCall, @NotNull Options options);
+
   @Nullable
-  public ReplacementData transform(GrMethodCallExpression callExpression, OptionsData optionsData) {
-    GrExpression element = getExpandedElement(callExpression);
-    MethodCallData methodInfo = MethodCallData.create(element);
-    if (methodInfo == null) return null;
+  public static GrExpression getBase(@NotNull GrMethodCall callExpression) {
+    GrExpression expression = callExpression.getInvokedExpression();
+    GrReferenceExpression invokedExpression = (GrReferenceExpression)expression;
+    GrExpression qualifier = invokedExpression.getQualifierExpression();
+    if (isSuperExpression(qualifier)) return null;
+    return qualifier;
+  }
 
-    String replacement = getReplacement(methodInfo, optionsData);
-    if (replacement == null) return null;
-
-    return new ReplacementData(replacement, this::getExpandedElement);
+  public boolean checkArgumentsCount(@NotNull GrMethodCall callExpression, int count) {
+    if (callExpression.getNamedArguments().length != 0) return false;
+    return callExpression.getExpressionArguments().length + callExpression.getClosureArguments().length ==  count;
   }
 
   @NotNull
-  protected GrExpression getExpandedElement(@NotNull GrMethodCallExpression callExpression) {
-    return callExpression;
-  }
+  public GrExpression getArgument(@NotNull GrMethodCall callExpression, int index) {
+    GrExpression[] expressionArguments = callExpression.getExpressionArguments();
+    if (index < expressionArguments.length) {
+      return expressionArguments[index];
+    }
 
-  @Nullable
-  public abstract String getReplacement(MethodCallData methodInfo, OptionsData optionsData);
+    return callExpression.getClosureArguments()[index - expressionArguments.length];
+  }
 }

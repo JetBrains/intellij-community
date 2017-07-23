@@ -14,7 +14,7 @@ class Test {
     @Nullable
     private String newMethod() {
         final String str = "";
-        if (str == "") {
+        if (str == "a") {
             return null;
         }
         return str;

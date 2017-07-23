@@ -17,6 +17,7 @@ package com.siyeh.ig.serialization;
 
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -26,6 +27,7 @@ public class NonSerializableFieldInSerializableClassInspection extends NonSerial
     return SerializableInspectionUtil.createOptions(this);
   }
 
+  @NotNull
   @Override
   protected JComponent[] createAdditionalOptions() {
     return new JComponent[]{SpecialAnnotationsUtil.createSpecialAnnotationsListControl(

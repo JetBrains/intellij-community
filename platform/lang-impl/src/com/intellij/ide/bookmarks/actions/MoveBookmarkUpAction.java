@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ class MoveBookmarkUpAction extends DumbAwareAction {
 
   MoveBookmarkUpAction(Project project, JList list) {
     super("Up", "Move current bookmark up", AllIcons.Actions.PreviousOccurence);
+    setEnabledInModalContext(true);
     myProject = project;
     myList = list;
     registerCustomShortcutSet(CommonShortcuts.MOVE_UP, list);
@@ -40,7 +41,7 @@ class MoveBookmarkUpAction extends DumbAwareAction {
   @Override
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabled(
-      !UISettings.getInstance().SORT_BOOKMARKS &&
+      !UISettings.getInstance().getSortBookmarks() &&
       BookmarksAction.notFiltered(myList)
       && BookmarksAction.getSelectedBookmarks(myList).size() == 1
       && myList.getSelectedIndex() > 0);

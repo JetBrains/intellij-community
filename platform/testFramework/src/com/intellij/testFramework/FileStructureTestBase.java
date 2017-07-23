@@ -33,7 +33,6 @@ public abstract class FileStructureTestBase extends CodeInsightFixtureTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myPopupFixture = new FileStructureTestFixture(myFixture);
-    Disposer.register(getProject(), myPopupFixture);
   }
 
   protected void configureDefault() {
@@ -44,8 +43,9 @@ public abstract class FileStructureTestBase extends CodeInsightFixtureTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    super.tearDown();
+    Disposer.dispose(myPopupFixture);
     myPopupFixture = null;
+    super.tearDown();
   }
 
   private String getFileName(String ext) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,21 @@
  */
 package org.jetbrains.settingsRepository
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.TextBrowseFolderListener
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.DocumentAdapter
 import com.intellij.util.Function
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
 import com.intellij.util.text.nullize
+import com.intellij.util.text.trimMiddle
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.table.TableModelEditor
 import gnu.trove.THashSet
@@ -83,7 +85,7 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
   }
 
   val editor = TableModelEditor(COLUMNS, itemEditor, "No sources configured")
-  editor.reset(icsManager.settings.readOnlySources)
+  editor.reset(if (ApplicationManager.getApplication().isUnitTestMode) emptyList() else icsManager.settings.readOnlySources)
   return object : ConfigurableUi<IcsSettings> {
     override fun isModified(settings: IcsSettings) = editor.isModified
 
@@ -117,12 +119,9 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
           indicator.text = "Deleting old repositories"
           for (path in toDelete) {
             indicator.checkCanceled()
-            try {
+            LOG.runAndLogException {
               indicator.text2 = path
               root.resolve(path).delete()
-            }
-            catch (e: Exception) {
-              LOG.error(e)
             }
           }
         }
@@ -130,21 +129,23 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
         if (toCheckout.isNotEmpty()) {
           for (source in toCheckout) {
             indicator.checkCanceled()
-            try {
-              indicator.text = "Cloning ${StringUtil.trimMiddle(source.url!!, 255)}"
+            LOG.runAndLogException {
+              indicator.text = "Cloning ${source.url!!.trimMiddle(255)}"
               val dir = root.resolve(source.path!!)
               if (dir.exists()) {
                 dir.delete()
               }
               cloneBare(source.url!!, dir, icsManager.credentialsStore, indicator.asProgressMonitor()).close()
             }
-            catch (e: Exception) {
-              LOG.error(e)
-            }
           }
         }
 
         icsManager.readOnlySourcesManager.setSources(newList)
+
+        // blindly reload all
+        icsManager.schemeManagerFactory.value.process {
+          it.reload()
+        }
       }
     }
 

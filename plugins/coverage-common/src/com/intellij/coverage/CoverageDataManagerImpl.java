@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -43,7 +44,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
@@ -87,7 +88,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   private static final String DO_NOT_APPLY_COLLECTED_COVERAGE = "Do not apply &collected coverage";
 
   private final List<CoverageSuiteListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private static final Logger LOG = Logger.getInstance("#" + CoverageDataManagerImpl.class.getName());
+  private static final Logger LOG = Logger.getInstance(CoverageDataManagerImpl.class);
   @NonNls
   private static final String SUITE = "SUITE";
 
@@ -98,6 +99,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   private final Object myLock = new Object();
   private boolean mySubCoverageIsActive;
 
+  @Override
   public CoverageSuitesBundle getCurrentSuitesBundle() {
     return myCurrentSuitesBundle;
   }
@@ -127,17 +129,13 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   }
 
 
+  @Override
   @NotNull @NonNls
   public String getComponentName() {
     return "CoverageDataManager";
   }
 
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
-  }
-
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     //noinspection unchecked
     for (Element suiteElement : element.getChildren(SUITE)) {
@@ -157,6 +155,9 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
         if (coverageRunner.acceptsCoverageEngine(engine)) {
           suite = engine.createEmptyCoverageSuite(coverageRunner);
           if (suite != null) {
+            if (suite instanceof BaseCoverageSuite) {
+              ((BaseCoverageSuite)suite).setProject(myProject);
+            }
             break;
           }
         }
@@ -173,6 +174,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     }
   }
 
+  @Override
   public void writeExternal(final Element element) throws WriteExternalException {
     for (CoverageSuite coverageSuite : myCoverageSuites) {
       final Element suiteElement = new Element(SUITE);
@@ -181,6 +183,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     }
   }
 
+  @Override
   public CoverageSuite addCoverageSuite(final String name, final CoverageFileProvider fileProvider, final String[] filters, final long lastCoverageTimeStamp,
                                         @Nullable final String suiteToMergeWith,
                                         final CoverageRunner coverageRunner,
@@ -225,6 +228,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     return suite;
   }
 
+  @Override
   public void removeCoverageSuite(final CoverageSuite suite) {
     final String fileName = suite.getCoverageDataFileName();
 
@@ -257,10 +261,13 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     }
   }
 
+  @Override
+  @NotNull
   public CoverageSuite[] getSuites() {
     return myCoverageSuites.toArray(new CoverageSuite[myCoverageSuites.size()]);
   }
 
+  @Override
   public void chooseSuitesBundle(final CoverageSuitesBundle suite) {
     if (myCurrentSuitesBundle == suite && suite == null) {
       return;
@@ -296,6 +303,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     fireAfterSuiteChosen();
   }
 
+  @Override
   public void coverageGathered(@NotNull final CoverageSuite suite) {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myProject.isDisposed()) return;
@@ -349,6 +357,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     });
   }
 
+  @Override
   public void triggerPresentationUpdate() {
     renewInformationInEditors();
     UIUtil.invokeLaterIfNeeded(() -> {
@@ -358,10 +367,12 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     });
   }
 
+  @Override
   public void attachToProcess(@NotNull final ProcessHandler handler,
                               @NotNull final RunConfigurationBase configuration,
                               final RunnerSettings runnerSettings) {
     handler.addProcessListener(new ProcessAdapter() {
+      @Override
       public void processTerminated(final ProcessEvent event) {
         processGatheredCoverage(configuration, runnerSettings);
       }
@@ -444,21 +455,24 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     }
   }
 
+  @Override
   public void projectOpened() {
     EditorFactory.getInstance().addEditorFactoryListener(new CoverageEditorFactoryListener(), myProject);
-    ProjectManagerAdapter projectManagerListener = new ProjectManagerAdapter() {
+    myProject.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      @Override
       public void projectClosing(Project project) {
+        if (project != myProject) {
+          return;
+        }
+
         synchronized (myLock) {
           myIsProjectClosing = true;
         }
       }
-    };
-    ProjectManager.getInstance().addProjectManagerListener(myProject, projectManagerListener);
+    });
   }
 
-  public void projectClosed() {
-  }
-
+  @Override
   public <T> T doInReadActionIfProjectOpen(Computable<T> computation) {
     synchronized(myLock) {
       if (myIsProjectClosing) return null;
@@ -466,6 +480,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     return ApplicationManager.getApplication().runReadAction(computation);
   }
 
+  @Override
   public void selectSubCoverage(@NotNull final CoverageSuitesBundle suite, final List<String> testNames) {
     suite.restoreCoverageData();
     final ProjectData data = suite.getCoverageData();
@@ -553,6 +568,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     return new File(new File(fileName).getParentFile(), FileUtil.getNameWithoutExtension(new File(fileName)));
   }
 
+  @Override
   public void restoreMergedCoverage(@NotNull final CoverageSuitesBundle suite) {
     mySubCoverageIsActive = false;
     suite.restoreCoverageData();
@@ -563,6 +579,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   public void addSuiteListener(final CoverageSuiteListener listener, Disposable parentDisposable) {
     myListeners.add(listener);
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         myListeners.remove(listener);
       }
@@ -581,6 +598,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     }
   }
 
+  @Override
   public boolean isSubCoverageActive() {
     return mySubCoverageIsActive;
   }
@@ -650,6 +668,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myProject);
     private final Map<Editor, Runnable> myCurrentEditors = new HashMap<>();
 
+    @Override
     public void editorCreated(@NotNull EditorFactoryEvent event) {
       synchronized (myLock) {
         if (myIsProjectClosing) return;
@@ -657,15 +676,11 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
 
       final Editor editor = event.getEditor();
       if (editor.getProject() != myProject) return;
-      final PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
-        @Nullable
-        @Override
-        public PsiFile compute() {
-          if (myProject.isDisposed()) return null;
-          final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-          final Document document = editor.getDocument();
-          return documentManager.getPsiFile(document);
-        }
+      final PsiFile psiFile = ReadAction.compute(() -> {
+        if (myProject.isDisposed()) return null;
+        final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+        final Document document = editor.getDocument();
+        return documentManager.getPsiFile(document);
       });
 
       if (psiFile != null && myCurrentSuitesBundle != null && psiFile.isPhysical()) {
@@ -698,6 +713,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
       }
     }
 
+    @Override
     public void editorReleased(@NotNull EditorFactoryEvent event) {
       final Editor editor = event.getEditor();
       if (editor.getProject() != myProject) return;

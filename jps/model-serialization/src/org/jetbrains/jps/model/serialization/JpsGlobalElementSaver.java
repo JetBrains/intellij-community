@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@ package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.SystemProperties;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.jps.model.JpsGlobal;
@@ -55,7 +53,7 @@ public class JpsGlobalElementSaver {
     File configFile = new File(optionsDir, fileName != null ? fileName : "other.xml");
     Element rootElement = loadOrCreateRootElement(configFile);
     serializer.saveExtension(myGlobal, JDomSerializationUtil.findOrCreateComponentElement(rootElement, serializer.getComponentName()));
-    JDOMUtil.writeDocument(new Document(rootElement), configFile, SystemProperties.getLineSeparator());
+    JDOMUtil.write(rootElement, configFile);
   }
 
   private static Element loadOrCreateRootElement(File configFile) {
@@ -65,10 +63,7 @@ public class JpsGlobalElementSaver {
     try {
       return JDOMUtil.load(configFile);
     }
-    catch (JDOMException e) {
-      throw new RuntimeException(e);
-    }
-    catch (IOException e) {
+    catch (JDOMException | IOException e) {
       throw new RuntimeException(e);
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -575,31 +575,24 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         boolean cancelable;
         if (dialog.isUnifiedDiff()) {
           final File targetFile = dialog.getTargetFile();
-          command = new Runnable() {
-            public void run() {
-              targetFile.getParentFile().mkdirs();
-              doUnifiedDiff(targetFile, sURL, tURL);
-            }
+          command = () -> {
+            targetFile.getParentFile().mkdirs();
+            doUnifiedDiff(targetFile, sURL, tURL);
           };
           cancelable = false;
         }
         else {
-          command = new Runnable() {
-            public void run() {
-              try {
-                doGraphicalDiff(sURL, tURL);
-              }
-              catch (final VcsException ex) {
-                //noinspection InstanceofCatchParameter
-                boolean isCancelled = ex instanceof SvnBindException && ((SvnBindException)ex).contains(SVNErrorCode.CANCELLED);
+          command = () -> {
+            try {
+              doGraphicalDiff(sURL, tURL);
+            }
+            catch (final VcsException ex) {
+              //noinspection InstanceofCatchParameter
+              boolean isCancelled = ex instanceof SvnBindException && ((SvnBindException)ex).contains(SVNErrorCode.CANCELLED);
 
-                if (!isCancelled) {
-                  WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-                    public void run() {
-                      Messages.showErrorDialog(myProject, ex.getMessage(), "Error");
-                    }
-                  }, null, myProject);
-                }
+              if (!isCancelled) {
+                WaitForProgressToShow
+                  .runOrInvokeLaterAboveProgress(() -> Messages.showErrorDialog(myProject, ex.getMessage(), "Error"), null, myProject);
               }
             }
           };
@@ -652,7 +645,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
             final int result =
               Messages.showOkCancelDialog(myProject, "You are about to move folder named '" + lastFolder +
                                                      "'. Are you sure?", SvnBundle.message(myDialogTitleKey), Messages.getWarningIcon());
-            if (Messages.OK == result) return;
+            if (Messages.OK != result) return;
           }
         }
         String message = dialog.getCommitMessage();
@@ -800,19 +793,17 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     private boolean doDelete(final SVNURL url, final String comment) {
       final Ref<Exception> exception = new Ref<>();
       final Project project = myBrowserComponent.getProject();
-      Runnable command = new Runnable() {
-        public void run() {
-          ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-          if (progress != null) {
-            progress.setText(SvnBundle.message("progres.text.deleting", url.toString()));
-          }
-          SvnVcs vcs = SvnVcs.getInstance(project);
-          try {
-            vcs.getFactoryFromSettings().createDeleteClient().delete(url, comment);
-          }
-          catch (VcsException e) {
-            exception.set(e);
-          }
+      Runnable command = () -> {
+        ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+        if (progress != null) {
+          progress.setText(SvnBundle.message("progres.text.deleting", url.toString()));
+        }
+        SvnVcs vcs = SvnVcs.getInstance(project);
+        try {
+          vcs.getFactoryFromSettings().createDeleteClient().delete(url, comment);
+        }
+        catch (VcsException e) {
+          exception.set(e);
         }
       };
       ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.title.browser.delete"), false, project);
@@ -970,20 +961,18 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
   protected static void doMkdir(final SVNURL url, final String comment, final Project project) {
     final Ref<Exception> exception = new Ref<>();
-    Runnable command = new Runnable() {
-      public void run() {
-        ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-        if (progress != null) {
-          progress.setText(SvnBundle.message("progress.text.browser.creating", url.toString()));
-        }
-        SvnVcs vcs = SvnVcs.getInstance(project);
-        SvnTarget target = SvnTarget.fromURL(url);
-        try {
-          vcs.getFactoryFromSettings().createBrowseClient().createDirectory(target, comment, false);
-        }
-        catch (VcsException e) {
-          exception.set(e);
-        }
+    Runnable command = () -> {
+      ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+      if (progress != null) {
+        progress.setText(SvnBundle.message("progress.text.browser.creating", url.toString()));
+      }
+      SvnVcs vcs = SvnVcs.getInstance(project);
+      SvnTarget target = SvnTarget.fromURL(url);
+      try {
+        vcs.getFactoryFromSettings().createBrowseClient().createDirectory(target, comment, false);
+      }
+      catch (VcsException e) {
+        exception.set(e);
       }
     };
     ProgressManager.getInstance().runProcessWithProgressSynchronously(command, SvnBundle.message("progress.text.create.remote.folder"), false, project);
@@ -994,21 +983,20 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
   private void doCopy(final SVNURL src, final SVNURL dst, final boolean move, final String comment) {
     final Ref<Exception> exception = new Ref<>();
-    Runnable command = new Runnable() {
-      public void run() {
-        ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-        if (progress != null) {
-          progress.setText((move ? SvnBundle.message("progress.text.browser.moving", src) : SvnBundle.message("progress.text.browser.copying", src)));
-          progress.setText2(SvnBundle.message("progress.text.browser.remote.destination", dst));
-        }
-        SvnVcs vcs = SvnVcs.getInstance(myProject);
-        try {
-          vcs.getFactoryFromSettings().createCopyMoveClient().copy(SvnTarget.fromURL(src), SvnTarget.fromURL(dst), SVNRevision.HEAD, true,
-                                                                   move, comment, null);
-        }
-        catch (VcsException e) {
-          exception.set(e);
-        }
+    Runnable command = () -> {
+      ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+      if (progress != null) {
+        progress.setText(
+          (move ? SvnBundle.message("progress.text.browser.moving", src) : SvnBundle.message("progress.text.browser.copying", src)));
+        progress.setText2(SvnBundle.message("progress.text.browser.remote.destination", dst));
+      }
+      SvnVcs vcs = SvnVcs.getInstance(myProject);
+      try {
+        vcs.getFactoryFromSettings().createCopyMoveClient().copy(SvnTarget.fromURL(src), SvnTarget.fromURL(dst), SVNRevision.HEAD, true,
+                                                                 move, comment, null);
+      }
+      catch (VcsException e) {
+        exception.set(e);
       }
     };
     String progressTitle = move ? SvnBundle.message("progress.title.browser.move") : SvnBundle.message("progress.title.browser.copy");
@@ -1095,10 +1083,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       myVCS.getFactoryFromSettings().createDiffClient().unifiedDiff(SvnTarget.fromURL(sourceURL, SVNRevision.HEAD),
                                                                     SvnTarget.fromURL(targetURL, SVNRevision.HEAD), os);
     }
-    catch (IOException e) {
-      LOG.info(e);
-    }
-    catch (VcsException e) {
+    catch (IOException | VcsException e) {
       LOG.info(e);
     }
     finally {
@@ -1121,12 +1106,10 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
   private void showDiffEditorResults(final Collection<Change> changes, String sourceTitle, String targetTitle) {
     final String title = SvnBundle.message("repository.browser.compare.title", sourceTitle, targetTitle);
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        final ChangeListViewerDialog dlg = new ChangeListViewerDialog(myRepositoryBrowser, myProject, changes, true);
-        dlg.setTitle(title);
-        dlg.show();
-      }
+    SwingUtilities.invokeLater(() -> {
+      final ChangeListViewerDialog dlg = new ChangeListViewerDialog(myRepositoryBrowser, myProject, changes, true);
+      dlg.setTitle(title);
+      dlg.show();
     });
   }
 

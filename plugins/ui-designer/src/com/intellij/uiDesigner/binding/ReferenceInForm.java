@@ -37,7 +37,7 @@ public abstract class ReferenceInForm implements PsiReference {
 
   protected ReferenceInForm(final PsiPlainTextFile file, TextRange range) {
     myFile = file;
-    final Document document = FileDocumentManager.getInstance().getDocument(myFile.getVirtualFile());
+    final Document document = FileDocumentManager.getInstance().getDocument(myFile.getViewProvider().getVirtualFile());
     myRangeMarker = document.createRangeMarker(range);
   }
 

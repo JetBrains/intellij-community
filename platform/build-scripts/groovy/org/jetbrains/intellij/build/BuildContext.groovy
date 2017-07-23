@@ -27,19 +27,13 @@ import org.jetbrains.jps.model.module.JpsModule
  * @author nik
  */
 @CompileStatic
-abstract class BuildContext {
-  AntBuilder ant
-  BuildMessages messages
-  BuildPaths paths
-  JpsProject project
+abstract class BuildContext implements CompilationContext {
   ApplicationInfoProperties applicationInfo
-  JpsGantProjectBuilder projectBuilder
   ProductProperties productProperties
   WindowsDistributionCustomizer windowsDistributionCustomizer
   LinuxDistributionCustomizer linuxDistributionCustomizer
   MacDistributionCustomizer macDistributionCustomizer
   ProprietaryBuildTools proprietaryBuildTools
-  BuildOptions options
   BundledJreManager bundledJreManager
 
   /**
@@ -77,13 +71,7 @@ abstract class BuildContext {
 
   abstract void notifyArtifactBuilt(String artifactPath)
 
-  abstract File findApplicationInfoInSources()
-
   abstract JpsModule findApplicationInfoModule()
-
-  abstract JpsModule findRequiredModule(String name)
-
-  abstract JpsModule findModule(String name)
 
   abstract File findFileInModuleSources(String moduleName, String relativePath)
 
@@ -98,12 +86,20 @@ abstract class BuildContext {
 
   abstract boolean shouldBuildDistributionForOS(String os)
 
+  static BuildContext createContext(String communityHome, String projectHome, ProductProperties productProperties,
+                                    ProprietaryBuildTools proprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+                                    BuildOptions options = new BuildOptions()) {
+    return BuildContextImpl.create(communityHome, projectHome, productProperties, proprietaryBuildTools, options)
+  }
+
+  /**
+   * @deprecated use {@link #createContext(String, String, ProductProperties, ProprietaryBuildTools, BuildOptions)} instead
+   */
   static BuildContext createContext(AntBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
-                                           String communityHome, String projectHome, ProductProperties productProperties,
-                                           ProprietaryBuildTools proprietaryBuildTools = ProprietaryBuildTools.DUMMY,
-                                           BuildOptions options = new BuildOptions()) {
-    return BuildContextImpl.create(ant, projectBuilder, project, global, communityHome, projectHome, productProperties,
-                                   proprietaryBuildTools, options)
+                                    String communityHome, String projectHome, ProductProperties productProperties,
+                                    ProprietaryBuildTools proprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+                                    BuildOptions options = new BuildOptions()) {
+    return BuildContextImpl.create(communityHome, projectHome, productProperties, proprietaryBuildTools, options)
   }
 
   /**
@@ -114,79 +110,4 @@ abstract class BuildContext {
   abstract BuildContext forkForParallelTask(String taskName)
 
   abstract BuildContext createCopyForProduct(ProductProperties productProperties, String projectHomeForCustomizers)
-}
-
-/**
- * All paths are absolute and use '/' as a separator
- */
-abstract class BuildPaths {
-  /**
-   * Path to a directory where idea/community Git repository is checked out
-   */
-  String communityHome
-
-  /**
-   * Path to a base directory of the project which will be compiled
-   */
-  String projectHome
-
-  /**
-   * Path to a directory where build script will store temporary and resulting files
-   */
-  String buildOutputRoot
-
-  /**
-   * Path to a directory where resulting artifacts will be placed
-   */
-  String artifacts
-
-  /**
-   * Path to a directory containing distribution files ('bin', 'lib', 'plugins' directories) common for all operating systems
-   */
-  String distAll
-
-  /**
-   * Path to a directory where temporary files required for a particular build step can be stored
-   */
-  String temp
-
-  /**
-   * Path to a directory containing JDK (currently Java 8) which is used to compile the project
-   */
-  String jdkHome
-}
-
-interface BuildMessages {
-  void info(String message)
-  void warning(String message)
-
-  /**
-   * Report an error and stop the build process
-   */
-  void error(String message)
-
-  void error(String message, Throwable cause)
-
-  void progress(String message)
-  def <V> V block(String blockName, Closure<V> body)
-
-  void artifactBuild(String relativeArtifactPath)
-
-  BuildMessages forkForParallelTask(String taskName)
-
-  /**
-   * Must be invoked from the main thread when all forks have been finished
-   */
-  void onAllForksFinished()
-
-  /**
-   * Must be invoked for the forked instance on the thread where it is executing before the task is started.
-   * It's required to correctly handle messages from Ant tasks.
-   */
-  void onForkStarted()
-
-  /**
-   * Must be invoked for the forked instance on the thread where it is executing when the task is finished
-   */
-  void onForkFinished()
 }

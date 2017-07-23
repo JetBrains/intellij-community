@@ -23,14 +23,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 
-/**
-* Created by Max Medvedev on 10/25/13
-*/
 public abstract class TypePointerBase<T extends PsiType> implements SmartTypePointer {
   private Reference<T> myTypeRef;
 
   public TypePointerBase(@NotNull T type) {
-    myTypeRef = new SoftReference<T>(type);
+    myTypeRef = new SoftReference<>(type);
   }
 
   @Override
@@ -39,7 +36,7 @@ public abstract class TypePointerBase<T extends PsiType> implements SmartTypePoi
     if (myType != null && myType.isValid()) return myType;
 
     myType = calcType();
-    myTypeRef = myType == null ? null : new SoftReference<T>(myType);
+    myTypeRef = myType == null ? null : new SoftReference<>(myType);
     return myType;
   }
 

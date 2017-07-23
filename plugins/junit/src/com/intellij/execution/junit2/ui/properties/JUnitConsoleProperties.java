@@ -17,6 +17,7 @@ package com.intellij.execution.junit2.ui.properties;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.junit.JUnitConfiguration;
+import com.intellij.execution.junit.TestObject;
 import com.intellij.execution.junit2.ui.actions.RerunFailedTestsAction;
 import com.intellij.execution.testframework.JavaAwareTestConsoleProperties;
 import com.intellij.execution.testframework.JavaTestLocator;
@@ -27,6 +28,7 @@ import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.rt.execution.junit.RepeatCount;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +40,7 @@ public class JUnitConsoleProperties extends JavaAwareTestConsoleProperties<JUnit
 
   public JUnitConsoleProperties(@NotNull JUnitConfiguration configuration, Executor executor) {
     super("JUnit", configuration, executor);
+    setIdBasedTestTree(JUnitStarter.JUNIT5_PARAMETER.equals(configuration.getPreferredRunner(TestObject.getScopeForJUnit(configuration))));
   }
 
   @NotNull

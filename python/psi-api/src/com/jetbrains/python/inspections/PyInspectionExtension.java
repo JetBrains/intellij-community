@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,8 +55,30 @@ public abstract class PyInspectionExtension {
     return false;
   }
 
+  /**
+   * Checks if unresolved member could be ignored.
+   *
+   * @param type type whose member will be checked
+   * @param name member name
+   * @return true if the unresolved member with the specified name could be ignored
+   * @deprecated Use {@link PyInspectionExtension#ignoreUnresolvedMember(PyType, String, TypeEvalContext)} instead.
+   * This method will be removed in 2018.1.
+   */
+  @Deprecated
   public boolean ignoreUnresolvedMember(@NotNull PyType type, @NotNull String name) {
     return false;
+  }
+
+  /**
+   * Checks if unresolved member could be ignored.
+   *
+   * @param type    type whose member will be checked
+   * @param name    member name
+   * @param context type evaluation context
+   * @return true if the unresolved member with the specified name could be ignored
+   */
+  public boolean ignoreUnresolvedMember(@NotNull PyType type, @NotNull String name, @NotNull TypeEvalContext context) {
+    return ignoreUnresolvedMember(type, name);
   }
 
   /**
@@ -67,6 +89,10 @@ public abstract class PyInspectionExtension {
    * @return true if ignore
    */
   public boolean ignoreProtectedSymbol(@NotNull final PyReferenceExpression expression, @NotNull final TypeEvalContext context) {
+    return false;
+  }
+
+  public boolean ignoreInitNewSignatures(@NotNull PyFunction original, @NotNull PyFunction complementary) {
     return false;
   }
 }

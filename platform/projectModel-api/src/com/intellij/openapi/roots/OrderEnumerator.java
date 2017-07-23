@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Interface for convenient processing dependencies of a module or a project. Allows to process {@link OrderEntry}s and collect classes
- * and source roots.<p>
- * <p/>
- * Use {@link #orderEntries(com.intellij.openapi.module.Module)} or {@link ModuleRootModel#orderEntries()} to process dependencies of a module
- * and use {@link #orderEntries(com.intellij.openapi.project.Project)} to process dependencies of all modules in a project.<p>
- * <p/>
- * Note that all configuration methods modify {@link OrderEnumerator} instance instead of creating a new one.
+ * <p>Interface for convenient processing dependencies of a module or a project. Allows to process {@link OrderEntry}s
+ * and collect classes and source roots.</p>
+ *
+ * <p>Use {@link #orderEntries(Module)} or {@link ModuleRootModel#orderEntries()} to process dependencies of a module
+ * and use {@link #orderEntries(Project)} to process dependencies of all modules in a project.</p>
+ *
+ * <p>Note that all configuration methods modify {@link OrderEnumerator} instance instead of creating a new one.</p>
  *
  * @author nik
  * @since 10.0
@@ -113,7 +113,7 @@ public abstract class OrderEnumerator {
   public abstract OrderEnumerator satisfying(Condition<OrderEntry> condition);
 
   /**
-   * Use <code>provider.getRootModel()</code> to process module dependencies
+   * Use {@code provider.getRootModel()} to process module dependencies
    *
    * @param provider provider
    * @return this instance
@@ -181,21 +181,21 @@ public abstract class OrderEnumerator {
   }
 
   /**
-   * Runs <code>processor.process()</code> for each entry processed by this enumerator.
+   * Runs {@code processor.process()} for each entry processed by this enumerator.
    *
    * @param processor processor
    */
   public abstract void forEach(@NotNull Processor<OrderEntry> processor);
 
   /**
-   * Runs <code>processor.process()</code> for each library processed by this enumerator.
+   * Runs {@code processor.process()} for each library processed by this enumerator.
    *
    * @param processor processor
    */
   public abstract void forEachLibrary(@NotNull Processor<Library> processor);
 
   /**
-   * Runs <code>processor.process()</code> for each module processed by this enumerator.
+   * Runs {@code processor.process()} for each module processed by this enumerator.
    *
    * @param processor processor
    */
@@ -212,7 +212,7 @@ public abstract class OrderEnumerator {
   public abstract <R> R process(@NotNull RootPolicy<R> policy, R initialValue);
 
   /**
-   * Creates new enumerator instance to process dependencies of <code>module</code>
+   * Creates new enumerator instance to process dependencies of {@code module}
    *
    * @param module module
    * @return new enumerator instance
@@ -223,7 +223,7 @@ public abstract class OrderEnumerator {
   }
 
   /**
-   * Creates new enumerator instance to process dependencies of all modules in <code>project</code>. Only first level dependencies of
+   * Creates new enumerator instance to process dependencies of all modules in {@code project}. Only first level dependencies of
    * modules are processed so {@link #recursively()} option is ignored and {@link #withoutDepModules()} option is forced
    *
    * @param project project

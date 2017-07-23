@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Point2D;
 import java.util.Map;
 
 /**
@@ -78,11 +79,11 @@ public class DimensionService implements PersistentStateComponent<Element> {
 
   /**
    * @param key a String key to perform a query for.
-   * @return point stored under the specified <code>key</code>. The method returns
-   * <code>null</code> if there is no stored value under the <code>key</code>. If point
-   * is outside of current screen bounds then the method returns <code>null</code>. It
+   * @return point stored under the specified {@code key}. The method returns
+   * {@code null} if there is no stored value under the {@code key}. If point
+   * is outside of current screen bounds then the method returns {@code null}. It
    * properly works in multi-monitor configuration.
-   * @throws java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
+   * @throws java.lang.IllegalArgumentException if {@code key} is {@code null}.
    */
   @Nullable
   public synchronized Point getLocation(String key) {
@@ -91,30 +92,38 @@ public class DimensionService implements PersistentStateComponent<Element> {
 
   @Nullable
   public synchronized Point getLocation(@NotNull String key, Project project) {
-    Point point = myKey2Location.get(realKey(key, project));
+    Pair<String, Float> pair = keyPair(key, project);
+    Point point = myKey2Location.get(pair.first);
+    if (point != null) {
+      point = (Point)point.clone();
+      float scale = pair.second;
+      point.setLocation(point.x / scale, point.y / scale);
+    }
     if (point != null && !ScreenUtil.getScreenRectangle(point).contains(point)) {
       point = null;
     }
-    return point != null ? (Point)point.clone() : null;
+    return point;
   }
 
   /**
-   * Store specified <code>point</code> under the <code>key</code>. If <code>point</code> is
-   * <code>null</code> then the value stored under <code>key</code> will be removed.
+   * Store specified {@code point} under the {@code key}. If {@code point} is
+   * {@code null} then the value stored under {@code key} will be removed.
    *
    * @param key   a String key to store location for.
    * @param point location to save.
-   * @throws java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
+   * @throws java.lang.IllegalArgumentException if {@code key} is {@code null}.
    */
   public synchronized void setLocation(String key, Point point) {
     setLocation(key, point, guessProject());
   }
 
   public synchronized void setLocation(@NotNull String key, Point point, Project project) {
-    key = realKey(key, project);
-
+    Pair<String, Float> pair = keyPair(key, project);
     if (point != null) {
-      myKey2Location.put(key, (Point)point.clone());
+      point = (Point)point.clone();
+      float scale = pair.second;
+      point.setLocation(point.x * scale, point.y * scale);
+      myKey2Location.put(pair.first, point);
     }
     else {
       myKey2Location.remove(key);
@@ -123,9 +132,9 @@ public class DimensionService implements PersistentStateComponent<Element> {
 
   /**
    * @param key a String key to perform a query for.
-   * @return point stored under the specified <code>key</code>. The method returns
-   * <code>null</code> if there is no stored value under the <code>key</code>.
-   * @throws java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
+   * @return point stored under the specified {@code key}. The method returns
+   * {@code null} if there is no stored value under the {@code key}.
+   * @throws java.lang.IllegalArgumentException if {@code key} is {@code null}.
    */
   @Nullable
   public synchronized Dimension getSize(@NotNull @NonNls String key) {
@@ -134,27 +143,35 @@ public class DimensionService implements PersistentStateComponent<Element> {
 
   @Nullable
   public synchronized Dimension getSize(@NotNull @NonNls String key, Project project) {
-    Dimension size = myKey2Size.get(realKey(key, project));
-    return size != null ? (Dimension)size.clone() : null;
+    Pair<String, Float> pair = keyPair(key, project);
+    Dimension size = myKey2Size.get(pair.first);
+    if (size != null) {
+      size = (Dimension)size.clone();
+      float scale = pair.second;
+      size.setSize(size.width / scale, size.height / scale);
+    }
+    return size;
   }
 
   /**
-   * Store specified <code>size</code> under the <code>key</code>. If <code>size</code> is
-   * <code>null</code> then the value stored under <code>key</code> will be removed.
+   * Store specified {@code size} under the {@code key}. If {@code size} is
+   * {@code null} then the value stored under {@code key} will be removed.
    *
    * @param key  a String key to to save size for.
    * @param size a Size to save.
-   * @throws java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
+   * @throws java.lang.IllegalArgumentException if {@code key} is {@code null}.
    */
   public synchronized void setSize(@NotNull @NonNls String key, Dimension size) {
     setSize(key, size, guessProject());
   }
 
   public synchronized void setSize(@NotNull @NonNls String key, Dimension size, Project project) {
-    key = realKey(key, project);
-
+    Pair<String, Float> pair = keyPair(key, project);
     if (size != null) {
-      myKey2Size.put(key, (Dimension)size.clone());
+      size = (Dimension)size.clone();
+      float scale = pair.second;
+      size.setSize(size.width * scale, size.height * scale);
+      myKey2Size.put(pair.first, size);
     }
     else {
       myKey2Size.remove(key);
@@ -253,13 +270,17 @@ public class DimensionService implements PersistentStateComponent<Element> {
     return openProjects.length == 1 ? openProjects[0] : null;
   }
 
+  /**
+   * @return Pair(key, scale) where:
+   * key is the HiDPI-aware key,
+   * scale is the HiDPI-aware factor to transform size metrics.
+   */
   @NotNull
-  private static String realKey(String key, @Nullable Project project) {
+  private static Pair<String, Float> keyPair(String key, @Nullable Project project) {
     GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
     if (env.isHeadlessInstance()) {
-      return key + ".headless";
+      return new Pair<>(key + ".headless", 1f);
     }
-
     JFrame frame = null;
     final Component owner = IdeFocusManager.findInstance().getFocusOwner();
     if (owner != null) {
@@ -272,30 +293,35 @@ public class DimensionService implements PersistentStateComponent<Element> {
       frame = WindowManager.getInstance().getFrame(project);
     }
     Rectangle screen = new Rectangle(0, 0, 0, 0);
+    GraphicsDevice gd = null;
     if (frame != null) {
       final Point topLeft = frame.getLocation();
-      Point center = new Point(topLeft.x + frame.getWidth() / 2, topLeft.y + frame.getHeight() / 2);
+      Point2D center = new Point2D.Float(topLeft.x + frame.getWidth() / 2, topLeft.y + frame.getHeight() / 2);
       for (GraphicsDevice device : env.getScreenDevices()) {
         Rectangle bounds = device.getDefaultConfiguration().getBounds();
         if (bounds.contains(center)) {
           screen = bounds;
+          gd = device;
           break;
         }
       }
     }
-    else {
-      GraphicsConfiguration gc = env.getScreenDevices()[0].getDefaultConfiguration();
-      screen = gc.getBounds();
+    if (gd == null) {
+      gd = env.getDefaultScreenDevice();
+      screen = gd.getDefaultConfiguration().getBounds();
+    }
+    float scale = 1f;
+    if (UIUtil.isJreHiDPIEnabled()) {
+      scale = JBUI.sysScale(gd.getDefaultConfiguration());
+      // normalize screen bounds
+      screen.setBounds((int)Math.floor(screen.x * scale), (int)Math.floor(screen.y * scale),
+                       (int)Math.ceil(screen.width * scale), (int)Math.ceil(screen.height * scale));
     }
     String realKey = key + '.' + screen.x + '.' + screen.y + '.' + screen.width + '.' + screen.height;
-    if (JBUI.isHiDPI()) {
-      // [tav] todo: Consider implementing inter-transforming of window coordinates b/w the HiDPI modes
-      // like it was done for the IdeFrame (see ScreenUtil.boundsFromDeviceSpace/boundsToDeviceSpace).
-      // The problem with DimensionService is that it can store location and size separately in
-      // which case it's not possible to do the mentioned transform.
-      String jm = UIUtil.isJDKManagedHiDPI() ? "jm" : "";
-      realKey+= "@" + jm + ((int)(96 * JBUI.pixScale())) + "dpi";
+    if (JBUI.isPixHiDPI(gd.getDefaultConfiguration())) {
+      int dpi = ((int)(96 * JBUI.pixScale(gd.getDefaultConfiguration())));
+      realKey += "@" + dpi + "dpi";
     }
-    return realKey;
+    return new Pair<>(realKey, scale);
   }
 }

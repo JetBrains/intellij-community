@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,15 +26,19 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
 
+import static org.intellij.lang.regexp.RegExpCapability.*;
+
 /**
  * @author yole
  */
 public class PythonRegexpParserDefinition extends RegExpParserDefinition {
   public static final IFileElementType PYTHON_REGEXP_FILE = new IFileElementType("PYTHON_REGEXP_FILE", PythonRegexpLanguage.INSTANCE);
-  protected final EnumSet<RegExpCapability> CAPABILITIES = EnumSet.of(RegExpCapability.DANGLING_METACHARACTERS,
-                                                                      RegExpCapability.OCTAL_NO_LEADING_ZERO,
-                                                                      RegExpCapability.OMIT_NUMBERS_IN_QUANTIFIERS);
-
+  protected final EnumSet<RegExpCapability> CAPABILITIES = EnumSet.of(DANGLING_METACHARACTERS,
+                                                                      OCTAL_NO_LEADING_ZERO,
+                                                                      OMIT_NUMBERS_IN_QUANTIFIERS,
+                                                                      OMIT_BOTH_NUMBERS_IN_QUANTIFIERS,
+                                                                      MIN_OCTAL_3_DIGITS);
+  @Override
   @NotNull
   public Lexer createLexer(Project project) {
     return new RegExpLexer(CAPABILITIES);

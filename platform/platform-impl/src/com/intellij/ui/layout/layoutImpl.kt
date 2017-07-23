@@ -28,7 +28,7 @@ internal const val VERTICAL_GAP = 5
 fun createLayoutBuilder() = LayoutBuilder(MigLayoutBuilder())
 
 // cannot use the same approach as in case of Row because cannot access to `build` method in inlined `panel` method,
-// in any case Kotlin compiler does the same thing —
+// in any case Kotlin compiler does the same thing -
 // "When a protected member is accessed from an inline function, a public accessor method is created to provide an access to that protected member from the outside of the class where the function will be inlined to."
 // (https://youtrack.jetbrains.com/issue/KT-12215)
 interface LayoutBuilderImpl {

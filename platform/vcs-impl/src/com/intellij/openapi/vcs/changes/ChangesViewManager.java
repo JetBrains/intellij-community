@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -44,11 +43,13 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
+import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
 import com.intellij.util.FunctionUtil;
@@ -81,6 +82,7 @@ import static java.util.stream.Collectors.toList;
 public class ChangesViewManager implements ChangesViewI, ProjectComponent, PersistentStateComponent<ChangesViewManager.State> {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangesViewManager");
+  private static final String CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION";
 
   @NotNull private final ChangesListView myView;
   private JPanel myProgressLabel;
@@ -95,16 +97,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   @NotNull private ChangesViewManager.State myState = new ChangesViewManager.State();
 
-  private JBSplitter mySplitter;
-
-  private boolean myDetailsOn;
-  @NotNull private final NotNullLazyValue<MyChangeProcessor> myDiffDetails = new NotNullLazyValue<MyChangeProcessor>() {
-    @NotNull
-    @Override
-    protected MyChangeProcessor compute() {
-      return new MyChangeProcessor(myProject);
-    }
-  };
+  private PreviewDiffSplitterComponent mySplitterComponent;
 
   @NotNull private final TreeSelectionListener myTsl;
   private Content myContent;
@@ -134,20 +127,17 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
             LOG.debug(message);
           }
         }
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            changeDetails();
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> updatePreview());
       }
     };
   }
 
+  @Override
   public void projectOpened() {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     changeListManager.addChangeListListener(myListener);
     Disposer.register(myProject, new Disposable() {
+      @Override
       public void dispose() {
         changeListManager.removeChangeListListener(myListener);
       }
@@ -158,26 +148,19 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myContentManager.addContent(myContent);
 
     scheduleRefresh();
-    myProject.getMessageBus().connect().subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            refreshView();
-          }
-        }, ModalityState.NON_MODAL, myProject.getDisposed());
-      }
-    });
-
-    myDetailsOn = VcsConfiguration.getInstance(myProject).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN;
-    changeDetails();
+    myProject.getMessageBus().connect().subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED,
+                                                  () -> ApplicationManager.getApplication().invokeLater(() -> refreshView(), ModalityState.NON_MODAL, myProject.getDisposed()));
+    updatePreview();
   }
 
+  @Override
   public void projectClosed() {
     myView.removeTreeSelectionListener(myTsl);
     myDisposed = true;
     myRepaintAlarm.cancelAllRequests();
   }
 
+  @Override
   @NonNls @NotNull
   public String getComponentName() {
     return "ChangesViewManager";
@@ -192,7 +175,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     EmptyAction.registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), panel);
     EmptyAction.registerWithShortcutSet("ChangesView.Rename",CommonShortcuts.getRename() , panel);
     EmptyAction.registerWithShortcutSet("ChangesView.SetDefault", new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.ALT_DOWN_MASK | ctrlMask())), panel);
-    EmptyAction.registerWithShortcutSet("ChangesView.Diff", CommonShortcuts.getDiff(), panel);
+    EmptyAction.registerWithShortcutSet(IdeActions.ACTION_SHOW_DIFF_COMMON, CommonShortcuts.getDiff(), panel);
 
     DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewToolbar");
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, group, false);
@@ -213,7 +196,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     visualActionsGroup.add(new ToggleShowIgnoredAction());
     visualActionsGroup.add(new IgnoredSettingsAction());
     visualActionsGroup.add(new ToggleDetailsAction());
-    visualActionsGroup.add(new ContextHelpAction(ChangesListView.ourHelpId));
+    visualActionsGroup.add(new ContextHelpAction(ChangesListView.HELP_ID));
     toolbarPanel.add(
       ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, visualActionsGroup, false).getComponent(), BorderLayout.CENTER);
 
@@ -227,45 +210,21 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     panel.setToolbar(toolbarPanel);
 
     final JPanel content = new JPanel(new BorderLayout());
-    mySplitter = new JBSplitter(false, "ChangesViewManager.DETAILS_SPLITTER_PROPORTION", 0.5f);
-    mySplitter.setHonorComponentsMinimumSize(false);
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myView);
     final JPanel wrapper = new JPanel(new BorderLayout());
     wrapper.add(scrollPane, BorderLayout.CENTER);
-    mySplitter.setFirstComponent(wrapper);
-    content.add(mySplitter, BorderLayout.CENTER);
+    MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject);
+    mySplitterComponent =
+      new PreviewDiffSplitterComponent(wrapper, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
+                                       VcsConfiguration.getInstance(myProject).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
+
+    content.add(mySplitterComponent, BorderLayout.CENTER);
     content.add(myProgressLabel, BorderLayout.SOUTH);
     panel.setContent(content);
 
     ChangesDnDSupport.install(myProject, myView);
     myView.addTreeSelectionListener(myTsl);
     return panel;
-  }
-
-  private void changeDetails() {
-    if (!myDetailsOn) {
-      if (myDiffDetails.isComputed()) {
-        myDiffDetails.getValue().clear();
-
-        if (mySplitter.getSecondComponent() != null) {
-          setChangeDetailsPanel(null);
-        }
-      }
-    }
-    else {
-      myDiffDetails.getValue().refresh();
-
-      if (mySplitter.getSecondComponent() == null) {
-        setChangeDetailsPanel(myDiffDetails.getValue().getComponent());
-      }
-    }
-  }
-
-  private void setChangeDetailsPanel(@Nullable JComponent component) {
-    mySplitter.setSecondComponent(component);
-    mySplitter.getFirstComponent().setBorder(component == null ? null : IdeBorderFactory.createBorder(SideBorder.RIGHT));
-    mySplitter.revalidate();
-    mySplitter.repaint();
   }
 
   @JdkConstants.InputEventMask
@@ -275,40 +234,31 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   private void updateProgressComponent(@NotNull final Factory<JComponent> progress) {
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        if (myProgressLabel != null) {
-          myProgressLabel.removeAll();
-          myProgressLabel.add(progress.create());
-          myProgressLabel.setMinimumSize(JBUI.emptySize());
-        }
+    SwingUtilities.invokeLater(() -> {
+      if (myProgressLabel != null) {
+        myProgressLabel.removeAll();
+        myProgressLabel.add(progress.create());
+        myProgressLabel.setMinimumSize(JBUI.emptySize());
       }
     });
   }
 
+  @Override
   public void updateProgressText(String text, boolean isError) {
     updateProgressComponent(createTextStatusFactory(text, isError));
   }
 
   @Override
   public void setBusy(final boolean b) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myView.setPaintBusy(b);
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> myView.setPaintBusy(b));
   }
 
   @NotNull
   public static Factory<JComponent> createTextStatusFactory(final String text, final boolean isError) {
-    return new Factory<JComponent>() {
-      @Override
-      public JComponent create() {
-        JLabel label = new JLabel(text);
-        label.setForeground(isError ? JBColor.RED : UIUtil.getLabelForeground());
-        return label;
-      }
+    return () -> {
+      JLabel label = new JLabel(text);
+      label.setForeground(isError ? JBColor.RED : UIUtil.getLabelForeground());
+      return label;
     };
   }
 
@@ -321,11 +271,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
       LOG.debug("schedule refresh, was " + was);
     }
     if (!myRepaintAlarm.isDisposed()) {
-      myRepaintAlarm.addRequest(new Runnable() {
-        public void run() {
-          refreshView();
-        }
-      }, 100, ModalityState.NON_MODAL);
+      myRepaintAlarm.addRequest(() -> refreshView(), 100, ModalityState.NON_MODAL);
     }
   }
 
@@ -336,20 +282,28 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
 
     TreeModelBuilder treeModelBuilder = new TreeModelBuilder(myProject, myView.isShowFlatten())
-      .set(changeListManager.getChangeListsCopy(), changeListManager.getDeletedFiles(), changeListManager.getModifiedWithoutEditing(),
-           changeListManager.getSwitchedFilesMap(), changeListManager.getSwitchedRoots(),
-           changeListManager.getLockedFolders(),
-           changeListManager.getLogicallyLockedFolders())
-      .setUnversioned(changeListManager.getUnversionedFiles(), changeListManager.getUnversionedFilesSize());
+      .setChangeLists(changeListManager.getChangeListsCopy())
+      .setLocallyDeletedPaths(changeListManager.getDeletedFiles())
+      .setModifiedWithoutEditing(changeListManager.getModifiedWithoutEditing())
+      .setSwitchedFiles(changeListManager.getSwitchedFilesMap())
+      .setSwitchedRoots(changeListManager.getSwitchedRoots())
+      .setLockedFolders(changeListManager.getLockedFolders())
+      .setLogicallyLockedFiles(changeListManager.getLogicallyLockedFolders())
+      .setUnversioned(changeListManager.getUnversionedFiles());
     if (myState.myShowIgnored) {
-      treeModelBuilder.setIgnored(changeListManager.getIgnoredFiles(), changeListManager.getIgnoredFilesSize(),
-                                  changeListManager.isIgnoredInUpdateMode());
+      treeModelBuilder.setIgnored(changeListManager.getIgnoredFiles(), changeListManager.isIgnoredInUpdateMode());
     }
     myView.updateModel(
       treeModelBuilder.build()
     );
 
-    changeDetails();
+    updatePreview();
+  }
+
+  private void updatePreview() {
+    if (mySplitterComponent != null) {
+      mySplitterComponent.updatePreview();
+    }
   }
 
   @NotNull
@@ -385,11 +339,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   @Override
   public void refreshChangesViewNodeAsync(@NotNull final VirtualFile file) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        refreshChangesViewNode(file);
-      }
-    }, myProject.getDisposed());
+    ApplicationManager.getApplication().invokeLater(() -> refreshChangesViewNode(file), myProject.getDisposed());
   }
 
   private void refreshChangesViewNode(@NotNull VirtualFile file) {
@@ -417,26 +367,32 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   private class MyChangeListListener extends ChangeListAdapter {
 
+    @Override
     public void changeListAdded(ChangeList list) {
       scheduleRefresh();
     }
 
+    @Override
     public void changeListRemoved(ChangeList list) {
       scheduleRefresh();
     }
 
+    @Override
     public void changeListRenamed(ChangeList list, String oldName) {
       scheduleRefresh();
     }
 
+    @Override
     public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {
       scheduleRefresh();
     }
 
+    @Override
     public void defaultListChanged(final ChangeList oldDefaultList, ChangeList newDefaultList) {
       scheduleRefresh();
     }
 
+    @Override
     public void changeListUpdateDone() {
       scheduleRefresh();
       ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
@@ -459,19 +415,23 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   }
 
   private class Expander implements TreeExpander {
+    @Override
     public void expandAll() {
       TreeUtil.expandAll(myView);
     }
 
+    @Override
     public boolean canExpand() {
       return true;
     }
 
+    @Override
     public void collapseAll() {
       TreeUtil.collapseAll(myView, 2);
       TreeUtil.expand(myView, 1);
     }
 
+    @Override
     public boolean canCollapse() {
       return true;
     }
@@ -484,10 +444,12 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
             AllIcons.Actions.GroupByPackage);
     }
 
+    @Override
     public boolean isSelected(AnActionEvent e) {
       return !myState.myShowFlatten;
     }
 
+    @Override
     public void setSelected(AnActionEvent e, boolean state) {
       setShowFlattenMode(!state);
     }
@@ -500,43 +462,32 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
             AllIcons.Actions.ShowHiddens);
     }
 
+    @Override
     public boolean isSelected(AnActionEvent e) {
       return myState.myShowIgnored;
     }
 
+    @Override
     public void setSelected(AnActionEvent e, boolean state) {
       myState.myShowIgnored = state;
       refreshView();
     }
   }
 
-  @Override
-  public void disposeComponent() {
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  private class ToggleDetailsAction extends ToggleAction implements DumbAware {
-    private ToggleDetailsAction() {
-      super("Preview Diff", null, AllIcons.Actions.PreviewDetails);
+  private class ToggleDetailsAction extends ShowDiffPreviewAction {
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      mySplitterComponent.setDetailsOn(state);
+      VcsConfiguration.getInstance(myProject).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = state;
     }
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return myDetailsOn;
-    }
-
-    @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      myDetailsOn = state;
-      VcsConfiguration.getInstance(myProject).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = myDetailsOn;
-      changeDetails();
+      return VcsConfiguration.getInstance(myProject).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN;
     }
   }
 
-  private class MyChangeProcessor extends CacheChangeProcessor {
+  private class MyChangeProcessor extends ChangeViewDiffRequestProcessor {
     public MyChangeProcessor(@NotNull Project project) {
       super(project, DiffPlaces.CHANGES_VIEW);
       Disposer.register(project, this);

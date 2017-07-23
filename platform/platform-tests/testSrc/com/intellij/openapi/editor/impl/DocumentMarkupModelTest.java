@@ -51,7 +51,7 @@ public class DocumentMarkupModelTest extends LightPlatformCodeInsightFixtureTest
     LanguageExtensionPoint<Annotator> extension = new LanguageExtensionPoint<>();
     extension.language="TEXT";
     extension.implementationClass = TestAnnotator.class.getName();
-    PlatformTestUtil.registerExtension(ExtensionPointName.create(LanguageAnnotators.EP_NAME), extension, getTestRootDisposable());
+    PlatformTestUtil.registerExtension(ExtensionPointName.create(LanguageAnnotators.EP_NAME), extension, myFixture.getTestRootDisposable());
     myFixture.configureByText(PlainTextFileType.INSTANCE, "foo");
     EditorColorsScheme scheme = new EditorColorsSchemeImpl(new DefaultColorsScheme()){{initFonts();}};
     scheme.setAttributes(HighlighterColors.TEXT, new TextAttributes(Color.black, Color.white, null, null, Font.PLAIN));
@@ -76,8 +76,7 @@ public class DocumentMarkupModelTest extends LightPlatformCodeInsightFixtureTest
         document.deleteString(document.getLineStartOffset(1), document.getTextLength());
       }
     }.execute();
-    assertTrue(highlighter.isValid());
-    assertEquals(6, highlighter.getStartOffset());
+    assertFalse(highlighter.isValid());
   }
 
   public static class TestAnnotator implements Annotator {

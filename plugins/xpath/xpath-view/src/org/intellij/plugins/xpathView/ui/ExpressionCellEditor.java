@@ -18,6 +18,7 @@ package org.intellij.plugins.xpathView.ui;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.EditorTextField;
 
@@ -51,7 +52,9 @@ public class ExpressionCellEditor extends AbstractCellEditor implements TableCel
                 Runnable runnable = () -> {
                     final Editor editor = getEditor();
                     if (editor != null) {
-                        editor.getContentComponent().requestFocus();
+                      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+                        IdeFocusManager.getGlobalInstance().requestFocus(editor.getContentComponent(), true);
+                      });
                     }
                 };
                 SwingUtilities.invokeLater(runnable);

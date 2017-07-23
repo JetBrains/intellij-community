@@ -1,0 +1,15 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" url="https://confluence.jetbrains.com/display/PYH/">
+  <!-- Components and extensions declared in this file work ONLY in the Python plugin for minor IDEs -->
+
+  <xi:include href="/META-INF/python-community-configure-common.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectConfigurable groupId="build" groupWeight="118"
+                         id="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+                         displayName="Python Interpreter"
+                         instance="com.jetbrains.python.minor.sdk.PyPluginSdkModuleConfigurable"/>
+
+    <facetType implementation="com.jetbrains.python.minor.facet.PythonFacetType"/>
+  </extensions>
+
+</idea-plugin>

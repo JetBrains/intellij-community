@@ -17,9 +17,8 @@ package com.theoryinpractice.testng.model;
 
 import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.ide.util.ClassFilter;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.theoryinpractice.testng.util.TestNGUtil;
@@ -38,13 +37,10 @@ public class TestListenerFilter implements ClassFilter.ClassFilterWithScope
   }
 
   public boolean isAccepted(final PsiClass psiClass) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        if (!ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(psiClass)) return false;
+    return ReadAction.compute(() -> {
+      if (!ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(psiClass)) return false;
 
-        return TestNGUtil.inheritsITestListener(psiClass);
-      }
+      return TestNGUtil.inheritsITestListener(psiClass);
     });
   }
 

@@ -24,7 +24,7 @@ import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.catchAndLog
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -47,7 +47,8 @@ import io.netty.handler.codec.http.cookie.ServerCookieDecoder
 import io.netty.handler.codec.http.cookie.ServerCookieEncoder
 import org.jetbrains.ide.BuiltInServerManagerImpl
 import org.jetbrains.ide.HttpRequestHandler
-import org.jetbrains.io.*
+import org.jetbrains.io.orInSafeMode
+import org.jetbrains.io.send
 import java.awt.datatransfer.StringSelection
 import java.io.IOException
 import java.math.BigInteger
@@ -95,10 +96,16 @@ class BuiltInWebServer : HttpRequestHandler() {
       if (urlDecoder.path().length < 2) {
         return false
       }
+      
       projectName = null
     }
     else {
-      projectName = host
+      if (host.endsWith(".localhost")) {
+        projectName = host.substring(0, host.lastIndexOf('.'))
+      }
+      else {
+        projectName = host
+      }
     }
     return doProcess(urlDecoder, request, context, projectName)
   }
@@ -228,7 +235,7 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
   }
 
   for (pathHandler in WebServerPathHandler.EP_NAME.extensions) {
-    LOG.catchAndLog {
+    LOG.runAndLogException {
       if (pathHandler.process(path, project, request, context, projectName, decodedPath, isCustomHost)) {
         return true
       }
@@ -237,7 +244,7 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
   return false
 }
 
-internal fun HttpRequest.isSignedRequest(): Boolean {
+fun HttpRequest.isSignedRequest(): Boolean {
   if (BuiltInServerOptions.getInstance().allowUnsignedRequests) {
     return true
   }
@@ -247,12 +254,11 @@ internal fun HttpRequest.isSignedRequest(): Boolean {
       ?: QueryStringDecoder(uri()).parameters().get(TOKEN_PARAM_NAME)?.firstOrNull()
       ?: referrer?.let { QueryStringDecoder(it).parameters().get(TOKEN_PARAM_NAME)?.firstOrNull() }
 
-  // we don't invalidate token — allow to make subsequent requests using it (it is required for our javadoc DocumentationComponent)
+  // we don't invalidate token - allow to make subsequent requests using it (it is required for our javadoc DocumentationComponent)
   return token != null && tokens.getIfPresent(token) != null
 }
 
-@JvmOverloads
-internal fun validateToken(request: HttpRequest, channel: Channel, isSignedRequest: Boolean = request.isSignedRequest()): HttpHeaders? {
+fun validateToken(request: HttpRequest, channel: Channel, isSignedRequest: Boolean): HttpHeaders? {
   if (BuiltInServerOptions.getInstance().allowUnsignedRequests) {
     return EmptyHttpHeaders.INSTANCE
   }

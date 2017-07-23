@@ -29,7 +29,6 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.refactoring.NamesValidator;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -87,7 +86,6 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     DumbService.getInstance(project).setAlternativeResolveEnabled(true);
     try {
@@ -137,9 +135,8 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
   private static boolean startFindUsages(@NotNull Editor editor, PsiElement element) {
     if (element != null) {
-      ShowUsagesAction showUsages = (ShowUsagesAction)ActionManager.getInstance().getAction(ShowUsagesAction.ID);
       RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
-      showUsages.startFindUsages(element, popupPosition, editor, ShowUsagesAction.USAGES_PAGE_SIZE);
+      new ShowUsagesAction().startFindUsages(element, popupPosition, editor, ShowUsagesAction.getUsagesPageSize());
       return true;
     }
     return false;

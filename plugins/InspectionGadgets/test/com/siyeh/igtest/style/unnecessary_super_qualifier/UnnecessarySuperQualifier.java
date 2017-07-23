@@ -20,7 +20,7 @@ public class UnnecessarySuperQualifier {
 
     private static class Up extends Base<String> {
         void foo() {
-            <warning descr="Qualifier 'super' is unnecessary in this context">super</warning>.test("asfd");
+            super.test("asfd");
             System.out.println(<warning descr="Qualifier 'super' is unnecessary in this context">super</warning>.field);
         }
     }
@@ -79,5 +79,35 @@ public class UnnecessarySuperQualifier {
             <warning descr="Qualifier 'super' is unnecessary in this context">super</warning>.a();
             return String.valueOf(<warning descr="Qualifier 'super' is unnecessary in this context">super</warning>.f);
         }
+    }
+}
+class BugSuper {
+    public void close() {
+        System.out.println("BugSuper.close()");
+    }
+    public static void main(String[] arg) {
+        try {
+            BugSuper bug = new Next2();
+            bug.close();
+        } catch(Throwable t) {
+            System.out.println("ERROR: " + t);
+            t.printStackTrace();
+        }
+    }
+}
+
+class Next1 extends  BugSuper {
+    public void closeall() {
+        System.out.println("Next1.closeall()");
+        // IDEA Intellij is suggesting: Remove unnecessary "super" qualifier.
+        // Try to remove yourself :-)
+        super.close();
+    }
+}
+
+class Next2 extends Next1 {
+    public void close() {
+        System.out.println("Next2.close()");
+        closeall();
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import java.util.Set;
  * @author peter
  */
 public class AnnotationTargetUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.AnnotationUtil");
+  private static final Logger LOG = Logger.getInstance(AnnotationTargetUtil.class);
 
   public static final Set<TargetType> DEFAULT_TARGETS = ContainerUtil.immutableSet(
     TargetType.PACKAGE, TargetType.TYPE, TargetType.ANNOTATION_TYPE, TargetType.FIELD, TargetType.METHOD, TargetType.CONSTRUCTOR,
@@ -45,6 +45,7 @@ public class AnnotationTargetUtil {
   private static final TargetType[] FIELD_TARGETS = {TargetType.FIELD, TargetType.TYPE_USE};
   private static final TargetType[] PARAMETER_TARGETS = {TargetType.PARAMETER, TargetType.TYPE_USE};
   private static final TargetType[] LOCAL_VARIABLE_TARGETS = {TargetType.LOCAL_VARIABLE, TargetType.TYPE_USE};
+  private static final TargetType[] MODULE_TARGETS = {TargetType.MODULE};
 
   @NotNull
   public static TargetType[] getTargetsForLocation(@Nullable PsiAnnotationOwner owner) {
@@ -94,11 +95,11 @@ public class AnnotationTargetUtil {
         if (scope instanceof PsiForeachStatement) {
           return LOCAL_VARIABLE_TARGETS;
         }
-        if (scope instanceof PsiParameterList && scope.getParent() instanceof PsiLambdaExpression && 
+        if (scope instanceof PsiParameterList && scope.getParent() instanceof PsiLambdaExpression &&
             ((PsiParameter)element).getTypeElement() == null) {
           return TargetType.EMPTY_ARRAY;
         }
-        
+
         return PARAMETER_TARGETS;
       }
       if (element instanceof PsiLocalVariable) {
@@ -106,6 +107,9 @@ public class AnnotationTargetUtil {
       }
       if (element instanceof PsiReceiverParameter) {
         return TYPE_USE_TARGETS;
+      }
+      if (element instanceof PsiJavaModule) {
+        return MODULE_TARGETS;
       }
     }
 
@@ -220,6 +224,9 @@ public class AnnotationTargetUtil {
     PsiAnnotation target = modifierList.findAnnotation(CommonClassNames.JAVA_LANG_ANNOTATION_TARGET);
     if (target == null) return DEFAULT_TARGETS;  // if omitted it is applicable to all but Java 8 TYPE_USE/TYPE_PARAMETERS targets
 
-    return extractRequiredAnnotationTargets(target.findAttributeValue(null));
+    PsiNameValuePair attribute = AnnotationUtil.findDeclaredAttribute(target, null);
+    if (attribute == null) return null;
+
+    return extractRequiredAnnotationTargets(attribute.getDetachedValue());
   }
 }

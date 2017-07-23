@@ -91,9 +91,9 @@ public final class PyTestSdkTools {
    * @throws InvalidSdkException bas sdk
    * @throws IOException         failed to read eggs
    */
-  private static void generateTempSkeletonsOrPackages(@NotNull final Sdk sdk,
-                                                      final boolean addSkeletons,
-                                                      @Nullable final Module module)
+  public static void generateTempSkeletonsOrPackages(@NotNull final Sdk sdk,
+                                                     final boolean addSkeletons,
+                                                     @Nullable final Module module)
     throws InvalidSdkException, IOException {
     Project project = null;
 
@@ -109,7 +109,6 @@ public final class PyTestSdkTools {
 
 
     final SdkModificator modificator = sdk.getSdkModificator();
-    modificator.removeRoots(OrderRootType.CLASSES);
 
     modificator.setSdkAdditionalData(new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(sdk)));
 

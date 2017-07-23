@@ -18,6 +18,7 @@ package git4idea.util;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
@@ -29,7 +30,6 @@ import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import git4idea.DialogManager;
@@ -45,6 +45,8 @@ import java.util.Collection;
 import java.util.List;
 
 public class GitUntrackedFilesHelper {
+
+  private static final Logger LOG = Logger.getInstance(GitUntrackedFilesHelper.class);
 
   private GitUntrackedFilesHelper() {
   }
@@ -64,12 +66,8 @@ public class GitUntrackedFilesHelper {
     final String notificationDesc = description == null ? createUntrackedFilesOverwrittenDescription(operation, true) : description;
 
     final Collection<String> absolutePaths = GitUtil.toAbsolute(root, relativePaths);
-    final List<VirtualFile> untrackedFiles = ContainerUtil.mapNotNull(absolutePaths, new Function<String, VirtualFile>() {
-      @Override
-      public VirtualFile fun(String absolutePath) {
-        return GitUtil.findRefreshFileOrLog(absolutePath);
-      }
-    });
+    final List<VirtualFile> untrackedFiles = ContainerUtil.mapNotNull(absolutePaths,
+                                                                      absolutePath -> GitUtil.findRefreshFileOrLog(absolutePath));
 
     VcsNotifier.getInstance(project).notifyError(notificationTitle, notificationDesc, new NotificationListener() {
       @Override
@@ -120,32 +118,28 @@ public class GitUntrackedFilesHelper {
                                                              @NotNull final String rollbackProposal,
                                                              @NotNull VirtualFile root,
                                                              @NotNull final Collection<String> relativePaths) {
-    final Collection<String> absolutePaths = GitUtil.toAbsolute(root, relativePaths);
-    final List<VirtualFile> untrackedFiles = ContainerUtil.mapNotNull(absolutePaths, new Function<String, VirtualFile>() {
-      @Override
-      public VirtualFile fun(String absolutePath) {
-        return GitUtil.findRefreshFileOrLog(absolutePath);
-      }
-    });
+    Collection<String> absolutePaths = GitUtil.toAbsolute(root, relativePaths);
+    List<VirtualFile> untrackedFiles = ContainerUtil.mapNotNull(absolutePaths,
+                                                                      absolutePath -> GitUtil.findRefreshFileOrLog(absolutePath));
 
-    final Ref<Boolean> rollback = Ref.create();
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        JComponent filesBrowser;
-        if (untrackedFiles.isEmpty()) {
-          filesBrowser = new GitSimplePathsBrowser(project, absolutePaths);
-        }
-        else {
-          filesBrowser = ScrollPaneFactory.createScrollPane(new SelectFilesDialog.VirtualFileList(project, untrackedFiles, false, false));
-        }
-        String title = "Could not " + StringUtil.capitalize(operationName);
-        String description = StringUtil.stripHtml(createUntrackedFilesOverwrittenDescription(operationName, false), true);
-        DialogWrapper dialog = new UntrackedFilesRollBackDialog(project, filesBrowser, description, rollbackProposal);
-        dialog.setTitle(title);
-        DialogManager.show(dialog);
-        rollback.set(dialog.isOK());
+    Ref<Boolean> rollback = Ref.create();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      JComponent filesBrowser;
+      if (untrackedFiles.isEmpty()) {
+        LOG.debug("Couldn't find the untracked files, displaying simplified dialog.");
+        filesBrowser = new GitSimplePathsBrowser(project, absolutePaths);
       }
+      else {
+        long validFiles = untrackedFiles.stream().filter(VirtualFile::isValid).count();
+        LOG.debug(String.format("Untracked files: [%s]. Valid: %d (of %d)", untrackedFiles, validFiles, untrackedFiles.size()));
+        filesBrowser = ScrollPaneFactory.createScrollPane(new SelectFilesDialog.VirtualFileList(project, untrackedFiles, false, true));
+      }
+      String title = "Could not " + StringUtil.capitalize(operationName);
+      String description = StringUtil.stripHtml(createUntrackedFilesOverwrittenDescription(operationName, false), true);
+      DialogWrapper dialog = new UntrackedFilesRollBackDialog(project, filesBrowser, description, rollbackProposal);
+      dialog.setTitle(title);
+      DialogManager.show(dialog);
+      rollback.set(dialog.isOK());
     });
     return rollback.get();
   }

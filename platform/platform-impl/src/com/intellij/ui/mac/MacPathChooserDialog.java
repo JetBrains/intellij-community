@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -139,7 +140,11 @@ public class MacPathChooserDialog implements PathChooserDialog, FileChooserDialo
       if (appStarted) {
         commandProcessor.leaveModal();
         LaterInvocator.leaveModal(myFileDialog);
-        if (parent != null) parent.requestFocus();
+        if (parent != null) {
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(parent, true);
+          });
+        }
       }
     }
 
@@ -167,10 +172,11 @@ public class MacPathChooserDialog implements PathChooserDialog, FileChooserDialo
 
       if (!ArrayUtil.isEmpty(files)) {
         callback.consume(virtualFileList);
+        return;
       }
-      else if (callback instanceof FileChooser.FileChooserConsumer) {
-        ((FileChooser.FileChooserConsumer)callback).cancelled();
-      }
+    }
+    if (callback instanceof FileChooser.FileChooserConsumer) {
+      ((FileChooser.FileChooserConsumer)callback).cancelled();
     }
   }
 

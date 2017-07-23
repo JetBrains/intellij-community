@@ -25,7 +25,6 @@ import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.testFramework.LightVirtualFile;
 import com.jetbrains.python.psi.PyExpressionCodeFragment;
-import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,12 +63,6 @@ public class PyExpressionCodeFragmentImpl extends PyFileImpl implements PyExpres
   public FileViewProvider getViewProvider() {
     if(myViewProvider != null) return myViewProvider;
     return super.getViewProvider();
-  }
-
-  public boolean isValid() {
-    if (!super.isValid()) return false;
-    if (myContext != null && !myContext.isValid()) return false;
-    return true;
   }
 
   public boolean isPhysical() {

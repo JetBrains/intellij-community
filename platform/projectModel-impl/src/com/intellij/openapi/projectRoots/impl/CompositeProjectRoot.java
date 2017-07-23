@@ -111,9 +111,7 @@ class CompositeProjectRoot implements ProjectRoot {
   public void writeExternal(Element element) {
     for (ProjectRoot root : myRoots) {
       Element e = ProjectRootUtil.write(root);
-      if (e != null) {
-        element.addContent(e);
-      }
+      element.addContent(e);
     }
   }
 

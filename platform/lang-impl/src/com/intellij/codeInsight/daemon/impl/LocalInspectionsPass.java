@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,14 +49,15 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -225,7 +226,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     visitRestElementsAndCleanup(progress, outside, session, init, elementDialectIds);
     inspectInjectedPsi(outside, isOnTheFly, progress, iManager, false, toolWrappers);
 
-    progress.checkCanceled();
+    ProgressManager.checkCanceled();
 
     myInfos = new ArrayList<>();
     addHighlightsFromResults(myInfos, progress);
@@ -263,7 +264,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                     @NotNull final LocalInspectionToolSession session,
                                     @NotNull List<InspectionContext> init,
                                     @NotNull Set<String> elementDialectIds) {
-    indicator.checkCanceled();
+    ProgressManager.checkCanceled();
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
     final LocalInspectionTool tool = toolWrapper.getTool();
@@ -299,7 +300,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                            @NotNull final Set<String> elementDialectIds) {
     Processor<InspectionContext> processor =
       context -> {
-        indicator.checkCanceled();
+        ProgressManager.checkCanceled();
         ApplicationManager.getApplication().assertReadAccessAllowed();
         InspectionEngine.acceptElements(elements, context.visitor, elementDialectIds, context.dialectIdsSpecifiedForTool);
         advanceProgress(1);
@@ -338,12 +339,20 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }
 
+  private static final TextAttributes NONEMPTY_TEXT_ATTRIBUTES = new TextAttributes() {
+    @Override
+    public boolean isEmpty() {
+      return false;
+    }
+  };
+
   @Nullable
   private HighlightInfo highlightInfoFromDescriptor(@NotNull ProblemDescriptor problemDescriptor,
                                                     @NotNull HighlightInfoType highlightInfoType,
                                                     @NotNull String message,
                                                     String toolTip,
-                                                    PsiElement psiElement) {
+                                                    PsiElement psiElement,
+                                                    @NotNull List<IntentionAction> quickFixes) {
     TextRange textRange = ((ProblemDescriptorBase)problemDescriptor).getTextRange();
     if (textRange == null || psiElement == null) return null;
     boolean isFileLevel = psiElement instanceof PsiFile && textRange.equals(psiElement.getTextRange());
@@ -355,6 +364,11 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                               .description(message)
                               .severity(severity);
     if (toolTip != null) b.escapedToolTip(toolTip);
+    if (HighlightSeverity.INFORMATION.equals(severity) && attributes == null && toolTip == null && !quickFixes.isEmpty()) {
+      // Hack to avoid filtering this info out in HighlightInfoFilterImpl even though its attributes are empty.
+      // But it has quick fixes so it needs to be created.
+      attributes = NONEMPTY_TEXT_ATTRIBUTES;
+    }
     if (attributes != null) b.textAttributes(attributes);
     if (problemDescriptor.isAfterEndOfLine()) b.endOfLine();
     if (isFileLevel) b.fileLevelAnnotation();
@@ -366,7 +380,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private final Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<>();
   private final TransferToEDTQueue<Trinity<ProblemDescriptor, LocalInspectionToolWrapper,ProgressIndicator>> myTransferToEDTQueue
     = new TransferToEDTQueue<>("Apply inspection results", new Processor<Trinity<ProblemDescriptor, LocalInspectionToolWrapper, ProgressIndicator>>() {
-    private final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
     private final InjectedLanguageManager ilManager = InjectedLanguageManager.getInstance(myProject);
     private final List<HighlightInfo> infos = new ArrayList<>(2);
     private final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
@@ -385,7 +398,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       PsiFile file = psiElement.getContainingFile();
       Document thisDocument = documentManager.getDocument(file);
 
-      HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), file).getSeverity();
+      HighlightSeverity severity = myProfileWrapper.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), file).getSeverity();
 
       infos.clear();
       createHighlightsForDescriptor(infos, emptyActionRegistered, ilManager, file, thisDocument, tool, severity, descriptor, psiElement);
@@ -440,24 +453,23 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   private void addHighlightsFromResults(@NotNull List<HighlightInfo> outInfos, @NotNull ProgressIndicator indicator) {
-    InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     InjectedLanguageManager ilManager = InjectedLanguageManager.getInstance(myProject);
     Set<Pair<TextRange, String>> emptyActionRegistered = new THashSet<>();
 
     for (Map.Entry<PsiFile, List<InspectionResult>> entry : result.entrySet()) {
-      indicator.checkCanceled();
+      ProgressManager.checkCanceled();
       PsiFile file = entry.getKey();
       Document documentRange = documentManager.getDocument(file);
       if (documentRange == null) continue;
       List<InspectionResult> resultList = entry.getValue();
       synchronized (resultList) {
         for (InspectionResult inspectionResult : resultList) {
-          indicator.checkCanceled();
+          ProgressManager.checkCanceled();
           LocalInspectionToolWrapper tool = inspectionResult.tool;
-          HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), file).getSeverity();
+          HighlightSeverity severity = myProfileWrapper.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), file).getSeverity();
           for (ProblemDescriptor descriptor : inspectionResult.foundProblems) {
-            indicator.checkCanceled();
+            ProgressManager.checkCanceled();
             PsiElement element = descriptor.getPsiElement();
             if (element != null) {
               createHighlightsForDescriptor(outInfos, emptyActionRegistered, ilManager, file, documentRange, tool, severity, descriptor, element);
@@ -494,7 +506,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
     boolean isInjected = file != getFile();
     if (!isInjected) {
-
       outInfos.add(info);
       return;
     }
@@ -517,7 +528,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       HighlightInfo patched = builder.createUnconditionally();
       if (patched.startOffset != patched.endOffset || info.startOffset == info.endOffset) {
         patched.setFromInjection(true);
-        registerQuickFixes(toolWrapper, descriptor, patched, emptyActionRegistered);
+        registerQuickFixes(toolWrapper, patched, getQuickFixes(toolWrapper, descriptor, emptyActionRegistered));
         outInfos.add(patched);
       }
     }
@@ -543,56 +554,76 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     HighlightInfoType type = new HighlightInfoType.HighlightInfoTypeImpl(level.getSeverity(element), level.getAttributesKey());
     final String plainMessage = message.startsWith("<html>") ? StringUtil.unescapeXml(XmlStringUtil.stripHtml(message).replaceAll("<[^>]*>", "")) : message;
-    @NonNls final String link = " <a "
-                                +"href=\"#inspection/" + tool.getShortName() + "\""
-                                + (UIUtil.isUnderDarcula() ? " color=\"7AB4C9\" " : "")
-                                +">" + DaemonBundle.message("inspection.extended.description")
-                                +"</a> " + myShortcutText;
+    @NonNls String link = "";
+    if (showToolDescription(tool)) {
+      link = " <a "
+             + "href=\"#inspection/" + tool.getShortName() + "\""
+             + (UIUtil.isUnderDarcula() ? " color=\"7AB4C9\" " : "")
+             + ">" + DaemonBundle.message("inspection.extended.description")
+             + "</a> " + myShortcutText;
+    }
 
     @NonNls String tooltip = null;
     if (descriptor.showTooltip()) {
       tooltip = XmlStringUtil.wrapInHtml((message.startsWith("<html>") ? XmlStringUtil.stripHtml(message): XmlStringUtil.escapeString(message)) + link);
     }
-    HighlightInfo highlightInfo = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip,element);
-    if (highlightInfo != null) {
-      registerQuickFixes(tool, descriptor, highlightInfo, emptyActionRegistered);
+    List<IntentionAction> quickFixes = getQuickFixes(tool, descriptor, emptyActionRegistered);
+    HighlightInfo info = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip, element, quickFixes);
+    if (info != null) {
+      registerQuickFixes(tool, info, quickFixes);
     }
-    return highlightInfo;
+    return info;
+  }
+
+  private static boolean showToolDescription(@NotNull LocalInspectionToolWrapper tool) {
+    return tool.getStaticDescription() == null || !tool.getStaticDescription().isEmpty();
   }
 
   private static void registerQuickFixes(@NotNull LocalInspectionToolWrapper tool,
-                                         @NotNull ProblemDescriptor descriptor,
                                          @NotNull HighlightInfo highlightInfo,
-                                         @NotNull Set<Pair<TextRange,String>> emptyActionRegistered) {
+                                         @NotNull List<IntentionAction> quickFixes) {
     final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
+    for (IntentionAction quickFix : quickFixes) {
+      QuickFixAction.registerQuickFixAction(highlightInfo, quickFix, key);
+    }
+  }
+
+  private static List<IntentionAction> getQuickFixes(@NotNull LocalInspectionToolWrapper tool,
+                                                     @NotNull ProblemDescriptor descriptor,
+                                                     @NotNull Set<Pair<TextRange, String>> emptyActionRegistered) {
+    List<IntentionAction> result = new SmartList<>();
     boolean needEmptyAction = true;
     final QuickFix[] fixes = descriptor.getFixes();
-    if (fixes != null && fixes.length > 0) {
+    if (fixes != null && fixes.length != 0) {
       for (int k = 0; k < fixes.length; k++) {
-        if (fixes[k] != null) { // prevent null fixes from var args
-          QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixWrapper.wrap(descriptor, k), key);
-          needEmptyAction = false;
-        }
+        QuickFix fix = fixes[k];
+        if (fix == null) throw new IllegalStateException("Inspection " + tool + " returns null quick fix in its descriptor: " + descriptor + "; array: " +
+                                                         Arrays.toString(fixes));
+        result.add(QuickFixWrapper.wrap(descriptor, k));
+        needEmptyAction = false;
       }
     }
     HintAction hintAction = descriptor instanceof ProblemDescriptorImpl ? ((ProblemDescriptorImpl)descriptor).getHintAction() : null;
     if (hintAction != null) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, hintAction, key);
+      result.add(hintAction);
       needEmptyAction = false;
     }
     if (((ProblemDescriptorBase)descriptor).getEnforcedTextAttributes() != null) {
       needEmptyAction = false;
     }
-    if (needEmptyAction && emptyActionRegistered.add(Pair.create(highlightInfo.getFixTextRange(), tool.getShortName()))) {
+    if (needEmptyAction && emptyActionRegistered.add(Pair.create(((ProblemDescriptorBase)descriptor).getTextRange(), tool.getShortName()))) {
       IntentionAction emptyIntentionAction = new EmptyIntentionAction(tool.getDisplayName());
-      QuickFixAction.registerQuickFixAction(highlightInfo, emptyIntentionAction, key);
+      result.add(emptyIntentionAction);
     }
+    return result;
   }
 
-  @NotNull
-  private static List<PsiElement> getElementsFrom(@NotNull PsiFile file) {
+  private static void getElementsAndDialectsFrom(@NotNull PsiFile file,
+                                                 @NotNull List<PsiElement> outElements,
+                                                 @NotNull Set<String> outDialects) {
     final FileViewProvider viewProvider = file.getViewProvider();
     final Set<PsiElement> result = new LinkedHashSet<>();
+    Set<Language> processedLanguages = new SmartHashSet<>();
     final PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
       @Override public void visitElement(PsiElement element) {
         ProgressManager.checkCanceled();
@@ -605,7 +636,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
           while (child != null) {
             child.accept(this);
             result.add(child);
-
+            appendDialects(child, processedLanguages, outDialects);
             child = child.getNextSibling();
           }
         }
@@ -618,10 +649,20 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       }
       psiRoot.accept(visitor);
       result.add(psiRoot);
+      appendDialects(psiRoot, processedLanguages, outDialects);
     }
-    return new ArrayList<>(result);
+    outElements.addAll(result);
   }
 
+  static void appendDialects(PsiElement element, Set<Language> outProcessedLanguages, Set<String> outDialectIds) {
+    Language language = element.getLanguage();
+    outDialectIds.add(language.getID());
+    if (outProcessedLanguages.add(language)) {
+      for (Language dialect : language.getDialects()) {
+        outDialectIds.add(dialect.getID());
+      }
+    }
+  }
 
   @NotNull
   List<LocalInspectionToolWrapper> getInspectionTools(@NotNull InspectionProfileWrapper profile) {
@@ -662,14 +703,15 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                     @NotNull List<LocalInspectionToolWrapper> wrappers) {
     final PsiElement host = InjectedLanguageManager.getInstance(injectedPsi.getProject()).getInjectionHost(injectedPsi);
 
-    final List<PsiElement> elements = getElementsFrom(injectedPsi);
+    List<PsiElement> elements = new ArrayList<>();
+    Set<String> elementDialectIds = new SmartHashSet<>();
+    getElementsAndDialectsFrom(injectedPsi, elements, elementDialectIds);
     if (elements.isEmpty()) {
       return;
     }
-    Set<String> elementDialectIds = InspectionEngine.calcElementDialectIds(elements);
     Map<LocalInspectionToolWrapper, Set<String>> toolToSpecifiedLanguageIds = InspectionEngine.getToolsToSpecifiedLanguages(wrappers);
-    for (final Map.Entry<LocalInspectionToolWrapper, Set<String>> pair : toolToSpecifiedLanguageIds.entrySet()) {
-      indicator.checkCanceled();
+    for (Map.Entry<LocalInspectionToolWrapper, Set<String>> pair : toolToSpecifiedLanguageIds.entrySet()) {
+      ProgressManager.checkCanceled();
       final LocalInspectionToolWrapper wrapper = pair.getKey();
       final LocalInspectionTool tool = wrapper.getTool();
       if (host != null && myIgnoreSuppressed && SuppressionUtil.inspectionResultSuppressed(host, tool)) {

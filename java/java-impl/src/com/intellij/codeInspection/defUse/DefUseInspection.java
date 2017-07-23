@@ -14,18 +14,11 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 24, 2001
- * Time: 2:46:32 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.defUse;
 
-import com.intellij.codeInspection.*;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.RemoveAssignmentFix;
+import com.intellij.codeInspection.RemoveInitializerFix;
 
 public class DefUseInspection extends DefUseInspectionBase {
 

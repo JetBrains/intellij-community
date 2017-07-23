@@ -15,35 +15,26 @@
  */
 package com.intellij.ui.plaf.gtk;
 
-import com.intellij.Patches;
+import sun.swing.plaf.synth.SynthIcon;
 
 import javax.swing.*;
 import javax.swing.plaf.synth.SynthContext;
 import javax.swing.plaf.synth.SynthUI;
 import java.awt.*;
-import java.lang.reflect.Method;
 
-public class IconWrapper implements Icon {
+class IconWrapper implements Icon {
   private final Icon myIcon;
   private final SynthUI myOriginalUI;
 
-  public IconWrapper(final Icon icon, final SynthUI originalUI) {
+  IconWrapper(final Icon icon, final SynthUI originalUI) {
     myIcon = icon;
     myOriginalUI = originalUI;
   }
 
   @Override
   public void paintIcon(final Component c, final Graphics g, final int x, final int y) {
-    if (Patches.USE_REFLECTION_TO_ACCESS_JDK7) {
-      try {
-        Method paintIcon = myIcon.getClass().getMethod("paintIcon", SynthContext.class, Graphics.class, int.class, int.class, int.class, int.class);
-        paintIcon.setAccessible(true);
-        paintIcon.invoke(myIcon, myOriginalUI.getContext((JComponent)c), g, x, y, getIconWidth(), getIconHeight());
-        return;
-      }
-      catch (Exception ignore) { }
-    }
-    myIcon.paintIcon(c, g, x, y);
+    SynthContext context = myOriginalUI.getContext((JComponent)c);
+    ((SynthIcon)myIcon).paintIcon(context, g, x, y, getIconWidth(), getIconHeight());
   }
 
   @Override

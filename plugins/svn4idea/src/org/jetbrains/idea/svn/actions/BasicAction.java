@@ -19,219 +19,126 @@ package org.jetbrains.idea.svn.actions;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 
-import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
+
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
+import static com.intellij.util.ArrayUtil.isEmpty;
 
 public abstract class BasicAction extends AnAction implements DumbAware {
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.actions.BasicAction");
 
-  public void actionPerformed(AnActionEvent event) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: actionPerformed(id='" + ActionManager.getInstance().getId(this) + "')");
-    }
-    final DataContext dataContext = event.getDataContext();
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    if (isEmpty(files)) return;
 
-    final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
-    if (LOG.isDebugEnabled() && files != null) {
-      LOG.debug("files='" + Arrays.asList(files) + "'");
-    }
-    if ((files == null || files.length == 0) && needsFiles()) return;
+    SvnVcs vcs = SvnVcs.getInstance(project);
+    if (!ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(vcs, files)) return;
 
-    final SvnVcs vcs = SvnVcs.getInstance(project);
-    if (!ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(vcs, files)) {
-      return;
-    }
+    project.save();
 
-    if (project != null) {
-      project.save();
-    }
-
-    final String actionName = getActionName(vcs);
-
-    final AbstractVcsHelper helper = AbstractVcsHelper.getInstance(project);
-    LocalHistoryAction action = LocalHistoryAction.NULL;
-    if (witeLocalHistory() && actionName != null) {
-      action = LocalHistory.getInstance().startAction(actionName);
-    }
+    String actionName = getActionName();
+    LocalHistoryAction action = LocalHistory.getInstance().startAction(actionName);
+    AbstractVcsHelper helper = AbstractVcsHelper.getInstance(project);
 
     try {
-      List<VcsException> exceptions = helper.runTransactionRunnable(vcs, new TransactionRunnable() {
-        public void run(List<VcsException> exceptions) {
-          VirtualFile badFile = null;
-          try {
-            if (isBatchAction()) {
-              batchExecute(project, vcs, files, dataContext, helper);
-            }
-            else {
-              for (int i = 0; files != null && i < files.length; i++) {
-                VirtualFile file = files[i];
-                badFile = file;
-                execute(project, vcs, file, dataContext, helper);
-              }
+      List<VcsException> exceptions = helper.runTransactionRunnable(vcs, exceptionList -> {
+        VirtualFile badFile = null;
+        try {
+          if (isBatchAction()) {
+            batchExecute(vcs, files, e.getDataContext());
+          }
+          else {
+            for (VirtualFile file : files) {
+              badFile = file;
+              execute(vcs, file, e.getDataContext());
             }
           }
-          catch (VcsException ex) {
-            ex.setVirtualFile(badFile);
-            exceptions.add(ex);
-          }
+        }
+        catch (VcsException ex) {
+          ex.setVirtualFile(badFile);
+          exceptionList.add(ex);
         }
       }, null);
 
-      helper.showErrors(exceptions, actionName != null ? actionName : vcs.getName());
+      helper.showErrors(exceptions, actionName);
     }
     finally {
       action.finish();
     }
   }
 
-  protected boolean witeLocalHistory() {
-    return true;
-  }
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    SvnVcs vcs = project != null ? SvnVcs.getInstance(project) : null;
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
+    boolean visible = project != null;
 
-  public void update(AnActionEvent e) {
-    //LOG.debug("enter: update class:"+getClass().getName());
-    super.update(e);
-
-    Presentation presentation = e.getPresentation();
-    final DataContext dataContext = e.getDataContext();
-
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project == null) {
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
-      return;
-    }
-
-
-    if (!needsFiles()) {
-      presentation.setEnabled(true);
-      presentation.setVisible(true);
-      return;
-    }
-
-    VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
-    if (files == null || files.length == 0) {
-      presentation.setEnabled(false);
-      presentation.setVisible(true);
-      return;
-    }
-
-    SvnVcs vcs = SvnVcs.getInstance(project);
-    if (!ProjectLevelVcsManager.getInstance(project).checkAllFilesAreUnder(vcs, files)) {
-      presentation.setEnabled(false);
-      presentation.setVisible(true);
-      return;
-    }
-
-    boolean enabled = true;
-    if (!needsAllFiles()) {
-      enabled = false;
-    }
-
-    LOG.debug(getClass().getName() + (enabled ? " needsAllFiles" : " needsSingleFile"));
-    for (int i = 0; i < files.length; i++) {
-      VirtualFile file = files[i];
-      boolean fileEnabled = false;
-      try {
-        fileEnabled = isEnabled(project, vcs, file);
-      }
-      catch (Throwable t) {
-        LOG.debug(t);
-
-      }
-      LOG.debug("file:" + file.getPath() + (fileEnabled ? " is enabled" : " is not enabled"));
-      if (needsAllFiles()) {
-        if (!fileEnabled) {
-          LOG.debug("now disabled");
-          enabled = false;
-          break;
-        }
-      }
-      else {
-        if (fileEnabled) {
-          LOG.debug("now enabled");
-          enabled = true;
-        }
-      }
-    }
-
-    presentation.setEnabled(enabled);
-    presentation.setVisible(true);
+    e.getPresentation().setEnabled(visible && vcs != null && !isEmpty(files) && isEnabled(vcs, files));
+    e.getPresentation().setVisible(visible);
   }
 
   protected boolean needsAllFiles() {
-    return needsFiles();
+    return true;
   }
 
-  protected void execute(Project project,
-                       final SvnVcs activeVcs,
-                       final VirtualFile file,
-                       DataContext context,
-                       AbstractVcsHelper helper) throws VcsException {
-    if (file.isDirectory()) {
-      perform(project, activeVcs, file, context);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          file.refresh(false, true);
-        }
-      });
+  protected void execute(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) throws VcsException {
+    perform(vcs, file, context);
 
-      doVcsRefresh(project, file);
-    }
-    else {
-      perform(project, activeVcs, file, context);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        public void run() {
-          file.refresh(false, true);
-        }
-      });
-      doVcsRefresh(project, file);
-    }
+    getApplication().runWriteAction(() -> file.refresh(false, true));
+    doVcsRefresh(vcs, file);
   }
 
-  protected void doVcsRefresh(final Project project, final VirtualFile file) {
-    VcsDirtyScopeManager.getInstance(project).fileDirty(file);
+  protected void doVcsRefresh(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
+    VcsDirtyScopeManager.getInstance(vcs.getProject()).fileDirty(file);
   }
 
-  private void batchExecute(Project project,
-                            final SvnVcs activeVcs,
-                            final VirtualFile[] file,
-                            DataContext context,
-                            AbstractVcsHelper helper) throws VcsException {
-    batchPerform(project, activeVcs, file, context);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        for (int i = 0; file != null && i < file.length; i++) {
-          file[i].refresh(false, true);
-        }
+  private void batchExecute(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) throws VcsException {
+    batchPerform(vcs, files, context);
+
+    getApplication().runWriteAction(() -> {
+      for (VirtualFile file : files) {
+        file.refresh(false, true);
       }
     });
-
-    for (int i = 0; file != null && i < file.length; i++) {
-      doVcsRefresh(project, file[i]);
+    for (VirtualFile file : files) {
+      doVcsRefresh(vcs, file);
     }
   }
 
-  protected abstract String getActionName(AbstractVcs vcs);
+  @NotNull
+  protected abstract String getActionName();
 
-  protected abstract boolean isEnabled(Project project, SvnVcs vcs, VirtualFile file);
+  protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files) {
+    Stream<VirtualFile> fileStream = Stream.of(files);
+    Predicate<VirtualFile> enabledPredicate = file -> isEnabled(vcs, file);
 
-  protected abstract boolean needsFiles();
+    return ProjectLevelVcsManager.getInstance(vcs.getProject()).checkAllFilesAreUnder(vcs, files) &&
+           (needsAllFiles() ? fileStream.allMatch(enabledPredicate) : fileStream.anyMatch(enabledPredicate));
+  }
 
-  protected abstract void perform(Project project, final SvnVcs activeVcs, VirtualFile file, DataContext context) throws VcsException;
+  protected abstract boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file);
 
-  protected abstract void batchPerform(Project project, final SvnVcs activeVcs, VirtualFile[] file, DataContext context) throws VcsException;
+  protected abstract void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) throws VcsException;
+
+  protected abstract void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) throws VcsException;
 
   protected abstract boolean isBatchAction();
 }

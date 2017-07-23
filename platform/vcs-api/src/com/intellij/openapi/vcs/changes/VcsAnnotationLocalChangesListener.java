@@ -18,12 +18,6 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vfs.VirtualFile;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/20/12
- * Time: 3:09 PM
- */
 public interface VcsAnnotationLocalChangesListener {
   // annotations for already committed revisions should not register with this method - they are not subject to refresh
   void registerAnnotation(VirtualFile file, FileAnnotation annotation);

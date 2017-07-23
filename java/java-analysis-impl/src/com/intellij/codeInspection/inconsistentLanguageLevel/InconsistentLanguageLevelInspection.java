@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 03-Nov-2009
- */
 package com.intellij.codeInspection.inconsistentLanguageLevel;
 
 import com.intellij.analysis.AnalysisScope;

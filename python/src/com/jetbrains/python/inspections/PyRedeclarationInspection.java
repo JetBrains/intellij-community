@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -35,6 +34,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +49,7 @@ import java.util.List;
  * @author vlan
  */
 public class PyRedeclarationInspection extends PyInspection {
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
@@ -77,6 +78,7 @@ public class PyRedeclarationInspection extends PyInspection {
 
     @Override
     public void visitPyTargetExpression(final PyTargetExpression node) {
+      if (PyNames.UNDERSCORE.equals(node.getText())) return;
       final ScopeOwner owner = ScopeUtil.getScopeOwner(node);
       if (owner instanceof PyFile || owner instanceof PyClass) {
         processElement(node);
@@ -136,8 +138,11 @@ public class PyRedeclarationInspection extends PyInspection {
                 if (rwInstruction.getAccess().isReadAccess()) {
                   readElementRef.set(originalElement);
                 }
-                if (rwInstruction.getAccess().isWriteAccess()) {
-                  if (originalElement != element) {
+                if (rwInstruction.getAccess().isWriteAccess() && originalElement != element) {
+                  if (PyiUtil.isOverload(originalElement, myTypeEvalContext)) {
+                    return ControlFlowUtil.Operation.NEXT;
+                  }
+                  else {
                     writeElementRef.set(originalElement);
                   }
                 }

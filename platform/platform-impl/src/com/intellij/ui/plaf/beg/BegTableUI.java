@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.plaf.beg;
 
+import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -69,7 +70,9 @@ public class BegTableUI extends BasicTableUI {
         if (cellEditor != null && !cellEditor.stopCellEditing()) {
           return;
         }
-        table.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(table, true);
+        });
         return;
       }
       ListSelectionModel rsm = table.getSelectionModel();
@@ -80,7 +83,9 @@ public class BegTableUI extends BasicTableUI {
       Component editorComp = table.getEditorComponent();
       if (editorComp != null) {
         editorComp.addKeyListener(myAdapter);
-        editorComp.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(editorComp, true);
+        });
       }
     }
   }

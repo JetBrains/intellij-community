@@ -10,7 +10,7 @@
     <orderEntry type="module-library" scope="TEST">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../junit5_rt/lib/junit-jupiter-api-5.0.0-M3.jar!/" />
+          <root url="jar://$MODULE_DIR$/../junit5_rt/lib/junit-jupiter-api-5.0.0-M6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -22,7 +22,8 @@
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module" module-name="execution-impl" scope="TEST" />
     <orderEntry type="module" module-name="junit" scope="TEST" />
-    <orderEntry type="module" module-name="maven" scope="TEST" />
     <orderEntry type="module" module-name="java-tests" scope="TEST" />
+    <orderEntry type="module" module-name="aether-dependency-resolver" scope="TEST" />
+    <orderEntry type="module" module-name="compiler-openapi" scope="TEST" />
   </component>
 </module>

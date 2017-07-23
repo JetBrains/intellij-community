@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-class JDOMElementBinding extends Binding implements MultiNodeBinding {
+class JDOMElementBinding extends NotNullDeserializeBinding implements MultiNodeBinding {
   private final String myTagName;
 
   public JDOMElementBinding(@NotNull MutableAccessor accessor) {
@@ -41,7 +41,7 @@ class JDOMElementBinding extends Binding implements MultiNodeBinding {
   }
 
   @Override
-  public Object serialize(@NotNull Object o, Object context, @NotNull SerializationFilter filter) {
+  public Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
     Object value = myAccessor.read(o);
     if (value == null) {
       return null;
@@ -65,7 +65,7 @@ class JDOMElementBinding extends Binding implements MultiNodeBinding {
 
   @Nullable
   @Override
-  public Object deserializeList(Object context, @NotNull List<Element> elements) {
+  public Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<Element> elements) {
     if (myAccessor.getValueClass().isArray()) {
       myAccessor.set(context, elements.toArray(new Element[elements.size()]));
     }
@@ -81,8 +81,8 @@ class JDOMElementBinding extends Binding implements MultiNodeBinding {
   }
 
   @Override
-  @Nullable
-  public Object deserialize(Object context, @NotNull Element element) {
+  @NotNull
+  public Object deserialize(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull Element element) {
     myAccessor.set(context, element);
     return context;
   }

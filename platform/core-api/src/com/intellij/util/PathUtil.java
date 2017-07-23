@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -32,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public class PathUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.PathUtil");
+
   private PathUtil() { }
 
   @Nullable
@@ -123,6 +126,36 @@ public class PathUtil {
   @Contract("null -> null; !null -> !null")
   public static String toSystemDependentName(@Nullable String path) {
     return path == null ? null : FileUtilRt.toSystemDependentName(path);
+  }
+
+  /**
+   * Ensures that the given argument doesn't contain {@code \} separators.
+   * <p>
+   * The violations are reported via the {@code LOG.error}.
+   * <p>
+   * TODO SystemIndependentInstrumentingBuilder now embeds assertions directly, so we can remove this method.
+   *
+   * @param className     Class name
+   * @param methodName    Method name
+   * @param parameterName Parameter name
+   * @param argument      Path
+   * @see SystemDependent
+   * @see SystemIndependent
+   */
+  @Deprecated
+  public static void assertArgumentIsSystemIndependent(String className, String methodName, String parameterName, String argument) {
+    if (argument != null && argument.contains("\\")) {
+      String message = String.format("Argument for @SystemIndependent parameter '%s' of %s.%s must be system-independent: %s",
+                                     parameterName, className, methodName, argument);
+
+      IllegalArgumentException exception = new IllegalArgumentException(message);
+
+      StackTraceElement[] stackTrace = new StackTraceElement[exception.getStackTrace().length - 1];
+      System.arraycopy(exception.getStackTrace(), 1, stackTrace, 0, stackTrace.length);
+      exception.setStackTrace(stackTrace);
+
+      LOG.error(exception);
+    }
   }
 
   @NotNull

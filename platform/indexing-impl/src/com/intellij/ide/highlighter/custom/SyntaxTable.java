@@ -16,6 +16,7 @@
 package com.intellij.ide.highlighter.custom;
 
 import com.intellij.ide.highlighter.custom.tokens.KeywordParser;
+import com.intellij.reference.SoftReference;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,10 +28,10 @@ import java.util.Set;
  * @version 1.0
  */
 public class SyntaxTable implements Cloneable {
-  private Set<String> myKeywords1;
-  private Set<String> myKeywords2;
-  private Set<String> myKeywords3;
-  private Set<String> myKeywords4;
+  private Set<String> myKeywords1 = new THashSet<>();
+  private Set<String> myKeywords2 = new THashSet<>();
+  private Set<String> myKeywords3 = new THashSet<>();
+  private Set<String> myKeywords4 = new THashSet<>();
 
   private String myLineComment = "";
   public boolean lineCommentOnlyAtStart;
@@ -45,22 +46,16 @@ public class SyntaxTable implements Cloneable {
   private boolean myHasBrackets;
   private boolean myHasParens;
   private boolean myHasStringEscapes;
-  private volatile KeywordParser myKeywordParser;
+  private volatile SoftReference<KeywordParser> myKeywordParser;
 
-  public SyntaxTable() {
-    myKeywords1 = new THashSet<>();
-    myKeywords2 = new THashSet<>();
-    myKeywords3 = new THashSet<>();
-    myKeywords4 = new THashSet<>();
-  }
-
-  KeywordParser getKeywordParser() {
-    KeywordParser parser = myKeywordParser;
+  public KeywordParser getKeywordParser() {
+    KeywordParser parser = SoftReference.dereference(myKeywordParser);
     if (parser == null) {
       synchronized (this) {
-        parser = myKeywordParser;
+        parser = SoftReference.dereference(myKeywordParser);
         if (parser == null) {
-          myKeywordParser = parser = new KeywordParser(Arrays.asList(myKeywords1, myKeywords2, myKeywords3, myKeywords4), myIgnoreCase);
+          myKeywordParser = new SoftReference<>(
+            parser = new KeywordParser(Arrays.asList(myKeywords1, myKeywords2, myKeywords3, myKeywords4), myIgnoreCase));
         }
       }
     }

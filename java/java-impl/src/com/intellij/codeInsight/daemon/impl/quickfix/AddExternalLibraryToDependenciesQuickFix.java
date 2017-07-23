@@ -17,8 +17,10 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
@@ -34,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 class AddExternalLibraryToDependenciesQuickFix extends AddOrderEntryFix {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddExternalLibraryToDependenciesQuickFix");
   private final Module myCurrentModule;
   private final ExternalLibraryDescriptor myLibraryDescriptor;
   private final String myQualifiedClassName;
@@ -74,7 +77,12 @@ class AddExternalLibraryToDependenciesQuickFix extends AddOrderEntryFix {
       .addDependency(myCurrentModule, myLibraryDescriptor, scope)
       .done(aVoid -> new WriteAction() {
         protected void run(@NotNull final Result result) {
-          importClass(myCurrentModule, editor, myReference, myQualifiedClassName);
+          try {
+            importClass(myCurrentModule, editor, myReference, myQualifiedClassName);
+          }
+          catch (IndexNotReadyException e) {
+            LOG.info(e);
+          }
         }
       }.execute());
   }

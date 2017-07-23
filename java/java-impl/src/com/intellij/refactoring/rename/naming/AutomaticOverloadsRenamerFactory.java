@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,23 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 12-Jan-2010
- */
 package com.intellij.refactoring.rename.naming;
 
-import com.intellij.psi.*;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class AutomaticOverloadsRenamerFactory implements AutomaticRenamerFactory{
-  public boolean isApplicable(PsiElement element) {
-    if (element instanceof PsiMethod && !((PsiMethod)element).isConstructor()) {
+public class AutomaticOverloadsRenamerFactory implements AutomaticRenamerFactory {
+
+  public boolean isApplicable(@NotNull PsiElement element) {
+    if (element.getLanguage() == JavaLanguage.INSTANCE && element instanceof PsiMethod && !((PsiMethod)element).isConstructor()) {
       final PsiClass containingClass = ((PsiMethod)element).getContainingClass();
       return containingClass != null && containingClass.findMethodsByName(((PsiMethod)element).getName(), false).length > 1;
     }
@@ -48,6 +49,7 @@ public class AutomaticOverloadsRenamerFactory implements AutomaticRenamerFactory
     JavaRefactoringSettings.getInstance().setRenameOverloads(enabled);
   }
 
+  @NotNull
   public AutomaticRenamer createRenamer(PsiElement element, String newName, Collection<UsageInfo> usages) {
     return new AutomaticOverloadsRenamer((PsiMethod)element, newName);
   }

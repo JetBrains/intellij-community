@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.psi.codeStyle.CodeStyleScheme;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
 public interface CodeStyleSettingsListener extends EventListener {
-  void currentSchemeChanged(final Object source);
+  default void currentSchemeChanged(Object source) {
+  }
 
-  void schemeListChanged();
+  default void schemeListChanged() {
+  }
 
-  void currentSettingsChanged();
+  default void beforeCurrentSettingsChanged() {
+  }
+  
+  default void afterCurrentSettingsChanged() {
+  }
 
-  void usePerProjectSettingsOptionChanged();
+  default void schemeChanged(CodeStyleScheme scheme) {
+  }
 
-  void schemeChanged(CodeStyleScheme scheme);
+  default void settingsChanged(@NotNull CodeStyleSettings settings) {}
 }

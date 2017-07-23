@@ -35,6 +35,8 @@ final class EditorOptionsImpl implements EditorOptions, JDOMExternalizable {
     private final GridOptions gridOptions;
     private final TransparencyChessboardOptions transparencyChessboardOptions;
     private final ZoomOptions zoomOptions;
+    private boolean fileNameVisible = true;
+    private boolean fileSizeVisible = true;
 
     EditorOptionsImpl(PropertyChangeSupport propertyChangeSupport) {
         gridOptions = new GridOptionsImpl(propertyChangeSupport);
@@ -70,16 +72,46 @@ final class EditorOptionsImpl implements EditorOptions, JDOMExternalizable {
                    zoomOptions.setOption(name, value);
     }
 
+    @Override
+    public boolean isFileNameVisible() {
+        return fileNameVisible;
+    }
+
+    @Override
+    public void setFileNameVisible(boolean fileNameVisible) {
+        this.fileNameVisible = fileNameVisible;
+    }
+
+    @Override
+    public void setFileSizeVisible(boolean fileSizeVisible) {
+        this.fileSizeVisible = fileSizeVisible;
+    }
+
+    @Override
+    public boolean isFileSizeVisible() {
+        return fileSizeVisible;
+    }
+
     public void readExternal(Element element) throws InvalidDataException {
         ((JDOMExternalizable)gridOptions).readExternal(element);
         ((JDOMExternalizable)transparencyChessboardOptions).readExternal(element);
         ((JDOMExternalizable)zoomOptions).readExternal(element);
+        String fileNameVisibleAttr = element.getAttributeValue("fileNameVisible");
+        fileNameVisible = fileNameVisibleAttr == null || Boolean.parseBoolean(fileNameVisibleAttr);
+        String fileSizeVisibleAttr = element.getAttributeValue("fileSizeVisible");
+        fileSizeVisible = fileNameVisibleAttr == null || Boolean.parseBoolean(fileSizeVisibleAttr);
     }
 
     public void writeExternal(Element element) throws WriteExternalException {
         ((JDOMExternalizable)gridOptions).writeExternal(element);
         ((JDOMExternalizable)transparencyChessboardOptions).writeExternal(element);
         ((JDOMExternalizable)zoomOptions).writeExternal(element);
+        if (!fileNameVisible) {
+            element.setAttribute("fileNameVisible", "false");
+        }
+        if (!fileSizeVisible) {
+            element.setAttribute("fileSizeVisible", "false");
+        }
     }
 
     public boolean equals(Object obj) {

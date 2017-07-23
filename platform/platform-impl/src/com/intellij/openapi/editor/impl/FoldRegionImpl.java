@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,39 +14,32 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Apr 22, 2002
- * Time: 5:51:22 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   private boolean myIsExpanded;
-  private final Editor myEditor;
+  private final EditorImpl myEditor;
   private final String myPlaceholderText;
   private final FoldingGroup myGroup;
   private final boolean myShouldNeverExpand;
   private boolean myDocumentRegionWasChanged;
 
-  FoldRegionImpl(@NotNull Editor editor,
+  FoldRegionImpl(@NotNull EditorImpl editor,
                  int startOffset,
                  int endOffset,
                  @NotNull String placeholder,
                  @Nullable FoldingGroup group,
                  boolean shouldNeverExpand) {
-    super((DocumentEx)editor.getDocument(), startOffset, endOffset,true);
+    super(editor.getDocument(), startOffset, endOffset,false);
     myGroup = group;
     myShouldNeverExpand = shouldNeverExpand;
     myIsExpanded = true;
@@ -61,12 +54,16 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
 
   @Override
   public void setExpanded(boolean expanded) {
-    FoldingModelImpl foldingModel = (FoldingModelImpl)myEditor.getFoldingModel();
+    setExpanded(expanded, true);
+  }
+
+  void setExpanded(boolean expanded, boolean notify) {
+    FoldingModelImpl foldingModel = myEditor.getFoldingModel();
     if (myGroup == null) {
-      doSetExpanded(expanded, foldingModel, this);
+      doSetExpanded(expanded, foldingModel, this, notify);
     } else {
       for (final FoldRegion region : foldingModel.getGroupedRegions(myGroup)) {
-        doSetExpanded(expanded, foldingModel, region);
+        doSetExpanded(expanded, foldingModel, region, notify || region != this);
         // There is a possible case that we can't change expanded status of particular fold region (e.g. we can't collapse
         // if it contains caret). So, we revert all changes for the fold regions from the same group then.
         if (region.isExpanded() != expanded) {
@@ -74,7 +71,7 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
             if (regionToRevert == region) {
               break;
             }
-            doSetExpanded(!expanded, foldingModel, regionToRevert);
+            doSetExpanded(!expanded, foldingModel, regionToRevert, notify || region != this);
           }
           return;
         }
@@ -82,12 +79,12 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
     }
   }
 
-  private static void doSetExpanded(boolean expanded, FoldingModelImpl foldingModel, FoldRegion region) {
+  private static void doSetExpanded(boolean expanded, FoldingModelImpl foldingModel, FoldRegion region, boolean notify) {
     if (expanded) {
-      foldingModel.expandFoldRegion(region);
+      foldingModel.expandFoldRegion(region, notify);
     }
     else{
-      foldingModel.collapseFoldRegion(region);
+      foldingModel.collapseFoldRegion(region, notify);
     }
   }
 
@@ -140,6 +137,32 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
       if (changeStart < oldEnd && changeEnd > oldStart) myDocumentRegionWasChanged = true;
     }
     super.changedUpdateImpl(e);
+    if (isValid()) {
+      alignToSurrogateBoundaries();
+    }
+    myEditor.getFoldingModel().clearCachedValues();
+  }
+
+  @Override
+  protected void onReTarget(int startOffset, int endOffset, int destOffset) {
+    alignToSurrogateBoundaries();
+  }
+
+  private void alignToSurrogateBoundaries() {
+    Document document = getDocument();
+    int start = intervalStart();
+    int end = intervalEnd();
+    if (DocumentUtil.isInsideSurrogatePair(document, start)) {
+      setIntervalStart(start - 1);
+    }
+    if (DocumentUtil.isInsideSurrogatePair(document, end)) {
+      setIntervalEnd(end - 1);
+    }
+  }
+
+  @Override
+  public void dispose() {
+    myEditor.getFoldingModel().removeRegionFromTree(this);
   }
 
   @Override

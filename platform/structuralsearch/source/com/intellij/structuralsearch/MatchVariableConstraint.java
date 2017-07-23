@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.structuralsearch;
 
 import org.jdom.Element;
@@ -18,10 +33,6 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
   private boolean wholeWordsOnly;
   private int minCount = 1;
   private int maxCount = 1;
-  private boolean readAccess;
-  private boolean invertReadAccess;
-  private boolean writeAccess;
-  private boolean invertWriteAccess;
   private boolean greedy = true;
   private boolean reference;
   private boolean invertReference;
@@ -55,14 +66,10 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
   @NonNls private static final String NEGATE_NAME_CONDITION = "negateName";
   @NonNls private static final String NEGATE_EXPRTYPE_CONDITION = "negateExprType";
   @NonNls private static final String NEGATE_FORMALTYPE_CONDITION = "negateFormalType";
-  @NonNls private static final String NEGATE_READ_CONDITION = "negateRead";
-  @NonNls private static final String NEGATE_WRITE_CONDITION = "negateWrite";
   @NonNls private static final String NEGATE_CONTAINS_CONDITION = "negateContains";
   @NonNls private static final String NEGATE_WITHIN_CONDITION = "negateWithin";
   @NonNls private static final String WITHIN_CONDITION = "within";
   @NonNls private static final String CONTAINS_CONDITION = "contains";
-  @NonNls private static final String READ = "readAccess";
-  @NonNls private static final String WRITE = "writeAccess";
   @NonNls private static final String TARGET = "target";
 
   @NonNls private static final String WHOLE_WORDS_ONLY = "wholeWordsOnly";
@@ -117,38 +124,6 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
 
   public void setMaxCount(int maxCount) {
     this.maxCount = maxCount;
-  }
-
-  public boolean isReadAccess() {
-    return readAccess;
-  }
-
-  public void setReadAccess(boolean readAccess) {
-    this.readAccess = readAccess;
-  }
-
-  public boolean isInvertReadAccess() {
-    return invertReadAccess;
-  }
-
-  public void setInvertReadAccess(boolean invertReadAccess) {
-    this.invertReadAccess = invertReadAccess;
-  }
-
-  public boolean isWriteAccess() {
-    return writeAccess;
-  }
-
-  public void setWriteAccess(boolean writeAccess) {
-    this.writeAccess = writeAccess;
-  }
-
-  public boolean isInvertWriteAccess() {
-    return invertWriteAccess;
-  }
-
-  public void setInvertWriteAccess(boolean invertWriteAccess) {
-    this.invertWriteAccess = invertWriteAccess;
   }
 
   public boolean isPartOfSearchResults() {
@@ -259,19 +234,15 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     if (greedy != matchVariableConstraint.greedy) return false;
     if (invertExprType != matchVariableConstraint.invertExprType) return false;
     if (invertFormalType != matchVariableConstraint.invertFormalType) return false;
-    if (invertReadAccess != matchVariableConstraint.invertReadAccess) return false;
     if (invertReference != matchVariableConstraint.invertReference) return false;
     if (invertRegExp != matchVariableConstraint.invertRegExp) return false;
-    if (invertWriteAccess != matchVariableConstraint.invertWriteAccess) return false;
     if (maxCount != matchVariableConstraint.maxCount) return false;
     if (minCount != matchVariableConstraint.minCount) return false;
     if (partOfSearchResults != matchVariableConstraint.partOfSearchResults) return false;
-    if (readAccess != matchVariableConstraint.readAccess) return false;
     if (reference != matchVariableConstraint.reference) return false;
     if (strictlyWithinHierarchy != matchVariableConstraint.strictlyWithinHierarchy) return false;
     if (wholeWordsOnly != matchVariableConstraint.wholeWordsOnly) return false;
     if (withinHierarchy != matchVariableConstraint.withinHierarchy) return false;
-    if (writeAccess != matchVariableConstraint.writeAccess) return false;
     if (!nameOfExprType.equals(matchVariableConstraint.nameOfExprType)) return false;
     if (!nameOfFormalArgType.equals(matchVariableConstraint.nameOfFormalArgType)) return false;
     if (!nameOfReferenceVar.equals(matchVariableConstraint.nameOfReferenceVar)) return false;
@@ -294,10 +265,6 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     result = 29 * result + (wholeWordsOnly ? 1 : 0);
     result = 29 * result + minCount;
     result = 29 * result + maxCount;
-    result = 29 * result + (readAccess ? 1 : 0);
-    result = 29 * result + (invertReadAccess ? 1 : 0);
-    result = 29 * result + (writeAccess ? 1 : 0);
-    result = 29 * result + (invertWriteAccess ? 1 : 0);
     result = 29 * result + (greedy ? 1 : 0);
     result = 29 * result + (reference ? 1 : 0);
     result = 29 * result + (invertReference ? 1 : 0);
@@ -395,42 +362,6 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
       }
     }
 
-    attribute = element.getAttribute(NEGATE_READ_CONDITION);
-    if (attribute != null) {
-      try {
-        invertReadAccess = attribute.getBooleanValue();
-      }
-      catch (DataConversionException ex) {
-      }
-    }
-
-    attribute = element.getAttribute(NEGATE_WRITE_CONDITION);
-    if (attribute != null) {
-      try {
-        invertWriteAccess = attribute.getBooleanValue();
-      }
-      catch (DataConversionException ex) {
-      }
-    }
-
-    attribute = element.getAttribute(READ);
-    if (attribute != null) {
-      try {
-        readAccess = attribute.getBooleanValue();
-      }
-      catch (DataConversionException ex) {
-      }
-    }
-
-    attribute = element.getAttribute(WRITE);
-    if (attribute != null) {
-      try {
-        writeAccess = attribute.getBooleanValue();
-      }
-      catch (DataConversionException ex) {
-      }
-    }
-
     attribute = element.getAttribute(TARGET);
     if (attribute != null) {
       try {
@@ -496,7 +427,6 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     if (nameOfReferenceVar.length() > 0) element.setAttribute(NAME_OF_REFEENCE_VAR,nameOfReferenceVar);
     if (nameOfFormalArgType.length() > 0) element.setAttribute(NAME_OF_FORMALTYPE,nameOfFormalArgType);
 
-
     if (withinHierarchy) element.setAttribute(WITHIN_HIERARCHY,TRUE);
     if (exprTypeWithinHierarchy) element.setAttribute(EXPRTYPE_WITHIN_HIERARCHY,TRUE);
     if (formalArgTypeWithinHierarchy) element.setAttribute(FORMALTYPE_WITHIN_HIERARCHY,TRUE);
@@ -504,14 +434,10 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     if (minCount!=1) element.setAttribute(MIN_OCCURS,String.valueOf(minCount));
     if (maxCount!=1) element.setAttribute(MAX_OCCURS,String.valueOf(maxCount));
     if (partOfSearchResults) element.setAttribute(TARGET,TRUE);
-    if (readAccess) element.setAttribute(READ,TRUE);
-    if (writeAccess) element.setAttribute(WRITE,TRUE);
 
     if (invertRegExp) element.setAttribute(NEGATE_NAME_CONDITION,TRUE);
     if (invertExprType) element.setAttribute(NEGATE_EXPRTYPE_CONDITION,TRUE);
     if (invertFormalType) element.setAttribute(NEGATE_FORMALTYPE_CONDITION,TRUE);
-    if (invertReadAccess) element.setAttribute(NEGATE_READ_CONDITION,TRUE);
-    if (invertWriteAccess) element.setAttribute(NEGATE_WRITE_CONDITION,TRUE);
 
     if (wholeWordsOnly) element.setAttribute(WHOLE_WORDS_ONLY,TRUE);
     if (invertContainsConstraint) element.setAttribute(NEGATE_CONTAINS_CONDITION,TRUE);

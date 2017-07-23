@@ -29,8 +29,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -171,7 +169,7 @@ public class JavaExecutionUtil {
 
   @Nullable
   public static PsiClass findMainClass(final Project project, final String mainClassName, final GlobalSearchScope scope) {
-    if (project.isDefault() || (DumbService.isDumb(project) && !Registry.is("dumb.aware.run.configurations"))) return null;
+    if (project.isDefault() || DumbService.isDumb(project) && !DumbService.getInstance(project).isAlternativeResolveEnabled()) return null;
     final PsiManager psiManager = PsiManager.getInstance(project);
     final String shortName = StringUtil.getShortName(mainClassName);
     final String packageName = StringUtil.getPackageName(mainClassName);

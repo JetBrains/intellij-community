@@ -1,5 +1,5 @@
 public class Bar {
     {
-        int[] a = new in<caret>
+        int[] a = new in<caret>x
     }
 }

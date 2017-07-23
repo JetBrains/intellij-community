@@ -31,12 +31,6 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 
 import java.util.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 7/30/12
- * Time: 3:39 PM
- */
 public class CachingSvnRepositoryPool implements SvnRepositoryPool {
   private static final long DEFAULT_IDLE_TIMEOUT = 60*1000;
 
@@ -197,12 +191,9 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
       myWait.notifyAll();
 
       myGuard.connectionDestroyed(listForClose.size());
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          for (SVNRepository repository : listForClose) {
-            repository.closeSession();
-          }
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        for (SVNRepository repository : listForClose) {
+          repository.closeSession();
         }
       });
     }

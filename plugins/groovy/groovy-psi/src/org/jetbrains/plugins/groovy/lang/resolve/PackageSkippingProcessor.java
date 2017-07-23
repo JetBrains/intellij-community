@@ -20,9 +20,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.GrDelegatingScopePro
 
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_KINDS_CLASS;
 
-/**
-* Created by Max Medvedev on 27/03/14
-*/
 public class PackageSkippingProcessor extends GrDelegatingScopeProcessorWithHints {
   public PackageSkippingProcessor(PsiScopeProcessor processor) {
     super(processor, null, RESOLVE_KINDS_CLASS);

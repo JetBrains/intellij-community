@@ -20,7 +20,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
@@ -49,7 +48,7 @@ public class MavenCommonParamReferenceProviders {
     public PsiReference[] getReferencesByElement(@NotNull PsiElement element,
                                                  @NotNull MavenDomConfiguration domCfg,
                                                  @NotNull ProcessingContext context) {
-      return MavenPathReferenceConverter.createReferences(domCfg, element, Conditions.<PsiFileSystemItem>alwaysTrue());
+      return MavenPathReferenceConverter.createReferences(domCfg, element, Conditions.alwaysTrue());
     }
   }
 

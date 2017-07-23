@@ -36,7 +36,7 @@ class PluginRepositoryXmlGenerator {
     def categories = new TreeMap<String, List<Plugin>>()
     pluginLayouts.each { layout ->
       def pluginZip = new File(targetDirectory, "${layout.directoryName}.zip")
-      def moduleOutput = buildContext.projectBuilder.moduleOutput(buildContext.findRequiredModule(layout.mainModule))
+      def moduleOutput = buildContext.getModuleOutputPath(buildContext.findRequiredModule(layout.mainModule))
       def pluginXmlPath = "$moduleOutput/META-INF/plugin.xml"
       def p = readPlugin(pluginZip, new File(pluginXmlPath), buildContext.buildNumber)
       categories.putIfAbsent(p.category, [])

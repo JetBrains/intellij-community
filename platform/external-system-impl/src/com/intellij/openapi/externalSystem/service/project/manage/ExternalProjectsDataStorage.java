@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,13 @@
  */
 package com.intellij.openapi.externalSystem.service.project.manage;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
-import com.intellij.openapi.externalSystem.model.*;
+import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
+import com.intellij.openapi.externalSystem.model.Key;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware;
@@ -33,9 +35,11 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
@@ -45,6 +49,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -86,18 +92,39 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
     myExternalRootProjects.clear();
     try {
       final Collection<InternalExternalProjectInfo> projectInfos = load(myProject);
+      if(projectInfos.isEmpty()) {
+        markDirtyAllExternalProjects();
+      }
       for (InternalExternalProjectInfo projectInfo : projectInfos) {
         if (validate(projectInfo)) {
           myExternalRootProjects.put(
             Pair.create(projectInfo.getProjectSystemId(), new File(projectInfo.getExternalProjectPath())), projectInfo);
+          if (projectInfo.getLastImportTimestamp() != projectInfo.getLastSuccessfulImportTimestamp()) {
+            markDirty(projectInfo.getExternalProjectPath());
+          }
+        }
+        else {
+          String projectPath = projectInfo.getNullSafeExternalProjectPath();
+          if (projectPath != null) {
+            markDirty(projectPath);
+          }
         }
       }
     }
     catch (IOException e) {
       LOG.debug(e);
+      markDirtyAllExternalProjects();
     }
 
     mergeLocalSettings();
+  }
+
+  private void markDirtyAllExternalProjects() {
+    ExternalProjectsManager.getInstance(myProject).getExternalProjectsWatcher().markDirtyAllExternalProjects();
+  }
+
+  private void markDirty(String projectPath) {
+    ExternalProjectsManager.getInstance(myProject).getExternalProjectsWatcher().markDirty(projectPath);
   }
 
   private static boolean validate(InternalExternalProjectInfo externalProjectInfo) {
@@ -105,7 +132,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
       final DataNode<ProjectData> projectStructure = externalProjectInfo.getExternalProjectStructure();
       if (projectStructure == null) return false;
 
-      ProjectDataManager.getInstance().ensureTheDataIsReadyToUse(projectStructure);
+      ProjectDataManagerImpl.getInstance().ensureTheDataIsReadyToUse(projectStructure);
       return externalProjectInfo.getExternalProjectPath().equals(projectStructure.getData().getLinkedExternalProjectPath());
     }
     catch (Exception e) {
@@ -252,6 +279,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
           final DataNode<ProjectData> dataNode = convert(systemId, projectPojo, entry.getValue(), availableTasks);
           externalProjectInfo = new InternalExternalProjectInfo(systemId, externalProjectPath, dataNode);
           myExternalRootProjects.put(key, externalProjectInfo);
+          ExternalProjectsManager.getInstance(myProject).getExternalProjectsWatcher().markDirty(externalProjectPath);
 
           changed.set(true);
         }
@@ -262,7 +290,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
         if (linkedProjectSettings != null && ContainerUtil.isEmpty(linkedProjectSettings.getModules())) {
 
           final Set<String> modulePaths = ContainerUtil.map2Set(
-            ExternalSystemApiUtil.findAllRecursively(externalProjectInfo.getExternalProjectStructure(), ProjectKeys.MODULE),
+            ExternalSystemApiUtil.findAllRecursively(externalProjectInfo.getExternalProjectStructure(), MODULE),
             node -> node.getData().getLinkedExternalProjectPath());
           linkedProjectSettings.setModules(modulePaths);
         }
@@ -298,8 +326,8 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
 
   private static void doSave(@NotNull final Project project, @NotNull Collection<InternalExternalProjectInfo> externalProjects)
     throws IOException {
-    final File projectConfigurationFile = getProjectConfigurationFile(project);
-    if (!FileUtil.createParentDirs(projectConfigurationFile)) {
+    final Path projectConfigurationFile = getProjectConfigurationFile(project);
+    if (!FileUtil.createParentDirs(projectConfigurationFile.toFile())) {
       throw new IOException("Unable to save " + projectConfigurationFile);
     }
 
@@ -320,7 +348,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
       });
     }
 
-    DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(projectConfigurationFile)));
+    DataOutputStream out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(projectConfigurationFile)));
     try {
       out.writeUTF(STORAGE_VERSION);
       out.writeInt(externalProjects.size());
@@ -355,10 +383,10 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
   @NotNull
   private static Collection<InternalExternalProjectInfo> load(@NotNull Project project) throws IOException {
     SmartList<InternalExternalProjectInfo> projects = new SmartList<>();
-    @SuppressWarnings("unchecked") final File configurationFile = getProjectConfigurationFile(project);
-    if (!configurationFile.isFile()) return projects;
+    @SuppressWarnings("unchecked") final Path configurationFile = getProjectConfigurationFile(project);
+    if (!Files.isRegularFile(configurationFile)) return projects;
 
-    DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(configurationFile)));
+    DataInputStream in = new DataInputStream(new BufferedInputStream(Files.newInputStream(configurationFile)));
 
     try {
       final String storage_version = in.readUTF();
@@ -386,16 +414,14 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
     return projects;
   }
 
-  private static File getProjectConfigurationFile(@NotNull Project project) {
-    return new File(getProjectConfigurationDir(), project.getLocationHash() + "/project.dat");
+  @NotNull
+  private static Path getProjectConfigurationFile(@NotNull Project project) {
+    return getProjectConfigurationDir(project).resolve("project.dat");
   }
 
-  private static File getProjectConfigurationDir() {
-    return getExternalBuildSystemDir("Projects");
-  }
-
-  private static File getExternalBuildSystemDir(String folder) {
-    return new File(PathManager.getSystemPath(), "external_build_system" + "/" + folder).getAbsoluteFile();
+  @NotNull
+  public static Path getProjectConfigurationDir(@NotNull Project project) {
+    return ProjectUtil.getExternalConfigurationDir(project);
   }
 
   @Nullable
@@ -438,21 +464,21 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
     @Property(surroundWithTag = false)
     @MapAnnotation(surroundWithTag = false, surroundValueWithTag = false, surroundKeyWithTag = false,
       keyAttributeName = "path", entryTagName = "projectState")
-    public Map<String, ProjectState> map = ContainerUtil.newConcurrentMap();
+    public final Map<String, ProjectState> map = ContainerUtil.newConcurrentMap();
   }
 
   static class ProjectState {
     @Property(surroundWithTag = false)
     @MapAnnotation(surroundWithTag = false, surroundValueWithTag = false, surroundKeyWithTag = false,
       keyAttributeName = "path", entryTagName = "dataType")
-    public Map<String, ModuleState> map = ContainerUtil.newConcurrentMap();
+    public final Map<String, ModuleState> map = ContainerUtil.newConcurrentMap();
     public boolean isInclusion;
   }
 
   static class ModuleState {
     @Property(surroundWithTag = false)
     @AbstractCollection(surroundWithTag = false, elementTag = "id")
-    public Set<String> set = ContainerUtil.newConcurrentSet();
+    public final Set<String> set = ContainerUtil.newConcurrentSet();
 
     public ModuleState() {
     }

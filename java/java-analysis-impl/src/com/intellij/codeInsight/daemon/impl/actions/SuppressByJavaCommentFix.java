@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.JavaSuppressionUtil;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -33,20 +34,15 @@ public class SuppressByJavaCommentFix extends SuppressByCommentFix {
     super(key, PsiStatement.class);
   }
 
+  public SuppressByJavaCommentFix(@NotNull String toolId) {
+    super(toolId, PsiStatement.class);
+  }
+
   @Override
   @Nullable
   public PsiElement getContainer(PsiElement context) {
-    if (hasJspMethodCallAsParent(context)) return null;
-    return PsiTreeUtil.getParentOfType(context, PsiStatement.class, false);
-  }
-
-  private static boolean hasJspMethodCallAsParent(PsiElement context) {
-    while (true) {
-      PsiMethod method = PsiTreeUtil.getParentOfType(context, PsiMethod.class);
-      if (method == null) return false;
-      if (method instanceof SyntheticElement) return true;
-      context = method;
-    }
+    PsiStatement statement = PsiTreeUtil.getParentOfType(context, PsiStatement.class, false);
+    return statement != null && JavaLanguage.INSTANCE.equals(statement.getLanguage()) ? statement : null;
   }
 
   @Override

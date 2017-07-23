@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.panels.ValidatingComponent;
 
@@ -51,7 +52,9 @@ public class ValidatingTextField extends ValidatingComponent<JTextField> {
   }
 
   public void requestFocus() {
-    getMainComponent().requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(getMainComponent(), true);
+    });
   }
 
   public boolean requestFocusInWindow() {

@@ -28,8 +28,8 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.xml.util.XmlStringUtil;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +41,6 @@ import static com.intellij.codeInspection.ProblemDescriptorUtil.TRIM_AT_TREE_END
  * @author max
  */
 public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
-  protected final InspectionToolWrapper myToolWrapper;
   private final CommonProblemDescriptor myDescriptor;
   private final HighlightDisplayLevel myLevel;
   protected final int myLineNumber;
@@ -49,26 +48,23 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
 
   public ProblemDescriptionNode(RefEntity element,
                                 CommonProblemDescriptor descriptor,
-                                @NotNull InspectionToolWrapper toolWrapper,
                                 @NotNull InspectionToolPresentation presentation) {
-    this(element, descriptor, toolWrapper, presentation, true, null);
+    this(element, descriptor, presentation, true, null);
   }
 
   protected ProblemDescriptionNode(@Nullable RefEntity element,
                                    CommonProblemDescriptor descriptor,
-                                   @NotNull InspectionToolWrapper toolWrapper,
                                    @NotNull InspectionToolPresentation presentation,
                                    boolean doInit,
                                    @Nullable IntSupplier lineNumberCounter) {
     super(descriptor, presentation);
     myElement = element;
     myDescriptor = descriptor;
-    myToolWrapper = toolWrapper;
     final InspectionProfileImpl profile = presentation.getContext().getCurrentProfile();
+    String shortName = presentation.getToolWrapper().getShortName();
     myLevel = descriptor instanceof ProblemDescriptor
-              ? profile
-                .getErrorLevel(HighlightDisplayKey.find(toolWrapper.getShortName()), ((ProblemDescriptor)descriptor).getStartElement())
-              : profile.getTools(toolWrapper.getShortName(), presentation.getContext().getProject()).getLevel();
+              ? profile.getErrorLevel(HighlightDisplayKey.find(shortName), ((ProblemDescriptor)descriptor).getStartElement())
+              : profile.getTools(shortName, presentation.getContext().getProject()).getLevel();
     if (doInit) {
       init(presentation.getContext().getProject());
     }
@@ -86,7 +82,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
 
   @NotNull
   public InspectionToolWrapper getToolWrapper() {
-    return myToolWrapper;
+    return getPresentation().getToolWrapper();
   }
 
   @Nullable
@@ -101,12 +97,12 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
 
   @Override
   public int getProblemCount(boolean allowSuppressed) {
-    return myPresentation.isProblemResolved(getElement(), myDescriptor) && !(allowSuppressed && isAlreadySuppressedFromView() && isValid())? 0 : 1;
+    return getPresentation().isProblemResolved(getElement(), myDescriptor) && !(allowSuppressed && isAlreadySuppressedFromView() && isValid())? 0 : 1;
   }
 
   @Override
-  public void visitProblemSeverities(FactoryMap<HighlightDisplayLevel, Integer> counter) {
-    if (!myPresentation.isProblemResolved(getElement(), myDescriptor)) {
+  public void visitProblemSeverities(TObjectIntHashMap<HighlightDisplayLevel> counter) {
+    if (!getPresentation().isProblemResolved(getElement(), myDescriptor)) {
       counter.put(myLevel, counter.get(myLevel) + 1);
     }
   }
@@ -139,12 +135,6 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   }
 
   @Override
-  @NotNull
-  public InspectionToolPresentation getPresentation() {
-    return myPresentation;
-  }
-
-  @Override
   public FileStatus getNodeStatus() {
     if (myElement instanceof RefElement) {
       return getPresentation().getProblemStatus(myDescriptor);
@@ -171,17 +161,17 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
 
   @Override
   public boolean isQuickFixAppliedFromView() {
-    return (myDescriptor != null && myPresentation.isProblemResolved(getElement(), myDescriptor)) && !isAlreadySuppressedFromView();
+    return (myDescriptor != null && getPresentation().isProblemResolved(getElement(), myDescriptor)) && !isAlreadySuppressedFromView();
   }
 
   @Nullable
   @Override
-  public String getCustomizedTailText() {
+  public String getTailText() {
     if (isQuickFixAppliedFromView()) {
       return "";
     }
     else {
-      final String text = super.getCustomizedTailText();
+      final String text = super.getTailText();
       return text == null ? "" : text;
     }
   }

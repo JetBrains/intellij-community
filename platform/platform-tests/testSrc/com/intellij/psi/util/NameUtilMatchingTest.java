@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@ package com.intellij.psi.util;
 import com.intellij.ide.util.FileStructureDialog;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.AllOccurrencesMatcher;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.ui.SpeedSearchComparator;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NonNls;
@@ -631,9 +631,9 @@ public class NameUtilMatchingTest extends UsefulTestCase {
  public void testSpeedSearchComparator() {
    final SpeedSearchComparator c = new SpeedSearchComparator(false, true);
 
-   assertTrue(c.matchingFragments("a", "Ant") != null);
-   assertTrue(c.matchingFragments("an", "Changes") != null);
-   assertTrue(c.matchingFragments("a", "Changes") != null);
+   assertNotNull(c.matchingFragments("a", "Ant"));
+   assertNotNull(c.matchingFragments("an", "Changes"));
+   assertNotNull(c.matchingFragments("a", "Changes"));
  }
 
   public void testFilePatterns() {
@@ -669,8 +669,8 @@ public class NameUtilMatchingTest extends UsefulTestCase {
       nonMatching.add(NameUtil.buildMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
     }
 
-    PlatformTestUtil.startPerformanceTest("Matcher is slow", 4500, () -> {
-      for (int i = 0; i < 100000; i++) {
+    PlatformTestUtil.startPerformanceTest("Matching", 5000, () -> {
+      for (int i = 0; i < 100_000; i++) {
         for (MinusculeMatcher matcher : matching) {
           Assert.assertTrue(matcher.toString(), matcher.matches(longName));
           matcher.matchingDegree(longName);
@@ -679,24 +679,44 @@ public class NameUtilMatchingTest extends UsefulTestCase {
           Assert.assertFalse(matcher.toString(), matcher.matches(longName));
         }
       }
-    }).cpuBound().useLegacyScaling().assertTiming();
+    }).assertTiming();
   }
 
   public void testOnlyUnderscoresPerformance() {
-    PlatformTestUtil.startPerformanceTest("Matcher is exponential", 300, () -> {
-      String small = StringUtil.repeat("_", 50);
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 120, () -> {
+      String small = StringUtil.repeat("_", 50000);
       String big = StringUtil.repeat("_", small.length() + 1);
       assertMatches("*" + small, big);
       assertDoesntMatch("*" + big, small);
-    }).cpuBound().useLegacyScaling().assertTiming();
+    }).assertTiming();
   }
 
   public void testRepeatedLetterPerformance() {
-    PlatformTestUtil.startPerformanceTest("Matcher is exponential", 300, () -> {
-      String big = StringUtil.repeat("Aaaaaa", 50);
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 30, () -> {
+      String big = StringUtil.repeat("Aaaaaa", 50000);
       assertMatches("aaaaaaaaaaaaaaaaaaaaaaaa", big);
       assertDoesntMatch("aaaaaaaaaaaaaaaaaaaaaaaab", big);
-    }).cpuBound().useLegacyScaling().assertTiming();
+    }).assertTiming();
+  }
+
+  public void testMatchingAllOccurrences() {
+    String text = "some text";
+    MinusculeMatcher matcher = new AllOccurrencesMatcher("*e", NameUtil.MatchingCaseSensitivity.NONE, "");
+    assertOrderedEquals(matcher.matchingFragments(text),
+                        new TextRange(3, 4), new TextRange(6, 7));
+  }
+
+  public void testCamelHumpWinsOverConsecutiveCaseMismatch() {
+    assertSize(3, NameUtil.buildMatcher("GEN", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments("GetExtendedName"));
+
+    assertPreference("GEN", "GetName", "GetExtendedName");
+    assertPreference("*GEN", "GetName", "GetExtendedName");
+  }
+
+  public void testPrintln() {
+    assertMatches("pl", "println");
+    assertMatches("pl", "printlnFoo");
+    assertDoesntMatch("pl", "printlnx");
   }
 
 }

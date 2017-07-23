@@ -21,6 +21,7 @@ import com.intellij.mock.MockDocument;
 import com.intellij.mock.MockPsiFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -36,20 +37,28 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
@@ -431,10 +440,77 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     makeFileTooLarge(vFile);
     assertFalse(psiFile.isValid());
     psiFile = findFile(vFile);
-    assertInstanceOf(psiFile, PsiLargeFile.class);
 
-    assertNoFileDocumentMapping(vFile, psiFile, document);
-    assertEquals("abc", document.getText());
+    assertInstanceOf(psiFile, PsiLargeTextFile.class);
+    assertLargeFileContentLimited(getTooLargeContent(), vFile, document);
+  }
+
+  private void makeFileTooLarge(final VirtualFile vFile) throws Exception {
+    WriteCommandAction.runWriteCommandAction(myProject, (ThrowableComputable<Object, Exception>)() -> {
+      setFileText(vFile, getTooLargeContent());
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      return null;
+    });
+  }
+
+  public void testFileTooLarge() throws Exception {
+    String content = getTooLargeContent();
+    VirtualFile vFile = getVirtualFile(createTempFile("a.txt", content));
+    PsiFile psiFile = findFile(vFile);
+    Document document = getDocument(psiFile);
+
+    assertNotNull(document);
+    assertInstanceOf(psiFile, PsiLargeTextFile.class);
+
+    assertLargeFileContentLimited(content, vFile, document);
+  }
+
+  public void testBinaryFileTooLarge() throws Exception {
+    VirtualFile vFile = getVirtualFile(createTempFile("a.zip", getTooLargeContent()));
+    PsiFile psiFile = findFile(vFile);
+    Document document = getDocument(psiFile);
+    assertNull(document);
+    assertInstanceOf(psiFile, PsiLargeBinaryFile.class);
+  }
+
+  public void testLargeFileException() throws Throwable {
+    VirtualFile vFile = getVirtualFile(createTempFile("a.txt", getTooLargeContent()));
+    assertException(new FileTooBigExceptionCase() {
+      @Override
+      public void tryClosure() throws Throwable {
+        vFile.getOutputStream(this);
+      }
+    });
+    assertException(new FileTooBigExceptionCase() {
+      @Override
+      public void tryClosure() throws Throwable {
+        vFile.setBinaryContent(new byte[] {});
+      }
+    });
+    assertException(new FileTooBigExceptionCase() {
+      @Override
+      public void tryClosure() throws Throwable {
+        vFile.setBinaryContent(ArrayUtil.EMPTY_BYTE_ARRAY, 1, 2);
+      }
+    });
+    assertException(new FileTooBigExceptionCase() {
+      @Override
+      public void tryClosure() throws Throwable {
+        vFile.setBinaryContent(ArrayUtil.EMPTY_BYTE_ARRAY, 1, 2, this);
+      }
+    });
+    assertException(new FileTooBigExceptionCase() {
+      @Override
+      public void tryClosure() throws Throwable {
+        vFile.contentsToByteArray();
+      }
+    });
+    assertException(new FileTooBigExceptionCase() {
+      @Override
+      public void tryClosure() throws Throwable {
+        vFile.contentsToByteArray(false);
+      }
+    });
   }
 
   private void assertNoFileDocumentMapping(VirtualFile vFile, PsiFile psiFile, Document document) {
@@ -442,14 +518,6 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertNull(FileDocumentManager.getInstance().getFile(document));
     assertNull(getPsiDocumentManager().getPsiFile(document));
     assertNull(getDocument(psiFile));
-  }
-
-  private void makeFileTooLarge(final VirtualFile vFile) throws Exception {
-    WriteCommandAction.runWriteCommandAction(myProject, (ThrowableComputable<Object, Exception>)() -> {
-      setFileText(vFile, StringUtil.repeat("a", FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1));
-      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      return null;
-    });
   }
 
   public void testCommitDocumentInModalDialog() throws IOException {
@@ -497,6 +565,24 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     waitTenSecondsForCommit(document);
 
     assertTrue(getPsiDocumentManager().isCommitted(document));
+  }
+
+  public void testBackgroundCommitInDialogInTransaction() throws IOException {
+    VirtualFile vFile = getVirtualFile(createTempFile("a.txt", "abc"));
+    PsiFile psiFile = findFile(vFile);
+    Document document = getDocument(psiFile);
+
+    TransactionGuard.submitTransaction(myProject, () -> {
+      WriteCommandAction.runWriteCommandAction(myProject, () -> {
+        document.insertString(0, "x");
+        LaterInvocator.enterModal(new Object());
+        assertFalse(getPsiDocumentManager().isCommitted(document));
+      });
+
+      waitTenSecondsForCommit(document);
+      assertTrue(getPsiDocumentManager().isCommitted(document));
+    });
+    UIUtil.dispatchAllInvocationEvents();
   }
 
   public void testChangeDocumentThenEnterModalDialogThenCallPerformWhenAllCommittedShouldFireWhileInsideModal() throws IOException {
@@ -587,7 +673,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
   public void testUndoShouldAddToCommitQueue() throws IOException {
     VirtualFile virtualFile = getVirtualFile(createTempFile("X.java", ""));
     PsiFile file = findFile(virtualFile);
-    assertTrue(file.getFileType().getName().equals("JAVA"));
+    assertEquals("JAVA", file.getFileType().getName());
 
     assertNotNull(file);
     assertTrue(file.isPhysical());
@@ -702,13 +788,59 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertTrue(pdm.isCommitted(document));
     assertFalse(file.isValid());
 
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      document.replaceString(0, document.getTextLength(), "xxxxxxxxxxxxxxxxxxxx");
-    });
+    WriteCommandAction.runWriteCommandAction(null, () ->
+      document.replaceString(0, document.getTextLength(), "xxxxxxxxxxxxxxxxxxxx"));
     pdm.commitAllDocuments();
     assertTrue(pdm.isCommitted(document));
 
     PsiFile file2 = getPsiManager().findFile(virtualFile);
     assertEquals(PlainTextLanguage.INSTANCE, file2.getLanguage());
+  }
+
+  public void testAsyncCommitHappensInProgressStartedFromTransaction() throws IOException {
+    PsiFile file = getPsiManager().findFile(getVirtualFile(createTempFile("X.txt", "")));
+    Document document = file.getViewProvider().getDocument();
+
+    Semaphore semaphore = new Semaphore(1);
+    TransactionGuard.submitTransaction(getTestRootDisposable(), () -> {
+      WriteCommandAction.runWriteCommandAction(myProject, () -> {
+        document.insertString(0, "x");
+
+        ProgressManager.getInstance().runProcessWithProgressAsynchronously(new Task.Backgroundable(myProject, "Title", false) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            getPsiDocumentManager().commitAndRunReadAction(() -> semaphore.up());
+          }
+        }, new ProgressWindow(false, myProject));
+      });
+    });
+    int iteration = 0;
+    while (!semaphore.waitFor(10)) {
+      UIUtil.dispatchAllInvocationEvents();
+      if (++iteration > 3000) {
+        printThreadDump();
+        fail("Couldn't wait for commit");
+      }
+    }
+  }
+
+  private static void assertLargeFileContentLimited(@NotNull String content, @NotNull VirtualFile vFile, @NotNull Document document) {
+    Charset charset = EncodingManager.getInstance().getEncoding(vFile, false);
+    float bytesPerChar = charset == null ? 2 : charset.newEncoder().averageBytesPerChar();
+    int contentSize = (int)(FileUtilRt.LARGE_FILE_PREVIEW_SIZE / bytesPerChar);
+    String substring = content.substring(0, contentSize);
+    assertEquals(substring, document.getText());
+  }
+
+  @NotNull
+  private static String getTooLargeContent() {
+    return StringUtil.repeat("a", FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1);
+  }
+
+  private abstract static class FileTooBigExceptionCase extends AbstractExceptionCase {
+    @Override
+    public Class getExpectedExceptionClass() {
+      return FileTooBigException.class;
+    }
   }
 }

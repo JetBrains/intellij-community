@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 public class GenericKeymapManager extends DefaultKeymap {
+  @NotNull
   @Override
   public String getDefaultKeymapName() {
     if (SystemInfo.isMac) {
@@ -33,6 +34,7 @@ public class GenericKeymapManager extends DefaultKeymap {
     }
   }
 
+  @NotNull
   @Override
   public String getKeymapPresentableName(@NotNull KeymapImpl keymap) {
     final String name = keymap.getName();

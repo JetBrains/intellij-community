@@ -32,10 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 14-Nov-2005
- */
 public class WrongPackageStatementInspectionBase extends BaseJavaBatchLocalInspectionTool {
   @Override
   @Nullable
@@ -61,7 +57,7 @@ public class WrongPackageStatementInspectionBase extends BaseJavaBatchLocalInspe
         String description = JavaErrorMessages.message("missing.package.statement", packageName);
 
         return new ProblemDescriptor[]{manager.createProblemDescriptor(classes[0].getNameIdentifier(), description,
-                                                                       new AdjustPackageNameFix(packageName),
+                                                                       isValidPackageName(packageName, file.getProject()) ? new AdjustPackageNameFix(packageName) : null,
                                                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly)};
       }
       if (packageStatement != null) {

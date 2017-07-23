@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -329,7 +329,6 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   protected boolean performRefactoring() {
     boolean bind = false;
     if (myInsertedName != null) {
-
       final CommandProcessor commandProcessor = CommandProcessor.getInstance();
       if (commandProcessor.getCurrentCommand() != null && getVariable() != null) {
         commandProcessor.setCurrentCommandName(getCommandName());
@@ -339,12 +338,8 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
       if (!isIdentifier(myInsertedName, myLanguage)) {
         performOnInvalidIdentifier(myInsertedName, myNameSuggestions);
       }
-      else {
-        if (mySnapshot != null) {
-          if (isIdentifier(myInsertedName, myLanguage)) {
-            ApplicationManager.getApplication().runWriteAction(() -> mySnapshot.apply(myInsertedName));
-          }
-        }
+      else if (mySnapshot != null) {
+        ApplicationManager.getApplication().runWriteAction(() -> mySnapshot.apply(myInsertedName));
       }
       performRefactoringRename(myInsertedName, myMarkAction);
     }

@@ -18,9 +18,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.LocalChangeListImpl;
 import com.intellij.util.NullableConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,18 +42,10 @@ public class ChangeListChooser extends DialogWrapper {
     super(project, false);
     myProject = project;
 
-    ChangeListEditHandler handler;
-    for (ChangeList changelist : changelists) {
-      handler = ((LocalChangeListImpl)changelist).getEditHandler();
-      if (handler != null) {
-        break;
-      }
-    }
-
     myPanel = new ChangeListChooserPanel(myProject, new NullableConsumer<String>() {
       public void consume(final @Nullable String errorMessage) {
         setOKActionEnabled(errorMessage == null);
-        setErrorText(errorMessage);
+        setErrorText(errorMessage, myPanel);
       }
     });
 
@@ -73,6 +63,12 @@ public class ChangeListChooser extends DialogWrapper {
 
   public JComponent getPreferredFocusedComponent() {
     return myPanel.getPreferredFocusedComponent();
+  }
+
+  @Nullable
+  @Override
+  protected String getHelpId() {
+    return "reference.dialogs.vcs.changelist.chooser";
   }
 
   protected String getDimensionServiceKey() {

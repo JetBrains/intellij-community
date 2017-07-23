@@ -28,11 +28,14 @@ public class SvnTreeConflictDiffRequestProvider implements ChangeDiffRequestProv
   @Override
   public ThreeState isEquals(@NotNull Change change1, @NotNull Change change2) {
     if (change1 instanceof ConflictedSvnChange && change2 instanceof ConflictedSvnChange) {
-      if (!change1.isTreeConflict() && !change2.isTreeConflict()) return ThreeState.UNSURE;
-      if (!change1.isTreeConflict() || !change2.isTreeConflict()) return ThreeState.NO;
+      ConflictedSvnChange conflict1 = (ConflictedSvnChange)change1;
+      ConflictedSvnChange conflict2 = (ConflictedSvnChange)change2;
 
-      TreeConflictDescription description1 = ((ConflictedSvnChange)change1).getBeforeDescription();
-      TreeConflictDescription description2 = ((ConflictedSvnChange)change2).getBeforeDescription();
+      if (!conflict1.isTreeConflict() && !conflict2.isTreeConflict()) return ThreeState.UNSURE;
+      if (!conflict1.isTreeConflict() || !conflict2.isTreeConflict()) return ThreeState.NO;
+
+      TreeConflictDescription description1 = conflict1.getBeforeDescription();
+      TreeConflictDescription description2 = conflict2.getBeforeDescription();
       return TreeConflictRefreshablePanel.descriptionsEqual(description1, description2) ? ThreeState.YES : ThreeState.NO;
     }
     return ThreeState.UNSURE;

@@ -20,7 +20,6 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import gnu.trove.THashSet;
@@ -29,10 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 import java.util.function.Function;
 
-/**
- * User: anna
- * Date: 15-Feb-2006
- */
 public class InspectionProfileWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionProfileWrapper");
 
@@ -79,10 +74,6 @@ public class InspectionProfileWrapper {
 
   public InspectionToolWrapper getInspectionTool(final String shortName, PsiElement element) {
     return myProfile.getInspectionTool(shortName, element);
-  }
-
-  public void cleanup(@NotNull Project project) {
-    myProfile.cleanup(project);
   }
 
   @NotNull

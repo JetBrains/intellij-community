@@ -36,7 +36,7 @@ public class GroovyCompilerConfiguration implements PersistentStateComponent<Jps
   private String myHeapSize = JpsGroovySettings.DEFAULT_HEAP_SIZE;
   private boolean myInvokeDynamic = JpsGroovySettings.DEFAULT_INVOKE_DYNAMIC;
   public boolean transformsOk = JpsGroovySettings.DEFAULT_TRANSFORMS_OK;
-  private final ExcludedEntriesConfiguration myExcludeFromStubGeneration = new ExcludedEntriesConfiguration();
+  private final ExcludedEntriesConfiguration myExcludeFromStubGeneration = new ExcludedEntriesConfiguration(null);
 
   @Override
   public JpsGroovySettings getState() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,6 +110,19 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
   private class MissingDeprecatedAnnotationVisitor extends BaseInspectionVisitor {
 
     @Override
+    public void visitModule(@NotNull PsiJavaModule module) {
+      super.visitModule(module);
+      if (hasDeprecatedAnnotation(module)) {
+        if (warnOnMissingJavadoc && !hasDeprecatedComment(module, true)) {
+          registerModuleError(module, Boolean.FALSE);
+        }
+      }
+      else if (hasDeprecatedComment(module, false)) {
+        registerModuleError(module, Boolean.TRUE);
+      }
+    }
+
+    @Override
     public void visitClass(@NotNull PsiClass aClass) {
       super.visitClass(aClass);
       if (hasDeprecatedAnnotation(aClass)) {
@@ -161,7 +174,7 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
       return modifierList != null && modifierList.findAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED) != null;
     }
 
-    private boolean hasDeprecatedComment(PsiDocCommentOwner element, boolean checkContent) {
+    private boolean hasDeprecatedComment(PsiJavaDocumentedElement element, boolean checkContent) {
       final PsiDocComment comment = element.getDocComment();
       if (comment == null) {
         return false;

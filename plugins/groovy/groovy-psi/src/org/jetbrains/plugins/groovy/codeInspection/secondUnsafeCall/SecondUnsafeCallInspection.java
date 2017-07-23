@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,10 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 13.11.2007
- */
 public class SecondUnsafeCallInspection extends GroovySuppressableInspectionTool {
   @Override
   @NotNull
@@ -78,19 +74,6 @@ public class SecondUnsafeCallInspection extends GroovySuppressableInspectionTool
           }
         }
     }
-  }
-
-  @Override
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
-    return "Probable bugs";
-  }
-
-  @NotNull
-  @Override
-  public String[] getGroupPath() {
-    return new String[]{"Groovy", getGroupDisplayName()};
   }
 
   @Override

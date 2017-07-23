@@ -25,8 +25,10 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -150,6 +152,7 @@ public class ProcessPopup  {
       int x = (int)(bounds.getMaxX() - width);
       int y = (int)(bounds.getMaxY() - height);
       myPopup = builder.createPopup();
+      myPopup.getContent().putClientProperty(AbstractPopup.FIRST_TIME_SIZE, new JBDimension(400, 0));
 
       StatusBarEx sb = (StatusBarEx)((IdeFrame)frame).getStatusBar();
       if (sb.isVisible()) {

@@ -70,6 +70,12 @@ public class PluginNode implements IdeaPluginDescriptor {
     this.id = id;
   }
 
+  public PluginNode(PluginId id, String name, String size) {
+    this.id = id;
+    this.name = name;
+    this.size = size;
+  }
+
   public void setCategory(String category) {
     this.category = category;
   }

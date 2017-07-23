@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,9 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -42,6 +43,8 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -75,6 +78,7 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.text.*;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.*;
 import java.net.MalformedURLException;
@@ -83,8 +87,11 @@ import java.util.*;
 import java.util.List;
 
 public class DocumentationComponent extends JPanel implements Disposable, DataProvider {
-  public static final Color DOCUMENTATION_COLOR = new JBColor(new Color(0xf6f6f6), new Color(0x4d4f51));
-  private static Logger LOGGER = Logger.getInstance(DocumentationComponent.class);
+
+  private static final Logger LOG = Logger.getInstance(DocumentationComponent.class);
+
+  private static final Color DOCUMENTATION_COLOR = new JBColor(new Color(0xf6f6f6), new Color(0x4d4f51));
+  public static final ColorKey COLOR_KEY = ColorKey.createColorKey("DOCUMENTATION_COLOR", DOCUMENTATION_COLOR);
 
   private static final Highlighter.HighlightPainter LINK_HIGHLIGHTER = new LinkHighlighter();
   @NonNls private static final String DOCUMENTATION_TOPIC_ID = "reference.toolWindows.Documentation";
@@ -105,7 +112,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private volatile boolean myIsEmpty;
   private boolean myIsShown;
   private final JLabel myElementLabel;
-  private final MutableAttributeSet myFontSizeStyle = new SimpleAttributeSet();
   private JSlider myFontSizeSlider;
   private final JComponent mySettingsPanel;
   private final MyShowSettingsButton myShowSettingsButton;
@@ -130,7 +136,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
           url = new URL(builtInServerManager.addAuthToken(parsedUrl).toExternalForm());
         }
         catch (MalformedURLException e) {
-          LOGGER.warn(e);
+          LOG.warn(e);
         }
       }
       return Toolkit.getDefaultToolkit().createImage(url);
@@ -182,10 +188,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   public void requestFocus() {
     // With a screen reader active, set the focus directly to the editor because
     // it makes it easier for users to read/navigate the documentation contents.
-    if (ScreenReader.isActive())
-      myEditorPane.requestFocus();
-    else
-      myScrollPane.requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      if (ScreenReader.isActive()) {
+        IdeFocusManager.getGlobalInstance().requestFocus(myEditorPane, true);
+      }
+      else {
+        IdeFocusManager.getGlobalInstance().requestFocus(myScrollPane, true);
+      }
+    });
   }
 
   public DocumentationComponent(final DocumentationManager manager, final AnAction[] additionalActions) {
@@ -258,8 +268,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       // Note: Making the caret visible is merely for convenience
       myEditorPane.getCaret().setVisible(true);
     }
-    myEditorPane.setBackground(DOCUMENTATION_COLOR);
-    myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit(false));
+    myEditorPane.setBackground(EditorColorsUtil.getGlobalOrDefaultColor(COLOR_KEY));
+    HTMLEditorKit editorKit = UIUtil.getHTMLEditorKit(false);
+    String editorFontName = StringUtil.escapeQuotes(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName());
+    editorKit.getStyleSheet().addRule("code {font-family:\"" + editorFontName + "\"}");
+    editorKit.getStyleSheet().addRule("pre {font-family:\"" + editorFontName + "\"}");
+    myEditorPane.setEditorKit(editorKit);
     myScrollPane = new JBScrollPane(myEditorPane) {
       @Override
       protected void processMouseWheelEvent(MouseWheelEvent e) {
@@ -287,7 +301,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         }
 
         setQuickDocFontSize(newFontSize);
-        applyFontSize();
+        applyFontProps();
         setFontSizeSliderSize(newFontSize);
       }
     };
@@ -398,7 +412,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       forward.registerCustomShortcutSet(forwardShortcutSet, myEditorPane);
     }
     catch (InvalidDataException e) {
-      LOGGER.error(e);
+      LOG.error(e);
     }
     
     myExternalDocAction.registerCustomShortcutSet(CustomShortcutSet.fromString("UP"), this);
@@ -487,7 +501,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
           return;
         }
         setQuickDocFontSize(FontSize.values()[myFontSizeSlider.getValue()]);
-        applyFontSize();
+        applyFontProps();
       }
     });
 
@@ -649,7 +663,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     highlightLink(-1);
 
     myEditorPane.setText(text);
-    applyFontSize();
+    applyFontProps();
 
     if (!myIsShown && myHint != null && !ApplicationManager.getApplication().isUnitTestMode()) {
       myManager.showHint(myHint);
@@ -668,23 +682,17 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       }});
   }
 
-  private void applyFontSize() {
+  private void applyFontProps() {
     Document document = myEditorPane.getDocument();
     if (!(document instanceof StyledDocument)) {
       return;
     }
+    String fontName = Registry.is("documentation.component.editor.font") ?
+                      EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName() :
+                      myEditorPane.getFont().getFontName();
 
-    final StyledDocument styledDocument = (StyledDocument)document;
-
-    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-    EditorColorsScheme scheme = colorsManager.getGlobalScheme();
-    StyleConstants.setFontSize(myFontSizeStyle, JBUI.scale(getQuickDocFontSize().getSize()));
-    if (Registry.is("documentation.component.editor.font")) {
-      StyleConstants.setFontFamily(myFontSizeStyle, scheme.getEditorFontName());
-    }
-
-    ApplicationManager.getApplication().executeOnPooledThread(
-      () -> styledDocument.setCharacterAttributes(0, styledDocument.getLength(), myFontSizeStyle, false));
+    // changing font will change the doc's CSS as myEditorPane has JEditorPane.HONOR_DISPLAY_PROPERTIES via UIUtil.getHTMLEditorKit
+    myEditorPane.setFont(UIUtil.getFontWithFallback(fontName, Font.PLAIN, JBUI.scale(getQuickDocFontSize().getSize())));
   }
 
   private void goBack() {
@@ -981,7 +989,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         myEditorPane.setCaretPosition(startOffset);
       }
       catch (BadLocationException e) {
-        LOGGER.warn("Error highlighting link", e);
+        LOG.warn("Error highlighting link", e);
       }
     }
     else if (myHighlightingTag != null) {
@@ -1112,7 +1120,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         }
       }
       catch (Exception e) {
-        LOGGER.warn("Error painting link highlight", e);
+        LOG.warn("Error painting link highlight", e);
       }
     }
   }

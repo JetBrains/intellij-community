@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ import java.util.Set;
  * @author Maxim.Mossienko
  */
 public class JavaDocumentationProvider extends DocumentationProviderEx implements CodeDocumentationProvider, ExternalDocumentationProvider {
-  private static final Logger LOG = Logger.getInstance("#" + JavaDocumentationProvider.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaDocumentationProvider.class);
 
   private static final String LINE_SEPARATOR = "\n";
   private static final String PARAM_TAG = "@param";
@@ -236,7 +236,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
 
   private static void writeTypeRefs(PsiClass aClass, StringBuilder buffer, PsiClassType[] refs) {
     for (int i = 0; i < refs.length; i++) {
-      JavaDocInfoGenerator.generateType(buffer, refs[i], aClass, false);
+      JavaDocInfoGenerator.generateType(buffer, refs[i], aClass, false, true);
 
       if (i < refs.length - 1) {
         buffer.append(", ");
@@ -260,7 +260,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
           buffer.append(" extends ");
 
           for (int j = 0; j < refs.length; j++) {
-            JavaDocInfoGenerator.generateType(buffer, refs[j], typeParameterOwner, false);
+            JavaDocInfoGenerator.generateType(buffer, refs[j], typeParameterOwner, false, true);
 
             if (j < refs.length - 1) {
               buffer.append(" & ");
@@ -297,17 +297,17 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     generateTypeParameters(method, buffer);
 
     if (method.getReturnType() != null) {
-      JavaDocInfoGenerator.generateType(buffer, substitutor.substitute(method.getReturnType()), method, false);
+      JavaDocInfoGenerator.generateType(buffer, substitutor.substitute(method.getReturnType()), method, false, true);
       buffer.append(" ");
     }
 
     buffer.append(method.getName());
 
-    buffer.append(" (");
+    buffer.append("(");
     PsiParameter[] params = method.getParameterList().getParameters();
     for (int i = 0; i < params.length; i++) {
       PsiParameter param = params[i];
-      JavaDocInfoGenerator.generateType(buffer, substitutor.substitute(param.getType()), method, false);
+      JavaDocInfoGenerator.generateType(buffer, substitutor.substitute(param.getType()), method, false, true);
       buffer.append(" ");
       if (param.getName() != null) {
         buffer.append(param.getName());
@@ -353,7 +353,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
 
     generateModifiers(buffer, field);
 
-    JavaDocInfoGenerator.generateType(buffer, substitutor.substitute(field.getType()), field, false);
+    JavaDocInfoGenerator.generateType(buffer, substitutor.substitute(field.getType()), field, false, true);
     buffer.append(" ");
     buffer.append(field.getName());
 
@@ -368,7 +368,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
 
     generateModifiers(buffer, variable);
 
-    JavaDocInfoGenerator.generateType(buffer, variable.getType(), variable, false);
+    JavaDocInfoGenerator.generateType(buffer, variable.getType(), variable, false, true);
 
     buffer.append(" ");
 
@@ -384,7 +384,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     VirtualFile file = PsiImplUtil.getModuleVirtualFile(module);
     generateOrderEntryInfo(sb, file, module.getProject());
 
-    sb.append(LangBundle.message("java.terms.module")).append(' ').append(module.getModuleName());
+    sb.append(LangBundle.message("java.terms.module")).append(' ').append(module.getName());
 
     return sb.toString();
   }
@@ -403,12 +403,13 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
   @Nullable
   @Override
   public Pair<PsiElement, PsiComment> parseContext(@NotNull PsiElement startPoint) {
-    for (PsiElement e = startPoint; e != null; e = e.getParent()) {
-      if (e instanceof PsiDocCommentOwner) {
-        return Pair.create(e, ((PsiDocCommentOwner)e).getDocComment());
+    PsiElement docCommentOwner = PsiTreeUtil.findFirstParent(startPoint, e -> {
+      if (e instanceof PsiDocCommentOwner && !(e instanceof PsiTypeParameter) && !(e instanceof PsiAnonymousClass)) {
+        return true;
       }
-    }
-    return null;
+      return false;
+    });
+    return docCommentOwner == null ? null : Pair.create(docCommentOwner, ((PsiDocCommentOwner)docCommentOwner).getDocComment());
   }
 
   @Override
@@ -506,8 +507,11 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
 
   @Override
   public String generateDoc(PsiElement element, PsiElement originalElement) {
-    if (element instanceof PsiExpressionList) {
-      element = element.getParent(); // for new Class(<caret>) or methodCall(<caret>) proceed from method call or new expression
+    // for new Class(<caret>) or methodCall(<caret>) proceed from method call or new expression
+    // same for new Cl<caret>ass() or method<caret>Call()
+    if (element instanceof PsiExpressionList ||
+        element instanceof PsiReferenceExpression && element.getParent() instanceof PsiMethodCallExpression) {
+      element = element.getParent();
       originalElement = null;
     }
     if (element instanceof PsiMethodCallExpression) {

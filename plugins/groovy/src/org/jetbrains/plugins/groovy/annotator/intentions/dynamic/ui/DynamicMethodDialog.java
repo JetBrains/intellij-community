@@ -36,10 +36,6 @@ import java.awt.*;
 import java.util.EventObject;
 import java.util.List;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 18.02.2008
- */
 public class DynamicMethodDialog extends DynamicDialog {
 
   public DynamicMethodDialog(GrReferenceExpression referenceExpression) {

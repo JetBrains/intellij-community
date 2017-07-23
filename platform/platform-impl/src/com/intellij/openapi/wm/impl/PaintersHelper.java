@@ -110,7 +110,8 @@ final class PaintersHelper implements Painter.Listener {
 
       g.setTransform(t);
       g.translate(offsets[i++], offsets[i++]);
-      g.scale(orig.getScaleX(), orig.getScaleY()); // scale the paint below
+      // paint in the orig graphics scale (note, the offsets are pre-scaled)
+      g.scale(orig.getScaleX(), orig.getScaleY());
       painter.paint(cur, g);
     }
     g.setTransform(orig);
@@ -123,9 +124,10 @@ final class PaintersHelper implements Painter.Listener {
     int[] offsets = new int[2 + myPainters.size() * 2];
     // store current graphics transform
     Graphics2D g = (Graphics2D)gg;
-    AffineTransform transform = g.getTransform();
-    offsets[i++] = (int)transform.getTranslateX();
-    offsets[i++] = (int)transform.getTranslateY();
+    AffineTransform tx = g.getTransform();
+    // graphics tx offsets include graphics scale
+    offsets[i++] = (int)tx.getTranslateX();
+    offsets[i++] = (int)tx.getTranslateY();
     // calculate relative offsets for painters
     Rectangle r = null;
     Component prev = null;
@@ -139,8 +141,9 @@ final class PaintersHelper implements Painter.Listener {
         r = SwingUtilities.convertRectangle(curParent, cur.getBounds(), component);
         prev = cur;
       }
-      offsets[i++] = r.x;
-      offsets[i++] = r.y;
+      // component offsets don't include graphics scale, so compensate
+      offsets[i++] = (int)(r.x * tx.getScaleX());
+      offsets[i++] = (int)(r.y * tx.getScaleY());
     }
     return offsets;
   }

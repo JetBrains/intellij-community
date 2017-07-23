@@ -16,20 +16,20 @@
 package org.jetbrains.jps.model.java.impl.compiler;
 
 import com.intellij.openapi.util.io.FileUtilRt;
-import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
  * @author nik
  */
 public class JpsCompilerExcludesImpl implements JpsCompilerExcludes {
-  private final Set<File> myFiles = new HashSet<File>();
-  private final Set<File> myDirectories = new HashSet<File>();
-  private final Set<File> myRecursivelyExcludedDirectories = new HashSet<File>();
+  private final Set<File> myFiles = new LinkedHashSet<>();
+  private final Set<File> myDirectories = new LinkedHashSet<>();
+  private final Set<File> myRecursivelyExcludedDirectories = new LinkedHashSet<>();
 
   @Override
   public void addExcludedFile(String url) {
@@ -50,7 +50,7 @@ public class JpsCompilerExcludesImpl implements JpsCompilerExcludes {
   }
 
   @Override
-  public  boolean isExcluded(File file) {
+  public boolean isExcluded(File file) {
     if (myFiles.contains(file)) {
       return true;
     }
@@ -69,5 +69,20 @@ public class JpsCompilerExcludesImpl implements JpsCompilerExcludes {
       }
     }
     return false;
+  }
+
+  @Override
+  public Set<File> getExcludedFiles() {
+    return myFiles;
+  }
+
+  @Override
+  public Set<File> getExcludedDirectories() {
+    return myDirectories;
+  }
+
+  @Override
+  public Set<File> getRecursivelyExcludedDirectories() {
+    return myRecursivelyExcludedDirectories;
   }
 }

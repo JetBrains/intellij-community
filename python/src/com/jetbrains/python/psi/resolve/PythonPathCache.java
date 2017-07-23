@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi.resolve;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
@@ -25,15 +24,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author yole
  */
 public abstract class PythonPathCache {
-  private final Map<QualifiedName, List<SoftReference<PsiElement>>> myCache = ContainerUtil.newConcurrentMap();
+  private final Map<QualifiedName, SoftReference<List<PsiElement>>> myCache = ContainerUtil.newConcurrentMap();
   private final Map<String, List<QualifiedName>> myQNameCache = ContainerUtil.newConcurrentMap();
 
   public void clearCache() {
@@ -41,23 +40,26 @@ public abstract class PythonPathCache {
     myQNameCache.clear();
   }
 
+  /***
+   * @return null if nothing found in cache. If path resolves to nothing you get empty list
+   */
   @Nullable
-  public List<PsiElement> get(QualifiedName qualifiedName) {
-    final List<SoftReference<PsiElement>> references = myCache.get(qualifiedName);
+  public List<PsiElement> get(@NotNull final QualifiedName qualifiedName) {
+    final SoftReference<List<PsiElement>> references = myCache.get(qualifiedName);
     if (references == null) {
       return null;
     }
-    final List<PsiElement> result = references.stream().map(r -> r.get()).filter(p -> p != null).collect(Collectors.toList());
-    final boolean staleElementRemoved = result.removeIf(e -> !e.isValid());
-    if (staleElementRemoved) {
-      Logger.getInstance(PythonPathCache.class).warn("Removing invalid element from cache");
+    final List<PsiElement> elements = references.get();
+    if(elements != null && ! elements.stream().allMatch(PsiElement::isValid)) {
+      // At least one element is invalid
+      return null;
     }
-    return (!result.isEmpty() ? result : null);
+    return elements != null ? Collections.unmodifiableList(elements) : null;
   }
 
   public void put(QualifiedName qualifiedName, List<PsiElement> results) {
     if (results != null) {
-      myCache.put(qualifiedName, new ArrayList<>(results.stream().map(e -> new SoftReference<>(e)).collect(Collectors.toList())));
+      myCache.put(qualifiedName, new SoftReference<>(results));
     }
   }
 
@@ -66,14 +68,15 @@ public abstract class PythonPathCache {
     if (vFile == null) {
       return null;
     }
-    return myQNameCache.get(vFile.getUrl());
+    final List<QualifiedName> names = myQNameCache.get(vFile.getUrl());
+    return names != null ? Collections.unmodifiableList(names) : null;
   }
 
   public void putNames(VirtualFile vFile, List<QualifiedName> qNames) {
     myQNameCache.put(vFile.getUrl(), new ArrayList<>(qNames));
   }
 
-  protected class MyVirtualFileAdapter extends VirtualFileAdapter {
+  protected class MyVirtualFileListener implements VirtualFileListener {
     @Override
     public void fileCreated(@NotNull VirtualFileEvent event) {
       clearCache();

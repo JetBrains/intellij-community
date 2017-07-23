@@ -70,7 +70,7 @@ public class ThumbnailComponentUI extends ComponentUI {
             }
 
             // File name
-            paintFileName(g, tc);
+            if (tc.isDirectory() || tc.getImageComponent().isFileNameVisible()) paintFileName(g, tc);
         }
     }
 
@@ -92,10 +92,10 @@ public class ThumbnailComponentUI extends ComponentUI {
     }
 
     private void paintImageThumbnail(Graphics g, ThumbnailComponent tc) {
-        // Paint blank
-        ImagesIcons.ThumbnailBlank.paintIcon(tc, g, 5, 5);
-
         ImageComponent imageComponent = tc.getImageComponent();
+        // Paint blank
+        if (imageComponent.isFileSizeVisible()) ImagesIcons.ThumbnailBlank.paintIcon(tc, g, 5, 5);
+        
         ImageDocument document = imageComponent.getDocument();
         BufferedImage image = document.getValue();
         if (image != null) {
@@ -104,7 +104,7 @@ public class ThumbnailComponentUI extends ComponentUI {
             paintError(g, tc);
         }
 
-        paintFileSize(g, tc);
+        if (imageComponent.isFileSizeVisible()) paintFileSize(g, tc);
     }
 
     private void paintBackground(Graphics g, ThumbnailComponent tc) {
@@ -115,21 +115,22 @@ public class ThumbnailComponentUI extends ComponentUI {
 
     private void paintImage(Graphics g, ThumbnailComponent tc) {
         ImageComponent imageComponent = tc.getImageComponent();
-        BufferedImage image = imageComponent.getDocument().getValue();
 
         int blankHeight = ImagesIcons.ThumbnailBlank.getIconHeight();
 
-        // Paint image info (and reduce height of text from available height)
-        blankHeight -= paintImageCaps(g, image);
-        // Paint image format (and reduce height of text from available height)
-        blankHeight -= paintFormatText(tc, g);
+        if (imageComponent.isFileSizeVisible()) {
+            // Paint image info (and reduce height of text from available height)
+            blankHeight -= paintImageCaps(g, imageComponent);
+            // Paint image format (and reduce height of text from available height)
+            blankHeight -= paintFormatText(tc, g);
+        }
 
         // Paint image
         paintThumbnail(g, imageComponent, blankHeight);
     }
 
-    private int paintImageCaps(Graphics g, BufferedImage image) {
-        String description = ImagesBundle.message("icon.dimensions", image.getWidth(), image.getHeight(), image.getColorModel().getPixelSize());
+    private int paintImageCaps(Graphics g, ImageComponent imageComponent) {
+        String description = imageComponent.getDescription();
 
         Font font = getSmallFont();
         FontMetrics fontMetrics = g.getFontMetrics(font);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.command.CommandAdapter;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
@@ -39,11 +39,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.*;
 
 @State(name = "IdeDocumentHistory", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements ProjectComponent, PersistentStateComponent<IdeDocumentHistoryImpl.RecentlyChangedFilesState> {
+public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements ProjectComponent, Disposable, PersistentStateComponent<IdeDocumentHistoryImpl.RecentlyChangedFilesState> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl");
 
   private static final int BACK_QUEUE_LIMIT = Registry.intValue("editor.navigation.history.stack.size");
@@ -76,7 +77,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   private final Set<VirtualFile> myChangedFilesInCurrentCommand = new THashSet<>();
   private boolean myCurrentCommandHasMoves;
 
-  private final CommandListener myCommandListener = new CommandAdapter() {
+  private final CommandListener myCommandListener = new CommandListener() {
     @Override
     public void commandStarted(CommandEvent event) {
       onCommandStarted();
@@ -109,21 +110,19 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     myEditorManager = (FileEditorManagerEx)FileEditorManager.getInstance(myProject);
     EditorEventMulticaster eventMulticaster = myEditorFactory.getEventMulticaster();
 
-    DocumentListener documentListener = new DocumentAdapter() {
+    eventMulticaster.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         onDocumentChanged(e);
       }
-    };
-    eventMulticaster.addDocumentListener(documentListener, myProject);
+    }, myProject);
 
-    CaretListener caretListener = new CaretAdapter() {
+    eventMulticaster.addCaretListener(new CaretListener() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         onCaretPositionChanged(e);
       }
-    };
-    eventMulticaster.addCaretListener(caretListener,myProject);
+    }, myProject);
 
     myProject.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
@@ -132,7 +131,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
       }
     });
 
-    VirtualFileListener fileListener = new VirtualFileAdapter() {
+    VirtualFileListener fileListener = new VirtualFileListener() {
       @Override
       public void fileDeleted(@NotNull VirtualFileEvent event) {
         onFileDeleted();
@@ -144,7 +143,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
   public static class RecentlyChangedFilesState {
     // don't make it private, see: IDEA-130363 Recently Edited Files list should survive restart
-    public List<String> CHANGED_PATHS = new ArrayList<>();
+    @SuppressWarnings("WeakerAccess") public List<String> CHANGED_PATHS = new ArrayList<>();
 
     public void register(VirtualFile file) {
       final String path = file.getPath();
@@ -154,7 +153,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     }
 
     private void trimToSize(){
-      final int limit = UISettings.getInstance().RECENT_FILES_LIMIT + 1;
+      final int limit = UISettings.getInstance().getRecentFilesLimit() + 1;
       while(CHANGED_PATHS.size()>limit){
         CHANGED_PATHS.remove(0);
       }
@@ -235,11 +234,6 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     else if (myCurrentCommandHasMoves) {
       pushCurrentChangePlace();
     }
-  }
-
-
-  @Override
-  public final void projectClosed() {
   }
 
   @Override
@@ -439,12 +433,9 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   private void gotoPlaceInfo(@NotNull PlaceInfo info) { // TODO: Msk
     final boolean wasActive = myToolWindowManager.isEditorComponentActive();
     EditorWindow wnd = info.getWindow();
-    final Pair<FileEditor[],FileEditorProvider[]> editorsWithProviders;
-    if (wnd != null && wnd.isValid()) {
-      editorsWithProviders = myEditorManager.openFileWithProviders(info.getFile(), wasActive, wnd);
-    } else {
-      editorsWithProviders = myEditorManager.openFileWithProviders(info.getFile(), wasActive, false);
-    }
+    final Pair<FileEditor[],FileEditorProvider[]> editorsWithProviders = wnd != null && wnd.isValid()
+                           ? myEditorManager.openFileWithProviders(info.getFile(), wasActive, wnd)
+                           : myEditorManager.openFileWithProviders(info.getFile(), wasActive, false);
 
     myEditorManager.setSelectedEditor(info.getFile(), info.getEditorTypeId());
 
@@ -504,11 +495,10 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   }
 
   private static final class PlaceInfo {
-
     private final VirtualFile myFile;
     private final FileEditorState myNavigationState;
     private final String myEditorTypeId;
-    private final WeakReference<EditorWindow> myWindow;
+    private final Reference<EditorWindow> myWindow;
 
     PlaceInfo(@NotNull VirtualFile file,
               @NotNull FileEditorState navigationState,
@@ -543,7 +533,6 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     public String toString() {
       return getFile().getName() + " " + getNavigationState();
     }
-
   }
 
   @NotNull
@@ -553,10 +542,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   }
 
   @Override
-  public final void initComponent() { }
-
-  @Override
-  public final void disposeComponent() {
+  public final void dispose() {
     myLastGroupId = null;
   }
 
@@ -573,6 +559,4 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
     return false;
   }
-
-
 }

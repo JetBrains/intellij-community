@@ -52,7 +52,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.TimedVcsCommit;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -199,12 +198,20 @@ public class DvcsUtil {
   @NotNull
   public static AccessToken workingTreeChangeStarted(@NotNull Project project) {
     ApplicationManager.getApplication().getMessageBus().syncPublisher(BatchFileChangeListener.TOPIC).batchChangeStarted(project);
-    return HeavyProcessLatch.INSTANCE.processStarted("Changing DVCS working tree");
+    return new AccessToken() {
+      @Override
+      public void finish() {
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(BatchFileChangeListener.TOPIC).batchChangeCompleted(project);
+      }
+    };
   }
 
+  /**
+   * @deprecated Call {@link AccessToken#finish()} directly from the AccessToken received by {@link #workingTreeChangeStarted(Project)}
+   */
+  @Deprecated
   public static void workingTreeChangeFinished(@NotNull Project project, @NotNull AccessToken token) {
     token.finish();
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(BatchFileChangeListener.TOPIC).batchChangeCompleted(project);
   }
 
   public static final Comparator<Repository> REPOSITORY_COMPARATOR = Comparator.comparing(Repository::getPresentableUrl);

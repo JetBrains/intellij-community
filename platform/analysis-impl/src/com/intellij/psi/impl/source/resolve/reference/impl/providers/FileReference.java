@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import com.intellij.psi.search.PsiFileSystemItemProcessor;
 import com.intellij.refactoring.rename.BindablePsiReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -156,9 +157,18 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
                                        final Collection<ResolveResult> result,
                                        final boolean caseSensitive) {
     if (isAllowedEmptyPath(text) || ".".equals(text) || "/".equals(text)) {
+      if (context instanceof FileReferenceResolver) {
+        ContainerUtil.addIfNotNull(result, resolveFileReferenceResolver((FileReferenceResolver)context, text));
+        return;
+      }
       result.add(new PsiElementResolveResult(context));
     }
     else if ("..".equals(text)) {
+      if (context instanceof FileReferenceResolver) {
+        ContainerUtil.addIfNotNull(result, resolveFileReferenceResolver((FileReferenceResolver)context, text));
+        return;
+      }
+
       final PsiFileSystemItem resolved = context.getParent();
       if (resolved != null) {
         result.add(new PsiElementResolveResult(resolved));
@@ -189,9 +199,9 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
           context = ((PackagePrefixFileSystemItem)context).getDirectory();
         }
         else if (context instanceof FileReferenceResolver) {
-          PsiFileSystemItem child = ((FileReferenceResolver)context).resolveFileReference(this, decoded);
+          ResolveResult child = resolveFileReferenceResolver((FileReferenceResolver)context, decoded);
           if (child != null) {
-            result.add(new PsiElementResolveResult(getOriginalFile(child)));
+            result.add(child);
             return;
           }
         }
@@ -233,13 +243,18 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   }
 
   @Nullable
-  public
-  String getNewFileTemplateName() {
+  public String getNewFileTemplateName() {
     FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(myText);
     if (fileType != UnknownFileType.INSTANCE) {
       return fileType.getName() + " File." + fileType.getDefaultExtension();
     }
     return null;
+  }
+
+  @Nullable
+  private ResolveResult resolveFileReferenceResolver(@NotNull FileReferenceResolver fileReferenceResolver, @NotNull String text) {
+    PsiFileSystemItem resolve = fileReferenceResolver.resolveFileReference(this, text);
+    return resolve != null ? new PsiElementResolveResult(getOriginalFile(resolve)) : null;
   }
 
   private static boolean caseSensitivityApplies(PsiDirectory context, boolean caseSensitive) {
@@ -527,6 +542,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
     }
   }
 
+  @NotNull
   protected static FileReferenceHelper[] getHelpers() {
     return FileReferenceHelperRegistrar.getHelpers();
   }

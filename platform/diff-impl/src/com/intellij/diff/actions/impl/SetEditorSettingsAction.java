@@ -17,7 +17,7 @@ package com.intellij.diff.actions.impl;
 
 import com.intellij.diff.tools.util.SyncScrollSupport;
 import com.intellij.diff.tools.util.base.HighlightingLevel;
-import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
+import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -30,17 +30,18 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.util.ArrayUtil.toObjectArray;
+
 public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
-  @NotNull private final TextDiffSettingsHolder.TextDiffSettings myTextSettings;
+  @NotNull private final TextDiffSettings myTextSettings;
   @NotNull private final List<? extends Editor> myEditors;
   @Nullable private SyncScrollSupport.Support mySyncScrollSupport;
 
   @NotNull private final AnAction[] myActions;
 
-  public SetEditorSettingsAction(@NotNull TextDiffSettingsHolder.TextDiffSettings settings,
+  public SetEditorSettingsAction(@NotNull TextDiffSettings settings,
                                  @NotNull List<? extends Editor> editors) {
     super("Editor Settings", null, AllIcons.General.SecondaryGroup);
     setPopup(true);
@@ -60,7 +61,7 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
 
         @Override
         public void setSelected(boolean state) {
-          myTextSettings.setShowWhiteSpaces(state);
+          myTextSettings.setShowWhitespaces(state);
         }
 
         @Override
@@ -163,11 +164,26 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
   @NotNull
   @Override
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
-    List<AnAction> result = new ArrayList<>();
-    ContainerUtil.addAll(result, myActions);
-    result.add(Separator.getInstance());
-    result.add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_GUTTER_POPUP));
-    return ContainerUtil.toArray(result, new AnAction[result.size()]);
+    AnAction[] children = ((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_GUTTER_POPUP)).getChildren(e);
+    AnAction editorSettingsGroup = ActionManager.getInstance().getAction("Diff.EditorGutterPopupMenu.EditorSettings");
+
+    DefaultActionGroup ourGroup = new DefaultActionGroup();
+    ourGroup.add(Separator.getInstance());
+    ourGroup.addAll(myActions);
+    ourGroup.add(editorSettingsGroup);
+    ourGroup.add(Separator.getInstance());
+
+    List<AnAction> result = ContainerUtil.newArrayList(children);
+    replaceOrAppend(result, editorSettingsGroup, ourGroup);
+
+    return toObjectArray(result, AnAction.class);
+  }
+
+  private static <T> void replaceOrAppend(List<T> list, T from, T to) {
+    int index = list.indexOf(from);
+    if (index == -1) index = list.size();
+    list.remove(from);
+    list.add(index, to);
   }
 
   private abstract class EditorSettingToggleAction extends ToggleAction implements DumbAware, EditorSettingAction {

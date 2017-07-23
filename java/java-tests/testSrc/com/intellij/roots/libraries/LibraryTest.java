@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +22,16 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.NativeLibraryOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.impl.ModuleRootManagerComponent;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.roots.ModuleRootManagerTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.CommonProcessors;
 import org.jdom.Element;
@@ -40,18 +40,15 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Collections;
 
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
+
 /**
  *  @author dsl
  */
 public class LibraryTest extends ModuleRootManagerTestCase {
   public void testModification() throws Exception {
     final LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
-    final Library library = ApplicationManager.getApplication().runWriteAction(new Computable<Library>() {
-      @Override
-      public Library compute() {
-        return libraryTable.createLibrary("NewLibrary");
-      }
-    });
+    final Library library = WriteAction.compute(() -> libraryTable.createLibrary("NewLibrary"));
     final boolean[] listenerNotifiedOnChange = new boolean[1];
     library.getRootProvider().addRootSetChangedListener(wrapper -> listenerNotifiedOnChange[0] = true);
     final Library.ModifiableModel model1 = library.getModifiableModel();
@@ -71,15 +68,25 @@ public class LibraryTest extends ModuleRootManagerTestCase {
   }
 
   public void testLibrarySerialization() {
+    final long moduleModificationCount = ((ModuleRootManagerComponent)ModuleRootManager.getInstance(myModule)).getStateModificationCount();
     Library library = PsiTestUtil.addProjectLibrary(myModule, "junit", Collections.singletonList(getJDomJar()),
                                                     Collections.singletonList(getJDomSources()));
+
+    assertThat(((ModuleRootManagerComponent)ModuleRootManager.getInstance(myModule)).getStateModificationCount()).isGreaterThan(moduleModificationCount);
     Element element = serialize(library);
     String classesUrl = getJDomJar().getUrl();
     String sourcesUrl = getJDomSources().getUrl();
-    PlatformTestUtil.assertElementEquals(
-      "<root><library name=\"junit\"><CLASSES><root url=\"" + classesUrl + "\" /></CLASSES>" +
-      "<JAVADOC /><SOURCES><root url=\"" + sourcesUrl + "\" /></SOURCES></library></root>",
-      element);
+    assertThat(element).isEqualTo("<root>\n" +
+                                  "  <library name=\"junit\">\n" +
+                                  "    <CLASSES>\n" +
+                                  "      <root url=\"" + classesUrl + "\" />\n" +
+                                  "    </CLASSES>\n" +
+                                  "    <JAVADOC />\n" +
+                                  "    <SOURCES>\n" +
+                                  "      <root url=\"" + sourcesUrl + "\" />\n" +
+                                  "    </SOURCES>\n" +
+                                  "  </library>\n" +
+                                  "</root>");
   }
 
   public void testResolveDependencyToAddedLibrary() {
@@ -93,14 +100,21 @@ public class LibraryTest extends ModuleRootManagerTestCase {
   }
 
   public void testFindLibraryByNameAfterRename() {
+    final long moduleModificationCount = ((ModuleRootManagerComponent)ModuleRootManager.getInstance(myModule)).getStateModificationCount();
+    ProjectLibraryTable table = (ProjectLibraryTable)getLibraryTable();
+    final long projectLibraryModificationCount = table.getStateModificationCount();
     Library a = createLibrary("a", null, null);
-    LibraryTable table = getLibraryTable();
     LibraryTable.ModifiableModel model = table.getModifiableModel();
     assertSame(a, table.getLibraryByName("a"));
     assertSame(a, model.getLibraryByName("a"));
     Library.ModifiableModel libraryModel = a.getModifiableModel();
     libraryModel.setName("b");
     commit(libraryModel);
+
+    // module not marked as to save if project library modified, but module is not affected
+    assertThat(((ModuleRootManagerComponent)ModuleRootManager.getInstance(myModule)).getStateModificationCount()).isEqualTo(moduleModificationCount);
+    assertThat(table.getStateModificationCount()).isGreaterThan(projectLibraryModificationCount);
+
     assertNull(table.getLibraryByName("a"));
     assertNull(model.getLibraryByName("a"));
     assertSame(a, table.getLibraryByName("b"));
@@ -158,6 +172,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
 
   private static void commit(final ModifiableRootModel model) {
     new WriteAction() {
+      @Override
       protected void run(@NotNull final Result result) {
         model.commit();
       }
@@ -178,11 +193,16 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     commit(model);
 
     Element element = serialize(library);
-    PlatformTestUtil.assertElementEquals(
-      "<root><library name=\"native\"><CLASSES /><JAVADOC />" +
-      "<NATIVE><root url=\"file://native-lib-root\" /></NATIVE>" +
-      "<SOURCES /></library></root>",
-      element);
+    assertThat(element).isEqualTo("<root>\n" +
+                                  "  <library name=\"native\">\n" +
+                                  "    <CLASSES />\n" +
+                                  "    <JAVADOC />\n" +
+                                  "    <NATIVE>\n" +
+                                  "      <root url=\"file://native-lib-root\" />\n" +
+                                  "    </NATIVE>\n" +
+                                  "    <SOURCES />\n" +
+                                  "  </library>\n" +
+                                  "</root>");
   }
 
   @NotNull
@@ -192,31 +212,25 @@ public class LibraryTest extends ModuleRootManagerTestCase {
 
   public void testJarDirectoriesSerialization() {
     LibraryTable table = getLibraryTable();
-    Library library = ApplicationManager.getApplication().runWriteAction(new Computable<Library>() {
-      @Override
-      public Library compute() {
-        return table.createLibrary("jarDirs");
-      }
-    });
+    Library library = WriteAction.compute(() -> table.createLibrary("jarDirs"));
     Library.ModifiableModel model = library.getModifiableModel();
     model.addJarDirectory("file://jar-dir", false, OrderRootType.CLASSES);
     model.addJarDirectory("file://jar-dir-src", false, OrderRootType.SOURCES);
     commit(model);
 
-    Element element = serialize(library);
-    PlatformTestUtil.assertElementEquals("<root>\n" +
-                                         "  <library name=\"jarDirs\">\n" +
-                                         "    <CLASSES>\n" +
-                                         "      <root url=\"file://jar-dir\" />\n" +
-                                         "    </CLASSES>\n" +
-                                         "    <JAVADOC />\n" +
-                                         "    <SOURCES>\n" +
-                                         "      <root url=\"file://jar-dir-src\" />\n" +
-                                         "    </SOURCES>\n" +
-                                         "    <jarDirectory url=\"file://jar-dir\" recursive=\"false\" />\n" +
-                                         "    <jarDirectory url=\"file://jar-dir-src\" recursive=\"false\" type=\"SOURCES\" />\n" +
-                                         "  </library>\n" +
-                                         "</root>" , element);
+    assertThat(serialize(library)).isEqualTo("<root>\n" +
+                                             "  <library name=\"jarDirs\">\n" +
+                                             "    <CLASSES>\n" +
+                                             "      <root url=\"file://jar-dir\" />\n" +
+                                             "    </CLASSES>\n" +
+                                             "    <JAVADOC />\n" +
+                                             "    <SOURCES>\n" +
+                                             "      <root url=\"file://jar-dir-src\" />\n" +
+                                             "    </SOURCES>\n" +
+                                             "    <jarDirectory url=\"file://jar-dir\" recursive=\"false\" />\n" +
+                                             "    <jarDirectory url=\"file://jar-dir-src\" recursive=\"false\" type=\"SOURCES\" />\n" +
+                                             "  </library>\n" +
+                                             "</root>");
   }
 
   private static Element serialize(Library library) {

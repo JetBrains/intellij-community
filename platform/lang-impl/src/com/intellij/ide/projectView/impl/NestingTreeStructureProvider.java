@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,13 @@
  */
 package com.intellij.ide.projectView.impl;
 
-import com.intellij.ide.projectView.ProjectViewNestingRulesProvider;
-import com.intellij.ide.projectView.TreeStructureProvider;
-import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.*;
+import com.intellij.ide.projectView.impl.ProjectViewFileNestingService.NestingRule;
 import com.intellij.ide.projectView.impl.nodes.NestingTreeNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -48,50 +46,50 @@ import java.util.*;
  * {@code com.intellij.projectViewNestingRulesProvider} extensions.
  *
  * @see ProjectViewNestingRulesProvider
+ * @see ProjectViewFileNestingService
+ * @see FileNestingInProjectViewDialog
  */
 public class NestingTreeStructureProvider implements TreeStructureProvider, DumbAware {
-
-  private static ExtensionPointName<ProjectViewNestingRulesProvider> EP_NAME =
-    ExtensionPointName.create("com.intellij.projectViewNestingRulesProvider");
-
   private static final Logger LOG = Logger.getInstance(NestingTreeStructureProvider.class);
+
+  private long myBaseListModCount = -1;
   private Set<NestingRule> myNestingRules;
 
   @NotNull
   private Collection<NestingRule> getNestingRules() {
-    if (myNestingRules == null) {
+    final ProjectViewFileNestingService fileNestingService = ProjectViewFileNestingService.getInstance();
+    final List<NestingRule> baseRules = fileNestingService.getRules();
+    final long modCount = fileNestingService.getModificationCount();
+
+    if (myNestingRules == null || myBaseListModCount != modCount) {
       myNestingRules = new THashSet<>();
+      myBaseListModCount = modCount;
 
       final MultiMap<String, String> childToParentSuffix = new MultiMap<>();
       final MultiMap<String, String> parentToChildSuffix = new MultiMap<>();
 
-      final ProjectViewNestingRulesProvider.Consumer consumer = new ProjectViewNestingRulesProvider.Consumer() {
-        @Override
-        public void addNestingRule(@NotNull final String parentFileSuffix, @NotNull final String childFileSuffix) {
-          LOG.assertTrue(!parentFileSuffix.isEmpty() && !childFileSuffix.isEmpty(), "file suffix must not be empty");
-          LOG.assertTrue(!parentFileSuffix.equals(childFileSuffix), "parent and child suffixes must be different: " + parentFileSuffix);
+      for (NestingRule rule : baseRules) {
+        final String parentFileSuffix = rule.getParentFileSuffix();
+        final String childFileSuffix = rule.getChildFileSuffix();
+        if (parentFileSuffix.isEmpty() || childFileSuffix.isEmpty()) continue; // shouldn't happen, checked on component loading and in UI
+        if (parentFileSuffix.equals(childFileSuffix)) continue; // shouldn't happen, checked on component loading and in UI
 
-          myNestingRules.add(new NestingRule(parentFileSuffix, childFileSuffix));
-          childToParentSuffix.putValue(childFileSuffix, parentFileSuffix);
-          parentToChildSuffix.putValue(parentFileSuffix, childFileSuffix);
+        myNestingRules.add(rule);
+        childToParentSuffix.putValue(childFileSuffix, parentFileSuffix);
+        parentToChildSuffix.putValue(parentFileSuffix, childFileSuffix);
 
-          // for all cases like A -> B -> C we also add a rule A -> C
-          for (String s : parentToChildSuffix.get(childFileSuffix)) {
-            myNestingRules.add(new NestingRule(parentFileSuffix, s));
-            parentToChildSuffix.putValue(parentFileSuffix, s);
-            childToParentSuffix.putValue(s, parentFileSuffix);
-          }
-
-          for (String s : childToParentSuffix.get(parentFileSuffix)) {
-            myNestingRules.add(new NestingRule(s, childFileSuffix));
-            parentToChildSuffix.putValue(s, childFileSuffix);
-            childToParentSuffix.putValue(childFileSuffix, s);
-          }
+        // for all cases like A -> B -> C we also add a rule A -> C
+        for (String s : parentToChildSuffix.get(childFileSuffix)) {
+          myNestingRules.add(new NestingRule(parentFileSuffix, s));
+          parentToChildSuffix.putValue(parentFileSuffix, s);
+          childToParentSuffix.putValue(s, parentFileSuffix);
         }
-      };
 
-      for (ProjectViewNestingRulesProvider provider : EP_NAME.getExtensions()) {
-        provider.addFileNestingRules(consumer);
+        for (String s : childToParentSuffix.get(parentFileSuffix)) {
+          myNestingRules.add(new NestingRule(s, childFileSuffix));
+          parentToChildSuffix.putValue(s, childFileSuffix);
+          childToParentSuffix.putValue(childFileSuffix, s);
+        }
       }
     }
 
@@ -108,17 +106,12 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
     return Collections.emptyList();
   }
 
-  @Nullable
-  @Override
-  public Object getData(final Collection<AbstractTreeNode> selected, final String dataName) {
-    return null;
-  }
-
   @NotNull
   @Override
   public Collection<AbstractTreeNode> modify(@NotNull final AbstractTreeNode parent,
                                              @NotNull final Collection<AbstractTreeNode> children,
                                              final ViewSettings settings) {
+    if (!(settings instanceof ProjectViewSettings) || !((ProjectViewSettings)settings).isUseFileNestingRules()) return children;
     if (!(parent instanceof PsiDirectoryNode)) return children;
 
     final Collection<NestingRule> rules = getNestingRules();
@@ -159,6 +152,11 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
                                                                                @NotNull final VirtualFile parentFile) {
     LOG.assertTrue(!parentFile.isDirectory());
 
+    final AbstractProjectViewPane pane = ProjectView.getInstance(project).getProjectViewPaneById(ProjectViewPane.ID);
+    if (pane instanceof ProjectViewPane) {
+      if (!((ProjectViewPane)pane).isUseFileNestingRules()) return Collections.emptyList();
+    }
+
     final VirtualFile dir = parentFile.getParent();
     if (dir == null) return Collections.emptyList();
 
@@ -187,8 +185,8 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
         final boolean matchesParent = c.first;
 
         if (matchesParent) {
-          final String baseName = childName.substring(0, childName.length() - rule.myParentFileSuffix.length());
-          if (parentFile.getName().equals(baseName + rule.myChildFileSuffix)) {
+          final String baseName = childName.substring(0, childName.length() - rule.getParentFileSuffix().length());
+          if (parentFile.getName().equals(baseName + rule.getChildFileSuffix())) {
             return Collections.emptyList(); // parentFile itself appears to be a child of childFile
           }
         }
@@ -201,8 +199,8 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
         final boolean matchesChild = c.second;
 
         if (matchesChild) {
-          final String baseName = childName.substring(0, childName.length() - rule.myChildFileSuffix.length());
-          if (parentFile.getName().equals(baseName + rule.myParentFileSuffix)) {
+          final String baseName = childName.substring(0, childName.length() - rule.getChildFileSuffix().length());
+          if (parentFile.getName().equals(baseName + rule.getParentFileSuffix())) {
             result.add(new ChildFileInfo(child, baseName));
           }
         }
@@ -280,14 +278,14 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
         }
 
         if (matchesParent) {
-          final String baseName = fileName.substring(0, fileName.length() - rule.myParentFileSuffix.length());
+          final String baseName = fileName.substring(0, fileName.length() - rule.getParentFileSuffix().length());
           final Edge<PsiFileNode> edge = getOrCreateEdge(baseNameAndRuleToEdge, baseName, rule);
           edge.from = (PsiFileNode)node;
           updateInfoIfEdgeComplete(parentToChildren, allChildNodes, edge);
         }
 
         if (matchesChild) {
-          final String baseName = fileName.substring(0, fileName.length() - rule.myChildFileSuffix.length());
+          final String baseName = fileName.substring(0, fileName.length() - rule.getChildFileSuffix().length());
           final Edge<PsiFileNode> edge = getOrCreateEdge(baseNameAndRuleToEdge, baseName, rule);
           edge.to = (PsiFileNode)node;
           updateInfoIfEdgeComplete(parentToChildren, allChildNodes, edge);
@@ -299,11 +297,11 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
   }
 
   private static Couple<Boolean> checkMatchingAsParentOrChild(@NotNull final NestingRule rule, @NotNull final String fileName) {
-    boolean matchesParent = !fileName.equals(rule.myParentFileSuffix) && fileName.endsWith(rule.myParentFileSuffix);
-    boolean matchesChild = !fileName.equals(rule.myChildFileSuffix) && fileName.endsWith(rule.myChildFileSuffix);
+    boolean matchesParent = !fileName.equals(rule.getParentFileSuffix()) && fileName.endsWith(rule.getParentFileSuffix());
+    boolean matchesChild = !fileName.equals(rule.getChildFileSuffix()) && fileName.endsWith(rule.getChildFileSuffix());
 
     if (matchesParent && matchesChild) {
-      if (rule.myParentFileSuffix.length() > rule.myChildFileSuffix.length()) {
+      if (rule.getParentFileSuffix().length() > rule.getChildFileSuffix().length()) {
         matchesChild = false;
       }
       else {
@@ -340,32 +338,6 @@ public class NestingTreeStructureProvider implements TreeStructureProvider, Dumb
     }
   }
 
-  private static class NestingRule {
-    @NotNull private final String myParentFileSuffix;
-    @NotNull private final String myChildFileSuffix;
-
-    public NestingRule(@NotNull String parentFileSuffix, @NotNull String childFileSuffix) {
-      myParentFileSuffix = parentFileSuffix;
-      myChildFileSuffix = childFileSuffix;
-    }
-
-    @Override
-    public String toString() {
-      return myParentFileSuffix + "->" + myChildFileSuffix;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      return o instanceof NestingRule &&
-             myParentFileSuffix.equals(((NestingRule)o).myParentFileSuffix) &&
-             myChildFileSuffix.equals(((NestingRule)o).myChildFileSuffix);
-    }
-
-    @Override
-    public int hashCode() {
-      return myParentFileSuffix.hashCode() + 239 * myChildFileSuffix.hashCode();
-    }
-  }
 
   private static class Edge<T> {
     @Nullable private T from;

@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * Created by Max Medvedev on 28/02/14
- */
 public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
   @Override
   public String getHintName() {

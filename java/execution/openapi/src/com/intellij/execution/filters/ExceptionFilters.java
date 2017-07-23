@@ -21,12 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/5/11
- * Time: 7:54 PM
- */
 public class ExceptionFilters {
   private ExceptionFilters() {
   }

@@ -67,8 +67,7 @@ public class VcsNotifier {
                              @NotNull NotificationType type,
                              @Nullable NotificationListener listener) {
     Notification notification = createNotification(notificationGroup, title, message, type, listener);
-    notification.notify(myProject);
-    return notification;
+    return notify(notification);
   }
 
   @NotNull

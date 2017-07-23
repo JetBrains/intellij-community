@@ -47,11 +47,11 @@ public class GradleModuleResourceConfiguration {
 
   @Tag("resources")
   @AbstractCollection(surroundWithTag = false, elementTag = "resource")
-  public List<ResourceRootConfiguration> resources = new ArrayList<ResourceRootConfiguration>();
+  public List<ResourceRootConfiguration> resources = new ArrayList<>();
 
   @Tag("test-resources")
   @AbstractCollection(surroundWithTag = false, elementTag = "resource")
-  public List<ResourceRootConfiguration> testResources = new ArrayList<ResourceRootConfiguration>();
+  public List<ResourceRootConfiguration> testResources = new ArrayList<>();
 
   public int computeConfigurationHash(boolean forTestResources) {
     int result = computeModuleConfigurationHash();

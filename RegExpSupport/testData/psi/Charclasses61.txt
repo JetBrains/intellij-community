@@ -3,11 +3,10 @@ REGEXP_FILE
     RegExpBranchImpl: <[\w-\w]>
       RegExpClassImpl: <[\w-\w]>
         PsiElement(CLASS_BEGIN)('[')
-        RegExpUnionImpl: <\w-\w>
-          RegExpSimpleClassImpl: <\w>
-            PsiElement(CHAR_CLASS)('\w')
-          RegExpCharImpl: <->
-            PsiElement(MINUS)('-')
-          RegExpSimpleClassImpl: <\w>
-            PsiElement(CHAR_CLASS)('\w')
+        RegExpSimpleClassImpl: <\w>
+          PsiElement(CHAR_CLASS)('\w')
+        RegExpCharImpl: <->
+          PsiElement(CHARACTER)('-')
+        RegExpSimpleClassImpl: <\w>
+          PsiElement(CHAR_CLASS)('\w')
         PsiElement(CLASS_END)(']')

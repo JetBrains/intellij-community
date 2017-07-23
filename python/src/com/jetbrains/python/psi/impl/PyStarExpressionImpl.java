@@ -24,12 +24,6 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: 27.02.2010
- * Time: 14:27:28
- */
 public class PyStarExpressionImpl extends PyElementImpl implements PyStarExpression {
   public PyStarExpressionImpl(ASTNode astNode) {
     super(astNode);

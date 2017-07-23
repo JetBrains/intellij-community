@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 30-Nov-2009
- */
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.openapi.util.Condition;

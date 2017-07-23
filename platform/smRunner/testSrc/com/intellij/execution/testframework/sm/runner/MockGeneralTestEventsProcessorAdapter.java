@@ -33,7 +33,7 @@ public class MockGeneralTestEventsProcessorAdapter extends GeneralTestEventsProc
   private final List<Pair<String, Key>> myOutputChunks = new ArrayList<>();
 
   public MockGeneralTestEventsProcessorAdapter(Project project, String testFrameworkName) {
-    super(project, testFrameworkName);
+    super(project, testFrameworkName, new SMTestProxy.SMRootTestProxy());
   }
 
   @Override

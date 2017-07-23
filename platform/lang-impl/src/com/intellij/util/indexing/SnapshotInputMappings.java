@@ -59,7 +59,7 @@ public class SnapshotInputMappings<Key, Value, Input> {
   private boolean myIsPsiBackedIndex;
 
   public SnapshotInputMappings(IndexExtension<Key, Value, Input> indexExtension) throws IOException {
-    myIndexId = indexExtension.getName();
+    myIndexId = (ID<Key, Value>)indexExtension.getName();
     myIsPsiBackedIndex = indexExtension instanceof PsiDependentIndex;
     mySnapshotIndexExternalizer = VfsAwareMapReduceIndex.createInputsIndexExternalizer(indexExtension);
     myValueExternalizer = indexExtension.getValueExternalizer();
@@ -109,7 +109,7 @@ public class SnapshotInputMappings<Key, Value, Input> {
       FileContent fileContent = (FileContent)content;
       hashId = getHashOfContent(fileContent);
       if (doReadSavedPersistentData) {
-        if (!myContents.isBusyReading() || DebugAssertions.EXTRA_SANITY_CHECKS) { // avoid blocking read, we can calculate index value
+        if (myContents == null || !myContents.isBusyReading() || DebugAssertions.EXTRA_SANITY_CHECKS) { // avoid blocking read, we can calculate index value
           ByteSequence bytes = readContents(hashId);
 
           if (bytes != null) {
@@ -226,6 +226,7 @@ public class SnapshotInputMappings<Key, Value, Input> {
   }
 
   private PersistentHashMap<Integer, ByteSequence> createContentsIndex() throws IOException {
+    if (SharedIndicesData.ourFileSharedIndicesEnabled && !SharedIndicesData.DO_CHECKS) return null;
     final File saved = new File(IndexInfrastructure.getPersistentIndexRootDir(myIndexId), "values");
     try {
       return new PersistentHashMap<>(saved, EnumeratorIntegerDescriptor.INSTANCE, ByteSequenceDataExternalizer.INSTANCE);

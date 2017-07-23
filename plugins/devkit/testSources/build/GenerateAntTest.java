@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 20-Dec-2006
- */
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.compiler.ant.BuildTargetsFactory;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.extensions;
 
-public class ExtensionException extends RuntimeException{
-  private final Class myExtensionClass;
+import org.jetbrains.annotations.NotNull;
 
-  public ExtensionException(final Class extensionClass) {
+public class ExtensionException extends RuntimeException{
+  private final Class<?> myExtensionClass;
+
+  public ExtensionException(@NotNull Class<?> extensionClass) {
     super(extensionClass.getCanonicalName());
+
     myExtensionClass = extensionClass;
   }
 
-  public Class getExtensionClass() {
+  public ExtensionException(@NotNull Class<?> extensionClass, @NotNull Throwable cause) {
+    super(extensionClass.getCanonicalName(), cause);
+
+    myExtensionClass = extensionClass;
+  }
+
+  @NotNull
+  public Class<?> getExtensionClass() {
     return myExtensionClass;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.intellij.openapi.editor.ex.util;
 import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -322,12 +324,8 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       throw ex;
     }
     catch (RuntimeException ex) {
-      throw new IllegalStateException("Error updating " + this + " after " + e, ex);
+      throw new InvalidStateException(this, "Error updating  after " + e, ex);
     }
-  }
-
-  @Override
-  public void beforeDocumentChange(DocumentEvent event) {
   }
 
   @Override
@@ -391,12 +389,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     }
 
     if(myEditor != null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      UIUtil.invokeLaterIfNeeded(new DumbAwareRunnable() {
-        @Override
-        public void run() {
-          myEditor.repaint(0, textLength);
-        }
-      });
+      UIUtil.invokeLaterIfNeeded((DumbAwareRunnable)() -> myEditor.repaint(0, textLength));
     }
   }
 
@@ -521,7 +514,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
         mySegmentIndex = mySegments.findSegmentIndex(startOffset);
       }
       catch (IllegalStateException e) {
-        throw new IllegalStateException("Wrong state of " + LexerEditorHighlighter.this, e);
+        throw new InvalidStateException(LexerEditorHighlighter.this, "wrong state", e);
       }
     }
 
@@ -572,5 +565,24 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
   public SegmentArrayWithData getSegments() {
     return mySegments;
+  }
+
+  public static class InvalidStateException extends RuntimeException implements ExceptionWithAttachments {
+    private final Attachment[] myAttachments;
+
+    private InvalidStateException(LexerEditorHighlighter highlighter, String message, Throwable cause) {
+      super(highlighter.getClass().getName() + "(" +
+            (highlighter.myLexer.getClass() == FlexAdapter.class ? highlighter.myLexer.toString()
+                                                                 : highlighter.myLexer.getClass().getName()) +
+            "): " + message,
+            cause);
+      myAttachments = new Attachment[] {new Attachment("content.txt", highlighter.myLexer.getBufferSequence().toString())};
+    }
+
+    @NotNull
+    @Override
+    public Attachment[] getAttachments() {
+      return myAttachments;
+    }
   }
 }

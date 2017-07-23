@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 22, 2001
- * Time: 4:54:17 PM
- * To change template for new interface use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
@@ -330,7 +322,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
   @Override
   public void appendNoProblems(StringBuffer buf) {
-    buf.append("<p class=\"problem-description-group\">");;
+    buf.append("<p class=\"problem-description-group\">");
     buf.append(InspectionsBundle.message("inspection.export.results.no.problems.found"));
     buf.append("</p>");
   }

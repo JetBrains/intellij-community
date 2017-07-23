@@ -16,22 +16,18 @@
 
 package org.jetbrains.plugins.groovy.intentions
 
-
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import com.intellij.util.Function
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
-import org.jetbrains.plugins.groovy.intentions.base.Intention
 
 /**
  * @author Maxim.Medvedev
  */
 abstract class GrIntentionTestCase extends LightCodeInsightFixtureTestCase {
-
   protected final String myHint
   private final Class<? extends LocalInspectionTool>[] myInspections
 
@@ -45,11 +41,11 @@ abstract class GrIntentionTestCase extends LightCodeInsightFixtureTestCase {
     myHint = intention.newInstance().text
   }
 
-  protected void doTest(@NotNull String hint = myHint, boolean intentionExists) {
+  protected void doTest(@NotNull String hint = myHint, boolean intentionShouldBeAvailable) {
     assertNotNull(hint)
     myFixture.configureByFile(getTestName(false) + ".groovy")
     final List<IntentionAction> list = myFixture.filterAvailableIntentions(hint)
-    if (intentionExists) {
+    if (intentionShouldBeAvailable) {
       myFixture.launchAction(assertOneElement(list))
       PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
       myFixture.checkResultByFile(getTestName(false) + "_after.groovy")

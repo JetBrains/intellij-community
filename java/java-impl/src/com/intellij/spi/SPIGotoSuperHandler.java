@@ -22,9 +22,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.spi.psi.SPIClassProviderReferenceElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- */
 public class SPIGotoSuperHandler extends JavaGotoSuperHandler {
   @Override
   protected PsiElement getElement(@NotNull PsiFile file, int offset) {

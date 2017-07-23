@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,6 +118,16 @@ class UpdateStrategyTest {
     assertBuild("145.595", result.newBuild)
   }
 
+  @Test fun `ignored same-baseline updates do not hide new major releases`() {
+    val result = check("IU-145.971", ChannelStatus.RELEASE, """
+      <channel id="IDEA_Release" status="release" licensing="release">
+        <build number="145.1617" version="2016.1.3"/>
+        <build number="145.2070" version="2016.1.4"/>
+        <build number="171.4424" version="2017.1.3"/>
+      </channel>""", listOf("145.1617", "145.2070"))
+    assertBuild("171.4424", result.newBuild)
+  }
+
   @Test fun `updates can be targeted for specific builds (different builds)`() {
     val channels = """
       <channel id="IDEA_EAP" status="eap" licensing="eap">
@@ -192,6 +202,30 @@ class UpdateStrategyTest {
         <build number="162.48" version="2016.2.1 EAP"/>
       </channel>""")
     assertBuild("162.48", result.newBuild)
+  }
+
+  @Test fun `for duplicate builds, first matching channel is preferred`() {
+    val build = """<build number="163.9166" version="2016.3.1"/>"""
+    val eap15 = """<channel id="IDEA15_EAP" status="eap" licensing="eap" majorVersion="15">$build</channel>"""
+    val eap = """<channel id="IDEA_EAP" status="eap" licensing="eap" majorVersion="2016">$build</channel>"""
+    val beta15 = """<channel id="IDEA15_Beta" status="beta" licensing="release" majorVersion="15">$build</channel>"""
+    val beta = """<channel id="IDEA_Beta" status="beta" licensing="release" majorVersion="2016">$build</channel>"""
+    val release15 = """<channel id="IDEA15_Release" status="release" licensing="release" majorVersion="15">$build</channel>"""
+    val release = """<channel id="IDEA_Release" status="release" licensing="release" majorVersion="2016">$build</channel>"""
+
+    // note: this is a test; in production, release builds should never be proposed via channels with EAP licensing
+    assertEquals("IDEA15_EAP", check("IU-163.1", ChannelStatus.EAP, (eap15 + eap + beta15 + beta + release15 + release)).updatedChannel?.id)
+    assertEquals("IDEA_EAP", check("IU-163.1", ChannelStatus.EAP, (eap + eap15 + beta + beta15 + release + release15)).updatedChannel?.id)
+    assertEquals("IDEA15_EAP", check("IU-163.1", ChannelStatus.EAP, (release15 + release + beta15 + beta + eap15 + eap)).updatedChannel?.id)
+    assertEquals("IDEA_EAP", check("IU-163.1", ChannelStatus.EAP, (release + release15 + beta + beta15 + eap + eap15)).updatedChannel?.id)
+
+    assertEquals("IDEA15_Beta", check("IU-163.1", ChannelStatus.BETA, (release15 + release + beta15 + beta + eap15 + eap)).updatedChannel?.id)
+    assertEquals("IDEA_Beta", check("IU-163.1", ChannelStatus.BETA, (release + release15 + beta + beta15 + eap + eap15)).updatedChannel?.id)
+
+    assertEquals("IDEA15_Release", check("IU-163.1", ChannelStatus.RELEASE, (eap15 + eap + beta15 + beta + release15 + release)).updatedChannel?.id)
+    assertEquals("IDEA_Release", check("IU-163.1", ChannelStatus.RELEASE, (eap + eap15 + beta + beta15 + release + release15)).updatedChannel?.id)
+    assertEquals("IDEA15_Release", check("IU-163.1", ChannelStatus.RELEASE, (release15 + release + beta15 + beta + eap15 + eap)).updatedChannel?.id)
+    assertEquals("IDEA_Release", check("IU-163.1", ChannelStatus.RELEASE, (release + release15 + beta + beta15 + eap + eap15)).updatedChannel?.id)
   }
 
   private fun check(currentBuild: String,

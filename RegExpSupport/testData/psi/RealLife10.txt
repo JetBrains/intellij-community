@@ -87,11 +87,10 @@ REGEXP_FILE
                                   RegExpClassImpl: <[^"\\]>
                                     PsiElement(CLASS_BEGIN)('[')
                                     PsiElement(CARET)('^')
-                                    RegExpUnionImpl: <"\\>
-                                      RegExpCharImpl: <">
-                                        PsiElement(CHARACTER)('"')
-                                      RegExpCharImpl: <\\>
-                                        PsiElement(ESC_CHARACTER)('\\')
+                                    RegExpCharImpl: <">
+                                      PsiElement(CHARACTER)('"')
+                                    RegExpCharImpl: <\\>
+                                      PsiElement(ESC_CHARACTER)('\\')
                                     PsiElement(CLASS_END)(']')
                                 PsiElement(UNION)('|')
                                 RegExpBranchImpl: <\\">
@@ -134,21 +133,20 @@ REGEXP_FILE
                           RegExpClosureImpl: <[0-9A-Z_]+>
                             RegExpClassImpl: <[0-9A-Z_]>
                               PsiElement(CLASS_BEGIN)('[')
-                              RegExpUnionImpl: <0-9A-Z_>
-                                RegExpCharRangeImpl: <0-9>
-                                  RegExpCharImpl: <0>
-                                    PsiElement(CHARACTER)('0')
-                                  PsiElement(MINUS)('-')
-                                  RegExpCharImpl: <9>
-                                    PsiElement(CHARACTER)('9')
-                                RegExpCharRangeImpl: <A-Z>
-                                  RegExpCharImpl: <A>
-                                    PsiElement(CHARACTER)('A')
-                                  PsiElement(MINUS)('-')
-                                  RegExpCharImpl: <Z>
-                                    PsiElement(CHARACTER)('Z')
-                                RegExpCharImpl: <_>
-                                  PsiElement(CHARACTER)('_')
+                              RegExpCharRangeImpl: <0-9>
+                                RegExpCharImpl: <0>
+                                  PsiElement(CHARACTER)('0')
+                                PsiElement(MINUS)('-')
+                                RegExpCharImpl: <9>
+                                  PsiElement(CHARACTER)('9')
+                              RegExpCharRangeImpl: <A-Z>
+                                RegExpCharImpl: <A>
+                                  PsiElement(CHARACTER)('A')
+                                PsiElement(MINUS)('-')
+                                RegExpCharImpl: <Z>
+                                  PsiElement(CHARACTER)('Z')
+                              RegExpCharImpl: <_>
+                                PsiElement(CHARACTER)('_')
                               PsiElement(CLASS_END)(']')
                             RegExpQuantifierImpl: <+>
                               PsiElement(PLUS)('+')
@@ -196,21 +194,20 @@ REGEXP_FILE
                           RegExpClosureImpl: <[0-9xa-f]+>
                             RegExpClassImpl: <[0-9xa-f]>
                               PsiElement(CLASS_BEGIN)('[')
-                              RegExpUnionImpl: <0-9xa-f>
-                                RegExpCharRangeImpl: <0-9>
-                                  RegExpCharImpl: <0>
-                                    PsiElement(CHARACTER)('0')
-                                  PsiElement(MINUS)('-')
-                                  RegExpCharImpl: <9>
-                                    PsiElement(CHARACTER)('9')
-                                RegExpCharImpl: <x>
-                                  PsiElement(CHARACTER)('x')
-                                RegExpCharRangeImpl: <a-f>
-                                  RegExpCharImpl: <a>
-                                    PsiElement(CHARACTER)('a')
-                                  PsiElement(MINUS)('-')
-                                  RegExpCharImpl: <f>
-                                    PsiElement(CHARACTER)('f')
+                              RegExpCharRangeImpl: <0-9>
+                                RegExpCharImpl: <0>
+                                  PsiElement(CHARACTER)('0')
+                                PsiElement(MINUS)('-')
+                                RegExpCharImpl: <9>
+                                  PsiElement(CHARACTER)('9')
+                              RegExpCharImpl: <x>
+                                PsiElement(CHARACTER)('x')
+                              RegExpCharRangeImpl: <a-f>
+                                RegExpCharImpl: <a>
+                                  PsiElement(CHARACTER)('a')
+                                PsiElement(MINUS)('-')
+                                RegExpCharImpl: <f>
+                                  PsiElement(CHARACTER)('f')
                               PsiElement(CLASS_END)(']')
                             RegExpQuantifierImpl: <+>
                               PsiElement(PLUS)('+')
@@ -258,21 +255,20 @@ REGEXP_FILE
                           RegExpClosureImpl: <[0-9xa-f]+>
                             RegExpClassImpl: <[0-9xa-f]>
                               PsiElement(CLASS_BEGIN)('[')
-                              RegExpUnionImpl: <0-9xa-f>
-                                RegExpCharRangeImpl: <0-9>
-                                  RegExpCharImpl: <0>
-                                    PsiElement(CHARACTER)('0')
-                                  PsiElement(MINUS)('-')
-                                  RegExpCharImpl: <9>
-                                    PsiElement(CHARACTER)('9')
-                                RegExpCharImpl: <x>
-                                  PsiElement(CHARACTER)('x')
-                                RegExpCharRangeImpl: <a-f>
-                                  RegExpCharImpl: <a>
-                                    PsiElement(CHARACTER)('a')
-                                  PsiElement(MINUS)('-')
-                                  RegExpCharImpl: <f>
-                                    PsiElement(CHARACTER)('f')
+                              RegExpCharRangeImpl: <0-9>
+                                RegExpCharImpl: <0>
+                                  PsiElement(CHARACTER)('0')
+                                PsiElement(MINUS)('-')
+                                RegExpCharImpl: <9>
+                                  PsiElement(CHARACTER)('9')
+                              RegExpCharImpl: <x>
+                                PsiElement(CHARACTER)('x')
+                              RegExpCharRangeImpl: <a-f>
+                                RegExpCharImpl: <a>
+                                  PsiElement(CHARACTER)('a')
+                                PsiElement(MINUS)('-')
+                                RegExpCharImpl: <f>
+                                  PsiElement(CHARACTER)('f')
                               PsiElement(CLASS_END)(']')
                             RegExpQuantifierImpl: <+>
                               PsiElement(PLUS)('+')
@@ -322,21 +318,20 @@ REGEXP_FILE
                           RegExpClosureImpl: <[0-9xa-f]+>
                             RegExpClassImpl: <[0-9xa-f]>
                               PsiElement(CLASS_BEGIN)('[')
-                              RegExpUnionImpl: <0-9xa-f>
-                                RegExpCharRangeImpl: <0-9>
-                                  RegExpCharImpl: <0>
-                                    PsiElement(CHARACTER)('0')
-                                  PsiElement(MINUS)('-')
-                                  RegExpCharImpl: <9>
-                                    PsiElement(CHARACTER)('9')
-                                RegExpCharImpl: <x>
-                                  PsiElement(CHARACTER)('x')
-                                RegExpCharRangeImpl: <a-f>
-                                  RegExpCharImpl: <a>
-                                    PsiElement(CHARACTER)('a')
-                                  PsiElement(MINUS)('-')
-                                  RegExpCharImpl: <f>
-                                    PsiElement(CHARACTER)('f')
+                              RegExpCharRangeImpl: <0-9>
+                                RegExpCharImpl: <0>
+                                  PsiElement(CHARACTER)('0')
+                                PsiElement(MINUS)('-')
+                                RegExpCharImpl: <9>
+                                  PsiElement(CHARACTER)('9')
+                              RegExpCharImpl: <x>
+                                PsiElement(CHARACTER)('x')
+                              RegExpCharRangeImpl: <a-f>
+                                RegExpCharImpl: <a>
+                                  PsiElement(CHARACTER)('a')
+                                PsiElement(MINUS)('-')
+                                RegExpCharImpl: <f>
+                                  PsiElement(CHARACTER)('f')
                               PsiElement(CLASS_END)(']')
                             RegExpQuantifierImpl: <+>
                               PsiElement(PLUS)('+')

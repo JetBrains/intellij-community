@@ -50,12 +50,12 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   private final boolean mySearchInComments;
   private final boolean mySearchInNonJavaFiles;
 
-  protected InlineToAnonymousClassProcessor(Project project,
-                                            PsiClass psiClass,
-                                            @Nullable final PsiCall callToInline,
-                                            boolean inlineThisOnly,
-                                            final boolean searchInComments,
-                                            final boolean searchInNonJavaFiles) {
+  public InlineToAnonymousClassProcessor(Project project,
+                                         PsiClass psiClass,
+                                         @Nullable final PsiCall callToInline,
+                                         boolean inlineThisOnly,
+                                         final boolean searchInComments,
+                                         final boolean searchInNonJavaFiles) {
     super(project);
     myClass = psiClass;
     myCallToInline = callToInline;
@@ -71,7 +71,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   }
 
   @NotNull
-  protected UsageInfo[] findUsages() {
+  public UsageInfo[] findUsages() {
     if (myInlineThisOnly) {
       return new UsageInfo[] { new UsageInfo(myCallToInline) };
     }

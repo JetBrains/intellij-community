@@ -85,6 +85,16 @@ public class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegist
 
   private void loadFeaturesFromProviders(ProductivityFeaturesProvider[] providers) {
     for (ProductivityFeaturesProvider provider : providers) {
+
+      for (String xmlUrl : provider.getXmlFilesUrls()) {
+        try {
+          readFromXml(xmlUrl);
+        }
+        catch (Exception e) {
+          LOG.error("Error while reading " + xmlUrl + " from " + provider + ": " + e.getMessage());
+        }
+      }
+
       final GroupDescriptor[] groupDescriptors = provider.getGroupDescriptors();
       if (groupDescriptors != null) {
         for (GroupDescriptor groupDescriptor : groupDescriptors) {

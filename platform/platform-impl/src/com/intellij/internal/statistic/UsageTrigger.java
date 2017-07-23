@@ -19,10 +19,10 @@ import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.components.*;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -42,11 +42,11 @@ public class UsageTrigger implements PersistentStateComponent<UsageTrigger.State
 
   private State myState = new State();
 
-  public static void trigger(@NotNull String feature) {
+  public static void trigger(@NotNull @NonNls String feature) {
     getInstance().doTrigger(feature);
   }
 
-  public static void triggerOnce(@NotNull String feature) {
+  public static void triggerOnce(@NotNull @NonNls String feature) {
     if (!getInstance().myState.myValues.containsKey(feature)) {
       getInstance().doTrigger(feature);
     }

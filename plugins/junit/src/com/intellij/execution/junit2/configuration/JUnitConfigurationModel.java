@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,10 +120,7 @@ public class JUnitConfigurationModel {
           data.MAIN_CLASS_NAME = className;
         }
       }
-      catch (ProcessCanceledException e) {
-        data.MAIN_CLASS_NAME = className;
-      }
-      catch (IndexNotReadyException e) {
+      catch (ProcessCanceledException | IndexNotReadyException e) {
         data.MAIN_CLASS_NAME = className;
       }
     }
@@ -178,7 +175,7 @@ public class JUnitConfigurationModel {
     setTestType(data.TEST_OBJECT);
     setJUnitTextValue(ALL_IN_PACKAGE, data.getPackageName());
     setJUnitTextValue(CLASS, data.getMainClassName() != null ? data.getMainClassName().replaceAll("\\$", "\\.") : "");
-    setJUnitTextValue(METHOD, data.getMethodName());
+    setJUnitTextValue(METHOD, data.getMethodNameWithSignature());
     setJUnitTextValue(PATTERN, data.getPatternPresentation());
     setJUnitTextValue(DIR, data.getDirName());
     setJUnitTextValue(CATEGORY, data.getCategory());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,31 +24,48 @@ import java.util.List;
 class AccessorBindingWrapper extends Binding implements MultiNodeBinding {
   private final Binding myBinding;
 
-  public AccessorBindingWrapper(@NotNull MutableAccessor accessor, @NotNull Binding binding) {
+  private final boolean myFlat;
+
+  public AccessorBindingWrapper(@NotNull MutableAccessor accessor, @NotNull Binding binding, boolean flat) {
     super(accessor);
 
     myBinding = binding;
+    myFlat = flat;
+  }
+
+  public boolean isFlat() {
+    return myFlat;
   }
 
   @Nullable
   @Override
-  public Object serialize(@NotNull Object o, @Nullable Object context, @NotNull SerializationFilter filter) {
+  public Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
     Object value = myAccessor.read(o);
     if (value == null) {
       throw new XmlSerializationException("Property " + myAccessor + " of object " + o + " (" + o.getClass() + ") must not be null");
     }
-    return myBinding.serialize(value, context, filter);
+    if (myFlat) {
+      ((BeanBinding)myBinding).serializeInto(value, (Element)context, filter);
+      return null;
+    }
+    else {
+      return myBinding.serialize(value, context, filter);
+    }
   }
 
   @Override
-  @Nullable
-  public Object deserialize(Object context, @NotNull Element element) {
+  public Object deserializeUnsafe(Object context, @NotNull Element element) {
+    return deserialize(context, element);
+  }
+
+  @NotNull
+  public Object deserialize(@NotNull Object context, @NotNull Element element) {
     Object currentValue = myAccessor.read(context);
     if (myBinding instanceof BeanBinding && myAccessor.isFinal()) {
-      ((BeanBinding)myBinding).deserializeInto(currentValue, element, null);
+      ((BeanBinding)myBinding).deserializeInto(currentValue, element);
     }
     else {
-      Object deserializedValue = myBinding.deserialize(currentValue, element);
+      Object deserializedValue = myBinding.deserializeUnsafe(currentValue, element);
       if (currentValue != deserializedValue) {
         myAccessor.set(context, deserializedValue);
       }
@@ -58,10 +75,10 @@ class AccessorBindingWrapper extends Binding implements MultiNodeBinding {
 
   @Nullable
   @Override
-  public Object deserializeList(Object context, @NotNull List<Element> elements) {
+  public Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<Element> elements) {
     Object currentValue = myAccessor.read(context);
     if (myBinding instanceof BeanBinding && myAccessor.isFinal()) {
-      ((BeanBinding)myBinding).deserializeInto(currentValue, elements.get(0), null);
+      ((BeanBinding)myBinding).deserializeInto(currentValue, elements.get(0));
     }
     else {
       Object deserializedValue = Binding.deserializeList(myBinding, currentValue, elements);

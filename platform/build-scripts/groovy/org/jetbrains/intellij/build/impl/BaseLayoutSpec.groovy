@@ -31,7 +31,7 @@ class BaseLayoutSpec {
    * 'Runtime' to be copied to the 'lib' directory of the plugin.
    *
    * @param relativeJarPath target JAR path relative to 'lib' directory of the plugin; different modules may be packed into the same JAR,
-   * but don't use this for new plugins; this parameter is temporary added to keep layout of old plugins.
+   * but <strong>don't use this for new plugins</strong>; this parameter is temporary added to keep layout of old plugins.
    * @param localizableResourcesInCommonJar if {@code true} the translatable resources from the module (messages, inspection descriptions, etc) will be
    * placed into a separate 'resources_en.jar'. <strong>Do not use this for new plugins, this parameter is temporary added to keep layout of old plugins</strong>.
    */
@@ -61,12 +61,13 @@ class BaseLayoutSpec {
   }
 
   /**
-   * Exclude the specified directory when {@code moduleName} is packed into JAR file.
-   * <strong>This is a temporary method added to keep layout of some old plugins. If some directory from a module shouldn't be included into the
-   * module JAR it's strongly recommended to move that directory outside of the module source roots.</strong>
-   * @param excludedDirectory path to the directory to be exclude relatively to the module output root
+   * Exclude the specified files when {@code moduleName} is packed into JAR file.
+   * <strong>This is a temporary method added to keep layout of some old plugins. If some files from a module shouldn't be included into the
+   * module JAR it's strongly recommended to move these files outside of the module source roots.</strong>
+   * @param excludedPattern Ant-like pattern describing files to be excluded (relatively to the module output root); e.g. {@code "foo/**"}
+   * to exclude 'foo' directory
    */
-  void excludeFromModule(String moduleName, String excludedDirectory) {
-    layout.moduleExcludes.put(moduleName, excludedDirectory)
+  void excludeFromModule(String moduleName, String excludedPattern) {
+    layout.moduleExcludes.put(moduleName, excludedPattern)
   }
 }

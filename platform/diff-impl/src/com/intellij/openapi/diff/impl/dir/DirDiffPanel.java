@@ -53,7 +53,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBLoadingPanelListener;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -72,6 +71,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.intellij.util.ArrayUtil.toObjectArray;
 
 /**
  * @author Konstantin Bulenkov
@@ -528,7 +529,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
       if (navigatable1 != null) navigatables.add(navigatable1);
       if (navigatable2 != null) navigatables.add(navigatable2);
     }
-    return ContainerUtil.toArray(navigatables, new Navigatable[navigatables.size()]);
+    return toObjectArray(navigatables, Navigatable.class);
   }
 
   private class MyPrevNextDifferenceIterable implements PrevNextDifferenceIterable {

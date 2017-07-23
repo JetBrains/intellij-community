@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,6 +96,8 @@ public class ProjectOpeningTest extends PlatformTestCase {
     assertTrue(ProjectUtil.isSameProject(iprFilePath.getAbsolutePath(), dirBasedProject));
     File miscXmlFilePath = new File(projectDir, ".idea/misc.xml");
     assertTrue(ProjectUtil.isSameProject(miscXmlFilePath.getAbsolutePath(), dirBasedProject));
+    File someOtherFilePath = new File(projectDir, "misc.xml");
+    assertFalse(ProjectUtil.isSameProject(someOtherFilePath.getAbsolutePath(), dirBasedProject));
   }
 
   public void testIsSameProjectForFileBasedProject() throws IOException {
@@ -110,7 +112,7 @@ public class ProjectOpeningTest extends PlatformTestCase {
     assertFalse(ProjectUtil.isSameProject(iprFilePath2.getAbsolutePath(), fileBasedProject));
   }
 
-  private static void closeProject(final Project project) {
+  static void closeProject(final Project project) {
     if (project != null && !project.isDisposed()) {
       ProjectManager.getInstance().closeProject(project);
       ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(project));

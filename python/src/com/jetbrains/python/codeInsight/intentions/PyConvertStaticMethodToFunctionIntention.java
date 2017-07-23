@@ -30,9 +30,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * User: ktisha
- */
 public class PyConvertStaticMethodToFunctionIntention extends PyBaseIntentionAction {
   @NotNull
   public String getFamilyName() {

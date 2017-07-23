@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,8 @@ package org.jetbrains.plugins.groovy.lang.psi.stubs;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
-import gnu.trove.TObjectIntIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
-import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 
 /**
  * @author Maxim.Medvedev
@@ -37,17 +35,4 @@ public class GrModifierListStub extends StubBase<GrModifierList> implements Stub
   public int getModifiersFlags() {
     return myFlags;
   }
-
-  public static int buildFlags(GrModifierList modifierList) {
-    int flags = 0;
-    final TObjectIntIterator<String> iterator = GrModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP.iterator();
-    while (iterator.hasNext()) {
-      iterator.advance();
-      if (modifierList.hasExplicitModifier(iterator.key())) {
-        flags |= iterator.value();
-      }
-    }
-    return flags;
-  }
-
 }

@@ -45,25 +45,23 @@ public class NoScrollPaneInspection extends BaseFormInspection {
     return UIDesignerBundle.message("inspection.no.scroll.pane");
   }
 
-  protected void checkComponentProperties(Module module, IComponent component, FormErrorCollector collector) {
+  @Override
+  protected void checkComponentProperties(Module module, @NotNull IComponent component, FormErrorCollector collector) {
     if (FormInspectionUtil.isComponentClass(module, component, Scrollable.class) &&
         !FormInspectionUtil.isComponentClass(module, component, JTextField.class) &&
         !FormInspectionUtil.isComponentClass(module, component.getParentContainer(), JScrollPane.class)) {
       collector.addError(getID(), component, null, UIDesignerBundle.message("inspection.no.scroll.pane"),
-                         new EditorQuickFixProvider() {
-                           public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
-                             return new MyQuickFix(editor, component);
-                           }
-                         });
+                         (EditorQuickFixProvider)MyQuickFix::new);
 
     }
   }
 
   private static class MyQuickFix extends QuickFix {
-    public MyQuickFix(final GuiEditor editor, RadComponent component) {
+    MyQuickFix(final GuiEditor editor, RadComponent component) {
       super(editor, UIDesignerBundle.message("inspection.no.scroll.pane.quickfix"), component);
     }
 
+    @Override
     public void run() {
       String scrollPane = JScrollPane.class.getName();
       ComponentItem item = Palette.getInstance(myEditor.getProject()).getItem(scrollPane);

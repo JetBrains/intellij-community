@@ -192,6 +192,6 @@ public class DFAMap<V> {
     if (myAll != null){
       return myAll.keySet();
     }
-    return myK != null ? Collections.singleton(myK) : Collections.<String>emptySet();
+    return myK != null ? Collections.singleton(myK) : Collections.emptySet();
   }
 }

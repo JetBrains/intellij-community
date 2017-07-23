@@ -17,6 +17,7 @@ package com.jetbrains.python.configuration;
 
 import com.intellij.facet.impl.DefaultFacetsProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleConfigurationStateImpl;
 import com.intellij.openapi.options.Configurable;
@@ -26,7 +27,6 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
-import com.intellij.openapi.util.Computable;
 import com.jetbrains.python.module.PyContentEntriesEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -62,12 +62,8 @@ public class PyContentEntriesModuleConfigurable extends SearchableConfigurable.P
 
   private void createEditor() {
     if (myModule == null) return;
-    myModifiableModel = ApplicationManager.getApplication().runReadAction(new Computable<ModifiableRootModel>() {
-      @Override
-      public ModifiableRootModel compute() {
-        return ModuleRootManager.getInstance(myModule).getModifiableModel();
-      }
-    });
+    myModifiableModel =
+      ReadAction.compute(() -> ModuleRootManager.getInstance(myModule).getModifiableModel());
 
     final ModuleConfigurationStateImpl moduleConfigurationState =
       new ModuleConfigurationStateImpl(myModule.getProject(), new DefaultModulesProvider(myModule.getProject())) {
@@ -83,12 +79,7 @@ public class PyContentEntriesModuleConfigurable extends SearchableConfigurable.P
       };
     myEditor = createEditor(myModule, moduleConfigurationState);
 
-    JComponent component = ApplicationManager.getApplication().runReadAction(new Computable<JComponent>() {
-      @Override
-      public JComponent compute() {
-        return myEditor.createComponent();
-      }
-    });
+    JComponent component = ReadAction.compute(() -> myEditor.createComponent());
     myTopPanel.add(component, BorderLayout.CENTER);
   }
 

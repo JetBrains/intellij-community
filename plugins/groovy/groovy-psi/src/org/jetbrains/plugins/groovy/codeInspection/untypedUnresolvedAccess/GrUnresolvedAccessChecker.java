@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -63,7 +64,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
@@ -73,6 +73,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GrScopeProcessorWithHints;
+import org.jetbrains.plugins.groovy.transformations.impl.GroovyObjectTransformationSupport;
 import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import java.util.ArrayList;
@@ -80,9 +81,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by Max Medvedev on 21/03/14
- */
 public class GrUnresolvedAccessChecker {
   public static final Logger LOG = Logger.getInstance(GrUnresolvedAccessChecker.class);
 
@@ -166,7 +164,7 @@ public class GrUnresolvedAccessChecker {
             !PsiUtil.hasEnclosingInstanceInScope(outerClass, newExpression, true) &&
             !hasEnclosingInstanceInArgList(newExpression.getArgumentList(), outerClass)) {
           String qname = clazz.getQualifiedName();
-          LOG.assertTrue(qname != null, clazz.getText());
+          LOG.assertTrue(qname != null);
           return createAnnotationForRef(refElement, inStaticContext, GroovyBundle.message("cannot.reference.non.static", qname));
         }
       }
@@ -336,6 +334,7 @@ public class GrUnresolvedAccessChecker {
   }
 
   private static boolean isNotFromGroovyObject(@NotNull PsiMethod found) {
+    if (GroovyObjectTransformationSupport.isGroovyObjectSupportMethod(found)) return false;
     PsiClass aClass = found.getContainingClass();
     if (aClass == null) return false;
     String qname = aClass.getQualifiedName();
@@ -346,7 +345,7 @@ public class GrUnresolvedAccessChecker {
 
   @Nullable
   private static PsiMethod findPatternMethod(@NotNull GrReferenceExpression ref) {
-    PsiClass groovyObject = GroovyPsiManager.getInstance(ref.getProject()).findClassWithCache(GroovyCommonClassNames.GROOVY_OBJECT,
+    PsiClass groovyObject = JavaPsiFacade.getInstance(ref.getProject()).findClass(GroovyCommonClassNames.GROOVY_OBJECT,
                                                                                               ref.getResolveScope());
     if (groovyObject == null) return null;
 
@@ -391,7 +390,7 @@ public class GrUnresolvedAccessChecker {
   @NotNull
   private static GroovyResolveResult getBestResolveResult(GrReferenceExpression ref) {
     GroovyResolveResult[] results = ref.multiResolve(false);
-    if (results.length == 0) return GroovyResolveResult.EMPTY_RESULT;
+    if (results.length == 0) return EmptyGroovyResolveResult.INSTANCE;
     if (results.length == 1) return results[0];
 
     for (GroovyResolveResult result : results) {

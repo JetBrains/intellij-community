@@ -33,7 +33,7 @@ public abstract class CloudMultiSourceServerRuntimeInstance<
   SC extends AC>
   extends CloudServerRuntimeInstance<DC, A, SC> {
 
-  private static final Logger LOG = Logger.getInstance("#" + CloudMultiSourceServerRuntimeInstance.class.getName());
+  private static final Logger LOG = Logger.getInstance(CloudMultiSourceServerRuntimeInstance.class);
 
   private final ServerType<?> myServerType;
 

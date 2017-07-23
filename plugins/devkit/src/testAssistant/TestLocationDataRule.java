@@ -66,7 +66,7 @@ public class TestLocationDataRule implements GetDataRule {
     if (fileIndex.isInContent(file) && !fileIndex.isInSource(file) && !fileIndex.isInLibraryClasses(file)) {
       final VirtualFile parent = file.getParent();
       final VirtualFile contentRoot = fileIndex.getContentRootForFile(file);
-      if (contentRoot != null) {
+      if (contentRoot != null && parent != null) {
         final String relativePath = VfsUtilCore.getRelativePath(parent, contentRoot, '/');
         if (relativePath != null) {
           final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(project);

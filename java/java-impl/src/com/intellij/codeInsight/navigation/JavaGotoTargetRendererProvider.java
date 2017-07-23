@@ -35,7 +35,7 @@ public class JavaGotoTargetRendererProvider implements GotoTargetRendererProvide
       return new MethodCellRenderer(gotoData.hasDifferentNames());
     }
     else if (element instanceof PsiClass) {
-      return PsiClassListCellRenderer.INSTANCE;
+      return new PsiClassListCellRenderer();
     }
     else if (element instanceof PsiFunctionalExpression) {
       return new PsiClassOrFunctionalExpressionListCellRenderer();

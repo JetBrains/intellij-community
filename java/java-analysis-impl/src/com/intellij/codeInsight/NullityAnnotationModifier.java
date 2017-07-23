@@ -16,7 +16,6 @@
 package com.intellij.codeInsight;
 
 import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.TypeAnnotationProvider;
 import com.intellij.psi.augment.TypeAnnotationModifier;
@@ -32,11 +31,10 @@ import java.util.List;
 public class NullityAnnotationModifier extends TypeAnnotationModifier {
   @Nullable
   @Override
-  public TypeAnnotationProvider modifyAnnotations(@NotNull PsiType inferenceVariableType, @NotNull PsiClassType boundType) {
+  public TypeAnnotationProvider boundAppeared(@NotNull PsiType inferenceVariableType, @NotNull PsiType boundType) {
     PsiAnnotation[] annotations = inferenceVariableType.getAnnotations();
     for (PsiAnnotation annotation : annotations) {
-      String qName = annotation.getQualifiedName();
-      if (qName != null && isMatchingAnnotation(boundType, annotation, qName)) {
+      if (isMatchingNullityAnnotation(boundType, annotation)) {
         return removeAnnotation(annotations, annotation);
       }
     }
@@ -44,20 +42,32 @@ public class NullityAnnotationModifier extends TypeAnnotationModifier {
     return null;
   }
 
+  private static boolean isMatchingNullityAnnotation(@NotNull PsiType boundType, PsiAnnotation annotation) {
+    String qName = annotation.getQualifiedName();
+    return qName != null &&
+           (NullableNotNullManager.isNullableAnnotation(annotation) || NullableNotNullManager.isNotNullAnnotation(annotation)) &&
+           boundType.findAnnotation(qName) != null;
+  }
+
+  @Nullable
+  @Override
+  public TypeAnnotationProvider modifyLowerBoundAnnotations(@NotNull PsiType lowerBound, @NotNull PsiType upperBound) {
+    PsiAnnotation[] lowerAnnotations = lowerBound.getAnnotations();
+    PsiAnnotation nullable = findNullable(lowerAnnotations);
+    if (nullable != null && findNullable(upperBound.getAnnotations()) == null) {
+      return removeAnnotation(lowerAnnotations, nullable);
+    }
+    return null;
+  }
+
+  private static PsiAnnotation findNullable(PsiAnnotation[] annotations) {
+    return ContainerUtil.find(annotations, NullableNotNullManager::isNullableAnnotation);
+  }
+
   @NotNull
   private static TypeAnnotationProvider removeAnnotation(PsiAnnotation[] annotations, PsiAnnotation annotation) {
     List<PsiAnnotation> list = ContainerUtil.newArrayList(annotations);
     list.remove(annotation);
-    if (list.isEmpty()) {
-      return TypeAnnotationProvider.EMPTY;
-    }
-
-    PsiAnnotation[] array = list.toArray(PsiAnnotation.EMPTY_ARRAY);
-    return () -> array;
-  }
-
-  private static boolean isMatchingAnnotation(@NotNull PsiClassType boundType, PsiAnnotation annotation, String qName) {
-    NullableNotNullManager manager = NullableNotNullManager.getInstance(annotation.getProject());
-    return (manager.getNullables().contains(qName) || manager.getNotNulls().contains(qName)) && boundType.findAnnotation(qName) != null;
+    return TypeAnnotationProvider.Static.create(list.toArray(PsiAnnotation.EMPTY_ARRAY));
   }
 }

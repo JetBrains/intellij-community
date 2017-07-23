@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.lang.Language;
-import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Result;
@@ -102,7 +101,8 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
   @Nullable
   @Override
   public BaseInjection findCommentInjection(@NotNull PsiElement host, @Nullable Ref<PsiElement> commentRef) {
-    boolean compiled = host.getContainingFile().getOriginalFile() instanceof PsiCompiledFile;
+    PsiFile containingFile = host.getContainingFile();
+    boolean compiled = containingFile != null && containingFile.getOriginalFile() instanceof PsiCompiledFile;
     return compiled ? null : super.findCommentInjection(host, commentRef);
   }
 
@@ -193,7 +193,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
         parent instanceof PsiNameValuePair) {
       return doInjectInJavaMethod(project, findPsiMethod(parent), -1, host, languageId);
     }
-    else if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression) {
+    else if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCall) {
       return doInjectInJavaMethod(project, findPsiMethod(parent), findParameterIndex(target, (PsiExpressionList)parent), host, languageId);
     }
     else if (parent instanceof PsiAssignmentExpression) {
@@ -340,8 +340,8 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
       }
     }
     final PsiMethod first;
-    if (parent.getParent() instanceof PsiCallExpression) {
-      first = ((PsiCallExpression)parent.getParent()).resolveMethod();
+    if (parent.getParent() instanceof PsiCall) {
+      first = ((PsiCall)parent.getParent()).resolveMethod();
     }
     else {
       first = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, false);
@@ -393,7 +393,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     configuration.replaceInjectionsWithUndo(
       project, Collections.singletonList(newInjection),
       ContainerUtil.createMaybeSingletonList(originalInjection),
-      Collections.<PsiElement>emptyList());
+      Collections.emptyList());
   }
 
   private static void collectInjections(PsiLiteralExpression host,
@@ -564,11 +564,6 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     else {
       super.setupPresentation(injection, presentation, isSelected);
     }
-  }
-
-  @Override
-  public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
-
   }
 
   @Override

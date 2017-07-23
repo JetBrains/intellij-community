@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyCallSiteExpression;
 import com.jetbrains.python.psi.PyClass;
@@ -30,28 +31,33 @@ import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author yole
  */
 public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType {
+
+  @NotNull
+  private final PsiElement myDeclaration;
+
+  @NotNull
   private final String myName;
 
-  // 2 - namedtuple call itself
-  // 1 - return type of namedtuple call, aka namedtuple class
-  // 0 - namedtuple instance
-  private final int myDefinitionLevel;
-  private final PsiElement myDeclaration;
-  private final List<String> myFields;
+  @NotNull
+  private final Map<String, FieldTypeAndDefaultValue> myFields;
 
-  public PyNamedTupleType(PyClass tupleClass, PsiElement declaration, String name, List<String> fields, int definitionLevel) {
-    super(tupleClass, definitionLevel > 0);
+  @NotNull
+  private final DefinitionLevel myDefinitionLevel;
+
+  public PyNamedTupleType(@NotNull PyClass tupleClass,
+                          @NotNull PsiElement declaration,
+                          @NotNull String name,
+                          @NotNull Map<String, FieldTypeAndDefaultValue> fields,
+                          @NotNull DefinitionLevel definitionLevel) {
+    super(tupleClass, definitionLevel != DefinitionLevel.INSTANCE);
     myDeclaration = declaration;
-    myFields = fields;
+    myFields = Collections.unmodifiableMap(fields);
     myName = name;
     myDefinitionLevel = definitionLevel;
   }
@@ -67,7 +73,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
     if (classMembers != null && !classMembers.isEmpty()) {
       return classMembers;
     }
-    if (myFields.contains(name)) {
+    if (myFields.containsKey(name)) {
       // It's important to make a copy of declaration otherwise members will have the same type as their class
       return Collections.singletonList(new RatedResolveResult(RatedResolveResult.RATE_HIGH, new PyElementImpl(myDeclaration.getNode())));
     }
@@ -76,14 +82,15 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
 
   @Override
   public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
-    List<Object> result = new ArrayList<>();
+    final List<Object> result = new ArrayList<>();
     Collections.addAll(result, super.getCompletionVariants(completionPrefix, location, context));
-    for (String field : myFields) {
+    for (String field : myFields.keySet()) {
       result.add(LookupElementBuilder.create(field));
     }
     return ArrayUtil.toObjectArray(result);
   }
 
+  @NotNull
   @Override
   public String getName() {
     return myName;
@@ -97,15 +104,30 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   @Nullable
   @Override
   public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
-    if (myDefinitionLevel > 0) {
-      return new PyNamedTupleType(myClass, myDeclaration, myName, myFields, myDefinitionLevel - 1);
+    if (myDefinitionLevel == DefinitionLevel.AS_SUPERCLASS) {
+      return new PyNamedTupleType(myClass, myDeclaration, myName, myFields, DefinitionLevel.NEW_TYPE);
     }
+    else if (myDefinitionLevel == DefinitionLevel.NEW_TYPE) {
+      return new PyNamedTupleType(myClass, myDeclaration, myName, myFields, DefinitionLevel.INSTANCE);
+    }
+
     return null;
   }
 
+  @NotNull
   @Override
   public PyClassType toInstance() {
-    return myDefinitionLevel == 1 ? new PyNamedTupleType(myClass, myDeclaration, myName, myFields, 0) : this;
+    return myDefinitionLevel == DefinitionLevel.NEW_TYPE
+           ? new PyNamedTupleType(myClass, myDeclaration, myName, myFields, DefinitionLevel.INSTANCE)
+           : this;
+  }
+
+  @NotNull
+  @Override
+  public PyClassLikeType toClass() {
+    return myDefinitionLevel == DefinitionLevel.INSTANCE
+           ? this
+           : new PyNamedTupleType(myClass, myDeclaration, myName, myFields, DefinitionLevel.NEW_TYPE);
   }
 
   @Override
@@ -117,7 +139,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   @Override
   public Set<String> getMemberNames(boolean inherited, @NotNull TypeEvalContext context) {
     final Set<String> result = super.getMemberNames(inherited, context);
-    result.addAll(myFields);
+    result.addAll(myFields.keySet());
 
     return result;
   }
@@ -127,7 +149,56 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   }
 
   @NotNull
-  public List<String> getElementNames() {
-    return Collections.unmodifiableList(myFields);
+  public Map<String, FieldTypeAndDefaultValue> getFields() {
+    return myFields;
+  }
+
+  @Override
+  public boolean isCallable() {
+    return myDefinitionLevel == DefinitionLevel.NEW_TYPE;
+  }
+
+  @Nullable
+  @Override
+  public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
+    return isCallable()
+           ? ContainerUtil.map(myFields.entrySet(), field -> fieldToCallableParameter(field.getKey(), field.getValue()))
+           : null;
+  }
+
+  @NotNull
+  private static PyCallableParameter fieldToCallableParameter(@NotNull String name, @NotNull FieldTypeAndDefaultValue typeAndDefaultValue) {
+    return PyCallableParameterImpl.nonPsi(name, typeAndDefaultValue.getType(), typeAndDefaultValue.getDefaultValue());
+  }
+
+  public enum DefinitionLevel {
+
+    AS_SUPERCLASS,
+    NEW_TYPE,
+    INSTANCE
+  }
+
+  public static class FieldTypeAndDefaultValue {
+
+    @Nullable
+    private final PyType myType;
+
+    @Nullable
+    private final PyExpression myDefaultValue;
+
+    public FieldTypeAndDefaultValue(@Nullable PyType type, @Nullable PyExpression defaultValue) {
+      myType = type;
+      myDefaultValue = defaultValue;
+    }
+
+    @Nullable
+    public PyType getType() {
+      return myType;
+    }
+
+    @Nullable
+    public PyExpression getDefaultValue() {
+      return myDefaultValue;
+    }
   }
 }

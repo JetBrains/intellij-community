@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,7 @@ class GrTypeCheckHighlightingTest extends GrHighlightingTestBase {
 
   void testTypeCheckString() { doTest() }
 
-  void testCastToBuiltInPrimitiveTypes() { doTest() }
-
-  void testCastToBuiltInBoxedTypes() { doTest() }
+  void testCastBuiltInTypes() { doTest() }
 
   void doTest() {
     addBigDecimal()
@@ -58,6 +56,26 @@ interface X {
 
 method([X.C, X.D])
 method2([a: X.C, b: X.D])
+'''
+  }
+
+  void 'test map without string keys and values'() {
+    testHighlighting '''\
+def foo(int a) {}
+def m = [(aa): (<error descr="Expression expected">)</error>]
+foo<warning descr="'foo' in '_' cannot be applied to '(java.util.LinkedHashMap)'">(m)</warning>
+'''
+  }
+
+  void 'test assignment when getter and setter have different types'() {
+    testHighlighting '''\
+interface MavenArtifactRepository {
+  URI getUrl()
+  void setUrl(Object var1)
+}
+def test(MavenArtifactRepository m) {
+  m.url = "String"
+}
 '''
   }
 }

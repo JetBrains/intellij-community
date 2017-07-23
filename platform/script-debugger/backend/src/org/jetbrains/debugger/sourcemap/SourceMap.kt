@@ -15,33 +15,67 @@
  */
 package org.jetbrains.debugger.sourcemap
 
-import com.intellij.openapi.util.NullableLazyValue
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Url
 
 // sources - is not originally specified, but canonicalized/normalized
-class SourceMap(val outFile: String?, val mappings: MappingList, internal val sourceIndexToMappings: Array<MappingList?>, val sourceResolver: SourceResolver, val hasNameMappings: Boolean) {
+// lines and columns are zero-based according to specification
+interface SourceMap {
+  val outFile: String?
+
+  /**
+   * note: Nested map returns only parent sources
+   */
   val sources: Array<Url>
+
+  val generatedMappings: Mappings
+  val hasNameMappings: Boolean
+  val sourceResolver: SourceResolver
+
+  fun findSourceMappings(sourceIndex: Int): Mappings
+
+  fun findSourceIndex(sourceUrls: List<Url>, sourceFile: VirtualFile?, resolver: Lazy<SourceFileResolver?>?, localFileUrlOnly: Boolean): Int
+
+  fun findSourceMappings(sourceUrls: List<Url>, sourceFile: VirtualFile?, resolver: Lazy<SourceFileResolver?>?, localFileUrlOnly: Boolean): Mappings? {
+    val sourceIndex = findSourceIndex(sourceUrls, sourceFile, resolver, localFileUrlOnly)
+    return if (sourceIndex >= 0) findSourceMappings(sourceIndex) else null
+  }
+
+  fun getSourceLineByRawLocation(rawLine: Int, rawColumn: Int) = generatedMappings.get(rawLine, rawColumn)?.sourceLine ?: -1
+
+  fun findSourceIndex(sourceFile: VirtualFile, localFileUrlOnly: Boolean): Int
+
+  fun processSourceMappingsInLine(sourceIndex: Int, sourceLine: Int, mappingProcessor: MappingsProcessorInLine): Boolean
+
+  fun processSourceMappingsInLine(sourceUrls: List<Url>, sourceLine: Int, mappingProcessor: MappingsProcessorInLine, sourceFile: VirtualFile?, resolver: Lazy<SourceFileResolver?>?, localFileUrlOnly: Boolean): Boolean {
+    val sourceIndex = findSourceIndex(sourceUrls, sourceFile, resolver, localFileUrlOnly)
+    return sourceIndex >= 0 && processSourceMappingsInLine(sourceIndex, sourceLine, mappingProcessor)
+  }
+}
+
+
+class OneLevelSourceMap(override val outFile: String?,
+                        override val generatedMappings: Mappings,
+                        internal val sourceIndexToMappings: Array<MappingList?>,
+                        override val sourceResolver: SourceResolver,
+                        override val hasNameMappings: Boolean) : SourceMap {
+  override val sources: Array<Url>
     get() = sourceResolver.canonicalizedUrls
 
-  fun getSourceLineByRawLocation(rawLine: Int, rawColumn: Int) = mappings.get(rawLine, rawColumn)?.sourceLine ?: -1
-
-  fun findMappingList(sourceUrls: List<Url>, sourceFile: VirtualFile?, resolver: NullableLazyValue<SourceResolver.Resolver>?): MappingList? {
-    var mappings = sourceResolver.findMappings(sourceUrls, this, sourceFile)
-    if (mappings == null && resolver != null) {
-      mappings = resolver.value?.let { sourceResolver.findMappings(sourceFile, this, it) }
+  override fun findSourceIndex(sourceUrls: List<Url>, sourceFile: VirtualFile?, resolver: Lazy<SourceFileResolver?>?, localFileUrlOnly: Boolean): Int {
+    val index = sourceResolver.findSourceIndex(sourceUrls, sourceFile, localFileUrlOnly)
+    if (index == -1 && resolver != null) {
+      return resolver.value?.let { sourceResolver.findSourceIndex(sourceFile, it) } ?: -1
     }
-    return mappings
+    return index
   }
 
-  fun processMappingsInLine(sourceUrls: List<Url>,
-                            sourceLine: Int,
-                            mappingProcessor: MappingList.MappingsProcessorInLine,
-                            sourceFile: VirtualFile?,
-                            resolver: NullableLazyValue<SourceResolver.Resolver>?): Boolean {
-    val mappings = findMappingList(sourceUrls, sourceFile, resolver)
-    return mappings != null && mappings.processMappingsInLine(sourceLine, mappingProcessor)
-  }
+  // returns SourceMappingList
+  override fun findSourceMappings(sourceIndex: Int) = sourceIndexToMappings.get(sourceIndex)!!
 
-  fun getMappingsOrderedBySource(source: Int) = sourceIndexToMappings[source]!!
+  override fun findSourceIndex(sourceFile: VirtualFile, localFileUrlOnly: Boolean) = sourceResolver.findSourceIndexByFile(sourceFile, localFileUrlOnly)
+
+  override fun processSourceMappingsInLine(sourceIndex: Int, sourceLine: Int, mappingProcessor: MappingsProcessorInLine): Boolean {
+    return findSourceMappings(sourceIndex).processMappingsInLine(sourceLine, mappingProcessor)
+  }
 }

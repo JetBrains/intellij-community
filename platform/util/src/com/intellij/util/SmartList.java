@@ -18,6 +18,7 @@ package com.intellij.util;
 import com.intellij.util.containers.EmptyIterator;
 import com.intellij.util.containers.SingletonIteratorBase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.reflect.Array;
 import java.util.*;
@@ -242,7 +243,8 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
     }
   }
 
-  public int getModificationCount() {
+  @TestOnly
+  int getModificationCount() {
     return modCount;
   }
 
@@ -294,7 +296,7 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
     if (mySize == 0) {
       return -1;
     }
-    else if (mySize == 1) {
+    if (mySize == 1) {
       if (o == null) {
         return myElem == null ? 0 : -1;
       }

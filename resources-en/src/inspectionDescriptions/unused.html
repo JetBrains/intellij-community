@@ -2,7 +2,10 @@
 <body>
 This inspection reports classes, methods or fields in the specified inspection scope that
 are not used or not reachable from entry points. It also reports parameters that are not used by their methods and all method
-implementations/overriders and local variables that are declared but not used.<br> <br>
+implementations/overriders and local variables that are declared but not used.
+Some unused members might not be reported during in-editor highlighting. Due to performance reasons, a non-private member is checked only when its name rarely occurs in the project.
+To see all results, please run the inspection using Analyze | Inspect Code... or Analyze | Run Inspection by Name...
+<br> <br>
 <!-- tooltip end -->
 Use visibility settings below to configure what members should be reported, e.g. configuring report private methods only means
 that public methods of private inner class would be reported though protected methods of top level class would be ignored.

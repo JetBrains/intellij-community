@@ -31,6 +31,8 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -38,7 +40,10 @@ import org.jetbrains.annotations.NotNull;
 import sun.awt.AppContext;
 
 import javax.swing.*;
-import javax.swing.plaf.*;
+import javax.swing.plaf.BorderUIResource;
+import javax.swing.plaf.ColorUIResource;
+import javax.swing.plaf.FontUIResource;
+import javax.swing.plaf.IconUIResource;
 import javax.swing.plaf.basic.BasicLookAndFeel;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import javax.swing.plaf.metal.MetalLookAndFeel;
@@ -61,13 +66,12 @@ public class DarculaLaf extends BasicLookAndFeel {
   private static final Object SYSTEM = new Object();
   public static final String NAME = "Darcula";
   BasicLookAndFeel base;
-  private static Disposable myDisposable;
-  private static Alarm myMnemonicAlarm;
+
+  protected Disposable myDisposable;
+  private Alarm myMnemonicAlarm;
   private static boolean myAltPressed;
 
-  public DarculaLaf() {
-    base = createBaseLookAndFeel();
-  }
+  public DarculaLaf() {}
 
   private static void installMacOSXFonts(UIDefaults defaults) {
     final String face = "HelveticaNeue-Regular";
@@ -183,7 +187,7 @@ public class DarculaLaf extends BasicLookAndFeel {
         JFrame.setDefaultLookAndFeelDecorated(true);
         JDialog.setDefaultLookAndFeelDecorated(true);
       }
-      if (SystemInfo.isLinux && JBUI.isHiDPI()) {
+      if (SystemInfo.isLinux && JBUI.isUsrHiDPI()) {
         applySystemFonts(defaults);
       }
       defaults.put("EditorPane.font", defaults.getFont("TextField.font"));
@@ -237,7 +241,7 @@ public class DarculaLaf extends BasicLookAndFeel {
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private void patchStyledEditorKit(UIDefaults defaults) {
-    URL url = getClass().getResource(getPrefix() + (JBUI.isHiDPI() ? "@2x.css" : ".css"));
+    URL url = getClass().getResource(getPrefix() + (JBUI.isUsrHiDPI() ? "@2x.css" : ".css"));
     StyleSheet styleSheet = UIUtil.loadStyleSheet(url);
     defaults.put("StyledEditorKit.JBDefaultStyle", styleSheet);
     try {
@@ -395,6 +399,8 @@ public class DarculaLaf extends BasicLookAndFeel {
       } catch (Exception e) {
         log(e);
       }
+    } else if (key.endsWith("Size")) {
+      return parseSize(value);
     } else {
       final Color color = parseColor(value);
       final Integer invVal = getInteger(value);
@@ -418,22 +424,20 @@ public class DarculaLaf extends BasicLookAndFeel {
 
   private static Insets parseInsets(String value) {
     final List<String> numbers = StringUtil.split(value, ",");
-    return new InsetsUIResource(Integer.parseInt(numbers.get(0)),
-                                           Integer.parseInt(numbers.get(1)),
-                                           Integer.parseInt(numbers.get(2)),
-                                           Integer.parseInt(numbers.get(3)));
+    return new JBInsets(Integer.parseInt(numbers.get(0)),
+                        Integer.parseInt(numbers.get(1)),
+                        Integer.parseInt(numbers.get(2)),
+                        Integer.parseInt(numbers.get(3))).asUIResource();
   }
 
   @SuppressWarnings("UseJBColor")
   private static Color parseColor(String value) {
     if (value != null && value.length() == 8) {
       final Color color = ColorUtil.fromHex(value.substring(0, 6));
-      if (color != null) {
-        try {
-          int alpha = Integer.parseInt(value.substring(6, 8), 16);
-          return new ColorUIResource(new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha));
-        } catch (Exception ignore){}
-      }
+      try {
+        int alpha = Integer.parseInt(value.substring(6, 8), 16);
+        return new ColorUIResource(new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha));
+      } catch (Exception ignore){}
       return null;
     }
     return ColorUtil.fromHex(value, null);
@@ -446,6 +450,11 @@ public class DarculaLaf extends BasicLookAndFeel {
     catch (NumberFormatException e) {
       return null;
     }
+  }
+
+  private static Dimension parseSize(String value) {
+    final List<String> numbers = StringUtil.split(value, ",");
+    return new JBDimension(Integer.parseInt(numbers.get(0)), Integer.parseInt(numbers.get(1))).asUIResource();
   }
 
   @Override
@@ -483,12 +492,15 @@ public class DarculaLaf extends BasicLookAndFeel {
     callInit("initClassDefaults", defaults);
   }
 
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   @Override
   public void initialize() {
+    myDisposable = Disposer.newDisposable();
+    base = createBaseLookAndFeel();
+
     try {
       base.initialize();
     } catch (Exception ignore) {}
-    myDisposable = Disposer.newDisposable();
     Application application = ApplicationManager.getApplication();
     if (application != null) {
       Disposer.register(application, myDisposable);

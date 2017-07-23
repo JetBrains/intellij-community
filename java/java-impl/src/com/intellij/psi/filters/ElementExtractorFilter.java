@@ -18,13 +18,6 @@ package com.intellij.psi.filters;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.infos.CandidateInfo;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 17.07.2003
- * Time: 13:43:17
- * To change this template use Options | File Templates.
- */
 public class ElementExtractorFilter implements ElementFilter{
   private final ElementFilter myFilter;
 

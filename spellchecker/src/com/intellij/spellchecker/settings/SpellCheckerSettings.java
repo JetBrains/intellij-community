@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,6 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
     return ServiceManager.getService(project, SpellCheckerSettings.class);
   }
 
-
   public List<String> getDictionaryFoldersPaths() {
     return myDictionaryFoldersPaths;
   }
@@ -72,6 +71,7 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
     myBundledDisabledDictionariesPaths = bundledDisabledDictionariesPaths;
   }
 
+  @Override
   @SuppressWarnings({"ConstantConditions"})
   public Element getState() {
     if (myBundledDisabledDictionariesPaths.isEmpty() &&
@@ -106,6 +106,7 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   }
 
 
+  @Override
   public void loadState(@NotNull final Element element) {
     myBundledDisabledDictionariesPaths.clear();
     myDictionaryFoldersPaths.clear();

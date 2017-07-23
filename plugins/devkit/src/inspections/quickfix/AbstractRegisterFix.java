@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
 
   @NotNull
   public String getFamilyName() {
-    return DevKitBundle.message("inspections.component.not.registered.quickfix.family");
+    return DevKitBundle.message("inspections.component.not.registered.quickfix.family", StringUtil.toLowerCase(getType()));
   }
 
   @Override
@@ -86,11 +86,9 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
 
     Runnable command = () -> {
       try {
-        if (PluginModuleType.isOfType(module)) {
-          XmlFile pluginXml = PluginModuleType.getPluginXml(module);
-          if (pluginXml != null) {
-            DescriptorUtil.patchPluginXml(this, element, pluginXml);
-          }
+        XmlFile pluginXml = PluginModuleType.getPluginXml(module);
+        if (pluginXml != null) {
+          DescriptorUtil.patchPluginXml(this, element, pluginXml);
         }
         else {
           List<Module> modules = PluginModuleType.getCandidateModules(module);

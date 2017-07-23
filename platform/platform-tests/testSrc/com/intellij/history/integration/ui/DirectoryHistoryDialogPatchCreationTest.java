@@ -23,12 +23,13 @@ import java.nio.charset.Charset;
 
 public class DirectoryHistoryDialogPatchCreationTest extends PatchingTestCase {
   public void testPatchCreation() throws Exception {
+
+    DirectoryHistoryDialogModel m = new DirectoryHistoryDialogModel(myProject, myGateway, getVcs(), myRoot);
+    m.clearRevisions();
     createChildDataWithContent(myRoot, "f1.txt");
     createChildDataWithContent(myRoot, "f2.txt");
     createChildDataWithContent(myRoot, "f3.txt");
-
-    DirectoryHistoryDialogModel m = new DirectoryHistoryDialogModel(myProject, myGateway, getVcs(), myRoot);
-    assertSize(6, m.getRevisions());
+    assertSize(7, m.getRevisions());
 
     m.selectRevisions(0, 5);
     m.createPatch(patchFilePath, myProject.getBasePath(), false, Charset.defaultCharset());

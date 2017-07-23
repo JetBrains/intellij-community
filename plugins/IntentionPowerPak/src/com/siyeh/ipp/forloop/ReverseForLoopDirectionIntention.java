@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2014 Bas Leijdekkers
+ * Copyright 2009-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,11 +105,7 @@ public class ReverseForLoopDirectionIntention extends Intention {
       return;
     }
     final Project project = element.getProject();
-    final PsiElementFactory factory =
-      JavaPsiFacade.getElementFactory(project);
-    final PsiExpression newUpdate = factory.createExpressionFromText(
-      newUpdateText.toString(), element);
-    updateExpression.replace(newUpdate);
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     final IElementType sign = condition.getOperationTokenType();
     final String negatedSign = ComparisonUtils.getNegatedComparison(sign);
     final StringBuilder conditionText = new StringBuilder();
@@ -161,12 +157,12 @@ public class ReverseForLoopDirectionIntention extends Intention {
     else {
       return;
     }
-    final PsiExpression newInitializer = factory.createExpressionFromText(
-      newInitializerText.toString(), element);
+    final PsiExpression newInitializer = factory.createExpressionFromText(newInitializerText.toString(), element);
     variable.setInitializer(newInitializer);
-    final PsiExpression newCondition = factory.createExpressionFromText(
-      conditionText.toString(), element);
+    final PsiExpression newCondition = factory.createExpressionFromText(conditionText.toString(), element);
     condition.replace(newCondition);
+    final PsiExpression newUpdate = factory.createExpressionFromText(newUpdateText.toString(), element);
+    updateExpression.replace(newUpdate);
   }
 
   private static String incrementExpression(PsiExpression expression,

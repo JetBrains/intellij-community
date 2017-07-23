@@ -29,7 +29,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +81,6 @@ public class XmlImportOptimizer implements ImportOptimizer {
           }
         }.visitFile(xmlFile);
         ProblemDescriptor[] results = holder.getResultsArray();
-        ArrayUtil.reverseArray(results);
         List<ProblemDescriptor> list = ContainerUtil.filter(results, myCondition);
 
         Map<XmlUnusedNamespaceInspection.RemoveNamespaceDeclarationFix, ProblemDescriptor> fixes = new LinkedHashMap<>();

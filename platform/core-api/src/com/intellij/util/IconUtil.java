@@ -30,6 +30,8 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBUI.JBUIScaleUpdatable;
+import com.intellij.util.ui.JBUI.ScaleType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,41 +132,47 @@ public class IconUtil {
     };
   }
 
-  private static final NullableFunction<FileIconKey, Icon> ICON_NULLABLE_FUNCTION = new NullableFunction<FileIconKey, Icon>() {
-    @Override
-    public Icon fun(final FileIconKey key) {
-      final VirtualFile file = key.getFile();
-      final int flags = key.getFlags();
-      final Project project = key.getProject();
+  private static final NullableFunction<FileIconKey, Icon> ICON_NULLABLE_FUNCTION = key -> {
+    final VirtualFile file = key.getFile();
+    final int flags = filterFileIconFlags(file, key.getFlags());
+    final Project project = key.getProject();
 
-      if (!file.isValid() || project != null && (project.isDisposed() || !wasEverInitialized(project))) return null;
+    if (!file.isValid() || project != null && (project.isDisposed() || !wasEverInitialized(project))) return null;
 
-      final Icon providersIcon = getProvidersIcon(file, flags, project);
-      Icon icon = providersIcon == null ? VirtualFilePresentation.getIconImpl(file) : providersIcon;
+    final Icon providersIcon = getProvidersIcon(file, flags, project);
+    Icon icon = providersIcon == null ? VirtualFilePresentation.getIconImpl(file) : providersIcon;
 
-      final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
-      for (FileIconPatcher patcher : getPatchers()) {
-        if (dumb && !DumbService.isDumbAware(patcher)) {
-          continue;
-        }
-
-        // render without locked icon patch since we are going to apply it later anyway
-        icon = patcher.patchIcon(icon, file, flags & ~Iconable.ICON_FLAG_READ_STATUS, project);
+    final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
+    for (FileIconPatcher patcher : getPatchers()) {
+      if (dumb && !DumbService.isDumbAware(patcher)) {
+        continue;
       }
 
-      if (file.is(VFileProperty.SYMLINK)) {
-        icon = new LayeredIcon(icon, PlatformIcons.SYMLINK_ICON);
-      }
-      if (BitUtil.isSet(flags, Iconable.ICON_FLAG_READ_STATUS) &&
-          (!file.isWritable() || !WritingAccessProvider.isPotentiallyWritable(file, project))) {
-        icon = new LayeredIcon(icon, PlatformIcons.LOCKED_ICON);
-      }
-
-      Iconable.LastComputedIcon.put(file, icon, flags);
-
-      return icon;
+      // render without locked icon patch since we are going to apply it later anyway
+      icon = patcher.patchIcon(icon, file, flags & ~Iconable.ICON_FLAG_READ_STATUS, project);
     }
+
+    if (file.is(VFileProperty.SYMLINK)) {
+      icon = new LayeredIcon(icon, PlatformIcons.SYMLINK_ICON);
+    }
+    if (BitUtil.isSet(flags, Iconable.ICON_FLAG_READ_STATUS) &&
+        (!file.isWritable() || !WritingAccessProvider.isPotentiallyWritable(file, project))) {
+      icon = new LayeredIcon(icon, PlatformIcons.LOCKED_ICON);
+    }
+
+    Iconable.LastComputedIcon.put(file, icon, flags);
+
+    return icon;
   };
+
+  @Iconable.IconFlags
+  private static int filterFileIconFlags(@NotNull VirtualFile file, @Iconable.IconFlags int flags) {
+    UserDataHolder fileTypeDataHolder = ObjectUtils.tryCast(file.getFileType(), UserDataHolder.class);
+    int fileTypeFlagIgnoreMask = Iconable.ICON_FLAG_IGNORE_MASK.get(fileTypeDataHolder, 0);
+    int flagIgnoreMask = Iconable.ICON_FLAG_IGNORE_MASK.get(file, fileTypeFlagIgnoreMask);
+    //noinspection MagicConstant
+    return flags & ~flagIgnoreMask;
+  }
 
   public static Icon getIcon(@NotNull final VirtualFile file, @Iconable.IconFlags final int flags, @Nullable final Project project) {
     Icon lastIcon = Iconable.LastComputedIcon.get(file, flags);
@@ -205,6 +213,7 @@ public class IconUtil {
     private static final FileIconProvider[] myProviders = Extensions.getExtensions(FileIconProvider.EP_NAME);
   }
 
+  @NotNull
   private static FileIconProvider[] getProviders() {
     return FileIconProviderHolder.myProviders;
   }
@@ -213,24 +222,13 @@ public class IconUtil {
     private static final FileIconPatcher[] ourPatchers = Extensions.getExtensions(FileIconPatcher.EP_NAME);
   }
 
+  @NotNull
   private static FileIconPatcher[] getPatchers() {
     return FileIconPatcherHolder.ourPatchers;
   }
 
   public static Image toImage(@NotNull Icon icon) {
-    if (icon instanceof ImageIcon) {
-      return ((ImageIcon)icon).getImage();
-    }
-    else {
-      final int w = icon.getIconWidth();
-      final int h = icon.getIconHeight();
-      final BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment()
-        .getDefaultScreenDevice().getDefaultConfiguration().createCompatibleImage(w, h, Transparency.TRANSLUCENT);
-      final Graphics2D g = image.createGraphics();
-      icon.paintIcon(null, g, 0, 0);
-      g.dispose();
-      return image;
-    }
+    return IconLoader.toImage(icon);
   }
 
   @NotNull
@@ -338,16 +336,16 @@ public class IconUtil {
   }
 
   @NotNull
-  public static Icon toSize(@NotNull Icon icon, int width, int height) {
+  public static Icon toSize(@Nullable Icon icon, int width, int height) {
     return new IconSizeWrapper(icon, width, height);
   }
 
-  private static class IconSizeWrapper implements Icon {
+  public static class IconSizeWrapper implements Icon {
     private final Icon myIcon;
     private final int myWidth;
     private final int myHeight;
 
-    private IconSizeWrapper(@NotNull Icon icon, int width, int height) {
+    protected IconSizeWrapper(@Nullable Icon icon, int width, int height) {
       myIcon = icon;
       myWidth = width;
       myHeight = height;
@@ -355,9 +353,14 @@ public class IconUtil {
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      x += (myWidth - myIcon.getIconWidth()) / 2;
-      y += (myHeight - myIcon.getIconHeight()) / 2;
-      myIcon.paintIcon(c, g, x, y);
+      paintIcon(myIcon, c, g, x, y);
+    }
+
+    protected void paintIcon(@Nullable Icon icon, Component c, Graphics g, int x, int y) {
+      if (icon == null) return;
+      x += (myWidth - icon.getIconWidth()) / 2;
+      y += (myHeight - icon.getIconHeight()) / 2;
+      icon.paintIcon(c, g, x, y);
     }
 
     @Override
@@ -438,15 +441,63 @@ public class IconUtil {
 
   /**
    * Returns a scaled icon instance.
+   * <p>
+   * The method delegates to {@link ScalableIcon#scale(float)} when applicable,
+   * otherwise defaults to {@link #scale(Icon, double)}
+   * <p>
+   * In the following example:
+   * <pre>
+   * Icon myIcon = new MyIcon();
+   * Icon scaledIcon = IconUtil.scale(myIcon, myComp, 2f);
+   * Icon anotherScaledIcon = IconUtil.scale(scaledIcon, myComp, 2f);
+   * assert(scaledIcon.getIconWidth() == anotherScaledIcon.getIconWidth()); // compare the scale of the icons
+   * </pre>
+   * The result of the assertion depends on {@code MyIcon} implementation. When {@code scaledIcon} is an instance of {@link ScalableIcon},
+   * then {@code anotherScaledIcon} should be scaled according to the {@link ScalableIcon} javadoc, and the assertion should pass.
+   * Otherwise, {@code anotherScaledIcon} should be 2 times bigger than {@code scaledIcon}, and 4 times bigger than {@code myIcon}.
+   * So, prior to scale the icon recursively, the returned icon should be inspected for its type to understand the result.
+   * But recursive scale should better be avoided.
    *
    * @param icon the icon to scale
+   * @param ancestor the component (or its ancestor) painting the icon, or null when not available
    * @param scale the scale factor
-   * @param smartScale whether to scale via {@link ScalableIcon#scale(float)} when applicable
    * @return the scaled icon
    */
   @NotNull
-  public static Icon scale(@NotNull Icon icon, float scale, boolean smartScale) {
-    if (smartScale && icon instanceof ScalableIcon) {
+  public static Icon scale(@NotNull Icon icon, @Nullable Component ancestor, float scale) {
+    if (icon instanceof ScalableIcon) {
+      if (icon instanceof JBUI.JBUIScaleUpdatable) {
+        ((JBUI.JBUIScaleUpdatable)icon).updateJBUIScale(ancestor != null ? ancestor.getGraphicsConfiguration() : null);
+      }
+      return ((ScalableIcon)icon).scale(scale);
+    }
+    return scale(icon, scale);
+  }
+
+  /**
+   * Returns a scaled icon instance, in scale of the provided font size.
+   * <p>
+   * The method delegates to {@link ScalableIcon#scale(float)} when applicable,
+   * otherwise defaults to {@link #scale(Icon, double)}
+   * <p>
+   * Refer to {@link #scale(Icon, Component, float)} for more details.
+   *
+   * @param icon the icon to scale
+   * @param ancestor the component (or its ancestor) painting the icon, or null when not available
+   * @param fontSize the reference font size
+   * @return the scaled icon
+   */
+  @NotNull
+  public static Icon scaleByFont(@NotNull Icon icon, @Nullable Component ancestor, float fontSize) {
+    float scale = JBUI.getFontScale(fontSize);
+    if (icon instanceof ScalableIcon) {
+      if (icon instanceof JBUIScaleUpdatable) {
+        JBUI.JBUIScaleUpdatable jbuiIcon = (JBUI.JBUIScaleUpdatable)icon;
+        jbuiIcon.updateJBUIScale(ancestor != null ? ancestor.getGraphicsConfiguration() : null);
+        // take into account the user scale of the icon
+        float usrScale = jbuiIcon.getJBUIScale(ScaleType.USR);
+        scale /= usrScale;
+      }
       return ((ScalableIcon)icon).scale(scale);
     }
     return scale(icon, scale);
@@ -474,6 +525,16 @@ public class IconUtil {
   @NotNull
   public static Icon desaturate(@NotNull Icon source) {
     return filterIcon(null, source, new DesaturationFilter());
+  }
+
+  @NotNull
+  public static Icon brighter(@NotNull Icon source, int tones) {
+    return filterIcon(null, source, new BrighterFilter(tones));
+  }
+
+  @NotNull
+  public static Icon darker(@NotNull Icon source, int tones) {
+    return filterIcon(null, source, new DarkerFilter(tones));
   }
 
   @NotNull
@@ -529,6 +590,48 @@ public class IconUtil {
       int max = Math.max(Math.max(rgba[0], rgba[1]), rgba[2]);
       int grey = (max + min) / 2;
       return new int[]{grey, grey, grey, rgba[3]};
+    }
+  }
+
+  private static class BrighterFilter extends Filter {
+    private final int myTones;
+
+    public BrighterFilter(int tones) {
+      myTones = tones;
+    }
+
+    @NotNull
+    @Override
+    int[] convert(@NotNull int[] rgba) {
+      final float[] hsb = Color.RGBtoHSB(rgba[0], rgba[1], rgba[2], null);
+      float brightness = hsb[2];
+      for (int i = 0; i < myTones; i++) {
+        brightness = Math.min(1, brightness * 1.1F);
+        if (brightness == 1) break;
+      }
+      Color color = Color.getHSBColor(hsb[0], hsb[1], brightness);
+      return new int[]{color.getRed(), color.getGreen(), color.getBlue(), rgba[3]};
+    }
+  }
+
+  private static class DarkerFilter extends Filter {
+    private final int myTones;
+
+    public DarkerFilter(int tones) {
+      myTones = tones;
+    }
+
+    @NotNull
+    @Override
+    int[] convert(@NotNull int[] rgba) {
+      final float[] hsb = Color.RGBtoHSB(rgba[0], rgba[1], rgba[2], null);
+      float brightness = hsb[2];
+      for (int i = 0; i < myTones; i++) {
+        brightness = Math.max(0, brightness / 1.1F);
+        if (brightness == 0) break;
+      }
+      Color color = Color.getHSBColor(hsb[0], hsb[1], brightness);
+      return new int[]{color.getRed(), color.getGreen(), color.getBlue(), rgba[3]};
     }
   }
 

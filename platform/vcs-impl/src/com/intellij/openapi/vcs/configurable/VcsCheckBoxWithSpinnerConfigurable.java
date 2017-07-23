@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/28/12
- * Time: 2:41 PM
- */
 public abstract class VcsCheckBoxWithSpinnerConfigurable implements Configurable {
   protected final Project myProject;
   private final String myCheckboxText;
@@ -71,8 +65,4 @@ public abstract class VcsCheckBoxWithSpinnerConfigurable implements Configurable
   }
 
   protected abstract SpinnerNumberModel createSpinnerModel();
-
-  @Override
-  public void disposeUIResources() {
-  }
 }

@@ -55,7 +55,7 @@ public class ProblemDescriptorUtil {
         }
       }
     }
-    ref = StringUtil.replaceChar(ref, '\n', ' ').trim();
+    ref = ref.replace('\n', ' ').trim();
     ref = StringUtil.first(ref, 100, true);
     return ref.trim().replaceAll("\\s+", " ");
   }
@@ -81,8 +81,7 @@ public class ProblemDescriptorUtil {
         message = StringUtil.replace(message, "#loc", "(" + InspectionsBundle.message("inspection.export.results.at.line") + " " + (lineNumber + 1) + ")");
       }
     }
-    message = StringUtil.replace(message, "<code>", "'");
-    message = StringUtil.replace(message, "</code>", "'");
+    message = unescapeTags(message);
     message = StringUtil.replace(message, "#loc ", "");
     message = StringUtil.replace(message, " #loc", "");
     message = StringUtil.replace(message, "#loc", "");
@@ -99,11 +98,17 @@ public class ProblemDescriptorUtil {
     message = StringUtil.replace(message, "#end", "");
     message = StringUtil.replace(message, "#treeend", "");
 
+    return message.trim();
+  }
+
+  public static String unescapeTags(String message) {
+    message = StringUtil.replace(message, "<code>", "'");
+    message = StringUtil.replace(message, "</code>", "'");
     if (message.contains(XML_CODE_MARKER.first)) {
       message = unescapeXmlCode(message);
     }
     else {
-      message = StringUtil.unescapeXml(message).trim();
+      message = StringUtil.unescapeXml(message);
     }
     return message;
   }

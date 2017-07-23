@@ -50,9 +50,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * Created by Max Medvedev on 10/29/13
- */
 public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntroducer<GroovyIntroduceVariableSettings> {
   private JCheckBox myCanBeFinalCb;
 

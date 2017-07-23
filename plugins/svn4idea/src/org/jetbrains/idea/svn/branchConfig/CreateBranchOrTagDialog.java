@@ -45,20 +45,11 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 
-/**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: 05.07.2005
- * Time: 23:35:12
- */
 public class CreateBranchOrTagDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.dialogs.CopyDialog");
 
@@ -109,12 +100,10 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
         updateControls();
       }
     });
-    myRepositoryField.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        SVNURL url = SelectLocationDialog.selectLocation(project, mySrcURL);
-        if (url != null) {
-          myRepositoryField.setText(url.toString());
-        }
+    myRepositoryField.addActionListener(e -> {
+      SVNURL url = SelectLocationDialog.selectLocation(project, mySrcURL);
+      if (url != null) {
+        myRepositoryField.setText(url.toString());
       }
     });
     myRepositoryField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
@@ -122,16 +111,14 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
         updateToURL();
       }
     });
-    myToURLText.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        String url = myToURLText.getText();
-        String dstName = SVNPathUtil.tail(mySrcURL);
-        dstName = SVNEncodingUtil.uriDecode(dstName);
-        url = SelectLocationDialog.selectCopyDestination(myProject, SVNPathUtil.removeTail(url),
-                                                  SvnBundle.message("label.copy.select.location.dialog.copy.as"), dstName, false);
-        if (url != null) {
-          myToURLText.setText(url);
-        }
+    myToURLText.addActionListener(e -> {
+      String url = myToURLText.getText();
+      String dstName = SVNPathUtil.tail(mySrcURL);
+      dstName = SVNEncodingUtil.uriDecode(dstName);
+      url = SelectLocationDialog.selectCopyDestination(myProject, SVNPathUtil.removeTail(url),
+                                                SvnBundle.message("label.copy.select.location.dialog.copy.as"), dstName, false);
+      if (url != null) {
+        myToURLText.setText(url);
       }
     });
 
@@ -149,25 +136,13 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
 
     myRevisionPanel.setRoot(mySrcVirtualFile);
     myRevisionPanel.setProject(myProject);
-    myRevisionPanel.setUrlProvider(new SvnRevisionPanel.UrlProvider() {
-      public String getUrl() {
-        return mySrcURL;
-      }
-    });
+    myRevisionPanel.setUrlProvider(() -> mySrcURL);
     updateBranchTagBases();
 
-    myRevisionPanel.addChangeListener(new ChangeListener() {
-      public void stateChanged(final ChangeEvent e) {
-        getOKAction().setEnabled(isOKActionEnabled());
-      }
-    });
+    myRevisionPanel.addChangeListener(e -> getOKAction().setEnabled(isOKActionEnabled()));
 
     init();
-    ActionListener listener = new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        updateControls();
-      }
-    };
+    ActionListener listener = e -> updateControls();
     myWorkingCopyRadioButton.addActionListener(listener);
     myRepositoryRadioButton.addActionListener(listener);
     myBranchOrTagRadioButton.addActionListener(listener);
@@ -179,23 +154,15 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
       }
     });
     updateToURL();
-    myProjectButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myRepositoryField.setText(myWcRootUrl);
-      }
+    myProjectButton.addActionListener(e -> myRepositoryField.setText(myWcRootUrl));
+    myBranchTagBaseComboBox.addActionListener(e -> {
+      BranchConfigurationDialog.configureBranches(project, mySrcVirtualFile);
+      updateBranchTagBases();
+      updateControls();
     });
-    myBranchTagBaseComboBox.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        BranchConfigurationDialog.configureBranches(project, mySrcVirtualFile);
-        updateBranchTagBases();
-        updateControls();
-      }
-    });
-    myBranchTagBaseComboBox.getComboBox().addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        updateToURL();
-        updateControls();
-      }
+    myBranchTagBaseComboBox.getComboBox().addActionListener(e -> {
+      updateToURL();
+      updateControls();
     });
   }
 

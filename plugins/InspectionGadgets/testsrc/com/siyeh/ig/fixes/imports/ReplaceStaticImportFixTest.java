@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,11 @@ public class ReplaceStaticImportFixTest extends IGQuickFixesTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myFixture.enableInspections(new StaticImportInspection());
-    myDefaultHint = InspectionGadgetsBundle.message("static.import.replace.quickfix");;
+    myDefaultHint = InspectionGadgetsBundle.message("static.import.replace.quickfix");
     myRelativePath = "imports/static_import";
   }
 
   public void testEnumConstant() { doTest(); }
+  public void testNonStaticUnqualifiedAccess() { doTest(); }
 }
 

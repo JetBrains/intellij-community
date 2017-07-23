@@ -18,13 +18,13 @@ package com.intellij.find.findUsages;
 import com.intellij.find.FindBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomTarget;
@@ -33,7 +33,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiElementProcessorAdapter;
+import com.intellij.psi.search.PsiReferenceProcessorAdapter;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.*;
 import com.intellij.psi.targets.AliasingPsiTarget;
 import com.intellij.psi.targets.AliasingPsiTargetMapper;
@@ -54,13 +57,8 @@ public class JavaFindUsagesHelper {
   @NotNull
   public static Set<String> getElementNames(@NotNull final PsiElement element) {
     if (element instanceof PsiDirectory) {  // normalize a directory to a corresponding package
-      PsiPackage aPackage = ApplicationManager.getApplication().runReadAction(new Computable<PsiPackage>() {
-        @Override
-        public PsiPackage compute() {
-          return JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
-        }
-      });
-      return aPackage == null ? Collections.<String>emptySet() : getElementNames(aPackage);
+      PsiPackage aPackage = ReadAction.compute(() -> JavaDirectoryService.getInstance().getPackage((PsiDirectory)element));
+      return aPackage == null ? Collections.emptySet() : getElementNames(aPackage);
     }
 
     final Set<String> result = new HashSet<>();
@@ -74,7 +72,7 @@ public class JavaFindUsagesHelper {
         if (qname != null) {
           result.add(qname);
           PsiClass topLevelClass = PsiUtil.getTopLevelClass(element);
-          if (topLevelClass != null) {
+          if (topLevelClass != null && !(topLevelClass instanceof PsiSyntheticClass)) {
             String topName = topLevelClass.getQualifiedName();
             assert topName != null : "topLevelClass : " + topLevelClass + "; element: " + element + " (" + qname + ") top level file: " + InjectedLanguageManager.getInstance(
               element.getProject()).getTopLevelFile(element);
@@ -135,23 +133,20 @@ public class JavaFindUsagesHelper {
       if (!addElementUsages(element, options, processor)) return false;
     }
 
-    boolean success = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        if (ThrowSearchUtil.isSearchable(element) && options instanceof JavaThrowFindUsagesOptions && options.isUsages) {
-          ThrowSearchUtil.Root root = ((JavaThrowFindUsagesOptions)options).getRoot();
-          if (root == null) {
-            final ThrowSearchUtil.Root[] roots = ThrowSearchUtil.getSearchRoots(element);
-            if (roots != null && roots.length > 0) {
-              root = roots [0];
-            }
-          }
-          if (root != null) {
-            return ThrowSearchUtil.addThrowUsages(processor, root, options);
+    boolean success = ReadAction.compute(() -> {
+      if (ThrowSearchUtil.isSearchable(element) && options instanceof JavaThrowFindUsagesOptions && options.isUsages) {
+        ThrowSearchUtil.Root root = ((JavaThrowFindUsagesOptions)options).getRoot();
+        if (root == null) {
+          final ThrowSearchUtil.Root[] roots = ThrowSearchUtil.getSearchRoots(element);
+          if (roots != null && roots.length > 0) {
+            root = roots [0];
           }
         }
-        return true;
+        if (root != null) {
+          return ThrowSearchUtil.addThrowUsages(processor, root, options);
+        }
       }
+      return true;
     });
     if (!success) return false;
 
@@ -162,19 +157,14 @@ public class JavaFindUsagesHelper {
     if (options instanceof JavaClassFindUsagesOptions) {
       final JavaClassFindUsagesOptions classOptions = (JavaClassFindUsagesOptions)options;
       final PsiClass psiClass = (PsiClass)element;
-      PsiManager manager = ApplicationManager.getApplication().runReadAction(new Computable<PsiManager>() {
-        @Override
-        public PsiManager compute() {
-          return psiClass.getManager();
-        }
-      });
+      PsiManager manager = ReadAction.compute(psiClass::getManager);
       if (classOptions.isMethodsUsages){
         if (!addMethodsUsages(psiClass, manager, classOptions, processor)) return false;
       }
       if (classOptions.isFieldsUsages){
         if (!addFieldsUsages(psiClass, manager, classOptions, processor)) return false;
       }
-      if (psiClass.isInterface()) {
+      if (ReadAction.compute(() -> psiClass.isInterface())) {
         if (classOptions.isDerivedInterfaces){
           if (classOptions.isImplementingClasses){
             if (!addInheritors(psiClass, classOptions, processor)) return false;
@@ -190,12 +180,7 @@ public class JavaFindUsagesHelper {
         if (classOptions.isImplementingClasses) {
           FunctionalExpressionSearch
             .search(psiClass, classOptions.searchScope).forEach(new PsiElementProcessorAdapter<>(
-            new PsiElementProcessor<PsiFunctionalExpression>() {
-              @Override
-              public boolean execute(@NotNull PsiFunctionalExpression expression) {
-                return addResult(expression, options, processor);
-              }
-            }));
+            expression -> addResult(expression, options, processor)));
         }
       }
       else if (classOptions.isDerivedClasses) {
@@ -205,41 +190,22 @@ public class JavaFindUsagesHelper {
 
     if (options instanceof JavaMethodFindUsagesOptions){
       final PsiMethod psiMethod = (PsiMethod)element;
-      boolean isAbstract = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          return psiMethod.hasModifierProperty(PsiModifier.ABSTRACT);
-        }
-      });
+      boolean isAbstract = ReadAction.compute(() -> psiMethod.hasModifierProperty(PsiModifier.ABSTRACT));
       final JavaMethodFindUsagesOptions methodOptions = (JavaMethodFindUsagesOptions)options;
       if (isAbstract && methodOptions.isImplementingMethods || methodOptions.isOverridingMethods) {
         if (!processOverridingMethods(psiMethod, processor, methodOptions)) return false;
         FunctionalExpressionSearch.search(psiMethod, methodOptions.searchScope).forEach(new PsiElementProcessorAdapter<>(
-          new PsiElementProcessor<PsiFunctionalExpression>() {
-            @Override
-            public boolean execute(@NotNull PsiFunctionalExpression expression) {
-              return addResult(expression, options, processor);
-            }
-          }));
+          expression -> addResult(expression, options, processor)));
       }
     }
 
     if (element instanceof PomTarget) {
        if (!addAliasingUsages((PomTarget)element, options, processor)) return false;
     }
-    final Boolean isSearchable = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        return ThrowSearchUtil.isSearchable(element);
-      }
-    });
+    final Boolean isSearchable = ReadAction.compute(() -> ThrowSearchUtil.isSearchable(element));
     if (!isSearchable && options.isSearchForTextOccurrences && options.searchScope instanceof GlobalSearchScope) {
-      Collection<String> stringsToSearch = ApplicationManager.getApplication().runReadAction(new NullableComputable<Collection<String>>() {
-        @Override
-        public Collection<String> compute() {
-          return getElementNames(element);
-        }
-      });
+      Collection<String> stringsToSearch = ApplicationManager.getApplication().runReadAction(
+        (NullableComputable<Collection<String>>)() -> getElementNames(element));
       // todo add to fastTrack
       if (!FindUsagesHelper.processUsagesInText(element, stringsToSearch, (GlobalSearchScope)options.searchScope, processor)) return false;
     }
@@ -252,12 +218,7 @@ public class JavaFindUsagesHelper {
     for (AliasingPsiTargetMapper aliasingPsiTargetMapper : Extensions.getExtensions(AliasingPsiTargetMapper.EP_NAME)) {
       for (final AliasingPsiTarget psiTarget : aliasingPsiTargetMapper.getTargets(pomTarget)) {
         boolean success = ReferencesSearch
-          .search(new ReferencesSearch.SearchParameters(ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
-            @Override
-            public PsiElement compute() {
-              return PomService.convertToPsi(psiTarget);
-            }
-          }), options.searchScope, false, options.fastTrack))
+          .search(new ReferencesSearch.SearchParameters(ReadAction.compute(() -> PomService.convertToPsi(psiTarget)), options.searchScope, false, options.fastTrack))
           .forEach(new ReadActionProcessor<PsiReference>() {
             @Override
             public boolean processInReadAction(final PsiReference reference) {
@@ -275,12 +236,7 @@ public class JavaFindUsagesHelper {
                                                   @NotNull final JavaMethodFindUsagesOptions options) {
     return OverridingMethodsSearch.search(psiMethod, options.searchScope, options.isCheckDeepInheritance).forEach(
       new PsiElementProcessorAdapter<>(
-        new PsiElementProcessor<PsiMethod>() {
-          @Override
-          public boolean execute(@NotNull PsiMethod element) {
-            return addResult(element.getNavigationElement(), options, processor);
-          }
-        }));
+        element -> addResult(element.getNavigationElement(), options, processor)));
   }
 
   private static boolean addClassesUsages(@NotNull PsiPackage aPackage,
@@ -296,15 +252,10 @@ public class JavaFindUsagesHelper {
       addClassesInPackage(aPackage, options.isIncludeSubpackages, classes);
       for (final PsiClass aClass : classes) {
         if (progress != null) {
-          String name = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-            @Override
-            public String compute() {
-              return aClass.getName();
-            }
-          });
+          String name = ReadAction.compute(aClass::getName);
           progress.setText(FindBundle.message("find.searching.for.references.to.class.progress", name));
-          progress.checkCanceled();
         }
+        ProgressManager.checkCanceled();
         boolean success = ReferencesSearch.search(new ReferencesSearch.SearchParameters(aClass, options.searchScope, false, options.fastTrack)).forEach(new ReadActionProcessor<PsiReference>() {
           @Override
           public boolean processInReadAction(final PsiReference psiReference) {
@@ -324,12 +275,7 @@ public class JavaFindUsagesHelper {
   }
 
   private static void addClassesInPackage(@NotNull final PsiPackage aPackage, boolean includeSubpackages, @NotNull List<PsiClass> array) {
-    PsiDirectory[] dirs = ApplicationManager.getApplication().runReadAction(new Computable<PsiDirectory[]>() {
-      @Override
-      public PsiDirectory[] compute() {
-        return aPackage.getDirectories();
-      }
-    });
+    PsiDirectory[] dirs = ReadAction.compute(aPackage::getDirectories);
     for (PsiDirectory dir : dirs) {
       addClassesInDirectory(dir, includeSubpackages, array);
     }
@@ -355,34 +301,20 @@ public class JavaFindUsagesHelper {
                                           @NotNull final JavaClassFindUsagesOptions options,
                                           @NotNull final Processor<UsageInfo> processor) {
     if (options.isIncludeInherited) {
-      final PsiMethod[] methods = ApplicationManager.getApplication().runReadAction(new Computable<PsiMethod[]>() {
-        @Override
-        public PsiMethod[] compute() {
-          return aClass.getAllMethods();
-        }
-      });
+      final PsiMethod[] methods = ReadAction.compute(aClass::getAllMethods);
       for(int i = 0; i < methods.length; i++){
         final PsiMethod method = methods[i];
         // filter overridden methods
         final int finalI = i;
-        final PsiClass methodClass =
-        ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-          @Override
-          public PsiClass compute() {
-            MethodSignature methodSignature = method.getSignature(PsiSubstitutor.EMPTY);
-            for (int j = 0; j < finalI; j++) {
-              if (methodSignature.equals(methods[j].getSignature(PsiSubstitutor.EMPTY))) return null;
-            }
-            return method.getContainingClass();
+        final PsiClass methodClass = ReadAction.compute(() -> {
+          MethodSignature methodSignature = method.getSignature(PsiSubstitutor.EMPTY);
+          for (int j = 0; j < finalI; j++) {
+            if (methodSignature.equals(methods[j].getSignature(PsiSubstitutor.EMPTY))) return null;
           }
+          return method.getContainingClass();
         });
         if (methodClass == null) continue;
-        boolean equivalent = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            return manager.areElementsEquivalent(methodClass, aClass);
-          }
-        });
+        boolean equivalent = ReadAction.compute(() -> manager.areElementsEquivalent(methodClass, aClass));
         if (equivalent){
           if (!addElementUsages(method, options, processor)) return false;
         }
@@ -390,24 +322,16 @@ public class JavaFindUsagesHelper {
           MethodReferencesSearch.SearchParameters parameters =
             new MethodReferencesSearch.SearchParameters(method, options.searchScope, true, options.fastTrack);
           boolean success = MethodReferencesSearch.search(parameters)
-            .forEach(new PsiReferenceProcessorAdapter(new PsiReferenceProcessor() {
-              @Override
-              public boolean execute(PsiReference reference) {
-                addResultFromReference(reference, methodClass, manager, aClass, options, processor);
-                return true;
-              }
+            .forEach(new PsiReferenceProcessorAdapter(reference -> {
+              addResultFromReference(reference, methodClass, manager, aClass, options, processor);
+              return true;
             }));
           if (!success) return false;
         }
       }
     }
     else {
-      PsiMethod[] methods = ApplicationManager.getApplication().runReadAction(new Computable<PsiMethod[]>() {
-        @Override
-        public PsiMethod[] compute() {
-          return aClass.getMethods();
-        }
-      });
+      PsiMethod[] methods = ReadAction.compute(aClass::getMethods);
       for (PsiMethod method : methods) {
         if (!addElementUsages(method, options, processor)) return false;
       }
@@ -420,33 +344,20 @@ public class JavaFindUsagesHelper {
                                          @NotNull final JavaClassFindUsagesOptions options,
                                          @NotNull final Processor<UsageInfo> processor) {
     if (options.isIncludeInherited) {
-      final PsiField[] fields = ApplicationManager.getApplication().runReadAction(new Computable<PsiField[]>() {
-        @Override
-        public PsiField[] compute() {
-          return aClass.getAllFields();
-        }
-      });
+      final PsiField[] fields = ReadAction.compute(aClass::getAllFields);
       for (int i = 0; i < fields.length; i++) {
         final PsiField field = fields[i];
         // filter hidden fields
         final int finalI = i;
         final PsiClass fieldClass =
-        ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-          @Override
-          public PsiClass compute() {
-            for (int j = 0; j < finalI; j++) {
-              if (Comparing.strEqual(field.getName(), fields[j].getName())) return null;
-            }
-            return field.getContainingClass();
+        ReadAction.compute(() -> {
+          for (int j = 0; j < finalI; j++) {
+            if (Comparing.strEqual(field.getName(), fields[j].getName())) return null;
           }
+          return field.getContainingClass();
         });
         if (fieldClass == null) continue;
-        boolean equivalent = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            return manager.areElementsEquivalent(fieldClass, aClass);
-          }
-        });
+        boolean equivalent = ReadAction.compute(() -> manager.areElementsEquivalent(fieldClass, aClass));
         if (equivalent) {
           if (!addElementUsages(fields[i], options, processor)) return false;
         }
@@ -462,12 +373,7 @@ public class JavaFindUsagesHelper {
       }
     }
     else {
-      PsiField[] fields = ApplicationManager.getApplication().runReadAction(new Computable<PsiField[]>() {
-        @Override
-        public PsiField[] compute() {
-          return aClass.getFields();
-        }
-      });
+      PsiField[] fields = ReadAction.compute(aClass::getFields);
       for (PsiField field : fields) {
         if (!addElementUsages(field, options, processor)) return false;
       }
@@ -507,13 +413,7 @@ public class JavaFindUsagesHelper {
                                        @NotNull final JavaClassFindUsagesOptions options,
                                        @NotNull final Processor<UsageInfo> processor) {
     return ClassInheritorsSearch.search(aClass, options.searchScope, options.isCheckDeepInheritance).forEach(
-      new PsiElementProcessorAdapter<>(
-        new PsiElementProcessor<PsiClass>() {
-          @Override
-          public boolean execute(@NotNull PsiClass element) {
-            return addResult(element, options, processor);
-          }
-        }));
+      new PsiElementProcessorAdapter<>(element -> addResult(element, options, processor)));
   }
 
   private static boolean addDerivedInterfaces(@NotNull PsiClass anInterface,
@@ -521,12 +421,7 @@ public class JavaFindUsagesHelper {
                                               @NotNull final Processor<UsageInfo> processor) {
     return ClassInheritorsSearch.search(anInterface, options.searchScope, options.isCheckDeepInheritance).forEach(
       new PsiElementProcessorAdapter<>(
-        new PsiElementProcessor<PsiClass>() {
-          @Override
-          public boolean execute(@NotNull PsiClass inheritor) {
-            return !inheritor.isInterface() || addResult(inheritor, options, processor);
-          }
-        }));
+        inheritor -> !inheritor.isInterface() || addResult(inheritor, options, processor)));
   }
 
   private static boolean addImplementingClasses(@NotNull PsiClass anInterface,
@@ -534,12 +429,7 @@ public class JavaFindUsagesHelper {
                                                 @NotNull final Processor<UsageInfo> processor) {
     return ClassInheritorsSearch.search(anInterface, options.searchScope, options.isCheckDeepInheritance).forEach(
       new PsiElementProcessorAdapter<>(
-        new PsiElementProcessor<PsiClass>() {
-          @Override
-          public boolean execute(@NotNull PsiClass inheritor) {
-            return inheritor.isInterface() || addResult(inheritor, options, processor);
-          }
-        }));
+        inheritor -> inheritor.isInterface() || addResult(inheritor, options, processor)));
   }
 
   private static boolean addResultFromReference(@NotNull PsiReference reference,
@@ -565,13 +455,10 @@ public class JavaFindUsagesHelper {
                                           @NotNull final Processor<UsageInfo> processor) {
     final SearchScope searchScope = options.searchScope;
     final PsiClass[] parentClass = new PsiClass[1];
-    if (element instanceof PsiMethod && ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        PsiMethod method = (PsiMethod)element;
-        parentClass[0] = method.getContainingClass();
-        return method.isConstructor();
-      }
+    if (element instanceof PsiMethod && ReadAction.compute(() -> {
+      PsiMethod method = (PsiMethod)element;
+      parentClass[0] = method.getContainingClass();
+      return method.isConstructor();
     })) {
       PsiMethod method = (PsiMethod)element;
 

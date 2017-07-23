@@ -16,6 +16,9 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.ui.components.JBOptionButton;
+import com.intellij.util.ui.*;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -28,6 +31,8 @@ import java.beans.PropertyChangeListener;
  * @author Konstantin Bulenkov
  */
 public class WinIntelliJButtonUI extends DarculaButtonUI {
+  static final float DISABLED_ALPHA_LEVEL = 0.47f;
+
   private PropertyChangeListener helpButtonListener = new PropertyChangeListener() {
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
@@ -42,6 +47,7 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
+    ((AbstractButton)c).setRolloverEnabled(true);
     return new WinIntelliJButtonUI();
   }
 
@@ -58,20 +64,80 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
   }
 
   @Override
-  protected boolean paintDecorations(Graphics2D g, JComponent c) {
+  public void paint(Graphics g, JComponent c) {
     if (isHelpButton(c)) {
-      final Icon help = MacIntelliJIconCache.getIcon("winHelp");
-      help.paintIcon(c, g, (c.getWidth() - help.getIconWidth()) / 2, (c.getHeight() - help.getIconHeight()) / 2);
-      return false;
+      Icon help = MacIntelliJIconCache.getIcon("winHelp");
+      Insets i = c.getInsets();
+      help.paintIcon(c, g, i.left, i.top + (c.getHeight() - help.getIconHeight()) / 2);
+    } else if (c instanceof AbstractButton) {
+      AbstractButton b = (AbstractButton)c;
+      ButtonModel bm = b.getModel();
+
+      Graphics2D g2 = (Graphics2D)g.create();
+      try {
+        Rectangle r = new Rectangle(c.getSize());
+        Container parent = c.getParent();
+        if (c.isOpaque() && parent != null) {
+          g2.setColor(parent.getBackground());
+          g2.fill(r);
+        }
+
+        JBInsets.removeFrom(r, JBUI.insets(2));
+        if (UIUtil.getParentOfType(ActionToolbar.class, c) != null) {
+          JBInsets.removeFrom(r, JBUI.insetsRight(3));
+        }
+
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+
+        Color color = bm.isPressed() ? UIManager.getColor("Button.intellij.native.pressedBackgroundColor") :
+                      c.hasFocus() || bm.isRollover() ? UIManager.getColor("Button.intellij.native.focusedBackgroundColor") :
+                      c.getBackground();
+
+        if (!b.isEnabled()) {
+          g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, DISABLED_ALPHA_LEVEL));
+        }
+
+        g2.setColor(color);
+        g2.fill(r);
+
+        paintContents(g2, b);
+      } finally {
+        g2.dispose();
+      }
     }
-    final Insets i = c.getInsets();
-    g.setColor(c.hasFocus() ? UIManager.getColor("Button.intellij.native.activeBackgroundColor") : c.getBackground());
-    if (c.getBorder() instanceof WinIntelliJButtonPainter) {
-     g.fillRect(0,0,c.getWidth(), c.getHeight());
+
+    // Draw border for emptyBorder buttons
+    if (!(c.getBorder() instanceof WinIntelliJButtonBorder)) {
+      WinIntelliJButtonBorder.paint(c, g, 0, 0, c.getWidth(), c.getHeight());
+    }
+  }
+
+  @Override protected void modifyViewRect(AbstractButton b, Rectangle rect) {
+    if (!isComboButton(b)) {
+      JBInsets.removeFrom(rect, b.getInsets());
+    }
+
+    if (isComboButton(b)) {
+      rect.x += JBUI.scale(5);
+    } else if (b instanceof JBOptionButton) {
+      rect.x -= JBUI.scale(4);
+    }
+
+    rect.y -= JBUI.scale(1); // Move one pixel up
+  }
+
+  @Override
+  public Dimension getPreferredSize(JComponent c) {
+    if (isHelpButton(c)) {
+      Icon icon = MacIntelliJIconCache.getIcon("winHelp");
+      Insets i = c.getInsets();
+      return new Dimension(icon.getIconWidth() + i.left + i.right, JBUI.scale(24));
+    } else if (isSquare(c)) {
+      return new JBDimension(24, 24);
     } else {
-      g.fillRect(i.left, i.top, c.getWidth() - i.left - i.right, c.getHeight() - i.top - i.bottom);
+      return super.getPreferredSize(c);
     }
-    return true;
   }
 
   @Override
@@ -81,9 +147,14 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
 
   @Override
   protected void paintDisabledText(Graphics g, String text, JComponent c, Rectangle textRect, FontMetrics metrics) {
-    g.setColor(UIManager.getColor("Button.disabledText"));
-    SwingUtilities2.drawStringUnderlineCharAt(c, g, text, -1,
-                                              textRect.x + getTextShiftOffset(),
-                                              textRect.y + metrics.getAscent() + getTextShiftOffset());
+    Graphics2D g2 = (Graphics2D)g.create();
+    try {
+      g2.setColor(UIManager.getColor("Button.disabledText"));
+      SwingUtilities2.drawStringUnderlineCharAt(c, g2, text, -1,
+                                                textRect.x + getTextShiftOffset(),
+                                                textRect.y + metrics.getAscent() + getTextShiftOffset());
+    } finally {
+      g2.dispose();
+    }
   }
 }

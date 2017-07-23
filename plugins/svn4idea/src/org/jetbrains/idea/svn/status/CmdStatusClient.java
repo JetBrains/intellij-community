@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.status;
 
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -43,12 +42,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/25/12
- * Time: 5:21 PM
- */
 public class CmdStatusClient extends BaseSvnClient implements StatusClient {
 
   @Override
@@ -104,12 +97,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
           status.setFile(path);
           status.setPath(path.getAbsolutePath());
           status.setContentsStatus(StatusType.STATUS_NORMAL);
-          status.setInfoGetter(new Getter<Info>() {
-            @Override
-            public Info get() {
-              return createInfoGetter(null).convert(path);
-            }
-          });
+          status.setInfoGetter(() -> createInfoGetter(null).convert(path));
           try {
             handler.consume(status);
           }
@@ -121,10 +109,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
     }
     catch (SvnExceptionWrapper e) {
       throw new SvnBindException(e.getCause());
-    } catch (IOException e) {
-      throw new SvnBindException(e);
-    }
-    catch (ParserConfigurationException e) {
+    } catch (IOException | ParserConfigurationException e) {
       throw new SvnBindException(e);
     }
     catch (SAXException e) {
@@ -163,15 +148,12 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
   }
 
   private Convertor<File, Info> createInfoGetter(final SVNRevision revision) {
-    return new Convertor<File, Info>() {
-      @Override
-      public Info convert(File o) {
-        try {
-          return myFactory.createInfoClient().doInfo(o, revision);
-        }
-        catch (SvnBindException e) {
-          throw new SvnExceptionWrapper(e);
-        }
+    return o -> {
+      try {
+        return myFactory.createInfoClient().doInfo(o, revision);
+      }
+      catch (SvnBindException e) {
+        throw new SvnExceptionWrapper(e);
       }
     };
   }
@@ -235,12 +217,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
   @Override
   public Status doStatus(@NotNull File path, boolean remote) throws SvnBindException {
     final Status[] svnStatus = new Status[1];
-    doStatus(path, SVNRevision.UNDEFINED, Depth.EMPTY, remote, false, false, false, new StatusConsumer() {
-      @Override
-      public void consume(Status status) throws SVNException {
-        svnStatus[0] = status;
-      }
-    }, null);
+    doStatus(path, SVNRevision.UNDEFINED, Depth.EMPTY, remote, false, false, false, status -> svnStatus[0] = status, null);
     return svnStatus[0];
   }
 }

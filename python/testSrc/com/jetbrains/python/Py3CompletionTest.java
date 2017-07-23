@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public class Py3CompletionTest extends PyTestCase {
   }
 
   private void doTest() {
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
+    CamelHumpMatcher.forceStartMatching(myFixture.getTestRootDisposable());
     final String testName = getTestName(true);
     myFixture.configureByFile(testName + ".py");
     myFixture.completeBasic();
@@ -170,43 +170,31 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-20279
   public void testImplicitDunderClass() {
-    final List<String> inClassMethod = doTestByText("class First:\n" +
-                                                    "    def foo(self):\n" +
-                                                    "        print(__cl<caret>)");
-    assertNotNull(inClassMethod);
-    assertContainsElements(inClassMethod, PyNames.__CLASS__);
+    doTestByText("class First:\n" +
+                 "    def foo(self):\n" +
+                 "        print(__cl<caret>)");
+    myFixture.checkResult("class First:\n" +
+                          "    def foo(self):\n" +
+                          "        print(__class__)");
 
-    final List<String> inStaticMethod = doTestByText("class First:\n" +
-                                                     "    @staticmethod\n" +
-                                                     "    def foo():\n" +
-                                                     "        print(__cl<caret>)");
-    assertNotNull(inStaticMethod);
-    assertContainsElements(inStaticMethod, PyNames.__CLASS__);
+    doTestByText("class First:\n" +
+                 "    @staticmethod\n" +
+                 "    def foo():\n" +
+                 "        print(__cl<caret>)");
+    myFixture.checkResult("class First:\n" +
+                          "    @staticmethod\n" +
+                          "    def foo():\n" +
+                          "        print(__class__)");
 
-    assertNull(doTestByText("class First:\n" +
-                            "    print(__cl<caret>)"));
+    doTestByText("class First:\n" +
+                 "    print(__cl<caret>)");
+    myFixture.checkResult("class First:\n" +
+                          "    print(__cl)");
 
-    assertNull(doTestByText("def abc():\n" +
-                            "    print(__cl<caret>)"));
-  }
-
-  // PY-20770
-  public void testAsyncGenerator() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON36,
-      () -> {
-        final String asyncGenerator = "async def asyncgen():\n" +
-                                      "    yield 42\n";
-
-        assertContainsElements(doTestByText(asyncGenerator +
-                                            "asyncgen().__a<caret>\n"),
-                               PyNames.AITER, PyNames.ANEXT);
-
-        assertContainsElements(doTestByText(asyncGenerator +
-                                            "asyncgen().a<caret>\n"),
-                               "ag_await", "ag_frame", "ag_running", "ag_code", "aclose", "asend", "athrow");
-      }
-    );
+    doTestByText("def abc():\n" +
+                 "    print(__cl<caret>)");
+    myFixture.checkResult("def abc():\n" +
+                          "    print(__cl)");
   }
 
   // PY-11208

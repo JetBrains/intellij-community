@@ -74,7 +74,7 @@ public abstract class ResolverProcessor<T extends GroovyResolveResult> extends G
 
   @NotNull
   protected List<T> getCandidatesInternal() {
-    return myCandidates == null ? Collections.<T>emptyList() : myCandidates;
+    return myCandidates == null ? Collections.emptyList() : myCandidates;
   }
 
   protected boolean isAccessible(@NotNull PsiNamedElement namedElement) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.resolve.CompletionVariantsProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -45,6 +44,7 @@ public class PyJavaClassType implements PyClassLikeType {
     myDefinition = definition;
   }
 
+  @Override
   @Nullable
   public List<? extends RatedResolveResult> resolveMember(@NotNull final String name,
                                                           @Nullable PyExpression location,
@@ -73,12 +73,15 @@ public class PyJavaClassType implements PyClassLikeType {
     return null;
   }
 
+  @Override
   public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
     final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(location);
     myClass.processDeclarations(processor, ResolveState.initial(), null, location);
     return processor.getResult();
   }
 
+  @Override
+  @Nullable
   public String getName() {
     if (myClass != null) {
       return myClass.getName();
@@ -117,20 +120,21 @@ public class PyJavaClassType implements PyClassLikeType {
     return getReturnType(context);
   }
 
-  @Nullable
-  @Override
-  public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
-    return null;
-  }
-
   @Override
   public boolean isDefinition() {
     return myDefinition;
   }
 
+  @NotNull
   @Override
   public PyClassLikeType toInstance() {
     return myDefinition ? new PyJavaClassType(myClass, false) : this;
+  }
+
+  @NotNull
+  @Override
+  public PyClassLikeType toClass() {
+    return myDefinition ? this : new PyJavaClassType(myClass, true);
   }
 
   @Nullable

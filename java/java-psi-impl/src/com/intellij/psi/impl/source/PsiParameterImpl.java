@@ -19,7 +19,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.ElementPresentationUtil;
@@ -27,7 +26,6 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiParameterStub;
-import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
 import com.intellij.psi.search.LocalSearchScope;
@@ -69,13 +67,8 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
         final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(param, PsiLambdaExpression.class);
         if (lambdaExpression != null) {
           final PsiType functionalInterfaceType = LambdaUtil.ourParameterGuard.doPreventingRecursion(param, false,
-                                                                                                     new Computable<PsiType>() {
-                                                                                                         @Override
-                                                                                                         public PsiType compute() {
-                                                                                                           return LambdaUtil.getFunctionalInterfaceType(lambdaExpression, true);
-                                                                                                         }
-                                                                                                       });
-          PsiType type = FunctionalInterfaceParameterizationUtil.getGroundTargetType(functionalInterfaceType, lambdaExpression);
+                                                                                                     () -> LambdaUtil.getFunctionalInterfaceType(lambdaExpression, true));
+          PsiType type = lambdaExpression.getGroundTargetType(functionalInterfaceType);
           if (type instanceof PsiIntersectionType) {
             final PsiType[] conjuncts = ((PsiIntersectionType)type).getConjuncts();
             for (PsiType conjunct : conjuncts) {
@@ -151,7 +144,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
         assert typeText != null : stub;
         type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
         type = JavaSharedImplUtil.applyAnnotations(type, getModifierList());
-        myCachedType = new SoftReference<PsiType>(type);
+        myCachedType = new SoftReference<>(type);
       }
       return type;
     }

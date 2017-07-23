@@ -1,0 +1,13 @@
+<html>
+<body>
+This inspection warns when calling some method in a loop (e.g. <code>collection.add(x)</code>) could be replaced when calling a bulk method
+(e.g. <code>collection.addAll(listOfX)</code>.
+<p>
+  If checkbox "Use Arrays.asList() to wrap arrays" is checked, the inspection will warn even if the original code iterates over
+  an array while bulk method requires a <code>Collection</code>. In this case the quick-fix action will automatically
+  wrap an array with <code>Arrays.asList()</code> call.
+</p>
+<!-- tooltip end -->
+<small>New in 2017.1</small>
+</body>
+</html>

@@ -19,6 +19,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.List;
 
@@ -37,7 +38,7 @@ public class Queue<T> {
   public void addLast(T object) {
     int currentSize = size();
     if (currentSize == myArray.length) {
-      myArray = normalize(Math.max(currentSize * 2, 5));
+      myArray = normalize(Math.max(currentSize * 3/2, 10));
       myFirst = 0;
       myLast = currentSize;
       isWrapped = false;
@@ -61,6 +62,15 @@ public class Queue<T> {
     return result;
   }
 
+  public T peekLast() {
+    int last = myLast;
+    if (last == 0) {
+      last = myArray.length;
+    }
+    @SuppressWarnings("unchecked") T result = (T)myArray[last-1];
+    return result;
+  }
+
 
   public boolean isEmpty() {
     return size() == 0;
@@ -70,12 +80,24 @@ public class Queue<T> {
     return isWrapped ? myArray.length - myFirst + myLast : myLast - myFirst;
   }
 
+  @NotNull
   public List<T> toList() {
     return Arrays.asList(normalize(size()));
   }
 
+  @NotNull
   public Object[] toArray() {
     return normalize(size());
+  }
+
+  @NotNull
+  public T[] toArray(T[] array) {
+    if (array.length < size()) {
+      //noinspection unchecked
+      array = (T[])Array.newInstance(array.getClass().getComponentType(), size());
+    }
+
+    return normalize(array);
   }
 
   public T pullFirst() {
@@ -103,8 +125,14 @@ public class Queue<T> {
     return length;
   }
 
+  @NotNull
   private T[] normalize(int capacity) {
     @SuppressWarnings("unchecked") T[] result = (T[])new Object[capacity];
+    return normalize(result);
+  }
+
+  @NotNull
+  private T[] normalize(T[] result) {
     if (isWrapped) {
       int tailLength = copyFromTo(myFirst, myArray.length, result, 0);
       copyFromTo(0, myLast, result, tailLength);
@@ -122,17 +150,9 @@ public class Queue<T> {
   }
 
   public T set(int index, T value) {
-    int arrayIndex;
-    if (isWrapped) {
-      if (myFirst + index >= myArray.length) {
-        arrayIndex = index - myArray.length + myFirst;
-      }
-      else {
-        arrayIndex = myFirst + index;
-      }
-    }
-    else {
-      arrayIndex = myFirst + index;
+    int arrayIndex = myFirst + index;
+    if (isWrapped && arrayIndex >= myArray.length) {
+      arrayIndex -= myArray.length;
     }
     final Object old = myArray[arrayIndex];
     myArray[arrayIndex] = value;
@@ -163,16 +183,13 @@ public class Queue<T> {
   @Override
   public String toString() {
     if (isEmpty()) return "<empty>";
-    List<Object> list = Arrays.asList(myArray);
-    if (isWrapped) {
-      return "[[[ " + list.subList(0, myLast) + " ||| ... " +
-             list.subList(myLast, myFirst) + " ... ||| " +
-             list.subList(myFirst, myArray.length) + " ]]]";
-    }
-    else {
-      return "[[[ ... " + list.subList(0, myFirst) + " ... ||| " +
-                 list.subList(myFirst, myLast) + " ||| ... " +
-                 list.subList(myFirst, myArray.length) + " ... ]]]";
-    }
+
+    return isWrapped ?
+           "[ " + sub(myFirst, myArray.length) + " ||| " + sub(0, myLast) + " ]" :
+           "[ " + sub(myFirst, myLast) + " ]";
+  }
+  private Object sub(int start, int end) {
+    if (start == end) return "";
+    return Arrays.asList(myArray).subList(start, end);
   }
 }

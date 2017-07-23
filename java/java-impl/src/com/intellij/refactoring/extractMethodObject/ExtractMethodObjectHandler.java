@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 06-May-2008
- */
 package com.intellij.refactoring.extractMethodObject;
 
 import com.intellij.lang.ContextAwareActionHandler;
@@ -30,8 +26,9 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -44,7 +41,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class ExtractMethodObjectHandler implements RefactoringActionHandler, ContextAwareActionHandler {
-  private static final Logger LOG = Logger.getInstance("#" + ExtractMethodObjectHandler.class.getName());
+  private static final Logger LOG = Logger.getInstance(ExtractMethodObjectHandler.class);
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
     ExtractMethodHandler.selectAndPass(project, editor, file, new Pass<PsiElement[]>() {
@@ -96,7 +93,7 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler, Con
     final RangeMarker marker;
     if (editor != null) {
       final int offset = editor.getCaretModel().getOffset();
-      marker = editor.getDocument().createRangeMarker(new TextRange(offset, offset));
+      marker = editor.getDocument().createRangeMarker(offset, offset);
     } else {
       marker = null;
     }
@@ -113,7 +110,7 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler, Con
 
                                                     PsiDocumentManager.getInstance(project).commitAllDocuments();
                                                     if (processor.isCreateInnerClass()) {
-                                                      ApplicationManager.getApplication().runWriteAction(() -> processor.moveUsedMethodsToInner());
+                                                      processor.moveUsedMethodsToInner();
                                                       PsiDocumentManager.getInstance(project).commitAllDocuments();
                                                       if (editor != null) {
                                                         DuplicatesImpl.processDuplicates(extractProcessor, project, editor);

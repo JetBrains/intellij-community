@@ -59,16 +59,25 @@ public class JavaGenericsUtil {
       }
 
       assert parameters.length == 0;
-      final PsiClassType.ClassResolveResult resolved = ((PsiClassType)PsiUtil.convertAnonymousToBaseType(classType)).resolveGenerics();
+      final PsiClassType.ClassResolveResult resolved = classType.resolveGenerics();
       final PsiClass aClass = resolved.getElement();
       if (aClass instanceof PsiTypeParameter) {
         return false;
       }
 
       if (aClass != null && !aClass.hasModifierProperty(PsiModifier.STATIC)) {
-        PsiModifierListOwner enclosingStaticElement = PsiUtil.getEnclosingStaticElement(aClass, aClass.getContainingClass());
+        //local class (inner inside inside anonymous) should skip anonymous as it can't be static itself 
+        final PsiClass stopClassLevel = PsiUtil.isLocalClass(aClass) ? null : aClass.getContainingClass();
+        PsiModifierListOwner enclosingStaticElement = PsiUtil.getEnclosingStaticElement(aClass, stopClassLevel);
         PsiClass containingClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
         if (containingClass != null && (enclosingStaticElement == null || PsiTreeUtil.isAncestor(enclosingStaticElement, containingClass, false))) {
+          //anonymous classes are not generic
+          while (containingClass instanceof PsiAnonymousClass) {
+            containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class, true);
+          }
+          if (containingClass == null || enclosingStaticElement != null && !PsiTreeUtil.isAncestor(enclosingStaticElement, containingClass, false)) {
+            return true;
+          }
           return isReifiableType(JavaPsiFacade.getElementFactory(aClass.getProject()).createType(containingClass, resolved.getSubstitutor()));
         }
       }
@@ -91,14 +100,21 @@ public class JavaGenericsUtil {
     }
     PsiMethod psiMethod = (PsiMethod)resolve;
 
-    if (!psiMethod.isVarArgs()) {
+    PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+
+    int parametersCount = parameters.length;
+    if (parametersCount == 0) {
       return false;
     }
+    PsiParameter varargParameter = parameters[parametersCount - 1];
+    if (!varargParameter.isVarArgs()) {
+      return false;
+    }
+
     if (AnnotationUtil.isAnnotated(psiMethod, "java.lang.SafeVarargs", false, false)) {
       return false;
     }
-    int parametersCount = psiMethod.getParameterList().getParametersCount();
-    PsiParameter varargParameter = psiMethod.getParameterList().getParameters()[parametersCount - 1];
+
     PsiType componentType = ((PsiEllipsisType)varargParameter.getType()).getComponentType();
     if (isReifiableType(resolveResult.getSubstitutor().substitute(componentType))) {
       return false;
@@ -193,6 +209,10 @@ public class JavaGenericsUtil {
       return false;
     }
 
+    if (rType instanceof PsiCapturedWildcardType) {
+      return isRawToGeneric(lType, ((PsiCapturedWildcardType)rType).getUpperBound());
+    }
+
     if (!(lType instanceof PsiClassType) || !(rType instanceof PsiClassType)) return false;
 
     PsiClassType.ClassResolveResult lResolveResult = ((PsiClassType)lType).resolveGenerics();
@@ -250,13 +270,11 @@ public class JavaGenericsUtil {
 
   @Nullable
   public static PsiType getCollectionItemType(@NotNull PsiExpression expression) {
-    final PsiType type = expression.getType();
-    if (type == null) return null;
-    return getCollectionItemType(type, expression.getResolveScope());
+    return getCollectionItemType(expression.getType(), expression.getResolveScope());
   }
 
   @Nullable
-  public static PsiType getCollectionItemType(final PsiType type, final GlobalSearchScope scope) {
+  public static PsiType getCollectionItemType(@Nullable PsiType type, @NotNull GlobalSearchScope scope) {
     if (type instanceof PsiArrayType) {
       return ((PsiArrayType)type).getComponentType();
     }

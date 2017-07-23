@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,17 +27,17 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.*;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -66,11 +66,11 @@ public class HintManagerImpl extends HintManager implements Disposable {
   private final VisibleAreaListener myVisibleAreaListener;
   private final CaretListener myCaretMoveListener;
 
-  private LightweightHint myQuestionHint = null;
-  private QuestionAction myQuestionAction = null;
+  private LightweightHint myQuestionHint;
+  private QuestionAction myQuestionAction;
 
   private final List<HintInfo> myHintsStack = new ArrayList<>();
-  private Editor myLastEditor = null;
+  private Editor myLastEditor;
   private final Alarm myHideAlarm = new Alarm();
 
   private static int getPriority(QuestionAction action) {
@@ -107,10 +107,10 @@ public class HintManagerImpl extends HintManager implements Disposable {
     myAnActionListener = new MyAnActionListener();
     actionManagerEx.addAnActionListener(myAnActionListener);
 
-    myCaretMoveListener = new CaretAdapter() {
+    myCaretMoveListener = new CaretListener() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
-        hideHints(HIDE_BY_ANY_KEY, false, false);
+        hideHints(HIDE_BY_ANY_KEY | HIDE_BY_CARET_MOVE, false, false);
       }
     };
 
@@ -118,7 +118,8 @@ public class HintManagerImpl extends HintManager implements Disposable {
     for (Project project : projectManager.getOpenProjects()) {
       projectManagerListener.projectOpened(project);
     }
-    projectManager.addProjectManagerListener(projectManagerListener);
+
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, projectManagerListener);
 
     myEditorMouseListener = new EditorMouseAdapter() {
       @Override
@@ -127,15 +128,12 @@ public class HintManagerImpl extends HintManager implements Disposable {
       }
     };
 
-    myVisibleAreaListener = new VisibleAreaListener() {
-      @Override
-      public void visibleAreaChanged(VisibleAreaEvent e) {
-        updateScrollableHints(e);
-        if (e.getOldRectangle() == null ||
-            e.getOldRectangle().x != e.getNewRectangle().x ||
-            e.getOldRectangle().y != e.getNewRectangle().y) {
-          hideHints(HIDE_BY_SCROLLING, false, false);
-        }
+    myVisibleAreaListener = e -> {
+      updateScrollableHints(e);
+      if (e.getOldRectangle() == null ||
+          e.getOldRectangle().x != e.getNewRectangle().x ||
+          e.getOldRectangle().y != e.getNewRectangle().y) {
+        hideHints(HIDE_BY_SCROLLING, false, false);
       }
     };
 
@@ -170,7 +168,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
       }
     };
 
-    myEditorDocumentListener = new DocumentAdapter() {
+    myEditorDocumentListener = new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent event) {
         LOG.assertTrue(SwingUtilities.isEventDispatchThread());
@@ -192,6 +190,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     };
   }
 
+  @Override
   public boolean isHint(Window component) {
     return myHintsStack.contains(component);
   }
@@ -296,7 +295,6 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
   /**
    * @param p                    point in layered pane coordinate system.
-   * @param reviveOnEditorChange
    */
   public void showEditorHint(@NotNull final LightweightHint hint,
                              @NotNull Editor editor,
@@ -375,12 +373,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
     myHintsStack.add(new HintInfo(hint, flags, reviveOnEditorChange));
     if (timeout > 0) {
-      Timer timer = UIUtil.createNamedTimer("Hint timeout", timeout, new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent event) {
-          hint.hide();
-        }
-      });
+      Timer timer = UIUtil.createNamedTimer("Hint timeout", timeout, event -> hint.hide());
       timer.setRepeats(false);
       timer.start();
     }
@@ -419,12 +412,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     }, flags, false);
     myHintsStack.add(info);
     if (timeout > 0) {
-      Timer timer = UIUtil.createNamedTimer("Popup timeout",timeout, new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent event) {
-          popup.dispose();
-        }
-      });
+      Timer timer = UIUtil.createNamedTimer("Popup timeout", timeout, event -> Disposer.dispose(popup));
       timer.setRepeats(false);
       timer.start();
     }
@@ -542,9 +530,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
         JComponent c = info.hint.getComponent();
         rectangle = SwingUtilities.convertRectangle(c.getParent(), rectangle, lp);
 
-        if (rectangle != null) {
-          return getHintPositionRelativeTo(hint, editor, constraint, rectangle, pos);
-        }
+        return getHintPositionRelativeTo(hint, editor, constraint, rectangle, pos);
       }
     }
 
@@ -580,7 +566,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
         return new Point(lookupBounds.x - hintSize.width, y);
       }
 
-      case RIGHT: {
+      case RIGHT:
         int y = lookupBounds.y;
         if (y < 0) {
           y = 0;
@@ -589,7 +575,6 @@ public class HintManagerImpl extends HintManager implements Disposable {
           y = layeredPaneHeight - hintSize.height;
         }
         return new Point(lookupBounds.x + lookupBounds.width, y);
-      }
 
       case ABOVE:
         Point posAboveCaret = getHintPosition(hint, editor, pos, ABOVE);
@@ -600,7 +585,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
         return new Point(lookupBounds.x, Math.max(posUnderCaret.y, lookupBounds.y + lookupBounds.height));
 
       default:
-        LOG.assertTrue(false);
+        LOG.error("");
         return null;
     }
   }
@@ -669,23 +654,19 @@ public class HintManagerImpl extends HintManager implements Disposable {
                                         @PositionFlags short constraint,
                                         boolean showByBalloon) {
     Dimension hintSize = hint.getComponent().getPreferredSize();
-    int line1 = pos1.line;
-    int col1 = pos1.column;
-    int line2 = pos2.line;
-    int col2 = pos2.column;
 
     Point location;
     JComponent externalComponent = getExternalComponent(editor);
     JComponent internalComponent = editor.getContentComponent();
     if (constraint == RIGHT_UNDER) {
-      Point p = editor.logicalPositionToXY(new LogicalPosition(line2, col2));
+      Point p = editor.logicalPositionToXY(pos2);
       if (!showByBalloon) {
         p.y += editor.getLineHeight();
       }
       location = SwingUtilities.convertPoint(internalComponent, p, externalComponent);
     }
     else {
-      Point p = editor.logicalPositionToXY(new LogicalPosition(line1, col1));
+      Point p = editor.logicalPositionToXY(pos1);
       if (constraint == UNDER) {
         p.y += editor.getLineHeight();
       }
@@ -819,7 +800,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     myQuestionHint = hint;
   }
 
-  public void hideQuestionHint() {
+  private void hideQuestionHint() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myQuestionHint != null) {
       myQuestionHint.hide();
@@ -909,15 +890,6 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
       hideHints(HIDE_BY_ANY_KEY, false, false);
     }
-
-
-    @Override
-    public void afterActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
-    }
-
-    @Override
-    public void beforeEditorTyping(char c, DataContext dataContext) {
-    }
   }
 
   /**
@@ -936,10 +908,10 @@ public class HintManagerImpl extends HintManager implements Disposable {
    * We have to spy for all opened projects to register MyEditorManagerListener into
    * all opened projects.
    */
-  private final class MyProjectManagerListener extends ProjectManagerAdapter {
+  private final class MyProjectManagerListener implements ProjectManagerListener {
     @Override
     public void projectOpened(Project project) {
-      project.getMessageBus().connect(project).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, myEditorManagerListener);
+      project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, myEditorManagerListener);
     }
 
     @Override

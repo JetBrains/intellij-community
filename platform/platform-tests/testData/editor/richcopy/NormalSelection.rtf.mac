@@ -9,7 +9,7 @@
 public class \cf1
 \i0\b0
 
-Basic \{\line
+Basic \{\
 
   \cf3
 \i0\b
@@ -17,9 +17,9 @@ Basic \{\line
 int \cf1
 \i0\b0
 
-field;\line
+field;\
 
-\line
+\
 
   \cf3
 \i0\b
@@ -27,7 +27,7 @@ field;\line
 public static void \cf1
 \i0\b0
 
-main(String[] args) \{\line
+main(String[] args) \{\
 
     System.out.println(\cf4
 \i0\b
@@ -39,9 +39,9 @@ main(String[] args) \{\line
 world!"\cf1
 \i0\b0
 
-);\line
+);\
 
-  \}\line
+  \}\
 
-\}\line
+\}\
 \par}

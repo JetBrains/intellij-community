@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,11 @@ public class SimpleColoredRenderer extends SimpleColoredComponent {
 
   public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText) {
     super.append(fragment, modifyAttributes(attributes), isMainText);
+  }
+
+  @Override
+  void revalidateAndRepaint() {
+    // no need for this in a renderer
   }
 
   protected SimpleTextAttributes modifyAttributes(final SimpleTextAttributes attributes) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
@@ -89,10 +90,14 @@ public class XSuspendPolicyPanel extends XBreakpointPropertiesSubPanel {
         ((XBreakpointManagerImpl)myBreakpointManager).getBreakpointDefaults(myBreakpointType).setSuspendPolicy(suspendPolicy);
         updateSuspendPolicyFont();
         if (SuspendPolicy.THREAD == suspendPolicy) {
-          mySuspendThread.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(mySuspendThread, true);
+          });
         }
         else {
-          mySuspendAll.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(mySuspendAll, true);
+          });
         }
         myMakeDefaultButton.setEnabled(false);
       }

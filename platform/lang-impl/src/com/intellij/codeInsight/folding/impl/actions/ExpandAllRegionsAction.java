@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@
 package com.intellij.codeInsight.folding.impl.actions;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
-import com.intellij.codeInsight.folding.impl.EditorFoldingInfo;
-import com.intellij.codeInsight.folding.impl.FoldingPolicy;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
@@ -26,7 +24,7 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -35,19 +33,20 @@ public class ExpandAllRegionsAction extends EditorAction {
   public ExpandAllRegionsAction() {
     super(new BaseFoldingHandler() {
       @Override
-      public void doExecute(final Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      public void doExecute(@NotNull final Editor editor, @Nullable Caret caret, DataContext dataContext) {
         Project project = editor.getProject();
         assert project != null;
         PsiDocumentManager.getInstance(project).commitAllDocuments();
-        CodeFoldingManager.getInstance(project).updateFoldRegions(editor);
+        CodeFoldingManager codeFoldingManager = CodeFoldingManager.getInstance(project);
+        codeFoldingManager.updateFoldRegions(editor);
 
         final List<FoldRegion> regions = getFoldRegionsForSelection(editor, caret);
         editor.getFoldingModel().runBatchFoldingOperation(() -> {
           boolean anythingDone = false;
           for (FoldRegion region : regions) {
             // try to restore to default state at first
-            PsiElement element = EditorFoldingInfo.get(editor).getPsiElement(region);
-            if (!region.isExpanded() && (element == null || !FoldingPolicy.isCollapseByDefault(element))) {
+            Boolean collapsedByDefault = codeFoldingManager.isCollapsedByDefault(region);
+            if (!region.isExpanded() && (collapsedByDefault == null || !collapsedByDefault)) {
               region.setExpanded(true);
               anythingDone = true;
             }

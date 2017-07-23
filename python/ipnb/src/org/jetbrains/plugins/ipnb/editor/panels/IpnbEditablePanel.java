@@ -1,14 +1,15 @@
 package org.jetbrains.plugins.ipnb.editor.panels;
 
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
@@ -30,13 +31,14 @@ import java.util.Arrays;
 public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEditableCell> extends IpnbPanel<T, K> {
   private static final Logger LOG = Logger.getInstance(IpnbEditablePanel.class);
   private boolean myEditing;
-  protected JTextArea myEditablePanel;
+  protected JTextArea myEditableTextArea;
   public final static String EDITABLE_PANEL = "Editable panel";
   public final static String VIEW_PANEL = "View panel";
-  private OnePixelSplitter mySplitter;
-  private JPanel myViewPrompt;
+  protected OnePixelSplitter mySplitter;
+  protected JPanel myViewPrompt;
   private JPanel myEditablePrompt;
   protected JLabel myPromptLabel;
+  protected Runnable myOnFinish;
 
   public IpnbEditablePanel(@NotNull K cell) {
     super(cell);
@@ -54,16 +56,17 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
     mySplitter.setSecondComponent(null);
     setBackground(IpnbEditorUtil.getBackground());
     add(mySplitter);
+    setBorder(BorderFactory.createLineBorder(IpnbEditorUtil.getBackground()));
     addRightClickMenu();
   }
 
   private void addEditablePanel() {
-    myEditablePanel = createEditablePanel();
+    myEditableTextArea = createEditablePanel();
     myEditablePrompt = new JPanel(new GridBagLayout());
 
     myEditablePrompt.setName(EDITABLE_PANEL);
     myEditablePrompt.setBackground(IpnbEditorUtil.getBackground());
-    addPromptPanel(myEditablePrompt, null, IpnbEditorUtil.PromptType.None, myEditablePanel);
+    addPromptPanel(myEditablePrompt, null, IpnbEditorUtil.PromptType.None, myEditableTextArea);
   }
 
   private void addViewPanel() {
@@ -117,7 +120,7 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
     setEditing(true);
 
     mySplitter.setFirstComponent(myEditablePrompt);
-    UIUtil.requestFocus(myEditablePanel);
+    IdeFocusManager.getGlobalInstance().requestFocus(myEditableTextArea, true);
     mySplitter.setSecondComponent(null);
   }
 
@@ -132,6 +135,10 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
 
   protected String getRawCellText() { return ""; }
 
+  public void onFinishExecutionAction(Runnable onFinish) {
+    myOnFinish = onFinish;
+  }
+
   public void runCell(boolean selectNext) {
     if (mySplitter != null) {
       updateCellSource();
@@ -141,10 +148,14 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
       setEditing(false);
       final Container parent = getParent();
       if (parent instanceof IpnbFilePanel) {
-        UIUtil.requestFocus((IpnbFilePanel)parent);
+        IdeFocusManager.getGlobalInstance().requestFocus(parent, true);
         if (selectNext) {
           ((IpnbFilePanel)parent).selectNext(this, true);
         }
+      }
+      if (myOnFinish != null) {
+        myOnFinish.run();
+        myOnFinish = null;
       }
     }
   }
@@ -161,10 +172,11 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
         if (e.getClickCount() == 1) {
           setEditing(true);
           final Container parent = getParent();
-          parent.repaint();
           if (parent instanceof IpnbFilePanel) {
             ((IpnbFilePanel)parent).setSelectedCellPanel(IpnbEditablePanel.this);
-            textArea.requestFocus();
+            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+              IdeFocusManager.getGlobalInstance().requestFocus(textArea, true);
+            });
           }
         }
       }
@@ -176,8 +188,7 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
           setEditing(false);
           final Container parent = getParent();
           if (parent instanceof IpnbFilePanel) {
-            parent.repaint();
-            UIUtil.requestFocus((IpnbFilePanel)parent);
+            IdeFocusManager.getGlobalInstance().requestFocus(parent, true);
           }
         }
       }
@@ -202,14 +213,16 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
   }
 
   public void setEditing(boolean editing) {
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(IpnbFilePanel.TOPIC).modeChanged(myEditing, editing);
     myEditing = editing;
+    setBorder(BorderFactory.createLineBorder(editing ? JBColor.GREEN : JBColor.GRAY));
   }
 
   public void updateCellView() {
   }
 
   public int getCaretPosition() {
-    return (myEditing && myEditablePanel != null) ? myEditablePanel.getCaretPosition() : -1;
+    return (myEditing && myEditableTextArea != null) ? myEditableTextArea.getCaretPosition() : -1;
   }
 
   @Override
@@ -224,7 +237,7 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
         }
       }
     });
-    myEditablePanel.addMouseListener(new MouseAdapter() {
+    myEditableTextArea.addMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent e) {
         if (SwingUtilities.isRightMouseButton(e) && e.getClickCount() == 1) {
@@ -240,9 +253,9 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
 
   @Nullable
   public String getText(int from, int to) {
-    if (myEditing && myEditablePanel != null) {
+    if (myEditing && myEditableTextArea != null) {
       try {
-        return myEditablePanel.getDocument().getText(from, to - from);
+        return myEditableTextArea.getDocument().getText(from, to - from);
       }
       catch (BadLocationException e) {
         LOG.warn(e.getMessage());
@@ -252,8 +265,8 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
   }
 
   public String getText(int from) {
-    if (myEditing && myEditablePanel != null) {
-      final Document document = myEditablePanel.getDocument();
+    if (myEditing && myEditableTextArea != null) {
+      final Document document = myEditableTextArea.getDocument();
       final int to = document.getLength();
       return getText(from, to);
     }
@@ -261,7 +274,10 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
   }
 
   public void updateCellSource() {
-    final String text = myEditablePanel.getText();
+    final String text = myEditableTextArea.getText();
+    if (StringUtil.isEmpty(text) && myCell.getSource().isEmpty()) {
+      return;
+    }
     myCell.setSource(Arrays.asList(StringUtil.splitByLinesKeepSeparators(text != null ? text : "")));
   }
 
@@ -281,7 +297,11 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
     return myCell;
   }
 
-  public JTextArea getEditablePanel() {
-    return myEditablePanel;
+  public JTextArea getEditableTextArea() {
+    return myEditableTextArea;
+  }
+
+  public void dispose() {
+    removeAll();
   }
 }

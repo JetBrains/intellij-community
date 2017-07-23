@@ -50,6 +50,8 @@ public final class LightRefDescriptor implements KeyDescriptor<LightRef>, Differ
     switch (type) {
       case CLASS_MARKER:
         return new JavaLightClassRef(DataInputOutputUtil.readINT(in));
+      case ANONYMOUS_CLASS_MARKER:
+        return new JavaLightAnonymousClassRef(DataInputOutputUtil.readINT(in));
       case METHOD_MARKER:
         return new JavaLightMethodRef(DataInputOutputUtil.readINT(in), DataInputOutputUtil.readINT(in), DataInputOutputUtil.readINT(in));
       case FIELD_MARKER:

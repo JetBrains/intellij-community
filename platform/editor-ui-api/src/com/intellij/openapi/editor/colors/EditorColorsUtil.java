@@ -39,6 +39,11 @@ public class EditorColorsUtil {
     return getColorSchemeForBackground(null);
   }
 
+  @Nullable
+  public static Color getGlobalOrDefaultColor(@NotNull ColorKey colorKey) {
+    return getColorSchemeForBackground(null).getColor(colorKey);
+  }
+
   /**
    * @return the appropriate color scheme for UI other than text editor (QuickDoc, UsagesView, etc.)
    * depending on the current LAF, current editor color scheme and the component background.

@@ -22,7 +22,9 @@ import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.ui.content.ContentManager;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -31,6 +33,7 @@ public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
     return (ProjectLevelVcsManagerEx) PeriodicalTasksCloser.getInstance().safeGetComponent(project, ProjectLevelVcsManager.class);
   }
 
+  @Nullable
   public abstract ContentManager getContentManager();
 
   @NotNull
@@ -45,6 +48,8 @@ public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
 
   public abstract void notifyDirectoryMappingChanged();
 
+  @CalledInAwt
+  @Nullable
   public abstract UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles,
                                                        String displayActionName,
                                                        ActionInfo actionInfo,

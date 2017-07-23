@@ -23,9 +23,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.vcs.vfs.VcsFileSystem;
-import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
@@ -43,9 +43,8 @@ public class OpenOutputAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(myConsole.getComponent()));
     if (editor != null) {
-      final byte[] content = editor.getDocument().getText().getBytes(CharsetToolkit.UTF8_CHARSET);
       final String extension = "xml"; // TODO: get from output type
-      final VcsVirtualFile file = new VcsVirtualFile("XSLT Output." + extension, content, null, VcsFileSystem.getInstance()) {
+      final VirtualFile file = new LightVirtualFile("XSLT Output." + extension, editor.getDocument().getText()) {
         @NotNull
         @Override
         public Charset getCharset() {

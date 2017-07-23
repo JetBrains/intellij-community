@@ -15,14 +15,13 @@
  */
 package com.intellij.refactoring.extractSuperclass;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -152,12 +151,8 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
       myDestinationFolderComboBox.selectDirectory(new PackageWrapper(PsiManager.getInstance(myProject), targetPackageName), false);
     if (moveDestination == null) return;
 
-    myTargetDirectory = myTargetDirectory != null ? ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
-      @Override
-      public PsiDirectory compute() {
-        return moveDestination.getTargetDirectory(myTargetDirectory);
-      }
-    }) : null;
+    myTargetDirectory = myTargetDirectory != null ? WriteAction
+      .compute(() -> moveDestination.getTargetDirectory(myTargetDirectory)) : null;
 
     if (myTargetDirectory == null) {
       throw new OperationFailedException(""); // message already reported by PackageUtil
@@ -177,8 +172,14 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
   @Override
   protected String validateName(String name) {
     return PsiNameHelper.getInstance(myProject).isIdentifier(name)
-           ? name.equals(mySourceClass.getName())
-             ? "Different name expected" : null
+           ? null
            : RefactoringMessageUtil.getIncorrectIdentifierMessage(name);
+  }
+
+  @Nullable
+  @Override
+  protected String validateQualifiedName(String packageName, String extractedSuperName) {
+    return StringUtil.getQualifiedName(packageName, extractedSuperName).equals(mySourceClass.getQualifiedName()) ? "Different name expected" 
+                                                                                                                 : null;
   }
 }

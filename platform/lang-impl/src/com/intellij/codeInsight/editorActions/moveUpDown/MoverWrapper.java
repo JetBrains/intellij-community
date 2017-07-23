@@ -70,7 +70,7 @@ class MoverWrapper {
       TextRange range = new TextRange(start, end);
       TextRange range2 = new TextRange(start2, end2);
       if (range.intersectsStrict(range2) && !range.equals(range2)) {
-        LOGGER.error("Wrong move ranges requested by " + myMover,
+        LOGGER.error("Wrong move ranges requested by " + myMover + " " + start + ":" + end + " vs " + start2 + ":" + end2,
                      new Attachment("ranges.txt",
                                     start + ":" + end + "(" + textToInsert + ")\n" + start2 + ":" + end2 + "(" + textToInsert2 + ")"));
         return;

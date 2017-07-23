@@ -9,10 +9,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- * Date: 1/8/13
- */
 public class JavaFxFileTypeFactory extends FileTypeFactory {
   @NonNls public static final String FXML_EXTENSION = "fxml";
   @NonNls static final String DOT_FXML_EXTENSION = "." + FXML_EXTENSION;

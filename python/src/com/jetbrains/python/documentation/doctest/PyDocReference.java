@@ -30,9 +30,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.PyQualifiedExpression;
-import com.jetbrains.python.psi.PyStatement;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.PyUtil.StringNodeInfo;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
 import com.jetbrains.python.psi.resolve.*;
@@ -100,9 +98,27 @@ public class PyDocReference extends PyReferenceImpl {
 
   @Nullable
   private PsiElement getScopeControlFlowAnchor(@NotNull PsiLanguageInjectionHost host) {
-    return isInsideFormattedStringNode(host) ? PsiTreeUtil.getParentOfType(host, PyStatement.class) : null;
+    if (isInsideFormattedStringNode(host)) {
+      return getControlFlowAnchorForFString((PyStringLiteralExpression)host);
+    }
+    return null;
   }
 
+  @Nullable
+  public static PsiElement getControlFlowAnchorForFString(@NotNull PyStringLiteralExpression host) {
+    final PsiElement comprehensionPart = PsiTreeUtil.findFirstParent(host, PyDocReference::isComprehensionResultOrComponent);
+    if (comprehensionPart != null) {
+      return comprehensionPart;
+    }
+    return PsiTreeUtil.getParentOfType(host, PyStatement.class);
+  }
+
+  private static boolean isComprehensionResultOrComponent(@NotNull PsiElement element) {
+    // Any comprehension component and its result are represented as children expressions of the comprehension element.
+    // Only they have respective nodes in CFG and thus can be used as anchors for getResultsFromProcessor().
+    return element instanceof PyExpression && element.getParent() instanceof PyComprehensionElement;
+  }
+  
   private boolean isInsideFormattedStringNode(@NotNull PsiLanguageInjectionHost host) {
     if (host instanceof PyStringLiteralExpression) {
       final ASTNode node = findContainingStringNode(getElement(), (PyStringLiteralExpression)host);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,14 +23,17 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElementChildRole;
+import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsGlobal;
+import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.serialization.impl.JpsPathVariablesConfigurationImpl;
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Map;
 
@@ -53,10 +56,20 @@ public class JpsGlobalLoader extends JpsLoaderBase {
   }
 
   public static void loadGlobalSettings(JpsGlobal global, String optionsPath) throws IOException {
-    File optionsDir = new File(FileUtil.toCanonicalPath(optionsPath));
-    new JpsGlobalLoader(global, Collections.<String, String>emptyMap()).loadGlobalComponents(optionsDir, new PathVariablesSerializer());
-    Map<String, String> pathVariables = JpsModelSerializationDataService.computeAllPathVariables(global);
+    Path optionsDir = Paths.get(FileUtil.toCanonicalPath(optionsPath));
+    Map<String, String> pathVariables = loadPathVariables(global, optionsDir);
     new JpsGlobalLoader(global, pathVariables).load(optionsDir);
+  }
+
+  private static Map<String, String> loadPathVariables(JpsGlobal global, Path optionsDir) {
+    new JpsGlobalLoader(global, Collections.emptyMap()).loadGlobalComponents(optionsDir, optionsDir.resolve("other.xml"), new PathVariablesSerializer());
+    return JpsModelSerializationDataService.computeAllPathVariables(global);
+  }
+
+  public static Map<String, String> computeAllPathVariables(@NotNull String optionsPath) {
+    JpsModel model = JpsElementFactory.getInstance().createModel();
+    Path optionsDir = Paths.get(FileUtil.toCanonicalPath(optionsPath));
+    return loadPathVariables(model.getGlobal(), optionsDir);
   }
 
   /**
@@ -67,20 +80,21 @@ public class JpsGlobalLoader extends JpsLoaderBase {
     return JpsModelSerializationDataService.getPathVariableValue(global, name);
   }
 
-  private void load(File optionsDir) {
-    LOG.debug("Loading config from " + optionsDir.getAbsolutePath());
+  private void load(@NotNull Path optionsDir) {
+    Path defaultConfigFile = optionsDir.resolve("other.xml");
+    LOG.debug("Loading config from " + optionsDir.toAbsolutePath());
     for (JpsGlobalExtensionSerializer serializer : SERIALIZERS) {
-      loadGlobalComponents(optionsDir, serializer);
+      loadGlobalComponents(optionsDir, defaultConfigFile, serializer);
     }
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       for (JpsGlobalExtensionSerializer serializer : extension.getGlobalExtensionSerializers()) {
-        loadGlobalComponents(optionsDir, serializer);
+        loadGlobalComponents(optionsDir, defaultConfigFile, serializer);
       }
     }
   }
 
-  private void loadGlobalComponents(File optionsDir, JpsGlobalExtensionSerializer serializer) {
-    loadComponents(optionsDir, "other.xml", serializer, myGlobal);
+  private void loadGlobalComponents(@NotNull Path optionsDir, @NotNull Path defaultConfigFile, JpsGlobalExtensionSerializer serializer) {
+    loadComponents(optionsDir, defaultConfigFile.getParent(), serializer, myGlobal);
   }
 
   public static class PathVariablesSerializer extends JpsGlobalExtensionSerializer {

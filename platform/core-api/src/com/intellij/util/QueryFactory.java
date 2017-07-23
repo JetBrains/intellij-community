@@ -40,7 +40,7 @@ public class QueryFactory<Result, Parameters> {
    */
   @NotNull
   public final Query<Result> createQuery(@NotNull Parameters parameters) {
-    return new ExecutorsQuery<Result, Parameters>(parameters, getExecutors());
+    return new ExecutorsQuery<>(parameters, getExecutors());
   }
 
 
@@ -70,7 +70,7 @@ public class QueryFactory<Result, Parameters> {
   @NotNull
   public final Query<Result> createUniqueResultsQuery(@NotNull Parameters parameters,
                                                       @NotNull TObjectHashingStrategy<Result> hashingStrategy) {
-    return new UniqueResultsQuery<Result, Result>(createQuery(parameters), hashingStrategy);
+    return new UniqueResultsQuery<>(createQuery(parameters), hashingStrategy);
   }
 
   /**
@@ -84,6 +84,6 @@ public class QueryFactory<Result, Parameters> {
   public final <T> Query<Result> createUniqueResultsQuery(@NotNull Parameters parameters,
                                                           @NotNull TObjectHashingStrategy<T> hashingStrategy,
                                                           @NotNull Function<Result, T> mapper) {
-    return new UniqueResultsQuery<Result, T>(createQuery(parameters), hashingStrategy, mapper);
+    return new UniqueResultsQuery<>(createQuery(parameters), hashingStrategy, mapper);
   }
 }

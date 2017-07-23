@@ -17,6 +17,7 @@
 package com.intellij.ide.hierarchy;
 
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -95,7 +96,7 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
       if (cachedChildren == null) {
         if (descriptor.isValid()) {
           try {
-            descriptor.setCachedChildren(buildChildren(descriptor));
+            descriptor.setCachedChildren(AbstractTreeUi.calculateYieldingToWriteAction(() ->buildChildren(descriptor)));
           }
           catch (IndexNotReadyException e) {
             return ArrayUtil.EMPTY_OBJECT_ARRAY;

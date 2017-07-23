@@ -29,8 +29,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension;
+import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 
 /**
  * @author dsl
@@ -73,8 +73,7 @@ public class ModuleOrderEntryImpl extends OrderEntryBaseImpl implements ModuleOr
 
   private ModuleOrderEntryImpl(ModuleOrderEntryImpl that, RootModelImpl rootModel) {
     super(rootModel);
-    final ModulePointer thatModule = that.myModulePointer;
-    myModulePointer = ModulePointerManager.getInstance(rootModel.getProject()).create(thatModule.getModuleName());
+    myModulePointer = ModulePointerManager.getInstance(rootModel.getProject()).create(that.myModulePointer.getModuleName());
     myExported = that.myExported;
     myProductionOnTestDependency = that.myProductionOnTestDependency;
     myScope = that.myScope;

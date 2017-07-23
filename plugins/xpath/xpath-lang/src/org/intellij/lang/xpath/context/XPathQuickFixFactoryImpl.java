@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 11.04.2006
- * Time: 00:46:09
- */
 package org.intellij.lang.xpath.context;
 
 import com.intellij.codeInspection.SuppressIntentionAction;

@@ -195,7 +195,7 @@ public final class KeyChooserDialog extends DialogWrapper{
 
   /**
    * @return resolved string descriptor. If user chose nothing then the
-   * method returns <code>null</code>.
+   * method returns {@code null}.
    */
   @Nullable StringDescriptor getDescriptor() {
     final int selectedRow = myTable.getSelectedRow();

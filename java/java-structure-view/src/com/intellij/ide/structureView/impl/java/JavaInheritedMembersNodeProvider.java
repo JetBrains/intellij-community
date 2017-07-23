@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,9 @@ public class JavaInheritedMembersNodeProvider extends InheritedMembersNodeProvid
   @Override
   public Collection<TreeElement> provideNodes(@NotNull TreeElement node) {
     if (node instanceof JavaClassTreeElement) {
-      final PsiClass aClass = ((JavaClassTreeElement)node).getValue();
+      final PsiClass aClass = ((JavaClassTreeElement)node).getElement();
+      if (aClass == null) return Collections.emptyList();
+
       Collection<PsiElement> inherited = new LinkedHashSet<>();
       Collection<PsiElement> ownChildren = JavaClassTreeElement.getOwnChildren(aClass);
 

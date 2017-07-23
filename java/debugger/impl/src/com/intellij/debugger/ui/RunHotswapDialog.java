@@ -30,17 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
-import java.util.List;
-
-/**
- * User: lex
- * Date: Oct 6, 2003
- * Time: 5:58:17 PM
- */
-
-
-
-public class RunHotswapDialog extends OptionsDialog {
+import java.util.List;public class RunHotswapDialog extends OptionsDialog {
   private final JPanel myPanel;
   private final ElementsChooser<SessionItem> myElementsChooser;
   private final boolean myDisplayHangWarning;

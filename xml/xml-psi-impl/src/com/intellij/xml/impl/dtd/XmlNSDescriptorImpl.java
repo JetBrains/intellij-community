@@ -185,6 +185,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     }
   }
 
+  @NotNull
   @Override
   public Object[] getDependences(){
     return new Object[]{myElement, ExternalResourceManager.getInstance()};

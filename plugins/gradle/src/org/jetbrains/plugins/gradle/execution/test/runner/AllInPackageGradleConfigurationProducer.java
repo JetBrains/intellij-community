@@ -20,7 +20,6 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit.JavaRuntimeConfigurationProducerBase;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -81,7 +80,7 @@ public class AllInPackageGradleConfigurationProducer extends GradleTestRunConfig
     if (context.getModule() == null) return false;
 
     if (!StringUtil.equals(
-      context.getModule().getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY),
+      ExternalSystemApiUtil.getExternalProjectPath(context.getModule()),
       configuration.getSettings().getExternalProjectPath())) {
       return false;
     }

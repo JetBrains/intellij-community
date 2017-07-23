@@ -31,6 +31,11 @@ public class PyPropertyAccessInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-20322
+  public void testAbcAbstractProperty() {
+    doTest();
+  }
+
   private void doTest() {
     setLanguageLevel(LanguageLevel.PYTHON26);
     myFixture.configureByFile("inspections/PyPropertyAccessInspection/" + getTestName(true) + ".py");

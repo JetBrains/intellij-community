@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,33 +15,66 @@
  */
 package com.intellij.debugger.engine.evaluation;
 
+import com.intellij.debugger.EvaluatingComputable;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.ClassLoaderReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class EvaluationContextImpl implements EvaluationContext{
-  private final Value myThisObject;
+public final class EvaluationContextImpl implements EvaluationContext {
+  private static final Logger LOG = Logger.getInstance(EvaluationContextImpl.class);
+
+  private final DebuggerComputableValue myThisObject;
   private final SuspendContextImpl mySuspendContext;
   private final StackFrameProxyImpl myFrameProxy;
   private boolean myAutoLoadClasses = true;
   private ClassLoaderReference myClassLoader;
-  
-  public EvaluationContextImpl(@NotNull SuspendContextImpl suspendContext, StackFrameProxyImpl frameProxy, @Nullable Value thisObject) {
-    myThisObject = thisObject;
+
+  private EvaluationContextImpl(@NotNull SuspendContextImpl suspendContext,
+                               @Nullable StackFrameProxyImpl frameProxy,
+                               @NotNull DebuggerComputableValue thisObjectComputableValue) {
+    myThisObject = thisObjectComputableValue;
     myFrameProxy = frameProxy;
     mySuspendContext = suspendContext;
   }
 
+  public EvaluationContextImpl(@NotNull SuspendContextImpl suspendContext,
+                               @Nullable StackFrameProxyImpl frameProxy,
+                               @NotNull EvaluatingComputable<Value> thisObjectFactory) {
+    this(suspendContext, frameProxy, new DebuggerComputableValue(thisObjectFactory));
+  }
+
+  public EvaluationContextImpl(@NotNull SuspendContextImpl suspendContext, @Nullable StackFrameProxyImpl frameProxy, @Nullable Value thisObject) {
+    this(suspendContext, frameProxy, new DebuggerComputableValue(thisObject));
+  }
+
+  public EvaluationContextImpl(@NotNull SuspendContextImpl suspendContext, @Nullable StackFrameProxyImpl frameProxy) {
+    this(suspendContext, frameProxy, () -> frameProxy != null ? frameProxy.thisObject() : null);
+  }
+
   @Nullable
   @Override
+  @Deprecated
   public Value getThisObject() {
-    return myThisObject;
+    try {
+      return computeThisObject();
+    }
+    catch (EvaluateException e) {
+      LOG.info(e);
+    }
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public Value computeThisObject() throws EvaluateException {
+    return myThisObject.getValue();
   }
 
   @NotNull

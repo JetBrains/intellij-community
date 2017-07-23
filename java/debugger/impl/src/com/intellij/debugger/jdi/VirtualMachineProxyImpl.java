@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
-import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.jdi.VirtualMachineProxyImpl");
@@ -57,7 +58,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   private final Map<String, StringReference> myStringLiteralCache = new HashMap<>();
 
   @NotNull
-  private Map<ThreadReference, ThreadReferenceProxyImpl>  myAllThreads = new HashMap<>();
+  private final Map<ThreadReference, ThreadReferenceProxyImpl> myAllThreads = new ConcurrentHashMap<>();
   private final Map<ThreadGroupReference, ThreadGroupReferenceProxyImpl> myThreadGroups = new HashMap<>();
   private boolean myAllThreadsDirty = true;
   private List<ReferenceType> myAllClasses;
@@ -83,6 +84,9 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     try {
       // this will cache classes inside JDI and enable faster search of classes later
       virtualMachine.allClasses();
+    }
+    catch (VMDisconnectedException e) {
+      throw e;
     }
     catch (Throwable e) {
       // catch all exceptions in order not to break vm attach process
@@ -124,7 +128,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     }
   }
 
-  public List<ReferenceType> classesByName(String s) {
+  public List<ReferenceType> classesByName(@NotNull String s) {
     String signature = JNITypeParserReflect.typeNameToSignature(s);
     if (signature != null) {
       if (myAllClassesByName == null) {
@@ -214,23 +218,15 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
    */
   public Collection<ThreadReferenceProxyImpl> allThreads() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if(myAllThreadsDirty) {
+    if (myAllThreadsDirty) {
       myAllThreadsDirty = false;
 
-      final List<ThreadReference> currentThreads = myVirtualMachine.allThreads();
-      final Map<ThreadReference, ThreadReferenceProxyImpl> result = new HashMap<>();
-
-      for (final ThreadReference threadReference : currentThreads) {
-        ThreadReferenceProxyImpl proxy = myAllThreads.get(threadReference);
-        if(proxy == null) {
-          proxy = new ThreadReferenceProxyImpl(this, threadReference);
-        }
-        result.put(threadReference, proxy);
+      for (ThreadReference threadReference : myVirtualMachine.allThreads()) {
+        getThreadReferenceProxy(threadReference); // add a proxy
       }
-      myAllThreads = result;
     }
 
-    return myAllThreads.values();
+    return new ArrayList<>(myAllThreads.values());
   }
 
   public void threadStarted(ThreadReference thread) {
@@ -361,13 +357,13 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return myVirtualMachine.mirrorOf(s);
   }
 
-  public StringReference mirrorOfStringLiteral(String s, DebuggerUtilsImpl.SupplierThrowing<StringReference, EvaluateException> generator)
+  public StringReference mirrorOfStringLiteral(String s, ThrowableComputable<StringReference, EvaluateException> generator)
     throws EvaluateException {
     StringReference reference = myStringLiteralCache.get(s);
     if (reference != null && !reference.isCollected()) {
       return reference;
     }
-    reference = generator.get();
+    reference = generator.compute();
     myStringLiteralCache.put(s, reference);
     return reference;
   }
@@ -383,14 +379,15 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     catch (UnsupportedOperationException e) {
       LOG.info(e);
     }
-
-    if (Patches.JDK_BUG_EVENT_CONTROLLER_LEAK) {
-      // Memory leak workaround, see IDEA-163334
-      TargetVM target = ReflectionUtil.getField(myVirtualMachine.getClass(), myVirtualMachine, TargetVM.class, "target");
-      if (target != null) {
-        Thread controller = ReflectionUtil.getField(target.getClass(), target, Thread.class, "eventController");
-        if (controller != null) {
-          controller.stop();
+    finally {
+      if (Patches.JDK_BUG_EVENT_CONTROLLER_LEAK) {
+        // Memory leak workaround, see IDEA-163334
+        TargetVM target = ReflectionUtil.getField(myVirtualMachine.getClass(), myVirtualMachine, TargetVM.class, "target");
+        if (target != null) {
+          Thread controller = ReflectionUtil.getField(target.getClass(), target, Thread.class, "eventController");
+          if (controller != null) {
+            controller.stop();
+          }
         }
       }
     }
@@ -546,10 +543,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
       }
       catch (NoSuchMethodException ignored) {
       }
-      catch (IllegalAccessException e) {
-        LOG.error(e);
-      }
-      catch (InvocationTargetException e) {
+      catch (IllegalAccessException | InvocationTargetException e) {
         LOG.error(e);
       }
       return false;
@@ -591,11 +585,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
           final Boolean rv = (Boolean)method.invoke(myVirtualMachine);
           return rv.booleanValue();
         }
-        catch (NoSuchMethodException ignored) {
-        }
-        catch (IllegalAccessException ignored) {
-        }
-        catch (InvocationTargetException ignored) {
+        catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException ignored) {
         }
       }
       return false;

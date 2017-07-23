@@ -25,19 +25,14 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
-import git4idea.commands.Git;
-import git4idea.commands.GitCommandResult;
-import git4idea.commands.GitHandlerUtil;
-import git4idea.commands.GitSimpleEventDetector;
+import git4idea.commands.*;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.GitUnstashDialog;
-import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,12 +96,11 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
   @Override
   public void load() {
-    for (VirtualFile root : myStashedRoots) {
-      loadRoot(root);
-    }
-
-    boolean conflictsResolved = new UnstashConflictResolver(myProject, myGit, myStashedRoots, myParams).merge();
-    LOG.info("load: conflicts resolved status is " + conflictsResolved + " in roots " + myStashedRoots);
+    GitStashUtils.unstash(myProject, myStashedRoots, (root) -> {
+      GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.STASH);
+      handler.addParameters("pop");
+      return handler;
+    }, new UnstashConflictResolver(myProject, myGit, myStashedRoots, myParams));
   }
 
   @Override
@@ -128,36 +122,6 @@ public class GitStashChangesSaver extends GitChangesSaver {
   @Override
   public void showSavedChanges() {
     GitUnstashDialog.showUnstashDialog(myProject, new ArrayList<>(myStashedRoots), myStashedRoots.iterator().next());
-  }
-
-  /**
-   * Returns true if the root was loaded with conflict.
-   * False is returned in all other cases: in the case of success and in case of some other error.
-   */
-  private boolean loadRoot(final VirtualFile root) {
-    LOG.info("loadRoot " + root);
-    myProgressIndicator.setText(GitHandlerUtil.formatOperationName("Unstashing changes to", root));
-
-    GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
-    if (repository == null) {
-      LOG.error("Repository is null for root " + root);
-      return false;
-    }
-
-    GitSimpleEventDetector conflictDetector = new GitSimpleEventDetector(GitSimpleEventDetector.Event.MERGE_CONFLICT_ON_UNSTASH);
-    GitCommandResult result = myGit.stashPop(repository, conflictDetector);
-    VfsUtil.markDirtyAndRefresh(false, true, false, root);
-    if (result.success()) {
-      return false;
-    }
-    else if (conflictDetector.hasHappened()) {
-      return true;
-    }
-    else {
-      LOG.info("unstash failed " + result.getErrorOutputAsJoinedString());
-      GitUIUtil.notifyImportantError(myProject, "Couldn't unstash", "<br/>" + result.getErrorOutputAsHtmlString());
-      return false;
-    }
   }
 
   @Override

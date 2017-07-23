@@ -218,7 +218,7 @@ public class CustomAntElementsRegistry {
         }
       }
     }
-    return errors == null? Collections.<String>emptyList() : errors;
+    return errors == null ? Collections.emptyList() : errors;
   }
   
   private void rememberNamedClassLoader(AntDomCustomClasspathComponent typedef, AntDomProject antProject) {

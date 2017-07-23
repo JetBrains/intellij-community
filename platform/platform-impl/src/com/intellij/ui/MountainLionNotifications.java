@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,13 +43,13 @@ class MountainLionNotifications implements SystemNotificationsImpl.Notifier {
 
   private MountainLionNotifications() {
     final MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-    connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener.Adapter() {
+    connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
       @Override
       public void applicationActivated(IdeFrame ideFrame) {
         cleanupDeliveredNotifications();
       }
     });
-    connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+    connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appClosing() {
         cleanupDeliveredNotifications();

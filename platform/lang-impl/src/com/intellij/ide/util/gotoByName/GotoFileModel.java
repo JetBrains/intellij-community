@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,7 +136,8 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
     if (element instanceof PsiFileSystemItem) {
       VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
       VirtualFile root = getTopLevelRoot(file);
-      return root != null ? GotoFileCellRenderer.getRelativePathFromRoot(file, root) : null;
+      return root != null ? GotoFileCellRenderer.getRelativePathFromRoot(file, root)
+                          : GotoFileCellRenderer.getRelativePath(file, myProject);
     }
 
     return getElementName(element);

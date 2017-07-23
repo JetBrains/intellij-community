@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.diff.impl.processing;
 
 import com.intellij.openapi.diff.ex.DiffFragment;
@@ -8,7 +23,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Assertion;
 import com.intellij.util.StringConvertion;
 import com.intellij.util.diff.FilesTooBigForDiffException;
-import gnu.trove.Equality;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 
@@ -106,13 +120,10 @@ public class ByWordTest extends TestCase {
   public void testExtractWords() {
     String text = "a b, c.d\n\n  x\n y";
     Word[] words = ByWord.buildWords(text, ComparisonPolicy.DEFAULT);
-    CHECK.setEquality(new Equality() {
-      @Override
-      public boolean equals(Object o1, Object o2) {
-        Word word1 = (Word)o1;
-        Word word2 = (Word)o2;
-        return word1.getStart() == word2.getStart() && word1.getEnd() == word2.getEnd();
-      }
+    CHECK.setEquality((o1, o2) -> {
+      Word word1 = (Word)o1;
+      Word word2 = (Word)o2;
+      return word1.getStart() == word2.getStart() && word1.getEnd() == word2.getEnd();
     });
     CHECK.setStringConvertion(StringConvertion.DEFAULT);
     CHECK.compareAll(new Word[]{new Formatting(text, new TextRange(0, 0)),

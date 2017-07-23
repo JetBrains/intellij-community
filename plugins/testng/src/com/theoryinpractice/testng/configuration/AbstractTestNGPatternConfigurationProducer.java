@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 23-May-2007
- */
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.actions.ConfigurationContext;
@@ -26,12 +22,9 @@ import com.intellij.execution.testframework.AbstractPatternBasedConfigurationPro
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifierListOwner;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestType;
-import com.theoryinpractice.testng.util.TestNGUtil;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -41,16 +34,6 @@ public abstract class AbstractTestNGPatternConfigurationProducer extends Abstrac
     super(configurationType);
   }
 
-  @Override
-    protected boolean isTestClass(PsiClass psiClass) {
-      return TestNGUtil.hasTest(psiClass);
-    }
-
-    @Override
-    protected boolean isTestMethod(boolean checkAbstract, PsiElement psiElement) {
-      return psiElement instanceof PsiModifierListOwner && TestNGUtil.hasTest((PsiModifierListOwner)psiElement);
-    }
-  
   @Override
   protected boolean setupConfigurationFromContext(TestNGConfiguration configuration,
                                                   ConfigurationContext context,
@@ -66,7 +49,7 @@ public abstract class AbstractTestNGPatternConfigurationProducer extends Abstrac
     data.TEST_OBJECT = TestType.PATTERN.getType();
     data.setScope(setupPackageConfiguration(context, configuration, data.getScope()));
     configuration.setGeneratedName();
-    TestNGConfigurationProducer.setupConfigurationParamName(configuration, context.getLocation());
+    setupConfigurationParamName(configuration, context.getLocation());
     return true;
   }
 

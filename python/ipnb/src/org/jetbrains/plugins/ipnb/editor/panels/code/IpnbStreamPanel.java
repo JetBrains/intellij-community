@@ -3,6 +3,7 @@ package org.jetbrains.plugins.ipnb.editor.panels.code;
 import com.intellij.openapi.ui.MessageType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbStreamOutputCell;
 
 import javax.swing.*;
@@ -19,5 +20,13 @@ public class IpnbStreamPanel extends IpnbCodeOutputPanel<IpnbStreamOutputCell> {
       viewPanel.setBackground(MessageType.ERROR.getPopupBackground());
     }
     return viewPanel;
+  }
+
+  public void addOutput(IpnbOutputCell outputCell) {
+    if (myViewPanel instanceof IpnbErrorPanel.ColorPane) {
+      ((IpnbErrorPanel.ColorPane)myViewPanel).setEditable(true);
+      ((IpnbErrorPanel.ColorPane)myViewPanel).appendANSI(outputCell.getSourceAsString());
+      ((IpnbErrorPanel.ColorPane)myViewPanel).setEditable(false);
+    }
   }
 }

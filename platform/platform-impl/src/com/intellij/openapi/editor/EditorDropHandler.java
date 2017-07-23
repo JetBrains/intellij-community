@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,4 +27,7 @@ import java.awt.datatransfer.Transferable;
 public interface EditorDropHandler {
   boolean canHandleDrop(DataFlavor[] transferFlavors);
   void handleDrop(Transferable t, final Project project, EditorWindow editorWindow);
+  default void handleDrop(Transferable t, final Project project, EditorWindow editorWindow, @SuppressWarnings("unused") int dropAction) {
+    handleDrop(t, project, editorWindow);
+  }
 }

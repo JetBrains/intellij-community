@@ -1,32 +1,30 @@
 class MyTest {
-    
     private static class Foo {
         static int foo(int i) { return i; }
     }
-    
+
     static Foo foo = new Foo();
 
     static void foo(String s) {}
-    
+
     static void bar(Integer i, Number n) {}
     static void bar(Number n, Integer i) {}
-    
+
     void baz(int i) {}
 }
 
 class AlienTest {
-    
     interface IInt {
-        int _(int i);
+        int m(int i);
     }
-    
+
     interface IIntInt {
-        int _(Integer i1, Integer i2);
+        int m(Integer i1, Integer i2);
     }
 
     static {
         IInt i1 = MyTest::<error descr="Cannot resolve method 'abracadabra'">abracadabra</error>;
-        IInt i2 = MyTest::<error descr="Invalid method reference: int cannot be converted to String">foo</error>;
+        IInt i2 = MyTest::<error descr="Cannot resolve method 'foo'">foo</error>;
         IInt i3 = MyTest::<error descr="Cannot resolve method 'bar'">bar</error>;
         <error descr="Incompatible types. Found: '<method reference>', required: 'AlienTest.IIntInt'">IIntInt i4 = MyTest::bar;</error>
         IInt i5 = <error descr="Non-static method cannot be referenced from a static context">MyTest::baz</error>;
@@ -35,34 +33,31 @@ class AlienTest {
     }
 }
 
-
 class MyTest1 {
-    
     interface I1 {
-        int[] _();
+        int[] m();
     }
-    
-    interface I2 {
-        Object _();
-    }
-    
-    interface I3 {
-        char[] _();
-    }
-    
-    interface I4 {
 
-        boolean  _();
+    interface I2 {
+        Object m();
+    }
+
+    interface I3 {
+        char[] m();
+    }
+
+    interface I4 {
+        boolean  m();
     }
 
     interface I5 {
-        Class<? extends MyTest1> _();
+        Class<? extends MyTest1> m();
     }
 
     interface I6 {
-        Class<MyTest1> _();
+        Class<MyTest1> m();
     }
-    
+
     void foo(Object[] arr) {
         I1 c1 = <error descr="Bad return type in method reference: cannot convert java.lang.Object[] to int[]">arr :: clone</error>;
         I2 c2 = arr :: clone;

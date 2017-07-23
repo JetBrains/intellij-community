@@ -16,18 +16,18 @@
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.uiDesigner.ErrorInfo;
-import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.PsiPropertiesProvider;
-import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IComponent;
@@ -42,23 +42,26 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public abstract class BaseFormInspection extends BaseJavaLocalInspectionTool implements FileCheckingInspection, FormInspectionTool {
+public abstract class BaseFormInspection extends BaseJavaLocalInspectionTool implements FormInspectionTool {
   private final String myInspectionKey;
 
   public BaseFormInspection(@NonNls @NotNull String inspectionKey) {
     myInspectionKey = inspectionKey;
   }
 
+  @Override
   @Nls @NotNull
   public String getDisplayName() {
     return "";
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return UIDesignerBundle.message("form.inspections.group");
   }
 
+  @Override
   @NotNull @NonNls public String getShortName() {
     return myInspectionKey;
   }
@@ -67,56 +70,60 @@ public abstract class BaseFormInspection extends BaseJavaLocalInspectionTool imp
     return true;
   }
 
+  @Override
   public boolean isActive(PsiElement psiRoot) {
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(psiRoot.getProject()).getCurrentProfile();
     HighlightDisplayKey key = HighlightDisplayKey.find(myInspectionKey);
     return key != null && profile.isToolEnabled(key, psiRoot);
   }
 
-  @Nullable public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (file.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {
-      final VirtualFile virtualFile = file.getVirtualFile();
-      if (virtualFile == null) {
-        return null;
-      }
-      final Module module = ModuleUtil.findModuleForFile(virtualFile, file.getProject());
-      if (module == null) {
-        return null;
-      }
-
-      final LwRootContainer rootContainer;
-      try {
-        rootContainer = Utils.getRootContainer(file.getText(), new PsiPropertiesProvider(module));
-      }
-      catch (Exception e) {
-        return null;
-      }
-
-      if (rootContainer.isInspectionSuppressed(getShortName(), null)) {
-        return null;
-      }
-      final FormFileErrorCollector collector = new FormFileErrorCollector(file, manager, isOnTheFly);
-      startCheckForm(rootContainer);
-      FormEditingUtil.iterate(rootContainer, new FormEditingUtil.ComponentVisitor() {
-        public boolean visit(final IComponent component) {
-          if (!rootContainer.isInspectionSuppressed(getShortName(), component.getId())) {
-            checkComponentProperties(module, component, collector);
-          }
-          return true;
-        }
-      });
-      doneCheckForm(rootContainer);
-      return collector.result();
+  @Override
+  @Nullable
+  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    if (!file.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {
+      return null;
     }
-    return null;
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null) {
+      return null;
+    }
+    final Module module = ModuleUtilCore.findModuleForFile(virtualFile, file.getProject());
+    if (module == null) {
+      return null;
+    }
+
+    final LwRootContainer rootContainer;
+    try {
+      rootContainer = Utils.getRootContainer(file.getText(), new PsiPropertiesProvider(module));
+    }
+    catch (Exception e) {
+      return null;
+    }
+
+    if (ErrorAnalyzer.isSuppressed(rootContainer, this, null)) {
+      return null;
+    }
+    final FormFileErrorCollector collector = new FormFileErrorCollector(file, manager, isOnTheFly);
+    startCheckForm(rootContainer);
+    FormEditingUtil.iterate(rootContainer, component -> {
+      if (!ErrorAnalyzer.isSuppressed(rootContainer, this, component.getId())) {
+        checkComponentProperties(module, component, collector);
+      }
+      return true;
+    });
+    doneCheckForm(rootContainer);
+    return collector.result();
   }
 
+  @Override
   public void startCheckForm(IRootContainer rootContainer) {
   }
 
+  @Override
   public void doneCheckForm(IRootContainer rootContainer) {
   }
 
+  @Override
   @Nullable
   public ErrorInfo[] checkComponent(@NotNull GuiEditor editor, @NotNull RadComponent component) {
     FormEditorErrorCollector collector = new FormEditorErrorCollector(editor, component);
@@ -124,5 +131,5 @@ public abstract class BaseFormInspection extends BaseJavaLocalInspectionTool imp
     return collector.result();
   }
 
-  protected abstract void checkComponentProperties(Module module, IComponent component, FormErrorCollector collector);
+  protected abstract void checkComponentProperties(Module module, @NotNull IComponent component, FormErrorCollector collector);
 }

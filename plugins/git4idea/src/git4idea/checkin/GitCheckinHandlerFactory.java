@@ -16,7 +16,6 @@
 package git4idea.checkin;
 
 import com.intellij.CommonBundle;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -24,7 +23,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -117,7 +115,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         return ReturnResult.COMMIT;
       }
 
-      final Git git = ServiceManager.getService(Git.class);
+      final Git git = Git.getInstance();
 
       final Collection<VirtualFile> files = myPanel.getVirtualFiles(); // deleted files aren't included, but for them we don't care about CRLFs.
       final AtomicReference<GitCrlfProblemsDetector> crlfHelper = new AtomicReference<>();
@@ -135,13 +133,10 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       }
 
       if (crlfHelper.get().shouldWarn()) {
-        Pair<Integer, Boolean> codeAndDontWarn = UIUtil.invokeAndWaitIfNeeded(new Computable<Pair<Integer, Boolean>>() {
-          @Override
-          public Pair<Integer, Boolean> compute() {
-            final GitCrlfDialog dialog = new GitCrlfDialog(myProject);
-            dialog.show();
-            return Pair.create(dialog.getExitCode(), dialog.dontWarnAgain());
-          }
+        Pair<Integer, Boolean> codeAndDontWarn = UIUtil.invokeAndWaitIfNeeded(() -> {
+          final GitCrlfDialog dialog = new GitCrlfDialog(myProject);
+          dialog.show();
+          return Pair.create(dialog.getExitCode(), dialog.dontWarnAgain());
         });
         int decision = codeAndDontWarn.first;
         boolean dontWarnAgain = codeAndDontWarn.second;
@@ -210,6 +205,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
 
       final GitUserNameNotDefinedDialog dialog = new GitUserNameNotDefinedDialog(project, notDefined, affectedRoots, defined);
       if (dialog.showAndGet()) {
+        GitVcsSettings.getInstance(project).setUserNameGlobally(dialog.isGlobal());
         return setUserNameUnderProgress(project, notDefined, dialog) ? ReturnResult.COMMIT : ReturnResult.CANCEL;
       }
       return ReturnResult.CLOSE_WINDOW;

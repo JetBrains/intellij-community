@@ -18,6 +18,7 @@ package com.intellij.openapi.externalSystem.service.settings;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.projectWizard.NamePathComponent;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
@@ -152,7 +153,7 @@ public abstract class AbstractImportFromExternalSystemControl<
    * project if it's already linked.
    * <p/>
    * This property helps us to achieve that - when an ide project is defined, that means that new modules are being imported
-   * to that ide project from external project; when this property is <code>null</code> that means that new ide project is being
+   * to that ide project from external project; when this property is {@code null} that means that new ide project is being
    * created on the target external project basis.
    * 
    * @param currentProject  current ide project (if any)
@@ -177,7 +178,7 @@ public abstract class AbstractImportFromExternalSystemControl<
    *
    * @param settings  target system settings
    * @return          a control for managing given system-level settings;
-   *                  <code>null</code> if current external system doesn't have system-level settings (only project-level settings)
+   *                  {@code null} if current external system doesn't have system-level settings (only project-level settings)
    */
   @Nullable
   protected abstract ExternalSystemSettingsControl<SystemSettings> createSystemSettingsControl(@NotNull SystemSettings settings);
@@ -249,9 +250,10 @@ public abstract class AbstractImportFromExternalSystemControl<
   }
 
   public boolean validate(WizardContext wizardContext, boolean defaultFormat) throws ConfigurationException {
-    if(!myProjectSettingsControl.validate(myProjectSettings)) return false;
-    if (mySystemSettingsControl != null && !mySystemSettingsControl.validate(mySystemSettings)) return false;
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return true;
 
+    if (!myProjectSettingsControl.validate(myProjectSettings)) return false;
+    if (mySystemSettingsControl != null && !mySystemSettingsControl.validate(mySystemSettings)) return false;
     String linkedProjectPath = myLinkedProjectPathField.getPath();
     if (StringUtil.isEmpty(linkedProjectPath)) {
       throw new ConfigurationException(ExternalSystemBundle.message("error.project.undefined"));
@@ -265,7 +267,6 @@ public abstract class AbstractImportFromExternalSystemControl<
       }
     }
 
-    if(wizardContext.isCreatingNewProject() && !myLinkedProjectPathField.validateNameAndPath(wizardContext, defaultFormat)) return false;
-    return true;
+    return !(wizardContext.isCreatingNewProject() && !myLinkedProjectPathField.validateNameAndPath(wizardContext, defaultFormat));
   }
 }

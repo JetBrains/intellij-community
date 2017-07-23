@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,9 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiPolyadicExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,5 +87,27 @@ public class ComparisonUtils {
 
   public static String getNegatedComparison(IElementType tokenType) {
     return s_invertedComparisons.get(tokenType);
+  }
+
+  @Nullable
+  public static IElementType getNegatedComparisonTokenType(IElementType tokenType) {
+    if(JavaTokenType.EQEQ.equals(tokenType)) return JavaTokenType.NE;
+    if(JavaTokenType.NE.equals(tokenType)) return JavaTokenType.EQEQ;
+    if(JavaTokenType.LT.equals(tokenType)) return JavaTokenType.GE;
+    if(JavaTokenType.LE.equals(tokenType)) return JavaTokenType.GT;
+    if(JavaTokenType.GT.equals(tokenType)) return JavaTokenType.LE;
+    if(JavaTokenType.GE.equals(tokenType)) return JavaTokenType.LT;
+    return null;
+  }
+
+  @Contract("null, _, _ -> false")
+  public static boolean isNullComparison(PsiExpression expression, @NotNull PsiVariable variable, boolean equal) {
+    return variable.equals(ExpressionUtils.getVariableFromNullComparison(expression, equal));
+  }
+
+  @Contract("null -> false")
+  public static boolean isNullComparison(PsiExpression expression) {
+    return expression instanceof PsiBinaryExpression &&
+           ExpressionUtils.getValueComparedWithNull((PsiBinaryExpression)expression) != null;
   }
 }

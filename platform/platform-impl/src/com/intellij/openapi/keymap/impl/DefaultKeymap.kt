@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,21 +18,23 @@ package com.intellij.openapi.keymap.impl
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.catchAndLog
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.util.loadElement
+import gnu.trove.THashMap
 import org.jdom.Element
-import java.net.URL
 import java.util.*
 
 private val LOG = Logger.getInstance("#com.intellij.openapi.keymap.impl.DefaultKeymap")
 
 open class DefaultKeymap {
   private val myKeymaps = ArrayList<Keymap>()
+
+  private val nameToScheme = THashMap<String, Keymap>()
 
   protected open val providers: Array<BundledKeymapProvider>
     get() = Extensions.getExtensions(BundledKeymapProvider.EP_NAME)
@@ -60,9 +62,9 @@ open class DefaultKeymap {
           else -> fileName
         }
 
-        LOG.catchAndLog {
+        LOG.runAndLogException {
           loadKeymapsFromElement(object: SchemeDataHolder<KeymapImpl> {
-            override fun read() = JDOMUtil.loadResourceDocument(URL("file:///keymaps/$key")).rootElement
+            override fun read() = provider.load(key) { loadElement(it) }
 
             override fun updateDigest(scheme: KeymapImpl) {
             }
@@ -86,25 +88,30 @@ open class DefaultKeymap {
       return when (name) {
         KeymapManager.DEFAULT_IDEA_KEYMAP -> SystemInfo.isWindows
         KeymapManager.MAC_OS_X_KEYMAP, KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP -> SystemInfo.isMac
-        KeymapManager.X_WINDOW_KEYMAP, "Default for GNOME", KeymapManager.KDE_KEYMAP -> SystemInfo.isXWindow
+        KeymapManager.X_WINDOW_KEYMAP, KeymapManager.GNOME_KEYMAP, KeymapManager.KDE_KEYMAP -> SystemInfo.isXWindow
         else -> true
       }
     }
   }
 
   private fun loadKeymapsFromElement(dataHolder: SchemeDataHolder<KeymapImpl>, keymapName: String) {
-    val keymap = if (keymapName.startsWith(KeymapManager.MAC_OS_X_KEYMAP)) MacOSDefaultKeymap(dataHolder) else DefaultKeymapImpl(dataHolder)
+    val keymap = if (keymapName.startsWith(KeymapManager.MAC_OS_X_KEYMAP)) MacOSDefaultKeymap(dataHolder, this) else DefaultKeymapImpl(dataHolder, this)
     keymap.name = keymapName
     myKeymaps.add(keymap)
+    nameToScheme.put(keymapName, keymap)
   }
 
   val keymaps: Array<Keymap>
     get() = myKeymaps.toTypedArray()
 
+  internal fun findScheme(name: String) = nameToScheme.get(name)
+
   open val defaultKeymapName: String
     get() = when {
       SystemInfo.isMac -> KeymapManager.MAC_OS_X_KEYMAP
-      SystemInfo.isXWindow -> if (SystemInfo.isKDE) KeymapManager.KDE_KEYMAP else KeymapManager.X_WINDOW_KEYMAP
+      SystemInfo.isGNOME -> KeymapManager.GNOME_KEYMAP
+      SystemInfo.isKDE -> KeymapManager.KDE_KEYMAP
+      SystemInfo.isXWindow -> KeymapManager.X_WINDOW_KEYMAP
       else -> KeymapManager.DEFAULT_IDEA_KEYMAP
     }
 

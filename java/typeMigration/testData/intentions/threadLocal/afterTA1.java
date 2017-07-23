@@ -5,10 +5,5 @@ import java.lang.annotation.*;
 public @interface TA { int value(); }
 
 class Test {
-    final ThreadLocal<@TA(42) Integer> field = new ThreadLocal<Integer>() {
-        @Override
-        protected Integer initialValue() {
-            return 0;
-        }
-    };
+    final ThreadLocal<@TA(42) Integer> field = ThreadLocal.withInitial(() -> 0);
 }

@@ -17,10 +17,8 @@ package git4idea.ui.branch;
 
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import git4idea.config.GitVcsSettings;
@@ -64,19 +62,16 @@ public class GitLogBranchOperationsActionGroup extends ActionGroup implements Du
     if (commits.size() != 1) return AnAction.EMPTY_ARRAY;
 
     CommitId commit = commits.get(0);
-    GitRepositoryManager repositoryManager = ServiceManager.getService(project, GitRepositoryManager.class);
+    GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
     final GitRepository root = repositoryManager.getRepositoryForRoot(commit.getRoot());
     if (root == null) return AnAction.EMPTY_ARRAY;
 
-    List<VcsRef> vcsRefs = ContainerUtil.filter(branches, new Condition<VcsRef>() {
-      @Override
-      public boolean value(VcsRef ref) {
-        if (ref.getType() == GitRefManager.LOCAL_BRANCH) {
-          return !ref.getName().equals(root.getCurrentBranchName());
-        }
-        if (ref.getType() == GitRefManager.REMOTE_BRANCH) return true;
-        return false;
+    List<VcsRef> vcsRefs = ContainerUtil.filter(branches, ref -> {
+      if (ref.getType() == GitRefManager.LOCAL_BRANCH) {
+        return !ref.getName().equals(root.getCurrentBranchName());
       }
+      if (ref.getType() == GitRefManager.REMOTE_BRANCH) return true;
+      return false;
     });
 
     VcsLogProvider provider = logUI.getDataPack().getLogProviders().get(root.getRoot());
@@ -135,12 +130,7 @@ public class GitLogBranchOperationsActionGroup extends ActionGroup implements Du
   }
 
   private static boolean branchInAllRepositories(@NotNull List<GitRepository> repositories, @NotNull final VcsRef branches) {
-    return ContainerUtil.and(repositories, new Condition<GitRepository>() {
-      @Override
-      public boolean value(GitRepository repository) {
-        return repository.getBranches().findBranchByName(branches.getName()) != null;
-      }
-    });
+    return ContainerUtil.and(repositories, repository -> repository.getBranches().findBranchByName(branches.getName()) != null);
   }
 
   @NotNull

@@ -153,7 +153,7 @@ public class PathInterner {
         }
         wrapper.encodedString = bytes;
       } else {
-        wrapper.encodedString = new String(string.substring(start, start + len));
+        wrapper.encodedString = string.substring(start, start + len);
       }
       wrapper.start = 0;
       wrapper.len = len;

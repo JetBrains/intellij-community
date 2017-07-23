@@ -39,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -123,8 +122,6 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
   @Override
   public void apply(CodeStyleSettings settings) {
-    myMatchingRulesPanel.hideEditor();
-
     CommonCodeStyleSettings commonSettings = settings.getCommonSettings(myLanguage);
     commonSettings.setArrangementSettings(createSettings());
     if (myForceArrangementPanel != null) {

@@ -22,13 +22,6 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.util.PsiUtil;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 28.01.2003
- * Time: 20:37:26
- * To change this template use Options | File Templates.
- */
 public class AnyInnerFilter implements ElementFilter{
   private final ElementFilter myFilter;
   public AnyInnerFilter(ElementFilter filter){

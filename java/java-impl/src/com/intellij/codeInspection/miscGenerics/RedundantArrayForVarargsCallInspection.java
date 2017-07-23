@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -102,8 +103,11 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
         }
         PsiExpression lastArg = args[args.length - 1];
         PsiParameter lastParameter = parameters[args.length - 1];
+        if (!lastParameter.isVarArgs()) {
+          return;
+        }
         PsiType lastParamType = lastParameter.getType();
-        LOG.assertTrue(lastParamType instanceof PsiEllipsisType);
+        LOG.assertTrue(lastParamType instanceof PsiEllipsisType, lastParamType);
         if (!(lastArg instanceof PsiNewExpression)) {
           return;
         }
@@ -115,6 +119,9 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
         }
         PsiExpression[] initializers = getInitializers((PsiNewExpression)lastArg);
         if (initializers == null) {
+          return;
+        }
+        if (Arrays.stream(initializers).anyMatch(expr -> expr instanceof PsiArrayInitializerExpression)) {
           return;
         }
         if (!isSafeToFlatten(expression, method, initializers)) {
@@ -146,6 +153,7 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
           if (callExpression instanceof PsiEnumConstant) {
             final PsiEnumConstant enumConstant = (PsiEnumConstant)callExpression;
             final PsiClass containingClass = enumConstant.getContainingClass();
+            if (containingClass == null) return false;
             final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
             final PsiClassType classType = facade.getElementFactory().createType(containingClass);
             resolveResult = facade.getResolveHelper().resolveConstructor(classType, copyArgumentList, enumConstant);
@@ -156,14 +164,17 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
             if (!resolveResult.isValidResult() || resolveResult.getElement() != oldRefMethod) {
               return false;
             }
+            if (callExpression.getParent() instanceof PsiExpressionStatement) return true;
             final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes((PsiCallExpression)callExpression, false);
+            if (expectedTypes.length == 0) return false;
             final PsiType expressionType = ((PsiCallExpression)copy).getType();
+            if (expressionType == null) return false;
             for (ExpectedTypeInfo expectedType : expectedTypes) {
-              if (!expectedType.getType().isAssignableFrom(expressionType)) {
-                return false;
+              if (expectedType.getType().isAssignableFrom(expressionType)) {
+                return true;
               }
             }
-            return true;
+            return false;
           }
         }
         catch (IncorrectOperationException e) {

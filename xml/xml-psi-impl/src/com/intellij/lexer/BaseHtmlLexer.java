@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import java.util.Locale;
 /**
  * @author Maxim.Mossienko
  */
-abstract class BaseHtmlLexer extends DelegateLexer {
+public abstract class BaseHtmlLexer extends DelegateLexer {
   protected static final int BASE_STATE_MASK = 0x3F;
   private static final int SEEN_STYLE = 0x40;
   private static final int SEEN_TAG = 0x80;
@@ -65,8 +65,8 @@ abstract class BaseHtmlLexer extends DelegateLexer {
   protected String styleType = null;
 
   private final boolean caseInsensitive;
-  private boolean seenContentType;
-  private boolean seenStylesheetType;
+  protected boolean seenContentType;
+  protected boolean seenStylesheetType;
   private CharSequence cachedBufferSequence;
   private Lexer lexerOfCacheBufferSequence;
 
@@ -100,20 +100,18 @@ abstract class BaseHtmlLexer extends DelegateLexer {
         if (((firstCh == 'l' || firstCh == 't') || (caseInsensitive && (firstCh == 'L' || firstCh == 'T')))) {
           @NonNls String name = TreeUtil.getTokenText(lexer);
           seenContentType = Comparing.strEqual("language", name, !caseInsensitive) || Comparing.strEqual("type", name, !caseInsensitive);
+          return;
         }
-        return;
       }
       if (seenStyle && !seenTag) {
         seenStylesheetType = false;
-        if (firstCh == 'r' || caseInsensitive && firstCh == 'R') {
-          seenStylesheetType = Comparing.strEqual(TreeUtil.getTokenText(lexer), "rel", !caseInsensitive);
+        if (firstCh == 't' || caseInsensitive && firstCh == 'T') {
+          seenStylesheetType = Comparing.strEqual(TreeUtil.getTokenText(lexer), "type", !caseInsensitive);
+          return;
         }
-        return;
       }
 
-      if (firstCh !='o' && firstCh !='s' &&
-          (!caseInsensitive || (firstCh !='S' && firstCh !='O') )
-          ) {
+      if (firstCh !='o' && firstCh !='s' && (!caseInsensitive || (firstCh !='S' && firstCh !='O'))) {
         return; // optimization
       }
 
@@ -166,8 +164,8 @@ abstract class BaseHtmlLexer extends DelegateLexer {
         scriptType = caseInsensitive ? mimeType.toLowerCase(Locale.US) : mimeType;
       }
       if (seenStylesheetType && seenStyle && !seenAttribute) {
-        @NonNls String rel = TreeUtil.getTokenText(lexer).trim();
-        styleType = caseInsensitive ? rel.toLowerCase(Locale.US) : rel;
+        @NonNls String type = TreeUtil.getTokenText(lexer).trim();
+        styleType = caseInsensitive ? type.toLowerCase(Locale.US) : type;
       }
     }
   }
@@ -180,12 +178,10 @@ abstract class BaseHtmlLexer extends DelegateLexer {
   
   @Nullable
   protected Language getStyleLanguage() {
-    if (ourDefaultStyleLanguage != null && styleType != null) {
-      String stylesheetPrefix = "stylesheet/";
-      if (StringUtil.startsWith(styleType, stylesheetPrefix)) {
-        String languageName = styleType.substring(stylesheetPrefix.length()).trim();
-        for (Language language : ourDefaultStyleLanguage.getDialects()) {
-          if (languageName.equals(language.getID().toLowerCase(Locale.US))) {
+    if (ourDefaultStyleLanguage != null && styleType != null && !"text/css".equals(styleType)) {
+      for (Language language : ourDefaultStyleLanguage.getDialects()) {
+        for (String mimeType : language.getMimeTypes()) {
+          if (styleType.equals(mimeType)) {
             return language;
           }
         }
@@ -215,13 +211,13 @@ abstract class BaseHtmlLexer extends DelegateLexer {
   }
 
   @Nullable
-  protected static HtmlScriptContentProvider findScriptContentProvider(@Nullable String mimeType) {
+  protected HtmlScriptContentProvider findScriptContentProvider(@Nullable String mimeType) {
     if (StringUtil.isEmpty(mimeType)) {
       return ourDefaultLanguage != null ? LanguageHtmlScriptContentProvider.getScriptContentProvider(ourDefaultLanguage) : null;
     }
     Collection<Language> instancesByMimeType = Language.findInstancesByMimeType(mimeType.trim());
     if (instancesByMimeType.isEmpty() && mimeType.contains("template")) {
-      instancesByMimeType = Collections.<Language>singletonList(HTMLLanguage.INSTANCE);
+      instancesByMimeType = Collections.singletonList(HTMLLanguage.INSTANCE);
     }
     for (Language language : instancesByMimeType) {
       HtmlScriptContentProvider scriptContentProvider = LanguageHtmlScriptContentProvider.getScriptContentProvider(language);
@@ -366,9 +362,7 @@ abstract class BaseHtmlLexer extends DelegateLexer {
           String name = TreeUtil.getTokenText(base);
           if (caseInsensitive) name = name.toLowerCase();
 
-          if((hasSeenScript() && XmlNameHandler.TOKEN_SCRIPT.equals(name)) ||
-             (hasSeenStyle() && XmlNameHandler.TOKEN_STYLE.equals(name)) ||
-             CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED.equalsIgnoreCase(name)) {
+          if(endOfTheEmbeddment(name)) {
             break; // really found end
           }
         }
@@ -392,6 +386,12 @@ abstract class BaseHtmlLexer extends DelegateLexer {
       base.getTokenType();
     }
     return tokenEnd;
+  }
+
+  protected boolean endOfTheEmbeddment(String name) {
+    return (hasSeenScript() && XmlNameHandler.TOKEN_SCRIPT.equals(name)) ||
+           (hasSeenStyle() && XmlNameHandler.TOKEN_STYLE.equals(name)) ||
+           CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED.equalsIgnoreCase(name);
   }
 
   protected boolean isValidAttributeValueTokenType(final IElementType tokenType) {

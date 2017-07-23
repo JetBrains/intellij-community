@@ -20,10 +20,6 @@ import com.intellij.openapi.module.ModuleType;
 
 import javax.swing.*;
 
-/**
- * User: anna
- * Date: 09-Jan-2006
- */
 public class InspectionModuleNode extends InspectionTreeNode{
   private final Module myModule;
   public InspectionModuleNode(final Module module) {

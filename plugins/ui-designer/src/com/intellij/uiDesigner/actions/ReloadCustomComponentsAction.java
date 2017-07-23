@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 05.10.2006
- * Time: 13:35:16
- */
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;

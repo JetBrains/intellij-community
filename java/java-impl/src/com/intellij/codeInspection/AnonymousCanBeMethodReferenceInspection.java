@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection.MethodReferenceCandidate;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -33,11 +34,8 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * User: anna
- */
 public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#" + AnonymousCanBeMethodReferenceInspection.class.getName());
+  private static final Logger LOG = Logger.getInstance(AnonymousCanBeMethodReferenceInspection.class);
 
   public boolean reportNotAnnotatedInterfaces = true;
 
@@ -82,12 +80,15 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
         if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(aClass, true, reportNotAnnotatedInterfaces, Collections.emptySet())) {
           final PsiMethod method = aClass.getMethods()[0];
           final PsiCodeBlock body = method.getBody();
-          PsiExpression lambdaBodyCandidate = LambdaCanBeMethodReferenceInspection.extractMethodReferenceCandidateExpression(body, false);
-          final PsiExpression methodRefCandidate =
+          MethodReferenceCandidate methodReferenceCandidate =
+            LambdaCanBeMethodReferenceInspection.extractMethodReferenceCandidateExpression(body);
+          if (methodReferenceCandidate == null) return;
+          final PsiExpression candidate =
             LambdaCanBeMethodReferenceInspection
-              .canBeMethodReferenceProblem(method.getParameterList().getParameters(), aClass.getBaseClassType(), aClass.getParent(), lambdaBodyCandidate);
-          if (methodRefCandidate instanceof PsiCallExpression) {
-            final PsiCallExpression callExpression = (PsiCallExpression)methodRefCandidate;
+              .canBeMethodReferenceProblem(method.getParameterList().getParameters(), aClass.getBaseClassType(), aClass.getParent(),
+                                           methodReferenceCandidate.myExpression);
+          if (candidate instanceof PsiCallExpression) {
+            final PsiCallExpression callExpression = (PsiCallExpression)candidate;
             final PsiMethod resolveMethod = callExpression.resolveMethod();
             if (resolveMethod != method &&
                 !AnonymousCanBeLambdaInspection.functionalInterfaceMethodReferenced(resolveMethod, aClass, callExpression)) {
@@ -98,11 +99,15 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
                   final PsiElement lBrace = aClass.getLBrace();
                   LOG.assertTrue(lBrace != null);
                   final TextRange rangeInElement = new TextRange(0, aClass.getStartOffsetInParent() + lBrace.getStartOffsetInParent());
-                  ProblemHighlightType highlightType = LambdaCanBeMethodReferenceInspection.checkQualifier(lambdaBodyCandidate) ? ProblemHighlightType.LIKE_UNUSED_SYMBOL
-                                                                                                                                : ProblemHighlightType.INFORMATION;
-                  holder.registerProblem(parent,
-                                         "Anonymous #ref #loc can be replaced with method reference",
-                                         highlightType, rangeInElement, new ReplaceWithMethodRefFix());
+                  ProblemHighlightType type = methodReferenceCandidate.mySafeQualifier && methodReferenceCandidate.myConformsCodeStyle
+                                              ? ProblemHighlightType.LIKE_UNUSED_SYMBOL
+                                              : ProblemHighlightType.INFORMATION;
+                  ProblemDescriptorBase descriptor = new ProblemDescriptorBase(parent, parent,
+                          "Anonymous #ref #loc can be replaced with method reference",
+                                            new LocalQuickFix[]{new ReplaceWithMethodRefFix()},
+                                            type, false, rangeInElement,
+                                            type != ProblemHighlightType.INFORMATION, true);
+                  holder.registerProblem(descriptor);
                 }
               }
             }
@@ -130,8 +135,11 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
 
           final PsiParameter[] parameters = methods[0].getParameterList().getParameters();
           final PsiType functionalInterfaceType = anonymousClass.getBaseClassType();
-          PsiExpression methodRefCandidate = LambdaCanBeMethodReferenceInspection.extractMethodReferenceCandidateExpression(methods[0].getBody(), false);
-          final PsiExpression candidate = LambdaCanBeMethodReferenceInspection.canBeMethodReferenceProblem(parameters, functionalInterfaceType, anonymousClass.getParent(), methodRefCandidate);
+          MethodReferenceCandidate methodRefCandidate =
+            LambdaCanBeMethodReferenceInspection.extractMethodReferenceCandidateExpression(methods[0].getBody());
+          if (methodRefCandidate == null) return;
+          final PsiExpression candidate = LambdaCanBeMethodReferenceInspection
+            .canBeMethodReferenceProblem(parameters, functionalInterfaceType, anonymousClass.getParent(), methodRefCandidate.myExpression);
 
           final String methodRefText = LambdaCanBeMethodReferenceInspection.createMethodReferenceText(candidate, functionalInterfaceType, parameters);
 

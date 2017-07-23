@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +35,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
@@ -97,7 +100,7 @@ public abstract class SelectLocationStep extends WizardStep {
 
   protected void init() {
     final DefaultActionGroup fileSystemActionGroup = createFileSystemActionGroup();
-    myFileSystemToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, fileSystemActionGroup, true);
+    myFileSystemToolBar = ActionManager.getInstance().createActionToolbar("CvsSelectLocation", fileSystemActionGroup, true);
 
     final JTree tree = myFileSystemTree.getTree();
     tree.getSelectionModel().addTreeSelectionListener(myTreeSelectionListener);
@@ -142,7 +145,10 @@ public abstract class SelectLocationStep extends WizardStep {
     myNorthPanel.add(toolbarPanel, BorderLayout.NORTH);
     panel.add(myNorthPanel, BorderLayout.NORTH);
     panel.add(ScrollPaneFactory.createScrollPane(myFileSystemTree.getTree()), BorderLayout.CENTER);
-    panel.add(new JLabel(FileChooserDialogImpl.DRAG_N_DROP_HINT, SwingConstants.CENTER), BorderLayout.SOUTH);
+    JLabel dndLabel = new JLabel(FileChooserDialogImpl.DRAG_N_DROP_HINT, SwingConstants.CENTER);
+    dndLabel.setFont(JBUI.Fonts.miniFont());
+    dndLabel.setForeground(UIUtil.getLabelDisabledForeground());
+    panel.add(dndLabel, BorderLayout.SOUTH);
     myUiUpdater = new MergingUpdateQueue("FileChooserUpdater", 200, false, panel);
     Disposer.register(myFileSystemTree, myUiUpdater);
     new UiNotifyConnector(panel, myUiUpdater);
@@ -237,7 +243,9 @@ public abstract class SelectLocationStep extends WizardStep {
       updatePathFromTree(myFileSystemTree.getSelectedFile(), true);
       myNorthPanel.add(myPathTextFieldWrapper, BorderLayout.SOUTH);
     }
-    myPathTextField.getField().requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(myPathTextField.getField(), true);
+    });
 
     myNorthPanel.revalidate();
     myNorthPanel.repaint();

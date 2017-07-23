@@ -28,6 +28,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.SingleRootFileViewProvider;
 import org.jetbrains.annotations.Nullable;
 
 public class DocumentUndoProvider implements Disposable {
@@ -62,7 +63,7 @@ public class DocumentUndoProvider implements Disposable {
     @Override
     public void beforeDocumentChange(DocumentEvent e) {
       Document document = e.getDocument();
-      if (shouldBeIgnored(document)) return;
+      if (!shouldProcess(document)) return;
 
       UndoManagerImpl undoManager = getUndoManager();
       if (undoManager.isActive() && isUndoable(document) && (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) && 
@@ -74,7 +75,7 @@ public class DocumentUndoProvider implements Disposable {
     @Override
     public void documentChanged(final DocumentEvent e) {
       Document document = e.getDocument();
-      if (shouldBeIgnored(document)) return;
+      if (!shouldProcess(document)) return;
 
       UndoManagerImpl undoManager = getUndoManager();
       if (undoManager.isActive() && isUndoable(document)) {
@@ -85,18 +86,21 @@ public class DocumentUndoProvider implements Disposable {
       }
     }
     
-    private boolean shouldBeIgnored(Document document) {
-      return UndoManagerImpl.isCopy(document) // if we don't ignore copy's events, we will receive notification
-                                              // for the same event twice (from original document too)
-                                              // and undo will work incorrectly
-             || !shouldRecordActions(document);
+    private boolean shouldProcess(Document document) {
+      if (myProject != null && myProject.isDisposed()) return false;
+      return !UndoManagerImpl.isCopy(document) // if we don't ignore copy's events, we will receive notification
+             // for the same event twice (from original document too)
+             // and undo will work incorrectly
+             && shouldRecordActions(document);
     }
 
     private boolean shouldRecordActions(final Document document) {
       if (document.getUserData(UndoConstants.DONT_RECORD_UNDO) == Boolean.TRUE) return false;
 
-      final VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
-      return vFile == null || vFile.getUserData(UndoConstants.DONT_RECORD_UNDO) != Boolean.TRUE;
+      VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
+      if (vFile == null) return true;
+      return vFile.getUserData(SingleRootFileViewProvider.FREE_THREADED) != Boolean.TRUE && 
+             vFile.getUserData(UndoConstants.DONT_RECORD_UNDO) != Boolean.TRUE;
     }
 
     private void registerUndoableAction(DocumentEvent e) {
@@ -109,9 +113,14 @@ public class DocumentUndoProvider implements Disposable {
     }
 
     private boolean isUndoable(Document document) {
-      if (!UndoManagerImpl.isRefresh()) return true;
+      DocumentReference ref = DocumentReferenceManager.getInstance().create(document);
+      VirtualFile file = ref.getFile();
 
-      return getUndoManager().isUndoOrRedoAvailable(DocumentReferenceManager.getInstance().create(document));
+      // Allow undo even from refresh if requested
+      if (file != null && file.getUserData(UndoConstants.FORCE_RECORD_UNDO) == Boolean.TRUE) {
+        return true;
+      }
+      return !UndoManagerImpl.isRefresh() || getUndoManager().isUndoOrRedoAvailable(ref);
     }
   }
 }

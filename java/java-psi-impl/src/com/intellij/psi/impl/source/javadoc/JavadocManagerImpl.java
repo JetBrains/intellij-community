@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public class JavadocManagerImpl implements JavadocManager {
   private final List<JavadocTagInfo> myInfos;
 
   public JavadocManagerImpl(Project project) {
-    myInfos = new ArrayList<JavadocTagInfo>();
+    myInfos = new ArrayList<>();
 
     myInfos.add(new AuthorDocTagInfo());
     myInfos.add(new SimpleDocTagInfo("deprecated", LanguageLevel.JDK_1_3, false, PsiElement.class));
@@ -53,8 +53,9 @@ public class JavadocManagerImpl implements JavadocManager {
     myInfos.add(new SimpleDocTagInfo("inheritDoc", LanguageLevel.JDK_1_4, true, PsiElement.class));
     myInfos.add(new SimpleDocTagInfo("literal", LanguageLevel.JDK_1_5, true, PsiElement.class));
     myInfos.add(new SimpleDocTagInfo("code", LanguageLevel.JDK_1_5, true, PsiElement.class));
+    myInfos.add(new SimpleDocTagInfo("index", LanguageLevel.JDK_1_9, true, PsiElement.class));
 
-    //Not a standard tag, but added by IDEA for inspection suppression
+    // not a standard tag, used by IDEA for suppressing inspections
     myInfos.add(new SimpleDocTagInfo(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME, LanguageLevel.JDK_1_3, false, PsiElement.class));
 
     myInfos.add(new ParamDocTagInfo());
@@ -77,7 +78,7 @@ public class JavadocManagerImpl implements JavadocManager {
   @Override
   @NotNull
   public JavadocTagInfo[] getTagInfos(PsiElement context) {
-    List<JavadocTagInfo> result = new ArrayList<JavadocTagInfo>();
+    List<JavadocTagInfo> result = new ArrayList<>();
 
     for (JavadocTagInfo info : myInfos) {
       if (info.isValidInContext(context)) {

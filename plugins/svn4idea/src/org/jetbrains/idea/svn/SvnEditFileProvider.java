@@ -25,6 +25,8 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+
 /**
  * @author alex
  */
@@ -39,7 +41,7 @@ public class SvnEditFileProvider implements EditFileProvider {
     File[] ioFiles = new File[files.length];
 
     for (int i = 0; i < files.length; i++) {
-      ioFiles[i] = new File(files[i].getPath());
+      ioFiles[i] = virtualToIoFile(files[i]);
 
       PropertyClient client = myVCS.getFactory(ioFiles[i]).createPropertyClient();
       PropertyValue property = client.getProperty(SvnTarget.fromFile(ioFiles[i], SVNRevision.WORKING), SvnPropertyKeys.SVN_NEEDS_LOCK,

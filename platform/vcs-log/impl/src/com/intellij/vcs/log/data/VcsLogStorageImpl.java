@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.Function;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentEnumeratorBase;
@@ -37,7 +38,9 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -51,10 +54,8 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   @NotNull public static final VcsLogStorage EMPTY = new EmptyLogStorage();
 
   public static final int VERSION = 5;
-  private static final int REFS_VERSION = 1;
-  @NotNull private static final String ROOT_STORAGE_KIND = "roots";
-
   public static final int NO_INDEX = -1;
+  private static final int REFS_VERSION = 1;
 
   @NotNull private final PersistentEnumeratorBase<CommitId> myCommitIdEnumerator;
   @NotNull private final PersistentEnumeratorBase<VcsRef> myRefsEnumerator;
@@ -72,15 +73,18 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     String logId = PersistentUtil.calcLogId(project, logProviders);
     MyCommitIdKeyDescriptor commitIdKeyDescriptor = new MyCommitIdKeyDescriptor(roots);
     myCommitIdEnumerator = PersistentUtil.createPersistentEnumerator(commitIdKeyDescriptor, HASHES_STORAGE, logId, VERSION);
-    myRefsEnumerator =
-      PersistentUtil.createPersistentEnumerator(new VcsRefKeyDescriptor(logProviders, commitIdKeyDescriptor), REFS_STORAGE, logId,
-                                                VERSION + REFS_VERSION);
-
-    // cleanup old root storages, to remove after 2016.3 release
-    PersistentUtil
-      .cleanupOldStorageFile(ROOT_STORAGE_KIND, project.getName() + "." + project.getBaseDir().getPath().hashCode());
-
+    myRefsEnumerator = PersistentUtil.createPersistentEnumerator(new VcsRefKeyDescriptor(logProviders, commitIdKeyDescriptor),
+                                                                 REFS_STORAGE, logId, VERSION + REFS_VERSION);
     Disposer.register(parent, this);
+  }
+
+  @NotNull
+  public static Function<Integer, Hash> createHashGetter(@NotNull VcsLogStorage storage) {
+    return commitIndex -> {
+      CommitId commitId = storage.getCommitId(commitIndex);
+      if (commitId == null) return null;
+      return commitId.getHash();
+    };
   }
 
   @Nullable

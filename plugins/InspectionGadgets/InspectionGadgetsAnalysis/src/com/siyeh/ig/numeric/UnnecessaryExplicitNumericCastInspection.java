@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2015 Bas Leijdekkers
+ * Copyright 2011-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      final PsiElement parent = element.getParent();
+      PsiElement parent = element.getParent();
       if (!(parent instanceof PsiTypeCastExpression)) {
         return;
       }
@@ -91,12 +91,17 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
       if (isPrimitiveNumericCastNecessary(typeCastExpression)) {
         return;
       }
+      PsiElement grandParent = parent.getParent();
+      while (grandParent instanceof PsiParenthesizedExpression) {
+        parent = grandParent;
+        grandParent = parent.getParent();
+      }
       final PsiExpression operand = typeCastExpression.getOperand();
       if (operand == null) {
-        typeCastExpression.delete();
+        parent.delete();
       }
       else {
-        typeCastExpression.replace(operand);
+        parent.replace(operand);
       }
     }
   }
@@ -121,6 +126,7 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
       }
       final PsiType operandType = operand.getType();
       if (castType.equals(operandType) || isPrimitiveNumericCastNecessary(expression)) {
+        // equal types is caught by "Redundant type cast" inspection
         return;
       }
       final PsiTypeElement typeElement = expression.getCastType();
@@ -140,7 +146,7 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
       return true;
     }
     final PsiType operandType = operand.getType();
-    if (operandType == null) {
+    if (!(operandType instanceof PsiPrimitiveType)) {
       return true;
     }
     PsiElement parent = expression.getParent();
@@ -162,9 +168,20 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
         }
         if (PsiType.LONG.equals(castType) || PsiType.FLOAT.equals(castType) || PsiType.DOUBLE.equals(castType)) {
           final PsiExpression[] operands = polyadicExpression.getOperands();
-          for (PsiExpression operand1 : operands) {
+          int expressionIndex = -1;
+          for (int i = 0; i < operands.length; i++) {
+            if (expressionIndex == 0 && i > 1) {
+              return true;
+            }
+            final PsiExpression operand1 = operands[i];
             if (PsiTreeUtil.isAncestor(operand1, expression, false)) {
-              continue;
+              if (i > 0) {
+                return true;
+              }
+              else {
+                expressionIndex = i;
+                continue;
+              }
             }
             final PsiType type = operand1.getType();
             if (castType.equals(type)) {
@@ -192,17 +209,8 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
       final PsiType lhsType = variable.getType();
       return !castType.equals(lhsType) || !isLegalAssignmentConversion(operand, lhsType);
     }
-    else if (parent instanceof PsiExpressionList) {
-      final PsiExpressionList expressionList = (PsiExpressionList)parent;
-      final PsiElement grandParent = expressionList.getParent();
-      if (!(grandParent instanceof PsiCallExpression)) {
-        return true;
-      }
-      final PsiCallExpression callExpression = (PsiCallExpression)grandParent;
-      final PsiMethod targetMethod = callExpression.resolveMethod();
-      if (targetMethod == null || targetMethod != MethodCallUtils.findMethodWithReplacedArgument(callExpression, expression, operand)) {
-        return true;
-      }
+    else if (MethodCallUtils.isNecessaryForSurroundingMethodCall(expression, operand)) {
+      return true;
     }
     final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false);
     return !castType.equals(expectedType) || !isLegalWideningConversion(operand, castType);

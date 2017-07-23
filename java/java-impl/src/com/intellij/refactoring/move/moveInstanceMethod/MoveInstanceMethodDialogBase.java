@@ -42,7 +42,7 @@ import java.awt.*;
  */
 public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
   protected final PsiMethod myMethod;
-  protected final PsiVariable[] myVariables;
+  protected final Object[] myVariables;
 
   public JComponent getPreferredFocusedComponent() {
     return myList;
@@ -52,7 +52,7 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
   protected JavaVisibilityPanel myVisibilityPanel;
   protected final String myRefactoringName;
 
-  public MoveInstanceMethodDialogBase(PsiMethod method, PsiVariable[] variables, String refactoringName) {
+  public MoveInstanceMethodDialogBase(PsiMethod method, Object[] variables, String refactoringName) {
     super(method.getProject(), true);
     myMethod = method;
     myVariables = variables;
@@ -142,12 +142,17 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
   private static class MyListCellRenderer extends DefaultListCellRenderer {
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      final PsiVariable psiVariable = (PsiVariable)value;
-      final String text = PsiFormatUtil.formatVariable(psiVariable,
-                                                       PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE,
-                                                       PsiSubstitutor.EMPTY);
-      setIcon(psiVariable.getIcon(0));
-      setText(text);
+      if (value instanceof PsiVariable) {
+        final PsiVariable psiVariable = (PsiVariable)value;
+        final String text = PsiFormatUtil.formatVariable(psiVariable,
+                                                         PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE,
+                                                         PsiSubstitutor.EMPTY);
+        setIcon(psiVariable.getIcon(0));
+        setText(text);
+      }
+      else if (value instanceof String) {
+        setText((String)value);
+      }
       return this;
     }
   }

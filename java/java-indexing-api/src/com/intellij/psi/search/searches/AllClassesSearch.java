@@ -39,7 +39,7 @@ public class AllClassesSearch extends ExtensibleQueryFactory<PsiClass, AllClasse
     private final Condition<String> myShortNameCondition;
 
     public SearchParameters(@NotNull SearchScope scope, @NotNull Project project) {
-      this(scope, project, Conditions.<String>alwaysTrue());
+      this(scope, project, Conditions.alwaysTrue());
     }
 
     public SearchParameters(@NotNull SearchScope scope, @NotNull Project project, @NotNull Condition<String> shortNameCondition) {

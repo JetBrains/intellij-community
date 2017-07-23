@@ -21,9 +21,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.CommonProcessors;
@@ -51,11 +51,12 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     return model.processRangeHighlightersOverlappingWith(startOffset, endOffset, marker -> {
+      ProgressManager.checkCanceled();
       Object tt = marker.getErrorStripeTooltip();
       if (!(tt instanceof HighlightInfo)) return true;
       HighlightInfo info = (HighlightInfo)tt;
       return minSeverity != null && severityRegistrar.compare(info.getSeverity(), minSeverity) < 0
-             || info.highlighter == null
+             || info.getHighlighter() == null
              || processor.process(info);
     });
   }
@@ -75,14 +76,14 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
       if (!(tt instanceof HighlightInfo)) return true;
       HighlightInfo info = (HighlightInfo)tt;
       return minSeverity != null && severityRegistrar.compare(info.getSeverity(), minSeverity) < 0
-             || info.highlighter == null
+             || info.getHighlighter() == null
              || processor.process(info);
     });
   }
 
   static boolean hasErrors(@NotNull Project project, @NotNull Document document) {
     return !processHighlights(document, project, HighlightSeverity.ERROR, 0, document.getTextLength(),
-                              CommonProcessors.<HighlightInfo>alwaysFalse());
+                              CommonProcessors.alwaysFalse());
   }
 
   @NotNull

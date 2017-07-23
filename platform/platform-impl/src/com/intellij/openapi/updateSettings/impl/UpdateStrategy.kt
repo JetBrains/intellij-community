@@ -37,6 +37,7 @@ class UpdateStrategy(private val currentBuild: BuildNumber, private val updates:
 
     val result = product.channels.asSequence()
       .filter { ch -> ch.status >= selectedChannel }                                      // filters out inapplicable channels
+      .sortedBy { ch -> ch.status }                                                       // reorders channels (EAPs first)
       .flatMap { ch -> ch.builds.asSequence().map { build -> build to ch } }              // maps into a sequence of <build, channel> pairs
       .filter { p -> isApplicable(p.first, ignoredBuilds) }                               // filters out inapplicable builds
       .maxWith(Comparator { p1, p2 -> compareBuilds(p1.first.number, p2.first.number) })  // a build with the max number, preferring the same baseline

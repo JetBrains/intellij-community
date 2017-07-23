@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package com.intellij.execution;
 
-import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
@@ -30,52 +30,54 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class RunManagerEx extends RunManager {
-  public static RunManagerEx getInstanceEx(final Project project) {
-    return (RunManagerEx)project.getComponent(RunManager.class);
+  @NotNull
+  public static RunManagerEx getInstanceEx(@NotNull Project project) {
+    return (RunManagerEx)RunManager.getInstance(project);
   }
 
-  //public abstract boolean isTemporary(@NotNull RunnerAndConfigurationSettings configuration);
-
   /**
-   * @deprecated use {@link #setSelectedConfiguration(RunnerAndConfigurationSettings)} instead
+   * @deprecated Use {@link #setSelectedConfiguration(RunnerAndConfigurationSettings)} instead
    */
   @Deprecated
-  public void setActiveConfiguration(@Nullable RunnerAndConfigurationSettings configuration) {
+  public final void setActiveConfiguration(@Nullable RunnerAndConfigurationSettings configuration) {
     setSelectedConfiguration(configuration);
   }
 
-  public abstract void setTemporaryConfiguration(@Nullable RunnerAndConfigurationSettings tempConfiguration);
-
+  @NotNull
   public abstract RunManagerConfig getConfig();
 
-  /**
-   * @deprecated use {@link RunManager#createRunConfiguration(String, ConfigurationFactory)} instead
-   * @param name
-   * @param type
-   * @return
-   */
-  @NotNull
-  public abstract RunnerAndConfigurationSettings createConfiguration(String name, ConfigurationFactory type);
+  @Deprecated
+  public final void addConfiguration(RunnerAndConfigurationSettings settings, boolean isShared, List<BeforeRunTask> tasks, boolean addTemplateTasksIfAbsent) {
+    ((RunnerAndConfigurationSettingsImpl)settings).setShared(isShared);
+    addConfiguration(settings, tasks, addTemplateTasksIfAbsent);
+  }
 
-  public abstract void addConfiguration(RunnerAndConfigurationSettings settings,
-                                        boolean isShared,
-                                        List<BeforeRunTask> tasks,
-                                        boolean addTemplateTasksIfAbsent);
+  @Deprecated
+  public void addConfiguration(@NotNull RunnerAndConfigurationSettings settings, @NotNull List<BeforeRunTask> tasks, boolean addTemplateTasksIfAbsent) {
+    setBeforeRunTasks(settings.getConfiguration(), tasks, addTemplateTasksIfAbsent);
+    addConfiguration(settings);
+  }
 
-  public abstract boolean isConfigurationShared(RunnerAndConfigurationSettings settings);
-
-  @NotNull
-  public abstract List<BeforeRunTask> getBeforeRunTasks(RunConfiguration settings);
-
-  public abstract void setBeforeRunTasks(RunConfiguration runConfiguration, List<BeforeRunTask> tasks, boolean addEnabledTemplateTasksIfAbsent);
+  @SuppressWarnings("MethodMayBeStatic")
+  @Deprecated
+  public final boolean isConfigurationShared(@NotNull RunnerAndConfigurationSettings settings) {
+    return settings.isShared();
+  }
 
   @NotNull
-  public abstract <T extends BeforeRunTask> List<T> getBeforeRunTasks(@NotNull RunConfiguration settings, Key<T> taskProviderID);
+  public abstract List<BeforeRunTask> getBeforeRunTasks(@NotNull RunConfiguration configuration);
+
+  public void setBeforeRunTasks(@NotNull RunConfiguration configuration, @NotNull List<BeforeRunTask> tasks) {
+    setBeforeRunTasks(configuration, tasks, false);
+  }
+
+  public abstract void setBeforeRunTasks(@NotNull RunConfiguration configuration, @NotNull List<BeforeRunTask> tasks, boolean addEnabledTemplateTasksIfAbsent);
 
   @NotNull
-  public abstract <T extends BeforeRunTask> List<T> getBeforeRunTasks(Key<T> taskProviderID);
+  public abstract <T extends BeforeRunTask> List<T> getBeforeRunTasks(@NotNull RunConfiguration settings, Key<T> taskProviderId);
 
-  public abstract RunnerAndConfigurationSettings findConfigurationByName(@Nullable final String name);
+  @NotNull
+  public abstract <T extends BeforeRunTask> List<T> getBeforeRunTasks(Key<T> taskProviderId);
 
   public Icon getConfigurationIcon(@NotNull RunnerAndConfigurationSettings settings) {
     return getConfigurationIcon(settings, false);
@@ -83,13 +85,21 @@ public abstract class RunManagerEx extends RunManager {
 
   public abstract Icon getConfigurationIcon(@NotNull RunnerAndConfigurationSettings settings, boolean withLiveIndicator);
 
+  /**
+   * @deprecated Use {@link #getAllSettings()}
+   */
   @NotNull
-  public abstract Collection<RunnerAndConfigurationSettings> getSortedConfigurations();
+  @Deprecated
+  public final Collection<RunnerAndConfigurationSettings> getSortedConfigurations() {
+    return getAllSettings();
+  }
 
-  public abstract void removeConfiguration(@Nullable RunnerAndConfigurationSettings settings);
-
-  public abstract void addRunManagerListener(RunManagerListener listener);
-  public abstract void removeRunManagerListener(RunManagerListener listener);
+  /**
+   * @deprecated Use {@link RunManagerListener#TOPIC} instead.
+   */
+  @Deprecated
+  public void addRunManagerListener(@NotNull RunManagerListener listener) {
+  }
 
   @NotNull
   public abstract Map<String, List<RunnerAndConfigurationSettings>> getStructure(@NotNull ConfigurationType type);

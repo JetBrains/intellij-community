@@ -38,11 +38,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: Irina.Chernushina
- * Date: 8/5/11
- * Time: 8:36 PM
- */
 public class ExceptionWorker {
   @NonNls private static final String AT = "at";
   private static final String AT_PREFIX = AT + " ";
@@ -61,24 +56,22 @@ public class ExceptionWorker {
     myCache = cache;
   }
 
-  public void execute(final String line, final int textEndOffset) {
+  public Filter.Result execute(final String line, final int textEndOffset) {
     myResult = null;
     myInfo = parseExceptionLine(line);
     if (myInfo == null) {
-      return;
+      return null;
     }
 
     myMethod = myInfo.getSecond().substring(line);
 
-    final int lparenthIndex = myInfo.third.getStartOffset();
-    final int rparenthIndex = myInfo.third.getEndOffset();
-    final String fileAndLine = line.substring(lparenthIndex + 1, rparenthIndex).trim();
+    final String fileAndLine = myInfo.third.substring(line).trim();
 
     final int colonIndex = fileAndLine.lastIndexOf(':');
-    if (colonIndex < 0) return;
+    if (colonIndex < 0) return null;
 
     final int lineNumber = getLineNumber(fileAndLine.substring(colonIndex + 1));
-    if (lineNumber < 0) return;
+    if (lineNumber < 0) return null;
 
     Pair<PsiClass[], PsiFile[]> pair = myCache.resolveClass(myInfo.first.substring(line).trim());
     myClasses = pair.first;
@@ -88,7 +81,7 @@ public class ExceptionWorker {
       //todo[nik] it would be better to use FilenameIndex here to honor the scope by it isn't accessible in Open API
       myFiles = PsiShortNamesCache.getInstance(myProject).getFilesByName(fileAndLine.substring(0, colonIndex).trim());
     }
-    if (myFiles.length == 0) return;
+    if (myFiles.length == 0) return null;
 
     /*
      IDEADEV-4976: Some scramblers put something like SourceFile mock instead of real class name.
@@ -100,8 +93,8 @@ public class ExceptionWorker {
 
     final int textStartOffset = textEndOffset - line.length();
 
-    final int highlightStartOffset = textStartOffset + lparenthIndex + 1;
-    final int highlightEndOffset = textStartOffset + rparenthIndex;
+    final int highlightStartOffset = textStartOffset + myInfo.third.getStartOffset();
+    final int highlightEndOffset = textStartOffset + myInfo.third.getEndOffset();
 
     ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     List<VirtualFile> virtualFilesInLibraries = new ArrayList<>();
@@ -130,7 +123,9 @@ public class ExceptionWorker {
       virtualFiles = virtualFilesInContent;
     }
     HyperlinkInfo linkInfo = HyperlinkInfoFactory.getInstance().createMultipleFilesHyperlinkInfo(virtualFiles, lineNumber - 1, myProject);
-    myResult = new Filter.Result(highlightStartOffset, highlightEndOffset, linkInfo, attributes);
+    Filter.Result result = new Filter.Result(highlightStartOffset, highlightEndOffset, linkInfo, attributes);
+    myResult = result;
+    return result;
   }
 
   private static int getLineNumber(String lineString) {
@@ -167,28 +162,32 @@ public class ExceptionWorker {
     return myInfo;
   }
 
-  //todo [roma] regexp
+  private static int findAtPrefix(String line) {
+    if (line.startsWith(AT_PREFIX)) return 0;
+
+    int startIdx = line.indexOf(STANDALONE_AT);
+    return startIdx < 0 ? line.indexOf(AT_PREFIX) : startIdx;
+  }
+
+  private static int findFirstRParenAfterDigit(String line) {
+    int rParenIdx = -1;
+    int rParenCandidate = line.lastIndexOf(')');
+    //Looking for minimal position for ')' after a digit
+    while (rParenCandidate > 0) {
+      if (Character.isDigit(line.charAt(rParenCandidate - 1))) {
+        rParenIdx = rParenCandidate;
+      }
+      rParenCandidate = line.lastIndexOf(')', rParenCandidate - 1);
+    }
+    return rParenIdx;
+  }
+
   @Nullable
-  static Trinity<TextRange, TextRange, TextRange> parseExceptionLine(final String line) {
-    int startIdx;
-    if (line.startsWith(AT_PREFIX)){
-      startIdx = 0;
-    }
-    else{
-      startIdx = line.indexOf(STANDALONE_AT);
-      if (startIdx < 0) {
-        startIdx = line.indexOf(AT_PREFIX);
-      }
+  public static Trinity<TextRange, TextRange, TextRange> parseExceptionLine(final String line) {
+    int startIdx = findAtPrefix(line);
 
-      if (startIdx < 0) {
-        startIdx = -1;
-      }
-    }
-
-    int rParenIdx = line.lastIndexOf(')');
-    while (rParenIdx > 0 && !Character.isDigit(line.charAt(rParenIdx-1))) {
-      rParenIdx = line.lastIndexOf(')', rParenIdx - 1);
-    }
+    TextRange yourKitLink = startIdx < 0 ? getYourKitLinkRange(line) : null;
+    int rParenIdx = yourKitLink != null ? yourKitLink.getEndOffset() - 2 : findFirstRParenAfterDigit(line);
     if (rParenIdx < 0) return null;
 
     final int lParenIdx = line.lastIndexOf('(', rParenIdx);
@@ -196,18 +195,34 @@ public class ExceptionWorker {
     
     final int dotIdx = line.lastIndexOf('.', lParenIdx);
     if (dotIdx < 0 || dotIdx < startIdx) return null;
+    int moduleIdx = line.indexOf('/');
+    int classNameIdx = moduleIdx > -1 && moduleIdx < lParenIdx && moduleIdx < dotIdx ? moduleIdx + 1 : startIdx + 1 + (startIdx >= 0 ? AT.length() : 0);
 
     // class, method, link
-    return Trinity.create(new TextRange(startIdx + 1 + (startIdx >= 0 ? AT.length() : 0), handleSpaces(line, dotIdx, -1, true)),
-                          new TextRange(handleSpaces(line, dotIdx + 1, 1, true), handleSpaces(line, lParenIdx + 1, -1, true)),
-                          new TextRange(lParenIdx, rParenIdx));
+    return Trinity.create(new TextRange(classNameIdx, handleSpaces(line, dotIdx, -1)),
+                          new TextRange(handleSpaces(line, dotIdx + 1, 1), handleSpaces(line, lParenIdx, -1)),
+                          yourKitLink != null ? yourKitLink : new TextRange(lParenIdx + 1, rParenIdx));
   }
 
-  private static int handleSpaces(String line, int pos, int delta, boolean skip) {
+  @Nullable
+  private static TextRange getYourKitLinkRange(String line) {
+    int lineEnd = line.length() - 1;
+    if (lineEnd > 0 && line.charAt(lineEnd) == '\n') lineEnd--;
+    if (lineEnd > 0 && Character.isDigit(line.charAt(lineEnd))) {
+      int spaceIndex = line.lastIndexOf(' ');
+      int rParenIdx = line.lastIndexOf(')');
+      if (rParenIdx > 0 && spaceIndex == rParenIdx + 1) {
+        return new TextRange(spaceIndex + 1, lineEnd + 1);
+      }
+    }
+    return null;
+  }
+
+  private static int handleSpaces(String line, int pos, int delta) {
     int len = line.length();
     while (pos >= 0 && pos < len) {
       final char c = line.charAt(pos);
-      if (skip != Character.isSpaceChar(c)) break;
+      if (!Character.isSpaceChar(c)) break;
       pos += delta;
     }
     return pos;

@@ -1,0 +1,14 @@
+{
+  "properties": {
+    "withPattern": {
+      "pattern": "^[]$"
+    },
+    "everythingFine": {
+      "pattern": "^[a]$"
+    }
+  },
+  "patternProperties": {
+    "p[0-9": {},
+    "b[0-7": {}
+  }
+}

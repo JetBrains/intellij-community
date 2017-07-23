@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Aug 23, 2006
- * Time: 3:56:42 PM
- */
 package com.intellij.formatting;
 
 import com.intellij.psi.PsiElement;

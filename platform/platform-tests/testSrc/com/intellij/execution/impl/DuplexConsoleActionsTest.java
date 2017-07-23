@@ -16,6 +16,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.console.DuplexConsoleView;
+import com.intellij.execution.process.NopProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.Disposable;
@@ -39,11 +40,7 @@ public class DuplexConsoleActionsTest extends LightPlatformTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myDisposable = new Disposable() {
-      @Override
-      public void dispose() {
-      }
-    };
+    myDisposable = Disposer.newDisposable();
   }
 
   @Override
@@ -52,6 +49,7 @@ public class DuplexConsoleActionsTest extends LightPlatformTestCase {
       Disposer.dispose(myDisposable);
     }
     finally {
+      myDisposable = null;
       //noinspection ThrowFromFinallyBlock
       super.tearDown();
     }
@@ -99,7 +97,9 @@ public class DuplexConsoleActionsTest extends LightPlatformTestCase {
     console2.flushDeferredText();
     
     clearAction.actionPerformed(AnActionEvent.createFromAnAction(clearAction, null, ActionPlaces.EDITOR_TOOLBAR, DataContext.EMPTY_CONTEXT));
-    
+    console1.waitAllRequests();
+    console2.waitAllRequests();
+
     assertEquals(0, console1.getContentSize());
     assertEquals(0, console2.getContentSize());
   }
@@ -129,7 +129,7 @@ public class DuplexConsoleActionsTest extends LightPlatformTestCase {
       }
     };
     console.getComponent();
-    ProcessHandler processHandler = new ConsoleViewImplTest.MyProcessHandler();
+    ProcessHandler processHandler = new NopProcessHandler();
     processHandler.startNotify();
     console.attachToProcess(processHandler);
     return console;

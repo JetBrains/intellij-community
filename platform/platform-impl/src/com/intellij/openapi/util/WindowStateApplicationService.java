@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,24 +31,24 @@ import java.awt.*;
 )
 final class WindowStateApplicationService extends WindowStateServiceImpl {
   @Override
-  Point getDefaultLocationFor(Object object, @NotNull String key) {
+  Point getDefaultLocationFor(@NotNull String key) {
     //  backward compatibility when this service is used instead of DimensionService
     return DimensionService.getInstance().getLocation(key);
   }
 
   @Override
-  Dimension getDefaultSizeFor(Object object, @NotNull String key) {
+  Dimension getDefaultSizeFor(@NotNull String key) {
     //  backward compatibility when this service is used instead of DimensionService
     return DimensionService.getInstance().getSize(key);
   }
 
   @Override
-  Rectangle getDefaultBoundsFor(Object object, @NotNull String key) {
-    Point location = getDefaultLocationFor(object, key);
+  Rectangle getDefaultBoundsFor(@NotNull String key) {
+    Point location = getDefaultLocationFor(key);
     if (location == null) {
       return null;
     }
-    Dimension size = getDefaultSizeFor(object, key);
+    Dimension size = getDefaultSizeFor(key);
     if (size == null) {
       return null;
     }

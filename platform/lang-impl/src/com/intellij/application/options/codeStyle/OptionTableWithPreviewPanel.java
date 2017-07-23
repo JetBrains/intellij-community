@@ -16,6 +16,7 @@
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
@@ -50,6 +51,7 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.List;
@@ -57,7 +59,12 @@ import java.util.List;
 /**
  * @author max
  */
+@SuppressWarnings("Duplicates")
 public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCodeStylePanel {
+  private static final Logger LOG = Logger.getInstance(OptionTableWithPreviewPanel.class);
+
+  private final static KeyStroke ENTER_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false);
+
   protected TreeTable myTreeTable;
   private final JPanel myPanel = new JPanel();
 
@@ -449,6 +456,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
         for (int i = 0; i < values.length; i++) {
           if (values[i] == value) return options[i];
         }
+        LOG.error("Invalid option value " + value + " for " + field.getName());
       }
       catch (IllegalAccessException ignore) {
       }
@@ -464,6 +472,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
             return;
           }
         }
+        LOG.error("Invalid option value " + value + " for " + field.getName());
       }
       catch (IllegalAccessException ignore) {
       }
@@ -661,7 +670,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
 
     public boolean isModified(final CodeStyleSettings settings) {
-      return !myValue.equals(myKey.getValue(settings));
+      return myValue != null && !myValue.equals(myKey.getValue(settings));
     }
 
     public void apply(final CodeStyleSettings settings) {
@@ -846,6 +855,12 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
       myOptionsEditor.addActionListener(itemChoosen);
       myBooleanEditor.putClientProperty("JComponent.sizeVariant", "small");
       myOptionsEditor.putClientProperty("JComponent.sizeVariant", "small");
+      myIntOptionsEditor.registerKeyboardAction(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          stopCellEditing();
+        }
+      }, ENTER_KEY_STROKE, JComponent.WHEN_FOCUSED);
     }
 
     @Override

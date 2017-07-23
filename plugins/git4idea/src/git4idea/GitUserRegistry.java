@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
@@ -101,18 +100,11 @@ public class GitUserRegistry implements Disposable, VcsListener {
       return;
     }
     final VirtualFile[] roots = myVcsManager.getRootsUnderVcs(vcs);
-    final Collection<VirtualFile> rootsToCheck = ContainerUtil.filter(roots, new Condition<VirtualFile>() {
-      @Override
-      public boolean value(VirtualFile root) {
-        return getUser(root) == null;
-      }
-    });
+    final Collection<VirtualFile> rootsToCheck = ContainerUtil.filter(roots, root -> getUser(root) == null);
     if (!rootsToCheck.isEmpty()) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        public void run() {
-          for (VirtualFile root : rootsToCheck) {
-            getOrReadUser(root);
-          }
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        for (VirtualFile root : rootsToCheck) {
+          getOrReadUser(root);
         }
       });
     }

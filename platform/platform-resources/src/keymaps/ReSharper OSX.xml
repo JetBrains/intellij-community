@@ -153,14 +153,8 @@
   <action id="TypeHierarchy">
     <keyboard-shortcut first-keystroke="control E" second-keystroke="H"/>
   </action>
-  <action id="TypeHierarchyBase.BaseOnThisType">
-    <keyboard-shortcut first-keystroke="meta UP"/>
-  </action>
   <action id="Unscramble">
     <keyboard-shortcut first-keystroke="control E" second-keystroke="T"/>
-  </action>
-  <action id="UsageView.ShowRecentFindUsages">
-    <keyboard-shortcut first-keystroke="control COMMA"/>
   </action>
   <action id="Vcs.ShowMessageHistory">
     <keyboard-shortcut first-keystroke="control M"/>
@@ -169,7 +163,9 @@
   <action id="context.load"/>
   <action id="org.jetbrains.plugins.ruby.console.LoadInIrbConsoleAction"/>
   <action id="tasks.switch"/>
-  <action id="tasks.switch.toolbar"/>
+  <action id="Git.Reword.Commit">
+    <keyboard-shortcut first-keystroke="control R" second-keystroke="R"/>
+  </action>
 </keymap>
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,24 @@
 package org.intellij.lang.regexp.intention;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionId;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -45,8 +47,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.intellij.lang.regexp.RegExpLanguage;
-import org.intellij.lang.regexp.RegExpModifierProvider;
+import org.intellij.lang.regexp.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -65,13 +66,12 @@ public class CheckRegExpForm {
 
   private final PsiFile myRegexpFile;
 
-  private EditorTextField mySampleText; //TODO[kb]: make it multiline
+  private EditorTextField mySampleText;
 
   private EditorTextField myRegExp;
   private JPanel myRootPanel;
   private JBLabel myMessage;
   private Project myProject;
-
 
   public CheckRegExpForm(@NotNull PsiFile regexpFile) {
     myRegexpFile = regexpFile;
@@ -81,7 +81,16 @@ public class CheckRegExpForm {
     myProject = myRegexpFile.getProject();
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(myRegexpFile);
 
-    myRegExp = new EditorTextField(document, myProject, RegExpLanguage.INSTANCE.getAssociatedFileType());
+    final Language language = myRegexpFile.getLanguage();
+    final LanguageFileType fileType;
+    if (language instanceof RegExpLanguage) {
+      fileType = RegExpLanguage.INSTANCE.getAssociatedFileType();
+    }
+    else {
+      // for correct syntax highlighting
+      fileType = new RegExpFileType(language);
+    }
+    myRegExp = new EditorTextField(document, myProject, fileType);
     final String sampleText = PropertiesComponent.getInstance(myProject).getValue(LAST_EDITED_REGEXP, "Sample Text");
     mySampleText = new EditorTextField(sampleText, myProject, PlainTextFileType.INSTANCE) {
       @Override
@@ -96,6 +105,7 @@ public class CheckRegExpForm {
 
     myRootPanel = new JPanel(new BorderLayout()) {
       Disposable disposable;
+      Alarm updater;
 
       @Override
       public void addNotify() {
@@ -111,21 +121,29 @@ public class CheckRegExpForm {
           }
         }.registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), mySampleText);
 
-        final Alarm updater = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable);
-        DocumentAdapter documentListener = new DocumentAdapter() {
+        updater = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable);
+        DocumentListener documentListener = new DocumentListener() {
           @Override
           public void documentChanged(DocumentEvent e) {
-            updater.cancelAllRequests();
-            if (!updater.isDisposed()) {
-              updater.addRequest(CheckRegExpForm.this::updateBalloon, 200);
-            }
+            update();
           }
         };
         myRegExp.addDocumentListener(documentListener);
         mySampleText.addDocumentListener(documentListener);
 
-        updateBalloon();
+        update();
         mySampleText.selectAll();
+      }
+
+      public void update() {
+        final TransactionId transactionId = TransactionGuard.getInstance().getContextTransaction();
+        updater.cancelAllRequests();
+        if (!updater.isDisposed()) {
+          updater.addRequest(() -> {
+            final RegExpMatchResult result = isMatchingText(myRegexpFile, mySampleText.getText());
+            TransactionGuard.getInstance().submitTransaction(myProject, transactionId, () -> setBalloonState(result));
+          }, 200);
+        }
       }
 
       @Override
@@ -138,6 +156,27 @@ public class CheckRegExpForm {
     myRootPanel.setBorder(JBUI.Borders.empty(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP));
   }
 
+  void setBalloonState(RegExpMatchResult result) {
+    mySampleText.setBackground(result == RegExpMatchResult.MATCHES ? BACKGROUND_COLOR_MATCH : BACKGROUND_COLOR_NOMATCH);
+    switch (result) {
+      case MATCHES:
+        myMessage.setText("Matches!");
+        break;
+      case NO_MATCH:
+        myMessage.setText("No match");
+        break;
+      case TIMEOUT:
+        myMessage.setText("Pattern is too complex");
+        break;
+      case BAD_REGEXP:
+        myMessage.setText("Bad pattern");
+        break;
+    }
+    myRootPanel.revalidate();
+    Balloon balloon = JBPopupFactory.getInstance().getParentBalloonFor(myRootPanel);
+    if (balloon != null && !balloon.isDisposed()) balloon.revalidate();
+  }
+
   @NotNull
   public JComponent getPreferredFocusedComponent() {
     return mySampleText;
@@ -148,50 +187,51 @@ public class CheckRegExpForm {
     return myRootPanel;
   }
 
-  private void updateBalloon() {
-    final Boolean correct = isMatchingText(myRegexpFile, mySampleText.getText());
-
-    ApplicationManager.getApplication().invokeLater(() -> {
-      mySampleText.setBackground(correct != null && correct ? BACKGROUND_COLOR_MATCH : BACKGROUND_COLOR_NOMATCH);
-      myMessage.setText(correct == null ? "Pattern is too complex" : correct ? "Matches!" : "No match");
-      myRootPanel.revalidate();
-      Balloon balloon = JBPopupFactory.getInstance().getParentBalloonFor(myRootPanel);
-      if (balloon != null && !balloon.isDisposed()) balloon.revalidate();
-    });
-  }
-
   @TestOnly
   public static boolean isMatchingTextTest(@NotNull PsiFile regexpFile, @NotNull String sampleText) {
-    Boolean result = isMatchingText(regexpFile, sampleText);
-    return result != null && result;
+    final RegExpMatchResult result = isMatchingText(regexpFile, sampleText);
+    return result != null && result == RegExpMatchResult.MATCHES;
   }
-
-  private static Boolean isMatchingText(@NotNull final PsiFile regexpFile, @NotNull String sampleText) {
+  static RegExpMatchResult isMatchingText(@NotNull final PsiFile regexpFile, @NotNull String sampleText) {
     final String regExp = regexpFile.getText();
 
-    Integer patternFlags = ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
-      @Override
-      public Integer compute() {
-        PsiLanguageInjectionHost host = InjectedLanguageUtil.findInjectionHost(regexpFile);
-        int flags = 0;
+    final Language regexpFileLanguage = regexpFile.getLanguage();
+    final RegExpMatcherProvider matcherProvider = RegExpMatcherProvider.EP.forLanguage(regexpFileLanguage);
+    if (matcherProvider != null) {
+      final RegExpMatchResult result = ReadAction.compute(() -> {
+        final PsiLanguageInjectionHost host = InjectedLanguageUtil.findInjectionHost(regexpFile);
         if (host != null) {
-          for (RegExpModifierProvider provider : RegExpModifierProvider.EP.allForLanguage(host.getLanguage())) {
-            flags = provider.getFlags(host, regexpFile);
-            if (flags > 0) break;
-          }
+          return matcherProvider.matches(regExp, regexpFile, host, sampleText, 1000L);
         }
-        return flags;
+        return null;
+      });
+      if (result != null) {
+        return result;
       }
+    }
+
+    final Integer patternFlags = ReadAction.compute(() -> {
+      final PsiLanguageInjectionHost host = InjectedLanguageUtil.findInjectionHost(regexpFile);
+      int flags = 0;
+      if (host != null) {
+        for (RegExpModifierProvider provider : RegExpModifierProvider.EP.allForLanguage(host.getLanguage())) {
+          flags = provider.getFlags(host, regexpFile);
+          if (flags > 0) break;
+        }
+      }
+      return flags;
     });
 
     try {
       //noinspection MagicConstant
-      return Pattern.compile(regExp, patternFlags).matcher(StringUtil.newBombedCharSequence(sampleText, 1000)).matches();
+      return Pattern.compile(regExp, patternFlags).matcher(StringUtil.newBombedCharSequence(sampleText, 1000)).matches()
+             ? RegExpMatchResult.MATCHES
+             : RegExpMatchResult.NO_MATCH;
     } catch (ProcessCanceledException pc) {
-      return null;
+      return RegExpMatchResult.TIMEOUT;
     }
     catch (Exception ignore) {}
 
-    return false;
+    return RegExpMatchResult.BAD_REGEXP;
   }
 }

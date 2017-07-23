@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 30.11.2006
- * Time: 19:39:02
- */
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.application.ModalityState;

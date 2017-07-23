@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,6 +133,12 @@ public class OffsetsElementSignatureProvider extends AbstractElementSignaturePro
     }
     while (range != null && range.getStartOffset() == start && range.getEndOffset() < end) {
       element = element.getParent();
+      if (element == null) {
+        if (processingInfoStorage != null) {
+          processingInfoStorage.append("Reached top of PSI tree");
+        }
+        return null;
+      }
       range = element.getTextRange();
       if (processingInfoStorage != null) {
         processingInfoStorage.append(String.format("Expanding element to '%s' and range to '%s'%n", element, range));

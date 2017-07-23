@@ -41,7 +41,7 @@ final class AutomakeCompileContext extends UserDataHolderBase implements Compile
   private final EmptyProgressIndicator myIndicator;
   private final boolean myAnnotationProcessingEnabled;
 
-  public AutomakeCompileContext(Project project) {
+  AutomakeCompileContext(Project project) {
     myProject = project;
     myScope = new ProjectCompileScope(project);
     myMessages = new MessagesContainer(project);
@@ -74,22 +74,29 @@ final class AutomakeCompileContext extends UserDataHolderBase implements Compile
     return true;
   }
 
-  public void addMessage(CompilerMessageCategory category, String message, @Nullable String url, int lineNum, int columnNum) {
+  @Override
+  public void addMessage(@NotNull CompilerMessageCategory category, String message, @Nullable String url, int lineNum, int columnNum) {
     addMessage(category, message, url, lineNum, columnNum, null);
   }
 
   @Override
-  public void addMessage(CompilerMessageCategory category, String message, @Nullable String url, int lineNum, int columnNum, Navigatable navigatable) {
+  public void addMessage(@NotNull CompilerMessageCategory category, String message, @Nullable String url, int lineNum, int columnNum, Navigatable navigatable) {
     createAndAddMessage(category, message, url, lineNum, columnNum, navigatable);
   }
 
   @Override
-  public CompilerMessage[] getMessages(CompilerMessageCategory category) {
+  @NotNull 
+  public CompilerMessage[] getMessages(@NotNull CompilerMessageCategory category) {
     return myMessages.getMessages(category).toArray(CompilerMessage.EMPTY_ARRAY);
   }
 
   @Nullable
-  public CompilerMessage createAndAddMessage(CompilerMessageCategory category, String message, @Nullable String url, int lineNum, int columnNum, Navigatable navigatable) {
+  CompilerMessage createAndAddMessage(CompilerMessageCategory category,
+                                      String message,
+                                      @Nullable String url,
+                                      int lineNum,
+                                      int columnNum,
+                                      Navigatable navigatable) {
     return myMessages.addMessage(category, message, url, lineNum, columnNum, navigatable);
   }
 
@@ -120,14 +127,16 @@ final class AutomakeCompileContext extends UserDataHolderBase implements Compile
   }
 
   @Override
-  public Module getModuleByFile(VirtualFile file) {
+  public Module getModuleByFile(@NotNull VirtualFile file) {
     return ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(file);
   }
 
-  public VirtualFile getModuleOutputDirectory(final Module module) {
+  @Override
+  public VirtualFile getModuleOutputDirectory(@NotNull final Module module) {
     return CompilerPaths.getModuleOutputDirectory(module, false);
   }
 
+  @Override
   public VirtualFile getModuleOutputDirectoryForTests(final Module module) {
     return CompilerPaths.getModuleOutputDirectory(module, true);
   }

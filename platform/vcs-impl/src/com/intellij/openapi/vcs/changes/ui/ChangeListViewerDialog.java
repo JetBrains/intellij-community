@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 20.07.2006
- * Time: 21:07:50
- */
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.CommonBundle;
@@ -44,7 +38,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -70,7 +63,6 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
   // do not related to local data/changes etc
   private final boolean myInAir;
   private Change[] myChanges;
-  private NotNullFunction<Change, Change> myConvertor;
   private JScrollPane commitMessageScroll;
   private VirtualFile myToSelect;
 
@@ -143,10 +135,6 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
     return null;
   }
 
-  public void setConvertor(final NotNullFunction<Change, Change> convertor) {
-    myConvertor = convertor;
-  }
-
   public JComponent createCenterPanel() {
     final JPanel mainPanel = new JPanel();
     mainPanel.setLayout(new BorderLayout());
@@ -159,20 +147,6 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
       protected void buildToolBar(DefaultActionGroup toolBarGroup) {
         super.buildToolBar(toolBarGroup);
         toolBarGroup.add(ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER));
-      }
-
-      @Override
-      protected void showDiffForChanges(final Change[] changesArray, final int indexInSelection) {
-        if (myInAir && (myConvertor != null)) {
-          final Change[] convertedChanges = new Change[changesArray.length];
-          for (int i = 0; i < changesArray.length; i++) {
-            Change change = changesArray[i];
-            convertedChanges[i] = myConvertor.fun(change);
-          }
-          super.showDiffForChanges(convertedChanges, indexInSelection);
-        } else {
-          super.showDiffForChanges(changesArray, indexInSelection);
-        }
       }
     };
     Disposer.register(getDisposable(), myChangesBrowser);

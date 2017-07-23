@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,14 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectObjectProcedure;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 public class CompoundScheme<E extends SchemeElement> implements ExternalizableScheme {
   protected String myName;
@@ -42,6 +44,9 @@ public class CompoundScheme<E extends SchemeElement> implements ExternalizableSc
 
   @NotNull
   public final List<E> getElements() {
+    if (myElements.isEmpty()) {
+      return Collections.emptyList();
+    }
     return Collections.unmodifiableList(new ArrayList<>(myElements));
   }
 
@@ -116,7 +121,7 @@ public class CompoundScheme<E extends SchemeElement> implements ExternalizableSc
   }
 
   public static final class MutatorHelper<T extends CompoundScheme<E>, E extends SchemeElement> {
-    private final THashMap<T, T> copiedToOriginal = new THashMap<>(ContainerUtil.identityStrategy());
+    private final THashMap<T, T> copiedToOriginal = ContainerUtil.newIdentityTroveMap();
 
     @NotNull
     public T copy(@NotNull T scheme) {
@@ -128,6 +133,11 @@ public class CompoundScheme<E extends SchemeElement> implements ExternalizableSc
 
     @NotNull
     public List<T> apply(@NotNull final List<T> copiedSchemes) {
+      return apply(copiedSchemes, null);
+    }
+
+    @NotNull
+    public List<T> apply(@NotNull final List<T> copiedSchemes, @Nullable BiConsumer<T, T> changedConsumer) {
       copiedToOriginal.retainEntries(new TObjectObjectProcedure<T, T>() {
         @Override
         public boolean execute(T copied, T original) {
@@ -144,6 +154,9 @@ public class CompoundScheme<E extends SchemeElement> implements ExternalizableSc
           copiedToOriginal.put(copied, original);
         }
         else {
+          if (changedConsumer != null) {
+            changedConsumer.accept(original, copied);
+          }
           original.resetFrom(copied);
         }
 

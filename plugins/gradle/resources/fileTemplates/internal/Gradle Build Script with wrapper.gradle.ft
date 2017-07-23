@@ -9,7 +9,7 @@ task wrapper(type: Wrapper) {
 #if (${GRADLE_VERSION} && ${GRADLE_VERSION} != "")
   gradleVersion = '${GRADLE_VERSION}'
 #else
-  gradleVersion = '2.14.1'
+  gradleVersion = '4.0'
 #end
   distributionUrl = "https://services.gradle.org/distributions/gradle-$gradleVersion-all.zip"
 }

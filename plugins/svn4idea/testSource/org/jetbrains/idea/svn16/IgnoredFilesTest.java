@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,57 +52,51 @@ public class IgnoredFilesTest extends Svn16TestCase {
 
   @Before
   public void setUp() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
-          myTempDirFixture = fixtureFactory.createTempDirTestFixture();
-          myTempDirFixture.setUp();
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
+        myTempDirFixture = fixtureFactory.createTempDirTestFixture();
+        myTempDirFixture.setUp();
 
-          myClientRoot = new File(myTempDirFixture.getTempDirPath(), "clientroot");
-          myClientRoot.mkdir();
+        myClientRoot = new File(myTempDirFixture.getTempDirPath(), "clientroot");
+        myClientRoot.mkdir();
 
-          initProject(myClientRoot, IgnoredFilesTest.this.getTestName());
+        initProject(myClientRoot, this.getTestName());
 
-          ((StartupManagerImpl)StartupManager.getInstance(myProject)).runPostStartupActivities();
+        ((StartupManagerImpl)StartupManager.getInstance(myProject)).runPostStartupActivities();
 
-          myChangeListManager = ChangeListManager.getInstance(myProject);
-          myVcs = SvnVcs.getInstance(myProject);
-          myVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
-          myVcsManager.registerVcs(myVcs);
-          myVcsManager.setDirectoryMapping(myWorkingCopyDir.getPath(), myVcs.getName());
+        myChangeListManager = ChangeListManager.getInstance(myProject);
+        myVcs = SvnVcs.getInstance(myProject);
+        myVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
+        myVcsManager.registerVcs(myVcs);
+        myVcsManager.setDirectoryMapping(myWorkingCopyDir.getPath(), myVcs.getName());
 
-          myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
-          myLocalFileSystem = LocalFileSystem.getInstance();
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+        myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
+        myLocalFileSystem = LocalFileSystem.getInstance();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
   }
 
   @After
   public void tearDown() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          myVcsManager.unregisterVcs(myVcs);
-          myVcsManager = null;
-          myVcs = null;
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        myVcsManager.unregisterVcs(myVcs);
+        myVcsManager = null;
+        myVcs = null;
 
-          tearDownProject();
-          if (myTempDirFixture != null) {
-            myTempDirFixture.tearDown();
-            myTempDirFixture = null;
-          }
-          FileUtil.delete(myClientRoot);
+        tearDownProject();
+        if (myTempDirFixture != null) {
+          myTempDirFixture.tearDown();
+          myTempDirFixture = null;
         }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+        FileUtil.delete(myClientRoot);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
   }
@@ -127,7 +121,7 @@ public class IgnoredFilesTest extends Svn16TestCase {
 
   private void dirty() {
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    myChangeListManager.scheduleUpdate(true);
+    myChangeListManager.scheduleUpdate();
     myChangeListManager.ensureUpToDate(false);
   }
 

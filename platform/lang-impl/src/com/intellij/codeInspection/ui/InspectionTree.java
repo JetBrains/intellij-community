@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Nov 4, 2001
- * Time: 5:19:35 PM
- */
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
@@ -33,7 +27,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeComparator;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
@@ -53,24 +46,19 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
 
+import static com.intellij.codeInspection.CommonProblemDescriptor.DESCRIPTOR_COMPARATOR;
+
 public class InspectionTree extends Tree {
   private static final Logger LOG = Logger.getInstance(InspectionTree.class);
-  private static final Comparator<CommonProblemDescriptor> DESCRIPTOR_COMPARATOR = (c1, c2) -> {
-    if (c1 instanceof ProblemDescriptor && c2 instanceof ProblemDescriptor) {
-      return PsiUtilCore.compareElementsByPosition(((ProblemDescriptor)c2).getPsiElement(),
-                                                   ((ProblemDescriptor)c1).getPsiElement());
-    }
-    return c1.getDescriptionTemplate().compareTo(c2.getDescriptionTemplate());
-  };
 
   @NotNull private final GlobalInspectionContextImpl myContext;
   @NotNull private final ExcludedInspectionTreeNodesManager myExcludedManager;
   @NotNull private InspectionTreeState myState = new InspectionTreeState();
   private boolean myQueueUpdate;
 
-  public InspectionTree(@NotNull Project project,
-                        @NotNull GlobalInspectionContextImpl context,
+  public InspectionTree(@NotNull GlobalInspectionContextImpl context,
                         @NotNull InspectionResultsView view) {
+    Project project = context.getProject();
     setModel(new DefaultTreeModel(new InspectionRootNode(project, new InspectionTreeUpdater(view))));
     myContext = context;
     myExcludedManager = view.getExcludedManager();
@@ -219,14 +207,17 @@ public class InspectionTree extends Tree {
     }
   }
 
+  @NotNull
   public CommonProblemDescriptor[] getAllValidSelectedDescriptors() {
     return getSelectedDescriptors(false, null, true, false);
   }
 
+  @NotNull
   public CommonProblemDescriptor[] getSelectedDescriptors() {
     return getSelectedDescriptors(false, null, false, false);
   }
 
+  @NotNull
   public CommonProblemDescriptor[] getSelectedDescriptors(boolean sortedByPosition,
                                                           @Nullable Set<VirtualFile> readOnlyFilesSink,
                                                           boolean allowResolved,
@@ -361,7 +352,7 @@ public class InspectionTree extends Tree {
   }
 
   public void queueUpdate() {
-    ((InspectionRootNode) getRoot()).getUpdater().update(null, true);
+    ((InspectionRootNode) getRoot()).getUpdater().update(true);
   }
 
   public void restoreExpansionAndSelection(boolean treeNodesMightChange) {

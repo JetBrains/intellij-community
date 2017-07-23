@@ -47,7 +47,7 @@ public class ChangesModuleGroupingPolicy implements ChangesGroupingPolicy {
 
   @Override
   @Nullable
-  public ChangesBrowserNode getParentNodeFor(final StaticFilePath node, final ChangesBrowserNode rootNode) {
+  public ChangesBrowserNode getParentNodeFor(final StaticFilePath node, final ChangesBrowserNode subtreeRoot) {
     if (myProject.isDefault()) return null;
 
     ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
@@ -59,17 +59,12 @@ public class ChangesModuleGroupingPolicy implements ChangesGroupingPolicy {
     boolean hideExcludedFiles = Registry.is("ide.hide.excluded.files");
     if (vFile != null && Comparing.equal(vFile, index.getContentRootForFile(vFile, hideExcludedFiles))) {
       Module module = index.getModuleForFile(vFile, hideExcludedFiles);
-      return getNodeForModule(module, rootNode);
+      return getNodeForModule(module, subtreeRoot);
     }
     return null;
   }
 
-  @Override
-  public void clear() {
-    myModuleCache.clear();
-  }
-
-  private ChangesBrowserNode getNodeForModule(Module module, ChangesBrowserNode root) {
+  private ChangesBrowserNode getNodeForModule(Module module, ChangesBrowserNode subtreeRoot) {
     ChangesBrowserNode node = myModuleCache.get(module);
     if (node == null) {
       if (module == null) {
@@ -78,7 +73,7 @@ public class ChangesModuleGroupingPolicy implements ChangesGroupingPolicy {
       else {
         node = new ChangesBrowserModuleNode(module);
       }
-      myModel.insertNodeInto(node, root, root.getChildCount());
+      myModel.insertNodeInto(node, subtreeRoot, subtreeRoot.getChildCount());
       myModuleCache.put(module, node);
     }
     return node;

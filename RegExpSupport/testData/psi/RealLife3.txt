@@ -23,37 +23,36 @@ REGEXP_FILE
             RegExpClosureImpl: <[0-9 a-z_A-Z\-\\./]+>
               RegExpClassImpl: <[0-9 a-z_A-Z\-\\./]>
                 PsiElement(CLASS_BEGIN)('[')
-                RegExpUnionImpl: <0-9 a-z_A-Z\-\\./>
-                  RegExpCharRangeImpl: <0-9>
-                    RegExpCharImpl: <0>
-                      PsiElement(CHARACTER)('0')
-                    PsiElement(MINUS)('-')
-                    RegExpCharImpl: <9>
-                      PsiElement(CHARACTER)('9')
-                  RegExpCharImpl: < >
-                    PsiElement(CHARACTER)(' ')
-                  RegExpCharRangeImpl: <a-z>
-                    RegExpCharImpl: <a>
-                      PsiElement(CHARACTER)('a')
-                    PsiElement(MINUS)('-')
-                    RegExpCharImpl: <z>
-                      PsiElement(CHARACTER)('z')
-                  RegExpCharImpl: <_>
-                    PsiElement(CHARACTER)('_')
-                  RegExpCharRangeImpl: <A-Z>
-                    RegExpCharImpl: <A>
-                      PsiElement(CHARACTER)('A')
-                    PsiElement(MINUS)('-')
-                    RegExpCharImpl: <Z>
-                      PsiElement(CHARACTER)('Z')
-                  RegExpCharImpl: <\->
-                    PsiElement(ESC_CHARACTER)('\-')
-                  RegExpCharImpl: <\\>
-                    PsiElement(ESC_CHARACTER)('\\')
-                  RegExpCharImpl: <.>
-                    PsiElement(CHARACTER)('.')
-                  RegExpCharImpl: </>
-                    PsiElement(CHARACTER)('/')
+                RegExpCharRangeImpl: <0-9>
+                  RegExpCharImpl: <0>
+                    PsiElement(CHARACTER)('0')
+                  PsiElement(MINUS)('-')
+                  RegExpCharImpl: <9>
+                    PsiElement(CHARACTER)('9')
+                RegExpCharImpl: < >
+                  PsiElement(CHARACTER)(' ')
+                RegExpCharRangeImpl: <a-z>
+                  RegExpCharImpl: <a>
+                    PsiElement(CHARACTER)('a')
+                  PsiElement(MINUS)('-')
+                  RegExpCharImpl: <z>
+                    PsiElement(CHARACTER)('z')
+                RegExpCharImpl: <_>
+                  PsiElement(CHARACTER)('_')
+                RegExpCharRangeImpl: <A-Z>
+                  RegExpCharImpl: <A>
+                    PsiElement(CHARACTER)('A')
+                  PsiElement(MINUS)('-')
+                  RegExpCharImpl: <Z>
+                    PsiElement(CHARACTER)('Z')
+                RegExpCharImpl: <\->
+                  PsiElement(ESC_CHARACTER)('\-')
+                RegExpCharImpl: <\\>
+                  PsiElement(ESC_CHARACTER)('\\')
+                RegExpCharImpl: <.>
+                  PsiElement(CHARACTER)('.')
+                RegExpCharImpl: </>
+                  PsiElement(CHARACTER)('/')
                 PsiElement(CLASS_END)(']')
               RegExpQuantifierImpl: <+>
                 PsiElement(PLUS)('+')

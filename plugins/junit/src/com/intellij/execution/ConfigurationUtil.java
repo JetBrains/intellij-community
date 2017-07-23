@@ -22,8 +22,8 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ReadActionProcessor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -39,7 +39,9 @@ import java.util.Set;
 
 public class ConfigurationUtil {
   // return true if there is JUnit4 test
-  public static boolean findAllTestClasses(final TestClassFilter testClassFilter, final Set<PsiClass> found) {
+  public static boolean findAllTestClasses(final TestClassFilter testClassFilter,
+                                           @Nullable final Module module,
+                                           final Set<PsiClass> found) {
     final PsiManager manager = testClassFilter.getPsiManager();
 
     final Project project = manager.getProject();
@@ -58,13 +60,8 @@ public class ConfigurationUtil {
     }
 
     // classes having suite() method
-    final PsiMethod[] suiteMethods = ApplicationManager.getApplication().runReadAction(
-        new Computable<PsiMethod[]>() {
-          public PsiMethod[] compute() {
-            return PsiShortNamesCache.getInstance(project).getMethodsByName(JUnitUtil.SUITE_METHOD_NAME, scope);
-          }
-        }
-    );
+    final PsiMethod[] suiteMethods =
+      ReadAction.compute(() -> PsiShortNamesCache.getInstance(project).getMethodsByName(JUnitUtil.SUITE_METHOD_NAME, scope));
     for (final PsiMethod method : suiteMethods) {
       ApplicationManager.getApplication().runReadAction(() -> {
         final PsiClass containingClass = method.getContainingClass();
@@ -79,30 +76,27 @@ public class ConfigurationUtil {
     }
 
     Set<PsiClass> processed = ContainerUtil.newHashSet();
-    boolean hasJunit4 = addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, processed, JUnitUtil.TEST_ANNOTATION);
-    hasJunit4 |= addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, processed, JUnitUtil.RUN_WITH);
+    boolean hasJunit4 = addAnnotatedMethodsAnSubclasses(scope, testClassFilter, module, found, processed, JUnitUtil.TEST_ANNOTATION,
+                                                        manager.getProject());
+    hasJunit4 |= addAnnotatedMethodsAnSubclasses(scope, testClassFilter, module, found, processed, JUnitUtil.RUN_WITH, manager.getProject());
     return hasJunit4;
   }
 
-  private static boolean addAnnotatedMethodsAnSubclasses(final PsiManager manager,
-                                                         final GlobalSearchScope scope,
+  private static boolean addAnnotatedMethodsAnSubclasses(final GlobalSearchScope scope,
                                                          final TestClassFilter testClassFilter,
+                                                         @Nullable final Module module,
                                                          final Set<PsiClass> found,
                                                          final Set<PsiClass> processed,
-                                                         final String annotation) {
+                                                         final String annotation,
+                                                         final Project project) {
     final Ref<Boolean> isJUnit4 = new Ref<>(Boolean.FALSE);
     // annotated with @Test
-    final PsiClass testAnnotation = ApplicationManager.getApplication().runReadAction(
-        new Computable<PsiClass>() {
-          @Nullable
-          public PsiClass compute() {
-            return JavaPsiFacade.getInstance(manager.getProject()).findClass(annotation, GlobalSearchScope.allScope(manager.getProject()));
-          }
-        }
-    );
+    final PsiClass testAnnotation = ReadAction.compute(() -> JavaPsiFacade.getInstance(project).findClass(annotation, GlobalSearchScope.allScope(project)));
     if (testAnnotation != null) {
       //allScope is used to find all abstract test cases which probably have inheritors in the current 'scope'
-      ClassesWithAnnotatedMembersSearch.search(testAnnotation, GlobalSearchScope.allScope(manager.getProject())).forEach(annotated -> {
+      GlobalSearchScope allScope = module == null ? GlobalSearchScope.allScope(project)
+                                                  : module.getModuleRuntimeScope(true);
+      ClassesWithAnnotatedMembersSearch.search(testAnnotation, allScope).forEach(annotated -> {
         AccessToken token = ReadAction.start();
         try {
           if (!processed.add(annotated)) { // don't process the same class twice regardless of it being in the scope

@@ -23,18 +23,17 @@ import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -65,7 +64,7 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
   public void apply(@NotNull List<FilePatch> remaining, @NotNull final MultiMap<VirtualFile, TextFilePatchInProgress> patchGroupsToApply,
                     @Nullable LocalChangeList localList,
                     @Nullable final String fileName,
-                    @Nullable final TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
+                    @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
     if (fileName == null) {
       LOG.error("Patch file name shouldn't be null");
       return;
@@ -78,15 +77,13 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
         final List<FilePatch> allPatches = new ArrayList<>();
         for (VirtualFile virtualFile : patchGroupsToApply.keySet()) {
           final File ioCurrentBase = new File(virtualFile.getPath());
-          allPatches.addAll(ContainerUtil.map(patchGroupsToApply.get(virtualFile), new Function<TextFilePatchInProgress, TextFilePatch>() {
-            public TextFilePatch fun(TextFilePatchInProgress patchInProgress) {
-              final TextFilePatch was = patchInProgress.getPatch();
-              was.setBeforeName(
-                PathUtil.toSystemIndependentName(FileUtil.getRelativePath(ioBase, new File(ioCurrentBase, was.getBeforeName()))));
-              was.setAfterName(
-                PathUtil.toSystemIndependentName(FileUtil.getRelativePath(ioBase, new File(ioCurrentBase, was.getAfterName()))));
-              return was;
-            }
+          allPatches.addAll(ContainerUtil.map(patchGroupsToApply.get(virtualFile), patchInProgress -> {
+            final TextFilePatch was = patchInProgress.getPatch();
+            was.setBeforeName(
+              PathUtil.toSystemIndependentName(FileUtil.getRelativePath(ioBase, new File(ioCurrentBase, was.getBeforeName()))));
+            was.setAfterName(
+              PathUtil.toSystemIndependentName(FileUtil.getRelativePath(ioBase, new File(ioCurrentBase, was.getAfterName()))));
+            return was;
           }));
         }
         if (!allPatches.isEmpty()) {
@@ -94,7 +91,7 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
           if (additionalInfo != null) {
             try {
               final Map<String, PatchEP> extensions = new HashMap<>();
-              for (Map.Entry<String, Map<String, CharSequence>> entry : additionalInfo.get().entrySet()) {
+              for (Map.Entry<String, Map<String, CharSequence>> entry : additionalInfo.compute().entrySet()) {
                 final String filePath = entry.getKey();
                 Map<String, CharSequence> extToValue = entry.getValue();
                 for (Map.Entry<String, CharSequence> innerEntry : extToValue.entrySet()) {

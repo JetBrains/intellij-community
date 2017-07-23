@@ -46,12 +46,14 @@ public class ModuleScopesTest extends ModuleTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myFixture = new LightTempDirTestFixtureImpl();
+    myFixture.setUp();
   }
 
   @Override
   protected void tearDown() throws Exception {
+    myFixture.tearDown();
+    myFixture = null;
     super.tearDown();
-    myFixture.deleteAll();
   }
 
   public void testBasics() throws Exception {
@@ -274,7 +276,7 @@ public class ModuleScopesTest extends ModuleTestCase {
     final VirtualFile libraryRoot = myFixture.findOrCreateDir("lib");
 
     ModuleRootModificationUtil.addModuleLibrary(m, "l", Collections.singletonList(libraryRoot.getUrl()),
-                                                Collections.<String>emptyList(), scope);
+                                                Collections.emptyList(), scope);
     return libraryRoot;
   }
 

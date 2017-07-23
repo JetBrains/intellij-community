@@ -16,12 +16,8 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class TestVcsNotifier extends VcsNotifier {
 
@@ -34,14 +30,6 @@ public class TestVcsNotifier extends VcsNotifier {
   }
 
   public Notification getLastNotification() {
-    return myLastNotification;
-  }
-
-  @Override
-  @NotNull
-  public Notification notify(@NotNull NotificationGroup notificationGroup, @NotNull String title, @NotNull String message,
-                             @NotNull NotificationType type, @Nullable NotificationListener listener) {
-    myLastNotification = new Notification(TEST_NOTIFICATION_GROUP, title, message, type, listener);
     return myLastNotification;
   }
 

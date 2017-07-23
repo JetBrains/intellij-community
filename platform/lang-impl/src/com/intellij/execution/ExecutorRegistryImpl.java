@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,17 +26,19 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class ExecutorRegistryImpl extends ExecutorRegistry {
+public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance(ExecutorRegistryImpl.class);
 
   @NonNls public static final String RUNNERS_GROUP = "RunnerActions";
@@ -52,13 +54,13 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
 
   private List<Executor> myExecutors = new ArrayList<>();
   private ActionManager myActionManager;
-  private final Map<String, Executor> myId2Executor = new HashMap<>();
-  private final Set<String> myContextActionIdSet = new HashSet<>();
-  private final Map<String, AnAction> myId2Action = new HashMap<>();
-  private final Map<String, AnAction> myContextActionId2Action = new HashMap<>();
+  private final Map<String, Executor> myId2Executor = new THashMap<>();
+  private final Set<String> myContextActionIdSet = new THashSet<>();
+  private final Map<String, AnAction> myId2Action = new THashMap<>();
+  private final Map<String, AnAction> myContextActionId2Action = new THashMap<>();
 
   // [Project, ExecutorId, RunnerId]
-  private final Set<Trinity<Project, String, String>> myInProgress = Collections.synchronizedSet(new java.util.HashSet<Trinity<Project, String, String>>());
+  private final Set<Trinity<Project, String, String>> myInProgress = Collections.synchronizedSet(new THashSet<>());
 
   public ExecutorRegistryImpl(ActionManager actionManager) {
     myActionManager = actionManager;
@@ -125,43 +127,31 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "ExecutorRegistyImpl";
-  }
-
-  @Override
   public void initComponent() {
-    ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    connection.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
       @Override
-      public void projectOpened(final Project project) {
-        final MessageBusConnection connect = project.getMessageBus().connect(project);
-        connect.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener(){
-          @Override
-          public void processStartScheduled(@NotNull String executorId, @NotNull ExecutionEnvironment environment) {
-            myInProgress.add(createExecutionId(executorId, environment));
-          }
-
-          @Override
-          public void processNotStarted(@NotNull String executorId, @NotNull ExecutionEnvironment environment) {
-            myInProgress.remove(createExecutionId(executorId, environment));
-          }
-
-          @Override
-          public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment environment, @NotNull ProcessHandler handler) {
-            myInProgress.remove(createExecutionId(executorId, environment));
-          }
-        });
+      public void processStartScheduled(@NotNull String executorId, @NotNull ExecutionEnvironment environment) {
+        myInProgress.add(createExecutionId(executorId, environment));
       }
 
+      @Override
+      public void processNotStarted(@NotNull String executorId, @NotNull ExecutionEnvironment environment) {
+        myInProgress.remove(createExecutionId(executorId, environment));
+      }
+
+      @Override
+      public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment environment, @NotNull ProcessHandler handler) {
+        myInProgress.remove(createExecutionId(executorId, environment));
+      }
+    });
+    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosed(final Project project) {
         // perform cleanup
         synchronized (myInProgress) {
           for (Iterator<Trinity<Project, String, String>> it = myInProgress.iterator(); it.hasNext(); ) {
-            final Trinity<Project, String, String> trinity = it.next();
-            if (project.equals(trinity.first)) {
+            if (project == it.next().first) {
               it.remove();
             }
           }
@@ -169,9 +159,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       }
     });
 
-
-    final Executor[] executors = Extensions.getExtensions(Executor.EXECUTOR_EXTENSION_NAME);
-    for (Executor executor : executors) {
+    for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensions()) {
       initExecutor(executor);
     }
   }
@@ -192,7 +180,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
   }
 
   @Override
-  public synchronized void disposeComponent() {
+  public synchronized void dispose() {
     if (!myExecutors.isEmpty()) {
       for (Executor executor : new ArrayList<>(myExecutors)) {
         deinitExecutor(executor);
@@ -283,7 +271,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
 
     @Nullable
     private RunnerAndConfigurationSettings getSelectedConfiguration(@NotNull final Project project) {
-      return RunManagerEx.getInstanceEx(project).getSelectedConfiguration();
+      return RunManager.getInstance(project).getSelectedConfiguration();
     }
 
     @Override

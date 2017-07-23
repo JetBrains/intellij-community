@@ -15,6 +15,8 @@
  */
 package com.intellij.ui.components.panels;
 
+import com.intellij.util.ui.JBInsets;
+
 import javax.swing.SwingConstants;
 import java.awt.Component;
 import java.awt.Container;
@@ -28,7 +30,7 @@ import java.util.ArrayList;
  * It allows to add them into the TOP, CENTER, or BOTTOM group, which are aligned separately.
  * Every group can contain any amount of components. The specified gap is added between components,
  * and the double gap is added between groups of components.
- * <p><b>NB!: this class must be modified together with the <code>HorizontalLayout</code> class accordingly</b></p>
+ * <p><b>NB!: this class must be modified together with the {@code HorizontalLayout} class accordingly</b></p>
  *
  * @author Sergey.Malenkov
  * @see HorizontalLayout
@@ -247,9 +249,7 @@ public final class VerticalLayout implements LayoutManager2 {
         int bottomHeight = bottom == null ? 0 : bottom.height;
         result.width += Math.abs(topHeight - bottomHeight);
       }
-      Insets insets = container.getInsets();
-      result.width += insets.left + insets.right;
-      result.height += insets.top + insets.bottom;
+      JBInsets.addTo(result, container.getInsets());
       return result;
     }
   }

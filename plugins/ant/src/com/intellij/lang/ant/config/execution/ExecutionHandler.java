@@ -26,6 +26,7 @@ import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.history.LocalHistory;
 import com.intellij.ide.macro.Macro;
 import com.intellij.lang.ant.AntBundle;
+import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntBuildListener;
 import com.intellij.lang.ant.config.AntBuildTarget;
@@ -49,6 +50,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -66,7 +68,9 @@ public final class ExecutionHandler {
                                                        List<BuildFileProperty> additionalProperties,
                                                        @NotNull final AntBuildListener antBuildListener) {
     AntBuildTarget target = antRunConfiguration.getTarget();
-    if (target == null) return null;
+    if (target == null) {
+      return null;
+    }
     FutureResult<ProcessHandler> result = runBuildImpl((AntBuildFileBase)target.getModel().getBuildFile(),
                                                        new String[]{target.getName()},
                                                        null,
@@ -74,12 +78,14 @@ public final class ExecutionHandler {
                                                        additionalProperties, antBuildListener, false);
     if (result != null) {
       try {
-        return result.get();
+        long l = System.currentTimeMillis();
+        try {
+          return result.get();
+        } finally {
+          new Throwable(EventQueue.isDispatchThread() + ": " + (System.currentTimeMillis() - l)).printStackTrace(System.out);
+        }
       }
-      catch (InterruptedException e) {
-        LOG.warn(e);
-      }
-      catch (java.util.concurrent.ExecutionException e) {
+      catch (InterruptedException | java.util.concurrent.ExecutionException e) {
         LOG.warn(e);
       }
     }
@@ -109,6 +115,7 @@ public final class ExecutionHandler {
                                                           @NotNull final AntBuildListener antBuildListener, final boolean waitFor) {
     final AntBuildMessageView messageView;
     final GeneralCommandLine commandLine;
+    final AntBuildListenerWrapper listenerWrapper = new AntBuildListenerWrapper(buildFile, antBuildListener);
     final Project project = buildFile.getProject();
     try {
       FileDocumentManager.getInstance().saveAllDocuments();
@@ -123,23 +130,25 @@ public final class ExecutionHandler {
       messageView = prepareMessageView(buildMessageViewToReuse, buildFile, targets, additionalProperties);
       commandLine = builder.getCommandLine().toCommandLine();
       messageView.setBuildCommandLine(commandLine.getCommandLineString());
+      
+      project.getMessageBus().syncPublisher(AntExecutionListener.TOPIC).beforeExecution(new AntBeforeExecutionEvent(buildFile, messageView));
     }
     catch (RunCanceledException e) {
       e.showMessage(project, AntBundle.message("run.ant.error.dialog.title"));
-      antBuildListener.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
+      listenerWrapper.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
       return null;
     }
     catch (CantRunException e) {
       ExecutionErrorDialog.show(e, AntBundle.message("cant.run.ant.error.dialog.title"), project);
-      antBuildListener.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
+      listenerWrapper.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
       return null;
     }
     catch (Macro.ExecutionCancelledException e) {
-      antBuildListener.buildFinished(AntBuildListener.ABORTED, 0);
+      listenerWrapper.buildFinished(AntBuildListener.ABORTED, 0);
       return null;
     }
     catch (Throwable e) {
-      antBuildListener.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
+      listenerWrapper.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
       LOG.error(e);
       return null;
     }
@@ -151,12 +160,12 @@ public final class ExecutionHandler {
       }
 
       public void onCancel() {
-        antBuildListener.buildFinished(AntBuildListener.ABORTED, 0);
+        listenerWrapper.buildFinished(AntBuildListener.ABORTED, 0);
       }
 
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
-          ProcessHandler handler = runBuild(indicator, messageView, buildFile, antBuildListener, commandLine);
+          ProcessHandler handler = runBuild(indicator, messageView, buildFile, listenerWrapper, commandLine);
           future.set(handler);
           if (waitFor && handler != null) {
             handler.waitFor();
@@ -164,7 +173,7 @@ public final class ExecutionHandler {
         }
         catch (Throwable e) {
           LOG.error(e);
-          antBuildListener.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
+          listenerWrapper.buildFinished(AntBuildListener.FAILED_TO_RUN, 0);
         }
       }
     }.queue();
@@ -308,5 +317,32 @@ public final class ExecutionHandler {
       }
     }
     return messageView;
+  }
+
+  private static class AntBuildListenerWrapper implements AntBuildListener {
+    @NotNull
+    private final AntBuildFile myBuildFile;
+    @NotNull
+    private final AntBuildListener myDelegate;
+
+    AntBuildListenerWrapper(@NotNull AntBuildFile buildFile, @NotNull AntBuildListener delegate) {
+      myBuildFile = buildFile;
+      myDelegate = delegate;
+    }
+
+    @Override
+    public void buildFinished(int state, int errorCount) {
+      try {
+        final AntFinishedExecutionEvent.Status status = state == AntBuildListener.ABORTED? AntFinishedExecutionEvent.Status.CANCELED :
+                                                  state == AntBuildListener.FAILED_TO_RUN? AntFinishedExecutionEvent.Status.FAILURE :
+                                                  AntFinishedExecutionEvent.Status.SUCCESS;
+        myBuildFile.getProject().getMessageBus().syncPublisher(AntExecutionListener.TOPIC).buildFinished(
+          new AntFinishedExecutionEvent(myBuildFile, status, errorCount)
+        );
+      }
+      finally {
+        myDelegate.buildFinished(state, errorCount);
+      }
+    }
   }
 }

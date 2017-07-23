@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,21 +25,17 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.util.Range;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.request.EventRequest;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author egor
  */
-public class ClassInstanceMethodFilter extends ConstructorStepMethodFilter implements ActionMethodFilter {
+public class ClassInstanceMethodFilter extends ConstructorStepMethodFilter {
   private final BreakpointStepMethodFilter myMethodFilter;
 
   public ClassInstanceMethodFilter(PsiMethod psiMethod, Range<Integer> lines) {
     super(psiMethod.getContainingClass(), lines);
     myMethodFilter = new AnonymousClassMethodFilter(psiMethod, getCallingExpressionLines());
-  }
-
-  public ClassInstanceMethodFilter(JVMName classJvmName, BreakpointStepMethodFilter methodFilter, Range<Integer> lines) {
-    super(classJvmName, lines);
-    myMethodFilter = methodFilter;
   }
 
   @Override
@@ -49,17 +45,12 @@ public class ClassInstanceMethodFilter extends ConstructorStepMethodFilter imple
       try {
         ObjectReference reference = proxy.thisObject();
         if (reference != null) {
-          DebugProcessImpl debugProcess = context.getDebugProcess();
-          BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(debugProcess.getProject()).getBreakpointManager();
-          StepIntoBreakpoint breakpoint = breakpointManager.addStepIntoBreakpoint(myMethodFilter);
+          StepIntoBreakpoint breakpoint =
+            DebuggerManagerEx.getInstanceEx(context.getDebugProcess().getProject()).getBreakpointManager().addStepIntoBreakpoint(myMethodFilter);
           if (breakpoint != null) {
-            breakpointManager.applyThreadFilter(debugProcess, null); // clear the filter on resume
             breakpoint.addInstanceFilter(reference.uniqueID());
             breakpoint.setInstanceFiltersEnabled(true);
-            breakpoint.setSuspendPolicy(context.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD ? DebuggerSettings.SUSPEND_THREAD : DebuggerSettings.SUSPEND_ALL);
-            breakpoint.createRequest(debugProcess);
-            breakpoint.setRequestHint(hint);
-            debugProcess.setRunToCursorBreakpoint(breakpoint);
+            setUpStepIntoBreakpoint(context, breakpoint, hint);
             return RequestHint.RESUME;
           }
         }
@@ -68,5 +59,16 @@ public class ClassInstanceMethodFilter extends ConstructorStepMethodFilter imple
       }
     }
     return RequestHint.STOP;
+  }
+
+  static void setUpStepIntoBreakpoint(SuspendContextImpl context, @NotNull StepIntoBreakpoint breakpoint, RequestHint hint) {
+    DebugProcessImpl debugProcess = context.getDebugProcess();
+    BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(debugProcess.getProject()).getBreakpointManager();
+    breakpointManager.applyThreadFilter(debugProcess, null); // clear the filter on resume
+    breakpoint.setSuspendPolicy(
+      context.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD ? DebuggerSettings.SUSPEND_THREAD : DebuggerSettings.SUSPEND_ALL);
+    breakpoint.createRequest(debugProcess);
+    breakpoint.setRequestHint(hint);
+    debugProcess.setRunToCursorBreakpoint(breakpoint);
   }
 }

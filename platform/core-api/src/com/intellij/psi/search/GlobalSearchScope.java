@@ -17,17 +17,16 @@ package com.intellij.psi.search;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
@@ -84,6 +83,14 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     return false;
   }
 
+  /**
+   * Returns descriptions of unloaded modules content of whose might be included into this scope if they had been loaded. Actually search in
+   * unloaded modules isn't performed, so this method is used to determine whether a warning about possible missing results should be shown.
+   */
+  public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+    return Collections.emptySet();
+  }
+
   @NotNull
   public GlobalSearchScope intersectWith(@NotNull GlobalSearchScope scope) {
     if (scope == this) return this;
@@ -106,7 +113,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   @NotNull
   public SearchScope intersectWith(@NotNull LocalSearchScope localScope2) {
     PsiElement[] elements2 = localScope2.getScope();
-    List<PsiElement> result = new ArrayList<PsiElement>(elements2.length);
+    List<PsiElement> result = new ArrayList<>(elements2.length);
     for (final PsiElement element2 : elements2) {
       if (PsiSearchScopeUtil.isInScope(this, element2)) {
         result.add(element2);
@@ -152,6 +159,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       @Override
       public boolean isSearchInLibraries() {
         return GlobalSearchScope.this.isSearchInLibraries();
+      }
+
+      @Override
+      public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+        return GlobalSearchScope.this.getUnloadedModulesBelongingToScope();
       }
 
       @NonNls
@@ -432,6 +444,11 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     @Override
+    public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+      return ContainerUtil.intersection(myScope1.getUnloadedModulesBelongingToScope(), myScope2.getUnloadedModulesBelongingToScope());
+    }
+
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof IntersectionScope)) return false;
@@ -462,12 +479,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     private UnionScope(@NotNull GlobalSearchScope[] scopes) {
-      super(ContainerUtil.getFirstItem(ContainerUtil.mapNotNull(scopes, new Function<GlobalSearchScope, Project>() {
-        @Override
-        public Project fun(GlobalSearchScope scope) {
-          return scope.getProject();
-        }
-      }), null));
+      super(ContainerUtil.getFirstItem(ContainerUtil.mapNotNull(scopes, scope -> scope.getProject()), null));
       if (scopes.length <= 1) throw new IllegalArgumentException("Too few scopes: "+ Arrays.asList(scopes));
       myScopes = scopes;
       final int[] nested = {0};
@@ -492,73 +504,54 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public boolean contains(@NotNull final VirtualFile file) {
-      return ContainerUtil.find(myScopes, new Condition<GlobalSearchScope>() {
-        @Override
-        public boolean value(GlobalSearchScope scope) {
-          return scope.contains(file);
-        }
-      }) != null;
+      return ContainerUtil.find(myScopes, scope -> scope.contains(file)) != null;
     }
 
     @Override
     public boolean isSearchOutsideRootModel() {
-      return ContainerUtil.find(myScopes, new Condition<GlobalSearchScope>() {
-        @Override
-        public boolean value(GlobalSearchScope scope) {
-          return scope.isSearchOutsideRootModel();
-        }
-      }) != null;
+      return ContainerUtil.find(myScopes, scope -> scope.isSearchOutsideRootModel()) != null;
+    }
+
+    @Override
+    public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+      Set<UnloadedModuleDescription> result = new LinkedHashSet<>();
+      for (GlobalSearchScope scope : myScopes) {
+        result.addAll(scope.getUnloadedModulesBelongingToScope());
+      }
+      return result;
     }
 
     @Override
     public int compare(@NotNull final VirtualFile file1, @NotNull final VirtualFile file2) {
       final int[] result = {0};
-      ContainerUtil.process(myScopes, new Processor<GlobalSearchScope>() {
-        @Override
-        public boolean process(GlobalSearchScope scope) {
-          int res1 = scope.contains(file1) && scope.contains(file2) ? scope.compare(file1, file2) : 0;
-          if (result[0] == 0) {
-            result[0] = res1;
-            return true;
-          }
-          if (result[0] > 0 != res1 > 0) {
-            result[0] = 0;
-            return false;
-          }
+      ContainerUtil.process(myScopes, scope -> {
+        int res1 = scope.contains(file1) && scope.contains(file2) ? scope.compare(file1, file2) : 0;
+        if (result[0] == 0) {
+          result[0] = res1;
           return true;
         }
+        if (result[0] > 0 != res1 > 0) {
+          result[0] = 0;
+          return false;
+        }
+        return true;
       });
       return result[0];
     }
 
     @Override
     public boolean isSearchInModuleContent(@NotNull final Module module) {
-      return ContainerUtil.find(myScopes, new Condition<GlobalSearchScope>() {
-        @Override
-        public boolean value(GlobalSearchScope scope) {
-          return scope.isSearchInModuleContent(module);
-        }
-      }) != null;
+      return ContainerUtil.find(myScopes, scope -> scope.isSearchInModuleContent(module)) != null;
     }
 
     @Override
     public boolean isSearchInModuleContent(@NotNull final Module module, final boolean testSources) {
-      return ContainerUtil.find(myScopes, new Condition<GlobalSearchScope>() {
-        @Override
-        public boolean value(GlobalSearchScope scope) {
-          return scope.isSearchInModuleContent(module, testSources);
-        }
-      }) != null;
+      return ContainerUtil.find(myScopes, scope -> scope.isSearchInModuleContent(module, testSources)) != null;
     }
 
     @Override
     public boolean isSearchInLibraries() {
-      return ContainerUtil.find(myScopes, new Condition<GlobalSearchScope>() {
-        @Override
-        public boolean value(GlobalSearchScope scope) {
-          return scope.isSearchInLibraries();
-        }
-      }) != null;
+      return ContainerUtil.find(myScopes, scope -> scope.isSearchInLibraries()) != null;
     }
 
     @Override
@@ -568,7 +561,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
       UnionScope that = (UnionScope)o;
 
-      return new HashSet<GlobalSearchScope>(Arrays.asList(myScopes)).equals(new HashSet<GlobalSearchScope>(Arrays.asList(that.myScopes)));
+      return new HashSet<>(Arrays.asList(myScopes)).equals(new HashSet<>(Arrays.asList(that.myScopes)));
     }
 
     @Override
@@ -629,7 +622,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       if (scope instanceof FileTypeRestrictionScope) {
         FileTypeRestrictionScope restrict = (FileTypeRestrictionScope)scope;
         if (restrict.myBaseScope == myBaseScope) {
-          List<FileType> intersection = new ArrayList<FileType>(Arrays.asList(restrict.myFileTypes));
+          List<FileType> intersection = new ArrayList<>(Arrays.asList(restrict.myFileTypes));
           intersection.retainAll(Arrays.asList(myFileTypes));
           return new FileTypeRestrictionScope(myBaseScope, intersection.toArray(new FileType[intersection.size()]));
         }
@@ -766,7 +759,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
   public static class FilesScope extends GlobalSearchScope implements Iterable<VirtualFile> {
     private final Collection<VirtualFile> myFiles;
-    private Boolean myHasFilesOutOfProjectRoots;
+    private volatile Boolean myHasFilesOutOfProjectRoots;
 
     /**
      * @deprecated use {@link GlobalSearchScope#filesScope(Project, Collection)}
@@ -813,24 +806,19 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     private boolean hasFilesOutOfProjectRoots() {
-      if (myHasFilesOutOfProjectRoots == null) {
-        myHasFilesOutOfProjectRoots = false;
+      Boolean result = myHasFilesOutOfProjectRoots;
+      if (result == null) {
         Project project = getProject();
-        if (project != null && !project.isDefault()) {
-          for (VirtualFile file : myFiles) {
-            if (FileIndexFacade.getInstance(project).getModuleForFile(file) == null) {
-              myHasFilesOutOfProjectRoots = true;
-              break;
-            }
-          }
-        }
+        myHasFilesOutOfProjectRoots = result =
+          project != null && !project.isDefault() &&
+          myFiles.stream().anyMatch(file -> FileIndexFacade.getInstance(project).getModuleForFile(file) == null);
       }
-      return myHasFilesOutOfProjectRoots;
+      return result;
     }
 
     @Override
     public String toString() {
-      List<VirtualFile> files = myFiles.size() <= 20 ? new ArrayList<VirtualFile>(myFiles) : new ArrayList<VirtualFile>(myFiles).subList(0,20);
+      List<VirtualFile> files = myFiles.size() <= 20 ? new ArrayList<>(myFiles) : new ArrayList<>(myFiles).subList(0, 20);
       return "Files: ("+ files +"); search in libraries: " + (myHasFilesOutOfProjectRoots != null ? myHasFilesOutOfProjectRoots : "unknown");
     }
 

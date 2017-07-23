@@ -27,9 +27,12 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import icons.ImagesIcons;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.editor.actionSystem.ImageEditorActions;
+import org.intellij.images.search.TagFilter;
 import org.intellij.images.thumbnail.ThumbnailView;
+import org.intellij.images.thumbnail.actions.ThemeFilter;
 import org.intellij.images.vfs.IfsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -46,6 +49,8 @@ final class ThumbnailViewImpl implements ThumbnailView {
   private boolean recursive = false;
   private VirtualFile root = null;
   private final ThumbnailViewUI myThubmnailViewUi;
+  private ThemeFilter myFilter;
+  private TagFilter myTagFilter;
 
   public ThumbnailViewImpl(Project project) {
     this.project = project;
@@ -118,6 +123,29 @@ final class ThumbnailViewImpl implements ThumbnailView {
     }
   }
 
+  @Override
+  public void setFilter(ThemeFilter filter) {
+    myFilter = filter;
+    updateUI();
+  }
+
+  @Override
+  public ThemeFilter getFilter() {
+    return myFilter;
+  }
+
+  @Override
+  public void setTagFilter(TagFilter filter) {
+    myTagFilter = filter;
+    updateUI();
+  }
+
+  @Nullable
+  @Override
+  public TagFilter getTagFilter() {
+    return myTagFilter;
+  }
+
   public void setVisible(boolean visible) {
     toolWindow.setAvailable(visible, null);
     if (visible) {
@@ -158,6 +186,30 @@ final class ThumbnailViewImpl implements ThumbnailView {
   public boolean isEnabledForActionPlace(String place) {
     // Enable if it not for Editor
     return isVisible() && !ImageEditorActions.ACTION_PLACE.equals(place);
+  }
+
+  @Override
+  public boolean isFileSizeVisible() {
+    return isVisible() && getUI().isFileSizeVisible();
+  }
+
+  @Override
+  public void setFileSizeVisible(boolean visible) {
+    if (isVisible()) {
+      getUI().setFileSizeVisible(visible);
+    }
+  }
+
+  @Override
+  public boolean isFileNameVisible() {
+    return isVisible() && getUI().isFileNameVisible();
+  }
+
+  @Override
+  public void setFileNameVisible(boolean visible) {
+    if (isVisible()) {
+      getUI().setFileNameVisible(visible);
+    }
   }
 
   public void dispose() {

@@ -18,6 +18,7 @@ package com.intellij.codeInsight.template.emmet;
 import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
+import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
@@ -51,7 +52,7 @@ public class SurroundWithEmmetAction extends BaseCodeInsightAction {
     public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
       SelectionModel selectionModel = editor.getSelectionModel();
       if (!selectionModel.hasSelection()) {
-        selectionModel.selectLineAtCaret();
+        SurroundWithHandler.selectLogicalLineContentsAtCaret(editor);
       }
 
       ZenCodingTemplate emmetCustomTemplate = CustomLiveTemplate.EP_NAME.findExtension(ZenCodingTemplate.class);
@@ -65,7 +66,7 @@ public class SurroundWithEmmetAction extends BaseCodeInsightAction {
 
     @Override
     public boolean startInWriteAction() {
-      return true;
+      return false;
     }
   }
 }

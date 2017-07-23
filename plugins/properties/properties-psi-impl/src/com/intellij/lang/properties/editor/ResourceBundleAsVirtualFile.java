@@ -98,7 +98,7 @@ public class ResourceBundleAsVirtualFile extends VirtualFile implements VirtualF
 
   @Override
   public boolean isValid() {
-    if (myResourceBundle instanceof ResourceBundleImpl && !((ResourceBundleImpl)myResourceBundle).isValid()) {
+    if (myResourceBundle instanceof ResourceBundleImpl && !myResourceBundle.isValid()) {
       return false;
     }
     for (PropertiesFile propertiesFile : myResourceBundle.getPropertiesFiles()) {

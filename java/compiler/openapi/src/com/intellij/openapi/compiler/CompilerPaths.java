@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,40 +18,28 @@ package com.intellij.openapi.compiler;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtilCore;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.Comparator;
 
 /**
  * A set of utility methods for working with paths
  */
 public class CompilerPaths {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.compiler.CompilerPaths");
-  private static volatile String ourSystemPath;
-  private static final Comparator<String> URLS_COMPARATOR = (o1, o2) -> o1.compareTo(o2);
-  /**
-   * Returns a directory
-   * @return a directory where compiler may generate files. All generated files are not deleted when the application exits
-   */
-  public static File getGeneratedDataDirectory(Project project, Compiler compiler) {
-    //noinspection HardCodedStringLiteral
-    return new File(getGeneratedDataDirectory(project), compiler.getDescription().replaceAll("\\s+", "_"));
-  }
+  private static final Logger LOG = Logger.getInstance(CompilerPaths.class);
 
   /**
    * @return a root directory where generated files for various compilers are stored
@@ -69,43 +57,21 @@ public class CompilerPaths {
     return new File(getCompilerSystemDirectory(project), ".caches");
   }
 
-  public static File getCacheStoreDirectory(String compilerProjectDirName) {
-    //noinspection HardCodedStringLiteral
-    return new File(getCompilerSystemDirectory(compilerProjectDirName), ".caches");
-  }
-
-  public static File getRebuildMarkerFile(Project project) {
-    return new File(getCompilerSystemDirectory(project), "rebuild_required");
-  }
-
   /**
    * @return a directory under IDEA "system" directory where all files related to compiler subsystem are stored (such as compiler caches or generated files)
    */
-  public static File getCompilerSystemDirectory(Project project) {
-    return getCompilerSystemDirectory(getCompilerSystemDirectoryName(project));
-  }
-
-  public static File getCompilerSystemDirectory(String compilerProjectDirName) {
-    return new File(getCompilerSystemDirectory(), compilerProjectDirName);
-  }
-
-  public static String getCompilerSystemDirectoryName(Project project) {
-    return ProjectUtilCore.getPresentableName(project) + "." + project.getLocationHash();
-  }
-
-  public static File getCompilerSystemDirectory() {
-    //noinspection HardCodedStringLiteral
-    final String systemPath = ourSystemPath != null? ourSystemPath : (ourSystemPath = PathUtil.getCanonicalPath(PathManager.getSystemPath()));
-    return new File(systemPath, "compiler");
+  @NotNull
+  public static File getCompilerSystemDirectory(@NotNull Project project) {
+    return ProjectUtil.getProjectCachePath(project, "compiler").toFile();
   }
 
   /**
    * @param forTestClasses true if directory for test sources, false - for sources.
-   * @return a directory to which the sources (or test sources depending on the second partameter) should be compiled.
+   * @return a directory to which the sources (or test sources depending on the second parameter) should be compiled.
    * Null is returned if output directory is not specified or is not valid
    */
   @Nullable
-  public static VirtualFile getModuleOutputDirectory(final Module module, boolean forTestClasses) {
+  public static VirtualFile getModuleOutputDirectory(@NotNull Module module, boolean forTestClasses) {
     final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
     if (compilerModuleExtension == null) {
       return null;
@@ -151,12 +117,9 @@ public class CompilerPaths {
         outPathUrl = url != null ? url : extension.getCompilerOutputUrl();
       }
       else {
-        outPathUrl = application.runReadAction(new Computable<String>() {
-          @Override
-          public String compute() {
-            final String url = extension.getCompilerOutputUrlForTests();
-            return url != null ? url : extension.getCompilerOutputUrl();
-          }
+        outPathUrl = application.runReadAction((Computable<String>)() -> {
+          final String url = extension.getCompilerOutputUrlForTests();
+          return url != null ? url : extension.getCompilerOutputUrl();
         });
       }
     }
@@ -165,12 +128,7 @@ public class CompilerPaths {
         outPathUrl = extension.getCompilerOutputUrl();
       }
       else {
-        outPathUrl = application.runReadAction(new Computable<String>() {
-          @Override
-          public String compute() {
-            return extension.getCompilerOutputUrl();
-          }
-        });
+        outPathUrl = application.runReadAction((Computable<String>)() -> extension.getCompilerOutputUrl());
       }
     }
     return outPathUrl != null? VirtualFileManager.extractPath(outPathUrl) : null;
@@ -196,7 +154,7 @@ public class CompilerPaths {
         return null;
       }
       if (roots.length > 1) {
-        Arrays.sort(roots, URLS_COMPARATOR);
+        Arrays.sort(roots);
       }
       return StringUtil.isEmpty(sourceDirName)? VirtualFileManager.extractPath(roots[0]): VirtualFileManager.extractPath(roots[0]) + "/" + sourceDirName;
     }

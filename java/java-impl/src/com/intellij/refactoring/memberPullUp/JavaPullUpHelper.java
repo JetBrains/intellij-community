@@ -18,14 +18,12 @@ package com.intellij.refactoring.memberPullUp;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -46,9 +44,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * Created by Max Medvedev on 10/3/13
- */
 public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
   private static final Logger LOG = Logger.getInstance(JavaPullUpHelper.class);
 
@@ -244,20 +239,15 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
 
       myJavaDocPolicy.processCopiedJavaDoc(methodCopy.getDocComment(), method.getDocComment(), isOriginalMethodAbstract);
 
-      final PsiMember movedElement;
+      final PsiMethod movedElement;
       if (superClassMethod != null && superClassMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        movedElement = (PsiMember)superClassMethod.replace(convertMethodToLanguage(methodCopy, language));
+        movedElement = (PsiMethod)superClassMethod.replace(convertMethodToLanguage(methodCopy, language));
       }
       else {
         movedElement =
-          anchor != null ? (PsiMember)myTargetSuperClass.addBefore(methodCopy, anchor) : (PsiMember)myTargetSuperClass.add(methodCopy);
+          (PsiMethod)(anchor != null ? myTargetSuperClass.addBefore(methodCopy, anchor) : myTargetSuperClass.add(methodCopy));
       }
-      CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(method.getProject());
-      if (styleSettings.INSERT_OVERRIDE_ANNOTATION) {
-        if (PsiUtil.isLanguageLevel5OrHigher(mySourceClass) && !myIsTargetInterface || PsiUtil.isLanguageLevel6OrHigher(mySourceClass)) {
-          new AddAnnotationFix(Override.class.getName(), method).invoke(method.getProject(), null, mySourceClass.getContainingFile());
-        }
-      }
+      OverrideImplementUtil.annotateOnOverrideImplement(method, mySourceClass, movedElement);
       if (!PsiUtil.isLanguageLevel6OrHigher(mySourceClass) && myIsTargetInterface) {
         if (isOriginalMethodAbstract) {
           for (PsiMethod oMethod : OverridingMethodsSearch.search(method)) {

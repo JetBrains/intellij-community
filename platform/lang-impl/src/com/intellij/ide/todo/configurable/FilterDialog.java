@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,9 @@ import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -78,23 +78,26 @@ class FilterDialog extends DialogWrapper {
     init();
   }
 
-  @Nullable
+  @NotNull
   @Override
-  protected ValidationInfo doValidate() {
+  protected List<ValidationInfo> doValidateAll() {
+    List<ValidationInfo> result = ContainerUtil.newArrayList();
     String filterName = getNewFilterName();
     if (filterName.isEmpty()) {
-      return new ValidationInfo(IdeBundle.message("error.filter.name.should.be.specified"), myNameField);
+      result.add(new ValidationInfo(IdeBundle.message("error.filter.name.should.be.specified"), myNameField));
     }
-    for (int i = 0; i < myFilters.size(); i++) {
-      TodoFilter filter = myFilters.get(i);
-      if (myFilterIndex != i && filterName.equals(filter.getName())) {
-        return new ValidationInfo(IdeBundle.message("error.filter.with.the.same.name.already.exists"), myNameField);
+    else {
+      for (int i = 0; i < myFilters.size(); i++) {
+        TodoFilter filter = myFilters.get(i);
+        if (myFilterIndex != i && filterName.equals(filter.getName())) {
+          result.add(new ValidationInfo(IdeBundle.message("error.filter.with.the.same.name.already.exists"), myNameField));
+        }
       }
     }
     if (myFilter.isEmpty()) {
-      return new ValidationInfo(IdeBundle.message("error.filter.should.contain.at.least.one.pattern"), myPatternsScrollPane);
+      result.add(new ValidationInfo(IdeBundle.message("error.filter.should.contain.at.least.one.pattern"), myPatternsScrollPane));
     }
-    return super.doValidate();
+    return result;
   }
 
   @NotNull

@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.testing.pytest;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.traceBackParsers.LinkInTrace;
@@ -100,13 +99,9 @@ public final class PyTestTracebackParserTest {
     requiredStrings.add("../../../files/files.py - 100");
     requiredStrings.add("/Users/Mac Hipster/Applications/PyCharm 4.0 .app/helpers/lala.py - 12");
     requiredStrings.add("C:\\Users\\ilya.kazakevich\\virtenvs\\spammy\\lib\\site-packages\\django_cron\\models.py - 4");
-    final Logger logger = Logger.getInstance(PyTestTracebackParserTest.class);
     final String[] strings = StringUtil.splitByLines(s);
-    logger.warn(String.format("Got lines %s", strings));
     for (final String line : strings) {
-      logger.warn(String.format("Starting with string %s", line));
       final LinkInTrace trace = new PyTestTracebackParser().findLinkInTrace(line);
-      logger.warn(String.format("Got %s", trace));
       if (trace != null) {
         final boolean removeResult = requiredStrings.remove(trace.getFileName() + " - " + trace.getLineNumber());
         Assert.assertTrue(String.format("Unexpected file found %s line %s", trace.getFileName(), trace.getLineNumber()),

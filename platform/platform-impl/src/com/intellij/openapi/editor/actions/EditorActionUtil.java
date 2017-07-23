@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jun 6, 2002
- * Time: 4:54:58 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.ide.ui.customization.CustomActionsSchema;
@@ -45,7 +37,9 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.EditorPopupHandler;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -84,7 +78,7 @@ public class EditorActionUtil {
       return;
     }
     
-    Rectangle viewRectangle = editor.getScrollingModel().getVisibleArea();
+    Rectangle viewRectangle = getVisibleArea(editor);
     int lineNumber = editor.getCaretModel().getVisualPosition().line;
     VisualPosition startPos = editor.xyToVisualPosition(new Point(0, viewRectangle.y));
     int start = startPos.line + 1;
@@ -102,7 +96,7 @@ public class EditorActionUtil {
                                                   int columnShift,
                                                   int lineShift,
                                                   boolean withSelection) {
-    Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+    Rectangle visibleArea = getVisibleArea(editor);
     VisualPosition pos = editor.getCaretModel().getVisualPosition();
     Point caretLocation = editor.visualPositionToXY(pos);
     int caretVShift = caretLocation.y - visibleArea.y;
@@ -243,7 +237,11 @@ public class EditorActionUtil {
    * Finds out whether there's a boundary between two lexemes of different type at given offset.
    */
   public static boolean isLexemeBoundary(@NotNull Editor editor, int offset) {
-    if (!(editor instanceof EditorEx) || offset <= 0 || offset >= editor.getDocument().getTextLength()) return false;
+    if (!(editor instanceof EditorEx) ||
+        offset <= 0 || offset >= editor.getDocument().getTextLength() ||
+        DocumentUtil.isInsideSurrogatePair(editor.getDocument(), offset)) {
+      return false;
+    }
     if (CharArrayUtil.isEmptyOrSpaces(editor.getDocument().getImmutableCharSequence(), offset - 1, offset + 1)) return false;
     EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
     HighlighterIterator it = highlighter.createIterator(offset);
@@ -441,7 +439,7 @@ public class EditorActionUtil {
    * @param editor              target editor
    * @param visualLineNumber    target visual line
    * @return                    visual column that points to the first non-white space symbol at the target visual line if the one exists;
-   *                            <code>'-1'</code> otherwise
+   *                            {@code '-1'} otherwise
    */
   public static int findFirstNonSpaceColumnOnTheLine(@NotNull Editor editor, int visualLineNumber) {
     Document document = editor.getDocument();
@@ -534,7 +532,7 @@ public class EditorActionUtil {
    * @param start       target start offset (inclusive)
    * @param end         target end offset (exclusive)
    * @return            index of the first non-white space character at the given document at the given range if the one is found;
-   *                    <code>'-1'</code> otherwise
+   *                    {@code '-1'} otherwise
    */
   public static int findFirstNonSpaceOffsetInRange(@NotNull CharSequence text, int start, int end) {
     for (; start < end; start++) {
@@ -555,7 +553,7 @@ public class EditorActionUtil {
    * 
    * @param editor target editor
    * @param isWithSelection whether selection should be set from original caret position to its target position
-   * @param ignoreTrailingWhitespace if <code>true</code>, line end will be determined while ignoring trailing whitespace, unless caret is
+   * @param ignoreTrailingWhitespace if {@code true}, line end will be determined while ignoring trailing whitespace, unless caret is
    *                                 already at so-determined target position, in which case trailing whitespace will be taken into account
    */
   public static void moveCaretToLineEnd(@NotNull Editor editor, boolean isWithSelection, boolean ignoreTrailingWhitespace) {
@@ -782,7 +780,7 @@ public class EditorActionUtil {
 
   public static void moveCaretPageUp(@NotNull Editor editor, boolean isWithSelection) {
     int lineHeight = editor.getLineHeight();
-    Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+    Rectangle visibleArea = getVisibleArea(editor);
     int linesIncrement = visibleArea.height / lineHeight;
     editor.getScrollingModel().scrollVertically(visibleArea.y - visibleArea.y % lineHeight - linesIncrement * lineHeight);
     int lineShift = -linesIncrement;
@@ -791,7 +789,7 @@ public class EditorActionUtil {
 
   public static void moveCaretPageDown(@NotNull Editor editor, boolean isWithSelection) {
     int lineHeight = editor.getLineHeight();
-    Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+    Rectangle visibleArea = getVisibleArea(editor);
     int linesIncrement = visibleArea.height / lineHeight;
     int allowedBottom = ((EditorEx)editor).getContentSize().height - visibleArea.height;
     editor.getScrollingModel().scrollVertically(
@@ -805,7 +803,7 @@ public class EditorActionUtil {
     int selectionStart = selectionModel.getLeadSelectionOffset();
     CaretModel caretModel = editor.getCaretModel();
     LogicalPosition blockSelectionStart = caretModel.getLogicalPosition();
-    Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+    Rectangle visibleArea = getVisibleArea(editor);
     int lineNumber = visibleArea.y / lineHeight;
     if (visibleArea.y % lineHeight > 0) {
       lineNumber++;
@@ -821,11 +819,17 @@ public class EditorActionUtil {
     int selectionStart = selectionModel.getLeadSelectionOffset();
     CaretModel caretModel = editor.getCaretModel();
     LogicalPosition blockSelectionStart = caretModel.getLogicalPosition();
-    Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+    Rectangle visibleArea = getVisibleArea(editor);
     int lineNumber = Math.max(0, (visibleArea.y + visibleArea.height) / lineHeight - 1);
     VisualPosition pos = new VisualPosition(lineNumber, editor.getCaretModel().getVisualPosition().column);
     editor.getCaretModel().moveToVisualPosition(pos);
     setupSelection(editor, isWithSelection, selectionStart, blockSelectionStart);
+  }
+
+  @NotNull
+  private static Rectangle getVisibleArea(@NotNull Editor editor) {
+    return SystemProperties.isTrueSmoothScrollingEnabled() ? editor.getScrollingModel().getVisibleAreaOnScrollingFinished()
+                                                           : editor.getScrollingModel().getVisibleArea();
   }
 
   public static EditorPopupHandler createEditorPopupHandler(@NotNull final String groupId) {

@@ -14,20 +14,13 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: mike
- * Date: Sep 30, 2002
- * Time: 9:46:52 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.xml.impl.schema;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
+import org.jetbrains.annotations.NotNull;
 
 public class AnyXmlAttributeDescriptor implements XmlAttributeDescriptor {
   private final String myAttributeName;
@@ -61,6 +54,7 @@ public class AnyXmlAttributeDescriptor implements XmlAttributeDescriptor {
   public void init(PsiElement element){
   }
 
+  @NotNull
   @Override
   public Object[] getDependences(){
     return ArrayUtil.EMPTY_OBJECT_ARRAY;

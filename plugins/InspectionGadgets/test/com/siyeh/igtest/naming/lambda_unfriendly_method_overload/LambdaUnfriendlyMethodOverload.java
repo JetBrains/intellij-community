@@ -56,3 +56,10 @@ class Generics<M, K> {
   void <warning descr="Lambda unfriendly overload of method 'm()'">m</warning>(Function f, K l) {}
 
 }
+class A {
+  static void foo(Function f) {}
+}
+
+class B extends A {
+  static void <warning descr="Lambda unfriendly overload of method 'foo()'">foo</warning>(IntFunction f) {}
+}

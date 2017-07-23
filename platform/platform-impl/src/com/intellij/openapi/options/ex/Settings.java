@@ -18,6 +18,7 @@ package com.intellij.openapi.options.ex;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
@@ -56,6 +57,17 @@ public abstract class Settings {
            : ActionCallback.REJECTED;
   }
 
+  @NotNull
+  public final ActionCallback select(Configurable configurable, String option) {
+    ActionCallback callback = select(configurable);
+    if (option != null && configurable instanceof SearchableConfigurable) {
+      SearchableConfigurable searchable = (SearchableConfigurable)configurable;
+      Runnable search = searchable.enableSearch(option);
+      if (search != null) callback.doWhenDone(search);
+    }
+    return callback;
+  }
+
   protected abstract ActionCallback selectImpl(Configurable configurable);
 
   private <T extends Configurable> T unwrap(Configurable configurable, Class<T> type) {
@@ -69,4 +81,9 @@ public abstract class Settings {
   private static Configurable choose(Configurable configurable, Configurable variant) {
     return variant != null ? variant : configurable;
   }
+
+  /**
+   * Used to handle programmatic settings changes when no UI events are sent.
+   */
+  public void revalidate() {}
 }

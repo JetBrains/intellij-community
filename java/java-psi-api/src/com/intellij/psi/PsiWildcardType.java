@@ -32,7 +32,7 @@ public class PsiWildcardType extends PsiType.Stub {
   public static final String SUPER_PREFIX = "? super ";
 
   private static final Logger LOG = Logger.getInstance(PsiWildcardType.class);
-  private static final Key<PsiWildcardType> UNBOUNDED_WILDCARD = new Key<PsiWildcardType>("UNBOUNDED_WILDCARD");
+  private static final Key<PsiWildcardType> UNBOUNDED_WILDCARD = new Key<>("UNBOUNDED_WILDCARD");
 
   private final PsiManager myManager;
   private final boolean myIsExtending;

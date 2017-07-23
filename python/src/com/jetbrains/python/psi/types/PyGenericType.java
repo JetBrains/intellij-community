@@ -15,11 +15,9 @@
  */
 package com.jetbrains.python.psi.types;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Function;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -32,13 +30,19 @@ import java.util.List;
 /**
  * @author vlan
  */
-public class PyGenericType implements PyType {
+public class PyGenericType implements PyType, PyInstantiableType<PyGenericType> {
   @NotNull private final String myName;
-  @Nullable private PyType myBound;
+  @Nullable private final PyType myBound;
+  private boolean myIsDefinition = false;
 
   public PyGenericType(@NotNull String name, @Nullable PyType bound) {
+    this(name, bound, false);
+  }
+
+  public PyGenericType(@NotNull String name, @Nullable PyType bound, boolean isDefinition) {
     myName = name;
     myBound = bound;
+    myIsDefinition = isDefinition;
   }
 
   @Nullable
@@ -52,20 +56,13 @@ public class PyGenericType implements PyType {
 
   @Override
   public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
-    return new Object[0];
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @NotNull
   @Override
   public String getName() {
-    if (myBound instanceof PyUnionType) {
-      final PyUnionType bounds = (PyUnionType)myBound;
-      final String boundsString = StringUtil.join(bounds.getMembers(), type -> type != null ? type.getName() : PyNames.UNKNOWN_TYPE, ", ");
-      return "TypeVar('" + myName + "', " + boundsString + ")";
-    }
-    else {
-      return "TypeVar('" + myName + "')";
-    }
+    return myName;
   }
 
   @Override
@@ -86,7 +83,7 @@ public class PyGenericType implements PyType {
       return false;
     }
     final PyGenericType type = (PyGenericType)o;
-    return myName.equals(type.myName);
+    return myName.equals(type.myName) && myIsDefinition == type.isDefinition();
   }
 
   @Override
@@ -103,5 +100,22 @@ public class PyGenericType implements PyType {
   @Nullable
   public PyType getBound() {
     return myBound;
+  }
+
+  @Override
+  public boolean isDefinition() {
+    return myIsDefinition;
+  }
+
+  @NotNull
+  @Override
+  public PyGenericType toInstance() {
+    return myIsDefinition ? new PyGenericType(myName, myBound, false) : this;
+  }
+
+  @NotNull
+  @Override
+  public PyGenericType toClass() {
+    return myIsDefinition ? this : new PyGenericType(myName, myBound, true);
   }
 }

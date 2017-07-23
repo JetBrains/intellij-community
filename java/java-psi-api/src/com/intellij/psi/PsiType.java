@@ -38,13 +38,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable {
   @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType NULL = new PsiPrimitiveType("null", (String)null);
 
   public static final PsiType[] EMPTY_ARRAY = new PsiType[0];
-  public static final ArrayFactory<PsiType> ARRAY_FACTORY = new ArrayFactory<PsiType>() {
-    @NotNull
-    @Override
-    public PsiType[] create(int count) {
-      return count == 0 ? EMPTY_ARRAY : new PsiType[count];
-    }
-  };
+  public static final ArrayFactory<PsiType> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiType[count];
 
   @NotNull
   public static PsiType[] createArray(int count) {

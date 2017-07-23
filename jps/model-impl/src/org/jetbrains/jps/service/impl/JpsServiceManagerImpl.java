@@ -15,6 +15,8 @@
  */
 package org.jetbrains.jps.service.impl;
 
+import com.intellij.util.containers.ContainerUtilRt;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.plugin.JpsPluginManager;
 import org.jetbrains.jps.service.JpsServiceManager;
 
@@ -26,8 +28,9 @@ import java.util.concurrent.ConcurrentMap;
  * @author nik
  */
 public class JpsServiceManagerImpl extends JpsServiceManager {
-  private final ConcurrentMap<Class, Object> myServices = new ConcurrentHashMap<Class, Object>(16, 0.75f, 1);
-  private final ConcurrentMap<Class, List<?>> myExtensions = new ConcurrentHashMap<Class, List<?>>(16, 0.75f, 1);
+  private final ConcurrentMap<Class, Object> myServices = new ConcurrentHashMap<>(16, 0.75f, 1);
+  private final ConcurrentMap<Class, List<?>> myExtensions = new ConcurrentHashMap<>(16, 0.75f, 1);
+  private volatile JpsPluginManager myPluginManager;
 
   @Override
   public <T> T getService(Class<T> serviceClass) {
@@ -56,7 +59,7 @@ public class JpsServiceManagerImpl extends JpsServiceManager {
   public <T> Iterable<T> getExtensions(Class<T> extensionClass) {
     List<?> cached = myExtensions.get(extensionClass);
     if (cached == null) {
-      final List<T> extensions = new ArrayList<T>(JpsPluginManager.getInstance().loadExtensions(extensionClass));
+      final List<T> extensions = new ArrayList<>(loadExtensions(extensionClass));
       cached = myExtensions.putIfAbsent(extensionClass, extensions);
       if (cached == null) {
         cached = extensions;
@@ -64,5 +67,33 @@ public class JpsServiceManagerImpl extends JpsServiceManager {
     }
     //noinspection unchecked
     return (List<T>)cached;
+  }
+
+  @NotNull
+  private <T> Collection<T> loadExtensions(Class<T> extensionClass) {
+    JpsPluginManager pluginManager = myPluginManager;
+    if (pluginManager == null) {
+      Iterator<JpsPluginManager> managers = ServiceLoader.load(JpsPluginManager.class, JpsPluginManager.class.getClassLoader()).iterator();
+      if (managers.hasNext()) {
+        pluginManager = managers.next();
+        if (managers.hasNext()) {
+          throw new ServiceConfigurationError("More than one implementation of " + JpsPluginManager.class + " found: " + pluginManager.getClass() + " and " + managers.next().getClass());
+        }
+      }
+      else {
+        pluginManager = new SingleClassLoaderPluginManager();
+      }
+      myPluginManager = pluginManager;
+    }
+    return pluginManager.loadExtensions(extensionClass);
+  }
+
+  private static class SingleClassLoaderPluginManager extends JpsPluginManager {
+    @NotNull
+    @Override
+    public <T> Collection<T> loadExtensions(@NotNull Class<T> extensionClass) {
+      ServiceLoader<T> loader = ServiceLoader.load(extensionClass, extensionClass.getClassLoader());
+      return ContainerUtilRt.newArrayList(loader);
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2015 Bas Leijdekkers
+ * Copyright 2008-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,6 +84,9 @@ public class WeakestTypeFinder {
         (PsiMethodCallExpression)facade.getElementFactory().createExpressionFromText(methodCallText, resourceVariable.getParent());
       if (!findWeakestType(methodCallExpression, weakestTypeClasses)) {
         return Collections.emptyList();
+      }
+      if (weakestTypeClasses.isEmpty()) {
+        weakestTypeClasses.add(lowerBoundClass);
       }
     }
     else {

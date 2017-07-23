@@ -36,12 +36,8 @@ public class RollbackLineStatusAction extends DumbAwareAction {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
-    if (DiffUtil.isDiffEditor(editor)) {
-      e.getPresentation().setEnabledAndVisible(false);
-      return;
-    }
     LineStatusTracker tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(editor.getDocument());
-    if (tracker == null || !tracker.isValid() || tracker.isSilentMode()) {
+    if (tracker == null || !tracker.isValid() || !tracker.isAvailableAt(editor)) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
@@ -79,6 +75,8 @@ public class RollbackLineStatusAction extends DumbAwareAction {
     assert editor != null || range != null;
 
     if (range != null) {
+      if (editor != null) DiffUtil.moveCaretToLineRangeIfNeeded(editor, range.getLine1(), range.getLine2());
+
       doRollback(tracker, range);
       return;
     }

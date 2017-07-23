@@ -87,9 +87,9 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
       final SourceToOutputMapping srcOutMapping = pd.dataManager.getSourceToOutputMap(target);
       final ArtifactOutputToSourceMapping outSrcMapping = pd.dataManager.getStorage(target, ArtifactOutToSourceStorageProvider.INSTANCE);
 
-      final TIntObjectHashMap<Set<String>> filesToProcess = new TIntObjectHashMap<Set<String>>();
-      final MultiMap<String, String> filesToDelete = new MultiMap<String, String>();
-      final Set<String> deletedOutputPaths = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+      final TIntObjectHashMap<Set<String>> filesToProcess = new TIntObjectHashMap<>();
+      final MultiMap<String, String> filesToDelete = new MultiMap<>();
+      final Set<String> deletedOutputPaths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
       for (String sourcePath : deletedFiles) {
         final Collection<String> outputPaths = srcOutMapping.getOutputs(sourcePath);
         if (outputPaths != null) {
@@ -101,7 +101,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
         }
       }
 
-      final Set<String> changedOutputPaths = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+      final Set<String> changedOutputPaths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
       holder.processDirtyFiles(new FileProcessor<ArtifactRootDescriptor, ArtifactBuildTarget>() {
         @Override
         public boolean apply(ArtifactBuildTarget target, File file, ArtifactRootDescriptor root) throws IOException {
@@ -132,7 +132,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
       context.checkCanceled();
 
       context.processMessage(new ProgressMessage("Building artifact '" + artifact.getName() + "': copying files..."));
-      final Set<JarInfo> changedJars = new THashSet<JarInfo>();
+      final Set<JarInfo> changedJars = new THashSet<>();
       for (ArtifactRootDescriptor descriptor : pd.getBuildRootIndex().getTargetRoots(target, context)) {
         context.checkCanceled();
         final Set<String> sourcePaths = filesToProcess.get(descriptor.getRootIndex());
@@ -154,7 +154,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
             List<ArtifactOutputToSourceMapping.SourcePathAndRootIndex> sources = outSrcMapping.getState(destination.getOutputFilePath());
             if (sources == null || sources.size() > 0 && sources.get(0).getRootIndex() == descriptor.getRootIndex()) {
               outSrcMapping.update(destination.getOutputFilePath(),
-                                   Collections.<ArtifactOutputToSourceMapping.SourcePathAndRootIndex>emptyList());
+                                   Collections.emptyList());
               changedJars.add(((JarDestinationInfo)destination).getJarInfo());
             }
           }
@@ -208,7 +208,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
     }
     Set<String> paths = filesToProcess.get(rootIndex);
     if (paths == null) {
-      paths = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+      paths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
       filesToProcess.put(rootIndex, paths);
     }
     paths.add(path);
@@ -221,8 +221,8 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
 
     context.processMessage(new ProgressMessage("Deleting outdated files..."));
     int notDeletedFilesCount = 0;
-    final THashSet<String> notDeletedPaths = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
-    final THashSet<String> deletedPaths = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+    final THashSet<String> notDeletedPaths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+    final THashSet<String> deletedPaths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
 
     for (String filePath : filesToDelete.keySet()) {
       if (notDeletedPaths.contains(filePath)) {

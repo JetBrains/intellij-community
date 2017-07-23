@@ -37,7 +37,7 @@ import java.util.List;
 public class MethodResolveProcessor implements PsiScopeProcessor, ElementClassHint, NameHint {
 
   private final String myNameHint;
-  private final List<PsiMethod> myMethods = new ArrayList<PsiMethod>();
+  private final List<PsiMethod> myMethods = new ArrayList<>();
 
   public MethodResolveProcessor() {
     myNameHint = null;

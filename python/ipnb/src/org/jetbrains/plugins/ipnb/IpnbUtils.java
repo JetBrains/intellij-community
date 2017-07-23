@@ -1,20 +1,29 @@
 package org.jetbrains.plugins.ipnb;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
-import javafx.application.Platform;
+import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ipnb.configuration.IpnbSettings;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public class IpnbUtils {
-  private static int hasFx = 0;
+  private static final Logger LOG  = Logger.getInstance(IpnbUtils.class);
 
-  public static JComponent createLatexPane(@NotNull final String source, int width) {
-    final JComponent panel = createHtmlPanel(source, width);
+  public static JComponent createLatexPane(@NotNull final String source, Project project, int width) {
+    final JComponent panel = createHtmlPanel(source, project, width);
 
     panel.addMouseListener(new MouseAdapter() {
       @Override
@@ -29,21 +38,8 @@ public class IpnbUtils {
     return panel;
   }
 
-  public static boolean hasFx() {
-    if (hasFx == 0) {
-      try {
-        Platform.setImplicitExit(false);
-        hasFx = 1;
-      }
-      catch (NoClassDefFoundError e) {
-        hasFx = 2;
-      }
-    }
-    return hasFx == 1;
-  }
-
-  public static JComponent createHtmlPanel(@NotNull final String source, int width) {
-    if (hasFx()) {
+  public static JComponent createHtmlPanel(@NotNull final String source, Project project, int width) {
+    if (IpnbSettings.getInstance(project).hasFx()) {
       return IpnbJfxUtils.createHtmlPanel(source, width);
     }
     return createNonJfxPanel(source);
@@ -56,5 +52,33 @@ public class IpnbUtils {
     textArea.setBorder(BorderFactory.createLineBorder(JBColor.lightGray));
     textArea.setBackground(IpnbEditorUtil.getBackground());
     return textArea;
+  }
+
+  @SuppressWarnings("Duplicates")
+  @Nullable
+  public static <T> T execCancelable(@NotNull final Callable<T> callable) {
+    final Future<T> future = ApplicationManager.getApplication().executeOnPooledThread(callable);
+
+    while (!future.isCancelled() && !future.isDone()) {
+      ProgressManager.checkCanceled();
+      TimeoutUtil.sleep(500);
+    }
+    T result = null;
+    try {
+      result = future.get();
+    }
+    catch (InterruptedException | ExecutionException e) {
+      LOG.warn(e.getMessage());
+    }
+    return result;
+  }
+  
+  @Nullable
+  public static <T> T runCancellableProcessUnderProgress(@NotNull Project project, @NotNull Callable<T> callable, 
+                                                         @SuppressWarnings("SameParameterValue") @NotNull String title) {
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+      return execCancelable(callable);
+    }, title, true, project);
   }
 }

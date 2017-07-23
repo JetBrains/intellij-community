@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyKey;
-import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
@@ -71,13 +70,8 @@ public class ServiceManager {
    * @param <T>          Service class type.
    * @return Key instance.
    */
+  @NotNull
   public static <T> NotNullLazyKey<T, Project> createLazyKey(@NotNull final Class<T> serviceClass) {
-    return NotNullLazyKey.create("Service: " + serviceClass.getName(), new NotNullFunction<Project, T>() {
-      @Override
-      @NotNull
-      public T fun(Project project) {
-        return getService(project, serviceClass);
-      }
-    });
+    return NotNullLazyKey.create("Service: " + serviceClass.getName(), project -> getService(project, serviceClass));
   }
 }

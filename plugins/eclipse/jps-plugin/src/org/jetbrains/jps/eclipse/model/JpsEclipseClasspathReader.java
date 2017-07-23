@@ -37,10 +37,6 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * User: anna
- * Date: 10/29/12
- */
 class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule> {
   private static final Logger LOG = Logger.getInstance(JpsEclipseClasspathReader.class);
   private final Map<String, String> myLibLevels;
@@ -115,12 +111,7 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
   @Override
   protected void addJUnitDefaultLib(JpsModule rootModel, String junitName, ExpandMacroToPathMap macroMap) {
     final String ideaHome = macroMap.substitute("$APPLICATION_HOME_DIR$", SystemInfo.isFileSystemCaseSensitive);
-    final FilenameFilter junitFilter = new FilenameFilter() {
-      @Override
-      public boolean accept(File dir, String name) {
-        return name.startsWith("junit");
-      }
-    };
+    final FilenameFilter junitFilter = (dir, name) -> name.startsWith("junit");
     File[] junitJars = new File(ideaHome, "lib").listFiles(junitFilter);
     if (junitJars == null || junitJars.length == 0) {
       junitJars = new File(new File(ideaHome, "community"), "lib").listFiles(junitFilter);
@@ -211,10 +202,10 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
                             final String testPattern,
                             Element classpathElement, JpsMacroExpander expander) throws IOException {
     LOG.debug("start loading classpath for " + model.getName());
-    final HashSet<String> libs = new HashSet<String>();
+    final HashSet<String> libs = new HashSet<>();
     for (Object o : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
       try {
-        readClasspathEntry(model, new ArrayList<String>(), new ArrayList<String>(), new HashSet<String>(),
+        readClasspathEntry(model, new ArrayList<>(), new ArrayList<>(), new HashSet<>(),
                            testPattern, (Element)o, 0, null, expander.getExpandMacroMap(), libs);
       }
       catch (ConversionException e) {

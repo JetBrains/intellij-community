@@ -15,9 +15,11 @@
  */
 package com.intellij.psi.stubs;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.RecentStringInterner;
 import com.intellij.util.io.AbstractStringEnumerator;
@@ -44,8 +46,9 @@ public class StubSerializationHelper {
   protected final TIntObjectHashMap<ObjectStubSerializer> myIdToSerializer = new TIntObjectHashMap<>();
   protected final TObjectIntHashMap<ObjectStubSerializer> mySerializerToId = new TObjectIntHashMap<>();
 
-  public StubSerializationHelper(@NotNull AbstractStringEnumerator nameStorage) {
+  public StubSerializationHelper(@NotNull AbstractStringEnumerator nameStorage, @NotNull Disposable parentDisposable) {
     myNameStorage = nameStorage;
+    myStringInterner = new RecentStringInterner(parentDisposable);
   }
 
   public void assignId(@NotNull final ObjectStubSerializer serializer) throws IOException {
@@ -112,11 +115,19 @@ public class StubSerializationHelper {
 
   private int getClassId(final ObjectStubSerializer serializer) {
     final int idValue = mySerializerToId.get(serializer);
-    assert idValue > 0: "No ID found for serializer " + LogUtil.objectAndClass(serializer);
+    if (idValue <= 0) {
+      assert false : "No ID found for serializer " +
+                     LogUtil.objectAndClass(serializer) +
+                     ", external id:" +
+                     serializer.getExternalId() +
+                     (serializer instanceof IElementType ?
+                        ", language:" + ((IElementType)serializer).getLanguage() + ", " + serializer : "")
+        ;
+    }
     return idValue;
   }
 
-  private final RecentStringInterner myStringInterner = new RecentStringInterner();
+  private final RecentStringInterner myStringInterner;
 
   @NotNull
   public Stub deserialize(@NotNull InputStream stream) throws IOException, SerializerNotFoundException {

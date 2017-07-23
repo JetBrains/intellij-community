@@ -19,17 +19,16 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.Consumer;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.NodeKind;
-import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.info.Info;
-import org.jetbrains.idea.svn.status.*;
 import org.jetbrains.idea.svn.info.SvnInfoHandler;
+import org.jetbrains.idea.svn.status.CmdStatusClient;
+import org.jetbrains.idea.svn.status.PortableStatus;
+import org.jetbrains.idea.svn.status.SvnStatusHandler;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
@@ -43,12 +42,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/9/12
- * Time: 7:03 PM
- */
 public class SvnParseCommandLineParseTest extends TestCase {
 
   public static final String LINUX_ROOT = "/c7181320/";
@@ -81,12 +74,7 @@ public class SvnParseCommandLineParseTest extends TestCase {
                      "</info>";
 
     final Info[] info = new Info[1];
-    final SvnInfoHandler handler = new SvnInfoHandler(new File("C:/base/"), new Consumer<Info>() {
-      @Override
-      public void consume(Info info1) {
-        info[0] = info1;
-      }
-    });
+    final SvnInfoHandler handler = new SvnInfoHandler(new File("C:/base/"), info1 -> info[0] = info1);
     SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
     parser.parse(new ByteArrayInputStream(s.getBytes(CharsetToolkit.UTF8_CHARSET)), handler);
 
@@ -570,32 +558,29 @@ public class SvnParseCommandLineParseTest extends TestCase {
       @Override
       public void switchChangeList(String newList) {
       }
-    }, new File(basePath), new Convertor<File, Info>() {
-      @Override
-      public Info convert(File o) {
-        try {
-          o.getCanonicalFile();
+    }, new File(basePath), o -> {
+      try {
+        o.getCanonicalFile();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      if (isWindows) {
+        final int idx = o.getPath().indexOf(":");
+        Assert.assertTrue(idx > 0);
+        final int secondIdx = o.getPath().indexOf(":", idx + 1);
+        Assert.assertTrue(o.getPath(), secondIdx == -1);
+      } else {
+        if (o.getPath().contains(LINUX_ROOT)) {
+          Assert.assertFalse(o.getPath().contains(basePath));
         }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-        if (isWindows) {
-          final int idx = o.getPath().indexOf(":");
-          Assert.assertTrue(idx > 0);
-          final int secondIdx = o.getPath().indexOf(":", idx + 1);
-          Assert.assertTrue(o.getPath(), secondIdx == -1);
-        } else {
-          if (o.getPath().contains(LINUX_ROOT)) {
-            Assert.assertFalse(o.getPath().contains(basePath));
-          }
-        }
-        try {
-          return createStubInfo(basePath + "1", "http://a.b.c");
-        }
-        catch (SVNException e) {
-          //
-          throw new RuntimeException(e);
-        }
+      }
+      try {
+        return createStubInfo(basePath + "1", "http://a.b.c");
+      }
+      catch (SVNException e) {
+        //
+        throw new RuntimeException(e);
       }
     });
     handlerArr[0] = handler;
@@ -667,33 +652,27 @@ public class SvnParseCommandLineParseTest extends TestCase {
     final String basePath = "C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main";
     final SvnStatusHandler[] handler = new SvnStatusHandler[1];
     final File baseFile = new File(basePath);
-    final SvnStatusHandler.ExternalDataCallback callback = CmdStatusClient.createStatusCallback(new StatusConsumer() {
-      @Override
-      public void consume(Status status) throws SVNException {
-        System.out.println(status.getURL());
-        if (new File(
-          "C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main\\slave\\src\\com\\slave\\MacMessagesParser.java")
-          .equals(status.getFile())) {
-          Assert.assertEquals("http://external/src/com/slave/MacMessagesParser.java", status.getURL().toString());
-        }
-        if (new File("C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main\\slave\\src\\com\\slave\\SomeOtherClass.java")
-          .equals(status.getFile())) {
-          Assert.assertEquals("http://external/src/com/slave/SomeOtherClass.java", status.getURL().toString());
-        }
+    final SvnStatusHandler.ExternalDataCallback callback = CmdStatusClient.createStatusCallback(status1 -> {
+      System.out.println(status1.getURL());
+      if (new File(
+        "C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main\\slave\\src\\com\\slave\\MacMessagesParser.java")
+        .equals(status1.getFile())) {
+        Assert.assertEquals("http://external/src/com/slave/MacMessagesParser.java", status1.getURL().toString());
+      }
+      if (new File("C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main\\slave\\src\\com\\slave\\SomeOtherClass.java")
+        .equals(status1.getFile())) {
+        Assert.assertEquals("http://external/src/com/slave/SomeOtherClass.java", status1.getURL().toString());
       }
     }, baseFile, createStubInfo(basePath, "http://mainurl/"), handler);
-    handler[0] = new SvnStatusHandler(callback, baseFile, new Convertor<File, Info>() {
-      @Override
-      public Info convert(File o) {
-        try {
-          if (new File("C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main\\slave").equals(o)) {
-            return createStubInfo(o.getPath(), "http://external");
-          }
-          return createStubInfo(o.getPath(), "http://12345");
+    handler[0] = new SvnStatusHandler(callback, baseFile, o -> {
+      try {
+        if (new File("C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main\\slave").equals(o)) {
+          return createStubInfo(o.getPath(), "http://external");
         }
-        catch (SVNException e) {
-          throw new RuntimeException(e);
-        }
+        return createStubInfo(o.getPath(), "http://12345");
+      }
+      catch (SVNException e) {
+        throw new RuntimeException(e);
       }
     });
     SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
@@ -752,32 +731,29 @@ public class SvnParseCommandLineParseTest extends TestCase {
       @Override
       public void switchChangeList(String newList) {
       }
-    }, new File(basePath), new Convertor<File, Info>() {
-      @Override
-      public Info convert(File o) {
-        try {
-          o.getCanonicalFile();
+    }, new File(basePath), o -> {
+      try {
+        o.getCanonicalFile();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      if (isWindows) {
+        final int idx = o.getPath().indexOf(":");
+        Assert.assertTrue(idx > 0);
+        final int secondIdx = o.getPath().indexOf(":", idx + 1);
+        Assert.assertTrue(o.getPath(), secondIdx == -1);
+      } else {
+        if (o.getPath().contains(LINUX_ROOT)) {
+          Assert.assertFalse(o.getPath().contains(basePath));
         }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-        if (isWindows) {
-          final int idx = o.getPath().indexOf(":");
-          Assert.assertTrue(idx > 0);
-          final int secondIdx = o.getPath().indexOf(":", idx + 1);
-          Assert.assertTrue(o.getPath(), secondIdx == -1);
-        } else {
-          if (o.getPath().contains(LINUX_ROOT)) {
-            Assert.assertFalse(o.getPath().contains(basePath));
-          }
-        }
-        try {
-          return createStubInfo(basePath + "1", "http://a.b.c");
-        }
-        catch (SVNException e) {
-          //
-          throw new RuntimeException(e);
-        }
+      }
+      try {
+        return createStubInfo(basePath + "1", "http://a.b.c");
+      }
+      catch (SVNException e) {
+        //
+        throw new RuntimeException(e);
       }
     });
     handlerArr[0] = handler;
@@ -842,32 +818,29 @@ public class SvnParseCommandLineParseTest extends TestCase {
       public void switchChangeList(String newList) {
         clName[0] = newList;
       }
-    }, new File(basePath), new Convertor<File, Info>() {
-      @Override
-      public Info convert(File o) {
-        try {
-          o.getCanonicalFile();
+    }, new File(basePath), o -> {
+      try {
+        o.getCanonicalFile();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      if (isWindows) {
+        final int idx = o.getPath().indexOf(":");
+        Assert.assertTrue(idx > 0);
+        final int secondIdx = o.getPath().indexOf(":", idx + 1);
+        Assert.assertTrue(o.getPath(), secondIdx == -1);
+      } else {
+        if (o.getPath().contains(LINUX_ROOT)) {
+          Assert.assertFalse(o.getPath().contains(basePath));
         }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-        if (isWindows) {
-          final int idx = o.getPath().indexOf(":");
-          Assert.assertTrue(idx > 0);
-          final int secondIdx = o.getPath().indexOf(":", idx + 1);
-          Assert.assertTrue(o.getPath(), secondIdx == -1);
-        } else {
-          if (o.getPath().contains(LINUX_ROOT)) {
-            Assert.assertFalse(o.getPath().contains(basePath));
-          }
-        }
-        try {
-          return createStubInfo(basePath + "1", "http://a.b.c");
-        }
-        catch (SVNException e) {
-          //
-          throw new RuntimeException(e);
-        }
+      }
+      try {
+        return createStubInfo(basePath + "1", "http://a.b.c");
+      }
+      catch (SVNException e) {
+        //
+        throw new RuntimeException(e);
       }
     });
     handlerArr[0] = handler;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testarithmetic$mul2() throws Throwable { doTest() }
 
   void testarithmetic$mul3() throws Throwable { doTest() }
+
+  void testarithmetic$mul4() throws Throwable { doTest() }
 
   void testarithmetic$post1() throws Throwable { doTest() }
 
@@ -122,6 +124,32 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testgstring$str8() throws Throwable { doTest() }
 
+  void testgstring$str9() throws Throwable { doTest() }
+
+  void teststring$singleQuoted() { doTest() }
+
+  void teststring$tripleSingleQuoted$ok() { doTest() }
+
+  void teststring$tripleSingleQuoted$err0() { doTest() }
+
+  void teststring$tripleSingleQuoted$err1() { doTest() }
+
+  void teststring$tripleSingleQuoted$err2() { doTest() }
+
+  void teststring$tripleSingleQuoted$err3() { doTest() }
+
+  void teststring$tripleSingleQuoted$err4() { doTest() }
+
+  void teststring$tripleSingleQuoted$err5() { doTest() }
+
+  void teststring$tripleSingleQuoted$unfinished0() { doTest() }
+
+  void teststring$tripleSingleQuoted$unfinished1() { doTest() }
+
+  void teststring$tripleSingleQuoted$unfinished2() { doTest() }
+
+  void teststring$tripleSingleQuoted$unfinished3() { doTest() }
+
   void testgstring$str_error1() throws Throwable { doTest() }
 
   void testgstring$str_error2() throws Throwable { doTest() }
@@ -143,6 +171,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testgstring$triple$triple2() throws Throwable { doTest() }
 
   void testgstring$triple$triple3() throws Throwable { doTest() }
+
+  void testgstring$triple$triple4() throws Throwable { doTest() }
 
   void testgstring$triple$quote_and_slash() throws Throwable { doTest() }
 
@@ -225,6 +255,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testpath$path13() throws Throwable { doTest() }
 
   void testpath$path14() throws Throwable { doTest() }
+
+  void testpath$path15() throws Throwable { doTest() }
 
   void testpath$path2() throws Throwable { doTest() }
 
@@ -352,6 +384,10 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testregex$dollarSlashy9() throws Throwable { doTest() }
 
+  void testregex$dollarSlashy10() { doTest() }
+
+  void testregex$dollarSlashy11() { doTest() }
+
   void testregex$dollarSlashyCode() throws Throwable { doTest() }
 
   void testregex$dollarSlashyCodeUnfinished() throws Throwable { doTest() }
@@ -375,6 +411,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testregex$dollarSlashyTriple() throws Throwable { doTest() }
 
   void testregex$dollarSlashyUltimate() { doTest() }
+
+  void testregex$afterNewLine() { doTest() }
 
   void testrelational$eq1() throws Throwable { doTest() }
 
@@ -509,6 +547,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testcommandExpr$indexAccess2() { doTest() }
 
   void testcommandExpr$indexAccess3() { doTest() }
+
+  void testcommandExpr$indexAccess4() { doTest() }
 
   void testcommandExpr$closureArg2() { doTest() }
 
@@ -848,4 +888,6 @@ Groovy script
   }
 
   void testspecial$mapHang() { doTest() }
+
+  void testindexpropertyWithUnfinishedInvokedExpression() { doTest() }
 }

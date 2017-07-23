@@ -18,6 +18,7 @@ package com.theoryinpractice.testng;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
@@ -26,6 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.util.IncorrectOperationException;
+import com.theoryinpractice.testng.configuration.TestNGConfigurationType;
 import com.theoryinpractice.testng.intention.TestNGExternalLibraryResolver;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import icons.TestngIcons;
@@ -191,6 +193,7 @@ public class TestNGFramework extends JavaTestFramework {
     return new FileTemplateDescriptor("TestNG TearDown Method.java");
   }
 
+  @NotNull
   public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("TestNG Test Method.java");
   }
@@ -202,7 +205,12 @@ public class TestNGFramework extends JavaTestFramework {
   }
 
   @Override
-  public boolean isTestMethod(PsiElement element) {
+  public boolean isTestMethod(PsiElement element, boolean checkAbstract) {
     return element instanceof PsiMethod && TestNGUtil.hasTest((PsiModifierListOwner)element);
+  }
+
+  @Override
+  public boolean isMyConfigurationType(ConfigurationType type) {
+    return type instanceof TestNGConfigurationType;
   }
 }

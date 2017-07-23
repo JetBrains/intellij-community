@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,40 +15,53 @@
  */
 package com.intellij.util.graph;
 
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.*;
 
 /**
  * @author dsl
  */
 public class GraphGenerator<Node> implements Graph<Node> {
+  @NotNull
   public static <T> Graph<T> generate(InboundSemiGraph<T> graph) {
     return new GraphGenerator<T>(graph);
   }
 
   private final InboundSemiGraph<Node> myGraph;
-  private final Map<Node, Set<Node>> myOuts;
+  private final Map<Node, List<Node>> myOuts;
 
-  private GraphGenerator(InboundSemiGraph<Node> graph) {
+  private GraphGenerator(@NotNull InboundSemiGraph<Node> graph) {
     myGraph = graph;
-    myOuts = new LinkedHashMap<Node, Set<Node>>();
+    myOuts = new THashMap<Node, List<Node>>();
     buildOuts();
   }
 
   private void buildOuts() {
+    final Set<Pair<Node, Node>> edges = new THashSet<Pair<Node, Node>>();
+
     Collection<Node> nodes = myGraph.getNodes();
-    for (Node node : nodes) {
-      myOuts.put(node, new LinkedHashSet<Node>());
-    }
 
     for (Node node : nodes) {
       Iterator<Node> inIt = myGraph.getIn(node);
       while (inIt.hasNext()) {
         Node inNode = inIt.next();
-        final Set<Node> set = myOuts.get(inNode);
-        if (set == null) {
-          throw new AssertionError("Unexpected node " + inNode + "; nodes=" + nodes);
+
+        if (!edges.add(Pair.create(inNode, node))) {
+          // Duplicate edge
+          continue;
         }
-        set.add(node);
+
+        List<Node> edgesFromInNode = myOuts.get(inNode);
+        if (edgesFromInNode == null) {
+          edgesFromInNode = new ArrayList<Node>();
+          myOuts.put(inNode, edgesFromInNode);
+        }
+        edgesFromInNode.add(node);
       }
     }
   }
@@ -65,7 +78,10 @@ public class GraphGenerator<Node> implements Graph<Node> {
 
   @Override
   public Iterator<Node> getOut(Node n) {
-    return myOuts.get(n).iterator();
+    final List<Node> outNodes = myOuts.get(n);
+    return outNodes != null
+           ? outNodes.iterator()
+           : ContainerUtil.<Node>emptyIterator();
   }
 
   //<editor-fold desc="Deprecated stuff.">

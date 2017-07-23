@@ -65,18 +65,8 @@ public class FragmentGenerator {
 
   @NotNull
   public Set<Integer> getMiddleNodes(final int upNode, final int downNode, boolean strict) {
-    Set<Integer> downWalk = getWalkNodes(upNode, false, new Condition<Integer>() {
-      @Override
-      public boolean value(Integer integer) {
-        return integer > downNode;
-      }
-    });
-    Set<Integer> upWalk = getWalkNodes(downNode, true, new Condition<Integer>() {
-      @Override
-      public boolean value(Integer integer) {
-        return integer < upNode;
-      }
-    });
+    Set<Integer> downWalk = getWalkNodes(upNode, false, integer -> integer > downNode);
+    Set<Integer> upWalk = getWalkNodes(downNode, true, integer -> integer < upNode);
 
     downWalk.retainAll(upWalk);
     if (strict) {
@@ -107,7 +97,7 @@ public class FragmentGenerator {
 
   @NotNull
   public GreenFragment getGreenFragmentForCollapse(int startNode, int maxWalkSize) {
-    if (myRedNodes.value(startNode)) return new GreenFragment(null, null, Collections.<Integer>emptySet());
+    if (myRedNodes.value(startNode)) return new GreenFragment(null, null, Collections.emptySet());
     Integer upRedNode = getNearRedNode(startNode, maxWalkSize, true);
     Integer downRedNode = getNearRedNode(startNode, maxWalkSize, false);
 

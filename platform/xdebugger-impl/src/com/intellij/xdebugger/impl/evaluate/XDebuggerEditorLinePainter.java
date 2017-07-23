@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
-import com.intellij.util.containers.ObjectLongHashMap;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
@@ -62,10 +61,9 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
     }
 
     XVariablesView.InlineVariablesInfo data = project.getUserData(XVariablesView.DEBUG_VARIABLES);
-    final ObjectLongHashMap<VirtualFile> timestamps = project.getUserData(XVariablesView.DEBUG_VARIABLES_TIMESTAMPS);
     final Document doc = FileDocumentManager.getInstance().getDocument(file);
 
-    if (data == null || timestamps == null || doc == null) {
+    if (data == null || doc == null) {
       return null;
     }
 
@@ -74,11 +72,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
       oldValues = new HashMap<>();
       project.putUserData(CACHE, oldValues);
     }
-    final Long timestamp = timestamps.get(file);
-    if (timestamp == -1 || timestamp < doc.getModificationStamp()) {
-      return null;
-    }
-    List<XValueNodeImpl> values = data.get(file, lineNumber);
+    List<XValueNodeImpl> values = data.get(file, lineNumber, doc.getModificationStamp());
     if (values != null && !values.isEmpty()) {
       XDebugSession session = XDebugView.getSession(values.iterator().next().getTree());
       final int bpLine = getCurrentBreakPointLineInFile(session, file);

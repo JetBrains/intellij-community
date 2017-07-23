@@ -19,15 +19,18 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.patterns.InitialPatternCondition;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -62,88 +65,89 @@ public class PythonPatterns extends PlatformPatterns {
     });
   }
 
-  public static PyElementPattern.Capture<PyExpression> pyArgument(final String functionName, final int index) {
+  @NotNull
+  public static PyElementPattern.Capture<PyExpression> pyArgument(@Nullable String functionName, int index) {
     return new PyElementPattern.Capture<>(new InitialPatternCondition<PyExpression>(PyExpression.class) {
-      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
+      public boolean accepts(@Nullable Object o, ProcessingContext context) {
         return isCallArgument(o, functionName, index);
       }
     });
   }
 
-  public static PyElementPattern.Capture<PyExpression> pyModuleFunctionArgument(final String functionName, final int index, final String moduleName) {
+  @NotNull
+  public static PyElementPattern.Capture<PyExpression> pyModuleFunctionArgument(@Nullable String functionName,
+                                                                                int index,
+                                                                                @NotNull String moduleName) {
     return new PyElementPattern.Capture<>(new InitialPatternCondition<PyExpression>(PyExpression.class) {
-      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
-        PyCallable function = resolveCalledFunction(o, functionName, index);
-        if (!(function instanceof PyFunction)) {
-          return false;
-        }
-        ScopeOwner scopeOwner = PsiTreeUtil.getParentOfType(function, ScopeOwner.class);
-        if (!(scopeOwner instanceof PyFile)) {
-          return false;
-        }
-        return moduleName.equals(FileUtil.getNameWithoutExtension(scopeOwner.getName()));
+      public boolean accepts(@Nullable Object o, ProcessingContext context) {
+        return StreamEx
+          .of(multiResolveCalledFunction(o, functionName, index))
+          .select(PyFunction.class)
+          .map(ScopeUtil::getScopeOwner)
+          .select(PyFile.class)
+          .anyMatch(file -> moduleName.equals(FileUtil.getNameWithoutExtension(file.getName())));
       }
     });
   }
 
-  public static PyElementPattern.Capture<PyExpression> pyMethodArgument(final String functionName, final int index, final String classQualifiedName) {
+  @NotNull
+  public static PyElementPattern.Capture<PyExpression> pyMethodArgument(@Nullable String functionName,
+                                                                        int index,
+                                                                        @NotNull String classQualifiedName) {
     return new PyElementPattern.Capture<>(new InitialPatternCondition<PyExpression>(PyExpression.class) {
-      public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
-        PyCallable function = resolveCalledFunction(o, functionName, index);
-        if (!(function instanceof PyFunction)) {
-          return false;
-        }
-        ScopeOwner scopeOwner = PsiTreeUtil.getParentOfType(function, ScopeOwner.class);
-        if (!(scopeOwner instanceof PyClass)) {
-          return false;
-        }
-        return classQualifiedName.equals(((PyClass)scopeOwner).getQualifiedName());
+      public boolean accepts(@Nullable Object o, ProcessingContext context) {
+        return StreamEx
+          .of(multiResolveCalledFunction(o, functionName, index))
+          .select(PyFunction.class)
+          .map(ScopeUtil::getScopeOwner)
+          .select(PyClass.class)
+          .anyMatch(cls -> classQualifiedName.equals(cls.getQualifiedName()));
       }
     });
   }
 
-  private static PyCallable resolveCalledFunction(Object o, String functionName, int index) {
-    if (!isCallArgument(o, functionName, index)) {
-      return null;
+  @NotNull
+  private static List<PyCallable> multiResolveCalledFunction(@Nullable Object expression, @Nullable String functionName, int index) {
+    if (!isCallArgument(expression, functionName, index)) {
+      return Collections.emptyList();
     }
-    PyExpression expression = (PyExpression) o;
-    PyCallExpression call = (PyCallExpression) expression.getParent().getParent();
+
+    final PyCallExpression call = (PyCallExpression)((PyExpression)expression).getParent().getParent();
 
     // TODO is it better or worse to allow implicits here?
-    PyResolveContext context = PyResolveContext.noImplicits()
-      .withTypeEvalContext(TypeEvalContext.codeAnalysis(expression.getProject(), expression.getContainingFile()));
+    final PyResolveContext context = PyResolveContext
+      .noImplicits()
+      .withTypeEvalContext(TypeEvalContext.codeAnalysis(call.getProject(), call.getContainingFile()));
 
-    PyCallExpression.PyMarkedCallee callee = call.resolveCallee(context);
-    return callee != null ? callee.getCallable() : null;
+    return call.multiResolveCalleeFunction(context);
   }
 
-  private static boolean isCallArgument(Object o, String functionName, int index) {
-    if (!(o instanceof PyExpression)) {
+  private static boolean isCallArgument(@Nullable Object expression, @Nullable String functionName, int index) {
+    if (!(expression instanceof PyExpression)) {
       return false;
     }
-    PsiElement parent = ((PyExpression)o).getParent();
-    if (!(parent instanceof PyArgumentList)) {
+
+    final PsiElement argumentList = ((PyExpression)expression).getParent();
+    if (!(argumentList instanceof PyArgumentList)) {
       return false;
     }
-    PsiElement parent1 = parent.getParent();
-    if (!(parent1 instanceof PyCallExpression)) {
+
+    final PsiElement call = argumentList.getParent();
+    if (!(call instanceof PyCallExpression)) {
       return false;
     }
-    PyExpression methodExpression = ((PyCallExpression)parent1).getCallee();
-    if (!(methodExpression instanceof PyReferenceExpression)) {
+
+    final PyExpression referenceToCallee = ((PyCallExpression)call).getCallee();
+    if (!(referenceToCallee instanceof PyReferenceExpression)) {
       return false;
     }
-    String referencedName = ((PyReferenceExpression)methodExpression).getReferencedName();
+
+    final String referencedName = ((PyReferenceExpression)referenceToCallee).getReferencedName();
     if (referencedName == null || !referencedName.equals(functionName)) {
       return false;
     }
-    int i = 0;
-    for (PsiElement child : parent.getChildren()) {
-      if (i == index) {
-        return child == o;
-      }
-      i++;
-    }
-    return false;
+
+    final PsiElement[] arguments = argumentList.getChildren();
+    return index < arguments.length && expression == arguments[index];
   }
 }

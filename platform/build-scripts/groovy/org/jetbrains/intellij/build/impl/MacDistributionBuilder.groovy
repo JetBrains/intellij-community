@@ -29,13 +29,13 @@ import java.time.LocalDate
 class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   private final MacDistributionCustomizer customizer
   private final File ideaProperties
-  private final String customIcnsPath
+  private final String icnsPath
 
   MacDistributionBuilder(BuildContext buildContext, MacDistributionCustomizer customizer, File ideaProperties) {
     super(BuildOptions.OS_MAC, "Mac OS", buildContext)
     this.ideaProperties = ideaProperties
     this.customizer = customizer
-    customIcnsPath = (buildContext.applicationInfo.isEAP ? customizer.icnsPathForEAP : null) ?: customizer.icnsPath
+    icnsPath = (buildContext.applicationInfo.isEAP ? customizer.icnsPathForEAP : null) ?: customizer.icnsPath
   }
 
   @Override
@@ -49,7 +49,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
           <string>ipr</string>
         </array>
         <key>CFBundleTypeIconFile</key>
-        <string>${PathUtilRt.getFileName(customIcnsPath ?: "idea.icns")}</string>
+        <string>${PathUtilRt.getFileName(icnsPath)}</string>
         <key>CFBundleTypeName</key>
         <string>${buildContext.applicationInfo.productName} Project File</string>
         <key>CFBundleTypeRole</key>
@@ -62,6 +62,20 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     }
     customIdeaProperties.putAll(customizer.getCustomIdeaProperties(buildContext.applicationInfo))
     layoutMacApp(ideaProperties, customIdeaProperties, docTypes, macDistPath)
+
+    if (customizer.helpId != null) {
+      def helpZip = customizer.getPathToHelpZip(buildContext)
+      if (helpZip == null) {
+        buildContext.messages.error("Path to zip archive with help files isn't specified")
+      }
+      if (!new File(helpZip).exists() && buildContext.options.isInDevelopmentMode) {
+        buildContext.messages.warning("Help won't be bundled with Mac OS X distribution: $helpZip doesn't exist")
+      }
+      else {
+        buildContext.ant.unzip(src: helpZip, dest: "$macDistPath/Resources")
+      }
+    }
+
     customizer.copyAdditionalFiles(buildContext, macDistPath)
 
     if (!customizer.binariesToSign.empty) {
@@ -112,23 +126,14 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     String executable = buildContext.productProperties.baseFileName
-    String icns = "idea.icns" //todo[nik] rename to more generic name?
+    buildContext.ant.copy(file: icnsPath, todir: "$target/Resources")
     String helpId = macCustomizer.helpId
-    String helpIcns = "$target/Resources/${helpId}.help/Contents/Resources/Shared/product.icns"
-    if (customIcnsPath != null) {
-      buildContext.ant.delete(file: "$target/Resources/idea.icns")
-      buildContext.ant.copy(file: customIcnsPath, todir: "$target/Resources")
-      buildContext.ant.copy(file: customIcnsPath, tofile: helpIcns)
-      icns = new File(customIcnsPath).name
-    }
-    else {
-      buildContext.ant.copy(file: "$target/Resources/idea.icns", tofile: helpIcns)
+    if (helpId != null) {
+      String helpIcns = "$target/Resources/${helpId}.help/Contents/Resources/Shared/product.icns"
+      buildContext.ant.copy(file: icnsPath, tofile: helpIcns)
     }
 
     String fullName = buildContext.applicationInfo.productName
-
-    //todo[nik] why do we put vm options to separate places (some into Info.plist, some into vmoptions file)?
-    String vmOptions = "-Dfile.encoding=UTF-8 ${VmOptionsGenerator.computeCommonVmOptions(buildContext.applicationInfo.isEAP)} -Xverify:none ${buildContext.productProperties.additionalIdeJvmArguments}".trim()
 
     //todo[nik] improve
     String minor = buildContext.applicationInfo.minorVersion
@@ -141,17 +146,17 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
     def coreKeys = ["idea.platform.prefix", "idea.paths.selector", "idea.executable"]
 
-    String coreProperties = submapToXml(properties, coreKeys);
+    String coreProperties = submapToXml(properties, coreKeys)
 
     StringBuilder effectiveProperties = new StringBuilder()
     properties.each { k, v ->
       if (!coreKeys.contains(k)) {
-        effectiveProperties.append("$k=$v\n");
+        effectiveProperties.append("$k=$v\n")
       }
     }
 
     new File("$target/bin/idea.properties").text = effectiveProperties.toString()
-    String ideaVmOptions = "${VmOptionsGenerator.vmOptionsForArch(JvmArchitecture.x64, buildContext.productProperties)} -XX:+UseCompressedOops"
+    String ideaVmOptions = "${VmOptionsGenerator.vmOptionsForArch(JvmArchitecture.x64, buildContext.productProperties)} -XX:+UseCompressedOops -Dfile.encoding=UTF-8 ${VmOptionsGenerator.computeCommonVmOptions(buildContext.applicationInfo.isEAP)} -Xverify:none ${buildContext.productProperties.additionalIdeJvmArguments} -XX:ErrorFile=\$USER_HOME/java_error_in_${executable}_%p.log -XX:HeapDumpPath=\$USER_HOME/java_error_in_${executable}.hprof -Xbootclasspath/a:../lib/boot.jar".trim()
     if (buildContext.applicationInfo.isEAP && buildContext.productProperties.enableYourkitAgentInEAP && macCustomizer.enableYourkitAgentInEAP) {
       ideaVmOptions += " " + VmOptionsGenerator.yourkitOptions(buildContext.systemSelector, "")
     }
@@ -190,13 +195,25 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       </array>
 """
     }
+    String bundledHelpAttributes
+    if (helpId != null) {
+      bundledHelpAttributes = """
+        <key>CFBundleHelpBookName</key>
+        <string>JetBrains.${helpId}.help</string>
+        <key>CFBundleHelpBookFolder</key>
+        <string>${helpId}.help</string>
+"""
+    }
+    else {
+      bundledHelpAttributes = ""
+    }
 
     String todayYear = LocalDate.now().year
     buildContext.ant.replace(file: "$target/Info.plist") {
       replacefilter(token: "@@build@@", value: buildContext.fullBuildNumber)
       replacefilter(token: "@@doc_types@@", value: docTypes ?: "")
       replacefilter(token: "@@executable@@", value: executable)
-      replacefilter(token: "@@icns@@", value: icns)
+      replacefilter(token: "@@icns@@", value: PathUtilRt.getFileName(icnsPath))
       replacefilter(token: "@@bundle_name@@", value: fullName)
       replacefilter(token: "@@product_state@@", value: EAP)
       replacefilter(token: "@@bundle_identifier@@", value: macCustomizer.bundleIdentifier)
@@ -205,13 +222,13 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       replacefilter(token: "@@min_year@@", value: "2000")
       replacefilter(token: "@@max_year@@", value: "$todayYear")
       replacefilter(token: "@@version@@", value: version)
-      replacefilter(token: "@@vmoptions@@", value: vmOptions)
       replacefilter(token: "@@idea_properties@@", value: coreProperties)
       replacefilter(token: "@@class_path@@", value: classPath)
       replacefilter(token: "@@help_id@@", value: helpId)
       replacefilter(token: "@@url_schemes@@", value: urlSchemesString)
       replacefilter(token: "@@archs@@", value: archsString)
       replacefilter(token: "@@min_osx@@", value: macCustomizer.minOSXVersion)
+      replacefilter(token: "@@bundled_help_attributes@@", value: bundledHelpAttributes)
     }
 
     if (executable != "idea") {
@@ -319,7 +336,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   private Map<String, String> readIdeaProperties(File propertiesFile, Map<String, String> customProperties = [:]) {
     Map<String, String> ideaProperties = [:]
     propertiesFile.withReader {
-      Properties loadedProperties = new Properties();
+      Properties loadedProperties = new Properties()
       loadedProperties.load(it)
       ideaProperties.putAll(loadedProperties as Map<String, String>)
     }

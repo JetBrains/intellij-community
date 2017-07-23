@@ -26,6 +26,16 @@ public class Semaphore {
    */
   public Semaphore() { }
 
+  /**
+   * Creates a semaphore and immediately puts it down the specified number of times
+   */
+  public Semaphore(int downs) {
+    assert downs >= 0 : "A nonnegative amount of 'downs' expected, found " + downs;
+    for (int i = 0; i < downs; i++) {
+      down();
+    }
+  }
+
   private static final class Sync extends AbstractQueuedSynchronizer {
     @Override
     public int tryAcquireShared(int acquires) {

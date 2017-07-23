@@ -18,7 +18,11 @@ package com.intellij.openapi.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.ErrorLabel;
+import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -26,16 +30,13 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 
-/**
- * User: anna
- * Date: 26-May-2006
- */
 public abstract class NamedConfigurable<T> implements Configurable {
   private JTextField myNameField;
   private JPanel myNamePanel;
   private JPanel myWholePanel;
   private JPanel myOptionsPanel;
   private JPanel myTopRightPanel;
+  private ErrorLabel myErrorLabel;
   private JComponent myOptionsComponent;
   private boolean myNameEditable;
 
@@ -49,9 +50,17 @@ public abstract class NamedConfigurable<T> implements Configurable {
     if (myNameEditable) {
       myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
         protected void textChanged(DocumentEvent e) {
-          setDisplayName(myNameField.getText());
-          if (updateTree != null){
-            updateTree.run();
+          String name = myNameField.getText().trim();
+          try {
+            checkName(name);
+            myErrorLabel.setErrorText(null, null);
+            setDisplayName(name);
+            if (updateTree != null){
+              updateTree.run();
+            }
+          }
+          catch (ConfigurationException exc) {
+            myErrorLabel.setErrorText(exc.getMessage(), JBColor.RED);
           }
         }
       });
@@ -94,6 +103,12 @@ public abstract class NamedConfigurable<T> implements Configurable {
     }
     updateName();
     return myWholePanel;
+  }
+
+  protected void checkName(@NotNull String name) throws ConfigurationException {
+    if (name.isEmpty()) {
+      throw new ConfigurationException("Name cannot be empty");
+    }
   }
 
   @Nullable

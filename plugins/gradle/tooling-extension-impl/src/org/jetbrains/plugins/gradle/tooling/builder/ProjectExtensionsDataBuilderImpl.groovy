@@ -43,10 +43,13 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
     for (it in project.configurations) {
       result.configurations.add(new DefaultGradleConfiguration(it.name, it.description, it.visible))
     }
+    for (it in project.buildscript.configurations) {
+      result.configurations.add(new DefaultGradleConfiguration(it.name, it.description, it.visible, true))
+    }
 
     def conventions = project.extensions as DefaultConvention
     conventions.extraProperties.properties.each { name, value ->
-      if(name == 'extraModelBuilder') return
+      if(name == 'extraModelBuilder' || name.contains('.')) return
       String typeFqn = getType(value)
       result.gradleProperties.add(new DefaultGradleProperty(
         name, typeFqn, value.toString()))
@@ -61,7 +64,7 @@ class ProjectExtensionsDataBuilderImpl implements ModelBuilderService {
         if (value instanceof NamedDomainObjectCollection) {
           def objectCollection = (NamedDomainObjectCollection)value
           if(!objectCollection.isEmpty()) {
-            namedObjectTypeFqn = getType(objectCollection.first())
+            namedObjectTypeFqn = getType(objectCollection.find{true})
           }
         }
         result.extensions.add(new DefaultGradleExtension(name, rootTypeFqn, namedObjectTypeFqn))

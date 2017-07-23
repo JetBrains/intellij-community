@@ -33,9 +33,6 @@ public class GitBinaryContentRevision extends GitContentRevision implements Bina
 
   @Override
   public byte[] getBinaryContent() throws VcsException {
-    if (myFile.isDirectory()) {
-      return null;
-    }
     return getContentAsBytes();
   }
 }

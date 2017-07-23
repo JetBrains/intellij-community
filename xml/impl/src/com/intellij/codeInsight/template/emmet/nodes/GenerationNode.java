@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,16 +29,13 @@ import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.injected.editor.DocumentWindowImpl;
-import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -129,13 +126,9 @@ public class GenerationNode extends UserDataHolderBase {
 
   private boolean isBlockTag() {
     if (myTemplateToken != null) {
-      XmlFile xmlFile = myTemplateToken.getFile();
-      XmlDocument document = xmlFile.getDocument();
-      if (document != null) {
-        XmlTag tag = document.getRootTag();
-        if (tag != null) {
-          return HtmlUtil.isHtmlBlockTagL(tag.getName());
-        }
+      XmlTag tag = myTemplateToken.getXmlTag();
+      if (tag != null) {
+        return HtmlUtil.isHtmlBlockTagL(tag.getName());
       }
     }
     return false;
@@ -273,21 +266,16 @@ public class GenerationNode extends UserDataHolderBase {
                                          CustomTemplateCallback callback,
                                          @Nullable ZenCodingGenerator generator,
                                          final boolean hasChildren) {
-    /*assert generator == null || generator instanceof XmlZenCodingGenerator :
-      "The generator cannot process TemplateToken because it doesn't inherit XmlZenCodingGenerator";*/
-
     ZenCodingGenerator zenCodingGenerator = ObjectUtils.notNull(generator, XmlZenCodingGeneratorImpl.INSTANCE);
     
     Map<String, String> attributes = token.getAttributes();
     TemplateImpl template = token.getTemplate();
     assert template != null;
-
-    final XmlFile xmlFile = token.getFile();
-    PsiFileFactory fileFactory = PsiFileFactory.getInstance(xmlFile.getProject());
-    XmlFile dummyFile = (XmlFile)fileFactory.createFileFromText("dummy.html", HTMLLanguage.INSTANCE, xmlFile.getText(), false, true);
-    final XmlTag tag = dummyFile.getRootTag();
+    
+    PsiFileFactory fileFactory = PsiFileFactory.getInstance(callback.getProject());
+    PsiFile dummyFile = fileFactory.createFileFromText("dummy.html", callback.getFile().getLanguage(), token.getTemplateText(), false, true);
+    XmlTag tag = PsiTreeUtil.findChildOfType(dummyFile, XmlTag.class);
     if (tag != null) {
-
       // autodetect href
       if (EmmetOptions.getInstance().isHrefAutoDetectEnabled() && StringUtil.isNotEmpty(mySurroundedText)) {
         final boolean isEmptyLinkTag = "a".equalsIgnoreCase(tag.getName()) && isEmptyValue(tag.getAttributeValue("href"));
@@ -310,12 +298,7 @@ public class GenerationNode extends UserDataHolderBase {
       }
       XmlTag tag1 = hasChildren ? expandEmptyTagIfNecessary(tag) : tag;
       setAttributeValues(tag1, attributes, callback, zenCodingGenerator.isHtml(callback));
-      XmlFile physicalFile = (XmlFile)fileFactory.createFileFromText(HTMLLanguage.INSTANCE, tag1.getContainingFile().getText());
-      VirtualFile vFile = physicalFile.getVirtualFile();
-      if (vFile != null) {
-        vFile.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
-      }
-      token.setFile(physicalFile);
+      token.setTemplateText(tag1.getContainingFile().getText(), callback);
     }
     template = zenCodingGenerator.generateTemplate(token, hasChildren, callback.getContext());
     removeVariablesWhichHasNoSegment(template);

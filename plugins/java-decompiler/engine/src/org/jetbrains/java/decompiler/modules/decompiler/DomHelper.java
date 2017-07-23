@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -191,7 +191,7 @@ public class DomHelper {
         lstPosts.add(stt.id);
       }
 
-      Collections.sort(lstPosts, (o1, o2) -> mapSortOrder.get(o1).compareTo(mapSortOrder.get(o2)));
+      Collections.sort(lstPosts, Comparator.comparing(mapSortOrder::get));
 
       if (lstPosts.size() > 1 && lstPosts.get(0).intValue() == st.id) {
         lstPosts.add(lstPosts.remove(0));

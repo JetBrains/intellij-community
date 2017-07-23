@@ -20,9 +20,6 @@ import com.intellij.util.ui.GraphicsUtil;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * User: Vassiliy.Kudryashov
- */
 public class JBCheckboxMenuItem extends JCheckBoxMenuItem {
   public JBCheckboxMenuItem() {
     super();

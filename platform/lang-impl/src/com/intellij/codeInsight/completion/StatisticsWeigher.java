@@ -17,21 +17,16 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.WeighingContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FlatteningIterator;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,8 +47,8 @@ public class StatisticsWeigher extends CompletionWeigher {
   public static class LookupStatisticsWeigher extends Classifier<LookupElement> {
     private final CompletionLocation myLocation;
     private final Map<LookupElement, StatisticsComparable> myWeights = ContainerUtil.newIdentityHashMap();
+    private final Set<String> myStringsWithWeights = ContainerUtil.newTroveSet();
     private final Set<LookupElement> myNoStats = ContainerUtil.newIdentityTroveSet();
-    private int myPrefixChanges;
 
     public LookupStatisticsWeigher(CompletionLocation location, Classifier<LookupElement> next) {
       super(next, "stats");
@@ -63,45 +58,30 @@ public class StatisticsWeigher extends CompletionWeigher {
     @Override
     public void addElement(@NotNull LookupElement element, @NotNull ProcessingContext context) {
       StatisticsInfo baseInfo = getBaseStatisticsInfo(element, myLocation);
-      myWeights.put(element, new StatisticsComparable(weigh(element, baseInfo, context.get(CompletionLookupArranger.WEIGHING_CONTEXT)), baseInfo));
+      int weight = weigh(baseInfo);
+      if (weight != 0) {
+        myWeights.put(element, new StatisticsComparable(weight, baseInfo));
+        myStringsWithWeights.add(element.getLookupString());
+      }
       if (baseInfo == StatisticsInfo.EMPTY) {
         myNoStats.add(element);
       }
       super.addElement(element, context);
     }
 
-    private void checkPrefixChanged(ProcessingContext context) {
-      int actualPrefixChanges = context.get(CompletionLookupArranger.PREFIX_CHANGES).intValue();
-      if (myPrefixChanges != actualPrefixChanges) {
-        myPrefixChanges = actualPrefixChanges;
-        myWeights.clear();
-      }
-    }
-
     @NotNull
     @Override
     public Iterable<LookupElement> classify(@NotNull Iterable<LookupElement> source, @NotNull final ProcessingContext context) {
-      checkPrefixChanged(context);
-
-      final Collection<List<LookupElement>> byWeight = buildMapByWeight(source, context).descendingMap().values();
-
       List<LookupElement> initialList = getInitialNoStatElements(source, context);
+      Iterable<LookupElement> rest = withoutInitial(source, initialList);
+      Collection<List<LookupElement>> byWeight = buildMapByWeight(rest).descendingMap().values();
 
-      //noinspection unchecked
-      final THashSet<LookupElement> initialSet = new THashSet<>(initialList, TObjectHashingStrategy.IDENTITY);
-      final Condition<LookupElement> notInInitialList = element -> !initialSet.contains(element);
+      return JBIterable.from(initialList).append(JBIterable.from(byWeight).flatten(group -> myNext.classify(group, context)));
+    }
 
-      return ContainerUtil.concat(initialList, new Iterable<LookupElement>() {
-        @Override
-        public Iterator<LookupElement> iterator() {
-          return new FlatteningIterator<List<LookupElement>, LookupElement>(byWeight.iterator()) {
-            @Override
-            protected Iterator<LookupElement> createValueIterator(List<LookupElement> group) {
-              return myNext.classify(ContainerUtil.findAll(group, notInInitialList), context).iterator();
-            }
-          };
-        }
-      });
+    private static Iterable<LookupElement> withoutInitial(Iterable<LookupElement> allItems, List<LookupElement> initial) {
+      Set<LookupElement> initialSet = ContainerUtil.newIdentityTroveSet(initial);
+      return JBIterable.from(allItems).filter(element -> !initialSet.contains(element));
     }
 
     private List<LookupElement> getInitialNoStatElements(Iterable<LookupElement> source, ProcessingContext context) {
@@ -117,44 +97,63 @@ public class StatisticsWeigher extends CompletionWeigher {
       return initialList;
     }
 
-    private TreeMap<Integer, List<LookupElement>> buildMapByWeight(Iterable<LookupElement> source, ProcessingContext context) {
-      TreeMap<Integer, List<LookupElement>> map = new TreeMap<>();
+    private TreeMap<Integer, List<LookupElement>> buildMapByWeight(Iterable<LookupElement> source) {
+      MultiMap<String, LookupElement> byName = MultiMap.create();
+      List<LookupElement> noStats = new ArrayList<>();
       for (LookupElement element : source) {
-        final int weight = getWeight(element, context.get(CompletionLookupArranger.WEIGHING_CONTEXT)).getScalar();
-        List<LookupElement> list = map.get(weight);
-        if (list == null) {
-          map.put(weight, list = new SmartList<>());
+        String string = element.getLookupString();
+        if (myStringsWithWeights.contains(string)) {
+          byName.putValue(string, element);
+        } else {
+          noStats.add(element);
         }
-        list.add(element);
+      }
+
+      TreeMap<Integer, List<LookupElement>> map = new TreeMap<>();
+      map.put(0, noStats);
+      for (String s : byName.keySet()) {
+        List<LookupElement> group = (List<LookupElement>)byName.get(s);
+        Collections.sort(group, Comparator.comparing(this::getScalarWeight).reversed());
+        map.computeIfAbsent(getMaxWeight(group), __ -> new ArrayList<>()).addAll(group);
       }
       return map;
     }
 
-    private StatisticsComparable getWeight(LookupElement t, WeighingContext context) {
+    private int getMaxWeight(List<LookupElement> group) {
+      int max = 0;
+      //noinspection ForLoopReplaceableByForEach
+      for (int i = 0; i < group.size(); i++) {
+        max = Math.max(max, getScalarWeight(group.get(i)));
+      }
+      return max;
+    }
+
+    private int getScalarWeight(LookupElement e) {
+      StatisticsComparable comparable = myWeights.get(e);
+      return comparable == null ? 0 : comparable.getScalar();
+    }
+
+    private StatisticsComparable getWeight(LookupElement t) {
       StatisticsComparable w = myWeights.get(t);
       if (w == null) {
         StatisticsInfo info = getBaseStatisticsInfo(t, myLocation);
-        myWeights.put(t, w = new StatisticsComparable(weigh(t, info, context), info));
+        myWeights.put(t, w = new StatisticsComparable(weigh(info), info));
       }
       return w;
     }
 
-    private static int weigh(@NotNull LookupElement item, final StatisticsInfo baseInfo, WeighingContext context) {
+    private static int weigh(final StatisticsInfo baseInfo) {
       if (baseInfo == StatisticsInfo.EMPTY) {
         return 0;
       }
-      String prefix = context.itemPattern(item);
-      StatisticsInfo composed = composeStatsWithPrefix(baseInfo, prefix, false);
-      int minRecency = composed.getLastUseRecency();
-      int useCount = composed.getUseCount();
-      return minRecency == Integer.MAX_VALUE ? useCount : 100 - minRecency;
+      int minRecency = baseInfo.getLastUseRecency();
+      return minRecency == Integer.MAX_VALUE ? 0 : StatisticsManager.RECENCY_OBLIVION_THRESHOLD - minRecency;
     }
 
     @NotNull
     @Override
     public List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<LookupElement> items, @NotNull final ProcessingContext context) {
-      checkPrefixChanged(context);
-      return ContainerUtil.map(items, lookupElement -> new Pair<LookupElement, Object>(lookupElement, getWeight(lookupElement, context.get(CompletionLookupArranger.WEIGHING_CONTEXT))));
+      return ContainerUtil.map(items, lookupElement -> new Pair<LookupElement, Object>(lookupElement, getWeight(lookupElement)));
     }
 
     @Override
@@ -190,41 +189,4 @@ public class StatisticsWeigher extends CompletionWeigher {
     return info == null ? StatisticsInfo.EMPTY : info;
   }
 
-  /**
-   * For different prefixes we want to prefer different completion items,
-   *   so we decorate their basic stat-infos depending on prefix.
-   * For example, consider that an item "fooBar" was chosen with a prefix "foo"
-   * Then we'll register "fooBar" for each of the sub-prefixes: "", "f", "fo" and "foo"
-   *   and suggest "foobar" whenever we a user types any of those prefixes
-   *
-   * If a user has typed "fooB" for which there's no stat-info registered, we want to check
-   *   all of its sub-prefixes: "", "f", "fo", "foo" and see if any of them is associated with a stat-info
-   * But if the item were "fobia" and the user has typed "fob", we don't want to claim
-   *   that "fooBar" (which matches) is statistically better than "fobia" with prefix "fob" even though both begin with "fo"
-   * So we only check non-partial sub-prefixes, then ones that had been really typed by the user before completing
-   *
-   * @param forWriting controls whether this stat-info will be used for incrementing usage count or for its retrieval (for sorting)
-   */
-  public static StatisticsInfo composeStatsWithPrefix(StatisticsInfo info, final String fullPrefix, boolean forWriting) {
-    ArrayList<StatisticsInfo> infos = new ArrayList<>((fullPrefix.length() + 3) * info.getConjuncts().size());
-    for (StatisticsInfo conjunct : info.getConjuncts()) {
-      if (forWriting) {
-        // some completion contributors may need pure statistical information to speed up searching for frequently chosen items
-        infos.add(conjunct);
-      }
-      for (int i = 0; i <= fullPrefix.length(); i++) {
-        // if we're incrementing usage count, register all sub-prefixes with "partial" mark
-        // if we're sorting and any sub-prefix was used as non-partial to choose this completion item, prefer it
-        infos.add(composeWithPrefix(conjunct, fullPrefix.substring(0, i), forWriting));
-      }
-      // if we're incrementing usage count, the full prefix is registered as non-partial
-      // if we're sorting and the current prefix was used as partial sub-prefix to choose this completion item, prefer it
-      infos.add(composeWithPrefix(conjunct, fullPrefix, !forWriting));
-    }
-    return StatisticsInfo.createComposite(infos);
-  }
-
-  private static StatisticsInfo composeWithPrefix(StatisticsInfo info, String fullPrefix, boolean partial) {
-    return new StatisticsInfo(info.getContext() + "###prefix=" + fullPrefix + "###part#" + partial, info.getValue());
-  }
 }

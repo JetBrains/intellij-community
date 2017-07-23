@@ -17,6 +17,8 @@ package com.intellij.psi.stubs;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -25,8 +27,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,22 +50,44 @@ public abstract class StubTreeLoader {
 
   @Nullable
   public abstract ObjectStubTree readFromVFile(Project project, final VirtualFile vFile);
-  
+
+  public boolean isStubReloadingProhibited() {
+    return false;
+  }
+
   public abstract void rebuildStubTree(VirtualFile virtualFile);
 
   public abstract boolean canHaveStub(VirtualFile file);
 
-  public String getStubAstMismatchDiagnostics(@NotNull VirtualFile file,
-                                              @NotNull PsiFile psiFile,
-                                              @NotNull ObjectStubTree stubTree,
-                                              @Nullable Document prevCachedDocument) {
-    String msg = "";
-    msg += "\n file=" + psiFile;
+  protected boolean hasPsiInManyProjects(@NotNull VirtualFile virtualFile) {
+    return false;
+  }
+
+  @Nullable
+  protected IndexingStampInfo getIndexingStampInfo(@NotNull VirtualFile file) {
+    return null;
+  }
+
+  @NotNull
+  public RuntimeException stubTreeAndIndexDoNotMatch(@NotNull String _message, @NotNull ObjectStubTree stubTree, @NotNull PsiFileWithStubSupport psiFile) {
+    VirtualFile file = psiFile.getViewProvider().getVirtualFile();
+    StubTree stubTreeFromIndex = (StubTree)readFromVFile(psiFile.getProject(), file);
+    boolean compiled = psiFile instanceof PsiCompiledElement;
+    Document document = compiled ? null : FileDocumentManager.getInstance().getDocument(file);
+    IndexingStampInfo indexingStampInfo = getIndexingStampInfo(file);
+    boolean upToDate = indexingStampInfo != null && indexingStampInfo.isUpToDate(document, file, psiFile);
+
+    String msg = _message + "\nPlease report the problem to JetBrains with the files attached\n";
+    if (upToDate) {
+      msg += "INDEXED VERSION IS THE CURRENT ONE";
+    }
+
+    msg += " file=" + psiFile;
     msg += ", file.class=" + psiFile.getClass();
     msg += ", file.lang=" + psiFile.getLanguage();
     msg += ", modStamp=" + psiFile.getModificationStamp();
 
-    if (!(psiFile instanceof PsiCompiledElement)) {
+    if (!compiled) {
       String text = psiFile.getText();
       PsiFile fromText = PsiFileFactory.getInstance(psiFile.getProject()).createFileFromText(psiFile.getName(), psiFile.getFileType(), text);
       if (fromText.getLanguage().equals(psiFile.getLanguage())) {
@@ -75,13 +101,11 @@ public abstract class StubTreeLoader {
     }
 
     msg += "\n stub debugInfo=" + stubTree.getDebugInfo();
-    msg += "\n document before=" + prevCachedDocument;
 
-    ObjectStubTree latestIndexedStub = readFromVFile(psiFile.getProject(), file);
-    msg += "\nlatestIndexedStub=" + latestIndexedStub;
-    if (latestIndexedStub != null) {
-      msg += "\n   same size=" + (stubTree.getPlainList().size() == latestIndexedStub.getPlainList().size());
-      msg += "\n   debugInfo=" + latestIndexedStub.getDebugInfo();
+    msg += "\nlatestIndexedStub=" + stubTreeFromIndex;
+    if (stubTreeFromIndex != null) {
+      msg += "\n   same size=" + (stubTree.getPlainList().size() == stubTreeFromIndex.getPlainList().size());
+      msg += "\n   debugInfo=" + stubTreeFromIndex.getDebugInfo();
     }
 
     FileViewProvider viewProvider = psiFile.getViewProvider();
@@ -92,47 +116,57 @@ public abstract class StubTreeLoader {
     msg += "; file modCount: " + file.getModificationCount();
     msg += "; file length: " + file.getLength();
 
-    Document document = FileDocumentManager.getInstance().getCachedDocument(file);
     if (document != null) {
       msg += "\n doc saved: " + !FileDocumentManager.getInstance().isDocumentUnsaved(document);
       msg += "; doc stamp: " + document.getModificationStamp();
       msg += "; doc size: " + document.getTextLength();
       msg += "; committed: " + PsiDocumentManager.getInstance(psiFile.getProject()).isCommitted(document);
     }
-    return msg;
+
+    msg += "\nin many projects: " + hasPsiInManyProjects(file);
+    msg += "\nindexing info: " + indexingStampInfo;
+
+    Attachment[] attachments = createAttachments(stubTree, psiFile, file, stubTreeFromIndex);
+
+    // separate methods and separate exception classes for EA to treat these situations differently
+    return upToDate ? handleUpToDateMismatch(msg, attachments) : new RuntimeExceptionWithAttachments(msg, attachments);
   }
-  
+
+  private static UpToDateStubIndexMismatch handleUpToDateMismatch(@NotNull String message, Attachment[] attachments) {
+    return new UpToDateStubIndexMismatch(message, attachments);
+  }
+
+  @NotNull
+  private static Attachment[] createAttachments(@NotNull ObjectStubTree stubTree,
+                                                @NotNull PsiFileWithStubSupport psiFile,
+                                                VirtualFile file,
+                                                @Nullable StubTree stubTreeFromIndex) {
+    List<Attachment> attachments = ContainerUtil.newArrayList();
+    attachments.add(new Attachment(file.getPath() + "_file.txt", psiFile instanceof PsiCompiledElement ? "compiled" : psiFile.getText()));
+    attachments.add(new Attachment("stubTree.txt", ((PsiFileStubImpl)stubTree.getRoot()).printTree()));
+    if (stubTreeFromIndex != null) {
+      attachments.add(new Attachment("stubTreeFromIndex.txt", ((PsiFileStubImpl)stubTreeFromIndex.getRoot()).printTree()));
+    }
+    return attachments.toArray(Attachment.EMPTY_ARRAY);
+  }
+
   public static String getFileViewProviderMismatchDiagnostics(@NotNull FileViewProvider provider) {
-    final Function<Language, String> languageID = new Function<Language, String>() {
-      @Override
-      public String fun(Language language) {
-        return language.getID();
-      }
-    };
-    final Function<PsiFile, String> fileClassName = new Function<PsiFile, String>() {
-      @Override
-      public String fun(PsiFile file) {
-        return file.getClass().getSimpleName();
-      }
-    };
-    final Function<PsiFile, String> fileToFileType = new Function<PsiFile, String>() {
-      @Override
-      public String fun(PsiFile file) {
-        return file.getFileType().getName();
-      }
-    };
-    final Function<Pair<IStubFileElementType, PsiFile>, String> stubRootToString = new Function<Pair<IStubFileElementType, PsiFile>, String>() {
-      @Override
-      public String fun(Pair<IStubFileElementType, PsiFile> pair) {
-        return "(" + pair.first.toString() + ", " + pair.first.getLanguage() + " -> " + fileClassName.fun(pair.second) + ")";
-      }
-    };
-    final List<Pair<IStubFileElementType, PsiFile>> roots = StubTreeBuilder.getStubbedRoots(provider);
+    Function<PsiFile, String> fileClassName = file -> file.getClass().getSimpleName();
+    Function<Pair<IStubFileElementType, PsiFile>, String> stubRootToString =
+      pair -> "(" + pair.first.toString() + ", " + pair.first.getLanguage() + " -> " + fileClassName.fun(pair.second) + ")";
+    List<Pair<IStubFileElementType, PsiFile>> roots = StubTreeBuilder.getStubbedRoots(provider);
     return "path = " + provider.getVirtualFile().getPath() +
            ", stubBindingRoot = " + fileClassName.fun(provider.getStubBindingRoot()) +
-           ", languages = [" + StringUtil.join(provider.getLanguages(), languageID, ", ") +
-           "], filesTypes = [" + StringUtil.join(provider.getAllFiles(), fileToFileType, ", ") +
+           ", languages = [" + StringUtil.join(provider.getLanguages(), Language::getID, ", ") +
+           "], fileTypes = [" + StringUtil.join(provider.getAllFiles(), file -> file.getFileType().getName(), ", ") +
            "], files = [" + StringUtil.join(provider.getAllFiles(), fileClassName, ", ") +
            "], roots = [" + StringUtil.join(roots, stubRootToString, ", ") + "]";
+  }
+}
+
+@SuppressWarnings("ExceptionClassNameDoesntEndWithException")
+class UpToDateStubIndexMismatch extends RuntimeExceptionWithAttachments {
+  UpToDateStubIndexMismatch(String message, Attachment... attachments) {
+    super(message, attachments);
   }
 }

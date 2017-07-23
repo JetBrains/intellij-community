@@ -29,7 +29,8 @@ import java.util.List;
 class PatchChangeBuilder {
   @NotNull private final StringBuilder myBuilder = new StringBuilder();
   @NotNull private final List<Hunk> myHunks = new ArrayList<>();
-  @NotNull private final LineNumberConvertor.Builder myConvertor = new LineNumberConvertor.Builder();
+  @NotNull private final LineNumberConvertor.Builder myConvertor1 = new LineNumberConvertor.Builder();
+  @NotNull private final LineNumberConvertor.Builder myConvertor2 = new LineNumberConvertor.Builder();
   @NotNull private final TIntArrayList myChangedLines = new TIntArrayList();
 
   private int totalLines = 0;
@@ -63,8 +64,8 @@ class PatchChangeBuilder {
       appendLines(hunk.getInsertedLines());
       int hunkEnd = totalLines;
 
-      myConvertor.put1(deletion, beforeRange.start + contextBefore.size(), insertion - deletion);
-      myConvertor.put2(insertion, afterRange.start + contextBefore.size(), hunkEnd - insertion);
+      myConvertor1.put(deletion, beforeRange.start + contextBefore.size(), insertion - deletion);
+      myConvertor2.put(insertion, afterRange.start + contextBefore.size(), hunkEnd - insertion);
 
 
       addContext(contextAfter, beforeRange.end - contextAfter.size(), afterRange.end - contextAfter.size());
@@ -79,8 +80,8 @@ class PatchChangeBuilder {
   }
 
   private void addContext(@NotNull List<String> context, int beforeLineNumber, int afterLineNumber) {
-    myConvertor.put1(totalLines, beforeLineNumber, context.size());
-    myConvertor.put2(totalLines, afterLineNumber, context.size());
+    myConvertor1.put(totalLines, beforeLineNumber, context.size());
+    myConvertor2.put(totalLines, afterLineNumber, context.size());
     appendLines(context);
   }
 
@@ -112,8 +113,13 @@ class PatchChangeBuilder {
   }
 
   @NotNull
-  public LineNumberConvertor getLineConvertor() {
-    return myConvertor.build();
+  public LineNumberConvertor getLineConvertor1() {
+    return myConvertor1.build();
+  }
+
+  @NotNull
+  public LineNumberConvertor getLineConvertor2() {
+    return myConvertor2.build();
   }
 
   @NotNull

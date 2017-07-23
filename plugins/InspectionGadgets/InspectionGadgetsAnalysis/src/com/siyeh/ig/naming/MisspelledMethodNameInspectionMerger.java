@@ -16,6 +16,7 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.ex.InspectionElementsMerger;
+import org.jetbrains.annotations.NotNull;
 
 public class MisspelledMethodNameInspectionMerger extends InspectionElementsMerger {
 
@@ -24,6 +25,7 @@ public class MisspelledMethodNameInspectionMerger extends InspectionElementsMerg
     return "MisspelledMethodName";
   }
 
+  @NotNull
   @Override
   public String[] getSourceToolNames() {
     return new String[]{"MethodNamesDifferOnlyByCase", "MisspelledSetUp", "MisspelledTearDown", "MisspelledHashcode", "MisspelledToString", "MisspelledCompareTo"};

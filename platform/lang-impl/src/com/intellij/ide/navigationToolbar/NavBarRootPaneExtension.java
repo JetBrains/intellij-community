@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 12-Nov-2007
- */
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
@@ -56,12 +52,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   public NavBarRootPaneExtension(Project project) {
     myProject = project;
 
-    myProject.getMessageBus().connect().subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
-      @Override
-      public void uiSettingsChanged(UISettings uiSettings) {
-        toggleRunPanel(!uiSettings.SHOW_MAIN_TOOLBAR && uiSettings.SHOW_NAVIGATION_BAR && !uiSettings.PRESENTATION_MODE);
-      }
-    });
+    myProject.getMessageBus().connect().subscribe(UISettingsListener.TOPIC, uiSettings -> toggleRunPanel(!uiSettings.getShowMainToolbar() && uiSettings.getShowNavigationBar() && !uiSettings.getPresentationMode()));
 
     myNavToolbarGroupExist = runToolbarExists();
 
@@ -71,7 +62,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   @Override
   public void revalidate() {
     final UISettings settings = UISettings.getInstance();
-    if (!settings.SHOW_MAIN_TOOLBAR && settings.SHOW_NAVIGATION_BAR && !UISettings.getInstance().PRESENTATION_MODE) {
+    if (!settings.getShowMainToolbar() && settings.getShowNavigationBar() && !UISettings.getInstance().getPresentationMode()) {
       toggleRunPanel(false);
       toggleRunPanel(true);
     }
@@ -83,7 +74,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   }
 
   public boolean isMainToolbarVisible() {
-    return !UISettings.getInstance().PRESENTATION_MODE && (UISettings.getInstance().SHOW_MAIN_TOOLBAR || !myNavToolbarGroupExist);
+    return !UISettings.getInstance().getPresentationMode() && (UISettings.getInstance().getShowMainToolbar() || !myNavToolbarGroupExist);
   }
 
   public static boolean runToolbarExists() {
@@ -108,7 +99,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         }
       };
       myWrapperPanel.add(buildNavBarPanel(), BorderLayout.CENTER);
-      toggleRunPanel(!UISettings.getInstance().SHOW_MAIN_TOOLBAR && !UISettings.getInstance().PRESENTATION_MODE);
+      toggleRunPanel(!UISettings.getInstance().getShowMainToolbar() && !UISettings.getInstance().getPresentationMode());
     }
 
     return myWrapperPanel;
@@ -132,7 +123,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
       Insets insets = container.getInsets();
       Dimension d = c.getPreferredSize();
       Rectangle r = container.getBounds();
-      c.setBounds(insets.left, (r.height - d.height) / 2, r.width - insets.left - insets.right, d.height);
+      c.setBounds(insets.left, (r.height - d.height - insets.top - insets.bottom) / 2 + insets.top, r.width - insets.left - insets.right, d.height);
     }
   }
 
@@ -152,8 +143,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         };
         myRunPanel.setOpaque(false);
         myRunPanel.add(component, BorderLayout.CENTER);
-
-        myRunPanel.setBorder(JBUI.Borders.empty(0, needGap ? 5 : 1, 1, 0));
+        myRunPanel.setBorder(JBUI.Borders.empty(0, needGap ? 5 : 1, 0, 0));
         myWrapperPanel.add(myRunPanel, BorderLayout.EAST);
       }
     }
@@ -166,8 +156,8 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   private boolean isUndocked() {
     final Window ancestor = SwingUtilities.getWindowAncestor(myWrapperPanel);
     return (ancestor != null && !(ancestor instanceof IdeFrameImpl))
-           || !UISettings.getInstance().SHOW_MAIN_TOOLBAR
-           || !UISettings.getInstance().PRESENTATION_MODE;
+           || !UISettings.getInstance().getShowMainToolbar()
+           || !UISettings.getInstance().getPresentationMode();
   }
 
   private static boolean isNeedGap(final AnAction group) {
@@ -269,8 +259,8 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   @Override
   public void uiSettingsChanged(final UISettings settings) {
     if (myNavigationBar != null) {
-      myNavigationBar.updateState(settings.SHOW_NAVIGATION_BAR);
-      myWrapperPanel.setVisible(settings.SHOW_NAVIGATION_BAR && !UISettings.getInstance().PRESENTATION_MODE);
+      myNavigationBar.updateState(settings.getShowNavigationBar());
+      myWrapperPanel.setVisible(settings.getShowNavigationBar() && !UISettings.getInstance().getPresentationMode());
 
       myWrapperPanel.revalidate();
       myNavigationBar.revalidate();

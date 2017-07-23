@@ -16,15 +16,17 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.psi.JsonStringLiteral;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.util.ProcessingContext;
-import com.jetbrains.jsonSchema.extension.schema.JsonSchemaBaseReference;
-import com.jetbrains.jsonSchema.extension.schema.JsonSchemaDefinitionResolver;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Irina.Chernushina on 4/15/2016.
@@ -44,7 +46,17 @@ public class JsonPropertyName2SchemaDefinitionReferenceProvider extends PsiRefer
     @Nullable
     @Override
     public PsiElement resolveInner() {
-      return new JsonSchemaDefinitionResolver(getElement(), null).doResolve();
+      final JsonSchemaService service = JsonSchemaService.Impl.get(myElement.getProject());
+      final VirtualFile file = myElement.getContainingFile().getVirtualFile();
+      if (file == null) return null;
+      final List<JsonSchemaVariantsTreeBuilder.Step> steps = JsonOriginalPsiWalker.INSTANCE.findPosition(getElement(), true, true);
+      if (steps == null) return null;
+      final JsonSchemaObject schemaObject = service.getSchemaObject(file);
+      if (schemaObject != null) {
+        return new JsonSchemaResolver(schemaObject, true, steps)
+          .findNavigationTarget(false, JsonSchemaService.isSchemaFile(myElement.getContainingFile()));
+      }
+      return null;
     }
   }
 }

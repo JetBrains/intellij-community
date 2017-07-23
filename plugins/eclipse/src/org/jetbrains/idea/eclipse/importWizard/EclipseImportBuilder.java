@@ -77,7 +77,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class EclipseImportBuilder extends ProjectImportBuilder<String> implements EclipseProjectWizardContext {
-  private static final Logger LOG = Logger.getInstance("#" + EclipseImportBuilder.class.getName());
+  private static final Logger LOG = Logger.getInstance(EclipseImportBuilder.class);
 
   public static class Parameters {
     public String root;
@@ -195,10 +195,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
           collectUnknownNatures(path, naturesNames, separator);
         }
       }
-      catch (IOException e) {
-        refEx.set(e);
-      }
-      catch (JDOMException e) {
+      catch (IOException | JDOMException e) {
         refEx.set(e);
       }
     }, EclipseBundle.message("eclipse.import.converting"), false, currentProject);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -127,7 +126,7 @@ class ClosureFolding {
     if (rangeStart >= rangeEnd) return null;
 
     FoldingGroup group = FoldingGroup.newGroup("lambda");
-    List<NamedFoldingDescriptor> foldElements = new ArrayList<NamedFoldingDescriptor>();
+    List<NamedFoldingDescriptor> foldElements = new ArrayList<>();
     foldElements.add(new NamedFoldingDescriptor(myNewExpression, getClosureStartOffset(), rangeStart, group, header));
     if (rangeEnd + 1 < getClosureEndOffset()) {
       foldElements.add(new NamedFoldingDescriptor(classRBrace, rangeEnd, getClosureEndOffset(), group, footer));
@@ -149,12 +148,7 @@ class ClosureFolding {
   private String getFoldingHeader() {
     String methodName = shouldShowMethodName() ? myMethod.getName() : "";
     String type = myQuick ? "" : getOptionalLambdaType();
-    String params = StringUtil.join(myMethod.getParameterList().getParameters(), new Function<PsiParameter, String>() {
-      @Override
-      public String fun(PsiParameter psiParameter) {
-        return psiParameter.getName();
-      }
-    }, ", ");
+    String params = StringUtil.join(myMethod.getParameterList().getParameters(), psiParameter -> psiParameter.getName(), ", ");
     return type + methodName + "(" + params + ") " + myBuilder.rightArrow() + " {";
   }
 

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 18-Mar-2008
- */
 package com.intellij.refactoring;
 
 import com.intellij.psi.*;
@@ -55,8 +51,9 @@ public class ChangeTypeSignatureTest extends LightCodeInsightTestCase {
       rules.setBoundScope(GlobalSearchScope.projectScope(getProject()));
       new TypeMigrationProcessor(getProject(),
                                  new PsiElement[]{parameterList},
-                                 Functions.<PsiElement, PsiType>constant(PsiSubstitutor.EMPTY.put(superClass.getTypeParameters()[0], migrationType).substitute(new PsiImmediateClassType(superClass, PsiSubstitutor.EMPTY))),
-                                 rules).run();
+                                 Functions.constant(PsiSubstitutor.EMPTY.put(superClass.getTypeParameters()[0], migrationType).substitute(new PsiImmediateClassType(superClass, PsiSubstitutor.EMPTY))),
+                                 rules,
+                                 true).run();
       if (success) {
         checkResultByFile(dataPath + getTestName(false) + ".java.after");
       } else {

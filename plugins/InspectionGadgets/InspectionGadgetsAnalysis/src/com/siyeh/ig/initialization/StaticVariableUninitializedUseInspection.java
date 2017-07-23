@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,12 +90,8 @@ public class StaticVariableUninitializedUseInspection extends BaseInspection {
           return;
         }
       }
-      final PsiClassInitializer[] initializers =
-        containingClass.getInitializers();
-      // Do the static initializers come in actual order in file?
-      // (They need to.)
-      final UninitializedReadCollector uninitializedReadCollector =
-        new UninitializedReadCollector();
+      final PsiClassInitializer[] initializers = containingClass.getInitializers();
+      final UninitializedReadCollector uninitializedReadCollector = new UninitializedReadCollector();
       boolean assigned = false;
       for (final PsiClassInitializer initializer : initializers) {
         if (!initializer.hasModifierProperty(PsiModifier.STATIC)) {

@@ -33,6 +33,6 @@ public class IdeSettingsDescriptor {
 
   @NotNull
   public List<String> getPropertyNames() {
-    return myPropertyNames == null ? Collections.<String>emptyList() : StringUtil.split(myPropertyNames, ",");
+    return myPropertyNames == null ? Collections.emptyList() : StringUtil.split(myPropertyNames, ",");
   }
 }

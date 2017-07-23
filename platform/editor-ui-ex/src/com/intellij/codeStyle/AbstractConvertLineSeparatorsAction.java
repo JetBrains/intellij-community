@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,9 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.LineSeparator;
-import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,22 +93,16 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
     VirtualFile projectVirtualDirectory = ProjectKt.getStateStore(project).getDirectoryStoreFile();
     final FileTypeRegistry fileTypeManager = FileTypeRegistry.getInstance();
     for (VirtualFile file : virtualFiles) {
-      VfsUtilCore.processFilesRecursively(
-        file,
-        file1 -> {
-          if (shouldProcess(file1, project)) {
-            changeLineSeparators(project, file1, mySeparator);
+      VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+        @NotNull
+        @Override
+        public Result visitFileEx(@NotNull VirtualFile file) {
+          if (shouldProcess(file, project)) {
+            changeLineSeparators(project, file, mySeparator);
           }
-          return true;
-        },
-        new Convertor<VirtualFile, Boolean>() {
-          @Override
-          public Boolean convert(VirtualFile dir) {
-            return !dir.equals(projectVirtualDirectory)
-                   && !fileTypeManager.isFileIgnored(dir); // Exclude files like '.git'
-          }
+          return file.isDirectory() && (file.equals(projectVirtualDirectory) || fileTypeManager.isFileIgnored(file)) ? SKIP_CHILDREN : CONTINUE;
         }
-      );
+      });
     }
   }
 

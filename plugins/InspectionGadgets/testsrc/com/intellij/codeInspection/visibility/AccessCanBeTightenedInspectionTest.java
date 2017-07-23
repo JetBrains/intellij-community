@@ -15,11 +15,22 @@
  */
 package com.intellij.codeInspection.visibility;
 
+import com.intellij.ToolExtensionPoints;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMember;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.siyeh.ig.LightInspectionTestCase;
+import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings("WeakerAccess")
 public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase {
@@ -116,6 +127,26 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
       "  public static class Err {\n" +
       "    public boolean isTVisible() { return true; }\n" +
       "  }\n"+
+      "}");
+    myFixture.configureByFiles("y/C.java","x/Sub.java");
+    myFixture.checkHighlighting();
+  }
+
+  public void testQualifiedAccessFromSubclass() {
+    myFixture.allowTreeAccessForAllFiles();
+    myFixture.addFileToProject("x/Sub.java",
+      "package x; " +
+      "import y.C; " +
+      "class Sub extends C {\n" +
+      "  void bazz(C c) {\n" +
+      "    int a = c.foo; c.bar();" +
+      "  }\n" +
+      "}\n" +
+      "");
+    myFixture.addFileToProject("y/C.java",
+      "package y; public class C {\n" +
+      "  public int foo = 0;\n" +
+      "  public void bar() {}\n"+
       "}");
     myFixture.configureByFiles("y/C.java","x/Sub.java");
     myFixture.checkHighlighting();
@@ -258,6 +289,62 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
       "}" +
       "");
     myFixture.configureByFiles("x/Outer.java", "x/Consumer.java");
+    myFixture.checkHighlighting();
+  }
+
+  public void testSuggestPackagePrivateForEntryPoint() {
+    myFixture.addFileToProject("x/MyTest.java",
+      "package x;\n" +
+      "public class MyTest {\n" +
+      "    <warning descr=\"Access can be protected\">public</warning> void foo() {}\n" +
+      "}");
+    PlatformTestUtil.registerExtension(Extensions.getRootArea(), ExtensionPointName.create(ToolExtensionPoints.DEAD_CODE_TOOL), new EntryPointWithVisibilityLevel() {
+      @Override
+      public void readExternal(Element element) throws InvalidDataException {}
+
+      @Override
+      public void writeExternal(Element element) throws WriteExternalException {}
+
+      @NotNull
+      @Override
+      public String getDisplayName() {
+        return "accepted visibility";
+      }
+
+      @Override
+      public boolean isEntryPoint(@NotNull RefElement refElement, @NotNull PsiElement psiElement) {
+        return isEntryPoint(psiElement);
+      }
+
+      @Override
+      public boolean isEntryPoint(@NotNull PsiElement psiElement) {
+        return psiElement instanceof PsiMethod && "foo".equals(((PsiMethod)psiElement).getName()) || psiElement instanceof PsiClass;
+      }
+
+      @Override
+      public int getMinVisibilityLevel(PsiMember member) {
+        return member instanceof PsiMethod && isEntryPoint(member) ? PsiUtil.ACCESS_LEVEL_PROTECTED : -1;
+      }
+
+      @Override
+      public boolean isSelected() {
+        return true;
+      }
+
+      @Override
+      public void setSelected(boolean selected) {}
+
+      @Override
+      public String getTitle() {
+        return getDisplayName();
+      }
+
+      @Override
+      public String getId() {
+        return getDisplayName();
+      }
+    }, getTestRootDisposable());
+    myFixture.configureByFiles("x/MyTest.java");
     myFixture.checkHighlighting();
   }
 }

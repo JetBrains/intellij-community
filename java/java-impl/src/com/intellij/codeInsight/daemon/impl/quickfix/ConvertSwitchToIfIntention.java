@@ -37,10 +37,6 @@ import java.util.Set;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
-/**
-* User: anna
-* Date: 2/22/12
-*/
 public class ConvertSwitchToIfIntention implements IntentionAction {
   private final PsiSwitchStatement mySwitchExpression;
 

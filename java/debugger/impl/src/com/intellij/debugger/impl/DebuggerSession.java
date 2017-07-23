@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -192,7 +192,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
           }
 
           @Override
-          public void contextAction() throws Exception {
+          public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
             context.initCaches();
             DebuggerInvocationUtil.swingInvokeLater(getProject(), setStateRunnable);
           }
@@ -403,8 +403,10 @@ public class DebuggerSession implements AbstractDebuggerSession {
   public void dispose() {
     getProcess().dispose();
     Disposer.dispose(myUpdateAlarm);
-    DebuggerInvocationUtil.swingInvokeLater(getProject(),
-                                            () -> getContextManager().setState(SESSION_EMPTY_CONTEXT, State.DISPOSED, Event.DISPOSE, null));
+    DebuggerInvocationUtil.swingInvokeLater(getProject(), () -> {
+      myContextManager.setState(SESSION_EMPTY_CONTEXT, State.DISPOSED, Event.DISPOSE, null);
+      myContextManager.dispose();
+    });
   }
 
   // ManagerCommands
@@ -493,7 +495,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
                     notification.expire();
                     getProcess().getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
                       @Override
-                      public void contextAction() throws Exception {
+                      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
                         final DebuggerContextImpl debuggerContext =
                           DebuggerContextUtil.createDebuggerContext(DebuggerSession.this, suspendContext);
 

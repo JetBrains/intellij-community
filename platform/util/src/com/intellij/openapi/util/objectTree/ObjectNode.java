@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,7 +103,7 @@ final class ObjectNode<T> {
     }
   }
 
-  void execute(final boolean disposeTree, @NotNull final ObjectTreeAction<T> action) {
+  void execute(@NotNull final ObjectTreeAction<T> action) {
     ObjectTree.executeActionWithRecursiveGuard(this, myTree.getNodesInExecution(), new ObjectTreeAction<ObjectNode<T>>() {
       @Override
       public void execute(@NotNull ObjectNode<T> each) {
@@ -117,31 +118,33 @@ final class ObjectNode<T> {
         synchronized (myTree.treeLock) {
           childrenArray = getChildrenArray();
         }
-        //todo: [kirillk] optimize
+
+        List<Throwable> exceptions = new SmartList<Throwable>();
+
         for (int i = childrenArray.length - 1; i >= 0; i--) {
-          childrenArray[i].execute(disposeTree, action);
+          try {
+            childrenArray[i].execute(action);
+          }
+          catch (Throwable e) {
+            exceptions.add(e);
+          }
         }
 
-        if (disposeTree) {
-          synchronized (myTree.treeLock) {
-            myChildren = null;
-          }
+        synchronized (myTree.treeLock) {
+          myChildren = null;
         }
 
         try {
           action.execute(myObject);
           myTree.fireExecuted(myObject);
         }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
         catch (Throwable e) {
-          LOG.error(e);
+          exceptions.add(e);
         }
 
-        if (disposeTree) {
-          remove();
-        }
+        remove();
+
+        handleExceptions(exceptions);
       }
 
       @Override
@@ -149,6 +152,21 @@ final class ObjectNode<T> {
 
       }
     });
+  }
+
+  private static void handleExceptions(List<Throwable> exceptions) {
+    if (!exceptions.isEmpty()) {
+      for (Throwable exception : exceptions) {
+        if (!(exception instanceof ProcessCanceledException)) {
+          LOG.error(exception);
+        }
+      }
+
+      ProcessCanceledException pce = ContainerUtil.findInstance(exceptions, ProcessCanceledException.class);
+      if (pce != null) {
+        throw pce;
+      }
+    }
   }
 
   private void remove() {

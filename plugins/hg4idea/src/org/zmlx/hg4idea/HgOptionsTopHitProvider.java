@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.zmlx.hg4idea;
 import com.intellij.ide.ui.OptionsTopHitProvider;
 import com.intellij.ide.ui.PublicMethodBasedOptionDescription;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
+import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -40,7 +41,7 @@ public final class HgOptionsTopHitProvider extends OptionsTopHitProvider {
 
   @NotNull
   @Override
-  public Collection<BooleanOptionDescription> getOptions(@Nullable Project project) {
+  public Collection<OptionDescription> getOptions(@Nullable Project project) {
     if (project != null) {
       for (VcsDescriptor descriptor : ProjectLevelVcsManager.getInstance(project).getAllVcss()) {
         if ("Mercurial".equals(descriptor.getDisplayName())) {

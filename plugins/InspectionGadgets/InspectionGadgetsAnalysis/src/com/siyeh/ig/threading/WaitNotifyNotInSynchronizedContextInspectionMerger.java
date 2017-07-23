@@ -16,6 +16,7 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.ex.InspectionElementsMerger;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
@@ -26,6 +27,7 @@ public class WaitNotifyNotInSynchronizedContextInspectionMerger extends Inspecti
     return "WaitNotifyNotInSynchronizedContext";
   }
 
+  @NotNull
   @Override
   public String[] getSourceToolNames() {
     return new String[] {
@@ -34,6 +36,7 @@ public class WaitNotifyNotInSynchronizedContextInspectionMerger extends Inspecti
     };
   }
 
+  @NotNull
   @Override
   public String[] getSuppressIds() {
     return new String[]{

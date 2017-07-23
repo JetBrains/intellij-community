@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,8 @@ import org.jetbrains.annotations.NotNull;
 public class NegativelyNamedBooleanVariableInspectionBase extends BaseInspection {
 
   @NonNls
-  private static final String[] NEGATIVE_NAMES = {"not", "isNot", "isNon", "shouldNot", "shallNot", "willNot", "cannot", "cant", "hasNot",
-    "couldNot", "doesNot", "hidden", "isHidden", "disabled", "isDisabled", "isInvalid", "invalid"};
+  private static final String[] NEGATIVE_NAMES = {"non", "not", "isNot", "isNon", "shouldNot", "shallNot", "willNot", "cannot", "canNot",
+    "cant", "hasNot", "hasnt", "couldNot", "doesNot", "hidden", "isHidden", "disabled", "isDisabled", "isInvalid", "invalid"};
 
   @Nls
   @NotNull
@@ -45,6 +45,11 @@ public class NegativelyNamedBooleanVariableInspectionBase extends BaseInspection
   @Override
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("negatively.named.boolean.variable.problem.descriptor");
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
   }
 
   @Override

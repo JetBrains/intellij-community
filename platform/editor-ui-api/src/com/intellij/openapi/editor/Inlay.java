@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,12 @@ public interface Inlay extends Disposable, UserDataHolderEx {
    * Returns current inlay's position in the document. This position is updated on document changes just like for a {@link RangeMarker}.
    */
   int getOffset();
+
+  /**
+   * Returns current visual position of the inlay's left boundary.
+   */
+  @NotNull
+  VisualPosition getVisualPosition();
 
   /**
    * Returns renderer, which defines size and representation for this inlay.

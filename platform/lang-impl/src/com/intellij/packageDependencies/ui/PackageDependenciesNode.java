@@ -37,8 +37,9 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import java.awt.*;
-import java.util.*;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class PackageDependenciesNode extends DefaultMutableTreeNode implements Navigatable{
   private static final EmptyIcon EMPTY_ICON = EmptyIcon.create(0, IconUtil.getEmptyIcon(false).getIconHeight());
@@ -225,10 +226,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
 
   public void sortChildren() {
     if (isSorted()) return;
-    final List children = TreeUtil.childrenToArray(this);
-    Collections.sort(children, new DependencyNodeComparator());
-    removeAllChildren();
-    TreeUtil.addChildrenTo(this, children);
+    TreeUtil.sortChildren(this, new DependencyNodeComparator());
     setSorted(true);
   }
 }

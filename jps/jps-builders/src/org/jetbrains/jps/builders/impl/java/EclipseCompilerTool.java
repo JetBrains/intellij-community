@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.java.CannotCreateJavaCompilerException;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
-import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
 import javax.tools.JavaCompiler;
@@ -107,27 +105,12 @@ public class EclipseCompilerTool extends JavaCompilingTool {
   public static File findEcjJarFile() {
     File[] libs = {new File(PathManager.getHomePath(), "lib"), new File(PathManager.getHomePath(), "community/lib")};
     for (File lib : libs) {
-      File[] children = lib.listFiles(new FilenameFilter() {
-        @Override
-        public boolean accept(File dir, String name) {
-          return name.startsWith(JAR_FILE_NAME_PREFIX) && name.endsWith(JAR_FILE_NAME_SUFFIX);
-        }
-      });
+      File[] children = lib.listFiles((dir, name) -> name.startsWith(JAR_FILE_NAME_PREFIX) && name.endsWith(JAR_FILE_NAME_SUFFIX));
       if (children != null && children.length > 0) {
         return children[0];
       }
     }
     return null;
-  }
-
-  @Override
-  public void processCompilerOptions(@NotNull CompileContext context, @NotNull List<String> options) {
-    for (String option : options) {
-      if (option.startsWith("-proceedOnError")) {
-        Utils.PROCEED_ON_ERROR_KEY.set(context, Boolean.TRUE);
-        break;
-      }
-    }
   }
 
   @Override

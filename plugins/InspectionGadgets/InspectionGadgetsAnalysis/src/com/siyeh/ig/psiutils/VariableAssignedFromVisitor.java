@@ -15,10 +15,12 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 class VariableAssignedFromVisitor extends JavaRecursiveElementWalkingVisitor {
+  private static final Logger LOG = Logger.getInstance(VariableAssignedFromVisitor.class);
 
   private boolean assignedFrom = false;
 
@@ -31,33 +33,28 @@ class VariableAssignedFromVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitElement(@NotNull PsiElement element) {
-    if (!assignedFrom) {
-      super.visitElement(element);
-    }
+  public void visitFile(PsiFile file) {
+    LOG.error("Unexpectedly visited PsiFile "+file+" when tracing variable "+variable);
+    stopWalking();
   }
 
   @Override
   public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment) {
-    if (assignedFrom) {
-      return;
-    }
     super.visitAssignmentExpression(assignment);
     final PsiExpression arg = assignment.getRExpression();
     if (VariableAccessUtils.mayEvaluateToVariable(arg, variable)) {
       assignedFrom = true;
+      stopWalking();
     }
   }
 
   @Override
   public void visitVariable(@NotNull PsiVariable var) {
-    if (assignedFrom) {
-      return;
-    }
     super.visitVariable(var);
     final PsiExpression initializer = var.getInitializer();
     if (VariableAccessUtils.mayEvaluateToVariable(initializer, variable)) {
       assignedFrom = true;
+      stopWalking();
     }
   }
 

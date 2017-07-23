@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.ProjectBundle;
@@ -30,6 +29,7 @@ import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonUpdater;
 import com.intellij.ui.DumbAwareActionButton;
@@ -98,12 +98,21 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
 
     @Override
     protected VirtualFile[] adjustAddedFileSet(Component component, VirtualFile[] files) {
-      VirtualFile[] finalFiles = files.clone();
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        for (VirtualFile file : finalFiles) {
-          JavadocQuarantineStatusCleaner.cleanIfNeeded(file);
+      JavadocQuarantineStatusCleaner.cleanIfNeeded(files);
+
+      for (int i = 0; i < files.length; i++) {
+        VirtualFile file = files[i], docRoot = null;
+
+        if (file.getName().equalsIgnoreCase("docs")) {
+          docRoot = file.findChild("api");
         }
-      });
+        else if (file.getFileSystem() instanceof ArchiveFileSystem && file.getParent() == null) {
+          docRoot = file.findFileByRelativePath("docs/api");
+        }
+
+        if (docRoot != null) files[i] = docRoot;
+      }
+
       return super.adjustAddedFileSet(component, files);
     }
   }

@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.annotation;
 
+import com.intellij.codeInspection.GlobalSimpleInspectionTool;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -75,5 +76,16 @@ public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> {
    * @param holder container which receives annotations
    */
   public void apply(@NotNull PsiFile file, AnnotationResultType annotationResult, @NotNull AnnotationHolder holder) {
+  }
+
+  /**
+   * Return inspection which should run in batch mode.
+   * When inspection with short name is disabled, then annotator won't run in the editor via {@link com.intellij.codeInsight.daemon.impl.ExternalToolPass}.
+   * Implementing {@link com.intellij.codeInspection.ex.ExternalAnnotatorBatchInspection}
+   * and extending {@link com.intellij.codeInspection.LocalInspectionTool} or {@link GlobalSimpleInspectionTool} would
+   * provide implementation for a batch tool which would run without read action, according to the {@link #doAnnotate(Object)} documentation.
+   */
+  public String getPairedBatchInspectionShortName() {
+    return null;
   }
 }

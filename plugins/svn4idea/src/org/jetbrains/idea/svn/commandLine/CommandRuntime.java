@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -202,12 +201,7 @@ public class CommandRuntime {
       authCases.add(new UsernamePasswordCallback(myAuthenticationService, url));
     }
 
-    return ContainerUtil.find(authCases, new Condition<AuthCallbackCase>() {
-      @Override
-      public boolean value(AuthCallbackCase authCase) {
-        return authCase.canHandle(errText);
-      }
-    });
+    return ContainerUtil.find(authCases, authCase -> authCase.canHandle(errText));
   }
 
   private void cleanup(@NotNull CommandExecutor executor, @NotNull File workingDirectory) throws SvnBindException {

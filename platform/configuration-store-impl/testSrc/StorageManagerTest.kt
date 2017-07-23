@@ -15,10 +15,7 @@
  */
 package com.intellij.configurationStore
 
-import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.components.stateStore
 import com.intellij.testFramework.ProjectRule
-import com.intellij.util.SmartList
 import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -71,8 +68,4 @@ internal class StorageManagerTest {
     storageManager.addMacro("\$DOLLAR_MACRO$", "/temp/d$")
     assertThat(storageManager.getOrCreateStorage("\$DOLLAR_MACRO$/test.xml")).isNotNull()
   }
-}
-
-fun ComponentManager.saveStore() {
-  stateStore.save(SmartList())
 }

@@ -55,9 +55,10 @@ public class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl imple
     myScope = scope;
   }
 
-  ModuleLibraryOrderEntryImpl(String name, final PersistentLibraryKind kind, @NotNull RootModelImpl rootModel, @NotNull ProjectRootManagerImpl projectRootManager) {
+  ModuleLibraryOrderEntryImpl(String name, final PersistentLibraryKind kind, @NotNull RootModelImpl rootModel,
+                              @NotNull ProjectRootManagerImpl projectRootManager, ProjectModelExternalSource externalSource) {
     super(rootModel, projectRootManager);
-    myLibrary = LibraryTableImplUtil.createModuleLevelLibrary(name, kind, getRootModel());
+    myLibrary = LibraryTableImplUtil.createModuleLevelLibrary(name, kind, getRootModel(), externalSource);
     doinit();
   }
 

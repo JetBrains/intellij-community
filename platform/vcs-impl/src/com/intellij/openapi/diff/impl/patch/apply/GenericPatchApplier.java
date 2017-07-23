@@ -64,8 +64,7 @@ public class GenericPatchApplier {
     Collections.addAll(myLines, LineTokenizer.tokenize(text, false));
     myBaseFileEndsWithNewLine = StringUtil.endsWithLineBreak(text);
     myHunks = hunks;
-    final Comparator<TextRange> textRangeComparator =
-      (o1, o2) -> new Integer(o1.getStartOffset()).compareTo(new Integer(o2.getStartOffset()));
+    final Comparator<TextRange> textRangeComparator = Comparator.comparingInt(TextRange::getStartOffset);
     myTransformations = new TreeMap<>(textRangeComparator);
     myNotExact = new ArrayList<>();
     myNotBound = new ArrayList<>();
@@ -659,7 +658,7 @@ public class GenericPatchApplier {
     }
   }
 
-  private class SequentialStepsChecker implements SequenceDescriptor {
+  private class SequentialStepsChecker {
     private int myDistance;
     // in the end, will be [excluding] end of changing interval
     private int myIdx;
@@ -677,7 +676,6 @@ public class GenericPatchApplier {
       return myUsesAlreadyApplied;
     }
 
-    @Override
     public int getDistance() {
       return myDistance;
     }
@@ -719,7 +717,6 @@ public class GenericPatchApplier {
       }
     }
     
-    @Override
     public int getSizeOfFragmentToBeReplaced() {
       return myForward ? (myIdx - myStartIdx) : (myStartIdx - myIdx);
     }
@@ -904,6 +901,7 @@ public class GenericPatchApplier {
       final boolean emptyFile = myLines.isEmpty() || myLines.size() == 1 && myLines.get(0).trim().length() == 0;
       if (emptyFile) {
         myNotBound.add(splitHunk);
+        processAppliedInfoForUnApplied(splitHunk);
       }
       return emptyFile;
     }
@@ -1321,7 +1319,7 @@ public class GenericPatchApplier {
 
     @Override
     public int compare(SplitHunk o1, SplitHunk o2) {
-      return Integer.valueOf(o1.getStartLineBefore()).compareTo(Integer.valueOf(o2.getStartLineBefore()));
+      return Integer.compare(o1.getStartLineBefore(), o2.getStartLineBefore());
     }
   }
 }

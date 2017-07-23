@@ -1,22 +1,23 @@
-/*
- * User: anna
- * Date: 20-May-2008
- */
 package com.intellij.coverage;
 
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.SimpleJavaParameters;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.PathUtil;
+import org.jacoco.agent.rt.RT;
 import org.jacoco.core.analysis.*;
 import org.jacoco.core.data.ExecutionDataReader;
 import org.jacoco.core.data.ExecutionDataStore;
@@ -28,27 +29,40 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
+import java.util.HashSet;
 
 public class JaCoCoCoverageRunner extends JavaCoverageRunner {
-  private static final Logger LOG = Logger.getInstance("#" + JaCoCoCoverageRunner.class.getName());
+  private static final Logger LOG = Logger.getInstance(JaCoCoCoverageRunner.class);
 
   @Override
   public ProjectData loadCoverageData(@NotNull File sessionDataFile, @Nullable CoverageSuite baseCoverageSuite) {
     final ProjectData data = new ProjectData();
     try {
-      final Project project = baseCoverageSuite instanceof BaseCoverageSuite ? ((BaseCoverageSuite)baseCoverageSuite).getProject() : null;
+      final Project project = baseCoverageSuite instanceof BaseCoverageSuite ? baseCoverageSuite.getProject() : null;
       if (project != null) {
-        loadExecutionData(sessionDataFile, data, project);
+        RunConfigurationBase configuration = ((BaseCoverageSuite)baseCoverageSuite).getConfiguration();
+        
+        Module mainModule = configuration instanceof ModuleBasedConfiguration 
+                            ? ((ModuleBasedConfiguration)configuration).getConfigurationModule().getModule() 
+                            : null;
+      
+        loadExecutionData(sessionDataFile, data, mainModule, project);
       }
     }
     catch (Exception e) {
+      LOG.error(e);
       return data;
     }
     return data;
   }
 
-  private static void loadExecutionData(@NotNull final File sessionDataFile, ProjectData data, @NotNull Project project) throws IOException {
+  private static void loadExecutionData(@NotNull final File sessionDataFile,
+                                        ProjectData data,
+                                        @Nullable Module mainModule,
+                                        @NotNull Project project) throws IOException {
     final ExecutionDataStore executionDataStore = new ExecutionDataStore();
     FileInputStream fis = null;
     try {
@@ -74,13 +88,37 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
     final CoverageBuilder coverageBuilder = new CoverageBuilder();
     final Analyzer analyzer = new Analyzer(executionDataStore, coverageBuilder);
 
-    final Module[] modules = ModuleManager.getInstance(project).getModules();
+    final Module[] modules;
+    if (mainModule != null) {
+      HashSet<Module> mainModuleWithDependencies = new HashSet<>();
+      ReadAction.run(() -> ModuleUtilCore.getDependencies(mainModule, mainModuleWithDependencies));
+      modules = mainModuleWithDependencies.toArray(Module.EMPTY_ARRAY);
+    }
+    else {
+      modules = ModuleManager.getInstance(project).getModules();
+    }
     for (Module module : modules) {
       final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
       if (compilerModuleExtension != null) {
-        final VirtualFile[] roots = compilerModuleExtension.getOutputRoots(true);
-        for (VirtualFile root : roots) {
-          analyzer.analyzeAll(VfsUtil.virtualToIoFile(root));
+        final String[] roots = compilerModuleExtension.getOutputRootUrls(true);
+        for (String root : roots) {
+          try {
+            String rootPath = VfsUtilCore.urlToPath(root);
+            Files.walkFileTree(Paths.get(new File(FileUtil.toSystemDependentName(rootPath)).toURI()), new SimpleFileVisitor<Path>() {
+              @Override
+              public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
+                File file = path.toFile();
+                try {
+                  analyzer.analyzeAll(file);
+                }
+                catch (Exception e) {
+                  LOG.info(e);
+                }
+                return FileVisitResult.CONTINUE;
+              }
+            });
+          }
+          catch (NoSuchFileException ignore) {}
         }
       }
     }
@@ -124,8 +162,8 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
 
   public void appendCoverageArgument(final String sessionDataFilePath, final String[] patterns, final SimpleJavaParameters javaParameters,
                                      final boolean collectLineInfo, final boolean isSampling) {
-    StringBuffer argument = new StringBuffer("-javaagent:");
-    final String agentPath = PathUtil.getJarPathForClass(org.jacoco.agent.rt.RT.class);
+    StringBuilder argument = new StringBuilder("-javaagent:");
+    final String agentPath = PathUtil.getJarPathForClass(RT.class);
     final String parentPath = handleSpacesInPath(agentPath);
     argument.append(parentPath).append(File.separator).append(new File(agentPath).getName());
     argument.append("=");

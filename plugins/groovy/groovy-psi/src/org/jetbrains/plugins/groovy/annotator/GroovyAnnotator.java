@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,6 +103,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.ast.InheritConstructorContribut
 import java.util.*;
 
 import static org.jetbrains.plugins.groovy.annotator.UtilKt.*;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.findScriptField;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isFieldDeclaration;
 
 /**
  * @author ven
@@ -962,11 +964,14 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     else if (parent instanceof GrTypeDefinition) {
       checkTypeDefinitionModifiers(myHolder, (GrTypeDefinition)parent);
     }
-    else if (parent instanceof GrVariableDeclaration && parent.getParent() instanceof GrTypeDefinitionBody) {
-      checkFieldModifiers(myHolder, (GrVariableDeclaration)parent);
-    }
     else if (parent instanceof GrVariableDeclaration) {
-      checkVariableModifiers(myHolder, ((GrVariableDeclaration)parent));
+      GrVariableDeclaration declaration = (GrVariableDeclaration)parent;
+      if (isFieldDeclaration(declaration)) {
+        checkFieldModifiers(myHolder, declaration);
+      }
+      else {
+        checkVariableModifiers(myHolder, declaration);
+      }
     }
     else if (parent instanceof GrClassInitializer) {
       checkClassInitializerModifiers(myHolder, modifierList);
@@ -998,9 +1003,9 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     if (variables.length == 0) return;
 
     GrVariable variable = variables[0];
-    if (!(variable instanceof GrField)) return;
+    final GrField member = variable instanceof GrField ? (GrField)variable : findScriptField(variable);
+    if (member == null) return;
 
-    final GrField member = (GrField)variable;
     final GrModifierList modifierList = fieldDeclaration.getModifierList();
 
     checkAccessModifiers(holder, modifierList, member);
@@ -1392,7 +1397,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   @Override
   public void visitGStringInjection(@NotNull GrStringInjection injection) {
     if (((GrString)injection.getParent()).isPlainString()) {
-      if (StringUtil.indexOf(injection.getText(), '\n') != -1) {
+      if (injection.getText().indexOf('\n') != -1) {
         myHolder.createErrorAnnotation(injection, GroovyBundle.message("injection.should.not.contain.line.feeds"));
       }
     }

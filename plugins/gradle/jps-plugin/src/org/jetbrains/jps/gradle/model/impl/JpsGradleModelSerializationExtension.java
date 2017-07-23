@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,9 +82,8 @@ public class JpsGradleModelSerializationExtension extends JpsModelSerializerExte
 
     @Override
     public JpsGradleArtifactExtension loadExtension(@Nullable Element optionsTag) {
-      GradleArtifactExtensionProperties properties =
-        optionsTag != null ? XmlSerializer.deserialize(optionsTag, GradleArtifactExtensionProperties.class) : null;
-      return new JpsGradleArtifactExtensionImpl(properties != null ? properties : null);
+      return new JpsGradleArtifactExtensionImpl(
+        optionsTag != null ? XmlSerializer.deserialize(optionsTag, GradleArtifactExtensionProperties.class) : null);
     }
 
     @Override

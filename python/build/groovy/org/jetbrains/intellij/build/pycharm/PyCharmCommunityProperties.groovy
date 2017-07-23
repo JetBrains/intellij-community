@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,10 +69,7 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
       }
 
       @Override
-      void copyAdditionalFiles(BuildContext context, String targetDirectory) {
-        super.copyAdditionalFiles(context, targetDirectory)
-        context.ant.copy(file: "$context.paths.projectHome/python/help/pycharmhelp.jar", todir: "$targetDirectory/help", failonerror: false)
-      }
+      String getBaseDownloadUrlForJre() { "https://download.jetbrains.com/python" }
     }
   }
 
@@ -81,15 +78,15 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
     return new LinuxDistributionCustomizer() {
       {
         iconPngPath = "$projectHome/python/resources/PyCharmCore128.png"
-      }
-      @Override
-      String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
-        "pycharm-community-${applicationInfo.isEAP ? buildNumber : applicationInfo.fullVersion}"
+        //snapName = "pycharm-community"
+        //snapDescription =
+        //  "Python IDE for professional developers. Save time while PyCharm takes care of the routine. "
+        //  "Focus on bigger things and embrace the keyboard-centric approach to get the most of PyCharm’s many productivity features."
       }
 
       @Override
-      void copyAdditionalFiles(BuildContext context, String targetDirectory) {
-        context.ant.copy(file: "$context.paths.projectHome/python/help/pycharmhelp.jar", todir: "$targetDirectory/help", failonerror: false)
+      String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
+        "pycharm-community-${applicationInfo.isEAP ? buildNumber : applicationInfo.fullVersion}"
       }
     }
   }
@@ -100,7 +97,6 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
       {
         icnsPath = "$projectHome/python/resources/PyCharmCore.icns"
         bundleIdentifier = "com.jetbrains.pycharm"
-        helpId = "PY"
         dmgImagePath = "$projectHome/python/build/DMG_background.png"
       }
 

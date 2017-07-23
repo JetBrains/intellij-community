@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ListUtil;
-import com.intellij.ui.speedSearch.ListWithFilter;
 
 import javax.swing.*;
 import java.util.List;
@@ -34,6 +33,7 @@ class DeleteBookmarkAction extends DumbAwareAction {
 
   DeleteBookmarkAction(Project project, JList list) {
     super("Delete", "Delete current bookmark", AllIcons.General.Remove);
+    setEnabledInModalContext(true);
     myProject = project;
     myList = list;
     registerCustomShortcutSet(CustomShortcutSet.fromString("DELETE", "BACK_SPACE"), list);
@@ -41,8 +41,7 @@ class DeleteBookmarkAction extends DumbAwareAction {
 
   @Override
   public void update(AnActionEvent e) {
-    final boolean searchActive = ListWithFilter.isSearchActive(myList);
-    e.getPresentation().setEnabled(!searchActive && BookmarksAction.getSelectedBookmarks(myList).size() > 0);
+    e.getPresentation().setEnabled(BookmarksAction.getSelectedBookmarks(myList).size() > 0);
   }
 
   @Override

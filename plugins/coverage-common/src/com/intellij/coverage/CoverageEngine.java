@@ -174,7 +174,7 @@ public abstract class CoverageEngine {
                                                         @Nullable final Module module,
                                                         @NotNull final CoverageSuitesBundle suite) {
     final VirtualFile virtualFile = srcFile.getVirtualFile();
-    return virtualFile == null ? Collections.<File>emptySet() : Collections.singleton(VfsUtilCore.virtualToIoFile(virtualFile));
+    return virtualFile == null ? Collections.emptySet() : Collections.singleton(VfsUtilCore.virtualToIoFile(virtualFile));
   }
 
   /**
@@ -296,6 +296,9 @@ public abstract class CoverageEngine {
 
   public abstract List<PsiElement> findTestsByNames(@NotNull final String[] testNames, @NotNull final Project project);
 
+  /**
+   * To support per test coverage. Return file name which contain traces for given test 
+   */
   @Nullable
   public abstract String getTestMethodName(@NotNull final PsiElement element, @NotNull final AbstractTestProxy testProxy);
 
@@ -329,7 +332,8 @@ public abstract class CoverageEngine {
     return false;
   }
 
-  public Object[] postProcessExecutableLines(Object[] lines, Editor editor) {
+  @NotNull
+  public Object[] postProcessExecutableLines(@NotNull Object[] lines, Editor editor) {
     return lines;
   }
 

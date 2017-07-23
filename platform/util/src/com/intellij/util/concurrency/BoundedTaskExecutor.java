@@ -17,6 +17,7 @@ package com.intellij.util.concurrency;
 
 import com.intellij.Patches;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
@@ -37,6 +38,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * The number of submitted tasks is unrestricted.
  */
 public class BoundedTaskExecutor extends AbstractExecutorService {
+  private static final Logger LOG = Logger.getInstance(BoundedTaskExecutor.class);
   private volatile boolean myShutdown;
   @NotNull private final String myName;
   private final Executor myBackendExecutor;
@@ -209,11 +211,13 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
             try {
               task.run();
             }
-            catch (Error ignored) {
-              // exception will be stored in this FutureTask status
-            }
-            catch (RuntimeException ignored) {
-              // exception will be stored in this FutureTask status
+            catch (Throwable e) {
+              // do not lose queued tasks because of this exception
+              try {
+                LOG.error(e);
+              }
+              catch (Throwable ignored) {
+              }
             }
             task = pollOrGiveUp(status);
           }

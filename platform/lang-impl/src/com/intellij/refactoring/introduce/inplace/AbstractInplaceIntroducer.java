@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,8 @@ import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -43,6 +43,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
@@ -57,10 +58,6 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 3/15/11
- */
 public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner, E extends PsiElement> extends
                                                                                                         InplaceVariableIntroducer<E> {
   protected V myLocalVariable;
@@ -74,7 +71,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   private EditorEx myPreview;
   private final JComponent myPreviewComponent;
 
-  private DocumentAdapter myDocumentAdapter;
+  private DocumentListener myDocumentAdapter;
   protected final JPanel myWholePanel;
   protected boolean myFinished = false;
 
@@ -204,7 +201,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
         started = super.performInplaceRefactoring(nameSuggestions);
         if (started) {
           onRenameTemplateStarted();
-          myDocumentAdapter = new DocumentAdapter() {
+          myDocumentAdapter = new DocumentListener() {
             @Override
             public void documentChanged(DocumentEvent e) {
               if (myPreview == null) return;
@@ -332,10 +329,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   @Override
   public void finish(boolean success) {
     myFinished = true;
-    final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
-    if (templateState != null) {
-      myEditor.putUserData(ACTIVE_INTRODUCE, null);
-    }
+    myEditor.putUserData(ACTIVE_INTRODUCE, null);
     if (myDocumentAdapter != null) {
       myEditor.getDocument().removeDocumentListener(myDocumentAdapter);
     }
@@ -378,14 +372,14 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   protected void collectAdditionalElementsToRename(List<Pair<PsiElement, TextRange>> stringUsages) {
     if (isReplaceAllOccurrences()) {
       for (E expression : getOccurrences()) {
-        LOG.assertTrue(expression.isValid(), expression.getText());
-        stringUsages.add(Pair.<PsiElement, TextRange>create(expression, new TextRange(0, expression.getTextLength())));
+        PsiUtilCore.ensureValid(expression);
+        stringUsages.add(Pair.create(expression, new TextRange(0, expression.getTextLength())));
       }
     }  else if (getExpr() != null) {
       correctExpression();
       final E expr = getExpr();
-      LOG.assertTrue(expr.isValid(), expr.getText());
-      stringUsages.add(Pair.<PsiElement, TextRange>create(expr, new TextRange(0, expr.getTextLength())));
+      PsiUtilCore.ensureValid(expr);
+      stringUsages.add(Pair.create(expr, new TextRange(0, expr.getTextLength())));
     }
 
     final V localVariable = getLocalVariable();
@@ -393,7 +387,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
       final PsiElement nameIdentifier = localVariable.getNameIdentifier();
       if (nameIdentifier != null) {
         int length = nameIdentifier.getTextLength();
-        stringUsages.add(Pair.<PsiElement, TextRange>create(nameIdentifier, new TextRange(0, length)));
+        stringUsages.add(Pair.create(nameIdentifier, new TextRange(0, length)));
       }
     }
   }
@@ -458,7 +452,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
         }
       }
       final List<RangeMarker> occurrenceMarkers = getOccurrenceMarkers();
-      for (int i = 0, occurrenceMarkersSize = occurrenceMarkers.size(); i < occurrenceMarkersSize; i++) {
+      for (int i = 0; i < occurrenceMarkers.size(); i++) {
         RangeMarker marker = occurrenceMarkers.get(i);
         if (getExprMarker() != null && marker.getStartOffset() == getExprMarker().getStartOffset() && myExpr != null) {
           myOccurrences[i] = myExpr;

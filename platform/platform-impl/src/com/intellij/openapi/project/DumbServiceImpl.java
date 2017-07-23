@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.project;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -23,11 +25,16 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
@@ -39,6 +46,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,11 +57,13 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.DumbServiceImpl");
-  private static Throwable ourForcedTrace;
   private final AtomicReference<State> myState = new AtomicReference<>(State.SMART);
   private volatile Throwable myDumbStart;
   private volatile TransactionId myDumbStartTransaction;
@@ -71,10 +81,12 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private final Queue<Runnable> myRunWhenSmartQueue = new Queue<>(5);
   private final Project myProject;
   private final ThreadLocal<Integer> myAlternativeResolution = new ThreadLocal<>();
+  private final StartupManager myStartupManager;
 
-  public DumbServiceImpl(Project project) {
+  public DumbServiceImpl(Project project, StartupManager startupManager) {
     myProject = project;
     myPublisher = project.getMessageBus().syncPublisher(DUMB_MODE);
+    myStartupManager = startupManager;
   }
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
@@ -145,7 +157,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void runWhenSmart(@NotNull Runnable runnable) {
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> {
+    myStartupManager.runWhenProjectIsInitialized(() -> {
       synchronized (myRunWhenSmartQueue) {
         if (isDumb()) {
           myRunWhenSmartQueue.addLast(runnable);
@@ -158,34 +170,38 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   @Override
-  public void queueTask(@NotNull final DumbModeTask task) {
-    TransactionId contextTransaction = TransactionGuard.getInstance().getContextTransaction();
-
-    final Throwable trace = ourForcedTrace != null ? ourForcedTrace : new Throwable(); // please report exceptions here to peter
+  public void queueTask(@NotNull DumbModeTask task) {
     if (LOG.isDebugEnabled()) LOG.debug("Scheduling task " + task);
+    LOG.assertTrue(!myProject.isDefault(), "No indexing tasks should be created for default project: " + task);
     final Application application = ApplicationManager.getApplication();
 
     if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
-      final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      if (indicator != null) {
-        indicator.pushState();
-      }
-      AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing task");
-      try {
-        task.performInDumbMode(indicator != null ? indicator : new EmptyProgressIndicator());
-      }
-      finally {
-        token.finish();
-        if (indicator != null) {
-          indicator.popState();
-        }
-        Disposer.dispose(task);
-      }
-      return;
+      runTaskSynchronously(task);
+    } else {
+      queueAsynchronousTask(task);
     }
+  }
 
+  private static void runTaskSynchronously(@NotNull DumbModeTask task) {
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator == null) indicator = new EmptyProgressIndicator();
+
+    indicator.pushState();
+    try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing task")) {
+      task.performInDumbMode(indicator);
+    }
+    finally {
+      indicator.popState();
+      Disposer.dispose(task);
+    }
+  }
+
+  @VisibleForTesting
+  void queueAsynchronousTask(@NotNull DumbModeTask task) {
+    Throwable trace = new Throwable(); // please report exceptions here to peter
+    TransactionId contextTransaction = TransactionGuard.getInstance().getContextTransaction();
     Runnable runnable = () -> queueTaskOnEdt(task, contextTransaction, trace);
-    if (application.isDispatchThread()) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
       runnable.run(); // will log errors if not already in a write-safe context
     } else {
       TransactionGuard.submitTransaction(myProject, runnable);
@@ -198,8 +214,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     if (!addTaskToQueue(task)) return;
 
     if (myState.get() == State.SMART || myState.get() == State.WAITING_FOR_FINISH) {
-      WriteAction.run(() -> enterDumbMode(contextTransaction, trace));
-      ApplicationManager.getApplication().invokeLater(this::startBackgroundProcess);
+      enterDumbMode(contextTransaction, trace);
+      ApplicationManager.getApplication().invokeLater(this::startBackgroundProcess, myProject.getDisposed());
     }
   }
 
@@ -220,12 +236,14 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private void enterDumbMode(@Nullable TransactionId contextTransaction, @NotNull Throwable trace) {
     boolean wasSmart = !isDumb();
-    synchronized (myRunWhenSmartQueue) {
-      myState.set(State.SCHEDULED_TASKS);
-    }
-    myDumbStart = trace;
-    myDumbStartTransaction = contextTransaction;
-    myModificationCount++;
+    WriteAction.run(() -> {
+      synchronized (myRunWhenSmartQueue) {
+        myState.set(State.SCHEDULED_TASKS);
+      }
+      myDumbStart = trace;
+      myDumbStartTransaction = contextTransaction;
+      myModificationCount++;
+    });
     if (wasSmart) {
       try {
         myPublisher.enteredDumbMode();
@@ -236,45 +254,29 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
   }
 
-  @NotNull
-  public static AccessToken forceDumbModeStartTrace(@NotNull Throwable trace) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    final Throwable prev = ourForcedTrace;
-    ourForcedTrace = trace;
-    return new AccessToken() {
-      @Override
-      public void finish() {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ourForcedTrace = prev;
-      }
-    };
-  }
-
   private void queueUpdateFinished() {
     if (myState.compareAndSet(State.RUNNING_DUMB_TASKS, State.WAITING_FOR_FINISH)) {
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
-        () -> TransactionGuard.getInstance().submitTransaction(myProject, myDumbStartTransaction, () ->
-          WriteAction.run(
-            () -> updateFinished())));
+        () -> TransactionGuard.getInstance().submitTransaction(myProject, myDumbStartTransaction, this::updateFinished));
     }
   }
 
-  private void updateFinished() {
+  private boolean switchToSmartMode() {
     synchronized (myRunWhenSmartQueue) {
       if (!myState.compareAndSet(State.WAITING_FOR_FINISH, State.SMART)) {
-        return;
+        return false;
       }
     }
     myDumbStart = null;
     myModificationCount++;
-    if (myProject.isDisposed()) return;
+    return !myProject.isDisposed();
+  }
+
+  private void updateFinished() {
+    if (!WriteAction.compute(this::switchToSmartMode)) return;
 
     if (ApplicationManager.getApplication().isInternal()) LOG.info("updateFinished");
 
-    notifyUpdateFinished();
-  }
-
-  private void notifyUpdateFinished() {
     try {
       myPublisher.exitDumbMode();
       FileEditorManagerEx.getInstanceEx(myProject).refreshIcons();
@@ -294,7 +296,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
           runnable.run();
         }
         catch (ProcessCanceledException e) {
-          LOG.error("Task canceled: " + runnable, new Attachment("pce.trace", ExceptionUtil.getThrowableText(e)));
+          LOG.error("Task canceled: " + runnable, new Attachment("pce", e));
         }
         catch (Throwable e) {
           LOG.error("Error executing task " + runnable, e);
@@ -393,7 +395,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     finally {
       if (myState.get() != State.SMART) {
         if (myState.get() != State.WAITING_FOR_FINISH) throw new AssertionError(myState.get());
-        WriteAction.run(() -> updateFinished());
+        updateFinished();
       }
     }
   }
@@ -416,9 +418,11 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private void runBackgroundProcess(@NotNull final ProgressIndicator visibleIndicator) {
     if (!myState.compareAndSet(State.SCHEDULED_TASKS, State.RUNNING_DUMB_TASKS)) return;
 
+    ProgressSuspender.markSuspendable(visibleIndicator);
+
     final ShutDownTracker shutdownTracker = ShutDownTracker.getInstance();
     final Thread self = Thread.currentThread();
-    try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing tasks")) {
+    try {
       shutdownTracker.registerStopperThread(self);
 
       if (visibleIndicator instanceof ProgressIndicatorEx) {
@@ -427,7 +431,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
       DumbModeTask task = null;
       while (true) {
-        Pair<DumbModeTask, ProgressIndicatorEx> pair = getNextTask(task);
+        Pair<DumbModeTask, ProgressIndicatorEx> pair = getNextTask(task, visibleIndicator);
         if (pair == null) break;
 
         task = pair.first;
@@ -441,7 +445,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
             }
           });
         }
-        runSingleTask(task, taskIndicator);
+        try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing tasks")) {
+          runSingleTask(task, taskIndicator);
+        }
       }
     }
     catch (Throwable unexpected) {
@@ -473,56 +479,84 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }, taskIndicator);
   }
 
-  @Nullable private Pair<DumbModeTask, ProgressIndicatorEx> getNextTask(@Nullable final DumbModeTask prevTask) {
-    final Ref<Pair<DumbModeTask, ProgressIndicatorEx>> result = Ref.create();
-    invokeAndWaitIfNeeded(() -> {
-      if (myProject.isDisposed()) return;
+  @Nullable
+  private Pair<DumbModeTask, ProgressIndicatorEx> getNextTask(@Nullable DumbModeTask prevTask, @NotNull ProgressIndicator indicator) {
+    CompletableFuture<Pair<DumbModeTask, ProgressIndicatorEx>> result = new CompletableFuture<>();
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (myProject.isDisposed()) {
+        result.completeExceptionally(new ProcessCanceledException());
+        return;
+      }
+
       if (prevTask != null) {
         Disposer.dispose(prevTask);
       }
 
-      while (true) {
-        if (myUpdatesQueue.isEmpty()) {
-          queueUpdateFinished();
-          return;
-        }
-
-        DumbModeTask queuedTask = myUpdatesQueue.pullFirst();
-        myQueuedEquivalences.remove(queuedTask.getEquivalenceObject());
-        ProgressIndicatorEx indicator = myProgresses.get(queuedTask);
-        if (indicator.isCanceled()) {
-          Disposer.dispose(queuedTask);
-          continue;
-        }
-
-        result.set(Pair.create(queuedTask, indicator));
-        return;
+      if (PowerSaveMode.isEnabled() && Registry.is("pause.indexing.in.power.save.mode")) {
+        indicator.setText("Indexing paused during Power Save mode...");
+        runWhenPowerSaveModeChanges(() -> result.complete(pollTaskQueue()));
+        completeWhenProjectClosed(result);
+      } else {
+        result.complete(pollTaskQueue());
       }
     });
-    return result.get();
+    return waitForFuture(result);
   }
 
-  private static void invokeAndWaitIfNeeded(Runnable runnable) {
-    Application app = ApplicationManager.getApplication();
-    if (app.isDispatchThread()) {
-      runnable.run();
-      return;
-    }
-
-    Semaphore semaphore = new Semaphore();
-    semaphore.down();
-    app.invokeLater(() -> {
-      try {
-        runnable.run();
-      } finally {
-        semaphore.up();
+  @Nullable
+  private Pair<DumbModeTask, ProgressIndicatorEx> pollTaskQueue() {
+    while (true) {
+      if (myUpdatesQueue.isEmpty()) {
+        queueUpdateFinished();
+        return null;
       }
-    }, ModalityState.any());
+
+      DumbModeTask queuedTask = myUpdatesQueue.pullFirst();
+      myQueuedEquivalences.remove(queuedTask.getEquivalenceObject());
+      ProgressIndicatorEx indicator = myProgresses.get(queuedTask);
+      if (indicator.isCanceled()) {
+        Disposer.dispose(queuedTask);
+        continue;
+      }
+
+      return Pair.create(queuedTask, indicator);
+    }
+  }
+
+  @Nullable
+  private static <T> T waitForFuture(Future<T> result) {
     try {
-      semaphore.waitFor();
+      return result.get();
     }
-    catch (ProcessCanceledException ignore) {
+    catch (InterruptedException e) {
+      return null;
     }
+    catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+      if (!(cause instanceof ProcessCanceledException)) {
+        ExceptionUtil.rethrowAllAsUnchecked(cause);
+      }
+      return null;
+    }
+  }
+
+  private void completeWhenProjectClosed(CompletableFuture<Pair<DumbModeTask, ProgressIndicatorEx>> result) {
+    ProjectManagerListener listener = new ProjectManagerListener() {
+      @Override
+      public void projectClosed(Project project) {
+        result.completeExceptionally(new ProcessCanceledException());
+      }
+    };
+    ProjectManager.getInstance().addProjectManagerListener(myProject, listener);
+    result.thenAccept(p -> ProjectManager.getInstance().removeProjectManagerListener(myProject, listener));
+  }
+
+  private void runWhenPowerSaveModeChanges(Runnable r) {
+    MessageBusConnection connection = myProject.getMessageBus().connect();
+    connection.subscribe(PowerSaveMode.TOPIC, () -> {
+      r.run();
+      connection.disconnect();
+    });
   }
 
   @Override

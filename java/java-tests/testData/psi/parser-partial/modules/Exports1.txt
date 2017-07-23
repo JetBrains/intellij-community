@@ -1,5 +1,9 @@
 PsiJavaFile:Exports1.java
+  PsiImportList
+    <empty list>
   PsiJavaModule:M
+    PsiModifierList:
+      <empty list>
     PsiKeyword:module('module')
     PsiWhiteSpace(' ')
     PsiJavaModuleReference
@@ -7,7 +11,7 @@ PsiJavaFile:Exports1.java
     PsiWhiteSpace(' ')
     PsiJavaToken:LBRACE('{')
     PsiWhiteSpace(' ')
-    PsiExportsStatement
+    PsiPackageAccessibilityStatement
       PsiKeyword:exports('exports')
       PsiWhiteSpace(' ')
       PsiJavaCodeReferenceElement:pkg

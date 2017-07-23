@@ -77,7 +77,14 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
   @Deprecated
   void setQuickDocFontSize(@NotNull FontSize fontSize);
 
+  @NotNull
   Font getFont(EditorFontType key);
+
+  /**
+   * @deprecated Use {@link #getFontPreferences()} and {@link ModifiableFontPreferences}
+   * to change fonts.
+   */
+  @Deprecated
   void setFont(EditorFontType key, Font font);
 
   float getLineSpacing();
@@ -99,6 +106,12 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
   @NotNull
   FontPreferences getConsoleFontPreferences();
   void setConsoleFontPreferences(@NotNull FontPreferences preferences);
+  
+  default void setUseEditorFontPreferencesInConsole() {}
+  default boolean isUseEditorFontPreferencesInConsole() {return false;}
+
+  default void setUseAppFontPreferencesInEditor() {}
+  default boolean isUseAppFontPreferencesInEditor() {return false;}
 
   String getConsoleFontName();
   void setConsoleFontName(String fontName);

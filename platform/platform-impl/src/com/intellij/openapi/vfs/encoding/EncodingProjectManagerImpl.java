@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Jul 17, 2007
- * Time: 3:20:51 PM
- */
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.openapi.Disposable;
@@ -33,8 +27,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
@@ -70,15 +62,10 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   private String myOldUTFGuessing;
   private boolean myNative2AsciiForPropertiesFilesWasSpecified;
 
-  public EncodingProjectManagerImpl(Project project, EncodingManager ideEncodingManager, ProjectManager projectManager) {
+  public EncodingProjectManagerImpl(Project project, EncodingManager ideEncodingManager) {
     myProject = project;
     myIdeEncodingManager = (EncodingManagerImpl)ideEncodingManager;
-    projectManager.addProjectManagerListener(project, new ProjectManagerAdapter() {
-      @Override
-      public void projectOpened(Project project) {
-        StartupManager.getInstance(project).runWhenProjectIsInitialized(EncodingProjectManagerImpl.this::reloadAlreadyLoadedDocuments);
-      }
-    });
+    StartupManager.getInstance(project).runWhenProjectIsInitialized(this::reloadAlreadyLoadedDocuments);
   }
 
   private final Map<VirtualFile, Charset> myMapping = ContainerUtil.newConcurrentMap();
@@ -89,7 +76,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     Element element = new Element("x");
     if (!myMapping.isEmpty()) {
       List<VirtualFile> files = new ArrayList<>(myMapping.keySet());
-      ContainerUtil.quickSort(files, (o1, o2) -> o1.getPath().compareTo(o2.getPath()));
+      ContainerUtil.quickSort(files, Comparator.comparing(VirtualFile::getPath));
       for (VirtualFile file : files) {
         Charset charset = myMapping.get(file);
         Element child = new Element("file");
@@ -363,6 +350,11 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     Charset charset = myProjectCharset;
     // if the project charset was not specified, use the IDE encoding, save this back
     return charset == null ? myIdeEncodingManager.getDefaultCharset() : charset;
+  }
+
+  @Nullable
+  public Charset getConfiguredDefaultCharset() {
+    return myProjectCharset;
   }
 
   @Override

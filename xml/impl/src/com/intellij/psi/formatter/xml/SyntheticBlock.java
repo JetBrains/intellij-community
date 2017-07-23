@@ -18,7 +18,6 @@ package com.intellij.psi.formatter.xml;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.tree.IElementType;
@@ -120,12 +119,9 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
     }
 
     if (type1 == XmlElementType.XML_ATTRIBUTE && (type2 == XmlTokenType.XML_TAG_END || type2 == XmlTokenType.XML_EMPTY_ELEMENT_END)) {
-      final PsiElement psi1 = node1.getPsi();
-
-      if (psi1 instanceof XmlAttribute && myXmlFormattingPolicy.insertLineBreakAfterLastAttribute((XmlAttribute)psi1)) {
-        return Spacing.createSpacing(0, 0, 1,
-                                     myXmlFormattingPolicy.getShouldKeepLineBreaks(),
-                                     myXmlFormattingPolicy.getKeepBlankLines());
+      Spacing spacing = myXmlFormattingPolicy.getSpacingAfterLastAttribute((XmlAttribute)node1.getPsi());
+      if (spacing != null) {
+        return spacing;
       }
     }
 
@@ -141,15 +137,13 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
     }
 
     if (type2 == XmlElementType.XML_ATTRIBUTE) {
-      int minLineFeeds = 0;
-
-      if (type1 == XmlTokenType.XML_NAME) {
-        final PsiElement psi2 = node2.getPsi();
-        minLineFeeds = psi2 instanceof XmlAttribute &&
-                       myXmlFormattingPolicy.insertLineBreakBeforeFirstAttribute((XmlAttribute)psi2)
-                       ? 1 : 0;
+      if (type1 == XmlTokenType.XML_NAME || type1 == XmlTokenType.XML_TAG_NAME) {
+        Spacing spacing = myXmlFormattingPolicy.getSpacingBeforeFirstAttribute((XmlAttribute)node2.getPsi());
+        if (spacing != null) {
+          return spacing;
+        }
       }
-      return Spacing.createSpacing(1, 1, minLineFeeds, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
+      return Spacing.createSpacing(1, 1, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     }
 
     if (((AbstractXmlBlock)child1).isTextElement() && ((AbstractXmlBlock)child2).isTextElement()) {
@@ -202,7 +196,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
   }
 
   private boolean isEntityRef(final ASTNode node) {
-    return node.getElementType() == XmlElementType.XML_ENTITY_REF;
+    return node.getElementType() == XmlElementType.XML_ENTITY_REF || node.getElementType() == XmlTokenType.XML_CHAR_ENTITY_REF;
   }
 
   private boolean shouldAddSpaceAroundTagName(final ASTNode node1, final ASTNode node2) {

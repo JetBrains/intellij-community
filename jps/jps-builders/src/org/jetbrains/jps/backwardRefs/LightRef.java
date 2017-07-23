@@ -30,14 +30,22 @@ public interface LightRef extends RW.Savable {
   byte METHOD_MARKER = 0x1;
   byte FIELD_MARKER = 0x2;
   byte FUN_EXPR_MARKER = 0x3;
+  byte ANONYMOUS_CLASS_MARKER = 0x4;
 
   LightRef override(int newOwner);
 
   interface NamedLightRef extends LightRef {
+    NamedLightRef[] EMPTY_ARRAY = new NamedLightRef[0];
+
     int getName();
   }
 
   interface LightClassHierarchyElementDef extends NamedLightRef {
+    LightClassHierarchyElementDef[] EMPTY_ARRAY = new LightClassHierarchyElementDef[0];
+
+  }
+
+  interface LightAnonymousClassDef extends LightClassHierarchyElementDef {
   }
 
   interface LightFunExprDef extends LightRef {
@@ -168,6 +176,50 @@ public interface LightRef extends RW.Savable {
     @Override
     public int hashCode() {
       return myName + 31 * myOwner;
+    }
+  }
+
+  class JavaLightAnonymousClassRef implements LightAnonymousClassDef {
+    private final int myName;
+
+    public JavaLightAnonymousClassRef(int name) {myName = name;}
+
+    @Override
+    public LightRef override(int newOwner) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int getName() {
+      return myName;
+    }
+
+    @Override
+    public void save(DataOutput out) {
+      try {
+        out.writeByte(ANONYMOUS_CLASS_MARKER);
+        DataInputOutputUtil.writeINT(out, getName());
+      }
+      catch (IOException e) {
+        throw new BuildDataCorruptedException(e);
+      }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      JavaLightAnonymousClassRef ref = (JavaLightAnonymousClassRef)o;
+
+      if (myName != ref.myName) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return myName;
     }
   }
 

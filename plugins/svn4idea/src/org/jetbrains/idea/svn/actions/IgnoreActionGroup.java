@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -84,7 +83,7 @@ public class IgnoreActionGroup extends DefaultActionGroup implements DumbAware {
         final Ref<Boolean> extensionOk = new Ref<>(Boolean.FALSE);
 
         // virtual files parameter is not used -> can pass null
-        SvnPropertyService.doCheckIgnoreProperty(vcs, project, null, fileGroupInfo, fileGroupInfo.getExtensionMask(), filesOk, extensionOk);
+        SvnPropertyService.doCheckIgnoreProperty(vcs, null, fileGroupInfo, fileGroupInfo.getExtensionMask(), filesOk, extensionOk);
 
         if (Boolean.TRUE.equals(filesOk.get())) {
           myRemoveExactAction.setActionText(fileGroupInfo.oneFileSelected() ?

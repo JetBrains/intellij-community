@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -34,7 +34,6 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.lang.UrlClassLoader;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.ReferenceType;
@@ -49,6 +48,7 @@ import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -58,10 +58,10 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.gradle.config.GradlePositionManager");
 
-  private static final Pattern                                    GRADLE_CLASS_PATTERN  = Pattern.compile(".*_gradle_.*");
-  private static final String                                     SCRIPT_CLOSURE_PREFIX = "build_";
-  private static final Key<CachedValue<ClassLoader>>              GRADLE_CLASS_LOADER   = Key.create("GRADLE_CLASS_LOADER");
-  private static final Key<CachedValue<FactoryMap<File, String>>> GRADLE_CLASS_NAME     = Key.create("GRADLE_CLASS_NAME");
+  private static final Pattern GRADLE_CLASS_PATTERN = Pattern.compile(".*_gradle_.*");
+  private static final String SCRIPT_CLOSURE_PREFIX = "build_";
+  private static final Key<CachedValue<ClassLoader>> GRADLE_CLASS_LOADER = Key.create("GRADLE_CLASS_LOADER");
+  private static final Key<CachedValue<Map<File, String>>> GRADLE_CLASS_NAME = Key.create("GRADLE_CLASS_NAME");
 
   private final GradleInstallationManager myLibraryManager;
 
@@ -69,14 +69,17 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
     myLibraryManager = manager;
   }
 
+  @Override
   public boolean isAppropriateRuntimeName(@NotNull final String runtimeName) {
     return runtimeName.startsWith(SCRIPT_CLOSURE_PREFIX) || GRADLE_CLASS_PATTERN.matcher(runtimeName).matches();
   }
 
+  @Override
   public boolean isAppropriateScriptFile(@NotNull final GroovyFile scriptFile) {
     return GroovyScriptUtil.isSpecificScriptFile(scriptFile, GradleScriptType.INSTANCE);
   }
 
+  @Override
   @NotNull
   public String getRuntimeScriptName(@NotNull GroovyFile groovyFile) {
     VirtualFile virtualFile = groovyFile.getVirtualFile();
@@ -93,6 +96,7 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
     return className == null ? "" : className;
   }
 
+  @Override
   public PsiFile getExtraScriptIfNotFound(@NotNull ReferenceType refType, @NotNull String runtimeName, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     String sourceFilePath = getScriptForClassName(refType);
     if (sourceFilePath == null) return null;
@@ -125,7 +129,7 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
 
   @Nullable
   private ClassLoader createGradleClassLoader(@NotNull Module module) {
-    String rootProjectPath = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
+    String rootProjectPath = ExternalSystemModulePropertyManager.getInstance(module).getRootProjectPath();
     if (StringUtil.isEmpty(rootProjectPath)) {
       return null;
     }
@@ -146,20 +150,16 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
     return UrlClassLoader.build().urls(urls).get();
   }
 
-  private class ScriptSourceMapCalculator implements CachedValueProvider<FactoryMap<File, String>> {
+  private class ScriptSourceMapCalculator implements CachedValueProvider<Map<File, String>> {
     private final Module myModule;
 
     public ScriptSourceMapCalculator(Module module) {
       myModule = module;
     }
 
-    public Result<FactoryMap<File, String>> compute() {
-      final FactoryMap<File, String> result = new ConcurrentFactoryMap<File, String>() {
-        @Override
-        protected String create(File scriptFile) {
-          return calcClassName(scriptFile);
-        }
-      };
+    @Override
+    public Result<Map<File, String>> compute() {
+      final Map<File, String> result = ConcurrentFactoryMap.createMap(scriptFile -> calcClassName(scriptFile));
       return Result.create(result, ProjectRootManager.getInstance(myModule.getProject()));
     }
 

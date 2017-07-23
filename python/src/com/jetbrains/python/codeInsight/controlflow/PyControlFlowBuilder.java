@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,6 +160,22 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
                                                ? ReadWriteInstruction.ACCESS.READWRITE
                                                : ReadWriteInstruction.ACCESS.READ;
     final ReadWriteInstruction readWriteInstruction = ReadWriteInstruction.newInstruction(myBuilder, node, node.getName(), access);
+    myBuilder.addNode(readWriteInstruction);
+    myBuilder.checkPending(readWriteInstruction);
+  }
+
+  @Override
+  public void visitPyBoolLiteralExpression(PyBoolLiteralExpression node) {
+    final ReadWriteInstruction readWriteInstruction = ReadWriteInstruction.newInstruction(myBuilder, node, node.getText(),
+                                                                                          ReadWriteInstruction.ACCESS.READ);
+    myBuilder.addNode(readWriteInstruction);
+    myBuilder.checkPending(readWriteInstruction);
+  }
+
+  @Override
+  public void visitPyNoneLiteralExpression(PyNoneLiteralExpression node) {
+    final ReadWriteInstruction readWriteInstruction = ReadWriteInstruction.newInstruction(myBuilder, node, node.getText(),
+                                                                                          ReadWriteInstruction.ACCESS.READ);
     myBuilder.addNode(readWriteInstruction);
     myBuilder.checkPending(readWriteInstruction);
   }
@@ -349,17 +365,13 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       });
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
-    boolean noPendingInScopeEdges = false;
-    if (!assertionEvaluator.getDefinitions().isEmpty()) {
-      final Ref<Boolean> pendingInScopeEdges = Ref.create(false);
-      myBuilder.processPending((pendingScope, instruction) -> {
-        if (pendingScope != null && PsiTreeUtil.isAncestor(node, pendingScope, false)) {
-          pendingInScopeEdges.set(true);
-        }
-        myBuilder.addPendingEdge(pendingScope, instruction);
-      });
-      noPendingInScopeEdges = !pendingInScopeEdges.get();
-    }
+    final Ref<Boolean> pendingInScopeEdges = Ref.create(false);
+    myBuilder.processPending((pendingScope, instruction) -> {
+      if (pendingScope != null && PsiTreeUtil.isAncestor(node, pendingScope, false)) {
+        pendingInScopeEdges.set(true);
+      }
+      myBuilder.addPendingEdge(pendingScope, instruction);
+    });
     final PyTypeAssertionEvaluator negativeAssertionEvaluator = new PyTypeAssertionEvaluator(false);
     final PyExpression ifCondition = ifPart.getCondition();
     // TODO: Add support for 'elif'
@@ -375,7 +387,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       elseBranch.accept(this);
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     } else {
-      if (noPendingInScopeEdges) {
+      if (!pendingInScopeEdges.get()) {
         myBuilder.prevInstruction = lastBranchingPoint;
         InstructionBuilder.addAssertInstructions(myBuilder, negativeAssertionEvaluator);
         myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
@@ -718,7 +730,10 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         else {
           myBuilder.startNode(condition);
         }
+        final PyTypeAssertionEvaluator assertionEvaluator = new PyTypeAssertionEvaluator();
         condition.accept(this);
+        condition.accept(assertionEvaluator);
+        InstructionBuilder.addAssertInstructions(myBuilder, assertionEvaluator);
 
         // Condition is true for nested "for" and "if" constructs, next startNode() should create a conditional node
         prevCondition = condition;
@@ -748,7 +763,9 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     }
   }
 
+  @Override
   public void visitPyAssertStatement(final PyAssertStatement node) {
+    myBuilder.startNode(node);
     super.visitPyAssertStatement(node);
     final PyExpression[] args = node.getArguments();
     // assert False

@@ -47,7 +47,7 @@ public class HgVersionTest extends HgPlatformTest {
 
   public void testParseSupported() throws Exception {
     for (TestHgVersion test : commonTests) {
-      HgVersion version = HgVersion.parseVersionAndExtensionInfo(test.output, Collections.<String>emptyList());
+      HgVersion version = HgVersion.parseVersionAndExtensionInfo(test.output, Collections.emptyList());
       assertEqualVersions(version, test);
       assertTrue(version.isSupported());
     }
@@ -56,7 +56,7 @@ public class HgVersionTest extends HgPlatformTest {
   public void testParseUnsupported() throws Exception {
     TestHgVersion unsupportedVersion = new TestHgVersion("Mercurial Distributed SCM (version 1.5.1)", 1, 5, 1);
     HgVersion parsedVersion =
-      HgVersion.parseVersionAndExtensionInfo(unsupportedVersion.output, Collections.<String>emptyList());
+      HgVersion.parseVersionAndExtensionInfo(unsupportedVersion.output, Collections.emptyList());
     assertEqualVersions(parsedVersion, unsupportedVersion);
     assertFalse(parsedVersion.isSupported());
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.vfs.*;
@@ -46,15 +45,13 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
     if (fileListener != null) VirtualFileManager.getInstance().addVirtualFileListener(fileListener, this);
 
     DocumentListener documentListener = createDocumentListener();
-    List<Document> documents = ContainerUtil.mapNotNull(myRequest.getContents(), (content) -> {
-      return content instanceof DocumentContent ? ((DocumentContent)content).getDocument() : null;
-    });
+    List<Document> documents = ContainerUtil.mapNotNull(myRequest.getContents(), (content) -> content instanceof DocumentContent ? ((DocumentContent)content).getDocument() : null);
     TextDiffViewerUtil.installDocumentListeners(documentListener, documents, this);
   }
 
   @NotNull
   protected DocumentListener createDocumentListener() {
-    return new DocumentAdapter() {
+    return new DocumentListener() {
       @Override
       public void beforeDocumentChange(DocumentEvent event) {
         onBeforeDocumentChange(event);
@@ -78,7 +75,7 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
 
     if (files.isEmpty()) return null;
 
-    return new VirtualFileAdapter() {
+    return new VirtualFileListener() {
       @Override
       public void contentsChanged(@NotNull VirtualFileEvent event) {
         if (files.contains(event.getFile())) {

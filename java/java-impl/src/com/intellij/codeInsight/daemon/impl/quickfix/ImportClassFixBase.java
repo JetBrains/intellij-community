@@ -88,8 +88,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       }
     }
 
-    PsiManager manager = file.getManager();
-    return manager.isInProject(file) && !getClassesToImport(true).isEmpty();
+    return !getClassesToImport(true).isEmpty();
   }
 
   @Nullable

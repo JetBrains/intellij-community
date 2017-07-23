@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
     super(astNode);
   }
 
+  @Override
   @NotNull
   public PyExpression getOperand() {
     return childToPsiNotNull(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 0);
@@ -57,6 +58,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
     return operand;
   }
 
+  @Override
   @Nullable
   public PyExpression getIndexExpression() {
     return childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 1);
@@ -72,35 +74,37 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PsiPolyVariantReference reference = getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
     final List<PyType> members = new ArrayList<>();
+    final PyExpression indexExpression = getIndexExpression();
+    final PyType type = indexExpression != null ? context.getType(getOperand()) : null;
+    if (type instanceof PyTupleType) {
+      final PyTupleType tupleType = (PyTupleType)type;
+      return Optional
+        .ofNullable(PyConstantExpressionEvaluator.evaluate(indexExpression))
+        .map(value -> PyUtil.as(value, Integer.class))
+        .map(tupleType::getElementType)
+        .orElse(null);
+    }
     for (PsiElement resolved : PyUtil.multiResolveTopPriority(reference)) {
       PyType res = null;
       if (resolved instanceof PyCallable) {
         res = ((PyCallable)resolved).getCallType(context, this);
       }
-      if (PyTypeChecker.isUnknown(res) || res instanceof PyNoneType) {
-        final PyExpression indexExpression = getIndexExpression();
-        if (indexExpression != null) {
-          final PyType type = context.getType(getOperand());
-          final PyClass cls = (type instanceof PyClassType) ? ((PyClassType)type).getPyClass() : null;
-          if (cls != null && PyABCUtil.isSubclass(cls, PyNames.MAPPING, context)) {
-            return res;
-          }
-          if (type instanceof PyTupleType) {
-            final PyTupleType tupleType = (PyTupleType)type;
-
-            res = Optional
-              .ofNullable(PyConstantExpressionEvaluator.evaluate(indexExpression))
-              .map(value -> PyUtil.as(value, Integer.class))
-              .map(tupleType::getElementType)
-              .orElse(null);
-          }
-          else if (type instanceof PyCollectionType) {
-            res = ((PyCollectionType)type).getIteratedItemType();
-          }
+      if (PyTypeChecker.isUnknown(res, context) || res instanceof PyNoneType) {
+        final PyClass cls = (type instanceof PyClassType) ? ((PyClassType)type).getPyClass() : null;
+        if (cls != null && PyABCUtil.isSubclass(cls, PyNames.MAPPING, context)) {
+          return res;
+        }
+        if (type instanceof PyCollectionType) {
+          res = ((PyCollectionType)type).getIteratedItemType();
         }
       }
       members.add(res);
     }
+
+    if (type instanceof PyUnionType && ((PyUnionType)type).isWeak()) {
+      return PyUnionType.createWeakType(PyUnionType.union(members));
+    }
+
     return PyUnionType.union(members);
   }
 
@@ -111,7 +115,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
 
   @NotNull
   @Override
-  public PsiPolyVariantReference getReference(PyResolveContext context) {
+  public PsiPolyVariantReference getReference(@NotNull PyResolveContext context) {
     return new PyOperatorReference(this, context);
   }
 

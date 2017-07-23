@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.progress;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -37,13 +36,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   public static ProgressManager getInstance() {
     ProgressManager result = ourInstance;
     if (result == null) {
-      result = ServiceManager.getService(ProgressManager.class);
-      if (result == null) {
-        throw new AssertionError("ProgressManager is null; " + ApplicationManager.getApplication());
-      }
-      else {
-        ourInstance = result;
-      }
+      ourInstance = result = ServiceManager.getService(ProgressManager.class);
     }
     return result;
   }
@@ -90,6 +83,10 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
 
   public abstract void executeNonCancelableSection(@NotNull Runnable runnable);
 
+  /**
+   * to be removed in 2017.2
+   */
+  @Deprecated
   public abstract void setCancelButtonText(String cancelButtonText);
 
   /**
@@ -204,7 +201,10 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static void checkCanceled() throws ProcessCanceledException {
-    getInstance().doCheckCanceled();
+    ProgressManager instance = ourInstance;
+    if (instance != null) {
+      instance.doCheckCanceled();
+    }
   }
 
   /**
@@ -215,7 +215,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   public static void assertNotCircular(@NotNull ProgressIndicator original) {
     Set<ProgressIndicator> wrappedParents = null;
     for (ProgressIndicator i = original; i instanceof WrappedProgressIndicator; i = ((WrappedProgressIndicator)i).getOriginalProgressIndicator()) {
-      if (wrappedParents == null) wrappedParents = new THashSet<ProgressIndicator>();
+      if (wrappedParents == null) wrappedParents = new THashSet<>();
       if (!wrappedParents.add(i)) {
         throw new IllegalArgumentException(i + " wraps itself");
       }
@@ -234,11 +234,11 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * <li>action started to execute, but was aborted using {@link ProcessCanceledException} when some other thread initiated
    * write action</li>
    * </ul>
-   * If unable to run read action because of interfering write action, this method waits for that write action to complete.
-   * So under no circumstances must you call this method from read action or under critical locks.
+   * @param action the code to execute under read action
+   * @param indicator progress indicator that should be cancelled if a write action is about to start. Can be null.
    * @since 171.*
    */
-  public abstract boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action);
+  public abstract boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action, @Nullable ProgressIndicator indicator);
 
   public abstract boolean isInNonCancelableSection();
 }

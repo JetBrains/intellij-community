@@ -76,7 +76,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
   @NotNull
   @Override
   public Collection<File> getOutputRoots(CompileContext context) {
-    Collection<File> result = new SmartList<File>();
+    Collection<File> result = new SmartList<>();
     final File outputDir = getOutputDir();
     if (outputDir != null) {
       result.add(outputDir);
@@ -109,13 +109,8 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     if (!isTests()) {
       enumerator.productionOnly();
     }
-    final ArrayList<BuildTarget<?>> dependencies = new ArrayList<BuildTarget<?>>();
-    enumerator.processModules(new Consumer<JpsModule>() {
-      @Override
-      public void consume(JpsModule module) {
-        dependencies.add(new ModuleBuildTarget(module, myTargetType));
-      }
-    });
+    final ArrayList<BuildTarget<?>> dependencies = new ArrayList<>();
+    enumerator.processModules(module -> dependencies.add(new ModuleBuildTarget(module, myTargetType)));
     if (isTests()) {
       dependencies.add(new ModuleBuildTarget(myModule, JavaModuleBuildTargetType.PRODUCTION));
     }
@@ -134,7 +129,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
   @NotNull
   @Override
   public List<JavaSourceRootDescriptor> computeRootDescriptors(JpsModel model, ModuleExcludeIndex index, IgnoredFileIndex ignoredFileIndex, BuildDataPaths dataPaths) {
-    List<JavaSourceRootDescriptor> roots = new ArrayList<JavaSourceRootDescriptor>();
+    List<JavaSourceRootDescriptor> roots = new ArrayList<>();
     JavaSourceRootType type = isTests() ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
     Iterable<ExcludedJavaSourceRootProvider> excludedRootProviders = JpsServiceManager.getInstance().getExtensions(ExcludedJavaSourceRootProvider.class);
     final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(myModule.getProject());

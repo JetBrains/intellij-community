@@ -20,7 +20,6 @@ import com.intellij.vcs.log.VcsRef;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Set;
 
 public class RequirementsImpl implements VcsLogProviderRequirementsEx {
 

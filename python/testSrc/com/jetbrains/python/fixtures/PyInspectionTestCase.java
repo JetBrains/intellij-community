@@ -9,8 +9,8 @@ import org.jetbrains.annotations.NotNull;
  * <br/>
  * For each case
  * <ol>
- * <li>Create file <code>testData/inspections/_YOUR_INSPECTION_CLASS_SIMPLE_NAME_/CASE_NAME_CAMEL_CASE.py</code></li>
- * <li>Create method <code>test_YOUR_CASE_NAME_PASCAL_CASE</code> that runs {@link #doTest()}</li>
+ * <li>Create file {@code testData/inspections/_YOUR_INSPECTION_CLASS_SIMPLE_NAME_/CASE_NAME_CAMEL_CASE.py}</li>
+ * <li>Create method {@code test_YOUR_CASE_NAME_PASCAL_CASE} that runs {@link #doTest()}</li>
  * <li>Overwrite {@link #isInfo()}, {@link #isWarning()} or {@link #isWeakWarning()} to configure what to check</li>
  * </ol>
  *

@@ -17,21 +17,23 @@ package com.intellij.util;
 
 import com.intellij.util.containers.ConcurrentFactoryMap;
 
+import java.util.concurrent.ConcurrentMap;
+
 /**
  * @author peter
  */
 public class ReflectionAssignabilityCache {
-  private final ConcurrentFactoryMap<Class, ConcurrentFactoryMap<Class, Boolean>> myCache = new ConcurrentFactoryMap<Class, ConcurrentFactoryMap<Class, Boolean>>() {
-    @Override
-    protected ConcurrentFactoryMap<Class, Boolean> create(final Class anc) {
-      return new ConcurrentFactoryMap<Class, Boolean>() {
-        @Override
-        protected Boolean create(Class desc) {
-          return anc.isAssignableFrom(desc);
-        }
-      };
-    }
-  };
+  private final ConcurrentMap<Class, ConcurrentMap<Class, Boolean>> myCache =
+    ConcurrentFactoryMap.createMap(new Function<Class, ConcurrentMap<Class, Boolean>>() {
+      @Override
+      public ConcurrentMap<Class, Boolean> fun(final Class anc) {
+        return ConcurrentFactoryMap.createMap(
+          new Function<Class, Boolean>() {
+            @Override
+            public Boolean fun(Class desc) {return anc.isAssignableFrom(desc);}
+          });
+      }
+    });
 
   public boolean isAssignable(Class ancestor, Class descendant) {
     return ancestor == descendant || myCache.get(ancestor).get(descendant).booleanValue();

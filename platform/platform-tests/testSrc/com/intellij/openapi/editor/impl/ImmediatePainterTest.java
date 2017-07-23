@@ -45,6 +45,7 @@ public class ImmediatePainterTest extends AbstractEditorTest {
   private String myDefaultFontName;
   private int myDefaultFontSize;
   private float myDefaultLineSpacing;
+  private Color myDefaultCaretColor;
   private KeyboardFocusManager myDefaultFocusManager;
 
   @Override
@@ -54,6 +55,7 @@ public class ImmediatePainterTest extends AbstractEditorTest {
     myDefaultFontName = getDefaultColorScheme().getEditorFontName();
     myDefaultFontSize = getDefaultColorScheme().getEditorFontSize();
     myDefaultLineSpacing = getDefaultColorScheme().getLineSpacing();
+    myDefaultCaretColor = getDefaultColorScheme().getColor(EditorColors.CARET_COLOR);
     myDefaultFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 
     FontLayoutService.setInstance(null);
@@ -71,6 +73,7 @@ public class ImmediatePainterTest extends AbstractEditorTest {
       getDefaultColorScheme().setEditorFontName(myDefaultFontName);
       getDefaultColorScheme().setEditorFontSize(myDefaultFontSize);
       getDefaultColorScheme().setLineSpacing(myDefaultLineSpacing);
+      getDefaultColorScheme().setColor(EditorColors.CARET_COLOR, myDefaultCaretColor);
       KeyboardFocusManager.setCurrentKeyboardFocusManager(myDefaultFocusManager);
     }
     finally {

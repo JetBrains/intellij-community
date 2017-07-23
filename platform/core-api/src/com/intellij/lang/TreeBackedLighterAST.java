@@ -48,7 +48,7 @@ public class TreeBackedLighterAST extends LighterAST {
     final ASTNode[] children = ((NodeWrapper)parent).myNode.getChildren(null);
     if (children.length == 0) return ContainerUtil.emptyList();
 
-    List<LighterASTNode> result = new ArrayList<LighterASTNode>(children.length);
+    List<LighterASTNode> result = new ArrayList<>(children.length);
     for (final ASTNode child : children) {
       result.add(wrap(child));
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,13 @@
  */
 package com.intellij.debugger.ui.tree.render;
 
-import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
-import com.intellij.debugger.ui.tree.DebuggerTreeNode;
-import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiExpression;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: lex
- * Date: Nov 19, 2003
- * Time: 3:13:11 PM
- */
 public class HexRenderer extends NodeRendererImpl{
   public static final @NonNls String UNIQUE_ID = "HexRenderer";
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.HexRenderer");
@@ -105,9 +96,6 @@ public class HexRenderer extends NodeRendererImpl{
     }
   }
 
-  public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {
-  }
-
   //returns whether this renderer is apllicable to this type or it's supertypes
   public boolean isApplicable(Type t) {
     if(t == null) {
@@ -119,14 +107,4 @@ public class HexRenderer extends NodeRendererImpl{
            t instanceof IntegerType ||
            t instanceof LongType;
   }
-
-  public PsiExpression getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) {
-    LOG.assertTrue(false);
-    return null;
-  }
-
-  public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
-    return false;
-  }
-
 }

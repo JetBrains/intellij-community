@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.html.dtd.HtmlElementDescriptorImpl;
 import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -104,7 +105,7 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
       if (xmlExtension.useXmlTagInsertHandler()) {
         lookupElement = lookupElement.withInsertHandler(XmlTagInsertHandler.INSTANCE);
       }
-
+      lookupElement = lookupElement.withCaseSensitivity(!(descriptor instanceof HtmlElementDescriptorImpl));
       elements.add(PrioritizedLookupElement.withPriority(lookupElement, separator > 0 ? 0 : 1));
     }
   }
@@ -130,7 +131,7 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
       if (ns.startsWith("file://")) continue;
       fbi.processValues(XmlNamespaceIndex.NAME, ns, null, new FileBasedIndex.ValueProcessor<XsdNamespaceBuilder>() {
         @Override
-        public boolean process(final VirtualFile file, XsdNamespaceBuilder value) {
+        public boolean process(@NotNull final VirtualFile file, XsdNamespaceBuilder value) {
           List<String> tags = value.getRootTags();
           for (String s : tags) {
             elements.add(LookupElementBuilder.create(s).withTypeText(ns).withInsertHandler(new XmlTagInsertHandler() {

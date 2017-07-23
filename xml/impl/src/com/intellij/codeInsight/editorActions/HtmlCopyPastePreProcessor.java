@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,10 +76,7 @@ public class HtmlCopyPastePreProcessor implements CopyPastePreProcessor {
                               convertFromRtfStream((InputStream)content.getTransferData(ourRtfDataFlavor));
           if (!StringUtil.isEmpty(data)) return data;
         }
-        catch (UnsupportedFlavorException e) {
-          LOG.error(e);
-        }
-        catch (IOException e) {
+        catch (UnsupportedFlavorException | IOException e) {
           LOG.error(e);
         }
       }
@@ -95,10 +92,7 @@ public class HtmlCopyPastePreProcessor implements CopyPastePreProcessor {
       new HTMLEditorKit().write(writer, document, 0, document.getLength());
       return writer.toString();
     }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-    catch (BadLocationException e) {
+    catch (IOException | BadLocationException e) {
       LOG.error(e);
     }
     return null;

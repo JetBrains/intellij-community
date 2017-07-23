@@ -15,7 +15,10 @@
  */
 package com.intellij.refactoring.inline;
 
+import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -50,9 +53,11 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   private final boolean myInlineThisOnly;
   private final boolean mySearchInCommentsAndStrings;
   private final boolean mySearchForTextOccurrences;
+  private final boolean myDeleteDeclaration;
+  private Map<Language, InlineHandler.Inliner> myInliners;
 
   public InlineConstantFieldProcessor(PsiField field, Project project, PsiReferenceExpression ref, boolean isInlineThisOnly) {
-    this(field, project, ref, isInlineThisOnly, false, false);
+    this(field, project, ref, isInlineThisOnly, false, false, true);
   }
 
   public InlineConstantFieldProcessor(PsiField field,
@@ -60,13 +65,15 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
                                       PsiReferenceExpression ref,
                                       boolean isInlineThisOnly,
                                       boolean searchInCommentsAndStrings,
-                                      boolean searchForTextOccurrences) {
+                                      boolean searchForTextOccurrences,
+                                      boolean isDeleteDeclaration) {
     super(project);
     myField = field;
     myRefExpr = ref;
     myInlineThisOnly = isInlineThisOnly;
     mySearchInCommentsAndStrings = searchInCommentsAndStrings;
     mySearchForTextOccurrences = searchForTextOccurrences;
+    myDeleteDeclaration = isDeleteDeclaration;
   }
 
   @Override
@@ -99,8 +106,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     for (PsiReference ref : ReferencesSearch.search(myField, GlobalSearchScope.projectScope(myProject), false)) {
       PsiElement element = ref.getElement();
       UsageInfo info = new UsageInfo(element);
-
-      if (!(element instanceof PsiExpression) && PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class) == null) {
+      if (element instanceof PsiDocMethodOrFieldRef) {
         info = new UsageFromJavaDoc(element);
       }
 
@@ -139,8 +145,6 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
     PsiExpression initializer = InlineConstantFieldHandler.getInitializer(myField);
     LOG.assertTrue(initializer != null);
-    initializer = normalize (initializer);
-
     final Set<PsiAssignmentExpression> assignments = new HashSet<>();
     for (UsageInfo info : usages) {
       if (info instanceof UsageFromJavaDoc) continue;
@@ -153,8 +157,12 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
         }
         else {
           PsiImportStaticStatement importStaticStatement = PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class);
-          LOG.assertTrue(importStaticStatement != null, element.getText());
-          importStaticStatement.delete();
+          if (importStaticStatement != null) {
+            importStaticStatement.delete();
+          }
+          else {
+            GenericInlineHandler.inlineReference(info, myField, myInliners);
+          }
         }
       }
       catch (IncorrectOperationException e) {
@@ -166,7 +174,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
       assignment.delete();
     }
 
-    if (!myInlineThisOnly) {
+    if (!myInlineThisOnly && myDeleteDeclaration && myField.isWritable()) {
       try {
         myField.delete();
       }
@@ -205,46 +213,9 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
       return;
     }
 
-    if (expr instanceof PsiReferenceExpression) {
-      PsiExpression qExpression = ((PsiReferenceExpression)expr).getQualifierExpression();
-      if (qExpression != null) {
-        PsiReferenceExpression referenceExpression = null;
-        if (initializer1 instanceof PsiReferenceExpression) {
-          referenceExpression = (PsiReferenceExpression)initializer1;
-        }
-        else if (initializer1 instanceof PsiMethodCallExpression) {
-          referenceExpression = ((PsiMethodCallExpression)initializer1).getMethodExpression();
-        }
-        if (referenceExpression != null &&
-            referenceExpression.getQualifierExpression() == null &&
-            !(referenceExpression.advancedResolve(false).getCurrentFileResolveScope() instanceof PsiImportStaticStatement)) {
-          referenceExpression.setQualifierExpression(qExpression);
-        }
-      }
-    }
-
-    InlineUtil.inlineVariable(myField, initializer1, (PsiJavaCodeReferenceElement)expr);
-  }
-
-  private static PsiExpression normalize(PsiExpression expression) {
-    if (expression instanceof PsiArrayInitializerExpression) {
-      PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
-      try {
-        final PsiType type = expression.getType();
-        if (type != null) {
-          String typeString = type.getCanonicalText();
-          PsiNewExpression result = (PsiNewExpression)factory.createExpressionFromText("new " + typeString + "{}", expression);
-          result.getArrayInitializer().replace(expression);
-          return result;
-        }
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-        return expression;
-      }
-    }
-
-    return expression;
+    PsiExpression thisAccessExpr = expr instanceof PsiReferenceExpression ? ((PsiReferenceExpression)expr).getQualifierExpression() : null;
+    PsiExpression invalidationCopy = thisAccessExpr != null ? (PsiExpression)thisAccessExpr.copy() : null;
+    InlineUtil.inlineVariable(myField, initializer1, (PsiJavaCodeReferenceElement)expr, invalidationCopy);
   }
 
   @Override
@@ -281,12 +252,19 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
       }
     }
 
+    myInliners = GenericInlineHandler.initInliners(myField, usagesIn, new InlineHandler.Settings() {
+      @Override
+      public boolean isOnlyOneReferenceToInline() {
+        return myInlineThisOnly;
+      }
+    }, conflicts, JavaLanguage.INSTANCE);
+
     if (!myInlineThisOnly) {
       for (UsageInfo info : usagesIn) {
-        if (info instanceof UsageFromJavaDoc) {
-          final PsiElement element = info.getElement();
-          if (element instanceof PsiDocMethodOrFieldRef && !PsiTreeUtil.isAncestor(myField, element, false)) {
-            conflicts.putValue(element, "Inlined method is used in javadoc");
+        final PsiElement element = info.getElement();
+        if (element instanceof PsiDocMethodOrFieldRef) {
+          if (!PsiTreeUtil.isAncestor(myField, element, false)) {
+            conflicts.putValue(element, "Inlined field is used in javadoc");
           }
         }
       }
@@ -310,6 +288,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
       return Collections.singletonList(myRefExpr);
     }
     else {
+      if (!myField.isWritable()) return Collections.emptyList();
       return super.getElementsToWrite(descriptor);
     }
   }

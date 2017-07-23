@@ -25,7 +25,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.settings.GradleProjectSettingsControl;
 import org.jetbrains.plugins.gradle.service.settings.GradleSystemSettingsControl;
 import org.jetbrains.plugins.gradle.service.settings.ImportFromGradleControl;
@@ -48,7 +47,7 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleP
     super(builder);
   }
 
-  @Nullable
+  @NotNull
   @Override
   public String[] getSupportedExtensions() {
     return new String[] {GradleConstants.DEFAULT_SCRIPT_NAME, GradleConstants.SETTINGS_FILE_NAME};
@@ -83,17 +82,22 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleP
     getBuilder().getControl(null).setLinkedProjectPath(pathToUse);
 
     final boolean result;
+    WizardContext dialogWizardContext = null;
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       result = setupGradleProjectSettingsInHeadlessMode(projectImportProvider, wizardContext);
     }
     else {
       AddModuleWizard dialog = new AddModuleWizard(null, file.getPath(), projectImportProvider);
-      dialog.getWizardContext().setProjectBuilder(getBuilder());
+      dialogWizardContext = dialog.getWizardContext();
+      dialogWizardContext.setProjectBuilder(getBuilder());
       dialog.navigateToStep(step -> step instanceof SelectExternalProjectStep);
       result = dialog.showAndGet();
     }
     if (result && getBuilder().getExternalProjectNode() != null) {
       wizardContext.setProjectName(getBuilder().getExternalProjectNode().getData().getInternalName());
+    }
+    if(result && dialogWizardContext != null) {
+      wizardContext.setProjectStorageFormat(dialogWizardContext.getProjectStorageFormat());
     }
     return result;
   }
@@ -158,5 +162,10 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleP
   @Override
   public boolean lookForProjectsInDirectory() {
     return false;
+  }
+
+  @Override
+  public boolean isStrongProjectInfoHolder() {
+    return ApplicationManager.getApplication().isHeadlessEnvironment();
   }
 }

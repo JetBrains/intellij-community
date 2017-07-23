@@ -18,19 +18,14 @@ package org.intellij.lang.xpath.xslt;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlUnusedNamespaceInspection;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtil;
 import org.intellij.lang.xpath.TestBase;
 import org.intellij.lang.xpath.xslt.impl.XsltStuffProvider;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 12.06.2008
-*/
 public class XsltHighlightingTest extends TestBase {
     @Override
     protected void setUp() throws Exception {
@@ -146,14 +141,11 @@ public class XsltHighlightingTest extends TestBase {
         final Project project = myFixture.getProject();
         PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-      return ApplicationManager.getApplication().runReadAction(new Computable<Long>() {
-        @Override
-        public Long compute() {
-          final long l = System.currentTimeMillis();
-          CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.getFile(), myFixture.getEditor(), ArrayUtil.EMPTY_INT_ARRAY, false);
-          return System.currentTimeMillis() - l;
-        }
-      });
+        return ReadAction.compute(() -> {
+            final long l = System.currentTimeMillis();
+            CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.getFile(), myFixture.getEditor(), ArrayUtil.EMPTY_INT_ARRAY, false);
+            return System.currentTimeMillis() - l;
+        });
     }
 
     private void doXsltHighlighting() throws Throwable {

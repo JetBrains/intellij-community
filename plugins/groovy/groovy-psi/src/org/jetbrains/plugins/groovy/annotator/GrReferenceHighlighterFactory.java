@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -39,8 +41,20 @@ public class GrReferenceHighlighterFactory extends AbstractProjectComponent impl
 
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    if (!isSpecificScriptFile(file) && !GrFileIndexUtil.isGroovySourceFile(file)) return null;
-    return new GrReferenceHighlighter(editor.getDocument(), (GroovyFileBase)file);
+    GroovyFileBase groovyFile = getAndCheckFile(file);
+    if (groovyFile == null) return null;
+    return new GrReferenceHighlighter(editor.getDocument(), groovyFile);
+  }
+
+  @Nullable
+  private static GroovyFileBase getAndCheckFile(@NotNull PsiFile file) {
+    if (isSpecificScriptFile(file)) return ((GroovyFileBase)file);
+
+    PsiFile psiGroovyFile = file.getViewProvider().getPsi(GroovyLanguage.INSTANCE);
+    if (!(psiGroovyFile instanceof GroovyFileBase)) return null;
+
+    GroovyFileBase groovyFile = (GroovyFileBase)psiGroovyFile;
+    return GrFileIndexUtil.isGroovySourceFile(groovyFile) ? groovyFile : null;
   }
 
   private static boolean isSpecificScriptFile(@NotNull PsiFile file) {

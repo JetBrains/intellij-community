@@ -43,7 +43,6 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
@@ -57,8 +56,8 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.io.SafeFileOutputStream;
 import com.intellij.xml.util.XmlStringUtil;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
@@ -79,23 +78,13 @@ import java.util.*;
  */
 public class ConsoleHistoryController {
 
-  private static final Key<ConsoleHistoryController> CONTROLLER_KEY = Key.create("CONTROLLER_KEY");
-
   private static final Logger LOG = Logger.getInstance("com.intellij.execution.console.ConsoleHistoryController");
 
   /** @noinspection MismatchedQueryAndUpdateOfCollection*/
-  private final static FactoryMap<String, ConsoleHistoryModel> ourModels = new FactoryMap<String, ConsoleHistoryModel>() {
-    @Override
-    protected Map<String, ConsoleHistoryModel> createMap() {
-      return ContainerUtil.createConcurrentWeakValueMap();
-    }
-
-    @Nullable
-    @Override
-    protected ConsoleHistoryModel create(String key) {
-      return new ConsoleHistoryModel(null);
-    }
-  };
+  private final static Map<String, ConsoleHistoryModel> ourModels = ConcurrentFactoryMap.createMap(key->
+      new ConsoleHistoryModel(null), ContainerUtil::createConcurrentWeakValueMap);
+  private final static Map<LanguageConsoleView, ConsoleHistoryController> ourControllers =
+    ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
 
   private final LanguageConsoleView myConsole;
   private final AnAction myHistoryNext = new MyAction(true, getKeystrokesUpDown(true));
@@ -120,8 +109,9 @@ public class ConsoleHistoryController {
     myConsole = console;
   }
 
-  public static ConsoleHistoryController getController(LanguageConsoleView console) {
-    return console.getVirtualFile().getUserData(CONTROLLER_KEY);
+  //@Nullable
+  public static ConsoleHistoryController getController(@NotNull LanguageConsoleView console) {
+    return ourControllers.get(console);
   }
 
   public static void addToHistory(@NotNull LanguageConsoleView consoleView, @Nullable String command) {
@@ -177,11 +167,16 @@ public class ConsoleHistoryController {
     ApplicationManager.getApplication().getMessageBus().connect(myConsole).subscribe(ProjectEx.ProjectSaved.TOPIC, listener);
     myConsole.getProject().getMessageBus().connect(myConsole).subscribe(AppTopics.FILE_DOCUMENT_SYNC, listener);
 
-    myConsole.getVirtualFile().putUserData(CONTROLLER_KEY, this);
+    ConsoleHistoryController original = ourControllers.put(myConsole, this);
+    LOG.assertTrue(original == null,
+                   "History controller already installed for: " + myConsole.getTitle());
     Disposer.register(myConsole, new Disposable() {
       @Override
       public void dispose() {
-        myConsole.getVirtualFile().putUserData(CONTROLLER_KEY, null);
+        ConsoleHistoryController controller = getController(myConsole);
+        if (controller == ConsoleHistoryController.this) {
+          ourControllers.remove(myConsole);
+        }
         saveHistory();
       }
     });
@@ -397,7 +392,7 @@ public class ConsoleHistoryController {
           PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(
             "a." + consoleFile.getFileType().getDefaultExtension(),
             language,
-            StringUtil.convertLineSeparators(new String(text)), false, true);
+            StringUtil.convertLineSeparators(text), false, true);
           VirtualFile virtualFile = psiFile.getViewProvider().getVirtualFile();
           if (virtualFile instanceof LightVirtualFile) ((LightVirtualFile)virtualFile).setWritable(false);
           Document document = FileDocumentManager.getInstance().getDocument(virtualFile);

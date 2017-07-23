@@ -1,5 +1,5 @@
 class a {
-  class ff { }
+  static class ff { }
 
   void f() {
     <error descr="Continue outside of loop">continue;</error>
@@ -61,5 +61,6 @@ class a {
     for (<error descr="Not a statement">i==0?7:8;</error> ; ) ;
     for (<error descr="Invalid statement">if (i<0) i++;</error> ; ) ;
     for (new ff(), new ff(); ; ) ;
+    for (<error descr="Invalid statement">class C { }</error>; true; ) ;
   }
 }

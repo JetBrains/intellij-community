@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.terminal;
 
-import com.google.common.base.Predicate;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -9,13 +8,14 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -77,12 +77,9 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   @NotNull
   public JBTabbedTerminalWidget createTerminalWidget(@NotNull Disposable parent) {
     final JBTerminalSystemSettingsProvider provider = new JBTerminalSystemSettingsProvider();
-    JBTabbedTerminalWidget terminalWidget = new JBTabbedTerminalWidget(myProject, provider, new Predicate<Pair<TerminalWidget, String>>() {
-      @Override
-      public boolean apply(Pair<TerminalWidget, String> widget) {
-        openSessionInDirectory(widget.getFirst(), widget.getSecond());
-        return true;
-      }
+    JBTabbedTerminalWidget terminalWidget = new JBTabbedTerminalWidget(myProject, provider, widget -> {
+      openSessionInDirectory(widget.getFirst(), widget.getSecond());
+      return true;
     }, parent);
     openSessionInDirectory(terminalWidget, null);
     return terminalWidget;
@@ -91,7 +88,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   private void initConsoleUI(final T process) {
     final Executor defaultExecutor = DefaultRunExecutor.getRunExecutorInstance();
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, false);
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("TerminalRunner", toolbarActions, false);
 
 
     final JPanel panel = new JPanel(new BorderLayout());
@@ -110,12 +107,9 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     toolbarActions.add(createCloseAction(defaultExecutor, contentDescriptor));
 
     final JBTerminalSystemSettingsProvider provider = new JBTerminalSystemSettingsProvider();
-    TerminalWidget widget = new JBTabbedTerminalWidget(myProject, provider, new Predicate<Pair<TerminalWidget, String>>() {
-      @Override
-      public boolean apply(Pair<TerminalWidget, String> widget) {
-        openSessionInDirectory(widget.getFirst(), widget.getSecond());
-        return true;
-      }
+    TerminalWidget widget = new JBTabbedTerminalWidget(myProject, provider, widget1 -> {
+      openSessionInDirectory(widget1.getFirst(), widget1.getSecond());
+      return true;
     }, contentDescriptor);
 
     createAndStartSession(widget, createTtyConnector(process));
@@ -165,14 +159,30 @@ public abstract class AbstractTerminalRunner<T extends Process> {
 
 
   public void openSessionInDirectory(@NotNull TerminalWidget terminalWidget, @Nullable String directory) {
-    // Create Server process
-    try {
-      final T process = createProcess(directory);
+    ModalityState modalityState = ModalityState.stateForComponent(terminalWidget.getComponent());
 
-      createAndStartSession(terminalWidget, createTtyConnector(process));
-    }
-    catch (Exception e) {
-      Messages.showErrorDialog(e.getMessage(), "Can't Open " + runningTargetName());
-    }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        // Create Server process
+        final T process = createProcess(directory);
+
+        ApplicationManager.getApplication().invokeLater(() -> {
+          try {
+            createAndStartSession(terminalWidget, createTtyConnector(process));
+            terminalWidget.getComponent().revalidate();
+          }
+          catch (RuntimeException e) {
+            showCannotOpenTerminalDialog(e);
+          }
+        }, modalityState);
+      }
+      catch (Exception e) {
+        ApplicationManager.getApplication().invokeLater(() -> showCannotOpenTerminalDialog(e), modalityState);
+      }
+    });
+  }
+
+  private void showCannotOpenTerminalDialog(@NotNull Throwable e) {
+    Messages.showErrorDialog(e.getMessage(), "Can't Open " + runningTargetName());
   }
 }

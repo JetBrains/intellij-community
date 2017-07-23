@@ -21,15 +21,14 @@ import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
-import com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurable;
+import com.intellij.profile.codeInspection.ui.ErrorsConfigurableProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -37,10 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.function.Consumer;
 
-/**
- * User: anna
- * Date: Feb 7, 2005
- */
 public class EditInspectionToolsSettingsAction implements IntentionAction, Iconable, HighPriorityAction {
   private final String myShortName;
 
@@ -91,16 +86,10 @@ public class EditInspectionToolsSettingsAction implements IntentionAction, Icona
                                      final InspectionProfileImpl inspectionProfile,
                                      final Consumer<ErrorsConfigurable> configurableAction) {
     final ShowSettingsUtil settingsUtil = ShowSettingsUtil.getInstance();
-    final ErrorsConfigurable errorsConfigurable = new ProjectInspectionToolsConfigurable(ProjectInspectionProfileManager.getInstance(project)) {
-
-      @Override
-      protected boolean setActiveProfileAsDefaultOnApply() {
-        return false;
-      }
-    };
+    final ErrorsConfigurable errorsConfigurable = (ErrorsConfigurable) ConfigurableExtensionPointUtil.createProjectConfigurableForProvider(project, ErrorsConfigurableProvider.class);
     return settingsUtil.editConfigurable(project, errorsConfigurable, () -> {
-      errorsConfigurable.selectProfile(inspectionProfile);
-      ApplicationManager.getApplication().invokeLater(() -> configurableAction.accept(errorsConfigurable));
+      errorsConfigurable.selectProfile(inspectionProfile); // profile can be selected only after the UI has been initialized
+      configurableAction.accept(errorsConfigurable);
     });
   }
 

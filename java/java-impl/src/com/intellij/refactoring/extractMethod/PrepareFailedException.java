@@ -26,7 +26,7 @@ public class PrepareFailedException extends Exception {
   private final PsiFile myContainingFile;
   private final TextRange myTextRange;
 
-  PrepareFailedException(String message, PsiElement errorElement) {
+  public PrepareFailedException(String message, PsiElement errorElement) {
     super(message);
     myContainingFile = errorElement.getContainingFile();
     myTextRange = errorElement.getTextRange();

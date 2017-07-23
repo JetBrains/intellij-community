@@ -15,10 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 05.08.2008
- */
 
 import com.intellij.lang.SmartEnterProcessorWithFixers;
 import com.intellij.openapi.editor.Editor;

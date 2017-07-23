@@ -91,6 +91,10 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
   }
 
   protected final void doTest(@Language("JAVA") @NotNull String classText) {
+    doTest(classText, "X.java");
+  }
+
+  protected final void doTest(@Language("JAVA") @NotNull String classText, String fileName) {
     final StringBuilder newText = new StringBuilder();
     int start = 0;
     int end = classText.indexOf("/*");
@@ -121,7 +125,7 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
       end = classText.indexOf("/*", end + 1);
     }
     newText.append(classText, start, classText.length());
-    myFixture.configureByText("X.java", newText.toString());
+    myFixture.configureByText(fileName, newText.toString());
     myFixture.testHighlighting(true, false, false);
   }
 

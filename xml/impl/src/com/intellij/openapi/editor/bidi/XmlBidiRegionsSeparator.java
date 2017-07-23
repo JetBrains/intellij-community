@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.xml.XmlTokenType;
 public class XmlBidiRegionsSeparator extends TokenSetBidiRegionsSeparator {
   public XmlBidiRegionsSeparator() {
     super(TokenSet.create(XmlTokenType.XML_DATA_CHARACTERS, 
-                          XmlTokenType.XML_REAL_WHITE_SPACE));
+                          XmlTokenType.XML_REAL_WHITE_SPACE,
+                          XmlTokenType.XML_WHITE_SPACE));
   }
 }

@@ -21,7 +21,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,9 +32,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * User: spLeaner
- */
 public final class SpeedSearchUtil {
 
   private SpeedSearchUtil() {
@@ -47,7 +43,7 @@ public final class SpeedSearchUtil {
                                                   boolean selected) {
     SpeedSearchSupply speedSearch = SpeedSearchSupply.getSupply(speedSearchEnabledComponent);
     // The bad thing is that SpeedSearch model is decoupled from UI presentation so we don't know the real matched text.
-    // Our best guess is to get strgin from the ColoredComponent. We can only provide main-text-only option.
+    // Our best guess is to get string from the ColoredComponent. We can only provide main-text-only option.
     Iterable<TextRange> ranges = speedSearch == null ? null : speedSearch.matchingFragments(coloredComponent.getCharSequence(mainTextOnly).toString());
     Iterator<TextRange> rangesIterator = ranges != null ? ranges.iterator() : null;
     if (rangesIterator == null || !rangesIterator.hasNext()) return;
@@ -138,19 +134,18 @@ public final class SpeedSearchUtil {
       searchTerms.add(Pair.create(fragment.substring(text), fragment.getStartOffset()));
     }
 
-    final int[] lastOffset = {0};
-    ContainerUtil.process(searchTerms, pair -> {
-      if (pair.second > lastOffset[0]) {
-        simpleColoredComponent.append(text.substring(lastOffset[0], pair.second), plain);
+    int lastOffset = 0;
+    for (Pair<String, Integer> pair : searchTerms) {
+      if (pair.second > lastOffset) {
+        simpleColoredComponent.append(text.substring(lastOffset, pair.second), plain);
       }
 
       simpleColoredComponent.append(text.substring(pair.second, pair.second + pair.first.length()), highlighted);
-      lastOffset[0] = pair.second + pair.first.length();
-      return true;
-    });
+      lastOffset = pair.second + pair.first.length();
+    }
 
-    if (lastOffset[0] < text.length()) {
-      simpleColoredComponent.append(text.substring(lastOffset[0]), plain);
+    if (lastOffset < text.length()) {
+      simpleColoredComponent.append(text.substring(lastOffset), plain);
     }
   }
 }

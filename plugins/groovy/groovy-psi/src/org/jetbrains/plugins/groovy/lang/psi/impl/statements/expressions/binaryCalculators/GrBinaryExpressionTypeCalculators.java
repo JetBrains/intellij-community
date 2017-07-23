@@ -20,16 +20,15 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression;
 
 import java.util.Map;
 
-/**
- * Created by Max Medvedev on 12/20/13
- */
 public class GrBinaryExpressionTypeCalculators {
-  private static final Map<IElementType, Function<GrBinaryFacade, PsiType>> MAP = ContainerUtil.newLinkedHashMap();
+  private static final Map<IElementType, Function<GrOperatorExpression, PsiType>> MAP = ContainerUtil.newLinkedHashMap();
 
   static {
 
@@ -83,10 +82,10 @@ public class GrBinaryExpressionTypeCalculators {
     MAP.put(GroovyTokenTypes.mASSIGN, GrAssignTypeCalculator.INSTANCE);
   }
 
-  @NotNull
-  public static Function<GrBinaryFacade, PsiType> getTypeCalculator(GrBinaryFacade e) {
-    final Function<GrBinaryFacade, PsiType> function = MAP.get(e.getOperationTokenType());
+  @Nullable
+  public static PsiType computeType(@NotNull GrOperatorExpression e) {
+    final Function<GrOperatorExpression, PsiType> function = MAP.get(e.getOperationTokenType());
     assert function != null : e.getOperationTokenType();
-    return function;
+    return function.fun(e);
   }
 }

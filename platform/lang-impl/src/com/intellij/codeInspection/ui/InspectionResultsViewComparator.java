@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Nov 23, 2001
- * Time: 10:31:03 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
@@ -44,18 +36,15 @@ import com.intellij.psi.util.PsiUtilCore;
 
 import java.util.Comparator;
 
-public class InspectionResultsViewComparator implements Comparator {
+public class InspectionResultsViewComparator implements Comparator<InspectionTreeNode> {
   private static final Logger LOG = Logger.getInstance(InspectionResultsViewComparator.class);
 
-  public boolean areEqual(Object o1, Object o2) {
+  public boolean areEqual(InspectionTreeNode o1, InspectionTreeNode o2) {
     return o1.getClass().equals(o2.getClass()) && compare(o1, o2) == 0;
   }
 
   @Override
-  public int compare(Object o1, Object o2) {
-    InspectionTreeNode node1 = (InspectionTreeNode)o1;
-    InspectionTreeNode node2 = (InspectionTreeNode)o2;
-
+  public int compare(InspectionTreeNode node1, InspectionTreeNode node2) {
     if (node1 instanceof InspectionSeverityGroupNode && node2 instanceof InspectionSeverityGroupNode) {
       final InspectionSeverityGroupNode groupNode1 = (InspectionSeverityGroupNode)node1;
       final InspectionSeverityGroupNode groupNode2 = (InspectionSeverityGroupNode)node2;
@@ -176,6 +165,16 @@ public class InspectionResultsViewComparator implements Comparator {
       if (p1 != null && p2 != null) {
         final VirtualFile file1 = p1.getVirtualFile();
         final VirtualFile file2 = p2.getVirtualFile();
+        if (file1 != null && file2 != null && file1.isValid() && file2.isValid()) {
+          if (file1.equals(file2)) {
+            final int positionComparing = PsiUtilCore.compareElementsByPosition(((RefElement)entity1).getElement(), ((RefElement)entity2).getElement());
+            if (positionComparing != 0) {
+              return positionComparing;
+            }
+          } else {
+            return file1.hashCode() - file2.hashCode();
+          }
+        }
         if (file1 != null && Comparing.equal(file1, file2) && file1.isValid()) {
           final int positionComparing = PsiUtilCore.compareElementsByPosition(((RefElement)entity1).getElement(), ((RefElement)entity2).getElement());
           if (positionComparing != 0) {

@@ -74,6 +74,9 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
                                                                                         PsiFile containingFile,
                                                                                         boolean forInjected) {
     if (containingFile != null && !containingFile.isValid() || containingFile == null && !element.isValid()) {
+      if (containingFile != null) {
+        PsiUtilCore.ensureValid(containingFile);
+      }
       PsiUtilCore.ensureValid(element);
       LOG.error("Invalid element:" + element);
     }
@@ -83,11 +86,11 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       return pointer;
     }
 
-    pointer = new SmartPsiElementPointerImpl<E>(myProject, element, containingFile, forInjected);
+    pointer = new SmartPsiElementPointerImpl<>(myProject, element, containingFile, forInjected);
     if (containingFile != null) {
       trackPointer(pointer, containingFile.getViewProvider().getVirtualFile());
     }
-    element.putUserData(CACHED_SMART_POINTER_KEY, new SoftReference<SmartPsiElementPointerImpl>(pointer));
+    element.putUserData(CACHED_SMART_POINTER_KEY, new SoftReference<>(pointer));
     return pointer;
   }
 
@@ -114,9 +117,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   public SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile file,
                                                           @NotNull TextRange range,
                                                           boolean forInjected) {
-    if (!file.isValid()) {
-      LOG.error("Invalid element:" + file);
-    }
+    PsiUtilCore.ensureValid(file);
     SmartPointerTracker.processQueue();
     SmartPsiFileRangePointerImpl pointer = new SmartPsiFileRangePointerImpl(file, ProperTextRange.create(range), forInjected);
     trackPointer(pointer, file.getViewProvider().getVirtualFile());
@@ -147,6 +148,11 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     }
     PsiFile containingFile = pointer.getContainingFile();
     int refCount = ((SmartPsiElementPointerImpl)pointer).incrementAndGetReferenceCount(-1);
+    if (refCount == -1) {
+      LOG.error("Double smart pointer removal: " + pointer);
+      return;
+    }
+
     if (refCount == 0) {
       PsiElement element = ((SmartPointerEx)pointer).getCachedElement();
       if (element != null) {
@@ -157,11 +163,14 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       info.cleanup();
 
       if (containingFile == null) return;
+
+      assert containingFile.getProject() == myProject : "Project mismatch: expected " + myProject + ", got " + containingFile.getProject();
+
       VirtualFile vFile = containingFile.getViewProvider().getVirtualFile();
       SmartPointerTracker pointers = getTracker(vFile);
       SmartPointerTracker.PointerReference reference = ((SmartPsiElementPointerImpl)pointer).pointerReference;
       if (pointers != null && reference != null) {
-        pointers.removeReference(reference);
+        pointers.removeReference(reference, POINTERS_KEY);
       }
     }
   }

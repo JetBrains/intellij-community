@@ -39,11 +39,6 @@ import org.kohsuke.rngom.digested.DElementPattern;
 import java.util.Collection;
 import java.util.List;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 19.11.2007
-*/
 public class RngDocumentationProvider implements DocumentationProvider {
   private static final Logger LOG = Logger.getInstance(RngDocumentationProvider.class);
 
@@ -98,6 +93,7 @@ public class RngDocumentationProvider implements DocumentationProvider {
             sb.append(getDocumentationFromTag((XmlTag)psiElement, d.getName(), "Attribute"));
           }
         }
+        return makeDocumentation(sb);
       }
     } else if (element instanceof XmlTag) {
       return makeDocumentation(getDocumentationFromTag((XmlTag)element, ((XmlTag)element).getLocalName(), "Element"));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * @see com.intellij.psi.util.PsiTreeUtil#processElements(com.intellij.psi.PsiElement, PsiElementProcessor)
+ * @see com.intellij.psi.util.PsiTreeUtil#processElements(PsiElement, PsiElementProcessor)
  */
 public interface PsiElementProcessor<T extends PsiElement> {
   /**
@@ -42,7 +42,7 @@ public interface PsiElementProcessor<T extends PsiElement> {
     private final Collection<T> myCollection;
 
     public CollectElements() {
-      this(new ArrayList<T>());
+      this(new ArrayList<>());
     }
 
     public CollectElements(@NotNull Collection<T> collection) {

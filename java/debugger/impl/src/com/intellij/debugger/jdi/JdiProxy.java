@@ -17,13 +17,6 @@ package com.intellij.debugger.jdi;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Jul 10, 2003
- * Time: 4:53:44 PM
- * To change this template use Options | File Templates.
- */
 public abstract class JdiProxy {
   @NotNull protected final JdiTimer myTimer;
   private int myTimeStamp = 0;

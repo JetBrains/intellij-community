@@ -30,6 +30,8 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
 
   @Override
   protected void tearDown() throws Exception {
+    myInternalManager = null;
+    myLocation = null;
     FileUtil.delete(SvnApplicationSettings.getLoadedRevisionsDir(myFixture.getProject()));
     super.tearDown();
   }
@@ -217,7 +219,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
   }
 
   public void testJustLiveProvider() throws Exception {
-    performTest(11, 2, null, Collections.<Pair<Long, Long>>emptyList(), 121);
+    performTest(11, 2, null, Collections.emptyList(), 121);
   }
 
   public void testLiveAndSimpleInternalProvider() throws Exception {
@@ -228,7 +230,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
 
   public void testLiveAndSimpleCommittedProvider() throws Exception {
     for (int i = 0; i < 2 * PAGE; i+=2) {
-      performTest(11, 2, new Pair<>(19L, 117L), Collections.<Pair<Long, Long>>emptyList(), 121 + i);
+      performTest(11, 2, new Pair<>(19L, 117L), Collections.emptyList(), 121 + i);
     }
   }
 
@@ -257,7 +259,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
   }
 
   public void testShortLive() throws Exception {
-    performTest(11, 2, null, Collections.<Pair<Long, Long>>emptyList(), 13);
+    performTest(11, 2, null, Collections.emptyList(), 13);
   }
 
   public void testShortInternal() throws Exception {
@@ -265,7 +267,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
   }
   
   public void testShortCommitted() throws Exception {
-    performTest(11, 2, new Pair<>(11L, 15L), Collections.<Pair<Long, Long>>emptyList(), 15);
+    performTest(11, 2, new Pair<>(11L, 15L), Collections.emptyList(), 15);
   }
 
   public void testThreeByOne() throws Exception {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,8 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
     myProjectView.setSortByType(myPane.getId(), myOriginalSortByType);
     ((ProjectViewImpl)myProjectView).setFoldersAlwaysOnTop(myOriginalFoldersAlwaysOnTop);
     myProjectView.removeProjectPane(myPane);
+    myProjectView = null;
+    myPane = null;
 
     super.tearDown();
   }
@@ -348,11 +350,6 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
         result.add(treeNode);
       }
       return result;
-    }
-
-    @Override
-    public Object getData(Collection<AbstractTreeNode> selected, String dataName) {
-      return null;
     }
   }
 }

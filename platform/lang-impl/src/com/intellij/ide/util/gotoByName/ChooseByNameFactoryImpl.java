@@ -20,10 +20,6 @@ import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- * Date: Jan 26, 2005
- */
 public class ChooseByNameFactoryImpl extends ChooseByNameFactory {
   private final Project myProject;
 

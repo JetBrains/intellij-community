@@ -16,8 +16,11 @@
 
 package com.intellij.codeInsight.hint.actions;
 
+import com.intellij.codeInsight.actions.CodeInsightEditorAction;
 import com.intellij.codeInsight.hint.PrevNextParameterHandler;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -26,5 +29,11 @@ public class NextParameterAction extends EditorAction {
   public NextParameterAction() {
     super(new PrevNextParameterHandler(true));
     setInjectedContext(true);
+  }
+
+  @Override
+  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
+    CodeInsightEditorAction.beforeActionPerformedUpdate(e);
+    super.beforeActionPerformedUpdate(e);
   }
 }

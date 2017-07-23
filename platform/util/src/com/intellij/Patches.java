@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,12 +40,14 @@ public class Patches {
   public static final boolean SLOW_GETTING_CLIPBOARD_CONTENTS = SystemInfo.isUnix;
 
   /**
-   * See https://bugs.openjdk.java.net/browse/JDK-6209673.
    * Huge int[] leak through VolatileImages cached in RepaintManager whenever screen configuration changes.
    * For instance screen saver activates or computer goes hibernate. The problem still exists in 1.6 when two (or more)
    * monitors exists
+   *
+   * <p> http://bugs.openjdk.java.net/browse/JDK-6209673
+   * <p> http://bugs.openjdk.java.net/browse/JDK-8041654
    */
-  public static final boolean SUN_BUG_ID_6209673 = true;
+  public static final boolean REPAINT_MANAGER_LEAK = !SystemInfo.isJavaVersionAtLeast("1.8.0_60");
 
   /**
    * Desktop API support on X Window is limited to GNOME (and even there it may work incorrectly).
@@ -63,13 +65,13 @@ public class Patches {
    * Marker field to find all usages of the reflective access to JDK 7-specific methods
    * which need to be changed when migrated to JDK 7
    */
-  public static final boolean USE_REFLECTION_TO_ACCESS_JDK7 = Boolean.valueOf(true);
+  public static final boolean USE_REFLECTION_TO_ACCESS_JDK7 = Boolean.TRUE; // non-compile-const to trick "Constant expression is always true" inspection
 
   /**
    * Marker field to find all usages of the reflective access to JDK 7-specific methods
    * which need to be changed when migrated to JDK 8
    */
-  public static final boolean USE_REFLECTION_TO_ACCESS_JDK8 = Boolean.valueOf(true);
+  public static final boolean USE_REFLECTION_TO_ACCESS_JDK8 = Boolean.TRUE; // non-compile-const to trick "Constant expression is always true" inspection
 
   /**
    * Support default methods in JDI
@@ -102,13 +104,13 @@ public class Patches {
   public static final boolean JDK_MAC_FONT_STYLE_BUG = SystemInfo.isMac && !SystemInfo.isJavaVersionAtLeast("1.8.0_60");
 
   /**
-   * On Mac OS font ligatures are not supported for natively loaded fonts, font needs to be loaded explicitly by JDK. 
+   * On Mac OS font ligatures are not supported for natively loaded fonts, font needs to be loaded explicitly by JDK.
    */
   public static final boolean JDK_BUG_ID_7162125;
   static {
     boolean value;
-    if (!SystemInfo.isMac || SystemInfo.isJavaVersionAtLeast("1.9")) value = false;
-    else if (!SystemInfo.isJetbrainsJvm) value = true;
+    if (!SystemInfo.isMac || SystemInfo.isJavaVersionAtLeast("9")) value = false;
+    else if (!SystemInfo.isJetBrainsJvm) value = true;
     else {
       try {
         Class.forName("sun.font.CCompositeFont");

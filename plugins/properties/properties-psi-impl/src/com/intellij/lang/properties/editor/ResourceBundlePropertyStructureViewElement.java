@@ -58,7 +58,7 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
   }
 
   public IProperty getProperty() {
-    return myProperty;
+    return myProperty.getPsiElement().isValid() ? myProperty : null;
   }
 
   @NotNull
@@ -104,7 +104,9 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
 
       @Override
       public String getPresentableText() {
-        return myPresentableName == null ? getProperty().getName() : myPresentableName.isEmpty() ? PROPERTY_GROUP_KEY_TEXT : myPresentableName;
+        IProperty property = getProperty();
+        if (property == null) return null;
+        return myPresentableName == null ? property.getName() : myPresentableName.isEmpty() ? PROPERTY_GROUP_KEY_TEXT : myPresentableName;
       }
 
       @Override

@@ -19,7 +19,6 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.OrderPanel;
-import com.intellij.ui.OrderPanelListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -79,11 +78,7 @@ public class SelectFilesDialog extends DialogWrapper implements ActionListener {
     mySelectAllButton.addActionListener(this);
     myDeselectAllButton.addActionListener(this);
 
-    myFilesList.addListener(new OrderPanelListener() {
-      public void entryMoved() {
-        getOKAction().setEnabled(isOKActionEnabled());
-      }
-    });
+    myFilesList.addListener(() -> getOKAction().setEnabled(isOKActionEnabled()));
   }
 
   protected String getDimensionServiceKey() {

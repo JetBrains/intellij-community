@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.evaluation.ExpressionInfo;
@@ -30,6 +31,8 @@ import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 
 import java.awt.*;
 
@@ -45,46 +48,58 @@ public class XQuickEvaluateHandler extends QuickEvaluateHandler {
     return session != null && session.getDebugProcess().getEvaluator() != null;
   }
 
+  @Nullable
   @Override
-  public AbstractValueHint createValueHint(@NotNull final Project project, @NotNull final Editor editor, @NotNull final Point point, final ValueHintType type) {
+  public AbstractValueHint createValueHint(@NotNull Project project, @NotNull Editor editor, @NotNull Point point, ValueHintType type) {
+    return null;
+  }
+
+  @NotNull
+  @Override
+  public Promise<AbstractValueHint> createValueHintAsync(@NotNull final Project project, @NotNull final Editor editor, @NotNull final Point point, final ValueHintType type) {
     final XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
     if (session == null) {
-      return null;
+      return Promise.resolve(null);
     }
 
     final XDebuggerEvaluator evaluator = session.getDebugProcess().getEvaluator();
     if (evaluator == null) {
-      return null;
+      return Promise.resolve(null);
     }
-
     int offset = AbstractValueHint.calculateOffset(editor, point);
-    ExpressionInfo expressionInfo = getExpressionInfo(evaluator, project, type, editor, offset);
-    if (expressionInfo == null) {
-      return null;
-    }
-
-    int textLength = editor.getDocument().getTextLength();
-    TextRange range = expressionInfo.getTextRange();
-    if (range.getStartOffset() > range.getEndOffset() || range.getStartOffset() < 0 || range.getEndOffset() > textLength) {
-      LOG.error("invalid range: " + range + ", text length = " + textLength + ", evaluator: " + evaluator);
-      return null;
-    }
-
-    return new XValueHint(project, editor, point, type, expressionInfo, evaluator, session);
+    return getExpressionInfo(evaluator, project, type, editor, offset)
+      .thenAsync(expressionInfo -> {
+        AsyncPromise<AbstractValueHint> resultPromise = new AsyncPromise<>();
+        UIUtil.invokeLaterIfNeeded(() -> {
+          int textLength = editor.getDocument().getTextLength();
+          if (expressionInfo == null) {
+            resultPromise.setResult(null);
+            return;
+          }
+          TextRange range = expressionInfo.getTextRange();
+          if (range.getStartOffset() > range.getEndOffset() || range.getStartOffset() < 0 || range.getEndOffset() > textLength) {
+            LOG.error("invalid range: " + range + ", text length = " + textLength + ", evaluator: " + evaluator);
+            resultPromise.setResult(null);
+            return;
+          }
+          resultPromise.setResult(new XValueHint(project, editor, point, type, expressionInfo, evaluator, session, false));
+        });
+        return resultPromise;
+      });
   }
 
-  @Nullable
-  private static ExpressionInfo getExpressionInfo(final XDebuggerEvaluator evaluator, final Project project,
-                                                                     final ValueHintType type,
-                                                                     final Editor editor, final int offset) {
+
+  @NotNull
+  private static Promise<ExpressionInfo> getExpressionInfo(final XDebuggerEvaluator evaluator, final Project project,
+                                                           final ValueHintType type, @NotNull Editor editor, final int offset) {
     SelectionModel selectionModel = editor.getSelectionModel();
     int selectionStart = selectionModel.getSelectionStart();
     int selectionEnd = selectionModel.getSelectionEnd();
     if ((type == ValueHintType.MOUSE_CLICK_HINT || type == ValueHintType.MOUSE_ALT_OVER_HINT) && selectionModel.hasSelection()
         && selectionStart <= offset && offset <= selectionEnd) {
-      return new ExpressionInfo(new TextRange(selectionStart, selectionEnd));
+      return Promise.resolve(new ExpressionInfo(new TextRange(selectionStart, selectionEnd)));
     }
-    return evaluator.getExpressionInfoAtOffset(project, editor.getDocument(), offset, type == ValueHintType.MOUSE_CLICK_HINT || type == ValueHintType.MOUSE_ALT_OVER_HINT);
+    return evaluator.getExpressionInfoAtOffsetAsync (project, editor.getDocument(), offset, type == ValueHintType.MOUSE_CLICK_HINT || type == ValueHintType.MOUSE_ALT_OVER_HINT);
   }
 
   @Override

@@ -282,10 +282,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
       try {
         extension.setConverter((Converter)converterType.newInstance());
       }
-      catch (InstantiationException e) {
-        LOG.info(e);
-      }
-      catch (IllegalAccessException e) {
+      catch (InstantiationException | IllegalAccessException e) {
         LOG.info(e);
       }
     }
@@ -455,8 +452,8 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
 
     public ClassIntrospectorAdapter(AntIntrospector introspector, Map<String, Class> coreTaskDefs, Map<String, Class> coreTypeDefs) {
       myIntrospector = introspector;
-      myCoreTaskDefs = coreTaskDefs != null? coreTaskDefs : Collections.<String, Class>emptyMap();
-      myCoreTypeDefs = coreTypeDefs != null? coreTypeDefs : Collections.<String, Class>emptyMap();
+      myCoreTaskDefs = coreTaskDefs != null? coreTaskDefs : Collections.emptyMap();
+      myCoreTypeDefs = coreTypeDefs != null? coreTypeDefs : Collections.emptyMap();
     }
 
     @NotNull 
@@ -592,7 +589,7 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
           names.keySet().retainAll(set);
         }
       }
-      final Map<String, Class> result = names == null ? Collections.<String, Class>emptyMap() : names;
+      final Map<String, Class> result = names == null ? Collections.emptyMap() : names;
       return myChildrenMap = result;
     }
 

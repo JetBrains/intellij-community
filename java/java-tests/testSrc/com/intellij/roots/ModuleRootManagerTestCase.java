@@ -15,15 +15,14 @@
  */
 package com.intellij.roots;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -121,20 +120,17 @@ public abstract class ModuleRootManagerTestCase extends ModuleTestCase {
   }
 
   protected Library createLibrary(final String name, final @Nullable VirtualFile classesRoot, final @Nullable VirtualFile sourceRoot) {
-    return ApplicationManager.getApplication().runWriteAction(new Computable<Library>() {
-      @Override
-      public Library compute() {
-        final Library library = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).createLibrary(name);
-        final Library.ModifiableModel model = library.getModifiableModel();
-        if (classesRoot != null) {
-          model.addRoot(classesRoot, OrderRootType.CLASSES);
-        }
-        if (sourceRoot != null) {
-          model.addRoot(sourceRoot, OrderRootType.SOURCES);
-        }
-        model.commit();
-        return library;
+    return WriteAction.compute(() -> {
+      final Library library = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).createLibrary(name);
+      final Library.ModifiableModel model = library.getModifiableModel();
+      if (classesRoot != null) {
+        model.addRoot(classesRoot, OrderRootType.CLASSES);
       }
+      if (sourceRoot != null) {
+        model.addRoot(sourceRoot, OrderRootType.SOURCES);
+      }
+      model.commit();
+      return library;
     });
   }
 

@@ -34,37 +34,35 @@ import java.util.regex.Pattern;
 /**
  * <p>Parses the 'git log' output basing on the given number of options.
  * Doesn't execute of prepare the command itself, performs only parsing.</p>
- *
  * <p>
  * Usage:
  * 1. Pass options you want to have in the output to the constructor using the {@link GitLogOption} enum constants.
  * 2. Get the custom format pattern for 'git log' by calling {@link #getPretty()}
  * 3. Call the command and retrieve the output.
- * 4. Parse the output via {@link #parse(String)} or {@link #parseOneRecord(String)} (if you want the output to be parsed line by line).</p>
- *
+ * 4. Parse the output via {@link #parse(CharSequence)} or {@link #parseOneRecord(CharSequence)} (if you want the output to be parsed line by line).</p>
  * <p>The class is package visible, since it's used only in GitHistoryUtils - the class which retrieve various pieced of history information
  * in different formats from 'git log'</p>
- *
  * <p>Note that you may pass one set of options to the GitLogParser constructor and then execute git log with other set of options.
- * In that case {@link #parse(String)} will parse only those options which you've specified in the constructor.
+ * In that case {@link #parse(CharSequence)} will parse only those options which you've specified in the constructor.
  * Others will be ignored since the parser knows nothing about them: it just gets the 'git log' output to parse.
  * Moreover you really <b>must</b> use {@link #getPretty()} to pass "--pretty=format" pattern to 'git log' - otherwise the parser won't be able
  * to parse output of 'git log' (because special separator characters are used for that).</p>
- *
  * <p>If you use '--name-status' or '--name-only' flags in 'git log' you also <b>must</b> call {@link #parseStatusBeforeName(boolean)} with
  * true or false respectively, because it also affects the output.</p>
- *  
+ *
  * @see git4idea.history.GitLogRecord
  */
 public class GitLogParser {
   // Single records begin with %x01, end with %03. Items of commit information (hash, committer, subject, etc.) are separated by %x02.
   // each character is declared twice - for Git pattern format and for actual character in the output.
-  public static final String RECORD_START = "\u0001";
+  public static final String RECORD_START = "\u0001\u0001";
   public static final String ITEMS_SEPARATOR = "\u0002";
-  public static final String RECORD_END = "\u0003";
-  public static final String RECORD_START_GIT = "%x01";
+  public static final String RECORD_END = "\u0003\u0003";
+  public static final String RECORD_START_GIT = "%x01%x01";
   private static final String ITEMS_SEPARATOR_GIT = "%x02";
-  private static final String RECORD_END_GIT = "%x03";
+  private static final String RECORD_END_GIT = "%x03%x03";
+  private static final int INPUT_ERROR_MESSAGE_HEAD_LIMIT = 1000000; // limit the string by ~2mb
+  private static final int INPUT_ERROR_MESSAGE_TAIL_LIMIT = 100;
 
   private final String myFormat;  // pretty custom format generated in the constructor
   private final GitLogOption[] myOptions;
@@ -73,35 +71,40 @@ public class GitLogParser {
 
   /**
    * Record format:
-   *
-   * One git log record.
+   * <p>One git log record.
    * RECORD_START - optional: it is split out when calling parse() but it is not when calling parseOneRecord() directly.
    * commit information separated by ITEMS_SEPARATOR.
    * RECORD_END
-   * Optionally: changed paths or paths with statuses (if --name-only or --name-status options are given).
-   *
-   * Example:
-   * 2c815939f45fbcfda9583f84b14fe9d393ada790<ITEM_SEPARATOR>sample commit<RECORD_END>
-   * D       a.txt
+   * Optionally: changed paths or paths with statuses (if --name-only or --name-status options are given).</p>
+   * <p>Example:
+   * <pre>
+   * 2c815939f45fbcfda9583f84b14fe9d393ada790&lt;ITEM_SEPARATOR&gt;sample commit&lt;RECORD_END&gt;
+   * D       a.txt</pre></p>
    */
-  private static final Pattern ONE_RECORD = Pattern.compile(RECORD_START + "?(.*)" + RECORD_END + "\n*(.*)", Pattern.DOTALL);
+  private static final Pattern ONE_RECORD = Pattern.compile("(?:" + RECORD_START + ")?(.*)" + RECORD_END + "\n*(.*)", Pattern.DOTALL);
   private static final String SINGLE_PATH = "([^\t\r\n]+)"; // something not empty, not a tab or newline.
   private static final String EOL = "\\s*(?:\r|\n|\r\n)";
   private static final String PATHS =
     SINGLE_PATH +                    // First path - required.
     "(?:\t" + SINGLE_PATH + ")?" +   // Second path - optional. Paths are separated by tab.
-    "(?:" + EOL + ")?";                             // Path(s) information ends with a line terminator (possibly except the last path in the output).
+    "(?:" + EOL + ")?";              // Path(s) information ends with a line terminator (possibly except the last path in the output).
 
   private static Pattern NAME_ONLY = Pattern.compile(PATHS);
   private static Pattern NAME_STATUS = Pattern.compile("([\\S]+)\t" + PATHS);
 
   // --name-only, --name-status or no flag
   enum NameStatus {
-    /** No flag. */
+    /**
+     * No flag.
+     */
     NONE,
-    /** --name-only */
+    /**
+     * --name-only
+     */
     NAME,
-    /** --name-status */
+    /**
+     * --name-status
+     */
     STATUS
   }
 
@@ -110,13 +113,19 @@ public class GitLogParser {
    * These are the pieces of information about a commit which we want to get from 'git log'.
    */
   enum GitLogOption {
-    HASH("H"), COMMIT_TIME("ct"), AUTHOR_NAME("an"), AUTHOR_TIME("at"), AUTHOR_EMAIL("ae"), COMMITTER_NAME("cn"),
+    HASH("H"), TREE("T"), COMMIT_TIME("ct"), AUTHOR_NAME("an"), AUTHOR_TIME("at"), AUTHOR_EMAIL("ae"), COMMITTER_NAME("cn"),
     COMMITTER_EMAIL("ce"), SUBJECT("s"), BODY("b"), PARENTS("P"), REF_NAMES("d"), SHORT_REF_LOG_SELECTOR("gd"),
     RAW_BODY("B");
 
     private String myPlaceholder;
-    GitLogOption(String placeholder) { myPlaceholder = placeholder; }
-    private String getPlaceholder() { return myPlaceholder; }
+
+    GitLogOption(String placeholder) {
+      myPlaceholder = placeholder;
+    }
+
+    private String getPlaceholder() {
+      return myPlaceholder;
+    }
   }
 
   /**
@@ -139,11 +148,7 @@ public class GitLogParser {
   }
 
   private static String makeFormatFromOptions(GitLogOption[] options) {
-    Function<GitLogOption,String> function = new Function<GitLogOption, String>() {
-      @Override public String fun(GitLogOption option) {
-        return "%" + option.getPlaceholder();
-      }
-    };
+    Function<GitLogOption, String> function = option -> "%" + option.getPlaceholder();
     return RECORD_START_GIT + StringUtil.join(options, function, ITEMS_SEPARATOR_GIT) + RECORD_END_GIT;
   }
 
@@ -153,12 +158,13 @@ public class GitLogParser {
 
   /**
    * Parses the output returned from 'git log' which was executed with '--pretty=format:' pattern retrieved from {@link #getPretty()}.
+   *
    * @param output 'git log' output to be parsed.
    * @return The list of {@link GitLogRecord GitLogRecords} with information for each revision.
-   *         The list is sorted as usual for git log - the first is the newest, the last is the oldest.
+   * The list is sorted as usual for git log - the first is the newest, the last is the oldest.
    */
   @NotNull
-  List<GitLogRecord> parse(@NotNull String output) {
+  List<GitLogRecord> parse(@NotNull CharSequence output) {
     // Here is what git log returns for --pretty=tformat:^%H#%s$
     // ^2c815939f45fbcfda9583f84b14fe9d393ada790#sample commit$
     //
@@ -166,20 +172,21 @@ public class GitLogParser {
     // ^b71477e9738168aa67a8d41c414f284255f81e8a#moved out$
     //
     // R100    dir/anew.txt    anew.txt
-    final List<String> records = StringUtil.split(output, RECORD_START); // split by START, because END is the end of information, but not the end of the record: file status and path follow.
+    final List<CharSequence> records = StringUtil.split(output, RECORD_START); // split by START, because END is the end of information, but not the end of the record: file status and path follow.
     String notMatchedPart = null;
     final List<GitLogRecord> res = new ArrayList<>(records.size());
-    for (String record : records) {
-      if (!record.trim().isEmpty()) {  // record[0] is empty for sure, because we're splitting on RECORD_START. Just to play safe adding the check for all records.
+    for (CharSequence record : records) {
+      String recordString = record.toString();
+      if (!recordString.isEmpty()) {  // record[0] is empty for sure, because we're splitting on RECORD_START. Just to play safe adding the check for all records.
         if (notMatchedPart != null) {
-          record = notMatchedPart + record;
+          recordString = notMatchedPart + recordString;
         }
-        if (ONE_RECORD.matcher(record).matches()) {
+        if (ONE_RECORD.matcher(recordString).matches()) {
           notMatchedPart = null;
-          res.add(parseOneRecord(record));
+          res.add(parseOneRecord(recordString));
         }
         else {
-          notMatchedPart = record;
+          notMatchedPart = recordString;
         }
       }
     }
@@ -189,13 +196,14 @@ public class GitLogParser {
   /**
    * Parses a single record returned by 'git log'. The record contains information from pattern and file status and path (if respective
    * flags --name-only or name-status were provided).
+   *
    * @param line record to be parsed.
    * @return GitLogRecord with information about the revision or {@code null} if the given line is empty.
    * @throws GitFormatException if the line is given in unexpected format.
    */
   @Nullable
-  GitLogRecord parseOneRecord(@NotNull String line) {
-    if (line.isEmpty()) {
+  GitLogRecord parseOneRecord(@NotNull CharSequence line) {
+    if (line.length() == 0) {
       return null;
     }
     Matcher matcher = ONE_RECORD.matcher(line);
@@ -273,8 +281,24 @@ public class GitLogParser {
     }
   }
 
-  private static void throwGFE(String message, String line) {
-    throw new GitFormatException(message + " [" + StringUtil.escapeStringCharacters(line) + "]");
+  private static void throwGFE(@NotNull String message, @NotNull CharSequence line) {
+    throw new GitFormatException(message + " [" + getTruncatedEscapedOutput(line) + "]");
   }
 
+  @NotNull
+  public static String getTruncatedEscapedOutput(@NotNull CharSequence line) {
+    String lineString;
+
+    String formatString = "%s...(%d more characters)...%s";
+    if (line.length() > INPUT_ERROR_MESSAGE_HEAD_LIMIT + INPUT_ERROR_MESSAGE_TAIL_LIMIT + formatString.length()) {
+      lineString = String.format(formatString, line.subSequence(0, INPUT_ERROR_MESSAGE_HEAD_LIMIT),
+                                 (line.length() - INPUT_ERROR_MESSAGE_HEAD_LIMIT - INPUT_ERROR_MESSAGE_TAIL_LIMIT),
+                                 line.subSequence(line.length() - INPUT_ERROR_MESSAGE_TAIL_LIMIT, line.length()));
+    }
+    else {
+      lineString = line.toString();
+    }
+
+    return StringUtil.escapeStringCharacters(lineString);
+  }
 }

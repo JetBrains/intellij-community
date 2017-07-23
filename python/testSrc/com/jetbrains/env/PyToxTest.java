@@ -71,10 +71,8 @@ public final class PyToxTest extends PyEnvTestCase {
     runPythonTest(new MyPyProcessWithConsoleTestTask("/toxtest/toxNose/", 1,
                                                      () -> new MyTestProcessRunner(),
                                                      Arrays.asList(
-                                                       Pair.create("py26", new InterpreterExpectations("", true)),
                                                        Pair.create("py27", new InterpreterExpectations("", true)),
                                                        // Does not support 3.4
-                                                       Pair.create("py32", new InterpreterExpectations("SyntaxError", false)),
                                                        Pair.create("py34", new InterpreterExpectations("SyntaxError", false))
                                                      ),
                                                      Integer.MAX_VALUE)
@@ -284,6 +282,8 @@ public final class PyToxTest extends PyEnvTestCase {
       // Interpreter should either run tests or mentioned as NotFound
       for (final SMTestProxy interpreterSuite : runner.getTestProxy().getChildren()) {
         final String interpreterName = interpreterSuite.getName();
+        assert interpreterName.startsWith("py") : String
+          .format("Bad interpreter name: %s. Tree is %s \n", interpreterName, getTestTree(interpreterSuite, 0));
         checkedInterpreters.add(interpreterName);
 
         final InterpreterExpectations expectations = myInterpreters.get(interpreterName);
@@ -330,6 +330,7 @@ public final class PyToxTest extends PyEnvTestCase {
         // Check expected output
         final String message = String.format("Interpreter %s does not have expected string in output. \n ", interpreterName) +
                                String.format("All: %s \n", all) +
+                               String.format("Test tree: %s \n", getTestTree(interpreterSuite, 0)) +
                                String.format("Error: %s \n", stderr);
 
 
@@ -347,7 +348,17 @@ public final class PyToxTest extends PyEnvTestCase {
 
 
       Assert
-        .assertThat("No all interpreters from tox.ini used", checkedInterpreters, Matchers.everyItem(Matchers.isIn(expectedInterpreters)));
+        .assertThat(String.format("No all interpreters from tox.ini used (test tree \n%s\n )", getTestTree(runner.getTestProxy(), 0)),
+                    checkedInterpreters, Matchers.everyItem(Matchers.isIn(expectedInterpreters)));
+    }
+
+    @NotNull
+    private static String getTestTree(@NotNull final SMTestProxy root, final int level) {
+      final StringBuilder result = new StringBuilder();
+      result.append(StringUtil.repeat(".", level)).append(root.getPresentableName()).append('\n');
+      final Optional<String> children = root.getChildren().stream().map(o -> getTestTree(o, level + 1)).reduce((s, s2) -> s + s2);
+      children.ifPresent(result::append);
+      return result.toString();
     }
 
     @NotNull

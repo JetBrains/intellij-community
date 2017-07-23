@@ -206,7 +206,7 @@ public class ImportToggleAliasIntention extends PyBaseIntentionAction {
           }
         });
         // no references here is OK by us.
-        if (showConflicts(project, findDefinitions(target_name, references, Collections.<PsiElement>emptySet()), target_name, null)) {
+        if (showConflicts(project, findDefinitions(target_name, references, Collections.emptySet()), target_name, null)) {
           return; // got conflicts
         }
 

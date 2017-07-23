@@ -82,7 +82,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
    * errorCount[idx] == number of highlighters of severity with index idx in this markup model.
    * severity index can be obtained via com.intellij.codeInsight.daemon.impl.SeverityRegistrar#getSeverityIdx(com.intellij.lang.annotation.HighlightSeverity)
    */
-  private int[] errorCount;
+  protected int[] errorCount;
 
   public TrafficLightRenderer(@Nullable Project project, Document document, PsiFile file) {
     myProject = project;
@@ -90,7 +90,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     myDocument = document;
     myFile = file;
     mySeverityRegistrar = SeverityRegistrar.getSeverityRegistrar(myProject);
-    refresh();
+    refresh(null);
 
     if (project != null) {
       final MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
@@ -113,7 +113,12 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     }
   }
 
-  private void refresh() {
+  @NotNull
+  public SeverityRegistrar getSeverityRegistrar() {
+    return mySeverityRegistrar;
+  }
+
+  protected void refresh(@Nullable EditorMarkupModelImpl editorMarkupModel) {
     int maxIndex = mySeverityRegistrar.getSeverityMaxIndex();
     if (errorCount != null && maxIndex + 1 == errorCount.length) return;
     errorCount = new int[maxIndex + 1];
@@ -130,8 +135,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     ErrorStripeRenderer renderer = editorMarkupModel.getErrorStripeRenderer();
     if (renderer instanceof TrafficLightRenderer) {
       TrafficLightRenderer tlr = (TrafficLightRenderer)renderer;
-      tlr.refresh();
-      ((EditorMarkupModelImpl)editorMarkupModel).repaintVerticalScrollBar();
+      EditorMarkupModelImpl markupModelImpl = (EditorMarkupModelImpl)editorMarkupModel;
+      tlr.refresh(markupModelImpl);
+      markupModelImpl.repaintVerticalScrollBar();
       if (tlr.myFile == null || tlr.myFile.isValid()) return;
       Disposer.dispose(tlr);
     }
@@ -164,8 +170,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     public boolean errorAnalyzingFinished; // all passes done
     List<ProgressableTextEditorHighlightingPass> passStati = Collections.emptyList();
     public int[] errorCount = ArrayUtil.EMPTY_INT_ARRAY;
-    private String reasonWhyDisabled;
-    private String reasonWhySuspended;
+    public String reasonWhyDisabled;
+    public String reasonWhySuspended;
 
     public DaemonCodeAnalyzerStatus() {
     }
@@ -239,9 +245,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     }
 
     status.errorCount = errorCount.clone();
-    fillDaemonCodeAnalyzerErrorsStatus(status, severityRegistrar);
     List<TextEditorHighlightingPass> passes = myDaemonCodeAnalyzer.getPassesToShowProgressFor(myDocument);
-    status.passStati = passes.isEmpty() ? Collections.<ProgressableTextEditorHighlightingPass>emptyList() :
+    status.passStati = passes.isEmpty() ? Collections.emptyList() :
                        new ArrayList<>(passes.size());
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < passes.size(); i++) {
@@ -254,6 +259,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     }
     status.errorAnalyzingFinished = myDaemonCodeAnalyzer.isAllAnalysisFinished(myFile);
     status.reasonWhySuspended = myDaemonCodeAnalyzer.isUpdateByTimerEnabled() ? null : "Highlighting is paused temporarily";
+    fillDaemonCodeAnalyzerErrorsStatus(status, severityRegistrar);
 
     return status;
   }

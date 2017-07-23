@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
@@ -111,12 +110,6 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     MavenProjectsManager.getInstance(getProject()).updateProjectTargetFolders();
   }
 
-  @Override
-  @NotNull
-  public Module[] getModules() {
-    return Module.EMPTY_ARRAY;
-  }
-
   @Nullable
   public MavenGeneralSettings getGeneralSettings() {
     return mySettings.myGeneralSettings;
@@ -150,7 +143,6 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     Element mavenSettingsElement = element.getChild(MavenSettings.TAG);
     if (mavenSettingsElement != null) {
       mySettings = XmlSerializer.deserialize(mavenSettingsElement, MavenSettings.class);
-      if (mySettings == null) mySettings = new MavenSettings();
 
       if (mySettings.myRunnerParameters == null) mySettings.myRunnerParameters = new MavenRunnerParameters();
 

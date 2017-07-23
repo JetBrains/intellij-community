@@ -16,6 +16,8 @@
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.LanguageUtil;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
@@ -28,15 +30,11 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
-* User: cdr
-*/
 class AnchorElementInfo extends SelfElementInfo {
   private volatile long myStubElementTypeAndId; // stubId in the lower 32 bits; stubElementTypeIndex in the high 32 bits packed together for atomicity
 
   AnchorElementInfo(@NotNull PsiElement anchor, @NotNull PsiFile containingFile, Identikit.ByAnchor identikit) {
     super(containingFile.getProject(), ProperTextRange.create(anchor.getTextRange()), identikit, containingFile, false);
-    assert !(anchor instanceof PsiFile) : "FileElementInfo must be used for file: "+anchor;
     myStubElementTypeAndId = pack(-1, null);
   }
   // will restore by stub index until file tree get loaded
@@ -89,7 +87,7 @@ class AnchorElementInfo extends SelfElementInfo {
         return packed1 == packed2;
       }
       if (packed1 != -1 || packed2 != -1) {
-        return areRestoredElementsEqual(other);
+        return ReadAction.compute(() -> Comparing.equal(restoreElement(), other.restoreElement()));
       }
     }
     return super.pointsToTheSameElementAs(other);

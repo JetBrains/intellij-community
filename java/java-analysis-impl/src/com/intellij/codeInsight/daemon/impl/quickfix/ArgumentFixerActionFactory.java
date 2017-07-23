@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -54,11 +55,11 @@ public abstract class ArgumentFixerActionFactory {
       PsiMethod method = (PsiMethod) candidate.getElement();
       PsiSubstitutor substitutor = candidate.getSubstitutor();
       PsiParameter[] parameters = method.getParameterList().getParameters();
-      if (expressions.length != parameters.length) {
+      if (expressions.length != parameters.length && !method.isVarArgs()) {
         methodCandidates.remove(i);
         continue;
       }
-      for (int j = 0; j < parameters.length; j++) {
+      for (int j = 0; j < Math.min(parameters.length, expressions.length); j++) {
         PsiParameter parameter = parameters[j];
         PsiExpression expression = expressions[j];
         // check if we can cast to this method
@@ -84,8 +85,7 @@ public abstract class ArgumentFixerActionFactory {
         for (CandidateInfo candidate : methodCandidates) {
           PsiMethod method = (PsiMethod)candidate.getElement();
           PsiSubstitutor substitutor = candidate.getSubstitutor();
-          PsiParameter[] parameters = method.getParameterList().getParameters();
-          PsiType originalParameterType = parameters[i].getType();
+          PsiType originalParameterType = PsiTypesUtil.getParameterType(method.getParameterList().getParameters(), i, true);
           PsiType parameterType = substitutor.substitute(originalParameterType);
           if (parameterType instanceof PsiWildcardType) continue;
           if (!GenericsUtil.isFromExternalTypeLanguage(parameterType)) continue;

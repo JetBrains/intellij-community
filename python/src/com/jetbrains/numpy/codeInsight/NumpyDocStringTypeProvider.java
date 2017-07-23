@@ -34,7 +34,7 @@ import com.jetbrains.python.documentation.docstrings.NumpyDocString;
 import com.jetbrains.python.documentation.docstrings.SectionBasedDocString.SectionField;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
+import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;
@@ -113,7 +113,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     }
 
     if (docString != null) {
-      final NumpyDocString parsed = (NumpyDocString)DocStringUtil.parseDocString(DocStringFormat.NUMPY, docString);
+      final NumpyDocString parsed = (NumpyDocString)DocStringUtil.parseDocStringContent(DocStringFormat.NUMPY, docString);
       if (parsed.getReturnFields().isEmpty() && parsed.getParameterFields().isEmpty()) {
         return null;
       }
@@ -165,8 +165,8 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   private static PyFunction resolveRedirectToFunction(@NotNull String redirect, @NotNull PsiElement reference) {
     final QualifiedName qualifiedName = QualifiedName.fromDottedString(redirect);
     final String functionName = qualifiedName.getLastComponent();
-    final PyPsiFacade facade = PyPsiFacade.getInstance(reference.getProject());
-    final List<PsiElement> items = facade.qualifiedNameResolver(qualifiedName.removeLastComponent()).fromElement(reference).resultsAsList();
+    final List<PsiElement> items = PyResolveImportUtil.resolveQualifiedName(qualifiedName.removeLastComponent(),
+                                                                            PyResolveImportUtil.fromFoothold(reference));
     for (PsiElement item : items) {
       if (item instanceof PsiDirectory) {
         item = ((PsiDirectory)item).findFile(PyNames.INIT_DOT_PY);
@@ -342,10 +342,8 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
    */
   @Nullable
   private static PyType getNominalType(@NotNull PsiElement anchor, @NotNull String typeString) {
-    final PyExpressionCodeFragmentImpl codeFragment = new PyExpressionCodeFragmentImpl(anchor.getProject(), "dummy.py", typeString, false);
-    final PsiElement element = codeFragment.getFirstChild();
-    if (element instanceof PyExpressionStatement) {
-      final PyExpression expression = ((PyExpressionStatement)element).getExpression();
+    final PyExpression expression = PyUtil.createExpressionFromFragment(typeString, anchor);
+    if (expression != null) {
       final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(anchor);
       if (expression instanceof PyStringLiteralExpression) {
         return builtinCache.getStrType();

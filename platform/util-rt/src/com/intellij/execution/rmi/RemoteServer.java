@@ -16,15 +16,12 @@
 package com.intellij.execution.rmi;
 
 import com.intellij.execution.rmi.ssl.SslSocketFactory;
-import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.naming.Context;
 import javax.naming.NamingException;
 import javax.naming.spi.InitialContextFactory;
-import java.io.*;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -43,8 +40,6 @@ public class RemoteServer {
     System.setProperty("apple.awt.UIElement", "true");
   }
 
-  public static final String DOMAIN_AUTH_LIBRARY_PATH = "domain.auth.library";
-
   private static Remote ourRemote;
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
@@ -52,7 +47,6 @@ public class RemoteServer {
     setupRMI();
     banJNDI();
     setupSSL();
-    setupDomainAuth();
 
     if (ourRemote != null) throw new AssertionError("Already started");
     ourRemote = remote;
@@ -120,19 +114,6 @@ public class RemoteServer {
     }
   }
 
-  private static void setupDomainAuth() {
-    String property = System.getProperty(DOMAIN_AUTH_LIBRARY_PATH);
-    if (property != null) {
-      try {
-        File extracted = extractLibraryFromJar(property);
-        setLibraryPath(extracted.getParentFile().getAbsolutePath());
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    }
-  }
-
   @SuppressWarnings("UnusedDeclaration")
   public static class Jndi implements InitialContextFactory, InvocationHandler {
     @NotNull
@@ -147,44 +128,5 @@ public class RemoteServer {
       }
       throw new NamingException("JNDI service is disabled");
     }
-  }
-
-  @NotNull
-  public static File extractLibraryFromJar(@NotNull String path) throws Exception {
-    if (!path.startsWith("/")) throw new IllegalArgumentException("The path to be absolute (start with '/').");
-
-    String[] parts = path.split("/");
-    String filename = parts.length > 1 ? parts[parts.length - 1] : null;
-
-    if (filename == null) throw new IllegalArgumentException("The filename extracted from the path: '" + path + "' is null");
-
-    File auth = FileUtilRt.createTempDirectory("win_auth", null, true);
-    File temp = new File(auth, filename);
-    temp.deleteOnExit();
-    if (!temp.createNewFile() || !temp.exists()) throw new FileNotFoundException("File " + temp.getAbsolutePath() + " does not exist.");
-
-    byte[] buffer = new byte[5 * 1024];
-    int readBytes;
-
-    //noinspection IOResourceOpenedButNotSafelyClosed
-    InputStream is = RemoteServer.class.getResourceAsStream(path);
-    if (is == null) throw new FileNotFoundException("File " + path + " was not found inside JAR.");
-
-    OutputStream os = new FileOutputStream(temp);
-    try {
-      while ((readBytes = is.read(buffer)) != -1) os.write(buffer, 0, readBytes);
-    }
-    finally {
-      os.close();
-      is.close();
-    }
-    return temp;
-  }
-
-  private static void setLibraryPath(@NotNull String path) throws NoSuchFieldException, IllegalAccessException {
-    System.setProperty("java.library.path", path);
-    Field fieldSysPath = ClassLoader.class.getDeclaredField("sys_paths");
-    fieldSysPath.setAccessible(true);
-    fieldSysPath.set(null, null);
   }
 }

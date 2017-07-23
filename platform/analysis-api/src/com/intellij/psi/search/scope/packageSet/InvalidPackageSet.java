@@ -18,9 +18,6 @@ package com.intellij.psi.search.scope.packageSet;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- */
 public class InvalidPackageSet extends AbstractPackageSet {
 
   public InvalidPackageSet(@NotNull String text) {

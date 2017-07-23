@@ -17,6 +17,7 @@ package com.intellij.openapi.compiler;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -35,6 +36,7 @@ public interface CompilerMessage {
    *
    * @return a category this message belongs to (error, warning, information).
    */
+  @NotNull
   CompilerMessageCategory getCategory();
 
   /**

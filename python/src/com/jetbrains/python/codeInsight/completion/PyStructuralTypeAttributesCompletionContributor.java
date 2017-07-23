@@ -5,9 +5,11 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
@@ -37,6 +39,8 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * @author Mikhail Golubev
  */
 public class PyStructuralTypeAttributesCompletionContributor extends CompletionContributor {
+
+  private static final Logger LOG = Logger.getInstance(PyStructuralTypeAttributesCompletionContributor.class);
 
   private static final Set<String> COMMON_OBJECT_ATTRIBUTES = ImmutableSet.of(
     "__init__",
@@ -70,11 +74,14 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
       final TypeEvalContext typeEvalContext = TypeEvalContext.codeCompletion(refExpr.getProject(), parameters.getOriginalFile());
       //noinspection ConstantConditions
       final PyStructuralType structType = as(typeEvalContext.getType(refExpr.getQualifier()), PyStructuralType.class);
+      LOG.debug("Structural type: " + structType);
       if (structType != null) {
         final Set<String> names = Sets.newHashSet(structType.getAttributeNames());
         // Remove "dummy" identifier from the set of attributes
         names.remove(refExpr.getReferencedName());
-        for (PyClass pyClass : suggestClassesFromUsedAttributes(refExpr, names, typeEvalContext)) {
+        final Set<PyClass> suitableClasses = suggestClassesFromUsedAttributes(refExpr, names, typeEvalContext);
+        LOG.debug("Result classes that contain attributes " + names + ": ", suitableClasses);
+        for (PyClass pyClass : suitableClasses) {
           final PsiElement origPosition = parameters.getOriginalPosition();
           final String prefix;
           if (origPosition != null && origPosition.getNode().getElementType() == PyTokenTypes.IDENTIFIER) {
@@ -100,12 +107,15 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
       final Map<PyClass, Set<PyClass>> ancestorsCache = Maps.newHashMap();
       for (String attribute : seenAttrs) {
         // Search for some of these attributes like __init__ may produce thousands of candidates in average SDK
-        // and we probably don't want to confuse user with PyNames.FAKE_OLD_BASE anyway
         if (COMMON_OBJECT_ATTRIBUTES.contains(attribute)) {
           candidates.add(PyBuiltinCache.getInstance(anchor).getClass(PyNames.OBJECT));
         }
         else {
           final Collection<PyClass> declaringClasses = PyClassAttributesIndex.find(attribute, anchor.getProject());
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Classes containing " + attribute + ": " +
+                      ContainerUtil.map(declaringClasses, AttributesCompletionProvider::debugClassCoordinates));
+          }
           candidates.addAll(declaringClasses);
         }
       }
@@ -115,7 +125,11 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
         if (PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(candidate.getContainingFile())) {
           continue;
         }
-        if (getAllInheritedAttributeNames(candidate, context, ancestorsCache).containsAll(seenAttrs)) {
+        final Set<String> inherited = getAllInheritedAttributeNames(candidate, context, ancestorsCache);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("All attributes of " + debugClassCoordinates(candidate) + ": " + inherited);
+        }
+        if (inherited.containsAll(seenAttrs)) {
           suitableClasses.add(candidate);
         }
       }
@@ -147,7 +161,7 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
         return ancestors;
       }
       // Sentinel value to prevent infinite recursion
-      ancestorsCache.put(pyClass, Collections.<PyClass>emptySet());
+      ancestorsCache.put(pyClass, Collections.emptySet());
       final Set<PyClass> result = Sets.newHashSet();
       try {
         for (final PyClassLikeType baseType : pyClass.getSuperClassTypes(context)) {
@@ -165,6 +179,11 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
         ancestorsCache.put(pyClass, Collections.unmodifiableSet(result));
       }
       return result;
+    }
+    
+    @NotNull
+    private static String debugClassCoordinates(PyClass cls) {
+      return cls.getQualifiedName() + " (" + cls.getContainingFile().getVirtualFile().getPath() + ")";
     }
   }
 }

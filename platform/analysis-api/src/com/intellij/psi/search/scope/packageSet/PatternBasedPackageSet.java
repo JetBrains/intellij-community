@@ -15,10 +15,6 @@
  */
 package com.intellij.psi.search.scope.packageSet;
 
-/**
- * User: anna
- * Date: Jul 26, 2010
- */
 public abstract class PatternBasedPackageSet extends PackageSetBase {
   public abstract String getPattern();
   public abstract String getModulePattern();

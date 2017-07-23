@@ -4,7 +4,7 @@ public class UnnecessaryFinalOnLocalVariableOrParameter {
   class XX {
     XX(Object o) {}
 
-    void foo(final Object o) {
+    void foo(<warning descr="Unnecessary 'final' on parameter 'o'">final</warning> Object o) {
       new XX(o) {};
     }
 

@@ -61,12 +61,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/26/13
- * Time: 1:27 PM
- */
 public class AuthenticationService {
 
   @NotNull private final SvnVcs myVcs;
@@ -74,13 +68,13 @@ public class AuthenticationService {
   private static final Logger LOG = Logger.getInstance(AuthenticationService.class);
   private File myTempDirectory;
   private boolean myProxyCredentialsWereReturned;
-  private SvnConfiguration myConfiguration;
+  @NotNull private final SvnConfiguration myConfiguration;
   private final Set<String> myRequestedCredentials;
 
   public AuthenticationService(@NotNull SvnVcs vcs, boolean isActive) {
     myVcs = vcs;
     myIsActive = isActive;
-    myConfiguration = SvnConfiguration.getInstance(myVcs.getProject());
+    myConfiguration = myVcs.getSvnConfiguration();
     myRequestedCredentials = ContainerUtil.newHashSet();
   }
 
@@ -105,13 +99,8 @@ public class AuthenticationService {
     if (repositoryUrl != null) {
       final String realm = repositoryUrl.toDecodedString();
 
-      authentication = requestCredentials(realm, type, new Getter<SVNAuthentication>() {
-        @Override
-        public SVNAuthentication get() {
-          return myVcs.getSvnConfiguration().getInteractiveManager(myVcs).getInnerProvider()
-            .requestClientAuthentication(type, repositoryUrl, realm, null, null, true);
-        }
-      });
+      authentication = requestCredentials(realm, type, () -> myConfiguration.getInteractiveManager(myVcs).getInnerProvider()
+        .requestClientAuthentication(type, repositoryUrl, realm, null, null, true));
     }
 
     if (authentication == null) {
@@ -142,7 +131,7 @@ public class AuthenticationService {
       result = fromUserProvider.get();
       if (result != null) {
         // save user credentials to memory cache
-        myVcs.getSvnConfiguration().acknowledge(type, realm, result);
+        myConfiguration.acknowledge(type, realm, result);
         myRequestedCredentials.add(key);
       }
     }
@@ -154,30 +143,25 @@ public class AuthenticationService {
   public String requestSshCredentials(@NotNull final String realm,
                                       @NotNull final SimpleCredentialsDialog.Mode mode,
                                       @NotNull final String key) {
-    return requestCredentials(realm, StringUtil.toLowerCase(mode.toString()), new Getter<String>() {
-      @Override
-      public String get() {
-        final Ref<String> answer = new Ref<>();
+    return requestCredentials(realm, StringUtil.toLowerCase(mode.toString()), () -> {
+      final Ref<String> answer = new Ref<>();
 
-        Runnable command = new Runnable() {
-          public void run() {
-            SimpleCredentialsDialog dialog = new SimpleCredentialsDialog(myVcs.getProject());
+      Runnable command = () -> {
+        SimpleCredentialsDialog dialog = new SimpleCredentialsDialog(myVcs.getProject());
 
-            dialog.setup(mode, realm, key, true);
-            dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
-            dialog.setSaveEnabled(false);
-            if (dialog.showAndGet()) {
-              answer.set(dialog.getPassword());
-            }
-          }
-        };
+        dialog.setup(mode, realm, key, true);
+        dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
+        dialog.setSaveEnabled(false);
+        if (dialog.showAndGet()) {
+          answer.set(dialog.getPassword());
+        }
+      };
 
-        // Use ModalityState.any() as currently ssh credentials in terminal mode are requested in the thread that reads output and not in
-        // the thread that started progress
-        WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(command, ModalityState.any());
+      // Use ModalityState.any() as currently ssh credentials in terminal mode are requested in the thread that reads output and not in
+      // the thread that started progress
+      WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(command, ModalityState.any());
 
-        return answer.get();
-      }
+      return answer.get();
     });
   }
 
@@ -197,7 +181,7 @@ public class AuthenticationService {
         AcceptResult.from(getAuthenticationManager().getInnerProvider().acceptServerAuthentication(url, realm, certificateInfo, true));
 
       if (!AcceptResult.REJECTED.equals(result)) {
-        myVcs.getSvnConfiguration().acknowledge(kind, realm, result);
+        myConfiguration.acknowledge(kind, realm, result);
       }
     }
 
@@ -309,7 +293,7 @@ public class AuthenticationService {
 
   @NotNull
   public SvnAuthenticationManager getAuthenticationManager() {
-    return isActive() ? myConfiguration.getInteractiveManager(myVcs) : myConfiguration.getPassiveAuthenticationManager(myVcs.getProject());
+    return isActive() ? myConfiguration.getInteractiveManager(myVcs) : myConfiguration.getPassiveAuthenticationManager(myVcs);
   }
 
   public void clearPassiveCredentials(String realm, SVNURL repositoryUrl, boolean password) {
@@ -317,19 +301,15 @@ public class AuthenticationService {
       return;
     }
 
-    final SvnConfiguration configuration = SvnConfiguration.getInstance(myVcs.getProject());
-    final List<String> kinds = getKinds(repositoryUrl, password);
-
-    for (String kind : kinds) {
-      configuration.clearCredentials(kind, realm);
+    for (String kind : getKinds(repositoryUrl, password)) {
+      myConfiguration.clearCredentials(kind, realm);
     }
   }
 
   // TODO: rename
   public boolean haveDataForTmpConfig() {
     final HttpConfigurable instance = HttpConfigurable.getInstance();
-    return SvnConfiguration.getInstance(myVcs.getProject()).isIsUseDefaultProxy() &&
-           (instance.USE_HTTP_PROXY || instance.USE_PROXY_PAC);
+    return myConfiguration.isIsUseDefaultProxy() && (instance.USE_HTTP_PROXY || instance.USE_PROXY_PAC);
   }
 
   @Nullable
@@ -427,10 +407,10 @@ public class AuthenticationService {
     return myTempDirectory != null ? myTempDirectory : new File(myConfiguration.getConfigurationDirectory());
   }
 
-  public void initTmpDir(SvnConfiguration configuration) throws IOException {
+  public void initTmpDir() throws IOException {
     if (myTempDirectory == null) {
       myTempDirectory = FileUtil.createTempDirectory("tmp", "Subversion");
-      FileUtil.copyDir(new File(configuration.getConfigurationDirectory()), myTempDirectory);
+      FileUtil.copyDir(new File(myConfiguration.getConfigurationDirectory()), myTempDirectory);
     }
   }
 }

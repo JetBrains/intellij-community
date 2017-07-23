@@ -30,14 +30,13 @@ import javax.swing.*;
  */
 public class CodeStyleImportsPanelWrapper extends CodeStyleAbstractPanel {
   
-  private final CodeStyleImportsPanel myImporsPanel;
+  private final JavaCodeStyleImportsPanel myImportsPanel;
 
   protected CodeStyleImportsPanelWrapper(CodeStyleSettings settings) {
     super(settings);
-    myImporsPanel = new CodeStyleImportsPanel(settings);
+    myImportsPanel = new JavaCodeStyleImportsPanel();
   }
-
-
+  
   @Override
   protected int getRightMargin() {
     return 0;
@@ -61,22 +60,22 @@ public class CodeStyleImportsPanelWrapper extends CodeStyleAbstractPanel {
 
   @Override
   public void apply(CodeStyleSettings settings) {
-    myImporsPanel.apply(settings);
+    myImportsPanel.apply(settings);
   }
 
   @Override
   public boolean isModified(CodeStyleSettings settings) {
-    return myImporsPanel.isModified(settings);
+    return myImportsPanel.isModified(settings);
   }
 
   @Override
   public JComponent getPanel() {
-    return myImporsPanel;
+    return myImportsPanel;
   }
 
   @Override
   protected void resetImpl(CodeStyleSettings settings) {
-    myImporsPanel.reset(settings);
+    myImportsPanel.reset(settings);
   }
 
   @Override

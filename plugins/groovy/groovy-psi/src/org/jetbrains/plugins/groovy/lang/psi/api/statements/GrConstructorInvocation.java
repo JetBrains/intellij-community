@@ -22,10 +22,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 29.05.2007
- */
 public interface GrConstructorInvocation extends GrStatement, GrConstructorCall {
   boolean isSuperCall();
 

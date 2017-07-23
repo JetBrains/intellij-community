@@ -14,19 +14,10 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Nov 28, 2001
- * Time: 4:17:17 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.NotNull;
@@ -63,12 +54,7 @@ public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImpl
 
   @Override
   public boolean isValid() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        return getOwnerClass().isValid();
-      }
-    }).booleanValue();
+    return ReadAction.compute(getOwnerClass()::isValid).booleanValue();
   }
 
   @Override

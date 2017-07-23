@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,16 +24,17 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 public class ToggleSortBookmarksAction extends ToggleAction {
   public ToggleSortBookmarksAction() {
     super(null, IdeBundle.message("action.bookmark.toggle.sort"), AllIcons.ObjectBrowser.Sorted);
+    setEnabledInModalContext(true);
   }
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    return UISettings.getInstance().SORT_BOOKMARKS;
+    return UISettings.getInstance().getSortBookmarks();
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    UISettings.getInstance().SORT_BOOKMARKS = state;
+    UISettings.getInstance().setSortBookmarks(state);
     UISettings.getInstance().fireUISettingsChanged();
   }
 }

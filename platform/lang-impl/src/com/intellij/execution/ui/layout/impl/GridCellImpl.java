@@ -29,14 +29,12 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.tabs.JBTabs;
-import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.TabsListener;
-import com.intellij.ui.tabs.UiDecorator;
+import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -47,6 +45,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.List;
 import java.util.Set;
 
 public class GridCellImpl implements GridCell {
@@ -75,6 +74,7 @@ public class GridCellImpl implements GridCell {
         //noinspection UseJBColor
         myDarkPainter.setDefaultTabColor(new Color(0x424D5F));
       }
+
       @Override
       public boolean useSmallLabels() {
         return true;
@@ -337,20 +337,30 @@ public class GridCellImpl implements GridCell {
     myTabs.getPresentation().setSideComponentVertical(!horizontal);
   }
 
+  public void setToolbarBefore(final boolean before) {
+    myTabs.getPresentation().setSideComponentBefore(before);
+  }
+
   public ActionCallback restoreLastUiState() {
     final ActionCallback result = new ActionCallback();
 
     restoreProportions();
 
-    Content[] contents = getContents();
+    final Content[] contents = getContents();
+    final List<Content> toMinimize = new SmartList<>();
+
     int window = 0;
-    for (Content each : contents) {
+    for (final Content each : contents) {
       final View view = myContainer.getStateFor(each);
       if (view.isMinimizedInGrid()) {
-        minimize(each);
+        toMinimize.add(each);
       }
+
       window = view.getWindow();
     }
+
+    minimize(toMinimize.toArray(new Content[toMinimize.size()]));
+
     final Tab tab = myContainer.getTab();
     final boolean detached = (tab != null && tab.isDetached(myPlaceInGrid)) || window != myContext.getWindow();
     if (detached && contents.length > 0) {
@@ -405,7 +415,15 @@ public class GridCellImpl implements GridCell {
     View state = myContext.getStateFor(content);
     state.setMinimizedInGrid(minimized);
     state.setPlaceInGrid(myPlaceInGrid);
-    state.assignTab(myContainer.getTabIndex());
+    final List<Content> contents = myContainer.getContents();
+    final Tab tab = myContainer.getTabIndex();
+    if (minimized && contents.size() == 1 && contents.get(0).equals(content)) {
+      state.setTabIndex(-1);
+      if (tab instanceof TabImpl) {
+        ((TabImpl)tab).setIndex(-1);
+      }
+    }
+    state.assignTab(tab);
     state.setWindow(myContext.getWindow());
   }
 
@@ -434,19 +452,21 @@ public class GridCellImpl implements GridCell {
   }
 
   public void minimize(Content[] contents) {
+    if (contents.length == 0) return;
     myContext.saveUiState();
 
     for (final Content each : contents) {
       myMinimizedContents.add(each);
       remove(each);
+      saveState(each, true);
       boolean isShowing = myTabs.getComponent().getRootPane() != null;
-      updateSelection(isShowing);
       myContainer.minimize(each, new CellTransform.Restore() {
         @Override
         public ActionCallback restoreInGrid() {
           return restore(each);
         }
       });
+      updateSelection(isShowing);
     }
   }
 

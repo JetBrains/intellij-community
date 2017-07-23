@@ -194,7 +194,7 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
   @NotNull
   public List<File> getModuleLibraryRoots(String libraryName) {
     final Element library = findModuleLibraryElement(libraryName);
-    return library != null ? myContext.getClassRoots(library, this) : Collections.<File>emptyList();
+    return library != null ? myContext.getClassRoots(library, this) : Collections.emptyList();
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,9 @@
 package com.intellij.openapi.editor;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-import java.awt.Point;
+import java.awt.*;
 
 /**
  * Represents a logical position in the editor. Logical positions ignore folding -
@@ -25,7 +26,7 @@ import java.awt.Point;
  * will have the line number 10 in its logical position.
  * <p>
  * Logical position may store additional parameters that define its mapping to {@link VisualPosition}. Rationale is that
- * single logical <code>(line; column)</code> pair matches soft wrap-introduced virtual space, i.e. different visual positions
+ * single logical {@code (line; column)} pair matches soft wrap-introduced virtual space, i.e. different visual positions
  * correspond to the same logical position. It's convenient to store exact visual location details within the logical
  * position in order to relief further {@code 'logical position' -> 'visual position'} mapping.
  * <p>
@@ -53,6 +54,9 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    * Identifies if current logical position may be correctly mapped to visual position. E.g. we can define properties like
    * {@link #softWrapLinesBeforeCurrentLogicalLine}, {@link #softWrapColumnDiff} etc during {@code 'visual position' -> 'logical position'} conversion
    * in order to be able to easy match it back to visual position.
+   *
+   * @deprecated Always {@code false} in {@link LogicalPosition} instances returned by platform code since 2016.1.
+   *             Will be removed in future.
    */
   public final boolean visualPositionAware;
 
@@ -60,6 +64,8 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    * Number of virtual soft wrap-introduced lines before the current logical line.
    *
    * @see #visualPositionAware
+   * @deprecated Always {@code 0} in {@link LogicalPosition} instances returned by platform code since 2016.1.
+   *             Will be removed in future.
    */
   public final int softWrapLinesBeforeCurrentLogicalLine;
 
@@ -68,9 +74,11 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    * to the current logical position.
    * <p>
    * Instead of directly using this value, EditorUtil.getSoftWrapCountAfterLineStart(Editor, LogicalPosition) method can be used,
-   * it will work regardless of whether current <code>LogicalPosition</code> instance is {@link #visualPositionAware}.
+   * it will work regardless of whether current {@code LogicalPosition} instance is {@link #visualPositionAware}.
    *
    * @see #visualPositionAware
+   * @deprecated Always {@code 0} in {@link LogicalPosition} instances returned by platform code since 2016.1.
+   *             Will be removed in future.
    */
   public final int softWrapLinesOnCurrentLogicalLine;
 
@@ -78,6 +86,8 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    * Number to add to the {@link #column logical column} in order to get soft wrap-introduced visual column offset.
    *
    * @see #visualPositionAware
+   * @deprecated Always {@code 0} in {@link LogicalPosition} instances returned by platform code since 2016.1.
+   *             Will be removed in future.
    */
   public final int softWrapColumnDiff;
 
@@ -85,6 +95,8 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    * Number of folded line feeds before the current position.
    *
    * @see #visualPositionAware
+   * @deprecated Always {@code 0} in {@link LogicalPosition} instances returned by platform code since 2016.1.
+   *             Will be removed in future.
    */
   public final int foldedLines;
 
@@ -92,21 +104,26 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    * Number to add to the {@link #column logical column} in order to get folding-introduced visual column offset.
    *
    * @see #visualPositionAware
+   * @deprecated Always {@code 0} in {@link LogicalPosition} instances returned by platform code since 2016.1.
+   *             Will be removed in future.
    */
   public final int foldingColumnDiff;
 
   /**
-   * If <code>true</code>, this position is associated with succeeding character (in logical order), otherwise it's associated with 
+   * If {@code true}, this position is associated with succeeding character (in logical order), otherwise it's associated with
    * preceding character. This can make difference in bidirectional text, where logical positions which differ only in this flag's value
    * can have different visual positions.
    * <p>
-   * This field has no impact on equality and comparison relationships between <code>LogicalPosition</code> instances.
+   * This field has no impact on equality and comparison relationships between {@code LogicalPosition} instances.
    */
   public final boolean leansForward;
 
   /**
    * This field provides the value of {@link VisualPosition#leansRight} field of visual position corresponding to current position.
    * It has meaning only if {@link #visualPositionAware} is set.
+   * 
+   * @deprecated Always {@code false} in {@link LogicalPosition} instances returned by platform code since 2016.1.
+   *             Will be removed in future.
    */
   public final boolean visualPositionLeansRight;
 
@@ -118,12 +135,18 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
     this(line, column, 0, 0, 0, 0, 0, false, leansForward, leansForward);
   }
 
+  /**
+   * @deprecated Use {@link #LogicalPosition(int, int)} instead. Additional fields won't be used in future.
+   */
   public LogicalPosition(int line, int column, int softWrapLinesBeforeCurrentLogicalLine, int softWrapLinesOnCurrentLogicalLine,
                          int softWrapColumnDiff, int foldedLines, int foldingColumnDiff) throws IllegalArgumentException {
     this(line, column, softWrapLinesBeforeCurrentLogicalLine, softWrapLinesOnCurrentLogicalLine, softWrapColumnDiff, foldedLines,
       foldingColumnDiff, true, false, false);
   }
 
+  /**
+   * @deprecated Use {@link #LogicalPosition(int, int, boolean)} instead. Additional fields won't be used in future.
+   */
   public LogicalPosition(int line, int column, int softWrapLinesBeforeCurrentLogicalLine, int softWrapLinesOnCurrentLogicalLine,
                          int softWrapColumnDiff, int foldedLines, int foldingColumnDiff, boolean leansForward,
                          boolean visualPositionLeansRight) throws IllegalArgumentException {
@@ -165,6 +188,8 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    * is {@link #visualPositionAware visual position aware}.
    *
    * @return    visual position based on a state of the current logical position
+   *
+   * @deprecated Result doesn't makes sense, since {@link #visualPositionAware} is deprecated.
    */
   public VisualPosition toVisualPosition() {
     return new VisualPosition(
@@ -177,13 +202,15 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
   /**
    * Returns a new instance of class corresponding to the same logical position in the document, but without any cached
    * reference to its visual position.
+   * 
+   * @deprecated Not needed, since {@link #visualPositionAware} is deprecated.
    */
   public LogicalPosition withoutVisualPositionInfo() {
     return new LogicalPosition(line, column, leansForward);
   }
 
   /**
-   * Constructs a new <code>LogicalPosition</code> instance with a given value of {@link #leansForward} flag.
+   * Constructs a new {@code LogicalPosition} instance with a given value of {@link #leansForward} flag.
    */
   public LogicalPosition leanForward(boolean value) {
     return new LogicalPosition(line, column, value);
@@ -214,7 +241,8 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
            + (leansForward ? "; leans forward" : "");
   }
 
-  public int compareTo(LogicalPosition position) {
+  @Override
+  public int compareTo(@NotNull LogicalPosition position) {
     if (line != position.line) return line - position.line;
     if (column != position.column) return column - position.column;
     if (softWrapLinesBeforeCurrentLogicalLine != position.softWrapLinesBeforeCurrentLogicalLine) return softWrapLinesBeforeCurrentLogicalLine - position.softWrapLinesBeforeCurrentLogicalLine;

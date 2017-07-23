@@ -39,6 +39,7 @@ public class PairedBraceMatcherAdapter implements NontrivialBraceMatcher, Paired
     myLanguage = language;
   }
 
+  @NotNull
   @Override
   public BracePair[] getPairs() {
     return myMatcher.getPairs();
@@ -133,7 +134,7 @@ public class PairedBraceMatcherAdapter implements NontrivialBraceMatcher, Paired
       }
     }
 
-    return result != null ? result : Collections.<IElementType>emptyList();
+    return result != null ? result : Collections.emptyList();
   }
 
   @Override

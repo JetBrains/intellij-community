@@ -31,9 +31,6 @@ import com.intellij.psi.impl.PsiDocumentManagerBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
-* User: cdr
-*/
 class FileElementInfo extends SmartPointerElementInfo {
   private final VirtualFile myVirtualFile;
   private final Project myProject;
@@ -66,14 +63,7 @@ class FileElementInfo extends SmartPointerElementInfo {
 
   @Override
   public boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
-    if (other instanceof FileElementInfo) {
-      return Comparing.equal(myVirtualFile, ((FileElementInfo)other).myVirtualFile);
-    }
-    if (other instanceof SelfElementInfo || other instanceof ClsElementInfo) {
-      // optimisation: SelfElementInfo need psi (parsing) for element restoration and apriori could not reference psi file
-      return false;
-    }
-    return Comparing.equal(restoreElement(), other.restoreElement());
+    return other instanceof FileElementInfo && Comparing.equal(myVirtualFile, ((FileElementInfo)other).myVirtualFile);
   }
 
   @Override
@@ -83,7 +73,10 @@ class FileElementInfo extends SmartPointerElementInfo {
 
   @Override
   public Segment getRange() {
-    return new TextRange(0, (int)myVirtualFile.getLength());
+    if (!myVirtualFile.isValid()) return null;
+
+    Document document = FileDocumentManager.getInstance().getDocument(myVirtualFile);
+    return document == null ? null : TextRange.from(0, document.getTextLength());
   }
 
   @NotNull

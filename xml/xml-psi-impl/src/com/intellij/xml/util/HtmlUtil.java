@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -38,6 +39,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.XmlRecursiveElementWalkingVisitor;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.html.dtd.HtmlAttributeDescriptorImpl;
@@ -123,7 +125,7 @@ public class HtmlUtil {
 
   private static final Set<String> BLOCK_TAGS_MAP = new THashSet<>();
 
-  @NonNls private static final String[] INLINE_ELEMENTS_CONTAINER = {"p", "h1", "h2", "h3", "h4", "h5", "h6", "pre", "dt"};
+  @NonNls private static final String[] INLINE_ELEMENTS_CONTAINER = {"p", "h1", "h2", "h3", "h4", "h5", "h6", "pre"};
   private static final Set<String> INLINE_ELEMENTS_CONTAINER_MAP = new THashSet<>();
   
   private static final Set<String> POSSIBLY_INLINE_TAGS_MAP = new THashSet<>();
@@ -425,6 +427,10 @@ public class HtmlUtil {
 
   public static boolean isHtml5Context(XmlElement context) {
     XmlDocument doc = PsiTreeUtil.getParentOfType(context, XmlDocument.class);
+    if (doc == null && context != null) {
+      return Html5SchemaProvider.getHtml5SchemaLocation()
+        .equals(ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(context.getProject()));
+    }
     return isHtml5Document(doc);
   }
 
@@ -756,5 +762,31 @@ public class HtmlUtil {
       child = child.getNextSibling();
     }
     return false;
+  }
+
+  public static List<XmlAttributeValue> getIncludedPathsElements(@NotNull final XmlFile file) {
+    final List<XmlAttributeValue> result = new ArrayList<>();
+    file.acceptChildren(new XmlRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitXmlTag(XmlTag tag) {
+        XmlAttribute attribute = null;
+        if ("link".equalsIgnoreCase(tag.getName())) {
+          attribute = tag.getAttribute("href");
+        }
+        else if ("script".equalsIgnoreCase(tag.getName()) || "img".equalsIgnoreCase(tag.getName())) {
+          attribute = tag.getAttribute("src");
+        }
+        if (attribute != null) result.add(attribute.getValueElement());
+        super.visitXmlTag(tag);
+      }
+
+      @Override
+      public void visitElement(PsiElement element) {
+        if (element.getLanguage() instanceof XMLLanguage) {
+          super.visitElement(element);
+        }
+      }
+    });
+    return result.isEmpty() ? Collections.emptyList() : result;
   }
 }

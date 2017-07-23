@@ -39,6 +39,7 @@ public class GitChangeProviderVersionedTest extends GitChangeProviderTest {
   @Test
   public void testCreateFileInDir() throws Exception {
     VirtualFile dir = createDir(myRootDir, "newdir");
+    dirty(dir);
     VirtualFile bfile = create(dir, "new.txt");
     add(bfile.getPath());
     assertChanges(new VirtualFile[] {bfile, dir}, new FileStatus[] { ADDED, null} );
@@ -58,19 +59,11 @@ public class GitChangeProviderVersionedTest extends GitChangeProviderTest {
 
   @Test
   public void testDeleteDirRecursively() throws Exception {
-    GuiUtils.runOrInvokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            final VirtualFile dir = myProjectRoot.findChild("dir");
-            myDirtyScope.addDirtyDirRecursively(VcsUtil.getFilePath(dir));
-            FileUtil.delete(VfsUtilCore.virtualToIoFile(dir));
-          }
-        });
-      }
-    });
+    GuiUtils.runOrInvokeAndWait(() -> ApplicationManager.getApplication().runWriteAction(() -> {
+      final VirtualFile dir = myProjectRoot.findChild("dir");
+      myDirtyScope.addDirtyDirRecursively(VcsUtil.getFilePath(dir));
+      FileUtil.delete(VfsUtilCore.virtualToIoFile(dir));
+    }));
     assertChanges(new VirtualFile[] { dir_ctxt, subdir_dtxt },
                   new FileStatus[] { DELETED, DELETED });
   }

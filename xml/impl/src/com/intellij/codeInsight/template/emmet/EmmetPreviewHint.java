@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -71,7 +71,7 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
       }
     }, this);
 
-    myEditor.getDocument().addDocumentListener(new DocumentAdapter() {
+    myEditor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent event) {
         if (!isDisposed && event.isWholeTextReplaced()) {
@@ -177,7 +177,7 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
       @NotNull
       @Override
       public Insets getInsets() {
-        return new Insets(1, 2, 0, 0);
+        return JBUI.insets(1, 2, 0, 0);
       }
     };
     panel.setBackground(previewEditor.getBackgroundColor());

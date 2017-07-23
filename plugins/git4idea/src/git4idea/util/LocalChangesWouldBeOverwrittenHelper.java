@@ -71,6 +71,10 @@ public class LocalChangesWouldBeOverwrittenHelper {
       });
   }
 
+  /**
+   * @deprecated Use {@link #showErrorNotification(Project, VirtualFile, String, Collection) showErrorNotification()}.
+   */
+  @Deprecated
   public static void showErrorDialog(@NotNull Project project, @NotNull VirtualFile root, @NotNull String operationName,
                                      @NotNull Collection<String> relativeFilePaths) {
     Collection<String> absolutePaths = GitUtil.toAbsolute(root, relativeFilePaths);

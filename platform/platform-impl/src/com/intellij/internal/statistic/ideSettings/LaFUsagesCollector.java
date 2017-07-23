@@ -23,7 +23,7 @@ public class LaFUsagesCollector extends UsagesCollector {
       key += SystemInfo.SUN_DESKTOP + " - ";
     }
     return laf != null ? Collections.singleton(new UsageDescriptor(key + laf.getName(), 1))
-                       : Collections.<UsageDescriptor>emptySet();
+                       : Collections.emptySet();
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrFinallyClause;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InstructionImpl;
 
@@ -34,18 +35,20 @@ public class ReturnInstruction extends InstructionImpl {
     return super.toString() + " RETURN";
   }
 
+  @NotNull
   @Override
   protected String getElementPresentation() {
     return "";
   }
 
+  @NotNull
   @Override
-  public Iterable<? extends Instruction> successors(CallEnvironment environment) {
+  public Iterable<Instruction> successors(@NotNull CallEnvironment environment) {
     final Deque<CallInstruction> callStack = environment.callStack(this);
     if (callStack.isEmpty()) return Collections.emptyList();     //can be true in case env was not populated (e.g. by DFA)
 
     final CallInstruction callInstruction = callStack.peek();
-    final Iterable<? extends Instruction> successors = callInstruction.allSuccessors();
+    final Iterable<Instruction> successors = callInstruction.allSuccessors();
     final Deque<CallInstruction> copy = new ArrayDeque<>(callStack);
     copy.pop();
     for (Instruction instruction : successors) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public class StringConcatenationInLoop
         }
         for(int i = 0; i < 5; i++)
         {
-            baz( foo <warning descr="String concatenation '+' in loop">+</warning> "  " + i);
+            baz( foo + "  " + i);
         }
         for(int i = 0; i < 5; i++)
         {
@@ -52,6 +52,80 @@ public class StringConcatenationInLoop
             {
                 throw new Error("foo" + i);
             }
+        }
+        String s = "";
+        for(int i = 0; i < 5; i++) {
+            if(i > 2) {
+                s += i;
+                {
+                    System.out.println(s);
+                    break;
+                }
+            }
+        }
+        for(int i = 0; i < 5; i++) {
+            if(i > 2) {
+                s += i;
+                {
+                    System.out.println(s);
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+        for(int i = 0; i < 5; i++) {
+            if(i > 2) {
+                s += i;
+                {
+                    {
+                        System.out.println(i);
+                    }
+                    break;
+                }
+            }
+        }
+        for(int i = 0; i < 5; i++) {
+            if(i > 2) {
+                s <warning descr="String concatenation '+=' in loop">+=</warning> i;
+                {
+                    System.out.println(i);
+                }
+                System.out.println(i);
+            }
+        }
+        for (int i = 0; i < 10; i++) {
+            if (i == 5) {
+                // concatenated only on single iteration
+                s += i;
+            }
+            System.out.println(i);
+        }
+        List<String> strings = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            s += i;
+            if (s.length() > 0) {
+                strings.add(s); // the whole string is used on every iteration anyways: it's useless to create a StringBuilder here
+            }
+        }
+        for (int i = 0; i < 10; i++) {
+            s <warning descr="String concatenation '+=' in loop">+=</warning> i;
+            if (i == 5 && s.length() > 0) {
+                strings.add(s); // the whole string is used, but only once: it's still reasonable to migrate to StringBuilder
+            }
+        }
+        for (int i = 0; i < 10; i++) {
+            s <warning descr="String concatenation '+=' in loop">+=</warning> i;
+            if (s.length() > 50) {
+                strings.add(s); // the whole string is used, but it's recreated after the usage: it's still reasonable to migrate to StringBuilder
+                s = "";
+            }
+        }
+        for (int i = 0; i < 10; i++) {
+            s = (s == "") + "...";
+        }
+        for (int i = 0; i < 10; i++) {
+            s = ("xyz" <warning descr="String concatenation '+' in loop">+</warning> (i <warning descr="String concatenation '+' in loop">+</warning> s)) <warning descr="String concatenation '+' in loop">+</warning> "...";
         }
         System.out.println(foo);
         return foo;
@@ -162,7 +236,7 @@ public class StringConcatenationInLoop
         String s = "asdf";
         final int len =  array.length;
         for (int k = 0; k < len; k++) {
-            array[k] <warning descr="String concatenation '+=' in loop">+=</warning> "b";
+            array[k] += "b";
             s <warning descr="String concatenation '+=' in loop">+=</warning> k;
         }
     }
@@ -170,6 +244,30 @@ public class StringConcatenationInLoop
     void bla() {
         while (true) {
             System.out.println("a" + "b" + "c");
+        }
+    }
+
+    String field;
+    StringConcatenationInLoop parent;
+
+    void fieldTest() {
+        for(int i=0; i<10; i++) {
+            field = this.field <warning descr="String concatenation '+' in loop">+</warning> "x";
+        }
+        for(int i=0; i<10; i++) {
+            this.field = field <warning descr="String concatenation '+' in loop">+</warning> "x";
+        }
+        for(int i=0; i<10; i++) {
+            this.field = this.field <warning descr="String concatenation '+' in loop">+</warning> "x";
+        }
+        for(int i=0; i<10; i++) {
+            this.field = parent.field + "x";
+        }
+        for(int i=0; i<10; i++) {
+            parent.field = this.field + "x";
+        }
+        for(int i=0; i<10; i++) {
+            parent.field = this.parent.field <warning descr="String concatenation '+' in loop">+</warning> "x";
         }
     }
 }

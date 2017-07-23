@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,9 @@ package com.jetbrains.python;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 
 /**
@@ -161,7 +159,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testAsyncDefReturnType() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("__coroutine[int]",
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("Coroutine[Any, Any, int]",
            "async def foo(x):\n" +
            "    await x\n" +
            "    return 0\n" +
@@ -263,7 +261,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20770
   public void testAsyncGenerator() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest("__asyncgenerator[int, Any]",
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest("AsyncGenerator[int, Any]",
                                                               "async def asyncgen():\n" +
                                                               "    yield 42\n" +
                                                               "expr = asyncgen()"));
@@ -271,7 +269,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20770
   public void testAsyncGeneratorDunderAiter() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest("AsyncIterator[int]",
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest("AsyncGenerator[int, Any]",
                                                               "async def asyncgen():\n" +
                                                               "    yield 42\n" +
                                                               "expr = asyncgen().__aiter__()"));
@@ -450,7 +448,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20757
   public void testMinElseNone() {
-    doTest("Union[None, Any]",
+    doTest("Optional[Any]",
            "def get_value(v):\n" +
            "    if v:\n" +
            "        return min(v)\n" +
@@ -481,15 +479,131 @@ public class Py3TypeTest extends PyTestCase {
            "expr = sum([1, 2, 3])");
   }
 
-  public void testDecimalDividedByInt() {
-    doTest("Union[int, Decimal]",
-           "class Decimal(object):\n" +
-           "    def __div__(self, other):\n" +
-           "        \"\"\"\n" +
-           "        :rtype: Decimal" +
-           "        \"\"\"\n" +
-           "        pass\n" +
-           "expr = Decimal() / 5");
+  public void testNumpyResolveRaterDoesNotIncreaseRateForNotNdarrayRightOperatorFoundInStub() {
+    myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
+    doTest("Union[D1, D2]",
+           "class D1(object):\n" +
+           "    pass\n" +
+           "class D2(object):\n" +
+           "    pass\n" +
+           "expr = D1() / D2()");
+  }
+
+  // PY-22181
+  public void testIterationOverIterableWithSeparateIterator() {
+    doTest("int",
+           "class AIter(object):\n" +
+           "    def __next__(self):\n" +
+           "        return 5\n" +
+           "class A(object):\n" +
+           "    def __iter__(self):\n" +
+           "        return AIter()\n" +
+           "a = A()\n" +
+           "for expr in a:\n" +
+           "    print(expr)");
+  }
+
+  // PY-22181
+  public void testAsyncIterationOverIterableWithSeparateIterator() {
+    doTest("int",
+           "class AIter(object):\n" +
+           "    def __anext__(self):\n" +
+           "        return 5\n" +
+           "class A(object):\n" +
+           "    def __aiter__(self):\n" +
+           "        return AIter()\n" +
+           "a = A()\n" +
+           "async for expr in a:\n" +
+           "    print(expr)");
+  }
+
+  // PY-21655
+  public void testUsageOfFunctionDecoratedWithAsyncioCoroutine() {
+    myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("int",
+                                                              "import asyncio\n" +
+                                                              "@asyncio.coroutine\n" +
+                                                              "def foo():\n" +
+                                                              "    yield from asyncio.sleep(1)\n" +
+                                                              "    return 3\n" +
+                                                              "async def bar():\n" +
+                                                              "    expr = await foo()\n" +
+                                                              "    return expr"));
+  }
+
+  // PY-21655
+  public void testUsageOfFunctionDecoratedWithTypesCoroutine() {
+    myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("int",
+                                                              "import asyncio\n" +
+                                                              "import types\n" +
+                                                              "@types.coroutine\n" +
+                                                              "def foo():\n" +
+                                                              "    yield from asyncio.sleep(1)\n" +
+                                                              "    return 3\n" +
+                                                              "async def bar():\n" +
+                                                              "    expr = await foo()\n" +
+                                                              "    return expr"));
+  }
+
+  // PY-22513
+  public void testGenericKwargs() {
+    doTest("Dict[str, Union[int, str]]",
+           "from typing import Any, Dict, TypeVar\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "def generic_kwargs(**kwargs: T) -> Dict[str, T]:\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = generic_kwargs(a=1, b='foo')\n");
+  }
+
+  // PY-19323
+  public void testReturnedTypingCallable() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("(...) -> Any",
+                   "from typing import Callable\n" +
+                   "def f() -> Callable:\n" +
+                   "    pass\n" +
+                   "expr = f()")
+    );
+  }
+
+  public void testReturnedTypingCallableWithUnknownParameters() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("(...) -> int",
+                   "from typing import Callable\n" +
+                   "def f() -> Callable[..., int]:\n" +
+                   "    pass\n" +
+                   "expr = f()")
+    );
+  }
+
+  public void testReturnedTypingCallableWithKnownParameters() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("(int, str) -> int",
+                   "from typing import Callable\n" +
+                   "def f() -> Callable[[int, str], int]:\n" +
+                   "    pass\n" +
+                   "expr = f()")
+    );
+  }
+
+  // PY-24445
+  public void testIsSubclassInsideListComprehension() {
+    doTest("List[Type[A]]",
+           "class A: pass\n" +
+           "expr = [e for e in [] if issubclass(e, A)]");
+  }
+
+  public void testIsInstanceInsideListComprehension() {
+    doTest("List[A]",
+           "class A: pass\n" +
+           "expr = [e for e in [] if isinstance(e, A)]");
   }
 
   private void doTest(final String expectedType, final String text) {
@@ -499,11 +613,5 @@ public class Py3TypeTest extends PyTestCase {
     final PsiFile containingFile = expr.getContainingFile();
     assertType(expectedType, expr, TypeEvalContext.codeAnalysis(project, containingFile));
     assertType(expectedType, expr, TypeEvalContext.userInitiated(project, containingFile));
-  }
-
-  private static void assertType(String expectedType, PyExpression expr, TypeEvalContext context) {
-    final PyType actual = context.getType(expr);
-    final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
-    assertEquals(expectedType, actualType);
   }
 }

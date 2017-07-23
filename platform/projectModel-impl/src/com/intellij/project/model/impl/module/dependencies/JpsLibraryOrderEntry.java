@@ -73,14 +73,16 @@ public class JpsLibraryOrderEntry extends JpsExportableOrderEntry<JpsLibraryDepe
     return getRootUrls(rootType);
   }
 
+  @NotNull
   @Override
-  public VirtualFile[] getRootFiles(OrderRootType type) {
+  public VirtualFile[] getRootFiles(@NotNull OrderRootType type) {
     final Library library = getLibrary();
     return library != null ? library.getFiles(type) : VirtualFile.EMPTY_ARRAY;
   }
 
+  @NotNull
   @Override
-  public String[] getRootUrls(OrderRootType type) {
+  public String[] getRootUrls(@NotNull OrderRootType type) {
     final Library library = getLibrary();
     return library != null ? library.getUrls(type) : ArrayUtil.EMPTY_STRING_ARRAY;
   }

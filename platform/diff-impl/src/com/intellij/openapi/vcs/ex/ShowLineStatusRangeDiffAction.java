@@ -22,6 +22,7 @@ import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -29,8 +30,11 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.diff.util.DiffUtil.getLineCount;
 
 public class ShowLineStatusRangeDiffAction extends DumbAwareAction {
   private final LineStatusTrackerBase myLineStatusTracker;
@@ -39,7 +43,7 @@ public class ShowLineStatusRangeDiffAction extends DumbAwareAction {
   public ShowLineStatusRangeDiffAction(@NotNull LineStatusTrackerBase lineStatusTracker, @NotNull Range range, @Nullable Editor editor) {
     myLineStatusTracker = lineStatusTracker;
     myRange = range;
-    ActionUtil.copyFrom(this, "ChangesView.Diff");
+    ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON);
   }
 
   public void update(final AnActionEvent e) {
@@ -56,8 +60,10 @@ public class ShowLineStatusRangeDiffAction extends DumbAwareAction {
     Range range = expand(myRange, myLineStatusTracker.getDocument(), myLineStatusTracker.getVcsDocument());
 
     DiffContent vcsContent = createDiffContent(myLineStatusTracker.getVcsDocument(),
+                                               myLineStatusTracker.getVirtualFile(),
                                                myLineStatusTracker.getVcsTextRange(range));
     DiffContent currentContent = createDiffContent(myLineStatusTracker.getDocument(),
+                                                   myLineStatusTracker.getVirtualFile(),
                                                    myLineStatusTracker.getCurrentTextRange(range));
 
     return new SimpleDiffRequest(VcsBundle.message("dialog.title.diff.for.range"),
@@ -68,16 +74,16 @@ public class ShowLineStatusRangeDiffAction extends DumbAwareAction {
   }
 
   @NotNull
-  private DiffContent createDiffContent(@NotNull Document document, @NotNull TextRange textRange) {
+  private DiffContent createDiffContent(@NotNull Document document, @Nullable VirtualFile highlightFile, @NotNull TextRange textRange) {
     final Project project = myLineStatusTracker.getProject();
-    DocumentContent content = DiffContentFactory.getInstance().create(project, document);
+    DocumentContent content = DiffContentFactory.getInstance().create(project, document, highlightFile);
     return DiffContentFactory.getInstance().createFragment(project, content, textRange);
   }
 
   @NotNull
   private static Range expand(@NotNull Range range, @NotNull Document document, @NotNull Document uDocument) {
     boolean canExpandBefore = range.getLine1() != 0 && range.getVcsLine1() != 0;
-    boolean canExpandAfter = range.getLine2() < document.getLineCount() && range.getVcsLine2() < uDocument.getLineCount();
+    boolean canExpandAfter = range.getLine2() < getLineCount(document) && range.getVcsLine2() < getLineCount(uDocument);
     int offset1 = range.getLine1() - (canExpandBefore ? 1 : 0);
     int uOffset1 = range.getVcsLine1() - (canExpandBefore ? 1 : 0);
     int offset2 = range.getLine2() + (canExpandAfter ? 1 : 0);

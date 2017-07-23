@@ -46,7 +46,6 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.library.RepositoryAttachHandler;
 
 import java.util.*;
 
@@ -174,7 +173,7 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
     if (name != null && name.startsWith(MavenArtifact.MAVEN_LIB_PREFIX)) {
       //it would be better to use RepositoryLibraryType for libraries imported from Maven and fetch mavenId from the library properties instead
       String mavenCoordinates = StringUtil.trimStart(name, MavenArtifact.MAVEN_LIB_PREFIX);
-      return addDependency(Collections.singletonList(from), RepositoryAttachHandler.getMavenId(mavenCoordinates), scope);
+      return addDependency(Collections.singletonList(from), new MavenId(mavenCoordinates), scope);
     }
     return null;
   }

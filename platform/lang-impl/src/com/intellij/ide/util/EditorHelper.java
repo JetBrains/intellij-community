@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +29,9 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public class EditorHelper {
   public static <T extends PsiElement> void openFilesInEditor(@NotNull T[] elements) {
-    final int limit = UISettings.getInstance().EDITOR_TAB_LIMIT;
+    final int limit = UISettings.getInstance().getEditorTabLimit();
     final int max = Math.min(limit, elements.length);
     for (int i = 0; i < max; i++) {
       openInEditor(elements[i], true);

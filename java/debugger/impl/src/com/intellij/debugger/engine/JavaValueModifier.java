@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
-import com.intellij.openapi.progress.util.ProgressWindowWithNotification;
+import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -68,7 +68,7 @@ public abstract class JavaValueModifier extends XValueModifier {
         }
 
         @Override
-        public void contextAction() throws Exception {
+        public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
           callback.setValue(
             StringUtil.wrapWithDoubleQuote(DebuggerUtils.translateStringValue(DebuggerUtils.getValueAsString(evaluationContext, value))));
         }
@@ -187,16 +187,7 @@ public abstract class JavaValueModifier extends XValueModifier {
           setValue(expressionToShow, evaluator, evaluationContext, setValueRunnable);
         }
       }
-      catch (InvocationException e) {
-        throw EvaluateExceptionUtil.createEvaluateException(e);
-      }
-      catch (ClassNotLoadedException e) {
-        throw EvaluateExceptionUtil.createEvaluateException(e);
-      }
-      catch (IncompatibleThreadStateException e) {
-        throw EvaluateExceptionUtil.createEvaluateException(e);
-      }
-      catch (InvalidTypeException e) {
+      catch (InvocationException | InvalidTypeException | IncompatibleThreadStateException | ClassNotLoadedException e) {
         throw EvaluateExceptionUtil.createEvaluateException(e);
       }
       catch (ObjectCollectedException e) {
@@ -206,7 +197,7 @@ public abstract class JavaValueModifier extends XValueModifier {
   }
 
   protected void set(@NotNull final String expression, final XModificationCallback callback, final DebuggerContextImpl debuggerContext, final SetValueRunnable setValueRunnable) {
-    final ProgressWindowWithNotification progressWindow = new ProgressWindowWithNotification(true, debuggerContext.getProject());
+    final ProgressWindow progressWindow = new ProgressWindow(true, debuggerContext.getProject());
     final EvaluationContextImpl evaluationContext = myJavaValue.getEvaluationContext();
 
     SuspendContextCommandImpl askSetAction = new DebuggerContextCommandImpl(debuggerContext) {

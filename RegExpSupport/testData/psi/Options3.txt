@@ -3,8 +3,9 @@ REGEXP_FILE
     RegExpBranchImpl: <(?idm-suxU)one(?suxU-idm)two>
       RegExpSetOptionsImpl: <(?idm-suxU)>
         PsiElement(SET_OPTIONS)('(?')
-        RegExpOptionsImpl: <idm-suxU>
+        RegExpOptionsImpl: <idm>
           PsiElement(OPTIONS_ON)('idm')
+        RegExpOptionsImpl: <-suxU>
           PsiElement(OPTIONS_OFF)('-suxU')
         PsiElement(GROUP_END)(')')
       RegExpCharImpl: <o>
@@ -15,8 +16,9 @@ REGEXP_FILE
         PsiElement(CHARACTER)('e')
       RegExpSetOptionsImpl: <(?suxU-idm)>
         PsiElement(SET_OPTIONS)('(?')
-        RegExpOptionsImpl: <suxU-idm>
+        RegExpOptionsImpl: <suxU>
           PsiElement(OPTIONS_ON)('suxU')
+        RegExpOptionsImpl: <-idm>
           PsiElement(OPTIONS_OFF)('-idm')
         PsiElement(GROUP_END)(')')
       RegExpCharImpl: <t>

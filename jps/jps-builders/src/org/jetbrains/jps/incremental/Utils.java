@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtilRt;
 import org.jetbrains.annotations.Nullable;
@@ -26,8 +25,9 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Locale;
 import java.util.Map;
@@ -69,19 +69,19 @@ public class Utils {
     String name;
     final int locationHash;
 
-    final File rootFile = new File(projectPath);
-    if (!rootFile.isDirectory() && projectPath.endsWith(".ipr")) {
-      name = StringUtil.trimEnd(rootFile.getName(), ".ipr");
+    final Path rootFile = Paths.get(projectPath);
+    if (!Files.isDirectory(rootFile) && projectPath.endsWith(".ipr")) {
+      name = StringUtil.trimEnd(rootFile.getFileName().toString(), ".ipr");
       locationHash = projectPath.hashCode();
     }
     else {
-      File directoryBased = null;
-      if (PathMacroUtil.DIRECTORY_STORE_NAME.equals(rootFile.getName())) {
+      Path directoryBased = null;
+      if (rootFile.endsWith(PathMacroUtil.DIRECTORY_STORE_NAME)) {
         directoryBased = rootFile;
       }
       else {
-        File child = new File(rootFile, PathMacroUtil.DIRECTORY_STORE_NAME);
-        if (child.exists()) {
+        Path child = rootFile.resolve(PathMacroUtil.DIRECTORY_STORE_NAME);
+        if (Files.exists(child)) {
           directoryBased = child;
         }
       }
@@ -89,38 +89,10 @@ public class Utils {
         return null;
       }
       name = PathUtilRt.suggestFileName(JpsProjectLoader.getDirectoryBaseProjectName(directoryBased));
-      locationHash = directoryBased.getPath().hashCode();
+      locationHash = directoryBased.toString().hashCode();
     }
 
     return new File(systemRoot, name.toLowerCase(Locale.US) + "_" + Integer.toHexString(locationHash));
-  }
-
-  public static URI toURI(String localPath) {
-    try {
-      String p = FileUtilRt.toSystemIndependentName(localPath);
-      if (!p.startsWith("/")) {
-        p = "/" + p;
-      }
-      if (!p.startsWith("//")) {
-        p = "//" + p;
-      }
-      return new URI("file", null, p, null);
-    }
-    catch (URISyntaxException e) {
-      throw new Error(e);
-    }
-  }
-
-  @Nullable
-  public static File convertToFile(final URI uri) {
-    if (uri == null) {
-      return null;
-    }
-    final String path = uri.getPath();
-    if (path == null) {
-      return null;
-    }
-    return new File(toURI(path));
   }
 
   public static boolean errorsDetected(CompileContext context) {

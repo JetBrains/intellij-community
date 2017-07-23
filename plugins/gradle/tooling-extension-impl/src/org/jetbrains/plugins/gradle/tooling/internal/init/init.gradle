@@ -1,45 +1,59 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+
+import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.tooling.provider.model.ToolingModelBuilderRegistry
 import org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder
 
-@SuppressWarnings("GrPackage")
-class JetGradlePlugin implements Plugin<Project> {
-  private final ToolingModelBuilderRegistry registry
-
-  @javax.inject.Inject
-  public JetGradlePlugin(ToolingModelBuilderRegistry registry) {
-    this.registry = registry
-  }
-
-  public void apply(Project project) {
-    registry.register(project.extraModelBuilder)
-  }
-}
-
 System.setProperty("idea.active", "true")
-
 initscript {
   dependencies {
     classpath files(${EXTENSIONS_JARS_PATH})
   }
 }
 
-def extraModelBuilderInstance = new ExtraModelBuilder()
-allprojects {
-  ext.extraModelBuilder = extraModelBuilderInstance
-  apply plugin: JetGradlePlugin
+apply plugin: JetGradlePlugin
+
+@SuppressWarnings("GrPackage")
+class JetGradlePlugin implements Plugin<Gradle> {
+  void apply(Gradle gradle) {
+    def extraModelBuilderInstance = new ExtraModelBuilder()
+    def isCompositeBuildsSupported = GradleVersion.current() >= GradleVersion.version("3.1")
+    def isOldGradle = !isCompositeBuildsSupported && GradleVersion.current() <= GradleVersion.version("2.13")
+    Set<ToolingModelBuilderRegistry> rootRegistries = new HashSet<>()
+    Set<ToolingModelBuilderRegistry> registries = new HashSet<>()
+    if (isOldGradle) {
+      gradle.allprojects { project ->
+        registries.add(((ProjectInternal)project).services.get(ToolingModelBuilderRegistry.class))
+      }
+    }
+    else {
+      gradle.rootProject { project ->
+        registries.add(((ProjectInternal)project).services.get(ToolingModelBuilderRegistry.class))
+        try {
+          if (isCompositeBuildsSupported) {
+            project.gradle.includedBuilds.each {
+              registries.add(it.configuredBuild.services.get(ToolingModelBuilderRegistry.class))
+            }
+          }
+        }
+        catch (ignore) {
+        }
+      }
+    }
+    gradle.rootProject {
+      registries.each {
+        def registry = it
+        while(registry.hasProperty('parent') && registry.parent != null) {
+          registry = registry.parent
+        }
+        rootRegistries.add(registry)
+      }
+      rootRegistries.each {
+        if (it.hasProperty('builders') && it.builders instanceof Collection &&
+            (it.builders as Collection).find { it instanceof ExtraModelBuilder} != null) {
+          return
+        }
+        it.register(extraModelBuilderInstance)
+      }
+    }
+  }
 }

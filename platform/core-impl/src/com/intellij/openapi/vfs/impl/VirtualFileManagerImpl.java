@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.KeyedExtensionCollector;
@@ -49,7 +50,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
       }
     };
 
-  private final List<VirtualFileSystem> myPhysicalFileSystems = new ArrayList<VirtualFileSystem>();
+  private final List<VirtualFileSystem> myPhysicalFileSystems = new ArrayList<>();
   private final EventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster = EventDispatcher.create(VirtualFileListener.class);
   private final List<VirtualFileManagerListener> myVirtualFileManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private int myRefreshCount;
@@ -59,7 +60,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
       registerFileSystem(fileSystem);
     }
 
-    if (LOG.isDebugEnabled()) {
+    if (LOG.isDebugEnabled() && !ApplicationInfoImpl.isInStressTest()) {
       addVirtualFileListener(new LoggingListener());
     }
 
@@ -84,8 +85,11 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
   public VirtualFileSystem getFileSystem(@Nullable String protocol) {
     if (protocol == null) return null;
     List<VirtualFileSystem> systems = myCollector.forKey(protocol);
-    if (systems.isEmpty()) return null;
-    LOG.assertTrue(systems.size() == 1);
+    int size = systems.size();
+    if (size == 0) return null;
+    if (size > 1) {
+      LOG.error(protocol + ": " + systems);
+    }
     return systems.get(0);
   }
 
@@ -177,12 +181,7 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx {
   @Override
   public void addVirtualFileManagerListener(@NotNull final VirtualFileManagerListener listener, @NotNull Disposable parentDisposable) {
     addVirtualFileManagerListener(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeVirtualFileManagerListener(listener);
-      }
-    });
+    Disposer.register(parentDisposable, () -> removeVirtualFileManagerListener(listener));
   }
 
   @Override

@@ -17,10 +17,10 @@ package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.vcs.ProgressManagerQueue;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.CalledInBackground;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.ProgressManagerQueue;
+import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -62,12 +62,7 @@ public class NewRootBunch {
       }
 
       if (reload && override) {
-        myBranchesLoader.run(new Runnable() {
-          @Override
-          public void run() {
-            reloadBranches(root, previous, config.getValue());
-          }
-        });
+        myBranchesLoader.run(() -> reloadBranches(root, previous, config.getValue()));
       }
     }
   }
@@ -104,16 +99,11 @@ public class NewRootBunch {
   public void reloadBranchesAsync(@NotNull final VirtualFile root,
                                   @NotNull final String branchLocation,
                                   @NotNull final InfoReliability reliability) {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        reloadBranches(root, branchLocation, reliability, true);
-      }
-    });
+    ApplicationManager.getApplication().executeOnPooledThread(() -> reloadBranches(root, branchLocation, reliability, true));
   }
 
   public void reloadBranches(@NotNull VirtualFile root, @Nullable SvnBranchConfigurationNew prev, @NotNull SvnBranchConfigurationNew next) {
-    final Set<String> oldUrls = (prev == null) ? Collections.<String>emptySet() : new HashSet<>(prev.getBranchUrls());
+    final Set<String> oldUrls = (prev == null) ? Collections.emptySet() : new HashSet<>(prev.getBranchUrls());
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     if (!vcs.isVcsBackgroundOperationsAllowed(root)) return;
 

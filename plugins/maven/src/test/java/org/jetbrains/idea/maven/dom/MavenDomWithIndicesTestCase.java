@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ public abstract class MavenDomWithIndicesTestCase extends MavenDomTestCase {
   }
 
   protected MavenIndicesTestFixture createIndicesFixture() {
-    return new MavenIndicesTestFixture(myDir, myProject);
+    return new MavenIndicesTestFixture(myDir.toPath(), myProject);
   }
 
   @Override
@@ -36,6 +36,7 @@ public abstract class MavenDomWithIndicesTestCase extends MavenDomTestCase {
     try {
       if (myIndicesFixture != null) {
         myIndicesFixture.tearDown();
+        myIndicesFixture = null;
       }
     }
     finally {

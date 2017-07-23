@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.roots.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
@@ -43,7 +44,7 @@ public class ModifiableModelCommitter {
 
     final List<RootModelImpl> modelsToCommit = getSortedChangedModels(rootModels, moduleModel);
 
-    final List<ModifiableRootModel> modelsToDispose = ContainerUtil.newArrayList(rootModels);
+    final List<ModifiableRootModel> modelsToDispose = new SmartList<>(rootModels);
     modelsToDispose.removeAll(modelsToCommit);
 
     ModuleManagerImpl.commitModelWithRunnable(moduleModel, () -> {
@@ -51,24 +52,33 @@ public class ModifiableModelCommitter {
         ModuleRootManagerImpl.doCommit(model);
       }
       for (ModifiableRootModel model : modelsToDispose) {
+        if (model instanceof RootModelImpl) {
+          ((RootModelImpl)model).checkModuleExtensionModification();
+        }
         model.dispose();
       }
     });
   }
 
+  @NotNull
   private static List<RootModelImpl> getSortedChangedModels(Collection<ModifiableRootModel> rootModels, ModifiableModuleModel moduleModel) {
-    List<RootModelImpl> result = ContainerUtil.newArrayListWithCapacity(rootModels.size());
-
+    List<RootModelImpl> result = null;
     for (ModifiableRootModel model : rootModels) {
       RootModelImpl rootModel = (RootModelImpl)model;
       if (rootModel.isChanged()) {
+        if (result == null) {
+          result = new SmartList<>();
+        }
         result.add(rootModel);
       }
     }
 
-    DFSTBuilder<RootModelImpl> builder = createDFSTBuilder(result, moduleModel);
-    Collections.sort(result, builder.comparator());
-
+    if (result == null) {
+      return Collections.emptyList();
+    }
+    if (result.size() > 1) {
+      result.sort(createDFSTBuilder(result, moduleModel).comparator());
+    }
     return result;
   }
 

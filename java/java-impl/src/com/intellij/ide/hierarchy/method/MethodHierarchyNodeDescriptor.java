@@ -20,6 +20,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.JavaHierarchyUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.util.Comparing;
@@ -28,6 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -52,8 +54,14 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
     myTreeStructure = treeStructure;
   }
 
+  @Nullable
   PsiMethod getMethod(final PsiClass aClass, final boolean checkBases) {
-    return MethodHierarchyUtil.findBaseMethodInClass(myTreeStructure.getBaseMethod(), aClass, checkBases);
+    try {
+      return MethodHierarchyUtil.findBaseMethodInClass(myTreeStructure.getBaseMethod(), aClass, checkBases);
+    }
+    catch (IndexNotReadyException e) {
+      return null;
+    }
   }
 
   public final PsiElement getPsiClass() {

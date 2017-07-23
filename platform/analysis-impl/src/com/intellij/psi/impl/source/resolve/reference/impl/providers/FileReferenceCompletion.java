@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -25,5 +26,6 @@ public abstract class FileReferenceCompletion {
     return ServiceManager.getService(FileReferenceCompletion.class);
   }
 
+  @NotNull
   public abstract Object[] getFileReferenceCompletionVariants(FileReference reference);
 }

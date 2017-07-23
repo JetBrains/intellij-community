@@ -31,7 +31,8 @@ import com.intellij.openapi.externalSystem.model.project.Identifiable;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
+import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
@@ -123,7 +124,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
   }
 
   private void init(@NotNull ExternalProjectInfo projectInfo) {
-    ProjectDataManager.getInstance().ensureTheDataIsReadyToUse(projectInfo.getExternalProjectStructure());
+    ProjectDataManagerImpl.getInstance().ensureTheDataIsReadyToUse(projectInfo.getExternalProjectStructure());
     myProjectInfo = projectInfo;
     myExternalSystemUiAware = ExternalSystemUiUtil.getUiAware(myProjectInfo.getProjectSystemId());
     myTree = createTree();
@@ -181,7 +182,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
     final Couple<CheckedTreeNode> rootAndPreselectedNode = createRoot();
     final CheckedTreeNode rootCopy = rootAndPreselectedNode.first;
 
-    List<TreeNode> nodes = TreeUtil.childrenToArray(rootCopy);
+    List<TreeNode> nodes = TreeUtil.listChildren(rootCopy);
     rootNode.removeAllChildren();
     TreeUtil.addChildrenTo(rootNode, nodes);
     treeModel.reload();
@@ -391,7 +392,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
       }
     }
 
-    List<TreeNode> nodes = projectNode != null ? TreeUtil.childrenToArray(projectNode) : ContainerUtil.emptyList();
+    List<TreeNode> nodes = projectNode != null ? TreeUtil.listChildren(projectNode) : ContainerUtil.emptyList();
     Collections.sort(nodes, (o1, o2) -> {
       if(o1 instanceof DataNodeCheckedTreeNode && o2 instanceof DataNodeCheckedTreeNode) {
         if (rootModuleComment.equals(((DataNodeCheckedTreeNode)o1).comment)) return -1;

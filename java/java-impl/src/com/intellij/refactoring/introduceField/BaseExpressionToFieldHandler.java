@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 29.05.2002
- * Time: 13:05:34
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -132,9 +124,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     if (classes.size() == 1 || editor == null || ApplicationManager.getApplication().isUnitTestMode() || shouldSuggestDialog) {
       return !convertExpressionToField(selectedExpr, editor, file, project, tempType);
     }
-    else {
+    else if (!classes.isEmpty()){
       PsiClass selection = AnonymousTargetClassPreselectionUtil.getPreselection(classes, myParentClass);
-      NavigationUtil.getPsiElementPopup(classes.toArray(new PsiClass[classes.size()]), PsiClassListCellRenderer.INSTANCE,
+      NavigationUtil.getPsiElementPopup(classes.toArray(new PsiClass[classes.size()]), new PsiClassListCellRenderer(),
                                         "Choose class to introduce " + (myIsConstant ? "constant" : "field"),
                                         new PsiElementProcessor<PsiClass>() {
                                           @Override
@@ -160,8 +152,13 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                                             getRefactoringName(), getHelpID());
         return true;
       }
+      else if ("package-info.java".equals(file.getName())) {
+        CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("error.not.supported.for.package.info", getRefactoringName()),
+                                            getRefactoringName(), getHelpID());
+        return true;
+      }
       else {
-        LOG.assertTrue(false);
+        LOG.error(file);
         return true;
       }
     }
@@ -263,11 +260,11 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     while (child != null) {
       PsiElement prev = child.getPrevSibling();
       if (RefactoringUtil.isExpressionAnchorElement(prev)) break;
-      if (prev instanceof PsiJavaToken && ((PsiJavaToken)prev).getTokenType() == JavaTokenType.LBRACE) break;
+      if (PsiUtil.isJavaToken(prev, JavaTokenType.LBRACE)) break;
       child = prev;
     }
 
-    child = PsiTreeUtil.skipSiblingsForward(child, PsiWhiteSpace.class, PsiComment.class);
+    child = PsiTreeUtil.skipWhitespacesAndCommentsForward(child);
     PsiElement anchor;
     if (child != null) {
       anchor = child;
@@ -738,7 +735,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         PsiMember anchorMember = finalAnchorElement instanceof PsiMember ? (PsiMember)finalAnchorElement : null;
 
         if (anchorMember instanceof PsiEnumConstant && destClass == anchorMember.getContainingClass() &&
-            PsiTreeUtil.isAncestor(((PsiEnumConstant)anchorMember).getArgumentList(), initializer, false)) {
+            initializer != null && PsiTreeUtil.isAncestor(((PsiEnumConstant)anchorMember).getArgumentList(), initializer, false)) {
           final String initialName = "Constants";
           String constantsClassName = initialName;
 
@@ -801,7 +798,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
             if (parent instanceof PsiClass) break;
             endElement = parent;
           }
-          PsiElement last = PsiTreeUtil.skipSiblingsBackward(endElement, PsiWhiteSpace.class);
+          PsiElement last = PsiTreeUtil.skipWhitespacesBackward(endElement);
           if (last.getTextRange().getStartOffset() < myElement.getTextRange().getStartOffset()) {
             last = myElement;
           }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -31,7 +32,6 @@ import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
-import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.impl.ParameterInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementBuilder;
@@ -62,18 +62,10 @@ public abstract class StructuralSearchProfile {
   public abstract PsiElementVisitor createMatchingVisitor(@NotNull GlobalMatchingVisitor globalVisitor);
 
   @NotNull
-  public abstract PsiElementVisitor getLexicalNodesFilter(@NotNull LexicalNodesFilter filter);
+  public abstract NodeFilter getLexicalNodesFilter();
 
   @NotNull
   public abstract CompiledPattern createCompiledPattern();
-
-  public static String getTypeName(FileType fileType) {
-    return fileType.getName().toLowerCase();
-  }
-
-  public final boolean canProcess(@NotNull FileType fileType) {
-    return fileType instanceof LanguageFileType && isMyLanguage(((LanguageFileType)fileType).getLanguage());
-  }
 
   public abstract boolean isMyLanguage(@NotNull Language language);
 
@@ -167,13 +159,8 @@ public abstract class StructuralSearchProfile {
   }
 
   public void checkReplacementPattern(Project project, ReplaceOptions options) {
-    String fileType = getTypeName(options.getMatchOptions().getFileType());
+    String fileType = options.getMatchOptions().getFileType().getName().toLowerCase();
     throw new UnsupportedPatternException(SSRBundle.message("replacement.not.supported.for.filetype", fileType));
-  }
-
-  @NotNull
-  public Language getLanguage(PsiElement element) {
-    return element.getLanguage();
   }
 
   // only for nodes not filtered by lexical-nodes filter; they can be by default

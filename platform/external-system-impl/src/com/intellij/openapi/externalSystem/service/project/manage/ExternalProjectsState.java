@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewState;
 import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -30,15 +30,7 @@ import java.util.Map;
  * @since 10/23/2014
  */
 public class ExternalProjectsState {
-
-
-  private final Map<String, State> myExternalSystemsState = new NullSafeMap<String, State>() {
-    @Nullable
-    @Override
-    protected State create(String key) {
-      return new State();
-    }
-  };
+  private final Map<String, State> myExternalSystemsState = FactoryMap.createMap(key-> new State());
 
   @Property(surroundWithTag = false)
   @MapAnnotation(surroundWithTag = false, surroundValueWithTag = false, surroundKeyWithTag = false,
@@ -51,23 +43,14 @@ public class ExternalProjectsState {
   public void setExternalSystemsState(Map<String, State> externalSystemsState) {
   }
 
+  @Attribute
+  public boolean storeExternally;
 
   @Tag("state")
   public static class State {
     private ExternalProjectsViewState projectsViewState = new ExternalProjectsViewState();
 
-    private final Map<String, TaskActivationState> myExternalSystemsTaskActivation = new NullSafeMap<String, TaskActivationState>() {
-      @Nullable
-      @Override
-      protected TaskActivationState create(String key) {
-        return new TaskActivationState();
-      }
-
-      @Override
-      protected Map<String, TaskActivationState> createMap() {
-        return new LinkedHashMap<>();
-      }
-    };
+    private final Map<String, TaskActivationState> myExternalSystemsTaskActivation = FactoryMap.createMap(key-> new TaskActivationState(), LinkedHashMap::new);
 
     @Property(surroundWithTag = false)
     @MapAnnotation(keyAttributeName = "path", entryTagName = "task",
@@ -87,14 +70,6 @@ public class ExternalProjectsState {
 
     public void setProjectsViewState(ExternalProjectsViewState projectsViewState) {
       this.projectsViewState = projectsViewState;
-    }
-  }
-
-  public static abstract class NullSafeMap<K,V> extends FactoryMap<K,V> {
-    @Override
-    public V put(K key, V value) {
-      if(value == null) return null;
-      return super.put(key, value);
     }
   }
 }

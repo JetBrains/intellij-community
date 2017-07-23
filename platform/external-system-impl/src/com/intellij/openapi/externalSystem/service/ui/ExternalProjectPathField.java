@@ -47,7 +47,6 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TextAccessor;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.Consumer;
 import com.intellij.util.TextFieldCompletionProvider;
 import com.intellij.util.TextFieldCompletionProviderDumbAware;
 import com.intellij.util.containers.ContainerUtil;
@@ -145,7 +144,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
   @NotNull
   private static Tree buildRegisteredProjectsTree(@NotNull Project project, @NotNull ProjectSystemId externalSystemId) {
     ExternalSystemTasksTreeModel model = new ExternalSystemTasksTreeModel(externalSystemId);
-    ExternalSystemTasksTree result = new ExternalSystemTasksTree(model, ContainerUtilRt.<String, Boolean>newHashMap(), project, externalSystemId);
+    ExternalSystemTasksTree result = new ExternalSystemTasksTree(model, ContainerUtilRt.newHashMap(), project, externalSystemId);
     
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
     assert manager != null;
@@ -219,12 +218,12 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
     String rawText = editor.getDocument().getText();
     for (Map.Entry<ExternalProjectPojo, Collection<ExternalProjectPojo>> entry : settings.getAvailableProjects().entrySet()) {
       if (entry.getKey().getPath().equals(rawText)) {
-        collapse(editor, uiAware.getProjectRepresentationName(entry.getKey().getPath(), null));
+        collapse(editor, uiAware.getProjectRepresentationName(project, entry.getKey().getPath(), null));
         return;
       }
       for (ExternalProjectPojo pojo : entry.getValue()) {
         if (pojo.getPath().equals(rawText)) {
-          collapse(editor, uiAware.getProjectRepresentationName(pojo.getPath(), entry.getKey().getPath()));
+          collapse(editor, uiAware.getProjectRepresentationName(project, pojo.getPath(), entry.getKey().getPath()));
           return;
         }
       }

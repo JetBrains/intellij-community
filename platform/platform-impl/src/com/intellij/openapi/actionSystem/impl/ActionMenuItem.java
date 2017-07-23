@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,11 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.components.JBCheckBoxMenuItem;
@@ -52,6 +53,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.HashSet;
 import java.util.Set;
+
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class ActionMenuItem extends JBCheckBoxMenuItem {
   private static final Icon ourCheckedIcon = JBUI.scale(new SizedIcon(PlatformIcons.CHECK_ICON, 18, 18));
@@ -83,7 +86,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     myToggleable = action instanceof Toggleable;
     myInsideCheckedGroup = insideCheckedGroup;
 
-    myEvent = new AnActionEvent(null, context, place, myPresentation, ActionManager.getInstance(), 0);
+    myEvent = new AnActionEvent(null, context, place, myPresentation, ActionManager.getInstance(), 0, true, false);
     addActionListener(new ActionTransmitter());
     setBorderPainted(false);
 
@@ -155,7 +158,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     updateIcon(action);
     String id = ActionManager.getInstance().getId(action);
     if (id != null) {
-      setAcceleratorFromShortcuts(KeymapManager.getInstance().getActiveKeymap().getShortcuts(id));
+      setAcceleratorFromShortcuts(getActiveKeymapShortcuts(id).getShortcuts());
     }
     else {
       final ShortcutSet shortcutSet = action.getShortcutSet();
@@ -209,11 +212,11 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
 
   public void updateContext(@NotNull DataContext context) {
     myContext = context;
-    myEvent = new AnActionEvent(null, context, myPlace, myPresentation, ActionManager.getInstance(), 0);
+    myEvent = new AnActionEvent(null, context, myPlace, myPresentation, ActionManager.getInstance(), 0, true, false);
   }
 
   private void updateIcon(AnAction action) {
-    if (isToggleable() && (myPresentation.getIcon() == null || myInsideCheckedGroup || !UISettings.getInstance().SHOW_ICONS_IN_MENUS)) {
+    if (isToggleable() && (myPresentation.getIcon() == null || myInsideCheckedGroup || !UISettings.getInstance().getShowIconsInMenus())) {
       action.update(myEvent);
       myToggled = Boolean.TRUE.equals(myEvent.getPresentation().getClientProperty(Toggleable.SELECTED_PROPERTY));
       if (ActionPlaces.MAIN_MENU.equals(myPlace) && SystemInfo.isMacSystemMenu ||
@@ -233,7 +236,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
       }
     }
     else {
-      if (UISettings.getInstance().SHOW_ICONS_IN_MENUS) {
+      if (UISettings.getInstance().getShowIconsInMenus()) {
         Icon icon = myPresentation.getIcon();
         if (action instanceof ToggleAction && ((ToggleAction)action).isSelected(myEvent)) {
           icon = new PoppedIcon(icon, 16, 16);
@@ -254,7 +257,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
       if (icon instanceof IconLoader.LazyIcon) {
         // [tav] JDK can't paint correctly our HiDPI icons at the system menu bar
-        icon = ((IconLoader.LazyIcon)icon).inNormalScale(false);
+        icon = ((IconLoader.LazyIcon)icon).inOriginalScale();
       }
     }
     super.setIcon(icon);
@@ -297,7 +300,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
       fm.runOnOwnContext(myContext, () -> {
         final AnActionEvent event = new AnActionEvent(
           new MouseEvent(ActionMenuItem.this, MouseEvent.MOUSE_PRESSED, 0, e.getModifiers(), getWidth() / 2, getHeight() / 2, 1, false),
-          myContext, myPlace, myPresentation, ActionManager.getInstance(), e.getModifiers()
+          myContext, myPlace, myPresentation, ActionManager.getInstance(), e.getModifiers(), true, false
         );
         final AnAction menuItemAction = myAction.getAction();
         if (ActionUtil.lastUpdateAndCheckDumb(menuItemAction, event, false)) {

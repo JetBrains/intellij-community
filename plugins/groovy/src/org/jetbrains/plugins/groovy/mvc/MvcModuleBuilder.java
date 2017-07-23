@@ -17,17 +17,15 @@ package org.jetbrains.plugins.groovy.mvc;
 
 import org.jetbrains.plugins.groovy.config.GroovyAwareModuleBuilder;
 
-import javax.swing.*;
-
 /**
  * @author peter
  */
 public class MvcModuleBuilder extends GroovyAwareModuleBuilder {
   private final MvcFramework myFramework;
 
-  protected MvcModuleBuilder(MvcFramework framework, Icon bigIcon) {
+  protected MvcModuleBuilder(MvcFramework framework) {
     super(framework.getFrameworkName(), framework.getDisplayName(),
-          framework.getDisplayName() + " modules are used for creating <b>" + framework.getDisplayName() + "</b> applications.", bigIcon);
+          framework.getDisplayName() + " modules are used for creating <b>" + framework.getDisplayName() + "</b> applications.");
     myFramework = framework;
   }
 

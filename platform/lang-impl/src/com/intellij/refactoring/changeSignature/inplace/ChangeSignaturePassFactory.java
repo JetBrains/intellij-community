@@ -93,7 +93,7 @@ public class ChangeSignaturePassFactory extends AbstractProjectComponent impleme
         info = builder.createUnconditionally();
         QuickFixAction.registerQuickFixAction(info, new ApplyChangeSignatureAction(currentRefactoring.getInitialName()));
       }
-      Collection<HighlightInfo> infos = info != null ? Collections.singletonList(info) : Collections.<HighlightInfo>emptyList();
+      Collection<HighlightInfo> infos = info != null ? Collections.singletonList(info) : Collections.emptyList();
       UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), infos, getColorsScheme(), getId());
     }
   }

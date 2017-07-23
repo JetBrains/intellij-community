@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 11-Nov-2008
- */
 package org.jetbrains.idea.eclipse;
 
 import com.intellij.openapi.util.Comparing;
@@ -68,10 +64,7 @@ public class EclipseProjectFinder implements EclipseXml {
         }
         name = name.replace("\n", " ").trim();
       }
-      catch (JDOMException e) {
-        return null;
-      }
-      catch (IOException e) {
+      catch (JDOMException | IOException e) {
         return null;
       }
     }

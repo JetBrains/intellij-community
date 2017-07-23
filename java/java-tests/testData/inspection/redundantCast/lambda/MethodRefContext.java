@@ -1,6 +1,6 @@
 class Test {
   {
-    ((Bar) Test::length)._("");
+    ((Bar) Test::length).m("");
   }
 
   public static Integer length(String s) {
@@ -8,6 +8,6 @@ class Test {
   }
 
   interface Bar {
-    Integer _(String s);
+    Integer m(String s);
   }
 }

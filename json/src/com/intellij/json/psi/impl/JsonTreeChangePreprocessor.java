@@ -17,34 +17,24 @@ package com.intellij.json.psi.impl;
 
 import com.intellij.json.JsonLanguage;
 import com.intellij.json.psi.JsonFile;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.PsiTreeChangePreprocessorBase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class JsonTreeChangePreprocessor extends PsiTreeChangePreprocessorBase {
-  public JsonTreeChangePreprocessor(@NotNull Project project) {
-    super(project);
+  public JsonTreeChangePreprocessor(@NotNull PsiManager psiManager) {
+    super(psiManager);
   }
 
   @Override
-  public void treeChanged(@NotNull PsiTreeChangeEventImpl event) {
-    if (event.getFile() instanceof JsonFile) {
-      super.treeChanged(event);
-    }
+  protected boolean acceptsEvent(@NotNull PsiTreeChangeEventImpl event) {
+    return event.getFile() instanceof JsonFile;
   }
 
   @Override
-  protected boolean isInsideCodeBlock(@Nullable PsiElement element) {
-    if (element instanceof PsiFileSystemItem) {
-      return false;
-    }
-    if (element == null || element.getParent() == null) {
-      return true;
-    }
-    return !(element.getLanguage() instanceof JsonLanguage);
+  protected boolean isOutOfCodeBlock(@NotNull PsiElement element) {
+    return element.getLanguage() instanceof JsonLanguage;
   }
 }

@@ -18,10 +18,9 @@ package com.intellij.openapi.vcs.changes.patch.tool;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.merge.MergeResult;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -56,12 +55,7 @@ public class ApplyPatchMergeRequest extends MergeRequest implements ApplyPatchRe
     myResultContent = resultContent;
     myAppliedPatch = appliedPatch;
 
-    myOriginalContent = ApplicationManager.getApplication().runReadAction(new Computable<CharSequence>() {
-      @Override
-      public CharSequence compute() {
-        return myResultContent.getDocument().getImmutableCharSequence();
-      }
-    });
+    myOriginalContent = ReadAction.compute(() -> myResultContent.getDocument().getImmutableCharSequence());
     myLocalContent = localContent;
 
     myWindowTitle = windowTitle;

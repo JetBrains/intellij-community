@@ -15,26 +15,34 @@
  */
 package com.intellij.compiler.backwardRefs;
 
+import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.java.stubs.FunctionalExpressionStub;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFunctionalExpression;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.impl.source.tree.JavaElementType;
-import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public class JavaCompilerElementRetriever {
+  private static final Logger LOG = Logger.getInstance(JavaCompilerElementRetriever.class);
+
   private final static TokenSet FUN_EXPR = TokenSet.create(JavaElementType.LAMBDA_EXPRESSION, JavaElementType.METHOD_REF_EXPRESSION);
 
   @NotNull
@@ -54,115 +62,35 @@ public class JavaCompilerElementRetriever {
         result[resIdx++] = (PsiFunctionalExpression)element.getPsi();
       }
     }
+
+    if (result.length != resIdx) {
+      final CompilerReferenceServiceImpl compilerReferenceService =
+        (CompilerReferenceServiceImpl)CompilerReferenceService.getInstance(psiFile.getProject());
+      final Set<Module> state = compilerReferenceService.getDirtyScopeHolder().getAllDirtyModules();
+      final VirtualFile file = psiFile.getVirtualFile();
+      final Module moduleForFile = ProjectFileIndex.getInstance(psiFile.getProject()).getModuleForFile(file);
+      LOG.error("Compiler functional expression index doesn't match to stub index.\n" +
+                "Functional expression indices: " + indices + "\n" +
+                "Does the file belong to dirty scope?: " + state.contains(moduleForFile),
+                new Attachment(psiFile.getName(), psiFile.getText()));
+
+      return ContainerUtil.filter(result, Objects::nonNull).toArray(PsiFunctionalExpression.EMPTY_ARRAY);
+    }
+
     return result;
   }
 
   @NotNull
-  static PsiClass[] retrieveClassesByInternalNames(@NotNull String[] internalNames,
-                                                   @NotNull PsiNamedElement baseClass,
-                                                   @NotNull PsiFileWithStubSupport psiFile) {
-    Collection<InternalClassMatcher> matchers = createClassMatcher(internalNames, baseClass);
-    return ReadAction.compute(() -> retrieveMatchedClasses(psiFile, matchers).toArray(PsiClass.EMPTY_ARRAY));
+  static PsiClass[] retrieveClassesByInternalIds(@NotNull SearchId[] internalIds,
+                                                 @NotNull PsiFileWithStubSupport psiFile) {
+    ClassMatcher matcher = ClassMatcher.create(internalIds);
+    return ReadAction.compute(() -> matcher.retrieveClasses(psiFile));
   }
 
-  private static List<PsiClass> retrieveMatchedClasses(PsiFileWithStubSupport psiFile, Collection<InternalClassMatcher> matchers) {
-    final List<PsiClass> result = new ArrayList<>(matchers.size());
-    StubTree tree = psiFile.getStubTree();
-    boolean foreign = tree == null;
-    if (foreign) {
-      tree = ((PsiFileImpl)psiFile).calcStubTree();
-    }
-
-    for (StubElement<?> element : tree.getPlainList()) {
-      if (element instanceof PsiClassStub && match((PsiClassStub)element, matchers)) {
-        result.add(((StubBase<PsiClass>)element).getPsi());
-      }
-    }
-
-    return result;
-  }
-
-
-  private static boolean match(PsiClassStub stub, Collection<InternalClassMatcher> matchers) {
-    for (InternalClassMatcher matcher : matchers) {
-      if (matcher.matches(stub)) {
-        //qualified name is unique among file's classes
-        if (matcher instanceof InternalClassMatcher.ByQualifiedName) {
-          matchers.remove(matcher);
-        }
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static Collection<InternalClassMatcher> createClassMatcher(@NotNull String[] internalNames, @NotNull PsiNamedElement baseClass) {
-    boolean matcherBySuperNameAdded = false;
-    final List<InternalClassMatcher> matchers = new ArrayList<>(internalNames.length);
-    for (String internalName : internalNames) {
-      int curLast = internalName.length() - 1;
-      while (true) {
-        int lastIndex = internalName.lastIndexOf('$', curLast);
-        if (lastIndex > -1 && lastIndex < internalName.length() - 1) {
-          final int followingIndex = lastIndex + 1;
-          final boolean digit = Character.isDigit(internalName.charAt(followingIndex));
-          if (digit) {
-            if (curLast == internalName.length() - 1) {
-              final int nextNonDigit = getNextNonDigitIndex(internalName, followingIndex);
-              if (nextNonDigit == -1) {
-                if (matcherBySuperNameAdded) {
-                  break;
-                }
-                matcherBySuperNameAdded = true;
-                //anonymous
-                matchers.add(new InternalClassMatcher.BySuperName(ReadAction.compute(() -> baseClass.getName())));
-                break;
-              } else {
-                //declared inside method
-                matchers.add(new InternalClassMatcher.ByName(internalName.substring(nextNonDigit)));
-              }
-            }
-            else {
-              //declared in anonymous
-              matchers.add(new InternalClassMatcher.ByName(StringUtil.getShortName(internalName, '$')));
-              break;
-            }
-          }
-        }
-        else {
-          matchers.add(new InternalClassMatcher.ByQualifiedName(StringUtil.replace(internalName, "$", ".")));
-          break;
-        }
-        curLast = lastIndex - 1;
-      }
-    }
-    return matchers;
-  }
-
-  private static int getNextNonDigitIndex(String name, int digitIndex) {
-    for (int i = digitIndex + 1; i < name.length(); i++) {
-      if (!Character.isDigit(name.charAt(i))) {
-        return i;
-      }
-    }
-    return -1;
-  }
-
-  private interface InternalClassMatcher {
+  private interface InternalNameMatcher {
     boolean matches(PsiClassStub stub);
 
-    class BySuperName implements InternalClassMatcher {
-      private final String mySuperName;
-
-      public BySuperName(String name) {mySuperName = name;}
-
-      @Override
-      public boolean matches(PsiClassStub stub) {
-        return stub.isAnonymous() && mySuperName.equals(PsiNameHelper.getShortClassName(stub.getBaseClassReferenceText()));
-      }
-    }
-
-    class ByName implements InternalClassMatcher {
+    class ByName implements InternalNameMatcher {
       private final String myName;
 
       public ByName(String name) {myName = name;}
@@ -173,7 +101,7 @@ public class JavaCompilerElementRetriever {
       }
     }
 
-    class ByQualifiedName implements InternalClassMatcher {
+    class ByQualifiedName implements InternalNameMatcher {
       private final String myQName;
 
       public ByQualifiedName(String name) {myQName = name;}
@@ -182,6 +110,116 @@ public class JavaCompilerElementRetriever {
       public boolean matches(PsiClassStub stub) {
         return myQName.equals(stub.getQualifiedName());
       }
+    }
+  }
+
+  private static class ClassMatcher {
+    @Nullable
+    private final TIntHashSet myAnonymousIndices;
+    @NotNull
+    private final Collection<InternalNameMatcher> myClassNameMatchers;
+
+    private ClassMatcher(@Nullable TIntHashSet anonymousIndices,
+                         @NotNull Collection<InternalNameMatcher> nameMatchers) {
+      myAnonymousIndices = anonymousIndices;
+      myClassNameMatchers = nameMatchers;
+    }
+
+
+    private PsiClass[] retrieveClasses(PsiFileWithStubSupport file) {
+      StubTree tree = file.getStubTree();
+      boolean foreign = tree == null;
+      if (foreign) {
+        tree = ((PsiFileImpl)file).calcStubTree();
+      }
+
+      List<PsiClass> result = new ArrayList<>(myClassNameMatchers.size() + (myAnonymousIndices == null ? 0 : myAnonymousIndices.size()));
+      int anonymousId = 0;
+      for (StubElement<?> element : tree.getPlainList()) {
+        if (element instanceof PsiClassStub) {
+          if (((PsiClassStub)element).isAnonymous()) {
+            if (myAnonymousIndices != null && !myAnonymousIndices.isEmpty()) {
+              if (myAnonymousIndices.contains(anonymousId)) {
+                result.add((PsiClass)element.getPsi());
+              }
+              anonymousId++;
+            }
+          }
+          else if (match((PsiClassStub)element, myClassNameMatchers)) {
+            result.add((PsiClass)element.getPsi());
+          }
+        }
+      }
+      return result.toArray(PsiClass.EMPTY_ARRAY);
+    }
+
+    private static boolean match(PsiClassStub stub, Collection<InternalNameMatcher> matchers) {
+      for (InternalNameMatcher matcher : matchers) {
+        if (matcher.matches(stub)) {
+          //qualified name is unique among file's classes
+          if (matcher instanceof InternalNameMatcher.ByQualifiedName) {
+            matchers.remove(matcher);
+          }
+          return true;
+        }
+      }
+      return false;
+    }
+
+    private static ClassMatcher create(@NotNull SearchId[] internalIds) {
+      List<InternalNameMatcher> nameMatchers = new SmartList<>();
+      TIntHashSet anonymousIndices = null;
+      for (SearchId internalId : internalIds) {
+        if (internalId.getId() != -1) {
+          if (anonymousIndices == null) {
+            anonymousIndices = new TIntHashSet();
+          }
+          anonymousIndices.add(internalId.getId());
+        }
+        else {
+          String internalName = internalId.getDeserializedName();
+          int curLast = internalName.length() - 1;
+          while (true) {
+            int lastIndex = internalName.lastIndexOf('$', curLast);
+            if (lastIndex > -1 && lastIndex < internalName.length() - 1) {
+              final int followingIndex = lastIndex + 1;
+              final boolean digit = Character.isDigit(internalName.charAt(followingIndex));
+              if (digit) {
+                if (curLast == internalName.length() - 1) {
+                  final int nextNonDigit = getNextNonDigitIndex(internalName, followingIndex);
+                  if (nextNonDigit != -1) {
+                    //declared inside method
+                    nameMatchers.add(new InternalNameMatcher.ByName(internalName.substring(nextNonDigit)));
+                  }
+                  else {
+                    throw new IllegalStateException();
+                  }
+                }
+                else {
+                  //declared in anonymous
+                  nameMatchers.add(new InternalNameMatcher.ByName(StringUtil.getShortName(internalName, '$')));
+                  break;
+                }
+              }
+            }
+            else {
+              nameMatchers.add(new InternalNameMatcher.ByQualifiedName(StringUtil.replace(internalName, "$", ".")));
+              break;
+            }
+            curLast = lastIndex - 1;
+          }
+        }
+      }
+      return new ClassMatcher(anonymousIndices, nameMatchers);
+    }
+
+    private static int getNextNonDigitIndex(String name, int digitIndex) {
+      for (int i = digitIndex + 1; i < name.length(); i++) {
+        if (!Character.isDigit(name.charAt(i))) {
+          return i;
+        }
+      }
+      return -1;
     }
   }
 }

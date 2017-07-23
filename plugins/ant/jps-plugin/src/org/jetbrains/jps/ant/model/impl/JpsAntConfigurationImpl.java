@@ -33,7 +33,7 @@ import java.util.Map;
 public class JpsAntConfigurationImpl extends JpsElementBase<JpsAntConfigurationImpl> implements JpsAntConfiguration {
   public static final JpsElementChildRole<JpsAntConfiguration> ROLE = JpsElementChildRoleBase.create("ant configuration");
   private String myProjectDefaultAntName;
-  private final Map<String, JpsAntBuildFileOptions> myOptionsMap = new HashMap<String, JpsAntBuildFileOptions>();
+  private final Map<String, JpsAntBuildFileOptions> myOptionsMap = new HashMap<>();
 
   public JpsAntConfigurationImpl(Map<String, JpsAntBuildFileOptions> options, String projectDefaultAntName) {
     myProjectDefaultAntName = projectDefaultAntName;

@@ -18,5 +18,5 @@ package com.intellij.openapi.editor.impl;
 import org.intellij.lang.annotations.JdkConstants;
 
 public interface EditorTextRepresentationHelper {
-  int charWidth(char c, @JdkConstants.FontStyle int fontType);
+  int charWidth(int c, @JdkConstants.FontStyle int fontType);
 }

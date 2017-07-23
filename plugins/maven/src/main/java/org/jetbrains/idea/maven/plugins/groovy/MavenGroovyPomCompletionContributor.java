@@ -41,9 +41,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenVersionComparable;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
+import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.library.RepositoryUtils;
+import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -83,7 +84,7 @@ public class MavenGroovyPomCompletionContributor extends CompletionContributor {
       buf.append('<').append(s).append("/>");
     }
 
-    PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("pom.xml", XMLLanguage.INSTANCE, buf);
+    PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(MavenConstants.POM_XML, XMLLanguage.INSTANCE, buf);
     psiFile.putUserData(ORIGINAL_POM_FILE, virtualFile);
     List<Object> variants = ContainerUtil.newArrayList();
 
@@ -208,8 +209,8 @@ public class MavenGroovyPomCompletionContributor extends CompletionContributor {
     for (String version : versions) {
       newResultSet.addElement(LookupElementBuilder.create(prefix + version));
     }
-    newResultSet.addElement(LookupElementBuilder.create(prefix + RepositoryUtils.ReleaseVersionId));
-    newResultSet.addElement(LookupElementBuilder.create(prefix + RepositoryUtils.LatestVersionId));
+    newResultSet.addElement(LookupElementBuilder.create(prefix + RepositoryLibraryDescription.ReleaseVersionId));
+    newResultSet.addElement(LookupElementBuilder.create(prefix + RepositoryLibraryDescription.LatestVersionId));
   }
 
   @NotNull

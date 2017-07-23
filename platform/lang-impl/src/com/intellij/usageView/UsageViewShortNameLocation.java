@@ -34,6 +34,7 @@ public class UsageViewShortNameLocation extends ElementDescriptionLocation {
 
   public static final UsageViewShortNameLocation INSTANCE = new UsageViewShortNameLocation();
 
+  @NotNull
   @Override
   public ElementDescriptionProvider getDefaultProvider() {
     return DEFAULT_PROVIDER;

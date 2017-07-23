@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,16 @@
 package com.intellij.testFramework.assertions
 
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.util.io.readText
 import com.intellij.util.isEmpty
+import com.intellij.util.loadElement
 import org.assertj.core.api.AbstractAssert
 import org.assertj.core.internal.Objects
 import org.jdom.Element
 import java.io.File
+import java.nio.file.Path
 
 class JdomAssert(actual: Element?) : AbstractAssert<JdomAssert, Element?>(actual, JdomAssert::class.java) {
   fun isEmpty(): JdomAssert {
@@ -33,8 +38,17 @@ class JdomAssert(actual: Element?) : AbstractAssert<JdomAssert, Element?>(actual
     return this
   }
 
-  fun isEqualTo(file: File): JdomAssert {
-    return isEqualTo(file.readText())
+  @Deprecated("isEqualTo(file: Path)", ReplaceWith("isEqualTo(file.toPath())"))
+  fun isEqualTo(file: File) = isEqualTo(file.toPath())
+
+  fun isEqualTo(file: Path): JdomAssert {
+    isNotNull
+
+    val expected = loadElement(file)
+    if (!JDOMUtil.areElementsEqual(actual, expected)) {
+      throw FileComparisonFailure(null, StringUtilRt.convertLineSeparators(file.readText()), JDOMUtil.writeElement(actual!!), file.toString())
+    }
+    return this
   }
 
   fun isEqualTo(element: Element): JdomAssert {

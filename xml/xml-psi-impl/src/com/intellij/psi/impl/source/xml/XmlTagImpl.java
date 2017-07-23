@@ -91,7 +91,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
         final int s = result.size();
         XmlTag[] tags = s > 0 ? ContainerUtil.toArray(result, new XmlTag[s]) : EMPTY;
         return CachedValueProvider.Result
-          .create(tags, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, tag.getContainingFile());
+          .create(tags, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, tag);
       }
     };
   private static final Comparator<TextRange> RANGE_COMPARATOR = (range1, range2) -> range1.getStartOffset() - range2.getStartOffset();
@@ -359,7 +359,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
         }
       }
     }
-    return map == null ? Collections.<String, CachedValue<XmlNSDescriptor>>emptyMap() : map;
+    return map == null ? Collections.emptyMap() : map;
   }
 
   private Map<String, CachedValue<XmlNSDescriptor>> initializeSchema(@NotNull final String namespace,
@@ -440,6 +440,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     }
 
     final XmlFile file = XmlUtil.getContainingFile(this);
+    if (file == null) return null;
     final PsiFile psiFile = ExternalResourceManager.getInstance().getResourceLocation(fileLocation, file, version);
     if (psiFile instanceof XmlFile) {
       return (XmlFile)psiFile;
@@ -599,7 +600,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
         if (element instanceof XmlAttribute) {
           XmlAttribute attribute = (XmlAttribute)element;
           result.add(attribute);
-          myHasNamespaceDeclarations = myHasNamespaceDeclarations || attribute.isNamespaceDeclaration();
+          if (!myHasNamespaceDeclarations && attribute.isNamespaceDeclaration()) myHasNamespaceDeclarations = true;
         }
         else if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_TAG_END) {
           return false;
@@ -678,7 +679,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
       @Override
       public boolean execute(@NotNull PsiElement element) {
         if (element instanceof XmlTag) {
-          assert element.isValid();
+          PsiUtilCore.ensureValid(element);
           result.add((XmlTag)element);
         }
         return true;
@@ -749,7 +750,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     return null;
   }
 
-  protected boolean isCaseSensitive() {
+  public boolean isCaseSensitive() {
     return true;
   }
 

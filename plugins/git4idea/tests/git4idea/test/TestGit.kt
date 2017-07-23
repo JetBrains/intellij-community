@@ -35,8 +35,14 @@ import java.io.File
  */
 val UNKNOWN_ERROR_TEXT: String = "unknown error"
 
+val SUCCESS_RESULT = GitCommandResult(true, 0, emptyList(), emptyList(), null)
+
 class TestGitImpl : GitImpl() {
   private val LOG = Logger.getInstance(TestGitImpl::class.java)
+
+  @Volatile var stashListener: ((GitRepository) -> Unit)? = null
+  @Volatile var mergeListener: ((GitRepository) -> Unit)? = null
+  @Volatile var pushListener: ((GitRepository) -> Unit)? = null
 
   @Volatile private var myRebaseShouldFail: (GitRepository) -> Boolean = { false }
   @Volatile private var myPushHandler: (GitRepository) -> GitCommandResult? = { null }
@@ -48,10 +54,12 @@ class TestGitImpl : GitImpl() {
                     spec: String,
                     force: Boolean,
                     updateTracking: Boolean,
+                    skipHook: Boolean,
                     tagMode: String?,
                     vararg listeners: GitLineHandlerListener): GitCommandResult {
+    pushListener?.invoke(repository)
     return myPushHandler(repository) ?:
-        super.push(repository, remote, spec, force, updateTracking, tagMode, *listeners)
+        super.push(repository, remote, spec, force, updateTracking, skipHook, tagMode, *listeners)
   }
 
   override fun branchDelete(repository: GitRepository,
@@ -85,13 +93,13 @@ class TestGitImpl : GitImpl() {
     }
   }
 
-  override fun configureEditor(project: Project, root: VirtualFile, handler: GitLineHandler,
-                               commitListAware: Boolean): GitInteractiveRebaseEditorHandler {
-    if (myInteractiveRebaseEditor == null) return super.configureEditor(project, root, handler, commitListAware)
+  override fun createEditor(project: Project, root: VirtualFile, handler: GitLineHandler,
+                            commitListAware: Boolean): GitInteractiveRebaseEditorHandler {
+    if (myInteractiveRebaseEditor == null) return super.createEditor(project, root, handler, commitListAware)
 
     val service = GitRebaseEditorService.getInstance()
-    val editor = object: GitInteractiveRebaseEditorHandler(service, project, root, handler) {
-      override fun editCommits(path: String?): Int {
+    val editor = object: GitInteractiveRebaseEditorHandler(service, project, root) {
+      override fun editCommits(path: String): Int {
         try {
           val file = File(path)
           FileUtil.writeToFile(file, myInteractiveRebaseEditor!!(FileUtil.loadFile(file)))
@@ -105,6 +113,19 @@ class TestGitImpl : GitImpl() {
     }
     service.configureHandler(handler, editor.handlerNo)
     return editor
+  }
+
+  override fun stashSave(repository: GitRepository, message: String): GitCommandResult {
+    stashListener?.invoke(repository)
+    return  super.stashSave(repository, message)
+  }
+
+  override fun merge(repository: GitRepository,
+                     branchToMerge: String,
+                     additionalParams: MutableList<String>?,
+                     vararg listeners: GitLineHandlerListener?): GitCommandResult {
+    mergeListener?.invoke(repository)
+    return super.merge(repository, branchToMerge, additionalParams, *listeners)
   }
 
   fun setShouldRebaseFail(shouldFail: (GitRepository) -> Boolean) {

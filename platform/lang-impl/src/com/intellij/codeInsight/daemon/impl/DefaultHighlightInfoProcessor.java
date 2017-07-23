@@ -40,6 +40,7 @@ import java.util.List;
 public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
   @Override
   public void highlightsInsideVisiblePartAreProduced(@NotNull final HighlightingSession session,
+                                                     @Nullable Editor editor,
                                                      @NotNull final List<HighlightInfo> infos,
                                                      @NotNull TextRange priorityRange,
                                                      @NotNull TextRange restrictRange,
@@ -51,7 +52,6 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
     final long modificationStamp = document.getModificationStamp();
     final TextRange priorityIntersection = priorityRange.intersection(restrictRange);
 
-    final Editor editor = session.getEditor();
     ((HighlightingSessionImpl)session).applyInEDT(() -> {
       if (modificationStamp != document.getModificationStamp()) return;
       if (priorityIntersection != null) {
@@ -74,6 +74,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
 
   @Override
   public void highlightsOutsideVisiblePartAreProduced(@NotNull final HighlightingSession session,
+                                                      @Nullable Editor editor,
                                                       @NotNull final List<HighlightInfo> infos,
                                                       @NotNull final TextRange priorityRange,
                                                       @NotNull final TextRange restrictedRange, final int groupId) {
@@ -91,7 +92,6 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
                                                          restrictedRange.getStartOffset(), restrictedRange.getEndOffset(),
                                                          ProperTextRange.create(priorityRange),
                                                          groupId);
-      Editor editor = session.getEditor();
       if (editor != null) {
         DaemonListeners.repaintErrorStripeRenderer(editor, project);
       }
@@ -125,7 +125,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
           }
           // seems that highlight info "existing" is going to disappear
           // remove it earlier
-          ((HighlightingSessionImpl)highlightingSession).queueDisposeHighlighter(existing.highlighter);
+          ((HighlightingSessionImpl)highlightingSession).queueDisposeHighlighterFor(existing);
         }
         return true;
       });
@@ -138,18 +138,19 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
                               @NotNull TextRange restrictedRange,
                               int groupId) {
     HighlightingSessionImpl impl = (HighlightingSessionImpl)session;
-    impl.queueHighlightInfo(info, priorityRange, restrictedRange, groupId);
+    impl.queueHighlightInfo(info, restrictedRange, groupId);
   }
 
   @Override
-  public void progressIsAdvanced(@NotNull HighlightingSession highlightingSession, double progress) {
+  public void progressIsAdvanced(@NotNull HighlightingSession highlightingSession,
+                                 @Nullable Editor editor,
+                                 double progress) {
     PsiFile file = highlightingSession.getPsiFile();
-    Editor editor = highlightingSession.getEditor();
     repaintTrafficIcon(file, editor, progress);
   }
 
   private final Alarm repaintIconAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private void repaintTrafficIcon(@NotNull final PsiFile file, final Editor editor, double progress) {
+  private void repaintTrafficIcon(@NotNull final PsiFile file, @Nullable Editor editor, double progress) {
     if (ApplicationManager.getApplication().isCommandLine()) return;
 
     if (repaintIconAlarm.isEmpty() || progress >= 1) {

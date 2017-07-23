@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,10 +50,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 29.07.2008
- */
 public class GroovySmartEnterProcessor extends SmartEnterProcessorWithFixers {
   public GroovySmartEnterProcessor() {
     final List<SmartEnterProcessorWithFixers.Fixer<GroovySmartEnterProcessor>> ourFixers = Arrays.asList(
@@ -184,10 +180,14 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessorWithFixers {
       commit(editor);
       final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(file.getProject());
       final boolean old = settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE;
-      settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
-      PsiElement elt = PsiTreeUtil.getParentOfType(file.findElementAt(caretOffset - 1), GrCodeBlock.class, GrTypeDefinitionBody.class);
-      reformat(elt);
-      settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = old;
+      try {
+        settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
+        PsiElement elt = PsiTreeUtil.getParentOfType(file.findElementAt(caretOffset - 1), GrCodeBlock.class, GrTypeDefinitionBody.class);
+        if (elt != null) reformat(elt);
+      }
+      finally {
+        settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = old;
+      }
       editor.getCaretModel().moveToOffset(caretOffset - 1);
     }
   }

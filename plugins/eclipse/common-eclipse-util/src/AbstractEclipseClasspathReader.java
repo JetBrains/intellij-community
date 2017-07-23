@@ -28,10 +28,6 @@ import java.util.*;
 import java.util.jar.Manifest;
 import java.util.regex.PatternSyntaxException;
 
-/**
- * User: anna
- * Date: 10/29/12
- */
 public abstract class AbstractEclipseClasspathReader<T> {
   protected final String myRootPath;
   @Nullable protected final List<String> myCurrentRoots;
@@ -241,7 +237,7 @@ public abstract class AbstractEclipseClasspathReader<T> {
           if (eclipseModuleManager != null) {
             eclipseModuleManager.registerUnknownCons(path);
           }
-          addNamedLibrary(rootModel, new ArrayList<String>(), exported, path, true);
+          addNamedLibrary(rootModel, new ArrayList<>(), exported, path, true);
         }
       }
     }

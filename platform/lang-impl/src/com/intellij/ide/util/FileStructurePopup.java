@@ -21,6 +21,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TreeExpander;
+import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.structureView.ModelListener;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewModel;
@@ -40,6 +41,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -47,7 +49,6 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -62,6 +63,7 @@ import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.ui.speedSearch.ElementFilter;
 import com.intellij.ui.treeStructure.AlwaysExpandedTree;
@@ -70,7 +72,6 @@ import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
@@ -93,6 +94,8 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -111,7 +114,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   private String myTitle;
   private final TreeSpeedSearch mySpeedSearch;
   private final SmartTreeStructure myTreeStructure;
-  private int myPreferredWidth;
   private final FilteringTreeStructure myFilteringStructure;
   private final PsiElement myInitialPsiElement;
   private final Map<Class, JCheckBox> myCheckBoxes = new HashMap<>();
@@ -217,7 +219,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
           ContainerUtil.addIfNotNull(result, Pair.create(node, psi));
         }
 
-        final Set<PsiElement> psiSelection = ContainerUtil.map2LinkedSet(result, Functions.<PsiElement>pairSecond());
+        final Set<PsiElement> psiSelection = ContainerUtil.map2LinkedSet(result, Functions.pairSecond());
 
         String text = StringUtil.join(result, pair -> {
           PsiElement psi = pair.second;
@@ -300,7 +302,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     //final long time = System.currentTimeMillis();
     JComponent panel = createCenterPanel();
     MnemonicHelper.init(panel);
-    boolean shouldSetWidth = DimensionService.getInstance().getSize(getDimensionServiceKey(), myProject) == null;
     myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, null)
       .setTitle(myTitle)
       .setResizable(true)
@@ -311,11 +312,8 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       .setBelongsToGlobalPopupStack(true)
       //.setCancelOnClickOutside(false) //for debug and snapshots
       .setCancelKeyEnabled(false)
-      .setDimensionServiceKey(null, getDimensionServiceKey(), false)
-      .setCancelCallback(() -> {
-        DimensionService.getInstance().setLocation(getDimensionServiceKey(), myPopup.getLocationOnScreen(), myProject);
-        return myCanClose;
-      })
+      .setDimensionServiceKey(null, getDimensionServiceKey(), true)
+      .setCancelCallback(() -> myCanClose)
       .createPopup();
 
     myTree.addTreeSelectionListener(new TreeSelectionListener() {
@@ -340,18 +338,9 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       }
     });
     myTree.getEmptyText().setText("Loading...");
-    final Point location = DimensionService.getInstance().getLocation(getDimensionServiceKey(), myProject);
-    if (location != null) {
-      myPopup.showInScreenCoordinates(myFileEditor.getComponent(), location);
-    }
-    else {
-      myPopup.showCenteredInCurrentWindow(myProject);
-    }
+    myPopup.showCenteredInCurrentWindow(myProject);
 
     ((AbstractPopup)myPopup).setShowHints(true);
-    if (shouldSetWidth) {
-      myPopup.setSize(new Dimension(myPreferredWidth + 10, myPopup.getSize().height));
-    }
 
     IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
     Window window = SwingUtilities.windowForComponent(myPopup.getContent());
@@ -628,10 +617,12 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     topPanel.add(createSettingsButton(), BorderLayout.EAST);
 
-    myPreferredWidth = Math.max(comboPanel.getPreferredSize().width, JBUI.scale(350));
     panel.add(topPanel, BorderLayout.NORTH);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myAbstractTreeBuilder.getTree());
     scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.BOTTOM));
+    Dimension preferredSize = scrollPane.getPreferredSize();
+    preferredSize.width = Math.max(comboPanel.getPreferredSize().width, JBUI.scale(350));
+    scrollPane.setPreferredSize(preferredSize);
     panel.add(scrollPane, BorderLayout.CENTER);
     //panel.add(createSouthPanel(), BorderLayout.SOUTH);
     DataManager.registerDataProvider(panel, new DataProvider() {
@@ -880,7 +871,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   static Shortcut[] extractShortcutFor(@NotNull TreeAction action) {
     if (action instanceof ActionShortcutProvider) {
       String actionId = ((ActionShortcutProvider)action).getActionIdForShortcut();
-      return KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
+      return getActiveKeymapShortcuts(actionId).getShortcuts();
     }
     return action instanceof FileStructureFilter ?
                            ((FileStructureFilter)action).getShortcut() : ((FileStructureNodeProvider)action).getShortcut();
@@ -960,14 +951,10 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     // NB!: this point is achievable if the following method returns null
     // see com.intellij.ide.util.treeView.NodeDescriptor.toString
     if (userObject instanceof StructureViewComponent.StructureViewTreeElementWrapper) {
-      return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        @Nullable
-        @Override
-        public String compute() {
-          final ItemPresentation presentation =
-            ((StructureViewComponent.StructureViewTreeElementWrapper)userObject).getValue().getPresentation();
-          return presentation.getPresentableText();
-        }
+      return ReadAction.compute(() -> {
+        final ItemPresentation presentation =
+          ((StructureViewComponent.StructureViewTreeElementWrapper)userObject).getValue().getPresentation();
+        return presentation.getPresentableText();
       });
     }
 
@@ -1039,17 +1026,13 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
   public class MyTreeSpeedSearch extends TreeSpeedSearch {
     public MyTreeSpeedSearch() {
-      super(myTree, new Convertor<TreePath, String>() {
-        @Override
-        @Nullable
-        public String convert(TreePath path) {
-          final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-          final Object userObject = node.getUserObject();
-          if (userObject instanceof FilteringTreeStructure.FilteringNode) {
-            return getSpeedSearchText(((FilteringTreeStructure.FilteringNode)userObject).getDelegate());
-          }
-          return "";
+      super(myTree, path -> {
+        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+        final Object userObject = node.getUserObject();
+        if (userObject instanceof FilteringTreeStructure.FilteringNode) {
+          return getSpeedSearchText(((FilteringTreeStructure.FilteringNode)userObject).getDelegate());
         }
+        return "";
       }, true);
     }
 
@@ -1113,7 +1096,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     }
   }
 
-  class FileStructureTree extends JBTreeWithHintProvider implements AlwaysExpandedTree, PlaceProvider<String> {
+  class FileStructureTree extends DnDAwareTree implements AlwaysExpandedTree, PlaceProvider<String> {
     private final boolean fast;
 
     public FileStructureTree(Object rootElement, boolean fastExpand) {
@@ -1136,6 +1119,9 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       setRootVisible(false);
       setShowsRootHandles(true);
       setHorizontalAutoScrollingEnabled(false);
+
+      HintUpdateSupply.installHintUpdateSupply(this, o -> getPsi(
+        (FilteringTreeStructure.FilteringNode)((DefaultMutableTreeNode)o).getUserObject()));
     }
 
     @Override
@@ -1151,12 +1137,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     @Override
     public boolean isExpanded(int row) {
       return fast || super.isExpanded(row);
-    }
-
-    @Override
-    protected PsiElement getPsiElementForHint(Object selectedValue) {
-      //noinspection ConstantConditions
-      return getPsi((FilteringTreeStructure.FilteringNode)((DefaultMutableTreeNode)selectedValue).getUserObject());
     }
 
     @Override

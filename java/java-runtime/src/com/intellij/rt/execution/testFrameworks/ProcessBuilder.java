@@ -55,6 +55,16 @@ public class ProcessBuilder {
   }
 
   // please keep an implementation in sync with [util] CommandLineUtil.toCommandLine()
+  //
+  // Comparing to the latter, this is a simplified version with the following limitations on Windows (neither of these
+  // seems to be used in our cases though):
+  //
+  //   - does not fully handle \" escaping (must escape quoted ["C:\Program Files\"] -> [\"C:\Program Files\\\"])
+  //   - does not support `cmd.exe /c call command args-with-special-chars-[&<>()@^|]
+  //   - does not handle special chars [&<>()@^|] interleaved with quotes ["] properly (the quote flag)
+  //   - mangles the output of `cmd.exe /c echo ...`
+  //
+  // If either of these becomes an issue, please refer to [util] CommandLineUtil.addToWindowsCommandLine() for a possible implementation.
   public Process createProcess() throws IOException {
     if (myParameters.size() < 1) {
       throw new IllegalArgumentException("Executable name not specified");

@@ -100,6 +100,9 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
 
   @Nullable
   private static byte[] toBytesIfPossible(CharSequence seq) {
+    if (seq instanceof ByteArrayCharSequence) {
+      return ((ByteArrayCharSequence)seq).getBytes();
+    }
     byte[] bytes = new byte[seq.length()];
     char[] chars = CharArrayUtil.fromSequenceWithoutCopying(seq);
     if (chars == null) {
@@ -260,22 +263,19 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
 
   @Override
   public char charAt(int index) {
-    if (index < 0 || index >= length()) throw new IndexOutOfBoundsException("Index out of range: " + index);
-    
-    if (myNode instanceof LeafNode) {
-      return myNode.charAt(index);
-    }
-
     InnerLeaf leaf = myLastLeaf;
-    if (leaf == null || index < leaf.offset || index >= leaf.offset + leaf.leafNode.length()) {
-      myLastLeaf = leaf = findLeaf(index, 0);
+    if (leaf == null || index < leaf.offset || index >= leaf.end) {
+      myLastLeaf = leaf = findLeaf(index);
     }
     return leaf.leafNode.charAt(index - leaf.offset);
   }
-  private volatile InnerLeaf myLastLeaf;
+  private InnerLeaf myLastLeaf;
 
-  private InnerLeaf findLeaf(int index, int offset) {
+  private InnerLeaf findLeaf(int index) {
     Node node = myNode;
+    if (index < 0 || index >= node.length()) throw new IndexOutOfBoundsException("Index out of range: " + index);
+
+    int offset = 0;
     while (true) {
       if (index >= node.length()) {
         throw new IndexOutOfBoundsException();
@@ -298,10 +298,12 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
   private static class InnerLeaf {
     final LeafNode leafNode;
     final int offset;
+    final int end;
 
     private InnerLeaf(@NotNull LeafNode leafNode, int offset) {
       this.leafNode = leafNode;
       this.offset = offset;
+      this.end = offset + leafNode.length();
     }
   }
   

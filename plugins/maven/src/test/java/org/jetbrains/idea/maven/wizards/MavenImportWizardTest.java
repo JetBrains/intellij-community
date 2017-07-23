@@ -30,8 +30,12 @@ import java.io.IOException;
 public class MavenImportWizardTest extends ProjectWizardTestCase {
   @Override
   public void tearDown() throws Exception {
-    MavenServerManager.getInstance().shutdown(true);
-    super.tearDown();
+    try {
+      MavenServerManager.getInstance().shutdown(true);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testImportModule() throws Exception {

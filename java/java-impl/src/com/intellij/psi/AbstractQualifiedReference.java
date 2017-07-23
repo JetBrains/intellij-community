@@ -64,6 +64,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
     return this;
   }
 
+  @NotNull
   protected abstract ResolveResult[] resolveInner();
 
   @Override

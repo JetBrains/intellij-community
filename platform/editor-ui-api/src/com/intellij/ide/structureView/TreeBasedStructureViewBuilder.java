@@ -59,8 +59,8 @@ public abstract class TreeBasedStructureViewBuilder implements StructureViewBuil
   }
 
   /**
-   * Override returning <code>false</code> if root node created by {@link #createStructureViewModel(Editor editor)} shall not be visible
-   * @return <code>false</code> if root node shall not be visible in structure tree.
+   * Override returning {@code false} if root node created by {@link #createStructureViewModel(Editor editor)} shall not be visible
+   * @return {@code false} if root node shall not be visible in structure tree.
    */
   public boolean isRootNodeShown() {
     return true;

@@ -29,10 +29,6 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import static com.intellij.patterns.PsiJavaPatterns.literalExpression;
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 
-/**
- * User: anna
- * Date: 2/22/13
- */
 public class JavaFxReferencesContributor extends PsiReferenceContributor {
   public static final PsiJavaElementPattern.Capture<PsiLiteralExpression> STYLESHEET_PATTERN =
       literalExpression().methodCallParameter(psiMethod()).and(new FilterPattern(new ElementFilter() {

@@ -29,7 +29,6 @@ import org.jetbrains.idea.svn.auth.SvnAuthenticationProvider;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.browse.DirectoryEntryConsumer;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -91,12 +90,8 @@ class RepositoryLoader extends Loader {
 
   private void startLoadTask(@NotNull final Pair<RepositoryTreeNode, Expander> data) {
     final ModalityState state = ModalityState.current();
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        ProgressManager.getInstance().runProcess(new LoadTask(data), new EmptyProgressIndicator(state));
-      }
-    });
+    ApplicationManager.getApplication()
+      .executeOnPooledThread(() -> ProgressManager.getInstance().runProcess(new LoadTask(data), new EmptyProgressIndicator(state)));
   }
 
   @NotNull
@@ -118,34 +113,24 @@ class RepositoryLoader extends Loader {
       final SvnVcs vcs = node.getVcs();
       SvnAuthenticationProvider.forceInteractive();
 
-      DirectoryEntryConsumer handler = new DirectoryEntryConsumer() {
-
-        @Override
-        public void consume(final DirectoryEntry entry) throws SVNException {
-          entries.add(entry);
-        }
-      };
+      DirectoryEntryConsumer handler = entry -> entries.add(entry);
       try {
         SvnTarget target = SvnTarget.fromURL(node.getURL());
         vcs.getFactoryFromSettings().createBrowseClient().list(target, SVNRevision.HEAD, Depth.IMMEDIATES, handler);
       }
       catch (final VcsException e) {
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            setError(myData, e.getMessage());
-            startNext();
-          }
+        SwingUtilities.invokeLater(() -> {
+          setError(myData, e.getMessage());
+          startNext();
         });
         return;
       } finally {
         SvnAuthenticationProvider.clearInteractive();
       }
 
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          setResults(myData, ContainerUtil.newArrayList(entries));
-          startNext();
-        }
+      SwingUtilities.invokeLater(() -> {
+        setResults(myData, ContainerUtil.newArrayList(entries));
+        startNext();
       });
     }
   }

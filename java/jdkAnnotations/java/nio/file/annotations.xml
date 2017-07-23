@@ -50,6 +50,9 @@
   <item name='java.nio.file.Files byte[] read(java.io.InputStream, int) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.nio.file.Files byte[] readAllBytes(java.nio.file.Path)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.nio.file.Files byte[] readAllBytes(java.nio.file.Path) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -65,6 +68,9 @@
   <item name='java.nio.file.Files java.io.BufferedWriter newBufferedWriter(java.nio.file.Path, java.nio.charset.Charset, java.nio.file.OpenOption...) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.nio.file.Files java.io.InputStream newInputStream(java.nio.file.Path, java.nio.file.OpenOption...)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.nio.file.Files java.io.InputStream newInputStream(java.nio.file.Path, java.nio.file.OpenOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -78,6 +84,9 @@
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Files java.lang.String probeContentType(java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.channels.SeekableByteChannel newByteChannel(java.nio.file.Path, java.nio.file.OpenOption...)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Files java.nio.channels.SeekableByteChannel newByteChannel(java.nio.file.Path, java.nio.file.OpenOption...) 0'>
@@ -243,6 +252,12 @@
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Files void delete(java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.FileSystem java.nio.file.Path getPath(java.lang.String, java.lang.String...)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.Path resolve(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Paths java.nio.file.Path get(java.lang.String, java.lang.String...) 0'>

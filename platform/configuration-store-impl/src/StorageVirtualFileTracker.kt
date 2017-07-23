@@ -2,7 +2,6 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
-import com.intellij.openapi.components.impl.stores.StateStorageManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -49,10 +48,9 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
   }
 
   private fun addVfsChangesListener() {
-    messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener.Adapter() {
+    messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: MutableList<out VFileEvent>) {
-        eventLoop@
-        for (event in events) {
+        eventLoop@ for (event in events) {
           var storage: StateStorage?
           if (event is VFilePropertyChangeEvent && VirtualFile.PROP_NAME == event.propertyName) {
             val oldPath = event.oldPath
@@ -91,7 +89,7 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
               }
             }
             is VFileCreateEvent -> {
-              if (storage is FileBasedStorage) {
+              if (storage is FileBasedStorage && event.requestor !is StateStorage.SaveSession) {
                 storage.setFile(event.file, null)
               }
             }
@@ -107,7 +105,7 @@ class StorageVirtualFileTracker(private val messageBus: MessageBus) {
           }
 
           val componentManager = storage.storageManager.componentManager!!
-          componentManager.messageBus.syncPublisher(StateStorageManager.STORAGE_TOPIC).storageFileChanged(event, storage, componentManager)
+          componentManager.messageBus.syncPublisher(STORAGE_TOPIC).storageFileChanged(event, storage, componentManager)
         }
       }
     })

@@ -42,11 +42,12 @@ class MergeAutoTest : MergeTestBase() {
         for (m in 1..MODIFICATION_CYCLE_COUNT) {
           checkUndo(MODIFICATION_CYCLE_SIZE) {
             for (n in 1..MODIFICATION_CYCLE_SIZE) {
-              val operation = RNG.nextInt(3)
+              val operation = RNG.nextInt(4)
               when (operation) {
                 0 -> doApply()
                 1 -> doIgnore()
-                2 -> doReplace()
+                2 -> doTryResolve()
+                3 -> doModifyText()
                 else -> fail()
               }
               checkChangesRangeOrdering(changes)
@@ -77,7 +78,14 @@ class MergeAutoTest : MergeTestBase() {
     command(change) { viewer.ignoreChange(change, side, modifier) }
   }
 
-  private fun TestBuilder.doReplace(): Unit {
+  private fun TestBuilder.doTryResolve(): Unit {
+    val index = RNG.nextInt(changes.size)
+    val change = changes[index]
+
+    command(change) { viewer.applyNonConflictedChange(change, ThreeSide.BASE) }
+  }
+
+  private fun TestBuilder.doModifyText(): Unit {
     val length = document.textLength
 
     var index1: Int = 0

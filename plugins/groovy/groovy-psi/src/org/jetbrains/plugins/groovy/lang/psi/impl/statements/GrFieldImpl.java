@@ -18,12 +18,12 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import icons.JetgroovyIcons;
@@ -52,10 +52,6 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.Map;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 25.05.2007
- */
 public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrField, StubBasedPsiElement<GrFieldStub> {
 
   public GrFieldImpl(@NotNull ASTNode node) {
@@ -203,12 +199,11 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   @Nullable
   @Override
   protected Icon getElementIcon(@IconFlags int flags) {
-    Icon superIcon = JetgroovyIcons.Groovy.Field;
-    if (!isProperty()) return superIcon;
-    LayeredIcon rowIcon = new LayeredIcon(2);
-    rowIcon.setIcon(superIcon, 0);
-    rowIcon.setIcon(JetgroovyIcons.Groovy.Def, 1);
-    return rowIcon;
+    boolean isAbstract = hasModifierProperty(PsiModifier.ABSTRACT);
+    Icon fieldIcon = isProperty()
+                     ? isAbstract ? JetgroovyIcons.Groovy.AbstractProperty : JetgroovyIcons.Groovy.Property
+                     : isAbstract ? JetgroovyIcons.Groovy.AbstractField : JetgroovyIcons.Groovy.Field;
+    return ElementPresentationUtil.createLayeredIcon(fieldIcon, this, false);
   }
 
   @Override

@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.pyi;
 
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.fixtures.PyMultiFileResolveTestCase;
 import com.jetbrains.python.psi.PyClass;
@@ -42,6 +44,21 @@ public class PyiResolveTest extends PyMultiFileResolveTestCase {
   }
 
   public void testModuleAttribute() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
+  // PY-21231
+  public void testModuleAttributePyiOverPy() {
+    final PsiElement result = doResolve();
+    assertInstanceOf(result, PyTargetExpression.class);
+    final PyTargetExpression target = (PyTargetExpression)result;
+    assertEquals("foo", target.getName());
+    final PsiFile containingFile = target.getContainingFile();
+    assertInstanceOf(containingFile, PyiFile.class);
+  }
+
+  // PY-21231
+  public void testGenericAttribute() {
     assertResolvesTo(PyTargetExpression.class, "foo");
   }
 }

@@ -39,11 +39,6 @@ import org.intellij.plugins.relaxNG.compact.psi.RncFile;
 import org.intellij.plugins.relaxNG.compact.psi.RncGrammar;
 import org.jetbrains.annotations.NotNull;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 01.08.2007
-*/
 public class RncFileImpl extends PsiFileBase implements RncFile, XmlFile {
   private static final TokenSet DECLS = TokenSet.create(RncElementTypes.NS_DECL, RncElementTypes.DATATYPES_DECL);
 

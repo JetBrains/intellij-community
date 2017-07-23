@@ -35,6 +35,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author Vladimir Kondratyev
@@ -371,14 +373,14 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
   }
 
   /**
-   * @return <code>true</code> if splitter has vertical orientation, <code>false</code> otherwise
+   * @return {@code true} if splitter has vertical orientation, {@code false} otherwise
    */
   public boolean getOrientation() {
     return myVerticalSplit;
   }
 
   /**
-   * @param verticalSplit <code>true</code> means that splitter will have vertical split
+   * @param verticalSplit {@code true} means that splitter will have vertical split
    */
   public void setOrientation(boolean verticalSplit) {
     myVerticalSplit = verticalSplit;
@@ -466,13 +468,13 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
 
   public void setFirstSize(final int size) {
-    myFirstSize = size;
+    myFirstSize = Math.max(getMinSize(true), size);
     doLayout();
     repaint();
   }
 
   public void setLastSize(final int size) {
-    myLastSize = size;
+    myLastSize = Math.max(getMinSize(false), size);
     doLayout();
     repaint();
   }
@@ -611,6 +613,13 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
     private boolean isInside(Point p) {
       if (!isVisible()) return false;
+      Window window = UIUtil.getWindow(this);
+      if (window != null) {
+        Point point = SwingUtilities.convertPoint(this, p, window);
+        Component component = UIUtil.getDeepestComponentAt(window, point.x, point.y);
+        List<Component> components = Arrays.asList(myFirstComponent, myFirstDivider, myInnerComponent, myLastDivider, myLastComponent);
+        if (UIUtil.findParentByCondition(component, c -> c != null && components.contains(c)) == null) return false;
+      }
 
       int dndOff = myIsOnePixel ? JBUI.scale(Registry.intValue("ide.splitter.mouseZone")) / 2 : 0;
       if (myVerticalSplit) {

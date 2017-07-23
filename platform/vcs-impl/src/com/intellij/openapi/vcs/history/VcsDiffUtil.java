@@ -96,6 +96,7 @@ public class VcsDiffUtil {
     changesBrowser.setChangesToDisplay(changes);
     dialogBuilder.setCenterPanel(changesBrowser);
     dialogBuilder.setPreferredFocusComponent(changesBrowser.getPreferredFocusedComponent());
+    dialogBuilder.setDimensionServiceKey("VcsDiffUtil.ChangesDialog");
     dialogBuilder.showNotModal();
   }
 

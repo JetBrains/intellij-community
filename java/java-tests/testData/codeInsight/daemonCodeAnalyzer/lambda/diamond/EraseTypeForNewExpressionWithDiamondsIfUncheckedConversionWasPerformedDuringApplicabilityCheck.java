@@ -2,14 +2,26 @@ class Test {
   {
     Holder h = null;
     Result<String> r1 = new Result<error descr="Cannot infer arguments"><></error>(h);
-    Result<String> r2 = Result.create<error descr="'create(K)' in 'Result' cannot be applied to '(Holder)'">(h)</error>;
+    Result<String> r2 = <error descr="Incompatible types. Required Result<String> but 'create' was inferred to Result<K>:
+no instance(s) of type variable(s)  exist so that Holder conforms to String
+inference variable K has incompatible bounds:
+ equality constraints: String
+lower bounds: Holder">Result.create(h);</error>
 
     Holder dataHolder = null;
     Result<String> r3 = new Result<error descr="Cannot infer arguments"><></error>(new Holder<>(dataHolder));
-    Result<String> r4 = Result.create(new Holder<error descr="Cannot infer arguments"><></error>(dataHolder));
+    Result<String> r4 = <error descr="Incompatible types. Required Result<String> but 'create' was inferred to Result<K>:
+no instance(s) of type variable(s)  exist so that Holder conforms to String
+inference variable K has incompatible bounds:
+ equality constraints: String
+lower bounds: Holder">Result.create(new Holder<>(dataHolder));</error>
 
     Result<String> r5 = new Result<error descr="Cannot infer arguments"><></error>(Holder.create(dataHolder));
-    Result<String> r6 = Result.create(Holder.create<error descr="'create(Holder<M>)' in 'Holder' cannot be applied to '(Holder)'">(dataHolder)</error>);
+    Result<String> r6 = <error descr="Incompatible types. Required Result<String> but 'create' was inferred to Result<K>:
+no instance(s) of type variable(s)  exist so that Holder conforms to String
+inference variable K has incompatible bounds:
+ equality constraints: String
+lower bounds: Holder">Result.create(Holder.create(dataHolder));</error>
 
   }
 }

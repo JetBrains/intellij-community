@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,21 @@ package com.siyeh.ig.bugs;
 import com.intellij.psi.PsiElement;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
+import com.siyeh.ig.ui.UiUtils;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author Bas Leijdekkers
  */
 public class ResultOfObjectAllocationIgnoredInspection extends ResultOfObjectAllocationIgnoredInspectionBase {
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return UiUtils.createTreeClassChooserList(ignoredClasses, "Ignored classes", "Choose class for which object allocation can be ignored");
+  }
 
   @Nullable
   @Override

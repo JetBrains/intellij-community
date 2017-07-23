@@ -42,7 +42,7 @@ import java.awt.*;
 import java.util.List;
 
 public class StaticImportMethodQuestionAction<T extends PsiMember> implements QuestionAction {
-  private static final Logger LOG = Logger.getInstance("#" + StaticImportMethodQuestionAction.class.getName());
+  private static final Logger LOG = Logger.getInstance(StaticImportMethodQuestionAction.class);
   private final Project myProject;
   private final Editor myEditor;
   private List<T> myCandidates;
@@ -87,7 +87,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
     return true;
   }
 
-  private void doImport(final T toImport) {
+  protected void doImport(final T toImport) {
     final Project project = toImport.getProject();
     final PsiElement element = myRef.getElement();
     if (element == null) return;

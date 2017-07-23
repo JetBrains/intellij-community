@@ -52,9 +52,7 @@ public class XsltStackFrame extends XStackFrame {
       try {
         _customizePresentation(component);
       }
-      catch (VMPausedException ignore) {
-      }
-      catch (DebuggerStoppedException ignore) {
+      catch (VMPausedException | DebuggerStoppedException ignore) {
       }
     }
   }

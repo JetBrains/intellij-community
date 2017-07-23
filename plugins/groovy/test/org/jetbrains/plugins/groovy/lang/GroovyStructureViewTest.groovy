@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ class Bar extends Foo {
  -Foo
   Foo(int, int)
   foo(int, int): Object
-  getClass(): Class<? extends Object>
+  getClass(): Class<?>
   hashCode(): int
   equals(Object): boolean
   clone(): Object
@@ -84,7 +84,7 @@ class Bar extends Foo {
  -Bar
   bar(int): Object
   foo(int, int): Object
-  getClass(): Class<? extends Object>
+  getClass(): Class<?>
   hashCode(): int
   equals(Object): boolean
   clone(): Object
@@ -125,4 +125,24 @@ class Foo {
 
   }
 
+  void testTraitMembers() {
+    myFixture.addFileToProject 'T.groovy', '''\
+trait T { 
+  def tProperty
+  def tMethod() {}
+}
+'''
+    myFixture.configureByText '_.groovy', '''\
+class C implements T {
+  void ownMethod() {}
+}
+'''
+    myFixture.testStructureView {
+      it.setActionActive InheritedMembersNodeProvider.ID, false
+      assertTreeEqual(it.tree, """-_.groovy
+ -C
+  ownMethod(): void
+""")
+    }
+  }
 }

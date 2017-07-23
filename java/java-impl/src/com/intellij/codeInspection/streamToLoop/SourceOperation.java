@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,18 +19,18 @@ import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.StreamToL
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.StreamApiUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.function.Consumer;
 
-import static com.intellij.codeInspection.streamToLoop.FunctionHelper.processUsedNames;
-import static com.intellij.codeInspection.streamToLoop.FunctionHelper.renameVarReference;
+import static com.intellij.codeInspection.streamToLoop.FunctionHelper.replaceVarReference;
 
 /**
  * @author Tagir Valeev
@@ -42,18 +42,21 @@ abstract class SourceOperation extends Operation {
     return true;
   }
 
+  @NotNull
   @Override
   final String wrap(StreamVariable inVar, StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
-    return wrap(outVar, code, context);
+    // Cannot inline "result" as wrap may register more beforeSteps
+    String result = wrap(outVar, code, context);
+    return context.drainBeforeSteps() + result + context.drainAfterSteps();
   }
 
   abstract String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context);
 
   @Nullable
-  static SourceOperation createSource(PsiMethodCallExpression call) {
+  static SourceOperation createSource(PsiMethodCallExpression call, boolean supportUnknownSources) {
     PsiExpression[] args = call.getArgumentList().getExpressions();
     PsiType callType = call.getType();
-    if(callType == null) return null;
+    if(callType == null || PsiType.VOID.equals(callType)) return null;
     PsiMethod method = call.resolveMethod();
     if(method == null) return null;
     String name = method.getName();
@@ -62,30 +65,36 @@ abstract class SourceOperation extends Operation {
     String className = aClass.getQualifiedName();
     if(className == null) return null;
     if ((name.equals("range") || name.equals("rangeClosed")) && args.length == 2 && method.getModifierList().hasExplicitModifier(
-      PsiModifier.STATIC) && (className.equals(CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM) ||
-                              className.equals(CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM))) {
+      PsiModifier.STATIC) && InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM)) {
       return new RangeSource(args[0], args[1], name.equals("rangeClosed"));
     }
     if (name.equals("of") && method.getModifierList().hasExplicitModifier(
-      PsiModifier.STATIC) && className.startsWith("java.util.stream.")) {
-      if(args.length == 1) {
+      PsiModifier.STATIC) && InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM)) {
+      if (method.getParameterList().getParametersCount() != 1) return null;
+      if (args.length == 1) {
         PsiType type = args[0].getType();
-        if(type instanceof PsiArrayType) {
-          PsiType componentType = ((PsiArrayType)type).getComponentType();
-          if(StreamApiUtil.getStreamElementType(callType).isAssignableFrom(componentType)) {
-            return new ForEachSource(args[0]);
-          }
+        PsiType componentType = null;
+        if (type instanceof PsiArrayType) {
+          componentType = ((PsiArrayType)type).getComponentType();
         }
+        else if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ITERABLE)) {
+          componentType = PsiUtil.substituteTypeParameter(type, CommonClassNames.JAVA_LANG_ITERABLE, 0, false);
+        }
+        PsiType elementType = StreamApiUtil.getStreamElementType(callType);
+        if (componentType != null && elementType.isAssignableFrom(componentType)) {
+          return new ForEachSource(args[0]);
+        }
+        if (type == null || !elementType.isAssignableFrom(type)) return null;
       }
-      return new ExplicitSource(args);
+      return new ExplicitSource(call);
     }
     if (name.equals("generate") && args.length == 1 && method.getModifierList().hasExplicitModifier(
-      PsiModifier.STATIC) && className.startsWith("java.util.stream.")) {
+      PsiModifier.STATIC) && InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM)) {
       FunctionHelper fn = FunctionHelper.create(args[0], 0);
       return fn == null ? null : new GenerateSource(fn, null);
     }
     if (name.equals("iterate") && args.length == 2 && method.getModifierList().hasExplicitModifier(
-      PsiModifier.STATIC) && className.startsWith("java.util.stream.")) {
+      PsiModifier.STATIC) && InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM)) {
       FunctionHelper fn = FunctionHelper.create(args[1], 1);
       return fn == null ? null : new IterateSource(args[0], fn);
     }
@@ -97,29 +106,37 @@ abstract class SourceOperation extends Operation {
         CommonClassNames.JAVA_UTIL_ARRAYS.equals(className)) {
       return new ForEachSource(args[0]);
     }
+    if (supportUnknownSources) {
+      PsiType type = StreamApiUtil.getStreamElementType(call.getType(), false);
+      if (type != null) {
+        return new StreamIteratorSource(call, type);
+      }
+    }
     return null;
   }
 
   static class ForEachSource extends SourceOperation {
-    private PsiExpression myQualifier;
+    private @Nullable PsiExpression myQualifier;
 
-    ForEachSource(PsiExpression qualifier) {
+    ForEachSource(@Nullable PsiExpression qualifier) {
       myQualifier = qualifier;
     }
 
     @Override
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
-      myQualifier = renameVarReference(myQualifier, oldName, newName, context);
+      if(myQualifier != null) {
+        myQualifier = replaceVarReference(myQualifier, oldName, newName, context);
+      }
     }
 
     @Override
-    public void registerUsedNames(Consumer<String> usedNameConsumer) {
-      processUsedNames(myQualifier, usedNameConsumer);
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      consumer.accept(myQualifier);
     }
 
     @Override
-    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
-      if(myQualifier instanceof PsiReferenceExpression) {
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      if (myQualifier instanceof PsiReferenceExpression) {
         String name = ((PsiReferenceExpression)myQualifier).getReferenceName();
         if(name != null) {
           String singularName = StringUtil.unpluralize(name);
@@ -132,39 +149,47 @@ abstract class SourceOperation extends Operation {
 
     @Override
     public String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
-      return context.getLoopLabel() +
-             "for(" + outVar.getDeclaration() + ": " + (myQualifier == null ? "this" : myQualifier.getText()) + ") {" + code + "}\n";
+      PsiExpression iterationParameter = myQualifier == null ? ExpressionUtils
+        .getQualifierOrThis(((PsiMethodCallExpression)context.createExpression("stream()")).getMethodExpression()) : myQualifier;
+      return context.getLoopLabel() + "for(" + outVar.getDeclaration() + ": " + iterationParameter.getText() + ") {" + code + "}\n";
     }
   }
 
   static class ExplicitSource extends SourceOperation {
-    private PsiExpression[] myArgList;
+    private PsiMethodCallExpression myCall;
 
-    ExplicitSource(PsiExpression[] argList) {
-      myArgList = argList;
+    ExplicitSource(PsiMethodCallExpression call) {
+      myCall = call;
     }
 
     @Override
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
-      Arrays.asList(myArgList).replaceAll(arg -> renameVarReference(arg, oldName, newName, context));
+      myCall = replaceVarReference(myCall, oldName, newName, context);
     }
 
     @Override
-    public void registerUsedNames(Consumer<String> usedNameConsumer) {
-      for(PsiExpression arg : myArgList) {
-        processUsedNames(arg, usedNameConsumer);
-      }
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      consumer.accept(myCall.getArgumentList());
     }
 
     @Override
     public String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
-      String type = outVar.getType();
-      String args = StreamEx.of(myArgList).map(PsiExpression::getText).joining(", ");
-      // TODO: remove type argument if redundant
-      String collection =
-        TypeConversionUtil.isPrimitive(type) ? "new " + type + "[] {" + args + "}" : "java.util.Arrays.<" + type + ">asList(" + args + ")";
+      PsiType type = outVar.getType();
+      String iterationParameter;
+      PsiExpressionList argList = myCall.getArgumentList();
+      if (type instanceof PsiPrimitiveType) {
+        // Not using argList.getExpressions() here as we want to preserve comments and formatting between the expressions
+        PsiElement[] children = argList.getChildren();
+        // first and last children are (parentheses), we need to remove them
+        iterationParameter = StreamEx.of(children, 1, children.length - 1)
+          .map(PsiElement::getText)
+          .joining("", "new " + type.getCanonicalText() + "[] {", "}");
+      }
+      else {
+        iterationParameter = "java.util.Arrays.<" + type.getCanonicalText() + ">asList" + argList.getText();
+      }
       return context.getLoopLabel() +
-             "for(" + outVar.getDeclaration() + ": " + collection + ") {" + code + "}\n";
+             "for(" + outVar.getDeclaration() + ": " + iterationParameter + ") {" + code + "}\n";
     }
   }
 
@@ -189,15 +214,15 @@ abstract class SourceOperation extends Operation {
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
       myFn.rename(oldName, newName, context);
       if(myLimit != null) {
-        myLimit = renameVarReference(myLimit, oldName, newName, context);
+        myLimit = replaceVarReference(myLimit, oldName, newName, context);
       }
     }
 
     @Override
-    public void registerUsedNames(Consumer<String> usedNameConsumer) {
-      myFn.registerUsedNames(usedNameConsumer);
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      myFn.registerReusedElements(consumer);
       if(myLimit != null) {
-        processUsedNames(myLimit, usedNameConsumer);
+        consumer.accept(myLimit);
       }
     }
 
@@ -211,7 +236,7 @@ abstract class SourceOperation extends Operation {
       }
       return context.getLoopLabel() +
              loop+"{\n" +
-             outVar.getDeclaration() + "=" + myFn.getText() + ";\n" + code +
+             outVar.getDeclaration(myFn.getText()) + code +
              "}\n";
     }
   }
@@ -227,19 +252,19 @@ abstract class SourceOperation extends Operation {
 
     @Override
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
-      myInitializer = renameVarReference(myInitializer, oldName, newName, context);
+      myInitializer = replaceVarReference(myInitializer, oldName, newName, context);
       myFn.rename(oldName, newName, context);
     }
 
     @Override
-    public void registerUsedNames(Consumer<String> usedNameConsumer) {
-      processUsedNames(myInitializer, usedNameConsumer);
-      myFn.registerUsedNames(usedNameConsumer);
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      consumer.accept(myInitializer);
+      myFn.registerReusedElements(consumer);
     }
 
     @Override
-    public void suggestNames(StreamVariable inVar, StreamVariable outVar) {
-      myFn.suggestVariableName(outVar, 0);
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      myFn.preprocessVariable(context, outVar, 0);
     }
 
     @Override
@@ -264,28 +289,87 @@ abstract class SourceOperation extends Operation {
 
     @Override
     void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
-      myOrigin = renameVarReference(myOrigin, oldName, newName, context);
-      myBound = renameVarReference(myBound, oldName, newName, context);
+      myOrigin = replaceVarReference(myOrigin, oldName, newName, context);
+      myBound = replaceVarReference(myBound, oldName, newName, context);
     }
 
     @Override
-    public void registerUsedNames(Consumer<String> usedNameConsumer) {
-      processUsedNames(myOrigin, usedNameConsumer);
-      processUsedNames(myBound, usedNameConsumer);
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      consumer.accept(myOrigin);
+      consumer.accept(myBound);
     }
 
     @Override
     String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
-      String bound;
-      if(!ExpressionUtils.isSimpleExpression(myBound)) {
-        bound = context.declare("bound", outVar.getType(), myBound.getText());
-      } else {
-        bound = myBound.getText();
+      String bound = myBound.getText();
+      if(!ExpressionUtils.isSimpleExpression(context.createExpression(bound))) {
+        bound = context.declare("bound", outVar.getType().getCanonicalText(), bound);
+      }
+      String loopVar = outVar.getName();
+      String reassign = "";
+      if (outVar.isFinal()) {
+        loopVar = context.registerVarName(Arrays.asList("i", "j", "idx"));
+        reassign = outVar.getDeclaration(loopVar);
       }
       return context.getLoopLabel() +
-             "for(" + outVar.getDeclaration() + " = " + myOrigin.getText() + ";" +
-             outVar + (myInclusive ? "<=" : "<") + bound + ";" +
-             outVar + "++) {\n" +
+             "for(" + outVar.getType().getCanonicalText() + " " + loopVar + " = " + myOrigin.getText() + ";" +
+             loopVar + (myInclusive ? "<=" : "<") + bound + ";" +
+             loopVar + "++) {\n" +
+             reassign +
+             code + "}\n";
+    }
+  }
+
+  private static class StreamIteratorSource extends SourceOperation {
+    private final String myElementType;
+    private PsiMethodCallExpression myCall;
+
+    public StreamIteratorSource(PsiMethodCallExpression call, PsiType type) {
+      myCall = call;
+      myElementType = type.getCanonicalText();
+    }
+
+    @Override
+    void rename(String oldName, String newName, StreamToLoopReplacementContext context) {
+      myCall = replaceVarReference(myCall, oldName, newName, context);
+    }
+
+    @Override
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      consumer.accept(myCall);
+    }
+
+    @Override
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      String name = myCall.getMethodExpression().getReferenceName();
+      if (name != null) {
+        String unpluralized = StringUtil.unpluralize(name);
+        if (unpluralized != null && !unpluralized.equals(name)) {
+          outVar.addOtherNameCandidate(unpluralized);
+        }
+      }
+    }
+
+    static String getIteratorType(String type) {
+      switch(type) {
+        case "int":
+          return "java.util.PrimitiveIterator.OfInt";
+        case "long":
+          return "java.util.PrimitiveIterator.OfLong";
+        case "double":
+          return "java.util.PrimitiveIterator.OfDouble";
+        default:
+          return CommonClassNames.JAVA_UTIL_ITERATOR+"<"+type+">";
+      }
+    }
+
+    @Override
+    String wrap(StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
+      String iterator = context.registerVarName(Arrays.asList("it", "iter", "iterator"));
+      String declaration = getIteratorType(myElementType) + " " + iterator + "=" + myCall.getText() + ".iterator()";
+      String condition = iterator + ".hasNext()";
+      return "for(" + declaration + ";" + condition + ";) {\n" +
+             outVar.getDeclaration(iterator + ".next()") +
              code + "}\n";
     }
   }

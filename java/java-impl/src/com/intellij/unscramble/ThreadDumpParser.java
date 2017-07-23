@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,6 +30,8 @@ import java.util.regex.Pattern;
  */
 public class ThreadDumpParser {
   private static final Pattern ourThreadStartPattern = Pattern.compile("^\\s*\"(.+)\".+(prio=\\d+ (?:os_prio=[^\\s]+ )?tid=[^\\s]+ nid=[^\\s]+|[Ii][Dd]=\\d+) ([^\\[]+)");
+  private static final Pattern ourYourkitThreadStartPattern = Pattern.compile("(?:\\s)*(.+) \\[([A-Z_, ]*)]");
+  private static final Pattern ourYourkitThreadStartPattern2 = Pattern.compile("(.+) State: (.+) CPU usage on sample: .+");
   private static final Pattern ourThreadStatePattern = Pattern.compile("java\\.lang\\.Thread\\.State: (.+) \\((.+)\\)");
   private static final Pattern ourThreadStatePattern2 = Pattern.compile("java\\.lang\\.Thread\\.State: (.+)");
   private static final Pattern ourWaitingForLockPattern = Pattern.compile("- waiting (on|to lock) <(.+)>");
@@ -188,7 +189,7 @@ public class ThreadDumpParser {
   }
 
   @Nullable
-  private static ThreadState tryParseThreadStart(final String line) {
+  private static ThreadState tryParseThreadStart(String line) {
     Matcher m = ourThreadStartPattern.matcher(line);
     if (m.find()) {
       final ThreadState state = new ThreadState(m.group(1), m.group(3));
@@ -197,6 +198,29 @@ public class ThreadDumpParser {
       }
       return state;
     }
+    
+    boolean daemon = line.contains(" [DAEMON]");
+    if (daemon) {
+      line = StringUtil.replace(line, " [DAEMON]", "");
+    }
+
+    m = matchYourKit(line);
+    if (m != null) {
+      ThreadState state = new ThreadState(m.group(1), m.group(2));
+      state.setDaemon(daemon);
+      return state;
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Matcher matchYourKit(String line) {
+    Matcher m = ourYourkitThreadStartPattern.matcher(line);
+    if (m.matches()) return m;
+
+    m = ourYourkitThreadStartPattern2.matcher(line);
+    if (m.matches()) return m;
+
     return null;
   }
 

@@ -15,7 +15,6 @@
  */
 package git4idea.rebase;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.Git;
@@ -44,7 +43,7 @@ public class GitRebaserReorderCommitsTest extends GitSingleRepoTest {
   @Override protected void setUp() throws Exception {
     super.setUp();
     GitTestUtil.createRepository(myProject, myProjectPath, false);
-    myRebaser = new GitRebaser(myProject, ServiceManager.getService(Git.class), new EmptyProgressIndicator());
+    myRebaser = new GitRebaser(myProject, Git.getInstance(), new EmptyProgressIndicator());
     myFirstCommit = makeCommit();
     BuiltInServerManager.getInstance().waitForStart();
   }
@@ -55,7 +54,7 @@ public class GitRebaserReorderCommitsTest extends GitSingleRepoTest {
   }
 
   public void testReorderingNothingShouldDoNothing() throws Exception {
-    myRebaser.reoderCommitsIfNeeded(myProjectRoot, myFirstCommit, Collections.<String>emptyList());
+    myRebaser.reoderCommitsIfNeeded(myProjectRoot, myFirstCommit, Collections.emptyList());
     assertCommits(myFirstCommit);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
-    moduleBuilder.addLibraryJars("guava", PathManager.getHomePathFor(Assert.class) + "/lib/", "guava-19.0.jar");
+    moduleBuilder.addLibraryJars("guava", getTestDataPath() + "/", "guava-stubs.jar");
     moduleBuilder.addLibraryJars("jsr305", PathManager.getHomePathFor(Assert.class) + "/lib/", "jsr305.jar");
     moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
   }
@@ -293,12 +293,16 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testLambdaImplementsBothInterfaces() {
+    doTest();
+  }
+
   private void doTestNoQuickFixes(Class<? extends PsiElement>... highlightedElements) {
     myFixture.configureByFile(getTestName(true) + ".java");
 
     myFixture.doHighlighting();
     for (IntentionAction action : myFixture.getAvailableIntentions()) {
-      if (action instanceof GuavaInspection.MigrateGuavaTypeFix) {
+      if (GuavaInspection.MigrateGuavaTypeFix.FAMILY_NAME.equals(action.getFamilyName())) {
         final PsiElement element = ((GuavaInspection.MigrateGuavaTypeFix)action).getStartElement();
         if (PsiTreeUtil.instanceOf(element, highlightedElements)) {
           fail("Quick fix is found but not expected for types " + Arrays.toString(highlightedElements));
@@ -313,7 +317,7 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     boolean actionFound = false;
     myFixture.doHighlighting();
     for (IntentionAction action : myFixture.getAvailableIntentions()) {
-      if (action instanceof GuavaInspection.MigrateGuavaTypeFix) {
+      if (GuavaInspection.MigrateGuavaTypeFix.FAMILY_NAME.equals(action.getFamilyName())) {
         myFixture.launchAction(action);
         actionFound = true;
         break;

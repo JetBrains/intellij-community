@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,6 +29,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -42,6 +44,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
+import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageViewUtil;
@@ -53,10 +56,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 11/9/11
- */
 public class MemberInplaceRenamer extends VariableInplaceRenamer {
   private final PsiElement mySubstituted;
   private RangeMarker mySubstitutedRange;
@@ -90,7 +89,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   @Override
   protected boolean acceptReference(PsiReference reference) {
     final PsiElement element = reference.getElement();
-    final TextRange textRange = reference.getRangeInElement();
+    final TextRange textRange = getRangeToRename(reference);
     final String referenceText = element.getText().substring(textRange.getStartOffset(), textRange.getEndOffset());
     return Comparing.strEqual(referenceText, myElementToRename.getName());
   }
@@ -126,6 +125,12 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
       return null;
     }
     return null;
+  }
+
+  @Override
+  protected boolean isIdentifier(String newName, Language language) {
+    PsiNamedElement namedElement = getVariable();
+    return namedElement != null ? RenameUtil.isValidName(myProject, namedElement, newName) : super.isIdentifier(newName, language);
   }
 
   @Override
@@ -211,6 +216,11 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
           }
 
           Runnable performRunnable = () -> {
+            if (DumbService.isDumb(myProject)) {
+              DumbService.getInstance(myProject).showDumbModeNotification("Refactorings cannot be performed while indexing is in progress");
+              return;
+            }
+
             final String commandName = RefactoringBundle.message("renaming.0.1.to.2",
                                                                  UsageViewUtil.getType(variable),
                                                                  DescriptiveNameUtil.getDescriptiveName(variable), newName);
@@ -255,7 +265,9 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   protected void restoreCaretOffsetAfterRename() {
     if (myBeforeRevert != null) {
-      myEditor.getCaretModel().moveToOffset(myBeforeRevert.getEndOffset());
+      if (!myEditor.isDisposed()) {
+        myEditor.getCaretModel().moveToOffset(myBeforeRevert.getEndOffset());
+      }
       myBeforeRevert.dispose();
     }
   }

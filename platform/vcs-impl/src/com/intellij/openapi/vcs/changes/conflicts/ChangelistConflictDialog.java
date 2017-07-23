@@ -21,7 +21,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.readOnlyHandler.FileListRenderer;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadOnlyStatusDialog;
@@ -112,7 +111,7 @@ public class ChangelistConflictDialog extends DialogWrapper {
   protected Action[] createLeftSideActions() {
     return new Action[] { new AbstractAction("&Configure...") {
       public void actionPerformed(ActionEvent e) {
-        ChangeListManagerImpl manager = (ChangeListManagerImpl)ChangeListManager.getInstance(myProject);
+        ChangeListManagerImpl manager = ChangeListManagerImpl.getInstanceImpl(myProject);
         ShowSettingsUtil.getInstance().editConfigurable(myPanel, new ChangelistConflictConfigurable(manager));
       }
     }};

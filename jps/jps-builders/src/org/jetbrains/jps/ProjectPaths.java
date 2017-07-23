@@ -48,7 +48,7 @@ public class ProjectPaths {
 
   @NotNull
   public static Collection<File> getPlatformCompilationClasspath(ModuleChunk chunk, boolean excludeMainModuleOutput) {
-    return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.containsTests()), excludeMainModuleOutput, ClasspathPart.BEFORE_JDK, true);
+    return getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.containsTests()), excludeMainModuleOutput, ClasspathPart.BEFORE_PLUS_JDK, true);
   }
 
   @NotNull
@@ -67,13 +67,13 @@ public class ProjectPaths {
                                                     boolean excludeMainModuleOutput,
                                                     ClasspathPart classpathPart,
                                                     boolean exportedOnly) {
-    final Set<File> files = new LinkedHashSet<File>();
+    final Set<File> files = new LinkedHashSet<>();
     for (JpsModule module : chunk.getModules()) {
       JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(module).includedIn(kind).recursively();
       if (exportedOnly) {
         enumerator = enumerator.exportedOnly();
       }
-      if (classpathPart == ClasspathPart.BEFORE_JDK) {
+      if (classpathPart == ClasspathPart.BEFORE_JDK || classpathPart == ClasspathPart.BEFORE_PLUS_JDK) {
         enumerator = enumerator.satisfying(new BeforeJavaSdkItemFilter(module));
       }
       else if (classpathPart == ClasspathPart.AFTER_JDK) {
@@ -86,7 +86,7 @@ public class ProjectPaths {
       files.addAll(rootsEnumerator.getRoots());
     }
 
-    if (classpathPart == ClasspathPart.BEFORE_JDK) {
+    if (classpathPart == ClasspathPart.BEFORE_PLUS_JDK) {
       for (JpsModule module : chunk.getModules()) {
         JpsSdk<JpsDummyElement> sdk = module.getSdk(JpsJavaSdkType.INSTANCE);
         if (sdk != null) {
@@ -109,25 +109,22 @@ public class ProjectPaths {
   @NotNull
   public static Map<File, String> getSourceRootsWithDependents(ModuleChunk chunk) {
     final boolean includeTests = chunk.containsTests();
-    final Map<File, String> result = new LinkedHashMap<File, String>();
-    processModulesRecursively(chunk, JpsJavaClasspathKind.compile(includeTests), new Consumer<JpsModule>() {
-      @Override
-      public void consume(JpsModule module) {
-        for (JpsModuleSourceRoot root : module.getSourceRoots()) {
-          if (root.getRootType().equals(JavaSourceRootType.SOURCE) ||
-              includeTests && root.getRootType().equals(JavaSourceRootType.TEST_SOURCE)) {
-            String prefix = ((JavaSourceRootProperties)root.getProperties()).getPackagePrefix();
-            if (!prefix.isEmpty()) {
-              prefix = prefix.replace('.', '/');
-              if (!prefix.endsWith("/")) {
-                prefix += "/";
-              }
+    final Map<File, String> result = new LinkedHashMap<>();
+    processModulesRecursively(chunk, JpsJavaClasspathKind.compile(includeTests), module -> {
+      for (JpsModuleSourceRoot root : module.getSourceRoots()) {
+        if (root.getRootType().equals(JavaSourceRootType.SOURCE) ||
+            includeTests && root.getRootType().equals(JavaSourceRootType.TEST_SOURCE)) {
+          String prefix = ((JavaSourceRootProperties)root.getProperties()).getPackagePrefix();
+          if (!prefix.isEmpty()) {
+            prefix = prefix.replace('.', '/');
+            if (!prefix.endsWith("/")) {
+              prefix += "/";
             }
-            else {
-              prefix = null;
-            }
-            result.put(JpsPathUtil.urlToFile(root.getUrl()), prefix);
           }
+          else {
+            prefix = null;
+          }
+          result.put(JpsPathUtil.urlToFile(root.getUrl()), prefix);
         }
       }
     });
@@ -136,13 +133,9 @@ public class ProjectPaths {
 
   public static Collection<File> getOutputPathsWithDependents(final ModuleChunk chunk) {
     final boolean forTests = chunk.containsTests();
-    final Set<File> sourcePaths = new LinkedHashSet<File>();
-    processModulesRecursively(chunk, JpsJavaClasspathKind.compile(forTests), new Consumer<JpsModule>() {
-      @Override
-      public void consume(JpsModule module) {
-        addFile(sourcePaths, JpsJavaExtensionService.getInstance().getOutputUrl(module, forTests));
-      }
-    });
+    final Set<File> sourcePaths = new LinkedHashSet<>();
+    processModulesRecursively(chunk, JpsJavaClasspathKind.compile(forTests),
+                              module -> addFile(sourcePaths, JpsJavaExtensionService.getInstance().getOutputUrl(module, forTests)));
     return sourcePaths;
   }
 
@@ -164,13 +157,8 @@ public class ProjectPaths {
         return null;
       }
       if (roots.size() > 1) {
-        roots = new ArrayList<String>(roots); // sort roots to get deterministic result
-        Collections.sort(roots, new Comparator<String>() {
-          @Override
-          public int compare(String o1, String o2) {
-            return o1.compareTo(o2);
-          }
-        });
+        roots = new ArrayList<>(roots); // sort roots to get deterministic result
+        roots.sort(Comparator.naturalOrder());
       }
       final File parent = JpsPathUtil.urlToFile(roots.get(0));
       return StringUtil.isEmpty(sourceDirName)? parent : new File(parent, sourceDirName);
@@ -183,7 +171,7 @@ public class ProjectPaths {
     return StringUtil.isEmpty(sourceDirName)? outputDir : new File(outputDir, sourceDirName);
   }
 
-  private enum ClasspathPart {WHOLE, BEFORE_JDK, AFTER_JDK}
+  private enum ClasspathPart {WHOLE, BEFORE_JDK, BEFORE_PLUS_JDK, AFTER_JDK}
 
   private static class BeforeJavaSdkItemFilter implements Condition<JpsDependencyElement> {
     private JpsModule myModule;

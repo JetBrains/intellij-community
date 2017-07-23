@@ -44,9 +44,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TreeSet;
 
-/**
- * User: anna
- */
 public class AvailablePluginsManagerMain extends PluginManagerMain {
   public static final String MANAGE_REPOSITORIES = "Manage repositories...";
   public static final String N_A = "N/A";

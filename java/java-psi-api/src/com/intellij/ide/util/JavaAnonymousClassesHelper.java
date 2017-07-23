@@ -48,7 +48,7 @@ public class JavaAnonymousClassesHelper {
   private static class AnonClassProvider implements ParameterizedCachedValueProvider<Map<PsiAnonymousClass, String>, PsiClass> {
     @Override
     public CachedValueProvider.Result<Map<PsiAnonymousClass, String>> compute(final PsiClass upper) {
-      final Map<PsiAnonymousClass, String> map = new THashMap<PsiAnonymousClass, String>();
+      final Map<PsiAnonymousClass, String> map = new THashMap<>();
       upper.accept(new JavaRecursiveElementWalkingVisitor() {
         int index;
 

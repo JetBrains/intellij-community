@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.CaretAdapter;
 import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -47,7 +47,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   private final PsiFile myPsiFile;
   private final List<FileEditorPositionListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private List<ModelListener> myModelListeners = new ArrayList<>(2);
-  private CaretAdapter myEditorCaretListener;
+  private CaretListener myEditorCaretListener;
   private Disposable myEditorCaretListenerDisposable;
 
   /**
@@ -73,7 +73,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
     myEditor = editor;
     myPsiFile = file;
 
-    myEditorCaretListener = new CaretAdapter() {
+    myEditorCaretListener = new CaretListener() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         if (e.getEditor().equals(myEditor)) {
@@ -125,9 +125,11 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   @Override
   public Object getCurrentEditorElement() {
     if (myEditor == null) return null;
-    final int offset = myEditor.getCaretModel().getOffset();
-    final PsiFile file = getPsiFile();
+    
+    PsiFile file = getPsiFile();
+    if (!file.isValid()) return null;
 
+    int offset = myEditor.getCaretModel().getOffset();
     return findAcceptableElement(file.getViewProvider().findElementAt(offset, file.getLanguage()));
   }
 

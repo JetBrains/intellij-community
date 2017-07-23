@@ -27,7 +27,7 @@ import java.util.concurrent.Future;
  * @author nik
  */
 public class SharedThreadPoolImpl extends SharedThreadPool {
-  private final ExecutorService myService = Executors.newCachedThreadPool(ConcurrencyUtil.newNamedThreadFactory("JPS thread pool"));
+  private final ExecutorService myService = Executors.newCachedThreadPool(ConcurrencyUtil.newNamedThreadFactory("JPS thread pool", true, Thread.NORM_PRIORITY));
 
   @Override
   public void execute(@NotNull Runnable command) {
@@ -37,15 +37,12 @@ public class SharedThreadPoolImpl extends SharedThreadPool {
   @NotNull
   @Override
   public Future<?> executeOnPooledThread(@NotNull final Runnable action) {
-    return myService.submit(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          action.run();
-        }
-        finally {
-          Thread.interrupted(); // reset interrupted status
-        }
+    return myService.submit(() -> {
+      try {
+        action.run();
+      }
+      finally {
+        Thread.interrupted(); // reset interrupted status
       }
     });
   }

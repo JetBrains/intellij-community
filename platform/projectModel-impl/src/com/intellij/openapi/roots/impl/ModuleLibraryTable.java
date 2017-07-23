@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
@@ -90,8 +91,13 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTableBase.Modifi
   }
 
   @Override
-  public Library createLibrary(String name, @Nullable PersistentLibraryKind kind) {
-    LibraryOrderEntry orderEntry = new ModuleLibraryOrderEntryImpl(name, kind, myRootModel, myProjectRootManager);
+  public Library createLibrary(String name, @Nullable PersistentLibraryKind type) {
+    return createLibrary(name, type, null);
+  }
+
+  @Override
+  public Library createLibrary(String name, @Nullable PersistentLibraryKind kind, @Nullable ProjectModelExternalSource externalSource) {
+    LibraryOrderEntry orderEntry = new ModuleLibraryOrderEntryImpl(name, kind, myRootModel, myProjectRootManager, externalSource);
     myRootModel.addOrderEntry(orderEntry);
     return orderEntry.getLibrary();
   }
@@ -130,11 +136,6 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTableBase.Modifi
   @Override
   public LibraryTablePresentation getPresentation() {
     return MODULE_LIBRARY_TABLE_PRESENTATION;
-  }
-
-  @Override
-  public boolean isEditable() {
-    return true;
   }
 
   @Override

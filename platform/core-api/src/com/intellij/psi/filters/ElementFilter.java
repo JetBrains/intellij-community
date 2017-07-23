@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.filters;
 
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-public interface ElementFilter{
+public interface ElementFilter {
+  ElementFilter[] EMPTY_ARRAY = new ElementFilter[0];
+
   /**
    * Checks if element in given context is matched by given filter.
+   *
    * @param element most often PsiElement
    * @param context context of the element (if any)
    * @return true if matched
@@ -31,11 +32,12 @@ public interface ElementFilter{
 
   /**
    * Quick check if the filter acceptable for elements of given class at all.
+   *
    * @param hintClass class for which we are looking for metadata
    * @return true if class matched
    */
   boolean isClassAcceptable(Class hintClass);
 
-   // To be used only for debug purposes!
-  @NonNls String toString();
+  // To be used only for debug purposes!
+  String toString();
 }

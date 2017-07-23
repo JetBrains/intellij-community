@@ -22,6 +22,7 @@ package com.intellij.util.messages;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.messages.impl.MessageBusImpl;
 import junit.framework.TestCase;
 
@@ -97,6 +98,7 @@ public class MessageBusTest extends TestCase {
       myBus.dispose();
     }
     finally {
+      myBus = null;
       super.tearDown();
     }
   }
@@ -301,9 +303,7 @@ public class MessageBusTest extends TestCase {
     if (e != null) {
       throw e;
     }
-    for (Thread thread : threads) {
-      thread.join();
-    }
+    ConcurrencyUtil.joinAll(threads);
   }
 
 
@@ -334,5 +334,35 @@ public class MessageBusTest extends TestCase {
     myBus.connect().subscribe(RUNNABLE_TOPIC, () -> assertTrue(myBus.hasUndeliveredEvents(RUNNABLE_TOPIC)));
     childBus.connect().subscribe(RUNNABLE_TOPIC, () -> assertFalse(myBus.hasUndeliveredEvents(RUNNABLE_TOPIC)));
     myBus.syncPublisher(RUNNABLE_TOPIC).run();
+  }
+
+  public void testDisposingBusInsideEvent() {
+    MessageBusImpl child = new MessageBusImpl(this, myBus);
+    myBus.connect().subscribe(TOPIC1, new T1Listener() {
+      @Override
+      public void t11() {
+        myLog.add("root 11");
+        myBus.syncPublisher(TOPIC1).t12();
+        child.dispose();
+      }
+
+      @Override
+      public void t12() {
+        myLog.add("root 12");
+      }
+    });
+    child.connect().subscribe(TOPIC1, new T1Listener() {
+      @Override
+      public void t11() {
+        myLog.add("child 11");
+      }
+
+      @Override
+      public void t12() {
+        myLog.add("child 12");
+      }
+    });
+    myBus.syncPublisher(TOPIC1).t11();
+    assertEvents("root 11", "child 11", "root 12", "child 12");
   }
 }

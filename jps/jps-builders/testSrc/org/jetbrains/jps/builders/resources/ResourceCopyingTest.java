@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.builders.resources;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
@@ -70,6 +71,18 @@ public class ResourceCopyingTest extends JpsBuildTestCase {
     String file = createFile("res/A.java", "xxx");
     JpsModule m = addModule("m");
     m.addSourceRoot(JpsPathUtil.pathToUrl(PathUtil.getParentPath(file)), JavaResourceRootType.RESOURCE);
+    rebuildAllModules();
+    assertOutput(m, fs().file("A.java", "xxx"));
+  }
+
+  public void testExcludesInResourceRoot() {
+    String file = createFile("res/A.java", "xxx");
+    String excludedFile = createFile("res/excluded.java", "XXX");
+    JpsModule m = addModule("m");
+    m.addSourceRoot(JpsPathUtil.pathToUrl(PathUtil.getParentPath(file)), JavaResourceRootType.RESOURCE);
+    JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(myProject).getCompilerExcludes().addExcludedFile(
+      "file://" + FileUtil.toSystemIndependentName(excludedFile)
+    );
     rebuildAllModules();
     assertOutput(m, fs().file("A.java", "xxx"));
   }

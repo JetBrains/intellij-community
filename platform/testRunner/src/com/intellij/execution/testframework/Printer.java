@@ -30,29 +30,23 @@ public interface Printer {
 
   default void printWithAnsiColoring(@NotNull String text, @NotNull Key processOutputType) {
     AnsiEscapeDecoder decoder = new AnsiEscapeDecoder();
-    decoder.escapeText(text, ProcessOutputTypes.STDOUT, new AnsiEscapeDecoder.ColoredTextAcceptor() {
-      @Override
-      public void coloredTextAvailable(String text, Key attributes) {
-        ConsoleViewContentType contentType = ConsoleViewContentType.getConsoleViewType(attributes);
-        if (contentType == null || contentType == ConsoleViewContentType.NORMAL_OUTPUT) {
-          contentType = ConsoleViewContentType.getConsoleViewType(processOutputType);
-        }
-        print(text, contentType);
+    decoder.escapeText(text, ProcessOutputTypes.STDOUT, (text1, attributes) -> {
+      ConsoleViewContentType contentType = ConsoleViewContentType.getConsoleViewType(attributes);
+      if (contentType == null || contentType == ConsoleViewContentType.NORMAL_OUTPUT) {
+        contentType = ConsoleViewContentType.getConsoleViewType(processOutputType);
       }
+      print(text1, contentType);
     });
   }
 
   default void printWithAnsiColoring(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
     AnsiEscapeDecoder decoder = new AnsiEscapeDecoder();
-    decoder.escapeText(text, ProcessOutputTypes.STDOUT, new AnsiEscapeDecoder.ColoredTextAcceptor() {
-      @Override
-      public void coloredTextAvailable(String text, Key attributes) {
-        ConsoleViewContentType viewContentType = ConsoleViewContentType.getConsoleViewType(attributes);
-        if (viewContentType == null) {
-          viewContentType = contentType;
-        }
-        print(text, viewContentType);
+    decoder.escapeText(text, ProcessOutputTypes.STDOUT, (text1, attributes) -> {
+      ConsoleViewContentType viewContentType = ConsoleViewContentType.getConsoleViewType(attributes);
+      if (viewContentType == null) {
+        viewContentType = contentType;
       }
+      print(text1, viewContentType);
     });
   }
 }

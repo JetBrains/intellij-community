@@ -49,6 +49,8 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
 
   private State myState = new State();
 
+  private String myDetectedHgExecutable;
+
   public static class State {
     public String myHgExecutable = null;
     // visited URL -> login for this URL. Passwords are remembered in the PasswordSafe.
@@ -70,7 +72,12 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
    */
   @NotNull
   public String defaultHgExecutable() {
-    if (myState.myHgExecutable == null) {
+    String hgExecutable = myState.myHgExecutable;
+    if (hgExecutable != null) {
+      return hgExecutable;
+    }
+
+    if (myDetectedHgExecutable == null) {
       String[] paths;
       String programName;
       if (SystemInfo.isWindows) {
@@ -85,15 +92,16 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
       for (String p : paths) {
         File f = new File(p, programName);
         if (f.exists()) {
-          myState.myHgExecutable = f.getAbsolutePath();
+          myDetectedHgExecutable = f.getAbsolutePath();
           break;
         }
       }
-      if (myState.myHgExecutable == null) { // otherwise, take the first variant and hope it's in $PATH
-        myState.myHgExecutable = programName;
+      if (myDetectedHgExecutable == null) {
+        // otherwise, take the first variant and hope it's in $PATH
+        myDetectedHgExecutable = programName;
       }
     }
-    return myState.myHgExecutable;
+    return myDetectedHgExecutable;
   }
 
   /**

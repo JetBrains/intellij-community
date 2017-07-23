@@ -17,6 +17,10 @@
 package com.intellij.execution;
 
 import com.intellij.CommonBundle;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -25,12 +29,21 @@ import com.intellij.util.ArrayUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TerminateRemoteProcessDialog {
-  public static GeneralSettings.ProcessCloseConfirmation show(final Project project,
-                         final String sessionName,
-                         boolean canDisconnect,
-                         boolean defaultDisconnect) {
+
+  public static GeneralSettings.ProcessCloseConfirmation show(Project project,
+                                                              String sessionName,
+                                                              ProcessHandler processHandler) {
+    //noinspection deprecation
+    if (processHandler.isSilentlyDestroyOnClose() ||
+        Boolean.TRUE.equals(processHandler.getUserData(ProcessHandler.SILENTLY_DESTROY_ON_CLOSE))) {
+      return GeneralSettings.ProcessCloseConfirmation.TERMINATE;
+    }
+
+    boolean canDisconnect =
+      !Boolean.TRUE.equals(processHandler.getUserData(RunContentManagerImpl.ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY));
     GeneralSettings.ProcessCloseConfirmation confirmation = GeneralSettings.getInstance().getProcessCloseConfirmation();
     if (confirmation != GeneralSettings.ProcessCloseConfirmation.ASK) {
       if (confirmation == GeneralSettings.ProcessCloseConfirmation.DISCONNECT && !canDisconnect) {
@@ -55,13 +68,31 @@ public class TerminateRemoteProcessDialog {
         }
       }
     };
-    return getConfirmation(Messages.showDialog(project,
-                               ExecutionBundle.message("terminate.process.confirmation.text", sessionName),
-                               ExecutionBundle.message("process.is.running.dialog.title", sessionName),
-                               ArrayUtil.toStringArray(options),
-                               canDisconnect && defaultDisconnect ? 1 : 0,
-                               Messages.getWarningIcon(),
-                               doNotAskOption), canDisconnect);
+
+    AtomicBoolean alreadyGone = new AtomicBoolean(false);
+    Runnable dialogRemover = Messages.createMessageDialogRemover(project);
+    ProcessAdapter listener = new ProcessAdapter() {
+      public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
+        alreadyGone.set(true);
+        dialogRemover.run();
+      }
+    };
+    processHandler.addProcessListener(listener);
+
+
+    boolean defaultDisconnect = processHandler.detachIsDefault();
+    int exitCode = Messages.showDialog(project,
+                                       ExecutionBundle.message("terminate.process.confirmation.text", sessionName),
+                                       ExecutionBundle.message("process.is.running.dialog.title", sessionName),
+                                       ArrayUtil.toStringArray(options),
+                                       canDisconnect && defaultDisconnect ? 1 : 0,
+                                       Messages.getWarningIcon(),
+                                       doNotAskOption);
+    processHandler.removeProcessListener(listener);
+    if (alreadyGone.get()) {
+      return GeneralSettings.ProcessCloseConfirmation.DISCONNECT;
+    }
+    return getConfirmation(exitCode, canDisconnect);
   }
 
   private static GeneralSettings.ProcessCloseConfirmation getConfirmation(int button, boolean withDisconnect) {

@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Jul 5, 2007
- * Time: 7:32:49 PM
- */
 package com.intellij.find.actions;
 
 import com.intellij.openapi.project.Project;

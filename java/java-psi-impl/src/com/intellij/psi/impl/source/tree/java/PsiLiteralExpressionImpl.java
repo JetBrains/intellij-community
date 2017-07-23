@@ -307,6 +307,6 @@ public class PsiLiteralExpressionImpl
   @Override
   @NotNull
   public LiteralTextEscaper<PsiLiteralExpressionImpl> createLiteralTextEscaper() {
-    return new StringLiteralEscaper<PsiLiteralExpressionImpl>(this);
+    return new StringLiteralEscaper<>(this);
   }
 }

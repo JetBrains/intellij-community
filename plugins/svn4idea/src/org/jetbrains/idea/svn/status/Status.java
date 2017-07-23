@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.status;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -167,12 +166,7 @@ public class Status {
   }
 
   public boolean is(@NotNull StatusType... types) {
-    return ContainerUtil.or(types, new Condition<StatusType>() {
-      @Override
-      public boolean value(StatusType type) {
-        return is(type);
-      }
-    });
+    return ContainerUtil.or(types, type -> is(type));
   }
 
   public boolean isProperty(@NotNull StatusType type) {
@@ -180,12 +174,7 @@ public class Status {
   }
 
   public boolean isProperty(@NotNull StatusType... types) {
-    return ContainerUtil.or(types, new Condition<StatusType>() {
-      @Override
-      public boolean value(StatusType type) {
-        return isProperty(type);
-      }
-    });
+    return ContainerUtil.or(types, type -> isProperty(type));
   }
 
   public boolean isLocked() {

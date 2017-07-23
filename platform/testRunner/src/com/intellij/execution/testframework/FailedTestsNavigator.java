@@ -17,9 +17,11 @@ package com.intellij.execution.testframework;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.OccurenceNavigator;
+import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 
+import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -89,8 +91,12 @@ public class FailedTestsNavigator implements OccurenceNavigator {
     }
 
     public FailedTestInfo execute() {
-      myAllTests = new ArrayList<>(myModel.getRoot().getAllTests());
+      myAllTests = new ArrayList<>();
+      collectTests(myAllTests, myModel.getTreeBuilder().getRootNode(), myModel.getTreeBuilder().getUi());
       myDefects = Filter.DEFECTIVE_LEAF.select(myAllTests);
+      if (myDefects.isEmpty()) {
+        return this;
+      }
       final AbstractTestProxy selectedTest = myModel.getTreeView().getSelectedTest();
       final int selectionIndex = myAllTests.indexOf(selectedTest);
       if (selectionIndex == -1)
@@ -109,6 +115,13 @@ public class FailedTestsNavigator implements OccurenceNavigator {
       return this;
     }
 
+    private void collectTests(List<AbstractTestProxy> tests, TreeNode node, AbstractTreeUi treeUi) {
+      final Object elementFor = treeUi.getElementFor(node);
+      if (elementFor instanceof AbstractTestProxy) tests.add((AbstractTestProxy)elementFor);
+      for(int i = 0; i < node.getChildCount(); i++) {
+        collectTests(tests, node.getChildAt(i), treeUi);
+      }
+    }
 
 
     private AbstractTestProxy findNextDefect(final int startIndex) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,22 +24,13 @@ import com.siyeh.ig.bugs.ObjectEqualityInspection;
  */
 public class EqualityToEqualsFixTest extends IGQuickFixesTestCase {
 
-  public void testSimple() { doTest(); }
-  public void testNegated() { doTest(); }
+  public void testSimple() { doTest(InspectionGadgetsBundle.message("equality.to.equals.quickfix")); }
+  public void testNegated() { doTest(InspectionGadgetsBundle.message("inequality.to.not.equals.quickfix")); }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     myFixture.enableInspections(new ObjectEqualityInspection());
-    myDefaultHint = InspectionGadgetsBundle.message("object.comparison.replace.quickfix");
     myRelativePath = "bugs/equality_to_equals";
-    myFixture.addClass(
-      "package java.util;" +
-      "public class Objects {" +
-      "    public static boolean equals(Object a, Object b) {\n" +
-      "        return (a == b) || (a != null && a.equals(b));\n" +
-      "    }" +
-      "}"
-    );
   }
 }

@@ -25,26 +25,20 @@
     <attribute name="deploy"/>
 
     <sequential>
-      <java classname="org.apache.tools.ant.Main" fork="true" failonerror="true" dir="${project.home}">
-        <sysproperty key="workIdeaHome" value="${work.idea.home}"/>
-        <sysproperty key="modulesOutput" value="${modules.output}"/>
-        <sysproperty key="gant.script" value="${project.home}/build/scripts/download_kotlin.gant"/>
-        <sysproperty key="include.kotlin.jars.to.classpath" value="false"/>
-        <classpath>
-          <fileset dir="${project.home}/lib/ant/lib">
-            <include name="*.jar"/>
-          </fileset>
-        </classpath>
-        <arg value="-f"/>
-        <arg value="${project.home}/build/gant.xml"/>
-      </java>
+      <condition property="gradle.executable" value="${project.home}/build/dependencies/gradlew.bat"
+                 else="${project.home}/build/dependencies/gradlew">
+        <os family="windows"/>
+      </condition>
+      <exec executable="${gradle.executable}" dir="${project.home}/build/dependencies" failonerror="true">
+        <arg value="--no-daemon"/>
+        <arg value="setupKotlin"/>
+      </exec>
       <java failonerror="true" classname="org.apache.tools.ant.Main" fork="true">
         <jvmarg line="-Xms64m -Xmx512m"/>
         <jvmarg line="&quot;-Ddeploy=@{deploy}&quot;"/>
         <jvmarg line="&quot;-Dmodules.output=${modules.output}&quot;"/>
         <jvmarg line="&quot;-Dgant.script=@{script}&quot;"/>
         <jvmarg line="&quot;-Dgant.target=@{target}&quot;"/>
-        <jvmarg line="-DmaySkipAndroidPlugin=true"/>
 
         <classpath>
           <fileset dir="${project.home}/lib/ant/lib">
@@ -59,14 +53,14 @@
   </macrodef>
 
   <target name="layout">
-    <run script="${project.home}/build/scripts/dist.gant"
+    <run script="${project.home}/build/scripts/idea_community.gant"
          target="update-from-sources"
          deploy="${project.home}/out/deploy"/>
   </target>
 
-  <target name="build-jars">
-    <run script="${project.home}/build/scripts/dist.gant"
-         target="build-dist-jars"
+  <target name="build-intellij-core">
+    <run script="${project.home}/build/scripts/idea_community.gant"
+         target="build-intellij-core"
          deploy="${project.home}/out/deploy"/>
   </target>
 </project>

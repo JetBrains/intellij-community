@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,22 @@
  */
 package com.intellij.openapi.roots.impl.storage;
 
+import com.intellij.ProjectTopics;
 import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.configurationStore.StateStorageBase;
+import com.intellij.configurationStore.StateStorageManager;
+import com.intellij.configurationStore.StateStorageManagerKt;
 import com.intellij.configurationStore.StorageUtilKt;
-import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.components.impl.stores.StateStorageManager;
-import com.intellij.openapi.components.impl.stores.StorageManagerListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.ModuleListener;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
@@ -40,12 +40,11 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
+import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -91,17 +90,20 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
 
     final List<String> paths = myConverter.getFilePaths();
     MessageBusConnection busConnection = module.getMessageBus().connect();
-    busConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
+    busConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
+        if (paths.isEmpty()) return;
         for (VFileEvent event : events) {
           if (!event.isFromRefresh() || !(event instanceof VFileContentChangeEvent)) {
             continue;
           }
 
+          String eventPath = event.getPath();
+
           for (String path : paths) {
-            if (path.equals(event.getPath())) {
-              module.getMessageBus().syncPublisher(StateStorageManager.STORAGE_TOPIC).storageFileChanged(event, ClasspathStorage.this, module);
+            if (path.equals(eventPath)) {
+              module.getMessageBus().syncPublisher(StateStorageManagerKt.getSTORAGE_TOPIC()).storageFileChanged(event, ClasspathStorage.this, module);
               return;
             }
           }
@@ -109,25 +111,17 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
       }
     });
 
-    busConnection.subscribe(StateStorageManager.STORAGE_TOPIC, new StorageManagerListener() {
-      private String fileNameToModuleName(@NotNull String fileName) {
-        return fileName.substring(0, fileName.length() - ModuleFileType.DOT_DEFAULT_EXTENSION.length());
-      }
-
+    busConnection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
-      public void storageFileChanged(@NotNull VFileEvent event, @NotNull StateStorage storage, @NotNull ComponentManager componentManager) {
-        assert componentManager == module;
-        if (!(event instanceof VFilePropertyChangeEvent)) {
-          return;
-        }
-
-        VFilePropertyChangeEvent propertyEvent = (VFilePropertyChangeEvent)event;
-        if (propertyEvent.getPropertyName().equals(VirtualFile.PROP_NAME)) {
-          String oldFileName = (String)propertyEvent.getOldValue();
-          if (oldFileName.endsWith(ModuleFileType.DOT_DEFAULT_EXTENSION)) {
+      public void modulesRenamed(@NotNull Project project,
+                                 @NotNull List<Module> modules,
+                                 @NotNull Function<Module, String> oldNameProvider) {
+        for (Module renamedModule : modules) {
+          if (renamedModule.equals(module)) {
             ClasspathStorageProvider provider = getProvider(ClassPathStorageUtil.getStorageType(module));
             if (provider != null) {
-              provider.moduleRenamed(module, fileNameToModuleName(oldFileName), fileNameToModuleName((String)propertyEvent.getNewValue()));
+              provider.moduleRenamed(module, oldNameProvider.fun(module), module.getName());
+              provider.modulePathChanged(module);
             }
           }
         }
@@ -261,26 +255,14 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
     }
 
     provider = getProvider(storageId);
-    if (provider == null) {
-      module.clearOption(JpsProjectLoader.CLASSPATH_ATTRIBUTE);
-      module.clearOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE);
-    }
-    else {
-      module.setOption(JpsProjectLoader.CLASSPATH_ATTRIBUTE, storageId);
-      String root = provider.getContentRoot(model);
-      if (root == null) {
-        module.clearOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE);
-      }
-      else {
-        module.setOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE, root);
-      }
-    }
+    module.setOption(JpsProjectLoader.CLASSPATH_ATTRIBUTE, provider == null ? null : storageId);
+    module.setOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE, provider == null ? null : provider.getContentRoot(model));
   }
 
-  public static void modulePathChanged(Module module, String newPath) {
+  public static void modulePathChanged(@NotNull Module module) {
     ClasspathStorageProvider provider = getProvider(ClassPathStorageUtil.getStorageType(module));
     if (provider != null) {
-      provider.modulePathChanged(module, newPath);
+      provider.modulePathChanged(module);
     }
   }
 
@@ -295,10 +277,6 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
     @Override
     public ExternalizationSession startExternalization() {
       return new ExternalizationSession() {
-        @Override
-        public void setState(@Nullable Object component, @NotNull String componentName, @NotNull Object state) {
-        }
-
         @Nullable
         @Override
         public SaveSession createSaveSession() {

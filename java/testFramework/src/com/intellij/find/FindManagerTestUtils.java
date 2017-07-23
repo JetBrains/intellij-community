@@ -19,7 +19,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import org.junit.Assert;
 
 public class FindManagerTestUtils {
-  static void runFindInCommentsAndLiterals(FindManager findManager, FindModel findModel, String text) {
+  public static void runFindInCommentsAndLiterals(FindManager findManager, FindModel findModel, String text) {
     runFindInCommentsAndLiterals(findManager, findModel, text, "java");
   }
 
@@ -38,11 +38,10 @@ public class FindManagerTestUtils {
   public static void runFindForwardAndBackward(FindManager findManager, FindModel findModel, String text, String ext) {
     findModel.setForward(true);
     LightVirtualFile file = new LightVirtualFile("A."+ext, text);
-    int previousOffset;
 
     FindResult findResult = findManager.findString(text, 0, findModel, file);
     Assert.assertTrue(findResult.isStringFound());
-    previousOffset = findResult.getStartOffset();
+    int previousOffset = findResult.getStartOffset();
 
     findResult = findManager.findString(text, findResult.getEndOffset(), findModel, file);
     Assert.assertTrue(findResult.isStringFound());

@@ -18,6 +18,8 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.OffsetKey;
+import com.intellij.codeInsight.completion.OffsetsInFile;
 import com.intellij.codeInsight.template.*;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
@@ -28,12 +30,8 @@ import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValueProvider;
@@ -49,8 +47,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 public class TemplateManagerImpl extends TemplateManager implements Disposable {
+  private static final TemplateContextType[] ourContextTypes = Extensions.getExtensions(TemplateContextType.EP_NAME);
   private final Project myProject;
   private boolean myTemplateTesting;
 
@@ -92,12 +92,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   public static void setTemplateTesting(Project project, Disposable parentDisposable) {
     final TemplateManagerImpl instance = (TemplateManagerImpl)getInstance(project);
     instance.myTemplateTesting = true;
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        instance.myTemplateTesting = false;
-      }
-    });
+    Disposer.register(parentDisposable, () -> instance.myTemplateTesting = false);
   }
 
   private static void disposeState(@NotNull TemplateState state) {
@@ -273,7 +268,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
       (editor.getCaretModel().getCaretCount() <= 1 || supportsMultiCaretMode(customLiveTemplate)));
     if (!customCandidates.isEmpty()) {
       int caretOffset = editor.getCaretModel().getOffset();
-      PsiFile fileCopy = insertDummyIdentifierIfNeeded(file, caretOffset, caretOffset, "");
+      PsiFile fileCopy = insertDummyIdentifierWithCache(file, caretOffset, caretOffset, "").getFile();
       Document document = editor.getDocument();
 
       for (final CustomLiveTemplate customLiveTemplate : customCandidates) {
@@ -376,9 +371,6 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     if (template2argument == null || template2argument.isEmpty()) {
       return null;
     }
-    if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), myProject)) {
-      return null;
-    }
 
     return () -> {
       if (template2argument.size() == 1) {
@@ -393,11 +385,11 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     };
   }
 
-  public static List<TemplateImpl> findMatchingTemplates(CharSequence text,
-                                                         int caretOffset,
-                                                         @Nullable Character shortcutChar,
-                                                         TemplateSettings settings,
-                                                         boolean hasArgument) {
+  private static List<TemplateImpl> findMatchingTemplates(CharSequence text,
+                                                          int caretOffset,
+                                                          @Nullable Character shortcutChar,
+                                                          TemplateSettings settings,
+                                                          boolean hasArgument) {
     List<TemplateImpl> candidates = Collections.emptyList();
     for (int i = settings.getMaxKeyLength(); i >= 1; i--) {
       int wordStart = caretOffset - i;
@@ -461,7 +453,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
       return candidates;
     }
 
-    PsiFile copy = insertDummyIdentifierIfNeeded(file, caretOffset, caretOffset, CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
+    PsiFile copy = insertDummyIdentifierWithCache(file, caretOffset, caretOffset, CompletionUtil.DUMMY_IDENTIFIER_TRIMMED).getFile();
 
     List<TemplateImpl> result = new ArrayList<>();
     for (TemplateImpl candidate : candidates) {
@@ -517,7 +509,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   }
 
   public static TemplateContextType[] getAllContextTypes() {
-    return Extensions.getExtensions(TemplateContextType.EP_NAME);
+    return ourContextTypes;
   }
 
   @Override
@@ -564,9 +556,9 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   
   public static List<TemplateImpl> listApplicableTemplateWithInsertingDummyIdentifier(Editor editor, PsiFile file, boolean selectionOnly) {
     int startOffset = editor.getSelectionModel().getSelectionStart();
-    file = insertDummyIdentifier(editor, file);
-
-    return listApplicableTemplates(file, startOffset, selectionOnly);
+    int endOffset = editor.getSelectionModel().getSelectionEnd();
+    OffsetsInFile offsets = insertDummyIdentifierWithCache(file, startOffset, endOffset, CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
+    return listApplicableTemplates(offsets.getFile(), getStartOffset(offsets), selectionOnly);
   }
 
   public static List<CustomLiveTemplate> listApplicableCustomTemplates(@NotNull Editor editor, @NotNull PsiFile file, boolean selectionOnly) {
@@ -602,38 +594,54 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
     return result;
   }
-  
-  public static PsiFile insertDummyIdentifier(Editor editor, PsiFile file) {
-    int startOffset = editor.getSelectionModel().getSelectionStart();
-    int endOffset = editor.getSelectionModel().getSelectionEnd();
-    return insertDummyIdentifierIfNeeded(file, startOffset, endOffset, CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
+
+  private static final OffsetKey START_OFFSET = OffsetKey.create("start", false);
+  private static final OffsetKey END_OFFSET = OffsetKey.create("end", true);
+
+  private static int getStartOffset(OffsetsInFile offsets) {
+    return offsets.getOffsets().getOffset(START_OFFSET);
   }
 
-  private static PsiFile insertDummyIdentifierIfNeeded(PsiFile file, final int startOffset, final int endOffset, String replacement) {
-    Document originalDocument = file.getViewProvider().getDocument();
-    assert originalDocument != null;
+  private static int getEndOffset(OffsetsInFile offsets) {
+    return offsets.getOffsets().getOffset(END_OFFSET);
+  }
 
-    if (replacement.isEmpty() && PsiDocumentManager.getInstance(file.getProject()).isCommitted(originalDocument)) {
-      return file;
+  private static OffsetsInFile insertDummyIdentifierWithCache(PsiFile file, int startOffset, int endOffset, String replacement) {
+    ProperTextRange editRange = ProperTextRange.create(startOffset, endOffset);
+    assertRangeWithinDocument(editRange, file.getViewProvider().getDocument());
+
+    ConcurrentMap<Pair<ProperTextRange, String>, OffsetsInFile> map = CachedValuesManager.getCachedValue(file, () ->
+      CachedValueProvider.Result.create(
+        ConcurrentFactoryMap.createMap(
+          key -> copyWithDummyIdentifier(new OffsetsInFile(file), key.first.getStartOffset(), key.first.getEndOffset(), key.second)),
+        file, file.getViewProvider().getDocument()));
+    return map.get(Pair.create(editRange, replacement));
+  }
+
+  private static void assertRangeWithinDocument(ProperTextRange editRange, Document document) {
+    TextRange docRange = TextRange.from(0, document.getTextLength());
+    assert docRange.contains(editRange) : docRange + " doesn't contain " + editRange;
+  }
+
+  @NotNull
+  public static OffsetsInFile copyWithDummyIdentifier(OffsetsInFile offsetMap, int startOffset, int endOffset, String replacement) {
+    offsetMap.getOffsets().addOffset(START_OFFSET, startOffset);
+    offsetMap.getOffsets().addOffset(END_OFFSET, endOffset);
+
+    Document document = offsetMap.getFile().getViewProvider().getDocument();
+    assert document != null;
+    if (replacement.isEmpty() && startOffset == endOffset) {
+      PsiDocumentManager pdm = PsiDocumentManager.getInstance(offsetMap.getFile().getProject());
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        pdm.commitDocument(document);
+      }
+      if (pdm.isCommitted(document)) {
+        return offsetMap;
+      }
     }
 
-    ConcurrentFactoryMap<Pair<ProperTextRange, String>, PsiFile> map =
-      CachedValuesManager.getCachedValue(file, () -> CachedValueProvider.Result.create(new ConcurrentFactoryMap<Pair<ProperTextRange, String>, PsiFile>() {
-        @Nullable
-        @Override
-        protected PsiFile create(Pair<ProperTextRange, String> key) {
-          PsiFile copy = (PsiFile)file.copy();
-
-          final Document document = copy.getViewProvider().getDocument();
-          assert document != null;
-
-          document.setText(originalDocument.getImmutableCharSequence()); // original file might be uncommitted
-          document.replaceString(key.first.getStartOffset(), key.first.getEndOffset(), key.second);
-          PsiDocumentManager.getInstance(copy.getProject()).commitDocument(document);
-          return copy;
-        }
-      }, file, originalDocument));
-
-    return map.get(Pair.create(ProperTextRange.create(startOffset, endOffset), replacement));
+    OffsetsInFile hostOffsets = offsetMap.toTopLevelFile();
+    OffsetsInFile hostCopy = hostOffsets.copyWithReplacement(getStartOffset(hostOffsets), getEndOffset(hostOffsets), replacement);
+    return hostCopy.toInjectedIfAny(getStartOffset(hostCopy));
   }
 }

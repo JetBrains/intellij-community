@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.SunToolkit;
@@ -39,7 +38,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author peter
  */
-public class PotemkinProgress extends ProgressWindow {
+public class PotemkinProgress extends ProgressWindow implements PingProgress {
   private long myLastUiUpdate = System.currentTimeMillis();
   private final LinkedBlockingQueue<InputEvent> myEventQueue = new LinkedBlockingQueue<>();
 
@@ -66,21 +65,14 @@ public class PotemkinProgress extends ProgressWindow {
     return Objects.requireNonNull(super.getDialog());
   }
 
-  private void installCheckCanceledPaintingHook() {
-    // make ProgressManager#checkCanceled actually delegate to the current indicator
-    HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
-
-    // isCanceled is final, so using a nonstandard way of plugging into it
-    addStateDelegate(new AbstractProgressIndicatorExBase() {
-      @Override
-      public boolean isCanceled() {
-        if (ApplicationManager.getApplication().isDispatchThread()) {
-          dispatchAwtEventsWithoutModelAccess(0);
-          updateUI();
-        }
-        return super.isCanceled();
+  public void interact() {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      long now = System.currentTimeMillis();
+      if (shouldDispatchAwtEvents(now)) {
+        dispatchAwtEventsWithoutModelAccess(0);
       }
-    });
+      updateUI(now);
+    }
   }
 
   private void dispatchAwtEventsWithoutModelAccess(int timeoutMs) {
@@ -96,6 +88,14 @@ public class PotemkinProgress extends ProgressWindow {
     catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private long myLastShouldDispatchCheck = 0;
+  private boolean shouldDispatchAwtEvents(long now) {
+    if (now == myLastShouldDispatchCheck) return false;
+
+    myLastShouldDispatchCheck = now;
+    return getDialog().getPanel().isShowing();
   }
 
   private void dispatchInputEvent(InputEvent e) {
@@ -115,20 +115,20 @@ public class PotemkinProgress extends ProgressWindow {
     return dialogWindow instanceof JDialog && SwingUtilities.isDescendingFrom(source, dialogWindow);
   }
 
-  private void updateUI() {
+  private void updateUI(long now) {
     JRootPane rootPane = getDialog().getPanel().getRootPane();
     if (rootPane == null) {
-      rootPane = considerShowingDialog();
+      rootPane = considerShowingDialog(now);
     }
 
-    if (rootPane != null && timeToPaint()) {
+    if (rootPane != null && timeToPaint(now)) {
       paintProgress();
     }
   }
 
   @Nullable
-  private JRootPane considerShowingDialog() {
-    if (System.currentTimeMillis() - myLastUiUpdate > DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
+  private JRootPane considerShowingDialog(long now) {
+    if (now - myLastUiUpdate > myDelayInMillis) {
       getDialog().myRepaintRunnable.run();
       showDialog();
       return getDialog().getPanel().getRootPane();
@@ -136,8 +136,7 @@ public class PotemkinProgress extends ProgressWindow {
     return null;
   }
 
-  private boolean timeToPaint() {
-    long now = System.currentTimeMillis();
+  private boolean timeToPaint(long now) {
     if (now - myLastUiUpdate <= ProgressDialog.UPDATE_INTERVAL) {
       return false;
     }
@@ -164,7 +163,6 @@ public class PotemkinProgress extends ProgressWindow {
   /** Executes the action in EDT, paints itself inside checkCanceled calls. */
   public void runInSwingThread(@NotNull Runnable action) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    installCheckCanceledPaintingHook();
     try {
       ProgressManager.getInstance().runProcess(action, this);
     }
@@ -184,7 +182,7 @@ public class PotemkinProgress extends ProgressWindow {
 
       while (isRunning()) {
         dispatchAwtEventsWithoutModelAccess(10);
-        updateUI();
+        updateUI(System.currentTimeMillis());
       }
     }
     finally {

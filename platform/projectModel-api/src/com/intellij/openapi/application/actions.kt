@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,23 @@
  */
 package com.intellij.openapi.application
 
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.util.Computable
 import javax.swing.SwingUtilities
 
-inline fun <T> runWriteAction(crossinline runnable: () -> T): T = ApplicationManager.getApplication().runWriteAction(Computable { runnable.invoke() })
+inline fun <T> runWriteAction(crossinline runnable: () -> T): T {
+  return ApplicationManager.getApplication().runWriteAction(Computable { runnable() })
+}
 
-inline fun <T> runReadAction(crossinline runnable: () -> T): T = ApplicationManager.getApplication().runReadAction(Computable { runnable.invoke() })
+inline fun <T> runUndoTransparentWriteAction(crossinline runnable: () -> T): T {
+  var result: T? = null
+  CommandProcessor.getInstance().runUndoTransparentAction {
+    result = ApplicationManager.getApplication().runWriteAction(Computable { runnable() })
+  }
+  return result as T
+}
+
+inline fun <T> runReadAction(crossinline runnable: () -> T): T = ApplicationManager.getApplication().runReadAction(Computable { runnable() })
 
 /**
  * @exclude Internal use only

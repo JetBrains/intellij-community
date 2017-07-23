@@ -160,14 +160,14 @@ public class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
     List<String> myRootValues;
 
     if (psifile == null) {
-      configureComboBox(rootElementChooser, Collections.<String>emptyList());
+      configureComboBox(rootElementChooser, Collections.emptyList());
       return;
     }
 
     final XmlTag rootTag = getRootTag(psifile);
 
     if (rootTag == null) {
-      configureComboBox(rootElementChooser, Collections.<String>emptyList());
+      configureComboBox(rootElementChooser, Collections.emptyList());
       rootElementChooser.setSelectedIndex(-1);
       previousUri = uri;
       return;

@@ -33,9 +33,9 @@ import com.intellij.util.indexing.impl.MapIndexStorage;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
 import gnu.trove.TIntHashSet;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 
@@ -52,12 +52,15 @@ public final class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<K
 
   private static final ConcurrentIntObjectMap<Boolean> ourInvalidatedSessionIds = ContainerUtil.createConcurrentIntObjectMap();
 
+  @TestOnly
   public VfsAwareMapIndexStorage(@NotNull File storageFile,
                                  @NotNull KeyDescriptor<Key> keyDescriptor,
                                  @NotNull DataExternalizer<Value> valueExternalizer,
-                                 final int cacheSize
+                                 final int cacheSize,
+                                 final boolean readOnly
   ) throws IOException {
-    this(storageFile, keyDescriptor, valueExternalizer, cacheSize, false, false);
+    super(storageFile, keyDescriptor, valueExternalizer, cacheSize, false, true, readOnly);
+    myBuildKeyHashToVirtualFileMapping = false;
   }
 
   public VfsAwareMapIndexStorage(@NotNull File storageFile,
@@ -66,7 +69,7 @@ public final class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<K
                                  final int cacheSize,
                                  boolean keyIsUniqueForIndexedFile,
                                  boolean buildKeyHashToVirtualFileMapping) throws IOException {
-    super(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, false);
+    super(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, false, false);
     myBuildKeyHashToVirtualFileMapping = buildKeyHashToVirtualFileMapping && FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
     initMapAndCache();
   }
@@ -248,15 +251,12 @@ public final class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<K
       stream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(newFileWithCaches)));
       DataInputOutputUtil.writeINT(stream, hashMaskSet.size());
       final DataOutputStream finalStream = stream;
-      savedSuccessfully = hashMaskSet.forEach(new TIntProcedure() {
-        @Override
-        public boolean execute(int value) {
-          try {
-            DataInputOutputUtil.writeINT(finalStream, value);
-            return true;
-          } catch (IOException ex) {
-            return false;
-          }
+      savedSuccessfully = hashMaskSet.forEach(value -> {
+        try {
+          DataInputOutputUtil.writeINT(finalStream, value);
+          return true;
+        } catch (IOException ex) {
+          return false;
         }
       });
     }

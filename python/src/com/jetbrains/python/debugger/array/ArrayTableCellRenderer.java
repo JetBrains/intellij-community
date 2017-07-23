@@ -15,10 +15,12 @@
  */
 package com.jetbrains.python.debugger.array;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.debugger.containerview.ColoredCellRenderer;
 import com.jetbrains.python.debugger.containerview.PyNumericViewUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -29,7 +31,7 @@ import java.awt.*;
  * @author amarch
  */
 class ArrayTableCellRenderer extends DefaultTableCellRenderer implements ColoredCellRenderer {
-
+  private static final Logger LOG = Logger.getInstance(ArrayTableCellRenderer.class);
   private double myMin = Double.MIN_VALUE;
   private double myMax = Double.MIN_VALUE;
   private String myComplexMin;
@@ -48,11 +50,6 @@ class ArrayTableCellRenderer extends DefaultTableCellRenderer implements Colored
 
   public void setColored(boolean colored) {
     myColored = colored;
-  }
-
-  @Override
-  public boolean getColored() {
-    return myColored;
   }
 
   public Component getTableCellRendererComponent(JTable table, Object value,
@@ -99,11 +96,25 @@ class ArrayTableCellRenderer extends DefaultTableCellRenderer implements Colored
     return myMax;
   }
 
-  public void setComplexMin(String complexMin) {
-    myComplexMin = complexMin;
-  }
-
-  public void setComplexMax(String complexMax) {
-    myComplexMax = complexMax;
+  public void fillColorRange(@NotNull String minValue, @NotNull String maxValue) {
+    if ("c".equals(myType)) {
+      myMin = 0;
+      myMax = 1;
+      myComplexMin = minValue;
+      myComplexMax = maxValue;
+      return;
+    }
+    if ("b".equals(myType)) {
+      myMin = "True".equals(minValue) ? 1 : 0;
+      myMax = "True".equals(maxValue) ? 1 : 0;
+      return;
+    }
+    try {
+      myMin = Double.parseDouble(minValue);
+      myMax = Double.parseDouble(maxValue);
+    }
+    catch (NumberFormatException e) {
+      LOG.error(String.format("Wrong bounds for '%s' type: minValue = %s, maxValue = %s", myType, minValue, maxValue));
+    }
   }
 }

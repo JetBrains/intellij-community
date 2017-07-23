@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.function.Predicate;
 
 public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
   @Override
@@ -63,6 +64,7 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
     return 0;
   }
 
+  @NotNull
   @Override
   public PsiElement shortenClassReferences(@NotNull PsiElement element) throws IncorrectOperationException {
     return element;
@@ -106,6 +108,14 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
   @NotNull
   @Override
   public String suggestUniqueVariableName(@NotNull @NonNls String baseName, PsiElement place, boolean lookForward) {
+    return suggestUniqueVariableName(baseName, place, lookForward, v -> false);
+  }
+
+  @NotNull
+  private static String suggestUniqueVariableName(@NotNull @NonNls String baseName,
+                                                  PsiElement place,
+                                                  boolean lookForward,
+                                                  Predicate<PsiVariable> canBeReused) {
     int index = 0;
     PsiElement scope = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class, PsiCodeBlock.class, PsiMethod.class);
     NextName:
@@ -129,7 +139,7 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
                 }
 
                 @Override public void visitVariable(PsiVariable variable) {
-                  if (name1.equals(variable.getName())) {
+                  if (name1.equals(variable.getName()) && !canBeReused.test(variable)) {
                     throw new CancelException();
                   }
                 }
@@ -152,12 +162,18 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
 
   @NotNull
   @Override
+  public String suggestUniqueVariableName(@NotNull String baseName, PsiElement place, Predicate<PsiVariable> canBeReused) {
+    return suggestUniqueVariableName(baseName, place, true, canBeReused);
+  }
+
+  @NotNull
+  @Override
   public SuggestedNameInfo suggestUniqueVariableName(@NotNull final SuggestedNameInfo baseNameInfo,
                                                      PsiElement place,
                                                      boolean ignorePlaceName,
                                                      boolean lookForward) {
     final String[] names = baseNameInfo.names;
-    final LinkedHashSet<String> uniqueNames = new LinkedHashSet<String>(names.length);
+    final LinkedHashSet<String> uniqueNames = new LinkedHashSet<>(names.length);
     for (String name : names) {
       if (ignorePlaceName && place instanceof PsiNamedElement) {
         final String placeName = ((PsiNamedElement)place).getName();

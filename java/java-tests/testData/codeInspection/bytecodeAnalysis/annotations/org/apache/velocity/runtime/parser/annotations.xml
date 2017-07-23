@@ -1,4 +1,9 @@
 <root>
+    <item name='org.apache.velocity.runtime.parser.JJTParserState JJTParserState()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.runtime.parser.JJTParserState boolean nodeCreated()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -27,11 +32,6 @@
     <item name='org.apache.velocity.runtime.parser.Parser Parser(org.apache.velocity.runtime.RuntimeServices) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='org.apache.velocity.runtime.parser.Parser java.lang.String escapedDirective(java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null-&gt;!null&quot;"/>
-        </annotation>
-    </item>
     <item name='org.apache.velocity.runtime.parser.Parser java.lang.String escapedDirective(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -49,6 +49,16 @@
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.Parser.JJCalls JJCalls()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.Parser.LookaheadSuccess LookaheadSuccess()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.ParserTokenManager ParserTokenManager(org.apache.velocity.runtime.parser.CharStream)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -146,8 +156,18 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.velocity.runtime.parser.TokenMgrError TokenMgrError()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.runtime.parser.TokenMgrError TokenMgrError(boolean, int, int, int, java.lang.String, char, int) 4'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.TokenMgrError TokenMgrError(java.lang.String, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.TokenMgrError java.lang.String LexicalError(boolean, int, int, int, java.lang.String, char)'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -167,7 +187,20 @@
     <item name='org.apache.velocity.runtime.parser.VelocityCharStream VelocityCharStream(java.io.InputStream, int, int, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.velocity.runtime.parser.VelocityCharStream VelocityCharStream(java.io.Reader, int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.VelocityCharStream VelocityCharStream(java.io.Reader, int, int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.runtime.parser.VelocityCharStream char[] GetSuffix(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.velocity.runtime.parser.VelocityCharStream int getBeginColumn()'>

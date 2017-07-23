@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,9 +49,9 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
+import com.jetbrains.python.psi.stubs.PyClassAttributesIndex;
 import com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
-import com.jetbrains.python.psi.stubs.PyInstanceAttributeIndex;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,7 +108,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
       }
     }
 
-    if ((PyTypeChecker.isUnknown(qualifierType) ||
+    if ((PyTypeChecker.isUnknown(qualifierType, myContext.getTypeEvalContext()) ||
          (qualifierType instanceof PyStructuralType && ((PyStructuralType)qualifierType).isInferredFromUsages())) &&
         myContext.allowImplicits() && canQualifyAnImplicitName(qualifier)) {
       addImplicitResolveResults(referencedName, ret);
@@ -158,16 +158,11 @@ public class PyQualifiedReference extends PyReferenceImpl {
       }
     }
 
-    final Collection attributes = PyInstanceAttributeIndex.find(referencedName, project, scope);
-    for (Object attribute : attributes) {
-      if (!(attribute instanceof PyTargetExpression)) {
-        FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID,
-                                                     new Throwable(
-                                                       "found non-target expression object " + attribute + " in target expression list"));
-        break;
-      }
-      ret.add(new ImplicitResolveResult((PyTargetExpression)attribute, getImplicitResultRate((PyTargetExpression)attribute, imports)));
-    }
+    PyClassAttributesIndex.findClassAndInstanceAttributes(referencedName, project, scope).forEach((PyTargetExpression attribute) -> {
+      ret.add(new ImplicitResolveResult(attribute, getImplicitResultRate(attribute, imports)));
+    });
+
+
   }
 
   private static List<QualifiedName> collectImports(PyFile containingFile) {
@@ -416,6 +411,10 @@ public class PyQualifiedReference extends PyReferenceImpl {
     return ArrayUtil.toObjectArray(results);
   }
 
+  /**
+   * Returns expressions accessible from scope of "anchor" with names that start with  provided "qualifierQName".
+   * Can be used for completion.
+   */
   @NotNull
   public static Collection<PyExpression> collectAssignedAttributes(@NotNull final QualifiedName qualifierQName,
                                                                    @NotNull final PsiElement anchor) {

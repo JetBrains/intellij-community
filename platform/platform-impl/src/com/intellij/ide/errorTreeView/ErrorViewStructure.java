@@ -339,11 +339,16 @@ public class ErrorViewStructure extends AbstractTreeStructure {
       if (element != null) {
         return element;
       }
-      element = new GroupingElement(groupName, data, file);
+      element = createGroupingElement(groupName, data, file);
       myGroupNames.add(groupName);
       myGroupNameToElementMap.put(groupName, element);
       return element;
     }
+  }
+
+  @NotNull
+  protected GroupingElement createGroupingElement(String groupName, Object data, VirtualFile file) {
+    return new GroupingElement(groupName, data, file);
   }
 
   public int getChildCount(GroupingElement groupingElement) {

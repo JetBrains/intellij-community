@@ -22,27 +22,31 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author yole
- */
 public abstract class ChangeListManagerEx extends ChangeListManager {
-  @Nullable
-  public abstract LocalChangeList getIdentityChangeList(Change change);
   public abstract boolean isInUpdate();
-  public abstract Collection<LocalChangeList> getInvolvedListsFilterChanges(final Collection<Change> changes, final List<Change> validChanges);
 
+  @Nullable
+  public abstract LocalChangeList getIdentityChangeList(@NotNull Change change);
 
-  public abstract LocalChangeList addChangeList(@NotNull String name, @Nullable final String comment, @Nullable Object data);
+  @NotNull
+  public abstract Collection<LocalChangeList> getInvolvedListsFilterChanges(@NotNull Collection<Change> changes, @NotNull List<Change> validChanges);
+
+  @NotNull
+  public abstract LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable Object data);
 
   /**
    * Blocks modal dialogs that we don't want to popup during some process, for example, above the commit dialog.
+   * They will be shown when notifications are unblocked.
    */
   @CalledInAwt
   public abstract void blockModalNotifications();
-
-  /**
-   * Unblocks modal dialogs showing and shows the ones which were queued.
-   */
   @CalledInAwt
   public abstract void unblockModalNotifications();
+
+  /**
+   * Temporarily disable CLM update
+   * For example, to preserve FilePath->ChangeList mapping during "stash-do_smth-unstash" routine.
+   */
+  public abstract void freeze(@NotNull String reason);
+  public abstract void unfreeze();
 }

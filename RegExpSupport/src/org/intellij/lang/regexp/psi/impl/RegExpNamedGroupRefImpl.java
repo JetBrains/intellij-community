@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.regexp.RegExpTT;
@@ -39,9 +38,6 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
   private static final TokenSet RUBY_GROUP_REF_TOKENS =
     TokenSet.create(RegExpTT.RUBY_NAMED_GROUP_REF, RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF,
                     RegExpTT.RUBY_NAMED_GROUP_CALL, RegExpTT.RUBY_QUOTED_NAMED_GROUP_CALL);
-  private static final TokenSet GROUP_REF_TOKENS =
-    TokenSet.create(RegExpTT.PYTHON_NAMED_GROUP_REF, RegExpTT.RUBY_NAMED_GROUP_REF, RegExpTT.RUBY_QUOTED_NAMED_GROUP_REF,
-                    RegExpTT.RUBY_NAMED_GROUP_CALL, RegExpTT.RUBY_QUOTED_NAMED_GROUP_CALL);
 
   public RegExpNamedGroupRefImpl(ASTNode node) {
     super(node);
@@ -52,24 +48,23 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
     visitor.visitRegExpNamedGroupRef(this);
   }
 
+  @Override
   @Nullable
   public RegExpGroup resolve() {
     final PsiElementProcessor.FindFilteredElement<RegExpGroup> processor = new PsiElementProcessor.FindFilteredElement<>(
-      new PsiElementFilter() {
-        public boolean isAccepted(PsiElement element) {
-          if (!(element instanceof RegExpGroup)) {
-            return false;
-          }
-          final RegExpGroup regExpGroup = (RegExpGroup)element;
-          return (regExpGroup.isPythonNamedGroup() || regExpGroup.isRubyNamedGroup()) &&
-                 Comparing.equal(getGroupName(), regExpGroup.getGroupName());
+      element -> {
+        if (!(element instanceof RegExpGroup)) {
+          return false;
         }
+        final RegExpGroup group = (RegExpGroup)element;
+        return group.isAnyNamedGroup() && Comparing.equal(getGroupName(), group.getGroupName());
       }
     );
     PsiTreeUtil.processElements(getContainingFile(), processor);
     return processor.getFoundElement();
   }
 
+  @Override
   @Nullable
   public String getGroupName() {
     final ASTNode nameNode = getNode().findChildByType(RegExpTT.NAME);
@@ -94,35 +89,47 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
 
   @Override
   public PsiReference getReference() {
+    if (getNode().findChildByType(RegExpTT.NAME) == null) {
+      return null;
+    }
     return new PsiReference() {
+      @Override
       public PsiElement getElement() {
         return RegExpNamedGroupRefImpl.this;
       }
 
       @Override
       public TextRange getRangeInElement() {
-        final ASTNode groupNode = getNode().findChildByType(GROUP_REF_TOKENS);
+        final ASTNode groupNode = getNode().getFirstChildNode();
         assert groupNode != null;
-        return new TextRange(groupNode.getTextLength(), getTextLength() - 1);
+        final ASTNode nameNode = getNode().findChildByType(RegExpTT.NAME);
+        assert nameNode != null;
+        final int startOffset = groupNode.getTextLength();
+        return new TextRange(startOffset, startOffset + nameNode.getTextLength());
       }
 
+      @Override
       public PsiElement resolve() {
         return RegExpNamedGroupRefImpl.this.resolve();
       }
 
+      @Override
       @NotNull
       public String getCanonicalText() {
         return getRangeInElement().substring(getText());
       }
 
+      @Override
       public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
         throw new UnsupportedOperationException();
       }
 
+      @Override
       public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
         throw new UnsupportedOperationException();
       }
 
+      @Override
       public boolean isReferenceTo(PsiElement element) {
         return resolve() == element;
       }
@@ -131,21 +138,13 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
       @NotNull
       public Object[] getVariants() {
         final PsiElementProcessor.CollectFilteredElements<RegExpGroup> processor = new PsiElementProcessor.CollectFilteredElements<>(
-          new PsiElementFilter() {
-            @Override
-            public boolean isAccepted(PsiElement element) {
-              if (!(element instanceof RegExpGroup)) {
-                return false;
-              }
-              final RegExpGroup regExpGroup = (RegExpGroup)element;
-              return regExpGroup.isPythonNamedGroup() || regExpGroup.isRubyNamedGroup();
-            }
-          }
+          e -> e instanceof RegExpGroup && ((RegExpGroup)e).isAnyNamedGroup()
         );
         PsiTreeUtil.processElements(getContainingFile(), processor);
         return processor.toArray();
       }
 
+      @Override
       public boolean isSoft() {
         return false;
       }

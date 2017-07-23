@@ -47,7 +47,7 @@ public interface ExternalSystemSettingsControl<S> {
   void reset();
 
   /**
-   * @return    <code>true</code> if settings exposed by the current control have been modified; <code>false</code> otherwise
+   * @return    {@code true} if settings exposed by the current control have been modified; {@code false} otherwise
    */
   boolean isModified();
 

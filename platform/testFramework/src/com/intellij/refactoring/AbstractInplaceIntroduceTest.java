@@ -22,10 +22,6 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
-/**
- * User: anna
- * Date: 8/25/11
- */
 public abstract class AbstractInplaceIntroduceTest extends LightPlatformCodeInsightTestCase {
 
   protected abstract String getBasePath();

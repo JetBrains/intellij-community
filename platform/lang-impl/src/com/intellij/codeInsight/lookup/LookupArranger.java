@@ -19,11 +19,9 @@ package com.intellij.codeInsight.lookup;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.hash.EqualityPolicy;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +35,7 @@ public abstract class LookupArranger implements WeighingContext {
   private final List<LookupElement> myMatchingItems = new ArrayList<>();
   private final List<LookupElement> myExactPrefixItems = new ArrayList<>();
   private final List<LookupElement> myInexactPrefixItems = new ArrayList<>();
-  private final Map<LookupElement, PrefixMatcher> myMatchers = ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
+  private final Key<PrefixMatcher> myMatcherKey = Key.create("LookupArrangerMatcher");
   private String myAdditionalPrefix = "";
 
   public void addElement(LookupElement item, LookupElementPresentation presentation) {
@@ -59,7 +57,7 @@ public abstract class LookupArranger implements WeighingContext {
   }
 
   public void registerMatcher(@NotNull LookupElement item, @NotNull PrefixMatcher matcher) {
-    myMatchers.put(item, matcher);
+    item.putUserData(myMatcherKey, matcher);
   }
 
   @NotNull
@@ -71,7 +69,7 @@ public abstract class LookupArranger implements WeighingContext {
 
   @NotNull
   public PrefixMatcher itemMatcher(@NotNull LookupElement item) {
-    PrefixMatcher matcher = myMatchers.get(item);
+    PrefixMatcher matcher = item.getUserData(myMatcherKey);
     if (matcher == null) {
       throw new AssertionError("Item not in lookup: item=" + item + "; lookup items=" + myItems);
     }
@@ -90,20 +88,17 @@ public abstract class LookupArranger implements WeighingContext {
   }
 
   public final void prefixReplaced(Lookup lookup, String newPrefix) {
-    //noinspection unchecked
-    Map<LookupElement, PrefixMatcher> newMatchers = new LinkedHashMap(EqualityPolicy.IDENTITY);
-    for (LookupElement item : myItems) {
+    ArrayList<LookupElement> itemCopy = ContainerUtil.newArrayList(myItems);
+    myItems.clear();
+    for (LookupElement item : itemCopy) {
       if (item.isValid()) {
         PrefixMatcher matcher = itemMatcher(item).cloneWithPrefix(newPrefix);
         if (matcher.prefixMatches(item)) {
-          newMatchers.put(item, matcher);
+          item.putUserData(myMatcherKey, matcher);
+          myItems.add(item);
         }
       }
     }
-    myMatchers.clear();
-    myMatchers.putAll(newMatchers);
-    myItems.clear();
-    myItems.addAll(newMatchers.keySet());
 
     prefixChanged(lookup);
   }
@@ -146,15 +141,11 @@ public abstract class LookupArranger implements WeighingContext {
 
   protected boolean isPrefixItem(LookupElement item, final boolean exactly) {
     final String pattern = itemPattern(item);
-    if (Comparing.strEqual(pattern, item.getLookupString(), item.isCaseSensitive())) {
-      return true;
-    }
+    for (String s : item.getAllLookupStrings()) {
+      if (!s.equalsIgnoreCase(pattern)) continue;
 
-    if (!exactly) {
-      for (String s : item.getAllLookupStrings()) {
-        if (s.equalsIgnoreCase(pattern)) {
-          return true;
-        }
+      if (!item.isCaseSensitive() || !exactly || s.equals(pattern)) {
+        return true;
       }
     }
     return false;

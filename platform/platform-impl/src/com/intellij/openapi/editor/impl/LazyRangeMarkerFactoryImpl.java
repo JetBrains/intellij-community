@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,15 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeStyle.CodeStyleFacade;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.LazyRangeMarkerFactory;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,7 +41,7 @@ public class LazyRangeMarkerFactoryImpl extends LazyRangeMarkerFactory {
   public LazyRangeMarkerFactoryImpl(@NotNull Project project, @NotNull final FileDocumentManager fileDocumentManager) {
     myProject = project;
 
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter() {
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
       public void beforeDocumentChange(DocumentEvent e) {
         transformRangeMarkers(e);
@@ -76,7 +75,7 @@ public class LazyRangeMarkerFactoryImpl extends LazyRangeMarkerFactory {
   }
 
   static WeakList<LazyMarker> getMarkers(@NotNull VirtualFile file) {
-    return file.getUserData(LazyRangeMarkerFactoryImpl.LAZY_MARKERS_KEY);
+    return file.getUserData(LAZY_MARKERS_KEY);
   }
 
   private static void addToLazyMarkersList(@NotNull LazyMarker marker, @NotNull VirtualFile file) {
@@ -99,34 +98,28 @@ public class LazyRangeMarkerFactoryImpl extends LazyRangeMarkerFactory {
   @Override
   @NotNull
   public RangeMarker createRangeMarker(@NotNull final VirtualFile file, final int offset) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<RangeMarker>() {
-      @Override
-      public RangeMarker compute() {
-        // even for already loaded document do not create range marker yet - wait until it really needed when e.g. user clicked to jump to OpenFileDescriptor
-        final LazyMarker marker = new OffsetLazyMarker(file, offset);
-        addToLazyMarkersList(marker, file);
-        return marker;
-      }
+    return ReadAction.compute(() -> {
+      // even for already loaded document do not create range marker yet - wait until it really needed when e.g. user clicked to jump to OpenFileDescriptor
+      final LazyMarker marker = new OffsetLazyMarker(file, offset);
+      addToLazyMarkersList(marker, file);
+      return marker;
     });
   }
 
   @Override
   @NotNull
   public RangeMarker createRangeMarker(@NotNull final VirtualFile file, final int line, final int column, final boolean persistent) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<RangeMarker>() {
-      @Override
-      public RangeMarker compute() {
-        final Document document = FileDocumentManager.getInstance().getCachedDocument(file);
-        if (document != null) {
-          int myTabSize = CodeStyleFacade.getInstance(myProject).getTabSize(file.getFileType());
-          final int offset = calculateOffset(document, line, column, myTabSize);
-          return document.createRangeMarker(offset, offset, persistent);
-        }
-
-        final LazyMarker marker = new LineColumnLazyMarker(myProject, file, line, column);
-        addToLazyMarkersList(marker, file);
-        return marker;
+    return ReadAction.compute(() -> {
+      final Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+      if (document != null) {
+        int myTabSize = CodeStyleFacade.getInstance(myProject).getTabSize(file.getFileType());
+        final int offset = calculateOffset(document, line, column, myTabSize);
+        return document.createRangeMarker(offset, offset, persistent);
       }
+
+      final LazyMarker marker = new LineColumnLazyMarker(myProject, file, line, column);
+      addToLazyMarkersList(marker, file);
+      return marker;
     });
   }
 

@@ -35,6 +35,7 @@ public class JavaBraceMatcher implements PairedBraceMatcher {
       new BracePair(JavaTokenType.LT, JavaTokenType.GT, false)
   };
 
+  @NotNull
   @Override
   public BracePair[] getPairs() {
     return pairs;

@@ -17,7 +17,6 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,8 +45,6 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -55,12 +52,9 @@ import java.io.File;
 import java.util.Map;
 import java.util.TreeMap;
 
-/**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: Jun 20, 2006
- * Time: 4:39:46 PM
- */
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+
 public class PropertiesComponent extends JPanel {
   public static final String ID = "SVN Properties";
   private JTable myTable;
@@ -96,26 +90,23 @@ public class PropertiesComponent extends JPanel {
     myTable.setModel(model);
     myTable.setShowVerticalLines(true);
     myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        int index = myTable.getSelectedRow();
-        if (index >= 0) {
-          Object value = myTable.getValueAt(index, 1);
-          if (value instanceof String) {
-            myTextArea.setText(((String) value));
-          } else {
-            myTextArea.setText("");
-          }
+    myTable.getSelectionModel().addListSelectionListener(e -> {
+      int index = myTable.getSelectedRow();
+      if (index >= 0) {
+        Object value = myTable.getValueAt(index, 1);
+        if (value instanceof String) {
+          myTextArea.setText(((String) value));
         } else {
           myTextArea.setText("");
         }
+      } else {
+        myTextArea.setText("");
       }
     });
     myPopupActionGroup = createPopup();
     PopupHandler.installPopupHandler(myTable, myPopupActionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
     PopupHandler.installPopupHandler(scrollPane, myPopupActionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
-    final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_CLOSE_ACTIVE_TAB);
-    myCloseAction.registerCustomShortcutSet(new CustomShortcutSet(shortcuts), this);
+    myCloseAction.registerCustomShortcutSet(getActiveKeymapShortcuts(IdeActions.ACTION_CLOSE_ACTIVE_TAB), this);
     myRefreshAction.registerCustomShortcutSet(CommonShortcuts.getRerun(), this);
   }
 
@@ -202,7 +193,7 @@ public class PropertiesComponent extends JPanel {
     group.add(new FollowSelectionAction());
     group.add(myRefreshAction);
     group.add(myCloseAction);
-    return ActionManager.getInstance().createActionToolbar("", group, false).getComponent();
+    return ActionManager.getInstance().createActionToolbar("SvnProperties", group, false).getComponent();
   }
 
   private DefaultActionGroup createPopup() {
@@ -404,7 +395,7 @@ public class PropertiesComponent extends JPanel {
       }
       VirtualFile vf = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
       if (vf != null) {
-        File f = new File(vf.getPath());
+        File f = virtualToIoFile(vf);
         if (!f.equals(myFile)) {
           setFile(myVcs, f);
           Project p = e.getProject();

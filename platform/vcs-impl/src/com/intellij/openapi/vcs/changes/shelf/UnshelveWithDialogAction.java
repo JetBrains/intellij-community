@@ -46,6 +46,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
+import static com.intellij.openapi.vcs.changes.ChangeListUtil.getChangeListNameForUnshelve;
 import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager.getBinaryShelveChanges;
 import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager.getShelveChanges;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
@@ -90,8 +91,8 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
                             VcsBundle.message("unshelve.changelist.chooser.title"), suggestedName) {
         @Nullable
         @Override
-        protected JComponent createSouthPanel() {
-          return addDoNotShowCheckBox(ObjectUtils.assertNotNull(super.createSouthPanel()), createRemoveFilesStrategyCheckbox(project));
+        protected JComponent createDoNotAskCheckbox() {
+          return createRemoveFilesStrategyCheckbox(project);
         }
       };
 
@@ -116,19 +117,16 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
                             @NotNull ShelvedChangeList changeList,
                             @NotNull List<ShelvedBinaryFilePatch> binaryShelvedPatches,
                             @Nullable Change[] preselectedChanges) {
-      super(project, new UnshelvePatchDefaultExecutor(project, changeList),
-            Collections.emptyList(), ApplyPatchMode.UNSHELVE,
-            patchFile, null,
-            changeList.isMarkedToDelete() ? getPredefinedChangeList(changeList.DESCRIPTION, ChangeListManager.getInstance(project)) : null,
-            binaryShelvedPatches,
+      super(project, new UnshelvePatchDefaultExecutor(project, changeList), Collections.emptyList(), ApplyPatchMode.UNSHELVE, patchFile,
+            null, getPredefinedChangeList(changeList, ChangeListManager.getInstance(project)), binaryShelvedPatches,
             hasNotAllSelectedChanges(project, changeList, preselectedChanges) ? newArrayList(preselectedChanges) : null,
-            changeList.DESCRIPTION, true);
+            getChangeListNameForUnshelve(changeList), true);
     }
 
     @Nullable
     @Override
-    protected JComponent createSouthPanel() {
-      return addDoNotShowCheckBox(ObjectUtils.assertNotNull(super.createSouthPanel()), createRemoveFilesStrategyCheckbox(myProject));
+    protected JComponent createDoNotAskCheckbox() {
+      return createRemoveFilesStrategyCheckbox(myProject);
     }
   }
 

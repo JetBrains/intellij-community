@@ -28,8 +28,10 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.file.impl.FileManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author mike
@@ -37,8 +39,8 @@ import java.util.ArrayList;
 public class ProjectRootUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectRootUtil");
 
-  @NonNls public static final String SIMPLE_ROOT = "simple";
-  @NonNls public static final String COMPOSITE_ROOT = "composite";
+  @NonNls private static final String SIMPLE_ROOT = "simple";
+  @NonNls private static final String COMPOSITE_ROOT = "composite";
   /**
    * @deprecated
    */
@@ -60,18 +62,17 @@ public class ProjectRootUtil {
    */
   @NonNls public static final String EJB_ROOT = "ejb";
   @NonNls private static final String ATTRIBUTE_TYPE = "type";
-  @NonNls public static final String ELEMENT_ROOT = "root";
+  @NonNls private static final String ELEMENT_ROOT = "root";
 
   private ProjectRootUtil() {
   }
 
+  @NotNull
   static ProjectRoot read(Element element)  {
     final String type = element.getAttributeValue(ATTRIBUTE_TYPE);
 
     if (type.equals(SIMPLE_ROOT)) {
-      final SimpleProjectRoot root = new SimpleProjectRoot();
-      root.readExternal(element);
-      return root;
+      return new SimpleProjectRoot(element);
     }
     if (type.equals(COMPOSITE_ROOT)) {
       CompositeProjectRoot root = new CompositeProjectRoot();
@@ -81,6 +82,7 @@ public class ProjectRootUtil {
     throw new IllegalArgumentException("Wrong type: " + type);
   }
 
+  @NotNull
   static Element write(ProjectRoot projectRoot)  {
     Element element = new Element(ELEMENT_ROOT);
     if (projectRoot instanceof SimpleProjectRoot) {
@@ -98,12 +100,14 @@ public class ProjectRootUtil {
     return element;
   }
 
-  public static PsiDirectory[] convertRoots(final Project project, VirtualFile[] roots) {
+  @NotNull
+  private static PsiDirectory[] convertRoots(final Project project, VirtualFile[] roots) {
     return convertRoots(((PsiManagerImpl)PsiManager.getInstance(project)).getFileManager(), roots);
   }
 
-  public static PsiDirectory[] convertRoots(final FileManager fileManager, VirtualFile[] roots) {
-    ArrayList<PsiDirectory> dirs = new ArrayList<>();
+  @NotNull
+  private static PsiDirectory[] convertRoots(final FileManager fileManager, VirtualFile[] roots) {
+    List<PsiDirectory> dirs = new ArrayList<>();
 
     for (VirtualFile root : roots) {
       if (!root.isValid()) {
@@ -118,11 +122,13 @@ public class ProjectRootUtil {
     return dirs.toArray(new PsiDirectory[dirs.size()]);
   }
 
+  @NotNull
   public static PsiDirectory[] getSourceRootDirectories(final Project project) {
     VirtualFile[] files = OrderEnumerator.orderEntries(project).sources().usingCache().getRoots();
     return convertRoots(project, files);
   }
 
+  @NotNull
   public static PsiDirectory[] getAllContentRoots(final Project project) {
     VirtualFile[] files = ProjectRootManager.getInstance(project).getContentRootsFromAllModules();
     return convertRoots(project, files);

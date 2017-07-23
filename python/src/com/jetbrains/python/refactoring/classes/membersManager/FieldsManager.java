@@ -72,7 +72,7 @@ abstract class FieldsManager extends MembersManager<PyTargetExpression> {
   @NotNull
   @Override
   protected List<PyElement> getMembersCouldBeMoved(@NotNull final PyClass pyClass) {
-    return Lists.<PyElement>newArrayList(Collections2.filter(getFieldsByClass(pyClass), SIMPLE_ASSIGNMENTS_ONLY));
+    return Lists.newArrayList(Collections2.filter(getFieldsByClass(pyClass), SIMPLE_ASSIGNMENTS_ONLY));
   }
 
   @Override

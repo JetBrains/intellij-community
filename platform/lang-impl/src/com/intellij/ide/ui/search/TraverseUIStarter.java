@@ -91,48 +91,54 @@ public class TraverseUIStarter extends ApplicationStarterEx {
 
   public static void startup(String outputPath) throws IOException {
     Map<SearchableConfigurable, Set<OptionDescription>> options = new LinkedHashMap<>();
-    SearchUtil.processProjectConfigurables(ProjectManager.getInstance().getDefaultProject(), options);
+    try {
+      SearchUtil.processProjectConfigurables(ProjectManager.getInstance().getDefaultProject(), options);
 
-    Element root = new Element(OPTIONS);
-    for (SearchableConfigurable option : options.keySet()) {
-      SearchableConfigurable configurable = option;
+      Element root = new Element(OPTIONS);
+      for (SearchableConfigurable option : options.keySet()) {
+        SearchableConfigurable configurable = option;
 
-      Element configurableElement = new Element(CONFIGURABLE);
-      String id = configurable.getId();
-      configurableElement.setAttribute(ID, id);
-      configurableElement.setAttribute(CONFIGURABLE_NAME, configurable.getDisplayName());
-      Set<OptionDescription> sortedOptions = options.get(configurable);
-      writeOptions(configurableElement, sortedOptions);
+        Element configurableElement = new Element(CONFIGURABLE);
+        String id = configurable.getId();
+        configurableElement.setAttribute(ID, id);
+        configurableElement.setAttribute(CONFIGURABLE_NAME, configurable.getDisplayName());
+        Set<OptionDescription> sortedOptions = options.get(configurable);
+        writeOptions(configurableElement, sortedOptions);
 
-      if (configurable instanceof ConfigurableWrapper) {
-        UnnamedConfigurable wrapped = ((ConfigurableWrapper)configurable).getConfigurable();
-        if (wrapped instanceof SearchableConfigurable) {
-          configurable = (SearchableConfigurable)wrapped;
+        if (configurable instanceof ConfigurableWrapper) {
+          UnnamedConfigurable wrapped = ((ConfigurableWrapper)configurable).getConfigurable();
+          if (wrapped instanceof SearchableConfigurable) {
+            configurable = (SearchableConfigurable)wrapped;
+          }
         }
-      }
-      if (configurable instanceof KeymapPanel) {
-        processKeymap(configurableElement);
-      }
-      else if (configurable instanceof OptionsContainingConfigurable) {
-        processOptionsContainingConfigurable((OptionsContainingConfigurable)configurable, configurableElement);
-      }
-      else if (configurable instanceof PluginManagerConfigurable) {
-        for (OptionDescription description : wordsToOptionDescriptors(Collections.singleton(AvailablePluginsManagerMain.MANAGE_REPOSITORIES))) {
-          append(null, AvailablePluginsManagerMain.MANAGE_REPOSITORIES, description.getOption(), configurableElement);
+        if (configurable instanceof KeymapPanel) {
+          processKeymap(configurableElement);
         }
-      }
-      else if (configurable instanceof AllFileTemplatesConfigurable) {
-        processFileTemplates(configurableElement);
+        else if (configurable instanceof OptionsContainingConfigurable) {
+          processOptionsContainingConfigurable((OptionsContainingConfigurable)configurable, configurableElement);
+        }
+        else if (configurable instanceof PluginManagerConfigurable) {
+          for (OptionDescription description : wordsToOptionDescriptors(Collections.singleton(AvailablePluginsManagerMain.MANAGE_REPOSITORIES))) {
+            append(null, AvailablePluginsManagerMain.MANAGE_REPOSITORIES, description.getOption(), configurableElement);
+          }
+        }
+        else if (configurable instanceof AllFileTemplatesConfigurable) {
+          processFileTemplates(configurableElement);
+        }
+
+        root.addContent(configurableElement);
       }
 
-      root.addContent(configurableElement);
-      configurable.disposeUIResources();
+      FileUtil.ensureCanCreateFile(new File(outputPath));
+      JDOMUtil.writeDocument(new Document(root), outputPath, "\n");
+
+      System.out.println("Searchable options index builder completed");
     }
-
-    FileUtil.ensureCanCreateFile(new File(outputPath));
-    JDOMUtil.writeDocument(new Document(root), outputPath, "\n");
-
-    System.out.println("Searchable options index builder completed");
+    finally {
+      for (SearchableConfigurable configurable : options.keySet()) {
+        configurable.disposeUIResources();
+      }
+    }
   }
 
   private static void processFileTemplates(Element configurableElement) {

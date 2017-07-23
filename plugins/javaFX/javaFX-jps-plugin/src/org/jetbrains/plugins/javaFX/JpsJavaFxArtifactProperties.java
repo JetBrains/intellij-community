@@ -9,10 +9,6 @@ import org.jetbrains.plugins.javaFX.packaging.JavaFxPackagerConstants;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 3/13/13
- */
 public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifactProperties> {
   protected MyState myState = new MyState();
 
@@ -80,7 +76,7 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
     private String myKeypass;
     private boolean myConvertCss2Bin;
     public JavaFxPackagerConstants.NativeBundles myNativeBundle = JavaFxPackagerConstants.NativeBundles.none;
-    private List<JavaFxManifestAttribute> myCustomManifestAttributes = new ArrayList<JavaFxManifestAttribute>();
+    private List<JavaFxManifestAttribute> myCustomManifestAttributes = new ArrayList<>();
     private JavaFxApplicationIcons myIcons = new JavaFxApplicationIcons();
 
     public String getTitle() {

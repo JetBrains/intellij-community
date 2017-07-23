@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,24 +19,23 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.codeInsight.template.impl.TemplateOptionalProcessor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyShortenFQNamesProcessor implements TemplateOptionalProcessor {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.template.GroovyShortenFQNamesProcessor");
+public class GroovyShortenFQNamesProcessor implements TemplateOptionalProcessor, DumbAware {
 
   @Override
   public void processText(final Project project,
@@ -46,17 +45,14 @@ public class GroovyShortenFQNamesProcessor implements TemplateOptionalProcessor 
                           final Editor editor) {
     if (!template.isToShortenLongNames()) return;
 
-    try {
-      PsiDocumentManager.getInstance(project).commitDocument(document);
-      final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
-      if (file instanceof GroovyFile) {
+    PsiDocumentManager.getInstance(project).commitDocument(document);
+    final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
+    if (file instanceof GroovyFile) {
+      DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(file, templateRange.getStartOffset(),templateRange.getEndOffset());
-      }
-      PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
+      });
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
+    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
   }
 
   @Override
@@ -67,10 +63,6 @@ public class GroovyShortenFQNamesProcessor implements TemplateOptionalProcessor 
   @Override
   public boolean isEnabled(final Template template) {
     return template.isToShortenLongNames();
-  }
-
-  @Override
-  public void setEnabled(final Template template, final boolean value) {
   }
 
   @Override

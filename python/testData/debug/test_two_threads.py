@@ -2,17 +2,20 @@ from threading import Thread
 from time import sleep
 
 
+def print_with_pause(text, pause):
+    sleep(pause)
+    print(text)
+
+
 def fun1(n):
     while True:
-        sleep(0.01)
-    print("finished fun1()", n)
+        print_with_pause("Thread1", 0.1)
 
 
 def fun2(m):
     sleep(2)
     while True:
-        sleep(0.01) #breakpoint
-    print("finished fun2()", m)
+        print_with_pause("Thread2", 0.1)  # breakpoint
 
 
 threads = [Thread(target=fun1, args=(24,), name="Thread1"),

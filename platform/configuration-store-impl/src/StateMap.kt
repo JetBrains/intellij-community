@@ -22,8 +22,8 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.SystemProperties
 import gnu.trove.THashMap
-import org.iq80.snappy.SnappyInputStream
-import org.iq80.snappy.SnappyOutputStream
+import org.iq80.snappy.SnappyFramedInputStream
+import org.iq80.snappy.SnappyFramedOutputStream
 import org.jdom.Element
 import java.io.ByteArrayInputStream
 import java.util.*
@@ -31,13 +31,13 @@ import java.util.concurrent.atomic.AtomicReferenceArray
 
 fun archiveState(state: Element): BufferExposingByteArrayOutputStream {
   val byteOut = BufferExposingByteArrayOutputStream()
-  SnappyOutputStream(byteOut).use {
+  SnappyFramedOutputStream(byteOut).use {
     serializeElementToBinary(state, it)
   }
   return byteOut
 }
 
-private fun unarchiveState(state: ByteArray) = SnappyInputStream(ByteArrayInputStream(state)).use { readElement(it) }
+private fun unarchiveState(state: ByteArray) = SnappyFramedInputStream(ByteArrayInputStream(state), false).use { deserializeElementFromBinary(it) }
 
 fun getNewByteIfDiffers(key: String, newState: Any, oldState: ByteArray): ByteArray? {
   val newBytes: ByteArray
@@ -58,7 +58,7 @@ fun getNewByteIfDiffers(key: String, newState: Any, oldState: ByteArray): ByteAr
 
   val logChangedComponents = SystemProperties.getBooleanProperty("idea.log.changed.components", false)
   if (ApplicationManager.getApplication().isUnitTestMode || logChangedComponents ) {
-    fun stateToString(state: Any) = JDOMUtil.writeParent(state as? Element ?: unarchiveState(state as ByteArray), "\n")
+    fun stateToString(state: Any) = JDOMUtil.write(state as? Element ?: unarchiveState(state as ByteArray), "\n")
 
     val before = stateToString(oldState)
     val after = stateToString(newState)
@@ -238,7 +238,7 @@ internal fun updateState(states: MutableMap<String, Any>, key: String, newState:
 }
 
 private fun arrayEquals(a: ByteArray, a2: ByteArray, aSize: Int = a.size): Boolean {
-  if (a == a2) {
+  if (a === a2) {
     return true
   }
 

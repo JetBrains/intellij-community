@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Alexey
- * Date: 18.12.2006
- * Time: 20:18:31
- */
 package com.intellij.util.containers;
 
 import gnu.trove.TObjectHashingStrategy;
@@ -33,7 +27,7 @@ import java.util.Map;
  * Concurrent soft key:K -> strong value:V map
  * Null keys are allowed
  * Null values are NOT allowed
- * @deprecated Use {@link ContainerUtil#createConcurrentSoftMap()} instead
+ * Use {@link ContainerUtil#createConcurrentSoftMap()} to create this
  */
 final class ConcurrentSoftHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
   private static class SoftKey<K, V> extends SoftReference<K> implements KeyReference<K, V> {

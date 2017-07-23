@@ -88,7 +88,7 @@ public class IntersectingLocalChangesPanel {
 
   @NotNull
   private SimpleTree createTree() {
-    SimpleTree tree = new SimpleTree(new TreeModelBuilder(myProject, true).buildModelFromFilePaths(myFiles)) {
+    SimpleTree tree = new SimpleTree(TreeModelBuilder.buildFromFilePaths(myProject, true, myFiles)) {
       @Override
       protected void configureUiHelper(@NotNull TreeUIHelper helper) {
         super.configureUiHelper(helper);

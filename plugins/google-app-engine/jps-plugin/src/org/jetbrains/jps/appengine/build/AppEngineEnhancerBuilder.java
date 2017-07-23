@@ -82,12 +82,12 @@ public class AppEngineEnhancerBuilder extends ModuleLevelBuilder {
   private static boolean processModule(final CompileContext context,
                                        DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                                        JpsAppEngineModuleExtension extension) throws IOException, ProjectBuildException {
-    final Set<File> roots = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+    final Set<File> roots = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
     for (String path : extension.getFilesToEnhance()) {
       roots.add(new File(FileUtil.toSystemDependentName(path)));
     }
 
-    final List<String> pathsToProcess = new ArrayList<String>();
+    final List<String> pathsToProcess = new ArrayList<>();
     dirtyFilesHolder.processDirtyFiles(new FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>() {
       @Override
       public boolean apply(ModuleBuildTarget target, File file, JavaSourceRootDescriptor root) throws IOException {
@@ -110,7 +110,7 @@ public class AppEngineEnhancerBuilder extends ModuleLevelBuilder {
 
     List<String> vmParams = Collections.singletonList("-Xmx256m");
 
-    List<String> classpath = new ArrayList<String>();
+    List<String> classpath = new ArrayList<>();
     classpath.add(extension.getToolsApiJarPath());
     classpath.add(PathManager.getJarPathForClass(EnhancerRunner.class));
     boolean removeOrmJars = Boolean.parseBoolean(System.getProperty("jps.appengine.enhancer.remove.orm.jars", "true"));
@@ -121,7 +121,7 @@ public class AppEngineEnhancerBuilder extends ModuleLevelBuilder {
       classpath.add(file.getAbsolutePath());
     }
 
-    List<String> programParams = new ArrayList<String>();
+    List<String> programParams = new ArrayList<>();
     final File argsFile = FileUtil.createTempFile("appEngineEnhanceFiles", ".txt");
     PrintWriter writer = new PrintWriter(argsFile);
     try {
@@ -144,7 +144,7 @@ public class AppEngineEnhancerBuilder extends ModuleLevelBuilder {
     }
     programParams.add("-v");
     List<String> commandLine = ExternalProcessUtil.buildJavaCommandLine(JpsJavaSdkType.getJavaExecutable(sdk), EnhancerRunner.class.getName(),
-                                                                    Collections.<String>emptyList(), classpath, vmParams, programParams);
+                                                                        Collections.emptyList(), classpath, vmParams, programParams);
 
     Process process = new ProcessBuilder(commandLine).start();
     ExternalEnhancerProcessHandler handler = new ExternalEnhancerProcessHandler(process, commandLine, context);

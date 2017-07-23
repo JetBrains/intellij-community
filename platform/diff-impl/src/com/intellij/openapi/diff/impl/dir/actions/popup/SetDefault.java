@@ -17,6 +17,7 @@ package com.intellij.openapi.diff.impl.dir.actions.popup;
 
 import com.intellij.ide.diff.DirDiffElement;
 import com.intellij.ide.diff.DirDiffOperation;
+import com.intellij.openapi.diff.impl.dir.DirDiffElementImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,8 +26,8 @@ import org.jetbrains.annotations.NotNull;
 public class SetDefault extends SetOperationToBase {
   @NotNull
   @Override
-  protected DirDiffOperation getOperation() {
-    return DirDiffOperation.NONE;
+  protected DirDiffOperation getOperation(DirDiffElementImpl element) {
+    return element.getDefaultOperation();
   }
 
   @Override

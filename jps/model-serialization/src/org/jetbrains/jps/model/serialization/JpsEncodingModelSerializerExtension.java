@@ -53,7 +53,7 @@ public class JpsEncodingModelSerializerExtension extends JpsModelSerializerExten
     @Override
     public void loadExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
       String projectEncoding = null;
-      Map<String, String> urlToEncoding = new HashMap<String, String>();
+      Map<String, String> urlToEncoding = new HashMap<>();
       for (Element fileTag : JDOMUtil.getChildren(componentTag, "file")) {
         String url = fileTag.getAttributeValue("url");
         String encoding = fileTag.getAttributeValue("charset");

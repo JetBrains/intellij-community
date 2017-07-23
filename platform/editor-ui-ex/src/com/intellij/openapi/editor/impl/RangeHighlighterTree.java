@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,10 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.util.Getter;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: cdr
- */
-public class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
+class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
   private final MarkupModelEx myMarkupModel;
 
-  public RangeHighlighterTree(@NotNull Document document, @NotNull MarkupModelEx markupModel) {
+  RangeHighlighterTree(@NotNull Document document, @NotNull MarkupModelEx markupModel) {
     super(document);
     myMarkupModel = markupModel;
   }
@@ -45,21 +42,23 @@ public class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
 
   @NotNull
   @Override
-  protected RHNode createNewNode(@NotNull RangeHighlighterEx key, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
-    return new RHNode(this, key, start, end, greedyToLeft, greedyToRight,layer);
+  protected RHNode createNewNode(@NotNull RangeHighlighterEx key, int start, int end, 
+                                 boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
+    return new RHNode(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight, layer);
   }
 
   static class RHNode extends RMNode<RangeHighlighterEx> {
     final int myLayer;
 
-    public RHNode(@NotNull RangeHighlighterTree rangeMarkerTree,
-                  @NotNull final RangeHighlighterEx key,
-                  int start,
-                  int end,
-                  boolean greedyToLeft,
-                  boolean greedyToRight,
-                  int layer) {
-      super(rangeMarkerTree, key, start, end, greedyToLeft, greedyToRight);
+    RHNode(@NotNull RangeHighlighterTree rangeMarkerTree,
+           @NotNull final RangeHighlighterEx key,
+           int start,
+           int end,
+           boolean greedyToLeft,
+           boolean greedyToRight,
+           boolean stickingToRight,
+           int layer) {
+      super(rangeMarkerTree, key, start, end, greedyToLeft, greedyToRight, stickingToRight);
       myLayer = layer;
     }
 

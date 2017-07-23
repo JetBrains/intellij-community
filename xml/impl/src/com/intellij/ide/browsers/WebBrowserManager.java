@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
@@ -44,21 +45,32 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
   private static final UUID PREDEFINED_YANDEX_ID = UUID.fromString("B1B2EC2C-20BD-4EE2-89C4-616DB004BCD4");
   private static final UUID PREDEFINED_EXPLORER_ID = UUID.fromString("16BF23D4-93E0-4FFC-BFD6-CB13575177B0");
 
-  private static final List<ConfigurableWebBrowser> PREDEFINED_BROWSERS = Arrays.asList(
-    new ConfigurableWebBrowser(PREDEFINED_CHROME_ID, BrowserFamily.CHROME),
-    new ConfigurableWebBrowser(PREDEFINED_FIREFOX_ID, BrowserFamily.FIREFOX),
-    new ConfigurableWebBrowser(PREDEFINED_SAFARI_ID, BrowserFamily.SAFARI),
-    new ConfigurableWebBrowser(PREDEFINED_OPERA_ID, BrowserFamily.OPERA),
-    new ConfigurableWebBrowser(PREDEFINED_YANDEX_ID, BrowserFamily.CHROME, "Yandex", SystemInfo.isWindows ? "browser" : (SystemInfo.isMac ? "Yandex" : "yandex"), false, BrowserFamily.CHROME.createBrowserSpecificSettings()),
-    new ConfigurableWebBrowser(PREDEFINED_EXPLORER_ID, BrowserFamily.EXPLORER)
-  );
+  private static final UUID[] PREDEFINED_BROWSER_IDS = new UUID[]{
+    PREDEFINED_CHROME_ID,
+    PREDEFINED_FIREFOX_ID,
+    PREDEFINED_SAFARI_ID,
+    PREDEFINED_OPERA_ID,
+    PREDEFINED_YANDEX_ID,
+    PREDEFINED_EXPLORER_ID
+  };
+
+  private static List<ConfigurableWebBrowser> getPredefinedBrowsers() {
+    return Arrays.asList(
+      new ConfigurableWebBrowser(PREDEFINED_CHROME_ID, BrowserFamily.CHROME),
+      new ConfigurableWebBrowser(PREDEFINED_FIREFOX_ID, BrowserFamily.FIREFOX),
+      new ConfigurableWebBrowser(PREDEFINED_SAFARI_ID, BrowserFamily.SAFARI),
+      new ConfigurableWebBrowser(PREDEFINED_OPERA_ID, BrowserFamily.OPERA),
+      new ConfigurableWebBrowser(PREDEFINED_YANDEX_ID, BrowserFamily.CHROME, "Yandex", SystemInfo.isWindows ? "browser" : (SystemInfo.isMac ? "Yandex" : "yandex"), false, BrowserFamily.CHROME.createBrowserSpecificSettings()),
+      new ConfigurableWebBrowser(PREDEFINED_EXPLORER_ID, BrowserFamily.EXPLORER)
+    );
+  }
 
   private List<ConfigurableWebBrowser> browsers;
   private boolean myShowBrowserHover = true;
   DefaultBrowserPolicy defaultBrowserPolicy = DefaultBrowserPolicy.SYSTEM;
 
   public WebBrowserManager() {
-    browsers = new ArrayList<>(PREDEFINED_BROWSERS);
+    browsers = new ArrayList<>(getPredefinedBrowsers());
   }
 
   public static WebBrowserManager getInstance() {
@@ -87,8 +99,8 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
 
   boolean isPredefinedBrowser(@NotNull ConfigurableWebBrowser browser) {
     UUID id = browser.getId();
-    for (ConfigurableWebBrowser predefinedBrowser : PREDEFINED_BROWSERS) {
-      if (id.equals(predefinedBrowser.getId())) {
+    for (UUID predefinedBrowserId : PREDEFINED_BROWSER_IDS) {
+      if (id.equals(predefinedBrowserId)) {
         return true;
       }
     }
@@ -110,30 +122,32 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
       state.setAttribute("showHover", "false");
     }
 
-    for (ConfigurableWebBrowser browser : browsers) {
-      Element entry = new Element("browser");
-      entry.setAttribute("id", browser.getId().toString());
-      entry.setAttribute("name", browser.getName());
-      entry.setAttribute("family", browser.getFamily().name());
+    if (!browsers.equals(getPredefinedBrowsers())) {
+      for (ConfigurableWebBrowser browser : browsers) {
+        Element entry = new Element("browser");
+        entry.setAttribute("id", browser.getId().toString());
+        entry.setAttribute("name", browser.getName());
+        entry.setAttribute("family", browser.getFamily().name());
 
-      String path = browser.getPath();
-      if (path != null && !path.equals(browser.getFamily().getExecutionPath())) {
-        entry.setAttribute("path", path);
-      }
-
-      if (!browser.isActive()) {
-        entry.setAttribute("active", "false");
-      }
-
-      BrowserSpecificSettings specificSettings = browser.getSpecificSettings();
-      if (specificSettings != null) {
-        Element settingsElement = new Element("settings");
-        XmlSerializer.serializeInto(specificSettings, settingsElement, new SkipDefaultValuesSerializationFilters());
-        if (!JDOMUtil.isEmpty(settingsElement)) {
-          entry.addContent(settingsElement);
+        String path = browser.getPath();
+        if (path != null && !path.equals(browser.getFamily().getExecutionPath())) {
+          entry.setAttribute("path", path);
         }
+
+        if (!browser.isActive()) {
+          entry.setAttribute("active", "false");
+        }
+
+        BrowserSpecificSettings specificSettings = browser.getSpecificSettings();
+        if (specificSettings != null) {
+          Element settingsElement = new Element("settings");
+          XmlSerializer.serializeInto(specificSettings, settingsElement, new SkipDefaultValuesSerializationFilters());
+          if (!JDOMUtil.isEmpty(settingsElement)) {
+            entry.addContent(settingsElement);
+          }
+        }
+        state.addContent(entry);
       }
-      state.addContent(entry);
     }
     return state;
   }
@@ -253,15 +267,20 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
     }
 
     // add removed/new predefined browsers
+    Map<UUID, ConfigurableWebBrowser> idToBrowser = null;
     int n = list.size();
-    pb: for (ConfigurableWebBrowser predefinedBrowser : PREDEFINED_BROWSERS) {
+    pb: for (UUID predefinedBrowserId : PREDEFINED_BROWSER_IDS) {
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < n; i++) {
-        if (list.get(i).getId().equals(predefinedBrowser.getId())) {
+        if (list.get(i).getId().equals(predefinedBrowserId)) {
           continue pb;
         }
       }
-      list.add(predefinedBrowser);
+
+      if (idToBrowser == null) {
+        idToBrowser = ContainerUtil.newMapFromValues(getPredefinedBrowsers().iterator(), it -> it.getId());
+      }
+      list.add(idToBrowser.get(predefinedBrowserId));
     }
 
     setList(list);
@@ -269,7 +288,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
 
   @NotNull
   public List<WebBrowser> getBrowsers() {
-    return Collections.<WebBrowser>unmodifiableList(browsers);
+    return Collections.unmodifiableList(browsers);
   }
 
   @NotNull
@@ -284,7 +303,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
 
   @NotNull
   public List<WebBrowser> getActiveBrowsers() {
-    return getBrowsers(Conditions.<WebBrowser>alwaysTrue(), true);
+    return getBrowsers(Conditions.alwaysTrue(), true);
   }
 
   @NotNull
@@ -310,6 +329,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
   public void setBrowserPath(@NotNull WebBrowser browser, @Nullable String path, boolean isActive) {
     ((ConfigurableWebBrowser)browser).setPath(path);
     ((ConfigurableWebBrowser)browser).setActive(isActive);
+    incModificationCount();
   }
 
   public WebBrowser addBrowser(final @NotNull UUID id,
@@ -338,10 +358,10 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
     }
   }
 
-  @Nullable
   /**
    * @param idOrFamilyName UUID or, due to backward compatibility, browser family name or JS debugger engine ID
    */
+  @Nullable
   public WebBrowser findBrowserById(@Nullable String idOrFamilyName) {
     if (StringUtil.isEmpty(idOrFamilyName)) {
       return null;
@@ -366,8 +386,8 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
     return null;
   }
 
-  @NotNull
-  public WebBrowser getFirstBrowser(@NotNull BrowserFamily family) {
+  @Nullable
+  public WebBrowser getFirstBrowserOrNull(@NotNull BrowserFamily family) {
     for (ConfigurableWebBrowser browser : browsers) {
       if (browser.isActive() && family.equals(browser.getFamily())) {
         return browser;
@@ -380,7 +400,16 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
       }
     }
 
-    throw new IllegalStateException("Must be at least one browser per family");
+    return null;
+  }
+
+  @NotNull
+  public WebBrowser getFirstBrowser(@NotNull BrowserFamily family) {
+    WebBrowser result = getFirstBrowserOrNull(family);
+    if (result == null) {
+      throw new IllegalStateException("Must be at least one browser per family");
+    }
+    return result;
   }
 
   public boolean isActive(@NotNull WebBrowser browser) {

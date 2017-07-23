@@ -65,7 +65,8 @@ public class LoadingDecorator {
 
       @Override
       protected void paintCycleEnd() {
-        myLoadingLayer.setVisible(false);
+        myLoadingLayer.setAlpha(0); // paint with zero alpha before hiding completely
+        hideLoadingLayer();
         myLoadingLayer.setAlpha(-1);
       }
     };
@@ -73,9 +74,29 @@ public class LoadingDecorator {
 
 
     myPane.add(content, JLayeredPane.DEFAULT_LAYER, 0);
-    myPane.add(myLoadingLayer, JLayeredPane.DRAG_LAYER, 1);
 
     Disposer.register(parent, myLoadingLayer.myProgress);
+  }
+
+  /**
+   * Removes a loading layer to restore a blit-accelerated scrolling.
+   */
+  private void hideLoadingLayer() {
+    myPane.remove(myLoadingLayer);
+    myLoadingLayer.setVisible(false);
+  }
+
+  /* Placing the invisible layer on top of JViewport suppresses blit-accelerated scrolling
+     as JViewport.canUseWindowBlitter() doesn't take component's visibility into account.
+
+     We need to add / remove the loading layer on demand to preserve the blit-based scrolling.
+
+     Blit-acceleration copies as much of the rendered area as possible and then repaints only newly exposed region.
+     This helps to improve scrolling performance and to reduce CPU usage (especially if drawing is compute-intensive). */
+  private void addLoadingLayerOnDemand() {
+    if (myPane != myLoadingLayer.getParent()) {
+      myPane.add(myLoadingLayer, JLayeredPane.DRAG_LAYER, 1);
+    }
   }
 
   protected NonOpaquePanel customizeLoadingLayer(JPanel parent, JLabel text, AsyncProcessIcon icon) {
@@ -114,6 +135,7 @@ public class LoadingDecorator {
   }
 
   protected void _startLoading(final boolean takeSnapshot) {
+    addLoadingLayerOnDemand();
     myLoadingLayer.setVisible(true, takeSnapshot);
   }
 

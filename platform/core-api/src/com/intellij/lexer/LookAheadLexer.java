@@ -34,8 +34,8 @@ public abstract class LookAheadLexer extends LexerBase{
 
   public LookAheadLexer(@NotNull Lexer baseLexer, int capacity) {
     myBaseLexer = baseLexer;
-    myTypeCache = new Queue<IElementType>(capacity);
-    myEndOffsetCache = new Queue<Integer>(capacity);
+    myTypeCache = new Queue<>(capacity);
+    myEndOffsetCache = new Queue<>(capacity);
   }
 
   public LookAheadLexer(@NotNull Lexer baseLexer) {

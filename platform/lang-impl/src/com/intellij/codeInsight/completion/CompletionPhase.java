@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,9 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandAdapter;
-import com.intellij.openapi.command.CommandEvent;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -35,11 +26,7 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Expirable;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import org.jetbrains.annotations.NotNull;
@@ -76,42 +63,15 @@ public abstract class CompletionPhase implements Disposable {
 
   public static class CommittingDocuments extends CompletionPhase {
     boolean replaced;
-    private boolean actionsHappened;
-    private final Editor myEditor;
-    private final Expirable focusStamp;
-    private final Project myProject;
-    private boolean ignoreDocumentChanges;
+    private final ActionTracker myTracker;
 
     public CommittingDocuments(@Nullable CompletionProgressIndicator prevIndicator, Editor editor) {
       super(prevIndicator);
-      myEditor = editor;
-      myProject = editor.getProject();
-      focusStamp = IdeFocusManager.getInstance(myProject).getTimestamp(true);
-      ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
-        @Override
-        public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-          actionsHappened = true;
-        }
-      }, this);
-      myEditor.getDocument().addDocumentListener(new DocumentAdapter() {
-        @Override
-        public void documentChanged(DocumentEvent e) {
-          if (!ignoreDocumentChanges) {
-            actionsHappened = true;
-          }
-        }
-      }, this);
+      myTracker = new ActionTracker(editor, this);
     }
 
     public void ignoreCurrentDocumentChange() {
-      ignoreDocumentChanges = true;
-      CommandProcessor.getInstance().addCommandListener(new CommandAdapter() {
-        @Override
-        public void commandFinished(CommandEvent event) {
-          CommandProcessor.getInstance().removeCommandListener(this);
-          ignoreDocumentChanges = false;
-        }
-      });
+      myTracker.ignoreCurrentDocumentChange();
     }
 
     public boolean isRestartingCompletion() {
@@ -123,10 +83,7 @@ public abstract class CompletionPhase implements Disposable {
         return true;
       }
 
-      if (actionsHappened || focusStamp.isExpired() || DumbService.getInstance(myProject).isDumb() ||
-          myEditor.isDisposed() ||
-          (myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) ||
-          ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      if (myTracker.hasAnythingHappened() || ApplicationManager.getApplication().isWriteAccessAllowed()) {
         CompletionServiceImpl.setCompletionPhase(NoCompletion);
         return true;
       }
@@ -231,7 +188,7 @@ public abstract class CompletionPhase implements Disposable {
           CompletionServiceImpl.setCompletionPhase(NoCompletion);
         }
       };
-      final DocumentAdapter documentListener = new DocumentAdapter() {
+      final DocumentListener documentListener = new DocumentListener() {
         @Override
         public void beforeDocumentChange(DocumentEvent e) {
           CompletionServiceImpl.setCompletionPhase(NoCompletion);
@@ -243,7 +200,7 @@ public abstract class CompletionPhase implements Disposable {
           CompletionServiceImpl.setCompletionPhase(NoCompletion);
         }
       };
-      final CaretListener caretListener = new CaretAdapter() {
+      final CaretListener caretListener = new CaretListener() {
         @Override
         public void caretPositionChanged(CaretEvent e) {
           CompletionServiceImpl.setCompletionPhase(NoCompletion);

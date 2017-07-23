@@ -17,7 +17,7 @@ package com.jetbrains.env.python.console;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.intellij.execution.ExecutionManager;
+import com.google.common.collect.Sets;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -39,9 +39,11 @@ import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 /**
@@ -57,12 +59,18 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   private PythonConsoleView myConsoleView;
   private Semaphore myCommandSemaphore;
   private Semaphore myConsoleInitSemaphore;
-  private PydevConsoleExecuteActionHandler myExecuteHandler;
+  private PythonConsoleExecuteActionHandler myExecuteHandler;
 
   private Ref<RunContentDescriptor> myContentDescriptorRef = Ref.create();
 
   public PyConsoleTask() {
     super(null);
+  }
+
+  @Nullable
+  @Override
+  public Set<String> getTagsToCover() {
+    return Sets.newHashSet("python3.6", "python2.7", "ipython", "ipython200", "jython", "IronPython");
   }
 
   public PythonConsoleView getConsoleView() {
@@ -71,9 +79,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
   @Override
   public void setUp(final String testName) throws Exception {
-    if (myFixture == null) {
-      super.setUp(testName);
-    }
+    super.setUp(testName);
   }
 
   @NotNull
@@ -87,42 +93,38 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
   @Override
   public void tearDown() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          if (myConsoleView != null) {
-            disposeConsole();
-            myCommunication.waitForTerminate();
-          }
-          PyConsoleTask.super.tearDown();
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        if (myConsoleView != null) {
+          disposeConsole();
+          myCommunication.waitForTerminate();
         }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+        super.tearDown();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
   }
 
   private void disposeConsole() throws InterruptedException {
     if (myCommunication != null) {
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            myCommunication.close();
-          }
-          catch (Exception e) {
-            e.printStackTrace();
-          }
-          myCommunication = null;
+      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+        try {
+          myCommunication.close();
         }
+        catch (Exception e) {
+          e.printStackTrace();
+        }
+        myCommunication = null;
       });
     }
 
     disposeConsoleProcess();
 
-    ExecutionManager.getInstance(getProject()).getContentManager().getAllDescriptors().forEach((Disposer::dispose));
+    if (!myContentDescriptorRef.isNull()) {
+      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> Disposer.dispose(myContentDescriptorRef.get()));
+    }
 
     if (myConsoleView != null) {
       new WriteAction() {
@@ -146,7 +148,14 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     PydevConsoleRunner consoleRunner =
       new PydevConsoleRunnerImpl(project, sdk, PyConsoleType.PYTHON, myFixture.getTempDirPath(), Maps.newHashMap(),
                                  PyConsoleOptions.getInstance(project).getPythonConsoleSettings(),
-                                 (s) -> {});
+                                 (s) -> {
+                                 }) {
+        protected void showContentDescriptor(RunContentDescriptor contentDescriptor) {
+          myContentDescriptorRef.set(contentDescriptor);
+          super.showContentDescriptor(contentDescriptor);
+        }
+      };
+
     before();
 
     myConsoleInitSemaphore = new Semaphore(0);
@@ -318,12 +327,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   protected void exec(final String command) throws InterruptedException {
     waitForReady();
     myCommandSemaphore.acquire(1);
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myConsoleView.executeInConsole(command);
-      }
-    });
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> myConsoleView.executeInConsole(command));
     Assert.assertTrue(String.format("Command execution wasn't finished: `%s` \n" +
                                     "Output: %s", command, output()), waitFor(myCommandSemaphore));
     myCommandSemaphore.release();
@@ -382,12 +386,9 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
 
   public void addTextToEditor(final String text) {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-                                   @Override
-                                   public void run() {
-                                     getConsoleView().setInputText(text);
-                                     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-                                   }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+                                   getConsoleView().setInputText(text);
+                                   PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
                                  }
     );
   }

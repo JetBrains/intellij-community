@@ -28,13 +28,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Eugene.Kudelevsky
- * Date: 3/29/11
- * Time: 4:21 PM
- * To change this template use File | Settings | File Templates.
- */
 public class HtmlGotoRelatedProvider extends GotoRelatedProvider {
   @NotNull
   @Override

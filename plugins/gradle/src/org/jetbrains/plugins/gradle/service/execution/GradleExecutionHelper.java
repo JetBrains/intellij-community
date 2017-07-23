@@ -15,33 +15,32 @@
  */
 package org.jetbrains.plugins.gradle.service.execution;
 
-import com.intellij.execution.configurations.CommandLineTokenizer;
+import com.google.common.annotations.VisibleForTesting;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.internal.nativeintegration.services.NativeServices;
 import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
-import org.gradle.tooling.internal.consumer.DefaultExecutorServiceFactory;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
-import org.gradle.tooling.internal.consumer.Distribution;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.project.DistributionFactoryExt;
+import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
@@ -53,11 +52,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Field;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
@@ -75,10 +70,11 @@ public class GradleExecutionHelper {
                                              @NotNull final ExternalSystemTaskId id,
                                              @Nullable GradleExecutionSettings settings,
                                              @NotNull ProjectConnection connection,
-                                             @NotNull ExternalSystemTaskNotificationListener listener,
-                                             @NotNull List<String> extraJvmArgs) {
+                                             @NotNull ExternalSystemTaskNotificationListener listener) {
     ModelBuilder<T> result = connection.model(modelType);
-    prepare(result, id, settings, listener, extraJvmArgs, ContainerUtil.<String>newArrayList(), connection);
+    if (settings != null) {
+      prepare(result, id, settings, listener, connection);
+    }
     return result;
   }
 
@@ -87,59 +83,44 @@ public class GradleExecutionHelper {
   public BuildLauncher getBuildLauncher(@NotNull final ExternalSystemTaskId id,
                                         @NotNull ProjectConnection connection,
                                         @Nullable GradleExecutionSettings settings,
-                                        @NotNull ExternalSystemTaskNotificationListener listener,
-                                        @NotNull final List<String> vmOptions,
-                                        @NotNull final List<String> commandLineArgs) {
+                                        @NotNull ExternalSystemTaskNotificationListener listener) {
     BuildLauncher result = connection.newBuild();
-    prepare(result, id, settings, listener, vmOptions, commandLineArgs, connection);
+    if (settings != null) {
+      prepare(result, id, settings, listener, connection);
+    }
     return result;
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  public static void prepare(@NotNull LongRunningOperation operation,
-                             @NotNull final ExternalSystemTaskId id,
-                             @Nullable GradleExecutionSettings settings,
-                             @NotNull final ExternalSystemTaskNotificationListener listener,
-                             @NotNull List<String> extraJvmArgs,
-                             @NotNull List<String> commandLineArgs,
-                             @NotNull ProjectConnection connection) {
-    prepare(operation, id, settings, listener, extraJvmArgs, commandLineArgs, connection,
-            new OutputWrapper(listener, id, true), new OutputWrapper(listener, id, false));
+  @Nullable
+  public static BuildEnvironment getBuildEnvironment(ProjectResolverContext projectResolverContext) {
+    return getBuildEnvironment(projectResolverContext.getConnection(),
+                               projectResolverContext.getExternalSystemTaskId(),
+                               projectResolverContext.getListener());
   }
 
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  public static void prepare(@NotNull LongRunningOperation operation,
+                             @NotNull final ExternalSystemTaskId id,
+                             @NotNull GradleExecutionSettings settings,
+                             @NotNull final ExternalSystemTaskNotificationListener listener,
+                             @NotNull ProjectConnection connection) {
+    prepare(operation, id, settings, listener, connection, new OutputWrapper(listener, id, true), new OutputWrapper(listener, id, false));
+  }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static void prepare(@NotNull LongRunningOperation operation,
                              @NotNull final ExternalSystemTaskId id,
-                             @Nullable GradleExecutionSettings settings,
+                             @NotNull GradleExecutionSettings settings,
                              @NotNull final ExternalSystemTaskNotificationListener listener,
-                             @NotNull List<String> extraJvmArgs,
-                             @NotNull List<String> commandLineArgs,
                              @NotNull ProjectConnection connection,
                              @NotNull final OutputStream standardOutput,
                              @NotNull final OutputStream standardError) {
-    if (settings == null) {
-      return;
-    }
+    Set<String> jvmArgs = settings.getVmOptions();
+    BuildEnvironment buildEnvironment = getBuildEnvironment(connection, id, listener);
 
-    Set<String> jvmArgs = ContainerUtilRt.newHashSet();
-
-    String vmOptions = settings.getDaemonVmOptions();
-    if (!StringUtil.isEmpty(vmOptions)) {
-      CommandLineTokenizer tokenizer = new CommandLineTokenizer(vmOptions);
-      while (tokenizer.hasMoreTokens()) {
-        String vmOption = tokenizer.nextToken();
-        if (!StringUtil.isEmpty(vmOption)) {
-          jvmArgs.add(vmOption);
-        }
-      }
-    }
-
-    jvmArgs.addAll(extraJvmArgs);
-
+    String gradleVersion = buildEnvironment != null ? buildEnvironment.getGradle().getGradleVersion() : null;
     if (!jvmArgs.isEmpty()) {
       // merge gradle args e.g. defined in gradle.properties
-      BuildEnvironment buildEnvironment = getBuildEnvironment(connection);
       Collection<String> merged = buildEnvironment != null
                                   ? mergeJvmArgs(settings.getServiceDirectory(), buildEnvironment.getJava().getJvmArguments(), jvmArgs)
                                   : jvmArgs;
@@ -151,44 +132,68 @@ public class GradleExecutionHelper {
     }
 
     if (settings.isOfflineWork()) {
-      commandLineArgs.add(GradleConstants.OFFLINE_MODE_CMD_OPTION);
+      settings.withArgument(GradleConstants.OFFLINE_MODE_CMD_OPTION);
     }
 
     final Application application = ApplicationManager.getApplication();
     if (application != null && application.isUnitTestMode()) {
-      commandLineArgs.add("--info");
-      commandLineArgs.add("--recompile-scripts");
+      if (!settings.getArguments().contains("--quiet")) {
+        settings.withArgument("--info");
+      }
+      settings.withArgument("--recompile-scripts");
     }
 
-    if (!commandLineArgs.isEmpty()) {
-      LOG.info("Passing command-line args to Gradle Tooling API: " + commandLineArgs);
+    if (!settings.getArguments().isEmpty()) {
+      String loggableArgs = StringUtil.join(obfuscatePasswordParameters(settings.getArguments()), " ");
+      LOG.info("Passing command-line args to Gradle Tooling API: " + loggableArgs);
+
       // filter nulls and empty strings
-      List<String> filteredArgs = ContainerUtil.mapNotNull(commandLineArgs, s -> StringUtil.isEmpty(s) ? null : s);
+      List<String> filteredArgs = ContainerUtil.mapNotNull(settings.getArguments(), s -> StringUtil.isEmpty(s) ? null : s);
 
       // TODO remove this replacement when --tests option will become available for tooling API
       replaceTestCommandOptionWithInitScript(filteredArgs);
       operation.withArguments(ArrayUtil.toStringArray(filteredArgs));
     }
+    setupEnvironment(operation, settings, gradleVersion, id, listener);
 
-    listener.onStart(id);
     final String javaHome = settings.getJavaHome();
     if (javaHome != null && new File(javaHome).isDirectory()) {
       operation.setJavaHome(new File(javaHome));
     }
-    operation.addProgressListener(new ProgressListener() {
-      @Override
-      public void statusChanged(ProgressEvent event) {
-        listener.onStatusChange(new ExternalSystemTaskNotificationEvent(id, event.getDescription()));
-      }
-    });
-    operation.addProgressListener(new org.gradle.tooling.events.ProgressListener() {
-      @Override
-      public void statusChanged(org.gradle.tooling.events.ProgressEvent event) {
-        listener.onStatusChange(GradleProgressEventConverter.convert(id, event));
-      }
-    });
+
+    GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, id);
+    operation.addProgressListener((ProgressListener)gradleProgressListener);
+    operation.addProgressListener((org.gradle.tooling.events.ProgressListener)gradleProgressListener);
     operation.setStandardOutput(standardOutput);
     operation.setStandardError(standardError);
+    InputStream inputStream = settings.getUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY);
+    if (inputStream != null) {
+      operation.setStandardInput(inputStream);
+    }
+  }
+
+  private static void setupEnvironment(@NotNull LongRunningOperation operation,
+                                       @NotNull GradleExecutionSettings settings,
+                                       @Nullable String gradleVersion,
+                                       ExternalSystemTaskId taskId,
+                                       ExternalSystemTaskNotificationListener listener) {
+    boolean isEnvironmentCustomizationSupported =
+      gradleVersion != null && GradleVersion.version(gradleVersion).getBaseVersion().compareTo(GradleVersion.version("3.5")) >= 0;
+    if (!isEnvironmentCustomizationSupported) {
+      if (!settings.isPassParentEnvs() || !settings.getEnv().isEmpty()) {
+        listener.onTaskOutput(taskId, String.format(
+          "The version of Gradle you are using%s does not support the environment variables customization feature. " +
+          "Support for this is available in Gradle 3.5 and all later versions.\n",
+          gradleVersion == null ? "" : (" (" + gradleVersion + ")")), false);
+      }
+      return;
+    }
+    GeneralCommandLine commandLine = new GeneralCommandLine();
+    commandLine.withEnvironment(settings.getEnv());
+    commandLine.withParentEnvironmentType(
+      settings.isPassParentEnvs() ? GeneralCommandLine.ParentEnvironmentType.CONSOLE : GeneralCommandLine.ParentEnvironmentType.NONE);
+    Map<String, String> effectiveEnvironment = commandLine.getEffectiveEnvironment();
+    operation.setEnvironmentVariables(effectiveEnvironment);
   }
 
   public <T> T execute(@NotNull String projectPath, @Nullable GradleExecutionSettings settings, @NotNull Function<ProjectConnection, T> f) {
@@ -258,6 +263,7 @@ public class GradleExecutionHelper {
         final File wrapperPropertyFileLocation = FileUtil.createTempFile("wrap", "loc");
         wrapperPropertyFileLocation.deleteOnExit();
         final String[] lines = {
+          "",
           "gradle.taskGraph.afterTask { Task task ->",
           "    if (task instanceof Wrapper) {",
           "        def wrapperPropertyFileLocation = task.jarFile.getCanonicalPath() - '.jar' + '.properties'",
@@ -265,12 +271,11 @@ public class GradleExecutionHelper {
           StringUtil.escapeBackSlashes(wrapperPropertyFileLocation.getCanonicalPath()) +
           "').write wrapperPropertyFileLocation",
           "}}",
+          "",
         };
         final File tempFile = writeToFileGradleInitScript(StringUtil.join(lines, SystemProperties.getLineSeparator()));
-
-        BuildLauncher launcher = getBuildLauncher(
-          id, connection, settings, listener, ContainerUtil.<String>newArrayList(),
-          ContainerUtil.newArrayList(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath()));
+        settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
+        BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener);
         launcher.forTasks("wrapper");
         launcher.run();
         String wrapperPropertyFile = FileUtil.loadFile(wrapperPropertyFileLocation);
@@ -294,12 +299,26 @@ public class GradleExecutionHelper {
     }
   }
 
-  private static List<String> mergeJvmArgs(String serviceDirectory, Iterable<String> jvmArgs1, Iterable<String> jvmArgs2) {
+  private static List<String> mergeJvmArgs(String serviceDirectory, List<String> jvmArgs, Set<String> jvmArgsFromIdeSettings) {
     File gradleUserHomeDir = serviceDirectory != null ? new File(serviceDirectory) : new BuildLayoutParameters().getGradleUserHomeDir();
     LOG.debug("Gradle home: " + gradleUserHomeDir);
     NativeServices.initialize(gradleUserHomeDir);
+    Map<String, String> mergedArgs = new LinkedHashMap<>();
+    for (String jvmArg : ContainerUtil.concat(jvmArgs, jvmArgsFromIdeSettings)) {
+      int i = jvmArg.indexOf('=');
+      if(i <= 0) {
+        mergedArgs.put(jvmArg, "");
+      } else {
+        mergedArgs.put(jvmArg.substring(0, i), jvmArg.substring(i));
+      }
+    }
+
+    List<String> mergedList = new ArrayList<>();
+    for (Map.Entry<String, String> entry : mergedArgs.entrySet()) {
+      mergedList.add(entry.getKey() + entry.getValue());
+    }
     JvmOptions jvmOptions = new JvmOptions(null);
-    jvmOptions.setAllJvmArgs(ContainerUtil.concat(jvmArgs1, jvmArgs2));
+    jvmOptions.setAllJvmArgs(mergedList);
     return jvmOptions.getAllJvmArgs();
   }
 
@@ -320,33 +339,17 @@ public class GradleExecutionHelper {
     int ttl = -1;
 
     if (settings != null) {
+      File gradleHome = settings.getGradleHome() == null ? null : new File(settings.getGradleHome());
       //noinspection EnumSwitchStatementWhichMissesCases
       switch (settings.getDistributionType()) {
         case LOCAL:
-          String gradleHome = settings.getGradleHome();
           if (gradleHome != null) {
-            try {
-              // There were problems with symbolic links processing at the gradle side.
-              connector.useInstallation(new File(gradleHome).getCanonicalFile());
-            }
-            catch (IOException e) {
-              connector.useInstallation(new File(settings.getGradleHome()));
-            }
+            connector.useInstallation(gradleHome);
           }
           break;
         case WRAPPED:
           if (settings.getWrapperPropertyFile() != null) {
-            File propertiesFile = new File(settings.getWrapperPropertyFile());
-            if (propertiesFile.exists()) {
-              Distribution distribution =
-                new DistributionFactoryExt(new DefaultExecutorServiceFactory()).getWrappedDistribution(propertiesFile);
-              try {
-                setField(connector, "distribution", distribution);
-              }
-              catch (Exception e) {
-                throw new ExternalSystemException(e);
-              }
-            }
+            DistributionFactoryExt.setWrappedDistribution(connector, settings.getWrapperPropertyFile(), gradleHome);
           }
           break;
       }
@@ -364,12 +367,11 @@ public class GradleExecutionHelper {
       ttl = (int)settings.getRemoteProcessIdleTtlInMs();
     }
 
+    // do not spawn gradle daemons during test execution
+    final Application app = ApplicationManager.getApplication();
+    ttl = (app != null && app.isUnitTestMode()) ? 10000 : ttl;
+
     if (ttl > 0 && connector instanceof DefaultGradleConnector) {
-
-      // do not spawn gradle daemons during test execution
-      final Application app = ApplicationManager.getApplication();
-      ttl = (app != null && app.isUnitTestMode()) ? 10000 : ttl;
-
       ((DefaultGradleConnector)connector).daemonMaxIdleTime(ttl, TimeUnit.MILLISECONDS);
     }
     connector.forProjectDirectory(projectDir);
@@ -380,29 +382,6 @@ public class GradleExecutionHelper {
       ));
     }
     return connection;
-  }
-
-  /**
-   * Utility to set field in object if there is no public setter for it.
-   * It's not recommended to use this method.
-   * FIXME: remove this workaround after gradle API changed
-   *
-   * @param obj        Object to be modified
-   * @param fieldName  name of object's field
-   * @param fieldValue value to be set for field
-   * @throws SecurityException
-   * @throws NoSuchFieldException
-   * @throws IllegalArgumentException
-   * @throws IllegalAccessException
-   */
-  public static void setField(Object obj, String fieldName, Object fieldValue)
-    throws SecurityException, NoSuchFieldException,
-           IllegalArgumentException, IllegalAccessException {
-    final Field field = obj.getClass().getDeclaredField(fieldName);
-    final boolean isAccessible = field.isAccessible();
-    field.setAccessible(true);
-    field.set(obj, fieldValue);
-    field.setAccessible(isAccessible);
   }
 
   @Nullable
@@ -464,8 +443,10 @@ public class GradleExecutionHelper {
   }
 
   @Nullable
-  public static GradleVersion getGradleVersion(@NotNull ProjectConnection connection) {
-    final BuildEnvironment buildEnvironment = getBuildEnvironment(connection);
+  public static GradleVersion getGradleVersion(@NotNull ProjectConnection connection,
+                                               @NotNull ExternalSystemTaskId taskId,
+                                               @NotNull ExternalSystemTaskNotificationListener listener) {
+    final BuildEnvironment buildEnvironment = getBuildEnvironment(connection, taskId, listener);
 
     GradleVersion gradleVersion = null;
     if (buildEnvironment != null) {
@@ -475,25 +456,30 @@ public class GradleExecutionHelper {
   }
 
   @Nullable
-  public static BuildEnvironment getBuildEnvironment(@NotNull ProjectConnection connection) {
-    try {
-      final BuildEnvironment buildEnvironment = connection.getModel(BuildEnvironment.class);
-      if (LOG.isDebugEnabled()) {
-        try {
-          LOG.debug("Gradle version: " + buildEnvironment.getGradle().getGradleVersion());
-          LOG.debug("Gradle java home: " + buildEnvironment.getJava().getJavaHome());
-          LOG.debug("Gradle jvm arguments: " + buildEnvironment.getJava().getJvmArguments());
-        }
-        catch (Throwable t) {
-          LOG.debug(t);
-        }
+  public static BuildEnvironment getBuildEnvironment(@NotNull ProjectConnection connection,
+                                                     @NotNull ExternalSystemTaskId taskId,
+                                                     @NotNull ExternalSystemTaskNotificationListener listener) {
+    ModelBuilder<BuildEnvironment> modelBuilder = connection.model(BuildEnvironment.class);
+    // do not use connection.getModel methods since it doesn't allow to handle progress events
+    // and we can miss gradle tooling client side events like distribution download.
+    GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, taskId);
+    modelBuilder.addProgressListener((ProgressListener)gradleProgressListener);
+    modelBuilder.addProgressListener((org.gradle.tooling.events.ProgressListener)gradleProgressListener);
+    modelBuilder.setStandardOutput(new OutputWrapper(listener, taskId, true));
+    modelBuilder.setStandardError(new OutputWrapper(listener, taskId, false));
+
+    final BuildEnvironment buildEnvironment = modelBuilder.get();
+    if (LOG.isDebugEnabled()) {
+      try {
+        LOG.debug("Gradle version: " + buildEnvironment.getGradle().getGradleVersion());
+        LOG.debug("Gradle java home: " + buildEnvironment.getJava().getJavaHome());
+        LOG.debug("Gradle jvm arguments: " + buildEnvironment.getJava().getJvmArguments());
       }
-      return buildEnvironment;
+      catch (Throwable t) {
+        LOG.debug(t);
+      }
     }
-    catch (Exception e) {
-      LOG.warn("can not get BuildEnvironment model", e);
-      return null;
-    }
+    return buildEnvironment;
   }
 
   private static void replaceTestCommandOptionWithInitScript(@NotNull List<String> args) {
@@ -557,5 +543,108 @@ public class GradleExecutionHelper {
     }
     buf.append(']');
     return buf.toString();
+  }
+
+  /* deprecated methods to be removed in future version */
+
+  /**
+   * @deprecated {@link #getModelBuilder(Class, ExternalSystemTaskId, GradleExecutionSettings, ProjectConnection, ExternalSystemTaskNotificationListener)}
+   */
+  @SuppressWarnings("MethodMayBeStatic")
+  @NotNull
+  public <T> ModelBuilder<T> getModelBuilder(@NotNull Class<T> modelType,
+                                             @NotNull final ExternalSystemTaskId id,
+                                             @Nullable GradleExecutionSettings settings,
+                                             @NotNull ProjectConnection connection,
+                                             @NotNull ExternalSystemTaskNotificationListener listener,
+                                             @NotNull List<String> extraJvmArgs) {
+    ModelBuilder<T> result = connection.model(modelType);
+    prepare(result, id, settings, listener, extraJvmArgs, ContainerUtil.newArrayList(), connection);
+    return result;
+  }
+
+
+  /**
+   * @deprecated {@link #getBuildLauncher(ExternalSystemTaskId, ProjectConnection, GradleExecutionSettings, ExternalSystemTaskNotificationListener)}
+   */
+  @SuppressWarnings("MethodMayBeStatic")
+  @NotNull
+  public BuildLauncher getBuildLauncher(@NotNull final ExternalSystemTaskId id,
+                                        @NotNull ProjectConnection connection,
+                                        @Nullable GradleExecutionSettings settings,
+                                        @NotNull ExternalSystemTaskNotificationListener listener,
+                                        @NotNull final List<String> vmOptions,
+                                        @NotNull final List<String> commandLineArgs) {
+    BuildLauncher result = connection.newBuild();
+    prepare(result, id, settings, listener, vmOptions, commandLineArgs, connection);
+    return result;
+  }
+
+  @VisibleForTesting
+  @NotNull
+  static List<String> obfuscatePasswordParameters(@NotNull List<String> commandLineArguments) {
+    List<String> replaced = new ArrayList<>(commandLineArguments.size());
+    final String PASSWORD_PARAMETER_IDENTIFIER = ".password=";
+    for (String option : commandLineArguments) {
+      // Find parameters ending in "password", like:
+      //   -Pandroid.injected.signing.store.password=
+      //   -Pandroid.injected.signing.key.password=
+      int index = option.indexOf(PASSWORD_PARAMETER_IDENTIFIER);
+      if (index == -1) {
+        replaced.add(option);
+      }
+      else {
+        replaced.add(option.substring(0, index + PASSWORD_PARAMETER_IDENTIFIER.length()) + "*********");
+      }
+    }
+    return replaced;
+  }
+
+  /**
+   * @deprecated to be removed in future version
+   */
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  public static void prepare(@NotNull LongRunningOperation operation,
+                             @NotNull final ExternalSystemTaskId id,
+                             @Nullable GradleExecutionSettings settings,
+                             @NotNull final ExternalSystemTaskNotificationListener listener,
+                             @NotNull List<String> extraJvmArgs,
+                             @NotNull ProjectConnection connection) {
+    if (settings == null) return;
+    settings.withVmOptions(extraJvmArgs);
+    prepare(operation, id, settings, listener, connection, new OutputWrapper(listener, id, true), new OutputWrapper(listener, id, false));
+  }
+
+  /**
+   * @deprecated use {@link #prepare(LongRunningOperation, ExternalSystemTaskId, GradleExecutionSettings, ExternalSystemTaskNotificationListener, ProjectConnection)}
+   */
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  public static void prepare(@NotNull LongRunningOperation operation,
+                             @NotNull final ExternalSystemTaskId id,
+                             @Nullable GradleExecutionSettings settings,
+                             @NotNull final ExternalSystemTaskNotificationListener listener,
+                             @NotNull List<String> extraJvmArgs,
+                             @NotNull List<String> commandLineArgs,
+                             @NotNull ProjectConnection connection) {
+    if (settings == null) return;
+    settings.withArguments(commandLineArgs).withVmOptions(extraJvmArgs);
+    prepare(operation, id, settings, listener, connection, new OutputWrapper(listener, id, true), new OutputWrapper(listener, id, false));
+  }
+
+  /**
+   * @deprecated use {@link #prepare(LongRunningOperation, ExternalSystemTaskId, GradleExecutionSettings, ExternalSystemTaskNotificationListener, ProjectConnection, OutputStream, OutputStream)}
+   */
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  public static void prepare(@NotNull LongRunningOperation operation,
+                             @NotNull final ExternalSystemTaskId id,
+                             @NotNull GradleExecutionSettings settings,
+                             @NotNull final ExternalSystemTaskNotificationListener listener,
+                             @NotNull List<String> extraJvmArgs,
+                             @NotNull List<String> commandLineArgs,
+                             @NotNull ProjectConnection connection,
+                             @NotNull final OutputStream standardOutput,
+                             @NotNull final OutputStream standardError) {
+    settings.withArguments(commandLineArgs).withVmOptions(extraJvmArgs);
+    prepare(operation, id, settings, listener, connection, standardOutput, standardError);
   }
 }

@@ -19,9 +19,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -217,7 +217,8 @@ public class ChangeContextUtil {
             boolean needQualifier = true;
             PsiElement refElement = refExpr.resolve();
             if (refMember.equals(refElement) ||
-                (refElement instanceof PsiMethod && refMember instanceof PsiMethod && ArrayUtil.find(((PsiMethod)refElement).findSuperMethods(), refMember) > -1)){
+                (refElement instanceof PsiMethod && refMember instanceof PsiMethod && 
+                 MethodSignatureUtil.isSuperMethod((PsiMethod)refMember, (PsiMethod)refElement))) {
               if (thisAccessExpr instanceof PsiThisExpression && ((PsiThisExpression)thisAccessExpr).getQualifier() == null) {
                 //Trivial qualifier
                 needQualifier = false;
@@ -229,7 +230,7 @@ public class ChangeContextUtil {
                   PsiClass thisExprClass = thisQualifier != null
                                            ? (PsiClass)thisQualifier.resolve()
                                            : RefactoringChangeUtil.getThisClass(refExpr);
-                  if (currentClass.equals(thisExprClass) || thisExprClass.isInheritor(realParentClass, true)){ // qualifier is not necessary
+                  if (thisExprClass != null && (thisExprClass.equals(currentClass) || thisExprClass.isInheritor(realParentClass, true))){ // qualifier is not necessary
                     needQualifier = false;
                   }
                 }

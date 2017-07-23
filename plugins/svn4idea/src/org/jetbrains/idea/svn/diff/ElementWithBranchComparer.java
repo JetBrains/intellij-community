@@ -35,6 +35,8 @@ import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.io.File;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+
 /**
 * @author Konstantin Kolosovsky.
 */
@@ -106,7 +108,7 @@ public abstract class ElementWithBranchComparer {
   @Nullable
   protected SVNURL resolveElementUrl() throws SVNException {
     final SvnFileUrlMapping urlMapping = myVcs.getSvnFileUrlMapping();
-    final File file = new File(myVirtualFile.getPath());
+    final File file = virtualToIoFile(myVirtualFile);
     final SVNURL fileUrl = urlMapping.getUrlForFile(file);
     if (fileUrl == null) {
       return null;
@@ -141,23 +143,16 @@ public abstract class ElementWithBranchComparer {
   }
 
   protected void reportGeneralException(final Exception e) {
-    WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-      public void run() {
-        Messages.showMessageDialog(myProject, e.getMessage(),
-                                   SvnBundle.message("compare.with.branch.error.title"), Messages.getErrorIcon());
-      }
-    }, null, myProject);
+    WaitForProgressToShow.runOrInvokeLaterAboveProgress(
+      () -> Messages
+        .showMessageDialog(myProject, e.getMessage(), SvnBundle.message("compare.with.branch.error.title"), Messages.getErrorIcon()), null,
+      myProject);
     LOG.info(e);
   }
 
   private void reportNotFound() {
-    WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-      public void run() {
-        Messages.showMessageDialog(myProject,
-                                   SvnBundle
-                                     .message("compare.with.branch.location.error", myVirtualFile.getPresentableUrl(), myBranchUrl),
-                                   SvnBundle.message("compare.with.branch.error.title"), Messages.getErrorIcon());
-      }
-    }, null, myProject);
+    WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> Messages
+      .showMessageDialog(myProject, SvnBundle.message("compare.with.branch.location.error", myVirtualFile.getPresentableUrl(), myBranchUrl),
+                         SvnBundle.message("compare.with.branch.error.title"), Messages.getErrorIcon()), null, myProject);
   }
 }

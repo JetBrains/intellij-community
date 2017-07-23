@@ -33,8 +33,7 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, UpdatableValu
   ValueContainerMap(@NotNull final File file,
                     @NotNull KeyDescriptor<Key> keyKeyDescriptor,
                     @NotNull DataExternalizer<Value> valueExternalizer,
-                    boolean keyIsUniqueForIndexedFile
-                    ) throws IOException {
+                    boolean keyIsUniqueForIndexedFile) throws IOException {
     super(file, keyKeyDescriptor, new ValueContainerExternalizer<Value>(valueExternalizer));
     myValueExternalizer = valueExternalizer;
     myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;

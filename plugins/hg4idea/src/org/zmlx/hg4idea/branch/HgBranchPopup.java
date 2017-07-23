@@ -19,11 +19,13 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.branch.DvcsBranchPopup;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.ui.RootAction;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgProjectSettings;
@@ -31,8 +33,17 @@ import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import javax.swing.*;
 import java.util.List;
+import java.util.Objects;
+
+import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.DEFAULT_NUM;
+import static com.intellij.dvcs.branch.DvcsBranchPopup.MyMoreIndex.MAX_NUM;
+import static com.intellij.dvcs.ui.BranchActionGroupPopup.wrapWithMoreActionIfNeeded;
+import static com.intellij.dvcs.ui.BranchActionUtil.FAVORITE_BRANCH_COMPARATOR;
+import static com.intellij.dvcs.ui.BranchActionUtil.getNumOfTopShownBranches;
+import static java.util.stream.Collectors.toList;
+import static org.zmlx.hg4idea.util.HgUtil.getDisplayableBranchOrBookmarkText;
+
 
 /**
  * <p>
@@ -43,6 +54,10 @@ import java.util.List;
  * </p>
  */
 public class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
+  private static final String DIMENSION_SERVICE_KEY = "Hg.Branch.Popup";
+  static final String SHOW_ALL_BRANCHES_KEY = "Hg.Branch.Popup.ShowAllBranches";
+  static final String SHOW_ALL_BOOKMARKS_KEY = "Hg.Branch.Popup.ShowAllBookmarks";
+  static final String SHOW_ALL_REPOSITORIES = "Hg.Branch.Popup.ShowAllRepositories";
 
   /**
    * @param currentRepository Current repository, which means the repository of the currently open or selected file.
@@ -53,27 +68,14 @@ public class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
     HgProjectSettings hgProjectSettings = ServiceManager.getService(project, HgProjectSettings.class);
     HgMultiRootBranchConfig hgMultiRootBranchConfig = new HgMultiRootBranchConfig(manager.getRepositories());
 
-    Condition<AnAction> preselectActionCondition = new Condition<AnAction>() {
-      @Override
-      public boolean value(AnAction action) {
-        return false;
-      }
-    };
-    return new HgBranchPopup(currentRepository, manager, hgMultiRootBranchConfig, hgProjectSettings,
-                             preselectActionCondition);
+    return new HgBranchPopup(currentRepository, manager, hgMultiRootBranchConfig, hgProjectSettings, Conditions.alwaysFalse());
   }
 
   private HgBranchPopup(@NotNull HgRepository currentRepository,
                         @NotNull HgRepositoryManager repositoryManager,
                         @NotNull HgMultiRootBranchConfig hgMultiRootBranchConfig, @NotNull HgProjectSettings vcsSettings,
                         @NotNull Condition<AnAction> preselectActionCondition) {
-    super(currentRepository, repositoryManager, hgMultiRootBranchConfig, vcsSettings, preselectActionCondition);
-  }
-
-  protected void setCurrentBranchInfo() {
-    String branchText = "Current branch : ";
-    //always display heavy branch name for additional info //
-    myPopup.setAdText(branchText + myCurrentRepository.getCurrentBranch(), SwingConstants.CENTER);
+    super(currentRepository, repositoryManager, hgMultiRootBranchConfig, vcsSettings, preselectActionCondition, DIMENSION_SERVICE_KEY);
   }
 
   @Override
@@ -87,35 +89,55 @@ public class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
     popupGroup.addAll(createRepositoriesActions());
 
     popupGroup.addSeparator("Common Branches");
-    for (String branch : myMultiRootBranchConfig.getLocalBranchNames()) {
-      List<HgRepository> repositories = filterRepositoriesNotOnThisBranch(branch, allRepositories);
-      if (!repositories.isEmpty()) {
-        popupGroup.add(new HgCommonBranchActions(myProject, repositories, branch));
-      }
+    List<HgCommonBranchActions> branchActions =
+      myMultiRootBranchConfig.getLocalBranchNames().stream()
+        .map(b -> createLocalBranchActions(allRepositories, b, false))
+        .filter(Objects::nonNull).sorted(FAVORITE_BRANCH_COMPARATOR).collect(toList());
+    int topShownBranches = getNumOfTopShownBranches(branchActions);
+    String commonBranch = myMultiRootBranchConfig.getCommonName(HgRepository::getCurrentBranch);
+    if (commonBranch != null) {
+      branchActions.add(0, new HgBranchPopupActions.CurrentBranch(myProject, allRepositories, commonBranch));
+      topShownBranches++;
     }
+    wrapWithMoreActionIfNeeded(myProject, popupGroup, branchActions, topShownBranches, SHOW_ALL_BRANCHES_KEY, true);
+
     popupGroup.addSeparator("Common Bookmarks");
-    for (String branch : ((HgMultiRootBranchConfig)myMultiRootBranchConfig).getBookmarkNames()) {
-      List<HgRepository> repositories = filterRepositoriesNotOnThisBranch(branch, allRepositories);
-      if (!repositories.isEmpty()) {
-        popupGroup.add(new HgBranchPopupActions.BookmarkActions(myProject, repositories, branch));
-      }
+    List<HgCommonBranchActions> bookmarkActions = ((HgMultiRootBranchConfig)myMultiRootBranchConfig).getBookmarkNames().stream()
+      .map(bm -> createLocalBranchActions(allRepositories, bm, true))
+      .filter(Objects::nonNull).sorted(FAVORITE_BRANCH_COMPARATOR).collect(toList());
+    int topShownBookmarks = getNumOfTopShownBranches(bookmarkActions);
+    String commonBookmark = myMultiRootBranchConfig.getCommonName(HgRepository::getCurrentBookmark);
+    if (commonBookmark != null) {
+      bookmarkActions.add(0, new HgBranchPopupActions.CurrentActiveBookmark(myProject, allRepositories, commonBookmark));
+      topShownBookmarks++;
     }
+    wrapWithMoreActionIfNeeded(myProject, popupGroup, bookmarkActions, topShownBookmarks, SHOW_ALL_BOOKMARKS_KEY, true);
+  }
+
+  @Nullable
+  private HgCommonBranchActions createLocalBranchActions(List<HgRepository> allRepositories, String name, boolean isBookmark) {
+    List<HgRepository> repositories = filterRepositoriesNotOnThisBranch(name, allRepositories);
+    if (repositories.isEmpty()) return null;
+    return isBookmark
+           ? new HgBranchPopupActions.BookmarkActions(myProject, repositories, name)
+           : new HgBranchPopupActions.BranchActions(myProject, repositories, name);
   }
 
   @NotNull
   protected DefaultActionGroup createRepositoriesActions() {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
     popupGroup.addSeparator("Repositories");
-    for (HgRepository repository : DvcsUtil.sortRepositories(myRepositoryManager.getRepositories())) {
-      popupGroup.add(new RootAction<>(repository, highlightCurrentRepo() ? myCurrentRepository : null,
-                                      new HgBranchPopupActions(repository.getProject(), repository).createActions(),
-                                      HgUtil.getDisplayableBranchOrBookmarkText(repository)));
-    }
+    List<ActionGroup> rootActions = DvcsUtil.sortRepositories(myRepositoryManager.getRepositories()).stream()
+      .map(repo -> new RootAction<>(repo, new HgBranchPopupActions(repo.getProject(), repo).createActions(),
+                                    getDisplayableBranchOrBookmarkText(repo)))
+      .collect(toList());
+    wrapWithMoreActionIfNeeded(myProject, popupGroup, rootActions, rootActions.size() > MAX_NUM ? DEFAULT_NUM : MAX_NUM,
+                               SHOW_ALL_REPOSITORIES);
     return popupGroup;
   }
 
   protected void fillPopupWithCurrentRepositoryActions(@NotNull DefaultActionGroup popupGroup, @Nullable DefaultActionGroup actions) {
-    popupGroup.addAll(new HgBranchPopupActions(myProject, myCurrentRepository).createActions(actions, myRepoTitleInfo));
+    popupGroup.addAll(new HgBranchPopupActions(myProject, myCurrentRepository).createActions(actions, myRepoTitleInfo, true));
   }
 }
 

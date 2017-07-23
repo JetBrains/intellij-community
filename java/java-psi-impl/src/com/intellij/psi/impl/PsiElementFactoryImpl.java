@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,12 +70,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
   public PsiElementFactoryImpl(final PsiManagerEx manager) {
     super(manager);
-    manager.registerRunnableToRunOnChange(new Runnable() {
-      @Override
-      public void run() {
-        myCachedObjectType.clear();
-      }
-    });
+    manager.registerRunnableToRunOnChange(() -> myCachedObjectType.clear());
   }
 
   @NotNull
@@ -362,7 +357,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   public PsiSubstitutor createRawSubstitutor(@NotNull final PsiTypeParameterListOwner owner) {
     Map<PsiTypeParameter, PsiType> substitutorMap = null;
     for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(owner)) {
-      if (substitutorMap == null) substitutorMap = new HashMap<PsiTypeParameter, PsiType>();
+      if (substitutorMap == null) substitutorMap = new HashMap<>();
       substitutorMap.put(parameter, null);
     }
     return PsiSubstitutorImpl.createSubstitutor(substitutorMap);
@@ -373,7 +368,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   public PsiSubstitutor createRawSubstitutor(@NotNull final PsiSubstitutor baseSubstitutor, @NotNull final PsiTypeParameter[] typeParameters) {
     Map<PsiTypeParameter, PsiType> substitutorMap = null;
     for (PsiTypeParameter parameter : typeParameters) {
-      if (substitutorMap == null) substitutorMap = new HashMap<PsiTypeParameter, PsiType>();
+      if (substitutorMap == null) substitutorMap = new HashMap<>();
       substitutorMap.put(parameter, null);
     }
     return PsiSubstitutorImpl.createSubstitutor(substitutorMap).putAll(baseSubstitutor);
@@ -679,6 +674,16 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   public PsiAnnotation createAnnotationFromText(@NotNull final String annotationText, @Nullable final PsiElement context) throws IncorrectOperationException {
     final PsiAnnotation psiAnnotation = super.createAnnotationFromText(annotationText, context);
     GeneratedMarkerVisitor.markGenerated(psiAnnotation);
+    return psiAnnotation;
+  }
+
+  public PsiAnnotation createAnnotationFromText(@NotNull final String annotationText,
+                                                @Nullable final PsiElement context,
+                                                boolean markGenerated) throws IncorrectOperationException {
+    final PsiAnnotation psiAnnotation = super.createAnnotationFromText(annotationText, context);
+    if (markGenerated) {
+      GeneratedMarkerVisitor.markGenerated(psiAnnotation);
+    }
     return psiAnnotation;
   }
 

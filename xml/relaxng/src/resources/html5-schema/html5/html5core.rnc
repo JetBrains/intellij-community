@@ -1,7 +1,7 @@
 include "common.rnc" {
-		XMLonly = notAllowed
-		HTMLonly = empty
-		v5only = notAllowed
+        XMLonly = notAllowed
+        HTMLonly = empty
+        v5only = notAllowed
 }
 start = html.elem
 include "phrase.rnc"

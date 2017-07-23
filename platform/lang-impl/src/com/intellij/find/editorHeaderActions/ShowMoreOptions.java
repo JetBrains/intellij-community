@@ -9,15 +9,8 @@ import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
-/**
-* Created by IntelliJ IDEA.
-* User: zajac
-* Date: 25.05.11
-* Time: 22:24
-* To change this template use File | Settings | File Templates.
-*/
 public class ShowMoreOptions extends AnAction implements DumbAware {
-  public static final Shortcut SHORT_CUT = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.ALT_DOWN_MASK), null);
+  public static final Shortcut SHORT_CUT = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK), null);
 
   private final ActionToolbarImpl myToolbarComponent;
 

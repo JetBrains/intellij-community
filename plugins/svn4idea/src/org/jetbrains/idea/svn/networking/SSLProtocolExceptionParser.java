@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Field;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 3/25/13
- * Time: 5:44 PM
- */
 public class SSLProtocolExceptionParser {
   private final String myMessage;
   private String myParsedMessage;
@@ -76,10 +70,7 @@ public class SSLProtocolExceptionParser {
         myParsedMessage += "\nThis may be JDK bug 7127374 : JSSE creates SSLProtocolException on (common) warning: unrecognized_name for SNI";
       }
     }
-    catch (NoSuchFieldException e) {
-      return false;
-    }
-    catch (IllegalAccessException e) {
+    catch (NoSuchFieldException | IllegalAccessException e) {
       return false;
     }
     return true;

@@ -18,6 +18,7 @@ package com.intellij.lang.ant;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Alarm;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.tools.ant.IntrospectionHelper;
@@ -65,24 +66,14 @@ public final class AntIntrospector {
       final Method method = helperClass.getMethod(methodName, types);
       return (T)method.invoke(myHelper, params);
     }
-    catch (IllegalAccessException e) {
-      if (!ignoreErrors) {
-        LOG.error(e);
-      }
-    }
-    catch (NoSuchMethodException e) {
+    catch (IllegalAccessException | NoSuchMethodException e) {
       if (!ignoreErrors) {
         LOG.error(e);
       }
     }
     catch (InvocationTargetException e) {
       final Throwable cause = e.getCause();
-      if (cause instanceof RuntimeException) {
-        throw (RuntimeException)cause;
-      }
-      if (cause instanceof Error) {
-        throw (Error)cause;
-      }
+      ExceptionUtil.rethrowUnchecked(cause);
       if (!ignoreErrors) {
         LOG.error(e);
       }
@@ -185,13 +176,7 @@ public final class AntIntrospector {
         final Method getHelperMethod = helperClass.getMethod("getHelper", Class.class);
         result = getHelperMethod.invoke(null, aClass);
       }
-      catch (ClassNotFoundException e) {
-        LOG.info(e);
-      }
-      catch (NoSuchMethodException e) {
-        LOG.info(e);
-      }
-      catch (IllegalAccessException e) {
+      catch (ClassNotFoundException | IllegalAccessException | NoSuchMethodException e) {
         LOG.info(e);
       }
       catch (InvocationTargetException ignored) {

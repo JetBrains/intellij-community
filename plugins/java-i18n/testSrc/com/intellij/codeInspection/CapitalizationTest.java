@@ -28,5 +28,8 @@ public class CapitalizationTest extends TestCase {
     assertTrue(TitleCapitalizationInspection.checkCapitalization("@charset is invalid", Nls.Capitalization.Sentence));
     assertTrue(TitleCapitalizationInspection.checkCapitalization("Add 'this' qualifier", Nls.Capitalization.Sentence));
     assertTrue(TitleCapitalizationInspection.checkCapitalization("Add    'this'    qualifier", Nls.Capitalization.Sentence));
+    assertTrue(TitleCapitalizationInspection.checkCapitalization("Please select the configuration file (usually named IntelliLang.xml) to import.", Nls.Capitalization.Sentence));
+    assertFalse(TitleCapitalizationInspection.checkCapitalization("Foo Bar", Nls.Capitalization.Sentence));
+    assertTrue(TitleCapitalizationInspection.checkCapitalization("Foo", Nls.Capitalization.Sentence));
   }
 }

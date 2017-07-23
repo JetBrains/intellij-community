@@ -28,7 +28,7 @@ import java.util.Properties;
 public class EclipseImportMap {
   private Properties myProperties;
   private final static String MAP_PROPERTIES = "EclipseImportMap.properties";
-  private static final Logger LOG = Logger.getInstance("#" + EclipseImportMap.class.getName());
+  private static final Logger LOG = Logger.getInstance(EclipseImportMap.class);
 
   public EclipseImportMap() {
     myProperties = new Properties();    

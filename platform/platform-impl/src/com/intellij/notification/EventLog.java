@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,11 @@
 package com.intellij.notification;
 
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.ide.DataManager;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Document;
@@ -31,7 +33,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.ui.BalloonLayoutData;
@@ -49,7 +54,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -64,7 +71,7 @@ public class EventLog {
   private static final String A_CLOSING = "</a>";
   private static final Pattern TAG_PATTERN = Pattern.compile("<[^>]*>");
   private static final Pattern A_PATTERN = Pattern.compile("<a ([^>]* )?href=[\"\']([^>]*)[\"\'][^>]*>");
-  private static final Set<String> NEW_LINES = ContainerUtil.newHashSet("<br>", "</br>", "<br/>", "<p>", "</p>", "<p/>");
+  private static final Set<String> NEW_LINES = ContainerUtil.newHashSet("<br>", "</br>", "<br/>", "<p>", "</p>", "<p/>", "<pre>", "</pre>");
   private static final String DEFAULT_CATEGORY = "";
 
   private final LogModel myModel = new LogModel(null, ApplicationManager.getApplication());
@@ -166,7 +173,9 @@ public class EventLog {
       Notification n = new Notification("", "", ".", NotificationType.INFORMATION, new NotificationListener() {
         @Override
         public void hyperlinkUpdate(@NotNull Notification n, @NotNull HyperlinkEvent event) {
-          Notification.fire(notification, notification.getActions().get(Integer.parseInt(event.getDescription())));
+          Object source = event.getSource();
+          DataContext context = source instanceof Component ? DataManager.getInstance().getDataContext((Component)source) : null;
+          Notification.fire(notification, notification.getActions().get(Integer.parseInt(event.getDescription())), context);
         }
       });
       if (title.length() > 0 || content.length() > 0) {
@@ -304,7 +313,7 @@ public class EventLog {
           String linkText = content.substring(tagMatcher.end(), linkEnd).replaceAll(TAG_PATTERN.pattern(), "");
           int linkStart = document.getTextLength();
           appendText(document, linkText);
-          links.put(document.createRangeMarker(new TextRange(linkStart, document.getTextLength())),
+          links.put(document.createRangeMarker(linkStart, document.getTextLength()),
                     new NotificationHyperlinkInfo(notification, href));
           content = content.substring(linkEnd + A_CLOSING.length());
           continue;
@@ -491,10 +500,6 @@ public class EventLog {
     }
 
     @Override
-    public void projectOpened() {
-    }
-
-    @Override
     public void projectClosed() {
       getApplicationComponent().myModel.setStatusMessage(null, 0);
       StatusBar.Info.set("", null, LOG_REQUESTOR);
@@ -516,12 +521,9 @@ public class EventLog {
     }
 
     private void doPrintNotification(@NotNull final Notification notification, @NotNull final EventLogConsole console) {
-      StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
-        @Override
-        public void run() {
-          if (!ShutDownTracker.isShutdownHookRunning() && !myProject.isDisposed()) {
-            ApplicationManager.getApplication().runReadAction(() -> console.doPrintNotification(notification));
-          }
+      StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
+        if (!ShutDownTracker.isShutdownHookRunning() && !myProject.isDisposed()) {
+          ApplicationManager.getApplication().runReadAction(() -> console.doPrintNotification(notification));
         }
       });
     }

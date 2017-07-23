@@ -36,6 +36,6 @@ class PyEvaluationResult {
   @NotNull
   List<PyExpression> getDeclarations(@NotNull final String name) {
     final List<PyExpression> expressions = myDeclarations.get(name);
-    return (expressions != null) ? expressions : Collections.<PyExpression>emptyList();
+    return (expressions != null) ? expressions : Collections.emptyList();
   }
 }

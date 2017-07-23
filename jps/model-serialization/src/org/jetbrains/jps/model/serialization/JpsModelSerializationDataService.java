@@ -42,7 +42,7 @@ public class JpsModelSerializationDataService {
   }
 
   public static Map<String, String> computeAllPathVariables(JpsGlobal global) {
-    Map<String, String> pathVariables = new HashMap<String, String>(PathMacroUtil.getGlobalSystemMacros());
+    Map<String, String> pathVariables = new HashMap<>(PathMacroUtil.getGlobalSystemMacros());
     JpsPathVariablesConfiguration configuration = getPathVariablesConfiguration(global);
     if (configuration != null) {
       pathVariables.putAll(configuration.getAllUserVariables());

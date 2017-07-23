@@ -1,0 +1,10 @@
+<html>
+<body>
+This inspection warns when result of <b>Comparator.compare</b> or <b>Comparable.compareTo</b> is compared with
+  specific non-zero constant (like <b>if(a.compareTo(b) == -1)</b>). By contract,
+  these methods can return any positive number (not just 1) or any negative number (not just -1), so comparing against
+  particular numbers is a bad practice.
+<!-- tooltip end -->
+<p><small>New in 2017.2</small></p>
+</body>
+</html>

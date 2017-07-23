@@ -65,7 +65,7 @@ public class MvcWatchedRootProvider implements WatchedRootsProvider {
       }
     }
 
-    return result == null ? Collections.<String>emptySet() : result;
+    return result == null ? Collections.emptySet() : result;
   }
 
 }

@@ -16,36 +16,33 @@
 package git4idea.push;
 
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.history.Label;
-import com.intellij.ide.BrowserUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
-import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.ViewUpdateInfoNotification;
 import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
 import git4idea.update.GitUpdateResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.openapi.vcs.update.ActionInfo.UPDATE;
+
 class GitPushResultNotification extends Notification {
 
-  public static final String VIEW_FILES_UPDATED_DURING_THE_PUSH = "<a href='UpdatedFiles'>View files updated during the push</a>";
+  public static final String VIEW_FILES_UPDATED_DURING_THE_PUSH = "View files updated during the push";
 
   public static final String UPDATE_WITH_RESOLVED_CONFLICTS = "push has been cancelled, because there were conflicts during update.<br/>" +
                                                               "Check that conflicts were resolved correctly, and invoke push again.";
@@ -59,9 +56,8 @@ class GitPushResultNotification extends Notification {
   public GitPushResultNotification(@NotNull String groupDisplayId,
                                    @NotNull String title,
                                    @NotNull String content,
-                                   @NotNull NotificationType type,
-                                   @Nullable NotificationListener listener) {
-    super(groupDisplayId, title, content, type, listener);
+                                   @NotNull NotificationType type) {
+    super(groupDisplayId, title, content, type);
   }
 
   @NotNull
@@ -95,50 +91,49 @@ class GitPushResultNotification extends Notification {
 
     String description = formDescription(pushResult.getResults(), multiRepoProject);
 
-    ViewUpdatedFilesNotificationListener listener = null;
-    UpdatedFiles updatedFiles = pushResult.getUpdatedFiles();
-    if (!updatedFiles.isEmpty()) {
-      description += "<br/>" + VIEW_FILES_UPDATED_DURING_THE_PUSH;
-      listener = new ViewUpdatedFilesNotificationListener(project, updatedFiles,
-                                                          pushResult.getBeforeUpdateLabel(), pushResult.getAfterUpdateLabel());
-    }
-
     NotificationGroup group = type == NotificationType.INFORMATION ?
-                              VcsNotifier.NOTIFICATION_GROUP_ID :
+                              VcsNotifier.STANDARD_NOTIFICATION :
                               VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
 
-    return new GitPushResultNotification(group.getDisplayId(), title, description, type, listener);
+    GitPushResultNotification notification = new GitPushResultNotification(group.getDisplayId(), title, description, type);
+
+    UpdatedFiles updatedFiles = pushResult.getUpdatedFiles();
+    if (!updatedFiles.isEmpty()) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        UpdateInfoTree tree = ProjectLevelVcsManagerEx.getInstanceEx(project).showUpdateProjectInfo(updatedFiles, "Update", UPDATE, false);
+        if (tree != null) {
+          tree.setBefore(pushResult.getBeforeUpdateLabel());
+          tree.setAfter(pushResult.getAfterUpdateLabel());
+          notification.addAction(new ViewUpdateInfoNotification(project, tree, VIEW_FILES_UPDATED_DURING_THE_PUSH));
+        }
+      });
+    }
+    return notification;
   }
 
   private static String formDescription(@NotNull Map<GitRepository, GitPushRepoResult> results, final boolean multiRepoProject) {
     List<Map.Entry<GitRepository, GitPushRepoResult>> entries = ContainerUtil.sorted(results.entrySet(),
-      new Comparator<Map.Entry<GitRepository, GitPushRepoResult>>() {
-        @Override
-        public int compare(Map.Entry<GitRepository, GitPushRepoResult> o1, Map.Entry<GitRepository, GitPushRepoResult> o2) {
-          // successful first
-          int compareResultTypes = GitPushRepoResult.TYPE_COMPARATOR.compare(o1.getValue().getType(), o2.getValue().getType());
-          if (compareResultTypes != 0) {
-            return compareResultTypes;
-          }
-          return DvcsUtil.REPOSITORY_COMPARATOR.compare(o1.getKey(), o2.getKey());
-        }
+      (o1, o2) -> {
+       // successful first
+       int compareResultTypes = GitPushRepoResult.TYPE_COMPARATOR.compare(o1.getValue().getType(), o2.getValue().getType());
+       if (compareResultTypes != 0) {
+         return compareResultTypes;
+       }
+       return DvcsUtil.REPOSITORY_COMPARATOR.compare(o1.getKey(), o2.getKey());
       });
 
-    return StringUtil.join(entries, new Function<Map.Entry<GitRepository, GitPushRepoResult>, String>() {
-      @Override
-      public String fun(Map.Entry<GitRepository, GitPushRepoResult> entry) {
-        GitRepository repository = entry.getKey();
-        GitPushRepoResult result = entry.getValue();
+    return StringUtil.join(entries, entry -> {
+      GitRepository repository = entry.getKey();
+      GitPushRepoResult result = entry.getValue();
 
-        String description = formRepoDescription(result);
-        if (!multiRepoProject) {
-          description = StringUtil.capitalize(description);
-        }
-        else {
-          description = DvcsUtil.getShortRepositoryName(repository) + ": " + description;
-        }
-        return description;
+      String description = formRepoDescription(result);
+      if (!multiRepoProject) {
+        description = StringUtil.capitalize(description);
       }
+      else {
+        description = DvcsUtil.getShortRepositoryName(repository) + ": " + description;
+      }
+      return description;
     }, "<br/>");
   }
 
@@ -218,37 +213,4 @@ class GitPushResultNotification extends Notification {
       return UPDATE_WITH_ERRORS;
     }
   }
-
-  private static class ViewUpdatedFilesNotificationListener implements NotificationListener {
-
-    private final Project myProject;
-    private final UpdatedFiles myUpdatedFiles;
-    private final Label myBeforeUpdateLabel;
-    private final Label myAfterUpdateLabel;
-
-    public ViewUpdatedFilesNotificationListener(@NotNull Project project, @NotNull UpdatedFiles updatedFiles,
-                                                @Nullable Label beforeUpdate, @Nullable Label afterUpdate) {
-      myProject = project;
-      myUpdatedFiles = updatedFiles;
-      myBeforeUpdateLabel = beforeUpdate;
-      myAfterUpdateLabel = afterUpdate;
-    }
-
-    @Override
-    public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-      if (event.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
-        if (event.getDescription().equals("UpdatedFiles")) {
-          ProjectLevelVcsManagerEx vcsManager = ProjectLevelVcsManagerEx.getInstanceEx(myProject);
-          UpdateInfoTree tree = vcsManager.showUpdateProjectInfo(myUpdatedFiles, "Update", ActionInfo.UPDATE, false);
-          tree.setBefore(myBeforeUpdateLabel);
-          tree.setAfter(myAfterUpdateLabel);
-        }
-        else {
-          BrowserUtil.browse(event.getDescription());
-        }
-      }
-    }
-  }
-
-
 }

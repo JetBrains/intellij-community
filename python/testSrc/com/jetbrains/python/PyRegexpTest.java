@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,9 @@ package com.jetbrains.python;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.jetbrains.python.codeInsight.regexp.PythonRegexpParserDefinition;
 import com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpLanguage;
@@ -38,6 +34,19 @@ import java.util.List;
  * @author yole
  */
 public class PyRegexpTest extends PyTestCase {
+
+  public void testLookbehind() {
+    doTestHighlighting();
+  }
+
+  public void testCountedQuantifier() {
+    doTestHighlighting();
+  }
+
+  public void testNotEmptyGroup() { // PY-14381
+    doTestHighlighting();
+  }
+
   public void testNestedCharacterClasses() {  // PY-2908
     doTestHighlighting();
   }
@@ -87,7 +96,7 @@ public class PyRegexpTest extends PyTestCase {
     doTestHighlighting();
   }
 
-  public void _testDoubleOpenCurly() {  // PY-8252
+  public void testDoubleOpenCurly() {  // PY-8252
     doTestHighlighting();
   }
 
@@ -168,7 +177,7 @@ public class PyRegexpTest extends PyTestCase {
                          ".* # <caret>comment\n" +
                          "\"\"\", re.I | re.M | re.X)",
                          "\n.* # comment\n");
-    assertEquals(element.getLanguage(), PythonVerboseRegexpLanguage.INSTANCE);
+    assertEquals(PythonVerboseRegexpLanguage.INSTANCE, element.getLanguage());
   }
 
   // PY-16404
@@ -190,17 +199,6 @@ public class PyRegexpTest extends PyTestCase {
     final PsiElement injected = files.get(0).getFirst();
     assertEquals(expected, injected.getText());
     return injected;
-  }
-
-  @NotNull
-  private PsiElement getElementAtCaret() {
-    final Editor editor = myFixture.getEditor();
-    final Document document = editor.getDocument();
-    final PsiFile file = PsiDocumentManager.getInstance(myFixture.getProject()).getPsiFile(document);
-    assertNotNull(file);
-    final PsiElement element = file.findElementAt(myFixture.getCaretOffset());
-    assertNotNull(element);
-    return element;
   }
 
   private void doTestHighlighting() {

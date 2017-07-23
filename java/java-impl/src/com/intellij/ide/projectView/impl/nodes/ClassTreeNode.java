@@ -41,7 +41,11 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
 
     if (getSettings().isShowMembers()) {
       ArrayList<PsiElement> result = new ArrayList<>();
-      PsiClassChildrenSource.DEFAULT_CHILDREN.addChildren(parent, result);
+      try {
+        PsiClassChildrenSource.DEFAULT_CHILDREN.addChildren(parent, result);
+      }
+      catch (IndexNotReadyException ignore) {
+      }
       for (PsiElement psiElement : result) {
         if (!psiElement.isPhysical()) {
           continue;

@@ -19,10 +19,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- * Date: 28-Dec-2005
- */
 public interface SmartRefElementPointer {
 
   @NonNls String FILE = "file";

@@ -51,6 +51,7 @@ if IS_JYTHON:
     if sys.version_info[0] == 2 and sys.version_info[1] < 5:
         IS_JYTH_LESS25 = True
 
+IS_PYTHON_STACKLESS = "stackless" in sys.version.lower()
 CYTHON_SUPPORTED = False
 
 try:
@@ -59,7 +60,7 @@ try:
 except:
     pass
 else:
-    if python_implementation == 'CPython':
+    if python_implementation == 'CPython' and not IS_PYTHON_STACKLESS:
         # Only available for CPython!
         if (
             (sys.version_info[0] == 2 and sys.version_info[1] >= 7)
@@ -74,7 +75,8 @@ else:
 # Python 3?
 #=======================================================================================================================
 IS_PY3K = False
-IS_PY34_OLDER = False
+IS_PY34_OR_GREATER = False
+IS_PY36_OR_GREATER = False
 IS_PY2 = True
 IS_PY27 = False
 IS_PY24 = False
@@ -83,7 +85,9 @@ try:
         IS_PY3K = True
         IS_PY2 = False
         if (sys.version_info[0] == 3 and sys.version_info[1] >= 4) or sys.version_info[0] > 3:
-            IS_PY34_OLDER = True
+            IS_PY34_OR_GREATER = True
+        if (sys.version_info[0] == 3 and sys.version_info[1] >= 6) or sys.version_info[0] > 3:
+            IS_PY36_OR_GREATER = True
     elif sys.version_info[0] == 2 and sys.version_info[1] == 7:
         IS_PY27 = True
     elif sys.version_info[0] == 2 and sys.version_info[1] == 4:
@@ -101,6 +105,10 @@ except:
 USE_LIB_COPY = SUPPORT_GEVENT and \
                ((not IS_PY3K and sys.version_info[1] >= 6) or
                 (IS_PY3K and sys.version_info[1] >= 3))
+
+
+INTERACTIVE_MODE_AVAILABLE = sys.platform in ('darwin', 'win32') or os.getenv('DISPLAY') is not None
+SHOW_CYTHON_WARNING = False
 
 
 def protect_libraries_from_patching():
@@ -154,20 +162,6 @@ except:
         except NameError:
             def dict_contains(d, key):
                 return d.has_key(key)
-try:
-    dict_pop = dict.pop
-except:
-    #=======================================================================================================================
-    # Jython 2.1
-    #=======================================================================================================================
-    def dict_pop(d, key, default=None):
-        try:
-            ret = d[key]
-            del d[key]
-            return ret
-        except:
-            return default
-
 
 if IS_PY3K:
     def dict_keys(d):

@@ -1,0 +1,108 @@
+package pkg;
+
+@SharedName4
+public class TestClashName extends ext.TestClashNameParent implements TestClashNameIface {
+   int TestClashNameParent = 0;
+   int TestClashNameIface = 0;
+   int SharedName1 = 0;
+   int SharedName4 = 0;
+   int SharedName5 = 0;
+   int i;
+   int j;
+   int k;
+   int l;
+   int m;
+   int n;
+   SharedName1 p;
+   SharedName5<SharedName1> q;
+
+   public TestClashName() {
+      this.i = pkg.SharedName1.f;// 59
+      this.j = NonSharedName.f;// 60
+      this.k = SharedName2.f;// 61
+      this.l = pkg.SharedName3.f;// 62
+      this.m = pkg.SharedName1.getF();// 63
+      this.n = NonSharedName.getF();// 64
+      this.p = null;// 65
+      this.q = null;// 67
+   }
+
+   @SharedName4
+   public int m() {
+      int var1 = this.i;// 73
+      pkg.SharedName1.f = this.j;// 74
+      int var2 = SharedName2.f;// 75
+      NonSharedName.f = this.k;// 76
+      int var3 = NonSharedName.f;// 77
+      return var1 + var2 + var3;// 78
+   }
+
+   public void f() {
+   }// 82
+}
+
+class 'pkg/TestClashName' {
+   method '<init> ()V' {
+      1e      19
+      21      19
+      25      20
+      28      20
+      2c      21
+      2f      21
+      33      22
+      36      22
+      3a      23
+      3d      23
+      41      24
+      44      24
+      48      25
+      49      25
+      4d      26
+      4e      26
+      51      27
+   }
+
+   method 'm ()I' {
+      1      31
+      4      31
+      6      32
+      9      32
+      c      33
+      f      33
+      11      34
+      14      34
+      17      35
+      1a      35
+      1d      36
+      1f      36
+      20      36
+   }
+
+   method 'f ()V' {
+      0      40
+   }
+}
+
+Lines mapping:
+59 <-> 20
+60 <-> 21
+61 <-> 22
+62 <-> 23
+63 <-> 24
+64 <-> 25
+65 <-> 26
+67 <-> 27
+73 <-> 32
+74 <-> 33
+75 <-> 34
+76 <-> 35
+77 <-> 36
+78 <-> 37
+82 <-> 41
+Not mapped:
+52
+53
+54
+55
+56
+57

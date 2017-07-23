@@ -10,7 +10,7 @@ import com.jetbrains.rest.fixtures.RestFixtureTestCase;
 public class RestDirectiveCompletionTest extends RestFixtureTestCase {
 
   public void testNote() {
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
+    CamelHumpMatcher.forceStartMatching(myFixture.getTestRootDisposable());
     doTest();
   }
 
@@ -23,7 +23,7 @@ public class RestDirectiveCompletionTest extends RestFixtureTestCase {
   }
 
   public void testMultiple() {
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
+    CamelHumpMatcher.forceStartMatching(myFixture.getTestRootDisposable());
     final String filePath = "/completion/directive/multiple.rst";
     myFixture.configureByFiles(filePath);
     final LookupElement[] items = myFixture.completeBasic();

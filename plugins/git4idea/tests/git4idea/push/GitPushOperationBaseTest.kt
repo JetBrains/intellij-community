@@ -15,40 +15,21 @@
  */
 package git4idea.push
 
-import com.intellij.dvcs.push.PushSpec
-import com.intellij.dvcs.push.PushSupport
-import com.intellij.openapi.extensions.Extensions
-import com.intellij.openapi.util.Condition
-import com.intellij.openapi.util.Trinity
-import com.intellij.openapi.vcs.AbstractVcsHelper
-import com.intellij.openapi.vcs.Executor
-import com.intellij.util.ObjectUtils
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.dvcs.DvcsUtil.getPushSupport
 import git4idea.GitBranch
-import git4idea.GitRemoteBranch
-import git4idea.GitStandardRemoteBranch
-import git4idea.GitUtil
-import git4idea.repo.GitRepository
-import git4idea.test.GitExecutor.cd
-import git4idea.test.GitExecutor.git
 import git4idea.test.GitPlatformTest
-import git4idea.test.GitTestUtil
-import git4idea.test.MockVcsHelper
 import git4idea.test.TestDialogHandler
 import git4idea.update.GitUpdateResult
-import java.io.File
 
 abstract class GitPushOperationBaseTest : GitPlatformTest() {
 
-  protected lateinit var myPushSupport: GitPushSupport
-  protected lateinit var myVcsHelper: MockVcsHelper
+  protected lateinit var pushSupport: GitPushSupport
 
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
 
-    myPushSupport = findGitPushSupport()
-    myVcsHelper = GitTestUtil.overrideService(myProject, AbstractVcsHelper::class.java, MockVcsHelper::class.java)
+    pushSupport = getPushSupport(myVcs) as GitPushSupport
   }
 
   override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#" + GitPushOperation::class.java.name)
@@ -57,39 +38,9 @@ abstract class GitPushOperationBaseTest : GitPlatformTest() {
     myGitRepositoryManager.updateAllRepositories()
   }
 
-  protected fun setupRepositories(repoRoot: String, parentName: String, broName: String): Trinity<GitRepository, File, File> {
-    val parentRepo = createParentRepo(parentName)
-    val broRepo = createBroRepo(broName, parentRepo)
-
-    val repository = GitTestUtil.createRepository(myProject, repoRoot)
-    cd(repository)
-    git("remote add origin " + parentRepo.path)
-    git("push --set-upstream origin master:master")
-
-    Executor.cd(broRepo.path)
-    git("pull")
-
-    return Trinity.create(repository, parentRepo, broRepo)
-  }
-
-  private fun createParentRepo(parentName: String): File {
-    Executor.cd(myTestRoot)
-    git("init --bare $parentName.git")
-    return File(myTestRoot, parentName + ".git")
-  }
-
-  private fun createBroRepo(broName: String, parentRepo: File): File {
-    Executor.cd(myTestRoot)
-    git("clone " + parentRepo.name + " " + broName)
-    return File(myTestRoot, broName)
-  }
-
   protected fun agreeToUpdate(exitCode: Int) {
-    myDialogManager.registerDialogHandler(GitRejectedPushUpdateDialog::class.java, object : TestDialogHandler<GitRejectedPushUpdateDialog> {
-      override fun handleDialog(dialog: GitRejectedPushUpdateDialog): Int {
-        return exitCode
-      }
-    })
+    myDialogManager.registerDialogHandler(GitRejectedPushUpdateDialog::class.java,
+                                          TestDialogHandler<GitRejectedPushUpdateDialog> { exitCode })
   }
 
   internal fun assertResult(type: GitPushRepoResult.Type, pushedCommits: Int, from: String, to: String,
@@ -101,33 +52,5 @@ abstract class GitPushOperationBaseTest : GitPlatformTest() {
     assertEquals(message, GitBranch.REFS_HEADS_PREFIX + from, actualResult.sourceBranch)
     assertEquals(message, GitBranch.REFS_REMOTES_PREFIX + to, actualResult.targetBranch)
     assertEquals(message, updateResult, actualResult.updateResult)
-  }
-
-
-  private fun findGitPushSupport(): GitPushSupport {
-    return ObjectUtils.assertNotNull(ContainerUtil.find(Extensions.getExtensions(PushSupport.PUSH_SUPPORT_EP, myProject),
-        object : Condition<PushSupport<*, *, *>> {
-          override fun value(support: PushSupport<*, *, *>): Boolean {
-            return support is GitPushSupport
-          }
-        })) as GitPushSupport
-  }
-
-  protected fun makePushSpec(repository: GitRepository,
-                             from: String,
-                             to: String): PushSpec<GitPushSource, GitPushTarget> {
-    val source = repository.branches.findLocalBranch(from)!!
-    var target: GitRemoteBranch? = repository.branches.findBranchByName(to) as GitRemoteBranch?
-    val newBranch: Boolean
-    if (target == null) {
-      val firstSlash = to.indexOf('/')
-      val remote = GitUtil.findRemoteByName(repository, to.substring(0, firstSlash))!!
-      target = GitStandardRemoteBranch(remote, to.substring(firstSlash + 1))
-      newBranch = true
-    }
-    else {
-      newBranch = false
-    }
-    return PushSpec(GitPushSource.create(source), GitPushTarget(target, newBranch))
   }
 }

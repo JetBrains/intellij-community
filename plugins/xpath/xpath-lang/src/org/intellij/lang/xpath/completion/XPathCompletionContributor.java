@@ -33,10 +33,6 @@ import java.util.Collection;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-*/
 public class XPathCompletionContributor extends CompletionContributor {
   public static final XPathInsertHandler INSERT_HANDLER = new XPathInsertHandler();
 

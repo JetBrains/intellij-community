@@ -112,6 +112,8 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
         element = file;
       }
 
+      if (SuppressionUtil.inspectionResultSuppressed(element, this)) continue;
+
       GlobalInspectionUtil.createProblem(
         element,
         info,

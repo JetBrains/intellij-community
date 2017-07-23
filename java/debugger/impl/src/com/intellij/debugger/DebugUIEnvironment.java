@@ -22,10 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
- */
 public interface DebugUIEnvironment {
 
   DebugEnvironment getEnvironment();

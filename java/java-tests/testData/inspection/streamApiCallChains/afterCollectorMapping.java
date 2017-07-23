@@ -1,4 +1,4 @@
-// "Replace Stream.collect(mapping()) with Stream.map().collect()" "true"
+// "Replace 'collect(mapping())' with 'map().collect()'" "true"
 
 import java.util.List;
 import java.util.stream.Collectors;

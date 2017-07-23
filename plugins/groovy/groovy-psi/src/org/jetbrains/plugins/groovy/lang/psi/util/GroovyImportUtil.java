@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyImportHelper;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
@@ -54,13 +55,17 @@ public class GroovyImportUtil {
     file.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
-        super.visitElement(element);
+        if (!(element instanceof GrImportStatement) && !(element instanceof GrPackageDefinition)) {
+          super.visitElement(element);
+        }
         if (element instanceof GrReferenceElement) {
           visitRefElement((GrReferenceElement)element);
         }
       }
 
       private void visitRefElement(GrReferenceElement refElement) {
+        if (refElement.isQualified()) return;
+
         final String refName = refElement.getReferenceName();
 
         if ("super".equals(refName)) return;
@@ -143,7 +148,8 @@ public class GroovyImportUtil {
               }
             }
           }
-          else if (context == null && !(refElement.getParent() instanceof GrImportStatement) && refElement.getQualifier() == null) {
+          else if (context == null && !(refElement.getParent() instanceof GrImportStatement) && refElement.getQualifier() == null &&
+                   (!(resolved instanceof PsiClass) || ((PsiClass)resolved).getContainingClass() == null)) {
             addImplicitClass(resolved);
           }
         }

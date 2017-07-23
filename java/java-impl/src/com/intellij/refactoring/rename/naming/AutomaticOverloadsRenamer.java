@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,19 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 12-Jan-2010
- */
 package com.intellij.refactoring.rename.naming;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.NotNull;
 
 public class AutomaticOverloadsRenamer extends AutomaticRenamer {
-  public AutomaticOverloadsRenamer(PsiMethod method, String newName) {
-    final PsiClass containingClass = method.getContainingClass();
-    if (containingClass != null) {
-      final PsiMethod[] overloads = containingClass.findMethodsByName(method.getName(), false);
-      for (PsiMethod overload : overloads) {
-        if (overload != method && overload.findDeepestSuperMethods().length == 0) {
-          myElements.add(overload);
-          suggestAllNames(overload.getName(), newName);
-        }
+
+  public AutomaticOverloadsRenamer(@NotNull PsiMethod method, String newName) {
+    for (PsiMethod overload : getOverloads(method)) {
+      if (overload != method && overload.findDeepestSuperMethods().length == 0) {
+        myElements.add(overload);
+        suggestAllNames(overload.getName(), newName);
       }
     }
   }
@@ -53,5 +47,12 @@ public class AutomaticOverloadsRenamer extends AutomaticRenamer {
   @Override
   public boolean isSelectedByDefault() {
     return true;
+  }
+
+  @NotNull
+  protected PsiMethod[] getOverloads(@NotNull PsiMethod method) {
+    PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null) return PsiMethod.EMPTY_ARRAY;
+    return containingClass.findMethodsByName(method.getName(), false);
   }
 }

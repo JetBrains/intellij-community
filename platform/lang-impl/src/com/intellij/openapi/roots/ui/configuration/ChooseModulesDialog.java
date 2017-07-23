@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 14-Aug-2006
- * Time: 12:13:18
- */
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.util.ChooseElementsDialog;

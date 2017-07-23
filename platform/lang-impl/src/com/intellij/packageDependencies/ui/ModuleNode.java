@@ -15,7 +15,7 @@
  */
 package com.intellij.packageDependencies.ui;
 
-import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -23,16 +23,20 @@ import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.NavigatableWithText;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Set;
 
 public class ModuleNode extends PackageDependenciesNode implements NavigatableWithText {
-  private final Module myModule;
+  private final @NotNull Module myModule;
+  private final ModuleGrouper myModuleGrouper;
 
-  public ModuleNode(Module module) {
+  public ModuleNode(@NotNull Module module, @Nullable ModuleGrouper moduleGrouper) {
     super(module.getProject());
     myModule = module;
+    myModuleGrouper = moduleGrouper;
   }
 
   @Override
@@ -47,7 +51,7 @@ public class ModuleNode extends PackageDependenciesNode implements NavigatableWi
 
   @Override
   public boolean canNavigate() {
-    return myModule != null && !myModule.isDisposed();
+    return !myModule.isDisposed();
   }
 
   @Override
@@ -62,18 +66,19 @@ public class ModuleNode extends PackageDependenciesNode implements NavigatableWi
 
   @Override
   public Icon getIcon() {
-    return myModule == null || myModule.isDisposed() ? super.getIcon() : ModuleType.get(myModule).getIcon();
+    return myModule.isDisposed() ? super.getIcon() : ModuleType.get(myModule).getIcon();
   }
 
   @Override
   public String toString() {
-    return myModule == null ? AnalysisScopeBundle.message("unknown.node.text") : myModule.getName();
+    return myModuleGrouper != null ? myModuleGrouper.getShortenedName(myModule) : myModule.getName();
   }
 
   public String getModuleName() {
     return myModule.getName();
   }
 
+  @NotNull
   public Module getModule() {
     return myModule;
   }
@@ -96,12 +101,12 @@ public class ModuleNode extends PackageDependenciesNode implements NavigatableWi
 
   @Override
   public int hashCode() {
-    return myModule == null ? 0 : myModule.hashCode();
+    return myModule.hashCode();
   }
 
   @Override
   public boolean isValid() {
-    return myModule != null && !myModule.isDisposed();
+    return !myModule.isDisposed();
   }
 
   @Override

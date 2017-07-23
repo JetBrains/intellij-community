@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,9 +76,9 @@ public class IJSwingUtilities extends JBSwingUtilities {
   }
 
   /**
-   * This method is copied from <code>SwingUtilities</code>.
-   * Returns index of the first occurrence of <code>mnemonic</code>
-   * within string <code>text</code>. Matching algorithm is not
+   * This method is copied from {@code SwingUtilities}.
+   * Returns index of the first occurrence of {@code mnemonic}
+   * within string {@code text}. Matching algorithm is not
    * case-sensitive.
    *
    * @param text The text to search through, may be null
@@ -159,7 +159,7 @@ public class IJSwingUtilities extends JBSwingUtilities {
   public static void moveMousePointerOn(Component component) {
     if (component != null && component.isShowing()) {
       UISettings settings = ApplicationManager.getApplication() == null ? null : UISettings.getInstance();
-      if (settings != null && settings.MOVE_MOUSE_ON_DEFAULT_BUTTON) {
+      if (settings != null && settings.getMoveMouseOnDefaultButton()) {
         Point point = component.getLocationOnScreen();
         int dx = component.getWidth() / 2;
         int dy = component.getHeight() / 2;

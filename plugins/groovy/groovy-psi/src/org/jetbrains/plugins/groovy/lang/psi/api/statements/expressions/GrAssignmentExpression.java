@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,31 +16,23 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 
 /**
- * @author ilyas
+ * Represents simple or operator assignment expression.
+ * <pre>
+ * a = b
+ * c += d
+ * </pre>
+ *
+ * @see GrTupleAssignmentExpression
  */
-public interface GrAssignmentExpression extends GrExpression, PsiPolyVariantReference {
+public interface GrAssignmentExpression extends GrOperatorExpression {
 
   @NotNull
   GrExpression getLValue();
 
   @Nullable
   GrExpression getRValue();
-
-  @NotNull
-  IElementType getOperationTokenType();
-
-  @Override
-  @NotNull
-  GroovyResolveResult[] multiResolve(boolean incompleteCode);
-
-  @NotNull
-  PsiElement getOperationToken();
 }

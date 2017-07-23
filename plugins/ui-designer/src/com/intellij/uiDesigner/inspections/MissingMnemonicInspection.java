@@ -42,14 +42,15 @@ public class MissingMnemonicInspection extends BaseFormInspection {
     return UIDesignerBundle.message("inspection.missing.mnemonics");
   }
 
-  protected void checkComponentProperties(Module module, IComponent component, FormErrorCollector collector) {
+  @Override
+  protected void checkComponentProperties(Module module, @NotNull IComponent component, FormErrorCollector collector) {
     String value = FormInspectionUtil.getText(module, component);
     if (value == null) {
       return;
     }
     IProperty textProperty = FormInspectionUtil.findProperty(component, SwingProperties.TEXT);
     SupportCode.TextWithMnemonic twm = SupportCode.parseText(value);
-    if (twm.myMnemonicIndex < 0 && twm.myText.length() > 0) {
+    if (twm.myMnemonicIndex < 0 && !twm.myText.isEmpty()) {
       if (FormInspectionUtil.isComponentClass(module, component, AbstractButton.class)) {
         collector.addError(getID(), component, textProperty,
                            UIDesignerBundle.message("inspection.missing.mnemonics.message", value),
@@ -67,7 +68,9 @@ public class MissingMnemonicInspection extends BaseFormInspection {
   }
 
   private static class MyEditorQuickFixProvider implements EditorQuickFixProvider {
-    public QuickFix createQuickFix(GuiEditor editor, RadComponent component) {
+    @NotNull
+    @Override
+    public QuickFix createQuickFix(GuiEditor editor, @NotNull RadComponent component) {
       return new AssignMnemonicFix(editor, component,
                                    UIDesignerBundle.message("inspections.missing.mnemonic.quickfix"));
     }

@@ -1,14 +1,31 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
@@ -20,9 +37,13 @@ import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Maxim.Mossienko
@@ -35,6 +56,7 @@ public class Replacer {
   private ReplaceOptions options;
   private ReplacementContext context;
   private StructuralReplaceHandler replaceHandler;
+  private PsiElement lastAffectedElement = null;
 
   public Replacer(Project project, ReplaceOptions options) {
     this.project = project;
@@ -64,14 +86,13 @@ public class Replacer {
                             FileType sourceFileType, Language sourceDialect) {
     this.options = options;
     final MatchOptions matchOptions = this.options.getMatchOptions();
-    matchOptions.setSearchPattern(what);
     this.options.setReplacement(by);
     replacementBuilder=null;
     context = null;
     replaceHandler = null;
 
     matchOptions.clearVariableConstraints();
-    MatcherImplUtil.transform(matchOptions);
+    matchOptions.fillSearchCriteria(what);
 
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(matchOptions.getFileType());
     assert profile != null;
@@ -106,7 +127,7 @@ public class Replacer {
       CollectingMatchResultSink sink = new CollectingMatchResultSink();
       matcher.testFindMatches(sink, matchOptions);
 
-      final List<ReplacementInfo> resultPtrList = new ArrayList<>();
+      final List<ReplacementInfo> resultPtrList = new SmartList<>();
 
       for (final MatchResult result : sink.getMatches()) {
         resultPtrList.add(buildReplacement(result));
@@ -144,11 +165,8 @@ public class Replacer {
     }
   }
 
-  public void replaceAll(final List<ReplacementInfo> resultPtrList) {
-    PsiElement lastAffectedElement = null;
-    PsiElement currentAffectedElement;
-
-    for (ReplacementInfo info : resultPtrList) {
+  public void replaceAll(final List<ReplacementInfo> infos) {
+    for (ReplacementInfo info : infos) {
       PsiElement element = info.getMatch(0);
       initContextAndHandler(element);
       if (replaceHandler != null) {
@@ -156,21 +174,46 @@ public class Replacer {
       }
     }
 
-    for (final ReplacementInfo aResultPtrList : resultPtrList) {
-      currentAffectedElement = doReplace(aResultPtrList);
+    ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithProgressInDispatchThread(
+      SSRBundle.message("structural.replace.title"),
+      project,
+      null,
+      "Stop",
+      indicator -> {
 
-      if (currentAffectedElement != lastAffectedElement) {
-        if (lastAffectedElement != null) reformatAndPostProcess(lastAffectedElement);
-        lastAffectedElement = currentAffectedElement;
+        try {
+          final int size = infos.size();
+          VirtualFile lastFile = null;
+          for (int i = 0; i < size; i++) {
+            indicator.checkCanceled();
+            indicator.setFraction((float)(i + 1) / size);
+
+            ReplacementInfo info = infos.get(i);
+            PsiElement element = info.getMatch(0);
+            assert element != null;
+            final VirtualFile vFile = element.getContainingFile().getVirtualFile();
+            if (vFile != null && !vFile.equals(lastFile)) {
+              indicator.setText2(vFile.getPresentableUrl());
+              lastFile = vFile;
+            }
+
+            ProgressManager.getInstance().executeNonCancelableSection(() -> {
+              final PsiElement affectedElement = doReplace(info);
+              if (affectedElement != lastAffectedElement) {
+                if (lastAffectedElement != null) reformatAndPostProcess(lastAffectedElement);
+                lastAffectedElement = affectedElement;
+              }
+            });
+          }
+        } finally {
+          ProgressManager.getInstance().executeNonCancelableSection(() -> reformatAndPostProcess(lastAffectedElement));
+        }
       }
-    }
-
-    reformatAndPostProcess(lastAffectedElement);
+    );
   }
 
   public void replace(ReplacementInfo info) {
-    PsiElement element = info.getMatch(0);
-    initContextAndHandler(element);
+    initContextAndHandler(info.getMatch(0));
 
     if (replaceHandler != null) {
       replaceHandler.prepare(info);
@@ -187,17 +230,14 @@ public class Replacer {
 
     final PsiElement elementParent = element.getParent();
 
-    //noinspection HardCodedStringLiteral
-    CommandProcessor.getInstance().executeCommand(
-      project,
-      () -> {
-        ApplicationManager.getApplication().runWriteAction(
-          () -> doReplace(element, replacementInfo)
-        );
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-      },
-      "ssreplace",
-      "test"
+    CodeStyleManager.getInstance(project).performActionWithFormatterDisabled(
+      (Runnable)() -> {
+        context.replacementInfo = replacementInfo;
+
+        if (replaceHandler != null) {
+          replaceHandler.replace(replacementInfo, options);
+        }
+      }
     );
 
     if (!elementParent.isValid() || !elementParent.isWritable()) {
@@ -209,46 +249,20 @@ public class Replacer {
 
   private void reformatAndPostProcess(final PsiElement elementParent) {
     if (elementParent == null) return;
-    final Runnable action = () -> {
-      final PsiFile containingFile = elementParent.getContainingFile();
+    final PsiFile containingFile = elementParent.getContainingFile();
 
-      if (containingFile != null && options.isToReformatAccordingToStyle()) {
-        if (containingFile.getVirtualFile() != null) {
-          PsiDocumentManager.getInstance(project)
-            .commitDocument(FileDocumentManager.getInstance().getDocument(containingFile.getVirtualFile()));
-        }
-
-        final int parentOffset = elementParent.getTextRange().getStartOffset();
-        CodeStyleManager.getInstance(project)
-          .reformatRange(containingFile, parentOffset, parentOffset + elementParent.getTextLength(), true);
+    if (containingFile != null && options.isToReformatAccordingToStyle()) {
+      final VirtualFile file = containingFile.getVirtualFile();
+      if (file != null) {
+        PsiDocumentManager.getInstance(project).commitDocument(FileDocumentManager.getInstance().getDocument(file));
       }
-      if (replaceHandler != null) {
-        replaceHandler.postProcess(elementParent, options);
-      }
-    };
 
-    CommandProcessor.getInstance().executeCommand(
-      project,
-      () -> ApplicationManager.getApplication().runWriteAction(action),
-      "reformat and shorten refs after ssr",
-      "test"
-    );
-  }
-
-  private void doReplace(final PsiElement elementToReplace,
-                         final ReplacementInfoImpl info) {
-    CodeStyleManager.getInstance(project).performActionWithFormatterDisabled(new Runnable() {
-        public void run() {
-          initContextAndHandler(elementToReplace);
-
-          context.replacementInfo = info;
-
-          if (replaceHandler != null) {
-            replaceHandler.replace(info, options);
-          }
-        }
-      }
-    );
+      final int parentOffset = elementParent.getTextRange().getStartOffset();
+      CodeStyleManager.getInstance(project).reformatRange(containingFile, parentOffset, parentOffset + elementParent.getTextLength(), true);
+    }
+    if (replaceHandler != null) {
+      replaceHandler.postProcess(elementParent, options);
+    }
   }
 
   private void initContextAndHandler(PsiElement psiContext) {
@@ -372,7 +386,7 @@ public class Replacer {
   }
 
   public ReplacementInfo buildReplacement(MatchResult result) {
-    List<SmartPsiElementPointer> l = new ArrayList<>();
+    List<SmartPsiElementPointer> l = new SmartList<>();
     SmartPointerManager manager = SmartPointerManager.getInstance(project);
 
     if (MatchResult.MULTI_LINE_MATCH.equals(result.getName())) {

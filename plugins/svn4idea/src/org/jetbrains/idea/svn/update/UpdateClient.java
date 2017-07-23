@@ -24,12 +24,6 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/1/12
- * Time: 11:59 AM
- */
 public interface UpdateClient extends SvnClient {
 
   long doUpdate(File path, SVNRevision revision, Depth depth, boolean allowUnversionedObstructions, boolean depthIsSticky)

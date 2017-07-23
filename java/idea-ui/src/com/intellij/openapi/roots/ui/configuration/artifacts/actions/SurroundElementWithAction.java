@@ -16,8 +16,6 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeComponent;
@@ -38,14 +36,15 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.List;
 
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
+
 /**
  * @author nik
  */
 public class SurroundElementWithAction extends LayoutTreeActionBase {
   public SurroundElementWithAction(ArtifactEditorEx artifactEditor) {
     super("Surround With...", artifactEditor);
-    final CustomShortcutSet shortcutSet = new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts("SurroundWith"));
-    registerCustomShortcutSet(shortcutSet, artifactEditor.getLayoutTreeComponent().getLayoutTree());
+    registerCustomShortcutSet(getActiveKeymapShortcuts("SurroundWith"), artifactEditor.getLayoutTreeComponent().getLayoutTree());
   }
 
   @Override

@@ -79,37 +79,34 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
 
         final ActionCallback resultWrapper = new ActionCallback();
 
-        result.doWhenDone(new Consumer<MavenArtifactDownloader.DownloadResult>() {
-          @Override
-          public void consume(MavenArtifactDownloader.DownloadResult downloadResult) {
-            if (!downloadResult.unresolvedSources.isEmpty()) {
-              final StringBuilder message = new StringBuilder();
+        result.doWhenDone((Consumer<MavenArtifactDownloader.DownloadResult>)downloadResult -> {
+          if (!downloadResult.unresolvedSources.isEmpty()) {
+            final StringBuilder message = new StringBuilder();
 
-              message.append("<html>Sources not found for:");
+            message.append("<html>Sources not found for:");
 
-              int count = 0;
-              for (MavenId each : downloadResult.unresolvedSources) {
-                if (count++ > 5) {
-                  message.append("<br>and more...");
-                  break;
-                }
-                message.append("<br>").append(each.getDisplayString());
+            int count = 0;
+            for (MavenId each : downloadResult.unresolvedSources) {
+              if (count++ > 5) {
+                message.append("<br>and more...");
+                break;
               }
-              message.append("</html>");
+              message.append("<br>").append(each.getDisplayString());
+            }
+            message.append("</html>");
 
-              Notifications.Bus.notify(new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
-                                                        "Cannot download sources",
-                                                        message.toString(),
-                                                        NotificationType.WARNING),
-                                       psiFile.getProject());
-            }
+            Notifications.Bus.notify(new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
+                                                      "Cannot download sources",
+                                                      message.toString(),
+                                                      NotificationType.WARNING),
+                                     psiFile.getProject());
+          }
 
-            if (downloadResult.resolvedSources.isEmpty()) {
-              resultWrapper.setRejected();
-            }
-            else {
-              resultWrapper.setDone();
-            }
+          if (downloadResult.resolvedSources.isEmpty()) {
+            resultWrapper.setRejected();
+          }
+          else {
+            resultWrapper.setDone();
           }
         });
 

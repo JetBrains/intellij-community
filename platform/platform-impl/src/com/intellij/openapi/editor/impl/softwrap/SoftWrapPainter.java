@@ -41,15 +41,15 @@ public interface SoftWrapPainter {
    *
    * @param g             target graphics buffer to draw in
    * @param drawingType   target drawing type
-   * @param x             target <code>'x'</code> coordinate to use
-   * @param y             target <code>'y'</code> coordinate to use
+   * @param x             target {@code 'x'} coordinate to use
+   * @param y             target {@code 'y'} coordinate to use
    * @param lineHeight    line height used at editor
    * @return              horizontal offset introduced to the given 'x' coordinate after target drawing painting
    */
   int paint(@NotNull Graphics g, @NotNull SoftWrapDrawingType drawingType, int x, int y, int lineHeight);
 
   /**
-   * Allows to ask about horizontal offset to be applied to the given <code>'x'</code> coordinate if drawing of the given
+   * Allows to ask about horizontal offset to be applied to the given {@code 'x'} coordinate if drawing of the given
    * type is performed at the given graphics buffer.
    * <p/>
    * Generally, this method is useful when we don't want to perform actual drawing for now but want to reserve
@@ -58,8 +58,8 @@ public interface SoftWrapPainter {
    *
    * @param g             target graphics buffer to draw in
    * @param drawingType   target drawing type
-   * @param x             target <code>'x'</code> coordinate to use
-   * @param y             target <code>'y'</code> coordinate to use
+   * @param x             target {@code 'x'} coordinate to use
+   * @param y             target {@code 'y'} coordinate to use
    * @param lineHeight    line height used at editor
    * @return              horizontal offset that would be introduced if the drawing is performed
    */
@@ -78,7 +78,7 @@ public interface SoftWrapPainter {
    * case that particular painter that exploits unicode symbols for drawing can't be used because there is no font
    * at local environment that knows how to draw target symbols).
    *
-   * @return    <code>true</code> if current painter can be used at local environment; <code>false</code> otherwise
+   * @return    {@code true} if current painter can be used at local environment; {@code false} otherwise
    */
   boolean canUse();
 

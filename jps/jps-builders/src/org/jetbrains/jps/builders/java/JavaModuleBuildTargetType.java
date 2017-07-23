@@ -36,7 +36,7 @@ public class JavaModuleBuildTargetType extends ModuleBasedBuildTargetType<Module
   private boolean myTests;
 
   private JavaModuleBuildTargetType(String typeId, boolean tests) {
-    super(typeId);
+    super(typeId, true);
     myTests = tests;
   }
 
@@ -44,7 +44,7 @@ public class JavaModuleBuildTargetType extends ModuleBasedBuildTargetType<Module
   @Override
   public List<ModuleBuildTarget> computeAllTargets(@NotNull JpsModel model) {
     List<JpsModule> modules = model.getProject().getModules();
-    List<ModuleBuildTarget> targets = new ArrayList<ModuleBuildTarget>(modules.size());
+    List<ModuleBuildTarget> targets = new ArrayList<>(modules.size());
     for (JpsModule module : modules) {
       targets.add(new ModuleBuildTarget(module, this));
     }
@@ -69,7 +69,7 @@ public class JavaModuleBuildTargetType extends ModuleBasedBuildTargetType<Module
     private final Map<String, JpsModule> myModules;
 
     public Loader(JpsModel model) {
-      myModules = new HashMap<String, JpsModule>();
+      myModules = new HashMap<>();
       for (JpsModule module : model.getProject().getModules()) {
         myModules.put(module.getName(), module);
       }

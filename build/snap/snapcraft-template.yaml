@@ -1,0 +1,25 @@
+# see platform/build-scripts/.../LinuxDistributionBuilder.groovy
+
+name: $NAME$
+version: '$VERSION$'
+icon: $NAME$.png
+summary: $SUMMARY$
+description: $DESCRIPTION$
+grade: stable
+confinement: classic
+architectures: [amd64]
+
+apps:
+  $NAME$:
+    command: $SCRIPT$
+
+parts:
+  common:
+    plugin: dump
+    source: dist.all
+  bins:
+    plugin: dump
+    source: dist.unix
+  jre:
+    plugin: dump
+    source: jre

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResult
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResultImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass
 import org.jetbrains.plugins.groovy.util.NotNullCachedComputableWrapper
@@ -826,6 +827,8 @@ def test() {
     assertNotNull(ref.resolve())
   }
 
+
+
   void testStringInjectionDontOverrideItParameter() {
     def ref = configureByText("""
 [2, 3, 4].collect {"\${it.toBigDeci<caret>mal()}"}
@@ -1071,38 +1074,6 @@ def xx(){5}
 def aa = 5 + x<caret>x()
 ''')
     assertInstanceOf(ref.resolve(), GrMethod)
-  }
-
-  void testStaticallyImportedProperty1() {
-    myFixture.addFileToProject('Foo.groovy', '''\
-class Foo {
-  static def getFoo() {2}
-  static def setFoo(def foo){}
-}''')
-
-    def ref = configureByText('''\
-import static Foo.f<caret>oo
-''')
-    def resolved = ref.resolve()
-    assertInstanceOf(resolved, GrMethod)
-    assertEquals('getFoo', resolved.name)
-  }
-
-  void testStaticallyImportedProperty2() {
-    myFixture.addFileToProject('Foo.groovy', '''\
-class Foo {
-  static def getFoo() {2}
-  static def setFoo(def foo){}
-}''')
-
-    def ref = configureByText('''\
-import static Foo.foo
-
-setFo<caret>o(2)
-''')
-    def resolved = ref.resolve()
-    assertInstanceOf(resolved, GrMethod)
-    assertEquals('setFoo', resolved.name)
   }
 
   void testRuntimeMixin1() {
@@ -2238,7 +2209,7 @@ SourceConcrete.someOtherStatic<caret>Method()
     def results = ref.multiResolve(false)
     assert results.length > 0
     results.each {
-      assert it instanceof GroovyMethodResult
+      assert it instanceof GroovyMethodResultImpl
       def computer = it.substitutorComputer
       assert computer instanceof NotNullCachedComputableWrapper
       assert !computer.computed
@@ -2291,5 +2262,35 @@ BigDecimal b = 1
     assert resolved instanceof GrGdkMethod
     fixture.enableInspections GroovyAssignabilityCheckInspection
     fixture.checkHighlighting()
+  }
+
+  void 'test resolve AutoImplement'() {
+    myFixture.addClass("package groovy.transform; public @interface AutoImplement {}")
+    def method = resolveByText '''
+import groovy.transform.AutoImplement
+
+@AutoImplement
+class SomeClass extends List<Integer> {
+}
+
+new SomeClass().si<caret>ze()
+''', GrLightMethodBuilder
+    assert (method as GrLightMethodBuilder).originInfo.contains("@AutoImplement")
+  }
+
+  void 'test resolve AutoImplement implemented'() {
+    myFixture.addClass("package groovy.transform; public @interface AutoImplement {}")
+    resolveByText '''
+import groovy.transform.AutoImplement
+
+@AutoImplement
+class SomeClass extends List<Integer> {
+  @Override
+  public int size() {return 0}
+}
+
+new SomeClass().si<caret>ze()
+''', GrMethodImpl
+
   }
 }

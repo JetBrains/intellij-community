@@ -27,6 +27,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -42,7 +43,7 @@ public class GitBinaryHandler extends GitHandler {
   @NotNull private final AtomicReference<VcsException> myException = new AtomicReference<>();
 
   public GitBinaryHandler(final Project project, final VirtualFile vcsRoot, final GitCommand command) {
-    super(project, vcsRoot, command);
+    super(project, vcsRoot, command, Collections.emptyList());
   }
 
   @Override
@@ -62,28 +63,25 @@ public class GitBinaryHandler extends GitHandler {
    * @param out the standard output
    */
   private void handleStream(final InputStream in, final ByteArrayOutputStream out, @NotNull String cmd) {
-    Thread t = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          byte[] buffer = new byte[BUFFER_SIZE];
-          while (true) {
-            int rc = in.read(buffer);
-            if (rc == -1) {
-              break;
-            }
-            out.write(buffer, 0, rc);
+    Thread t = new Thread(() -> {
+      try {
+        byte[] buffer = new byte[BUFFER_SIZE];
+        while (true) {
+          int rc = in.read(buffer);
+          if (rc == -1) {
+            break;
           }
+          out.write(buffer, 0, rc);
         }
-        catch (IOException e) {
-          //noinspection ThrowableInstanceNeverThrown
-          if (!myException.compareAndSet(null, new VcsException("Stream IO problem", e))) {
-            LOG.error("Problem reading stream", e);
-          }
+      }
+      catch (IOException e) {
+        //noinspection ThrowableInstanceNeverThrown
+        if (!myException.compareAndSet(null, new VcsException("Stream IO problem", e))) {
+          LOG.error("Problem reading stream", e);
         }
-        finally {
-          mySteamSemaphore.release(1);
-        }
+      }
+      finally {
+        mySteamSemaphore.release(1);
       }
     }, cmd);
     t.setDaemon(true);

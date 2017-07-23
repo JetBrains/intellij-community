@@ -23,14 +23,11 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
+import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: catherine
- */
-public class PythonDocTestRunConfiguration extends AbstractPythonTestRunConfiguration
+public class PythonDocTestRunConfiguration extends AbstractPythonLegacyTestRunConfiguration<PythonDocTestRunConfiguration>
                                           implements PythonDocTestRunConfigurationParams {
   protected String myPluralTitle = "Doctests";
   protected String myTitle = "Doctest";
@@ -40,7 +37,7 @@ public class PythonDocTestRunConfiguration extends AbstractPythonTestRunConfigur
   }
 
   @Override
-  protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {
+  protected SettingsEditor<PythonDocTestRunConfiguration> createConfigurationEditor() {
     return new PythonDocTestRunConfigurationEditor(getProject(), this);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.Function;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenEmbeddersManager;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -31,7 +30,7 @@ import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -624,7 +623,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(myProject);
     final List<NativeMavenProjectHolder> nativeProject = new ArrayList<>();
     try {
-      myTree.addListener(new MavenProjectsTree.ListenerAdapter() {
+      myTree.addListener(new MavenProjectsTree.Listener() {
         @Override
         public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
                                     NativeMavenProjectHolder nativeMavenProject) {
@@ -674,7 +673,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     MavenEmbeddersManager embeddersManager = new MavenEmbeddersManager(myProject);
     try {
       final NativeMavenProjectHolder[] nativeProject = new NativeMavenProjectHolder[1];
-      myTree.addListener(new MavenProjectsTree.ListenerAdapter() {
+      myTree.addListener(new MavenProjectsTree.Listener() {
         @Override
         public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
                                     NativeMavenProjectHolder nativeMavenProject) {
@@ -1867,7 +1866,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
       embeddersManager.releaseInTests();
     }
 
-    File f = new File(myDir, "tree.dat");
+    Path f = myDir.toPath().resolve("tree.dat");
     myTree.save(f);
     MavenProjectsTree read = MavenProjectsTree.read(myProject, f);
 
@@ -2239,7 +2238,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     PlatformTestUtil.assertPathsEqual(pathFromBasedir("my-target/test-classes"), project.getTestOutputDirectory());
   }
 
-  private static class MyLoggingListener extends MavenProjectsTree.ListenerAdapter {
+  private static class MyLoggingListener implements MavenProjectsTree.Listener {
     String log = "";
 
     @Override

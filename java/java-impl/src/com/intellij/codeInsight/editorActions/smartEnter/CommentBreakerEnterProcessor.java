@@ -26,13 +26,6 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 
-/**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Sep 8, 2003
- * Time: 2:57:38 PM
- * To change this template use Options | File Templates.
- */
 public class CommentBreakerEnterProcessor implements EnterProcessor {
   @Override
   public boolean doEnter(Editor editor, PsiElement psiElement, boolean isModified) {

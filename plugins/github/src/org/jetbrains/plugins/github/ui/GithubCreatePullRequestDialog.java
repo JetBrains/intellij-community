@@ -67,7 +67,7 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
 
     myPanel.getForkComboBox().addItemListener(e -> {
       if (e.getStateChange() == ItemEvent.DESELECTED) {
-        myPanel.setBranches(Collections.<BranchInfo>emptyList());
+        myPanel.setBranches(Collections.emptyList());
       }
       if (e.getStateChange() == ItemEvent.SELECTED) {
         final ForkInfo fork = (ForkInfo)e.getItem();

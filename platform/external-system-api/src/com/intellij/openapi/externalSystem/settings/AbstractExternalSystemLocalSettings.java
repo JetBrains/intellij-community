@@ -22,7 +22,6 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectBuildClasspathPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -252,11 +251,8 @@ public abstract class AbstractExternalSystemLocalSettings {
       pathsToForget.remove(projectSettings.getExternalProjectPath());
     }
     for (Module module : ModuleManager.getInstance(myProject).getModules()) {
-      String id = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
-      if (!myExternalSystemId.toString().equals(id)) {
-        continue;
-      }
-      pathsToForget.remove(module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY));
+      if (!ExternalSystemApiUtil.isExternalSystemAwareModule(myExternalSystemId, module)) continue;
+      pathsToForget.remove(ExternalSystemApiUtil.getExternalProjectPath(module));
     }
 
     if (!pathsToForget.isEmpty()) {

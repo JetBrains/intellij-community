@@ -16,18 +16,18 @@
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.JavaPsiEquivalenceUtil;
+import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffManager;
+import com.intellij.diff.DiffRequestPanel;
+import com.intellij.diff.contents.DocumentContent;
+import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffManager;
-import com.intellij.openapi.diff.SimpleContent;
-import com.intellij.openapi.diff.SimpleDiffRequest;
-import com.intellij.openapi.diff.ex.DiffPanelEx;
-import com.intellij.openapi.diff.ex.DiffPanelOptions;
-import com.intellij.openapi.diff.impl.ComparisonPolicy;
-import com.intellij.openapi.diff.impl.processing.HighlightMode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -36,6 +36,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
@@ -55,7 +56,7 @@ import java.util.*;
 import java.util.List;
 
 public class ExtractMethodSignatureSuggester {
-  private static final Logger LOG = Logger.getInstance("#" + ExtractMethodSignatureSuggester.class.getName());
+  private static final Logger LOG = Logger.getInstance(ExtractMethodSignatureSuggester.class);
   private static final TObjectHashingStrategy<PsiExpression> ourEquivalenceStrategy = new TObjectHashingStrategy<PsiExpression>() {
     @Override
     public int computeHashCode(PsiExpression object) {
@@ -405,19 +406,17 @@ public class ExtractMethodSignatureSuggester {
     @Override
     protected JComponent createCenterPanel() {
       final Project project = myOldMethod.getProject();
-      final DiffPanelEx diffPanel = (DiffPanelEx)DiffManager.getInstance().createDiffPanel(null, project, getDisposable(), null);
-      diffPanel.setComparisonPolicy(ComparisonPolicy.IGNORE_SPACE);
-      diffPanel.setHighlightMode(HighlightMode.BY_WORD);
-      DiffPanelOptions diffPanelOptions = diffPanel.getOptions();
-      diffPanelOptions.setShowSourcePolicy(DiffPanelOptions.ShowSourcePolicy.OPEN_EDITOR);
-      diffPanelOptions.setRequestFocusOnNewContent(false);
-      SimpleDiffRequest request = new SimpleDiffRequest(project, null);
-      final String oldContent = myOldMethod.getText() + "\n\n\nmethod call:\n " + myOldCall.getText();
-      final String newContent = myNewMethod.getText() + "\n\n\nmethod call:\n " + myNewCall.getText();
-      request.setContents(new SimpleContent(oldContent), new SimpleContent(newContent));
-      request.setContentTitles("Before", "After");
-      diffPanel.setDiffRequest(request);
-      
+      final VirtualFile file = PsiUtilCore.getVirtualFile(myOldMethod);
+
+      DiffContentFactory contentFactory = DiffContentFactory.getInstance();
+      DocumentContent oldContent = contentFactory.create(myOldMethod.getText() + "\n\n\nmethod call:\n " + myOldCall.getText(), file);
+      DocumentContent newContent = contentFactory.create(myNewMethod.getText() + "\n\n\nmethod call:\n " + myNewCall.getText(), file);
+      SimpleDiffRequest request = new SimpleDiffRequest(null, oldContent, newContent, "Before", "After");
+
+      DiffRequestPanel diffPanel = DiffManager.getInstance().createRequestPanel(project, getDisposable(), null);
+      diffPanel.putContextHints(DiffUserDataKeys.PLACE, "ExtractSignature");
+      diffPanel.setRequest(request);
+
       final JPanel panel = new JPanel(new BorderLayout());
       panel.add(diffPanel.getComponent(), BorderLayout.CENTER);
       panel.setBorder(IdeBorderFactory.createEmptyBorder(JBUI.insetsTop(5)));

@@ -16,13 +16,17 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
 import gnu.trove.THashSet;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 public class SideEffectChecker {
   private static final Set<String> ourSideEffectFreeClasses = new THashSet<>(Arrays.asList(
@@ -56,96 +60,157 @@ public class SideEffectChecker {
   }
 
   public static boolean mayHaveSideEffects(@NotNull PsiExpression exp) {
-    final SideEffectsVisitor visitor = new SideEffectsVisitor();
+    final SideEffectsVisitor visitor = new SideEffectsVisitor(null);
     exp.accept(visitor);
     return visitor.mayHaveSideEffects();
   }
 
-  public static boolean checkSideEffects(@NotNull PsiExpression element, @NotNull List<PsiElement> sideEffects) {
-    final SideEffectsVisitor visitor = new SideEffectsVisitor();
+  public static boolean mayHaveSideEffects(@NotNull PsiElement element, Predicate<PsiMethodCallExpression> shouldIgnoreCall) {
+    final SideEffectsVisitor visitor = new SideEffectsVisitor(null, shouldIgnoreCall);
     element.accept(visitor);
-    if (visitor.sideEffect != null) {
-      sideEffects.add(visitor.sideEffect);
-      return true;
-    }
-    return false;
+    return visitor.mayHaveSideEffects();
+  }
+
+  public static boolean checkSideEffects(@NotNull PsiExpression element, @NotNull List<PsiElement> sideEffects) {
+    final SideEffectsVisitor visitor = new SideEffectsVisitor(sideEffects);
+    element.accept(visitor);
+    return visitor.mayHaveSideEffects();
+  }
+
+  public static List<PsiExpression> extractSideEffectExpressions(@NotNull PsiExpression element) {
+    List<PsiElement> list = new ArrayList<>();
+    element.accept(new SideEffectsVisitor(list));
+    return StreamEx.of(list).select(PsiExpression.class).toList();
   }
 
   private static class SideEffectsVisitor extends JavaRecursiveElementWalkingVisitor {
-    PsiElement sideEffect;
+    private @Nullable final List<PsiElement> mySideEffects;
+    boolean found;
+    final Predicate<PsiMethodCallExpression> myIgnoredCallPredicate;
 
-    @Override
-    public void visitElement(@NotNull PsiElement element) {
-      if (sideEffect == null) {
-        super.visitElement(element);
+    SideEffectsVisitor(@Nullable List<PsiElement> sideEffects) {
+      this(sideEffects, call -> false);
+    }
+
+    SideEffectsVisitor(@Nullable List<PsiElement> sideEffects, Predicate<PsiMethodCallExpression> predicate) {
+      myIgnoredCallPredicate = predicate;
+      mySideEffects = sideEffects;
+    }
+
+    private void addSideEffect(PsiElement element) {
+      found = true;
+      if(mySideEffects != null) {
+        mySideEffects.add(element);
+      } else {
+        stopWalking();
       }
     }
 
     @Override
-    public void visitAssignmentExpression(
-      @NotNull PsiAssignmentExpression expression) {
-      if (sideEffect != null) {
-        return;
-      }
-      super.visitAssignmentExpression(expression);
-      sideEffect = expression;
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
+      addSideEffect(expression);
     }
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
-      if (sideEffect != null) {
-        return;
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+      if (!myIgnoredCallPredicate.test(expression)) {
+        final PsiMethod method = expression.resolveMethod();
+        if (!isPure(method)) {
+          addSideEffect(expression);
+          return;
+        }
       }
       super.visitMethodCallExpression(expression);
-      final PsiMethod method = expression.resolveMethod();
-      if (method != null && (PropertyUtil.isSimpleGetter(method) || ControlFlowAnalyzer.isPure(method))) {
-        return;
-      }
-      
-      sideEffect = expression;
+    }
+
+    protected boolean isPure(PsiMethod method) {
+      if (method == null) return false;
+      if (PropertyUtil.isSimpleGetter(method)) return true;
+      return ControlFlowAnalyzer.isPure(method) && !mayHaveExceptionalSideEffect(method);
     }
 
     @Override
     public void visitNewExpression(@NotNull PsiNewExpression expression) {
-      if (sideEffect != null) {
+      if(!isSideEffectFreeConstructor(expression)) {
+        addSideEffect(expression);
         return;
       }
       super.visitNewExpression(expression);
-      sideEffect = isSideEffectFreeConstructor(expression) ? null : expression;
     }
 
     @Override
-    public void visitPostfixExpression(
-      @NotNull PsiPostfixExpression expression) {
-      if (sideEffect != null) {
+    public void visitPostfixExpression(@NotNull PsiPostfixExpression expression) {
+      final IElementType tokenType = expression.getOperationTokenType();
+      if (tokenType.equals(JavaTokenType.PLUSPLUS) || tokenType.equals(JavaTokenType.MINUSMINUS)) {
+        addSideEffect(expression);
         return;
       }
       super.visitPostfixExpression(expression);
-      final IElementType tokenType = expression.getOperationTokenType();
-      if (tokenType.equals(JavaTokenType.PLUSPLUS) ||
-          tokenType.equals(JavaTokenType.MINUSMINUS)) {
-        sideEffect = expression;
-      }
     }
 
     @Override
-    public void visitPrefixExpression(
-      @NotNull PsiPrefixExpression expression) {
-      if (sideEffect != null) {
+    public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
+      final IElementType tokenType = expression.getOperationTokenType();
+      if (tokenType.equals(JavaTokenType.PLUSPLUS) || tokenType.equals(JavaTokenType.MINUSMINUS)) {
+        addSideEffect(expression);
         return;
       }
       super.visitPrefixExpression(expression);
-      final IElementType tokenType = expression.getOperationTokenType();
-      if (tokenType.equals(JavaTokenType.PLUSPLUS) ||
-          tokenType.equals(JavaTokenType.MINUSMINUS)) {
-        sideEffect = expression;
-      }
+    }
+
+    @Override
+    public void visitDeclarationStatement(PsiDeclarationStatement statement) {
+      addSideEffect(statement);
+    }
+
+    @Override
+    public void visitBreakStatement(PsiBreakStatement statement) {
+      addSideEffect(statement);
+    }
+
+    @Override
+    public void visitClass(PsiClass aClass) {
+      // local or anonymous class declaration is not side effect per se (unless it's instantiated)
+    }
+
+    @Override
+    public void visitContinueStatement(PsiContinueStatement statement) {
+      addSideEffect(statement);
+    }
+
+    @Override
+    public void visitReturnStatement(PsiReturnStatement statement) {
+      addSideEffect(statement);
+    }
+
+    @Override
+    public void visitThrowStatement(PsiThrowStatement statement) {
+      addSideEffect(statement);
+    }
+
+    @Override
+    public void visitLambdaExpression(PsiLambdaExpression expression) {
+      // lambda is not side effect per se (unless it's called)
     }
 
     public boolean mayHaveSideEffects() {
-      return sideEffect != null;
+      return found;
     }
+  }
+
+  /**
+   * Returns true if given method function is likely to throw an exception (e.g. "assertEquals"). In some cases this means that
+   * the method call should be preserved in source code even if it's pure (i.e. does not change the program state).
+   *
+   * @param method a method to check
+   * @return true if the method has exceptional side effect
+   */
+  public static boolean mayHaveExceptionalSideEffect(PsiMethod method) {
+    if (method.getName().startsWith("assert") || method.getName().startsWith("check")) {
+      return true;
+    }
+    return ControlFlowAnalyzer.getMethodContracts(method).stream()
+      .anyMatch(mc -> mc.returnValue == MethodContract.ValueConstraint.THROW_EXCEPTION);
   }
 
   private static boolean isSideEffectFreeConstructor(@NotNull PsiNewExpression newExpression) {

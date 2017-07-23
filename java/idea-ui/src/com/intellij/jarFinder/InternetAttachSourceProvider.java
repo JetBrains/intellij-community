@@ -193,21 +193,25 @@ public class InternetAttachSourceProvider extends AbstractAttachSourceProvider {
   }
 
   public static void attachSourceJar(@NotNull File sourceJar, @NotNull Collection<Library> libraries) {
+    VirtualFile srcFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(sourceJar);
+    if (srcFile == null) return;
+
+    VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(srcFile);
+    if (jarRoot == null) return;
+
+    VirtualFile[] roots = LibrarySourceRootDetectorUtil.scanAndSelectDetectedJavaSourceRoots(null, new VirtualFile[]{jarRoot});
+    if (roots.length == 0) {
+      roots = new VirtualFile[]{jarRoot};
+    }
+
+    doAttachSourceJars(libraries, roots);
+  }
+
+  private static void doAttachSourceJars(@NotNull Collection<Library> libraries, VirtualFile[] roots) {
     WriteAction.run(() -> {
-      VirtualFile srcFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(sourceJar);
-      if (srcFile == null) return;
-
-      VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(srcFile);
-      if (jarRoot == null) return;
-
-      VirtualFile[] roots = LibrarySourceRootDetectorUtil.scanAndSelectDetectedJavaSourceRoots(null, new VirtualFile[]{jarRoot});
-      if (roots.length == 0) {
-        roots = new VirtualFile[]{jarRoot};
-      }
-
       for (Library library : libraries) {
         Library.ModifiableModel model = library.getModifiableModel();
-        List<VirtualFile> alreadyExistingFiles = Arrays.asList(model.getFiles(OrderRootType.SOURCES));
+        Set<VirtualFile> alreadyExistingFiles = ContainerUtil.newHashSet(model.getFiles(OrderRootType.SOURCES));
 
         for (VirtualFile root : roots) {
           if (!alreadyExistingFiles.contains(root)) {

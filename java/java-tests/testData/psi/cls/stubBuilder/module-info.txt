@@ -1,6 +1,15 @@
 PsiJavaFileStub []
   PsiJavaModuleStub:M.N
-    PsiRequiresStatementStub:0:java.desktop
-    PsiRequiresStatementStub:1:java.logging
-    PsiExportsStatementStub:pkg.d1
-    PsiExportsStatementStub:pkg.d2:java.desktop
+    PsiModifierListStub[mask=0]
+      PsiAnnotationStub[@java.lang.Deprecated]
+    PsiRequiresStatementStub:java.desktop
+      PsiModifierListStub[mask=0]
+    PsiRequiresStatementStub:java.logging
+      PsiModifierListStub[mask=16392]
+    PsiPackageAccessibilityStatementStub[EXPORTS]:pkg.d1
+    PsiPackageAccessibilityStatementStub[EXPORTS]:pkg.d2:java.desktop
+    PsiPackageAccessibilityStatementStub[OPENS]:pkg.d1
+    PsiPackageAccessibilityStatementStub[OPENS]:pkg.d2:java.desktop
+    PsiUsesStatementStub:pkg.d1.C1
+    PsiProvidesStatementStub:pkg.d1.C1
+      PsiRefListStub[PROVIDES_WITH_LIST:pkg.d2.C2]

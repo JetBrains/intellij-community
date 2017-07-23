@@ -1,11 +1,17 @@
 <html>
 <body>
 Reports on <b>while</b> loops which spin on the
-value of a non-volatile field, waiting for it to be changed by another thread. In addition to being potentially
-extremely CPU intensive when little work is done inside the loop, such
+value of a non-volatile field, waiting for it to be changed by another thread.
+<p>
+In addition to being potentially extremely CPU intensive when little work is done inside the loop, such
 loops are likely have different semantics than intended, as the Java Memory Model allows such field accesses
 to be hoisted out of the loop, causing the loop to never complete even if another thread does change the
 field's value.
+</p>
+<p>
+  Additionally since Java 9 it's recommended to call <code>Thread.onSpinWait()</code> inside spin loop
+  on a volatile field which may significantly improve performance on some hardware.
+</p>
 <!-- tooltip end -->
 <p>
 

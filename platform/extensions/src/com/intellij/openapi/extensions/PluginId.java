@@ -28,7 +28,7 @@ import java.util.Map;
 public class PluginId implements Comparable<PluginId> {
   public static final PluginId[] EMPTY_ARRAY = new PluginId[0];
 
-  private static final Map<String, PluginId> ourRegisteredIds = new THashMap<String, PluginId>();
+  private static final Map<String, PluginId> ourRegisteredIds = new THashMap<>();
 
   private final String myIdString;
 
@@ -43,12 +43,7 @@ public class PluginId implements Comparable<PluginId> {
 
   @NotNull
   public static synchronized PluginId getId(@NotNull String idString) {
-    PluginId pluginId = ourRegisteredIds.get(idString);
-    if (pluginId == null) {
-      pluginId = new PluginId(idString);
-      ourRegisteredIds.put(idString, pluginId);
-    }
-    return pluginId;
+    return ourRegisteredIds.computeIfAbsent(idString, PluginId::new);
   }
 
   @Nullable
@@ -75,6 +70,6 @@ public class PluginId implements Comparable<PluginId> {
 
   @NotNull
   public static synchronized Map<String, PluginId> getRegisteredIds() {
-    return new THashMap<String, PluginId>(ourRegisteredIds);
+    return new THashMap<>(ourRegisteredIds);
   }
 }

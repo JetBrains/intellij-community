@@ -77,14 +77,14 @@ public class Javac2 extends Javac {
   }
 
   /**
-   * @return semicolon-separated names of not-null annotations to be instrumented. Example: <code>"org.jetbrains.annotations.NotNull;javax.annotation.Nonnull"</code>
+   * @return semicolon-separated names of not-null annotations to be instrumented. Example: {@code "org.jetbrains.annotations.NotNull;javax.annotation.Nonnull"}
    */
   public String getNotNullAnnotations() {
     return myNotNullAnnotations;
   }
 
   /**
-   * @param notNullAnnotations semicolon-separated names of not-null annotations to be instrumented. Example: <code>"org.jetbrains.annotations.NotNull;javax.annotation.Nonnull"</code>
+   * @param notNullAnnotations semicolon-separated names of not-null annotations to be instrumented. Example: {@code "org.jetbrains.annotations.NotNull;javax.annotation.Nonnull"}
    */
   public void setNotNullAnnotations(String notNullAnnotations) {
     myNotNullAnnotations = notNullAnnotations;

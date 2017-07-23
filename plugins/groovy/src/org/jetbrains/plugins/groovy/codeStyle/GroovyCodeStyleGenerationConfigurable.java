@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,15 @@
 package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.psi.codeStyle.CodeStyleConfigurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -31,7 +32,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-public class GroovyCodeStyleGenerationConfigurable implements Configurable {
+public class GroovyCodeStyleGenerationConfigurable implements CodeStyleConfigurable {
   private final CodeStyleSettings mySettings;
   private final MembersOrderList myMembersOrderList;
 
@@ -45,9 +46,9 @@ public class GroovyCodeStyleGenerationConfigurable implements Configurable {
   public JComponent createComponent() {
     JPanel panel = ToolbarDecorator.createDecorator(myMembersOrderList)
       .disableAddAction().disableRemoveAction().createPanel();
-    panel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.order.of.members"), true, new JBInsets(0, 10, 10, 10)));
 
     JPanel wholePanel = new JPanel(new BorderLayout());
+    wholePanel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.order.of.members"), true, new JBInsets(0, 10, 10, 10)));
     wholePanel.add(panel, BorderLayout.NORTH);
     return wholePanel;
   }
@@ -59,12 +60,12 @@ public class GroovyCodeStyleGenerationConfigurable implements Configurable {
 
   @Override
   public void apply() throws ConfigurationException {
-    myMembersOrderList.apply(mySettings);
+    apply(mySettings);
   }
 
   @Override
   public void reset() {
-    myMembersOrderList.reset(mySettings);
+    reset(mySettings);
   }
 
   @Nls
@@ -73,10 +74,14 @@ public class GroovyCodeStyleGenerationConfigurable implements Configurable {
     return ApplicationBundle.message("title.code.generation");
   }
 
-  @Nullable
   @Override
-  public String getHelpTopic() {
-    return null;
+  public void reset(@NotNull CodeStyleSettings settings) {
+    myMembersOrderList.reset(settings);
+  }
+
+  @Override
+  public void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException {
+    myMembersOrderList.apply(settings);
   }
 
   public static class MembersOrderList extends JBList {

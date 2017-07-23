@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -36,10 +36,12 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.inCallers.JavaCallerChooser;
@@ -49,11 +51,11 @@ import com.intellij.refactoring.ui.JavaComboBoxVisibilityPanel;
 import com.intellij.refactoring.ui.VisibilityPanelBase;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.*;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBUI;
@@ -98,9 +100,19 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   }
 
   public static JavaChangeSignatureDialog createAndPreselectNew(final Project project,
+                                                              final PsiMethod method,
+                                                              final List<ParameterInfoImpl> parameterInfos,
+                                                              final boolean allowDelegation,
+                                                              final PsiReferenceExpression refExpr) {
+    return createAndPreselectNew(project, method, parameterInfos, allowDelegation, refExpr, null);
+  }
+
+  public static JavaChangeSignatureDialog createAndPreselectNew(final Project project,
                                                                 final PsiMethod method,
                                                                 final List<ParameterInfoImpl> parameterInfos,
-                                                                final boolean allowDelegation, final PsiReferenceExpression refExpr) {
+                                                                final boolean allowDelegation,
+                                                                final PsiReferenceExpression refExpr,
+                                                                final Consumer<List<ParameterInfoImpl>> callback) {
     return new JavaChangeSignatureDialog(project, method, allowDelegation, refExpr) {
       @Override
       protected int getSelectedIdx() {
@@ -111,6 +123,29 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
           }
         }
         return super.getSelectedIdx();
+      }
+
+      @Override
+      protected BaseRefactoringProcessor createRefactoringProcessor() {
+        final List<ParameterInfoImpl> parameters = getParameters();
+        return new ChangeSignatureProcessor(myProject,
+                                            myMethod.getMethod(),
+                                            isGenerateDelegate(),
+                                            getVisibility(),
+                                            getMethodName(),
+                                            getReturnType(),
+                                            parameters.toArray(new ParameterInfoImpl[parameters.size()]),
+                                            getExceptions(),
+                                            myMethodsToPropagateParameters,
+                                            myMethodsToPropagateExceptions) {
+          @Override
+          protected void performRefactoring(@NotNull UsageInfo[] usages) {
+            super.performRefactoring(usages);
+            if (callback != null) {
+              callback.consume(getParameters());
+            }
+          }
+        };
       }
     };
   }
@@ -150,6 +185,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     return true;
   }
 
+  @Override
   @NotNull
   protected List<Pair<String,JPanel>> createAdditionalPanels() {
     // this method is invoked before constructor body
@@ -161,7 +197,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     table.setRowHeight(20);
     table.getColumnModel().getColumn(0).setCellRenderer(new CodeFragmentTableCellRenderer(myProject));
     final JavaCodeFragmentTableCellEditor cellEditor = new JavaCodeFragmentTableCellEditor(myProject);
-    cellEditor.addDocumentListener(new DocumentAdapter() {
+    cellEditor.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         final int row = table.getSelectedRow();
@@ -425,10 +461,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     try {
       return ((PsiTypeCodeFragment)item.typeCodeFragment).getType();
     }
-    catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-      return null;
-    }
-    catch (PsiTypeCodeFragment.NoTypeException e) {
+    catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException e) {
       return null;
     }
   }    
@@ -487,10 +520,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
         final PsiType type = ((PsiTypeCodeFragment)myReturnTypeCodeFragment).getType();
         return CanonicalTypes.createTypeWrapper(type);
       }
-      catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-        return null;
-      }
-      catch (PsiTypeCodeFragment.NoTypeException e) {
+      catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException e) {
         return null;
       }
     }
@@ -529,11 +559,15 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
         ((PsiTypeCodeFragment)myReturnTypeCodeFragment).getType();
       }
       catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-        myReturnTypeField.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(myReturnTypeField, true);
+        });
         return RefactoringBundle.message("changeSignature.wrong.return.type", myReturnTypeCodeFragment.getText());
       }
       catch (PsiTypeCodeFragment.NoTypeException e) {
-        myReturnTypeField.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(myReturnTypeField, true);
+        });
         return RefactoringBundle.message("changeSignature.no.return.type");
       }
     }
@@ -566,12 +600,8 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       }
 
       if (item.parameter.oldParameterIndex < 0) {
-        String def = WriteCommandAction.runWriteCommandAction(myProject, new Computable<String>() {
-          @Override
-          public String compute() {
-            return JavaCodeStyleManager.getInstance(myProject).qualifyClassReferences(item.defaultValueCodeFragment).getText().trim();
-          }
-        });
+        String def = WriteCommandAction.runWriteCommandAction(myProject,
+                                                              (Computable<String>)() -> JavaCodeStyleManager.getInstance(myProject).qualifyClassReferences(item.defaultValueCodeFragment).getText().trim());
         item.parameter.defaultValue = def;
         if (!(type instanceof PsiEllipsisType)) {
           try {
@@ -615,7 +645,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     // warnings
     try {
       if (myMethod.canChangeReturnType() == MethodDescriptor.ReadWriteOption.ReadWrite) {
-        if (!RefactoringUtil.isResolvableType(((PsiTypeCodeFragment)myReturnTypeCodeFragment).getType())) {
+        if (PsiTypesUtil.hasUnresolvedComponents(((PsiTypeCodeFragment)myReturnTypeCodeFragment).getType())) {
           if (Messages.showOkCancelDialog(myProject, RefactoringBundle
             .message("changeSignature.cannot.resolve.return.type", myReturnTypeCodeFragment.getText()),
                                           RefactoringBundle.message("changeSignature.refactoring.name"), Messages.getWarningIcon()) != Messages.OK) {
@@ -625,7 +655,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       }
       for (ParameterTableModelItemBase<ParameterInfoImpl> item : parameterInfos) {
 
-        if (!RefactoringUtil.isResolvableType(((PsiTypeCodeFragment)item.typeCodeFragment).getType())) {
+        if (PsiTypesUtil.hasUnresolvedComponents(((PsiTypeCodeFragment)item.typeCodeFragment).getType())) {
           if (Messages.showOkCancelDialog(myProject, RefactoringBundle
             .message("changeSignature.cannot.resolve.parameter.type", item.typeCodeFragment.getText(), item.parameter.getName()),
                                           RefactoringBundle.message("changeSignature.refactoring.name"), Messages.getWarningIcon()) !=

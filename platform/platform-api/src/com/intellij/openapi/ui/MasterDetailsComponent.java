@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
@@ -67,15 +68,18 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   @NonNls public static final String TREE_NAME = "treeName";
 
   protected History myHistory = new History(new Place.Navigator() {
+    @Override
     public void setHistory(final History history) {
       myHistory = history;
     }
 
+    @Override
     @Nullable
     public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
       return null;
     }
 
+    @Override
     public void queryPlace(@NotNull final Place place) {
     }
   });
@@ -87,10 +91,8 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
   protected final MasterDetailsState myState;
 
-  protected Runnable TREE_UPDATER;
-
-  {
-    TREE_UPDATER = new Runnable() {
+  protected final Runnable TREE_UPDATER = new Runnable() {
+      @Override
       public void run() {
         final TreePath selectionPath = myTree.getSelectionPath();
         if (selectionPath == null) return;
@@ -100,11 +102,11 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
         myState.setLastEditedConfigurable(getNodePathString(node)); //survive after rename;
         myDetails.setText(node.getConfigurable().getBannerSlogan());
-        ((DefaultTreeModel)myTree.getModel()).reload(node);
+        node.reloadNode((DefaultTreeModel)myTree.getModel());
         fireItemsChangedExternally();
       }
     };
-  }
+
 
   protected MyNode myRoot = new MyRootNode();
   protected Tree myTree = new Tree();
@@ -141,6 +143,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     if (!myToReInitWholePanel) return;
 
     myWholePanel = new JPanel(new BorderLayout()) {
+      @Override
       public void addNotify() {
         super.addNotify();
         MasterDetailsComponent.this.addNotify();
@@ -162,6 +165,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     myWholePanel.add(mySplitter, BorderLayout.CENTER);
 
     JPanel left = new JPanel(new BorderLayout()) {
+      @Override
       public Dimension getMinimumSize() {
         final Dimension original = super.getMinimumSize();
         return new Dimension(Math.max(original.width, 100), original.height);
@@ -191,18 +195,22 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
   private void installAutoScroll() {
     myAutoScrollHandler = new AutoScrollToSourceHandler() {
+      @Override
       protected boolean isAutoScrollMode() {
         return isAutoScrollEnabled();
       }
 
+      @Override
       protected void setAutoScrollMode(boolean state) {
         //do nothing
       }
 
+      @Override
       protected void scrollToSource(Component tree) {
         updateSelectionFromTree();
       }
 
+      @Override
       protected boolean needToCheckFocus() {
         return false;
       }
@@ -244,6 +252,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     return false;
   }
 
+  @Override
   public DetailsComponent getDetailsComponent() {
     return myDetails;
   }
@@ -281,7 +290,8 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     return JBUI.size(800, 600);
   }
 
-  @NotNull 
+  @Override
+  @NotNull
   public JComponent createComponent() {
     myTree.updateUI();
     reInitWholePanelIfNeeded();
@@ -289,6 +299,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     updateSelectionFromTree();
 
     final JPanel panel = new JPanel(new BorderLayout()) {
+      @Override
       public Dimension getPreferredSize() {
         return getPanelPreferredSize();
       }
@@ -297,6 +308,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     return panel;
   }
 
+  @Override
   public boolean isModified() {
     if (myHasDeletedItems) return true;
     final boolean[] modified = new boolean[1];
@@ -317,6 +329,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     return myInitializedConfigurables.contains(configurable);
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     processRemovedItems();
     final ConfigurationException[] ex = new ConfigurationException[1];
@@ -345,6 +358,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
   protected abstract boolean wasObjectStored(Object editableObject);
 
+  @Override
   public void reset() {
     loadComponentState();
     myHasDeletedItems = false;
@@ -419,6 +433,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     XmlSerializerUtil.copyBean(object, myState);
   }
 
+  @Override
   public void disposeUIResources() {
     myState.getProportions().saveSplitterProportions(myWholePanel);
     myAutoScrollHandler.cancelAllRequests();
@@ -436,7 +451,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   protected void clearChildren() {
     TreeUtil.traverseDepth(myRoot, node -> {
       if (node instanceof MyNode) {
-        final MyNode treeNode = ((MyNode)node);
+        final MyNode treeNode = (MyNode)node;
         treeNode.getConfigurable().disposeUIResources();
         if (!(treeNode instanceof MyRootNode)) {
           treeNode.setUserObject(null);
@@ -460,7 +475,8 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     UIUtil.setLineStyleAngled(myTree);
     TreeUtil.installActions(myTree);
     myTree.setCellRenderer(new ColoredTreeCellRenderer() {
-      public void customizeCellRenderer(JTree tree,
+      @Override
+      public void customizeCellRenderer(@NotNull JTree tree,
                                         Object value,
                                         boolean selected,
                                         boolean expanded,
@@ -468,7 +484,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
                                         int row,
                                         boolean hasFocus) {
         if (value instanceof MyNode) {
-          final MyNode node = ((MyNode)value);
+          final MyNode node = (MyNode)value;
           setIcon(node.getIcon(expanded));
           final Font font = UIUtil.getTreeFont();
           if (node.isDisplayInBold()) {
@@ -505,7 +521,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     return null;
   }
 
-  public void fireItemsChangeListener(final Object editableObject) {
+  private void fireItemsChangeListener(final Object editableObject) {
     for (ItemsChangeListener listener : myListeners) {
       listener.itemChanged(editableObject);
     }
@@ -519,13 +535,15 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
   private void createUIComponents() {
     myTree = new Tree() {
+      @Override
       public Dimension getPreferredScrollableViewportSize() {
         Dimension size = super.getPreferredScrollableViewportSize();
         size = new Dimension(size.width + 20, size.height);
         return size;
       }
 
-      @SuppressWarnings({"NonStaticInitializer"})
+      @Override
+      @SuppressWarnings("NonStaticInitializer")
       public JToolTip createToolTip() {
         final JToolTip toolTip = new JToolTip() {
           {
@@ -545,7 +563,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   protected void sortDescendants(MyNode root) {
-    TreeUtil.sort(root, getNodeComparator());
+    TreeUtil.sortRecursively(root, getNodeComparator());
     ((DefaultTreeModel)myTree.getModel()).reload(root);
   }
 
@@ -563,14 +581,12 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
   public ActionCallback selectNodeInTree(final DefaultMutableTreeNode nodeToSelect, boolean center, final boolean requestFocus) {
     if (requestFocus) {
-      myTree.requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTree, true));
     }
     if (nodeToSelect != null) {
       return TreeUtil.selectInTree(nodeToSelect, requestFocus, myTree, center);
     }
-    else {
-      return TreeUtil.selectFirstNode(myTree);
-    }
+    return TreeUtil.selectFirstNode(myTree);
   }
 
   @Nullable
@@ -669,6 +685,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     myDetails.setEmptyContentText(getEmptySelectionString());
   }
 
+  @Override
   public String getHelpTopic() {
     if (myCurrentConfigurable != null) {
       return myCurrentConfigurable.getHelpTopic();
@@ -676,7 +693,8 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     return null;
   }
 
-  protected @Nullable String getEmptySelectionString() {
+  @Nullable
+  protected String getEmptySelectionString() {
     return null;
   }
 
@@ -685,7 +703,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   /**
-   * @deprecated use {@link #checkForEmptyAndDuplicatedNames(String, String, Class} instead
+   * @deprecated use {@link #checkForEmptyAndDuplicatedNames(String, String, Class)} instead
    */
   protected void checkApply(Set<MyNode> rootNodes, String prefix, String title) throws ConfigurationException {
     for (MyNode rootNode : rootNodes) {
@@ -710,7 +728,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
       if (configurableClass.isInstance(scopeConfigurable)) {
         final String name = scopeConfigurable.getDisplayName();
-        if (name.trim().length() == 0) {
+        if (name.trim().isEmpty()) {
           selectNodeInTree(node);
           throw new ConfigurationException("Name should contain non-space characters");
         }
@@ -749,6 +767,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       final NamedConfigurable namedConfigurable = node.getConfigurable();
       final Object editableObject = namedConfigurable.getEditableObject();
       parentNode = (MyNode)node.getParent();
+      if (parentNode == null) continue;
       idx = parentNode.getIndex(node);
       ((DefaultTreeModel)myTree.getModel()).removeNodeFromParent(node);
       myHasDeletedItems |= wasObjectStored(editableObject);
@@ -766,13 +785,16 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
           if (idx > 0 && parentNode.getChildCount() > 0) {
             if (idx - 1 < parentNode.getChildCount()) {
               toSelect = (DefaultMutableTreeNode) parentNode.getChildAt(idx - 1);
-            } else {
+            }
+            else {
               toSelect = (DefaultMutableTreeNode) parentNode.getFirstChild();
             }
-          } else {
+          }
+          else {
             if (parentNode.isRoot() && myTree.isRootVisible()) {
               toSelect = parentNode;
-            } else if (parentNode.getChildCount() > 0) {
+            }
+            else if (parentNode.getChildCount() > 0) {
               toSelect = (DefaultMutableTreeNode) parentNode.getFirstChild();
             }
           }
@@ -795,7 +817,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     private final Condition<Object[]> myCondition;
 
     public MyDeleteAction() {
-      this(Conditions.<Object[]>alwaysTrue());
+      this(Conditions.alwaysTrue());
     }
 
     public MyDeleteAction(Condition<Object[]> availableCondition) {
@@ -804,17 +826,19 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       myCondition = availableCondition;
     }
 
+    @Override
     public void update(AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);
       final TreePath[] selectionPath = myTree.getSelectionPaths();
       if (selectionPath != null) {
-        Object[] nodes = ContainerUtil.map2Array(selectionPath, treePath -> treePath.getLastPathComponent());
+        Object[] nodes = ContainerUtil.map2Array(selectionPath, TreePath::getLastPathComponent);
         if (!myCondition.value(nodes)) return;
         presentation.setEnabled(true);
       }
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       removePaths(myTree.getSelectionPaths());
     }
@@ -843,7 +867,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
     @NotNull
     public String getDisplayName() {
-      final NamedConfigurable configurable = ((NamedConfigurable)getUserObject());
+      final NamedConfigurable configurable = (NamedConfigurable)getUserObject();
       LOG.assertTrue(configurable != null, "Tree was already disposed");
       return configurable.getDisplayName();
     }
@@ -869,50 +893,48 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       }
       return null;
     }
+
+    protected void reloadNode(DefaultTreeModel treeModel) {
+      treeModel.reload(this);
+    }
   }
 
-  @SuppressWarnings({"ConstantConditions"})
+  @SuppressWarnings("ConstantConditions")
   protected static class MyRootNode extends MyNode {
     public MyRootNode() {
       super(new NamedConfigurable(false, null) {
+        @Override
         public void setDisplayName(String name) {
         }
 
+        @Override
         public Object getEditableObject() {
           return null;
         }
 
+        @Override
         public String getBannerSlogan() {
           return null;
         }
 
+        @Override
         public String getDisplayName() {
           return "";
         }
 
-        @Nullable
-        @NonNls
-        public String getHelpTopic() {
-          return null;
-        }
-
+        @Override
         public JComponent createOptionsPanel() {
           return null;
         }
 
+        @Override
         public boolean isModified() {
           return false;
         }
 
-        public void apply() throws ConfigurationException {
+        @Override
+        public void apply() {
         }
-
-        public void reset() {
-        }
-
-        public void disposeUIResources() {
-        }
-
       }, false);
     }
   }
@@ -930,7 +952,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   protected class MyActionGroupWrapper extends AnAction implements DumbAware {
-    private ActionGroup myActionGroup;
+    private final ActionGroup myActionGroup;
     private ActionGroupWithPreselection myPreselection;
 
     public MyActionGroupWrapper(final ActionGroupWithPreselection actionGroup) {
@@ -945,6 +967,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       registerCustomShortcutSet(actionGroup.getShortcutSet(), myTree);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
       final DataContext dataContext = e.getDataContext();
@@ -961,21 +984,25 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     }
   }
 
+  @Override
   public JComponent getToolbar() {
     myToReInitWholePanel = true;
     return myNorthPanel;
   }
 
+  @Override
   public JComponent getMaster() {
     myToReInitWholePanel = true;
     return myMaster;
   }
 
+  @Override
   public DetailsComponent getDetails() {
     myToReInitWholePanel = true;
     return myDetails;
   }
 
+  @Override
   public void initUi() {
     createComponent();
   }

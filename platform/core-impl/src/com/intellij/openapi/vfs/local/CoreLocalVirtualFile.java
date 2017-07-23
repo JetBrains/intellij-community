@@ -22,8 +22,6 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author yole
@@ -87,16 +85,15 @@ public class CoreLocalVirtualFile extends VirtualFile {
   public VirtualFile[] getChildren() {
     VirtualFile[] answer = myChildren;
     if (answer == null) {
-      List<VirtualFile> result = new ArrayList<VirtualFile>();
       final File[] files = myIoFile.listFiles();
-      if (files == null) {
+      if (files == null || files.length == 0) {
         answer = EMPTY_ARRAY;
       }
       else {
-        for (File file : files) {
-          result.add(new CoreLocalVirtualFile(myFileSystem, file));
+        answer = new VirtualFile[files.length];
+        for (int i = 0; i < files.length; i++) {
+          answer[i] = new CoreLocalVirtualFile(myFileSystem, files[i]);
         }
-        answer = result.toArray(new VirtualFile[result.size()]);
       }
       myChildren = answer;
     }

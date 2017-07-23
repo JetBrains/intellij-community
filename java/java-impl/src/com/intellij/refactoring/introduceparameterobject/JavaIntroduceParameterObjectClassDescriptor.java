@@ -27,6 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.MoveDestination;
@@ -43,7 +44,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParameterObjectClassDescriptor<PsiMethod, ParameterInfoImpl> {
-  private static final Logger LOG = Logger.getInstance("#" + JavaIntroduceParameterObjectClassDescriptor.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaIntroduceParameterObjectClassDescriptor.class);
   private final Set<PsiTypeParameter> myTypeParameters = new LinkedHashSet<>();
   private final Map<ParameterInfoImpl, ParameterBean> myExistingClassProperties = new HashMap<>();
   private final MoveDestination myMoveDestination;
@@ -59,23 +60,11 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     super(className, calcPackageName(packageName, createInnerClass, method), useExistingClass, createInnerClass,
           newVisibility, generateAccessors, paramsToMerge);
     myMoveDestination = moveDestination;
-    final PsiTypeVisitor<Object> typeParametersVisitor = new PsiTypeVisitor<Object>() {
-      @Override
-      public Object visitClassType(PsiClassType classType) {
-        final PsiClass referent = classType.resolve();
-        if (referent instanceof PsiTypeParameter) {
-          myTypeParameters.add((PsiTypeParameter)referent);
-        }
-        for (PsiType type : classType.getParameters()) {
-          type.accept(this);
-        }
-
-        return super.visitClassType(classType);
-      }
-    };
+    PsiTypesUtil.TypeParameterSearcher searcher = new PsiTypesUtil.TypeParameterSearcher();
     for (ParameterInfoImpl parameterInfo : paramsToMerge) {
-      parameterInfo.getTypeWrapper().getType(method).accept(typeParametersVisitor);
+      parameterInfo.getTypeWrapper().getType(method).accept(searcher);
     }
+    myTypeParameters.addAll(searcher.getTypeParameters());
   }
 
   private static String calcPackageName(String packageName, boolean createInnerClass, PsiMethod method) {

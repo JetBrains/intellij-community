@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.documentation;
 
-import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -84,8 +83,7 @@ public class QuickDocOnMouseOverManager {
     }
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(
-      ApplicationActivationListener.TOPIC,
-      new ApplicationActivationListener.Adapter() {
+      ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
         @Override
         public void applicationActivated(IdeFrame ideFrame) {
           myApplicationActive = true;
@@ -285,7 +283,6 @@ public class QuickDocOnMouseOverManager {
     private final int offset;
     @NotNull private final PsiElement originalElement;
     @NotNull private final ProgressIndicator myProgressIndicator = new ProgressIndicatorBase();
-    private final HintManager myHintManager = HintManager.getInstance();
 
     private MyShowQuickDocRequest(@NotNull DocumentationManager docManager, @NotNull Editor editor, int offset, 
                                   @NotNull PsiElement originalElement) {
@@ -394,7 +391,7 @@ public class QuickDocOnMouseOverManager {
     }
   }
   
-  private class MyCaretListener extends CaretAdapter {
+  private class MyCaretListener implements CaretListener {
     @Override
     public void caretPositionChanged(CaretEvent e) {
       Editor editor = getEditor();
@@ -405,7 +402,7 @@ public class QuickDocOnMouseOverManager {
     }
   }
   
-  private class MyDocumentListener extends DocumentAdapter {
+  private class MyDocumentListener implements DocumentListener {
     @Override
     public void documentChanged(DocumentEvent e) {
       Editor editor = getEditor();

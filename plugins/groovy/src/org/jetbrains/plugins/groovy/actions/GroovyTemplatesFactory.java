@@ -20,6 +20,7 @@ import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
@@ -64,15 +65,17 @@ public class GroovyTemplatesFactory {
       throw new RuntimeException(message, e);
     }
 
-    final PsiFileFactory factory = PsiFileFactory.getInstance(project);
-    PsiFile file = factory.createFileFromText(fileName, GroovyFileType.GROOVY_FILE_TYPE, text);
+    return WriteAction.compute(() -> {
+      final PsiFileFactory factory = PsiFileFactory.getInstance(project);
+      PsiFile file = factory.createFileFromText(fileName, GroovyFileType.GROOVY_FILE_TYPE, text);
 
-    file = (PsiFile)directory.add(file);
+      file = (PsiFile)directory.add(file);
 
-    if (file != null && allowReformatting && template.isReformatCode()) {
-      new ReformatCodeProcessor(project, file, null, false).run();
-    }
+      if (file != null && allowReformatting && template.isReformatCode()) {
+        new ReformatCodeProcessor(project, file, null, false).run();
+      }
 
-    return file;
+      return file;
+    });
   }
 }

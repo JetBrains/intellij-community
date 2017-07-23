@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,16 @@
  */
 package com.intellij.execution.testDiscovery;
 
-import com.intellij.execution.JavaTestConfigurationBase;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.PathKt;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntObjectHashMap;
@@ -34,6 +32,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -42,10 +42,8 @@ import java.util.List;
 /**
  * @author Maxim.Mossienko on 7/9/2015.
  */
-public class TestDiscoveryIndex implements ProjectComponent {
+public class TestDiscoveryIndex implements Disposable {
   static final Logger LOG = Logger.getInstance(TestDiscoveryIndex.class);
-
-  private final Project myProject;
 
   //private volatile TestInfoHolder mySystemHolder;
   private final TestDataController myLocalTestRunDataController;
@@ -55,13 +53,11 @@ public class TestDiscoveryIndex implements ProjectComponent {
     this(project, TestDiscoveryExtension.baseTestDiscoveryPathForProject(project));
   }
 
-  public TestDiscoveryIndex(final Project project, final String basePath) {
-    myProject = project;
-
+  public TestDiscoveryIndex(final Project project, @NotNull Path basePath) {
     myLocalTestRunDataController = new TestDataController(basePath, false);
     myRemoteTestRunDataController = new TestDataController(null, true);
 
-    if (new File(basePath).exists()) {
+    if (Files.exists(basePath)) {
       StartupManager.getInstance(project).registerPostStartupActivity(() -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
         myLocalTestRunDataController.getHolder(); // proactively init with maybe io costly compact
       }));
@@ -87,22 +83,19 @@ public class TestDiscoveryIndex implements ProjectComponent {
   }
 
   public void removeTestTrace(@NotNull String testName) throws IOException {
-    myLocalTestRunDataController.withTestDataHolder(new ThrowableConvertor<TestInfoHolder, Void, IOException>() {
-      @Override
-      public Void convert(TestInfoHolder localHolder) throws IOException {
-        final int testNameId = localHolder.myTestNameEnumerator.tryEnumerate(testName);  // todo remove remote data isn't possible
-        if (testNameId != 0) {
-          localHolder.doUpdateFromDiff(testNameId, null,
-                                  localHolder.myTestNameToUsedClassesAndMethodMap.get(testNameId),
-                                  null);
-        }
-        return null;
+    myLocalTestRunDataController.withTestDataHolder((ThrowableConvertor<TestInfoHolder, Void, IOException>)localHolder -> {
+      final int testNameId = localHolder.myTestNameEnumerator.tryEnumerate(testName);  // todo remove remote data isn't possible
+      if (testNameId != 0) {
+        localHolder.doUpdateFromDiff(testNameId, null,
+                                localHolder.myTestNameToUsedClassesAndMethodMap.get(testNameId),
+                                null);
       }
+      return null;
     });
   }
 
-  public void setRemoteTestRunDataPath(String path) {
-    if(!TestInfoHolder.isValidPath(path)) {
+  public void setRemoteTestRunDataPath(@NotNull Path path) {
+    if (!TestInfoHolder.isValidPath(path)) {
       path = null;
     }
     myRemoteTestRunDataController.init(path);
@@ -204,16 +197,16 @@ public class TestDiscoveryIndex implements ProjectComponent {
 
   static class TestDataController {
     private final Object myLock = new Object();
-    private String myBasePath;
+    private Path myBasePath;
     private final boolean myReadOnly;
     private volatile TestInfoHolder myHolder;
 
-    TestDataController(String basePath, boolean readonly) {
+    TestDataController(Path basePath, boolean readonly) {
       myReadOnly = readonly;
       init(basePath);
     }
 
-    void init(String basePath) {
+    void init(Path basePath) {
       if (myHolder != null) dispose();
 
       synchronized (myLock) {
@@ -227,7 +220,7 @@ public class TestDiscoveryIndex implements ProjectComponent {
       if (holder == null) {
         synchronized (myLock) {
           holder = myHolder;
-          if (holder == null && myBasePath != null) holder = myHolder = new TestInfoHolder(myBasePath, myReadOnly, myLock);
+          if (holder == null && myBasePath != null) myHolder = holder = new TestInfoHolder(myBasePath, myReadOnly, myLock);
         }
       }
       return holder;
@@ -246,8 +239,7 @@ public class TestDiscoveryIndex implements ProjectComponent {
     private void thingsWentWrongLetsReinitialize(@Nullable TestInfoHolder holder, Throwable throwable) throws IOException {
       LOG.error("Unexpected problem", throwable);
       if (holder != null) holder.dispose();
-      final File versionFile = TestInfoHolder.getVersionFile(myBasePath);
-      FileUtil.delete(versionFile);
+      PathKt.delete(TestInfoHolder.getVersionFile(myBasePath));
 
       myHolder = null;
       if (throwable instanceof IOException) throw (IOException) throwable;
@@ -273,27 +265,9 @@ public class TestDiscoveryIndex implements ProjectComponent {
   }
 
   @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
+  public void dispose() {
     myLocalTestRunDataController.dispose();
     myRemoteTestRunDataController.dispose();
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return getClass().getName();
-  }
-
-  @Override
-  public void projectOpened() {
-  }
-
-  @Override
-  public void projectClosed() {
   }
 
   public void updateFromTestTrace(@NotNull File file,
@@ -305,43 +279,40 @@ public class TestDiscoveryIndex implements ProjectComponent {
   }
 
   private void doUpdateFromTestTrace(File file, final String testName, @Nullable final String moduleName) throws IOException {
-    myLocalTestRunDataController.withTestDataHolder(new ThrowableConvertor<TestInfoHolder, Void, IOException>() {
-      @Override
-      public Void convert(TestInfoHolder localHolder) throws IOException {
-        final int testNameId = localHolder.myTestNameEnumerator.enumerate(testName);
-        TIntObjectHashMap<TIntArrayList> classData = loadClassAndMethodsMap(file, localHolder);
-        TIntObjectHashMap<TIntArrayList> previousClassData = localHolder.myTestNameToUsedClassesAndMethodMap.get(testNameId);
-        if (previousClassData == null) {
-          previousClassData = myRemoteTestRunDataController.withTestDataHolder(
-            remoteDataHolder -> {
-              TIntObjectHashMap<TIntArrayList> remoteClassData = remoteDataHolder.myTestNameToUsedClassesAndMethodMap.get(testNameId);
-              if (remoteClassData == null) return null;
-              TIntObjectHashMap<TIntArrayList> result = new TIntObjectHashMap<>(remoteClassData.size());
-              Ref<IOException> exceptionRef = new Ref<>();
-              boolean processingResult = remoteClassData.forEachEntry((remoteClassKey, remoteClassMethodIds) -> {
-                try {
-                  int localClassKey =
-                    localHolder.myClassEnumeratorCache.enumerate(remoteDataHolder.myClassEnumeratorCache.valueOf(remoteClassKey));
-                  TIntArrayList localClassIds = new TIntArrayList(remoteClassMethodIds.size());
-                  for (int methodId : remoteClassMethodIds.toNativeArray()) {
-                    localClassIds
-                      .add(localHolder.myMethodEnumeratorCache.enumerate(remoteDataHolder.myMethodEnumeratorCache.valueOf(methodId)));
-                  }
-                  result.put(localClassKey, localClassIds);
-                  return true;
-                } catch (IOException ex) {
-                  exceptionRef.set(ex);
-                  return false;
+    myLocalTestRunDataController.withTestDataHolder((ThrowableConvertor<TestInfoHolder, Void, IOException>)localHolder -> {
+      final int testNameId = localHolder.myTestNameEnumerator.enumerate(testName);
+      TIntObjectHashMap<TIntArrayList> classData = loadClassAndMethodsMap(file, localHolder);
+      TIntObjectHashMap<TIntArrayList> previousClassData = localHolder.myTestNameToUsedClassesAndMethodMap.get(testNameId);
+      if (previousClassData == null) {
+        previousClassData = myRemoteTestRunDataController.withTestDataHolder(
+          remoteDataHolder -> {
+            TIntObjectHashMap<TIntArrayList> remoteClassData = remoteDataHolder.myTestNameToUsedClassesAndMethodMap.get(testNameId);
+            if (remoteClassData == null) return null;
+            TIntObjectHashMap<TIntArrayList> result = new TIntObjectHashMap<>(remoteClassData.size());
+            Ref<IOException> exceptionRef = new Ref<>();
+            boolean processingResult = remoteClassData.forEachEntry((remoteClassKey, remoteClassMethodIds) -> {
+              try {
+                int localClassKey =
+                  localHolder.myClassEnumeratorCache.enumerate(remoteDataHolder.myClassEnumeratorCache.valueOf(remoteClassKey));
+                TIntArrayList localClassIds = new TIntArrayList(remoteClassMethodIds.size());
+                for (int methodId : remoteClassMethodIds.toNativeArray()) {
+                  localClassIds
+                    .add(localHolder.myMethodEnumeratorCache.enumerate(remoteDataHolder.myMethodEnumeratorCache.valueOf(methodId)));
                 }
-              });
-              if (!processingResult) throw exceptionRef.get();
-              return result;
+                result.put(localClassKey, localClassIds);
+                return true;
+              } catch (IOException ex) {
+                exceptionRef.set(ex);
+                return false;
+              }
             });
-        }
-
-        localHolder.doUpdateFromDiff(testNameId, classData, previousClassData, moduleName != null ? localHolder.myModuleNameEnumerator.enumerate(moduleName) : null);
-        return null;
+            if (!processingResult) throw exceptionRef.get();
+            return result;
+          });
       }
+
+      localHolder.doUpdateFromDiff(testNameId, classData, previousClassData, moduleName != null ? localHolder.myModuleNameEnumerator.enumerate(moduleName) : null);
+      return null;
     });
   }
 

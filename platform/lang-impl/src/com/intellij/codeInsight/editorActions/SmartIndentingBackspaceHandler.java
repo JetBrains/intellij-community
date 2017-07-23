@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,16 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeStyle.CodeStyleFacade;
-import com.intellij.formatting.FormatterEx;
-import com.intellij.formatting.FormattingModel;
-import com.intellij.formatting.FormattingModelBuilder;
-import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,7 +59,7 @@ public class SmartIndentingBackspaceHandler extends AbstractIndentingBackspaceHa
     if (myReplacement == null) {
       return;
     }
-    int tabSize = getTabSize(codeStyleFacade, document);
+    int tabSize = codeStyleFacade.getTabSize(file.getFileType());
     int targetColumn = getWidth(myReplacement, tabSize);
     int endOffset = CharArrayUtil.shiftForward(charSequence, caretOffset, " \t");
     LogicalPosition logicalPosition = caretOffset < endOffset ? editor.offsetToLogicalPosition(endOffset) : pos;
@@ -80,7 +75,8 @@ public class SmartIndentingBackspaceHandler extends AbstractIndentingBackspaceHa
       int prevLineEndOffset = document.getLineEndOffset(logicalPosition.line - 1);
       myStartOffset = CharArrayUtil.shiftBackward(charSequence, prevLineEndOffset - 1, " \t") + 1;
       if (myStartOffset != document.getLineStartOffset(logicalPosition.line - 1)) {
-        myReplacement = getSpacing(file, endOffset);
+        int spacing = CodeStyleManager.getInstance(project).getSpacing(file, endOffset);
+        myReplacement = StringUtil.repeatSymbol(' ', Math.max(0, spacing));
       }
     }
   }
@@ -99,23 +95,6 @@ public class SmartIndentingBackspaceHandler extends AbstractIndentingBackspaceHa
     caretModel.moveToOffset(myStartOffset + myReplacement.length());
 
     return true;
-  }
-
-  private static String getSpacing(PsiFile file, int offset) {
-    FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
-    if (builder == null) {
-      return "";
-    }
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(file.getProject());
-    FormattingModel model = builder.createModel(file, settings);
-    int spacing = FormatterEx.getInstance().getSpacingForBlockAtOffset(model, offset);
-    return StringUtil.repeatSymbol(' ', spacing);
-  }
-
-  private static int getTabSize(@NotNull CodeStyleFacade codeStyleFacade, @NotNull Document document) {
-    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    FileType fileType = file == null ? null : file.getFileType();
-    return codeStyleFacade.getTabSize(fileType);
   }
 
   private static int getWidth(@NotNull String indent, int tabSize) {

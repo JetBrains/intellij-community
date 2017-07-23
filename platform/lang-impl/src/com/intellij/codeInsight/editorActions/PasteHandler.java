@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.ide.PasteProvider;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -70,7 +69,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
   }
 
   @Override
-  public void doExecute(final Editor editor, Caret caret, final DataContext dataContext) {
+  public void doExecute(@NotNull final Editor editor, Caret caret, final DataContext dataContext) {
     assert caret == null : "Invocation of 'paste' operation for specific caret is not supported";
     execute(editor, dataContext, null);
   }
@@ -79,8 +78,8 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
   public void execute(final Editor editor, final DataContext dataContext, @Nullable final Producer<Transferable> producer) {
     final Transferable transferable = EditorModificationUtil.getContentsToPasteToEditor(producer);
     if (transferable == null) return;
-    
-    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
+
+    if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
 
     final Document document = editor.getDocument();
     if (!EditorModificationUtil.requestWriting(editor)) {

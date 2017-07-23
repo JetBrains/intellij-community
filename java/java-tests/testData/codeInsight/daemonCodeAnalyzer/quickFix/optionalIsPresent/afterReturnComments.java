@@ -11,10 +11,10 @@ public class Main {
   }
 
   public Number testOptionalComments(Optional<MyList> strList) {
-    /* optional is present */
-    /*return something */
-    /* optional is absent */
-    /* return null*/
+      /* optional is present */
+      /*return something */
+      /* optional is absent */
+      /* return null*/
       return strList.map(myList -> myList.size() > /*too big*/ 1 ? myList.get(1) : 1.0).orElse(null);
   }
 }

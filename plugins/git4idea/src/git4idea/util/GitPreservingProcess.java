@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -74,8 +75,8 @@ public class GitPreservingProcess {
     myDestinationName = destinationName;
     myProgressIndicator = indicator;
     myOperation = operation;
-    myStashMessage = String.format("Uncommitted changes before %s at %s", StringUtil.capitalize(myOperationTitle),
-                                   DateFormatUtil.formatDateTime(Clock.getTime()));
+    myStashMessage = VcsBundle.message("stash.changes.message", StringUtil.capitalize(myOperationTitle)) +
+                                       " at " +DateFormatUtil.formatDateTime(Clock.getTime());
     mySaver = configureSaver(saveMethod);
   }
 
@@ -84,30 +85,27 @@ public class GitPreservingProcess {
   }
 
   public void execute(@Nullable final Computable<Boolean> autoLoadDecision) {
-    Runnable operation = new Runnable() {
-      @Override
-      public void run() {
-        LOG.debug("starting");
-        boolean savedSuccessfully = save();
-        LOG.debug("save result: " + savedSuccessfully);
-        if (savedSuccessfully) {
-          try {
-            LOG.debug("running operation");
-            myOperation.run();
-            LOG.debug("operation completed.");
+    Runnable operation = () -> {
+      LOG.debug("starting");
+      boolean savedSuccessfully = save();
+      LOG.debug("save result: " + savedSuccessfully);
+      if (savedSuccessfully) {
+        try {
+          LOG.debug("running operation");
+          myOperation.run();
+          LOG.debug("operation completed.");
+        }
+        finally {
+          if (autoLoadDecision == null || autoLoadDecision.compute()) {
+            LOG.debug("loading");
+            load();
           }
-          finally {
-            if (autoLoadDecision == null || autoLoadDecision.compute()) {
-              LOG.debug("loading");
-              load();
-            }
-            else {
-              mySaver.notifyLocalChangesAreNotRestored();
-            }
+          else {
+            mySaver.notifyLocalChangesAreNotRestored();
           }
         }
-        LOG.debug("finished.");
       }
+      LOG.debug("finished.");
     };
 
     new GitFreezingProcess(myProject, myOperationTitle, operation).execute();

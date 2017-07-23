@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,18 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
+import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,20 +35,21 @@ import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
- * Type of a particular function that is represented as a {@link com.jetbrains.python.psi.PyCallable} in the PSI tree.
+ * Type of a particular function that is represented as a {@link PyCallable} in the PSI tree.
  *
  * @author vlan
  */
 public class PyFunctionTypeImpl implements PyFunctionType {
   @NotNull private final PyCallable myCallable;
+  @NotNull private final List<PyCallableParameter> myParameters;
 
   public PyFunctionTypeImpl(@NotNull PyCallable callable) {
-    myCallable = callable;
+    this(callable, ContainerUtil.map(callable.getParameterList().getParameters(), PyCallableParameterImpl::psi));
   }
 
-  @Override
-  public boolean isCallable() {
-    return true;
+  public PyFunctionTypeImpl(@NotNull PyCallable callable, @NotNull List<PyCallableParameter> parameters) {
+    myCallable = callable;
+    myParameters = parameters;
   }
 
   @Nullable
@@ -67,11 +67,7 @@ public class PyFunctionTypeImpl implements PyFunctionType {
   @Nullable
   @Override
   public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
-    final List<PyCallableParameter> result = new ArrayList<>();
-    for (PyParameter parameter : myCallable.getParameterList().getParameters()) {
-      result.add(new PyCallableParameterImpl(parameter));
-    }
-    return result;
+    return myParameters;
   }
 
   @Override
@@ -79,7 +75,7 @@ public class PyFunctionTypeImpl implements PyFunctionType {
                                                           @Nullable PyExpression location,
                                                           @NotNull AccessDirection direction,
                                                           @NotNull PyResolveContext resolveContext) {
-    final PyClassType delegate = selectFakeType(location, resolveContext.getTypeEvalContext());
+    final PyClassType delegate = selectCallableType(location, resolveContext.getTypeEvalContext());
     if (delegate == null) {
       return Collections.emptyList();
     }
@@ -91,10 +87,12 @@ public class PyFunctionTypeImpl implements PyFunctionType {
     final TypeEvalContext typeEvalContext = TypeEvalContext.codeCompletion(location.getProject(), location.getContainingFile());
     final PyClassType delegate;
     if (location instanceof PyReferenceExpression) {
-      delegate = selectFakeType(((PyReferenceExpression)location).getQualifier(), typeEvalContext);
+      delegate = selectCallableType(((PyReferenceExpression)location).getQualifier(), typeEvalContext);
     }
     else {
-      delegate = PyBuiltinCache.getInstance(getCallable()).getObjectType(PyNames.FAKE_FUNCTION);
+      final PyClass cls = as(PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString(PyNames.TYPES_FUNCTION_TYPE),
+                                                                       PyResolveImportUtil.fromFoothold(myCallable)), PyClass.class);
+      delegate = cls != null ? new PyClassTypeImpl(cls, false) : null;
     }
     if (delegate == null) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -102,20 +100,18 @@ public class PyFunctionTypeImpl implements PyFunctionType {
     return delegate.getCompletionVariants(completionPrefix, location, context);
   }
 
-  /**
-   * Select either {@link PyNames#FAKE_FUNCTION} or {@link PyNames#FAKE_METHOD} fake class depending on concrete reference used and
-   * language level. Will fallback to fake function type.
-   */
   @Nullable
-  private PyClassTypeImpl selectFakeType(@Nullable PyExpression location, @NotNull TypeEvalContext context) {
-    final String fakeClassName;
+  private PyClassType selectCallableType(@Nullable PyExpression location, @NotNull TypeEvalContext context) {
+    final String className;
     if (location instanceof PyReferenceExpression && isBoundMethodReference((PyReferenceExpression)location, context)) {
-      fakeClassName = PyNames.FAKE_METHOD;
+      className = PyNames.TYPES_METHOD_TYPE;
     }
     else {
-      fakeClassName = PyNames.FAKE_FUNCTION;
+      className = PyNames.TYPES_FUNCTION_TYPE;
     }
-    return PyBuiltinCache.getInstance(getCallable()).getObjectType(fakeClassName);
+    final PyClass cls = as(PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString(className),
+                                                                     PyResolveImportUtil.fromFoothold(myCallable)), PyClass.class);
+    return cls != null ? new PyClassTypeImpl(cls, false) : null;
   }
 
   private boolean isBoundMethodReference(@NotNull PyReferenceExpression location, @NotNull TypeEvalContext context) {
@@ -132,9 +128,7 @@ public class PyFunctionTypeImpl implements PyFunctionType {
       }
       else {
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-        final QualifiedResolveResult resolveResult = location.followAssignmentsChain(resolveContext);
-        final List<PyExpression> qualifiers = resolveResult.getQualifiers();
-        qualifier = ContainerUtil.isEmpty(qualifiers) ? null : qualifiers.get(qualifiers.size() - 1);
+        qualifier = ContainerUtil.getLastItem(location.followAssignmentsChain(resolveContext).getQualifiers());
       }
       if (qualifier != null) {
         //noinspection ConstantConditions
@@ -176,17 +170,5 @@ public class PyFunctionTypeImpl implements PyFunctionType {
   @NotNull
   public PyCallable getCallable() {
     return myCallable;
-  }
-
-  @Nullable
-  public static String getParameterName(@NotNull PyNamedParameter namedParameter) {
-    String name = namedParameter.getName();
-    if (namedParameter.isPositionalContainer()) {
-      name = "*" + name;
-    }
-    else if (namedParameter.isKeywordContainer()) {
-      name = "**" + name;
-    }
-    return name;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,11 @@ import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
-import org.jetbrains.java.decompiler.struct.StructField;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
@@ -35,6 +35,7 @@ import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class ClassWrapper {
@@ -53,12 +54,6 @@ public class ClassWrapper {
     DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS, classStruct);
     DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_WRAPPER, this);
     DecompilerContext.getLogger().startClass(classStruct.qualifiedName);
-
-    // collect field names
-    Set<String> setFieldNames = new HashSet<>();
-    for (StructField fd : classStruct.getFields()) {
-      setFieldNames.add(fd.getName());
-    }
 
     int maxSec = Integer.parseInt(DecompilerContext.getProperty(IFernflowerPreferences.MAX_PROCESSING_METHOD).toString());
     boolean testMode = DecompilerContext.getOption(IFernflowerPreferences.UNIT_TEST_MODE);
@@ -147,7 +142,9 @@ public class ClassWrapper {
         }
       }
       catch (Throwable ex) {
-        DecompilerContext.getLogger().writeMessage("Method " + mt.getName() + " " + mt.getDescriptor() + " couldn't be decompiled.", ex);
+        DecompilerContext.getLogger().writeMessage("Method " + mt.getName() + " " + mt.getDescriptor() + " couldn't be decompiled.",
+                                                   IFernflowerLogger.Severity.WARN,
+                                                   ex);
         isError = true;
       }
 
@@ -156,14 +153,35 @@ public class ClassWrapper {
 
       methods.addWithKey(methodWrapper, InterpreterUtil.makeUniqueKey(mt.getName(), mt.getDescriptor()));
 
-      // rename vars so that no one has the same name as a field
-      varProc.refreshVarNames(new VarNamesCollector(setFieldNames));
+      if (!isError) {
+        // rename vars so that no one has the same name as a field
+        VarNamesCollector namesCollector = new VarNamesCollector();
+        classStruct.getFields().forEach(f -> namesCollector.addName(f.getName()));
+        varProc.refreshVarNames(namesCollector);
 
-      // if debug information present and should be used
-      if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
-        StructLocalVariableTableAttribute attr = mt.getLocalVariableAttr();
-        if (attr != null) {
-          varProc.setDebugVarNames(attr.getMapVarNames());
+        // if debug information present and should be used
+        if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
+          StructLocalVariableTableAttribute attr = mt.getLocalVariableAttr();
+          if (attr != null) {
+            // only param names here
+            varProc.setDebugVarNames(attr.getMapParamNames());
+
+            // the rest is here
+            methodWrapper.getOrBuildGraph().iterateExprents(exprent -> {
+              List<Exprent> lst = exprent.getAllExprents(true);
+              lst.add(exprent);
+              lst.stream()
+                .filter(e -> e.type == Exprent.EXPRENT_VAR)
+                .forEach(e -> {
+                  VarExprent varExprent = (VarExprent)e;
+                  String name = varExprent.getDebugName(mt);
+                  if (name != null) {
+                    varProc.setVarName(varExprent.getVarVersionPair(), name);
+                  }
+                });
+              return 0;
+            });
+          }
         }
       }
 
@@ -200,5 +218,10 @@ public class ClassWrapper {
 
   public VBStyleCollection<Exprent, String> getDynamicFieldInitializers() {
     return dynamicFieldInitializers;
+  }
+
+  @Override
+  public String toString() {
+    return classStruct.qualifiedName;
   }
 }

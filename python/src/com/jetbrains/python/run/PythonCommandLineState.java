@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.run;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -73,6 +74,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author traff, Leonid Shalupov
@@ -91,6 +93,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   private Boolean myMultiprocessDebug = null;
   private boolean myRunWithPty = PtyCommandLine.isEnabled();
+
+  public boolean isRunWithPty() {
+    return myRunWithPty;
+  }
 
   public boolean isDebug() {
     return PyDebugRunner.PY_DEBUG_RUNNER.equals(getEnvironment().getRunner().getRunnerId());
@@ -118,6 +124,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return PythonSdkFlavor.getFlavor(myConfig.getInterpreterPath());
   }
 
+  @Nullable
   public Sdk getSdk() {
     return myConfig.getSdk();
   }
@@ -129,7 +136,13 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   public ExecutionResult execute(Executor executor, CommandLinePatcher... patchers) throws ExecutionException {
-    final ProcessHandler processHandler = startProcess(patchers);
+    return execute(executor, getDefaultPythonProcessStarter(), patchers);
+  }
+
+  public ExecutionResult execute(Executor executor,
+                                 PythonProcessStarter processStarter,
+                                 CommandLinePatcher... patchers) throws ExecutionException {
+    final ProcessHandler processHandler = startProcess(processStarter, patchers);
     final ConsoleView console = createAndAttachConsole(myConfig.getProject(), processHandler, executor);
     return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler));
   }
@@ -170,7 +183,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   @Override
   @NotNull
   protected ProcessHandler startProcess() throws ExecutionException {
-    return startProcess(new CommandLinePatcher[]{});
+    return startProcess(getDefaultPythonProcessStarter());
   }
 
   /**
@@ -179,29 +192,54 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * @param patchers any number of patchers; any patcher may be null, and the whole argument may be null.
    * @return handler of the started process
    * @throws ExecutionException
+   * @deprecated use {@link #startProcess(PythonProcessStarter, CommandLinePatcher...)} instead
    */
+  @Deprecated
+  @NotNull
   protected ProcessHandler startProcess(CommandLinePatcher... patchers) throws ExecutionException {
+    return startProcess(getDefaultPythonProcessStarter(), patchers);
+  }
+
+  /**
+   * Patches the command line parameters applying patchers from first to last, and then runs it.
+   *
+   * @param processStarter
+   * @param patchers any number of patchers; any patcher may be null, and the whole argument may be null.
+   * @return handler of the started process
+   * @throws ExecutionException
+   */
+  @NotNull
+  protected ProcessHandler startProcess(PythonProcessStarter processStarter, CommandLinePatcher... patchers) throws ExecutionException {
     GeneralCommandLine commandLine = generateCommandLine(patchers);
 
     // Extend command line
     PythonRunConfigurationExtensionsManager.getInstance()
       .patchCommandLine(myConfig, getRunnerSettings(), commandLine, getEnvironment().getRunner().getRunnerId());
-    Sdk sdk = PythonSdkType.findSdkByPath(myConfig.getInterpreterPath());
-    final ProcessHandler processHandler;
-    if (PySdkUtil.isRemote(sdk)) {
-      PyRemotePathMapper pathMapper = createRemotePathMapper();
-      processHandler = createRemoteProcessStarter().startRemoteProcess(sdk, commandLine, myConfig.getProject(), pathMapper);
-    }
-    else {
-      EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(commandLine);
-      processHandler = doCreateProcess(commandLine);
-      ProcessTerminatedListener.attach(processHandler);
-    }
+
+    ProcessHandler processHandler = processStarter.start(myConfig, commandLine);
 
     // attach extensions
     PythonRunConfigurationExtensionsManager.getInstance().attachExtensionsToProcess(myConfig, processHandler, getRunnerSettings());
 
     return processHandler;
+  }
+
+  @NotNull
+  protected final PythonProcessStarter getDefaultPythonProcessStarter() {
+    return (config, commandLine) -> {
+      Sdk sdk = PythonSdkType.findSdkByPath(myConfig.getInterpreterPath());
+      final ProcessHandler processHandler;
+      if (PySdkUtil.isRemote(sdk)) {
+        PyRemotePathMapper pathMapper = createRemotePathMapper();
+        processHandler = createRemoteProcessStarter().startRemoteProcess(sdk, commandLine, myConfig.getProject(), pathMapper);
+      }
+      else {
+        EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(commandLine);
+        processHandler = doCreateProcess(commandLine);
+        ProcessTerminatedListener.attach(processHandler);
+      }
+      return processHandler;
+    };
   }
 
   @Nullable
@@ -300,20 +338,22 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   private static void setupVirtualEnvVariables(PythonRunParams myConfig, Map<String, String> env, String sdkHome) {
-    if (PythonSdkType.isVirtualEnv(sdkHome)) {
+    Sdk sdk = PythonSdkType.findSdkByPath(sdkHome);
+    if (PythonSdkType.isVirtualEnv(sdkHome) || (sdk != null && PythonSdkType.isCondaVirtualEnv(sdk))) {
       PyVirtualEnvReader reader = new PyVirtualEnvReader(sdkHome);
       if (reader.getActivate() != null) {
         try {
-          env.putAll(reader.readShellEnv());
+          env.putAll(reader.readShellEnv().entrySet().stream().filter((entry) -> PyVirtualEnvReader.Companion.getVirtualEnvVars().contains(entry.getKey())
+          ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
 
           for (Map.Entry<String, String> e : myConfig.getEnvs().entrySet()) {
             if ("PATH".equals(e.getKey())) {
               env.put(e.getKey(), PythonEnvUtil.appendToPathEnvVar(env.get("PATH"), e.getValue()));
-            } else {
+            }
+            else {
               env.put(e.getKey(), e.getValue());
             }
           }
-
         }
         catch (Exception e) {
           LOG.error("Couldn't read virtualenv variables", e);
@@ -395,10 +435,11 @@ public abstract class PythonCommandLineState extends CommandLineState {
     }
   }
 
-  protected static Collection<String> collectPythonPath(Project project, PythonRunParams config, boolean isDebug) {
+  @VisibleForTesting
+  public static Collection<String> collectPythonPath(Project project, PythonRunParams config, boolean isDebug) {
     final Module module = getModule(project, config);
     final HashSet<String> pythonPath =
-      Sets.newHashSet(collectPythonPath(module, config.shouldAddContentRoots(), config.shouldAddSourceRoots()));
+      Sets.newLinkedHashSet(collectPythonPath(module, config.shouldAddContentRoots(), config.shouldAddSourceRoots()));
 
     if (isDebug && PythonSdkFlavor.getFlavor(config.getSdkHome()) instanceof JythonSdkFlavor) {
       //that fixes Jython problem changing sys.argv on execfile, see PY-8164
@@ -561,5 +602,11 @@ public abstract class PythonCommandLineState extends CommandLineState {
   @NotNull
   protected UrlFilter createUrlFilter(ProcessHandler handler) {
     return new UrlFilter();
+  }
+
+  public interface PythonProcessStarter {
+    @NotNull
+    ProcessHandler start(@NotNull AbstractPythonRunConfiguration config,
+                         @NotNull GeneralCommandLine commandLine) throws ExecutionException;
   }
 }

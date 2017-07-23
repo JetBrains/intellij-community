@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-public abstract class IndexedFilesListener extends VirtualFileAdapter implements BulkFileListener {
+public abstract class IndexedFilesListener implements BulkFileListener, VirtualFileListener {
   private final ManagingFS myManagingFS = ManagingFS.getInstance();
   @Nullable private final String myConfigPath;
   @Nullable private final String myLogPath;
@@ -110,7 +110,7 @@ public abstract class IndexedFilesListener extends VirtualFileAdapter implements
     }
   }
 
-  protected boolean invalidateIndicesForFile(VirtualFile file, boolean contentChange) {
+  protected boolean invalidateIndicesForFile(@NotNull VirtualFile file, boolean contentChange) {
     if (isUnderConfigOrSystem(file)) {
       return false;
     }
@@ -126,9 +126,9 @@ public abstract class IndexedFilesListener extends VirtualFileAdapter implements
     return true;
   }
 
-  protected abstract void iterateIndexableFiles(VirtualFile file, ContentIterator iterator);
-  protected abstract void buildIndicesForFile(VirtualFile file, boolean contentChange);
-  protected abstract void doInvalidateIndicesForFile(VirtualFile file, boolean contentChange);
+  protected abstract void iterateIndexableFiles(@NotNull VirtualFile file, @NotNull ContentIterator iterator);
+  protected abstract void buildIndicesForFile(@NotNull VirtualFile file, boolean contentChange);
+  protected abstract void doInvalidateIndicesForFile(@NotNull VirtualFile file, boolean contentChange);
 
   protected void invalidateIndicesRecursively(@NotNull final VirtualFile file, final boolean contentChange) {
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {

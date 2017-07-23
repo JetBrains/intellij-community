@@ -25,7 +25,6 @@ import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 public class LanguageLevelUsagesCollector extends AbstractApplicationUsagesCollector {
-  public static final String GROUP_ID = "language-level";
+  public static final String GROUP_ID = "module-language-level";
 
   @NotNull
   @Override
@@ -41,10 +40,8 @@ public class LanguageLevelUsagesCollector extends AbstractApplicationUsagesColle
     return GroupDescriptor.create(GROUP_ID, GroupDescriptor.HIGHER_PRIORITY);
   }
 
-
   @NotNull
   public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) {
-
     final Set<String> languageLevels = new HashSet<>();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       final LanguageLevelModuleExtension instance = LanguageLevelModuleExtensionImpl.getInstance(module);
@@ -52,8 +49,10 @@ public class LanguageLevelUsagesCollector extends AbstractApplicationUsagesColle
       if (languageLevel != null) {
         languageLevels.add(languageLevel.toString());
       }
+      else {
+        languageLevels.add(LanguageLevelProjectExtension.getInstance(project).getLanguageLevel().toString());
+      }
     }
-    languageLevels.add(LanguageLevelProjectExtension.getInstance(project).getLanguageLevel().toString());
 
     return ContainerUtil.map2Set(languageLevels, languageLevel -> new UsageDescriptor(languageLevel, 1));
   }

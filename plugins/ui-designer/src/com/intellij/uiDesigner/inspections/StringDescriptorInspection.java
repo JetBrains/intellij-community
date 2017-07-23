@@ -38,7 +38,8 @@ public abstract class StringDescriptorInspection extends BaseFormInspection {
     super(inspectionKey);
   }
 
-  protected void checkComponentProperties(Module module, IComponent component, FormErrorCollector collector) {
+  @Override
+  protected void checkComponentProperties(Module module, @NotNull IComponent component, FormErrorCollector collector) {
     for(IProperty prop: component.getModifiedProperties()) {
       Object propValue = prop.getPropertyValue(component);
       if (propValue instanceof StringDescriptor) {
@@ -77,10 +78,12 @@ public abstract class StringDescriptorInspection extends BaseFormInspection {
   private static class MockTabTitleProperty implements IProperty {
     public static MockTabTitleProperty INSTANCE = new MockTabTitleProperty();
 
+    @Override
     public String getName() {
       return ITabbedPane.TAB_TITLE_PROPERTY;
     }
 
+    @Override
     public Object getPropertyValue(final IComponent component) {
       return null;
     }
@@ -89,10 +92,12 @@ public abstract class StringDescriptorInspection extends BaseFormInspection {
   private static class MockTabToolTipProperty implements IProperty {
     public static MockTabToolTipProperty INSTANCE = new MockTabToolTipProperty();
 
+    @Override
     public String getName() {
       return ITabbedPane.TAB_TOOLTIP_PROPERTY;
     }
 
+    @Override
     public Object getPropertyValue(final IComponent component) {
       return null;
     }

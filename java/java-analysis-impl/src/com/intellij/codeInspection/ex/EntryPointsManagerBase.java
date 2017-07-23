@@ -645,12 +645,6 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     }
   }
 
-  public static class AnnotationPattern {
-    public boolean readWriteAccess = true;
-    public String pattern = "";
-
-  }
-
   public class AddImplicitlyWriteAnnotation implements IntentionAction {
     private final String myQualifiedName;
 

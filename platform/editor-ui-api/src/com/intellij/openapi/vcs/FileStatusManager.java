@@ -26,7 +26,7 @@ import java.awt.*;
  * @author mike
  */
 public abstract class FileStatusManager {
-  public static FileStatusManager getInstance(Project project) {
+  public static FileStatusManager getInstance(@NotNull Project project) {
     return project.getComponent(FileStatusManager.class);
   }
 

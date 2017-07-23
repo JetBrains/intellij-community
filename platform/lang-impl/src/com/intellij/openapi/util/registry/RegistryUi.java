@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.PlatformIcons;
@@ -135,7 +136,7 @@ public class RegistryUi implements Disposable {
     tbGroup.add(new EditAction());
     tbGroup.add(new RevertAction());
 
-    final ActionToolbar tb = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, tbGroup, true);
+    final ActionToolbar tb = ActionManager.getInstance().createActionToolbar("Registry", tbGroup, true);
     tb.setTargetComponent(myTable);
 
     myContent.add(tb.getComponent(), BorderLayout.NORTH);
@@ -210,11 +211,11 @@ public class RegistryUi implements Disposable {
 
   private void startEditingAtSelection() {
     myTable.editCellAt(myTable.getSelectedRow(), 2);
-    SwingUtilities.invokeLater(() -> {
-      if (myTable.isEditing()) {
-        myTable.getEditorComponent().requestFocus();
-      }
-    });
+    if (myTable.isEditing()) {
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(myTable.getEditorComponent(), true);
+      });
+    }
   }
 
   private static class MyTableModel extends AbstractTableModel {

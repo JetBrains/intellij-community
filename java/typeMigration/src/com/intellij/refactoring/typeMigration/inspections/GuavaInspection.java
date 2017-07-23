@@ -18,7 +18,6 @@ package com.intellij.refactoring.typeMigration.inspections;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -34,7 +33,6 @@ import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
 import com.intellij.refactoring.typeMigration.rules.guava.*;
 import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.Nls;
@@ -270,6 +268,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
   }
 
   public class MigrateGuavaTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement implements BatchQuickFix<CommonProblemDescriptor> {
+    public static final String FAMILY_NAME = "Migrate Guava's type to Java";
     private final PsiType myTargetType;
 
     private MigrateGuavaTypeFix(@NotNull PsiElement element, PsiType targetType) {
@@ -312,7 +311,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Migrate Guava's type to Java";
+      return FAMILY_NAME;
     }
 
     @Override
@@ -349,34 +348,19 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
     }
 
     private void performTypeMigration(List<PsiElement> elements, List<PsiType> types) {
-      PsiFile containingFile = null;
-      for (PsiElement element : elements) {
-        final PsiFile currentContainingFile = element.getContainingFile();
-        if (containingFile == null) {
-          containingFile = currentContainingFile;
-        }
-        else {
-          LOG.assertTrue(containingFile.isEquivalentTo(currentContainingFile));
-        }
-      }
-      LOG.assertTrue(containingFile != null);
-      if (!FileModificationService.getInstance().prepareFileForWrite(containingFile)) return;
-      try {
-        final TypeMigrationRules rules = new TypeMigrationRules();
-        rules.setBoundScope(GlobalSearchScopesCore.projectProductionScope(containingFile.getProject())
-                              .union(GlobalSearchScopesCore.projectTestScope(containingFile.getProject())));
-        rules.addConversionRuleSettings(new GuavaConversionSettings(ignoreJavaxNullable));
-        TypeMigrationProcessor.runHighlightingTypeMigration(containingFile.getProject(),
-                                                            null,
-                                                            rules,
-                                                            elements.toArray(new PsiElement[elements.size()]),
-                                                            createMigrationTypeFunction(elements, types),
-                                                            true);
-        UndoUtil.markPsiFileForUndo(containingFile);
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
+      if (!FileModificationService.getInstance().preparePsiElementsForWrite(elements)) return;
+      final Project project = elements.get(0).getProject();
+      final TypeMigrationRules rules = new TypeMigrationRules();
+      rules.setBoundScope(GlobalSearchScopesCore.projectProductionScope(project)
+                            .union(GlobalSearchScopesCore.projectTestScope(project)));
+      rules.addConversionRuleSettings(new GuavaConversionSettings(ignoreJavaxNullable));
+      TypeMigrationProcessor.runHighlightingTypeMigration(project,
+                                                          null,
+                                                          rules,
+                                                          elements.toArray(new PsiElement[elements.size()]),
+                                                          createMigrationTypeFunction(elements, types),
+                                                          true,
+                                                          true);
     }
 
     private Function<PsiElement, PsiType> createMigrationTypeFunction(@NotNull final List<PsiElement> elements,

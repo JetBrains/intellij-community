@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: May 13, 2002
- * Time: 8:20:36 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -33,7 +25,7 @@ import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.DocumentUtil;
 
 public class DeleteAction extends EditorAction {
   public DeleteAction() {
@@ -46,21 +38,15 @@ public class DeleteAction extends EditorAction {
     }
 
     @Override
-    public void executeWriteAction(Editor editor, DataContext dataContext) {
+    public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
       EditorUIUtil.hideCursorInEditor(editor);
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
       CopyPasteManager.getInstance().stopKillRings();
-      SelectionModel selectionModel = editor.getSelectionModel();
-      if (!selectionModel.hasSelection()) {
-        if (editor.getInlayModel().hasInlineElementAt(editor.getCaretModel().getVisualPosition())) {
-          editor.getCaretModel().moveCaretRelatively(1, 0, false, false, EditorUtil.isCurrentCaretPrimary(editor));
-        }
-        else {
-          deleteCharAtCaret(editor);
-        }
+      if (editor.getInlayModel().hasInlineElementAt(editor.getCaretModel().getVisualPosition())) {
+        editor.getCaretModel().moveCaretRelatively(1, 0, false, false, EditorUtil.isCurrentCaretPrimary(editor));
       }
       else {
-        EditorModificationUtil.deleteSelectedText(editor);
+        deleteCharAtCaret(editor);
       }
     }
   }
@@ -104,7 +90,7 @@ public class DeleteAction extends EditorAction {
         editor.getCaretModel().moveToOffset(region.getStartOffset());
       }
       else {
-        document.deleteString(offset, offset + 1);
+        document.deleteString(offset, DocumentUtil.getNextCodePointOffset(document, offset));
       }
       return;
     }

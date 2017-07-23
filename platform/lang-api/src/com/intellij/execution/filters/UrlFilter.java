@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.filters;
 
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.io.URLUtil;
@@ -28,7 +29,7 @@ import java.util.regex.Matcher;
 /**
  * @author yole
  */
-public class UrlFilter implements Filter {
+public class UrlFilter implements Filter, DumbAware {
   @Nullable
   @Override
   public Result applyFilter(String line, int entireLength) {

@@ -33,61 +33,71 @@ public class Modifier implements ChangeListsWriteOperations {
   private final List<ChangeListCommand> myCommandQueue;
   private final DelayedNotificator myNotificator;
 
-  public Modifier(final ChangeListWorker worker, final DelayedNotificator notificator) {
+  public Modifier(ChangeListWorker worker, DelayedNotificator notificator) {
     myWorker = worker;
     myNotificator = notificator;
     myCommandQueue = new LinkedList<>();
   }
 
-  public LocalChangeList addChangeList(@NotNull final String name, @Nullable final String comment, @Nullable Object data) {
-    final AddList command = new AddList(name, comment, data);
+  @Override
+  public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable Object data) {
+    AddList command = new AddList(name, comment, data);
     impl(command);
     return command.getNewListCopy();
   }
 
-  public String setDefault(final String name) {
-    final SetDefault command = new SetDefault(name);
+  @Override
+  public String setDefault(String name) {
+    SetDefault command = new SetDefault(name);
     impl(command);
     return command.getPrevious();
   }
 
-  public boolean removeChangeList(@NotNull final String name) {
-    final RemoveList command = new RemoveList(name);
+  @Override
+  public boolean removeChangeList(@NotNull String name) {
+    RemoveList command = new RemoveList(name);
     impl(command);
     return command.isRemoved();
   }
 
-  public MultiMap<LocalChangeList, Change> moveChangesTo(final String name, final Change[] changes) {
-    final MoveChanges command = new MoveChanges(name, changes);
+  @Override
+  public MultiMap<LocalChangeList, Change> moveChangesTo(String name, @NotNull Change[] changes) {
+    MoveChanges command = new MoveChanges(name, changes);
     impl(command);
     return command.getMovedFrom();
   }
 
-  private void impl(final ChangeListCommand command) {
-    command.apply(myWorker);
+  private void impl(ChangeListCommand command) {
     if (myInsideUpdate) {
+      // apply command and store it to be applied again when update is finished
+      // notification about this invocation might be sent later if the update is cancelled
+      command.apply(myWorker);
       myCommandQueue.add(command);
-      // notify after change lsist are synchronized
-    } else {
-      // notify immediately
+    }
+    else {
+      // apply and notify immediately
+      command.apply(myWorker);
       myNotificator.callNotify(command);
     }
   }
 
-  public boolean setReadOnly(final String name, final boolean value) {
-    final SetReadOnly command = new SetReadOnly(name, value);
+  @Override
+  public boolean setReadOnly(String name, boolean value) {
+    SetReadOnly command = new SetReadOnly(name, value);
     impl(command);
     return command.isResult();
   }
 
-  public boolean editName(@NotNull final String fromName, @NotNull final String toName) {
-    final EditName command = new EditName(fromName, toName);
+  @Override
+  public boolean editName(@NotNull String fromName, @NotNull String toName) {
+    EditName command = new EditName(fromName, toName);
     impl(command);
     return command.isResult();
   }
 
-  public String editComment(@NotNull final String fromName, final String newComment) {
-    final EditComment command = new EditComment(fromName, newComment);
+  @Override
+  public String editComment(@NotNull String fromName, String newComment) {
+    EditComment command = new EditComment(fromName, newComment);
     impl(command);
     return command.getOldComment();
   }
@@ -100,29 +110,20 @@ public class Modifier implements ChangeListsWriteOperations {
     myInsideUpdate = true;
   }
 
-  public void finishUpdate(final ChangeListWorker worker) {
-    exitUpdate();
-    // should be applied for notifications to be delivered (they were delayed)
-    apply(worker);
-    clearQueue();
-  }
-
-  private void exitUpdate() {
+  public void finishUpdate(@Nullable ChangeListWorker worker) {
     myInsideUpdate = false;
-  }
 
-  private void clearQueue() {
-    myCommandQueue.clear();
-  }
+    if (worker != null) {
+      // re-apply commands to the new worker
+      for (ChangeListCommand command : myCommandQueue) {
+        command.apply(worker);
+      }
+      myWorker = worker;
+    }
 
-  private void apply(final ChangeListWorker worker) {
     for (ChangeListCommand command : myCommandQueue) {
-      command.apply(worker);
       myNotificator.callNotify(command);
     }
-  }
-
-  public void setWorker(ChangeListWorker worker) {
-    myWorker = worker;
+    myCommandQueue.clear();
   }
 }

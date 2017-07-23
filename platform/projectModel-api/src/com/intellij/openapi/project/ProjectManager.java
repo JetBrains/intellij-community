@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,28 +32,35 @@ public abstract class ProjectManager {
   public static final Topic<ProjectManagerListener> TOPIC = new Topic<>("Project open and close events", ProjectManagerListener.class);
 
   /**
-   * Gets <code>ProjectManager</code> instance.
+   * Gets {@code ProjectManager} instance.
    *
-   * @return <code>ProjectManager</code> instance
+   * @return {@code ProjectManager} instance
    */
   public static ProjectManager getInstance() {
     return ApplicationManager.getApplication().getComponent(ProjectManager.class);
   }
 
   /**
-   * Adds global listener to all projects
-   *
-   * @param listener listener to add
+   * @deprecated Use {@link Topic}
    */
+  @Deprecated
   public abstract void addProjectManagerListener(@NotNull ProjectManagerListener listener);
+
+  public abstract void addProjectManagerListener(@NotNull VetoableProjectManagerListener listener);
+
+  /**
+   * @deprecated Use {@link Topic}
+   */
+  @Deprecated
   public abstract void addProjectManagerListener(@NotNull ProjectManagerListener listener, @NotNull Disposable parentDisposable);
 
   /**
-   * Removes global listener from all projects.
-   *
-   * @param listener listener to remove
+   * @deprecated Use {@link Topic}
    */
+  @Deprecated
   public abstract void removeProjectManagerListener(@NotNull ProjectManagerListener listener);
+
+  public abstract void removeProjectManagerListener(@NotNull VetoableProjectManagerListener listener);
 
   /**
    * Adds listener to the specified project.
@@ -107,7 +114,7 @@ public abstract class ProjectManager {
   public abstract Project loadAndOpenProject(@NotNull String filePath) throws IOException, JDOMException, InvalidDataException;
 
   /**
-   * Closes the specified project.
+   * Closes the specified project, but does not dispose it.
    *
    * @param project the project to close.
    * @return true if the project was closed successfully, false if the closing was disallowed by the close listeners.

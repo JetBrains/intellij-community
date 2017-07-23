@@ -24,9 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-/**
- * Created by Max Medvedev on 05/02/14
- */
 public class GrEnumConstantInfo extends ConstructorCallInfoBase<GrEnumConstant> implements ConstructorCallInfo<GrEnumConstant> {
   public GrEnumConstantInfo(GrEnumConstant constant) {
     super(constant);

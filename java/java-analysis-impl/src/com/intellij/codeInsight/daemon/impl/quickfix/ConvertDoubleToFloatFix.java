@@ -27,10 +27,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: 2/10/12
- */
 public class ConvertDoubleToFloatFix implements IntentionAction {
   private final PsiExpression myExpression;
 

@@ -23,12 +23,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: 16.02.2010
- * Time: 21:33:28
- */
 public class ConvertSetLiteralQuickFix implements LocalQuickFix {
   @NotNull
   @Override

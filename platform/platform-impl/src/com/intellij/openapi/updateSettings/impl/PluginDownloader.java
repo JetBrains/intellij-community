@@ -48,7 +48,7 @@ import java.util.List;
  * @since 10-Aug-2007
  */
 public class PluginDownloader {
-  private static final Logger LOG = Logger.getInstance("#" + PluginDownloader.class.getName());
+  private static final Logger LOG = Logger.getInstance(PluginDownloader.class);
 
   private static final String FILENAME = "filename=";
 

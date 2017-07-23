@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -25,11 +26,13 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class MismatchedArrayReadWriteInspection extends BaseInspection {
 
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
@@ -87,10 +90,10 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
       if (!shouldCheckVariable(field, containingClass)) {
         return;
       }
-      final ArrayReadWriteVisitor visitor = new ArrayReadWriteVisitor(field, !isSimpleArrayExpression(field.getInitializer()));
+      final ArrayReadWriteVisitor visitor = new ArrayReadWriteVisitor(field, !isZeroSizeArrayExpression(field.getInitializer()));
       containingClass.accept(visitor);
       final boolean written = visitor.isWritten();
-      if (!visitor.isReferenced() || written == visitor.isRead()) {
+      if (!visitor.isReferenced() || written == visitor.isRead() || UnusedSymbolUtil.isImplicitWrite(field)) {
         return;
       }
       registerFieldError(field, Boolean.valueOf(written));
@@ -103,7 +106,7 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
       if (!shouldCheckVariable(variable, codeBlock)) {
         return;
       }
-      final ArrayReadWriteVisitor visitor = new ArrayReadWriteVisitor(variable, !isSimpleArrayExpression(variable.getInitializer()));
+      final ArrayReadWriteVisitor visitor = new ArrayReadWriteVisitor(variable, !isZeroSizeArrayExpression(variable.getInitializer()));
       codeBlock.accept(visitor);
       final boolean written = visitor.isWritten();
       if (!visitor.isReferenced() || written == visitor.isRead()) {
@@ -113,10 +116,10 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
     }
 
     private static boolean shouldCheckVariable(PsiVariable variable, PsiElement context) {
-      return context != null && variable.getType().getArrayDimensions() != 0 && !isComplexArrayExpression(variable.getInitializer());
+      return context != null && variable.getType().getArrayDimensions() != 0 && !mayBeAccessedElsewhere(variable.getInitializer());
     }
 
-    static boolean isComplexArrayExpression(PsiExpression expression) {
+    static boolean mayBeAccessedElsewhere(PsiExpression expression) {
       expression = ParenthesesUtils.stripParentheses(expression);
       if (expression == null) {
         return false;
@@ -124,12 +127,12 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
       if (expression instanceof PsiNewExpression) {
         final PsiNewExpression newExpression = (PsiNewExpression)expression;
         final PsiArrayInitializerExpression arrayInitializer = newExpression.getArrayInitializer();
-        return isComplexArrayExpression(arrayInitializer);
+        return mayBeAccessedElsewhere(arrayInitializer);
       }
       else if (expression instanceof PsiArrayInitializerExpression) {
         final PsiArrayInitializerExpression arrayInitializerExpression = (PsiArrayInitializerExpression)expression;
         for (PsiExpression initializer : arrayInitializerExpression.getInitializers()) {
-          if (isComplexArrayExpression(initializer)) {
+          if (mayBeAccessedElsewhere(initializer)) {
             return true;
           }
         }
@@ -143,12 +146,12 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
       }
       else if (expression instanceof PsiTypeCastExpression) {
         final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)expression;
-        return isComplexArrayExpression(typeCastExpression.getOperand());
+        return mayBeAccessedElsewhere(typeCastExpression.getOperand());
       }
       else if (expression instanceof PsiConditionalExpression) {
         final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)expression;
-        return isComplexArrayExpression(conditionalExpression.getThenExpression()) ||
-               isComplexArrayExpression(conditionalExpression.getElseExpression());
+        return mayBeAccessedElsewhere(conditionalExpression.getThenExpression()) ||
+               mayBeAccessedElsewhere(conditionalExpression.getElseExpression());
       }
       else if (expression instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
@@ -174,14 +177,14 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
       return true;
     }
 
-    static boolean isSimpleArrayExpression(PsiExpression initializer) {
+    static boolean isZeroSizeArrayExpression(PsiExpression initializer) {
       if (initializer == null) {
         return true;
       }
       if (initializer instanceof PsiNewExpression) {
         final PsiNewExpression newExpression = (PsiNewExpression)initializer;
         final PsiArrayInitializerExpression arrayInitializer = newExpression.getArrayInitializer();
-        return arrayInitializer == null || isSimpleArrayExpression(arrayInitializer);
+        return arrayInitializer == null || isZeroSizeArrayExpression(arrayInitializer);
       }
       if (initializer instanceof PsiArrayInitializerExpression) {
         final PsiArrayInitializerExpression arrayInitializerExpression = (PsiArrayInitializerExpression)initializer;
@@ -217,11 +220,11 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
           if (parent instanceof PsiAssignmentExpression) {
             final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
             final PsiExpression rhs = assignmentExpression.getRExpression();
-            if (isComplexArrayExpression(rhs)) {
+            if (mayBeAccessedElsewhere(rhs)) {
               myWritten = true;
               myRead = true;
             }
-            else if (!isSimpleArrayExpression(rhs)) {
+            else if (!isZeroSizeArrayExpression(rhs)) {
               myWritten = true;
             }
           }

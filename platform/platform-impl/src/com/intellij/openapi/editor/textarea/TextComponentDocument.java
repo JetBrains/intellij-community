@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,19 @@
  */
 package com.intellij.openapi.editor.textarea;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
-import java.beans.PropertyChangeListener;
 
 /**
  * @author yole
  */
-public class TextComponentDocument extends UserDataHolderBase implements Document {
+public class TextComponentDocument extends UserDataHolderBase implements com.intellij.openapi.editor.Document {
   private final JTextComponent myTextComponent;
 
   public TextComponentDocument(final JTextComponent textComponent) {
@@ -40,9 +36,9 @@ public class TextComponentDocument extends UserDataHolderBase implements Documen
 
   @NotNull
   @Override
-  public String getText() {
+  public CharSequence getImmutableCharSequence() {
     try {
-      final javax.swing.text.Document document = myTextComponent.getDocument();
+      final Document document = myTextComponent.getDocument();
       return document.getText(0, document.getLength());
     }
     catch (BadLocationException e) {
@@ -54,30 +50,12 @@ public class TextComponentDocument extends UserDataHolderBase implements Documen
   @Override
   public String getText(@NotNull TextRange range) {
     try {
-      final javax.swing.text.Document document = myTextComponent.getDocument();
+      final Document document = myTextComponent.getDocument();
       return document.getText(range.getStartOffset(), range.getLength());
     }
     catch (BadLocationException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  @Override
-  @NotNull
-  public CharSequence getCharsSequence() {
-    return getText();
-  }
-
-  @NotNull
-  @Override
-  public CharSequence getImmutableCharSequence() {
-    return getText();
-  }
-
-  @Override
-  @NotNull
-  public char[] getChars() {
-    throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
@@ -127,7 +105,7 @@ public class TextComponentDocument extends UserDataHolderBase implements Documen
 
   @Override
   public void replaceString(final int startOffset, final int endOffset, @NotNull final CharSequence s) {
-    final javax.swing.text.Document document = myTextComponent.getDocument();
+    final Document document = myTextComponent.getDocument();
     try {
       document.remove(startOffset, endOffset-startOffset);
       document.insertString(startOffset, s.toString(), null);
@@ -142,107 +120,25 @@ public class TextComponentDocument extends UserDataHolderBase implements Documen
     return true;
   }
 
+  @NotNull
+  @Override
+  public RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  @NotNull
+  @Override
+  public RangeMarker createGuardedBlock(int startOffset, int endOffset) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  @Override
+  public void setText(@NotNull CharSequence text) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
   @Override
   public long getModificationStamp() {
     throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
-  public void fireReadOnlyModificationAttempt() {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
-  public void addDocumentListener(@NotNull final DocumentListener listener) {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
-  public void addDocumentListener(@NotNull final DocumentListener listener, @NotNull final Disposable parentDisposable) {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
-  public void removeDocumentListener(@NotNull final DocumentListener listener) {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
-  @NotNull
-  public RangeMarker createRangeMarker(final int startOffset, final int endOffset) {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
-  @NotNull
-  public RangeMarker createRangeMarker(final int startOffset, final int endOffset, final boolean surviveOnExternalChange) {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
-  public void addPropertyChangeListener(@NotNull final PropertyChangeListener listener) {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
-  public void removePropertyChangeListener(@NotNull final PropertyChangeListener listener) {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
-  public void setReadOnly(final boolean isReadOnly) {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
-  @NotNull
-  public RangeMarker createGuardedBlock(final int startOffset, final int endOffset) {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
-  public void removeGuardedBlock(@NotNull final RangeMarker block) {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
-  @Nullable
-  public RangeMarker getOffsetGuard(final int offset) {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
-  @Nullable
-  public RangeMarker getRangeGuard(final int start, final int end) {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
-  public void startGuardedBlockChecking() {
-  }
-
-  @Override
-  public void stopGuardedBlockChecking() {
-  }
-
-  @Override
-  public void setCyclicBufferSize(final int bufferSize) {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
-  public void setText(@NotNull final CharSequence text) {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
-  @NotNull
-  public RangeMarker createRangeMarker(@NotNull final TextRange textRange) {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
-  public int getLineSeparatorLength(final int line) {
-    return 0;
   }
 }

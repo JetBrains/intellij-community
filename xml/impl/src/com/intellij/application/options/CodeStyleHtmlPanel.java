@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,25 +22,22 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.ListItemsDialogWrapper;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
 
@@ -70,6 +67,8 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   private JPanel myRightMarginPanel;
   private JComboBox myQuotesCombo;
   private JBCheckBox myEnforceQuotesBox;
+  private ComboBox myBeforeFirstAttributeCombo;
+  private ComboBox myAfterLastAttributeCombo;
   private RightMarginForm myRightMarginForm;
 
   public CodeStyleHtmlPanel(CodeStyleSettings settings) {
@@ -77,7 +76,9 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     installPreviewPanel(myPreviewPanel);
 
     fillWrappingCombo(myWrapAttributes);
-    fillQuotesCombo(myQuotesCombo);
+    fillEnumCombobox(myQuotesCombo, CodeStyleSettings.QuoteStyle.class);
+    fillEnumCombobox(myBeforeFirstAttributeCombo, CodeStyleSettings.HtmlTagNewLineStyle.class);
+    fillEnumCombobox(myAfterLastAttributeCombo, CodeStyleSettings.HtmlTagNewLineStyle.class);
 
     customizeField(ApplicationBundle.message("title.insert.new.line.before.tags"), myInsertNewLineTagNames);
     customizeField(ApplicationBundle.message("title.remove.line.breaks.before.tags"), myRemoveNewLineTagNames);
@@ -122,30 +123,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   }
 
   private static void customizeField(final String title, final TextFieldWithBrowseButton uiField) {
-    uiField.getTextField().setEditable(false);
-    uiField.setButtonIcon(PlatformIcons.OPEN_EDIT_DIALOG_ICON);
-    uiField.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final TagListDialog tagListDialog = new TagListDialog(title);
-        tagListDialog.setData(createCollectionOn(uiField.getText()));
-        if (tagListDialog.showAndGet()) {
-          uiField.setText(createStringOn(tagListDialog.getData()));
-        }
-      }
-
-      private String createStringOn(final ArrayList<String> data) {
-        return StringUtil.join(ArrayUtil.toStringArray(data), ",");
-      }
-
-      private ArrayList<String> createCollectionOn(final String data) {
-        if (data == null || data.trim().isEmpty()) {
-          return new ArrayList<>();
-        }
-        return new ArrayList<>(Arrays.asList(data.split(",")));
-      }
-
-    });
+    ListItemsDialogWrapper.installListItemsDialogForTextField(uiField, () -> new TagListDialog(title));
   }
 
   @Override
@@ -176,12 +154,9 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     settings.HTML_KEEP_LINE_BREAKS_IN_TEXT = myShouldKeepLineBreaksInText.isSelected();
     settings.HTML_QUOTE_STYLE = (CodeStyleSettings.QuoteStyle)myQuotesCombo.getSelectedItem();
     settings.HTML_ENFORCE_QUOTES = myEnforceQuotesBox.isSelected();
+    settings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE = (CodeStyleSettings.HtmlTagNewLineStyle)myBeforeFirstAttributeCombo.getSelectedItem();
+    settings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE = (CodeStyleSettings.HtmlTagNewLineStyle)myAfterLastAttributeCombo.getSelectedItem();
     myRightMarginForm.apply(settings);
-  }
-
-  @NotNull
-  protected String getQuotes() {
-    return ApplicationBundle.message("single.quotes").equals(myQuotesCombo.getSelectedItem()) ? "'" : "\"";
   }
 
   private static int getIntValue(JTextField keepBlankLines) {
@@ -217,6 +192,8 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     myRightMarginForm.reset(settings);
     myQuotesCombo.setSelectedItem(settings.HTML_QUOTE_STYLE);
     myEnforceQuotesBox.setSelected(settings.HTML_ENFORCE_QUOTES);
+    myBeforeFirstAttributeCombo.setSelectedItem(settings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE);
+    myAfterLastAttributeCombo.setSelectedItem(settings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE);
   }
 
   @Override
@@ -290,6 +267,12 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     if (myQuotesCombo.getSelectedItem() != settings.HTML_QUOTE_STYLE) {
       return true;
     }
+    if (myBeforeFirstAttributeCombo.getSelectedItem() != settings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE) {
+      return true;
+    }
+    if (myAfterLastAttributeCombo.getSelectedItem() != settings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE) {
+      return true;
+    }
 
     return myRightMarginForm.isModified(settings) ||
            myEnforceQuotesBox.isSelected() != settings.HTML_ENFORCE_QUOTES;
@@ -317,7 +300,8 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     //psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
   }
 
-  private static void fillQuotesCombo(JComboBox combo) {
-    combo.setModel(new EnumComboBoxModel<>(CodeStyleSettings.QuoteStyle.class));
+  private static <T extends Enum<T>> void fillEnumCombobox(JComboBox combo, Class<T> enumClass) {
+    //noinspection unchecked
+    combo.setModel(new EnumComboBoxModel<>(enumClass));
   }
 }

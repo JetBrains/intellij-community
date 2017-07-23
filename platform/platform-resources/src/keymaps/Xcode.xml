@@ -65,12 +65,6 @@
   <action id="Compare.SameVersion">
     <keyboard-shortcut first-keystroke="alt shift meta ENTER"/>
   </action>
-  <action id="Diff.NextChange">
-    <keyboard-shortcut first-keystroke="shift meta CLOSE_BRACKET"/>
-  </action>
-  <action id="Diff.PrevChange">
-    <keyboard-shortcut first-keystroke="shift meta OPEN_BRACKET"/>
-  </action>
   <action id="DuplicatesForm.SendToLeft"/>
   <action id="DuplicatesForm.SendToRight"/>
 
@@ -355,9 +349,6 @@
     <keyboard-shortcut first-keystroke="shift meta J"/>
     <keyboard-shortcut first-keystroke="alt F1"/>
   </action>
-  <action id="ShelvedChanges.Rename">
-    <keyboard-shortcut first-keystroke="shift F6"/>
-  </action>
   <action id="ShowNavBar">
     <keyboard-shortcut first-keystroke="control 5"/>
     <keyboard-shortcut first-keystroke="alt HOME"/>
@@ -443,7 +434,6 @@
   <action id="Vcs.UpdateProject">
     <keyboard-shortcut first-keystroke="alt meta X"/>
   </action>
-  <action id="UsageView.ShowRecentFindUsages"/>
   <action id="Vcs.ShowMessageHistory">
     <keyboard-shortcut first-keystroke="control M"/>
   </action>
@@ -560,4 +550,19 @@
   </action>
 
   <action id="Vcs.Push"/>
+
+  <action id="XPathView.Actions.Evaluate">
+    <keyboard-shortcut first-keystroke="control alt X" second-keystroke="E" />
+  </action>
+  <action id="XPathView.Actions.ShowPath">
+    <keyboard-shortcut first-keystroke="control alt X" second-keystroke="P" />
+  </action>
+  <action id="XPathView.Actions.FindByExpression">
+    <keyboard-shortcut first-keystroke="control alt X" second-keystroke="F" />
+  </action>
+
+  <action id="Git.Reword.Commit">
+    <keyboard-shortcut first-keystroke="control meta E"/>
+    <keyboard-shortcut first-keystroke="shift F6"/>
+  </action>
 </keymap>

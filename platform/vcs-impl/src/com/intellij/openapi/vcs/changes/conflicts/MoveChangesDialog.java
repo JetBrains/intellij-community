@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBCheckBox;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -58,8 +59,7 @@ public class MoveChangesDialog extends DialogWrapper {
 
       @Override
       protected DefaultTreeModel buildTreeModel(List<Change> changes, ChangeNodeDecorator changeNodeDecorator) {
-        TreeModelBuilder builder = new TreeModelBuilder(project, isShowFlatten());
-        return builder.buildModel(new ArrayList<>(changeLists));
+        return TreeModelBuilder.buildFromChangeLists(project, isShowFlatten(), changeLists);
       }
 
       @Override
@@ -114,7 +114,7 @@ public class MoveChangesDialog extends DialogWrapper {
     panel.add(ScrollPaneFactory.createScrollPane(myTreeList), BorderLayout.CENTER);
 
     DefaultActionGroup actionGroup = new DefaultActionGroup(myTreeList.getTreeActions());
-    panel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, true).getComponent(), BorderLayout.NORTH);
+    panel.add(ActionManager.getInstance().createActionToolbar("MoveChangesDialog", actionGroup, true).getComponent(), BorderLayout.NORTH);
     myTreeList.expandAll();
     myTreeList.repaint();
     return panel;
@@ -134,10 +134,10 @@ public class MoveChangesDialog extends DialogWrapper {
     return !getIncludedChanges().isEmpty();
   }
 
+  @Nullable
   @Override
-  protected JComponent createSouthPanel() {
-    JComponent panel = super.createSouthPanel();
-    return addDoNotShowCheckBox(panel, myCheckBox);
+  protected JComponent createDoNotAskCheckbox() {
+    return myCheckBox;
   }
   /*
 

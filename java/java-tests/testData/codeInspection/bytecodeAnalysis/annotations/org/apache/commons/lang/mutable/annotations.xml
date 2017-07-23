@@ -4,6 +4,16 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.mutable.MutableBoolean MutableBoolean(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableBoolean MutableBoolean(java.lang.Boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.mutable.MutableBoolean MutableBoolean(java.lang.Boolean) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -48,6 +58,11 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableByte MutableByte()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableByte MutableByte(byte)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -106,6 +121,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableByte java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableByte long longValue()'>
@@ -127,12 +145,18 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.mutable.MutableDouble MutableDouble(double)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.mutable.MutableDouble MutableDouble(java.lang.Number) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableDouble boolean equals(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null-&gt;false&quot;"/>
+            <val name="value" val="&quot;null-&gt;false&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableDouble boolean equals(java.lang.Object) 0'>
@@ -158,8 +182,18 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.mutable.MutableDouble int compareTo(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.mutable.MutableDouble int compareTo(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableDouble int hashCode()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableDouble int intValue()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -174,6 +208,11 @@
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableDouble java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableDouble long longValue()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -194,12 +233,18 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.mutable.MutableFloat MutableFloat(float)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.mutable.MutableFloat MutableFloat(java.lang.Number) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableFloat boolean equals(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null-&gt;false&quot;"/>
+            <val name="value" val="&quot;null-&gt;false&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableFloat boolean equals(java.lang.Object) 0'>
@@ -225,8 +270,18 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.mutable.MutableFloat int compareTo(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.mutable.MutableFloat int compareTo(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableFloat int hashCode()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableFloat int intValue()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -241,6 +296,11 @@
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableFloat java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableFloat long longValue()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -257,6 +317,11 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableInt MutableInt()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableInt MutableInt(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -310,6 +375,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableInt java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableInt long longValue()'>
@@ -333,6 +401,11 @@
     </item>
     <item name='org.apache.commons.lang.mutable.MutableLong MutableLong(java.lang.Number) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableLong MutableLong(long)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableLong boolean equals(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -380,6 +453,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableLong java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableLong long longValue()'>
@@ -401,6 +477,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.mutable.MutableObject MutableObject(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.mutable.MutableObject boolean equals(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;null-&gt;false&quot;"/>
@@ -414,6 +495,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.mutable.MutableObject java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.mutable.MutableShort MutableShort()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -421,6 +507,11 @@
     </item>
     <item name='org.apache.commons.lang.mutable.MutableShort MutableShort(java.lang.Number) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableShort MutableShort(short)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableShort boolean equals(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -468,6 +559,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableShort java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableShort long longValue()'>

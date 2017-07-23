@@ -19,6 +19,7 @@ import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -29,6 +30,7 @@ public class ConstantNamingConventionInspection extends ConstantNamingConvention
     return new RenameFix();
   }
 
+  @NotNull
   @Override
   public JComponent[] createExtraOptions() {
     return new JComponent[] {

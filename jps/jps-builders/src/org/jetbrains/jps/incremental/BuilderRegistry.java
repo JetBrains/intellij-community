@@ -35,8 +35,8 @@ public class BuilderRegistry {
   private static class Holder {
     static final BuilderRegistry ourInstance = new BuilderRegistry();
   }
-  private final Map<BuilderCategory, List<ModuleLevelBuilder>> myModuleLevelBuilders = new HashMap<BuilderCategory, List<ModuleLevelBuilder>>();
-  private final List<TargetBuilder<?,?>> myTargetBuilders = new ArrayList<TargetBuilder<?,?>>();
+  private final Map<BuilderCategory, List<ModuleLevelBuilder>> myModuleLevelBuilders = new HashMap<>();
+  private final List<TargetBuilder<?,?>> myTargetBuilders = new ArrayList<>();
   private final FileFilter myModuleBuilderFileFilter;
 
   public static BuilderRegistry getInstance() {
@@ -45,10 +45,10 @@ public class BuilderRegistry {
 
   private BuilderRegistry() {
     for (BuilderCategory category : BuilderCategory.values()) {
-      myModuleLevelBuilders.put(category, new ArrayList<ModuleLevelBuilder>());
+      myModuleLevelBuilders.put(category, new ArrayList<>());
     }
 
-    Set<String> compilableFileExtensions = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+    Set<String> compilableFileExtensions = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
     for (BuilderService service : JpsServiceManager.getInstance().getExtensions(BuilderService.class)) {
       myTargetBuilders.addAll(service.createBuilders());
       final List<? extends ModuleLevelBuilder> moduleLevelBuilders = service.createModuleLevelBuilders();
@@ -69,12 +69,7 @@ public class BuilderRegistry {
     }
     else {
       final Set<String> finalCompilableFileExtensions = compilableFileExtensions;
-      myModuleBuilderFileFilter = new FileFilter() {
-        @Override
-        public boolean accept(File file) {
-          return finalCompilableFileExtensions.contains(FileUtilRt.getExtension(file.getName()));
-        }
-      };
+      myModuleBuilderFileFilter = file -> finalCompilableFileExtensions.contains(FileUtilRt.getExtension(file.getName()));
     }
   }
 
@@ -104,7 +99,7 @@ public class BuilderRegistry {
   }
 
   public List<ModuleLevelBuilder> getModuleLevelBuilders() {
-    List<ModuleLevelBuilder> result = new ArrayList<ModuleLevelBuilder>();
+    List<ModuleLevelBuilder> result = new ArrayList<>();
     for (BuilderCategory category : BuilderCategory.values()) {
       result.addAll(getBuilders(category));
     }

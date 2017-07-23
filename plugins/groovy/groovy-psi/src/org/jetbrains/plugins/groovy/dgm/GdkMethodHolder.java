@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
+import java.util.concurrent.ConcurrentMap;
+
 /**
  * @author Max Medvedev
  */
@@ -43,14 +45,15 @@ public class GdkMethodHolder {
   private static final Key<CachedValue<GdkMethodHolder>> CACHED_NON_STATIC = Key.create("Cached instance gdk method holder");
   private static final Key<CachedValue<GdkMethodHolder>> CACHED_STATIC = Key.create("Cached static gdk method holder");
 
-
-  private final ConcurrentFactoryMap<String, MultiMap<String, PsiMethod>> myOriginalMethodsByNameAndType;
+  private final String myClassName;
+  private final ConcurrentMap<String, MultiMap<String, PsiMethod>> myOriginalMethodsByNameAndType;
   private final NotNullLazyValue<MultiMap<String, PsiMethod>> myOriginalMethodByType;
   private final boolean myStatic;
   private final GlobalSearchScope myScope;
   private final PsiManager myPsiManager;
 
   private GdkMethodHolder(final PsiClass categoryClass, final boolean isStatic, final GlobalSearchScope scope) {
+    myClassName = categoryClass.getName();
     myStatic = isStatic;
     myScope = scope;
     final MultiMap<String, PsiMethod> byName = new MultiMap<>();
@@ -58,7 +61,7 @@ public class GdkMethodHolder {
     for (PsiMethod m : categoryClass.getMethods()) {
       final PsiParameter[] params = m.getParameterList().getParameters();
       if (params.length == 0) continue;
-      if (!m.hasModifierProperty(PsiModifier.PUBLIC)) continue;
+      if (!m.hasModifierProperty(PsiModifier.PUBLIC) || !m.hasModifierProperty(PsiModifier.STATIC)) continue;
       if (PsiImplUtil.isDeprecatedByAnnotation(m) || PsiImplUtil.isDeprecatedByDocTag(m)) {
         continue;
       }
@@ -76,16 +79,14 @@ public class GdkMethodHolder {
       }
     };
 
-    myOriginalMethodsByNameAndType = new ConcurrentFactoryMap<String, MultiMap<String, PsiMethod>>() {
-      @Override
-      protected MultiMap<String, PsiMethod> create(String name) {
+    myOriginalMethodsByNameAndType = ConcurrentFactoryMap.createMap(name-> {
         MultiMap<String, PsiMethod> map = new MultiMap<>();
         for (PsiMethod method : byName.get(name)) {
           map.putValue(getCategoryTargetType(method).getCanonicalText(), method);
         }
         return map;
       }
-    };
+    );
   }
 
   private PsiType getCategoryTargetType(PsiMethod method) {
@@ -130,5 +131,10 @@ public class GdkMethodHolder {
 
       return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, rootManager);
     }, false);
+  }
+
+  @Override
+  public String toString() {
+    return "GDK Method Holder for " + myClassName;
   }
 }

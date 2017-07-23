@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.PsiCall;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
@@ -97,6 +98,7 @@ public class MethodMatcher {
       }
       myMethodNamePatterns.set(index, pattern + '|' + methodName);
     }
+    ProjectInspectionProfileManager.getInstance(method.getProject()).fireProfileChanged();
   }
 
   @NotNull
@@ -146,10 +148,7 @@ public class MethodMatcher {
         pattern = Pattern.compile(methodNamePattern);
         myPatternCache.put(methodNamePattern, pattern);
       }
-      catch (PatternSyntaxException ignore) {
-        return null;
-      }
-      catch (NullPointerException ignore) {
+      catch (PatternSyntaxException | NullPointerException ignore) {
         return null;
       }
     }

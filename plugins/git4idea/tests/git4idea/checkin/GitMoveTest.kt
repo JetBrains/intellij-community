@@ -17,22 +17,16 @@ package git4idea.checkin
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.Executor.echo
 import com.intellij.openapi.vcs.VcsConfiguration.StandardConfirmation.ADD
-import com.intellij.openapi.vcs.VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY
-import com.intellij.openapi.vcs.VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY
-import com.intellij.openapi.vcs.VcsTestUtil
-import com.intellij.openapi.vcs.VcsTestUtil.renameFileInCommand
 import com.intellij.openapi.vcs.VcsVFSListener
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.testFramework.vcs.AbstractVcsTestCase.setStandardConfirmation
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitUtil.getLogString
-import git4idea.GitVcs
-import git4idea.test.GitExecutor.*
 import git4idea.test.GitSingleRepoTest
+import git4idea.test.addCommit
+import git4idea.test.git
 import java.io.File
 
 class GitMoveTest : GitSingleRepoTest() {
@@ -106,28 +100,5 @@ class GitMoveTest : GitSingleRepoTest() {
     ADD.doSilently()
     renameFile(file, "unv-ren.txt")
     assertUnversioned(file)
-  }
-
-  private fun VcsConfiguration.StandardConfirmation.doSilently() = setStandardConfirmation(myProject, GitVcs.NAME, this, DO_ACTION_SILENTLY)
-  private fun VcsConfiguration.StandardConfirmation.doNothing() = setStandardConfirmation(myProject, GitVcs.NAME, this, DO_NOTHING_SILENTLY)
-
-  private fun prepareUnversionedFile(fileName: String): VirtualFile {
-    val file = myProjectRoot.createFile(fileName, "initial\ncontent\n")
-    updateChangeListManager()
-    assertUnversioned(file)
-    return file
-  }
-
-  private fun VirtualFile.createDir(dir: String) = VcsTestUtil.findOrCreateDir(myProject, this, dir)
-  private fun VirtualFile.createFile(fileName: String, content: String) = VcsTestUtil.createFile(myProject, this, fileName, content)
-
-  private fun renameFile(file: VirtualFile, newName: String) {
-    renameFileInCommand(myProject, file, newName)
-    updateChangeListManager()
-  }
-
-  private fun assertUnversioned(file: VirtualFile) {
-    assertTrue("File should be unversioned! All changes: " + getLogString(myProjectPath, changeListManager.allChanges),
-               changeListManager.isUnversioned(file))
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,9 +35,11 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
-import com.intellij.openapi.editor.impl.view.IterationState;
+import com.intellij.openapi.editor.impl.ScrollingModelImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.textarea.TextComponentEditor;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.util.*;
@@ -73,6 +75,12 @@ public final class EditorUtil {
 
   public static boolean isPasswordEditor(@Nullable Editor editor) {
     return editor != null && editor.getContentComponent() instanceof JPasswordField;
+  }
+
+  @Nullable
+  public static EditorEx getEditorEx(@Nullable FileEditor fileEditor) {
+    Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
+    return editor instanceof EditorEx ? (EditorEx)editor : null;
   }
 
   public static int getLastVisualLineColumnNumber(@NotNull Editor editor, final int line) {
@@ -238,172 +246,6 @@ public final class EditorUtil {
     }
   }
 
-  /**
-   * Tries to match given logical column to the document offset assuming that it's located at <code>[start; end)</code> region.
-   *
-   * @param editor          editor that is used to represent target document
-   * @param text            target document text
-   * @param start           start offset to check (inclusive)
-   * @param end             end offset to check (exclusive)
-   * @param columnNumber    target logical column number
-   * @param tabSize         user-defined desired number of columns to use for tabulation symbol representation
-   * @param x               <code>'x'</code> coordinate that corresponds to the given <code>'start'</code> offset
-   * @param currentColumn   logical column that corresponds to the given <code>'start'</code> offset
-   * @param debugBuffer     buffer to hold debug info during the processing (if any)
-   * @return                target offset that belongs to the <code>[start; end)</code> range and points to the target logical
-   *                        column if any; <code>-1</code> otherwise
-   */
-  public static int calcSoftWrapUnawareOffset(@NotNull Editor editor,
-                                               @NotNull CharSequence text,
-                                               int start,
-                                               int end,
-                                               int columnNumber,
-                                               int tabSize,
-                                               int x,
-                                               @NotNull int[] currentColumn,
-                                               @Nullable StringBuilder debugBuffer) {
-    if (debugBuffer != null) {
-      debugBuffer.append(String.format(
-        "Starting calcSoftWrapUnawareOffset(). Target range: [%d; %d), target column number to map: %d, tab size: %d, "
-        + "x: %d, current column: %d%n", start, end, columnNumber, tabSize, x, currentColumn[0]));
-    }
-
-    // The main problem in a calculation is that target text may contain tabulation symbols and every such symbol may take different
-    // number of logical columns to represent. E.g. it takes two columns if tab size is four and current column is two; three columns
-    // if tab size is four and current column is one etc. So, first of all we check if there are tabulation symbols at the target
-    // text fragment.
-    boolean useOptimization = true;
-    boolean hasTabs = false;
-    int scanEndOffset = Math.min(end, start + columnNumber - currentColumn[0] + 1);
-    boolean hasNonTabs = false;
-    for (int i = start; i < scanEndOffset; i++) {
-      char c = text.charAt(i);
-      if (debugBuffer != null) {
-        debugBuffer.append(String.format("Found symbol '%c' at the offset %d%n", c, i));
-      }
-      if (c == '\t') {
-        hasTabs = true;
-        if (hasNonTabs) {
-          useOptimization = false;
-          break;
-        }
-      }
-      else {
-        hasNonTabs = true;
-      }
-    }
-
-    if (debugBuffer != null) {
-      debugBuffer.append(String.format("Has tabs: %b, use optimisation: %b%n", hasTabs, useOptimization));
-    }
-
-    // Perform optimized processing if possible. 'Optimized' here means the processing when we exactly know how many logical
-    // columns are occupied by tabulation symbols.
-    if (useOptimization) {
-      if (!hasTabs) {
-        int result = start + columnNumber - currentColumn[0];
-        if (result < end) {
-          return result;
-        }
-        else {
-          currentColumn[0] += end - start;
-          if (debugBuffer != null) {
-            debugBuffer.append(String.format("Incrementing 'current column' by %d (new value is %d)%n", end - start, currentColumn[0]));
-          }
-          return -1;
-        }
-      }
-
-      // This variable holds number of 'virtual' tab-introduced columns, e.g. there is a possible case that particular tab owns
-      // three columns, hence, it increases 'shift' by two (3 - 1).
-      int shift = 0;
-      int offset = start;
-      int prevX = x;
-      if (debugBuffer != null) {
-        debugBuffer.append("Processing a string that contains only tabs\n");
-      }
-      for (; offset < end && offset + shift + currentColumn[0] < start + columnNumber; offset++) {
-        final char c = text.charAt(offset);
-        if (c == '\t') {
-          int nextX = nextTabStop(prevX, editor, tabSize);
-          final int columnsShift = columnsNumber(nextX - prevX, getSpaceWidth(Font.PLAIN, editor)) - 1;
-          if (debugBuffer != null) {
-            debugBuffer.append(String.format(
-              "Processing tabulation symbol at the offset %d. Current X: %d, new X: %d, current columns shift: %d, new column shift: %d%n",
-              offset, prevX, nextX, shift, shift + columnsShift
-            ));
-          }
-          shift += columnsShift;
-          prevX = nextX;
-        }
-      }
-      int diff = start + columnNumber - offset - shift - currentColumn[0];
-      if (debugBuffer != null) debugBuffer.append(String.format("Resulting diff: %d%n", diff));
-      if (diff < 0) {
-        return offset - 1;
-      }
-      else if (diff == 0) {
-        return offset;
-      }
-      else {
-        final int inc = offset - start + shift;
-        if (debugBuffer != null) {
-          debugBuffer.append(String.format("Incrementing 'current column' by %d (new value is %d)%n", inc, currentColumn[0] + inc));
-        }
-        currentColumn[0] += inc;
-        return -1;
-      }
-    }
-
-    // It means that there are tabulation symbols that can't be explicitly mapped to the occupied logical columns number,
-    // hence, we need to perform special calculations to get know that.
-    EditorEx editorImpl = (EditorEx)editor;
-    int offset = start;
-    IterationState state = new IterationState(editorImpl, start, end, null, false, false, true, false);
-    int fontType = state.getMergedAttributes().getFontType();
-    int column = currentColumn[0];
-    int plainSpaceSize = getSpaceWidth(Font.PLAIN, editorImpl);
-    for (; column < columnNumber && offset < end; offset++) {
-      if (offset >= state.getEndOffset()) {
-        state.advance();
-        fontType = state.getMergedAttributes().getFontType();
-      }
-
-      char c = text.charAt(offset);
-      if (c == '\t') {
-        final int newX = nextTabStop(x, editorImpl);
-        final int columns = columnsNumber(newX - x, plainSpaceSize);
-        if (debugBuffer != null) {
-          debugBuffer.append(String.format(
-            "Processing tabulation at the offset %d. Current X: %d, new X: %d, current column: %d, new column: %d%n",
-            offset, x, newX, column, column + columns
-          ));
-        }
-        x = newX;
-        column += columns;
-      }
-      else {
-        final int width = charWidth(c, fontType, editorImpl);
-        if (debugBuffer != null) {
-          debugBuffer.append(String.format(
-            "Processing symbol '%c' at the offset %d. Current X: %d, new X: %d%n", c, offset, x, x + width
-          ));
-        }
-        x += width;
-        column++;
-      }
-    }
-
-    if (column == columnNumber) {
-      return offset;
-    }
-    if (column > columnNumber && offset > 0 && text.charAt(offset - 1) == '\t') {
-      return offset - 1;
-    }
-    currentColumn[0] = column;
-    return -1;
-  }
-
   private static int getTabLength(int colNumber, int tabSize) {
     if (tabSize <= 0) {
       tabSize = 1;
@@ -477,7 +319,8 @@ public final class EditorUtil {
   @NotNull
   public static FontInfo fontForChar(final char c, @JdkConstants.FontStyle int style, @NotNull Editor editor) {
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
-    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, colorsScheme.getFontPreferences());
+    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, colorsScheme.getFontPreferences(),
+                                                           FontInfo.getFontRenderContext(editor.getContentComponent()));
   }
 
   public static Icon scaleIconAccordingEditorFont(Icon icon, Editor editor) {
@@ -516,7 +359,8 @@ public final class EditorUtil {
   }
 
   public static int nextTabStop(int x, @NotNull Editor editor, int tabSize) {
-    return nextTabStop(x, getSpaceWidth(Font.PLAIN, editor), tabSize);
+    int leftInset = editor.getContentComponent().getInsets().left;
+    return nextTabStop(x - leftInset, getSpaceWidth(Font.PLAIN, editor), tabSize) + leftInset;
   }
 
   public static int nextTabStop(int x, int plainSpaceWidth, int tabSize) {
@@ -575,26 +419,6 @@ public final class EditorUtil {
   }
 
   /**
-   * Allows to answer how many columns are necessary for representation of the given char on a screen.
-   *
-   * @param c           target char
-   * @param x           <code>'x'</code> coordinate of the line where given char is represented that indicates char end location
-   * @param prevX       <code>'x'</code> coordinate of the line where given char is represented that indicates char start location
-   * @param plainSpaceSize   <code>'space'</code> symbol width (in plain font style)
-   * @return            number of columns necessary for representation of the given char on a screen.
-   */
-  public static int columnsNumber(char c, int x, int prevX, int plainSpaceSize) {
-    if (c != '\t') {
-      return 1;
-    }
-    int result = (x - prevX) / plainSpaceSize;
-    if ((x - prevX) % plainSpaceSize > 0) {
-      result++;
-    }
-    return result;
-  }
-
-  /**
    * Allows to answer how many visual columns are occupied by the given width.
    *
    * @param width       target width
@@ -610,7 +434,7 @@ public final class EditorUtil {
   }
 
   /**
-   * Allows to answer what width in pixels is required to draw fragment of the given char array from <code>[start; end)</code> interval
+   * Allows to answer what width in pixels is required to draw fragment of the given char array from {@code [start; end)} interval
    * at the given editor.
    * <p/>
    * Tabulation symbols is processed specially, i.e. it's ta
@@ -623,9 +447,9 @@ public final class EditorUtil {
    * @param start     offset within the given char array that points to target text start (inclusive)
    * @param end       offset within the given char array that points to target text end (exclusive)
    * @param fontType  font type to use for target text representation
-   * @param x         <code>'x'</code> coordinate that should be used as a starting point for target text representation.
+   * @param x         {@code 'x'} coordinate that should be used as a starting point for target text representation.
    *                  It's necessity is implied by the fact that IDEA editor may represent tabulation symbols in any range
-   *                  from <code>[1; tab size]</code> (check {@link #nextTabStop(int, Editor)} for more details)
+   *                  from {@code [1; tab size]} (check {@link #nextTabStop(int, Editor)} for more details)
    * @return          width in pixels required for target text representation
    */
   public static int textWidth(@NotNull Editor editor, @NotNull CharSequence text, int start, int end, @JdkConstants.FontStyle int fontType, int x) {
@@ -858,8 +682,8 @@ public final class EditorUtil {
 
   public static Font getEditorFont() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    int size = UISettings.getInstance().PRESENTATION_MODE
-               ? UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE - 4 : scheme.getEditorFontSize();
+    int size = UISettings.getInstance().getPresentationMode()
+               ? UISettings.getInstance().getPresentationModeFontSize() - 4 : scheme.getEditorFontSize();
     return new Font(scheme.getEditorFontName(), Font.PLAIN, size);
   }
 
@@ -924,6 +748,23 @@ public final class EditorUtil {
     }
     else {
       editor.getFoldingModel().runBatchFoldingOperation(operation);
+    }
+  }
+
+  public static void runWithAnimationDisabled(@NotNull Editor editor, @NotNull Runnable taskWithScrolling) {
+    ScrollingModel scrollingModel = editor.getScrollingModel();
+    if (!(scrollingModel instanceof ScrollingModelImpl)) {
+      taskWithScrolling.run();
+    }
+    else {
+      boolean animationWasEnabled = ((ScrollingModelImpl)scrollingModel).isAnimationEnabled();
+      scrollingModel.disableAnimation();
+      try {
+        taskWithScrolling.run();
+      }
+      finally {
+        if (animationWasEnabled) scrollingModel.enableAnimation();
+      }
     }
   }
 }

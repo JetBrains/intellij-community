@@ -116,10 +116,13 @@ public class ExceptionUtil {
 
   @NotNull
   public static String getUserStackTrace(@NotNull Throwable aThrowable, Logger logger) {
-    final String result = getThrowableText(aThrowable, "com.intellij.");
-    if (!result.contains("\n\tat")) {
-      // no stack frames found
+    String result = getThrowableText(aThrowable, "com.intellij.");
+    if (!result.contains("\n\tat") && aThrowable.getStackTrace().length > 0) {
+      // no 3rd party stack frames found, log as error
       logger.error(aThrowable);
+    }
+    else {
+      return result.trim() + " (no stack trace)";
     }
     return result;
   }
@@ -152,10 +155,8 @@ public class ExceptionUtil {
   }
 
   public static void rethrowUnchecked(@Nullable Throwable t) {
-    if (t != null) {
-      if (t instanceof Error) throw (Error)t;
-      if (t instanceof RuntimeException) throw (RuntimeException)t;
-    }
+    if (t instanceof Error) throw (Error)t;
+    if (t instanceof RuntimeException) throw (RuntimeException)t;
   }
 
   public static void rethrowAll(@Nullable Throwable t) throws Exception {
@@ -166,15 +167,8 @@ public class ExceptionUtil {
   }
 
   public static void rethrow(@Nullable Throwable throwable) {
-    if (throwable instanceof Error) {
-      throw (Error)throwable;
-    }
-    else if (throwable instanceof RuntimeException) {
-      throw (RuntimeException)throwable;
-    }
-    else {
-      throw new RuntimeException(throwable);
-    }
+    rethrowUnchecked(throwable);
+    throw new RuntimeException(throwable);
   }
 
   public static void rethrowAllAsUnchecked(@Nullable Throwable t) {

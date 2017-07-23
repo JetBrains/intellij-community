@@ -18,7 +18,6 @@ package git4idea.reset;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -29,7 +28,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.Hash;
@@ -69,7 +67,7 @@ public class GitResetOperation {
     myCommits = targetCommits;
     myMode = mode;
     myIndicator = indicator;
-    myGit = ServiceManager.getService(Git.class);
+    myGit = Git.getInstance();
     myNotifier = VcsNotifier.getInstance(project);
     myUiHandler = new GitBranchUiHandlerImpl(myProject, myGit, indicator);
   }
@@ -99,7 +97,7 @@ public class GitResetOperation {
       }
     }
     finally {
-      DvcsUtil.workingTreeChangeFinished(myProject, token);
+      token.finish();
     }
     notifyResult(results);
   }
@@ -113,12 +111,7 @@ public class GitResetOperation {
       final Ref<GitCommandResult> result = Ref.create();
       new GitPreservingProcess(myProject, myGit, Collections.singleton(repository.getRoot()), "reset", target,
                                GitVcsSettings.UpdateChangesPolicy.STASH, myIndicator,
-                               new Runnable() {
-        @Override
-        public void run() {
-          result.set(myGit.reset(repository, myMode, target));
-        }
-      }).execute();
+                               () -> result.set(myGit.reset(repository, myMode, target))).execute();
       return result.get();
     }
     if (choice == GitSmartOperationDialog.FORCE_EXIT_CODE) {
@@ -160,13 +153,7 @@ public class GitResetOperation {
     if (grouped.size() == 1) {
       return "<code>" + grouped.keySet().iterator().next() + "</code>";
     }
-    return StringUtil.join(grouped.entrySet(), new Function<Map.Entry<String, Collection<GitRepository>>, String>() {
-      @NotNull
-      @Override
-      public String fun(@NotNull Map.Entry<String, Collection<GitRepository>> entry) {
-        return joinRepos(entry.getValue()) + ":<br/><code>" + entry.getKey() + "</code>";
-      }
-    }, "<br/>");
+    return StringUtil.join(grouped.entrySet(), entry -> joinRepos(entry.getValue()) + ":<br/><code>" + entry.getKey() + "</code>", "<br/>");
   }
 
   // to avoid duplicate error reports if they are the same for different repositories

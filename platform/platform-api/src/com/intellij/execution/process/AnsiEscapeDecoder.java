@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * See <a href="http://en.wikipedia.org/wiki/ANSI_escape_code">ANSI escape code</a>.
@@ -34,10 +33,13 @@ import java.util.regex.Pattern;
 public class AnsiEscapeDecoder {
   private static final char ESC_CHAR = '\u001B'; // Escape sequence start character
   private static final String CSI = ESC_CHAR + "["; // "Control Sequence Initiator"
-  private static final Pattern INNER_PATTERN = Pattern.compile(Pattern.quote("m" + CSI));
+  private static final String M_CSI = "m" + CSI;
   private static final char BACKSPACE = '\b';
 
+  private final ColoredOutputTypeRegistry myColoredOutputTypeRegistry = ColoredOutputTypeRegistry.getInstance();
   private Key myCurrentTextAttributes;
+  private String myUnhandledStdout;
+  private String myUnhandledStderr;
 
   /**
    * Parses ansi-color codes from text and sends text fragments with color attributes to textAcceptor
@@ -48,36 +50,69 @@ public class AnsiEscapeDecoder {
    *                     It can implement ColoredChunksAcceptor to receive list of pairs (text, attribute).
    */
   public void escapeText(@NotNull String text, @NotNull Key outputType, @NotNull ColoredTextAcceptor textAcceptor) {
-    List<Pair<String, Key>> chunks = null;
-    int pos = 0;
+    text = prependUnhandledText(text, outputType);
     text = normalizeAsciiControlCharacters(text);
+    int pos = 0;
+    List<Pair<String, Key>> chunks = null;
+    int unhandledSuffixLength = 0;
     while (true) {
-      int escSeqBeginInd = text.indexOf(CSI, pos);
+      int escSeqBeginInd = findEscSeqBeginIndex(text, pos);
       if (escSeqBeginInd < 0) {
+        if (escSeqBeginInd < -1) {
+          unhandledSuffixLength = decodeUnhandledSuffixLength(escSeqBeginInd);
+        }
         break;
       }
       if (pos < escSeqBeginInd) {
         chunks = processTextChunk(chunks, text.substring(pos, escSeqBeginInd), outputType, textAcceptor);
       }
-      final int escSeqEndInd = findEscSeqEndIndex(text, escSeqBeginInd);
+      int escSeqEndInd = findConsecutiveEscSequencesEndIndex(text, escSeqBeginInd);
       if (escSeqEndInd < 0) {
+        if (escSeqEndInd < -1) {
+          unhandledSuffixLength = decodeUnhandledSuffixLength(escSeqEndInd);
+        }
         break;
       }
-      if (text.charAt(escSeqEndInd - 1) == 'm') {
-        String escSeq = text.substring(escSeqBeginInd, escSeqEndInd);
+      if (text.charAt(escSeqEndInd) == 'm') {
+        String escSeq = text.substring(escSeqBeginInd, escSeqEndInd + 1);
         // this is a simple fix for RUBY-8996:
         // we replace several consecutive escape sequences with one which contains all these sequences
-        String colorAttribute = INNER_PATTERN.matcher(escSeq).replaceAll(";");
-        myCurrentTextAttributes = ColoredOutputTypeRegistry.getInstance().getOutputKey(colorAttribute);
+        String colorAttribute = StringUtil.replace(escSeq, M_CSI, ";");
+        myCurrentTextAttributes = myColoredOutputTypeRegistry.getOutputKey(colorAttribute);
       }
-      pos = escSeqEndInd;
+      pos = escSeqEndInd + 1;
     }
-    if (pos < text.length()) {
+    updateUnhandledSuffix(text, outputType, unhandledSuffixLength);
+    if (unhandledSuffixLength == 0 && pos < text.length()) {
       chunks = processTextChunk(chunks, text.substring(pos), outputType, textAcceptor);
     }
     if (chunks != null && textAcceptor instanceof ColoredChunksAcceptor) {
       ((ColoredChunksAcceptor)textAcceptor).coloredChunksAvailable(chunks);
     }
+  }
+
+  private void updateUnhandledSuffix(@NotNull String text, @NotNull Key outputType, int unhandledSuffixLength) {
+    String unhandledSuffix = unhandledSuffixLength > 0 ? text.substring(text.length() - unhandledSuffixLength) : null;
+    if (outputType == ProcessOutputTypes.STDOUT) {
+      myUnhandledStdout = unhandledSuffix;
+    }
+    else if (outputType == ProcessOutputTypes.STDERR) {
+      myUnhandledStderr = unhandledSuffix;
+    }
+  }
+
+  @NotNull
+  private String prependUnhandledText(@NotNull String text, @NotNull Key outputType) {
+    String prevUnhandledText = null;
+    if (outputType == ProcessOutputTypes.STDOUT) {
+      prevUnhandledText = myUnhandledStdout;
+      myUnhandledStdout = null;
+    }
+    else if (outputType == ProcessOutputTypes.STDERR) {
+      prevUnhandledText = myUnhandledStderr;
+      myUnhandledStderr = null;
+    }
+    return prevUnhandledText != null ? prevUnhandledText + text : text;
   }
 
   @NotNull
@@ -122,29 +157,66 @@ public class AnsiEscapeDecoder {
     return result.toString();
   }
 
-  /*
-   * Selects all consecutive escape sequences and returns escape sequence end index (exclusive).
-   * If the escape sequence isn't finished, returns -1.
+  /**
+   * Returns the index of the first occurrence of CSI within the passed string that is greater than or equal to {@code fromIndex},
+   * or negative number if CSI is not found: -1 - (length of text suffix to keep in case of an incomplete CSI).
    */
-  private static int findEscSeqEndIndex(@NotNull String text, final int escSeqBeginInd) {
-    int beginInd = escSeqBeginInd;
-    while (true) {
-      int letterInd = findEscSeqLetterIndex(text, beginInd);
-      if (letterInd == -1) {
-        return beginInd == escSeqBeginInd ? -1 : beginInd;
-      }
-      if (text.charAt(letterInd) != 'm') {
-        return beginInd == escSeqBeginInd ? letterInd + 1 : beginInd;
-      }
-      beginInd = letterInd + 1;
-    }
-  }
-
-  private static int findEscSeqLetterIndex(@NotNull String text, int escSeqBeginInd) {
-    if (!text.regionMatches(escSeqBeginInd, CSI, 0, CSI.length())) {
+  private static int findEscSeqBeginIndex(@NotNull String text, int fromIndex) {
+    int ind = text.indexOf(CSI.charAt(0), fromIndex);
+    if (ind == -1) {
       return -1;
     }
-    int parameterEndInd = escSeqBeginInd + 2;
+    else if (ind == text.length() - 1) {
+      return encodeUnhandledSuffixLength(text, ind);
+    }
+    return text.charAt(ind + 1) == CSI.charAt(1) ? ind : -1;
+  }
+
+  /**
+   * Returns end index of all consecutive escape sequences started at {@code firstEscSeqBeginInd}, or
+   * a negative number if not found. Since an escape sequence could be split among several subsequent output chunks
+   * (e.g. because of automatic flushing of standard stream when its buffer is full), it should be parsed
+   * when all the needed output chunks are available. To achieve that, the return value encodes
+   * the length of the passed string suffix to keep in case of an incomplete last escape sequence:
+   *  {@code -1 - (length of string suffix to keep in case of an incomplete last escape sequence)}.  </p>
+   * If the return value is -1, no string suffix should be kept => a malformed escape sequence has been encountered.
+   * If the return value is less than -1, no actual handing of the incomplete escape sequence should be performed,
+   * the string suffix length should be decoded with {@code #decodeUnhandledSuffixLength(the return value)} and the suffix
+   * should be preserved until the next output chunks is available.
+   */
+  private static int findConsecutiveEscSequencesEndIndex(@NotNull String text, int firstEscSeqBeginInd) {
+    int escSeqBeginInd = firstEscSeqBeginInd;
+    int lastMatchedColorEscSeqEndInd = -1;
+    int escSeqEndInd;
+    while ((escSeqEndInd = findEscSeqEndIndex(text, escSeqBeginInd)) >= 0) {
+      if (text.charAt(escSeqEndInd) != 'm') {
+        // Handle non-color escape sequences separately
+        // ColoredOutputTypeRegistry expects only color escape sequences and in a single consecutive text chunk
+        return lastMatchedColorEscSeqEndInd > 0 ? lastMatchedColorEscSeqEndInd : escSeqEndInd;
+      }
+      escSeqBeginInd = escSeqEndInd + 1;
+      lastMatchedColorEscSeqEndInd = escSeqEndInd;
+      if (escSeqEndInd + 1 >= text.length()) {
+        return encodeUnhandledSuffixLength(text, firstEscSeqBeginInd);
+      }
+      if (text.charAt(escSeqEndInd + 1) != CSI.charAt(0)) {
+        break;
+      }
+      if (escSeqEndInd + 2 >= text.length()) {
+        return encodeUnhandledSuffixLength(text, firstEscSeqBeginInd);
+      }
+      if (text.charAt(escSeqEndInd + 2) != CSI.charAt(1)) {
+        break;
+      }
+    }
+    if (escSeqEndInd < -1) {
+      return encodeUnhandledSuffixLength(text, firstEscSeqBeginInd);
+    }
+    return lastMatchedColorEscSeqEndInd;
+  }
+
+  private static int findEscSeqEndIndex(@NotNull String text, int escSeqBeginInd) {
+    int parameterEndInd = escSeqBeginInd + CSI.length();
     while (parameterEndInd < text.length()) {
       char ch = text.charAt(parameterEndInd);
       if (Character.isDigit(ch) || ch == ';') {
@@ -154,13 +226,21 @@ public class AnsiEscapeDecoder {
         break;
       }
     }
-    if (parameterEndInd < text.length()) {
-      char letter = text.charAt(parameterEndInd);
-      if (StringUtil.containsChar("ABCDEFGHJKSTfmisu", letter)) {
-        return parameterEndInd;
-      }
+    if (parameterEndInd == text.length()) {
+      return encodeUnhandledSuffixLength(text, escSeqBeginInd);
     }
-    return -1;
+    return StringUtil.containsChar("ABCDEFGHJKSTfmisu", text.charAt(parameterEndInd)) ? parameterEndInd : -1;
+  }
+
+  private static int encodeUnhandledSuffixLength(@NotNull String text, int suffixStartInd) {
+    return -1 - (text.length() - suffixStartInd);
+  }
+
+  private static int decodeUnhandledSuffixLength(int encodedUnhandledSuffixLength) {
+    if (encodedUnhandledSuffixLength >= -1) {
+      throw new AssertionError();
+    }
+    return -encodedUnhandledSuffixLength - 1;
   }
 
   @Nullable
@@ -189,17 +269,12 @@ public class AnsiEscapeDecoder {
     return myCurrentTextAttributes != null ? myCurrentTextAttributes : outputType;
   }
 
-  public void coloredTextAvailable(@NotNull List<Pair<String, Key>> textChunks, ColoredTextAcceptor textAcceptor) {
-    for (Pair<String, Key> textChunk : textChunks) {
-      textAcceptor.coloredTextAvailable(textChunk.getFirst(), textChunk.getSecond());
-    }
-  }
-
   public interface ColoredChunksAcceptor extends ColoredTextAcceptor {
-    void coloredChunksAvailable(List<Pair<String, Key>> chunks);
+    void coloredChunksAvailable(@NotNull List<Pair<String, Key>> chunks);
   }
 
+  @FunctionalInterface
   public interface ColoredTextAcceptor {
-    void coloredTextAvailable(String text, Key attributes);
+    void coloredTextAvailable(@NotNull String text, @NotNull Key attributes);
   }
 }

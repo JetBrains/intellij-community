@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.ide.ui.OptionsTopHitProvider;
 import com.intellij.ide.ui.PublicFieldBasedOptionDescription;
 import com.intellij.ide.ui.PublicMethodBasedOptionDescription;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
+import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -35,6 +36,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+import static com.intellij.vcs.commit.CommitMessageInspectionProfile.getBodyRightMargin;
+
 /**
  * @author Sergey.Malenkov
  */
@@ -46,7 +49,7 @@ public final class VcsOptionsTopHitProvider extends OptionsTopHitProvider {
 
   @NotNull
   @Override
-  public Collection<BooleanOptionDescription> getOptions(@Nullable Project project) {
+  public Collection<OptionDescription> getOptions(@Nullable Project project) {
     if (project == null || ProjectLevelVcsManager.getInstance(project).getAllVcss().length == 0) {
       return Collections.emptyList();
     }
@@ -59,13 +62,12 @@ public final class VcsOptionsTopHitProvider extends OptionsTopHitProvider {
     String id = "project.propVCSSupport.Mappings"; // process Version Control settings
     options.add(option(vcs, id, "Limit history by " + vcs.MAXIMUM_HISTORY_ROWS + " rows", "LIMIT_HISTORY"));
     options.add(option(vcs, id, "Show directories with changed descendants", "SHOW_DIRTY_RECURSIVELY"));
-    options.add(option(vcs, id, VcsBundle.message("vcs.shelf.store.base.content"), "INCLUDE_TEXT_INTO_SHELF"));
     VcsContentAnnotationSettings vcsCA = VcsContentAnnotationSettings.getInstance(project);
     if (vcsCA != null) {
       options.add(option(vcsCA, id, "Show changed in last " + vcsCA.getLimitDays() + " days", "isShow", "setShow"));
     }
     options.add(option(vcs, id, "Notify about VCS root errors", "SHOW_VCS_ERROR_NOTIFICATIONS"));
-    options.add(option(vcs, id, "Commit message right margin " + vcs.COMMIT_MESSAGE_MARGIN_SIZE + " columns", "USE_COMMIT_MESSAGE_MARGIN"));
+    options.add(option(vcs, id, "Commit message right margin " + getBodyRightMargin(project) + " columns", "USE_COMMIT_MESSAGE_MARGIN"));
     options.add(option(vcs, id, ApplicationBundle.message("checkbox.wrap.typing.on.right.margin"), "WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN"));
 
     id = "project.propVCSSupport.Confirmation"; // process Version Control / Confirmation settings
@@ -84,6 +86,9 @@ public final class VcsOptionsTopHitProvider extends OptionsTopHitProvider {
     options.add(option(vcs, id, "Perform in background: Edit/Checkout", "PERFORM_EDIT_IN_BACKGROUND"));
     options.add(option(vcs, id, "Perform in background: Add/Remove", "PERFORM_ADD_REMOVE_IN_BACKGROUND"));
     options.add(option(vcs, id, "Perform in background: revert", "PERFORM_ROLLBACK_IN_BACKGROUND"));
+    
+    id = ShelfProjectConfigurable.HELP_ID;
+    options.add(option(vcs, id, VcsBundle.message("vcs.shelf.store.base.content"), "INCLUDE_TEXT_INTO_SHELF"));
 
     if (!project.isDefault()) {
       // process Version Control / Changelist Conflicts settings

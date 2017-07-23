@@ -34,6 +34,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
+import static com.intellij.util.ArrayUtil.toObjectArray;
+
 public class SyncScrollSupport {
   public interface SyncScrollable {
     @CalledInAwt
@@ -106,7 +108,7 @@ public class SyncScrollSupport {
 
     @NotNull
     private ScrollHelper create(@NotNull Side side) {
-      return ScrollHelper.create(myEditors, side.getIndex(), side.other().getIndex(), myScrollable, side);
+      return new ScrollHelper(myEditors, side.getIndex(), side.other().getIndex(), myScrollable, side);
     }
   }
 
@@ -209,7 +211,7 @@ public class SyncScrollSupport {
         side = Side.fromLeft(master == ThreeSide.BASE);
       }
 
-      return ScrollHelper.create(myEditors, master.getIndex(), slave.getIndex(), scrollable, side);
+      return new ScrollHelper(myEditors, master.getIndex(), slave.getIndex(), scrollable, side);
     }
   }
 
@@ -249,7 +251,7 @@ public class SyncScrollSupport {
       assert startLines.length == count;
       assert endLines.length == count;
 
-      final int[] offsets = getTargetOffsets(editors.toArray(new Editor[count]), startLines, endLines, -1);
+      final int[] offsets = getTargetOffsets(toObjectArray(editors, Editor.class), startLines, endLines, -1);
 
       final int[] startOffsets = new int[count];
       for (int i = 0; i < count; i++) {
@@ -292,34 +294,30 @@ public class SyncScrollSupport {
     }
   }
 
-  private static abstract class ScrollHelper implements VisibleAreaListener {
+  private static class ScrollHelper implements VisibleAreaListener {
     @NotNull private final List<? extends Editor> myEditors;
     private final int myMasterIndex;
     private final int mySlaveIndex;
+    @NotNull private final SyncScrollable myScrollable;
+    @NotNull private final Side mySide;
 
     @Nullable private Anchor myAnchor;
 
-    public ScrollHelper(@NotNull List<? extends Editor> editors, int masterIndex, int slaveIndex) {
+    public ScrollHelper(@NotNull List<? extends Editor> editors,
+                        int masterIndex,
+                        int slaveIndex,
+                        @NotNull SyncScrollable scrollable,
+                        @NotNull Side side) {
       myEditors = editors;
       myMasterIndex = masterIndex;
       mySlaveIndex = slaveIndex;
+      myScrollable = scrollable;
+      mySide = side;
     }
 
-    @NotNull
-    public static ScrollHelper create(@NotNull List<? extends Editor> editors,
-                                      int masterIndex,
-                                      int slaveIndex,
-                                      @NotNull final SyncScrollable scrollable,
-                                      @NotNull final Side side) {
-      return new ScrollHelper(editors, masterIndex, slaveIndex) {
-        @Override
-        protected int convertLine(int value) {
-          return scrollable.transfer(side, value);
-        }
-      };
+    private int convertLine(int value) {
+      return myScrollable.transfer(mySide, value);
     }
-
-    protected abstract int convertLine(int value);
 
     public void setAnchor(int masterStartOffset, int masterEndOffset, int slaveStartOffset, int slaveEndOffset) {
       myAnchor = new Anchor(masterStartOffset, masterEndOffset, slaveStartOffset, slaveEndOffset);
@@ -332,6 +330,7 @@ public class SyncScrollSupport {
     @Override
     public void visibleAreaChanged(VisibleAreaEvent e) {
       if (((FoldingModelImpl)getSlave().getFoldingModel()).isInBatchFoldingOperation()) return;
+      if (getMaster().isDisposed() || getSlave().isDisposed()) return;
 
       Rectangle newRectangle = e.getNewRectangle();
       Rectangle oldRectangle = e.getOldRectangle();
@@ -364,7 +363,10 @@ public class SyncScrollSupport {
 
       Rectangle viewRect = getMaster().getScrollingModel().getVisibleArea();
       int middleY = viewRect.height / 3;
+      int lineHeight = getMaster().getLineHeight();
 
+      boolean onlyMajorForward = false;
+      boolean onlyMajorBackward = false;
       int offset;
       if (myAnchor == null) {
         LogicalPosition masterPos = getMaster().xyToLogicalPosition(new Point(viewRect.x, viewRect.y + middleY));
@@ -372,8 +374,11 @@ public class SyncScrollSupport {
         int convertedCenterLine = convertLine(masterCenterLine);
 
         Point point = getSlave().logicalPositionToXY(new LogicalPosition(convertedCenterLine, masterPos.column));
-        int correction = (viewRect.y + middleY) % getMaster().getLineHeight();
+        int correction = (viewRect.y + middleY) % lineHeight;
         offset = point.y - middleY + correction;
+
+        onlyMajorBackward = convertedCenterLine == convertLine(masterCenterLine - 1) && correction < lineHeight / 2;
+        onlyMajorForward = convertedCenterLine == convertLine(masterCenterLine + 1) && correction > lineHeight / 2;
       }
       else {
         double progress = myAnchor.masterStartOffset == myAnchor.masterEndOffset || viewRect.y == myAnchor.masterEndOffset ? 1 :
@@ -383,7 +388,7 @@ public class SyncScrollSupport {
       }
 
       int deltaHeaderOffset = getHeaderOffset(getSlave()) - getHeaderOffset(getMaster());
-      doScrollVertically(getSlave(), offset + deltaHeaderOffset, animated);
+      doScrollVertically(getSlave(), offset + deltaHeaderOffset, animated, onlyMajorForward, onlyMajorBackward);
     }
 
     private void syncHorizontalScroll(boolean animated) {
@@ -393,7 +398,21 @@ public class SyncScrollSupport {
   }
 
   private static void doScrollVertically(@NotNull Editor editor, int offset, boolean animated) {
+    doScrollVertically(editor, offset, animated, false, false);
+  }
+
+  private static void doScrollVertically(@NotNull Editor editor, int offset, boolean animated,
+                                         boolean onlyMajorForward, boolean onlyMajorBackward) {
     ScrollingModel model = editor.getScrollingModel();
+
+    int currentOffset = model.getVerticalScrollOffset();
+    if (onlyMajorForward && offset > currentOffset ||
+        onlyMajorBackward && offset < currentOffset) {
+      if (Math.abs(offset - currentOffset) < editor.getLineHeight()) {
+        return;
+      }
+    }
+
     if (!animated) model.disableAnimation();
     model.scrollVertically(offset);
     if (!animated) model.enableAnimation();

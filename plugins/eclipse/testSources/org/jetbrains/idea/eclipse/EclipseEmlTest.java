@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 28-Nov-2008
- */
 package org.jetbrains.idea.eclipse;
 
 import com.intellij.openapi.application.PluginPathManager;
@@ -36,12 +32,9 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
-import junit.framework.Assert;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +43,9 @@ import org.jetbrains.idea.eclipse.conversion.IdeaSpecificSettings;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
+
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 public class EclipseEmlTest extends IdeaTestCase {
   @Override
@@ -91,11 +87,7 @@ public class EclipseEmlTest extends IdeaTestCase {
     final Element root = new Element("component");
     IdeaSpecificSettings.writeIdeaSpecificClasspath(root, rootModel);
 
-    final String resulted = new String(JDOMUtil.printDocument(new Document(root), "\n"));
-
-    final File emlFile = new File(path, module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX);
-    Assert.assertTrue(resulted.replaceAll(StringUtil.escapeToRegexp(module.getProject().getBaseDir().getPath()), "\\$ROOT\\$"),
-                      JDOMUtil.areElementsEqual(root, JDOMUtil.loadDocument(FileUtil.loadFile(emlFile)).getRootElement()));
+    assertThat(root).isEqualTo(Paths.get(path, module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX));
   }
 
   private static void replaceRoot(String path, final String child, final Project project) throws IOException, JDOMException {
@@ -104,7 +96,7 @@ public class EclipseEmlTest extends IdeaTestCase {
     if (!SystemInfo.isWindows) {
       fileText = fileText.replaceAll(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL);
     }
-    JDOMUtil.writeDocument(JDOMUtil.loadDocument(fileText), emlFile, "\n");
+    JDOMUtil.write(JDOMUtil.load(fileText), emlFile, "\n");
   }
 
   public void testSrcInZip() throws Exception {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,18 +27,20 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.runner.DefaultGroovyScriptRunner;
@@ -50,6 +52,8 @@ import java.awt.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+
+import static org.jetbrains.plugins.groovy.console.GroovyConsoleUtilKt.getWorkingDirectory;
 
 public class GroovyConsole {
 
@@ -64,8 +68,6 @@ public class GroovyConsole {
   private final ConsoleView myConsoleView;
   private final ProcessHandler myProcessHandler;
 
-  private boolean first = true;
-
   public GroovyConsole(Project project, RunContentDescriptor descriptor, ConsoleView view, ProcessHandler handler) {
     myProject = project;
     myContentDescriptor = descriptor;
@@ -74,19 +76,14 @@ public class GroovyConsole {
   }
 
   private void doExecute(@NotNull String command) {
-    // dirty hack
-    if (first) {
-      first = false;
-    }
-    else {
+    for (String line : command.trim().split("\n")) {
+      myConsoleView.print("> ", ConsoleViewContentType.USER_INPUT);
+      myConsoleView.print(line, ConsoleViewContentType.USER_INPUT);
       myConsoleView.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
     }
-    if (!command.endsWith("\n")) command += "\n";
-    myConsoleView.print("> ", ConsoleViewContentType.USER_INPUT);
-    myConsoleView.print(command, ConsoleViewContentType.NORMAL_OUTPUT);
-    myConsoleView.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
-    myConsoleView.print("Result: ", ConsoleViewContentType.SYSTEM_OUTPUT);
-    send(myProcessHandler, StringUtil.replace(command, "\n", "###\\n"));
+    ApplicationManager.getApplication().executeOnPooledThread(
+      () -> send(myProcessHandler, StringUtil.replace(command, "\n", "###\\n"))
+    );
   }
 
   public void execute(@NotNull String command) {
@@ -150,7 +147,7 @@ public class GroovyConsole {
     consoleStateService.setFileModule(contentFile, module);
     final String title = consoleStateService.getSelectedModuleTitle(contentFile);
 
-    final ConsoleViewImpl consoleView = new ConsoleViewImpl(project, true);
+    final ConsoleViewImpl consoleView = new GroovyConsoleView(project);
     final RunContentDescriptor descriptor = new RunContentDescriptor(consoleView, processHandler, new JPanel(new BorderLayout()), title);
     final GroovyConsole console = new GroovyConsole(project, descriptor, consoleView, processHandler);
 
@@ -169,7 +166,7 @@ public class GroovyConsole {
       }
     });
 
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, false);
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("GroovyConsole", actionGroup, false);
     toolbar.setTargetComponent(consoleViewComponent);
 
     final JComponent ui = descriptor.getComponent();
@@ -222,14 +219,9 @@ public class GroovyConsole {
 
   private static JavaParameters createJavaParameters(@NotNull Module module) throws ExecutionException {
     JavaParameters res = GroovyScriptRunConfiguration.createJavaParametersWithSdk(module);
-    DefaultGroovyScriptRunner
-      .configureGenericGroovyRunner(res, module, "groovy.ui.GroovyMain", !GroovyConsoleUtil.hasGroovyAll(module), true);
-    PathsList list = GroovyScriptRunner.getClassPathFromRootModel(module, true, res, true, res.getClassPath());
-    if (list != null) {
-      res.getClassPath().addAll(list.getPathList());
-    }
+    DefaultGroovyScriptRunner.configureGenericGroovyRunner(res, module, "groovy.ui.GroovyMain", !GroovyConsoleUtil.hasGroovyAll(module), true, true, false);
     res.getProgramParametersList().addAll("-p", GroovyScriptRunner.getPathInConf("console.txt"));
-    res.setWorkingDirectory(ModuleRootManager.getInstance(module).getContentRoots()[0].getPath());
+    res.setWorkingDirectory(getWorkingDirectory(module));
     res.setUseDynamicClasspath(true);
     return res;
   }

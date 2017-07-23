@@ -16,23 +16,32 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.VirtualFileGist;
+import one.util.streamex.EntryStream;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.IntFunction;
+import java.util.stream.Stream;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
@@ -45,24 +54,26 @@ import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalys
  *
  * @author lambdamix
  */
-public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<Bytes, HEquations>> {
+public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMethod, Equations>> {
 
   public static final Final FINAL_TOP = new Final(Value.Top);
+  public static final Final FINAL_FAIL = new Final(Value.Fail);
   public static final Final FINAL_BOT = new Final(Value.Bot);
   public static final Final FINAL_NOT_NULL = new Final(Value.NotNull);
   public static final Final FINAL_NULL = new Final(Value.Null);
 
+  public static final Consumer<Map<HMethod, Equations>> ourIndexSizeStatistics =
+    ApplicationManager.getApplication().isUnitTestMode() ? new ClassDataIndexerStatistics() : map -> {};
+
   @Nullable
   @Override
-  public Map<Bytes, HEquations> calcData(@NotNull Project project, @NotNull VirtualFile file) {
-    HashMap<Bytes, HEquations> map = new HashMap<>();
+  public Map<HMethod, Equations> calcData(@NotNull Project project, @NotNull VirtualFile file) {
+    HashMap<HMethod, Equations> map = new HashMap<>();
     try {
       MessageDigest md = BytecodeAnalysisConverter.getMessageDigest();
-      Map<Key, List<Equation>> allEquations = processClass(new ClassReader(file.contentsToByteArray(false)), file.getPresentableUrl());
-      for (Map.Entry<Key, List<Equation>> entry: allEquations.entrySet()) {
-        Key methodKey = entry.getKey();
-        map.put(compressKey(md, methodKey), convertEquations(md, methodKey, entry.getValue()));
-      }
+      Map<EKey, Equations> allEquations = processClass(new ClassReader(file.contentsToByteArray(false)), file.getPresentableUrl());
+      allEquations = solvePartially(allEquations);
+      allEquations.forEach((methodKey, equations) -> map.put(methodKey.method.hashed(md), hash(equations, md)));
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -72,22 +83,64 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<Byte
       // so here we suppose that exception is due to incorrect bytecode
       LOG.debug("Unexpected Error during indexing of bytecode", e);
     }
+    ourIndexSizeStatistics.consume(map);
     return map;
   }
 
-  @NotNull
-  static Bytes compressKey(MessageDigest md, Key methodKey) {
-    return new Bytes(BytecodeAnalysisConverter.asmKey(methodKey, md).key);
+  private static Map<EKey, Equations> solvePartially(Map<EKey, Equations> map) {
+    PuritySolver solver = new PuritySolver();
+    BiFunction<EKey, Equations, EKey> keyCreator = (key, eqs) -> new EKey(key.method, Pure, eqs.stable, false);
+    EntryStream.of(map).mapToKey(keyCreator)
+      .flatMapValues(eqs -> eqs.results.stream().map(drp -> drp.result))
+      .selectValues(Effects.class)
+      .forKeyValue(solver::addEquation);
+    Map<EKey, Effects> solved = solver.solve();
+    Map<EKey, Effects> partiallySolvedPurity =
+      StreamEx.of(solved, solver.pending).flatMapToEntry(Function.identity()).removeValues(Effects::isTop).toMap();
+    return EntryStream.of(map)
+      .mapToValue((key, eqs) -> eqs.update(Pure, partiallySolvedPurity.get(keyCreator.apply(key, eqs))))
+      .toMap();
   }
 
+  private static Equations hash(Equations equations, MessageDigest md) {
+    return new Equations(ContainerUtil.map(equations.results, drp -> hash(drp, md)), equations.stable);
+  }
+
+  private static DirectionResultPair hash(DirectionResultPair drp, MessageDigest md) {
+    return new DirectionResultPair(drp.directionKey, hash(drp.result, md));
+  }
+
+  private static Result hash(Result result, MessageDigest md) {
+    if(result instanceof Effects) {
+      Effects effects = (Effects)result;
+      return new Effects(effects.returnValue, StreamEx.of(effects.effects).map(effect -> hash(effect, md)).toSet());
+    } else if(result instanceof Pending) {
+      return new Pending(ContainerUtil.map(((Pending)result).delta, component -> hash(component, md)));
+    }
+    return result;
+  }
+
+  private static Component hash(Component component, MessageDigest md) {
+    return new Component(component.value, StreamEx.of(component.ids).map(key -> key.hashed(md)).toArray(EKey[]::new));
+  }
+
+  private static EffectQuantum hash(EffectQuantum effect, MessageDigest md) {
+    if(effect instanceof EffectQuantum.CallQuantum) {
+      EffectQuantum.CallQuantum call = (EffectQuantum.CallQuantum)effect;
+      return new EffectQuantum.CallQuantum(call.key.hashed(md), call.data, call.isStatic);
+    }
+    return effect;
+  }
+
+
   @NotNull
-  private static HEquations convertEquations(MessageDigest md, Key methodKey, List<Equation> rawMethodEquations) {
+  private static Equations convertEquations(EKey methodKey, List<Equation> rawMethodEquations) {
     List<DirectionResultPair> compressedMethodEquations =
-      ContainerUtil.map(rawMethodEquations, equation -> BytecodeAnalysisConverter.convert(equation, md));
-    return new HEquations(compressedMethodEquations, methodKey.stable);
+      ContainerUtil.map(rawMethodEquations, equation -> new DirectionResultPair(equation.key.dirKey, equation.result));
+    return new Equations(compressedMethodEquations, methodKey.stable);
   }
 
-  public static Map<Key, List<Equation>> processClass(final ClassReader classReader, final String presentableUrl) {
+  public static Map<EKey, Equations> processClass(final ClassReader classReader, final String presentableUrl) {
 
     // It is OK to share pending states, actions and results for analyses.
     // Analyses are designed in such a way that they first write to states/actions/results and then read only those portion
@@ -96,11 +149,11 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<Byte
     final State[] sharedPendingStates = new State[Analysis.STEPS_LIMIT];
     final PendingAction[] sharedPendingActions = new PendingAction[Analysis.STEPS_LIMIT];
     final PResults.PResult[] sharedResults = new PResults.PResult[Analysis.STEPS_LIMIT];
-    final Map<Key, List<Equation>> equations = new HashMap<>();
+    final Map<EKey, Equations> equations = new HashMap<>();
 
     classReader.accept(new KeyedMethodVisitor() {
 
-      protected MethodVisitor visitMethod(final MethodNode node, final Key key) {
+      protected MethodVisitor visitMethod(final MethodNode node, Method method, final EKey key) {
         return new MethodVisitor(Opcodes.API_VERSION, node) {
           private boolean jsr;
 
@@ -115,7 +168,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<Byte
           @Override
           public void visitEnd() {
             super.visitEnd();
-            equations.put(key, processMethod(node, jsr, key.method, key.stable));
+            equations.put(key, convertEquations(key, processMethod(node, jsr, method, key.stable)));
           }
         };
       }
@@ -125,6 +178,8 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<Byte
        *
        * @param methodNode asm node for method
        * @param jsr whether a method has jsr instruction
+       * @param method a method descriptor
+       * @param stable whether a method is stable (final or declared in a final class)
        */
       private List<Equation> processMethod(final MethodNode methodNode, boolean jsr, Method method, boolean stable) {
         ProgressManager.checkCanceled();
@@ -134,15 +189,8 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<Byte
         final boolean isBooleanResult = ASMUtils.isBooleanType(resultType);
         final boolean isInterestingResult = isReferenceResult || isBooleanResult;
 
-        // 4*n: for each reference parameter: @NotNull IN, @Nullable, null -> ... contract, !null -> contract
-        // 3: @NotNull OUT, @Nullable OUT, purity analysis
-        List<Equation> equations = new ArrayList<>(argumentTypes.length * 4 + 3);
-        equations.add(PurityAnalysis.analyze(method, methodNode, stable));
-
-        if (argumentTypes.length == 0 && !isInterestingResult) {
-          // no need to continue analysis
-          return equations;
-        }
+        List<Equation> equations = new ArrayList<>();
+        ContainerUtil.addIfNotNull(equations, PurityAnalysis.analyze(method, methodNode, stable));
 
         try {
           final ControlFlowGraph graph = ControlFlowGraph.build(className, methodNode, jsr);
@@ -161,18 +209,21 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<Byte
               RichControlFlow richControlFlow = new RichControlFlow(graph, dfs);
               if (richControlFlow.reducible()) {
                 NegationAnalysis negated = tryNegation(method, argumentTypes, graph, isBooleanResult, dfs, jsr);
-                processBranchingMethod(method, methodNode, richControlFlow, argumentTypes, isReferenceResult, isBooleanResult, stable, jsr, equations, negated);
+                processBranchingMethod(method, methodNode, richControlFlow, argumentTypes, resultType, stable, jsr, equations, negated);
                 return equations;
               }
               LOG.debug(method + ": CFG is not reducible");
             }
             // simple
             else {
-              processNonBranchingMethod(method, argumentTypes, graph, isReferenceResult, isBooleanResult, stable, equations);
+              processNonBranchingMethod(method, argumentTypes, graph, resultType, stable, equations);
               return equations;
             }
           }
-          return topEquations(method, argumentTypes, isReferenceResult, isInterestingResult, stable);
+          // We can visit here if method body is absent (e.g. native method)
+          // Make sure to preserve hardcoded purity, if any.
+          equations.addAll(topEquations(method, argumentTypes, isReferenceResult, isInterestingResult, stable));
+          return equations;
         }
         catch (ProcessCanceledException e) {
           throw e;
@@ -279,33 +330,22 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<Byte
                                           final MethodNode methodNode,
                                           final RichControlFlow richControlFlow,
                                           Type[] argumentTypes,
-                                          boolean isReferenceResult,
-                                          boolean isBooleanResult,
+                                          Type resultType,
                                           final boolean stable,
                                           boolean jsr,
                                           List<Equation> result,
                                           NegationAnalysis negatedAnalysis) throws AnalyzerException {
+        final boolean isReferenceResult = ASMUtils.isReferenceType(resultType);
+        final boolean isBooleanResult = ASMUtils.isBooleanType(resultType);
         boolean isInterestingResult = isBooleanResult || isReferenceResult;
-        boolean maybeLeakingParameter = isInterestingResult;
-        for (Type argType : argumentTypes) {
-          if (ASMUtils.isReferenceType(argType)) {
-            maybeLeakingParameter = true;
-            break;
-          }
-        }
 
-        final LeakingParameters leakingParametersAndFrames =
-          maybeLeakingParameter ? leakingParametersAndFrames(method, methodNode, argumentTypes, jsr) : null;
+        final LeakingParameters leakingParametersAndFrames = leakingParametersAndFrames(method, methodNode, argumentTypes, jsr);
 
-        boolean[] leakingParameters =
-          leakingParametersAndFrames != null ? leakingParametersAndFrames.parameters : null;
-        boolean[] leakingNullableParameters =
-          leakingParametersAndFrames != null ? leakingParametersAndFrames.nullableParameters : null;
+        boolean[] leakingParameters = leakingParametersAndFrames.parameters;
+        boolean[] leakingNullableParameters = leakingParametersAndFrames.nullableParameters;
 
         final boolean[] origins =
-          isInterestingResult ?
-          OriginsAnalysis.resultOrigins(leakingParametersAndFrames.frames, methodNode.instructions, richControlFlow.controlFlow) :
-          null;
+          OriginsAnalysis.resultOrigins(leakingParametersAndFrames.frames, methodNode.instructions, richControlFlow.controlFlow);
 
         Equation outEquation =
           isInterestingResult ?
@@ -314,7 +354,21 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<Byte
 
         if (isReferenceResult) {
           result.add(outEquation);
-          result.add(new Equation(new Key(method, NullableOut, stable), NullableMethodAnalysis.analyze(methodNode, origins, jsr)));
+          result.add(new Equation(new EKey(method, NullableOut, stable), NullableMethodAnalysis.analyze(methodNode, origins, jsr)));
+        }
+        final boolean shouldInferNonTrivialFailingContracts;
+        final Equation throwEquation;
+        if(methodNode.name.equals("<init>")) {
+          // Do not infer failing contracts for constructors
+          shouldInferNonTrivialFailingContracts = false;
+          throwEquation = new Equation(new EKey(method, Throw, stable), FINAL_TOP);
+        } else {
+          final InThrowAnalysis inThrowAnalysis = new InThrowAnalysis(richControlFlow, Throw, origins, stable, sharedPendingStates);
+          throwEquation = inThrowAnalysis.analyze();
+          if (!throwEquation.result.equals(FINAL_TOP)) {
+            result.add(throwEquation);
+          }
+          shouldInferNonTrivialFailingContracts = !inThrowAnalysis.myHasNonTrivialReturn;
         }
 
         boolean withCycle = !richControlFlow.dfsTree.back.isEmpty();
@@ -323,6 +377,31 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<Byte
           return;
         }
 
+        final IntFunction<Function<Value, Stream<Equation>>> inOuts =
+          index -> val -> {
+            if (isBooleanResult && negatedAnalysis != null) {
+              return Stream.of(negatedAnalysis.contractEquation(index, val, stable));
+            }
+            Stream.Builder<Equation> builder = Stream.builder();
+            try {
+              if (isInterestingResult) {
+                builder.add(new InOutAnalysis(richControlFlow, new InOut(index, val), origins, stable, sharedPendingStates).analyze());
+              }
+              if (shouldInferNonTrivialFailingContracts) {
+                InThrow direction = new InThrow(index, val);
+                if (throwEquation.result.equals(FINAL_FAIL)) {
+                  builder.add(new Equation(new EKey(method, direction, stable), FINAL_FAIL));
+                }
+                else {
+                  builder.add(new InThrowAnalysis(richControlFlow, direction, origins, stable, sharedPendingStates).analyze());
+                }
+              }
+            }
+            catch (AnalyzerException e) {
+              throw new RuntimeException("Analyzer error", e);
+            }
+            return builder.build();
+          };
         // arguments and contract clauses
         for (int i = 0; i < argumentTypes.length; i++) {
           boolean notNullParam = false;
@@ -331,105 +410,91 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<Byte
             boolean possibleNPE = false;
             if (leakingParameters[i]) {
               NonNullInAnalysis notNullInAnalysis =
-                new NonNullInAnalysis(richControlFlow, new In(i, In.NOT_NULL_MASK), stable, sharedPendingActions, sharedResults);
+                new NonNullInAnalysis(richControlFlow, new In(i, false), stable, sharedPendingActions, sharedResults);
               Equation notNullParamEquation = notNullInAnalysis.analyze();
               possibleNPE = notNullInAnalysis.possibleNPE;
-              notNullParam = notNullParamEquation.rhs.equals(FINAL_NOT_NULL);
+              notNullParam = notNullParamEquation.result.equals(FINAL_NOT_NULL);
               result.add(notNullParamEquation);
             }
             else {
               // parameter is not leaking, so it is definitely NOT @NotNull
-              result.add(new Equation(new Key(method, new In(i, In.NOT_NULL_MASK), stable), FINAL_TOP));
+              result.add(new Equation(new EKey(method, new In(i, false), stable), FINAL_TOP));
             }
 
             if (leakingNullableParameters[i]) {
               if (notNullParam || possibleNPE) {
-                result.add(new Equation(new Key(method, new In(i, In.NULLABLE_MASK), stable), FINAL_TOP));
+                result.add(new Equation(new EKey(method, new In(i, true), stable), FINAL_TOP));
               }
               else {
-                result.add(new NullableInAnalysis(richControlFlow, new In(i, In.NULLABLE_MASK), stable, sharedPendingStates).analyze());
+                result.add(new NullableInAnalysis(richControlFlow, new In(i, true), stable, sharedPendingStates).analyze());
               }
             }
             else {
-              result.add(new Equation(new Key(method, new In(i, In.NULLABLE_MASK), stable), FINAL_NULL));
+              result.add(new Equation(new EKey(method, new In(i, true), stable), FINAL_NULL));
             }
 
             if (isInterestingResult) {
-              if (leakingParameters[i]) {
-                if (notNullParam) {
-                  // @NotNull, so "null->fail"
-                  result.add(new Equation(new Key(method, new InOut(i, Value.Null), stable), FINAL_BOT));
-                }
-                else {
-                  // may be null on some branch, running "null->..." analysis
-                  if (isBooleanResult && negatedAnalysis != null) {
-                      result.add(negatedAnalysis.contractEquation(i, Value.Null, stable));
-                  }
-                  else {
-                    result.add(new InOutAnalysis(richControlFlow, new InOut(i, Value.Null), origins, stable, sharedPendingStates).analyze());
-                  }
-                }
-                if (isBooleanResult && negatedAnalysis != null) {
-                  result.add(negatedAnalysis.contractEquation(i, Value.NotNull, stable));
-                }
-                else {
-                  result.add(new InOutAnalysis(richControlFlow, new InOut(i, Value.NotNull), origins, stable, sharedPendingStates).analyze());
-                }
-              }
-              else {
+              if (!leakingParameters[i]) {
                 // parameter is not leaking, so a contract is the same as for the whole method
-                result.add(new Equation(new Key(method, new InOut(i, Value.Null), stable), outEquation.rhs));
-                result.add(new Equation(new Key(method, new InOut(i, Value.NotNull), stable), outEquation.rhs));
+                result.add(new Equation(new EKey(method, new InOut(i, Value.Null), stable), outEquation.result));
+                result.add(new Equation(new EKey(method, new InOut(i, Value.NotNull), stable), outEquation.result));
+                continue;
+              }
+              if (notNullParam) {
+                // @NotNull, like "null->fail"
+                result.add(new Equation(new EKey(method, new InOut(i, Value.Null), stable), FINAL_BOT));
+                result.add(new Equation(new EKey(method, new InOut(i, Value.NotNull), stable), outEquation.result));
+                continue;
               }
             }
           }
+          Value.typeValues(argumentTypes[i]).flatMap(inOuts.apply(i)).forEach(result::add);
         }
       }
 
       private void processNonBranchingMethod(Method method,
                                              Type[] argumentTypes,
                                              ControlFlowGraph graph,
-                                             boolean isReferenceResult,
-                                             boolean isBooleanResult,
+                                             Type returnType,
                                              boolean stable,
                                              List<Equation> result) throws AnalyzerException {
         CombinedAnalysis analyzer = new CombinedAnalysis(method, graph);
         analyzer.analyze();
-        if (isReferenceResult) {
-          result.add(analyzer.outContractEquation(stable));
+        ContainerUtil.addIfNotNull(result, analyzer.outContractEquation(stable));
+        ContainerUtil.addIfNotNull(result, analyzer.failEquation(stable));
+        if (ASMUtils.isReferenceType(returnType)) {
           result.add(analyzer.nullableResultEquation(stable));
         }
-        for (int i = 0; i < argumentTypes.length; i++) {
-          Type argType = argumentTypes[i];
+        EntryStream.of(argumentTypes).forKeyValue((i, argType) -> {
           if (ASMUtils.isReferenceType(argType)) {
             result.add(analyzer.notNullParamEquation(i, stable));
             result.add(analyzer.nullableParamEquation(i, stable));
-            if (isReferenceResult || isBooleanResult) {
-              result.add(analyzer.contractEquation(i, Value.Null, stable));
-              result.add(analyzer.contractEquation(i, Value.NotNull, stable));
-            }
           }
-        }
+          Value.typeValues(argType)
+            .flatMap(val -> Stream.of(analyzer.contractEquation(i, val, stable), analyzer.failEquation(i, val, stable)))
+            .filter(Objects::nonNull)
+            .forEach(result::add);
+        });
       }
 
       private List<Equation> topEquations(Method method,
-                                                      Type[] argumentTypes,
-                                                      boolean isReferenceResult,
-                                                      boolean isInterestingResult,
-                                                      boolean stable) {
+                                          Type[] argumentTypes,
+                                          boolean isReferenceResult,
+                                          boolean isInterestingResult,
+                                          boolean stable) {
         // 4 = @NotNull parameter, @Nullable parameter, null -> ..., !null -> ...
         List<Equation> result = new ArrayList<>(argumentTypes.length * 4 + 2);
         if (isReferenceResult) {
-          result.add(new Equation(new Key(method, Out, stable), FINAL_TOP));
-          result.add(new Equation(new Key(method, NullableOut, stable), FINAL_BOT));
+          result.add(new Equation(new EKey(method, Out, stable), FINAL_TOP));
+          result.add(new Equation(new EKey(method, NullableOut, stable), FINAL_BOT));
         }
         for (int i = 0; i < argumentTypes.length; i++) {
           if (ASMUtils.isReferenceType(argumentTypes[i])) {
-            result.add(new Equation(new Key(method, new In(i, In.NOT_NULL_MASK), stable), FINAL_TOP));
-            result.add(new Equation(new Key(method, new In(i, In.NULLABLE_MASK), stable), FINAL_TOP));
+            result.add(new Equation(new EKey(method, new In(i, false), stable), FINAL_TOP));
+            result.add(new Equation(new EKey(method, new In(i, true), stable), FINAL_TOP));
             if (isInterestingResult) {
-              result.add(new Equation(new Key(method, new InOut(i, Value.Null), stable), FINAL_TOP));
-              result.add(new Equation(new Key(method, new InOut(i, Value.NotNull), stable), FINAL_TOP));
+              result.add(new Equation(new EKey(method, new InOut(i, Value.Null), stable), FINAL_TOP));
+              result.add(new Equation(new EKey(method, new InOut(i, Value.NotNull), stable), FINAL_TOP));
             }
           }
         }
@@ -446,5 +511,31 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<Byte
     }, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
     return equations;
+  }
+
+  private static class ClassDataIndexerStatistics implements Consumer<Map<HMethod, Equations>> {
+    private static final AtomicLong ourTotalSize = new AtomicLong(0);
+    private static final AtomicLong ourTotalCount = new AtomicLong(0);
+
+    @Override
+    public void consume(Map<HMethod, Equations> map) {
+      try {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        new BytecodeAnalysisIndex.EquationsExternalizer().save(new DataOutputStream(stream), map);
+        ourTotalSize.addAndGet(stream.size());
+        ourTotalCount.incrementAndGet();
+      }
+      catch (IOException ignored) {
+      }
+    }
+
+    @Override
+    public String toString() {
+      if(ourTotalCount.get() == 0) {
+        return "";
+      }
+      return String.format(Locale.ENGLISH, "Classes: %d\nBytes: %d\nBytes per class: %.2f%n", ourTotalCount.get(), ourTotalSize.get(),
+                           ((double)ourTotalSize.get()) / ourTotalCount.get());
+    }
   }
 }

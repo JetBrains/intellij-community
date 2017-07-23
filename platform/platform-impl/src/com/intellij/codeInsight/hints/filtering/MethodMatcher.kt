@@ -56,18 +56,30 @@ object MatcherConstructor {
     val trimmedMatcher = matcher.trim()
     if (trimmedMatcher.isEmpty()) return null
 
-    val index = trimmedMatcher.indexOf('(')
-    if (index < 0) {
+    val openParenthIndex = trimmedMatcher.indexOf('(')
+    if (openParenthIndex < 0) {
       return Couple(trimmedMatcher, "")
     }
-    else if (index == 0) {
-      return Couple("", trimmedMatcher)
+    else if (openParenthIndex == 0) {
+      val paramsMatcher = getParamsMatcher(trimmedMatcher) ?: return null
+      return Couple("", paramsMatcher)
     }
 
-    val methodMatcher = trimmedMatcher.substring(0, index)
-    val paramsMatcher = trimmedMatcher.substring(index)
+    val methodMatcher = trimmedMatcher.substring(0, openParenthIndex)
+    val paramsMatcher = getParamsMatcher(trimmedMatcher) ?: return null
 
     return Couple(methodMatcher.trim(), paramsMatcher.trim())
+  }
+  
+  private fun getParamsMatcher(matcher: String): String? {
+    val openBraceIndex = matcher.indexOf("(")
+    val closeBraceIndex = matcher.indexOf(")")
+
+    if (openBraceIndex >= 0 && closeBraceIndex > 0) {
+      return matcher.substring(openBraceIndex, closeBraceIndex + 1).trim()
+    }
+    
+    return null
   }
 
   private fun createParametersMatcher(paramsMatcher: String): ParamMatcher? {

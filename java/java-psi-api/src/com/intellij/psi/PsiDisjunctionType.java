@@ -44,19 +44,16 @@ public class PsiDisjunctionType extends PsiType.Stub {
     myManager = psiManager;
     myTypes = Collections.unmodifiableList(types);
 
-    myLubCache = CachedValuesManager.getManager(myManager.getProject()).createCachedValue(new CachedValueProvider<PsiType>() {
-      @Override
-      public Result<PsiType> compute() {
-        PsiType lub = myTypes.get(0);
-        for (int i = 1; i < myTypes.size(); i++) {
-          lub = GenericsUtil.getLeastUpperBound(lub, myTypes.get(i), myManager);
-          if (lub == null) {
-            lub = PsiType.getJavaLangObject(myManager, GlobalSearchScope.allScope(myManager.getProject()));
-            break;
-          }
+    myLubCache = CachedValuesManager.getManager(myManager.getProject()).createCachedValue(() -> {
+      PsiType lub = myTypes.get(0);
+      for (int i = 1; i < myTypes.size(); i++) {
+        lub = GenericsUtil.getLeastUpperBound(lub, myTypes.get(i), myManager);
+        if (lub == null) {
+          lub = PsiType.getJavaLangObject(myManager, GlobalSearchScope.allScope(myManager.getProject()));
+          break;
         }
-        return Result.create(lub, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       }
+      return CachedValueProvider.Result.create(lub, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
     }, false);
   }
 
@@ -84,34 +81,19 @@ public class PsiDisjunctionType extends PsiType.Stub {
   @NotNull
   @Override
   public String getPresentableText(final boolean annotated) {
-    return StringUtil.join(myTypes, new Function<PsiType, String>() {
-      @Override
-      public String fun(PsiType psiType) {
-        return psiType.getPresentableText(annotated);
-      }
-    }, " | ");
+    return StringUtil.join(myTypes, psiType -> psiType.getPresentableText(annotated), " | ");
   }
 
   @NotNull
   @Override
   public String getCanonicalText(final boolean annotated) {
-    return StringUtil.join(myTypes, new Function<PsiType, String>() {
-      @Override
-      public String fun(PsiType psiType) {
-        return psiType.getCanonicalText(annotated);
-      }
-    }, " | ");
+    return StringUtil.join(myTypes, psiType -> psiType.getCanonicalText(annotated), " | ");
   }
 
   @NotNull
   @Override
   public String getInternalCanonicalText() {
-    return StringUtil.join(myTypes, new Function<PsiType, String>() {
-      @Override
-      public String fun(PsiType psiType) {
-        return psiType.getInternalCanonicalText();
-      }
-    }, " | ");
+    return StringUtil.join(myTypes, psiType -> psiType.getInternalCanonicalText(), " | ");
   }
 
   @Override

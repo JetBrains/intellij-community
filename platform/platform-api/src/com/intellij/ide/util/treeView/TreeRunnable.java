@@ -31,12 +31,12 @@ abstract class TreeRunnable extends NamedRunnable {
 
   @Override
   public final void run() {
-    debug("started");
+    trace("started");
     try {
       perform();
     }
     finally {
-      debug("finished");
+      trace("finished");
     }
   }
 

@@ -18,50 +18,37 @@
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 
-import java.io.File;
+import static com.intellij.util.containers.ContainerUtil.ar;
+import static org.jetbrains.idea.svn.SvnUtil.toIoFiles;
 
 public class UnlockAction extends BasicAction {
-  protected String getActionName(AbstractVcs vcs) {
+  @NotNull
+  @Override
+  protected String getActionName() {
     return SvnBundle.message("action.Subversion.Unlock.description");
   }
 
-  protected boolean needsAllFiles() {
-    return true;
+  @Override
+  protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile file) {
+    return !file.isDirectory() && SvnStatusUtil.isExplicitlyLocked(vcs, file);
   }
 
-  protected boolean isEnabled(Project project, SvnVcs vcs, VirtualFile file) {
-    if (file == null || file.isDirectory()) {
-      return false;
-    }
-    return SvnStatusUtil.isExplicitlyLocked(project, file);
+  @Override
+  protected void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) throws VcsException {
+    batchPerform(vcs, ar(file), context);
   }
 
-  protected boolean needsFiles() {
-    return true;
-  }
-
-  protected void perform(Project project, SvnVcs activeVcs, VirtualFile file, DataContext context)
-    throws VcsException {
-    batchPerform(project, activeVcs, new VirtualFile[]{file}, context);
-  }
-
-  protected void batchPerform(Project project, SvnVcs activeVcs, VirtualFile[] files, DataContext context)
-    throws VcsException {
-    File[] ioFiles = new File[files.length];
-    for (int i = 0; i < files.length; i++) {
-      VirtualFile virtualFile = files[i];
-      ioFiles[i] = new File(virtualFile.getPath());
-    }
-    SvnUtil.doUnlockFiles(project, activeVcs, ioFiles);
+  @Override
+  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) throws VcsException {
+    SvnUtil.doUnlockFiles(vcs.getProject(), vcs, toIoFiles(files));
   }
 
   protected boolean isBatchAction() {

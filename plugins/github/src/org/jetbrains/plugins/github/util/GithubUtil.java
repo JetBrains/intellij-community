@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -416,12 +417,12 @@ public class GithubUtil {
       return repositories.get(0);
     }
     if (file != null) {
-      GitRepository repository = manager.getRepositoryForFile(file);
+      GitRepository repository = manager.getRepositoryForFileQuick(file);
       if (repository != null) {
         return repository;
       }
     }
-    return manager.getRepositoryForFile(project.getBaseDir());
+    return manager.getRepositoryForFileQuick(project.getBaseDir());
   }
 
   public static boolean addGithubRemote(@NotNull Project project,
@@ -446,5 +447,37 @@ public class GithubUtil {
       GithubNotifications.showError(project, "Can't add remote", e);
       return false;
     }
+  }
+
+  /**
+   * Splits full commit message into subject and description in GitHub style:
+   * First line becomes subject, everything after first line becomes description
+   * Also supports empty line that separates subject and description
+   *
+   * @param commitMessage full commit message
+   * @return couple of subject and description based on full commit message
+   */
+  public static Couple<String> getGithubLikeFormattedDescriptionMessage(String commitMessage) {
+    //Trim original
+    String message = commitMessage == null ? "" : commitMessage.trim();
+    if (message.isEmpty()) {
+      return Couple.of("", "");
+    }
+    int firstLineEnd = message.indexOf("\n");
+    String subject;
+    String description;
+    if (firstLineEnd > -1) {
+      //Subject is always first line
+      subject = message.substring(0, firstLineEnd).trim();
+      //Description is all text after first line, we also trim it to remove empty lines on start of description
+      description = message.substring(firstLineEnd + 1).trim();
+    } else {
+      //If we don't have any line separators and cannot detect description,
+      //we just assume that it is one-line commit and use full message as subject with empty description
+      subject = message;
+      description = "";
+    }
+
+    return Couple.of(subject, description);
   }
 }

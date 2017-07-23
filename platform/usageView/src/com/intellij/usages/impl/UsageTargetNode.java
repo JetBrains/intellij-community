@@ -17,6 +17,7 @@ package com.intellij.usages.impl;
 
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -47,9 +48,10 @@ class UsageTargetNode extends Node {
     return false;
   }
 
+  @NotNull
   @Override
   protected String getText(@NotNull final UsageView view) {
-    return getTarget().getPresentation().getPresentableText();
+    return ObjectUtils.notNull(getTarget().getPresentation().getPresentableText(), "");
   }
 
   @NotNull

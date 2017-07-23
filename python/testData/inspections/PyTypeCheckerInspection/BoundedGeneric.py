@@ -9,4 +9,4 @@ def test():
     x = f(10)
     y = f('foo')
     z = f(<warning descr="Expected type 'TypeVar('T', int, str)', got 'list' instead">[]</warning>)
-    return x + <warning descr="Expected type 'Number', got 'str' instead">y</warning>
+    return x + <warning descr="Expected type 'int', got 'str' instead">y</warning>

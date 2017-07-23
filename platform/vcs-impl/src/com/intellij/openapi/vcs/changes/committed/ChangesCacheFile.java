@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
@@ -112,12 +111,7 @@ public class ChangesCacheFile {
     try {
       loadHeader();
     }
-    catch(VersionMismatchException ex) {
-      myPath.delete();
-      myIndexPath.delete();
-      return true;
-    }
-    catch(EOFException ex) {
+    catch(VersionMismatchException | EOFException ex) {
       myPath.delete();
       myIndexPath.delete();
       return true;
@@ -133,7 +127,7 @@ public class ChangesCacheFile {
       closeStreams();
     }
     catch (IOException e) {
-      //
+      LOG.debug(e);
     }
   }
 
@@ -968,21 +962,18 @@ public class ChangesCacheFile {
           return new ProcessingResult(true, AFTER_DOES_NOT_MATTER_DELETED_FOUND_IN_INCOMING_LIST);
         }
         else if (file != null) {
-          return new ProcessingResult(file, new Function<VcsRevisionNumber, ProcessingResult>() {
-            @Override
-            public ProcessingResult fun(VcsRevisionNumber revision) {
-              if (revision != null) {
-                debug("Current revision is " + revision + ", changelist revision is " + afterRevision.getRevisionNumber());
-                //noinspection unchecked
-                if (myChangesCacheFile.myChangesProvider
-                  .isChangeLocallyAvailable(afterRevision.getFile(), revision, afterRevision.getRevisionNumber(), changeList)) {
-                  return new ProcessingResult(true, AFTER_EXISTS_LOCALLY_AVAILABLE);
-                }
-                return new ProcessingResult(false, AFTER_EXISTS_NOT_LOCALLY_AVAILABLE);
+          return new ProcessingResult(file, revision -> {
+            if (revision != null) {
+              debug("Current revision is " + revision + ", changelist revision is " + afterRevision.getRevisionNumber());
+              //noinspection unchecked
+              if (myChangesCacheFile.myChangesProvider
+                .isChangeLocallyAvailable(afterRevision.getFile(), revision, afterRevision.getRevisionNumber(), changeList)) {
+                return new ProcessingResult(true, AFTER_EXISTS_LOCALLY_AVAILABLE);
               }
-              debug("Failed to fetch revision");
-              return new ProcessingResult(false, AFTER_EXISTS_REVISION_NOT_LOADED);
+              return new ProcessingResult(false, AFTER_EXISTS_NOT_LOCALLY_AVAILABLE);
             }
+            debug("Failed to fetch revision");
+            return new ProcessingResult(false, AFTER_EXISTS_REVISION_NOT_LOADED);
           });
         }
         else {
@@ -1022,17 +1013,14 @@ public class ChangesCacheFile {
         }
         else {
           final VirtualFile file = beforeRevision.getFile().getVirtualFile();
-          return new ProcessingResult(file, new Function<VcsRevisionNumber, ProcessingResult>() {
-            @Override
-            public ProcessingResult fun(VcsRevisionNumber currentRevision) {
-              if ((currentRevision != null) && (currentRevision.compareTo(beforeRevision.getRevisionNumber()) > 0)) {
-                // revived in newer revision - possibly was added file with same name
-                debug("File with same name was added after file deletion");
-                return new ProcessingResult(true, BEFORE_SAME_NAME_ADDED_AFTER_DELETION);
-              }
-              debug("File exists locally and no 'create' change found for it");
-              return new ProcessingResult(false, BEFORE_EXISTS_BUT_SHOULD_NOT);
+          return new ProcessingResult(file, currentRevision -> {
+            if ((currentRevision != null) && (currentRevision.compareTo(beforeRevision.getRevisionNumber()) > 0)) {
+              // revived in newer revision - possibly was added file with same name
+              debug("File with same name was added after file deletion");
+              return new ProcessingResult(true, BEFORE_SAME_NAME_ADDED_AFTER_DELETION);
             }
+            debug("File exists locally and no 'create' change found for it");
+            return new ProcessingResult(false, BEFORE_EXISTS_BUT_SHOULD_NOT);
           });
         }
       }
@@ -1162,12 +1150,7 @@ public class ChangesCacheFile {
     public Set<Change> accountedChanges;
 
     List<Change> getChangesToProcess() {
-      return ContainerUtil.filter(changeList.getChanges(), new Condition<Change>() {
-        @Override
-        public boolean value(Change change) {
-          return !accountedChanges.contains(change);
-        }
-      });
+      return ContainerUtil.filter(changeList.getChanges(), change -> !accountedChanges.contains(change));
     }
   }
 

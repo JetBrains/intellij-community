@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,21 @@
 package com.intellij.execution.runners;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.Executor;
 import com.intellij.execution.RunProfileStarter;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
+import static com.intellij.execution.runners.GenericProgramRunnerKt.startRunProfile;
+
 /**
- * Allows to postpone actual {@link RunProfileState} execution until all the needed preparations are done.
+ * @deprecated Use AsyncProgramRunner
  */
+@Deprecated
 public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings> extends BaseProgramRunner<Settings> {
   @Override
   protected final void execute(@NotNull ExecutionEnvironment environment,
@@ -45,6 +47,8 @@ public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings>
   /**
    * Makes all the needed preparations for the further execution. Although this method is called in EDT,
    * these preparations can be performed in a background thread.
+   * Please note that {@link RunProfileState#execute(Executor, ProgramRunner)} should not be called during the preparations
+   * to not execute the run profile before "Before launch" tasks.
    *
    * You must call {@link ExecutionUtil#handleExecutionError} in case of error
    *
@@ -54,16 +58,4 @@ public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings>
    */
   @NotNull
   protected abstract Promise<RunProfileStarter> prepare(@NotNull ExecutionEnvironment environment, @NotNull RunProfileState state) throws ExecutionException;
-
-  private static void startRunProfile(@NotNull ExecutionEnvironment environment,
-                                      @NotNull RunProfileState state,
-                                      @Nullable final Callback callback,
-                                      @Nullable final RunProfileStarter starter) {
-    ExecutionManager.getInstance(environment.getProject()).startRunProfile(new RunProfileStarter() {
-      @Override
-      public RunContentDescriptor execute(@NotNull RunProfileState state, @NotNull ExecutionEnvironment environment) throws ExecutionException {
-        return postProcess(environment, starter == null ? null : starter.execute(state, environment), callback);
-      }
-    }, state, environment);
-  }
 }

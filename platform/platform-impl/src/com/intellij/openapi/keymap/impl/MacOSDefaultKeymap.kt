@@ -23,14 +23,17 @@ import org.intellij.lang.annotations.JdkConstants
 import java.awt.event.InputEvent
 import javax.swing.KeyStroke
 
-class MacOSDefaultKeymap(dataHolder: SchemeDataHolder<KeymapImpl>) : DefaultKeymapImpl(dataHolder) {
+class MacOSDefaultKeymap(dataHolder: SchemeDataHolder<KeymapImpl>, defaultKeymapManager: DefaultKeymap) : DefaultKeymapImpl(dataHolder, defaultKeymapManager) {
   companion object {
     @JvmStatic
     fun convertShortcutFromParent(shortcut: Shortcut): Shortcut {
       if (shortcut is MouseShortcut) {
         return _convertMouseShortcut(shortcut)
       }
-      return KeyboardShortcut(_convertKeyStroke((shortcut as KeyboardShortcut).firstKeyStroke), shortcut.secondKeyStroke?.let(::_convertKeyStroke))
+      if (shortcut is KeyboardShortcut) {
+        return KeyboardShortcut(_convertKeyStroke(shortcut.firstKeyStroke), shortcut.secondKeyStroke?.let(::_convertKeyStroke))
+      }
+      return shortcut
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.util.containers
 
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
+import gnu.trove.THashSet
 import java.util.*
 import java.util.stream.Stream
 
@@ -39,7 +40,17 @@ fun <K, V> MutableMap<K, MutableList<V>>.putValue(key: K, value: V) {
 
 fun Collection<*>?.isNullOrEmpty() = this == null || isEmpty()
 
-inline fun <T, R> Iterator<T>.computeOrNull(processor: (T) -> R): R? {
+inline fun <T, R> Iterator<T>.computeIfAny(processor: (T) -> R): R? {
+  for (item in this) {
+    val result = processor(item)
+    if (result != null) {
+      return result
+    }
+  }
+  return null
+}
+
+inline fun <T, R> Array<T>.computeIfAny(processor: (T) -> R): R? {
   for (file in this) {
     val result = processor(file)
     if (result != null) {
@@ -49,19 +60,9 @@ inline fun <T, R> Iterator<T>.computeOrNull(processor: (T) -> R): R? {
   return null
 }
 
-inline fun <T, R> Array<T>.computeOrNull(processor: (T) -> R): R? {
-  for (file in this) {
-    val result = processor(file)
-    if (result != null) {
-      return result
-    }
-  }
-  return null
-}
-
-inline fun <T, R> List<T>.computeOrNull(processor: (T) -> R): R? {
-  for (file in this) {
-    val result = processor(file)
+inline fun <T, R> List<T>.computeIfAny(processor: (T) -> R): R? {
+  for (item in this) {
+    val result = processor(item)
     if (result != null) {
       return result
     }
@@ -133,19 +134,67 @@ inline fun MutableList<Throwable>.catch(runnable: () -> Unit) {
 }
 
 inline fun <T, R> Array<out T>.mapSmart(transform: (T) -> R): List<R> {
-  return if (size == 1) {
-    SmartList<R>(transform(this[0]))
-  }
-  else {
-    mapTo(ArrayList<R>(size), transform)
+  val size = size
+  return when (size) {
+    1 -> SmartList(transform(this[0]))
+    0 -> SmartList()
+    else -> mapTo(ArrayList(size), transform)
   }
 }
 
 inline fun <T, R> Collection<T>.mapSmart(transform: (T) -> R): List<R> {
+  val size = size
+  return when (size) {
+    1 -> SmartList(transform(first()))
+    0 -> emptyList()
+    else -> mapTo(ArrayList(size), transform)
+  }
+}
+
+/**
+ * Not mutable set will be returned.
+ */
+inline fun <T, R> Collection<T>.mapSmartSet(transform: (T) -> R): Set<R> {
+  val size = size
+  return when (size) {
+    1 -> {
+      val result = SmartHashSet<R>()
+      result.add(transform(first()))
+      result
+    }
+    0 -> emptySet()
+    else -> mapTo(THashSet(size), transform)
+  }
+}
+
+inline fun <T, R : Any> Collection<T>.mapSmartNotNull(transform: (T) -> R?): List<R> {
+  val size = size
   return if (size == 1) {
-    SmartList<R>(transform(first()))
+    transform(first())?.let { SmartList<R>(it) } ?: SmartList<R>()
   }
   else {
-    mapTo(ArrayList<R>(size), transform)
+    mapNotNullTo(ArrayList<R>(size), transform)
   }
+}
+
+fun <T> List<T>.toMutableSmartList(): MutableList<T> {
+  return when (size) {
+    1 -> SmartList(first())
+    0 -> SmartList()
+    else -> ArrayList(this)
+  }
+}
+
+inline fun <T> Collection<T>.filterSmart(predicate: (T) -> Boolean): List<T> {
+  val result: MutableList<T> = when (size) {
+    1 -> SmartList()
+    0 -> return emptyList()
+    else -> ArrayList()
+  }
+  filterTo(result, predicate)
+  return result
+}
+
+inline fun <T> Collection<T>.filterSmartMutable(predicate: (T) -> Boolean): MutableList<T> {
+  return filterTo(if (size <= 1) SmartList() else ArrayList(), predicate)
 }

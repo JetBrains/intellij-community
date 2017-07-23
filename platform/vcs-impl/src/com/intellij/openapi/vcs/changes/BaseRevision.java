@@ -19,15 +19,9 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/19/12
- * Time: 4:39 PM
- */
 public class BaseRevision {
   private final FilePath myPath;
-  private VcsRevisionNumber myRevision;
+  private final VcsRevisionNumber myRevision;
   private final VcsKey myVcs;
 
   public BaseRevision(VcsKey vcs, VcsRevisionNumber revision, FilePath path) {
@@ -36,7 +30,11 @@ public class BaseRevision {
     myPath = path;
   }
 
-  public FilePath getPath() {
+  public String getPath() {
+    return myPath.getPath();
+  }
+
+  public FilePath getFilePath() {
     return myPath;
   }
 
@@ -46,9 +44,5 @@ public class BaseRevision {
 
   public VcsKey getVcs() {
     return myVcs;
-  }
-
-  public void setRevision(VcsRevisionNumber revision) {
-    myRevision = revision;
   }
 }

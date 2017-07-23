@@ -24,6 +24,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -107,14 +108,21 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
 
 
   @Override
-  protected void update(final PresentationData presentation) {
+  public boolean validate() {
     PackageElement value = getValue();
-    if (value != null && value.getPackage().isValid() && (value.getModule() == null || !value.getModule().isDisposed())) {
-      updateValidData(presentation, value);
+    return value != null && value.getPackage().isValid() && (value.getModule() == null || !value.getModule().isDisposed());
+  }
+
+  @Override
+  protected void update(final PresentationData presentation) {
+    try {
+      if (validate()) {
+        updateValidData(presentation, getValue());
+        return;
+      }
     }
-    else {
-      setValue(null);
-    }
+    catch (IndexNotReadyException ignore) {}
+    setValue(null);
   }
 
   private void updateValidData(PresentationData presentation, PackageElement value) {

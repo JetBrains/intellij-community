@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -169,18 +169,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       final Collection<DebuggerSession> values = mySessions.values();
       return values.isEmpty() ? Collections.emptyList() : new ArrayList<>(values);
     }
-  }
-
-  @Override
-  public void disposeComponent() {
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void projectClosed() {
   }
 
   @Override
@@ -384,13 +372,14 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       throw new ExecutionException(DebuggerBundle.message("error.jdk.not.specified"));
     }
     final JavaSdkVersion version = JavaSdk.getInstance().getVersion(jdk);
-    String versionString = jdk.getVersionString();
     if (version == JavaSdkVersion.JDK_1_0 || version == JavaSdkVersion.JDK_1_1) {
+      String versionString = jdk.getVersionString();
       throw new ExecutionException(DebuggerBundle.message("error.unsupported.jdk.version", versionString));
     }
     if (SystemInfo.isWindows && version == JavaSdkVersion.JDK_1_2) {
       final VirtualFile homeDirectory = jdk.getHomeDirectory();
       if (homeDirectory == null || !homeDirectory.isValid()) {
+        String versionString = jdk.getVersionString();
         throw new ExecutionException(DebuggerBundle.message("error.invalid.jdk.home", versionString));
       }
       //noinspection HardCodedStringLiteral

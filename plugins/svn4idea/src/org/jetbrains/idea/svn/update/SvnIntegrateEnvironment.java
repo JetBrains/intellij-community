@@ -61,7 +61,7 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
 
   @Override
   protected boolean isDryRun() {
-    return SvnConfiguration.getInstance(myVcs.getProject()).isMergeDryRun();
+    return myVcs.getSvnConfiguration().isMergeDryRun();
   }
 
   private static class IntegrateCrawler extends AbstractUpdateIntegrateCrawler {
@@ -78,7 +78,7 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
     }
 
     protected void showProgressMessage(final ProgressIndicator progress, final File root) {
-      if (SvnConfiguration.getInstance(myVcs.getProject()).isMergeDryRun()) {
+      if (myVcs.getSvnConfiguration().isMergeDryRun()) {
         progress.setText(SvnBundle.message("progress.text.merging.dry.run.changes", root.getAbsolutePath()));
       }
       else {
@@ -87,8 +87,7 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
     }
 
     protected long doUpdate(final File root) throws VcsException {
-      final SvnConfiguration svnConfig = SvnConfiguration.getInstance(myVcs.getProject());
-
+      SvnConfiguration svnConfig = myVcs.getSvnConfiguration();
       MergeRootInfo info = svnConfig.getMergeRootInfo(root, myVcs);
       if (info.getUrlString1().equals(info.getUrlString2()) &&
         info.getRevision1().equals(info.getRevision2())) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 
+import java.nio.file.Paths;
+
 public class ConfigureTestDiscoveryAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
@@ -37,7 +39,7 @@ public class ConfigureTestDiscoveryAction extends AnAction {
                                     "to be replaced within TeamCity IDEA plugin");
     final VirtualFile virtualFile = FileChooser.chooseFile(folderDescriptor, e.getProject(), null);
     if (virtualFile != null) {
-      TestDiscoveryIndex.getInstance(e.getProject()).setRemoteTestRunDataPath(virtualFile.getPath());
+      TestDiscoveryIndex.getInstance(e.getProject()).setRemoteTestRunDataPath(Paths.get(virtualFile.getPath()));
     }
   }
 }

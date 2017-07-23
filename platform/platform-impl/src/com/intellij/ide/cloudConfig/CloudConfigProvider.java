@@ -16,8 +16,6 @@
 package com.intellij.ide.cloudConfig;
 
 import com.intellij.ide.customize.AbstractCustomizeWizardStep;
-import com.intellij.openapi.application.ConfigImportSettings;
-import com.intellij.openapi.application.ImportOldConfigsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,9 +38,7 @@ public abstract class CloudConfigProvider {
     myProvider = provider;
   }
 
-  public abstract void initConfigsPanel(@NotNull ImportOldConfigsPanel dialog,
-                                        @NotNull JPanel parentPanel,
-                                        @NotNull ConfigImportSettings settings);
+  public abstract void initConfigsPanel(@NotNull ButtonGroup group, @NotNull JRadioButton customButton);
 
   public abstract void importFinished(@NotNull File newConfigDir);
 

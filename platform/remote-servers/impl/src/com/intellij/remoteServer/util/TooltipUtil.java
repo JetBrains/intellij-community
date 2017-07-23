@@ -25,7 +25,7 @@ public class TooltipUtil {
       protected void hyperlinkActivated(HyperlinkEvent e) {
         final JLabel label = new JLabel(message);
         label.setBorder(HintUtil.createHintBorder());
-        label.setBackground(HintUtil.INFORMATION_COLOR);
+        label.setBackground(HintUtil.getInformationColor());
         label.setOpaque(true);
         HintManager.getInstance()
           .showHint(label, RelativePoint.getSouthEastOf(link), HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE, -1);

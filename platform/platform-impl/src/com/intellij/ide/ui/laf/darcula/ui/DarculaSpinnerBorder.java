@@ -71,7 +71,7 @@ public class DarculaSpinnerBorder implements Border, UIResource {
     }
 
     if (focused) {
-      DarculaUIUtil.paintFocusRing(g, x1 + 2, y1, width1 - 3, height1);
+      DarculaUIUtil.paintFocusRing(g, new Rectangle(x1 + 2, y1, width1 - 3, height1));
     } else {
       g.setColor(new JBColor(Gray._149,Gray._100));
       g.drawRoundRect(x1, y1, width1, height1, 5, 5);
@@ -87,5 +87,19 @@ public class DarculaSpinnerBorder implements Border, UIResource {
   @Override
   public boolean isBorderOpaque() {
     return true;
+  }
+
+  public static boolean isFocused(Component c) {
+    if (c.hasFocus()) return true;
+
+    if (c instanceof JSpinner) {
+      JSpinner spinner = (JSpinner)c;
+      if (spinner.getEditor() != null) {
+        synchronized (spinner.getEditor().getTreeLock()) {
+          return spinner.getEditor().getComponent(0).hasFocus();
+        }
+      }
+    }
+    return false;
   }
 }

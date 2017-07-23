@@ -36,10 +36,15 @@ public class ServersToolWindowFactory implements ToolWindowFactory, Condition<Pr
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     final ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
-    final ServersToolWindowContent serversContent = new ServersToolWindowContent(project, myContribution);
+    final ServersToolWindowContent serversContent = doCreateToolWindowContent(project);
     Content content = contentFactory.createContent(serversContent.getMainPanel(), null, false);
     Disposer.register(content, serversContent);
     toolWindow.getContentManager().addContent(content);
+  }
+
+  @NotNull
+  protected ServersToolWindowContent doCreateToolWindowContent(@NotNull Project project) {
+    return new ServersToolWindowContent(project, myContribution, ServersToolWindowContent.ActionGroups.SHARED_ACTION_GROUPS);
   }
 
   @Override

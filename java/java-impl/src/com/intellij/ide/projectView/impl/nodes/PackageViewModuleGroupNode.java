@@ -20,13 +20,17 @@ import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collections;
+import java.util.List;
 
-/**
- * User: anna
- * Date: Feb 22, 2005
- */
 public class PackageViewModuleGroupNode extends ModuleGroupNode {
   public PackageViewModuleGroupNode(final Project project, final Object value, final ViewSettings viewSettings) {
     super(project, value, viewSettings);
@@ -45,5 +49,17 @@ public class PackageViewModuleGroupNode extends ModuleGroupNode {
   @Override
   protected ModuleGroupNode createModuleGroupNode(ModuleGroup moduleGroup) {
     return new PackageViewModuleGroupNode(getProject(), moduleGroup, getSettings());
+  }
+
+  @NotNull
+  @Override
+  protected List<Module> getModulesByFile(@NotNull VirtualFile file) {
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    Module module = fileIndex.getModuleForFile(file, false);
+    if (module != null) {
+      return Collections.singletonList(module);
+    }
+    List<OrderEntry> entriesForFile = fileIndex.getOrderEntriesForFile(file);
+    return ContainerUtil.map(entriesForFile, OrderEntry::getOwnerModule);
   }
 }

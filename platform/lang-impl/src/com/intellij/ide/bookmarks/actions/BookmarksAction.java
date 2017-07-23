@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,20 +26,20 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DimensionService;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.util.DetailViewImpl;
 import com.intellij.ui.popup.util.ItemWrapper;
 import com.intellij.ui.popup.util.MasterDetailPopupBuilder;
 import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,8 +47,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.TreeSet;
 
 /**
  * @author max
@@ -57,6 +59,10 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
   @NonNls private static final String DIMENSION_SERVICE_KEY = "bookmarks";
 
   private JBPopup myPopup;
+
+  public BookmarksAction() {
+    setEnabledInModalContext(true);
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -83,41 +89,48 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     actions.add(new MoveBookmarkUpAction(project, list));
     actions.add(new MoveBookmarkDownAction(project, list));
 
-    myPopup = new MasterDetailPopupBuilder(project).
+    JBPopup popup = new MasterDetailPopupBuilder(project).
       setList(list).
       setDelegate(this).
-      setDetailView(new DetailViewImpl(project)).
+      setDetailView(new MyDetailView(project)).
       setDimensionServiceKey(DIMENSION_SERVICE_KEY).
       setAddDetailViewToEast(true).
       setActionsGroup(actions).
       setPopupTuner(builder -> builder.setCloseOnEnter(false).setCancelOnClickOutside(false)).
-      setDoneRunnable(() -> myPopup.cancel()).
+      setDoneRunnable(() -> { if (myPopup != null) myPopup.cancel(); }).
       createMasterDetailPopup();
 
+    myPopup = popup;
     new AnAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
         @SuppressWarnings("deprecation") Object[] values = list.getSelectedValues();
         for (Object item : values) {
           if (item instanceof BookmarkItem) {
-            itemChosen((BookmarkItem)item, project, myPopup, true);
+            itemChosen((BookmarkItem)item, project, popup, true);
           }
         }
       }
-    }.registerCustomShortcutSet(CommonShortcuts.getEditSource(), list);
+    }.registerCustomShortcutSet(CommonShortcuts.getEditSource(), list, popup);
+    editDescriptionAction.setPopup(popup);
+    Disposer.register(popup, () -> {
+      if (myPopup == popup) {
+        myPopup = null;
+        editDescriptionAction.setPopup(null);
+      }
+    });
 
-    editDescriptionAction.setPopup(myPopup);
     final Point location = DimensionService.getInstance().getLocation(DIMENSION_SERVICE_KEY, project);
     if (location != null) {
-      myPopup.showInScreenCoordinates(WindowManager.getInstance().getFrame(project), location);
+      popup.showInScreenCoordinates(WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow(), location);
     }
     else {
-      myPopup.showCenteredInCurrentWindow(project);
+      popup.showInBestPositionFor(e.getDataContext());
     }
 
     list.getEmptyText().setText("No Bookmarks");
     list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-    project.getMessageBus().connect(myPopup).subscribe(BookmarksListener.TOPIC, new BookmarksListener() {
+    project.getMessageBus().connect(popup).subscribe(BookmarksListener.TOPIC, new BookmarksListener() {
       @Override
       public void bookmarkAdded(@NotNull Bookmark b) {
       }
@@ -136,7 +149,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
       }
 
       private void doUpdate() {
-        TreeSet selectedValues = new TreeSet(Arrays.asList(list.getSelectedValues()));
+        TreeSet selectedValues = new TreeSet(list.getSelectedValuesList());
         DefaultListModel listModel = buildModel(project);
         list.setModel(listModel);
         ListSelectionModel selectionModel = list.getSelectionModel();
@@ -288,5 +301,19 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     if (!(model1 instanceof FilteringListModel)) return true;
     final FilteringListModel model = (FilteringListModel)model1;
     return model.getOriginalModel().getSize() == model.getSize();
+  }
+
+  private static class MyDetailView extends DetailViewImpl {
+    public MyDetailView(Project project) {
+      super(project);
+    }
+
+    @NotNull
+    @Override
+    protected Editor createEditor(@Nullable Project project, Document document, VirtualFile file) {
+      Editor editor = super.createEditor(project, document, file);
+      editor.setBorder(IdeBorderFactory.createEmptyBorder());
+      return editor;
+    }
   }
 }

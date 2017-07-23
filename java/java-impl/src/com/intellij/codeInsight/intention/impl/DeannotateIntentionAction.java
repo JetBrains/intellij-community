@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 08-Jul-2007
- */
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -43,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class DeannotateIntentionAction implements IntentionAction, LowPriorityAction {
-  private static final Logger LOG = Logger.getInstance("#" + DeannotateIntentionAction.class.getName());
+  private static final Logger LOG = Logger.getInstance(DeannotateIntentionAction.class);
   private String myAnnotationName;
 
   @Override

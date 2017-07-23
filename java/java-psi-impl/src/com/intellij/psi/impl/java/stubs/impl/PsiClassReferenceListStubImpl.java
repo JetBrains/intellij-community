@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,43 +23,28 @@ import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.io.StringRef;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
  */
 public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> implements PsiClassReferenceListStub {
-  @NotNull
-  private final PsiReferenceList.Role myRole;
-  private final StringRef[] myNames;
+  private final String[] myNames;
   private PsiClassType[] myTypes;
 
-  public PsiClassReferenceListStubImpl(@NotNull JavaClassReferenceListElementType type, final StubElement parent, @NotNull String[] names, @NotNull PsiReferenceList.Role role) {
-    this(type, parent, toStringRefs(names), role);
-  }
-
-  @NotNull
-  private static StringRef[] toStringRefs(String[] names) {
-    StringRef[] myNames = StringRef.createArray(names.length);
-    for (int i = 0; i < names.length; i++) {
-      myNames[i] = StringRef.fromString(names[i]);
-    }
-    return myNames;
-  }
-
-  public PsiClassReferenceListStubImpl(@NotNull JavaClassReferenceListElementType type, final StubElement parent, @NotNull StringRef[] names, @NotNull PsiReferenceList.Role role) {
+  public PsiClassReferenceListStubImpl(@NotNull JavaClassReferenceListElementType type, StubElement parent, @NotNull String[] names) {
     super(parent, type);
+    ObjectUtils.assertAllElementsNotNull(names);
     myNames = names;
-    myRole = role;
   }
 
   @NotNull
   @Override
   public PsiClassType[] getReferencedTypes() {
     if (myTypes != null) return myTypes;
+
     if (myNames.length == 0) {
       myTypes = PsiClassType.EMPTY_ARRAY;
       return myTypes;
@@ -70,7 +55,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
     final boolean compiled = ((JavaClassReferenceListElementType)getStubType()).isCompiled(this);
     if (compiled) {
       for (int i = 0; i < types.length; i++) {
-        types[i] = new PsiClassReferenceType(new ClsJavaCodeReferenceElementImpl(getPsi(), myNames[i].toString()), null);
+        types[i] = new PsiClassReferenceType(new ClsJavaCodeReferenceElementImpl(getPsi(), myNames[i]), null);
       }
     }
     else {
@@ -80,7 +65,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
       final PsiReferenceList psi = getPsi();
       for (int i = 0; i < types.length; i++) {
         try {
-          final PsiJavaCodeReferenceElement ref = factory.createReferenceFromText(myNames[i].toString(), psi);
+          final PsiJavaCodeReferenceElement ref = factory.createReferenceFromText(myNames[i], psi);
           ((PsiJavaCodeReferenceElementImpl)ref).setKindWhenDummy(PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND);
           types[i] = factory.createType(ref);
         }
@@ -107,27 +92,24 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
   @NotNull
   @Override
   public String[] getReferencedNames() {
-    String[] names = ArrayUtil.newStringArray(myNames.length);
-    for (int i = 0; i < names.length; i++) {
-      names[i] = StringRef.toString(myNames[i]);
-    }
-    return names;
+    return myNames.clone();
   }
 
   @NotNull
   @Override
   public PsiReferenceList.Role getRole() {
-    return myRole;
+    return JavaClassReferenceListElementType.elementTypeToRole(getStubType());
   }
 
+  @Override
   public String toString() {
     StringBuilder builder = new StringBuilder();
-    builder.append("PsiRefListStub[").append(myRole.name()).append(":");
+    builder.append("PsiRefListStub[").append(getRole()).append(':');
     for (int i = 0; i < myNames.length; i++) {
       if (i > 0) builder.append(", ");
       builder.append(myNames[i]);
     }
-    builder.append("]");
+    builder.append(']');
     return builder.toString();
   }
 }

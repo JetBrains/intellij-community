@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.fixes.controlflow;
 
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.controlflow.TrivialIfInspection;
 
@@ -26,7 +25,7 @@ public class TrivialIfFixTest extends IGQuickFixesTestCase {
     super.setUp();
     myFixture.enableInspections(new TrivialIfInspection());
     myRelativePath = "controlflow/trivialIf";
-    myDefaultHint = InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
+    myDefaultHint = "Simplify 'if else'";
   }
 
   public void testComments() {
@@ -42,6 +41,14 @@ public class TrivialIfFixTest extends IGQuickFixesTestCase {
   }
 
   public void testNegatedConditional1() {
+    doTest();
+  }
+
+  public void testAssert1() {
+    doTest();
+  }
+
+  public void testAssert2() {
     doTest();
   }
 }

@@ -26,9 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-/**
- * Created by Max Medvedev on 05/02/14
- */
 public class GrMethodCallInfo extends CallInfoBase<GrMethodCall> implements CallInfo<GrMethodCall> {
   public GrMethodCallInfo(GrMethodCall call) {
     super(call);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.extensions.impl.TypeCondition;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -39,10 +40,11 @@ public class SwingBuilderNamedArgumentProvider extends GroovyNamedArgumentProvid
 
   @Override
   public void getNamedArguments(@NotNull GrCall call,
-                                @Nullable PsiElement resolve,
+                                @NotNull GroovyResolveResult resolveResult,
                                 @Nullable String argumentName,
                                 boolean forCompletion,
-                                Map<String, NamedArgumentDescriptor> result) {
+                                @NotNull Map<String, NamedArgumentDescriptor> result) {
+    PsiElement resolve = resolveResult.getElement();
     PsiType returnType = resolve == null ? null : ((PsiMethod)resolve).getReturnType();
     PsiClass aClass = PsiTypesUtil.getPsiClass(returnType);
     if (aClass == null) return;

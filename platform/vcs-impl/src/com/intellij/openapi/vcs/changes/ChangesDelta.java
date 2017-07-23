@@ -15,28 +15,27 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.util.BeforeAfter;
 import com.intellij.openapi.vcs.changes.ui.PlusMinusModify;
+import com.intellij.util.BeforeAfter;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class ChangesDelta {
   private final PlusMinusModify<BaseRevision> myDeltaListener;
   private boolean myInitialized;
 
-  public ChangesDelta(final PlusMinusModify<BaseRevision> deltaListener) {
+  public ChangesDelta(@NotNull PlusMinusModify<BaseRevision> deltaListener) {
     myDeltaListener = deltaListener;
   }
 
-  // true -> something changed
-  public boolean step(final ChangeListsIndexes was, final ChangeListsIndexes became) {
-    List<BaseRevision> wasAffected = was.getAffectedFilesUnderVcs();
-    if (! myInitialized) {
-      sendPlus(wasAffected);
+  public boolean notifyPathsChanged(final ChangeListsIndexes was, final ChangeListsIndexes became) {
+    if (!myInitialized) {
       myInitialized = true;
+      for (BaseRevision pair : was.getAffectedFilesUnderVcs()) {
+        myDeltaListener.plus(pair);
+      }
       return true;  //+-
     }
 
@@ -48,18 +47,12 @@ public class ChangesDelta {
     for (BaseRevision pair : toRemove) {
       myDeltaListener.minus(pair);
     }
-    sendPlus(toAdd);
+    for (BaseRevision pair : toAdd) {
+      myDeltaListener.plus(pair);
+    }
     for (BeforeAfter<BaseRevision> beforeAfter : toModify) {
       myDeltaListener.modify(beforeAfter.getBefore(), beforeAfter.getAfter());
     }
-    return ! toRemove.isEmpty() || ! toAdd.isEmpty();
-  }
-
-  private void sendPlus(final Collection<BaseRevision> toAdd) {
-    if (toAdd != null) {
-      for (BaseRevision pair : toAdd) {
-        myDeltaListener.plus(pair);
-      }
-    }
+    return !toRemove.isEmpty() || !toAdd.isEmpty();
   }
 }

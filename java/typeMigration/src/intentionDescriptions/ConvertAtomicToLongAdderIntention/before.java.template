@@ -1,7 +1,8 @@
-void m() {
-  AtomicLong <spot>l</spot> = new AtomicLong();
+public class X {
+  void m() {
+    AtomicLong <spot>l</spot> = new AtomicLong();
 
-  l.incrementAndGet();
-
-  long res = l.get();
+    l.incrementAndGet();
+    long res = l.get();
+  }
 }

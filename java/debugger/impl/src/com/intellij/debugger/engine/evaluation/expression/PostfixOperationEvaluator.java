@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,8 @@ public class PostfixOperationEvaluator implements Evaluator{
   private Modifier myModifier;
 
   public PostfixOperationEvaluator(Evaluator operandEvaluator, Evaluator incrementImpl) {
-    myOperandEvaluator = new DisableGC(operandEvaluator);
-    myIncrementImpl = new DisableGC(incrementImpl);
+    myOperandEvaluator = DisableGC.create(operandEvaluator);
+    myIncrementImpl = DisableGC.create(incrementImpl);
   }
 
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {

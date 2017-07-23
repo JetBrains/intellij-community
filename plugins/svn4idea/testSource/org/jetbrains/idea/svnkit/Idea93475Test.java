@@ -21,12 +21,6 @@ import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/15/12
- * Time: 3:39 PM
- */
 public class Idea93475Test {
   private final static String ourWcPath = "C:\\TestProjects\\sortedProjects\\Subversion\\Sasha\\renameNewWithVersioned";
 

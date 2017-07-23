@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.vcs.test.VcsPlatformTest
@@ -32,7 +30,6 @@ import com.intellij.vcsUtil.VcsUtil.getFilePath
 class VcsDirtyScopeManagerTest : VcsPlatformTest() {
 
   private lateinit var dirtyScopeManager: VcsDirtyScopeManager
-  private lateinit var vcsManager: ProjectLevelVcsManagerImpl
   private lateinit var vcs: MockAbstractVcs
   private lateinit var baseRoot: VirtualFile
   private lateinit var basePath: FilePath
@@ -47,7 +44,6 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
     disableVcsDirtyScopeVfsListener()
     disableChangeListManager()
 
-    vcsManager = ProjectLevelVcsManager.getInstance(myProject) as ProjectLevelVcsManagerImpl
     vcsManager.registerVcs(vcs)
     registerRootMapping(baseRoot)
   }

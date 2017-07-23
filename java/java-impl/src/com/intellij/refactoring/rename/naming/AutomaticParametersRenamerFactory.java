@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 12-Jan-2010
- */
 package com.intellij.refactoring.rename.naming;
 
 import com.intellij.psi.PsiElement;

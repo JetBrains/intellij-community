@@ -34,14 +34,14 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
 
   JpsElementCollectionImpl(JpsElementChildRole<E> role) {
     myChildRole = role;
-    myElements = new SmartList<E>();
+    myElements = new SmartList<>();
     myCopyToOriginal = null;
   }
 
   private JpsElementCollectionImpl(JpsElementCollectionImpl<E> original) {
     myChildRole = original.myChildRole;
-    myElements = new SmartList<E>();
-    myCopyToOriginal = new HashMap<E, E>();
+    myElements = new SmartList<>();
+    myCopyToOriginal = new HashMap<>();
     for (E e : original.myElements) {
       //noinspection unchecked
       final E copy = (E)e.getBulkModificationSupport().createCopy();
@@ -58,7 +58,7 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
 
   @Override
   public <X extends JpsTypedElement<P>, P extends JpsElement> Iterable<X> getElementsOfType(@NotNull final JpsElementType<P> type) {
-    return new JpsElementIterable<X, P>(type);
+    return new JpsElementIterable<>(type);
   }
 
   @NotNull
@@ -92,7 +92,7 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
 
   @Override
   public void removeAllChildren() {
-    List<E> elements = new ArrayList<E>(myElements);
+    List<E> elements = new ArrayList<>(myElements);
     for (E element : elements) {
       removeChild(element);
     }
@@ -101,12 +101,12 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
   @NotNull
   @Override
   public JpsElementCollectionImpl<E> createCopy() {
-    return new JpsElementCollectionImpl<E>(this);
+    return new JpsElementCollectionImpl<>(this);
   }
 
   public void applyChanges(@NotNull JpsElementCollectionImpl<E> modified) {
-    Set<E> toRemove = new LinkedHashSet<E>(myElements);
-    List<E> toAdd = new ArrayList<E>();
+    Set<E> toRemove = new LinkedHashSet<>(myElements);
+    List<E> toAdd = new ArrayList<>();
     final Map<E, E> copyToOriginal = modified.myCopyToOriginal;
     for (E element : modified.myElements) {
       final E original = copyToOriginal != null ? copyToOriginal.get(element) : null;
@@ -140,12 +140,7 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
     public Iterator<X> iterator() {
       //noinspection unchecked
       Iterator<JpsTypedElement<?>> iterator = (Iterator<JpsTypedElement<?>>)myElements.iterator();
-      return new FilteringIterator<JpsTypedElement<?>, X>(iterator, new Condition<JpsTypedElement<?>>() {
-        @Override
-        public boolean value(JpsTypedElement<?> e) {
-          return e.getType().equals(myType);
-        }
-      });
+      return new FilteringIterator<>(iterator, e -> e.getType().equals(myType));
     }
   }
 }

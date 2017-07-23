@@ -50,7 +50,7 @@ public class JpsSimpleElementImpl<D> extends JpsElementBase<JpsSimpleElementImpl
   @NotNull
   @Override
   public JpsSimpleElementImpl<D> createCopy() {
-    return new JpsSimpleElementImpl<D>(this);
+    return new JpsSimpleElementImpl<>(this);
   }
 
   @Override

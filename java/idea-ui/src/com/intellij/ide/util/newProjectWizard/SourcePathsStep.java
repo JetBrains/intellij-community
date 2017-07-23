@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,24 +23,23 @@ import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
 import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
 import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -153,7 +152,9 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
         fullPathLabel.setVisible(enabled);
         myTfFullPath.setVisible(enabled);
         if (enabled) {
-          myTfSourceDirectoryName.requestFocus();
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            IdeFocusManager.getGlobalInstance().requestFocus(myTfSourceDirectoryName, true);
+          });
         }
       }
     });
@@ -178,19 +179,10 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     final JPanel panel = new JPanel(new GridBagLayout());
     mySourcePathsChooser = new ElementsChooser<JavaModuleSourceRoot>(true) {
       public String getItemText(@NotNull JavaModuleSourceRoot sourceRoot) {
-        StringBuilder builder = StringBuilderSpinAllocator.alloc();
-        try {
-          builder.append(sourceRoot.getDirectory().getAbsolutePath());
-          final String packagePrefix = sourceRoot.getPackagePrefix();
-          if (!packagePrefix.isEmpty()) {
-            builder.append(" (").append(packagePrefix).append(")");
-          }
-          builder.append(" [").append(sourceRoot.getRootTypeName()).append("]");
-          return builder.toString();
-        }
-        finally {
-          StringBuilderSpinAllocator.dispose(builder);
-        }
+        String packagePrefix = sourceRoot.getPackagePrefix();
+        return sourceRoot.getDirectory().getAbsolutePath() +
+               (packagePrefix.isEmpty() ? "" : " (" + packagePrefix + ")") +
+               " [" + sourceRoot.getRootTypeName() + "]";
       }
     };
     final String text = IdeBundle.message("label.java.source.files.have.been.found");
@@ -380,11 +372,8 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     private VirtualFile getContentEntryDir() {
       final String contentEntryPath = getContentRootPath();
       if (contentEntryPath != null) {
-        return ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-          public VirtualFile compute() {
-            return LocalFileSystem.getInstance().refreshAndFindFileByPath(contentEntryPath);
-          }
-        });
+        return WriteAction
+          .compute(() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(contentEntryPath));
       }
       return null;
     }

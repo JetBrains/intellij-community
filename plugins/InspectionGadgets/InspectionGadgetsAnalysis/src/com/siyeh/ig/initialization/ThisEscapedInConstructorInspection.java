@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,7 +155,7 @@ public class ThisEscapedInConstructorInspection extends BaseInspection {
      *         initializer, or field initializer. Otherwise false
      */
     private static boolean isInInitializer(PsiElement call) {
-      final PsiMethod method = PsiTreeUtil.getParentOfType(call, PsiMethod.class, true, PsiClass.class);
+      final PsiMethod method = PsiTreeUtil.getParentOfType(call, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
       if (method != null) {
         return method.isConstructor();
       }

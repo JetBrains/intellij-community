@@ -15,12 +15,6 @@
  */
 package com.intellij.ide.favoritesTreeView;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 6/1/12
- * Time: 1:53 PM
- */
 public enum PercentDone {
   _0(0), _05(5), _20(20), _50(50), _70(70), _100(100);
 

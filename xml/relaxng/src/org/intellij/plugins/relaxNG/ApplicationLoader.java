@@ -38,25 +38,11 @@ import org.intellij.plugins.relaxNG.model.descriptors.RngNsDescriptor;
 import org.intellij.plugins.relaxNG.validation.ValidateAction;
 import org.intellij.plugins.relaxNG.xml.dom.RngDefine;
 import org.intellij.plugins.relaxNG.xml.dom.impl.RngDefineMetaData;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 18.07.2007
- */
 public class ApplicationLoader implements ApplicationComponent {
   private static final String RNG_EXT = "rng";
   private static final String VALIDATE_XML = "ValidateXml";
   public static final String RNG_NAMESPACE = "http://relaxng.org/ns/structure/1.0";
-
-  @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "Relax-NG";
-  }
 
   @Override
   public void initComponent() {
@@ -101,10 +87,6 @@ public class ApplicationLoader implements ApplicationComponent {
         return XmlTag.class.isAssignableFrom(hintClass);
       }
     }, RngDefineMetaData.class);
-  }
-
-  @Override
-  public void disposeComponent() {
   }
 
   public static Class[] getInspectionClasses() {

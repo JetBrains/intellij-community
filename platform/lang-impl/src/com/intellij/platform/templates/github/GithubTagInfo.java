@@ -162,4 +162,8 @@ public class GithubTagInfo {
     return ObjectUtils.tryCast(o, GithubTagInfo.class);
   }
 
+  @Override
+  public String toString() {
+    return getName();
+  }
 }

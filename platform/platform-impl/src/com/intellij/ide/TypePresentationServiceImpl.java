@@ -15,18 +15,21 @@
  */
 package com.intellij.ide;
 
-import com.intellij.ide.presentation.*;
+import com.intellij.ide.presentation.Presentation;
+import com.intellij.ide.presentation.PresentationProvider;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author peter
@@ -118,29 +121,26 @@ public class TypePresentationServiceImpl extends TypePresentationService {
   private final Map<String, NullableLazyValue<Icon>> myIcons = new HashMap<>();
   private final Map<String, NullableLazyValue<String>> myNames = new HashMap<>();
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
-  private final FactoryMap<Class, Set<PresentationTemplate>> mySuperClasses = new ConcurrentFactoryMap<Class, Set<PresentationTemplate>>() {
-    @Override
-    protected Set<PresentationTemplate> create(Class key) {
+  private final Map<Class, Set<PresentationTemplate>> mySuperClasses = ConcurrentFactoryMap.createMap(key-> {
       LinkedHashSet<PresentationTemplate> templates = new LinkedHashSet<>();
       walkSupers(key, new LinkedHashSet<>(), templates);
       return templates;
     }
-
-    private void walkSupers(Class aClass, Set<Class> classes, Set<PresentationTemplate> templates) {
-      if (!classes.add(aClass)) {
-        return;
-      }
-      ContainerUtil.addIfNotNull(templates, createPresentationTemplate(aClass));
-      final Class superClass = aClass.getSuperclass();
-      if (superClass != null) {
-        walkSupers(superClass, classes, templates);
-      }
-
-      for (Class intf : aClass.getInterfaces()) {
-        walkSupers(intf, classes, templates);
-      }
+  );
+  private void walkSupers(Class aClass, Set<Class> classes, Set<PresentationTemplate> templates) {
+    if (!classes.add(aClass)) {
+      return;
     }
-  };
+    ContainerUtil.addIfNotNull(templates, createPresentationTemplate(aClass));
+    final Class superClass = aClass.getSuperclass();
+    if (superClass != null) {
+      walkSupers(superClass, classes, templates);
+    }
+
+    for (Class intf : aClass.getInterfaces()) {
+      walkSupers(intf, classes, templates);
+    }
+  }
 
   /**
    * @author Dmitry Avdeev

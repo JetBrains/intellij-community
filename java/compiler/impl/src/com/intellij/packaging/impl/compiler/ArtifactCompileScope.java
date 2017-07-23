@@ -27,10 +27,7 @@ import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.elements.ArtifactElementType;
-import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
-import com.intellij.packaging.impl.elements.ModuleOutputPackagingElement;
 import com.intellij.packaging.impl.elements.ProductionModuleOutputElementType;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -118,12 +115,10 @@ public class ArtifactCompileScope {
 
   private static boolean containsModuleOutput(Artifact artifact, final Set<Module> modules, final PackagingElementResolvingContext context) {
     return !ArtifactUtil.processPackagingElements(artifact, ProductionModuleOutputElementType.ELEMENT_TYPE,
-                                                         new Processor<ModuleOutputPackagingElement>() {
-                                                           public boolean process(ModuleOutputPackagingElement moduleOutputPackagingElement) {
-                                                             final Module module = moduleOutputPackagingElement.findModule(context);
-                                                             return module == null || !modules.contains(module);
-                                                           }
-                                                         }, context, true);
+                                                  moduleOutputPackagingElement -> {
+                                                    final Module module = moduleOutputPackagingElement.findModule(context);
+                                                    return module == null || !modules.contains(module);
+                                                  }, context, true);
   }
 
   @NotNull

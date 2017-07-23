@@ -117,7 +117,7 @@ public class AbbreviationManagerImpl extends AbbreviationManager implements Pers
   @Override
   public List<String> findActions(String abbreviation) {
     final List<String> actions = myAbbreviation2ActionId.get(abbreviation);
-    return actions == null ? Collections.<String>emptyList() : Collections.unmodifiableList(actions);
+    return actions == null ? Collections.emptyList() : Collections.unmodifiableList(actions);
   }
 
 

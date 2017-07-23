@@ -47,19 +47,6 @@ public class SMRunnerUtil {
     }
   }
 
-  public static void registerAsAction(final KeyStroke keyStroke,
-                                      final String actionKey,
-                                      final Runnable action, final JComponent component) {
-    final InputMap inputMap = component.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-
-    inputMap.put(keyStroke, actionKey);
-    component.getActionMap().put(inputMap.get(keyStroke), new AbstractAction() {
-      public void actionPerformed(final ActionEvent e) {
-        action.run();
-      }
-    });
-  }
-
   public static void runInEventDispatchThread(final Runnable runnable, final ModalityState state) {
     try {
       ApplicationManager.getApplication().invokeAndWait(runnable, state);

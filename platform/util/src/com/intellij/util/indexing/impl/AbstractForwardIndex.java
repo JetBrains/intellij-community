@@ -15,13 +15,13 @@
  */
 package com.intellij.util.indexing.impl;
 
-import com.intellij.util.indexing.ID;
 import com.intellij.util.indexing.IndexExtension;
+import com.intellij.util.indexing.IndexId;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractForwardIndex<Key, Value> implements ForwardIndex<Key,Value> {
-  protected final ID<Key, Value> myIndexId;
+  protected final IndexId<Key, Value> myIndexId;
   protected final KeyDescriptor<Key> myKeyDescriptor;
   protected final IndexExtension<Key, Value, ?> myIndexExtension;
 
@@ -34,9 +34,5 @@ public abstract class AbstractForwardIndex<Key, Value> implements ForwardIndex<K
   @NotNull
   public IndexExtension<Key, Value, ?> getIndexExtension() {
     return myIndexExtension;
-  }
-
-  public boolean hasOnlyKeysData() {
-    return true;
   }
 }

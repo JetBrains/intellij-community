@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,12 @@ import com.intellij.history.LocalHistory;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -41,7 +41,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -202,10 +201,10 @@ public class SrcFileAnnotator implements Disposable {
   @Nullable
   private SoftReference<TIntIntHashMap> doGetLineMapping(final long date, boolean oldToNew, MyEditorBean editorBean) {
     VirtualFile virtualFile = editorBean.getVFile();
+    if (myOldContent == null && ApplicationManager.getApplication().isDispatchThread()) return null;
     final byte[] oldContent;
     synchronized (LOCK) {
       if (myOldContent == null) {
-        if (ApplicationManager.getApplication().isDispatchThread()) return null;
         final LocalHistory localHistory = LocalHistory.getInstance();
         byte[] byteContent = localHistory.getByteContent(virtualFile, new FileRevisionTimestampComparator() {
           public boolean isSuitable(long revisionTimestamp) {
@@ -283,6 +282,7 @@ public class SrcFileAnnotator implements Disposable {
     final Document document = myDocument;
     if (editor == null || psiFile == null || document == null) return;
     final VirtualFile file = getVirtualFile(psiFile);
+    if (file == null || !file.isValid()) return;
     final MyEditorBean editorBean = new MyEditorBean(editor, file, document);
     final MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myProject, true);
     final List<RangeHighlighter> highlighters = new ArrayList<>();
@@ -332,13 +332,7 @@ public class SrcFileAnnotator implements Disposable {
       return;
     }
 
-    final Module module = ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
-      @Nullable
-      @Override
-      public Module compute() {
-        return ModuleUtilCore.findModuleForPsiElement(psiFile);
-      }
-    });
+    final Module module = ReadAction.compute(() -> ModuleUtilCore.findModuleForPsiElement(psiFile));
     if (module != null) {
       if (engine.recompileProjectAndRerunAction(module, suite, () -> CoverageDataManager.getInstance(myProject).chooseSuitesBundle(suite))) {
         return;
@@ -422,7 +416,7 @@ public class SrcFileAnnotator implements Disposable {
       }
     });
 
-    final DocumentListener documentListener = new DocumentAdapter() {
+    final DocumentListener documentListener = new DocumentListener() {
       @Override
       public void documentChanged(final DocumentEvent e) {
         myNewToOldLines = null;

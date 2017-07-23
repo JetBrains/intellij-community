@@ -38,7 +38,10 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
@@ -75,15 +78,11 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   private File ourTempDir;
 
   protected IdeaProjectTestFixture myTestFixture;
-
   protected Project myProject;
-
   protected File myTestDir;
   protected VirtualFile myProjectRoot;
   protected VirtualFile myProjectConfig;
   protected List<VirtualFile> myAllConfigs = new ArrayList<>();
-
-  private List<String> myAllowedRoots = new ArrayList<>();
 
   @Before
   @Override
@@ -115,7 +114,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     List<String> allowedRoots = new ArrayList<>();
     collectAllowedRoots(allowedRoots);
     if (!allowedRoots.isEmpty()) {
-      VfsRootAccess.allowRootAccess(getTestRootDisposable(), ArrayUtil.toStringArray(allowedRoots));
+      VfsRootAccess.allowRootAccess(myTestFixture.getTestRootDisposable(), ArrayUtil.toStringArray(allowedRoots));
     }
 
     CompilerTestUtil.enableExternalCompiler();
@@ -463,9 +462,13 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   }
 
   protected Module getModule(final String name) {
+    return getModule(myProject, name);
+  }
+
+  protected Module getModule(Project project, String name) {
     AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
     try {
-      Module m = ModuleManager.getInstance(myProject).findModuleByName(name);
+      Module m = ModuleManager.getInstance(project).findModuleByName(name);
       assertNotNull("Module " + name + " not found", m);
       return m;
     }

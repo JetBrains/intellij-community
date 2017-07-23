@@ -26,10 +26,7 @@ import git4idea.branch.GitBranchUtil;
 import git4idea.config.GitSharedSettings;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersionSpecialty;
-import git4idea.repo.GitBranchTrackInfo;
-import git4idea.repo.GitRemote;
-import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
+import git4idea.repo.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -172,7 +169,18 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
   @Nullable
   @Override
   public VcsPushOptionsPanel createOptionsPanel() {
-    return new GitPushTagPanel(mySettings.getPushTagMode(), GitVersionSpecialty.SUPPORTS_FOLLOW_TAGS.existsIn(myVcs.getVersion()));
+    return new GitPushOptionsPanel(mySettings.getPushTagMode(),
+                                   GitVersionSpecialty.SUPPORTS_FOLLOW_TAGS.existsIn(myVcs.getVersion()),
+                                   shouldShowSkipHookOption());
+  }
+
+  private boolean shouldShowSkipHookOption() {
+    return GitVersionSpecialty.PRE_PUSH_HOOK.existsIn(myVcs.getVersion()) &&
+           getRepositoryManager()
+             .getRepositories()
+             .stream()
+             .map(e -> e.getInfo().getHooksInfo())
+             .anyMatch(GitHooksInfo::isPrePushHookAvailable);
   }
 
   @Override

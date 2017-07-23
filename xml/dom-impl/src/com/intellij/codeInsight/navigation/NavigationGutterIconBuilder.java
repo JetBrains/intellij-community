@@ -201,7 +201,7 @@ public class NavigationGutterIconBuilder<T> {
                                                                                                     final NotNullFunction<T, Collection<? extends GotoRelatedItem>> gotoRelatedItemProvider,
                                                                                                     final Factory<Collection<T>> factory) {
     if (gotoRelatedItemProvider == null) {
-      return NotNullLazyValue.<Collection<? extends GotoRelatedItem>>createConstantValue(Collections.<GotoRelatedItem>emptyList());
+      return NotNullLazyValue.createConstantValue(Collections.emptyList());
     }
 
     if (lazy) {
@@ -214,7 +214,7 @@ public class NavigationGutterIconBuilder<T> {
       };
     }
     Collection<GotoRelatedItem> concat = ContainerUtil.concat(factory.create(), gotoRelatedItemProvider);
-    return NotNullLazyValue.<Collection<? extends GotoRelatedItem>>createConstantValue(concat);
+    return NotNullLazyValue.createConstantValue(concat);
   }
 
   private void checkBuilt() {

@@ -28,10 +28,10 @@ import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
-import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.AppUIUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.SmartHashSet
 import gnu.trove.THashMap
@@ -55,12 +55,18 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
                                 name: String,
                                 attributeProvider: Function<String, String?>,
                                 isBundled: Boolean) = KeymapImpl(name, dataHolder)
-
-      override fun getState(scheme: Keymap) = if (scheme.canModify()) SchemeState.POSSIBLY_CHANGED else SchemeState.NON_PERSISTENT
-
       override fun onCurrentSchemeSwitched(oldScheme: Keymap?, newScheme: Keymap?) {
         for (listener in listeners) {
           listener.activeKeymapChanged(newScheme)
+        }
+      }
+
+      override fun reloaded(schemeManager: SchemeManager<Keymap>) {
+        if (schemeManager.currentScheme == null) {
+          // listeners expect that event will be fired in EDT
+          AppUIUtil.invokeOnEdt {
+            schemeManager.setCurrentSchemeName(defaultKeymap.defaultKeymapName, true)
+          }
         }
       }
     })
@@ -127,8 +133,8 @@ class KeymapManagerImpl(defaultKeymap: DefaultKeymap, factory: SchemeManagerFact
 
   override fun getState(): Element {
     val result = Element("state")
-    if (schemeManager.currentScheme != null) {
-      schemeManager.currentScheme?.let {
+    schemeManager.currentScheme?.let {
+      if (it.name != DefaultKeymap.instance.defaultKeymapName) {
         val e = Element(ACTIVE_KEYMAP)
         e.setAttribute(NAME_ATTRIBUTE, it.name)
         result.addContent(e)

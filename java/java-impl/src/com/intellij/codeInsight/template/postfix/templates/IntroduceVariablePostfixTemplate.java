@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
-import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.introduceVariable.InputValidator;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
@@ -53,7 +52,7 @@ public class IntroduceVariablePostfixTemplate extends PostfixTemplateWithExpress
       public final IntroduceVariableSettings getSettings(Project project, Editor editor, final PsiExpression expr,
                                                          PsiExpression[] occurrences, TypeSelectorManagerImpl typeSelectorManager,
                                                          boolean declareFinalIfAll, boolean anyAssignmentLHS, InputValidator validator,
-                                                         PsiElement anchor, OccurrencesChooser.ReplaceChoice replaceChoice) {
+                                                         PsiElement anchor, JavaReplaceChoice replaceChoice) {
         return new IntroduceVariableSettings() {
           @Override
           public String getEnteredName() {
@@ -92,5 +91,11 @@ public class IntroduceVariablePostfixTemplate extends PostfixTemplateWithExpress
         return true;
       }
     };
+  }
+
+  @Override
+  protected void prepareAndExpandForChooseExpression(@NotNull PsiElement expression, @NotNull Editor editor) {
+    //no write action
+    expandForChooseExpression(expression, editor);
   }
 }

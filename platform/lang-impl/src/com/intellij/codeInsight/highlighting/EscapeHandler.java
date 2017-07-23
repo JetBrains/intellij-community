@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -36,7 +37,7 @@ public class EscapeHandler extends EditorActionHandler {
   }
 
   @Override
-  public void execute(Editor editor, DataContext dataContext){
+  public void execute(@NotNull Editor editor, DataContext dataContext){
     editor.setHeaderComponent(null);
 
     Project project = CommonDataKeys.PROJECT.getData(dataContext);

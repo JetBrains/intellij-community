@@ -16,6 +16,7 @@
 package com.jetbrains.python.remote
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import java.io.File
 import java.util.function.Consumer
 
@@ -59,9 +60,17 @@ interface PyProjectSynchronizer {
    * @param module current module
    * @param syncDirection local-to-remote (aka java-to-python) or opposite. See enum value doc.
    * @param callback code to be called after sync completion. Argument tells if sync was success or not.
+   * @param fileNames files to be used as source (local files in case of java-to-python, remote otherwise).
+   *                  If no file provided, *all* files are copied. So, use this arg as filter to sync subset of files.
    */
   fun syncProject(module: Module, syncDirection: PySyncDirection,
-                  callback: Consumer<Boolean>?)
+                  callback: Consumer<Boolean>?, vararg fileNames: String)
+
+  /**
+   * Maps file name from one side to another.
+   * @param filePath local file name (in case of java-to-python), remote otherwise
+   */
+  fun mapFilePath(project: Project, direction: PySyncDirection, filePath: String): String?
 }
 
 /**
@@ -90,18 +99,12 @@ class PySyncCheckOnly(val projectBaseDir: File) : PySyncCheckStrategy
  * This argument should only be provided first time. On next call always provide null to prevent infinite loop because
  * user will be asked for path only if this argument is null.
  */
-class PySyncCheckCreateIfPossible(val module: Module, val remotePath: String? ) : PySyncCheckStrategy
+class PySyncCheckCreateIfPossible(val module: Module, val remotePath: String?) : PySyncCheckStrategy
 
 /**
  * Local-remote sync direction
  */
 enum class PySyncDirection {
-  /**
-   * aka local-to-remote
-   */
-  JAVA_TO_PYTHON,
-  /**
-   * aka remote-to-local
-   */
-  PYTHON_TO_JAVA,
+  LOCAL_TO_REMOTE,
+  REMOTE_TO_LOCAL,
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,14 @@
  */
 package com.intellij.codeInspection.java19modules;
 
-import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInspection.*;
-import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -31,71 +31,40 @@ import java.util.List;
  * @author Pavel.Dolgov
  */
 public class Java9ModuleExportsPackageToItselfInspection extends BaseJavaLocalInspectionTool {
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    PsiFile file = holder.getFile();
-    if (file instanceof PsiJavaFile) {
-      PsiJavaFile javaFile = (PsiJavaFile)file;
-      if (javaFile.getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_9) && javaFile.getModuleDeclaration() != null) {
-        return new ExportedToSelfVisitor(holder);
-      }
-    }
-    return PsiElementVisitor.EMPTY_VISITOR;
+    return PsiUtil.isModuleFile(holder.getFile()) ? new ExportedToSelfVisitor(holder) : PsiElementVisitor.EMPTY_VISITOR;
   }
 
   private static class ExportedToSelfVisitor extends JavaElementVisitor {
     private final ProblemsHolder myHolder;
 
-    public ExportedToSelfVisitor(ProblemsHolder holder) { myHolder = holder; }
+    public ExportedToSelfVisitor(ProblemsHolder holder) {
+      myHolder = holder;
+    }
 
     @Override
-    public void visitExportsStatement(PsiExportsStatement statement) {
-      super.visitExportsStatement(statement);
+    public void visitPackageAccessibilityStatement(PsiPackageAccessibilityStatement statement) {
+      super.visitPackageAccessibilityStatement(statement);
       PsiJavaModule javaModule = PsiTreeUtil.getParentOfType(statement, PsiJavaModule.class);
       if (javaModule != null) {
-        String moduleName = javaModule.getModuleName();
-        List<PsiJavaModuleReferenceElement> referenceElements = ContainerUtil.newArrayList(statement.getModuleReferences());
-        for (PsiJavaModuleReferenceElement referenceElement : referenceElements) {
+        String moduleName = javaModule.getName();
+        List<PsiJavaModuleReferenceElement> references = ContainerUtil.newArrayList(statement.getModuleReferences());
+        for (PsiJavaModuleReferenceElement referenceElement : references) {
           if (moduleName.equals(referenceElement.getReferenceText())) {
-            String message = InspectionsBundle.message(referenceElements.size() == 1
-                                                       ? "inspection.module.exports.package.to.itself.only.message"
-                                                       : "inspection.module.exports.package.to.itself.message");
-            myHolder.registerProblem(referenceElement, message,
-                                     new DeleteExportsToModuleFix(referenceElement));
+            String message = InspectionsBundle.message("inspection.module.exports.package.to.itself");
+            if (references.size() == 1) {
+              String fixText = InspectionsBundle.message("exports.to.itself.delete.statement.fix");
+              myHolder.registerProblem(referenceElement, message, QuickFixFactory.getInstance().createDeleteFix(statement, fixText));
+            }
+            else {
+              String fixText = InspectionsBundle.message("exports.to.itself.delete.module.ref.fix", moduleName);
+              myHolder.registerProblem(referenceElement, message, QuickFixFactory.getInstance().createDeleteFix(referenceElement, fixText));
+            }
           }
         }
       }
-    }
-  }
-
-  private static class DeleteExportsToModuleFix implements LocalQuickFix {
-    private final String myModuleName;
-
-    public DeleteExportsToModuleFix(PsiJavaModuleReferenceElement reference) {
-      myModuleName = reference.getReferenceText();
-    }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getName() {
-      return InspectionsBundle.message("exports.to.itself.delete.module.fix.name", myModuleName);
-    }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return InspectionsBundle.message("exports.to.itself.delete.module.fix.family.name");
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement psiElement = descriptor.getPsiElement();
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(psiElement)) return;
-      psiElement.delete();
     }
   }
 }

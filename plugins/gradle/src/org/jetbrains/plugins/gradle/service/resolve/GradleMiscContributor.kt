@@ -16,10 +16,7 @@
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.patterns.PsiJavaPatterns.psiElement
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiType
-import com.intellij.psi.ResolveState
+import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
 import groovy.lang.Closure
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
@@ -28,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyClosure
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
@@ -48,20 +45,24 @@ class GradleMiscContributor : GradleMethodContextContributor {
     val testLoggingClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_TASKS_TESTING_TEST, "testLogging"))
     val downloadClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, "download"))
     val domainCollectionWithTypeClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_DOMAIN_OBJECT_COLLECTION, "withType"))
-//    val publicationsClosure = groovyClosure().inMethod(psiMethod("org.gradle.api.publish.PublishingExtension", "publications"))
+    val manifestClosure = groovyClosure().inMethod(psiMethod(GRADLE_JVM_TASKS_JAR, "manifest"))
+    //    val publicationsClosure = groovyClosure().inMethod(psiMethod("org.gradle.api.publish.PublishingExtension", "publications"))
     val downloadSpecFqn = "de.undercouch.gradle.tasks.download.DownloadSpec"
     val pluginDependenciesSpecFqn = "org.gradle.plugin.use.PluginDependenciesSpec"
   }
 
   override fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? {
     if (useJUnitClosure.accepts(closure)) {
-      return DelegatesToInfo(TypesUtil.createType(GRADLE_API_JUNIT_OPTIONS, closure), Closure.DELEGATE_FIRST)
+      return DelegatesToInfo(createType(GRADLE_API_JUNIT_OPTIONS, closure), Closure.DELEGATE_FIRST)
     }
     if (testLoggingClosure.accepts(closure)) {
-      return DelegatesToInfo(TypesUtil.createType(GRADLE_API_TEST_LOGGING_CONTAINER, closure), Closure.DELEGATE_FIRST)
+      return DelegatesToInfo(createType(GRADLE_API_TEST_LOGGING_CONTAINER, closure), Closure.DELEGATE_FIRST)
     }
     if (downloadClosure.accepts(closure)) {
-      return DelegatesToInfo(TypesUtil.createType(downloadSpecFqn, closure), Closure.DELEGATE_FIRST)
+      return DelegatesToInfo(createType(downloadSpecFqn, closure), Closure.DELEGATE_FIRST)
+    }
+    if (manifestClosure.accepts(closure)) {
+      return DelegatesToInfo(createType(GRADLE_API_JAVA_ARCHIVES_MANIFEST, closure), Closure.DELEGATE_FIRST)
     }
 //    if (publicationsClosure.accepts(closure)) {
 //      return DelegatesToInfo(TypesUtil.createType("org.gradle.api.publish.PublicationContainer", closure), Closure.DELEGATE_FIRST)
@@ -72,7 +73,7 @@ class GradleMiscContributor : GradleMethodContextContributor {
       if (parent is GrMethodCallExpression) {
         val psiElement = parent.argumentList.allArguments.singleOrNull()?.reference?.resolve()
         if (psiElement is PsiClass) {
-          return DelegatesToInfo(TypesUtil.createType(psiElement.qualifiedName, closure), Closure.DELEGATE_FIRST)
+          return DelegatesToInfo(createType(psiElement.qualifiedName, closure), Closure.DELEGATE_FIRST)
         }
       }
     }
@@ -92,12 +93,12 @@ class GradleMiscContributor : GradleMethodContextContributor {
 
     val classHint = processor.getHint(com.intellij.psi.scope.ElementClassHint.KEY)
     val shouldProcessMethods = ResolveUtil.shouldProcessMethods(classHint)
-    val psiManager = GroovyPsiManager.getInstance(place.project)
+    val groovyPsiManager = GroovyPsiManager.getInstance(place.project)
     val resolveScope = place.resolveScope
 
     if (shouldProcessMethods && place.parent?.parent is GroovyFile && place.text == "plugins") {
-      val pluginsDependenciesClass = psiManager.findClassWithCache(pluginDependenciesSpecFqn, resolveScope) ?: return true
-      val returnClass = psiManager.createTypeByFQClassName(pluginDependenciesSpecFqn, resolveScope) ?: return true
+      val pluginsDependenciesClass = JavaPsiFacade.getInstance(place.project).findClass(pluginDependenciesSpecFqn, resolveScope) ?: return true
+      val returnClass = groovyPsiManager.createTypeByFQClassName(pluginDependenciesSpecFqn, resolveScope) ?: return true
       val methodBuilder = GrLightMethodBuilder(place.manager, "plugins").apply {
         containingClass = pluginsDependenciesClass
         returnType = returnClass

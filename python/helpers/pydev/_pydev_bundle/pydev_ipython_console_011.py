@@ -36,6 +36,7 @@ except ImportError:
 from IPython.core import release
 
 from _pydev_bundle.pydev_imports import xmlrpclib
+from _pydevd_bundle.pydevd_constants import dict_keys
 
 default_pydev_banner_parts = default_banner_parts
 
@@ -46,6 +47,9 @@ def show_in_pager(self, strng, *args, **kwargs):
     # On PyDev we just output the string, there are scroll bars in the console
     # to handle "paging". This is the same behaviour as when TERM==dump (see
     # page.py)
+    # for compatibility with mime-bundle form:
+    if isinstance(strng, dict):
+        strng = strng['text/plain']
     print(strng)
 
 def create_editor_hook(pydev_host, pydev_client_port):
@@ -139,8 +143,7 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
     # Things related to exceptions
     #-------------------------------------------------------------------------
 
-    def showtraceback(self, exc_tuple=None, filename=None, tb_offset=None,
-                  exception_only=False):
+    def showtraceback(self, *args, **kwargs):
         # IPython does a lot of clever stuff with Exceptions. However mostly
         # it is related to IPython running in a terminal instead of an IDE.
         # (e.g. it prints out snippets of code around the stack trace)
@@ -313,15 +316,16 @@ class _PyDevFrontEnd:
     version = release.__version__
 
     def __init__(self, show_banner=True):
-
         # Create and initialize our IPython instance.
-        self.ipython = PyDevTerminalInteractiveShell.instance()
+        if hasattr(PyDevTerminalInteractiveShell, '_instance') and PyDevTerminalInteractiveShell._instance is not None:
+            self.ipython = PyDevTerminalInteractiveShell._instance
+        else:
+            self.ipython = PyDevTerminalInteractiveShell.instance()
 
         if show_banner:
             # Display the IPython banner, this has version info and
             # help info
             self.ipython.show_banner()
-
 
         self._curr_exec_line = 0
         self._curr_exec_lines = []
@@ -330,8 +334,8 @@ class _PyDevFrontEnd:
     def update(self, globals, locals):
         ns = self.ipython.user_ns
 
-        for ind in ['_oh', '_ih', '_dh', '_sh', 'In', 'Out', 'get_ipython', 'exit', 'quit']:
-            locals[ind] = ns[ind]
+        for key in dict_keys(self.ipython.user_ns):
+            locals[key] = ns[key]
 
         self.ipython.user_global_ns.clear()
         self.ipython.user_global_ns.update(globals)

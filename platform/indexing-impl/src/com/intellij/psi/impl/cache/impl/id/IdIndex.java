@@ -20,7 +20,6 @@ import com.intellij.lang.cacheBuilder.CacheBuilderRegistry;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
@@ -43,12 +42,7 @@ import java.util.Map;
 public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
   @NonNls public static final ID<IdIndexEntry, Integer> NAME = ID.create("IdIndex");
   
-  private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
-    @Override
-    public boolean acceptInput(@NotNull final VirtualFile file) {
-      return isIndexable(file.getFileType());
-    }
-  };
+  private final FileBasedIndex.InputFilter myInputFilter = file -> isIndexable(file.getFileType());
 
   public static final boolean ourSnapshotMappingsEnabled = SystemProperties.getBooleanProperty("idea.index.snapshot.mappings.enabled", true);
 

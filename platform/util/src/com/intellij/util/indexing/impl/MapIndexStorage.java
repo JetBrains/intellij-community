@@ -16,6 +16,7 @@
 package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.indexing.StorageException;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -41,13 +43,14 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
   protected final Lock l = new ReentrantLock();
   private final DataExternalizer<Value> myDataExternalizer;
   private final boolean myKeyIsUniqueForIndexedFile;
+  private final boolean myReadOnly;
 
-  public MapIndexStorage(@NotNull File storageFile,
+  protected MapIndexStorage(@NotNull File storageFile,
                          @NotNull KeyDescriptor<Key> keyDescriptor,
                          @NotNull DataExternalizer<Value> valueExternalizer,
                          final int cacheSize,
                          boolean keyIsUniqueForIndexedFile) throws IOException {
-    this(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, true);
+    this(storageFile, keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, true, false);
   }
 
   protected MapIndexStorage(@NotNull File storageFile,
@@ -55,12 +58,14 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
                             @NotNull DataExternalizer<Value> valueExternalizer,
                             final int cacheSize,
                             boolean keyIsUniqueForIndexedFile,
-                            boolean initialize) throws IOException {
+                            boolean initialize,
+                            boolean readOnly) throws IOException {
     myBaseStorageFile = storageFile;
     myKeyDescriptor = keyDescriptor;
     myCacheSize = cacheSize;
     myDataExternalizer = valueExternalizer;
     myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
+    myReadOnly = readOnly;
     if (initialize) initMapAndCache();
   }
 
@@ -75,7 +80,12 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
       });
     PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(Boolean.TRUE);
     try {
-      map = new ValueContainerMap<Key, Value>(getStorageFile(), myKeyDescriptor, myDataExternalizer, myKeyIsUniqueForIndexedFile);
+      map = new ValueContainerMap<Key, Value>(getStorageFile(), myKeyDescriptor, myDataExternalizer, myKeyIsUniqueForIndexedFile) {
+        @Override
+        protected boolean isReadOnly() {
+          return myReadOnly;
+        }
+      };
     } finally {
       PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(null);
       PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(null);
@@ -111,7 +121,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
 
       @Override
       protected void onDropFromCache(final Key key, @NotNull final ChangeTrackingValueContainer<Value> valueContainer) {
-        if (valueContainer.isDirty()) {
+        if (!myReadOnly && valueContainer.isDirty()) {
           try {
             map.put(key, valueContainer);
           }
@@ -200,6 +210,9 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
 
   @Override
   public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
+    if (myReadOnly) {
+      throw new IncorrectOperationException("Index storage is read-only");
+    }
     try {
       myMap.markDirty();
       if (!myKeyIsUniqueForIndexedFile) {
@@ -243,7 +256,14 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
 
   @Override
   public void clearCaches() {
-
+    l.lock();
+    try {
+      for(Map.Entry<Key, ChangeTrackingValueContainer<Value>> entry:myCache.entrySet()) {
+        entry.getValue().dropMergedData();
+      }
+    } finally {
+      l.unlock();
+    }
   }
 
   protected static <T> T unwrapCauseAndRethrow(RuntimeException e) throws StorageException {
@@ -274,5 +294,10 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
     finally {
       l.unlock();
     }
+  }
+
+  @TestOnly
+  public PersistentMap<Key, UpdatableValueContainer<Value>> getIndexMap() {
+    return myMap;
   }
 }

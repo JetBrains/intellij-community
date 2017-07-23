@@ -35,8 +35,8 @@ import java.util.Map;
  * @author yole
  */
 public class CoreFileTypeRegistry extends FileTypeRegistry {
-  private final Map<String, FileType> myExtensionsMap = new THashMap<String, FileType>(FileUtil.PATH_HASHING_STRATEGY);
-  private final List<FileType> myAllFileTypes = new ArrayList<FileType>();
+  private final Map<String, FileType> myExtensionsMap = new THashMap<>(FileUtil.PATH_HASHING_STRATEGY);
+  private final List<FileType> myAllFileTypes = new ArrayList<>();
 
   public CoreFileTypeRegistry() {
     myAllFileTypes.add(UnknownFileType.INSTANCE);
@@ -47,6 +47,7 @@ public class CoreFileTypeRegistry extends FileTypeRegistry {
     return false;
   }
 
+  @NotNull
   @Override
   public FileType[] getRegisteredFileTypes() {
     return myAllFileTypes.toArray(new FileType[myAllFileTypes.size()]);

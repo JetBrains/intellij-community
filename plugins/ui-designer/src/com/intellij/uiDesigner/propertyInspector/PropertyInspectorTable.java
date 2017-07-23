@@ -218,7 +218,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   }
 
   /**
-   * @return currently selected {@link IntrospectedProperty} or <code>null</code>
+   * @return currently selected {@link IntrospectedProperty} or {@code null}
    * if nothing selected or synthetic property is selected.
    */
   @Nullable
@@ -378,9 +378,9 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
    * which is already selected then the new value will be
    * also selected. It is very convenient.
    *
-   * @param forceSynch if <code>false</code> and selected component in the ComponentTree
+   * @param forceSynch if {@code false} and selected component in the ComponentTree
    * is the same as current component in the PropertyInspector then method does
-   * nothing such sace. If <code>true</code> then inspector is forced to resynch.
+   * nothing such sace. If {@code true} then inspector is forced to resynch.
    */
   public void synchWithTree(final boolean forceSynch){
     if (myInsideSynch) {
@@ -497,8 +497,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   }
 
   /**
-   * @return index of the property with specified <code>name</code>.
-   * If there is no such property then the method returns <code>-1</code>.
+   * @return index of the property with specified {@code name}.
+   * If there is no such property then the method returns {@code -1}.
    */
   private static int findPropertyByName(final ArrayList<Property> properties, final String name){
     for(int i=properties.size()-1;i>=0;i--){
@@ -642,7 +642,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   }
 
   /**
-   * Starts editing property with the specified <code>index</code>.
+   * Starts editing property with the specified {@code index}.
    * The method does nothing is property isn't editable.
    */
   private void startEditing(final int index){
@@ -795,7 +795,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
 
   /**
    * @return first error for the property at the specified row. If component doesn't contain
-   * any error then the method returns <code>null</code>.
+   * any error then the method returns {@code null}.
    */
   @Nullable
   private String getErrorForRow(final int row){

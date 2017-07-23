@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,18 +86,21 @@ public class RunnerMediator {
     if (!SystemInfo.isWindows) {
       throw new IllegalStateException("There is no need of runner under unix based OS");
     }
-    final String path = System.getenv(IDEA_RUNNERW);
+
+    String path = System.getenv(IDEA_RUNNERW);
     if (path != null) {
       if (new File(path).exists()) {
         return path;
       }
-      LOG.warn("Cannot locate " + STANDARD_RUNNERW + " by " + IDEA_RUNNERW + " environment variable (" + path + ")");
+      LOG.warn("Cannot locate " + STANDARD_RUNNERW + " by " + IDEA_RUNNERW + "=" + path);
     }
-    File runnerw = new File(PathManager.getBinPath(), STANDARD_RUNNERW);
-    if (runnerw.exists()) {
+
+    File runnerw = PathManager.findBinFile(STANDARD_RUNNERW);
+    if (runnerw != null && runnerw.exists()) {
       return runnerw.getPath();
     }
-    LOG.warn("Cannot locate " + STANDARD_RUNNERW + " by default path (" + runnerw.getAbsolutePath() + ")");
+
+    LOG.warn("Cannot locate " + STANDARD_RUNNERW + " in " + PathManager.getBinPath());
     return null;
   }
 

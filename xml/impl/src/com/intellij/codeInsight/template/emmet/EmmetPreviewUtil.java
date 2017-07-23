@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.template.emmet;
 
-import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
 import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
@@ -23,10 +22,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.event.CaretAdapter;
 import com.intellij.openapi.editor.event.CaretEvent;
-import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -56,7 +55,7 @@ public class EmmetPreviewUtil {
         final String templatePrefix = new ZenCodingTemplate().computeTemplateKeyWithoutContextChecking(callback);
         if (templatePrefix != null) {
           try {
-            ZenCodingTemplate.expand(templatePrefix, callback, generator, Collections.<ZenCodingFilter>emptyList(),
+            ZenCodingTemplate.expand(templatePrefix, callback, generator, Collections.emptyList(),
                                      expandPrimitiveAbbreviations, 0);
             TemplateImpl template = callback.getGeneratedTemplate();
             String templateText = template != null ? template.getTemplateText() : null;
@@ -77,7 +76,7 @@ public class EmmetPreviewUtil {
   public static void addEmmetPreviewListeners(@NotNull final Editor editor,
                                               @NotNull final PsiFile file,
                                               final boolean expandPrimitiveAbbreviations) {
-    editor.getDocument().addDocumentListener(new DocumentAdapter() {
+    editor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
         EmmetPreviewHint existingHint = EmmetPreviewHint.getExistingHint(editor);
@@ -90,7 +89,7 @@ public class EmmetPreviewUtil {
       }
     });
 
-    editor.getCaretModel().addCaretListener(new CaretAdapter() {
+    editor.getCaretModel().addCaretListener(new CaretListener() {
       @Override
       public void caretPositionChanged(@NotNull CaretEvent e) {
         EmmetPreviewHint existingHint = EmmetPreviewHint.getExistingHint(e.getEditor());

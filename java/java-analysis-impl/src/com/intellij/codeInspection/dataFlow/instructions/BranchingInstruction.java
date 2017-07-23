@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Feb 8, 2002
- * Time: 10:03:49 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.dataFlow.instructions;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +33,7 @@ public abstract class BranchingInstruction extends Instruction {
     myIsTrueReachable = false;
     myIsFalseReachable = false;
     myExpression = psiAnchor;
-    isConstTrue = psiAnchor != null && isBoolConst(psiAnchor);
+    isConstTrue = psiAnchor instanceof PsiExpression && isBoolConst(PsiUtil.skipParenthesizedExprDown((PsiExpression)psiAnchor));
   }
 
   public boolean isTrueReachable() {

@@ -23,10 +23,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 18.02.2008
- */
 public class DynamicPropertyDialog extends DynamicDialog {
 
   public DynamicPropertyDialog(GrReferenceExpression referenceExpression) {

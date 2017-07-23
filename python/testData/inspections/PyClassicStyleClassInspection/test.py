@@ -22,3 +22,7 @@ Meta = create_meta()
 
 class Something(Meta):
     pass
+
+
+class DerivedException(Exception):
+    pass

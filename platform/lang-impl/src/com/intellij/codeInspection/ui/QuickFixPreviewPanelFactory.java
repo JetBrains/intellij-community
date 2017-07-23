@@ -36,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
-import java.util.stream.Stream;
 
 /**
  * @author Dmitry Batkovich
@@ -67,16 +66,17 @@ public class QuickFixPreviewPanelFactory {
       LOG.assertTrue(myWrapper != null);
       CommonProblemDescriptor[] descriptors = myView.getTree().getSelectedDescriptors(false, null, false, true);
       QuickFixAction[] fixes = view.getProvider().getQuickFixes(myWrapper, view.getTree());
-      myEmpty = fillPanel(fixes, descriptors);
+      myEmpty = fillPanel(fixes, descriptors, view);
     }
 
     public boolean isEmpty() {
       return myEmpty;
     }
 
-    private boolean fillPanel(@Nullable QuickFixAction[] fixes,
-                              CommonProblemDescriptor[] descriptors) {
-      boolean hasFixes = fixes != null && fixes.length != 0;
+    private boolean fillPanel(@NotNull QuickFixAction[] fixes,
+                              CommonProblemDescriptor[] descriptors,
+                              @NotNull InspectionResultsView view) {
+      boolean hasFixes = fixes.length != 0;
       int problemCount = descriptors.length;
       boolean multipleDescriptors = problemCount > 1;
       setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
@@ -97,9 +97,9 @@ public class QuickFixPreviewPanelFactory {
         actions.add(suppressionCombo);
       }
       if (actions.getChildrenCount() != 0) {
-        final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actions, true);
+        final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("inspection.view.quick.fix.preview", actions, true);
         final JComponent component = toolbar.getComponent();
-        toolbar.setTargetComponent(this);
+        toolbar.setTargetComponent(view);
         add(component);
         hasComponents = true;
       }
@@ -115,24 +115,24 @@ public class QuickFixPreviewPanelFactory {
       final AnActionEvent
         event = AnActionEvent.createFromDataContext(ActionPlaces.CODE_INSPECTION, null, DataManager.getInstance().getDataContext(view));
       final AnAction[] suppressors = new SuppressActionWrapper().getChildren(event);
-      final Stream<AnAction> suppressActionStream = Arrays.stream(suppressors).filter(s -> {
+      final AnAction[] availableSuppressors = Arrays.stream(suppressors).filter(s -> {
+        event.getPresentation().setEnabled(false);
         s.update(event);
         return event.getPresentation().isEnabled();
-      });
-      if (!suppressActionStream.findFirst().isPresent()) {
+      }).toArray(AnAction[]::new);
+      if (availableSuppressors.length == 0) {
         return null;
       }
       final ComboBoxAction action = new ComboBoxAction() {
         {
           getTemplatePresentation().setText("Suppress");
-          getTemplatePresentation().setEnabledAndVisible(suppressors.length != 0);
         }
 
         @NotNull
         @Override
         protected DefaultActionGroup createPopupActionGroup(JComponent button) {
           DefaultActionGroup group = new DefaultCompactActionGroup();
-          group.addAll(suppressors);
+          group.addAll(availableSuppressors);
           return group;
         }
       };

@@ -21,12 +21,11 @@ import com.intellij.codeInsight.generation.GenerationInfo;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
@@ -126,11 +125,6 @@ public class GroovyGeneratePropertyMissingHandler extends GenerateMembersHandler
     return GenerationInfo.EMPTY_ARRAY;
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
   @Nullable
   @Override
   protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project) {
@@ -160,18 +154,15 @@ public class GroovyGeneratePropertyMissingHandler extends GenerateMembersHandler
                                    Messages.getQuestionIcon()) == Messages.YES) {
         final PsiMethod finalGetter = getter;
         final PsiMethod finalSetter = setter;
-        if (!ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            try {
-              finalSetter.delete();
-              finalGetter.delete();
-              return Boolean.TRUE;
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-              return Boolean.FALSE;
-            }
+        if (!WriteAction.compute(() -> {
+          try {
+            finalSetter.delete();
+            finalGetter.delete();
+            return Boolean.TRUE;
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+            return Boolean.FALSE;
           }
         }).booleanValue()) {
           return null;

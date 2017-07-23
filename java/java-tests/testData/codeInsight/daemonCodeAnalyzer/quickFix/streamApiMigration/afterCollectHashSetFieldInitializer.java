@@ -8,8 +8,8 @@ public class Collect {
     }
   }
 
-  Set<String> names = new HashSet<>();
+  final Set<String> names = new HashSet<>();
   void collectNames(List<Person> persons){
-      persons.stream().map(Person::getName).forEach(s -> names.add(s));
+      persons.stream().map(Person::getName).forEach(names::add);
   }
 }

@@ -114,12 +114,12 @@ public class XPath2TypeTest extends XPath2HighlightingTestBase {
   }
 
   public void testDatePlusDuration() throws Throwable {
-    TestNamespaceContext.install(getTestRootDisposable());
+    TestNamespaceContext.install(myFixture.getTestRootDisposable());
     doXPathHighlighting();
   }
 
   public void testDatePlusDate() throws Throwable {
-    TestNamespaceContext.install(getTestRootDisposable());
+    TestNamespaceContext.install(myFixture.getTestRootDisposable());
     doXPathHighlighting();
   }
 
@@ -140,37 +140,37 @@ public class XPath2TypeTest extends XPath2HighlightingTestBase {
   }
 
   public void testDateMinusDuration() throws Throwable {
-    TestNamespaceContext.install(getTestRootDisposable());
+    TestNamespaceContext.install(myFixture.getTestRootDisposable());
     doXPathHighlighting();
   }
 
   public void testDateMinusDuration2() throws Throwable {
-    TestNamespaceContext.install(getTestRootDisposable());
+    TestNamespaceContext.install(myFixture.getTestRootDisposable());
     doXPathHighlighting();
   }
 
   public void testDurationMinusDate() throws Throwable {
-    TestNamespaceContext.install(getTestRootDisposable());
+    TestNamespaceContext.install(myFixture.getTestRootDisposable());
     doXPathHighlighting();
   }
 
   public void testNumericDivDuration() throws Throwable {
-    TestNamespaceContext.install(getTestRootDisposable());
+    TestNamespaceContext.install(myFixture.getTestRootDisposable());
     doXPathHighlighting();
   }
 
   public void testNumericIDivDuration() throws Throwable {
-    TestNamespaceContext.install(getTestRootDisposable());
+    TestNamespaceContext.install(myFixture.getTestRootDisposable());
     doXPathHighlighting();
   }
 
   public void testDurationDivNumeric() throws Throwable {
-    TestNamespaceContext.install(getTestRootDisposable());
+    TestNamespaceContext.install(myFixture.getTestRootDisposable());
     doXPathHighlighting();
   }
 
   public void testDurationIDivNumeric() throws Throwable {
-    TestNamespaceContext.install(getTestRootDisposable());
+    TestNamespaceContext.install(myFixture.getTestRootDisposable());
     doXPathHighlighting();
   }
 
@@ -183,7 +183,7 @@ public class XPath2TypeTest extends XPath2HighlightingTestBase {
   }
 
   public void testRedundantTypeConversion() throws Throwable {
-    TestNamespaceContext.install(getTestRootDisposable());
+    TestNamespaceContext.install(myFixture.getTestRootDisposable());
     doXPathHighlighting();
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TwoColorsIcon;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -40,7 +41,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public final class ColorLineMarkerProvider implements LineMarkerProvider {
+public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   private final ElementColorProvider[] myExtensions = ElementColorProvider.EP_NAME.getExtensions();
 
@@ -60,7 +61,18 @@ public final class ColorLineMarkerProvider implements LineMarkerProvider {
   @Override
   public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
   }
-  
+
+  @Override
+  public String getName() {
+    return "Color preview";
+  }
+
+  @Nullable
+  @Override
+  public Icon getIcon() {
+    return AllIcons.Gutter.Colors;
+  }
+
   private static class MyInfo extends MergeableLineMarkerInfo<PsiElement> {
 
     private final Color myColor;

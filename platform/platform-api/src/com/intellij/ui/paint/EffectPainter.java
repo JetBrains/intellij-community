@@ -222,7 +222,7 @@ public enum EffectPainter implements RegionPainter<Font> {
 
       @Override
       void paintImage(Graphics2D g, int width, int height, int period) {
-        Integer round = period <= 2 && !UIUtil.isJDKManagedHiDPIScreen(g) ? null : period;
+        Integer round = period <= 2 && !UIUtil.isJreHiDPI(g) ? null : period;
         for (int dx = 0; dx < width; dx += period + period) {
           RectanglePainter.FILL.paint(g, dx, 0, period, period, round);
         }

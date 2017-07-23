@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
@@ -174,12 +173,7 @@ public class SvnFileRevision implements VcsFileRevision {
     else {
       result = ContentRevisionCache.getOrLoadAsBytes(myVCS.getProject(), VcsUtil.getFilePathOnNonLocal(myURL, false), getRevisionNumber(),
                                                      myVCS.getKeyInstanceMethod(), ContentRevisionCache.UniqueType.REMOTE_CONTENT,
-                                                     new Throwable2Computable<byte[], VcsException, IOException>() {
-                                                       @Override
-                                                       public byte[] compute() throws VcsException, IOException {
-                                                         return loadContent();
-                                                       }
-                                                     });
+                                                     () -> loadContent());
     }
 
     return result;

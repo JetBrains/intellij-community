@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.plugins;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,13 +34,8 @@ import java.util.List;
 class PluginXmlPathResolver implements JDOMXIncluder.PathResolver {
   private final List<File> myPluginJarFiles;
 
-  public PluginXmlPathResolver(File[] filesInLib) {
-    myPluginJarFiles = ContainerUtil.filter(filesInLib, new Condition<File>() {
-      @Override
-      public boolean value(File file) {
-        return FileUtil.isJarOrZip(file);
-      }
-    });
+  PluginXmlPathResolver(@NotNull File[] filesInLib) {
+    myPluginJarFiles = ContainerUtil.filter(filesInLib, FileUtil::isJarOrZip);
   }
 
   @NotNull

@@ -36,7 +36,9 @@ import java.util.concurrent.ConcurrentMap;
  * and its register instance wrapped with {@link LanguageFileType} instance via {@code FileTypeManager.getInstance().registerFileType()}.
  * There should be exactly one instance of each Language.
  * It is usually created when creating {@link LanguageFileType} and can be retrieved later with {@link #findInstance(Class)}.
- * For the list of standard languages, see {@code com.intellij.lang.StdLanguages}.
+ * For the list of standard languages, see {@code com.intellij.lang.StdLanguages}.<p/>
+ *
+ * The language coming from file type can be changed by {@link com.intellij.psi.LanguageSubstitutor}
  */
 public abstract class Language extends UserDataHolderBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.Language");
@@ -93,7 +95,7 @@ public abstract class Language extends UserDataHolderBase {
       }
       List<Language> languagesByMimeType = ourRegisteredMimeTypes.get(mimeType);
       if (languagesByMimeType == null) {
-        languagesByMimeType = ConcurrencyUtil.cacheOrGet(ourRegisteredMimeTypes, mimeType, ContainerUtil.<Language>createConcurrentList());
+        languagesByMimeType = ConcurrencyUtil.cacheOrGet(ourRegisteredMimeTypes, mimeType, ContainerUtil.createConcurrentList());
       }
       languagesByMimeType.add(this);
     }
@@ -109,7 +111,7 @@ public abstract class Language extends UserDataHolderBase {
   @NotNull
   public static Collection<Language> getRegisteredLanguages() {
     final Collection<Language> languages = ourRegisteredLanguages.values();
-    return Collections.unmodifiableCollection(new ArrayList<Language>(languages));
+    return Collections.unmodifiableCollection(new ArrayList<>(languages));
   }
 
   /**
@@ -128,7 +130,7 @@ public abstract class Language extends UserDataHolderBase {
   @NotNull
   public static Collection<Language> findInstancesByMimeType(@Nullable String mimeType) {
     List<Language> result = mimeType == null ? null : ourRegisteredMimeTypes.get(mimeType);
-    return result == null ? Collections.<Language>emptyList() : Collections.unmodifiableCollection(result);
+    return result == null ? Collections.emptyList() : Collections.unmodifiableCollection(result);
   }
 
   @Override

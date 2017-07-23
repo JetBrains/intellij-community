@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#" + ComparatorCombinatorsInspection.class.getName());
+  private static final Logger LOG = Logger.getInstance(ComparatorCombinatorsInspection.class);
 
   @NotNull
   @Override

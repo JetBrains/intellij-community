@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -426,7 +425,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
 
       @Override
       public Component prepareEditor(final TableCellEditor editor, final int row, final int column) {
-        final DocumentAdapter listener = new DocumentAdapter() {
+        final DocumentListener listener = new DocumentListener() {
           @Override
           public void documentChanged(DocumentEvent e) {
             final TableCellEditor ed = myParametersTable.getCellEditor();
@@ -674,11 +673,6 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     @Override
     public void tableChanged(TableModelEvent e) {
       update();
-    }
-
-    //---ignored
-    @Override
-    public void beforeDocumentChange(DocumentEvent event) {
     }
   }
 

@@ -126,6 +126,7 @@ fun createDebugLoggerWithFile(debugFile: String): MessagingLogger? {
       }
     }
     writer.write("]")
+    writer.flush()
     out.close()
   }
   return logger

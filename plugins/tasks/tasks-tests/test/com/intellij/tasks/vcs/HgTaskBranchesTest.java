@@ -43,6 +43,7 @@ public class HgTaskBranchesTest extends TaskBranchesTest {
   protected void setUp() throws Exception {
     super.setUp();
     HgVcs hgVcs = ObjectUtils.assertNotNull(HgVcs.getInstance(myProject));
+    hgVcs.getProjectSettings().setCheckIncomingOutgoing(false);
     hgVcs.getGlobalSettings().setHgExecutable(HgExecutor.getHgExecutable());
   }
 
@@ -60,9 +61,8 @@ public class HgTaskBranchesTest extends TaskBranchesTest {
     ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
     HgVcs hgVcs = HgVcs.getInstance(myProject);
     assert hgVcs != null;
-    hgVcs.getProjectSettings().setCheckIncomingOutgoing(false);
     vcsManager.setDirectoryMapping(root, HgVcs.VCS_NAME);
-    VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(root));
+    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(root));
     HgRepository repository = HgUtil.getRepositoryManager(myProject).getRepositoryForRoot(file);
     assertNotNull("Couldn't find repository for root " + root, repository);
     return repository;

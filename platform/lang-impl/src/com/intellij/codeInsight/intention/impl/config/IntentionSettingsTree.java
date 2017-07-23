@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,14 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 
@@ -96,6 +97,7 @@ public abstract class IntentionSettingsTree {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     myNorthPanel = new JPanel(new BorderLayout());
     myNorthPanel.add(myFilter, BorderLayout.CENTER);
+    myNorthPanel.setBorder(JBUI.Borders.emptyBottom(2));
 
     final DefaultActionGroup group = new DefaultActionGroup();
     final CommonActionsManager actionManager = CommonActionsManager.getInstance();
@@ -104,7 +106,7 @@ public abstract class IntentionSettingsTree {
     group.add(actionManager.createExpandAllAction(treeExpander, myTree));
     group.add(actionManager.createCollapseAllAction(treeExpander, myTree));
 
-    myNorthPanel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent(), BorderLayout.WEST);
+    myNorthPanel.add(ActionManager.getInstance().createActionToolbar("IntentionSettingsTree", group, true).getComponent(), BorderLayout.WEST);
 
     myComponent.add(myNorthPanel, BorderLayout.NORTH);
     myComponent.add(scrollPane, BorderLayout.CENTER);
@@ -194,7 +196,7 @@ public abstract class IntentionSettingsTree {
     if (userObject instanceof IntentionActionMetaData) {
       IntentionActionMetaData metaData = (IntentionActionMetaData)userObject;
       Boolean b = myIntentionToCheckStatus.get(metaData);
-      boolean enabled = b == null ? false : b.booleanValue();
+      boolean enabled = b == Boolean.TRUE;
       root.setChecked(enabled);
       return enabled;
     }
@@ -371,7 +373,9 @@ public abstract class IntentionSettingsTree {
       }
       SwingUtilities.invokeLater(() -> {
         myTree.setSelectionRow(0);
-        myTree.requestFocus();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          IdeFocusManager.getGlobalInstance().requestFocus(myTree, true);
+        });
       });
       TreeUtil.expandAll(myTree);
       if (filter == null || filter.length() == 0) {

@@ -96,7 +96,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
       }
     });
     if (exception[0] != null) throw exception[0];
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> TestCase.assertFalse("Can't run test", LaterInvocator.isInModalContext()));
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> TestCase.assertFalse("Can't run test " + ModalityState.current(), LaterInvocator.isInModalContext()));
 
     flushSwingQueue();
   }

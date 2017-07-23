@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,22 @@
 
 package com.intellij.execution.configurations;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Base class for a configuration that is associated with a specific module. For example, Java run configurations use the selected module
@@ -68,12 +67,18 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     myModule.setModule(module);
   }
 
+  public void setModuleName(@Nullable String moduleName) {
+    myModule.setModuleName(moduleName);
+  }
+
   protected void readModule(final Element element) {
     myModule.readExternal(element);
   }
 
-  protected void writeModule(final Element element) {
-    myModule.writeExternal(element);
+  protected void writeModule(@NotNull Element element) {
+    //if (myModule.getModule() != null) {
+      myModule.writeExternal(element);
+    //}
   }
 
   public Collection<Module> getAllModules() {
@@ -101,11 +106,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
       configuration.readExternal(element);
       return (ModuleBasedConfiguration)configuration;
     }
-    catch (InvalidDataException e) {
-      LOG.error(e);
-      return null;
-    }
-    catch (WriteExternalException e) {
+    catch (InvalidDataException | WriteExternalException e) {
       LOG.error(e);
       return null;
     }
@@ -114,22 +115,37 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
   @Override
   @NotNull
   public Module[] getModules() {
-    Module module = ApplicationManager.getApplication().runReadAction((Computable<Module>)() -> getConfigurationModule().getModule());
+    Module module = ReadAction.compute(() -> getConfigurationModule().getModule());
     return module == null ? Module.EMPTY_ARRAY : new Module[] {module};
   }
 
   public void restoreOriginalModule(final Module originalModule) {
-    if (originalModule == null) {
-      return;
-    }
-
-    Set<Module> modules = new THashSet<>();
-    for (Module classModule : getModules()) {
-      ModuleUtilCore.collectModulesDependsOn(classModule, modules);
-    }
-    if (modules.contains(originalModule)) {
+    if (canRestoreOriginalModule(originalModule, getModules())) {
       setModule(originalModule);
     }
+  }
+
+  public static boolean canRestoreOriginalModule(Module originalModule, Module[] configModules) {
+    if (originalModule == null || configModules.length == 0) {
+      return false;
+    }
+
+    Deque<Module> queue = new ArrayDeque<>();
+    queue.addLast(originalModule);
+    Set<Module> modules = new THashSet<>();
+    while (!queue.isEmpty()) {
+      Module module = queue.removeFirst();
+      //configModules contains 1 element
+      if (ArrayUtil.contains(module, configModules)) {
+        return true;
+      }
+
+      for (Module next : ModuleRootManager.getInstance(module).getModuleDependencies(true)) {
+        if (!modules.add(next)) continue;
+        queue.addLast(next);
+      }
+    }
+    return false;
   }
 
   public void onNewConfigurationCreated() {
@@ -138,5 +154,9 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
       final Module[] modules = ModuleManager.getInstance(getProject()).getModules();
       configurationModule.setModule(modules.length == 1 ? modules[0] : null);
     }
+  }
+
+  public boolean isModuleDirMacroSupported() {
+    return false;
   }
 }

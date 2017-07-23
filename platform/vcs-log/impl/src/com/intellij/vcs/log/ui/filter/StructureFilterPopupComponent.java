@@ -33,13 +33,13 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsLogRootFilter;
-import com.intellij.vcs.log.impl.VcsLogFileFilter;
-import com.intellij.vcs.log.impl.VcsLogRootFilterImpl;
 import com.intellij.vcs.log.VcsLogStructureFilter;
 import com.intellij.vcs.log.data.VcsLogStructureFilterImpl;
+import com.intellij.vcs.log.impl.VcsLogFileFilter;
+import com.intellij.vcs.log.impl.VcsLogRootFilterImpl;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
-import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
+import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,7 +70,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
   protected String getText(@NotNull VcsLogFileFilter filter) {
     Collection<VirtualFile> roots = filter.getRootFilter() == null ? getAllRoots() : filter.getRootFilter().getRoots();
     Collection<FilePath> files =
-      filter.getStructureFilter() == null ? Collections.<FilePath>emptySet() : filter.getStructureFilter().getFiles();
+      filter.getStructureFilter() == null ? Collections.emptySet() : filter.getStructureFilter().getFiles();
     Collection<VirtualFile> visibleRoots =
       VcsLogUtil.getAllVisibleRoots(getAllRoots(), filter.getRootFilter(), filter.getStructureFilter());
 
@@ -78,7 +78,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       return getTextFromRoots(roots, visibleRoots.size() == getAllRoots().size());
     }
     else {
-      return getTextFromFilePaths(files, "folders", files.isEmpty());
+      return getTextFromFilePaths(files, "folders", false);
     }
   }
 

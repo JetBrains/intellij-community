@@ -26,12 +26,6 @@ import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/2/12
- * Time: 4:22 PM
- */
 public class SvnNativeCallsTranslator {
   private final static String ourGenericAdvice =
     new StringBuilder().append("An error result is returned by native ").append(SystemInfo.OS_NAME).append(" ")
@@ -165,18 +159,16 @@ public class SvnNativeCallsTranslator {
     }
 
     static {
-      ourAdvices.put(-25293, new Convertor<NativeLogReader.CallInfo, String>() {
-        @Override
-        public String convert(NativeLogReader.CallInfo callInfo) {
-          if (! SystemInfo.isMac) return null;
-          final Trinity<String, String, String> trinity = MacParser.macMessages.get(callInfo.getResultCode());
-          if (trinity == null) return null;
-          return MessageFormat.format(ourGenericAdvice, callInfo.getFunctionName(),
-                                      new StringBuilder().append(callInfo.getResultCode()).append(" ( ").append(trinity.getFirst())
-                                        .append(" - ").append(trinity.getSecond()).append(")").append("\nYou are likely to have modified ")
-                                        .append(ApplicationInfo.getInstance().getVersionName()).append(" bundle.\n")
-                                        .append("Please try to reinstall ").append(ApplicationInfo.getInstance().getVersionName()).toString());
-        }
+      ourAdvices.put(-25293, callInfo -> {
+        if (!SystemInfo.isMac) return null;
+        final Trinity<String, String, String> trinity = MacParser.macMessages.get(callInfo.getResultCode());
+        if (trinity == null) return null;
+        return MessageFormat.format(ourGenericAdvice, callInfo.getFunctionName(),
+                                    new StringBuilder().append(callInfo.getResultCode()).append(" ( ").append(trinity.getFirst())
+                                      .append(" - ").append(trinity.getSecond()).append(")").append("\nYou are likely to have modified ")
+                                      .append(ApplicationInfo.getInstance().getVersionName()).append(" bundle.\n")
+                                      .append("Please try to reinstall ").append(ApplicationInfo.getInstance().getVersionName())
+                                      .toString());
       });
 
     }

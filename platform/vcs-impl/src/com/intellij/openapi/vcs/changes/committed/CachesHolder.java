@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,78 +17,53 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.NotNullFunction;
-import com.intellij.util.PairProcessor;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.CommonProcessors.CollectProcessor;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
+
+import static com.intellij.util.containers.ContainerUtil.find;
+import static com.intellij.util.containers.ContainerUtil.newConcurrentMap;
+import static org.apache.commons.codec.digest.DigestUtils.md5Hex;
 
 public class CachesHolder {
   @NonNls private static final String VCS_CACHE_PATH = "vcsCache";
-  
-  private final Project myProject;
-  private final Map<String, ChangesCacheFile> myCacheFiles;
-  private final RepositoryLocationCache myLocationCache;
-  private final ProjectLevelVcsManager myPlManager;
 
-  public CachesHolder(final Project project, final RepositoryLocationCache locationCache) {
+  @NotNull private final Project myProject;
+  @NotNull private final Map<String, ChangesCacheFile> myCacheFiles = newConcurrentMap();
+  @NotNull private final RepositoryLocationCache myLocationCache;
+  @NotNull private final ProjectLevelVcsManager myPlManager;
+
+  public CachesHolder(@NotNull Project project, @NotNull RepositoryLocationCache locationCache) {
     myProject = project;
     myLocationCache = locationCache;
     myPlManager = ProjectLevelVcsManager.getInstance(myProject);
-    myCacheFiles = ContainerUtil.newConcurrentMap();
-  }
-
-  public CachesHolder(final Project project, final RepositoryLocationCache locationCache, final ProjectLevelVcsManager manager) {
-    myProject = project;
-    myPlManager = manager;
-    myLocationCache = locationCache;
-    myCacheFiles = ContainerUtil.newConcurrentMap();
   }
 
   /**
    * Returns all paths that will be used to collect committed changes about. ideally, for one checkout there should be one file
    */
-  public Map<VirtualFile, RepositoryLocation> getAllRootsUnderVcs(final AbstractVcs vcs) {
-    final RootsCalculator calculator = new RootsCalculator(myProject, vcs, myLocationCache);
-    return calculator.getRoots();
+  @NotNull
+  public Map<VirtualFile, RepositoryLocation> getAllRootsUnderVcs(@NotNull AbstractVcs vcs) {
+    return new RootsCalculator(myProject, vcs, myLocationCache).getRoots();
   }
 
-  public void iterateAllRepositoryLocations(final PairProcessor<RepositoryLocation, AbstractVcs> locationProcessor) {
-    final AbstractVcs[] vcses = myPlManager.getAllActiveVcss();
-    for (AbstractVcs vcs : vcses) {
-      final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
-      if (provider instanceof CachingCommittedChangesProvider) {
-        final Map<VirtualFile, RepositoryLocation> map = getAllRootsUnderVcs(vcs);
-        for (VirtualFile root : map.keySet()) {
-          final RepositoryLocation location = map.get(root);
-          if (! Boolean.TRUE.equals(locationProcessor.process(location, vcs))) {
-            return;
-          }
-        }
-      }
-    }
-  }
-
-  public void iterateAllCaches(final NotNullFunction<ChangesCacheFile, Boolean> consumer) {
-    final AbstractVcs[] vcses = myPlManager.getAllActiveVcss();
-    for (AbstractVcs vcs : vcses) {
-      final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
-      if (provider instanceof CachingCommittedChangesProvider) {
-        final Map<VirtualFile, RepositoryLocation> map = getAllRootsUnderVcs(vcs);
-        for (VirtualFile root : map.keySet()) {
-          final RepositoryLocation location = map.get(root);
-          final ChangesCacheFile cacheFile = getCacheFile(vcs, root, location);
-          if (Boolean.TRUE.equals(consumer.fun(cacheFile))) {
+  public void iterateAllCaches(@NotNull Processor<ChangesCacheFile> processor) {
+    for (AbstractVcs vcs : myPlManager.getAllActiveVcss()) {
+      if (vcs.getCommittedChangesProvider() instanceof CachingCommittedChangesProvider) {
+        for (Map.Entry<VirtualFile, RepositoryLocation> entry : getAllRootsUnderVcs(vcs).entrySet()) {
+          ChangesCacheFile cacheFile = getCacheFile(vcs, entry.getKey(), entry.getValue());
+          if (!processor.process(cacheFile)) {
             return;
           }
         }
@@ -97,65 +72,48 @@ public class CachesHolder {
   }
 
   public void clearAllCaches() {
-    for (Map.Entry<String, ChangesCacheFile> entry : myCacheFiles.entrySet()) {
-      entry.getValue().delete();
-    }
+    myCacheFiles.values().forEach(ChangesCacheFile::delete);
     myCacheFiles.clear();
   }
 
-  public List<ChangesCacheFile> getAllCaches() {
-    final List<ChangesCacheFile> result = new ArrayList<>();
-    iterateAllCaches(new NotNullFunction<ChangesCacheFile, Boolean>() {
-      @NotNull
-      public Boolean fun(final ChangesCacheFile changesCacheFile) {
-        result.add(changesCacheFile);
-        return false;
-      }
-    });
-    return result;
+  @NotNull
+  public Collection<ChangesCacheFile> getAllCaches() {
+    CollectProcessor<ChangesCacheFile> processor = new CollectProcessor<>();
+    iterateAllCaches(processor);
+    return processor.getResults();
   }
 
-  public ChangesCacheFile getCacheFile(AbstractVcs vcs, VirtualFile root, RepositoryLocation location) {
-    final String key = location.getKey();
-    ChangesCacheFile cacheFile = myCacheFiles.get(key);
-    if (cacheFile == null) {
-      cacheFile = new ChangesCacheFile(myProject, getCachePath(location), vcs, root, location);
-      myCacheFiles.put(key, cacheFile);
-    }
-    return cacheFile;
+  @NotNull
+  public ChangesCacheFile getCacheFile(@NotNull AbstractVcs vcs, @NotNull VirtualFile root, @NotNull RepositoryLocation location) {
+    return myCacheFiles
+      .computeIfAbsent(location.getKey(), key -> new ChangesCacheFile(myProject, getCachePath(location), vcs, root, location));
   }
 
+  @NotNull
   public File getCacheBasePath() {
     File file = new File(PathManager.getSystemPath(), VCS_CACHE_PATH);
     file = new File(file, myProject.getLocationHash());
     return file;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private File getCachePath(final RepositoryLocation location) {
+  @NotNull
+  private File getCachePath(@NotNull RepositoryLocation location) {
     File file = getCacheBasePath();
     file.mkdirs();
-    String s = location.getKey();
-    try {
-      final byte[] bytes = MessageDigest.getInstance("MD5").digest(CharsetToolkit.getUtf8Bytes(s));
-      StringBuilder result = new StringBuilder();
-      for (byte aByte : bytes) {
-        result.append(String.format("%02x", aByte));
-      }
-      return new File(file, result.toString());
-    }
-    catch (NoSuchAlgorithmException e) {
-      throw new RuntimeException(e);
-    }
+    return new File(file, md5Hex(location.getKey()));
   }
 
-  public ChangesCacheFile haveCache(RepositoryLocation location) {
+  @Nullable
+  public ChangesCacheFile haveCache(@NotNull RepositoryLocation location) {
     String key = location.getKey();
-    if (myCacheFiles.containsKey(key)) return myCacheFiles.get(key);
-    key = key.endsWith("/") ? key : (key + "/");
-    for (String s : myCacheFiles.keySet()) {
-      if (key.startsWith(s) || s.startsWith(key)) return myCacheFiles.get(s);
+    ChangesCacheFile result = myCacheFiles.get(key);
+
+    if (result == null) {
+      String keyWithSlash = key.endsWith("/") ? key : key + "/";
+      String cachedSimilarKey = find(myCacheFiles.keySet(), s -> keyWithSlash.startsWith(s) || s.startsWith(keyWithSlash));
+      result = cachedSimilarKey != null ? myCacheFiles.get(cachedSimilarKey) : null;
     }
-    return null;
+
+    return result;
   }
 }

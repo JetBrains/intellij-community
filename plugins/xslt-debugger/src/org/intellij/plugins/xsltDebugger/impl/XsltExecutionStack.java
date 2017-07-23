@@ -41,7 +41,7 @@ public class XsltExecutionStack extends XExecutionStack {
         if (firstFrameIndex <= frames.size()) {
           container.addStackFrames(frames.subList(firstFrameIndex, frames.size()), true);
         } else {
-          container.addStackFrames(Collections.<XStackFrame>emptyList(), true);
+          container.addStackFrames(Collections.emptyList(), true);
         }
       }
     } catch (VMPausedException e) {

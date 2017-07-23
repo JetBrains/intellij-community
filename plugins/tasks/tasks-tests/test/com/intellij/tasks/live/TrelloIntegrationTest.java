@@ -230,11 +230,7 @@ public class TrelloIntegrationTest extends LiveIntegrationTestCase<TrelloReposit
   private static void assertObjectsNamed(@NotNull String message,
                                          @NotNull Collection<? extends TrelloModel> objects,
                                          @NotNull String... names) {
-    assertEquals(message, ContainerUtil.newHashSet(names), ContainerUtil.map2Set(objects, new Function<TrelloModel, String>() {
-      @Override
-      public String fun(TrelloModel model) {
-        return model.getName();
-      }
-    }));
+    assertEquals(message, ContainerUtil.newHashSet(names), ContainerUtil.map2Set(objects,
+                                                                                 (Function<TrelloModel, String>)model -> model.getName()));
   }
 }

@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -37,12 +36,7 @@ public class HgActionUtil {
   @NotNull
   public static List<HgRepository> collectRepositoriesFromFiles(@NotNull final HgRepositoryManager repositoryManager,
                                                                 @NotNull Collection<VirtualFile> files) {
-    return ContainerUtil.mapNotNull(files, new Function<VirtualFile, HgRepository>() {
-      @Override
-      public HgRepository fun(VirtualFile file) {
-        return repositoryManager.getRepositoryForFile(file);
-      }
-    });
+    return ContainerUtil.mapNotNull(files, file -> repositoryManager.getRepositoryForFile(file));
   }
 
   @Nullable
@@ -55,6 +49,6 @@ public class HgActionUtil {
     }
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     HgRepositoryManager repositoryManager = HgUtil.getRepositoryManager(project);
-    return file != null ? repositoryManager.getRepositoryForFile(file) : HgUtil.getCurrentRepository(project);
-  }
+    return file != null ? repositoryManager.getRepositoryForFileQuick(file) : HgUtil.getCurrentRepository(project);
+  }                                                                                                         
 }

@@ -25,10 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * User: anna
- * Date: 7/12/12
- */
 public class CreateGetterSetterPropertyFromUsageFix extends CreatePropertyFromUsageFix {
   public CreateGetterSetterPropertyFromUsageFix(@NotNull PsiMethodCallExpression methodCall) {
     super(methodCall);

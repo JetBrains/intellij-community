@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Alexey
- * Date: 11.04.2005
- * Time: 1:26:45
- */
 package com.intellij.lang.properties.psi;
 
 import com.intellij.lang.properties.IProperty;
@@ -38,6 +32,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+/**
+ * An interface representing a properties file.
+ *
+ * It can be both xml based {@link com.intellij.lang.properties.xml.XmlPropertiesFile} or .properties based
+ */
 public interface PropertiesFile {
 
   @NotNull
@@ -81,6 +80,9 @@ public interface PropertiesFile {
   /**
    * Adds property to the the file after the specified property.
    * If anchor is null, property added to the beginning of the file.
+   *
+   * In the most cases one can consider to use {@link PropertiesFile#addPropertyAfter(String, String, IProperty)} instead of this method
+   *
    * @param property to add. Typically you create the property via {@link PropertiesElementFactory}.
    * @param anchor property after which to add the new property
    * @return newly added property.
@@ -89,9 +91,20 @@ public interface PropertiesFile {
    */
   @NotNull PsiElement addPropertyAfter(@NotNull IProperty property, @Nullable IProperty anchor) throws IncorrectOperationException;
 
+  /**
+   * Adds property to the the file after the specified property.
+   * If anchor is null, property added to the beginning of the file.
+   *
+   * @param key of a property to add.
+   * @param value of a property to add.
+   * @param anchor property after which to add the new property
+   * @return newly added property.
+   * @throws IncorrectOperationException
+   */
+  IProperty addPropertyAfter(String key, String value, IProperty anchor) throws IncorrectOperationException;
+
   IProperty addProperty(String key, String value);
 
-  IProperty addPropertyAfter(String key, String value, IProperty anchor);
   /**
    * @return Property key to the property value map.
    * Do not modify this map. It's no use anyway.
@@ -102,11 +115,17 @@ public interface PropertiesFile {
 
   VirtualFile getVirtualFile();
 
+  /**
+   * @return containing directory for the corresponding properties file
+   */
   PsiDirectory getParent();
 
   Project getProject();
 
   String getText();
 
+  /**
+   * @return true if property keys in file are alphabetically sorted, otherwise returns false
+   */
   boolean isAlphaSorted();
 }

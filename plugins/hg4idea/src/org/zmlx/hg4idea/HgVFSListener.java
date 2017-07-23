@@ -28,7 +28,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -109,23 +108,14 @@ public class HgVFSListener extends VcsVFSListener {
             getIgnoreRepoHolder(repo).addFiles(ignoredForRepo);
           }
           catch (final VcsException ex) {
-            UIUtil.invokeLaterIfNeeded(new Runnable() {
-              public void run() {
-                ((HgVcs)myVcs).showMessageInConsole(ex.getMessage(), ConsoleViewContentType.ERROR_OUTPUT);
-              }
-            });
+            UIUtil.invokeLaterIfNeeded(() -> ((HgVcs)myVcs).showMessageInConsole(ex.getMessage(), ConsoleViewContentType.ERROR_OUTPUT));
           }
         }
         addedFiles.retainAll(untrackedFiles);
         // select files to add if there is something to select
         if (!addedFiles.isEmpty() || !copyFromMap.isEmpty()) {
 
-          AppUIUtil.invokeLaterIfProjectAlive(myProject, new Runnable() {
-            @Override
-            public void run() {
-              originalExecuteAdd(addedFiles, copyFromMap);
-            }
-          });
+          AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> originalExecuteAdd(addedFiles, copyFromMap));
         }
       }
     }.queue();
@@ -161,12 +151,8 @@ public class HgVFSListener extends VcsVFSListener {
         HgStatusCommand statusCommand = new HgStatusCommand.Builder(false).unknown(true).ignored(true).build(myProject);
         for (Map.Entry<VirtualFile, Collection<VirtualFile>> entry : sortedSourceFilesByRepos.entrySet()) {
           Set<HgChange> changes =
-            statusCommand.executeInCurrentThread(entry.getKey(), ContainerUtil.map(entry.getValue(), new Function<VirtualFile, FilePath>() {
-              @Override
-              public FilePath fun(VirtualFile virtualFile) {
-                return VcsUtil.getFilePath(virtualFile);
-              }
-            }));
+            statusCommand.executeInCurrentThread(entry.getKey(), ContainerUtil.map(entry.getValue(),
+                                                                                   virtualFile -> VcsUtil.getFilePath(virtualFile)));
           for (HgChange change : changes) {
             unversionedAndIgnoredFiles.add(change.afterFile().toFilePath().getVirtualFile());
           }

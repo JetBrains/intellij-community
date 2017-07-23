@@ -16,17 +16,22 @@
 package com.intellij.tasks.vcs;
 
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.tasks.*;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskChangelistSupport;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,11 +40,10 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-/**
- * @author Dmitry Avdeev
- *         Date: 3/5/12
- */
 public class TaskVcsTest extends CodeInsightFixtureTestCase {
+  private TestRepository myRepository;
+  private MockAbstractVcs myVcs;
+  private MyMockChangeProvider myChangeProvider;
 
   private ChangeListManagerImpl myChangeListManager;
   private TaskManagerImpl myTaskManager;
@@ -280,7 +284,8 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     LocalChangeList changeList = myChangeListManager.getChangeList(info.id);
     assertNotNull(changeList);
 
-    CommitChangeListDialog.commitChanges(getProject(), Collections.<Change>emptyList(), changeList, null, changeList.getName());
+    List<Change> changes = addChanges(changeList);
+    CommitChangeListDialog.commitChanges(getProject(), changes, changeList, null, changeList.getName());
 
     assertEquals(2, myTaskManager.getLocalTasks().size()); // no extra task created
     assertEquals(2, myChangeListManager.getChangeListsCopy().size());
@@ -299,7 +304,8 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals(1, myTaskManager.getLocalTasks().size());
     assertEquals(2, myChangeListManager.getChangeListsCopy().size());
 
-    CommitChangeListDialog.commitChanges(getProject(), Collections.<Change>emptyList(), changeList, null, changeList.getName());
+    List<Change> changes = addChanges(changeList);
+    CommitChangeListDialog.commitChanges(getProject(), changes, changeList, null, changeList.getName());
 
     assertEquals(2, myTaskManager.getLocalTasks().size()); // extra task created
     assertEquals(2, myChangeListManager.getChangeListsCopy().size());
@@ -316,6 +322,25 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
   private void removeChangeList(LocalChangeList changeList) {
     myChangeListManager.removeChangeList(changeList);
     myTaskManager.getChangeListListener().changeListRemoved(changeList);
+  }
+
+  @NotNull
+  private List<Change> addChanges(@NotNull LocalChangeList list) {
+    VirtualFile file = myFixture.getTempDirFixture().createFile("Test.txt");
+    FilePath path = VcsUtil.getFilePath(file);
+    Change change = new Change(new SimpleContentRevision("", path, ""),
+                               new CurrentContentRevision(path));
+
+    List<Change> changes = Collections.singletonList(change);
+    myChangeProvider.setChanges(changes);
+
+    myChangeListManager.scheduleUpdate();
+    myChangeListManager.waitUntilRefreshed();
+
+    myChangeListManager.moveChangesTo(list, change);
+    myChangeListManager.waitUntilRefreshed();
+
+    return changes;
   }
 
   public void testProjectWithDash() throws Exception {
@@ -388,14 +413,13 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals("1-contains-Illegal$Symbols", myTaskManager.suggestBranchName(withIllegalSymbolsInIssue));
   }
 
-  private TestRepository myRepository;
-  private MockAbstractVcs myVcs;
-
   @Override
   public void setUp() throws Exception {
     super.setUp();
 
     myVcs = new MockAbstractVcs(getProject());
+    myChangeProvider = new MyMockChangeProvider();
+    myVcs.setChangeProvider(myChangeProvider);
     AllVcses.getInstance(getProject()).registerManually(myVcs);
     myChangeListManager = (ChangeListManagerImpl)ChangeListManager.getInstance(getProject());
 
@@ -476,7 +500,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      myTaskManager.setRepositories(Collections.<TaskRepository>emptyList());
+      myTaskManager.setRepositories(Collections.emptyList());
       AllVcses.getInstance(getProject()).unregisterManually(myVcs);
     }
     finally {
@@ -485,6 +509,33 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
       myChangeListManager = null;
 
       super.tearDown();
+    }
+  }
+
+  private static class MyMockChangeProvider implements ChangeProvider {
+    private List<Change> myChanges = Collections.emptyList();
+
+    public void setChanges(List<Change> changes) {
+      myChanges = changes;
+    }
+
+    @Override
+    public void getChanges(@NotNull VcsDirtyScope dirtyScope,
+                           @NotNull final ChangelistBuilder builder,
+                           @NotNull ProgressIndicator progress,
+                           @NotNull ChangeListManagerGate addGate) throws VcsException {
+      for (Change change : myChanges) {
+        builder.processChange(change, MockAbstractVcs.getKey());
+      }
+    }
+
+    @Override
+    public boolean isModifiedDocumentTrackingRequired() {
+      return false;
+    }
+
+    @Override
+    public void doCleanup(List<VirtualFile> files) {
     }
   }
 }

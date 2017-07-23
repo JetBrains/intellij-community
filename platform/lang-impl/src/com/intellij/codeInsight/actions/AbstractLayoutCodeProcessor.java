@@ -23,6 +23,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -277,7 +278,7 @@ public abstract class AbstractLayoutCodeProcessor {
       return new FileTreeIterator(myProject);
     }
 
-    return new FileTreeIterator(Collections.<PsiFile>emptyList());
+    return new FileTreeIterator(Collections.emptyList());
   }
 
   @NotNull
@@ -354,7 +355,7 @@ public abstract class AbstractLayoutCodeProcessor {
         LOG.error(e);
       }
     };
-    runLayoutCodeProcess(readAction, writeAction, false );
+    runLayoutCodeProcess(readAction, writeAction);
   }
 
   private boolean checkFileWritable(final PsiFile file){
@@ -395,7 +396,7 @@ public abstract class AbstractLayoutCodeProcessor {
     return !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(virtualFile, file.getProject());
   }
 
-  private void runLayoutCodeProcess(final Runnable readAction, final Runnable writeAction, final boolean globalAction) {
+  private void runLayoutCodeProcess(final Runnable readAction, final Runnable writeAction) {
     final ProgressWindow progressWindow = new ProgressWindow(true, myProject);
     progressWindow.setTitle(myCommandName);
     progressWindow.setText(myProgressText);
@@ -417,7 +418,6 @@ public abstract class AbstractLayoutCodeProcessor {
       }
 
       final Runnable writeRunnable = () -> CommandProcessor.getInstance().executeCommand(myProject, () -> {
-        if (globalAction) CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
         try {
           writeAction.run();
 
@@ -530,7 +530,7 @@ public abstract class AbstractLayoutCodeProcessor {
 
     @NotNull
     private PsiFile nextFile(FileTreeIterator it) {
-      return ApplicationManager.getApplication().runReadAction((Computable<PsiFile>)it::next);
+      return ReadAction.compute(it::next);
     }
 
     private boolean hasFilesToProcess(FileTreeIterator it) {
@@ -543,18 +543,15 @@ public abstract class AbstractLayoutCodeProcessor {
     }
 
     private void performFileProcessing(@NotNull PsiFile file) {
-      myProcessors.stream().forEach((processor) -> {
-        Ref<FutureTask<Boolean>> writeTaskRef = Ref.create();
-
-        ApplicationManager.getApplication().runReadAction(() -> writeTaskRef.set(processor.prepareTask(file, myProcessChangedTextOnly)));
+      for (AbstractLayoutCodeProcessor processor : myProcessors) {
+        FutureTask<Boolean> writeTask = ReadAction.compute(() -> processor.prepareTask(file, myProcessChangedTextOnly));
 
         ProgressIndicatorProvider.checkCanceled();
-        FutureTask<Boolean> writeTask = writeTaskRef.get();
-        
+
         ApplicationManager.getApplication().invokeAndWait(() -> WriteCommandAction.runWriteCommandAction(myProject, myCommandName, null, writeTask));
 
         checkStop(writeTask, file);
-      });
+      }
     }
 
     private void checkStop(FutureTask<Boolean> task, PsiFile file) {
@@ -563,10 +560,12 @@ public abstract class AbstractLayoutCodeProcessor {
           myStopFormatting = true;
         }
       }
-      catch (InterruptedException e) {
-        LOG.error("Got unexpected exception during formatting " + file, e);
-      }
-      catch (ExecutionException e) {
+      catch (InterruptedException | ExecutionException e) {
+        Throwable cause = e.getCause();
+        if (cause instanceof IndexNotReadyException) {
+          LOG.warn(cause);
+          return;
+        }
         LOG.error("Got unexpected exception during formatting " + file, e);
       }
     }

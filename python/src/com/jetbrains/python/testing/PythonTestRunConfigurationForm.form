@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.jetbrains.python.testing.PythonTestRunConfigurationForm">
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.jetbrains.python.testing.PythonTestLegacyRunConfigurationForm">
   <grid id="aecbe" layout-manager="CardLayout" hgap="0" vgap="0">
     <constraints>
       <xy x="20" y="20" width="647" height="373"/>

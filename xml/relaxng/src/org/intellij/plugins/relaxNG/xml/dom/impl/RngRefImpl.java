@@ -24,11 +24,6 @@ import org.intellij.plugins.relaxNG.xml.dom.RngRef;
 
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 05.09.2007
- */
 public abstract class RngRefImpl extends RngDomElementBase implements RngRef {
   @Override
   public void accept(Visitor visitor) {

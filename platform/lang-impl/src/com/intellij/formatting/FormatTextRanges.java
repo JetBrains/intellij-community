@@ -15,9 +15,12 @@
  */
 package com.intellij.formatting;
 
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -36,9 +39,10 @@ public class FormatTextRanges implements FormattingRangesInfo {
     myInsertedRanges = null;
     add(range, processHeadingWhitespace);
   }
-  
+
   public FormatTextRanges(@NotNull ChangedRangesInfo changedRangesInfo) {
-    changedRangesInfo.allChangedRanges.forEach((range) -> add(range, true));
+    List<TextRange> optimized = optimizedChangedRanges(changedRangesInfo.allChangedRanges);
+    optimized.forEach((range) -> add(range, true));
     myInsertedRanges = changedRangesInfo.insertedRanges;
   }
 
@@ -99,6 +103,39 @@ public class FormatTextRanges implements FormattingRangesInfo {
       .stream()
       .map(FormatTextRange::getTextRange)
       .collect(Collectors.toList());
+  }
+  
+  public List<TextRange> getExtendedFormattingRanges() {
+    return myStorage
+      .getRanges()
+      .stream()
+      .map((range) -> {
+        TextRange textRange = range.getTextRange();
+        return new UnfairTextRange(textRange.getStartOffset() - 500, textRange.getEndOffset() + 500);
+      })
+      .collect(Collectors.toList());
+  }
+
+  private static List<TextRange> optimizedChangedRanges(@NotNull List<TextRange> allChangedRanges) {
+    if (allChangedRanges.isEmpty()) return allChangedRanges;
+    List<TextRange> sorted = ContainerUtil.sorted(allChangedRanges, Segment.BY_START_OFFSET_THEN_END_OFFSET);
+
+    List<TextRange> result = ContainerUtil.newSmartList();
+
+    TextRange prev = sorted.get(0);
+    for (TextRange next : sorted) {
+      if (next.getStartOffset() <= prev.getEndOffset() + 5) {
+        int newEndOffset = Math.max(prev.getEndOffset(), next.getEndOffset());
+        prev = new TextRange(prev.getStartOffset(), newEndOffset);
+      }
+      else {
+        result.add(prev);
+        prev = next;
+      }
+    }
+    result.add(prev);
+
+    return result;
   }
   
 }

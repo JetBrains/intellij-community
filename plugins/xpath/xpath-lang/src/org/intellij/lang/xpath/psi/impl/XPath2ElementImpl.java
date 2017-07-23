@@ -19,11 +19,6 @@ import com.intellij.lang.ASTNode;
 import org.intellij.lang.xpath.psi.XPath2ElementVisitor;
 import org.intellij.lang.xpath.psi.XPathElementVisitor;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 08.04.11
-*/
 public class XPath2ElementImpl extends XPathElementImpl {
   public XPath2ElementImpl(ASTNode node) {
     super(node);

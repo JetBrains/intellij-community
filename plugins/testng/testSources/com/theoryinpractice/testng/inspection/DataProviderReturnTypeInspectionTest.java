@@ -15,20 +15,12 @@
  */
 package com.theoryinpractice.testng.inspection;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.PathUtil;
-import com.intellij.util.ui.UIUtil;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
 
 /**
  * @author Dmitry Batkovich

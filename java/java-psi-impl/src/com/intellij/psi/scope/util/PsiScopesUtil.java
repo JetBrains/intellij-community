@@ -262,7 +262,7 @@ public class PsiScopesUtil {
             if (superClass != null) {
               PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
               PsiClass runSuper = superClass;
-              List<PsiSubstitutor> contextSubstitutors = new ArrayList<PsiSubstitutor>();
+              List<PsiSubstitutor> contextSubstitutors = new ArrayList<>();
               do {
                 if (runSuper != null) {
                   PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(runSuper, aClass, PsiSubstitutor.EMPTY);

@@ -190,16 +190,13 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
                         @NotNull final Collection<File> files,
                         @NotNull GroupByPackages groupByPackages,
                         String parentPath) {
-    Collections.sort(roots, new Comparator<File>() {
-      @Override
-      public int compare(File file1, File file2) {
-        boolean containsFile1 = files.contains(file1);
-        boolean containsFile2 = files.contains(file2);
-        if (containsFile1 == containsFile2) {
-          return file1.getAbsolutePath().compareToIgnoreCase(file2.getAbsolutePath());
-        }
-        return containsFile1 ? 1 : -1;
+    Collections.sort(roots, (file1, file2) -> {
+      boolean containsFile1 = files.contains(file1);
+      boolean containsFile2 = files.contains(file2);
+      if (containsFile1 == containsFile2) {
+        return file1.getAbsolutePath().compareToIgnoreCase(file2.getAbsolutePath());
       }
+      return containsFile1 ? 1 : -1;
     });
 
     for (final File root : roots) {
@@ -213,12 +210,7 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
   }
 
   private void buildFiles(@Nullable Pair<PackageSetBase, NamedScopesHolder> filter, boolean showOnlyFilteredItems) {
-    Collections.sort(myFilePaths, new Comparator<String>() {
-      @Override
-      public int compare(String path1, String path2) {
-        return path1.compareToIgnoreCase(path2);
-      }
-    });
+    Collections.sort(myFilePaths, (path1, path2) -> path1.compareToIgnoreCase(path2));
 
     boolean apply = false;
 

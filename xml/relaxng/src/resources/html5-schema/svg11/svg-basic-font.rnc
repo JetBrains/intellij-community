@@ -103,6 +103,7 @@ grammar {
         SVG.Core.attrib,
         SVG.Style.attrib,
         SVG.Presentation.attrib,
+        (common.attrs.aria.implicit.group | common.attrs.aria)?,
         attribute unicode { text }?,
         attribute glyph-name { text }?,
         attribute d { PathData.datatype }?,

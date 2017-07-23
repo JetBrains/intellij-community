@@ -23,6 +23,7 @@ import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
 import org.fest.swing.exception.ComponentLookupException;
 import org.fest.swing.timing.Condition;
+import org.fest.swing.timing.Timeout;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -71,7 +72,8 @@ public class ActionLinkFixture extends JComponentFixture<ActionLinkFixture, Acti
   @NotNull
   public static ActionLinkFixture findActionLinkByName(@NotNull final String actionName,
                                                        @NotNull final Robot robot,
-                                                       @NotNull final Container container) {
+                                                       @NotNull final Container container,
+                                                       @NotNull final Timeout timeout) {
     final Ref<ActionLink> actionLinkRef = new Ref<ActionLink>();
     pause(new Condition("Find ActionLink with name '" + actionName + "'") {
       @Override
@@ -91,7 +93,7 @@ public class ActionLinkFixture extends JComponentFixture<ActionLinkFixture, Acti
         }
         return false;
       }
-    }, SHORT_TIMEOUT);
+    }, timeout);
 
     ActionLink actionLink = actionLinkRef.get();
     if (actionLink == null) {
@@ -100,6 +102,12 @@ public class ActionLinkFixture extends JComponentFixture<ActionLinkFixture, Acti
     return new ActionLinkFixture(robot, actionLink);
   }
 
+  @NotNull
+  public static ActionLinkFixture findActionLinkByName(@NotNull final String actionName,
+                                                       @NotNull final Robot robot,
+                                                       @NotNull final Container container) {
+    return findActionLinkByName(actionName, robot, container, SHORT_TIMEOUT);
+  }
 
   private ActionLinkFixture(@NotNull Robot robot, @NotNull ActionLink target) {
     super(ActionLinkFixture.class, robot, target);

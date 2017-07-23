@@ -1,7 +1,7 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
-  id "com.jetbrains.python.envs" version "0.0.9"
+  id "com.jetbrains.python.envs" version "0.0.10"
 }
 
 
@@ -12,25 +12,30 @@ envs {
   packages = ["pip", "setuptools"]
   _64Bits = true
 
-  conda "django19", "2.7", ["django==1.9", "tox", "nose", "pytest", "behave", "lettuce>=0.2.22"], true
-  textfile "django19/tags.txt", "django\nnose\npytest\nbehave\nlettuce\npackaging\ntox"
+  conda "django19", "2.7", ["django==1.9", "tox", "nose", "pytest", "behave", "lettuce>=0.2.22", "unittest2", "teamcity-messages"], true
+  textfile "django19/tags.txt", "python2.7\ndjango\nnose\npytest\nbehave\nlettuce\npackaging\ntox\nunittest2"
 
-  conda "django110", "3.4", ["django==1.10"], false
-  textfile "django110/tags.txt", "django\nskeletons"
+  conda "django110", "3.4", ["django==1.10", "django-nose"], false
+  textfile "django110/tags.txt", "python3.4\ndjango\nskeletons\ndjango-nose"
+
+  conda "django111", "3.4", ["django==1.11"], true
+  textfile "django111/tags.txt", "python3.4\ndjango"
 
   conda "python34", "3.4", ["ipython==2.1", "django==1.8", "behave", "jinja2", "tox>=2.0", "pandas"], true
-  textfile "python34/tags.txt", "python3\nipython\nipython200\nskeletons\ndjango\nbehave\ntox\njinja2\npython34\npackaging\npandas"
+  textfile "python34/tags.txt", "python3.4\npython3\nipython\nipython200\nskeletons\ndjango\nbehave\ntox\njinja2\npython34\npackaging\npandas"
 
-  conda "pyqt_env", "2.7", [install("pyqt=5.6")], true
-  textfile "pyqt_env/tags.txt", "pyqt5"
+  conda "python36", "3.6", ["django==1.9", "jinja2"], true
+  textfile "python36/tags.txt", "python3.6\npython3\ndjango\njinja2\npython34\npython36"
 
   if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
+    conda "pyqt_env", "2.7", [install("pyqt=5.6.0")], true
+    textfile "pyqt_env/tags.txt", "pyqt5"
 //    jython "jython25", []
 //    textfile "jython25/tags.txt", "jython"
   }
 
   conda "django_latest", "3.5", ["django"], true
-  textfile "django_latest/tags.txt", "django"
+  textfile "django_latest/tags.txt", "python3.5\ndjango"
 }
 
 if (new File(envs.envsDirectory, "django_latest").exists() && 

@@ -31,7 +31,8 @@ import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
-import com.intellij.junit5.JUnit5IdeaTestRunner;
+import com.intellij.junit4.JUnit4IdeaTestRunner;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -41,6 +42,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.IDEAJUnitListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
@@ -52,12 +54,7 @@ import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.jupiter.engine.JupiterTestEngine;
-import org.junit.platform.commons.JUnitException;
-import org.junit.platform.engine.TestEngine;
-import org.junit.platform.launcher.TestExecutionListener;
-import org.junit.platform.runner.JUnitPlatform;
-import org.junit.vintage.engine.VintageTestEngine;
+import org.opentest4j.MultipleFailuresError;
 
 import java.io.File;
 import java.io.IOException;
@@ -139,6 +136,15 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   protected void configureRTClasspath(JavaParameters javaParameters) {
     final String path = System.getProperty(DEBUG_RT_PATH);
     javaParameters.getClassPath().add(path != null ? path : PathUtil.getJarPathForClass(JUnitStarter.class));
+
+    //include junit5 listeners for the case custom junit 5 engines would be detected on runtime
+    javaParameters.getClassPath().add(getJUnit5RtFile());
+  }
+
+  public static File getJUnit5RtFile() {
+    File junit4Rt = new File(PathUtil.getJarPathForClass(JUnit4IdeaTestRunner.class));
+    String junit5Name = junit4Rt.getName().replace("junit", "junit5");
+    return new File(junit4Rt.getParent(), junit5Name);
   }
 
   @Override
@@ -162,31 +168,61 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
     final Project project = getConfiguration().getProject();
     final SourceScope sourceScope = getSourceScope();
-    if (isJUnit5(getConfiguration().getConfigurationModule().getModule(), sourceScope, project)) {
-      javaParameters.getProgramParametersList().add(JUnitStarter.JUNIT5_PARAMETER);
-      javaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnit5IdeaTestRunner.class));
-
+    GlobalSearchScope globalSearchScope = getScopeForJUnit(getConfiguration().getConfigurationModule().getModule(), sourceScope, project);
+    String preferredRunner = getConfiguration().getPreferredRunner(globalSearchScope);
+    if (JUnitStarter.JUNIT5_PARAMETER.equals(preferredRunner)) {
       final PathsList classPath = javaParameters.getClassPath();
-      classPath.add(PathUtil.getJarPathForClass(TestExecutionListener.class));
-      classPath.add(PathUtil.getJarPathForClass(JupiterTestEngine.class));
-      classPath.add(PathUtil.getJarPathForClass(JUnitException.class));
-      classPath.add(PathUtil.getJarPathForClass(TestEngine.class));
-      classPath.add(PathUtil.getJarPathForClass(JUnitPlatform.class));
-      try {
-        JUnitUtil.getTestCaseClass(sourceScope);
-        classPath.add(PathUtil.getJarPathForClass(VintageTestEngine.class));
+      File lib = new File(PathUtil.getJarPathForClass(MultipleFailuresError.class)).getParentFile();
+      File[] files = lib.listFiles();
+      if (files != null) {
+        JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+        for (File file : files) {
+          String fileName = file.getName();
+          if (fileName.startsWith("junit-platform-launcher-") && !hasPackageWithDirectories(psiFacade, "org.junit.platform.launcher", globalSearchScope) ||
+
+              fileName.startsWith("junit-platform-") && !hasPackageWithDirectories(psiFacade, "org.junit.platform", globalSearchScope) ||
+
+              fileName.startsWith("junit-platform-engine-") && !hasPackageWithDirectories(psiFacade, "org.junit.platform.engine", globalSearchScope) ||
+
+              fileName.startsWith("junit-jupiter-engine-") && !hasPackageWithDirectories(psiFacade, "org.junit.jupiter.engine", globalSearchScope) &&
+                                                               hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope)) {
+            classPath.add(file.getAbsolutePath());
+          }
+          else if (fileName.startsWith("junit-vintage-engine-") && !hasPackageWithDirectories(psiFacade, "org.junit.vintage", globalSearchScope)) {
+            if (hasPackageWithDirectories(psiFacade, "junit.framework", globalSearchScope)) {
+              classPath.add(file.getAbsolutePath());
+            }
+          }
+        }
       }
-      catch (JUnitUtil.NoJUnitException ignore) {
-      }
+    }
+    if (preferredRunner != null) {
+      javaParameters.getProgramParametersList().add(preferredRunner);
     }
     
     return javaParameters;
   }
 
+  private static boolean hasPackageWithDirectories(JavaPsiFacade psiFacade,
+                                                   String packageQName,
+                                                   GlobalSearchScope globalSearchScope) {
+    PsiPackage aPackage = psiFacade.findPackage(packageQName);
+    return aPackage != null && aPackage.getDirectories(globalSearchScope).length > 0;
+  }
+
   public static boolean isJUnit5(@Nullable Module module, @Nullable SourceScope sourceScope, Project project) {
-    return JUnitUtil.isJUnit5(module != null ? GlobalSearchScope.moduleRuntimeScope(module, true)
-                                             : sourceScope != null ? sourceScope.getLibrariesScope() : GlobalSearchScope.allScope(project),
-                              project);
+    return JUnitUtil.isJUnit5(getScopeForJUnit(module, sourceScope, project), project);
+  }
+
+  private static GlobalSearchScope getScopeForJUnit(@Nullable Module module, @Nullable SourceScope sourceScope, Project project) {
+    return module != null ? GlobalSearchScope.moduleRuntimeScope(module, true)
+                                             : sourceScope != null ? sourceScope.getLibrariesScope() : GlobalSearchScope.allScope(project);
+  }
+
+  public static GlobalSearchScope getScopeForJUnit(JUnitConfiguration configuration) {
+    return getScopeForJUnit(configuration.getConfigurationModule().getModule(),
+                            configuration.getTestSearchScope().getSourceScope(configuration),
+                            configuration.getProject() );
   }
 
   @NotNull
@@ -216,7 +252,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     return getConfiguration().getForkMode();
   }
 
-  protected <T> void addClassesListToJavaParameters(Collection<? extends T> elements, Function<T, String> nameFunction, String packageName,
+  protected <T> void addClassesListToJavaParameters(Collection<? extends T> elements,
+                                                    Function<T, String> nameFunction,
+                                                    String packageName,
                                                     boolean createTempFile, JavaParameters javaParameters) throws CantRunException {
     try {
       if (createTempFile) {
@@ -228,6 +266,31 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
       final List<String> testNames = new ArrayList<>();
 
+      if (elements.isEmpty() && perModule != null) {
+        final SourceScope sourceScope = getSourceScope();
+        Project project = getConfiguration().getProject();
+        if (sourceScope != null && packageName != null 
+            && !ReadAction.compute(() -> isJUnit5(getConfiguration().getConfigurationModule().getModule(),
+                                                  sourceScope,
+                                                  getConfiguration().getProject()))) {
+          final PsiPackage aPackage = JavaPsiFacade.getInstance(getConfiguration().getProject()).findPackage(packageName);
+          if (aPackage != null) {
+            final TestSearchScope scope = getScope();
+            if (scope != null) {
+              final GlobalSearchScope configurationSearchScope = GlobalSearchScopesCore.projectTestScope(project)
+                .intersectWith(sourceScope.getGlobalSearchScope());
+              final PsiDirectory[] directories = aPackage.getDirectories(configurationSearchScope);
+              for (PsiDirectory directory : directories) {
+                Module module = ModuleUtilCore.findModuleForFile(directory.getVirtualFile(), project);
+                if (module != null) {
+                  perModule.put(module, Collections.emptyList());
+                }
+              }
+            }
+          }
+        }
+      }
+      
       for (final T element : elements) {
         final String name = nameFunction.fun(element);
         if (name == null) {
@@ -262,7 +325,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       }
 
       final String category = JUnitConfiguration.TEST_CATEGORY.equals(data.TEST_OBJECT) ? data.getCategory() : "";
-      JUnitStarter.printClassesList(testNames, packageName, category, myTempFile);
+      final String filters = JUnitConfiguration.TEST_PATTERN.equals(data.TEST_OBJECT) ? data.getPatternPresentation() : "";
+      JUnitStarter.printClassesList(testNames, packageName, category, filters, myTempFile);
 
       writeClassesPerModule(packageName, javaParameters, perModule);
     }

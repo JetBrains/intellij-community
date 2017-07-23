@@ -69,7 +69,7 @@ public class IdeaActionButtonLook extends ActionButtonLook {
             ((Graphics2D)g).draw(getShape(size));
           }
         }
-        else if (state == ActionButtonComponent.POPPED) {
+        else if (state == ActionButtonComponent.POPPED || state == ActionButtonComponent.SELECTED) {
           if (UIUtil.isUnderAquaLookAndFeel()) {
             ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, bg, 0, size.height, ColorUtil.darker(bg, 2)));
             ((Graphics2D)g).fill(getShape(size));
@@ -83,9 +83,9 @@ public class IdeaActionButtonLook extends ActionButtonLook {
       }
       else {
         final boolean dark = UIUtil.isUnderDarcula();
-        final Color pushed = UIUtil.isUnderWin10LookAndFeel() ? Gray.xE6 : ColorUtil.shift(bg, dark? 1d / 0.7d :  0.7d);
+        final Color pushed = UIUtil.isUnderWin10LookAndFeel() ? Gray.xE6 : dark? ColorUtil.shift(bg,  1.428D) : Gray.xD0;
         final Color dark_normal = Gray._255.withAlpha(40);
-        g.setColor(state == ActionButtonComponent.PUSHED ? pushed : dark ? dark_normal : ALPHA_40);
+        g.setColor(state == ActionButtonComponent.PUSHED ? pushed : dark ? dark_normal : Gray.xD9);
         ((Graphics2D)g).fill(getShape(size));
       }
     }
@@ -122,8 +122,8 @@ public class IdeaActionButtonLook extends ActionButtonLook {
         g.drawLine(size.width - 3, 3, size.width - 3, size.width - 3);
       }
       else {
-        final double shift = UIUtil.isUnderDarcula() ? 1 / 0.49 : 0.49;
-        g.setColor(ColorUtil.shift(UIUtil.getPanelBackground(), shift));
+        Color color = UIUtil.isUnderDarcula() ? ColorUtil.shift(UIUtil.getPanelBackground(), 2.04D) : Gray.xA1;
+        g.setColor(color);
         ((Graphics2D)g).setStroke(BASIC_STROKE);
         ((Graphics2D)g).draw(getShape(size));
       }

@@ -24,14 +24,13 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.propertyInspector.properties.IntroStringProperty;
 import com.intellij.uiDesigner.quickFixes.PopupQuickFix;
 import com.intellij.uiDesigner.quickFixes.QuickFix;
-import com.intellij.uiDesigner.radComponents.RadComponent;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -39,10 +38,14 @@ import java.util.List;
  * @author yole
  */
 public class FormSpellCheckingInspection extends StringDescriptorInspection {
-  public static final String SHORT_NAME = "SpellCheckingInspection";
-
   public FormSpellCheckingInspection() {
-    super(SHORT_NAME);
+    super("FormSpellChecking");
+  }
+
+  @Nullable
+  @Override
+  public String getAlternativeID() {
+    return "SpellCheckingInspection";
   }
 
   @Override
@@ -60,41 +63,32 @@ public class FormSpellCheckingInspection extends StringDescriptorInspection {
       final String word = textRange.substring(value);
       if (manager.hasProblem(word)) {
         final List<String> suggestions = manager.getSuggestions(word);
-        if (suggestions.size() > 0 && prop instanceof IntroStringProperty) {
-          EditorQuickFixProvider changeToProvider = new EditorQuickFixProvider() {
+        if (!suggestions.isEmpty() && prop instanceof IntroStringProperty) {
+          EditorQuickFixProvider changeToProvider = (editor, component1) -> new PopupQuickFix<String>(editor, "Change to...", component1) {
             @Override
-            public QuickFix createQuickFix(final GuiEditor editor, final RadComponent component1) {
-              return new PopupQuickFix<String>(editor, "Change to...", component1) {
-                @Override
-                public void run() {
-                  ListPopup popup = JBPopupFactory.getInstance().createListPopup(getPopupStep());
-                  popup.showUnderneathOf(component1.getDelegee());
-                }
+            public void run() {
+              ListPopup popup = JBPopupFactory.getInstance().createListPopup(getPopupStep());
+              popup.showUnderneathOf(component1.getDelegee());
+            }
 
-                @Override
-                public ListPopupStep<String> getPopupStep() {
-                  return new BaseListPopupStep<String>("Select Replacement", suggestions) {
-                    @Override
-                    public PopupStep onChosen(String selectedValue, boolean finalChoice) {
-                      FormInspectionUtil.updateStringPropertyValue(editor, component1, (IntroStringProperty) prop, descriptor, selectedValue);
-                      return FINAL_CHOICE;
-                    }
-                  };
-                }
-              };
-            }
-          };
-          EditorQuickFixProvider acceptProvider = new EditorQuickFixProvider() {
             @Override
-            public QuickFix createQuickFix(final GuiEditor editor, RadComponent component1) {
-              return new QuickFix(editor, "Save '" + word + "' to dictionary", component1) {
+            public ListPopupStep<String> getPopupStep() {
+              return new BaseListPopupStep<String>("Select Replacement", suggestions) {
                 @Override
-                public void run() {
-                  manager.acceptWordAsCorrect(word, editor.getProject());
+                public PopupStep onChosen(String selectedValue, boolean finalChoice) {
+                  FormInspectionUtil.updateStringPropertyValue(editor, component1, (IntroStringProperty) prop, descriptor, selectedValue);
+                  return FINAL_CHOICE;
                 }
               };
             }
           };
+          EditorQuickFixProvider acceptProvider =
+            (editor, component1) -> new QuickFix(editor, "Save '" + word + "' to dictionary", component1) {
+              @Override
+              public void run() {
+                manager.acceptWordAsCorrect(word, editor.getProject());
+              }
+            };
           collector.addError(getID(), component, prop, "Typo in word '" + word + "'", changeToProvider, acceptProvider);
         }
         else {

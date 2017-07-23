@@ -35,7 +35,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -54,8 +53,6 @@ import java.util.List;
 import static com.intellij.diff.util.DiffUtil.getDiffSettings;
 
 public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolder> {
-  public static final Logger LOG = Logger.getInstance(TwosideBinaryDiffViewer.class);
-
   @NotNull private final TransferableFileEditorStateSupport myTransferableStateSupport;
   @NotNull private final StatusPanel myStatusPanel;
 

@@ -31,8 +31,10 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
@@ -49,6 +51,7 @@ import java.util.Set;
  * @author Dmitry Batkovich
  */
 class OfflineDescriptorResolveResult {
+  private static final Logger LOG = Logger.getInstance(OfflineDescriptorResolveResult.class);
   private RefEntity myResolvedEntity;
   private CommonProblemDescriptor myResolvedDescriptor;
 
@@ -122,8 +125,15 @@ class OfflineDescriptorResolveResult {
     PsiFile containingFile = psiElement.getContainingFile();
     final ProblemsHolder holder = new ProblemsHolder(inspectionManager, containingFile, false);
     final LocalInspectionTool localTool = toolWrapper.getTool();
-    final int startOffset = psiElement.getTextRange().getStartOffset();
-    final int endOffset = psiElement.getTextRange().getEndOffset();
+    TextRange textRange = psiElement.getTextRange();
+    LOG.assertTrue(textRange != null,
+                   "text range muse be not null here; " +
+                   "isValid = " + psiElement.isValid() + ", " +
+                   "isPhysical = " + psiElement.isPhysical() + ", " +
+                   "containingFile = " + containingFile.getName() + ", " +
+                   "inspection = " + toolWrapper.getShortName());
+    final int startOffset = textRange.getStartOffset();
+    final int endOffset = textRange.getEndOffset();
     LocalInspectionToolSession session = new LocalInspectionToolSession(containingFile, startOffset, endOffset);
     final PsiElementVisitor visitor = localTool.buildVisitor(holder, false, session);
     localTool.inspectionStarted(session, false);
@@ -150,6 +160,7 @@ class OfflineDescriptorResolveResult {
     return null;
   }
 
+  @NotNull
   private static PsiElement[] getElementsIntersectingRange(PsiFile file, final int startOffset, final int endOffset) {
     final FileViewProvider viewProvider = file.getViewProvider();
     final Set<PsiElement> result = new LinkedHashSet<>();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,10 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
@@ -38,21 +39,20 @@ import java.util.ArrayList;
 /**
  * @author peter
  */
-public final class CompletionServiceImpl extends CompletionService{
+public final class CompletionServiceImpl extends CompletionService {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.impl.CompletionServiceImpl");
   private static volatile CompletionPhase ourPhase = CompletionPhase.NoCompletion;
   private static String ourPhaseTrace;
 
   public CompletionServiceImpl() {
-    ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosing(Project project) {
         CompletionProgressIndicator indicator = getCurrentCompletion();
         if (indicator != null && indicator.getProject() == project) {
           indicator.closeAndFinish(true);
           setCompletionPhase(CompletionPhase.NoCompletion);
-        }
-        else if (indicator == null) {
+        } else if (indicator == null) {
           setCompletionPhase(CompletionPhase.NoCompletion);
         }
       }
@@ -61,7 +61,7 @@ public final class CompletionServiceImpl extends CompletionService{
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
   public static CompletionServiceImpl getCompletionService() {
-    return (CompletionServiceImpl)CompletionService.getCompletionService();
+    return (CompletionServiceImpl) CompletionService.getCompletionService();
   }
 
   @Override
@@ -89,13 +89,13 @@ public final class CompletionServiceImpl extends CompletionService{
     final String prefix = CompletionData.findPrefixStatic(position, offset);
     CamelHumpMatcher matcher = new CamelHumpMatcher(prefix);
     CompletionSorterImpl sorter = defaultSorter(parameters, matcher);
-    return new CompletionResultSetImpl(consumer, offset, matcher, contributor,parameters, sorter, null);
+    return new CompletionResultSetImpl(consumer, offset, matcher, contributor, parameters, sorter, null);
   }
 
   @Override
   public CompletionProgressIndicator getCurrentCompletion() {
     if (isPhase(CompletionPhase.BgCalculation.class, CompletionPhase.ItemsCalculated.class, CompletionPhase.CommittingDocuments.class,
-                CompletionPhase.Synchronous.class)) {
+      CompletionPhase.Synchronous.class)) {
       return ourPhase.indicator;
     }
     return null;
@@ -105,7 +105,9 @@ public final class CompletionServiceImpl extends CompletionService{
     private final int myLengthOfTextBeforePosition;
     private final CompletionParameters myParameters;
     private final CompletionSorterImpl mySorter;
-    @Nullable private final CompletionResultSetImpl myOriginal;
+    @Nullable
+    private final CompletionResultSetImpl myOriginal;
+
 
     public CompletionResultSetImpl(final Consumer<CompletionResult> consumer, final int lengthOfTextBeforePosition,
                                    final PrefixMatcher prefixMatcher,
@@ -121,10 +123,16 @@ public final class CompletionServiceImpl extends CompletionService{
     }
 
     @Override
+    public void addAllElements(@NotNull Iterable<? extends LookupElement> elements) {
+      CompletionThreadingBase.withBatchUpdate(() -> super.addAllElements(elements));
+    }
+
+    @Override
     public void addElement(@NotNull final LookupElement element) {
+      ProgressManager.checkCanceled();
       if (!element.isValid()) {
         LOG.error("Invalid lookup element: " + element + " of " + element.getClass() +
-                  " in " + myParameters.getOriginalFile() + " of " + myParameters.getOriginalFile().getClass());
+          " in " + myParameters.getOriginalFile() + " of " + myParameters.getOriginalFile().getClass());
         return;
       }
 
@@ -137,6 +145,10 @@ public final class CompletionServiceImpl extends CompletionService{
     @Override
     @NotNull
     public CompletionResultSet withPrefixMatcher(@NotNull final PrefixMatcher matcher) {
+      if (matcher.equals(getPrefixMatcher())) {
+        return this;
+      }
+      
       return new CompletionResultSetImpl(getConsumer(), myLengthOfTextBeforePosition, matcher, myContributor, myParameters, mySorter, this);
     }
 
@@ -154,14 +166,14 @@ public final class CompletionServiceImpl extends CompletionService{
     @Override
     @NotNull
     public CompletionResultSet withPrefixMatcher(@NotNull final String prefix) {
-      return withPrefixMatcher(new CamelHumpMatcher(prefix));
+      return withPrefixMatcher(getPrefixMatcher().cloneWithPrefix(prefix));
     }
 
     @NotNull
     @Override
     public CompletionResultSet withRelevanceSorter(@NotNull CompletionSorter sorter) {
-      return new CompletionResultSetImpl(getConsumer(), myLengthOfTextBeforePosition, getPrefixMatcher(), myContributor, myParameters, (CompletionSorterImpl)sorter,
-                                         this);
+      return new CompletionResultSetImpl(getConsumer(), myLengthOfTextBeforePosition, getPrefixMatcher(), myContributor, myParameters, (CompletionSorterImpl) sorter,
+        this);
     }
 
     @Override
@@ -241,16 +253,14 @@ public final class CompletionServiceImpl extends CompletionService{
       final String id = weigher.toString();
       if ("prefix".equals(id)) {
         sorter = sorter.withClassifier(CompletionSorterImpl.weighingFactory(new RealPrefixMatchingWeigher()));
-      }
-      else if ("stats".equals(id)) {
+      } else if ("stats".equals(id)) {
         sorter = sorter.withClassifier(new ClassifierFactory<LookupElement>("stats") {
           @Override
           public Classifier<LookupElement> createClassifier(Classifier<LookupElement> next) {
             return new StatisticsWeigher.LookupStatisticsWeigher(location, next);
           }
         });
-      }
-      else {
+      } else {
         sorter = sorter.weigh(new LookupElementWeigher(id, true, false) {
           @Override
           public Comparable weigh(@NotNull LookupElement element) {

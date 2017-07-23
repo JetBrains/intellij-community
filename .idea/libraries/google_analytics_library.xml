@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="google-analytics-library">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/android/android/lib/google-analytics-library.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

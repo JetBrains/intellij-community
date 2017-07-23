@@ -23,10 +23,7 @@ import com.intellij.psi.stubs.StubIndex;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
-import com.jetbrains.python.psi.stubs.PyClassNameIndex;
-import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
-import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
-import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
+import com.jetbrains.python.psi.stubs.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -45,6 +42,7 @@ public class PyGotoSymbolContributor implements GotoClassContributor {
     symbols.addAll(PyModuleNameIndex.getAllKeys(project));
     symbols.addAll(StubIndex.getInstance().getAllKeys(PyFunctionNameIndex.KEY, project));
     symbols.addAll(StubIndex.getInstance().getAllKeys(PyVariableNameIndex.KEY, project));
+    symbols.addAll(StubIndex.getInstance().getAllKeys(PyClassAttributesIndex.KEY, project));
     return ArrayUtil.toStringArray(symbols);
   }
 
@@ -59,7 +57,7 @@ public class PyGotoSymbolContributor implements GotoClassContributor {
     symbols.addAll(PyModuleNameIndex.find(name, project, includeNonProjectItems));
     symbols.addAll(PyFunctionNameIndex.find(name, project, scope));
     symbols.addAll(PyVariableNameIndex.find(name, project, scope));
-
+    symbols.addAll(PyClassAttributesIndex.findClassAndInstanceAttributes(name, project, scope));
     return symbols.toArray(new NavigationItem[symbols.size()]);
   }
 

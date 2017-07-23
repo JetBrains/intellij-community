@@ -1,7 +1,7 @@
 <component name="libraryTable">
   <library name="sherpa-solver">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/android/android/lib/sherpa-solver.jar!/" />
+      <root url="jar://$PROJECT_DIR$/android/android/lib/constraint-layout.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

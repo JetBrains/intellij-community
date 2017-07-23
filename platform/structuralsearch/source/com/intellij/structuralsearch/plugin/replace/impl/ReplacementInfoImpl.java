@@ -9,13 +9,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
- * User: maxim
- * Date: 03.12.2004
- * Time: 21:33:53
- * To change this template use File | Settings | File Templates.
- */
 public class ReplacementInfoImpl extends ReplacementInfo {
   List<SmartPsiElementPointer> matchesPtrList;
   String result;

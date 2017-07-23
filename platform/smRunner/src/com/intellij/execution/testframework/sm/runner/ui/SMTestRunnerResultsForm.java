@@ -84,7 +84,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   @NonNls private static final String DEFAULT_SM_RUNNER_SPLITTER_PROPERTY = "SMTestRunner.Splitter.Proportion";
 
   public static final Color DARK_YELLOW = JBColor.YELLOW.darker();
-  private static final Logger LOG = Logger.getInstance("#" + SMTestRunnerResultsForm.class.getName());
+  private static final Logger LOG = Logger.getInstance(SMTestRunnerResultsForm.class);
 
   private SMTRunnerTestTreeView myTreeView;
 
@@ -160,7 +160,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myTreeView.setTestResultsViewer(this);
     final SMTRunnerTreeStructure structure = new SMTRunnerTreeStructure(myProject, myTestsRootNode);
     myTreeBuilder = new SMTRunnerTreeBuilder(myTreeView, structure);
-    myTreeBuilder.setTestsComparator(TestConsoleProperties.SORT_ALPHABETICALLY.value(myProperties));
+    myTreeBuilder.setTestsComparator(myProperties);
     Disposer.register(this, myTreeBuilder);
 
     myAnimator = new TestsProgressAnimator(myTreeBuilder);
@@ -268,7 +268,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       myTestsRunning = false;
       final boolean sortByDuration = TestConsoleProperties.SORT_BY_DURATION.value(myProperties);
       if (sortByDuration) {
-        myTreeBuilder.setStatisticsComparator(myProperties, sortByDuration);
+        myTreeBuilder.setTestsComparator(myProperties);
       }
     };
     if (myLastSelected == null) {
@@ -293,7 +293,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     final TestsUIUtil.TestResultPresentation presentation = new TestsUIUtil.TestResultPresentation(testsRoot, myStartTime > 0, null)
       .getPresentation(myFailedTestCount, 
                        Math.max(0, myFinishedTestCount - myFailedTestCount - myIgnoredTestCount), 
-                       myTotalTestCount - myFinishedTestCount, 
+                       myTotalTestCount - (myFinishedTestCount - myIgnoredTestCount),
                        myIgnoredTestCount);
     TestsUIUtil.notifyByBalloon(myProperties.getProject(), testsRoot, myProperties, presentation);
     addToHistory(testsRoot, myProperties, this);
@@ -797,7 +797,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       // read action to prevent project (and storage) from being disposed
       ApplicationManager.getApplication().runReadAction(() -> {
         Project project = getProject();
-        if (project.isDisposed()) return;
+        if (project.isDisposed() || myRoot == null) return;
         TestStateStorage storage = TestStateStorage.getInstance(project);
         List<SMTestProxy> tests = myRoot.getAllTests();
         for (SMTestProxy proxy : tests) {

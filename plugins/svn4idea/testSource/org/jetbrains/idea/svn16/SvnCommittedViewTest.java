@@ -30,13 +30,14 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 public class SvnCommittedViewTest extends Svn16TestCase {
 
@@ -108,7 +109,7 @@ public class SvnCommittedViewTest extends Svn16TestCase {
     // r1, addition without history
     checkin();
 
-    final String d1Path = new File(d1.getPath()).getAbsolutePath();
+    final String d1Path = virtualToIoFile(d1).getAbsolutePath();
     runInAndVerifyIgnoreOutput("delete", d1Path);
     runInAndVerifyIgnoreOutput("add", d1Path);
 
@@ -167,7 +168,7 @@ public class SvnCommittedViewTest extends Svn16TestCase {
     checkin();
 
     final String oldPath = absPath(d1);
-    final String oldF11Path = new File(f11.getPath()).getAbsolutePath();
+    final String oldF11Path = virtualToIoFile(f11).getAbsolutePath();
     moveFileInCommand(d1, d2);
     VcsTestUtil.editFileInCommand(myProject, f11, "new");
 
@@ -241,7 +242,7 @@ public class SvnCommittedViewTest extends Svn16TestCase {
   }
 
   protected String absPath(final VirtualFile vf) {
-    return new File(vf.getPath()).getAbsolutePath();
+    return virtualToIoFile(vf).getAbsolutePath();
   }
 
   protected static class Data {

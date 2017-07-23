@@ -19,6 +19,8 @@ package com.intellij.psi.impl;
 import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -40,7 +42,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -86,7 +87,6 @@ public class PsiManagerImpl extends PsiManagerEx {
     myFileManager = isProjectDefault ? new EmptyFileManager(this) : new FileManagerImpl(this, fileDocumentManager, fileIndex);
 
     myTreeChangePreprocessors.add((PsiTreeChangePreprocessor)modificationTracker);
-    Collections.addAll(myTreeChangePreprocessors, Extensions.getExtensions(PsiTreeChangePreprocessor.EP_NAME, myProject));
 
     Disposer.register(project, new Disposable() {
       @Override
@@ -109,6 +109,12 @@ public class PsiManagerImpl extends PsiManagerEx {
     }
     beforeChange(true);
     beforeChange(false);
+  }
+
+  @Override
+  public void dropPsiCaches() {
+    dropResolveCaches();
+    WriteAction.run(() -> ((PsiModificationTrackerImpl)myModificationTracker).incCounter());
   }
 
   @Override
@@ -361,6 +367,9 @@ public class PsiManagerImpl extends PsiManagerEx {
       for (PsiTreeChangePreprocessor preprocessor : myTreeChangePreprocessors) {
         preprocessor.treeChanged(event);
       }
+      for (PsiTreeChangePreprocessor preprocessor : Extensions.getExtensions(PsiTreeChangePreprocessor.EP_NAME, myProject)) {
+        preprocessor.treeChanged(event);
+      }
 
       for (PsiTreeChangeListener listener : myTreeChangeListeners) {
         try {
@@ -492,6 +501,6 @@ public class PsiManagerImpl extends PsiManagerEx {
   public void cleanupForNextTest() {
     assert ApplicationManager.getApplication().isUnitTestMode();
     myFileManager.cleanupForNextTest();
-    dropResolveCaches();
+    dropPsiCaches();
   }
 }

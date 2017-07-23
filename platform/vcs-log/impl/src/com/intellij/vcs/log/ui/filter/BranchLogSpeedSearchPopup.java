@@ -25,7 +25,8 @@ public class BranchLogSpeedSearchPopup extends FlatSpeedSearchPopup {
   }
 
   @Override
-  protected boolean shouldShow(@NotNull AnAction action) {
+  protected boolean shouldBeShowing(@NotNull AnAction action) {
+    if (!super.shouldBeShowing(action)) return false;
     return !getSpeedSearch().isHoldingFilter() || !(action instanceof ActionGroup);
   }
 

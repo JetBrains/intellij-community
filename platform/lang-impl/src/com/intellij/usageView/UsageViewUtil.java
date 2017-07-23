@@ -36,7 +36,6 @@ import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageView;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -92,6 +91,7 @@ public class UsageViewUtil {
     return false;
   }
 
+  @NotNull
   public static UsageInfo[] removeDuplicatedUsages(@NotNull UsageInfo[] usages) {
     Set<UsageInfo> set = new LinkedHashSet<>(Arrays.asList(usages));
 

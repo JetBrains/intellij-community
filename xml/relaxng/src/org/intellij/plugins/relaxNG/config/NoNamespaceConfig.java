@@ -23,11 +23,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 26.11.2007
- */
 public abstract class NoNamespaceConfig implements ProjectComponent {
   @Nullable
   public abstract String getMapping(@NotNull PsiFile file);

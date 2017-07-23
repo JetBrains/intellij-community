@@ -27,9 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitField;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 
-/**
- * Created by Max Medvedev on 15/04/14
- */
 public class GroovyTraitFieldSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
   public GroovyTraitFieldSearcher() {
     super(true);

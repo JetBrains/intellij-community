@@ -25,9 +25,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * User: anna
- */
 public class PsiPolyExpressionUtil {
   public static boolean hasStandaloneForm(PsiExpression expression) {
     if (expression instanceof PsiFunctionalExpression ||
@@ -74,7 +71,7 @@ public class PsiPolyExpressionUtil {
   }
 
   public static boolean isMethodCallTypeDependsOnInference(PsiExpression expression, PsiMethod method) {
-    final Set<PsiTypeParameter> typeParameters = new HashSet<PsiTypeParameter>(Arrays.asList(method.getTypeParameters()));
+    final Set<PsiTypeParameter> typeParameters = new HashSet<>(Arrays.asList(method.getTypeParameters()));
     if (!typeParameters.isEmpty()) {
       final PsiType returnType = method.getReturnType();
       if (returnType != null) {
@@ -109,10 +106,15 @@ public class PsiPolyExpressionUtil {
       @Nullable
       @Override
       public Boolean visitClassType(PsiClassType classType) {
-        for (PsiType type : classType.getParameters()) {
-          if (type.accept(this)) return true;
+        PsiClassType.ClassResolveResult result = classType.resolveGenerics();
+        final PsiClass psiClass = result.getElement();
+        if (psiClass != null) {
+          PsiSubstitutor substitutor = result.getSubstitutor();
+          for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(psiClass)) {
+            PsiType type = substitutor.substitute(parameter);
+            if (type != null && type.accept(this)) return true;
+          }
         }
-        final PsiClass psiClass = classType.resolve();
         return psiClass instanceof PsiTypeParameter && typeParameters.contains(psiClass);
       }
 
@@ -174,7 +176,7 @@ public class PsiPolyExpressionUtil {
     }
     if (expr == null) return null;
     PsiType type = null;
-    //A class instance creation expression (§15.9) for a class that is convertible to a numeric type.
+    //A class instance creation expression (p15.9) for a class that is convertible to a numeric type.
     //As numeric classes do not have type parameters, at this point expressions with diamonds could be ignored
     if (expr instanceof PsiNewExpression && !PsiDiamondType.hasDiamond((PsiNewExpression)expr) ||
         hasStandaloneForm(expr)) {

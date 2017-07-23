@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,14 +33,14 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
@@ -63,7 +63,6 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Util;
 import com.intellij.uiDesigner.editor.UIFormEditor;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
-import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.uiDesigner.palette.ComponentItem;
@@ -97,7 +96,7 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * <code>GuiEditor</code> is a panel with border layout. It has palette at the north,
+ * {@code GuiEditor} is a panel with border layout. It has palette at the north,
  * tree of component with property editor at the west and editor area at the center.
  * This editor area contains internal component where user edit the UI.
  *
@@ -184,24 +183,20 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
 
   private RadRootContainer myRootContainer;
   /**
-   * Panel with components palette.
-   */
-  //@NotNull private final PalettePanel myPalettePanel;
-  /**
-   * GuiEditor should not react on own events. If <code>myInsideChange</code>
-   * is <code>true</code> then we do not react on incoming DocumentEvent.
+   * GuiEditor should not react on own events. If {@code myInsideChange}
+   * is {@code true} then we do not react on incoming DocumentEvent.
    */
   private boolean myInsideChange;
-  private final DocumentAdapter myDocumentListener;
+  private final DocumentListener myDocumentListener;
   private final CardLayout myCardLayout = new CardLayout();
   private final ThreeComponentsSplitter myContentSplitter = new ThreeComponentsSplitter();
   private final JPanel myCardPanel = new JPanel(myCardLayout);
 
-  @NonNls private final static String CARD_VALID = "valid";
-  @NonNls private final static String CARD_INVALID = "invalid";
+  @NonNls private static final String CARD_VALID = "valid";
+  @NonNls private static final String CARD_INVALID = "invalid";
   private final JPanel myValidCard;
   private final JPanel myInvalidCard;
-  private boolean myInvalid = false;
+  private boolean myInvalid;
 
   private final CutCopyPasteSupport myCutCopyPasteSupport;
   /**
@@ -231,8 +226,8 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
 
   /**
    * @param file file to be edited
-   * @throws java.lang.IllegalArgumentException if the <code>file</code>
-   *                                            is <code>null</code> or <code>file</code> is not valid PsiFile
+   * @throws IllegalArgumentException if the {@code file}
+   *                                            is {@code null} or {@code file} is not valid PsiFile
    */
   public GuiEditor(@NotNull UIFormEditor editor, @NotNull Project project, @NotNull Module module, @NotNull VirtualFile file) {
     myEditor = editor;
@@ -280,11 +275,13 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     myLayeredPane.add(myDragLayer, LAYER_DND);
 
     myGlassLayer.addFocusListener(new FocusListener() {
+      @Override
       public void focusGained(FocusEvent e) {
         myDecorationLayer.repaint();
         //fireSelectedComponentChanged(); // EA-36478
       }
 
+      @Override
       public void focusLost(FocusEvent e) {
         myDecorationLayer.repaint();
       }
@@ -298,7 +295,8 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
 
     // We need to synchronize GUI editor with the document
     final Alarm alarm = new Alarm();
-    myDocumentListener = new DocumentAdapter() {
+    myDocumentListener = new DocumentListener() {
+      @Override
       public void documentChanged(final DocumentEvent e) {
         if (!myInsideChange) {
           UndoManager undoManager = UndoManager.getInstance(getProject());
@@ -365,10 +363,12 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
 
     myActiveDecorationLayer.installSelectionWatcher();
 
-    ActionManager.getInstance().getAction("GuiDesigner.IncreaseIndent").registerCustomShortcutSet(
-      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0)), myGlassLayer);
-    ActionManager.getInstance().getAction("GuiDesigner.DecreaseIndent").registerCustomShortcutSet(
-      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, KeyEvent.SHIFT_MASK)), myGlassLayer);
+    EmptyAction.registerWithShortcutSet("GuiDesigner.IncreaseIndent",
+                                        new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0)),
+                                        myGlassLayer);
+    EmptyAction.registerWithShortcutSet("GuiDesigner.DecreaseIndent",
+                                        new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_MASK)),
+                                        myGlassLayer);
 
     UsageTrigger.trigger("swing-designer.open");
 
@@ -418,9 +418,9 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
   @Override
   public Module getModule() {
     if (myModule.isDisposed()) {
-      myModule = ModuleUtil.findModuleForFile(myFile, myProject);
+      myModule = ModuleUtilCore.findModuleForFile(myFile, myProject);
       if (myModule == null) {
-        throw new IllegalArgumentException("No module for file " + myFile + " in project " + myModule);
+        throw new IllegalArgumentException("No module for file " + myFile);
       }
     }
     return myModule;
@@ -453,7 +453,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     VirtualFile sourceFileToCheckOut = null;
     if (!GuiDesignerConfiguration.getInstance(getProject()).INSTRUMENT_CLASSES) {
       final String classToBind = myRootContainer.getClassToBind();
-      if (classToBind != null && classToBind.length() > 0) {
+      if (classToBind != null && !classToBind.isEmpty()) {
         PsiClass psiClass = FormEditingUtil.findClassToBind(getModule(), classToBind);
         if (psiClass != null) {
           sourceFileToCheckOut = psiClass.getContainingFile().getVirtualFile();
@@ -526,6 +526,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     }
   }
 
+  @Override
   public Object getData(final String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return ourHelpID;
@@ -571,8 +572,8 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
   }
 
   /**
-   * @return the topmost <code>UiConainer</code> which in the root of
-   * component hierarchy. This method never returns <code>null</code>.
+   * @return the topmost {@code UiConainer} which in the root of
+   * component hierarchy. This method never returns {@code null}.
    */
   @NotNull
   public RadRootContainer getRootContainer() {
@@ -698,30 +699,28 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
 
   private void refreshProperties() {
     final Ref<Boolean> anythingModified = new Ref<>();
-    FormEditingUtil.iterate(myRootContainer, new FormEditingUtil.ComponentVisitor() {
-      public boolean visit(final IComponent component) {
-        final RadComponent radComponent = (RadComponent)component;
-        boolean componentModified = false;
-        for (IProperty prop : component.getModifiedProperties()) {
-          if (prop instanceof IntroStringProperty) {
-            IntroStringProperty strProp = (IntroStringProperty)prop;
-            componentModified = strProp.refreshValue(radComponent) || componentModified;
-          }
+    FormEditingUtil.iterate(myRootContainer, component -> {
+      final RadComponent radComponent = (RadComponent)component;
+      boolean componentModified = false;
+      for (IProperty prop : component.getModifiedProperties()) {
+        if (prop instanceof IntroStringProperty) {
+          IntroStringProperty strProp = (IntroStringProperty)prop;
+          componentModified = strProp.refreshValue(radComponent) || componentModified;
         }
-
-        if (component instanceof RadContainer) {
-          componentModified = ((RadContainer)component).updateBorder() || componentModified;
-        }
-
-        if (component.getParentContainer() instanceof RadTabbedPane) {
-          componentModified = ((RadTabbedPane)component.getParentContainer()).refreshChildTitle(radComponent) || componentModified;
-        }
-        if (componentModified) {
-          anythingModified.set(Boolean.TRUE);
-        }
-
-        return true;
       }
+
+      if (component instanceof RadContainer) {
+        componentModified = ((RadContainer)component).updateBorder() || componentModified;
+      }
+
+      if (component.getParentContainer() instanceof RadTabbedPane) {
+        componentModified = ((RadTabbedPane)component.getParentContainer()).refreshChildTitle(radComponent) || componentModified;
+      }
+      if (componentModified) {
+        anythingModified.set(Boolean.TRUE);
+      }
+
+      return true;
     });
     if (!anythingModified.isNull()) {
       refresh();
@@ -862,7 +861,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
   }
 
   /**
-   * Creates and sets new <code>RadRootContainer</code>
+   * Creates and sets new {@code RadRootContainer}
    *
    * @param keepSelection if true, the GUI designer tries to preserve the selection state after reload.
    */
@@ -922,38 +921,34 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
 
   private Map<String, String> saveTabbedPaneSelectedTabs() {
     final Map<String, String> result = new HashMap<>();
-    FormEditingUtil.iterate(getRootContainer(), new FormEditingUtil.ComponentVisitor() {
-      public boolean visit(final IComponent component) {
-        if (component instanceof RadTabbedPane) {
-          RadTabbedPane tabbedPane = (RadTabbedPane)component;
-          RadComponent c = tabbedPane.getSelectedTab();
-          if (c != null) {
-            result.put(tabbedPane.getId(), c.getId());
-          }
+    FormEditingUtil.iterate(getRootContainer(), component -> {
+      if (component instanceof RadTabbedPane) {
+        RadTabbedPane tabbedPane = (RadTabbedPane)component;
+        RadComponent c = tabbedPane.getSelectedTab();
+        if (c != null) {
+          result.put(tabbedPane.getId(), c.getId());
         }
-        return true;
       }
+      return true;
     });
     return result;
   }
 
   private void restoreTabbedPaneSelectedTabs(final Map<String, String> tabbedPaneSelectedTabs) {
-    FormEditingUtil.iterate(getRootContainer(), new FormEditingUtil.ComponentVisitor() {
-      public boolean visit(final IComponent component) {
-        if (component instanceof RadTabbedPane) {
-          RadTabbedPane tabbedPane = (RadTabbedPane)component;
-          String selectedTabId = tabbedPaneSelectedTabs.get(tabbedPane.getId());
-          if (selectedTabId != null) {
-            for (RadComponent c : tabbedPane.getComponents()) {
-              if (c.getId().equals(selectedTabId)) {
-                tabbedPane.selectTab(c);
-                break;
-              }
+    FormEditingUtil.iterate(getRootContainer(), component -> {
+      if (component instanceof RadTabbedPane) {
+        RadTabbedPane tabbedPane = (RadTabbedPane)component;
+        String selectedTabId = tabbedPaneSelectedTabs.get(tabbedPane.getId());
+        if (selectedTabId != null) {
+          for (RadComponent c : tabbedPane.getComponents()) {
+            if (c.getId().equals(selectedTabId)) {
+              tabbedPane.selectTab(c);
+              break;
             }
           }
         }
-        return true;
       }
+      return true;
     });
   }
 
@@ -1004,7 +999,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     if (myHorzCaptionPanel.isFocusOwner()) {
       return myHorzCaptionPanel;
     }
-    else if (myVertCaptionPanel.isFocusOwner()) {
+    if (myVertCaptionPanel.isFocusOwner()) {
       return myVertCaptionPanel;
     }
     return null;
@@ -1048,6 +1043,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     /**
      * All components allocate whole pane's area.
      */
+    @Override
     public void doLayout() {
       for (int i = getComponentCount() - 1; i >= 0; i--) {
         final Component component = getComponent(i);
@@ -1055,10 +1051,12 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
       }
     }
 
+    @Override
     public Dimension getMinimumSize() {
       return getPreferredSize();
     }
 
+    @Override
     public Dimension getPreferredSize() {
       // make sure all components fit
       int width = 0;
@@ -1077,14 +1075,17 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
       return new Dimension(Math.max(width, bounds.width), Math.max(height, bounds.height));
     }
 
+    @Override
     public Dimension getPreferredScrollableViewportSize() {
       return getPreferredSize();
     }
 
+    @Override
     public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
       return 10;
     }
 
+    @Override
     public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
       if (orientation == SwingConstants.HORIZONTAL) {
         return visibleRect.width - 10;
@@ -1092,10 +1093,12 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
       return visibleRect.height - 10;
     }
 
+    @Override
     public boolean getScrollableTracksViewportWidth() {
       return false;
     }
 
+    @Override
     public boolean getScrollableTracksViewportHeight() {
       return false;
     }
@@ -1105,11 +1108,13 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
    * Action works only if we are not editing something in the property inspector
    */
   private final class CancelCurrentOperationAction extends AnAction {
+    @Override
     public void actionPerformed(final AnActionEvent e) {
       myProcessor.cancelOperation();
       myQuickFixManager.hideIntentionHint();
     }
 
+    @Override
     public void update(final AnActionEvent e) {
       PropertyInspector inspector = DesignerToolWindowManager.getInstance(GuiEditor.this).getPropertyInspector();
       e.getPresentation().setEnabled(inspector != null && !inspector.isEditing());
@@ -1120,13 +1125,15 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
    * Allows "DEL" button to work through the standard mechanism
    */
   private final class MyDeleteProvider implements DeleteProvider {
+    @Override
     public void deleteElement(@NotNull final DataContext dataContext) {
-      if (!GuiEditor.this.ensureEditable()) {
+      if (!ensureEditable()) {
         return;
       }
       CommandProcessor.getInstance().executeCommand(getProject(), () -> FormEditingUtil.deleteSelection(GuiEditor.this), UIDesignerBundle.message("command.delete.selection"), null);
     }
 
+    @Override
     public boolean canDeleteElement(@NotNull final DataContext dataContext) {
       return
         !DesignerToolWindowManager.getInstance(GuiEditor.this).getPropertyInspector().isEditing() &&
@@ -1143,7 +1150,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     private final MyRefreshPropertiesRequest myRefreshPropertiesRequest = new MyRefreshPropertiesRequest();
     private final MySynchronizeRequest mySynchronizeRequest = new MySynchronizeRequest(true);
 
-    public MyPsiTreeChangeListener() {
+    MyPsiTreeChangeListener() {
       myAlarm = new Alarm();
     }
 
@@ -1155,26 +1162,32 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
       myAlarm.cancelAllRequests();
     }
 
+    @Override
     public void childAdded(@NotNull final PsiTreeChangeEvent event) {
       handleEvent(event);
     }
 
+    @Override
     public void childMoved(@NotNull final PsiTreeChangeEvent event) {
       handleEvent(event);
     }
 
+    @Override
     public void childrenChanged(@NotNull final PsiTreeChangeEvent event) {
       handleEvent(event);
     }
 
+    @Override
     public void childRemoved(@NotNull PsiTreeChangeEvent event) {
       handleEvent(event);
     }
 
+    @Override
     public void childReplaced(@NotNull PsiTreeChangeEvent event) {
       handleEvent(event);
     }
 
+    @Override
     public void propertyChanged(@NotNull final PsiTreeChangeEvent event) {
       if (PsiTreeChangeEvent.PROP_ROOTS.equals(event.getPropertyName())) {
         myAlarm.cancelRequest(myRefreshPropertiesRequest);
@@ -1193,7 +1206,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
         else if (containingFile instanceof PsiPlainTextFile && containingFile.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {
           // quick check if relevant
           String resourceName = FormEditingUtil.buildResourceName(containingFile);
-          if (myDocument.getText().indexOf(resourceName) >= 0) {
+          if (myDocument.getText().contains(resourceName)) {
             LOG.debug("Received PSI change event for nested form");
             // TODO[yole]: handle multiple nesting
             myAlarm.cancelRequest(mySynchronizeRequest);
@@ -1207,10 +1220,11 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
   private class MySynchronizeRequest implements Runnable {
     private final boolean myKeepSelection;
 
-    public MySynchronizeRequest(final boolean keepSelection) {
+    MySynchronizeRequest(final boolean keepSelection) {
       myKeepSelection = keepSelection;
     }
 
+    @Override
     public void run() {
       if (getModule().isDisposed()) {
         return;
@@ -1226,6 +1240,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
   }
 
   private class MyRefreshPropertiesRequest implements Runnable {
+    @Override
     public void run() {
       if (!getModule().isDisposed() && !getProject().isDisposed() && !DumbService.isDumb(getProject())) {
         refreshProperties();

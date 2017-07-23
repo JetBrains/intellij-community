@@ -27,29 +27,21 @@ import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+
 /**
  * @author yole
  */
 public class PySyntaxHighlighterFactory extends SyntaxHighlighterFactory {
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
-  private final FactoryMap<LanguageLevel, PyHighlighter> myMap = new FactoryMap<LanguageLevel, PyHighlighter>() {
-    @Override
-    protected PyHighlighter create(LanguageLevel key) {
-      return new PyHighlighter(key);
-    }
-  };
+  private final Map<LanguageLevel, PyHighlighter> myMap = FactoryMap.createMap(key -> new PyHighlighter(key));
 
-  private final FactoryMap<LanguageLevel, PyHighlighter> myConsoleMap = new FactoryMap<LanguageLevel, PyHighlighter>() {
-      @Override
-      protected PyHighlighter create(LanguageLevel key) {
-        return new PyHighlighter(key) {
-          @Override
-          protected PythonHighlightingLexer createHighlightingLexer(LanguageLevel languageLevel) {
-            return new PyConsoleHighlightingLexer(languageLevel);
-          }
-        };
-      }
-    };
+  private final Map<LanguageLevel, PyHighlighter> myConsoleMap = FactoryMap.createMap(key -> new PyHighlighter(key) {
+    @Override
+    protected PythonHighlightingLexer createHighlightingLexer(LanguageLevel languageLevel) {
+      return new PyConsoleHighlightingLexer(languageLevel);
+    }
+  });
 
   @NotNull
   public SyntaxHighlighter getSyntaxHighlighter(@Nullable final Project project, @Nullable final VirtualFile virtualFile) {

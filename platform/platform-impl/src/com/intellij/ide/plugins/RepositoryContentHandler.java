@@ -61,7 +61,7 @@ class RepositoryContentHandler extends DefaultHandler {
 
   @NotNull
   public List<IdeaPluginDescriptor> getPluginsList() {
-    return plugins != null ? plugins : Collections.<IdeaPluginDescriptor>emptyList();
+    return plugins != null ? plugins : Collections.emptyList();
   }
 
   @Override
@@ -90,7 +90,6 @@ class RepositoryContentHandler extends DefaultHandler {
         currentPlugin.setDate(dateString);
       }
       currentPlugin.setIncomplete(false);
-      plugins.add(currentPlugin);
     }
     else if (qName.equals(IDEA_VERSION)) {
       currentPlugin.setSinceBuild(attributes.getValue(SINCE_BUILD));
@@ -109,7 +108,6 @@ class RepositoryContentHandler extends DefaultHandler {
       currentPlugin.setDownloadUrl(attributes.getValue(URL));
       currentPlugin.setVersion(attributes.getValue(VERSION));
       currentPlugin.setIncomplete(true);
-      plugins.add(currentPlugin);
     }
     currentValue.setLength(0);
   }
@@ -151,6 +149,9 @@ class RepositoryContentHandler extends DefaultHandler {
       currentPlugin.setDownloadUrl(currentValueString);
     }
     else if (qName.equals(IDEA_PLUGIN) || qName.equals(PLUGIN)) {
+      if (currentPlugin != null && !PluginManagerCore.isBrokenPlugin(currentPlugin)) {
+        plugins.add(currentPlugin);
+      }
       currentPlugin = null;
     }
   }

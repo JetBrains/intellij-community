@@ -83,7 +83,8 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
           LanguageLevel level = PsiUtil.getLanguageLevel(expression);
           for (int i = 0; i < typeParameters.length; i++) {
             PsiTypeParameter typeParameter = typeParameters[i];
-            final PsiType substitution = helper.getSubstitutionForTypeParameter(typeParameter, returnType, toType, false, level);
+            final PsiType substitution = toType == null ? resolveResult.getSubstitutor().substitute(typeParameter)
+                                                        : helper.getSubstitutionForTypeParameter(typeParameter, returnType, toType, false, level);
             if (substitution == null || PsiType.NULL.equals(substitution)) return null;
             mappings[i] = GenericsUtil.eliminateWildcards(substitution, false);
           }

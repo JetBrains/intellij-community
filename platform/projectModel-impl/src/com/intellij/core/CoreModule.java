@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -76,12 +75,7 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
           loadState(object, false);
         }
       };
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        moduleRootManager.disposeComponent();
-      }
-    });
+    Disposer.register(parentDisposable, moduleRootManager);
     getPicoContainer().registerComponentInstance(ModuleRootManager.class, moduleRootManager);
     getPicoContainer().registerComponentInstance(PathMacroManager.class, createModulePathMacroManager(project));
     getPicoContainer().registerComponentInstance(ModuleFileIndex.class, createModuleFileIndex(project));
@@ -106,32 +100,13 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
     return new CoreModuleScopeProvider();
   }
 
-  protected PathMacroManager createModulePathMacroManager(@NotNull Project project) {
+  // used by Upsource
+  protected PathMacroManager createModulePathMacroManager(@SuppressWarnings("unused") @NotNull Project project) {
     return new ModulePathMacroManager(PathMacros.getInstance(), this);
   }
 
   protected ModuleFileIndex createModuleFileIndex(@NotNull Project project) {
     return new ModuleFileIndexImpl(this, DirectoryIndex.getInstance(project));
-  }
-
-  @Override
-  public void init(@NotNull String path, @Nullable final Runnable beforeComponentCreation) {
-  }
-
-  @Override
-  public void moduleAdded() {
-  }
-
-  @Override
-  public void projectOpened() {
-  }
-
-  @Override
-  public void projectClosed() {
-  }
-
-  @Override
-  public void rename(String newName) {
   }
 
   @Override
@@ -169,11 +144,6 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
 
   @Override
   public void setOption(@NotNull String optionName, @NotNull String optionValue) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void clearOption(@NotNull String optionName) {
     throw new UnsupportedOperationException();
   }
 

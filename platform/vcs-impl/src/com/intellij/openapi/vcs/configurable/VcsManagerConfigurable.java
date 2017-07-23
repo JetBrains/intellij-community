@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,12 @@
  */
 package com.intellij.openapi.vcs.configurable;
 
+import com.intellij.application.options.colors.fileStatus.FileStatusColorsConfigurable;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfigurableProvider;
@@ -28,21 +28,24 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictConfigurable;
 import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsPanel;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+
+import static com.intellij.openapi.options.ex.ConfigurableWrapper.wrapConfigurable;
+import static com.intellij.util.ArrayUtil.toObjectArray;
+import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.*;
 
 public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstract implements Configurable.NoScroll {
-  private final Project myProject;
+  @NotNull private final Project myProject;
   private VcsDirectoryConfigurationPanel myMappings;
   private VcsGeneralConfigurationConfigurable myGeneralPanel;
 
-  public VcsManagerConfigurable(Project project) {
+  public VcsManagerConfigurable(@NotNull Project project) {
     myProject = project;
   }
 
@@ -75,11 +78,6 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
   }
 
   @Override
-  public boolean isVisible() {
-    return ProjectLevelVcsManager.getInstance(myProject).getAllVcss().length > 0;
-  }
-
-  @Override
   public void disposeUIResources() {
     super.disposeUIResources();
     if (myMappings != null) {
@@ -97,6 +95,7 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
   }
 
   @Override
+  @NotNull
   public String getHelpTopic() {
     return "project.propVCSSupport.Mappings";
   }
@@ -104,110 +103,85 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
   @Override
   @NotNull
   public String getId() {
-    return getDefaultConfigurableIdValue(this);
-  }
-
-  @NotNull
-  private static String getDefaultConfigurableIdValue(final Configurable configurable) {
-    final String helpTopic = configurable.getHelpTopic();
-    return helpTopic == null ? configurable.getClass().getName() : helpTopic;
+    return getHelpTopic();
   }
 
   @Override
   protected Configurable[] buildConfigurables() {
     myGeneralPanel = new VcsGeneralConfigurationConfigurable(myProject, this);
 
-    List<Configurable> result = new ArrayList<>();
+    List<Configurable> result = newArrayList();
 
     result.add(myGeneralPanel);
     result.add(new VcsBackgroundOperationsConfigurable(myProject));
-
     if (!myProject.isDefault()) {
       result.add(new IgnoredSettingsPanel(myProject));
     }
-    /*if (!myProject.isDefault()) {
-      result.add(new CacheSettingsPanel(myProject));
-    }*/
     result.add(new IssueNavigationConfigurationPanel(myProject));
     if (!myProject.isDefault()) {
       result.add(new ChangelistConflictConfigurable(ChangeListManagerImpl.getInstanceImpl(myProject)));
     }
-
+    result.add(new CommitDialogConfigurable(myProject));
+    result.add(new ShelfProjectConfigurable(myProject));  
     for (VcsConfigurableProvider provider : VcsConfigurableProvider.EP_NAME.getExtensions()) {
-      final Configurable configurable = provider.getConfigurable(myProject);
-      if (configurable != null) {
-        result.add(configurable);
+      addIfNotNull(result, provider.getConfigurable(myProject));
+    }
+
+    result.add(new FileStatusColorsConfigurable());
+
+    Set<String> projectConfigurableIds = map2Set(myProject.getExtensions(Configurable.PROJECT_CONFIGURABLE), ep -> ep.id);
+    for (VcsDescriptor descriptor : ProjectLevelVcsManager.getInstance(myProject).getAllVcss()) {
+      if (!projectConfigurableIds.contains(getVcsConfigurableId(descriptor.getDisplayName()))) {
+        result.add(wrapConfigurable(new VcsConfigurableEP(myProject, descriptor)));
       }
     }
 
-    VcsDescriptor[] vcses = ProjectLevelVcsManager.getInstance(myProject).getAllVcss();
-    for (VcsDescriptor vcs : vcses) {
-      result.add(createVcsConfigurableWrapper(vcs));
-    }
-
-    return result.toArray(new Configurable[result.size()]);
+    return toObjectArray(result, Configurable.class);
   }
 
+  @Nullable
   public VcsDirectoryConfigurationPanel getMappings() {
     return myMappings;
   }
 
-  private Configurable createVcsConfigurableWrapper(final VcsDescriptor vcs) {
-    final NotNullLazyValue<Configurable> delegate = new NotNullLazyValue<Configurable>() {
-      @NotNull
-      @Override
-      protected Configurable compute() {
-        return ProjectLevelVcsManager.getInstance(myProject).findVcsByName(vcs.getName()).getConfigurable();
-      }
-    };
-    return new SearchableConfigurable(){
+  @NotNull
+  public static String getVcsConfigurableId(@NotNull String displayName) {
+    return "vcs." + displayName;
+  }
 
-      @Override
-      @Nls
-      public String getDisplayName() {
-        return vcs.getDisplayName();
-      }
+  private static class VcsConfigurableEP extends ConfigurableEP<Configurable> {
 
-      @Override
-      public String getHelpTopic() {
-        return delegate.getValue().getHelpTopic();
-      }
+    private static final int WEIGHT = -500;
 
-      @Override
-      public JComponent createComponent() {
-        return delegate.getValue().createComponent();
-      }
+    @NotNull private final VcsDescriptor myDescriptor;
 
-      @Override
-      public boolean isModified() {
-        return delegate.getValue().isModified();
-      }
+    public VcsConfigurableEP(@NotNull Project project, @NotNull VcsDescriptor descriptor) {
+      super(project);
+      myDescriptor = descriptor;
+      displayName = descriptor.getDisplayName();
+      id = getVcsConfigurableId(descriptor.getDisplayName());
+      groupWeight = WEIGHT;
+    }
 
-      @Override
-      public void apply() throws ConfigurationException {
-        delegate.getValue().apply();
-      }
+    @NotNull
+    @Override
+    protected ConfigurableEP.ObjectProducer createProducer() {
+      return new ObjectProducer() {
+        @Override
+        protected Object createElement() {
+          return notNull(ProjectLevelVcsManager.getInstance(getProject()).findVcsByName(myDescriptor.getName())).getConfigurable();
+        }
 
-      @Override
-      public void reset() {
-        delegate.getValue().reset();
-      }
+        @Override
+        protected boolean canCreateElement() {
+          return true;
+        }
 
-      @Override
-      public void disposeUIResources() {
-        delegate.getValue().disposeUIResources();
-      }
-
-      @Override
-      @NotNull
-      public String getId() {
-        return "vcs." + getDisplayName();
-      }
-
-      @Override
-      public String toString() {
-        return "VcsConfigurable for "+vcs.getDisplayName();
-      }
-    };
+        @Override
+        protected Class<?> getType() {
+          return SearchableConfigurable.class;
+        }
+      };
+    }
   }
 }

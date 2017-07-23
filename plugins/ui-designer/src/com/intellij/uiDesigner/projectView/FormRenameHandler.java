@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 26.10.2006
- * Time: 16:44:00
- */
 package com.intellij.uiDesigner.projectView;
 
 import com.intellij.openapi.actionSystem.DataContext;

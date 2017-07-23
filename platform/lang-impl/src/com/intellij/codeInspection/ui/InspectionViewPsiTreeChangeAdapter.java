@@ -31,14 +31,10 @@ import com.intellij.psi.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.hash.HashSet;
-import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -50,10 +46,11 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
   private final InspectionResultsView myView;
   private final MergingUpdateQueue myUpdater;
 
-  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private final Alarm myAlarm;
 
   public InspectionViewPsiTreeChangeAdapter(@NotNull InspectionResultsView view) {
     myView = view;
+    myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, view);
     myUpdater = new MergingUpdateQueue("inspection.view.psi.update.listener",
                                        300,
                                        true,
@@ -75,12 +72,13 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
             final Project project = view.getProject();
 
             final Runnable runnable = () -> {
+              if (view.isDisposed()) return;
               synchronized (myView.getTreeStructureUpdateLock()) {
                 InspectionTreeNode root = myView.getTree().getRoot();
                 boolean[] needUpdateUI = {false};
                 processNodesIfNeed(root, (node) -> {
-                  if (node instanceof CachedInspectionTreeNode) {
-                    RefEntity element = ((CachedInspectionTreeNode)node).getElement();
+                  if (node instanceof SuppressableInspectionTreeNode) {
+                    RefEntity element = ((SuppressableInspectionTreeNode)node).getElement();
                     if (element instanceof RefElement) {
                       final SmartPsiElementPointer pointer = ((RefElement)element).getPointer();
                       VirtualFile strictVirtualFile = pointer.getVirtualFile();
@@ -91,7 +89,7 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
                         }
                       }
                       if (strictVirtualFile == null || files.contains(strictVirtualFile)) {
-                        ((CachedInspectionTreeNode)node).dropCache(project);
+                        ((SuppressableInspectionTreeNode)node).dropCache(project);
                         if (!needUpdateUI[0]) {
                           needUpdateUI[0] = true;
                         }
@@ -99,7 +97,7 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
                       return false;
                     }
                     else {
-                      ((CachedInspectionTreeNode)node).dropCache(project);
+                      ((SuppressableInspectionTreeNode)node).dropCache(project);
                       if (!needUpdateUI[0]) {
                         needUpdateUI[0] = true;
                       }
@@ -110,9 +108,7 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
                 });
                 if (needUpdateUI[0]) {
                   myAlarm.cancelAllRequests();
-                  myAlarm.addRequest(() -> {
-                    myView.resetTree();
-                  }, 100, ModalityState.NON_MODAL);
+                  myAlarm.addRequest(() -> myView.resetTree(), 100, ModalityState.NON_MODAL);
                 }
               }
             };

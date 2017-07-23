@@ -21,14 +21,11 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import org.junit.Assert;
 
-import java.io.File;
-
 public class ChangedLinesCounterTest extends LightPlatformCodeInsightFixtureTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/')
-           + "/platform/platform-tests/testData/"
+    return PlatformTestUtil.getPlatformTestDataPath()
            + "codeStyle/formatter/";
   }
 

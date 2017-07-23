@@ -1,0 +1,286 @@
+The software in this package is distributed under the GNU General Public
+License (with a special exception described below).
+
+A copy of GNU General Public License (GPL) is included in this distribution,
+in the file COPYING.  If you do not have the source code, it is available at:
+
+    http://www.gnu.org/software/classpath/
+
+  Linking this library statically or dynamically with other modules is
+  making a combined work based on this library.  Thus, the terms and
+  conditions of the GNU General Public License cover the whole
+  combination.
+ 
+  As a special exception, the copyright holders of this library give you
+  permission to link this library with independent modules to produce an
+  executable, regardless of the license terms of these independent
+  modules, and to copy and distribute the resulting executable under
+  terms of your choice, provided that you also meet, for each linked
+  independent module, the terms and conditions of the license of that
+  module.  An independent module is a module which is not derived from
+  or based on this library.  If you modify this library, you may extend
+  this exception to your version of the library, but you are not
+  obligated to do so.  If you do not wish to do so, delete this
+  exception statement from your version.
+
+
+GNU Classpath also contains other (example) code distributed under other
+terms.  External libraries included with GNU Classpath may also be
+distributed under different licensing terms.
+The location and the exact terms of this other code is mentioned below.
+
+
+Directory examples.
+All example code is distributed under the GNU General Public License (GPL).
+Each example source code files carries the following notice:
+
+  GNU Classpath examples are free software; you can redistribute it
+  and/or modify it under the terms of the GNU General Public License as
+  published by the Free Software Foundation; either version 2, or (at
+  your option) any later version.
+
+  GNU Classpath examples are distributed in the hope that they will be
+  useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with GNU Classpath examples; see the file COPYING.  If not,
+  write to the Free Software Foundation, 51 Franklin Street, Fifth Floor,
+  Boston, MA 02110-1301, USA.
+
+For more information see the README file in the examples directory.
+
+
+Directory native/fdlibm
+fdlimb contains general algorithms useful for runtimes and compilers to
+support strict double and float mathematical operations.
+
+fdlibm files carry the following notices:
+
+  Copyright (c) 1991 by AT&T.
+ 
+  Permission to use, copy, modify, and distribute this software for any
+  purpose without fee is hereby granted, provided that this entire notice
+  is included in all copies of any software which is or includes a copy
+  or modification of this software and in all copies of the supporting
+  documentation for such software.
+ 
+  THIS SOFTWARE IS BEING PROVIDED "AS IS", WITHOUT ANY EXPRESS OR IMPLIED
+  WARRANTY.  IN PARTICULAR, NEITHER THE AUTHOR NOR AT&T MAKES ANY
+  REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE MERCHANTABILITY
+  OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR PURPOSE.
+
+  Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
+ 
+  Developed at SunPro, a Sun Microsystems, Inc. business.
+  Permission to use, copy, modify, and distribute this
+  software is freely granted, provided that this notice
+  is preserved.
+
+The upstream for fdlibm is libgcj (http://gcc.gnu.org/java/), they sync
+again with the 'real' upstream (http://www.netlib.org/fdlibm/readme).
+
+
+The documentation of some of the files in org/ietf/jgss/ is derived from
+the text of RFC 2853: Generic Security Service API Version 2: Java Bindings.
+That document is covered under the following license notice:
+
+  Copyright (C) The Internet Society (2000).  All Rights Reserved.
+
+  This document and translations of it may be copied and furnished to
+  others, and derivative works that comment on or otherwise explain it
+  or assist in its implementation may be prepared, copied, published and
+  distributed, in whole or in part, without restriction of any kind,
+  provided that the above copyright notice and this paragraph are
+  included on all such copies and derivative works.  However, this
+  document itself may not be modified in any way, such as by removing
+  the copyright notice or references to the Internet Society or other
+  Internet organizations, except as needed for the purpose of developing
+  Internet standards in which case the procedures for copyrights defined
+  in the Internet Standards process must be followed, or as required to
+  translate it into languages other than English.
+
+  The limited permissions granted above are perpetual and will not be
+  revoked by the Internet Society or its successors or assigns.
+
+  This document and the information contained herein is provided on an
+  "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+  TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT
+  NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION HEREIN
+  WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+  MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+
+Directory external/w3c_dom
+Bindings for the Document Object Model (DOM) as published by the
+World Wide Web Consortium. All files are distributed under the following
+W3C Software Short Notice:
+
+  Copyright (c) 2004 World Wide Web Consortium,
+
+  (Massachusetts Institute of Technology, European Research Consortium for
+  Informatics and Mathematics, Keio University). All Rights Reserved. This
+  work is distributed under the W3C(r) Software License [1] in the hope that
+  it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+  warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+  [1] http://www.w3.org/Consortium/Legal/2002/copyright-software-20021231
+
+  Permission to copy, modify, and distribute this software and its
+  documentation, with or without modification, for any purpose and
+  without fee or royalty is hereby granted, provided that you include
+  the following on ALL copies of the software and documentation or
+  portions thereof, including modifications:
+
+  1. The full text of this NOTICE in a location viewable to users of
+  the redistributed or derivative work.
+  2. Any pre-existing intellectual property disclaimers, notices, or
+  terms and conditions. If none exist, the W3C Software Short Notice
+  should be included (hypertext is preferred, text is permitted) within
+  the body of any redistributed or derivative code.
+  3. Notice of any changes or modifications to the files, including
+  the date changes were made. (We recommend you provide URIs to the
+  location from which the code is derived.)
+
+  THIS SOFTWARE AND DOCUMENTATION IS PROVIDED "AS IS," AND COPYRIGHT
+  HOLDERS MAKE NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR IMPLIED,
+  INCLUDING BUT NOT LIMITED TO, WARRANTIES OF MERCHANTABILITY OR FITNESS
+  FOR ANY PARTICULAR PURPOSE OR THAT THE USE OF THE SOFTWARE OR
+  DOCUMENTATION WILL NOT INFRINGE ANY THIRD PARTY PATENTS, COPYRIGHTS,
+  TRADEMARKS OR OTHER RIGHTS.
+
+  COPYRIGHT HOLDERS WILL NOT BE LIABLE FOR ANY DIRECT, INDIRECT, SPECIAL
+  OR CONSEQUENTIAL DAMAGES ARISING OUT OF ANY USE OF THE SOFTWARE OR
+  DOCUMENTATION.
+
+  The name and trademarks of copyright holders may NOT be used in
+  advertising or publicity pertaining to the software without specific,
+  written prior permission. Title to copyright in this software and any
+  associated documentation will at all times remain with copyright
+  holders.
+
+
+Directory external/sax
+Simple API for XML, a standard application interface for processing XML.
+All files are distributed with the following short notice:
+
+  NO WARRANTY!  This class is in the Public Domain.
+
+The www.saxproject.org explains:
+
+  Copyright Status
+
+  SAX is free!
+
+  In fact, it's not possible to own a license to SAX, since it's been
+  placed in the public domain.
+
+  No Warranty
+
+  Because SAX is released to the public domain, there is no warranty
+  for the design or for the software implementation, to the extent
+  permitted by applicable law. Except when otherwise stated in writing
+  the copyright holders and/or other parties provide SAX "as is" without
+  warranty of any kind, either expressed or implied, including, but not
+  limited to, the implied warranties of merchantability and fitness for
+  a particular purpose. The entire risk as to the quality and
+  performance of SAX is with you. Should SAX prove defective, you assume
+  the cost of all necessary servicing, repair or correction.
+
+  In no event unless required by applicable law or agreed to in
+  writing will any copyright holder, or any other party who may modify
+  and/or redistribute SAX, be liable to you for damages, including any
+  general, special, incidental or consequential damages arising out of
+  the use or inability to use SAX (including but not limited to loss of
+  data or data being rendered inaccurate or losses sustained by you or
+  third parties or a failure of the SAX to operate with any other
+  programs), even if such holder or other party has been advised of the
+  possibility of such damages.
+
+  Copyright Disclaimers
+
+  This page includes statements to that effect by David Megginson, who
+  would have been able to claim copyright for the original work.
+
+  SAX 1.0
+
+  Version 1.0 of the Simple API for XML (SAX), created collectively by
+  the membership of the XML-DEV mailing list, is hereby released into
+  the public domain.
+
+  No one owns SAX: you may use it freely in both commercial and
+  non-commercial applications, bundle it with your software
+  distribution, include it on a CD-ROM, list the source code in a book,
+  mirror the documentation at your own web site, or use it in any other
+  way you see fit.
+
+  David Megginson, sax@megginson.com
+  1998-05-11
+
+  SAX 2.0
+
+  I hereby abandon any property rights to SAX 2.0 (the Simple API for
+  XML), and release all of the SAX 2.0 source code, compiled code, and
+  documentation contained in this distribution into the Public
+  Domain. SAX comes with NO WARRANTY or guarantee of fitness for any
+  purpose.
+
+  David Megginson, david@megginson.com
+  2000-05-05
+
+
+Two files in gnu/xml/aelfred2 (SAXDriver.java and XmlParser.java) were
+originally derived from code which carried the following notice:
+
+  Copyright (c) 1997, 1998 by Microstar Software Ltd.
+
+  AElfred is free for both commercial and non-commercial use and
+  redistribution, provided that Microstar's copyright and disclaimer are
+  retained intact.  You are free to modify AElfred for your own use and
+  to redistribute AElfred with your modifications, provided that the
+  modifications are clearly documented.
+
+  This program is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of
+  merchantability or fitness for a particular purpose.  Please use it AT
+  YOUR OWN RISK.
+
+
+The files in resource/gnu/java/locale were generated by gnu.localegen
+from the files distributed from date provided by CLDR.
+All these files are distributed under the following terms:
+
+  Copyright (C) 1991-2005 Unicode, Inc. All rights reserved. Distributed
+  under the Terms of Use in http://www.unicode.org/copyright.html.
+
+  Permission is hereby granted, free of charge, to any person obtaining
+  a copy of the Unicode data files and any associated documentation (the
+  "Data Files") or Unicode software and any associated documentation
+  (the "Software") to deal in the Data Files or Software without
+  restriction, including without limitation the rights to use, copy,
+  modify, merge, publish, distribute, and/or sell copies of the Data
+  Files or Software, and to permit persons to whom the Data Files or
+  Software are furnished to do so, provided that (a) the above copyright
+  notice(s) and this permission notice appear with all copies of the
+  Data Files or Software, (b) both the above copyright notice(s) and
+  this permission notice appear in associated documentation, and (c)
+  there is clear notice in each modified Data File or in the Software as
+  well as in the documentation associated with the Data File(s) or
+  Software that the data or software has been modified.
+
+  THE DATA FILES AND SOFTWARE ARE PROVIDED "AS IS", WITHOUT WARRANTY OF
+  ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+  WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+  NONINFRINGEMENT OF THIRD PARTY RIGHTS. IN NO EVENT SHALL THE COPYRIGHT
+  HOLDER OR HOLDERS INCLUDED IN THIS NOTICE BE LIABLE FOR ANY CLAIM, OR
+  ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
+  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+  OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THE DATA FILES OR
+  SOFTWARE.
+
+  Except as contained in this notice, the name of a copyright holder
+  shall not be used in advertising or otherwise to promote the sale, use
+  or other dealings in these Data Files or Software without prior
+  written authorization of the copyright holder.

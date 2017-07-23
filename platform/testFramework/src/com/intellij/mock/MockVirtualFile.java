@@ -154,7 +154,7 @@ public class MockVirtualFile extends VirtualFile {
   @Override
   @NotNull
   public byte[] contentsToByteArray() throws IOException {
-    return myText == null ? ArrayUtil.EMPTY_BYTE_ARRAY : myText.getBytes();
+    return myText == null ? ArrayUtil.EMPTY_BYTE_ARRAY : myText.getBytes(CharsetToolkit.UTF8_CHARSET);
   }
 
 
@@ -178,7 +178,7 @@ public class MockVirtualFile extends VirtualFile {
     throw new UnsupportedOperationException("Method getInputStream is not yet implemented in " + getClass().getName());
   }
 
-  private VirtualFileListener myListener = null;
+  private VirtualFileListener myListener;
   public void setListener(VirtualFileListener listener) {
     myListener = listener;
   }

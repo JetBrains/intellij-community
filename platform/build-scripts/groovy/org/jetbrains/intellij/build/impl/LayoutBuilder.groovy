@@ -27,8 +27,8 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 
 /**
- * This is replacement for {@link org.jetbrains.jps.gant.JpsGantTool} which doesn't depend on Gant. It also allows us to patch a module
- * output before packing it into JAR.
+ * Use this class to pack output of modules and libraries into JARs and lay out them by directories. It delegates the actual work to
+ * {@link jetbrains.antlayout.tasks.LayoutTask}.
  *
  * @author nik
  */
@@ -182,6 +182,15 @@ class LayoutBuilder {
       library.getFiles(JpsOrderRootType.COMPILED).each {
         ant.fileset(file: it.absolutePath)
       }
+    }
+
+    /**
+     * Include files and directories specified in {@code inner} into the current place in this layout
+     */
+    def include(@DelegatesTo(LayoutSpec) Closure inner) {
+      def body = inner.rehydrate(null, this, inner.thisObject)
+      body.resolveStrategy = Closure.OWNER_FIRST
+      body()
     }
 
     JpsModule findModule(String name) {

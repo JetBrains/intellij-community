@@ -22,9 +22,11 @@ import com.siyeh.ig.LightInspectionTestCase;
  * @author Bas Leijdekkers
  */
 public class CollectionsMustHaveInitialCapacityInspectionTest extends LightInspectionTestCase {
+  private CollectionsMustHaveInitialCapacityInspection myInspection = new CollectionsMustHaveInitialCapacityInspection();
+
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new CollectionsMustHaveInitialCapacityInspection();
+    return myInspection;
   }
 
   @Override
@@ -81,5 +83,27 @@ public class CollectionsMustHaveInitialCapacityInspectionTest extends LightInspe
            "    new ArrayList(3);" +
            "  }" +
            "}");
+  }
+
+  public void testFieldsReported() {
+    doTest("import java.util.*;" +
+           "class X {" +
+           "   HashMap m1 = new /*'new HashMap<String, String>()' without initial capacity*/HashMap<String, String>/**/();" +
+           "   HashMap m2 = new HashMap<String, String>(3);" +
+           "}");
+  }
+
+  public void testFieldsNotReported() {
+    myInspection.myIgnoreFields = true;
+    try {
+      doTest("import java.util.*;" +
+             "class X {" +
+             "   HashMap m1 = new HashMap<String, String>();" +
+             "   HashMap m2 = new HashMap<String, String>(3);" +
+             "}");
+    }
+    finally {
+      myInspection.myIgnoreFields = false;
+    }
   }
 }

@@ -34,15 +34,15 @@ import java.awt.*;
 public interface TextDrawingCallback {
 
   /**
-   * Asks to draw symbols from <code>[start; end)</code> range of given char array at given graphics buffer using given
+   * Asks to draw symbols from {@code [start; end)} range of given char array at given graphics buffer using given
    * font info and color.
    *
    * @param g         graphics buffer to use
    * @param data      target symbols holder
    * @param start     start offset within the symbols holder to use (inclusive)
    * @param end       end offset within the symbols holder to use (inclusive)
-   * @param x         <code>'x'</code> coordinate to use as a start position at the given graphics buffer
-   * @param y         <code>'y'</code> coordinate to use as a start position at the given graphics buffer
+   * @param x         {@code 'x'} coordinate to use as a start position at the given graphics buffer
+   * @param y         {@code 'y'} coordinate to use as a start position at the given graphics buffer
    * @param fontInfo  font info to use during drawing target text at the given graphics buffer
    * @param color     color to use during drawing target text at the given graphics buffer
    */

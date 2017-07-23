@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,16 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.ide.ui.UISettings;
+import com.intellij.testFramework.PlatformTestCase;
 import junit.framework.Assert;
-import junit.framework.TestCase;
 
 /**
  * Created in IntelliJ IDEA.
  * By: Alexander.Chernikov
  * When: 10.10.2006, 20:19:35
  */
-public class PresentationTest extends TestCase {
+public class PresentationTest extends PlatformTestCase {
 
   private final String[] inputTextsUnderscores = new String[]{"No mnemonic", "_First char",
     "S_econd char", "Pre-last and not unique ch_ar", "Last cha_r", "Too late_", "Do__uble", "Dou_&ble",
@@ -60,6 +61,24 @@ public class PresentationTest extends TestCase {
       Assert.assertEquals(fullMenuTexts[i], p.getTextWithMnemonic());
 
       Assert.assertTrue(menuTexts[i].length() > p.getDisplayedMnemonicIndex());
+    }
+  }
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    UISettings.getInstance().setDisableMnemonics(false);
+    UISettings.getInstance().setDisableMnemonicsInControls(false);
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    try {
+      UISettings defaults = new UISettings();
+      UISettings.getInstance().setDisableMnemonics(defaults.getDisableMnemonics());
+      UISettings.getInstance().setDisableMnemonicsInControls(defaults.getDisableMnemonicsInControls());
+    } finally {
+      super.tearDown();
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ public final class GroovyResolverProcessorBuilder {
   private boolean myIncomplete = false;
   private boolean myAllVariants = false;
   private GrExpression myUpToArgument = null;
+  private boolean myForceRValue = false;
 
   @NotNull
   public GroovyResolverProcessor build(GrReferenceExpression ref) {
@@ -38,7 +39,7 @@ public final class GroovyResolverProcessorBuilder {
       return new GroovyAllVariantsProcessor(ref, kinds, myUpToArgument);
     }
     else {
-      return new GroovyResolverProcessorImpl(ref, kinds);
+      return new GroovyResolverProcessorImpl(ref, kinds, myForceRValue);
     }
   }
 
@@ -61,6 +62,12 @@ public final class GroovyResolverProcessorBuilder {
   @NotNull
   public GroovyResolverProcessorBuilder setUpToArgument(GrExpression upToArgument) {
     myUpToArgument = upToArgument;
+    return this;
+  }
+
+  @NotNull
+  public GroovyResolverProcessorBuilder setForceRValue(boolean forceRValue) {
+    myForceRValue = forceRValue;
     return this;
   }
 

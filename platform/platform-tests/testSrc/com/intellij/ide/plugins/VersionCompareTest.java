@@ -19,13 +19,6 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.util.text.StringUtil;
 import junit.framework.TestCase;
 
-/**
- * Created by IntelliJ IDEA.
- * User: stathik
- * Date: Dec 13, 2003
- * Time: 8:19:03 PM
- * To change this template use Options | File Templates.
- */
 public class VersionCompareTest extends TestCase {
   private static int compareVersions(String v1, String v2) {
     return PluginDownloader.comparePluginVersions(v1, v2);

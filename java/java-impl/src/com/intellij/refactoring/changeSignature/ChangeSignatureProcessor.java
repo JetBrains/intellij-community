@@ -193,7 +193,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
             return;
           }
           final PsiType overriderType = overrider.getReturnType();
-          if (overriderType != null && type.isAssignableFrom(overriderType)) {
+          if (overriderType != null && !type.equals(overriderType) && type.isAssignableFrom(overriderType)) {
             covariantOverriderInfos.add(usageInfo);
           }
         }

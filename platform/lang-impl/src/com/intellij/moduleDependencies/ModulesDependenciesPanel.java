@@ -41,7 +41,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphAlgorithms;
@@ -187,7 +186,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
             for (Module dependency : getModuleDependencies(module)) {
               child.add(new DefaultMutableTreeNode(new MyUserObject(isInCycle(dependency), dependency)));
             }
-            TreeUtil.sort(child, NODE_COMPARATOR);
+            TreeUtil.sortRecursively(child, NODE_COMPARATOR);
           }
         }
       }
@@ -231,12 +230,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
 
     TreeUtil.installActions(tree);
 
-    new TreeSpeedSearch(tree, new Convertor<TreePath, String>() {
-      @Override
-      public String convert(TreePath o) {
-        return o.getLastPathComponent().toString();
-      }
-    }, true);
+    new TreeSpeedSearch(tree, o -> o.getLastPathComponent().toString(), true);
 
     DefaultActionGroup group = new DefaultActionGroup();
     CommonActionsManager commonActionManager = CommonActionsManager.getInstance();
@@ -318,7 +312,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
 
     group.add(new ContextHelpAction(HELP_ID));
 
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ModulesDependencies", group, true);
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(toolbar.getComponent(), BorderLayout.WEST);
     panel.add(myPathField, BorderLayout.CENTER);
@@ -342,7 +336,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
       }
     }, AnalysisScopeBundle.message("update.module.tree.progress.title"), true, myProject);
 
-    TreeUtil.sort(root, NODE_COMPARATOR);
+    TreeUtil.sortRecursively(root, NODE_COMPARATOR);
     ((DefaultTreeModel)myLeftTree.getModel()).reload();
     TreeUtil.selectFirstNode(myLeftTree);
   }

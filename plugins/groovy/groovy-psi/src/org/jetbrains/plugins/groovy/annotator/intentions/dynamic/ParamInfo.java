@@ -15,10 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 29.02.2008
- */
 public class ParamInfo {
   public String name = null;
   public String type = null;

@@ -68,7 +68,7 @@ public class PsiElementFinderImpl extends PsiElementFinder implements DumbAware 
   @Override
   @NotNull
   public PsiPackage[] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-    final Map<String, PsiPackage> packagesMap = new HashMap<String, PsiPackage>();
+    final Map<String, PsiPackage> packagesMap = new HashMap<>();
     final String qualifiedName = psiPackage.getQualifiedName();
     for (PsiDirectory dir : psiPackage.getDirectories(scope)) {
       PsiDirectory[] subDirs = dir.getSubdirectories();
@@ -101,7 +101,7 @@ public class PsiElementFinderImpl extends PsiElementFinder implements DumbAware 
     for (PsiDirectory dir : psiPackage.getDirectories(scope)) {
       PsiClass[] classes = JavaDirectoryService.getInstance().getClasses(dir);
       if (classes.length == 0) continue;
-      if (list == null) list = new ArrayList<PsiClass>();
+      if (list == null) list = new ArrayList<>();
       for (PsiClass aClass : classes) {
         // class file can be located in wrong place inside file system
         String qualifiedName = aClass.getQualifiedName();
@@ -142,13 +142,13 @@ public class PsiElementFinderImpl extends PsiElementFinder implements DumbAware 
             file instanceof PsiClassOwnerEx ? ((PsiClassOwnerEx)file).getClassNames() : getClassNames(((PsiClassOwner)file).getClasses());
 
           if (inFile.isEmpty()) continue;
-          if (names == null) names = new HashSet<String>();
+          if (names == null) names = new HashSet<>();
           names.addAll(inFile);
         }
       }
 
     }
-    return names == null ? Collections.<String>emptySet() : names;
+    return names == null ? Collections.emptySet() : names;
   }
 
   @Override

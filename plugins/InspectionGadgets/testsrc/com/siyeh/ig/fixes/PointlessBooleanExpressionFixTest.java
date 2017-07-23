@@ -26,10 +26,13 @@ public class PointlessBooleanExpressionFixTest extends IGQuickFixesTestCase {
     super.setUp();
     myFixture.enableInspections(new PointlessBooleanExpressionInspection());
     myRelativePath = "pointlessboolean";
-    myDefaultHint = InspectionGadgetsBundle.message("pointless.bitwise.expression.simplify.quickfix");
+    myDefaultHint = InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
   }
 
   public void testNegation() { doTest(); }
   public void testPolyadic() { doTest(); }
   public void testBoxed() { doTest(); }
+  public void testSideEffects() {
+    doTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix.sideEffect"));
+  }
 }

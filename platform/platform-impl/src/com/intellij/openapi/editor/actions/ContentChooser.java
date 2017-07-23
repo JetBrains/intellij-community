@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,11 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.ui.speedSearch.ListWithFilter;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,9 +46,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -56,7 +57,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
   private final boolean myUseIdeaEditor;
 
-  private final JBList     myList;
+  private final JBList<Item> myList;
   private final JBSplitter mySplitter;
   private final Project    myProject;
   private final boolean    myAllowMultipleSelections;
@@ -75,8 +76,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     myUpdateAlarm = new Alarm(getDisposable());
     mySplitter = new JBSplitter(true, 0.3f);
     mySplitter.setSplitterProportionKey(getDimensionServiceKey() + ".splitter");
-    myList = new JBList(new CollectionListModel<Item>());
-    myList.setExpandableItemsEnabled(false);
+    myList = new JBList<>(new CollectionListModel<Item>());
 
     setOKButtonText(CommonBundle.getOkButtonText());
     setTitle(title);
@@ -120,13 +120,14 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     }.installOn(myList);
 
 
-    myList.setCellRenderer(new MyListCellRenderer());
+    MyListCellRenderer renderer = new MyListCellRenderer();
+    myList.setCellRenderer(renderer);
     myList.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_DELETE) {
           int newSelectionIndex = -1;
-          for (Object o : myList.getSelectedValues()) {
+          for (Object o : myList.getSelectedValuesList()) {
             int i = ((Item)o).index;
             removeContentAt(myAllContents.get(i));
             if (newSelectionIndex < 0) {
@@ -146,7 +147,9 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
           doOKAction();
         }
         else {
-          final char aChar = e.getKeyChar();
+          SpeedSearchSupply supply = SpeedSearchSupply.getSupply(myList);
+          if (supply != null && supply.isPopupActive()) return;
+          char aChar = e.getKeyChar();
           if (aChar >= '0' && aChar <= '9') {
             int idx = aChar == '0' ? 9 : aChar - '1';
             if (idx < myAllContents.size()) {
@@ -159,8 +162,17 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       }
     });
 
-    mySplitter.setFirstComponent(ListWithFilter.wrap(myList, ScrollPaneFactory.createScrollPane(myList), o -> ((Item)o).longText));
+    mySplitter.setFirstComponent(ListWithFilter.wrap(
+      myList, ScrollPaneFactory.createScrollPane(myList), o -> o.getShortText(renderer.previewChars), true));
     mySplitter.setSecondComponent(new JPanel());
+    mySplitter.getFirstComponent().addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        FontMetrics metrics = myList.getFontMetrics(myList.getFont());
+        int charWidth = metrics.charWidth('m');
+        renderer.previewChars = myList.getParent().getParent().getWidth() / charWidth + 10;
+      }
+    });
     rebuildListContent();
 
     ScrollingUtil.installActions(myList);
@@ -169,6 +181,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     myList.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
+        if (myUpdateAlarm.isDisposed()) return;
         myUpdateAlarm.cancelAllRequests();
         myUpdateAlarm.addRequest(() -> updateViewerForSelection(), 100);
       }
@@ -209,8 +222,9 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       JComponent component = myViewer.getComponent();
       component.setPreferredSize(JBUI.size(300, 500));
       mySplitter.setSecondComponent(component);
-    } else {
-      final JTextArea textArea = new JTextArea(fullString);
+    }
+    else {
+      JTextArea textArea = new JTextArea(fullString);
       textArea.setRows(3);
       textArea.setWrapStyleWord(true);
       textArea.setLineWrap(true);
@@ -251,31 +265,9 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     int i = 0;
     List<Data> contents = new ArrayList<>(getContents());
     for (Data content : contents) {
-      String fullString = getStringRepresentationFor(content);
-      if (fullString != null) {
-        String shortString;
-        fullString = StringUtil.convertLineSeparators(fullString);
-        int newLineIdx = fullString.indexOf('\n');
-        if (newLineIdx == -1) {
-          shortString = fullString.trim(); 
-        }
-        else {
-          int lastLooked = 0;
-          do  {
-            int nextLineIdx = fullString.indexOf("\n", lastLooked);
-            if (nextLineIdx > lastLooked) {
-              shortString = fullString.substring(lastLooked, nextLineIdx).trim() + " ...";
-              break;
-            }
-            else if (nextLineIdx == -1) {
-              shortString = " ...";
-              break;
-            }
-            lastLooked = nextLineIdx + 1;
-          } while (true);
-        }
-        items.add(new Item(i ++, shortString, fullString));
-      }
+      String longText = getStringRepresentationFor(content);
+      if (StringUtil.isEmpty(longText)) continue;
+      items.add(new Item(i++, longText));
     }
     myAllContents = contents;
     FilteringListModel listModel = (FilteringListModel)myList.getModel();
@@ -288,8 +280,10 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     }
   }
 
-  protected abstract String getStringRepresentationFor(final Data content);
+  @Nullable
+  protected abstract String getStringRepresentationFor(Data content);
 
+  @NotNull
   protected abstract List<Data> getContents();
 
   public int getSelectedIndex() {
@@ -304,15 +298,11 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
   }
 
   @NotNull
-  public int[] getSelectedIndices() {
-    Object[] values = myList.getSelectedValues();
-    int[] result = new int[values.length];
-    for (int i = 0, length = values.length; i < length; i++) {
-      result[i] = ((Item)values[i]).index;
-    }
-    return result;
+  public List<Data> getSelectedContents() {
+    return JBIterable.from(myList.getSelectedValuesList()).map(o -> myAllContents.get(o.index)).toList();
   }
 
+  @NotNull
   public List<Data> getAllContents() {
     return myAllContents;
   }
@@ -321,7 +311,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
   public String getSelectedText() {
     StringBuilder sb = new StringBuilder();
     boolean first = true;
-    for (Object o : myList.getSelectedValues()) {
+    for (Object o : myList.getSelectedValuesList()) {
       if (first) first = false;
       else sb.append("\n");
       String s = ((Item)o).longText;
@@ -330,9 +320,12 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     return sb.toString();
   }
   
-  private class MyListCellRenderer extends ColoredListCellRenderer {
+  private class MyListCellRenderer extends ColoredListCellRenderer<Item> {
+
+    int previewChars = 80;
+
     @Override
-    protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
+    protected void customizeCellRenderer(@NotNull JList list, Item value, int index, boolean selected, boolean hasFocus) {
       setIcon(myListEntryIcon);
       if (myUseIdeaEditor) {
         int max = list.getModel().getSize();
@@ -341,32 +334,58 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
         char[] spaces = new char[count];
         Arrays.fill(spaces, ' ');
         String prefix = indexString + new String(spaces) + "  ";
-        append(prefix, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        append(prefix, SimpleTextAttributes.GRAYED_ATTRIBUTES, false);
       }
       else if (UIUtil.isUnderGTKLookAndFeel()) {
         // Fix GTK background
         Color background = selected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground();
         UIUtil.changeBackGround(this, background);
       }
-      String text = ((Item)value).shortText;
-
-      FontMetrics metrics = list.getFontMetrics(list.getFont());
-      int charWidth = metrics.charWidth('m');
-      int maxLength = list.getParent().getParent().getWidth() * 3 / charWidth / 2;
-      text = StringUtil.first(text, maxLength, true); // do not paint long strings
-      append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      String text = value.getShortText(previewChars);
+      append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES, true);
+      SpeedSearchUtil.applySpeedSearchHighlighting(list, this, true, selected);
     }
   }
   
   private static class Item {
     final int index;
-    final String shortText;
     final String longText;
+    String shortText = "";
+    boolean trimmed;
 
-    private Item(int index, String shortText, String longText) {
+    Item(int index, String longText) {
       this.index = index;
-      this.shortText = shortText;
       this.longText = longText;
     }
+
+    String getShortText(int maxChars) {
+      int len = shortText.length();
+      if (len > 0 && !trimmed) return shortText;
+      if (len >= maxChars && (len - maxChars) * 10 / len == 0) return shortText;
+      if (len > maxChars) {
+        shortText = StringUtil.first(shortText, maxChars, true);
+        trimmed = true;
+        return shortText;
+      }
+      boolean hasSlashR = StringUtil.indexOf(longText, '\r', 0, Math.min(longText.length(), maxChars * 2 + 1)) > 0;
+      if (!hasSlashR) {
+        String s = StringUtil.first(longText, maxChars, true);
+        trimmed = s != longText;
+        shortText = StringUtil.convertLineSeparators(s, "\u23ce");
+      }
+      else {
+        String s = StringUtil.first(longText, maxChars * 2 + 1, false);
+        String s2 = StringUtil.convertLineSeparators(s, "\u23ce");
+        shortText = StringUtil.first(s2, maxChars, true);
+        trimmed = s != longText || s2 != shortText;
+      }
+      return shortText;
+    }
+  }
+
+  @Nullable
+  @Override
+  protected String getHelpId() {
+    return "ixPasteSelected";
   }
 }

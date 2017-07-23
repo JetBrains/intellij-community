@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ import java.util.Set;
  * @author nik
  */
 public class JavadocGeneratorRunProfile implements ModuleRunProfile {
-  private static final Logger LOGGER = Logger.getInstance("#" + JavadocConfiguration.class.getName());
+  private static final Logger LOGGER = Logger.getInstance(JavadocConfiguration.class);
   private final Project myProject;
   private final AnalysisScope myGenerationScope;
   private final JavadocConfiguration myConfiguration;
@@ -89,11 +89,6 @@ public class JavadocGeneratorRunProfile implements ModuleRunProfile {
 
   public Icon getIcon() {
     return null;
-  }
-
-  @NotNull
-  public Module[] getModules() {
-    return Module.EMPTY_ARRAY;
   }
 
   private static class MyJavaCommandLineState extends CommandLineState {

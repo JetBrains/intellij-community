@@ -101,10 +101,15 @@ public class ShelvedBinaryFile implements JDOMExternalizable {
       };
     }
     if (AFTER_PATH != null) {
-      final FilePath file = VcsUtil.getFilePath(new File(baseDir, AFTER_PATH), false);
-      after = new ShelvedBinaryContentRevision(file, SHELVED_PATH);
+      after = createBinaryContentRevision(project);
     }
     return new Change(before, after);
+  }
+
+  @NotNull
+  ShelvedBinaryContentRevision createBinaryContentRevision(@NotNull Project project) {
+    final FilePath file = VcsUtil.getFilePath(new File(project.getBaseDir().getPath(), AFTER_PATH), false);
+   return new ShelvedBinaryContentRevision(file, SHELVED_PATH);
   }
 
   @Override

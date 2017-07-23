@@ -17,8 +17,6 @@ package com.intellij.refactoring.removemiddleman;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ScrollingModel;
@@ -55,7 +53,7 @@ public class RemoveMiddlemanHandler implements RefactoringActionHandler {
     final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     if (!(element instanceof PsiField)) {
       CommonRefactoringUtil.showErrorHint(project, editor, RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message(
-          "the.caret.should.be.positioned.at.the.name.of.the.field.to.be.refactored"), null, getHelpID());
+          "the.caret.should.be.positioned.at.the.name.of.the.field.to.be.refactored"), REFACTORING_NAME, getHelpID());
       return;
     }
     invoke((PsiField)element, editor);
@@ -77,7 +75,7 @@ public class RemoveMiddlemanHandler implements RefactoringActionHandler {
     if (delegating.isEmpty()) {
       final String message =
         RefactorJBundle.message("cannot.perform.the.refactoring") + RefactorJBundle.message("field.selected.is.not.used.as.a.delegate");
-      CommonRefactoringUtil.showErrorHint(project, editor, message, null, getHelpID());
+      CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, getHelpID());
       return;
     }
 

@@ -15,8 +15,5 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 
-/**
- * Created by Max Medvedev on 09/04/14
- */
 public interface GrTraitTypeDefinition extends GrTypeDefinition {
 }

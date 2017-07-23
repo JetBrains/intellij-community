@@ -61,6 +61,7 @@ public class UncheckedWarningLocalInspectionBase extends BaseJavaBatchLocalInspe
     return uncheckedCb;
   }
 
+  @NotNull
   private static LocalQuickFix[] getChangeVariableTypeFixes(@NotNull PsiVariable parameter, @Nullable PsiType itemType, LocalQuickFix[] generifyFixes) {
     if (itemType instanceof PsiMethodReferenceType) return generifyFixes;
     LOG.assertTrue(parameter.isValid());
@@ -148,8 +149,9 @@ public class UncheckedWarningLocalInspectionBase extends BaseJavaBatchLocalInspe
     };
   }
 
+  @NotNull
   protected LocalQuickFix[] createFixes() {
-    return null;
+    return LocalQuickFix.EMPTY_ARRAY;
   }
 
   private static String isMethodCalledOnRawType(PsiElement expression) {
@@ -401,24 +403,38 @@ public class UncheckedWarningLocalInspectionBase extends BaseJavaBatchLocalInspe
     public void visitReturnStatement(PsiReturnStatement statement) {
       super.visitReturnStatement(statement);
       if (IGNORE_UNCHECKED_ASSIGNMENT) return;
-      final PsiElement psiElement = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class);
-      if (psiElement instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)psiElement;
-        final PsiType returnType = method.getReturnType();
-        if (returnType != null && !PsiType.VOID.equals(returnType)) {
-          final PsiExpression returnValue = statement.getReturnValue();
-          if (returnValue != null) {
-            final PsiType valueType = returnValue.getType();
-            if (valueType != null) {
-              checkRawToGenericsAssignment(returnValue, returnValue, returnType, valueType,
-                                           false,
-                                           new LocalQuickFix[]{QuickFixFactory.getInstance().createMethodReturnFix(method, valueType, true)});
-            }
+      final PsiType returnType = PsiTypesUtil.getMethodReturnType(statement);
+      if (returnType != null && !PsiType.VOID.equals(returnType)) {
+        final PsiExpression returnValue = statement.getReturnValue();
+        if (returnValue != null) {
+          final PsiType valueType = returnValue.getType();
+          if (valueType != null) {
+            final PsiElement psiElement = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class);
+            LocalQuickFix[] fixes = psiElement instanceof PsiMethod
+                                    ? new LocalQuickFix[]{QuickFixFactory.getInstance().createMethodReturnFix((PsiMethod)psiElement, valueType, true)}
+                                    : LocalQuickFix.EMPTY_ARRAY;
+            checkRawToGenericsAssignment(returnValue, returnValue, returnType, valueType, false, fixes);
           }
         }
       }
     }
 
+    @Override
+    public void visitLambdaExpression(PsiLambdaExpression expression) {
+      super.visitLambdaExpression(expression);
+
+      if (IGNORE_UNCHECKED_ASSIGNMENT) return;
+      PsiElement body = expression.getBody();
+      if (body instanceof PsiExpression) {
+        PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(expression);
+        if (interfaceReturnType != null && !PsiType.VOID.equals(interfaceReturnType)) {
+          PsiType type = ((PsiExpression)body).getType();
+          if (type != null) {
+            checkRawToGenericsAssignment(body, (PsiExpression)body, interfaceReturnType, type, false, LocalQuickFix.EMPTY_ARRAY);
+          }
+        }
+      }
+    }
 
     @Nullable
     private String getUncheckedCallDescription(PsiElement place, JavaResolveResult resolveResult) {
@@ -458,14 +474,18 @@ public class UncheckedWarningLocalInspectionBase extends BaseJavaBatchLocalInspe
 
           @Override
           public Boolean visitClassType(PsiClassType classType) {
-            PsiClass psiClass = classType.resolve();
+            PsiClassType.ClassResolveResult result = classType.resolveGenerics();
+            PsiClass psiClass = result.getElement();
             if (psiClass instanceof PsiTypeParameter) {
               if (((PsiTypeParameter)psiClass).getOwner() == method) return Boolean.FALSE;
               return substitutor.substitute((PsiTypeParameter)psiClass) == null ? Boolean.TRUE : Boolean.FALSE;
             }
-            PsiType[] parameters = classType.getParameters();
-            for (PsiType parameter : parameters) {
-              if (parameter.accept(this).booleanValue()) return Boolean.TRUE;
+            if (psiClass != null) {
+              PsiSubstitutor typeSubstitutor = result.getSubstitutor();
+              for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(psiClass)) {
+                PsiType psiType = typeSubstitutor.substitute(parameter);
+                if (psiType != null && psiType.accept(this).booleanValue()) return Boolean.TRUE;
+              }
             }
             return Boolean.FALSE;
           }

@@ -56,6 +56,11 @@ public class Disposer {
     }
   };
 
+  private static final String debugDisposer = System.getProperty("idea.disposer.debug");
+  public static boolean isDebugDisposerOn() {
+    return "on".equals(debugDisposer);
+  }
+
   private static boolean ourDebugMode;
 
   private Disposer() {
@@ -63,11 +68,13 @@ public class Disposer {
 
   @NotNull
   public static Disposable newDisposable() {
+    // must not be lambda because we care about identity in ObjectTree.myObject2NodeMap
     return newDisposable(null);
   }
 
   @NotNull
   public static Disposable newDisposable(@Nullable final String debugName) {
+    // must not be lambda because we care about identity in ObjectTree.myObject2NodeMap
     return new Disposable() {
       @Override
       public void dispose() {
@@ -87,12 +94,11 @@ public class Disposer {
   }
 
   public static void register(@NotNull Disposable parent, @NotNull Disposable child, @NonNls @Nullable final String key) {
-    assert parent != child : " Cannot register to itself";
-
     ourTree.register(parent, child);
 
     if (key != null) {
-      assert get(key) == null;
+      Disposable v = get(key);
+      if (v != null) throw new IllegalArgumentException("Key "+key+" already registered: "+v);
       ourKeyDisposables.put(key, child);
       register(child, new Disposable() {
         @Override
@@ -116,11 +122,11 @@ public class Disposer {
   }
 
   public static void dispose(@NotNull Disposable disposable, boolean processUnregistered) {
-    ourTree.executeAll(disposable, true, ourDisposeAction, processUnregistered);
+    ourTree.executeAll(disposable, ourDisposeAction, processUnregistered);
   }
 
   public static void disposeChildAndReplace(@NotNull Disposable toDispose, @NotNull Disposable toReplace) {
-    ourTree.executeChildAndReplace(toDispose, toReplace, true, ourDisposeAction);
+    ourTree.executeChildAndReplace(toDispose, toReplace, ourDisposeAction);
   }
 
   @NotNull
@@ -145,7 +151,10 @@ public class Disposer {
   /**
    * @return old value
    */
-  public static boolean setDebugMode(final boolean debugMode) {
+  public static boolean setDebugMode(boolean debugMode) {
+    if (debugMode) {
+      debugMode = !"off".equals(debugDisposer);
+    }
     boolean oldValue = ourDebugMode;
     ourDebugMode = debugMode;
     return oldValue;

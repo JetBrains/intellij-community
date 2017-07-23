@@ -22,8 +22,6 @@ import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Collection;
 
 public class SvnUpdatePanel extends AbstractSvnUpdatePanel {
@@ -51,27 +49,13 @@ public class SvnUpdatePanel extends AbstractSvnUpdatePanel {
     myDepthLabel.setVisible(descend);
     myDepthLabel.setLabelFor(myDepthCombo);
 
-    final SvnConfiguration svnConfiguration = SvnConfiguration.getInstance(myVCS.getProject());
+    SvnConfiguration svnConfiguration = myVCS.getSvnConfiguration();
     myLockOnDemand.setSelected(svnConfiguration.isUpdateLockOnDemand());
-    myLockOnDemand.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        svnConfiguration.setUpdateLockOnDemand(myLockOnDemand.isSelected());
-      }
-    });
+    myLockOnDemand.addActionListener(e -> svnConfiguration.setUpdateLockOnDemand(myLockOnDemand.isSelected()));
     myForceBox.setSelected(svnConfiguration.isForceUpdate());
     myIgnoreExternalsCheckBox.setSelected(svnConfiguration.isIgnoreExternals());
-    myForceBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        svnConfiguration.setForceUpdate(myForceBox.isSelected());
-      }
-    });
-    myIgnoreExternalsCheckBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        svnConfiguration.setIgnoreExternals(myIgnoreExternalsCheckBox.isSelected());
-      }
-    });
+    myForceBox.addActionListener(e -> svnConfiguration.setForceUpdate(myForceBox.isSelected()));
+    myIgnoreExternalsCheckBox.addActionListener(e -> svnConfiguration.setIgnoreExternals(myIgnoreExternalsCheckBox.isSelected()));
   }
 
   protected JPanel getRootsPanel() {

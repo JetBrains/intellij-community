@@ -43,14 +43,14 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
     DISCONNECTED, CONNECTING, CONNECTED, DISCONNECTING
   }
 
-  private final AtomicReference<State> myState = new AtomicReference<State>(State.DISCONNECTED);
+  private final AtomicReference<State> myState = new AtomicReference<>(State.DISCONNECTED);
   protected final ChannelInitializer myChannelInitializer;
   protected final EventLoopGroup myEventLoopGroup;
   protected volatile ChannelFuture myConnectFuture;
   private final ProtobufClientMessageHandler<T> myMessageHandler;
 
   public SimpleProtobufClient(final MessageLite msgDefaultInstance, final Executor asyncExec, final UUIDGetter uuidGetter) {
-    myMessageHandler = new ProtobufClientMessageHandler<T>(uuidGetter, this, asyncExec);
+    myMessageHandler = new ProtobufClientMessageHandler<>(uuidGetter, this, asyncExec);
     myEventLoopGroup = new NioEventLoopGroup(1, asyncExec);
     myChannelInitializer = new ChannelInitializer() {
       @Override
@@ -138,7 +138,7 @@ public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
   }
 
   public final RequestFuture<T> sendMessage(final UUID messageId, MessageLite message, @Nullable final T responseHandler, @Nullable final RequestFuture.CancelAction<T> cancelAction) {
-    final RequestFuture<T> requestFuture = new RequestFuture<T>(responseHandler, messageId, cancelAction);
+    final RequestFuture<T> requestFuture = new RequestFuture<>(responseHandler, messageId, cancelAction);
     myMessageHandler.registerFuture(messageId, requestFuture);
     final ChannelFuture connectFuture = myConnectFuture;
     final Channel channel = connectFuture != null? connectFuture.channel() : null;

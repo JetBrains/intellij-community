@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,14 @@ package com.jetbrains.python.console;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.util.DocumentUtil;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import org.jetbrains.annotations.NotNull;
 
-public class PyConsoleStartFolding extends DocumentAdapter implements ConsoleCommunicationListener, FoldingListener {
+public class PyConsoleStartFolding implements ConsoleCommunicationListener, FoldingListener, DocumentListener {
   private PythonConsoleView myConsoleView;
   private int myNumberOfCommandExecuted = 0;
   private int myNumberOfCommandToStop = 1;

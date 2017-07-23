@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 public class PropertiesStructureViewBuilderFactory implements PsiStructureViewFactory {
   @Override
   @NotNull
-  public StructureViewBuilder getStructureViewBuilder(final PsiFile psiFile) {
+  public StructureViewBuilder getStructureViewBuilder(@NotNull final PsiFile psiFile) {
     return new StructureViewBuilder() {
       @Override
       @NotNull

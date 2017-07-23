@@ -113,7 +113,7 @@ public class GradleBuildClasspathManager {
   public List<VirtualFile> getModuleClasspathEntries(@NotNull String externalModulePath) {
     checkRootsValidity(myClasspathMap.get().get(externalModulePath));
     List<VirtualFile> virtualFiles = myClasspathMap.get().get(externalModulePath);
-    return virtualFiles == null ? Collections.<VirtualFile>emptyList() : virtualFiles;
+    return virtualFiles == null ? Collections.emptyList() : virtualFiles;
   }
 
   private void checkRootsValidity(@Nullable List<VirtualFile> virtualFiles) {

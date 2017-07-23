@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * An extension controlling aspects of Live Template insertion, like reformatting, adding imports, etc. {@link #getOptionName()} allows
  * to show a checkbox to enable/disable specific such aspect in Live Template settings, {@link #processText} does the actual
- * modifications during live template expansion.
+ * modifications during live template expansion.<p/>
+ *
+ * During indexing, {@link #processText} is executed only for instances implementing {@link com.intellij.openapi.project.DumbAware}.
  * @author yole
  */
 public interface TemplateOptionalProcessor {
@@ -56,7 +58,8 @@ public interface TemplateOptionalProcessor {
    * Change whether this processor is enabled for a given template. It's invoked, for example, when a user changes the value of
    * the corresponding checkbox in Live template settings.
    */
-  void setEnabled(Template template, boolean value);
+  default void setEnabled(Template template, boolean value) {
+  }
 
   /**
    * @return whether a checkbox for this template should be shown in the configuration dialog, with the given template context.

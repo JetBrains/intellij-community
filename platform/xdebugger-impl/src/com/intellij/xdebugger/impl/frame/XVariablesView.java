@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import gnu.trove.THashMap;
+import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +52,6 @@ import java.util.TreeSet;
  */
 public class XVariablesView extends XVariablesViewBase implements DataProvider {
   public static final Key<InlineVariablesInfo> DEBUG_VARIABLES = Key.create("debug.variables");
-  public static final Key<ObjectLongHashMap<VirtualFile>> DEBUG_VARIABLES_TIMESTAMPS = Key.create("debug.variables.timestamps");
   private final JPanel myComponent;
 
   public XVariablesView(@NotNull XDebugSessionImpl session) {
@@ -72,18 +72,13 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
       getTree().markNodesObsolete();
     }
 
+    if (event == SessionEvent.BEFORE_RESUME) {
+      return;
+    }
+
     XStackFrame stackFrame = session.getCurrentStackFrame();
     DebuggerUIUtil.invokeLater(() -> {
-      XDebuggerTree tree = getTree();
-
-      if (event == SessionEvent.BEFORE_RESUME || event == SessionEvent.SETTINGS_CHANGED) {
-        saveCurrentTreeState(stackFrame);
-        if (event == SessionEvent.BEFORE_RESUME) {
-          return;
-        }
-      }
-
-      tree.markNodesObsolete();
+      getTree().markNodesObsolete();
       if (stackFrame != null) {
         cancelClear();
         buildTreeAndRestoreState(stackFrame);
@@ -102,7 +97,6 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
 
   private static void clearInlineData(XDebuggerTree tree) {
     tree.getProject().putUserData(DEBUG_VARIABLES, null);
-    tree.getProject().putUserData(DEBUG_VARIABLES_TIMESTAMPS, null);
     tree.updateEditor();
     clearInlays(tree);
   }
@@ -141,23 +135,24 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
   }
 
   public static class InlineVariablesInfo {
-    private final Map<Pair<VirtualFile, Integer>, Set<Entry>> myData
-      = new THashMap<>();
+    private final Map<Pair<VirtualFile, Integer>, Set<Entry>> myData = new THashMap<>();
+    private final TObjectLongHashMap<VirtualFile> myTimestamps = new ObjectLongHashMap<>();
 
     @Nullable
-    public List<XValueNodeImpl> get(@NotNull VirtualFile file, int line) {
-      synchronized (myData) {
-        Set<Entry> entries = myData.get(Pair.create(file, line));
-        if (entries == null) return null;
-        return ContainerUtil.map(entries, entry -> entry.myNode);
+    public synchronized List<XValueNodeImpl> get(@NotNull VirtualFile file, int line, long currentTimestamp) {
+      long timestamp = myTimestamps.get(file);
+      if (timestamp == -1 || timestamp < currentTimestamp) {
+        return null;
       }
+      Set<Entry> entries = myData.get(Pair.create(file, line));
+      if (entries == null) return null;
+      return ContainerUtil.map(entries, entry -> entry.myNode);
     }
 
-    public void put(@NotNull VirtualFile file, @NotNull XSourcePosition position, @NotNull XValueNodeImpl node) {
-      synchronized (myData) {
-        Pair<VirtualFile, Integer> key = Pair.create(file, position.getLine());
-        myData.computeIfAbsent(key, k -> new TreeSet<>()).add(new Entry(position.getOffset(), node));
-      }
+    public synchronized void put(@NotNull VirtualFile file, @NotNull XSourcePosition position, @NotNull XValueNodeImpl node, long timestamp) {
+      myTimestamps.put(file, timestamp);
+      Pair<VirtualFile, Integer> key = Pair.create(file, position.getLine());
+      myData.computeIfAbsent(key, k -> new TreeSet<>()).add(new Entry(position.getOffset(), node));
     }
 
     private static class Entry implements Comparable<Entry> {

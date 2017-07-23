@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ import com.intellij.psi.impl.file.PsiDirectoryImpl;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -183,12 +182,6 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
         return result;
       }
       return children;
-    }
-
-    @Nullable
-    @Override
-    public Object getData(Collection<AbstractTreeNode> selected, String dataName) {
-      return null;
     }
   }
 }

@@ -119,21 +119,21 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
 
   private class MyJdkTableListener implements ProjectJdkTable.Listener {
     @Override
-    public void jdkRemoved(Sdk jdk) {
+    public void jdkRemoved(@NotNull Sdk jdk) {
       if (jdk.equals(getJdk())) {
         updateFromRootProviderAndSubscribe();
       }
     }
 
     @Override
-    public void jdkAdded(Sdk jdk) {
+    public void jdkAdded(@NotNull Sdk jdk) {
       if (isAffectedByJdk(jdk)) {
         updateFromRootProviderAndSubscribe();
       }
     }
 
     @Override
-    public void jdkNameChanged(Sdk jdk, String previousName) {
+    public void jdkNameChanged(@NotNull Sdk jdk, @NotNull String previousName) {
       if (isAffectedByJdk(jdk)) {
         // if current name matches my name
         updateFromRootProviderAndSubscribe();

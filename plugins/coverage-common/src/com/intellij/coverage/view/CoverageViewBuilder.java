@@ -20,10 +20,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 1/2/12
- */
 public class CoverageViewBuilder extends AbstractListBuilder {
   private final JBTable myTable;
   private final FileStatusListener myFileStatusListener;

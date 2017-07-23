@@ -33,8 +33,7 @@ import org.jetbrains.annotations.NotNull;
 public class LibraryDependentToolWindowManager extends AbstractProjectComponent {
   private final ToolWindowManagerEx myToolWindowManager;
 
-  protected LibraryDependentToolWindowManager(Project project,
-                                              ToolWindowManagerEx toolWindowManager) {
+  protected LibraryDependentToolWindowManager(Project project, ToolWindowManagerEx toolWindowManager) {
     super(project);
     myToolWindowManager = toolWindowManager;
   }
@@ -42,6 +41,7 @@ public class LibraryDependentToolWindowManager extends AbstractProjectComponent 
   @Override
   public void projectOpened() {
     final ModuleRootListener rootListener = new ModuleRootListener() {
+      @Override
       public void rootsChanged(ModuleRootEvent event) {
         if (!myProject.isDisposed()) {
           checkToolWindowStatuses(myProject);
@@ -62,6 +62,7 @@ public class LibraryDependentToolWindowManager extends AbstractProjectComponent 
     assert !project.isDisposed();
 
     DumbService.getInstance(project).smartInvokeLater(new Runnable() {
+      @Override
       public void run() {
         for (LibraryDependentToolWindow libraryToolWindow : Extensions.getExtensions(LibraryDependentToolWindow.EXTENSION_POINT_NAME)) {
           boolean exists;

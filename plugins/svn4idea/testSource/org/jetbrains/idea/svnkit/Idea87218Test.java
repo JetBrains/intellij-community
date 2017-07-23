@@ -21,12 +21,6 @@ import org.tmatesoft.svn.core.wc.*;
 
 import java.io.File;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/7/12
- * Time: 11:47 AM
- */
 public class Idea87218Test {
   private final static String ourWcPath = "C:\\TestProjects\\sortedProjects\\Subversion\\Sasha\\moveTest";
 

@@ -286,4 +286,8 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   public void testAwaitExpression() {
     doTest("bar", LanguageLevel.PYTHON35);
   }
+
+  public void testCommentsPrecedingSourceStatement() {
+    doTest("func");
+  }
 }

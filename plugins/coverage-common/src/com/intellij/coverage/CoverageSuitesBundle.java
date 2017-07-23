@@ -16,21 +16,19 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.reference.SoftReference;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
 
-/**
- * User: anna
- * Date: 12/14/10
- */
 public class CoverageSuitesBundle {
-  private CoverageSuite[] mySuites;
+  private final CoverageSuite[] mySuites;
   private CoverageEngine myEngine;
 
   private Set<Module> myProcessedModules;
@@ -38,7 +36,7 @@ public class CoverageSuitesBundle {
   private CachedValue<GlobalSearchScope> myCachedValue;
 
   private SoftReference<ProjectData> myData = new SoftReference<>(null);
-  private static final Logger LOG = Logger.getInstance("#" + CoverageSuitesBundle.class.getName());
+  private static final Logger LOG = Logger.getInstance(CoverageSuitesBundle.class);
 
   public CoverageSuitesBundle(CoverageSuite suite) {
     this(new CoverageSuite[]{suite});
@@ -133,6 +131,7 @@ public class CoverageSuitesBundle {
     return myEngine.getCoverageAnnotator(project);
   }
 
+  @NotNull
   public CoverageSuite[] getSuites() {
     return mySuites;
   }
@@ -187,13 +186,16 @@ public class CoverageSuitesBundle {
   }
 
   private GlobalSearchScope getSearchScopeInner(Project project) {
-    final RunConfigurationBase configuration = getRunConfiguration();
-    if (configuration instanceof ModuleBasedConfiguration) {
-      final Module module = ((ModuleBasedConfiguration)configuration).getConfigurationModule().getModule();
-      if (module != null) {
-        return GlobalSearchScope.moduleRuntimeScope(module, isTrackTestFolders());
-      }
+    Module[] modules = Arrays.stream(mySuites).filter(suite -> suite instanceof BaseCoverageSuite)
+      .map(suite -> ((BaseCoverageSuite)suite).getConfiguration())
+      .filter(configuration -> configuration instanceof ModuleBasedConfiguration)
+      .map(configuration -> ((ModuleBasedConfiguration)configuration).getConfigurationModule().getModule())
+      .toArray(Module[]::new);
+
+    if (modules.length == 0 || ArrayUtil.find(modules, null) > -1) {
+      return isTrackTestFolders() ? GlobalSearchScope.projectScope(project) : GlobalSearchScopesCore.projectProductionScope(project);
     }
-    return isTrackTestFolders() ? GlobalSearchScope.projectScope(project) : GlobalSearchScopesCore.projectProductionScope(project);
+
+    return GlobalSearchScope.union(Arrays.stream(modules).map(module -> GlobalSearchScope.moduleRuntimeScope(module, isTrackTestFolders())).toArray(GlobalSearchScope[]::new));
   }
 }

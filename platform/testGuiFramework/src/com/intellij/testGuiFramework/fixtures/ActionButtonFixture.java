@@ -26,12 +26,14 @@ import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.exception.ComponentLookupException;
 import org.fest.swing.timing.Condition;
 import org.fest.swing.timing.Pause;
+import org.fest.swing.timing.Timeout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Collection;
 
+import static com.intellij.testGuiFramework.framework.GuiTestUtil.SHORT_TIMEOUT;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static org.fest.swing.edt.GuiActionRunner.execute;
 
@@ -40,7 +42,7 @@ public class ActionButtonFixture extends JComponentFixture<ActionButtonFixture, 
   @NotNull
   public static ActionButtonFixture findByActionId(@NotNull final String actionId,
                                                    @NotNull final Robot robot,
-                                                   @NotNull final Container container) {
+                                                   @NotNull final Container container, Timeout timeout) {
     final Ref<ActionButton> actionButtonRef = new Ref<ActionButton>();
     Pause.pause(new Condition("Find ActionButton with ID '" + actionId + "'") {
       @Override
@@ -64,13 +66,55 @@ public class ActionButtonFixture extends JComponentFixture<ActionButtonFixture, 
         }
         return false;
       }
-    }, GuiTestUtil.SHORT_TIMEOUT);
+    }, timeout);
 
     ActionButton button = actionButtonRef.get();
     if (button == null) {
       throw new ComponentLookupException("Failed to find ActionButton with ID '" + actionId + "'");
     }
     return new ActionButtonFixture(robot, button);
+  }
+
+  @NotNull
+  public static ActionButtonFixture findByActionClassName(@NotNull final String actionClassName,
+                                                   @NotNull final Robot robot,
+                                                   @NotNull final Container container, Timeout timeout) {
+    final Ref<ActionButton> actionButtonRef = new Ref<ActionButton>();
+    Pause.pause(new Condition("Find ActionButton by action class name: '" + actionClassName + "'") {
+      @Override
+      public boolean test() {
+        Collection<ActionButton> found = robot.finder().findAll(container, new GenericTypeMatcher<ActionButton>(ActionButton.class) {
+          @Override
+          protected boolean isMatching(@NotNull ActionButton button) {
+            if (button.isVisible()) {
+              AnAction action = button.getAction();
+              if (action != null) {
+                return action.getClass().getSimpleName().equals(actionClassName);
+              }
+            }
+            return false;
+          }
+        });
+        if (found.size() == 1) {
+          actionButtonRef.set(getFirstItem(found));
+          return true;
+        }
+        return false;
+      }
+    }, timeout);
+
+    ActionButton button = actionButtonRef.get();
+    if (button == null) {
+      throw new ComponentLookupException("Failed to find ActionButton with action class name: '" + actionClassName + "'");
+    }
+    return new ActionButtonFixture(robot, button);
+  }
+
+  @NotNull
+  public static ActionButtonFixture findByActionId(@NotNull final String actionId,
+                                                   @NotNull final Robot robot,
+                                                   @NotNull final Container container) {
+    return findByActionId(actionId, robot, container, SHORT_TIMEOUT);
   }
 
   @NotNull
@@ -97,14 +141,21 @@ public class ActionButtonFixture extends JComponentFixture<ActionButtonFixture, 
 
   @NotNull
   public static ActionButtonFixture findByText(@NotNull final String text, @NotNull Robot robot, @NotNull Container container) {
-    final ActionButton button = robot.finder().find(container, new GenericTypeMatcher<ActionButton>(ActionButton.class) {
+    return findByText(text, robot, container, SHORT_TIMEOUT);
+  }
+
+  @NotNull
+  public static ActionButtonFixture findByText(@NotNull final String text, @NotNull Robot robot, @NotNull Container container, @NotNull Timeout timeout) {
+
+    ActionButton button = GuiTestUtil.waitUntilFound(robot, container, new GenericTypeMatcher<ActionButton>(ActionButton.class) {
       @Override
       protected boolean isMatching(@NotNull ActionButton button) {
         AnAction action = button.getAction();
         return text.equals(action.getTemplatePresentation().getText());
       }
-    });
+    }, timeout);
     return new ActionButtonFixture(robot, button);
+
   }
 
   private ActionButtonFixture(@NotNull Robot robot, @NotNull ActionButton target) {

@@ -32,12 +32,8 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 3/12/13
- */
 public abstract class AbstractJavaFxPackager {
-  private static final Logger LOG = Logger.getInstance("#" + AbstractJavaFxPackager.class.getName());
+  private static final Logger LOG = Logger.getInstance(AbstractJavaFxPackager.class);
   private static final String JB_JFX_JKS = "jb-jfx.jks";
   private static final String NATIVE_BUNDLES = "bundles";
 
@@ -175,7 +171,7 @@ public abstract class AbstractJavaFxPackager {
   }
 
   private void sign(String binPath, boolean selfSigning, final String jar2Sign) {
-    final List<String> signCommandLine = new ArrayList<String>();
+    final List<String> signCommandLine = new ArrayList<>();
     addParameter(signCommandLine, FileUtil.toSystemDependentName(binPath + File.separator + "jarsigner"));
 
     collectStoreParams(selfSigning, signCommandLine);
@@ -196,7 +192,7 @@ public abstract class AbstractJavaFxPackager {
       FileUtil.delete(keyStoreFile);
     }
 
-    final List<String> genCommandLine = new ArrayList<String>();
+    final List<String> genCommandLine = new ArrayList<>();
     addParameter(genCommandLine, FileUtil.toSystemDependentName(binPath + File.separator + "keytool"));
 
     addParameter(genCommandLine, "-genkeypair");
@@ -276,7 +272,7 @@ public abstract class AbstractJavaFxPackager {
       registerJavaFxPackagerError("Bundled ant not found.");
       return -1;
     }
-    final ArrayList<String> commands = new ArrayList<String>();
+    final ArrayList<String> commands = new ArrayList<>();
     commands.add(javaHome + File.separator + "bin" + File.separator + "java");
 
     commands.add("-Dant.home=" + antHome);

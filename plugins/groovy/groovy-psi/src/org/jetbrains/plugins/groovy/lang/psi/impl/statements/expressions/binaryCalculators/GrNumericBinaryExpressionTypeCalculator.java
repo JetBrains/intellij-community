@@ -20,39 +20,35 @@ import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-/**
- * Created by Max Medvedev on 12/20/13
- */
-public class GrNumericBinaryExpressionTypeCalculator implements NullableFunction<GrBinaryFacade, PsiType> {
+public class GrNumericBinaryExpressionTypeCalculator implements NullableFunction<GrOperatorExpression, PsiType> {
   public static final GrNumericBinaryExpressionTypeCalculator INSTANCE = new GrNumericBinaryExpressionTypeCalculator();
 
   @Nullable
   @Override
-  public PsiType fun(GrBinaryFacade e) {
+  public PsiType fun(GrOperatorExpression e) {
 
     final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(e.multiResolve(false));
     if (resolveResult.isApplicable() && !PsiUtil.isDGMMethod(resolveResult.getElement())) {
-      return ResolveUtil.extractReturnTypeFromCandidate(resolveResult, e.getPsiElement(), new PsiType[]{GrBinaryExpressionUtil.getRightType(e)});
+      return ResolveUtil.extractReturnTypeFromCandidate(resolveResult, e, new PsiType[]{e.getRightType()});
     }
 
-    PsiType lType = GrBinaryExpressionUtil.getLeftType(e);
-    PsiType rType = GrBinaryExpressionUtil.getRightType(e);
+    PsiType lType = e.getLeftType();
+    PsiType rType = e.getRightType();
     if (TypesUtil.isNumericType(lType) && TypesUtil.isNumericType(rType)) {
-      assert lType != null;
-      assert rType != null;
       return inferNumericType(lType, rType, e);
     }
 
-    return ResolveUtil.extractReturnTypeFromCandidate(resolveResult, e.getPsiElement(), new PsiType[]{rType});
+    return ResolveUtil.extractReturnTypeFromCandidate(resolveResult, e, new PsiType[]{rType});
   }
 
   @Nullable
-  protected PsiType inferNumericType(@NotNull PsiType ltype, @NotNull PsiType rtype, GrBinaryFacade e) {
+  protected PsiType inferNumericType(@NotNull PsiType ltype, @NotNull PsiType rtype, GrOperatorExpression e) {
     return GrBinaryExpressionUtil.getDefaultNumericResultType(ltype, rtype, e);
   }
 }

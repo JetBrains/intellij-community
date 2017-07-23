@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,17 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
-public class DfaValue {
+public abstract class DfaValue {
   private final int myID;
   protected final DfaValueFactory myFactory;
 
   protected DfaValue(final DfaValueFactory factory) {
     myFactory = factory;
     myID = factory == null ? 0 : factory.registerValue(this);
+  }
+
+  public DfaValueFactory getFactory() {
+    return myFactory;
   }
 
   public int getID() {

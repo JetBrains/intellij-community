@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.apple.eawt.*;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ActionCallback;
@@ -46,9 +46,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
 
-/**
- * User: spLeaner
- */
 public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettingsListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.MacMainFrameDecorator");
 
@@ -101,7 +98,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
 
   private void enterFullscreen() {
     myInFullScreen = true;
-    myFrame.storeFullScreenStateIfNeeded(true);
+    myFrame.storeFullScreenStateIfNeeded();
     myFullscreenQueue.runFromQueue();
   }
 
@@ -116,7 +113,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
 
   private void exitFullscreen() {
     myInFullScreen = false;
-    myFrame.storeFullScreenStateIfNeeded(false);
+    myFrame.storeFullScreenStateIfNeeded();
 
     JRootPane rootPane = myFrame.getRootPane();
     if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, null);
@@ -158,13 +155,13 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
 
   public static final Runnable TOOLBAR_SETTER = () -> {
     final UISettings settings = UISettings.getInstance();
-    settings.SHOW_MAIN_TOOLBAR = SHOWN;
+    settings.setShowMainToolbar(SHOWN);
     settings.fireUISettingsChanged();
   };
 
   public static final Runnable NAVBAR_SETTER = () -> {
     final UISettings settings = UISettings.getInstance();
-    settings.SHOW_NAVIGATION_BAR = SHOWN;
+    settings.setShowNavigationBar(SHOWN);
     settings.fireUISettingsChanged();
   };
 
@@ -172,7 +169,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
   public static final Function<Object, Boolean> NAVBAR_GETTER = new Function<Object, Boolean>() {
     @Override
     public Boolean fun(Object o) {
-      return UISettings.getInstance().SHOW_NAVIGATION_BAR;
+      return UISettings.getInstance().getShowNavigationBar();
     }
   };
 
@@ -180,7 +177,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
   public static final Function<Object, Boolean> TOOLBAR_GETTER = new Function<Object, Boolean>() {
     @Override
     public Boolean fun(Object o) {
-      return UISettings.getInstance().SHOW_MAIN_TOOLBAR;
+      return UISettings.getInstance().getShowMainToolbar();
     }
   };
 
@@ -287,8 +284,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
       // install uri handler
       final ID mainBundle = invoke("NSBundle", "mainBundle");
       final ID urlTypes = invoke(mainBundle, "objectForInfoDictionaryKey:", Foundation.nsString("CFBundleURLTypes"));
-      final ApplicationInfoEx info = ApplicationInfoImpl.getShadowInstance();
-      final BuildNumber build = info != null ? info.getBuild() : null;
+      final BuildNumber build = ApplicationInfoImpl.getShadowInstance().getBuild();
       if (urlTypes.equals(ID.NIL) && build != null && !build.isSnapshot()) {
         LOG.warn("no url bundle present. \n" +
                  "To use platform protocol handler to open external links specify required protocols in the mac app layout section of the build file\n" +
@@ -299,7 +295,8 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
       Application.getApplication().setOpenURIHandler(new OpenURIHandler() {
         @Override
         public void openURI(AppEvent.OpenURIEvent event) {
-          ourProtocolHandler.openLink(event.getURI());
+          TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () ->
+            ourProtocolHandler.openLink(event.getURI()));
         }
       });
     }

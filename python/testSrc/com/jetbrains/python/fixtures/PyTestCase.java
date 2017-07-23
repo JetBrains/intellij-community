@@ -16,11 +16,8 @@
 package com.jetbrains.python.fixtures;
 
 import com.google.common.base.Joiner;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupEx;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
@@ -65,14 +62,14 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
+import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -88,7 +85,7 @@ public abstract class PyTestCase extends UsefulTestCase {
   public static final String PYTHON_2_MOCK_SDK = "2.7";
   public static final String PYTHON_3_MOCK_SDK = "3.4";
 
-  private static final PyLightProjectDescriptor ourPyDescriptor = new PyLightProjectDescriptor(PYTHON_2_MOCK_SDK);
+  protected static final PyLightProjectDescriptor ourPyDescriptor = new PyLightProjectDescriptor(PYTHON_2_MOCK_SDK);
   protected static final PyLightProjectDescriptor ourPy3Descriptor = new PyLightProjectDescriptor(PYTHON_3_MOCK_SDK);
   private static final String PARSED_ERROR_MSG = "Operations should have been performed on stubs but caused file to be parsed";
 
@@ -201,29 +198,6 @@ public abstract class PyTestCase extends UsefulTestCase {
     }
   }
 
-  /**
-   * Searches for quickfix itetion by its class
-   *
-   * @param clazz quick fix class
-   * @param <T>   quick fix class
-   * @return quick fix or null if nothing found
-   */
-  @Nullable
-  public <T extends LocalQuickFix> T findQuickFixByClassInIntentions(@NotNull final Class<T> clazz) {
-
-    for (final IntentionAction action : myFixture.getAvailableIntentions()) {
-      if ((action instanceof QuickFixWrapper)) {
-        final QuickFixWrapper quickFixWrapper = (QuickFixWrapper)action;
-        final LocalQuickFix fix = quickFixWrapper.getFix();
-        if (clazz.isInstance(fix)) {
-          @SuppressWarnings("unchecked")
-          final T result = (T)fix;
-          return result;
-        }
-      }
-    }
-    return null;
-  }
 
 
   protected static void assertNotParsed(PyFile file) {
@@ -453,5 +427,26 @@ public abstract class PyTestCase extends UsefulTestCase {
       }
     }
   }
+
+  @NotNull
+  protected PsiElement getElementAtCaret() {
+    final PsiFile file = myFixture.getFile();
+    assertNotNull(file);
+    return file.findElementAt(myFixture.getCaretOffset());
+  }
+
+  public static void assertType(@NotNull String expectedType, @NotNull PyTypedElement element, @NotNull TypeEvalContext context) {
+    assertType("Failed in " + context + " context", expectedType, element, context);
+  }
+
+  public static void assertType(@NotNull String message,
+                                @NotNull String expectedType,
+                                @NotNull PyTypedElement element,
+                                @NotNull TypeEvalContext context) {
+    final PyType actual = context.getType(element);
+    final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
+    assertEquals(message, expectedType, actualType);
+  }
+  
 }
 

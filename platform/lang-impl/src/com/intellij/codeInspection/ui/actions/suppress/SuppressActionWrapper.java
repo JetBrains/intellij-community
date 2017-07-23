@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 29-Jan-2007
- */
 package com.intellij.codeInspection.ui.actions.suppress;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -38,7 +34,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SequentialModalProgressTask;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +65,7 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
     if (view == null) return AnAction.EMPTY_ARRAY;
     final InspectionToolWrapper wrapper = view.getTree().getSelectedToolWrapper(true);
     if (wrapper == null) return AnAction.EMPTY_ARRAY;
-    final Set<SuppressIntentionAction> suppressActions = view.getSuppressActions(wrapper);
+    final Set<SuppressIntentionAction> suppressActions = view.getSuppressActionHolder().getSuppressActions(wrapper);
 
     if (suppressActions.isEmpty()) return AnAction.EMPTY_ARRAY;
     final AnAction[] actions = new AnAction[suppressActions.size() + 1];
@@ -77,17 +75,7 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
       actions[i++] = new SuppressTreeAction(action);
     }
     actions[suppressActions.size()] = Separator.getInstance();
-
-    Arrays.sort(actions, new Comparator<AnAction>() {
-      @Override
-      public int compare(AnAction a1, AnAction a2) {
-        return getWeight(a1) - getWeight(a2);
-      }
-
-      public int getWeight(AnAction a) {
-        return a instanceof Separator ? 0 : ((SuppressTreeAction)a).isSuppressAll() ? 1 : -1;
-      }
-    });
+    Arrays.sort(actions, Comparator.comparingInt(a -> a instanceof Separator ? 0 : ((SuppressTreeAction)a).isSuppressAll() ? 1 : -1));
     return actions;
   }
 
@@ -129,22 +117,21 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
 
     @Override
     protected boolean isEnabled(@NotNull InspectionResultsView view, AnActionEvent e) {
-      final Set<SuppressableInspectionTreeNode> suppressNodes = getNodesToSuppress(view);
-      for (SuppressableInspectionTreeNode node : suppressNodes) {
-        if (node.getAvailableSuppressActions().contains(mySuppressAction)) {
-          String text = mySuppressAction.getFamilyName();
-          if (suppressNodes.size() == 1) {
-            final PsiElement element = node.getSuppressContent().getFirst();
-            if (element != null) {
-              mySuppressAction.isAvailable(view.getProject(), null, element);
-              text = mySuppressAction.getText();
-            }
-          }
-          e.getPresentation().setText(text);
-          return true;
+      final Set<SuppressableInspectionTreeNode> nodesToSuppress = getNodesToSuppress(view);
+      if (nodesToSuppress.isEmpty()) return false;
+      if (nodesToSuppress.size() == 1) {
+        final PsiElement element = ObjectUtils.notNull(ContainerUtil.getFirstItem(nodesToSuppress)).getSuppressContent().getFirst();
+        String text = mySuppressAction.getFamilyName();
+        if (element != null) {
+          mySuppressAction.isAvailable(view.getProject(), null, element);
+          text = mySuppressAction.getText();
         }
+        e.getPresentation().setText(text);
+        return true;
+      } else {
+        e.getPresentation().setText(mySuppressAction.getFamilyName());
+        return true;
       }
-      return false;
     }
 
     public boolean isSuppressAll() {
@@ -158,16 +145,21 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
       for (TreePath path : paths) {
         final Object node = path.getLastPathComponent();
         if (!(node instanceof TreeNode)) continue;
-        TreeUtil.traverse((TreeNode)node, node1 -> {    //fetch leaves
+        if (!TreeUtil.traverse((TreeNode)node, node1 -> {    //fetch leaves
           final InspectionTreeNode n = (InspectionTreeNode)node1;
           if (n instanceof SuppressableInspectionTreeNode &&
               ((SuppressableInspectionTreeNode)n).canSuppress() &&
-              ((SuppressableInspectionTreeNode)n).getAvailableSuppressActions().contains(mySuppressAction) &&
               n.isValid()) {
-            result.add((SuppressableInspectionTreeNode)n);
+            if (((SuppressableInspectionTreeNode)n).getAvailableSuppressActions().contains(mySuppressAction)) {
+              result.add((SuppressableInspectionTreeNode)n);
+            } else {
+              return false;
+            }
           }
           return true;
-        });
+        })) {
+          return Collections.emptySet();
+        }
       }
       return result;
     }

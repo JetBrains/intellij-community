@@ -50,7 +50,7 @@ public class JpsSdkImpl<P extends JpsElement> extends JpsCompositeElementBase<Jp
   @NotNull
   @Override
   public JpsSdkImpl<P> createCopy() {
-    return new JpsSdkImpl<P>(this);
+    return new JpsSdkImpl<>(this);
   }
 
   @Override

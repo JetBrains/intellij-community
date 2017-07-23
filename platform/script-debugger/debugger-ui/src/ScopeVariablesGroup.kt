@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,9 @@ import org.jetbrains.concurrency.thenAsyncAccept
 class ScopeVariablesGroup(val scope: Scope, parentContext: VariableContext, callFrame: CallFrame?) : XValueGroup(scope.createScopeNodeName()) {
   private val context = createVariableContext(scope, parentContext, callFrame)
 
-  private val callFrame = if (scope.type == Scope.Type.LOCAL) callFrame else null
+  private val callFrame = if (scope.type == ScopeType.LOCAL) callFrame else null
 
-  override fun isAutoExpand() = scope.type == Scope.Type.LOCAL || scope.type == Scope.Type.CATCH
+  override fun isAutoExpand() = scope.type == ScopeType.LOCAL || scope.type == ScopeType.CATCH
 
   override fun getComment(): String? {
     val className = scope.description
@@ -73,9 +73,9 @@ fun createAndAddScopeList(node: XCompositeNode, scopes: List<Scope>, context: Va
 }
 
 fun createVariableContext(scope: Scope, parentContext: VariableContext, callFrame: CallFrame?): VariableContext {
-  if (callFrame == null || scope.type == Scope.Type.LIBRARY) {
+  if (callFrame == null || scope.type == ScopeType.LIBRARY) {
     // functions scopes - we can watch variables only from global scope
-    return ParentlessVariableContext(parentContext, scope, scope.type == Scope.Type.GLOBAL)
+    return ParentlessVariableContext(parentContext, scope, scope.type == ScopeType.GLOBAL)
   }
   else {
     return VariableContextWrapper(parentContext, scope)
@@ -88,17 +88,17 @@ private class ParentlessVariableContext(parentContext: VariableContext, scope: S
 
 private fun Scope.createScopeNodeName(): String {
   when (type) {
-    Scope.Type.GLOBAL -> return XDebuggerBundle.message("scope.global")
-    Scope.Type.LOCAL -> return XDebuggerBundle.message("scope.local")
-    Scope.Type.WITH -> return XDebuggerBundle.message("scope.with")
-    Scope.Type.CLOSURE -> return XDebuggerBundle.message("scope.closure")
-    Scope.Type.CATCH -> return XDebuggerBundle.message("scope.catch")
-    Scope.Type.LIBRARY -> return XDebuggerBundle.message("scope.library")
-    Scope.Type.INSTANCE -> return XDebuggerBundle.message("scope.instance")
-    Scope.Type.CLASS -> return XDebuggerBundle.message("scope.class")
-    Scope.Type.BLOCK -> return XDebuggerBundle.message("scope.block")
-    Scope.Type.SCRIPT -> return XDebuggerBundle.message("scope.script")
-    Scope.Type.UNKNOWN -> return XDebuggerBundle.message("scope.unknown")
+    ScopeType.GLOBAL -> return XDebuggerBundle.message("scope.global")
+    ScopeType.LOCAL -> return XDebuggerBundle.message("scope.local")
+    ScopeType.WITH -> return XDebuggerBundle.message("scope.with")
+    ScopeType.CLOSURE -> return XDebuggerBundle.message("scope.closure")
+    ScopeType.CATCH -> return XDebuggerBundle.message("scope.catch")
+    ScopeType.LIBRARY -> return XDebuggerBundle.message("scope.library")
+    ScopeType.INSTANCE -> return XDebuggerBundle.message("scope.instance")
+    ScopeType.CLASS -> return XDebuggerBundle.message("scope.class")
+    ScopeType.BLOCK -> return XDebuggerBundle.message("scope.block")
+    ScopeType.SCRIPT -> return XDebuggerBundle.message("scope.script")
+    ScopeType.UNKNOWN -> return XDebuggerBundle.message("scope.unknown")
     else -> throw IllegalArgumentException(type.name)
   }
 }

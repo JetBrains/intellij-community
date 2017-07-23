@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.util.function.Function;
 
 /**
  * @author nik
@@ -46,11 +47,40 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   private final ComboBox<XExpression> myComboBox;
   private XDebuggerComboBoxEditor myEditor;
   private XExpression myExpression;
+  private Function<Document, Document> myDocumentProcessor = Function.identity();
 
   public XDebuggerExpressionComboBox(@NotNull Project project, @NotNull XDebuggerEditorsProvider debuggerEditorsProvider, @Nullable @NonNls String historyId,
                                      @Nullable XSourcePosition sourcePosition, boolean showEditor) {
     super(project, debuggerEditorsProvider, EvaluationMode.EXPRESSION, historyId, sourcePosition);
     myComboBox = new ComboBox<>(100);
+    myComboBox.setFocusCycleRoot(true);
+    myComboBox.setFocusTraversalPolicyProvider(true);
+    myComboBox.setFocusTraversalPolicy(new FocusTraversalPolicy() {
+      @Override
+      public Component getComponentAfter(Container aContainer, Component aComponent) {
+        return null;
+      }
+
+      @Override
+      public Component getComponentBefore(Container aContainer, Component aComponent) {
+        return null;
+      }
+
+      @Override
+      public Component getFirstComponent(Container aContainer) {
+        return null;
+      }
+
+      @Override
+      public Component getLastComponent(Container aContainer) {
+        return null;
+      }
+
+      @Override
+      public Component getDefaultComponent(Container aContainer) {
+        return null;
+      }
+    });
     myComboBox.setEditable(true);
     myExpression = XExpressionImpl.EMPTY_EXPRESSION;
     Dimension minimumSize = new Dimension(myComboBox.getMinimumSize());
@@ -130,6 +160,15 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   public XExpression getExpression() {
     XExpression item = myEditor.getItem();
     return item != null ? item : myExpression;
+  }
+
+  @Override
+  protected Document createDocument(XExpression text) {
+    return myDocumentProcessor.apply(super.createDocument(text));
+  }
+
+  public void setDocumentProcessor(Function<Document, Document> documentProcessor) {
+    myDocumentProcessor = documentProcessor;
   }
 
   @Override

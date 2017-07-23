@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,20 +39,20 @@ import java.util.List;
  * @author max
  */
 public class DeprecationInspection extends BaseJavaBatchLocalInspectionTool {
-  @NonNls public static final String SHORT_NAME = DeprecationUtil.DEPRECATION_SHORT_NAME;
-  @NonNls public static final String ID = DeprecationUtil.DEPRECATION_ID;
+  public static final String SHORT_NAME = DeprecationUtil.DEPRECATION_SHORT_NAME;
+  public static final String ID = DeprecationUtil.DEPRECATION_ID;
   public static final String DISPLAY_NAME = DeprecationUtil.DEPRECATION_DISPLAY_NAME;
   public static final String IGNORE_METHODS_OF_DEPRECATED_NAME = "IGNORE_METHODS_OF_DEPRECATED";
 
-  public boolean IGNORE_INSIDE_DEPRECATED;
+  public boolean IGNORE_INSIDE_DEPRECATED = true;
   public boolean IGNORE_ABSTRACT_DEPRECATED_OVERRIDES = true;
   public boolean IGNORE_IMPORT_STATEMENTS = true;
   public boolean IGNORE_METHODS_OF_DEPRECATED = true;
 
   @Override
   @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    return new DeprecationElementVisitor(holder, IGNORE_INSIDE_DEPRECATED, IGNORE_ABSTRACT_DEPRECATED_OVERRIDES, 
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    return new DeprecationElementVisitor(holder, IGNORE_INSIDE_DEPRECATED, IGNORE_ABSTRACT_DEPRECATED_OVERRIDES,
                                          IGNORE_IMPORT_STATEMENTS, IGNORE_METHODS_OF_DEPRECATED);
   }
 
@@ -76,7 +76,7 @@ public class DeprecationInspection extends BaseJavaBatchLocalInspectionTool {
 
   @Override
   @NotNull
-  @NonNls
+  @SuppressWarnings("PatternOverriddenByNonAnnotatedMethod")
   public String getID() {
     return ID;
   }
@@ -94,7 +94,6 @@ public class DeprecationInspection extends BaseJavaBatchLocalInspectionTool {
     panel.addCheckbox("<html>Ignore overrides of deprecated abstract methods from non-deprecated supers</html>", "IGNORE_ABSTRACT_DEPRECATED_OVERRIDES");
     panel.addCheckbox("Ignore members of deprecated classes", IGNORE_METHODS_OF_DEPRECATED_NAME);
     return panel;
-
   }
 
   private static class DeprecationElementVisitor extends JavaElementVisitor {
@@ -104,11 +103,11 @@ public class DeprecationInspection extends BaseJavaBatchLocalInspectionTool {
     private final boolean myIgnoreImportStatements;
     private final boolean myIgnoreMethodsOfDeprecated;
 
-    DeprecationElementVisitor(@NotNull ProblemsHolder holder,
-                              boolean ignoreInsideDeprecated,
-                              boolean ignoreAbstractDeprecatedOverrides,
-                              boolean ignoreImportStatements,
-                              boolean ignoreMethodsOfDeprecated) {
+    private DeprecationElementVisitor(ProblemsHolder holder,
+                                      boolean ignoreInsideDeprecated,
+                                      boolean ignoreAbstractDeprecatedOverrides,
+                                      boolean ignoreImportStatements,
+                                      boolean ignoreMethodsOfDeprecated) {
       myHolder = holder;
       myIgnoreInsideDeprecated = ignoreInsideDeprecated;
       myIgnoreAbstractDeprecatedOverrides = ignoreAbstractDeprecatedOverrides;
@@ -118,59 +117,63 @@ public class DeprecationInspection extends BaseJavaBatchLocalInspectionTool {
 
     @Override
     public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-      JavaResolveResult result = reference.advancedResolve(true);
-      PsiElement resolved = result.getElement();
-      checkDeprecated(resolved, reference.getReferenceNameElement(), null, myIgnoreInsideDeprecated, myIgnoreImportStatements, myIgnoreMethodsOfDeprecated, myHolder);
+      PsiElement resolved = reference.advancedResolve(true).getElement();
+      PsiElement refName = reference.getReferenceNameElement();
+      checkDeprecated(resolved, refName, null, myIgnoreInsideDeprecated, myIgnoreImportStatements, myIgnoreMethodsOfDeprecated, myHolder);
     }
 
     @Override
     public void visitImportStaticStatement(PsiImportStaticStatement statement) {
-      final PsiJavaCodeReferenceElement importReference = statement.getImportReference();
+      PsiJavaCodeReferenceElement importReference = statement.getImportReference();
       if (importReference != null) {
-        checkDeprecated(importReference.resolve(), importReference.getReferenceNameElement(), null, myIgnoreInsideDeprecated, false, true, myHolder);
+        PsiElement refName = importReference.getReferenceNameElement();
+        checkDeprecated(importReference.resolve(), refName, null, myIgnoreInsideDeprecated, false, true, myHolder);
       }
     }
 
-    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
       visitReferenceElement(expression);
     }
 
-    @Override public void visitNewExpression(PsiNewExpression expression) {
+    @Override
+    public void visitNewExpression(PsiNewExpression expression) {
+      PsiClass aClass = null;
       PsiType type = expression.getType();
-      PsiExpressionList list = expression.getArgumentList();
-      if (!(type instanceof PsiClassType)) return;
-      PsiClassType.ClassResolveResult typeResult = ((PsiClassType)type).resolveGenerics();
-      PsiClass aClass = typeResult.getElement();
-      if (aClass == null) return;
-      if (aClass instanceof PsiAnonymousClass) {
-        type = ((PsiAnonymousClass)aClass).getBaseClassType();
-        typeResult = ((PsiClassType)type).resolveGenerics();
-        aClass = typeResult.getElement();
-        if (aClass == null) return;
+      if (type instanceof PsiClassType) {
+        aClass = ((PsiClassType)type).resolveGenerics().getElement();
+        if (aClass instanceof PsiAnonymousClass) {
+          type = ((PsiAnonymousClass)aClass).getBaseClassType();
+          aClass = ((PsiClassType)type).resolveGenerics().getElement();
+        }
       }
-      final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(expression.getProject()).getResolveHelper();
-      final PsiMethod[] constructors = aClass.getConstructors();
-      if (constructors.length > 0 && list != null) {
+      if (aClass == null) return;
+      PsiExpressionList list = expression.getArgumentList();
+      PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(expression.getProject()).getResolveHelper();
+      if (list != null && aClass.getConstructors().length > 0) {
         JavaResolveResult[] results = resolveHelper.multiResolveConstructor((PsiClassType)type, list, list);
         MethodCandidateInfo result = null;
         if (results.length == 1) result = (MethodCandidateInfo)results[0];
 
         PsiMethod constructor = result == null ? null : result.getElement();
-        if (constructor != null && expression.getClassOrAnonymousClassReference() != null) {
+        PsiJavaCodeReferenceElement ref;
+        if (constructor != null && (ref = expression.getClassOrAnonymousClassReference()) != null) {
           if (expression.getClassReference() == null && constructor.getParameterList().getParametersCount() == 0) return;
-          checkDeprecated(constructor, expression.getClassOrAnonymousClassReference(), null, myIgnoreInsideDeprecated, myIgnoreImportStatements, true, myHolder);
+          checkDeprecated(constructor, ref, null, myIgnoreInsideDeprecated, myIgnoreImportStatements, true, myHolder);
         }
       }
     }
 
-    @Override public void visitMethod(PsiMethod method){
-        MethodSignatureBackedByPsiMethod methodSignature = MethodSignatureBackedByPsiMethod.create(method, PsiSubstitutor.EMPTY);
-        if (!method.isConstructor()) {
-          List<MethodSignatureBackedByPsiMethod> superMethodSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
-          checkMethodOverridesDeprecated(methodSignature, superMethodSignatures, myIgnoreAbstractDeprecatedOverrides, myHolder);
-        } else {
-          checkImplicitCallToSuper(method);
-        }
+    @Override
+    public void visitMethod(PsiMethod method) {
+      MethodSignatureBackedByPsiMethod methodSignature = MethodSignatureBackedByPsiMethod.create(method, PsiSubstitutor.EMPTY);
+      if (!method.isConstructor()) {
+        List<MethodSignatureBackedByPsiMethod> superMethodSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
+        checkMethodOverridesDeprecated(methodSignature, superMethodSignatures, myIgnoreAbstractDeprecatedOverrides, myHolder);
+      }
+      else {
+        checkImplicitCallToSuper(method);
+      }
     }
 
     private void checkImplicitCallToSuper(PsiMethod method) {
@@ -193,8 +196,8 @@ public class DeprecationInspection extends BaseJavaBatchLocalInspectionTool {
     }
 
     private void registerDefaultConstructorProblem(PsiClass superClass, PsiElement nameIdentifier, boolean asDeprecated) {
-      myHolder.registerProblem(nameIdentifier, "Default constructor in " + superClass.getQualifiedName() + " is deprecated",
-                               asDeprecated ? ProblemHighlightType.LIKE_DEPRECATED : ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+      ProblemHighlightType type = asDeprecated ? ProblemHighlightType.LIKE_DEPRECATED : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+      myHolder.registerProblem(nameIdentifier, "Default constructor in " + superClass.getQualifiedName() + " is deprecated", type);
     }
 
     @Override
@@ -209,7 +212,21 @@ public class DeprecationInspection extends BaseJavaBatchLocalInspectionTool {
             final PsiExpressionList argumentList = ((PsiAnonymousClass)aClass).getArgumentList();
             if (argumentList != null && argumentList.getExpressions().length > 0) return;
           }
-          registerDefaultConstructorProblem(superClass, isAnonymous ? ((PsiAnonymousClass)aClass).getBaseClassReference() : aClass.getNameIdentifier(), isAnonymous);
+          PsiElement identifier = isAnonymous ? ((PsiAnonymousClass)aClass).getBaseClassReference() : aClass.getNameIdentifier();
+          registerDefaultConstructorProblem(superClass, identifier, isAnonymous);
+        }
+      }
+    }
+
+    @Override
+    public void visitRequiresStatement(PsiRequiresStatement statement) {
+      PsiJavaModuleReferenceElement refElement = statement.getReferenceElement();
+      if (refElement != null) {
+        PsiPolyVariantReference ref = refElement.getReference();
+        PsiElement target = ref != null ? ref.resolve() : null;
+        if (target instanceof PsiJavaModule && PsiImplUtil.isDeprecatedByAnnotation((PsiJavaModule)target)) {
+          String message = JavaErrorMessages.message("deprecated.symbol", HighlightMessageUtil.getSymbolName(target));
+          myHolder.registerProblem(refElement, message, ProblemHighlightType.LIKE_DEPRECATED);
         }
       }
     }
@@ -227,12 +244,13 @@ public class DeprecationInspection extends BaseJavaBatchLocalInspectionTool {
     return false;
   }
 
-  //@top
-  static void checkMethodOverridesDeprecated(MethodSignatureBackedByPsiMethod methodSignature,
-                                             List<MethodSignatureBackedByPsiMethod> superMethodSignatures,
-                                             boolean ignoreAbstractDeprecatedOverrides, ProblemsHolder holder) {
+  private static void checkMethodOverridesDeprecated(MethodSignatureBackedByPsiMethod methodSignature,
+                                                     List<MethodSignatureBackedByPsiMethod> superMethodSignatures,
+                                                     boolean ignoreAbstractDeprecatedOverrides,
+                                                     ProblemsHolder holder) {
     PsiMethod method = methodSignature.getMethod();
     PsiElement methodName = method.getNameIdentifier();
+    if (methodName == null) return;
     for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
       PsiMethod superMethod = superMethodSignature.getMethod();
       PsiClass aClass = superMethod.getContainingClass();
@@ -240,8 +258,7 @@ public class DeprecationInspection extends BaseJavaBatchLocalInspectionTool {
       // do not show deprecated warning for class implementing deprecated methods
       if (ignoreAbstractDeprecatedOverrides && !aClass.isDeprecated() && superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) continue;
       if (superMethod.isDeprecated()) {
-        String description = JavaErrorMessages.message("overrides.deprecated.method",
-                                                       HighlightMessageUtil.getSymbolName(aClass, PsiSubstitutor.EMPTY));
+        String description = JavaErrorMessages.message("overrides.deprecated.method", HighlightMessageUtil.getSymbolName(aClass));
         holder.registerProblem(methodName, description, ProblemHighlightType.LIKE_DEPRECATED);
       }
     }
@@ -254,17 +271,18 @@ public class DeprecationInspection extends BaseJavaBatchLocalInspectionTool {
     checkDeprecated(refElement, elementToHighlight, rangeInElement, false, false, true, holder);
   }
 
-  static void checkDeprecated(PsiElement refElement,
-                              PsiElement elementToHighlight,
-                              @Nullable TextRange rangeInElement,
-                              boolean ignoreInsideDeprecated,
-                              boolean ignoreImportStatements,
-                              boolean ignoreMethodsOfDeprecated,
-                              ProblemsHolder holder) {
+  private static void checkDeprecated(PsiElement refElement,
+                                      PsiElement elementToHighlight,
+                                      @Nullable TextRange rangeInElement,
+                                      boolean ignoreInsideDeprecated,
+                                      boolean ignoreImportStatements,
+                                      boolean ignoreMethodsOfDeprecated,
+                                      ProblemsHolder holder) {
     if (!(refElement instanceof PsiDocCommentOwner)) return;
+
     if (!((PsiDocCommentOwner)refElement).isDeprecated()) {
       if (!ignoreMethodsOfDeprecated) {
-        checkDeprecated(((PsiDocCommentOwner)refElement).getContainingClass(), elementToHighlight, rangeInElement, 
+        checkDeprecated(((PsiDocCommentOwner)refElement).getContainingClass(), elementToHighlight, rangeInElement,
                         ignoreInsideDeprecated, ignoreImportStatements, false, holder);
       }
       return;
@@ -281,9 +299,7 @@ public class DeprecationInspection extends BaseJavaBatchLocalInspectionTool {
       return;
     }
 
-    String description = JavaErrorMessages.message("deprecated.symbol",
-                                                   HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY));
-
+    String description = JavaErrorMessages.message("deprecated.symbol", HighlightMessageUtil.getSymbolName(refElement));
     holder.registerProblem(elementToHighlight, description, ProblemHighlightType.LIKE_DEPRECATED, rangeInElement);
   }
 }

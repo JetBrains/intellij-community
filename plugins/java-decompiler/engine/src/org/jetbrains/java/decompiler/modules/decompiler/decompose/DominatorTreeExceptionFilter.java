@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,14 +157,14 @@ public class DominatorTreeExceptionFilter {
 
           if (range.contains(id)) {
 
-            Integer exit = null;
+            Integer exit;
 
             if (!range.contains(childid)) {
               exit = childid;
             }
             else {
               // exit = map.containsKey(handler)?-1:mapChild.get(handler); FIXME: Eclipse bug?
-              exit = map.containsKey(handler) ? new Integer(-1) : mapChild.get(handler);
+              exit = map.containsKey(handler) ? -1 : mapChild.get(handler);
             }
 
             if (exit != null) {

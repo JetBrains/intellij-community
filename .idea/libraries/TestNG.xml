@@ -5,6 +5,8 @@
       <root url="jar://$PROJECT_DIR$/plugins/testng/lib/jcommander.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/plugins/testng/lib/src/testng-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>

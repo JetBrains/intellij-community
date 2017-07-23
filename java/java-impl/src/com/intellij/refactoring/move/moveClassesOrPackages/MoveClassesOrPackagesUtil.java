@@ -17,7 +17,7 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.lang.java.JavaFindUsagesProvider;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -25,7 +25,6 @@ import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -145,9 +144,7 @@ public class MoveClassesOrPackagesUtil {
     moveDirectoryRecursively(dir, destination, new HashSet<>());
   }
 
-  private static void moveDirectoryRecursively(PsiDirectory dir, PsiDirectory destination, HashSet<VirtualFile> movedPaths)
-    throws IncorrectOperationException {
-    final PsiManager manager = dir.getManager();
+  private static void moveDirectoryRecursively(PsiDirectory dir, PsiDirectory destination, HashSet<VirtualFile> movedPaths) throws IncorrectOperationException {
     final VirtualFile destVFile = destination.getVirtualFile();
     final VirtualFile sourceVFile = dir.getVirtualFile();
     if (movedPaths.contains(sourceVFile)) return;
@@ -244,10 +241,16 @@ public class MoveClassesOrPackagesUtil {
 
       file = moveDestination.findFile(file.getName());
 
-      if (newPackage != null && file instanceof PsiClassOwner && !FileTypeUtils.isInServerPageFile(file) && !PsiUtil.isModuleFile(file)) {
+    }
+
+    if (newPackage != null && file instanceof PsiClassOwner && !FileTypeUtils.isInServerPageFile(file) &&
+        !PsiUtil.isModuleFile(file)) {
+      String qualifiedName = newPackage.getQualifiedName();
+      if (!Comparing.strEqual(qualifiedName, ((PsiClassOwner)file).getPackageName()) && 
+          PsiNameHelper.getInstance(file.getProject()).isQualifiedName(qualifiedName)) {
         // Do not rely on class instance identity retention after setPackageName (Scala)
         String aClassName = aClass.getName();
-        ((PsiClassOwner)file).setPackageName(newPackage.getQualifiedName());
+        ((PsiClassOwner)file).setPackageName(qualifiedName);
         newClass = findClassByName((PsiClassOwner)file, aClassName);
         LOG.assertTrue(newClass != null, "name:" + aClassName + " file:" + file + " classes:" + Arrays.toString(((PsiClassOwner)file).getClasses()));
       }
@@ -297,22 +300,14 @@ public class MoveClassesOrPackagesUtil {
     else {
       final List<VirtualFile> contentSourceRoots = JavaProjectRootsUtil.getSuitableDestinationSourceRoots(project);
       if (contentSourceRoots.size() == 1 && (baseDirVirtualFile == null || fileIndex.isInTestSourceContent(contentSourceRoots.get(0)) == isBaseDirInTestSources)) {
-        directory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
-          @Override
-          public PsiDirectory compute() {
-            return RefactoringUtil.createPackageDirectoryInSourceRoot(packageWrapper, contentSourceRoots.get(0));
-          }
-        });
+        directory = WriteAction
+          .compute(() -> RefactoringUtil.createPackageDirectoryInSourceRoot(packageWrapper, contentSourceRoots.get(0)));
       }
       else {
         final VirtualFile sourceRootForFile = chooseSourceRoot(packageWrapper, contentSourceRoots, baseDir);
         if (sourceRootForFile == null) return null;
-        directory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
-          @Override
-          public PsiDirectory compute() {
-            return new AutocreatingSingleSourceRootMoveDestination(packageWrapper, sourceRootForFile).getTargetDirectory((PsiDirectory)null);
-          }
-        });
+        directory = WriteAction.compute(
+          () -> new AutocreatingSingleSourceRootMoveDestination(packageWrapper, sourceRootForFile).getTargetDirectory((PsiDirectory)null));
       }
     }
     return directory;

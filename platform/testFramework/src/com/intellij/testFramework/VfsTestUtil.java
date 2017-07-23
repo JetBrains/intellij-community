@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,18 +46,22 @@ public class VfsTestUtil {
 
   private VfsTestUtil() { }
 
+  @NotNull
   public static VirtualFile createFile(@NotNull VirtualFile root, @NotNull String relativePath) {
     return createFile(root, relativePath, "");
   }
 
+  @NotNull
   public static VirtualFile createFile(@NotNull VirtualFile root, @NotNull String relativePath, @NotNull String text) {
     return createFileOrDir(root, relativePath, text, false);
   }
 
+  @NotNull
   public static VirtualFile createDir(@NotNull VirtualFile root, @NotNull String relativePath) {
     return createFileOrDir(root, relativePath, "", true);
   }
 
+  @NotNull
   private static VirtualFile createFileOrDir(VirtualFile root, String relativePath, String text, boolean dir) {
     try {
       return WriteAction.compute(() -> {
@@ -107,7 +111,7 @@ public class VfsTestUtil {
     });
   }
 
-  public static void overwriteTestData(String filePath, String actual) {
+  public static void overwriteTestData(@NotNull String filePath, @NotNull String actual) {
     try {
       FileUtil.writeToFile(new File(filePath), actual);
     }
@@ -148,7 +152,7 @@ public class VfsTestUtil {
     List<VFileEvent> allEvents = new ArrayList<>();
 
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         allEvents.addAll(events);

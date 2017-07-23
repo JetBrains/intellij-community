@@ -38,7 +38,6 @@ import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.testIntegration.TestIntegrationUtils;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -181,7 +180,7 @@ public class JavaTestGenerator implements TestGenerator {
 
   public static void addTestMethods(Editor editor,
                                     PsiClass targetClass,
-                                    @Nullable PsiClass sourceClass, 
+                                    @Nullable PsiClass sourceClass,
                                     final TestFramework descriptor,
                                     Collection<MemberInfo> methods,
                                     boolean generateBefore,
@@ -198,7 +197,8 @@ public class JavaTestGenerator implements TestGenerator {
 
     final Template template = TestIntegrationUtils.createTestMethodTemplate(TestIntegrationUtils.MethodKind.TEST, descriptor,
                                                                             targetClass, sourceClass, null, true, existingNames);
-    final String prefix = JavaPsiFacade.getElementFactory(targetClass.getProject()).createMethodFromText(template.getTemplateText(), targetClass).getName();
+    JVMElementFactory elementFactory = JVMElementFactories.getFactory(targetClass.getLanguage(), targetClass.getProject());
+    final String prefix = elementFactory != null ? elementFactory.createMethodFromText(template.getTemplateText(), targetClass).getName() : "";
     existingNames.addAll(ContainerUtil.map(targetClass.getMethods(), method -> StringUtil.decapitalize(StringUtil.trimStart(method.getName(), prefix))));
 
     for (MemberInfo m : methods) {
@@ -219,7 +219,8 @@ public class JavaTestGenerator implements TestGenerator {
                                           Editor editor,
                                           @Nullable String name,
                                           Set<String> existingNames, PsiMethod anchor) {
-    PsiMethod method = (PsiMethod)targetClass.addAfter(TestIntegrationUtils.createDummyMethod(targetClass), anchor);
+    PsiMethod dummyMethod = TestIntegrationUtils.createDummyMethod(targetClass);
+    PsiMethod method = (PsiMethod)(anchor == null ? targetClass.add(dummyMethod) : targetClass.addAfter(dummyMethod, anchor));
     PsiDocumentManager.getInstance(targetClass.getProject()).doPostponedOperationsAndUnblockDocument(editor.getDocument());
     TestIntegrationUtils.runTestMethodTemplate(methodKind, descriptor, editor, targetClass, sourceClass, method, name, true, existingNames);
     return method;

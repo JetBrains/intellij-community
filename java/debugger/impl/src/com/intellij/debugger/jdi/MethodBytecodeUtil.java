@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,11 +52,16 @@ public class MethodBytecodeUtil {
   }
 
   public static void visit(Method method, long maxOffset, MethodVisitor methodVisitor, boolean withLineNumbers) {
-    // need to keep the size, otherwise labels array will not be initialized correctly
-    byte[] originalBytecodes = method.bytecodes();
-    byte[] bytecodes = new byte[originalBytecodes.length];
-    System.arraycopy(originalBytecodes, 0, bytecodes, 0, (int)maxOffset);
-    visit(method, bytecodes, methodVisitor, withLineNumbers);
+    if (maxOffset > 0) {
+      // need to keep the size, otherwise labels array will not be initialized correctly
+      byte[] originalBytecodes = method.bytecodes();
+      byte[] bytecodes = originalBytecodes;
+      if (maxOffset < originalBytecodes.length) {
+        bytecodes = new byte[originalBytecodes.length];
+        System.arraycopy(originalBytecodes, 0, bytecodes, 0, (int)maxOffset);
+      }
+      visit(method, bytecodes, methodVisitor, withLineNumbers);
+    }
   }
 
   public static byte[] getConstantPool(ReferenceType type) {
@@ -77,11 +82,14 @@ public class MethodBytecodeUtil {
   private static void visit(Method method, byte[] bytecodes, MethodVisitor methodVisitor, boolean withLineNumbers) {
     ReferenceType type = method.declaringType();
     try {
-      try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); DataOutputStream dos = new DataOutputStream(bos)) {
+      byte[] constantPool = getConstantPool(type);
+      try (ByteArrayBuilderOutputStream bos = new ByteArrayBuilderOutputStream(constantPool.length + 24);
+           DataOutputStream dos = new DataOutputStream(bos)) {
+
         dos.writeInt(0xCAFEBABE); // magic
         dos.writeInt(Opcodes.V1_8); // version
         dos.writeShort(type.constantPoolCount()); // constant_pool_count
-        dos.write(getConstantPool(type)); // constant_pool
+        dos.write(constantPool); // constant_pool
         dos.writeShort(0); //             access_flags;
         dos.writeShort(0); //             this_class;
         dos.writeShort(0); //             super_class;
@@ -90,7 +98,7 @@ public class MethodBytecodeUtil {
         dos.writeShort(0); //             methods_count;
         dos.writeShort(0); //             attributes_count;
 
-        ClassReader reader = new ClassReader(bos.toByteArray());
+        ClassReader reader = new ClassReader(bos.getBuffer());
         ClassWriter writer = new ClassWriter(reader, 0);
 
         String superName = null;
@@ -193,7 +201,7 @@ public class MethodBytecodeUtil {
       dos.write(bytecodes); // code
       dos.writeShort(0); // exception_table_length
       List<Location> locations = withLineNumbers ? DebuggerUtilsEx.allLineLocations(method) : Collections.emptyList();
-      if (!locations.isEmpty()) {
+      if (!ContainerUtil.isEmpty(locations)) {
         dos.writeShort(1); // attributes_count
         dos.writeShort(cw.newUTF8("LineNumberTable"));
         dos.writeInt(2 * locations.size() + 2);
@@ -285,5 +293,16 @@ public class MethodBytecodeUtil {
       }, false);
     }
     return methodRef.get();
+  }
+
+  private static class ByteArrayBuilderOutputStream extends ByteArrayOutputStream {
+    public ByteArrayBuilderOutputStream(int size) {
+      super(size);
+    }
+
+    byte[] getBuffer() {
+      assert buf.length == count : "Buffer is not fully filled";
+      return buf;
+    }
   }
 }

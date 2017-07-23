@@ -22,7 +22,7 @@ import java.io.File;
 
 @Deprecated
 public interface ExportableComponent {
-  ExtensionPointName<ServiceBean> EXTENSION_POINT = new ExtensionPointName<ServiceBean>("com.intellij.exportable");
+  ExtensionPointName<ServiceBean> EXTENSION_POINT = new ExtensionPointName<>("com.intellij.exportable");
 
   @NotNull
   File[] getExportFiles();

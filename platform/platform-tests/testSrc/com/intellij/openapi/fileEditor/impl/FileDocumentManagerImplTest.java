@@ -18,8 +18,12 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.AppTopics;
 import com.intellij.mock.MockVirtualFile;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
@@ -27,16 +31,15 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -45,6 +48,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class FileDocumentManagerImplTest extends PlatformTestCase {
   private FileDocumentManagerImpl myDocumentManager;
@@ -71,6 +81,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
   @Override
   protected void tearDown() throws Exception {
     myReloadFromDisk = null;
+    myDocumentManager = null;
     super.tearDown();
   }
 
@@ -592,5 +603,91 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(1, "y"));
 
     FileDocumentManager.getInstance().saveAllDocuments();
+  }
+
+  public void testDocumentUnsavedInsideChangeListener() throws IOException {
+    VirtualFile file = createFile("a.txt", "a");
+    FileDocumentManager manager = FileDocumentManager.getInstance();
+    Document document = manager.getDocument(file);
+    assertFalse(manager.isDocumentUnsaved(document));
+
+    AtomicInteger invoked = new AtomicInteger();
+    AtomicBoolean expectUnsaved = new AtomicBoolean(true);
+    DocumentListener listener = new DocumentListener() {
+      @Override
+      public void beforeDocumentChange(DocumentEvent e) {
+        assertFalse(manager.isDocumentUnsaved(document));
+      }
+
+      @Override
+      public void documentChanged(DocumentEvent event) {
+        invoked.incrementAndGet();
+        assertEquals(expectUnsaved.get(), manager.isDocumentUnsaved(document));
+      }
+    };
+    document.addDocumentListener(listener, getTestRootDisposable());
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(listener, getTestRootDisposable());
+
+    WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, "b"));
+
+    assertTrue(manager.isDocumentUnsaved(document));
+    assertEquals(2, invoked.get());
+
+    expectUnsaved.set(false);
+    FileDocumentManager.getInstance().saveAllDocuments();
+    FileUtil.writeToFile(VfsUtilCore.virtualToIoFile(file), "something");
+    file.refresh(false, false);
+    
+    assertEquals("something", document.getText());
+    assertFalse(manager.isDocumentUnsaved(document));
+    assertEquals(4, invoked.get());
+  }
+
+  public void testGetFileFromConcurrentlyCreatedDocument() throws Exception {
+    List<VirtualFile> physicalFiles = new ArrayList<>();
+    for (int i = 0; i < 5; i++) {
+      physicalFiles.add(createFile("a" + i + ".txt", "a" + i));
+    }
+
+    for (int iteration = 0; iteration < 10; iteration++) {
+      GCUtil.tryGcSoftlyReachableObjects();
+
+      checkDocumentFiles(physicalFiles);
+      checkDocumentFiles(createNonPhysicalFiles());
+    }
+  }
+
+  private static void checkDocumentFiles(List<VirtualFile> files) throws Exception {
+    FileDocumentManager fdm = FileDocumentManager.getInstance();
+
+    List<Future> futures = new ArrayList<>();
+    for (VirtualFile file : files) {
+      assertNull(fdm.getCachedDocument(file));
+      for (int i = 0; i < 30; i++) {
+        futures.add(ApplicationManager.getApplication().executeOnPooledThread((Runnable)() -> ReadAction.run(() -> {
+          Document document = fdm.getDocument(file);
+          assertEquals(file, fdm.getFile(document));
+        })));
+      }
+    }
+
+    for (Future future : futures) {
+      try {
+        future.get(20, TimeUnit.SECONDS);
+      }
+      catch (TimeoutException e) {
+        printThreadDump();
+        throw e;
+      }
+    }
+  }
+
+  @NotNull
+  private static List<VirtualFile> createNonPhysicalFiles() {
+    List<VirtualFile> allFiles = new ArrayList<>();
+    for (int i = 0; i < 5; i++) {
+      allFiles.add(new LightVirtualFile("b" + i + ".txt", "b" + i));
+    }
+    return allFiles;
   }
 }

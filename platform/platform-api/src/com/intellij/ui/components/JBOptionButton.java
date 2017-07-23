@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
@@ -60,6 +61,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
 
   private IdeGlassPane myGlassPane;
   private final Disposable myDisposable = Disposer.newDisposable();
+  private boolean myPaintDefaultIfSingle = false;
 
   public JBOptionButton(Action action, Action[] options) {
     super(action);
@@ -246,6 +248,18 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
     myAbovePopup.setVisible(false);
   }
 
+  public void updateOptions(@Nullable Action[] options) {
+    if (options == null) {
+      options = new Action[0];
+    }
+
+    myOptions = options;
+    myUnderPopup = fillMenu(true);
+    myAbovePopup = fillMenu(false);
+    enableEvents(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
+    repaint();
+  }
+
   private JPopupMenu fillMenu(boolean under) {
     final JPopupMenu result = new JBPopupMenu();
 
@@ -355,9 +369,13 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
   @Override
   protected void paintChildren(Graphics g) {
     super.paintChildren(g);
+    if (myPaintDefaultIfSingle && myOptions.length == 0) {
+      return;
+    }
+
     if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
-      int x = getWidth() - getInsets().right - 10;
       Icon icon = AllIcons.Mac.YosemiteOptionButtonSelector;
+      int x = getWidth() - getInsets().right - icon.getIconWidth() - 6;
       int y = (getHeight() - icon.getIconHeight()) / 2;
       GraphicsConfig config = isEnabled() ? new GraphicsConfig(g) : GraphicsUtil.paintWithAlpha(g, 0.6f);
       icon.paintIcon(this, g, x, y);
@@ -367,8 +385,13 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
 
     boolean dark = UIUtil.isUnderDarcula();
     int off = dark ? 6 : 0;
-    AllIcons.General.ArrowDown.paintIcon(this, g, myMoreRec.x - off, myMoreRec.y);
-    if (dark) return;
+    Icon icon = AllIcons.General.ArrowDown;
+    if (UIUtil.isUnderIntelliJLaF() && !UIUtil.isUnderWin10LookAndFeel()) {
+      icon = AllIcons.General.ArrowDown_white;
+    }
+    icon.paintIcon(this, g, myMoreRec.x - off, myMoreRec.y);
+
+    if (dark || UIUtil.isUnderWin10LookAndFeel()) return;
 
     final Insets insets = getInsets();
     int y1 = myMoreRec.y - 2;
@@ -388,5 +411,9 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
 
   public void setOkToProcessDefaultMnemonics(boolean ok) {
     myOkToProcessDefaultMnemonics = ok;
+  }
+
+  public void setPaintDefaultIfSingle(boolean value) {
+    myPaintDefaultIfSingle = value;
   }
 }

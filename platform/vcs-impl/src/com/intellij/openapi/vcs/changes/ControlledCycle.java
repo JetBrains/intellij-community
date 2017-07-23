@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,15 +30,13 @@ public class ControlledCycle {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ControlledCycle");
 
   private final Alarm mySimpleAlarm;
-  // this interval is also to check for not initialized paths, so it is rather small
-  private static final int ourRefreshInterval = 10000;
-  private int myRefreshInterval;
+  private final int myRefreshInterval;
   private final Runnable myRunnable;
 
   private final AtomicBoolean myActive;
 
   public ControlledCycle(@NotNull Project project, final Getter<Boolean> callback, @NotNull final String name, final int refreshInterval) {
-    myRefreshInterval = (refreshInterval <= 0) ? ourRefreshInterval : refreshInterval;
+    myRefreshInterval = refreshInterval;
     myActive = new AtomicBoolean(false);
     myRunnable = new Runnable() {
       boolean shouldBeContinued = true;
@@ -61,20 +59,10 @@ public class ControlledCycle {
     mySimpleAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
   }
 
-  public boolean startIfNotStarted(final int refreshInterval) {
-    final boolean refreshIntervalChanged = (refreshInterval > 0) && refreshInterval != myRefreshInterval;
-    if (refreshIntervalChanged) {
-      mySimpleAlarm.cancelAllRequests();
-    }
-    if (refreshInterval > 0) {
-      myRefreshInterval = refreshInterval;
-    }
-
-    final boolean wasSet = myActive.compareAndSet(false, true);
-    if (wasSet || refreshIntervalChanged) {
+  public void startIfNotStarted() {
+    if (myActive.compareAndSet(false, true)) {
       mySimpleAlarm.addRequest(myRunnable, myRefreshInterval);
     }
-    return wasSet;
   }
 
   public void stop() {

@@ -16,7 +16,6 @@
 package com.jetbrains.python.packaging.setupPy;
 
 import com.intellij.ide.IdeView;
-import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateAction;
@@ -38,6 +37,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.SystemProperties;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.psi.PyUtil;
 
@@ -50,16 +50,15 @@ import java.util.Properties;
 public class CreateSetupPyAction extends CreateFromTemplateAction {
   private static final String AUTHOR_PROPERTY = "python.packaging.author";
   private static final String EMAIL_PROPERTY = "python.packaging.author.email";
+  static final String SETUP_SCRIPT_TEMPLATE_NAME = "Setup Script";
 
   public CreateSetupPyAction() {
-    super(FileTemplateManager.getDefaultInstance().getInternalTemplate("Setup Script"));
+    super(
+      SETUP_SCRIPT_TEMPLATE_NAME, 
+      PythonFileType.INSTANCE.getIcon(), 
+      () -> FileTemplateManager.getDefaultInstance().getInternalTemplate(SETUP_SCRIPT_TEMPLATE_NAME)
+    );
     getTemplatePresentation().setText("Create setup.py");
-  }
-
-  @Override
-  public FileTemplate getTemplate() {
-    // to ensure changes are picked up, reload the template on every call (PY-6681)
-    return FileTemplateManager.getDefaultInstance().getInternalTemplate("Setup Script");
   }
 
   @Override

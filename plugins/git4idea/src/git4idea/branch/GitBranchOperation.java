@@ -29,7 +29,6 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.MultiMap;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
@@ -43,6 +42,7 @@ import java.util.*;
 
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
+import static git4idea.GitUtil.getRepositoryManager;
 
 /**
  * Common class for Git operations with branches aware of multi-root configuration,
@@ -69,7 +69,8 @@ abstract class GitBranchOperation {
     myProject = project;
     myGit = git;
     myUiHandler = uiHandler;
-    myRepositories = repositories;
+
+    myRepositories = getRepositoryManager(project).sortByDependency(repositories);
     myCurrentHeads = Maps.toMap(repositories, repo -> chooseNotNull(repo.getCurrentBranchName(), repo.getCurrentRevision()));
     myInitialRevisions = Maps.toMap(repositories, GitRepository::getCurrentRevision);
     mySuccessfulRepositories = new ArrayList<>();
@@ -401,17 +402,9 @@ abstract class GitBranchOperation {
     if (grouped.size() == 1) {
       return grouped.keySet().iterator().next();
     }
-    return StringUtil.join(grouped.entrySet(), new Function<Map.Entry<String, Collection<VirtualFile>>, String>() {
-      @Override
-      public String fun(Map.Entry<String, Collection<VirtualFile>> entry) {
-        String roots = StringUtil.join(entry.getValue(), new Function<VirtualFile, String>() {
-          @Override
-          public String fun(VirtualFile file) {
-            return file.getName();
-          }
-        }, ", ");
-        return entry.getKey() + " (in " + roots + ")";
-      }
+    return StringUtil.join(grouped.entrySet(), entry -> {
+      String roots = StringUtil.join(entry.getValue(), file -> file.getName(), ", ");
+      return entry.getKey() + " (in " + roots + ")";
     }, "<br/>");
   }
 

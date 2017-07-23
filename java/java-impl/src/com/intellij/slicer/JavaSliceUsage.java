@@ -72,4 +72,18 @@ public class JavaSliceUsage extends SliceUsage {
   public PsiSubstitutor getSubstitutor() {
     return mySubstitutor;
   }
+
+  public int getIndexNesting() {
+    return indexNesting;
+  }
+
+  @NotNull
+  public String getSyntheticField() {
+    return syntheticField;
+  }
+
+  @Override
+  public boolean canBeLeaf() {
+    return indexNesting == 0 && super.canBeLeaf();
+  }
 }

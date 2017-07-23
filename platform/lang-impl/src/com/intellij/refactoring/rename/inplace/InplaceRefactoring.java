@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,10 +91,6 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 1/11/12
- */
 public abstract class InplaceRefactoring {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.VariableInplaceRenamer");
   @NonNls protected static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
@@ -367,8 +363,8 @@ public abstract class InplaceRefactoring {
   }
 
   protected void beforeTemplateStart() {
-    myCaretRangeMarker = myEditor.getDocument()
-          .createRangeMarker(new TextRange(myEditor.getCaretModel().getOffset(), myEditor.getCaretModel().getOffset()));
+    myCaretRangeMarker =
+      myEditor.getDocument().createRangeMarker(myEditor.getCaretModel().getOffset(), myEditor.getCaretModel().getOffset());
     myCaretRangeMarker.setGreedyToLeft(true);
     myCaretRangeMarker.setGreedyToRight(true);
   }
@@ -395,7 +391,8 @@ public abstract class InplaceRefactoring {
     template.setToShortenLongNames(false);
     template.setToReformat(false);
     myHighlighters = new ArrayList<>();
-    topLevelEditor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
+    int targetOffset = rangeMarker.getStartOffset();
+    topLevelEditor.getCaretModel().moveToLogicalPosition(topLevelEditor.offsetToLogicalPosition(targetOffset).leanForward(true)); // to the right of parameter hint, if any
 
     TemplateManager.getInstance(myProject).startTemplate(topLevelEditor, template, templateListener);
     restoreOldCaretPositionAndSelection(offset);
@@ -430,7 +427,8 @@ public abstract class InplaceRefactoring {
   private void restoreOldCaretPositionAndSelection(final int offset) {
     //move to old offset
     Runnable runnable = () -> {
-      myEditor.getCaretModel().moveToOffset(restoreCaretOffset(offset));
+      int targetOffset = restoreCaretOffset(offset);
+      myEditor.getCaretModel().moveToLogicalPosition(myEditor.offsetToLogicalPosition(targetOffset).leanForward(true)); // to the right of parameter hint, if any
       restoreSelection();
     };
 
@@ -798,11 +796,16 @@ public abstract class InplaceRefactoring {
   public static boolean canStartAnotherRefactoring(Editor editor, Project project, RefactoringActionHandler handler, PsiElement... element) {
     final InplaceRefactoring inplaceRefactoring = getActiveInplaceRenamer(editor);
     return StartMarkAction.canStart(project) == null ||
-           (inplaceRefactoring != null && element.length == 1 && inplaceRefactoring.startsOnTheSameElement(handler, element[0]));
+           (inplaceRefactoring != null && inplaceRefactoring.startsOnTheSameElements(editor, handler, element));
   }
 
   public static InplaceRefactoring getActiveInplaceRenamer(Editor editor) {
     return editor != null ? editor.getUserData(INPLACE_RENAMER) : null;
+  }
+
+  protected boolean startsOnTheSameElements(Editor editor, RefactoringActionHandler handler,
+                                            PsiElement[] element) {
+    return element.length == 1 && startsOnTheSameElement(handler, element[0]);
   }
 
   protected boolean startsOnTheSameElement(RefactoringActionHandler handler, PsiElement element) {
@@ -870,7 +873,7 @@ public abstract class InplaceRefactoring {
     public void beforeTemplateFinished(final TemplateState templateState, Template template) {
       try {
         final TextResult value = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
-        myInsertedName = value != null ? value.toString() : null;
+        myInsertedName = value != null ? value.toString().trim() : null;
 
         TextRange range = templateState.getCurrentVariableRange();
         final int currentOffset = myEditor.getCaretModel().getOffset();

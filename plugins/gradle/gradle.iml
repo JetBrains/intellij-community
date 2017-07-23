@@ -23,7 +23,6 @@
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="maven" />
-    <orderEntry type="module" module-name="junit" />
     <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="library" exported="" name="Slf4j" level="project" />
     <orderEntry type="library" exported="" name="Gradle" level="project" />
@@ -36,17 +35,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
-      <library name="Jsr305">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/jsr305-1.3.9.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/jsr305-1.3.9.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
+    <orderEntry type="library" name="jsr305" level="project" />
     <orderEntry type="module-library" exported="">
       <library name="commons-io">
         <CLASSES>
@@ -66,15 +55,30 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="GradleJnaPosix">
+      <library name="GradleNative">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/native-platform-0.11.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-native-4.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-freebsd-amd64-libcpp-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-freebsd-amd64-libstdcpp-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-freebsd-i386-libcpp-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-freebsd-i386-libstdcpp-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-amd64-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-amd64-ncurses5-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-amd64-ncurses6-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-i386-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-i386-ncurses5-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-i386-ncurses6-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-osx-amd64-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-osx-i386-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-windows-amd64-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-windows-i386-0.14.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/jansi-1.14.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="junit" />
     <orderEntry type="module" module-name="smRunner" />
     <orderEntry type="library" name="Kryo" level="project" />
     <orderEntry type="library" name="Ant" level="project" />

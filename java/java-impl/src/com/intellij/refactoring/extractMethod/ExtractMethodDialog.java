@@ -54,6 +54,8 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.util.HashSet;
+import java.util.Set;
 
 
 /**
@@ -124,6 +126,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     if (canBeChainedConstructor) {
       myCbChainedConstructor = new NonFocusableCheckBox(RefactoringBundle.message("extract.chained.constructor.checkbox"));
     }
+    myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[myVariableData.getInputVariables().size()]);
 
     init();
   }
@@ -159,7 +162,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
 
   @Override
   public String getChosenMethodName() {
-    return myNameField.getEnteredName();
+    return myNameField.getEnteredName().trim();
   }
 
   @Override
@@ -219,7 +222,9 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     myNameField.addDataChangedListener(this::update);
 
     myVisibilityPanel = createVisibilityPanel();
-    myVisibilityPanel.registerUpDownActionsFor(myNameField);
+    if (!myNameField.hasSuggestions()) {
+      myVisibilityPanel.registerUpDownActionsFor(myNameField);
+    }
     final JPanel visibilityAndReturnType = new JPanel(new BorderLayout(2, 0));
     if (!myTargetClass.isInterface()) {
       visibilityAndReturnType.add(myVisibilityPanel, BorderLayout.WEST);
@@ -306,28 +311,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
 
     //optionsPanel.add(new JLabel("Options: "));
 
-    if (myStaticFlag || myCanBeStatic) {
-      myMakeStatic.setEnabled(!myStaticFlag);
-      myMakeStatic.setSelected(myStaticFlag);
-      if (myVariableData.hasInstanceFields()) {
-        myMakeStatic.setText(RefactoringBundle.message("declare.static.pass.fields.checkbox"));
-      }
-      myMakeStatic.addItemListener(e -> {
-        if (myVariableData.hasInstanceFields()) {
-          myVariableData.setPassFields(myMakeStatic.isSelected());
-          myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[myVariableData.getInputVariables().size()]);
-          updateVarargsEnabled();
-          createParametersPanel();
-        }
-        updateSignature();
-      });
-      optionsPanel.add(myMakeStatic);
-    } else {
-      myMakeStatic.setSelected(false);
-      myMakeStatic.setEnabled(false);
-    }
-    final Border emptyBorder = IdeBorderFactory.createEmptyBorder(5, 0, 5, 4);
-    myMakeStatic.setBorder(emptyBorder);
+    createStaticOptions(optionsPanel, RefactoringBundle.message("declare.static.pass.fields.checkbox"));
 
     myFoldParameters.setSelected(myVariableData.isFoldingSelectedByDefault());
     myFoldParameters.setVisible(myVariableData.isFoldable());
@@ -342,6 +326,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
       updateSignature();
     });
     optionsPanel.add(myFoldParameters);
+    final Border emptyBorder = IdeBorderFactory.createEmptyBorder(5, 0, 5, 4);
     myFoldParameters.setBorder(emptyBorder);
 
     boolean canBeVarargs = false;
@@ -392,6 +377,30 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     return optionsPanel;
   }
 
+  protected void createStaticOptions(JPanel optionsPanel, String passFieldsAsParamsLabel) {
+    if (myStaticFlag || myCanBeStatic) {
+      myMakeStatic.setEnabled(!myStaticFlag);
+      myMakeStatic.setSelected(myStaticFlag);
+      if (myVariableData.hasInstanceFields()) {
+        myMakeStatic.setText(passFieldsAsParamsLabel);
+      }
+      myMakeStatic.addItemListener(e -> {
+        if (myVariableData.hasInstanceFields()) {
+          myVariableData.setPassFields(myMakeStatic.isSelected());
+          myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[myVariableData.getInputVariables().size()]);
+          updateVarargsEnabled();
+          createParametersPanel();
+        }
+        updateSignature();
+      });
+      optionsPanel.add(myMakeStatic);
+    } else {
+      myMakeStatic.setSelected(false);
+      myMakeStatic.setEnabled(false);
+    }
+    myMakeStatic.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 5, 4));
+  }
+
   private ComboBoxVisibilityPanel<String> createVisibilityPanel() {
     final JavaComboBoxVisibilityPanel panel = new JavaComboBoxVisibilityPanel();
     final PsiMethod containingMethod = getContainingMethod();
@@ -430,7 +439,8 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
   @Override
   @NotNull
   public String getVisibility() {
-    return myTargetClass.isInterface() ? PsiModifier.PUBLIC : ObjectUtils.notNull(myVisibilityPanel.getVisibility(), PsiModifier.PUBLIC);
+    return myTargetClass.isInterface() || myVisibilityPanel == null 
+           ? PsiModifier.PUBLIC : ObjectUtils.notNull(myVisibilityPanel.getVisibility(), PsiModifier.PUBLIC);
   }
 
   @Override
@@ -599,10 +609,11 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
   }
 
   protected void checkMethodConflicts(MultiMap<PsiElement, String> conflicts) {
+    checkParametersConflicts(conflicts);
     PsiMethod prototype;
     try {
       PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
-      prototype = factory.createMethod(myNameField.getEnteredName().trim(), myReturnType);
+      prototype = factory.createMethod(getChosenMethodName(), myReturnType);
       if (myTypeParameterList != null) prototype.getTypeParameterList().replace(myTypeParameterList);
       for (VariableData data : myInputVariables) {
         if (data.passAsParameter) {
@@ -616,6 +627,15 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     }
 
     ConflictsUtil.checkMethodConflicts(myTargetClass, null, prototype, conflicts);
+  }
+
+  protected void checkParametersConflicts(MultiMap<PsiElement, String> conflicts) {
+    Set<String> usedNames = new HashSet<>();
+    for (VariableData data : myInputVariables) {
+      if (data.passAsParameter && !usedNames.add(data.name)) {
+        conflicts.putValue(null, "Conflicting parameter name: " + data.name);
+      }
+    }
   }
 
   @Override

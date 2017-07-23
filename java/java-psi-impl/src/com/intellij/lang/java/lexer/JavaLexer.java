@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public class JavaLexer extends LexerBase {
 
   private static final Set<CharSequence> JAVA9_KEYWORDS = ContainerUtil.newTroveSet(
     CharSequenceHashingStrategy.CASE_SENSITIVE,
-    MODULE, REQUIRES, EXPORTS, USES, PROVIDES, TO, WITH);
+    OPEN, MODULE, REQUIRES, EXPORTS, OPENS, USES, PROVIDES, TRANSITIVE, TO, WITH);
 
   public static boolean isKeyword(String id, @NotNull LanguageLevel level) {
     return KEYWORDS.contains(id) ||

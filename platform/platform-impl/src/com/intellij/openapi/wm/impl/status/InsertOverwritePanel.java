@@ -42,11 +42,13 @@ public class InsertOverwritePanel extends EditorBasedWidget implements StatusBar
     myTextPanel.setRightPadding(7);
   }
 
+  @Override
   @NotNull
   public String ID() {
     return "InsertOverwrite";
   }
 
+  @Override
   public WidgetPresentation getPresentation(@NotNull PlatformType type) {
     return null;
   }

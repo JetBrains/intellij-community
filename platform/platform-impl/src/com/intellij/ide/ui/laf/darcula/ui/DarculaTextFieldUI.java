@@ -120,7 +120,7 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
     if (c.hasFocus()) {
       g.fillRoundRect(i.left - JBUI.scale(5), i.top - JBUI.scale(2), width - i.right - i.left + JBUI.scale(10), height - i.top - i.bottom + JBUI.scale(6), JBUI.scale(5), JBUI.scale(5));
     } else {
-      g.fillRect(i.left - JBUI.scale(5), i.top - JBUI.scale(2), width - i.right - i.left + JBUI.scale(12), height - i.top - i.bottom + JBUI.scale(6));
+      g.fillRect(i.left - JBUI.scale(5), i.top - JBUI.scale(2), width - i.right - i.left + JBUI.scale(10), height - i.top - i.bottom + JBUI.scale(6));
     }
   }
 
@@ -153,11 +153,5 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
       }
       clearIcon.paintIcon(null, g, p.x, p.y);
     }
-  }
-
-  @Override
-  protected void paintSafely(Graphics g) {
-    paintBackground(g);
-    super.paintSafely(g);
   }
 }

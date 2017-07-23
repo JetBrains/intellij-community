@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.ModuleAdapter;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -33,56 +31,38 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author yole
- */
-public class ModuleVcsDetector implements ProjectComponent {
+public class ModuleVcsDetector {
   private final Project myProject;
-  private final MessageBus myMessageBus;
   private final ProjectLevelVcsManagerImpl myVcsManager;
-  private MessageBusConnection myConnection;
 
-  public ModuleVcsDetector(final Project project, final MessageBus messageBus, final ProjectLevelVcsManager vcsManager) {
+  public ModuleVcsDetector(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManager, @NotNull StartupManager startupManager) {
     myProject = project;
-    myMessageBus = messageBus;
     myVcsManager = (ProjectLevelVcsManagerImpl) vcsManager;
-  }
 
-  @Override
-  public void projectOpened() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
     
-    final StartupManager manager = StartupManager.getInstance(myProject);
-    manager.registerStartupActivity(new Runnable() {
-      @Override
-      public void run() {
-        if (myVcsManager.needAutodetectMappings()) {
-          autoDetectVcsMappings(true);
-        }
-        myVcsManager.updateActiveVcss();
+    startupManager.registerStartupActivity(() -> {
+      if (myVcsManager.needAutodetectMappings()) {
+        autoDetectVcsMappings(true);
       }
+      myVcsManager.updateActiveVcss();
     });
-    manager.registerPostStartupActivity(new Runnable() {
-      @Override
-      public void run() {
-        if (myMessageBus != null) {
-          myConnection = myMessageBus.connect();
-          final MyModulesListener listener = new MyModulesListener();
-          myConnection.subscribe(ProjectTopics.MODULES, listener);
-          myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, listener);
-        }
-      }
+    startupManager.registerPostStartupActivity(() -> {
+      MessageBusConnection connection = myProject.getMessageBus().connect();
+      final MyModulesListener listener = new MyModulesListener();
+      connection.subscribe(ProjectTopics.MODULES, listener);
+      connection.subscribe(ProjectTopics.PROJECT_ROOTS, listener);
     });
   }
 
-  private class MyModulesListener extends ModuleAdapter implements ModuleRootListener {
+  private class MyModulesListener implements ModuleRootListener, ModuleListener {
     private final List<Pair<String, VcsDirectoryMapping>> myMappingsForRemovedModules = new ArrayList<>();
 
     @Override
@@ -111,28 +91,6 @@ public class ModuleVcsDetector implements ProjectComponent {
     @Override
     public void beforeModuleRemoved(@NotNull final Project project, @NotNull final Module module) {
       myMappingsForRemovedModules.addAll(getMappings(module));
-    }
-  }
-
-  @Override
-  public void projectClosed() {
-  }
-
-  @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "ModuleVcsDetector";
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
-    if (myConnection != null) {
-      myConnection.disconnect();
     }
   }
 

@@ -17,7 +17,6 @@ package git4idea.log;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.util.BekUtil;
@@ -41,7 +40,7 @@ class GitBekParentFixer {
   @NotNull
   static GitBekParentFixer prepare(@NotNull VirtualFile root, @NotNull GitLogProvider provider) throws VcsException {
     if (!BekUtil.isBekEnabled()) {
-      return new GitBekParentFixer(Collections.<Hash>emptySet());
+      return new GitBekParentFixer(Collections.emptySet());
     }
     return new GitBekParentFixer(getWrongCommits(provider, root));
   }
@@ -57,12 +56,7 @@ class GitBekParentFixer {
   @NotNull
   private static Set<Hash> getWrongCommits(@NotNull GitLogProvider provider, @NotNull VirtualFile root) throws VcsException {
     List<TimedVcsCommit> commitsMatchingFilter = provider.getCommitsMatchingFilter(root, MAGIC_FILTER, -1);
-    return ContainerUtil.map2Set(commitsMatchingFilter, new Function<TimedVcsCommit, Hash>() {
-      @Override
-      public Hash fun(TimedVcsCommit timedVcsCommit) {
-        return timedVcsCommit.getId();
-      }
-    });
+    return ContainerUtil.map2Set(commitsMatchingFilter, timedVcsCommit -> timedVcsCommit.getId());
   }
 
   @NotNull
@@ -89,6 +83,16 @@ class GitBekParentFixer {
 
   private static VcsLogFilterCollection createVcsLogFilterCollection() {
     final VcsLogTextFilter textFilter = new VcsLogTextFilter() {
+      @Override
+      public boolean matchesCase() {
+        return false;
+      }
+
+      @Override
+      public boolean isRegex() {
+        return false;
+      }
+
       @NotNull
       @Override
       public String getText() {
@@ -152,7 +156,7 @@ class GitBekParentFixer {
       @NotNull
       @Override
       public List<VcsLogDetailsFilter> getDetailsFilters() {
-        return Collections.<VcsLogDetailsFilter>singletonList(textFilter);
+        return Collections.singletonList(textFilter);
       }
     };
   }

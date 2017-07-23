@@ -16,7 +16,7 @@
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -25,7 +25,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.util.PathUtil;
-import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.dom.intentions.ChooseFileIntentionAction;
@@ -714,7 +713,12 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     String libPath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
     final VirtualFile libFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath);
 
-    ((ChooseFileIntentionAction)((IntentionActionWrapper)action).getDelegate()).setFileChooser(() -> new VirtualFile[]{libFile});
+    IntentionAction intentionAction = action;
+    while (intentionAction instanceof IntentionActionDelegate) {
+      intentionAction = ((IntentionActionDelegate)intentionAction).getDelegate();
+    }
+
+    ((ChooseFileIntentionAction)intentionAction).setFileChooser(() -> new VirtualFile[]{libFile});
     XmlCodeStyleSettings xmlSettings =
       CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().getCustomSettings(XmlCodeStyleSettings.class);
 
@@ -726,7 +730,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     }
     finally {
       xmlSettings.XML_TEXT_WRAP = prevValue;
-      ((ChooseFileIntentionAction)((IntentionActionWrapper)action).getDelegate()).setFileChooser(null);
+      ((ChooseFileIntentionAction)intentionAction).setFileChooser(null);
     }
 
     MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(myProject, myProjectPom);

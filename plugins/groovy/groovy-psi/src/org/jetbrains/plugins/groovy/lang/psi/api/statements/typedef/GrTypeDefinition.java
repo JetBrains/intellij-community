@@ -25,18 +25,19 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
+import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 
-public interface GrTypeDefinition extends PsiClass, GrTopLevelDefinition, GrDocCommentOwner, GrMember {
+public interface GrTypeDefinition extends PsiClass, GrDocCommentOwner, GrMember, GrNamedElement, GrTopStatement {
 
   GrTypeDefinition[] EMPTY_ARRAY = new GrTypeDefinition[0];
-  ArrayFactory<GrTypeDefinition> ARRAY_FACTORY = GrTypeDefinition[]::new;
+  ArrayFactory<GrTypeDefinition> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new GrTypeDefinition[count];
 
   @NotNull
   @Override

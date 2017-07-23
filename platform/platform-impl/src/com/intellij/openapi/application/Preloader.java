@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -25,14 +26,13 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.io.storage.HeavyProcessLatch;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Executor;
 
 /**
  * @author peter
  */
-public class Preloader implements ApplicationComponent {
+public class Preloader implements Disposable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.Preloader");
   private final Executor myExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("com.intellij.openapi.application.Preloader pool");
   private final ProgressIndicator myIndicator = new ProgressIndicatorBase();
@@ -82,13 +82,7 @@ public class Preloader implements ApplicationComponent {
   }
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     myIndicator.cancel();
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "Preloader";
   }
 }

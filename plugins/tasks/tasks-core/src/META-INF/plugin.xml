@@ -78,9 +78,7 @@
 
     <group id="tasks.toolbar.group" text="Tasks toolbar">
       <separator/>
-      <action id="tasks.switch.toolbar" class="com.intellij.tasks.actions.SwitchTaskCombo" text="Switch Task">
-        <keyboard-shortcut keymap="$default" first-keystroke="alt shift T"/>
-      </action>
+      <reference id="tasks.switch"/>
       <add-to-group group-id="MainToolBar" anchor="last"/>
       <add-to-group group-id="NavBarToolBarOthers" anchor="last"/>
     </group>
@@ -98,8 +96,8 @@
 
   <extensionPoints>
     <extensionPoint name="repositoryType" interface="com.intellij.tasks.TaskRepositoryType"/>
-    <extensionPoint area="IDEA_PROJECT" name="contextProvider" interface="com.intellij.tasks.context.WorkingContextProvider"/>
     <extensionPoint name="dialogPanelProvider" interface="com.intellij.tasks.ui.TaskDialogPanelProvider"/>
+    <extensionPoint name="commitPlaceholderProvider" interface="com.intellij.tasks.CommitPlaceholderProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -112,18 +110,10 @@
     <editChangelistSupport implementation="com.intellij.tasks.impl.TaskChangelistSupport"/>
 
     <projectService serviceImplementation="com.intellij.tasks.impl.TaskProjectConfiguration"/>
-    <projectService serviceImplementation="com.intellij.tasks.context.WorkingContextManager"/>
     <applicationService serviceImplementation="com.intellij.tasks.config.RecentTaskRepositories"/>
     <applicationService serviceImplementation="com.intellij.tasks.config.TaskSettings"/>
 
     <lang.documentationProvider language="TEXT" implementationClass="com.intellij.tasks.doc.TaskDocumentationProvider"/>
-
-    <!--context providers-->
-    <tasks.contextProvider implementation="com.intellij.tasks.context.OpenEditorsContextProvider"/>
-    <tasks.contextProvider implementation="com.intellij.tasks.context.ProjectViewContextProvider"/>
-    <tasks.contextProvider implementation="com.intellij.tasks.context.RunConfigurationsContextProvider"/>
-    <tasks.contextProvider implementation="com.intellij.tasks.context.XDebuggerBreakpointsContextProvider"/>
-    <tasks.contextProvider implementation="com.intellij.tasks.context.XDebuggerWatchesProvider"/>
 
     <tasks.repositoryType implementation="com.intellij.tasks.jira.JiraRepositoryType"/>
     <tasks.repositoryType implementation="com.intellij.tasks.youtrack.YouTrackRepositoryType"/>
@@ -149,7 +139,7 @@
     <annotator language="JQL" implementationClass="com.intellij.tasks.jira.jql.codeinsight.JqlAnnotator"/>
 
     <checkinHandlerFactory implementation="com.intellij.tasks.impl.TaskCheckinHandlerFactory"/>
-
+    <vcs.commitMessageProvider implementation="com.intellij.tasks.impl.TaskCommitMessageProvider"/>
     <!-- YouTrack support -->
     <!--<annotator language="TEXT" implementationClass="com.intellij.tasks.youtrack.lang.YouTrackHighlightingAnnotator"/>-->
     <fileTypeFactory implementation="com.intellij.tasks.youtrack.lang.YouTrackFileTypeFactory"/>

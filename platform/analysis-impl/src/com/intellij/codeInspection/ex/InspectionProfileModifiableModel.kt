@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,14 @@
  */
 package com.intellij.codeInspection.ex
 
-import com.intellij.codeInspection.ModifiableModel
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
+import com.intellij.psi.PsiElement
 import com.intellij.util.Consumer
 
-open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) : InspectionProfileImpl(source.name, source.myRegistrar, source.profileManager, source.myBaseProfile, null), ModifiableModel {
+open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) : InspectionProfileImpl(source.name, source.myToolSupplier, source.profileManager, source.myBaseProfile, null) {
   private var modified = false
 
   init {
@@ -78,9 +77,9 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
 
   fun isProperSetting(toolId: String): Boolean {
     if (myBaseProfile != null) {
-      val tools = myBaseProfile.getTools(toolId, null)
-      val currentTools = myTools[toolId]
-      return !Comparing.equal<Tools>(tools, currentTools)
+      val tools = myBaseProfile.getToolsOrNull(toolId, null)
+      val currentTools = myTools.get(toolId)
+      return tools != currentTools
     }
     return false
   }
@@ -98,6 +97,13 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
     modified = false
   }
 
+  fun resetToEmpty(project: Project) {
+    initInspectionTools(project)
+    for (toolWrapper in getInspectionTools(null)) {
+      setToolEnabled(toolWrapper.shortName, false, project, fireEvents = false)
+    }
+  }
+
   private fun InspectionProfileImpl.commit(model: InspectionProfileImpl) {
     name = model.name
     description = model.description
@@ -108,10 +114,14 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
     profileManager = model.profileManager
   }
 
+  fun disableTool(toolShortName: String, element: PsiElement) {
+    getTools(toolShortName, element.project).disableTool(element)
+  }
+
   override fun toString() = "$name (copy)"
 }
 
-fun modifyAndCommitProjectProfile(project: Project, action: Consumer<ModifiableModel>) {
+fun modifyAndCommitProjectProfile(project: Project, action: Consumer<InspectionProfileModifiableModel>) {
   ProjectInspectionProfileManager.getInstance(project).currentProfile.edit { action.consume(this) }
 }
 

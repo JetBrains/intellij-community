@@ -31,12 +31,9 @@ public abstract class HgActionFromMqPatches extends DumbAwareAction {
     final HgMqUnAppliedPatchesPanel patchInfo = e.getRequiredData(HgMqUnAppliedPatchesPanel.MQ_PATCHES);
     final List<String> names = patchInfo.getSelectedPatchNames();
     final HgRepository repository = patchInfo.getRepository();
-    Runnable task = new Runnable() {
-      @Override
-      public void run() {
-        ProgressManager.getInstance().getProgressIndicator().setText(getTitle());
-        executeInCurrentThread(repository, names);
-      }
+    Runnable task = () -> {
+      ProgressManager.getInstance().getProgressIndicator().setText(getTitle());
+      executeInCurrentThread(repository, names);
     };
     patchInfo.updatePatchSeriesInBackground(task);
   }

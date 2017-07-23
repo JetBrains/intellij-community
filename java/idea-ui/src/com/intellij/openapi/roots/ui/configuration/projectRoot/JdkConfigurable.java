@@ -34,27 +34,24 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * User: anna
- * Date: 05-Jun-2006
- */
 public class JdkConfigurable extends ProjectStructureElementConfigurable<Sdk> implements Place.Navigator {
   private final ProjectJdkImpl myProjectJdk;
   private final SdkEditor mySdkEditor;
   private final SdkProjectStructureElement myProjectStructureElement;
 
-  public JdkConfigurable(final ProjectJdkImpl projectJdk,
-                         final ProjectSdksModel sdksModel,
-                         final Runnable updateTree, @NotNull History history, Project project) {
+  public JdkConfigurable(@NotNull ProjectJdkImpl projectJdk,
+                         @NotNull ProjectSdksModel sdksModel,
+                         @NotNull Runnable updateTree,
+                         @NotNull History history, @NotNull Project project) {
     super(true, updateTree);
     myProjectJdk = projectJdk;
-    mySdkEditor = createSdkEditor(sdksModel, history, myProjectJdk);
+    mySdkEditor = createSdkEditor(project, sdksModel, history, myProjectJdk);
     final StructureConfigurableContext context = ModuleStructureConfigurable.getInstance(project).getContext();
     myProjectStructureElement = new SdkProjectStructureElement(context, myProjectJdk);
   }
 
-  protected SdkEditor createSdkEditor(ProjectSdksModel sdksModel, History history, ProjectJdkImpl projectJdk) {
-    return new SdkEditor(sdksModel, history, projectJdk);
+  protected SdkEditor createSdkEditor(@NotNull Project project, ProjectSdksModel sdksModel, History history, ProjectJdkImpl projectJdk) {
+    return new SdkEditor(project, sdksModel, history, projectJdk);
   }
 
   @Override

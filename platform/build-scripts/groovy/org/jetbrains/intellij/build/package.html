@@ -3,12 +3,15 @@
 <body>
 This package contains groovy scripts which build distributions of products based on IntelliJ Platform.
 <p>
-If you want to build a product from sources locally, run the corresponding *.gant file from IntelliJ IDEA (e.g. dist.gant to build IDEA Community).
+If you want to build a product from sources locally, run the corresponding *.gant file from IntelliJ IDEA (e.g. idea_community.gant to build IDEA Community).
   Do not forget to add 'Build Project' step to 'Before Launch' section of the created Run configuration to ensure that changed groovy scripts are copied to the output.
   It makes sense to add {@linkplain org.jetbrains.intellij.build.BuildOptions#USE_COMPILED_CLASSES_PROPERTY '-Dintellij.build.use.compiled.classes=true'} to 'VM Options'
   to skip compilation and use the compiled classes from the project output. Also you may use {@linkplain org.jetbrains.intellij.build.BuildOptions#targetOS 'intellij.build.target.os'}
   system property to build artifacts only for a specific OS, and set {@linkplain org.jetbrains.intellij.build.BuildOptions#buildStepsToSkip 'intellij.build.skip.build.steps'}
   system property to skip some long build steps (e.g. scrambling). See {@link org.jetbrains.intellij.build.BuildOptions BuildOptions} class for more options.
+</p>
+<p>
+  In order to run a gant script without IntelliJ IDEA you can use build/gant.xml Ant file and pass path to the gant script via gant.script property.
 </p>
 <p>
   If you want to add a new module to an existing product, add its name to {@link org.jetbrains.intellij.build.ProductModulesLayout#platformApiModules
@@ -35,7 +38,7 @@ If you want to build a new product, you need to define the following:
 <ol>
   <li>an implementation of {@link org.jetbrains.intellij.build.ProductProperties ProductProperties}, look at {@link org.jetbrains.intellij.build.IdeaCommunityProperties IdeaCommunityProperties}
     for example.</li>
-  <li>a gant file which calls {@link org.jetbrains.intellij.build.BuildTasks#buildProduct BuildTasks.buildProduct} method</li>
+  <li>a gant file which calls {@link org.jetbrains.intellij.build.BuildTasks#buildProduct BuildTasks.buildProduct} method, look at python/build/pycharm_community_build.gant for example</li>
 </ol>
 </body>
 </html>

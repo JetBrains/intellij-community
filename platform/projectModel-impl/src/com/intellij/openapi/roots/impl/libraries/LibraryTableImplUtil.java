@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.roots.impl.libraries;
 
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
@@ -36,6 +37,7 @@ public class LibraryTableImplUtil {
   private LibraryTableImplUtil() {
   }
 
+  @NotNull
   public static Library loadLibrary(@NotNull Element rootElement, @NotNull RootModelImpl rootModel) throws InvalidDataException {
     final List children = rootElement.getChildren(LibraryImpl.ELEMENT);
     if (children.size() != 1) throw new InvalidDataException();
@@ -43,9 +45,9 @@ public class LibraryTableImplUtil {
     return new LibraryImpl(null, element, rootModel);
   }
 
-  public static Library createModuleLevelLibrary(@Nullable String name,
-                                                 PersistentLibraryKind kind,
-                                                 @NotNull RootModelImpl rootModel) {
-    return new LibraryImpl(name, kind, null, rootModel);
+  @NotNull
+  public static Library createModuleLevelLibrary(@Nullable String name, PersistentLibraryKind kind, @NotNull RootModelImpl rootModel,
+                                                 @Nullable ProjectModelExternalSource externalSource) {
+    return new LibraryImpl(name, kind, null, rootModel, externalSource);
   }
 }

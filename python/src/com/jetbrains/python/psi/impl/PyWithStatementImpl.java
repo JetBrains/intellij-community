@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,5 +75,10 @@ public class PyWithStatementImpl extends PyElementImpl implements PyWithStatemen
     final PyStatementList statementList = childToPsi(PyElementTypes.STATEMENT_LIST);
     assert statementList != null : "Statement list missing for with statement " + getText();
     return statementList;
+  }
+
+  @Override
+  public boolean isAsync() {
+    return getNode().findChildByType(PyTokenTypes.ASYNC_KEYWORD) != null;
   }
 }

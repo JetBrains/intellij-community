@@ -30,12 +30,15 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
 
 /**
  * A java version of http://github.com/blakeembrey/pluralize
@@ -65,20 +68,27 @@ class Pluralizer {
    */
   static String restoreCase(String word, String result) {
     if (word == null || result == null || word == result) return result;
+    int len = Math.min(result.length(), word.length());
+    if (len == 0) return result;
     char[] chars = result.toCharArray();
-    boolean prevUp = false;
-    int len = Math.min(chars.length, word.length());
-    for (int i = 0; i < len; i++) {
+    int i = 0;
+    for (; i < len; i++) {
       char wc = word.charAt(i);
       if (chars[i] == wc && i != len - 1) continue;
       char uc = Character.toUpperCase(chars[i]);
       char lc = Character.toLowerCase(chars[i]);
-      if (wc == lc || (prevUp = wc == uc)) {
-        chars[i] = wc;
-      }
+      if (wc != lc && wc != uc) break;
+      chars[i] = wc;
     }
-    for (int i = len; i < chars.length; i++) {
-      chars[i] = prevUp ? Character.toUpperCase(chars[i]) : Character.toLowerCase(chars[i]);
+    if (i < chars.length) {
+      char wc = word.charAt(i - 1);
+      char uc = Character.toUpperCase(wc);
+      char lc = Character.toLowerCase(wc);
+      if (uc != lc) {
+        for (; i < chars.length; i++) {
+          chars[i] = wc == uc ? Character.toUpperCase(chars[i]) : Character.toLowerCase(chars[i]);
+        }
+      }
     }
     return new String(chars);
   }
@@ -98,11 +108,12 @@ class Pluralizer {
         return matcher.replaceFirst(rule.second);
       }
     }
-    return word;
+    return null;
   }
 
   /**
    * Replace a word with the updated word.
+   * @return null if no applicable rules found
    */
   private String replaceWord(String word, Map<String, String> replaceMap, Map<String, String> keepMap, List<Pair<Pattern, String>> rules) {
     if (StringUtil.isEmpty(word)) return word;
@@ -112,8 +123,9 @@ class Pluralizer {
     if (keepMap.containsKey(word)) return word;
 
     // Check against the replacement map for a direct word replacement.
-    if (replaceMap.containsKey(word)) {
-      return restoreCase(word, replaceMap.get(word));
+    String replacement = replaceMap.get(word);
+    if (replacement != null) {
+      return replacement;
     }
 
     // Run all the rules against the word.
@@ -126,14 +138,16 @@ class Pluralizer {
   public String pluralize(String word, int count, boolean inclusive) {
     String pluralized = count == 1 ? singular(word) : plural(word);
 
-    return (inclusive ? count + " " : "") + pluralized;
+    return (inclusive ? count + " " : "") + notNullize(pluralized, word);
   }
 
-  public String plural(String word) {
+  @Nullable
+  public String plural(@Nullable String word) {
     return restoreCase(word, replaceWord(word, irregularSingles, irregularPlurals, pluralRules));
   }
 
-  public String singular(String word) {
+  @Nullable
+  public String singular(@Nullable String word) {
     return restoreCase(word, replaceWord(word, irregularPlurals, irregularSingles, singularRules));
   }
 
@@ -258,7 +272,6 @@ class Pluralizer {
       {"/(child)(?:ren)?$", "$1ren"},
       {"/eaux$", "$0"},
       {"/m[ae]n$", "men"},
-      {"thou", "you"}
     }).consumeEach(new Consumer<String[]>() {
       @Override
       public void consume(String[] o) {
@@ -271,8 +284,8 @@ class Pluralizer {
      */
     JBIterable.of(new String[][]{
       {"/(.)s$", "$1"},
-      {"/(ss)$", "$1"},
-      {"/((a)naly|(b)a|(d)iagno|(p)arenthe|(p)rogno|(s)ynop|(t)he)(?:sis|ses)$", "$1sis"},
+      {"/([^aeiou]s)es$", "$1"},
+      {"/(analy|^ba|diagno|parenthe|progno|synop|the)(?:sis|ses)$", "$1sis"},
       {"/(^analy)(?:sis|ses)$", "$1sis"},
       {"/(wi|kni|(?:after|half|high|low|mid|non|night|[^\\w]|^)li)ves$", "$1fe"},
       {"/(ar|(?:wo|[ae])l|[eo][ao])ves$", "$1f"},
@@ -281,7 +294,7 @@ class Pluralizer {
       {"/\\b(mon|smil)ies$", "$1ey"},
       {"/(m|l)ice$", "$1ouse"},
       {"/(seraph|cherub)im$", "$1"},
-      {"/(x|ch|ss|sh|zz|tto|go|cho|alias|[^aou]us|tlas|gas|(?:her|at|gr)o|ris)(?:es)?$", "$1"},
+      {"/(x|ch|.ss|sh|zz|tto|go|cho|alias|[^aou]us|tlas|gas|(?:her|at|gr)o|ris)(?:es)?$", "$1"},
       {"/(e[mn]u)s?$", "$1"},
       {"/(cookie|movie|twelve)s$", "$1"},
       {"/(cris|test|diagnos)(?:is|es)$", "$1is"},
@@ -377,6 +390,7 @@ class Pluralizer {
       "species",
       "staff",
       "swine",
+      "tennis",
       "trout",
       "traffic",
       "transportation",

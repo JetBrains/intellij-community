@@ -21,7 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.stubs.EmptyStub;
-import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -37,7 +36,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
  * @author ilyas
  */
 public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub> implements GrTypeParameterList, StubBasedPsiElement<EmptyStub> {
-  private static final ArrayFactory<GrTypeParameter> ARRAY_FACTORY = count -> new GrTypeParameter[count];
 
   public GrTypeParameterListImpl(EmptyStub stub) {
     super(stub, GroovyElementTypes.TYPE_PARAMETER_LIST);
@@ -51,9 +49,10 @@ public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub> implem
     return "Type parameter list";
   }
 
+  @NotNull
   @Override
   public GrTypeParameter[] getTypeParameters() {
-    return getStubOrPsiChildren(GroovyElementTypes.TYPE_PARAMETER, ARRAY_FACTORY);
+    return getStubOrPsiChildren(GroovyElementTypes.TYPE_PARAMETER, GrTypeParameter.ARRAY_FACTORY);
   }
 
   @Override

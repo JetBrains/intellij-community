@@ -35,13 +35,15 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.history.GitFileHistory;
 import git4idea.history.GitHistoryUtils;
-import git4idea.history.browser.GitHeavyCommit;
-import git4idea.history.browser.SymbolicRefs;
+import git4idea.history.GitLogUtil;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,12 +108,7 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
   public void loadCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, int maxCount,
                                    final AsynchConsumer<CommittedChangeList> consumer) throws VcsException {
     try {
-      getCommittedChangesImpl(settings, location, maxCount, new Consumer<GitCommittedChangeList>() {
-        @Override
-        public void consume(GitCommittedChangeList gitCommittedChangeList) {
-          consumer.consume(gitCommittedChangeList);
-        }
-      });
+      getCommittedChangesImpl(settings, location, maxCount, gitCommittedChangeList -> consumer.consume(gitCommittedChangeList));
     }
     finally {
       consumer.finished();
@@ -123,17 +120,13 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
 
     final List<CommittedChangeList> result = new ArrayList<>();
 
-    getCommittedChangesImpl(settings, location, maxCount, new Consumer<GitCommittedChangeList>() {
-      public void consume(GitCommittedChangeList committedChangeList) {
-        result.add(committedChangeList);
-      }
-    });
+    getCommittedChangesImpl(settings, location, maxCount, committedChangeList -> result.add(committedChangeList));
 
     return result;
   }
 
   private void getCommittedChangesImpl(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount,
-                                                            final Consumer<GitCommittedChangeList> consumer)
+                                       final Consumer<GitCommittedChangeList> consumer)
     throws VcsException {
     GitRepositoryLocation l = (GitRepositoryLocation)location;
     final Long beforeRev = settings.getChangeBeforeFilter();
@@ -146,29 +139,27 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
       throw new VcsException("The repository does not exists anymore: " + l.getRoot());
     }
 
-    GitUtil.getLocalCommittedChanges(myProject, root, new Consumer<GitSimpleHandler>() {
-      public void consume(GitSimpleHandler h) {
-        if (!StringUtil.isEmpty(author)) {
-          h.addParameters("--author=" + author);
-        }
-        if (beforeDate != null) {
-          h.addParameters("--before=" + GitUtil.gitTime(beforeDate));
-        }
-        if (afterDate != null) {
-          h.addParameters("--after=" + GitUtil.gitTime(afterDate));
-        }
-        if (maxCount != getUnlimitedCountValue()) {
-          h.addParameters("-n" + maxCount);
-        }
-        if (beforeRev != null && afterRev != null) {
-          h.addParameters(GitUtil.formatLongRev(afterRev) + ".." + GitUtil.formatLongRev(beforeRev));
-        }
-        else if (beforeRev != null) {
-          h.addParameters(GitUtil.formatLongRev(beforeRev));
-        }
-        else if (afterRev != null) {
-          h.addParameters(GitUtil.formatLongRev(afterRev) + "..");
-        }
+    GitUtil.getLocalCommittedChanges(myProject, root, h -> {
+      if (!StringUtil.isEmpty(author)) {
+        h.addParameters("--author=" + author);
+      }
+      if (beforeDate != null) {
+        h.addParameters("--before=" + GitUtil.gitTime(beforeDate));
+      }
+      if (afterDate != null) {
+        h.addParameters("--after=" + GitUtil.gitTime(afterDate));
+      }
+      if (maxCount != getUnlimitedCountValue()) {
+        h.addParameters("-n" + maxCount);
+      }
+      if (beforeRev != null && afterRev != null) {
+        h.addParameters(GitUtil.formatLongRev(afterRev) + ".." + GitUtil.formatLongRev(beforeRev));
+      }
+      else if (beforeRev != null) {
+        h.addParameters(GitUtil.formatLongRev(beforeRev));
+      }
+      else if (afterRev != null) {
+        h.addParameters(GitUtil.formatLongRev(afterRev) + "..");
       }
     }, consumer, false);
   }
@@ -186,34 +177,43 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
   }
 
   @Override
-  public Pair<CommittedChangeList, FilePath> getOneList(final VirtualFile file, final VcsRevisionNumber number) throws VcsException {
+  public Pair<CommittedChangeList, FilePath> getOneList(@NotNull VirtualFile file, @NotNull VcsRevisionNumber number)
+    throws VcsException {
     FilePath filePath = VcsUtil.getFilePath(file);
 
-    final List<GitHeavyCommit> gitCommits =
-      GitHistoryUtils.commitsDetails(myProject, filePath, new SymbolicRefs(), Collections.singletonList(number.asString()));
+    GitRepository repository =
+      GitRepositoryManager.getInstance(myProject).getRepositoryForFile(GitHistoryUtils.getLastCommitName(myProject, filePath));
+    if (repository == null) {
+      return null;
+    }
+    VirtualFile root = repository.getRoot();
+
+    String[] hashParameters = GitHistoryUtils.formHashParameters(repository.getVcs(), Collections.singleton(number.asString()));
+    List<GitCommit> gitCommits = GitLogUtil.collectFullDetails(myProject, root, hashParameters);
     if (gitCommits.size() != 1) {
       return null;
     }
-    final GitHeavyCommit gitCommit = gitCommits.get(0);
-    CommittedChangeList commit = new GitCommittedChangeList(gitCommit.getDescription() + " (" + gitCommit.getShortHash().getString() + ")",
-                                                            gitCommit.getDescription(), gitCommit.getAuthor(), (GitRevisionNumber)number,
+    VcsFullCommitDetails gitCommit = gitCommits.get(0);
+    CommittedChangeList commit = new GitCommittedChangeList(gitCommit.getFullMessage() + " (" + gitCommit.getId().toShortString() + ")",
+                                                            gitCommit.getFullMessage(), VcsUserUtil.toExactString(gitCommit.getAuthor()),
+                                                            (GitRevisionNumber)number,
                                                             new Date(gitCommit.getAuthorTime()), gitCommit.getChanges(),
                                                             assertNotNull(GitVcs.getInstance(myProject)), true);
 
-    final Collection<Change> changes = commit.getChanges();
+    Collection<Change> changes = commit.getChanges();
     if (changes.size() == 1) {
       Change change = changes.iterator().next();
       return Pair.create(commit, ChangesUtil.getFilePath(change));
     }
     for (Change change : changes) {
       if (change.getAfterRevision() != null && FileUtil.filesEqual(filePath.getIOFile(), change.getAfterRevision().getFile().getIOFile())) {
-        return new Pair<>(commit, filePath);
+        return Pair.create(commit, filePath);
       }
     }
-    final String afterTime = "--after=" + GitUtil.gitTime(gitCommit.getDate());
-    final List<VcsFileRevision> history = GitHistoryUtils.history(myProject, filePath, (VirtualFile)null, afterTime);
+    String afterTime = "--after=" + GitUtil.gitTime(new Date(gitCommit.getCommitTime()));
+    List<VcsFileRevision> history = GitFileHistory.collectHistory(myProject, filePath, afterTime);
     if (history.isEmpty()) {
-      return new Pair<>(commit, filePath);
+      return Pair.create(commit, filePath);
     }
     return Pair.create(commit, ((GitFileRevision)history.get(history.size() - 1)).getPath());
   }

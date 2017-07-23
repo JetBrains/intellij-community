@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,9 +80,5 @@ public class CustomFoldingConfigurable implements SearchableConfigurable {
     mySettingsPanel.setEndPattern(myConfiguration.getState().getEndFoldingPattern());
     mySettingsPanel.setEnabled(myConfiguration.getState().isEnabled());
     mySettingsPanel.setCollapsedStatePattern(myConfiguration.getState().getDefaultCollapsedStatePattern());
-  }
-
-  @Override
-  public void disposeUIResources() {
   }
 }

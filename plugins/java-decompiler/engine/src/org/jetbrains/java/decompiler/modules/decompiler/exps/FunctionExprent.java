@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -459,7 +459,20 @@ public class FunctionExprent extends Exprent {
         .append(wrapOperandString(lstOperands.get(1), true, indent, tracer));
     }
 
+      // try to determine more accurate type for 'char' literals
     if (funcType >= FUNCTION_EQ) {
+      if (funcType <= FUNCTION_LE) {
+        Exprent left = lstOperands.get(0);
+        Exprent right = lstOperands.get(1);
+
+        if (right.type == EXPRENT_CONST) {
+          ((ConstExprent) right).adjustConstType(left.getExprType());
+        }
+        else if (left.type == EXPRENT_CONST) {
+          ((ConstExprent) left).adjustConstType(right.getExprType());
+        }
+      }
+
       return wrapOperandString(lstOperands.get(0), false, indent, tracer)
         .append(OPERATORS[funcType - FUNCTION_EQ + 11])
         .append(wrapOperandString(lstOperands.get(1), true, indent, tracer));
@@ -485,9 +498,9 @@ public class FunctionExprent extends Exprent {
         return res.append(".length");
       case FUNCTION_IIF:
         return wrapOperandString(lstOperands.get(0), true, indent, tracer)
-          .append("?")
+          .append(" ? ")
           .append(wrapOperandString(lstOperands.get(1), true, indent, tracer))
-          .append(":")
+          .append(" : ")
           .append(wrapOperandString(lstOperands.get(2), true, indent, tracer));
       case FUNCTION_IPP:
         return wrapOperandString(lstOperands.get(0), true, indent, tracer).append("++");
@@ -501,27 +514,27 @@ public class FunctionExprent extends Exprent {
         return wrapOperandString(lstOperands.get(0), true, indent, tracer).append(" instanceof ").append(wrapOperandString(lstOperands.get(1), true, indent, tracer));
       case FUNCTION_LCMP: // shouldn't appear in the final code
         return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("__lcmp__(")
-                 .append(",")
+                 .append(", ")
                  .append(wrapOperandString(lstOperands.get(1), true, indent, tracer))
                  .append(")");
       case FUNCTION_FCMPL: // shouldn't appear in the final code
         return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("__fcmpl__(")
-                 .append(",")
+                 .append(", ")
                  .append(wrapOperandString(lstOperands.get(1), true, indent, tracer))
                  .append(")");
       case FUNCTION_FCMPG: // shouldn't appear in the final code
         return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("__fcmpg__(")
-                 .append(",")
+                 .append(", ")
                  .append(wrapOperandString(lstOperands.get(1), true, indent, tracer))
                  .append(")");
       case FUNCTION_DCMPL: // shouldn't appear in the final code
         return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("__dcmpl__(")
-                 .append(",")
+                 .append(", ")
                  .append(wrapOperandString(lstOperands.get(1), true, indent, tracer))
                  .append(")");
       case FUNCTION_DCMPG: // shouldn't appear in the final code
         return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("__dcmpg__(")
-                 .append(",")
+                 .append(", ")
                  .append(wrapOperandString(lstOperands.get(1), true, indent, tracer))
                  .append(")");
     }

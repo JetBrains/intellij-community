@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -180,31 +181,7 @@ public class DoubleBraceInitializationInspection extends BaseInspection {
     @Override
     public void visitAnonymousClass(PsiAnonymousClass aClass) {
       super.visitAnonymousClass(aClass);
-      final PsiClassInitializer[] initializers = aClass.getInitializers();
-      if (initializers.length != 1) {
-        return;
-      }
-      final PsiClassInitializer initializer = initializers[0];
-      if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
-        // don't warn on broken code
-        return;
-      }
-      final PsiField[] fields = aClass.getFields();
-      if (fields.length != 0) {
-        return;
-      }
-      final PsiMethod[] methods = aClass.getMethods();
-      if (methods.length != 0) {
-        return;
-      }
-      final PsiClass[] innerClasses = aClass.getInnerClasses();
-      if (innerClasses.length != 0) {
-        return;
-      }
-      final PsiJavaCodeReferenceElement reference = aClass.getBaseClassReference();
-      if (reference.resolve() == null) {
-        return;
-      }
+      if (ClassUtils.getDoubleBraceInitializer(aClass) == null) return;
       registerClassError(aClass, aClass);
     }
   }

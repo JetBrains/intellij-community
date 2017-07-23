@@ -3,7 +3,7 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$" />
-    <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="annotations" />
     <orderEntry type="module" module-name="ant" />
@@ -100,7 +100,6 @@
     <orderEntry type="module" module-name="ui-designer-jps-plugin" scope="TEST" />
     <orderEntry type="module" module-name="ui-designer-jps-plugin" scope="TEST" />
     <orderEntry type="module" module-name="java-tests" scope="TEST" />
-    <orderEntry type="module" module-name="community-tests" scope="TEST" />
     <orderEntry type="module" module-name="jira" />
     <orderEntry type="module" module-name="java-decompiler-plugin" />
     <orderEntry type="module" module-name="structuralsearch" />
@@ -112,7 +111,6 @@
     <orderEntry type="module" module-name="typeMigration" />
     <orderEntry type="module" module-name="platform-tests" />
     <orderEntry type="module" module-name="android" />
-    <orderEntry type="module" module-name="configuration-store-tests" scope="TEST" />
     <orderEntry type="module" module-name="devkit-tests" scope="TEST" />
     <orderEntry type="module" module-name="diff-tests" scope="TEST" />
     <orderEntry type="module" module-name="built-in-server-tests" scope="TEST" />
@@ -123,5 +121,10 @@
     <orderEntry type="module" module-name="script-debugger-ui" scope="TEST" />
     <orderEntry type="module" module-name="remote-servers-git-java" />
     <orderEntry type="module" module-name="terminal" />
+    <orderEntry type="module" module-name="javac-ref-scanner-8" scope="RUNTIME" />
+    <orderEntry type="module" module-name="platform-build-scripts" scope="TEST" />
+    <orderEntry type="module" module-name="android-plugin" />
+    <orderEntry type="module" module-name="stats-collector" />
+    <orderEntry type="module" module-name="slowCheck" scope="TEST" />
   </component>
 </module>

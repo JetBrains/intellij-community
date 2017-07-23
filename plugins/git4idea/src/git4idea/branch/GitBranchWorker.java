@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -38,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Executes the logic of git branch operations.
@@ -60,12 +60,9 @@ public final class GitBranchWorker {
   
   public void checkoutNewBranch(@NotNull final String name, @NotNull List<GitRepository> repositories) {
     updateInfo(repositories);
-    repositories = ContainerUtil.filter(repositories, new Condition<GitRepository>() {
-      @Override
-      public boolean value(GitRepository repository) {
-        GitLocalBranch currentBranch = repository.getCurrentBranch();
-        return currentBranch == null || !currentBranch.getName().equals(name);
-      }
+    repositories = ContainerUtil.filter(repositories, repository -> {
+      GitLocalBranch currentBranch = repository.getCurrentBranch();
+      return currentBranch == null || !currentBranch.getName().equals(name);
     });
     if (!repositories.isEmpty()) {
       new GitCheckoutNewBranchOperation(myProject, myGit, myUiHandler, repositories, name).execute();
@@ -75,10 +72,15 @@ public final class GitBranchWorker {
     }
   }
 
+  public void createBranch(@NotNull String name, @NotNull Map<GitRepository, String> startPoints) {
+    updateInfo(startPoints.keySet());
+    new GitCreateBranchOperation(myProject, myGit, myUiHandler, name, startPoints).execute();
+  }
+
   public void createNewTag(@NotNull final String name, @NotNull final String reference, @NotNull final List<GitRepository> repositories) {
     for (GitRepository repository : repositories) {
       myGit.createNewTag(repository, name, null, reference);
-      repository.getRepositoryFiles().refresh(false);
+      repository.getRepositoryFiles().refresh();
     }
   }
 
@@ -133,12 +135,8 @@ public final class GitBranchWorker {
       LOG.error("The task to get compare info didn't finish. Repositories: \n" + repositories + "\nbranch name: " + branchName);
       return;
     }
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        displayCompareDialog(branchName, GitBranchUtil.getCurrentBranchOrRev(repositories), myCompareInfo, selectedRepository);
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(
+      () -> displayCompareDialog(branchName, GitBranchUtil.getCurrentBranchOrRev(repositories), myCompareInfo, selectedRepository));
   }
 
   private GitCommitCompareInfo loadCommitsToCompare(List<GitRepository> repositories, String branchName) {

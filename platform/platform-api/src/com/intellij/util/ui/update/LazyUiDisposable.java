@@ -17,27 +17,25 @@ package com.intellij.util.ui.update;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
 
-import javax.swing.*;
+import javax.swing.JComponent;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
+import static com.intellij.openapi.actionSystem.PlatformDataKeys.UI_DISPOSABLE;
 
 public abstract class LazyUiDisposable<T extends Disposable> implements Activatable {
 
   private Throwable myAllocation;
 
-  private boolean myWasEverShown;
-
+  private final AtomicReference<JComponent> myUI;
   private final Disposable myParent;
   private final T myChild;
 
@@ -46,6 +44,7 @@ public abstract class LazyUiDisposable<T extends Disposable> implements Activata
       myAllocation = new Exception();
     }
 
+    myUI = new AtomicReference<>(ui);
     myParent = parent;
     myChild = child;
 
@@ -53,57 +52,35 @@ public abstract class LazyUiDisposable<T extends Disposable> implements Activata
   }
 
   public final void showNotify() {
-    if (myWasEverShown) return;
+    JComponent ui = myUI.getAndSet(null);
+    if (ui == null) return;
 
-    try {
-      findParentDisposable()
-        .done(parent -> {
-          Project project = null;
-          if (ApplicationManager.getApplication() != null) {
-            project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-          }
-          initialize(parent, myChild, project);
-          Disposer.register(parent, myChild);
-        });
+    Project project = null;
+    Disposable parent = myParent;
+
+    if (ApplicationManager.getApplication() != null) {
+      DataContext context = DataManager.getInstance().getDataContext(ui);
+      project = PROJECT.getData(context);
+      if (parent == null) {
+        parent = UI_DISPOSABLE.getData(context);
+      }
     }
-    finally {
-      myWasEverShown = true;
+    if (parent == null) {
+      if (project == null) {
+        Logger.getInstance(LazyUiDisposable.class).warn("use application as a parent disposable");
+        parent = Disposer.get("ui");
+      }
+      else {
+        Logger.getInstance(LazyUiDisposable.class).warn("use project as a parent disposable");
+        parent = project;
+      }
     }
+    initialize(parent, myChild, project);
+    Disposer.register(parent, myChild);
   }
 
   public final void hideNotify() {
   }
 
   protected abstract void initialize(@NotNull Disposable parent, @NotNull T child, @Nullable Project project);
-
-  @NotNull
-  private Promise<Disposable> findParentDisposable() {
-    return findDisposable(myParent, PlatformDataKeys.UI_DISPOSABLE);
-  }
-
-  private static Promise<Disposable> findDisposable(Disposable defaultValue, final DataKey<? extends Disposable> key) {
-    if (defaultValue == null) {
-      if (ApplicationManager.getApplication() != null) {
-        final AsyncPromise<Disposable> result = new AsyncPromise<>();
-        DataManager.getInstance().getDataContextFromFocus()
-          .doWhenDone(new Consumer<DataContext>() {
-            @Override
-            public void consume(DataContext context) {
-              Disposable disposable = key.getData(context);
-              if (disposable == null) {
-                disposable = Disposer.get("ui");
-              }
-              result.setResult(disposable);
-            }
-          });
-        return result;
-      }
-      else {
-        return null;
-      }
-    }
-    else {
-      return Promise.resolve(defaultValue);
-    }
-  }
 }

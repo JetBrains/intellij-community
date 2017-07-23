@@ -14,7 +14,6 @@
     </content>
     <content url="file://$MODULE_DIR$/../../plugins/generate-tostring">
       <sourceFolder url="file://$MODULE_DIR$/../../plugins/generate-tostring/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/../../plugins/generate-tostring/resources" type="java-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -50,6 +49,17 @@
     <orderEntry type="module" module-name="spellchecker" />
     <orderEntry type="library" name="nekohtml" level="project" />
     <orderEntry type="module" module-name="built-in-server" />
+    <orderEntry type="module" module-name="uast-java" />
+    <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../lib/wadl-core.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
   <component name="copyright">
     <Base>

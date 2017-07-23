@@ -57,6 +57,7 @@ grammar {
         SVG.GraphicalEvents.attrib,
         SVG.Cursor.attrib,
         SVG.External.attrib,
+        common.attrs.aria?,
         attribute d { PathData.datatype },
         attribute pathLength { Number.datatype }?,
         attribute transform { TransformList.datatype }?
@@ -81,6 +82,7 @@ grammar {
         SVG.GraphicalEvents.attrib,
         SVG.Cursor.attrib,
         SVG.External.attrib,
+        common.attrs.aria?,
         attribute x { Coordinate.datatype }?,
         attribute y { Coordinate.datatype }?,
         attribute width { Length.datatype },
@@ -109,6 +111,7 @@ grammar {
         SVG.GraphicalEvents.attrib,
         SVG.Cursor.attrib,
         SVG.External.attrib,
+        common.attrs.aria?,
         attribute cx { Coordinate.datatype }?,
         attribute cy { Coordinate.datatype }?,
         attribute r { Length.datatype },
@@ -131,6 +134,7 @@ grammar {
         SVG.GraphicalEvents.attrib,
         SVG.Cursor.attrib,
         SVG.External.attrib,
+        common.attrs.aria?,
         attribute x1 { Coordinate.datatype }?,
         attribute y1 { Coordinate.datatype }?,
         attribute x2 { Coordinate.datatype }?,
@@ -157,6 +161,7 @@ grammar {
         SVG.GraphicalEvents.attrib,
         SVG.Cursor.attrib,
         SVG.External.attrib,
+        common.attrs.aria?,
         attribute cx { Coordinate.datatype }?,
         attribute cy { Coordinate.datatype }?,
         attribute rx { Length.datatype },
@@ -185,6 +190,7 @@ grammar {
         SVG.GraphicalEvents.attrib,
         SVG.Cursor.attrib,
         SVG.External.attrib,
+        (common.attrs.aria.implicit.group | common.attrs.aria)?,
         attribute points { Points.datatype },
         attribute transform { TransformList.datatype }?
     a:documentation [
@@ -209,6 +215,7 @@ grammar {
         SVG.GraphicalEvents.attrib,
         SVG.Cursor.attrib,
         SVG.External.attrib,
+        common.attrs.aria?,
         attribute points { Points.datatype },
         attribute transform { TransformList.datatype }?
 }

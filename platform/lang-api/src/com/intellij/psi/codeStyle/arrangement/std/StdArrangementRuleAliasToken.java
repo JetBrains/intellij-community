@@ -34,7 +34,7 @@ public class StdArrangementRuleAliasToken extends StdArrangementSettingsToken im
   private List<StdArrangementMatchRule> myDefinitionRules;
 
   public StdArrangementRuleAliasToken(@NotNull String name) {
-    this(name, ContainerUtil.<StdArrangementMatchRule>emptyList());
+    this(name, ContainerUtil.emptyList());
   }
 
   public StdArrangementRuleAliasToken(@NotNull String name,

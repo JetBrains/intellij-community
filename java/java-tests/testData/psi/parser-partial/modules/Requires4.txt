@@ -1,5 +1,9 @@
 PsiJavaFile:Requires4.java
+  PsiImportList
+    <empty list>
   PsiJavaModule:M
+    PsiModifierList:
+      <empty list>
     PsiKeyword:module('module')
     PsiWhiteSpace(' ')
     PsiJavaModuleReference
@@ -10,11 +14,13 @@ PsiJavaFile:Requires4.java
     PsiRequiresStatement
       PsiKeyword:requires('requires')
       PsiWhiteSpace(' ')
+      PsiModifierList:
+        <empty list>
       PsiJavaModuleReference
         PsiIdentifier:A('A')
       PsiErrorElement:';' expected
         <empty list>
-    PsiErrorElement:Module statement expected
+    PsiErrorElement:Module directive expected
       PsiJavaToken:COMMA(',')
       PsiWhiteSpace(' ')
       PsiIdentifier:B('B')

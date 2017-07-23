@@ -1,7 +1,6 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -116,12 +115,7 @@ public class Command {
 
   @Nullable
   public List<String> getTargetsPaths() {
-    return ContainerUtil.isEmpty(myTargets) ? null : ContainerUtil.map(myTargets, new Function<File, String>() {
-      @Override
-      public String fun(File file) {
-        return CommandUtil.format(file.getAbsolutePath(), null);
-      }
-    });
+    return ContainerUtil.isEmpty(myTargets) ? null : ContainerUtil.map(myTargets, file -> CommandUtil.format(file.getAbsolutePath(), null));
   }
 
   @Nullable

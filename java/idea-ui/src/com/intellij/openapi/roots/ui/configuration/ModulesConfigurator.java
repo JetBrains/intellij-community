@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +68,7 @@ import java.util.List;
  *         Date: Dec 15, 2003
  */
 public class ModulesConfigurator implements ModulesProvider, ModuleEditor.ChangeListener {
-  private static final Logger LOG = Logger.getInstance("#" + ModulesConfigurator.class.getName());
+  private static final Logger LOG = Logger.getInstance(ModulesConfigurator.class);
 
   private final Project myProject;
 
@@ -273,12 +274,11 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       }
     }
 
-    final List<ModifiableRootModel> models = new ArrayList<>(myModuleEditors.size());
     for (ModuleEditor moduleEditor : myModuleEditors.values()) {
       moduleEditor.canApply();
     }
     
-    final Map<Sdk, Sdk> modifiedToOriginalMap = new HashMap<>();
+    final Map<Sdk, Sdk> modifiedToOriginalMap = new THashMap<>();
     final ProjectSdksModel projectJdksModel = ProjectStructureConfigurable.getInstance(myProject).getProjectJdksModel();
     for (Map.Entry<Sdk, Sdk> entry : projectJdksModel.getProjectSdks().entrySet()) {
       modifiedToOriginalMap.put(entry.getValue(), entry.getKey());
@@ -286,6 +286,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
     final Ref<ConfigurationException> exceptionRef = Ref.create();
     ApplicationManager.getApplication().runWriteAction(() -> {
+      final List<ModifiableRootModel> models = new ArrayList<>(myModuleEditors.size());
       try {
         for (final ModuleEditor moduleEditor : myModuleEditors.values()) {
           final ModifiableRootModel model = moduleEditor.apply();
@@ -311,8 +312,10 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       }
 
       try {
-        final ModifiableRootModel[] rootModels = models.toArray(new ModifiableRootModel[models.size()]);
-        ModifiableModelCommitter.multiCommit(rootModels, myModuleModel);
+        for (ModuleEditor editor : myModuleEditors.values()) {
+          editor.resetModifiableModel();
+        }
+        ModifiableModelCommitter.multiCommit(models, myModuleModel);
         myModuleModelCommitted = true;
         myFacetsConfigurator.commitFacets();
 

@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
+import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTreeBuilder;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
@@ -71,7 +72,7 @@ public class TaskExecutionView implements ConsoleView, DataProvider {
 
   public TaskExecutionView(Project project) {
     myProject = project;
-    final ColumnInfo[] COLUMNS = new ColumnInfo[]{
+    final ColumnInfo[] COLUMNS = {
       new TreeColumnInfo("name"),
       new ColumnInfo("time elapsed") {
         @Nullable
@@ -96,7 +97,7 @@ public class TaskExecutionView implements ConsoleView, DataProvider {
       }
     };
     myRoot = new ExecutionNode(project, myWorkingDir);
-    myRoot.setInfo(new ExecutionInfo(null, "Run build", myWorkingDir));
+    myRoot.setInfo(new ExecutionInfo(null, "Building...", myWorkingDir));
     final ListTreeTableModelOnColumns model = new ListTreeTableModelOnColumns(new DefaultMutableTreeNode(myRoot), COLUMNS);
 
     myTreeTable = new TaskExecutionTreeTable(model);
@@ -144,7 +145,12 @@ public class TaskExecutionView implements ConsoleView, DataProvider {
     timeColumn.setMinWidth(TIME_COLUMN_MIN_WIDTH);
 
     TreeTableTree tree = myTreeTable.getTree();
-    final SimpleTreeStructure treeStructure = new SimpleTreeStructure.Impl(myRoot);
+    final SimpleTreeStructure treeStructure = new SimpleTreeStructure.Impl(myRoot) {
+      @Override
+      public boolean isToBuildChildrenInBackground(Object element) {
+        return true;
+      }
+    };
 
     myBuilder = new SimpleTreeBuilder(tree, model, treeStructure, null);
     Disposer.register(this, myBuilder);
@@ -169,13 +175,29 @@ public class TaskExecutionView implements ConsoleView, DataProvider {
     if (progressEvent instanceof ExternalSystemStartEvent) {
       final ExecutionInfo executionInfo = new ExecutionInfo(progressEvent.getEventId(), progressEvent.getDescriptor(), myWorkingDir);
       executionInfo.setStartTime(progressEvent.getEventTime());
-      final ExecutionNode currentNode = parentEventId == null ? myRoot : new ExecutionNode(myProject, myWorkingDir);
+      final ExecutionNode currentNode = new ExecutionNode(myProject, myWorkingDir);
       if (parentEventId != null) {
         final ExecutionNode parentNode = nodeMap.get(parentEventId);
         if (parentNode != null) {
           parentNode.add(currentNode);
         }
       }
+
+      if (parentEventId == null) {
+        myRoot.add(currentNode);
+        if (myRoot.getInfo().getStartTime() == 0) {
+          myRoot.getInfo().setStartTime(executionInfo.getStartTime());
+        }
+        if (progressEvent.getDisplayName().equals("Run build")) {
+          for (SimpleNode node : myRoot.getChildren()) {
+            if (node instanceof ExecutionNode && "Unzipping...".equals(((ExecutionNode)node).getInfo().getDisplayName())) {
+              ((ExecutionNode)node).getInfo().setEndTime(progressEvent.getEventTime());
+              break;
+            }
+          }
+        }
+      }
+
       currentNode.setInfo(executionInfo);
       nodeMap.put(progressEvent.getEventId(), currentNode);
 
@@ -199,7 +221,22 @@ public class TaskExecutionView implements ConsoleView, DataProvider {
         executionInfo.setUpToDate(((SuccessResult)operationResult).isUpToDate());
       }
       if (parentEventId == null) {
-        myProgressAnimator.stopMovie();
+        if (progressEvent.getDisplayName().equals("Run build")) {
+          myRoot.getInfo().setEndTime(executionInfo.getEndTime());
+          String buildStatusResult =
+            executionInfo.isFailed() ? "Build failed" : executionInfo.isSkipped() ? "Build skipped" : "Build succeeded";
+          myRoot.getInfo().setDescriptor(new OperationDescriptorImpl(buildStatusResult, executionInfo.getEndTime()));
+          myProgressAnimator.stopMovie();
+        }
+        else if (progressEvent.getDisplayName().startsWith("Download")) {
+          final ExecutionInfo unzipExecutionInfo = new ExecutionInfo(null, "Unzipping...", myWorkingDir);
+          unzipExecutionInfo.setStartTime(progressEvent.getEventTime());
+          final ExecutionNode unzipNode = new ExecutionNode(myProject, myWorkingDir);
+          unzipNode.setInfo(unzipExecutionInfo);
+          myRoot.add(unzipNode);
+          myProgressAnimator.setCurrentNode(unzipNode);
+          myBuilder.queueUpdateFrom(unzipNode, false, true);
+        }
       }
 
       myBuilder.queueUpdateFrom(node, false, false);
@@ -312,7 +349,7 @@ public class TaskExecutionView implements ConsoleView, DataProvider {
   }
 
   @Override
-  public void setHelpId(String helpId) {
+  public void setHelpId(@NotNull String helpId) {
 
   }
 

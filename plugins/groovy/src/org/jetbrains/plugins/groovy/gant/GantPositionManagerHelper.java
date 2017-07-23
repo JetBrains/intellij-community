@@ -69,9 +69,7 @@ public class GantPositionManagerHelper extends ScriptPositionManagerHelper {
         return candidate;
       }
     }
-    catch (ProcessCanceledException ignored) {
-    }
-    catch (IndexNotReadyException ignored) {
+    catch (ProcessCanceledException | IndexNotReadyException ignored) {
     }
     return null;
   }

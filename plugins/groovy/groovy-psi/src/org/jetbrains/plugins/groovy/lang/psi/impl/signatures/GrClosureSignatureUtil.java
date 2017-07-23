@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,8 +97,7 @@ public class GrClosureSignatureUtil {
 
   public static GrClosureSignature createSignature(MethodSignature signature) {
     final PsiType[] types = signature.getParameterTypes();
-    GrClosureParameter[] parameters = new GrClosureParameter[types.length];
-    ContainerUtil.map(types, type -> new GrImmediateClosureParameterImpl(type, null, false, null), parameters);
+    GrClosureParameter[] parameters = ContainerUtil.map(types, type -> new GrImmediateClosureParameterImpl(type, null, false, null), new GrClosureParameter[types.length]);
     return new GrImmediateClosureSignatureImpl(parameters, null, false, false);
   }
 
@@ -348,21 +347,7 @@ public class GrClosureSignatureUtil {
                                                            @NotNull PsiType[] args,
                                                            @NotNull PsiElement context,
                                                            boolean partial) {
-    return mapParametersToArguments(signature, args, FunctionUtil.<PsiType>id(), context, partial);
-  }
-
-  private static class ArgWrapper<Arg> {
-    PsiType type;
-    @Nullable Arg arg;
-
-    private ArgWrapper(PsiType type, @Nullable Arg arg) {
-      this.type = type;
-      this.arg = arg;
-    }
-  }
-
-  private static <Arg> Function<ArgWrapper<Arg>, PsiType> ARG_WRAPPER_COMPUTER() {
-    return argWrapper -> argWrapper.type;
+    return mapParametersToArguments(signature, args, FunctionUtil.id(), context, partial);
   }
 
   @Nullable
@@ -376,12 +361,12 @@ public class GrClosureSignatureUtil {
     if (checkForOnlyMapParam(signature, args.length)) return ArgInfo.empty_array();
     GrClosureParameter[] params = signature.getParameters();
     if (args.length > params.length && !signature.isVarargs() && !partial) return null;
-    int optional = getOptionalParamCount(signature, false);
+    int optional = getOptionalParamCount(signature);
     int notOptional = params.length - optional;
     if (signature.isVarargs()) notOptional--;
     if (notOptional > args.length && !partial) return null;
 
-    final ArgInfo<Arg>[] map = mapSimple(params, args, typeComputer, context, false);
+    final ArgInfo<Arg>[] map = mapSimple(params, args, typeComputer, context, optional, false);
     if (map != null) return map;
 
     if (signature.isVarargs()) {
@@ -390,7 +375,7 @@ public class GrClosureSignatureUtil {
 
     if (!partial) return null;
 
-    return mapSimple(params, args, typeComputer, context, true);
+    return mapSimple(params, args, typeComputer, context, optional, true);
   }
 
   private static boolean checkForOnlyMapParam(@NotNull GrClosureSignature signature, final int argCount) {
@@ -406,11 +391,11 @@ public class GrClosureSignatureUtil {
                                                 @NotNull Arg[] args,
                                                 @NotNull Function<Arg, PsiType> typeComputer,
                                                 @NotNull PsiElement context,
+                                                int optional,
                                                 boolean partial) {
     if (args.length > params.length && !partial) return null;
 
     ArgInfo<Arg>[] map = new ArgInfo[params.length];
-    int optional = getOptionalParamCount(params, false);
     int notOptional = params.length - optional;
     int optionalArgs = args.length - notOptional;
 
@@ -570,29 +555,24 @@ public class GrClosureSignatureUtil {
     }
   }
 
-  public static int getOptionalParamCount(GrClosureSignature signature, boolean hasNamedArgs) {
-    return getOptionalParamCount(signature.getParameters(), hasNamedArgs);
-  }
-
-  public static int getOptionalParamCount(GrClosureParameter[] parameters, boolean hasNamedArgs) {
+  private static int getOptionalParamCount(@NotNull GrClosureSignature signature) {
+    GrClosureParameter[] parameters = signature.getParameters();
+    if (parameters.length == 1 && !(parameters[0].getType() instanceof PsiPrimitiveType) && !signature.isCurried()) return 1;
     int count = 0;
-    int i = 0;
-    if (hasNamedArgs) i++;
-    for (; i < parameters.length; i++) {
-      GrClosureParameter parameter = parameters[i];
+    for (GrClosureParameter parameter : parameters) {
       if (parameter.isOptional()) count++;
     }
     return count;
   }
 
   public static class ArgInfo<ArgType> {
-    public static final ArgInfo[] EMPTY_ARRAY = new ArgInfo[0];
+    private static final ArgInfo[] EMPTY_ARRAY = new ArgInfo[0];
 
-    public List<ArgType> args;
+    public final @NotNull List<ArgType> args;
     public final boolean isMultiArg;
-    public final PsiType type;
+    public final @Nullable PsiType type;
 
-    public ArgInfo(List<ArgType> args, boolean multiArg, PsiType type) {
+    public ArgInfo(@NotNull List<ArgType> args, boolean multiArg, @Nullable PsiType type) {
       this.args = args;
       isMultiArg = multiArg;
       this.type = type;
@@ -603,10 +583,11 @@ public class GrClosureSignatureUtil {
     }
 
     public ArgInfo(boolean isMultiArg, PsiType type) {
-      this(Collections.<ArgType>emptyList(), isMultiArg, type);
+      this(Collections.emptyList(), isMultiArg, type);
     }
 
     public static <ArgType> ArgInfo<ArgType>[] empty_array() {
+      //noinspection unchecked
       return EMPTY_ARRAY;
     }
   }
@@ -940,9 +921,6 @@ public class GrClosureSignatureUtil {
     if (args.length < params.length) return null;
 
     if (args.length > params.length && !signature.isVarargs()) return null;
-
-    int optional = getOptionalParamCount(params, false);
-    assert optional == 0;
 
     int errorCount = 0;
     ArgInfo<Arg>[] map = new ArgInfo[params.length];

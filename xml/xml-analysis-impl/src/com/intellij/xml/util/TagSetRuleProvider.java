@@ -35,6 +35,7 @@ public abstract class TagSetRuleProvider extends XmlTagRuleProviderBase {
 
   protected abstract void initMap(TagsRuleMap map, @NotNull String version);
 
+  @NotNull
   @Override
   public Rule[] getTagRule(@NotNull XmlTag tag) {
     String namespace = getNamespace(tag);
@@ -43,6 +44,7 @@ public abstract class TagSetRuleProvider extends XmlTagRuleProviderBase {
     return getTagRule(tag, namespace);
   }
 
+  @NotNull
   public Rule[] getTagRule(@NotNull XmlTag tag, String namespace) {
     TagsRuleMap ruleMap = map.get(namespace);
     if (ruleMap == null) {

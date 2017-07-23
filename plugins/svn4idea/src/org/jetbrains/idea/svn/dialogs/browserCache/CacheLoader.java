@@ -37,21 +37,19 @@ public class CacheLoader extends Loader {
   }
 
   public void load(@NotNull final RepositoryTreeNode node, @NotNull final Expander expander) {
-    SwingUtilities.invokeLater(new Runnable(){
-      public void run() {
-        final String nodeUrl = node.getURL().toString();
+    SwingUtilities.invokeLater(() -> {
+      final String nodeUrl = node.getURL().toString();
 
-        final List<DirectoryEntry> cached = myCache.getChildren(nodeUrl);
-        if (cached != null) {
-          refreshNode(node, cached, expander);
-        }
-        final String error = myCache.getError(nodeUrl);
-        if (error != null) {
-          refreshNodeError(node, error);
-        }
-        // refresh anyway
-        myRepositoryLoader.load(node, expander);
+      final List<DirectoryEntry> cached = myCache.getChildren(nodeUrl);
+      if (cached != null) {
+        refreshNode(node, cached, expander);
       }
+      final String error = myCache.getError(nodeUrl);
+      if (error != null) {
+        refreshNodeError(node, error);
+      }
+      // refresh anyway
+      myRepositoryLoader.load(node, expander);
     });
   }
 

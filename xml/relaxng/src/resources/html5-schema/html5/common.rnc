@@ -296,9 +296,6 @@ common.attrs.other =
 	common.data.datetime =
 		w:datetime-tz
 
-	common.data.date-or-time =
-		w:date-or-time
-
 	common.data.date =
 		w:date
 
@@ -328,6 +325,9 @@ common.attrs.other =
 	common.data.uris =
 		list { w:iri-ref* }
 
+	common.data.uris.http.or.https =
+		list { w:iri-ref-http-or-https* }
+
 	common.data.uri.absolute =
 		w:iri
 
@@ -340,6 +340,11 @@ common.attrs.other =
 				pattern = "[1-9][0-9]*x[1-9][0-9]*"
 			}+
 		}
+
+## color for <link rel="mask-icon"> and <meta name="theme-color">
+
+	common.data.color =
+		w:color
 
 ## MIME types
 
@@ -400,6 +405,10 @@ common.attrs.other =
 	common.data.sandbox-allow-list =
 		w:string "" | w:sandbox-allow-list
 
+## Custom element name
+	common.data.custom.element.name =
+		w:custom-element-name
+
 ## Microdata Properties
   common.data.microdata-properties =
     list { w:microdata-property+ }
@@ -440,6 +449,7 @@ common.attrs.aria.role.application = ( notAllowed )
 common.attrs.aria.role.article = ( notAllowed )
 common.attrs.aria.role.banner = ( notAllowed )
 common.attrs.aria.role.button = ( notAllowed )
+common.attrs.aria.role.cell |= ( notAllowed )
 common.attrs.aria.role.checkbox = ( notAllowed )
 common.attrs.aria.role.combobox = ( notAllowed )
 common.attrs.aria.role.complementary = ( notAllowed )
@@ -447,6 +457,8 @@ common.attrs.aria.role.contentinfo = ( notAllowed )
 common.attrs.aria.role.dialog = ( notAllowed )
 common.attrs.aria.role.directory = ( notAllowed )
 common.attrs.aria.role.document = ( notAllowed )
+common.attrs.aria.role.feed |= ( notAllowed )
+common.attrs.aria.role.figure |= ( notAllowed )
 common.attrs.aria.role.group = ( notAllowed )
 common.attrs.aria.role.heading = ( notAllowed )
 common.attrs.aria.role.img = ( notAllowed )
@@ -467,14 +479,18 @@ common.attrs.aria.role.option = ( notAllowed )
 common.attrs.aria.role.presentation = ( notAllowed )
 common.attrs.aria.role.progressbar = ( notAllowed )
 common.attrs.aria.role.radio = ( notAllowed )
+common.attrs.aria.role.radiogroup |= ( notAllowed )
 common.attrs.aria.role.region = ( notAllowed )
+common.attrs.aria.role.rowgroup |= ( notAllowed )
 common.attrs.aria.role.search = ( notAllowed )
+common.attrs.aria.role.searchbox |= ( notAllowed )
 common.attrs.aria.role.separator = ( notAllowed )
 common.attrs.aria.role.slider = ( notAllowed )
 common.attrs.aria.role.spinbutton = ( notAllowed )
 common.attrs.aria.role.status = ( notAllowed )
 common.attrs.aria.role.switch = ( notAllowed )
 common.attrs.aria.role.tab = ( notAllowed )
+common.attrs.aria.role.table |= ( notAllowed )
 common.attrs.aria.role.tablist = ( notAllowed )
 common.attrs.aria.role.tabpanel = ( notAllowed )
 common.attrs.aria.role.textbox = ( notAllowed )
@@ -484,12 +500,14 @@ common.attrs.aria.role.treeitem = ( notAllowed )
 common.attrs.aria.implicit.article = ( notAllowed )
 common.attrs.aria.implicit.banner = ( notAllowed )
 common.attrs.aria.implicit.button = ( notAllowed )
+common.attrs.aria.implicit.cell |= ( notAllowed )
 common.attrs.aria.implicit.checkbox = ( notAllowed )
 common.attrs.aria.implicit.column-or-row-header = ( notAllowed )
 common.attrs.aria.implicit.combobox = ( notAllowed )
 common.attrs.aria.implicit.complementary = ( notAllowed )
 common.attrs.aria.implicit.contentinfo = ( notAllowed )
 common.attrs.aria.implicit.dialog = ( notAllowed )
+common.attrs.aria.implicit.figure |= ( notAllowed )
 common.attrs.aria.implicit.document = ( notAllowed )
 common.attrs.aria.implicit.form = ( notAllowed )
 common.attrs.aria.implicit.group = ( notAllowed )
@@ -506,12 +524,16 @@ common.attrs.aria.implicit.option = ( notAllowed )
 common.attrs.aria.implicit.progressbar = ( notAllowed )
 common.attrs.aria.implicit.radio = ( notAllowed )
 common.attrs.aria.implicit.region = ( notAllowed )
+common.attrs.aria.implicit.row |= ( notAllowed )
+common.attrs.aria.implicit.rowgroup |= ( notAllowed )
+common.attrs.aria.implicit.searchbox |= ( notAllowed )
 common.attrs.aria.implicit.section = ( notAllowed )
 common.attrs.aria.implicit.select = ( notAllowed )
 common.attrs.aria.implicit.slider = ( notAllowed )
 common.attrs.aria.implicit.spinbutton = ( notAllowed )
 common.attrs.aria.implicit.status = ( notAllowed )
 common.attrs.aria.implicit.structure = ( notAllowed )
+common.attrs.aria.implicit.table |= ( notAllowed )
 common.attrs.aria.implicit.textbox = ( notAllowed )
 common.attrs.aria.implicit.toolbar = ( notAllowed )
 common.attrs.aria.prop.readonly = ( notAllowed )
@@ -527,3 +549,43 @@ common.attrs.aria.landmark.search = ( notAllowed )
 common.attrs.aria.landmark.article = ( notAllowed )
 common.attrs.aria.landmark.document = ( notAllowed )
 common.attrs.aria.landmark.note = ( notAllowed )
+
+common.attrs.aria.role.doc-abstract = ( notAllowed )
+common.attrs.aria.role.doc-acknowledgments = ( notAllowed )
+common.attrs.aria.role.doc-afterword = ( notAllowed )
+common.attrs.aria.role.doc-appendix = ( notAllowed )
+common.attrs.aria.role.doc-backlink = ( notAllowed )
+common.attrs.aria.role.doc-biblioentry = ( notAllowed )
+common.attrs.aria.role.doc-bibliography = ( notAllowed )
+common.attrs.aria.role.doc-biblioref = ( notAllowed )
+common.attrs.aria.role.doc-chapter = ( notAllowed )
+common.attrs.aria.role.doc-colophon = ( notAllowed )
+common.attrs.aria.role.doc-conclusion = ( notAllowed )
+common.attrs.aria.role.doc-cover = ( notAllowed )
+common.attrs.aria.role.doc-credit = ( notAllowed )
+common.attrs.aria.role.doc-credits = ( notAllowed )
+common.attrs.aria.role.doc-dedication = ( notAllowed )
+common.attrs.aria.role.doc-endnote = ( notAllowed )
+common.attrs.aria.role.doc-endnotes = ( notAllowed )
+common.attrs.aria.role.doc-epigraph = ( notAllowed )
+common.attrs.aria.role.doc-epilogue = ( notAllowed )
+common.attrs.aria.role.doc-errata = ( notAllowed )
+common.attrs.aria.role.doc-example = ( notAllowed )
+common.attrs.aria.role.doc-footnote = ( notAllowed )
+common.attrs.aria.role.doc-foreword = ( notAllowed )
+common.attrs.aria.role.doc-glossary = ( notAllowed )
+common.attrs.aria.role.doc-glossref = ( notAllowed )
+common.attrs.aria.role.doc-index = ( notAllowed )
+common.attrs.aria.role.doc-introduction = ( notAllowed )
+common.attrs.aria.role.doc-noteref = ( notAllowed )
+common.attrs.aria.role.doc-notice = ( notAllowed )
+common.attrs.aria.role.doc-pagebreak = ( notAllowed )
+common.attrs.aria.role.doc-pagelist = ( notAllowed )
+common.attrs.aria.role.doc-part = ( notAllowed )
+common.attrs.aria.role.doc-preface = ( notAllowed )
+common.attrs.aria.role.doc-prologue = ( notAllowed )
+common.attrs.aria.role.doc-pullquote = ( notAllowed )
+common.attrs.aria.role.doc-qna = ( notAllowed )
+common.attrs.aria.role.doc-subtitle = ( notAllowed )
+common.attrs.aria.role.doc-tip = ( notAllowed )
+common.attrs.aria.role.doc-toc = ( notAllowed )

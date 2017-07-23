@@ -82,17 +82,6 @@ class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<Xslt
   }
 
   @Override
-  public void disposeComponent() {
-  }
-
-  @Override
-  @NotNull
-  @NonNls
-  public String getComponentName() {
-    return "XSLT-Support.Configuration";
-  }
-
-  @Override
   public boolean isShowLinkedFiles() {
     return SHOW_LINKED_FILES;
   }

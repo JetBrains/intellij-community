@@ -35,7 +35,7 @@ public abstract class VariablesProcessor extends BaseScopeProcessor implements E
 
   /** Collecting _all_ variables in scope */
   public VariablesProcessor(boolean staticSensitive){
-    this(staticSensitive, new SmartList<PsiVariable>());
+    this(staticSensitive, new SmartList<>());
   }
 
   /** Collecting _all_ variables in scope */

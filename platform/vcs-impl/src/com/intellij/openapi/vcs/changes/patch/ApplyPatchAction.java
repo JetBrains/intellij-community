@@ -20,12 +20,11 @@ import com.intellij.diff.DiffManager;
 import com.intellij.diff.InvalidDiffRequestException;
 import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.merge.MergeResult;
-import com.intellij.diff.merge.MergeTool;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatch;
@@ -39,9 +38,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
@@ -53,7 +49,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -104,15 +99,12 @@ public class ApplyPatchAction extends DumbAwareAction {
       final VirtualFile toSelect = settings.PATCH_STORAGE_LOCATION == null ? null :
                                    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(settings.PATCH_STORAGE_LOCATION));
 
-      FileChooser.chooseFile(descriptor, project, toSelect, new Consumer<VirtualFile>() {
-        @Override
-        public void consume(VirtualFile file) {
-          final VirtualFile parent = file.getParent();
-          if (parent != null) {
-            settings.PATCH_STORAGE_LOCATION = parent.getPath();
-          }
-          showApplyPatch(project, file);
+      FileChooser.chooseFile(descriptor, project, toSelect, file -> {
+        final VirtualFile parent = file.getParent();
+        if (parent != null) {
+          settings.PATCH_STORAGE_LOCATION = parent.getPath();
         }
+        showApplyPatch(project, file);
       });
     }
   }
@@ -125,7 +117,7 @@ public class ApplyPatchAction extends DumbAwareAction {
   public static void showApplyPatch(@NotNull final Project project, @NotNull final VirtualFile file) {
     final ApplyPatchDifferentiatedDialog dialog = new ApplyPatchDifferentiatedDialog(
       project, new ApplyPatchDefaultExecutor(project),
-      Collections.<ApplyPatchExecutor>singletonList(new ImportToShelfExecutor(project)), ApplyPatchMode.APPLY, file);
+      Collections.singletonList(new ImportToShelfExecutor(project)), ApplyPatchMode.APPLY, file);
     dialog.show();
   }
 
@@ -190,19 +182,14 @@ public class ApplyPatchAction extends DumbAwareAction {
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document == null) return ApplyPatchStatus.FAILURE;
 
-    String baseContent = toString(mergeData.getBase());
-    String localContent = toString(mergeData.getLocal());
+    String baseContent = convertLineSeparators(mergeData.getBase());
+    String localContent = convertLineSeparators(mergeData.getLocal());
     String patchedContent = mergeData.getPatched();
 
-    if (localContent == null) return ApplyPatchStatus.FAILURE;
-
     final Ref<ApplyPatchStatus> applyPatchStatusReference = new Ref<>();
-    Consumer<MergeResult> callback = new Consumer<MergeResult>() {
-      @Override
-      public void consume(MergeResult result) {
-        FileDocumentManager.getInstance().saveDocument(document);
-        applyPatchStatusReference.setIfNull(result != MergeResult.CANCEL ? ApplyPatchStatus.SUCCESS : ApplyPatchStatus.FAILURE);
-      }
+    Consumer<MergeResult> callback = result13 -> {
+      FileDocumentManager.getInstance().saveDocument(document);
+      applyPatchStatusReference.setIfNull(result13 != MergeResult.CANCEL ? ApplyPatchStatus.SUCCESS : ApplyPatchStatus.FAILURE);
     };
 
     try {
@@ -231,28 +218,20 @@ public class ApplyPatchAction extends DumbAwareAction {
         final AppliedTextPatch appliedTextPatch = AppliedTextPatch.create(applier.getAppliedInfo());
         request = PatchDiffRequestFactory.createBadMergeRequest(project, document, file, localContent, appliedTextPatch, callback);
       }
-      request.putUserData(DiffUserDataKeysEx.MERGE_ACTION_CAPTIONS, new Function<MergeResult, String>() {
-        @Override
-        public String fun(MergeResult result) {
-          return result.equals(MergeResult.CANCEL) ? "Abort..." : null;
-        }
-      });
-      request.putUserData(DiffUserDataKeysEx.MERGE_CANCEL_HANDLER, new Condition<MergeTool.MergeViewer>() {
-        @Override
-        public boolean value(MergeTool.MergeViewer viewer) {
-          int result = Messages.showYesNoCancelDialog(viewer.getComponent().getRootPane(),
-                                                      XmlStringUtil.wrapInHtml(
-                                                        "Would you like to <u>A</u>bort&Rollback applying patch action or <u>S</u>kip this file?"),
-                                                      "Close Merge", "_Abort", "_Skip", "Cancel", Messages.getQuestionIcon());
+      request.putUserData(DiffUserDataKeysEx.MERGE_ACTION_CAPTIONS, result12 -> result12.equals(MergeResult.CANCEL) ? "Abort..." : null);
+      request.putUserData(DiffUserDataKeysEx.MERGE_CANCEL_HANDLER, viewer -> {
+        int result1 = Messages.showYesNoCancelDialog(viewer.getComponent().getRootPane(),
+                                                     XmlStringUtil.wrapInHtml(
+                                                      "Would you like to <u>A</u>bort&Rollback applying patch action or <u>S</u>kip this file?"),
+                                                     "Close Merge", "_Abort", "_Skip", "Cancel", Messages.getQuestionIcon());
 
-          if (result == Messages.YES) {
-            applyPatchStatusReference.set(ApplyPatchStatus.ABORT);
-          }
-          else if (result == Messages.NO) {
-            applyPatchStatusReference.set(ApplyPatchStatus.SKIP);
-          }
-          return result != Messages.CANCEL;
+        if (result1 == Messages.YES) {
+          applyPatchStatusReference.set(ApplyPatchStatus.ABORT);
         }
+        else if (result1 == Messages.NO) {
+          applyPatchStatusReference.set(ApplyPatchStatus.SKIP);
+        }
+        return result1 != Messages.CANCEL;
       });
       DiffManager.getInstance().showMerge(project, request);
       return applyPatchStatusReference.get();
@@ -270,31 +249,24 @@ public class ApplyPatchAction extends DumbAwareAction {
                                                      @NotNull final VirtualFile file,
                                                      @Nullable final CommitContext commitContext) {
     final FilePatch patchBase = patch.getPatch();
-    return ApplicationManager.getApplication().runWriteAction(
-      new Computable<ApplyFilePatch.Result>() {
-        @Override
-        public ApplyFilePatch.Result compute() {
-          try {
-            return patch.apply(file, context, project, VcsUtil.getFilePath(file), new Getter<CharSequence>() {
-              @Override
-              public CharSequence get() {
-                final BaseRevisionTextPatchEP baseRevisionTextPatchEP =
-                  Extensions.findExtension(PatchEP.EP_NAME, project, BaseRevisionTextPatchEP.class);
-                final String path = ObjectUtils.chooseNotNull(patchBase.getBeforeName(), patchBase.getAfterName());
-                return baseRevisionTextPatchEP.provideContent(path, commitContext);
-              }
-            }, commitContext);
-          }
-          catch (IOException e) {
-            LOG.error(e);
-            return ApplyFilePatch.Result.createThrow(e);
-          }
-        }
-      });
+    return WriteAction.compute(() -> {
+      try {
+        return patch.apply(file, context, project, VcsUtil.getFilePath(file), () -> {
+          final BaseRevisionTextPatchEP baseRevisionTextPatchEP =
+            Extensions.findExtension(PatchEP.EP_NAME, project, BaseRevisionTextPatchEP.class);
+          final String path = ObjectUtils.chooseNotNull(patchBase.getBeforeName(), patchBase.getAfterName());
+          return baseRevisionTextPatchEP.provideContent(path, commitContext);
+        }, commitContext);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+        return ApplyFilePatch.Result.createThrow(e);
+      }
+    });
   }
 
   @Nullable
-  private static String toString(@Nullable CharSequence charSequence) {
-    return charSequence != null ? StringUtil.convertLineSeparators(charSequence.toString()) : null;
+  private static String convertLineSeparators(@Nullable String charSequence) {
+    return charSequence != null ? StringUtil.convertLineSeparators(charSequence) : null;
   }
 }

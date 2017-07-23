@@ -77,15 +77,17 @@ class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
   @Test
   void methodPresentations() {
     doTest(() -> {
-      PsiClass aClass = myFixture.addClass("class MyTest {" +
+      myFixture.addClass("package a; public class TestInfo {}");
+      PsiClass aClass = myFixture.addClass("class MyTest<T extends a.TestInfo> {" +
                                            "  @org.junit.jupiter.api.Test void method() {}" +
                                            "  @org.junit.jupiter.api.Test void method(a.TestInfo info) {}" +
+                                           "  @org.junit.jupiter.api.Test void method(T info) {}" +
                                            "  @org.junit.Test void method1() {}" +
                                            "  @org.junit.Test void method1(a.TestInfo info) {}" +
                                            "}");
       assertNotNull(aClass);
 
-      Stream<String> expectedData = Arrays.stream(new String[]{"method", "method(a.TestInfo)", "method1", "method1"});
+      Stream<String> expectedData = Arrays.stream(new String[]{"method", "method(a.TestInfo)", "method(a.TestInfo)", "method1", "method1"});
       StreamEx.of(aClass.getMethods())
         .zipWith(expectedData)
         .forEach(e -> assertEquals(e.getValue(), JUnitConfiguration.Data.getMethodPresentation(e.getKey())));

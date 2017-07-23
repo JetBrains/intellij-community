@@ -17,44 +17,34 @@ package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformat
 
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.MethodCallData;
-import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.OptionsData;
+import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
+import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection.Options;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 
-/**
- * e.g.
- * !a.asBoolean()    → !a
- * a.asBoolean()     → !!a
- * if(a.asBoolean()) → if(a)
- */
+import static java.util.Objects.requireNonNull;
+
+
 public class UnaryTransformation extends Transformation {
 
-  private final @NotNull String myOperator;
+  private final IElementType myOperator;
 
   public UnaryTransformation(@NotNull IElementType operatorType) {
-    this(operatorType.toString());
-  }
-
-  public UnaryTransformation(@NotNull String operator) {
-    myOperator = operator;
-  }
-
-  public UnaryTransformation() {
-    this("");
+    myOperator = operatorType;
   }
 
   @Override
-  @Nullable
-  public String getReplacement(MethodCallData call, OptionsData options) {
-    String prefix = getPrefix(call, options);
-    String base = call.getBase();
-    if (prefix == null) return null;
-
-    return prefix + base;
+  public void apply(@NotNull GrMethodCall methodCall, @NotNull Options options) {
+    GrInspectionUtil.replaceExpression(methodCall, myOperator.toString() + requireNonNull(getBase(methodCall)).getText());
   }
 
-  @Nullable
-  protected String getPrefix(MethodCallData call, OptionsData optionsData) {
-    return myOperator;
+  @Override
+  public boolean couldApplyInternal(@NotNull GrMethodCall methodCall, @NotNull Options options) {
+    return getBase(methodCall)!= null && checkArgumentsCount(methodCall, 0);
+  }
+
+  @Override
+  protected boolean needParentheses(@NotNull GrMethodCall methodCall, @NotNull Options options) {
+    return ParenthesesUtils.checkPrecedence(ParenthesesUtils.PREFIX_PRECEDENCE, methodCall);
   }
 }

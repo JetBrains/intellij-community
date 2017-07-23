@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
     private final List<PsiComment> leadingComments = new ArrayList<>();
     private final List<PsiElement> commentsAndWhitespace = new ArrayList<>();
 
-    private StringBufferReplaceableByStringFix(boolean isStringBuilder) {
+    StringBufferReplaceableByStringFix(boolean isStringBuilder) {
       this.isStringBuilder = isStringBuilder;
     }
 
@@ -116,10 +116,20 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
           return;
         }
         final PsiExpression[] arguments = argumentList.getExpressions();
-        if (arguments.length == 0 || PsiType.INT.equals(arguments[0].getType())) {
+        if (arguments.length == 0) {
           builder = new StringBuilder();
-        } else {
-          builder = new StringBuilder(arguments[0].getText());
+        }
+        else {
+          final PsiExpression argument = arguments[0];
+          if (PsiType.INT.equals(argument.getType())) {
+            builder = new StringBuilder();
+          }
+          else if (ParenthesesUtils.getPrecedence(argument) > ParenthesesUtils.ADDITIVE_PRECEDENCE) {
+            builder = new StringBuilder("(").append(argument.getText()).append(')');
+          }
+          else {
+            builder = new StringBuilder(argument.getText());
+          }
         }
       } else {
         return;
@@ -185,7 +195,7 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
     }
 
     @Nullable
-    private StringBuilder buildStringExpression(PsiElement element, @NonNls StringBuilder result) {
+    StringBuilder buildStringExpression(PsiElement element, @NonNls StringBuilder result) {
       if (element instanceof PsiNewExpression) {
         final PsiNewExpression newExpression = (PsiNewExpression)element;
         final PsiExpressionList argumentList = newExpression.getArgumentList();
@@ -254,10 +264,15 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
               result.append('(').append(argumentText).append(')');
             }
             else {
-              if (StringUtil.startsWithChar(argumentText, '+')) {
-                result.append(' ');
+              if (type instanceof PsiArrayType) {
+                result.append("String.valueOf(").append(argumentText).append(")");
               }
-              result.append(argumentText);
+              else {
+                if (StringUtil.startsWithChar(argumentText, '+')) {
+                  result.append(' ');
+                }
+                result.append(argumentText);
+              }
             }
           }
           else {
@@ -371,7 +386,7 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
       commentsAndWhitespace.clear();
     }
 
-    private void collectComments(PsiElement element) {
+    void collectComments(PsiElement element) {
       commentsAndWhitespace.addAll(PsiTreeUtil.findChildrenOfAnyType(element, PsiComment.class, PsiWhiteSpace.class));
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiExpressionStatement) && !(parent instanceof PsiDeclarationStatement)) {
@@ -433,7 +448,7 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
       private final List<PsiMethodCallExpression> expressions = ContainerUtil.newArrayList();
       private boolean myProblem;
 
-      private StringBuildingVisitor(@NotNull PsiVariable variable, StringBuilder builder) {
+      StringBuildingVisitor(@NotNull PsiVariable variable, StringBuilder builder) {
         myVariable = variable;
         myBuilder = builder;
       }
@@ -473,7 +488,7 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
         return expressions;
       }
 
-      private boolean hadProblem() {
+      boolean hadProblem() {
         return myProblem;
       }
     }

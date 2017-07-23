@@ -20,7 +20,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -159,7 +158,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         for (PyImportElement importElement : importElements) {
           for (QualifiedName qName : getImportedQNames(importElement)) {
             if (qName.matchesPrefix(resolvingQName)) {
-              final PsiElement subModule = ResolveImportUtil.resolveChild(myModule, name, myModule, false, true);
+              final PsiElement subModule = ResolveImportUtil.resolveChild(myModule, name, myModule, false, true, false);
               if (subModule != null) {
                 final ResolveResultList results = new ResolveResultList();
                 results.add(new ImportedResolveResult(subModule, RatedResolveResult.RATE_NORMAL, importElement));
@@ -393,7 +392,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
                                                            return LookupElementBuilder.createWithIcon((PsiNamedElement)element);
                                                          }
                                                          return null;
-                                                       }) : Collections.<LookupElement>emptyList();
+                                                       }) : Collections.emptyList();
   }
 
   @Nullable

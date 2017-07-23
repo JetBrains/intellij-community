@@ -57,6 +57,9 @@ public class BalloonLayoutImpl implements BalloonLayout {
 
   private final Alarm myRelayoutAlarm = new Alarm();
   private final Runnable myRelayoutRunnable = () -> {
+    if (myLayeredPane == null) {
+      return;
+    }
     relayout();
     fireRelayout();
   };
@@ -131,22 +134,8 @@ public class BalloonLayoutImpl implements BalloonLayout {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Balloon merge = merge(layoutData);
     if (merge == null) {
-      if (getVisibleCount() > 0 && layoutData instanceof BalloonLayoutData && ((BalloonLayoutData)layoutData).groupId != null) {
-        int index = -1;
-        int count = 0;
-        for (int i = 0, size = myBalloons.size(); i < size; i++) {
-          BalloonLayoutData ld = myLayoutData.get(myBalloons.get(i));
-          if (ld != null && ld.groupId != null) {
-            if (index == -1) {
-              index = i;
-            }
-            count++;
-          }
-        }
-
-        if (count > 0 && count == getVisibleCount()) {
-          remove(myBalloons.get(index));
-        }
+      if (!myBalloons.isEmpty() && myBalloons.size() == getVisibleCount()) {
+        remove(myBalloons.get(0));
       }
       myBalloons.add(balloon);
     }
@@ -185,8 +174,9 @@ public class BalloonLayoutImpl implements BalloonLayout {
 
     calculateSize();
     relayout();
-    ((BalloonImpl)balloon).traceDispose(false);
-    balloon.show(myLayeredPane);
+    if (!balloon.isDisposed()) {
+      balloon.show(myLayeredPane);
+    }
     fireRelayout();
   }
 
@@ -251,6 +241,20 @@ public class BalloonLayoutImpl implements BalloonLayout {
       balloon.hide();
       fireRelayout();
     }
+  }
+
+  public void closeAll() {
+    myCloseAll.run();
+  }
+
+  public void closeFirst() {
+    if (!myBalloons.isEmpty()) {
+      remove(myBalloons.get(0), true);
+    }
+  }
+
+  public int getBalloonCount() {
+    return myBalloons.size();
   }
 
   private static int getVisibleCount() {

@@ -21,8 +21,8 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.TransactionRunnable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedList;
@@ -120,11 +120,9 @@ abstract class HgAbstractFilesAction extends AnAction {
 
     batchPerform(project, activeVcs, enabledFiles, context);
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        for (VirtualFile file : files) {
-          file.refresh(false, true);
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      for (VirtualFile file : files) {
+        file.refresh(false, true);
       }
     });
 
@@ -132,11 +130,9 @@ abstract class HgAbstractFilesAction extends AnAction {
       for (VirtualFile file : enabledFiles) {
           HgUtil.markFileDirty(project, file);
       }
-    } catch (InvocationTargetException e) {
+    } catch (InvocationTargetException | InterruptedException e) {
       LOG.info("Exception while marking files dirty", e);
 
-    } catch (InterruptedException e) {
-      LOG.info("Exception while marking files dirty", e);
     }
   }
 

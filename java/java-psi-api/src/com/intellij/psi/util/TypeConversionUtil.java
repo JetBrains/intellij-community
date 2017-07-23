@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -49,7 +48,7 @@ public class TypeConversionUtil {
     {false, false, false, false, false, false, true}, // double
   };
 
-  private static final TObjectIntHashMap<PsiType> TYPE_TO_RANK_MAP = new TObjectIntHashMap<PsiType>();
+  private static final TObjectIntHashMap<PsiType> TYPE_TO_RANK_MAP = new TObjectIntHashMap<>();
 
   public static final int BYTE_RANK = 1;
   public static final int SHORT_RANK = 2;
@@ -363,7 +362,7 @@ public class TypeConversionUtil {
       }
     }
 
-    if (visited == null) visited = new THashSet<PsiClass>();
+    if (visited == null) visited = new THashSet<>();
     visited.add(derived);
     for (PsiClass aSuper : supers) {
       PsiSubstitutor s = getSuperClassSubstitutor(aSuper, derived, derivedSubstitutor);
@@ -834,7 +833,7 @@ public class TypeConversionUtil {
       return false; // must be TypeCook's PsiTypeVariable
     }
     if (left instanceof PsiPrimitiveType) {
-      return isUnboxable((PsiPrimitiveType)left, (PsiClassType)right, new HashSet<PsiClassType>());
+      return isUnboxable((PsiPrimitiveType)left, (PsiClassType)right, new HashSet<>());
     }
     final PsiClassType.ClassResolveResult leftResult = PsiUtil.resolveGenericsClassInType(left);
     final PsiClassType.ClassResolveResult rightResult = PsiUtil.resolveGenericsClassInType(right);
@@ -933,24 +932,19 @@ public class TypeConversionUtil {
     final Project project = psiClass.getProject();
     CachedValue<Set<String>> boxedHolderTypes = project.getUserData(POSSIBLE_BOXED_HOLDER_TYPES);
     if (boxedHolderTypes == null) {
-      project.putUserData(POSSIBLE_BOXED_HOLDER_TYPES, boxedHolderTypes = CachedValuesManager.getManager(manager.getProject()).createCachedValue(new CachedValueProvider<Set<String>>() {
-        @Override
-        public Result<Set<String>> compute() {
+      project.putUserData(POSSIBLE_BOXED_HOLDER_TYPES, boxedHolderTypes = CachedValuesManager.getManager(manager.getProject()).createCachedValue(
+        () -> {
           final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-          final Set<String> set = new THashSet<String>();
+          final Set<String> set = new THashSet<>();
           for (final String qname : PsiPrimitiveType.getAllBoxedTypeNames()) {
             final PsiClass boxedClass = facade.findClass(qname, GlobalSearchScope.allScope(project));
-            InheritanceUtil.processSupers(boxedClass, true, new Processor<PsiClass>() {
-              @Override
-              public boolean process(PsiClass psiClass) {
-                ContainerUtil.addIfNotNull(set, psiClass.getQualifiedName());
-                return true;
-              }
+            InheritanceUtil.processSupers(boxedClass, true, psiClass1 -> {
+              ContainerUtil.addIfNotNull(set, psiClass1.getQualifiedName());
+              return true;
             });
           }
-          return Result.create(set, ProjectRootModificationTracker.getInstance(project));
-        }
-      }, false));
+          return CachedValueProvider.Result.create(set, ProjectRootModificationTracker.getInstance(project));
+        }, false));
     }
 
     return boxedHolderTypes.getValue();
@@ -1031,13 +1025,8 @@ public class TypeConversionUtil {
         }
         else { //isSuper
           if (rightWildcard.isSuper()) {
-            final Boolean assignable = ourGuard.doPreventingRecursion(rightWildcard, true, new NotNullComputable<Boolean>() {
-              @NotNull
-              @Override
-              public Boolean compute() {
-                return isAssignable(rightWildcard.getBound(), leftBound, allowUncheckedConversion, false);
-              }
-            });
+            final Boolean assignable = ourGuard.doPreventingRecursion(rightWildcard, true,
+                                                                      (NotNullComputable<Boolean>)() -> isAssignable(rightWildcard.getBound(), leftBound, allowUncheckedConversion, false));
             if (assignable != null && assignable) {
               return true;
             }
@@ -1050,13 +1039,8 @@ public class TypeConversionUtil {
           return isAssignable(leftBound, typeRight, false, false);
         }
         else { // isSuper
-          final Boolean assignable = ourGuard.doPreventingRecursion(leftWildcard, true, new NotNullComputable<Boolean>() {
-            @NotNull
-            @Override
-            public Boolean compute() {
-              return isAssignable(typeRight, leftBound, false, false);
-            }
-          });
+          final Boolean assignable = ourGuard.doPreventingRecursion(leftWildcard, true,
+                                                                    (NotNullComputable<Boolean>)() -> isAssignable(typeRight, leftBound, false, false));
           return assignable == null || assignable.booleanValue(); 
         }
       }
@@ -1081,8 +1065,6 @@ public class TypeConversionUtil {
     return getMaybeSuperClassSubstitutor(superClassCandidate, derivedClassCandidate, derivedSubstitutor, null);
   }
 
-  private static final Set<String> ourReportedSuperClassSubstitutorExceptions = ContainerUtil.newConcurrentSet();
-
   /**
    * Calculates substitutor that binds type parameters in {@code superClass} with
    * values that they have in {@code derivedClass}, given that type parameters in
@@ -1100,13 +1082,11 @@ public class TypeConversionUtil {
                                                         @NotNull PsiSubstitutor derivedSubstitutor) {
     if (!superClass.hasTypeParameters() && superClass.getContainingClass() == null) return PsiSubstitutor.EMPTY; //optimization and protection against EJB queer hierarchy
 
-    Set<PsiClass> visited = new THashSet<PsiClass>();
+    Set<PsiClass> visited = new THashSet<>();
     PsiSubstitutor substitutor = getMaybeSuperClassSubstitutor(superClass, derivedClass, derivedSubstitutor, visited);
 
     if (substitutor == null) {
-      if (ourReportedSuperClassSubstitutorExceptions.add(derivedClass.getQualifiedName() + "/" + superClass.getQualifiedName())) {
-        reportHierarchyInconsistency(superClass, derivedClass, visited);
-      }
+      JavaClassSupers.getInstance().reportHierarchyInconsistency(superClass, derivedClass);
       return PsiSubstitutor.EMPTY;
     }
     return substitutor;
@@ -1119,38 +1099,6 @@ public class TypeConversionUtil {
                                                              @NotNull PsiSubstitutor derivedSubstitutor,
                                                              @Nullable Set<PsiClass> visited) {
     return JavaClassSupers.getInstance().getSuperClassSubstitutor(superClass, derivedClass, derivedClass.getResolveScope(), derivedSubstitutor);
-  }
-
-  private static void reportHierarchyInconsistency(@NotNull PsiClass superClass, @NotNull PsiClass derivedClass, @NotNull Set<PsiClass> visited) {
-    final StringBuilder msg = new StringBuilder("Super: " + classInfo(superClass));
-    msg.append("visited:\n");
-    for (PsiClass aClass : visited) {
-      msg.append("  each: " + classInfo(aClass));
-    }
-    msg.append("isInheritor: " + InheritanceUtil.isInheritorOrSelf(derivedClass, superClass, true) + " " + derivedClass.isInheritor(superClass, true));
-    msg.append("\nhierarchy:\n");
-    InheritanceUtil.processSupers(derivedClass, true, new Processor<PsiClass>() {
-      @Override
-      public boolean process(PsiClass psiClass) {
-        msg.append("each: " + classInfo(psiClass));
-        return true;
-      }
-    });
-    LOG.error(msg.toString());
-  }
-
-  @NotNull
-  private static String classInfo(@NotNull PsiClass aClass) {
-    String s = aClass.getQualifiedName() + "(" + aClass.getClass().getName() + "; " + PsiUtilCore.getVirtualFile(aClass) + ");\n";
-    s += "extends: ";
-    for (PsiClassType type : aClass.getExtendsListTypes()) {
-      s += type + " (" + type.getClass().getName() + "; " + type.resolve() + ") ";
-    }
-    s += "\nimplements: ";
-    for (PsiClassType type : aClass.getImplementsListTypes()) {
-      s += type + " (" + type.getClass().getName() + "; " + type.resolve() + ") ";
-    }
-    return s + "\n";
   }
 
   @NotNull
@@ -1186,7 +1134,7 @@ public class TypeConversionUtil {
     return type;
   }
 
-  private static final Set<String> INTEGER_NUMBER_TYPES = new THashSet<String>(5);
+  private static final Set<String> INTEGER_NUMBER_TYPES = new THashSet<>(5);
 
   static {
     INTEGER_NUMBER_TYPES.add(PsiType.BYTE.getCanonicalText());
@@ -1196,7 +1144,7 @@ public class TypeConversionUtil {
     INTEGER_NUMBER_TYPES.add(PsiType.SHORT.getCanonicalText());
   }
 
-  private static final Set<String> PRIMITIVE_TYPES = new THashSet<String>(9);
+  private static final Set<String> PRIMITIVE_TYPES = new THashSet<>(9);
 
   static {
     PRIMITIVE_TYPES.add(PsiType.VOID.getCanonicalText());
@@ -1210,7 +1158,7 @@ public class TypeConversionUtil {
     PRIMITIVE_TYPES.add(PsiType.BOOLEAN.getCanonicalText());
   }
 
-  private static final Set<String> PRIMITIVE_WRAPPER_TYPES = new THashSet<String>(8);
+  private static final Set<String> PRIMITIVE_WRAPPER_TYPES = new THashSet<>(8);
 
   static {
     PRIMITIVE_WRAPPER_TYPES.add("java.lang.Byte");
@@ -1244,7 +1192,7 @@ public class TypeConversionUtil {
 
   @Contract("null -> false")
   public static boolean isPrimitiveWrapper(final PsiType type) {
-    return type != null && isPrimitiveWrapper(type.getCanonicalText());
+    return type instanceof PsiClassType && isPrimitiveWrapper(type.getCanonicalText());
   }
 
   @Contract("null -> false")
@@ -1261,7 +1209,7 @@ public class TypeConversionUtil {
     if (extendsList.length > 0) {
       final PsiClass psiClass = extendsList[0].resolve();
       if (psiClass instanceof PsiTypeParameter) {
-        Set<PsiClass> visited = new THashSet<PsiClass>();
+        Set<PsiClass> visited = new THashSet<>();
         visited.add(psiClass);
         final PsiTypeParameter boundTypeParameter = (PsiTypeParameter)psiClass;
         if (beforeSubstitutor.getSubstitutionMap().containsKey(boundTypeParameter)) {
@@ -1880,7 +1828,7 @@ public class TypeConversionUtil {
     }
   };
 
-  private static final Map<Class, PsiType> WRAPPER_TO_PRIMITIVE = new THashMap<Class, PsiType>(8);
+  private static final Map<Class, PsiType> WRAPPER_TO_PRIMITIVE = new THashMap<>(8);
   static {
     WRAPPER_TO_PRIMITIVE.put(Boolean.class, PsiType.BOOLEAN);
     WRAPPER_TO_PRIMITIVE.put(Byte.class, PsiType.BYTE);

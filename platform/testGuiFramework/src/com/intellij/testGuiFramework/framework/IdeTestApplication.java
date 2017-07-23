@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.text.StringTokenizer;
@@ -35,13 +36,16 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.application.PathManager.PROPERTY_CONFIG_PATH;
+import static com.intellij.openapi.application.PathManager.PROPERTY_SYSTEM_PATH;
 import static com.intellij.openapi.util.io.FileUtil.*;
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
 import static com.intellij.testGuiFramework.framework.GuiTestUtil.getProjectCreationDirPath;
+import static com.intellij.testGuiFramework.framework.GuiTestUtil.getSystemPropertyOrEnvironmentVariable;
 import static com.intellij.util.ArrayUtil.EMPTY_STRING_ARRAY;
 import static com.intellij.util.ui.UIUtil.initDefaultLAF;
 import static org.fest.assertions.Assertions.assertThat;
@@ -54,6 +58,8 @@ public class IdeTestApplication {
   private static final String PROPERTY_IGNORE_CLASSPATH = "ignore.classpath";
   private static final String PROPERTY_ALLOW_BOOTSTRAP_RESOURCES = "idea.allow.bootstrap.resources";
   private static final String PROPERTY_ADDITIONAL_CLASSPATH = "idea.additional.classpath";
+  private static final String CUSTOM_CONFIG_PATH= "CUSTOM_CONFIG_PATH";
+  private static final String CUSTOM_SYSTEM_PATH= "CUSTOM_SYSTEM_PATH";
 
   private static IdeTestApplication ourInstance;
 
@@ -67,6 +73,13 @@ public class IdeTestApplication {
   @NotNull
   public static File getFailedTestScreenshotDirPath() throws IOException {
     File dirPath = new File(getGuiTestRootDirPath(), "failures");
+    ensureExists(dirPath);
+    return dirPath;
+  }
+
+  @NotNull
+  public static File getTestScreenshotDirPath() throws IOException {
+    File dirPath = new File(getGuiTestRootDirPath(), "screenshots");
     ensureExists(dirPath);
     return dirPath;
   }
@@ -90,8 +103,20 @@ public class IdeTestApplication {
 
   @NotNull
   public static synchronized IdeTestApplication getInstance() throws Exception {
-    File configDirPath = getConfigDirPath();
-    System.setProperty(PROPERTY_CONFIG_PATH, configDirPath.getPath());
+    String customConfigPath = getSystemPropertyOrEnvironmentVariable(CUSTOM_CONFIG_PATH);
+    String customSystemPath = getSystemPropertyOrEnvironmentVariable(CUSTOM_SYSTEM_PATH);
+    File configDirPath = null;
+    boolean isDefaultConfig = true;
+    if (StringUtil.isEmpty(customConfigPath)) {
+      configDirPath = getConfigDirPath();
+      System.setProperty(PROPERTY_CONFIG_PATH, configDirPath.getPath());
+    } else {
+      isDefaultConfig = false;
+      File customConfigFile = new File(customConfigPath);
+      System.setProperty(PROPERTY_CONFIG_PATH, customConfigFile.getPath());
+    }
+
+    if (! StringUtil.isEmpty(customSystemPath)) System.setProperty(PROPERTY_SYSTEM_PATH, Paths.get(customSystemPath).toFile().getPath());
 
     //Force Swing FileChooser on Mac (instead of native one) to be able to use FEST to drive it.
     System.setProperty("native.mac.file.chooser.enabled", "false");
@@ -101,7 +126,7 @@ public class IdeTestApplication {
 
     if (!isLoaded()) {
       ourInstance = new IdeTestApplication();
-      recreateDirectory(configDirPath);
+      if (isDefaultConfig) recreateDirectory(configDirPath);
 
       File newProjectsRootDirPath = getProjectCreationDirPath();
       recreateDirectory(newProjectsRootDirPath);
@@ -158,7 +183,7 @@ public class IdeTestApplication {
 
     UrlClassLoader.Builder builder = UrlClassLoader.build()
       .urls(filterClassPath(new ArrayList<>(classpath)))
-      .parent(IdeTestApplication.class.getClassLoader())
+      //.parent(IdeTestApplication.class.getClassLoader())
       .allowLock(false)
       .usePersistentClasspathIndexForLocalClassDirectories();
     if (SystemProperties.getBooleanProperty(PROPERTY_ALLOW_BOOTSTRAP_RESOURCES, true)) {

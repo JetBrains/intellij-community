@@ -16,9 +16,9 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyKey;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +43,8 @@ public abstract class ExternalAnnotationsManager {
     return INSTANCE_KEY.getValue(project);
   }
 
+  public abstract boolean hasAnnotationRootsForFile(@NotNull VirtualFile file);
+
   public abstract boolean isExternalAnnotation(@NotNull PsiAnnotation annotation);
 
   @Nullable
@@ -57,9 +59,10 @@ public abstract class ExternalAnnotationsManager {
   public abstract void annotateExternally(@NotNull PsiModifierListOwner listOwner,
                                           @NotNull String annotationFQName,
                                           @NotNull PsiFile fromFile,
-                                          @Nullable PsiNameValuePair[] value) throws ProcessCanceledException;
+                                          @Nullable PsiNameValuePair[] value) throws CanceledConfigurationException;
 
   public abstract boolean deannotate(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
+  public void elementRenamedOrMoved(@NotNull PsiModifierListOwner element, @NotNull String oldExternalName) { }
 
   // Method used in Kotlin plugin when it is necessary to leave external annotation, but modify its arguments
   public abstract boolean editExternalAnnotation(@NotNull PsiModifierListOwner listOwner,
@@ -70,4 +73,10 @@ public abstract class ExternalAnnotationsManager {
 
   @Nullable
   public abstract List<PsiFile> findExternalAnnotationsFiles(@NotNull PsiModifierListOwner listOwner);
+
+  public static class CanceledConfigurationException extends RuntimeException {
+    public static final CanceledConfigurationException INSTANCE = new CanceledConfigurationException();
+
+    private CanceledConfigurationException() {}
+  }
 }

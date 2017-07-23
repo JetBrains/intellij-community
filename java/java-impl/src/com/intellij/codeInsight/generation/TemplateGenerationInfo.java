@@ -20,6 +20,8 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class TemplateGenerationInfo extends GenerationInfoBase implements GenerationInfo {
   private final Expression myExpression;
@@ -36,14 +38,15 @@ public abstract class TemplateGenerationInfo extends GenerationInfoBase implemen
 
   protected abstract PsiElement getTemplateElement(PsiMethod method);
 
+  @NotNull
   @Override
   public PsiMethod getPsiMember() {
-    return myElement.getElement();
+    return ObjectUtils.assertNotNull(myElement.getElement());
   }
 
   @Override
-  public void insert(PsiClass aClass, PsiElement anchor, boolean before) throws IncorrectOperationException {
-    setElement((PsiMethod)GenerateMembersUtil.insert(aClass, myElement.getElement(), anchor, before));
+  public void insert(@NotNull PsiClass aClass, PsiElement anchor, boolean before) throws IncorrectOperationException {
+    setElement((PsiMethod)GenerateMembersUtil.insert(aClass, getPsiMember(), anchor, before));
   }
 
   public Template getTemplate() {

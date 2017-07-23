@@ -134,4 +134,16 @@ public class MethodRefCanBeReplacedWithLambdaFixTest extends IGQuickFixesTestCas
   public void testNoUnderscoreInLambdaParameterName() throws Exception {
     doTest();
   }
+
+  public void testNoCastWhereCaptureArgIsExpected() throws Exception {
+    doTest();
+  }
+
+  public void testSpecifyFormalParameterTypesWhenMethodReferenceWasExactAndTypeOfParameterIsUnknown() throws Exception {
+    doTest();
+  }
+
+  public void testEnsureNoConversionIsSuggestedWhenLambdaWithoutCantBeInferredAndFormalParametersAreNotDenotable() throws Exception {
+    assertQuickfixNotAvailable();
+  }
 }

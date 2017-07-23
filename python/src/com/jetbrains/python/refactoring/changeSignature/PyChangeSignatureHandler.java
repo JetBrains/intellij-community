@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,8 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,9 +57,17 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
   public PsiElement findTargetMember(@Nullable PsiElement element) {
     final PyCallExpression callExpression = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
     if (callExpression != null) {
-      return callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
+      final PyCallable resolved = callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
+      if (resolved instanceof PyFunction && PyiUtil.isOverload(resolved, TypeEvalContext.codeInsightFallback(callExpression.getProject()))) {
+        return PyiUtil.getImplementation((PyFunction)resolved);
+      }
+      return resolved;
     }
-    return PsiTreeUtil.getParentOfType(element, PyFunction.class);
+    final PyFunction parent = PsiTreeUtil.getParentOfType(element, PyFunction.class);
+    if (parent != null && PyiUtil.isOverload(parent, TypeEvalContext.codeInsightFallback(parent.getProject()))) {
+      return null;
+    }
+    return parent;
   }
 
   @Override
@@ -126,10 +136,10 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
 
   private static void showCannotRefactorErrorHint(@NotNull Project project, @Nullable Editor editor, @NotNull String details) {
     final String message = RefactoringBundle.getCannotRefactorMessage(details);
-    CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, REFACTORING_NAME);
+    CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, "refactoring.renameRefactorings");
   }
 
-  private static boolean isNotUnderSourceRoot(@NotNull final Project project, @Nullable final PsiFile psiFile) {
+  public static boolean isNotUnderSourceRoot(@NotNull final Project project, @Nullable final PsiFile psiFile) {
     if (psiFile == null) {
       return true;
     }

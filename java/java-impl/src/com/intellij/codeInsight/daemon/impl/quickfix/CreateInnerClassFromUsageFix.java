@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
@@ -108,7 +109,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
     final Project project = classes[0].getProject();
 
     final JList list = new JBList(classes);
-    PsiElementListCellRenderer renderer = PsiClassListCellRenderer.INSTANCE;
+    PsiElementListCellRenderer renderer = new PsiClassListCellRenderer();
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(renderer);
     final PopupChooserBuilder builder = new PopupChooserBuilder(list);
@@ -139,12 +140,12 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
                       : myKind == CreateClassKind.CLASS ? elementFactory.createClass(refName) : elementFactory.createEnum(refName);
     final PsiModifierList modifierList = created.getModifierList();
     LOG.assertTrue(modifierList != null);
-    if (aClass.isInterface()) {
+    if (aClass.isInterface() || PsiUtil.isLocalOrAnonymousClass(aClass)) {
       modifierList.setModifierProperty(PsiModifier.PACKAGE_LOCAL, true);
     } else {
       modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
     }
-    if (RefactoringUtil.isInStaticContext(ref, aClass)) {
+    if (RefactoringUtil.isInStaticContext(ref, aClass) && !aClass.isInterface()) {
       modifierList.setModifierProperty(PsiModifier.STATIC, true);
     }
     if (superClassName != null) {

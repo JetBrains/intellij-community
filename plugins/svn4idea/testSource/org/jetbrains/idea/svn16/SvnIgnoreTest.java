@@ -20,17 +20,18 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.junit.Assert;
 import org.junit.Test;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNPropertyValue;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static org.jetbrains.idea.svn.SvnPropertyKeys.SVN_IGNORE;
+import static org.tmatesoft.svn.core.SVNDepth.EMPTY;
+import static org.tmatesoft.svn.core.SVNPropertyValue.create;
 
 /**
  * @author irengrig
@@ -56,8 +57,8 @@ public class SvnIgnoreTest extends Svn16TestCase {
   public void testOneFileCreatedDeep() throws Exception {
     final VirtualFile versionedParent = createDirInCommand(myWorkingCopyDir, "versionedParent");
     final String name = "ign123";
-    myVcs.getSvnKitManager().createWCClient().doSetProperty(new File(versionedParent.getPath()), SvnPropertyKeys.SVN_IGNORE,
-                                         SVNPropertyValue.create(name + "\n"), true, SVNDepth.EMPTY, null, null);
+    myVcs.getSvnKitManager().createWCClient().doSetProperty(virtualToIoFile(versionedParent), SVN_IGNORE,
+                                                            create(name + "\n"), true, EMPTY, null, null);
     checkin();
     update();
 
@@ -86,8 +87,9 @@ public class SvnIgnoreTest extends Svn16TestCase {
     final VirtualFile versionedParent = createDirInCommand(myWorkingCopyDir, "versionedParent");
     final String name = "ign123";
     final String name2 = "ign321";
-    myVcs.getSvnKitManager().createWCClient().doSetProperty(new File(versionedParent.getPath()), SvnPropertyKeys.SVN_IGNORE,
-                                         SVNPropertyValue.create(name + "\n" + name2 + "\n"), true, SVNDepth.EMPTY, null, null);
+    myVcs.getSvnKitManager().createWCClient().doSetProperty(virtualToIoFile(versionedParent), SVN_IGNORE,
+                                                            create(name + "\n" + name2 + "\n"), true, EMPTY, null,
+                                                            null);
     checkin();
     update();
 

@@ -13,9 +13,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class MavenGenerateTemplateAction extends GenerateDomElementAction {
   public MavenGenerateTemplateAction(@NotNull final String description,
                                      @NotNull final Class<? extends DomElement> childElementClass,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,14 @@ package com.intellij.profile;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.util.xmlb.SmartSerializer;
 import com.intellij.util.xmlb.annotations.OptionTag;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- * Date: 01-Dec-2005
- */
 public abstract class ProfileEx implements Comparable, ExternalizableScheme {
   public static final String SCOPE = "scope";
   public static final String NAME = "name";
   public static final String PROFILE = "profile";
 
-  private final SmartSerializer mySerializer;
+  protected final SmartSerializer mySerializer;
 
   @NotNull
   protected String myName;
@@ -57,14 +52,6 @@ public abstract class ProfileEx implements Comparable, ExternalizableScheme {
     myName = name;
   }
 
-  public void readExternal(Element element) {
-    mySerializer.readExternal(this, element);
-  }
-
-  public void writeExternal(@NotNull Element element) {
-    mySerializer.writeExternal(this, element, false);
-  }
-
   public boolean equals(Object o) {
     return this == o || o instanceof ProfileEx && myName.equals(((ProfileEx)o).myName);
   }
@@ -79,20 +66,5 @@ public abstract class ProfileEx implements Comparable, ExternalizableScheme {
       return getName().compareToIgnoreCase(((ProfileEx)o).getName());
     }
     return 0;
-  }
-
-  public final void copyFrom(@NotNull ProfileEx profile) {
-    Element element = profile.writeScheme();
-    if (element.getName().equals("component")) {
-      element = element.getChild("profile");
-    }
-    readExternal(element);
-  }
-
-  @NotNull
-  public Element writeScheme() {
-    Element element = new Element(PROFILE);
-    writeExternal(element);
-    return element;
   }
 }

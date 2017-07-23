@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 29-Aug-2008
- */
 package com.intellij.refactoring.inlineSuperClass.usageInfo;
 
 import com.intellij.openapi.util.text.StringUtil;

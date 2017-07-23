@@ -18,6 +18,7 @@ package com.intellij.configurationStore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.util.isEmpty
 import org.jdom.Element
 
 abstract class StorageBaseEx<T : Any> : StateStorageBase<T>() {
@@ -61,7 +62,7 @@ class StateGetter<S : Any, T : Any>(private val component: PersistentStateCompon
     }
     else {
       serializeState(stateAfterLoad)?.normalizeRootName().let {
-        if (JDOMUtil.isEmpty(it)) null else it
+        if (it.isEmpty()) null else it
       }
     }
 

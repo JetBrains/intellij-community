@@ -236,7 +236,7 @@
 
     <!-- Errors -->
     <!-- Show full error options configurable only in full IDEA - platform supports only default IDE profile for now -->
-    <projectConfigurable groupId="editor" groupWeight="160" displayName="Inspections" id="Errors" instance="com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurable"/>
+    <projectConfigurable groupId="editor" groupWeight="160" displayName="Inspections" id="Errors" provider="com.intellij.profile.codeInspection.ui.ErrorsConfigurableProviderImpl"/>
 
     <!-- Compiler -->
     <projectConfigurable groupId="build" groupWeight="130" instance="com.intellij.compiler.options.CompilerConfigurable" id="project.propCompiler" order="after project"
@@ -304,7 +304,6 @@
     <gotoFileContributor implementation="com.intellij.ide.util.gotoByName.ProjectBaseDirNavigationContributor"/>
 
     <consoleFilterProvider implementation="com.intellij.execution.filters.DefaultConsoleFiltersProvider"/>
-    <consoleFilterProvider implementation="com.intellij.execution.filters.UrlFilter$UrlFilterProvider"/>
 
     <selectInTarget implementation="com.intellij.ide.impl.ProjectStructureSelectInTarget"/>
 
@@ -370,7 +369,6 @@
     <projectStructure.sourceRootEditHandler implementation="com.intellij.openapi.roots.ui.configuration.JavaResourceRootEditHandler"/>
     <projectStructure.sourceRootEditHandler implementation="com.intellij.openapi.roots.ui.configuration.JavaTestResourceRootEditHandler"/>
 
-    <buildProcess.parametersProvider implementation="com.intellij.compiler.classFilesIndex.api.index.ClassFilesIndexerBuilderParametersProvider"/>
     <buildProcess.parametersProvider implementation="com.intellij.compiler.CompilerReferenceIndexBuildParametersProvider"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">

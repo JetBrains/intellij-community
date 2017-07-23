@@ -34,7 +34,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.psi.PsiElement;
@@ -64,12 +63,7 @@ public class ExtractMethodHelper {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, RefactoringBundle.message("searching.for.duplicates"), true) {
       public void run(@NotNull ProgressIndicator indicator) {
         if (myProject == null || myProject.isDisposed()) return;
-        final List<SimpleMatch> duplicates = ApplicationManager.getApplication().runReadAction(new Computable<List<SimpleMatch>>() {
-          @Override
-          public List<SimpleMatch> compute() {
-            return finder.findDuplicates(scope, generatedMethod);
-          }
-        });
+        final List<SimpleMatch> duplicates = ReadAction.compute(() -> finder.findDuplicates(scope, generatedMethod));
 
         ApplicationManager.getApplication().invokeLater(() -> replaceDuplicates(callElement, editor, replacer, duplicates));
       }

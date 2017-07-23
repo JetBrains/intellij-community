@@ -21,10 +21,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-/**
- * User: anna
- * Date: 1/10/13
- */
 public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescriptor {
   private final String myName;
   private final PsiClass myPsiClass;
@@ -190,7 +186,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
       final List<String> remainingPropertyNames = propertyNames.subList(1, propertyNames.size());
       for (String propertyName : remainingPropertyNames) {
         if (aClass == null) break;
-        final PsiMember member = JavaFxPsiUtil.collectReadableProperties(aClass).get(propertyName);
+        final PsiMember member = JavaFxPsiUtil.getReadableProperties(aClass).get(propertyName);
         aClass = JavaFxPsiUtil.getPropertyClass(JavaFxPsiUtil.getReadablePropertyType(member), xmlAttributeValue);
       }
       if (aClass != null && !InheritanceUtil.isInheritorOrSelf(aClass, targetPropertyClass, true)) {
@@ -273,7 +269,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
   }
 
   private PsiMember getDeclarationMember() {
-    return JavaFxPsiUtil.collectWritableProperties(myPsiClass).get(myName);
+    return JavaFxPsiUtil.getWritableProperties(myPsiClass).get(myName);
   }
 
   @Override
@@ -295,6 +291,7 @@ public class JavaFxPropertyAttributeDescriptor extends BasicXmlAttributeDescript
   public void init(PsiElement element) {
   }
 
+  @NotNull
   @Override
   public Object[] getDependences() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;

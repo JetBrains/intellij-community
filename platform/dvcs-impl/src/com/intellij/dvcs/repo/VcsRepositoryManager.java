@@ -20,7 +20,6 @@ import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
@@ -91,8 +90,23 @@ public class VcsRepositoryManager extends AbstractProjectComponent implements Di
 
   @Nullable
   public Repository getRepositoryForFile(@NotNull VirtualFile file) {
+    return getRepositoryForFile(file, false);
+  }
+
+  /**
+   * @Deprecated to delete in 2017.X
+   */
+  @Nullable
+  @Deprecated
+  public Repository getRepositoryForFileQuick(@NotNull VirtualFile file) {
+    return getRepositoryForFile(file, true);
+  }
+
+  @Nullable
+  public Repository getRepositoryForFile(@NotNull VirtualFile file, boolean quick) {
     final VcsRoot vcsRoot = myVcsManager.getVcsRootObjectFor(file);
-    return vcsRoot != null ? getRepositoryForRoot(vcsRoot.getPath()) : null;
+    if (vcsRoot == null) return null;
+    return quick ? getRepositoryForRootQuick(vcsRoot.getPath()) : getRepositoryForRoot(vcsRoot.getPath());
   }
 
   @Nullable
@@ -235,23 +249,13 @@ public class VcsRepositoryManager extends AbstractProjectComponent implements Di
   @NotNull
   private Collection<VirtualFile> findInvalidRoots(@NotNull final Collection<VirtualFile> roots) {
     final VirtualFile[] validRoots = myVcsManager.getAllVersionedRoots();
-    return ContainerUtil.filter(roots, new Condition<VirtualFile>() {
-      @Override
-      public boolean value(VirtualFile file) {
-        return !ArrayUtil.contains(file, validRoots);
-      }
-    });
+    return ContainerUtil.filter(roots, file -> !ArrayUtil.contains(file, validRoots));
   }
 
   @Nullable
   private VcsRepositoryCreator getRepositoryCreator(@Nullable final AbstractVcs vcs) {
     if (vcs == null) return null;
-    return ContainerUtil.find(myRepositoryCreators, new Condition<VcsRepositoryCreator>() {
-      @Override
-      public boolean value(VcsRepositoryCreator creator) {
-        return creator.getVcsKey().equals(vcs.getKeyInstanceMethod());
-      }
-    });
+    return ContainerUtil.find(myRepositoryCreators, creator -> creator.getVcsKey().equals(vcs.getKeyInstanceMethod()));
   }
 
   @NotNull

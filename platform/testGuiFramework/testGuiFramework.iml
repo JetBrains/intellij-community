@@ -5,24 +5,24 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/res" type="java-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="module" module-name="platform-impl" exported="" />
     <orderEntry type="library" exported="" name="fest" level="project" />
-    <orderEntry type="library" name="JUnit4" level="project" />
+    <orderEntry type="library" exported="" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="bootstrap" />
     <orderEntry type="module" module-name="idea-ui" />
-    <orderEntry type="module" module-name="dvcs-impl" scope="TEST" />
     <orderEntry type="module" module-name="testRunner" />
     <orderEntry type="module" module-name="xdebugger-impl" />
     <orderEntry type="module" module-name="external-system-rt" />
     <orderEntry type="module" module-name="external-system-impl" />
-    <orderEntry type="module" module-name="git4idea" />
-    <orderEntry type="module" module-name="vcs-tests" />
-    <orderEntry type="module" module-name="platform-main" />
     <orderEntry type="library" name="jsr305" level="project" />
+    <orderEntry type="module" module-name="testFramework" />
+    <orderEntry type="module" module-name="jps-builders" />
+    <orderEntry type="module" module-name="diff-impl" scope="TEST" />
   </component>
 </module>

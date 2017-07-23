@@ -53,7 +53,7 @@ public class BuildFSState {
   // alternatively, when false, after first scan will rely on external notifications about changes
   private final boolean myAlwaysScanFS;
   private final Set<BuildTarget<?>> myInitialScanPerformed = Collections.synchronizedSet(new HashSet<BuildTarget<?>>());
-  private final TObjectLongHashMap<File> myRegistrationStamps = new TObjectLongHashMap<File>(FileUtil.FILE_HASHING_STRATEGY);
+  private final TObjectLongHashMap<File> myRegistrationStamps = new TObjectLongHashMap<>(FileUtil.FILE_HASHING_STRATEGY);
   private final Map<BuildTarget<?>, FilesDelta> myDeltas = Collections.synchronizedMap(new HashMap<BuildTarget<?>, FilesDelta>());
 
   public BuildFSState(boolean alwaysScanFS) {
@@ -61,7 +61,7 @@ public class BuildFSState {
   }
 
   public void save(DataOutput out) throws IOException {
-    MultiMap<BuildTargetType<?>, BuildTarget<?>> targetsByType = new MultiMap<BuildTargetType<?>, BuildTarget<?>>();
+    MultiMap<BuildTargetType<?>, BuildTarget<?>> targetsByType = new MultiMap<>();
     for (BuildTarget<?> target : myInitialScanPerformed) {
       targetsByType.putValue(target.getTargetType(), target);
     }
@@ -173,14 +173,22 @@ public class BuildFSState {
     myInitialScanPerformed.add(target);
   }
 
-  public void registerDeleted(BuildTarget<?> target, final File file, @Nullable Timestamps tsStorage) throws IOException {
-    registerDeleted(target, file);
+  public void registerDeleted(@Nullable CompileContext context, BuildTarget<?> target, final File file, @Nullable Timestamps tsStorage) throws IOException {
+    registerDeleted(context, target, file);
     if (tsStorage != null) {
       tsStorage.removeStamp(file, target);
     }
   }
 
-  public void registerDeleted(BuildTarget<?> target, File file) {
+  public void registerDeleted(@Nullable CompileContext context, BuildTarget<?> target, final File file) {
+    final FilesDelta currentDelta = getRoundDelta(CURRENT_ROUND_DELTA_KEY, context);
+    if (currentDelta != null) {
+      currentDelta.addDeleted(file);
+    }
+    final FilesDelta nextDelta = getRoundDelta(NEXT_ROUND_DELTA_KEY, context);
+    if (nextDelta != null) {
+      nextDelta.addDeleted(file);
+    }
     getDelta(target).addDeleted(file);
   }
 
@@ -285,7 +293,7 @@ public class BuildFSState {
     if (context == null) {
       return false;
     }
-    Set<? extends BuildTarget<?>> targets = CONTEXT_TARGETS_KEY.get(context, Collections.<BuildTarget<?>>emptySet());
+    Set<? extends BuildTarget<?>> targets = CONTEXT_TARGETS_KEY.get(context, Collections.emptySet());
     return targets.contains(rd.getTarget());
   }
 
@@ -333,7 +341,7 @@ public class BuildFSState {
     if (currentDelta == null) {
       // this is the initial round.
       // Need to make a snapshot of the FS state so that all builders in the chain see the same picture
-      final List<FilesDelta> deltas = new SmartList<FilesDelta>();
+      final List<FilesDelta> deltas = new SmartList<>();
       for (ModuleBuildTarget target : chunk.getTargets()) {
         deltas.add(getDelta(target));
       }

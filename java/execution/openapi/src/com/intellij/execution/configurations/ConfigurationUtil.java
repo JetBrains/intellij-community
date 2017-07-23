@@ -20,10 +20,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiMethodUtil;
 
-/**
- * User: anna
- * Date: Jan 26, 2005
- */
 public class ConfigurationUtil {
   public static final Condition<PsiClass> PUBLIC_INSTANTIATABLE_CLASS = new Condition<PsiClass>() {
     public boolean value(final PsiClass psiClass) {

@@ -15,11 +15,6 @@
  */
 package org.intellij.lang.xpath;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 10.03.11
-*/
 public class XPath2HighlightingTest extends XPath2HighlightingTestBase {
   public void testIfInsideArgumentList() throws Throwable {
     doXPathHighlighting();
@@ -62,7 +57,7 @@ public class XPath2HighlightingTest extends XPath2HighlightingTestBase {
   }
 
   public void testValidOperations2() throws Throwable {
-    TestNamespaceContext.install(getTestRootDisposable());
+    TestNamespaceContext.install(myFixture.getTestRootDisposable());
     doXPathHighlighting();
   }
 

@@ -27,7 +27,7 @@ public class WelcomeWizardUtil {
   private static volatile String ourWizardMacKeymap;
   private static volatile String ourWizardEditorScheme;
   private static volatile Boolean ourAutoScrollToSource;
-  private static final Set<String> ourFeaturedPluginsToInstall = new HashSet<String>();
+  private static final Set<String> ourFeaturedPluginsToInstall = new HashSet<>();
 
   public static void setDefaultLAF(String laf) {
     ourDefaultLAF = laf;

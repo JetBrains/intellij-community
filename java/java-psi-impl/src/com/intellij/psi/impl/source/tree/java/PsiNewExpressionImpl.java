@@ -55,7 +55,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
   @Nullable
   private PsiType doGetType(@Nullable PsiAnnotation stopAt) {
     PsiType type = null;
-    SmartList<PsiAnnotation> annotations = new SmartList<PsiAnnotation>();
+    SmartList<PsiAnnotation> annotations = new SmartList<>();
     boolean stop = false;
 
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {

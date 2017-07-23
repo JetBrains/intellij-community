@@ -44,8 +44,10 @@ import org.jetbrains.idea.svn.properties.PropertyValue;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
   @NotNull private final WrapperRequest myWrapperRequest;
@@ -135,13 +137,10 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
       }
     }
 
-    return new Runnable() {
-      @Override
-      public void run() {
-        for (DiffChange change : myDiffChanges) {
-          setupHighlighting(change, Side.LEFT);
-          setupHighlighting(change, Side.RIGHT);
-        }
+    return () -> {
+      for (DiffChange change : myDiffChanges) {
+        setupHighlighting(change, Side.LEFT);
+        setupHighlighting(change, Side.RIGHT);
       }
     };
   }
@@ -219,7 +218,7 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
       int shift2 = editor2.getScrollingModel().getVerticalScrollOffset() - headerOffset2;
       double rotate = shift1 == shift2 ? 0 : Math.atan2(shift2 - shift1, clip.width);
 
-      DiffDividerDrawUtil.paintPolygons(gg, divider.getWidth(), false, rotate == 0, editor1, editor2, this);
+      DiffDividerDrawUtil.paintPolygons(gg, divider.getWidth(), rotate == 0, editor1, editor2, this);
 
       for (DiffChange change : myDiffChanges) {
         int y1 = editor1.logicalPositionToXY(new LogicalPosition(change.getStartLine(Side.LEFT), 0)).y - shift1;
@@ -384,12 +383,7 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
       records.add(createRecord(name, before.get(name), after.get(name)));
     }
 
-    ContainerUtil.sort(records, new Comparator<PropertyRecord>() {
-      @Override
-      public int compare(PropertyRecord o1, PropertyRecord o2) {
-        return StringUtil.naturalCompare(o1.getName(), o2.getName());
-      }
-    });
+    ContainerUtil.sort(records, (o1, o2) -> StringUtil.naturalCompare(o1.getName(), o2.getName()));
 
     return records;
   }
@@ -446,13 +440,13 @@ public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
     @NotNull
     @Override
     public List<DiffContent> getContents() {
-      return ContainerUtil.<DiffContent>list(myContent1, myContent2);
+      return ContainerUtil.list(myContent1, myContent2);
     }
 
     @NotNull
     @Override
     public List<String> getContentTitles() {
-      return myEmbedded ? ContainerUtil.<String>list(null, null) : myRequest.getContentTitles();
+      return myEmbedded ? ContainerUtil.list(null, null) : myRequest.getContentTitles();
     }
 
     @Nullable

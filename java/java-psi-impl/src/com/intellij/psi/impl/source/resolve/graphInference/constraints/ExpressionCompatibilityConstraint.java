@@ -28,9 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Set;
 
-/**
- * User: anna
- */
 public class ExpressionCompatibilityConstraint extends InputOutputConstraintFormula {
   private final PsiExpression myExpression;
   private PsiType myT;
@@ -99,16 +96,14 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
     }
     
     if (myExpression instanceof PsiCall) {
-      final InferenceSession callSession = reduceExpressionCompatibilityConstraint(session, myExpression, myT);
+      final InferenceSession callSession = reduceExpressionCompatibilityConstraint(session, myExpression, myT, true);
       if (callSession == null) {
         return false;
       }
       if (callSession != session) {
         session.getInferenceSessionContainer().registerNestedSession(callSession);
         session.propagateVariables(callSession.getInferenceVariables(), callSession.getRestoreNameSubstitution());
-/*        if (callSession.isErased()) {
-          session.setErased();
-        }*/
+        callSession.setUncheckedInContext();
       }
       return true;
     }
@@ -129,13 +124,18 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
 
   public static InferenceSession reduceExpressionCompatibilityConstraint(InferenceSession session,
                                                                          PsiExpression expression,
-                                                                         PsiType targetType) {
+                                                                         PsiType targetType,
+                                                                         boolean registerErrorOnFailure) {
+    if (!PsiPolyExpressionUtil.isPolyExpression(expression)) {
+      return session;
+    }
     final PsiExpressionList argumentList = ((PsiCall)expression).getArgumentList();
     if (argumentList != null) {
       final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(argumentList);
       PsiType returnType = null;
       PsiTypeParameter[] typeParams = null;
-      final JavaResolveResult resolveResult = candidateProperties != null ? null : InferenceSession.getResolveResult((PsiCall)expression);
+      final JavaResolveResult resolveResult = candidateProperties != null ? null : PsiDiamondType
+        .getDiamondsAwareResolveResult((PsiCall)expression);
       final PsiMethod method = InferenceSession.getCalledMethod((PsiCall)expression);
 
       if (method != null && !method.isConstructor()) {
@@ -151,6 +151,9 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
             typeParams = ArrayUtil.mergeArrays(typeParams, method.getTypeParameters());
           }
         }
+      }
+      else {
+        return session;
       }
 
       if (typeParams != null) {
@@ -184,8 +187,12 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
             session.registerIncompatibleErrorMessage(message);
           }
         }
+        return null;
       }
-      return null;
+      else if (registerErrorOnFailure) {
+        session.registerIncompatibleErrorMessage("Failed to resolve argument");
+        return null;
+      }
     }
     return session;
   }

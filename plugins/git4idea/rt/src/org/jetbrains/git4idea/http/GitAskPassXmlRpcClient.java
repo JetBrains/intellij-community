@@ -46,10 +46,7 @@ class GitAskPassXmlRpcClient {
     try {
       return (String)myClient.execute(methodName("askUsername"), parameters);
     }
-    catch (XmlRpcException e) {
-      throw new RuntimeException("Invocation failed " + e.getMessage(), e);
-    }
-    catch (IOException e) {
+    catch (XmlRpcException | IOException e) {
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);
     }
   }
@@ -64,10 +61,7 @@ class GitAskPassXmlRpcClient {
     try {
       return (String)myClient.execute(methodName("askPassword"), parameters);
     }
-    catch (XmlRpcException e) {
-      throw new RuntimeException("Invocation failed " + e.getMessage(), e);
-    }
-    catch (IOException e) {
+    catch (XmlRpcException | IOException e) {
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);
     }
   }

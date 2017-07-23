@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class FileTreeBuilder extends AbstractTreeBuilder {
 
     initRootNode();
 
-    VirtualFileAdapter listener = new VirtualFileAdapter() {
+    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
       @Override
       public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
         doUpdate();
@@ -72,8 +72,7 @@ public class FileTreeBuilder extends AbstractTreeBuilder {
       private void doUpdate() {
         queueUpdateFrom(getRootNode(), false);
       }
-    };
-    VirtualFileManager.getInstance().addVirtualFileListener(listener, this);
+    }, this);
   }
 
   @Override

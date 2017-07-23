@@ -1,18 +1,23 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2015, by the Pockets team, see AUTHORS.
+# Copyright (c) 2016 the Pockets team, see AUTHORS.
 # Licensed under the BSD License, see LICENSE for details.
 
 """A pocket full of useful string manipulation functions!"""
 
 from __future__ import absolute_import
 import re
+import six
+import sys
 
 from pockets.collections import listify
 
 __all__ = ["camel", "uncamel", "splitcaps"]
 
 # Default regular expression flags
-_re_flags = re.L | re.M | re.U
+if six.PY2:
+    _re_flags = re.L | re.M | re.U
+else:
+    _re_flags = re.M | re.U
 
 _whitespace_group_re = re.compile("(\s+)", _re_flags)
 
@@ -275,3 +280,22 @@ def splitcaps(s, pattern=None, maxsplit=None, flags=0):
             break
 
     return result if len(result) > 0 else [s]
+
+
+class UnicodeMixin(object):
+    """Mixin class to define the proper __str__/__unicode__ methods in
+    Python 2 or 3.
+
+    Originally found on the `Porting Python 2 Code to Python 3 HOWTO`_.
+
+    .. _Porting Python 2 Code to Python 3 HOWTO:
+       https://docs.python.org/3.3/howto/pyporting.html
+
+    """
+
+    if sys.version_info[0] >= 3:  # Python 3
+        def __str__(self):
+            return self.__unicode__()
+    else:  # Python 2
+        def __str__(self):
+            return self.__unicode__().encode('utf8')

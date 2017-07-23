@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,9 @@ import com.intellij.openapi.util.Condition
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.components.JBList
 import com.intellij.util.io.connect
+import com.intellij.util.io.sleep
 import com.intellij.util.io.socketConnection.ConnectionStatus
 import io.netty.bootstrap.Bootstrap
-import io.netty.channel.ChannelFuture
-import io.netty.util.concurrent.GenericFutureListener
 import org.jetbrains.concurrency.*
 import org.jetbrains.debugger.Vm
 import org.jetbrains.io.NettyUtil
@@ -41,25 +40,25 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
   var address: InetSocketAddress? = null
 
   private val connectCancelHandler = AtomicReference<() -> Unit>()
-
-  protected val channelCloseListener = GenericFutureListener<ChannelFuture> {
-    close("Process disconnected unexpectedly", ConnectionStatus.DISCONNECTED)
-  }
-
+  
   abstract fun createBootstrap(address: InetSocketAddress, vmResult: AsyncPromise<Vm>): Bootstrap
-
+  
   @JvmOverloads
   fun open(address: InetSocketAddress, stopCondition: Condition<Void>? = null): Promise<Vm> {
+    if (address.isUnresolved) {
+      val error = "Host ${address.hostString} is unresolved"
+      setState(ConnectionStatus.CONNECTION_FAILED, error)
+      return rejectedPromise(error)
+    }
+
     this.address = address
     @Suppress("DEPRECATION")
     port = address.port
     setState(ConnectionStatus.WAITING_FOR_CONNECTION, "Connecting to ${address.hostString}:${address.port}")
     val result = AsyncPromise<Vm>()
-    val future = ApplicationManager.getApplication().executeOnPooledThread {
-      if (Thread.interrupted()) {
-        return@executeOnPooledThread
-      }
-
+    
+    var attemptNumber = 0
+    fun attempt() {
       connectCancelHandler.set { result.setError("Closed explicitly") }
 
       val connectionPromise = AsyncPromise<Any?>()
@@ -80,8 +79,29 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
         .processed { connectCancelHandler.set(null) }
 
       createBootstrap(address, result)
-          .connect(address, connectionPromise, maxAttemptCount = if (stopCondition == null) NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT else -1, stopCondition = stopCondition)
-          ?.let { it.closeFuture().addListener(channelCloseListener) }
+        .connect(address, connectionPromise,
+                 maxAttemptCount = if (stopCondition == null) NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT else -1,
+                 stopCondition = stopCondition)
+        ?.closeFuture()?.addListener {
+        if (result.isFulfilled) {
+          close("Process disconnected unexpectedly", ConnectionStatus.DISCONNECTED)
+        }
+        else if (++attemptNumber > 100 || (stopCondition?.value(null) ?: false)) {
+          result.setError("Cannot establish connection - promptly closed after open")
+        }
+        else {
+          sleep(result, 500)
+          attempt()
+        }
+      }
+    }
+    
+    val future = ApplicationManager.getApplication().executeOnPooledThread {
+      if (Thread.interrupted()) {
+        return@executeOnPooledThread
+      }
+      
+      attempt()
     }
 
     connectCancelHandler.set {

@@ -43,3 +43,18 @@ class NoDuplication2Test {
   public Object[][] someTestData2() {return null;}
 
 }
+
+abstract class DuplicateInSuperBase {
+  @DataProvider(name = "someTestData")
+  public static Object[][] someTestData2() {return null;}
+
+  @DataProvider
+  public abstract Object[][] getData();
+}
+class DuplicateInSuper extends DuplicateInSuperBase {
+  @DataProvider
+  public static Object[][] <error descr="Data provider with name 'someTestData' already exists in context">someTestData</error>() {return null;}
+
+  @DataProvider
+  public Object[][] getData() {return null;}
+}

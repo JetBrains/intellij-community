@@ -2,7 +2,6 @@ package git4idea.log;
 
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -41,8 +40,8 @@ public class GitRefManager implements VcsLogRefManager {
 
   private static final List<VcsRefType> REF_TYPE_INDEX = Arrays.asList(HEAD, LOCAL_BRANCH, REMOTE_BRANCH, TAG, OTHER);
 
-  private static final String MASTER = "master";
-  private static final String ORIGIN_MASTER = "origin/master";
+  public static final String MASTER = "master";
+  public static final String ORIGIN_MASTER = "origin/master";
   private static final Logger LOG = Logger.getInstance(GitRefManager.class);
   private static final String REMOTE_TABLE_SEPARATOR = " & ";
   private static final String SEPARATOR = "/";
@@ -256,12 +255,7 @@ public class GitRefManager implements VcsLogRefManager {
   }
 
   private static Set<String> getLocalBranches(GitRepository repository) {
-    return ContainerUtil.map2Set(repository.getBranches().getLocalBranches(), new Function<GitBranch, String>() {
-      @Override
-      public String fun(GitBranch branch) {
-        return branch.getName();
-      }
-    });
+    return ContainerUtil.map2Set(repository.getBranches().getLocalBranches(), (Function<GitBranch, String>)branch -> branch.getName());
   }
 
   @NotNull
@@ -288,12 +282,7 @@ public class GitRefManager implements VcsLogRefManager {
   }
 
   private static Set<String> getTrackedRemoteBranchesFromConfig(GitRepository repository) {
-    return ContainerUtil.map2Set(repository.getBranchTrackInfos(), new Function<GitBranchTrackInfo, String>() {
-      @Override
-      public String fun(GitBranchTrackInfo trackInfo) {
-        return trackInfo.getRemoteBranch().getName();
-      }
-    });
+    return ContainerUtil.map2Set(repository.getBranchTrackInfos(), trackInfo -> trackInfo.getRemoteBranch().getName());
   }
 
   @NotNull
@@ -530,14 +519,9 @@ public class GitRefManager implements VcsLogRefManager {
         LOG.error("Undefined root " + ref.getRoot());
         return false;
       }
-      return ContainerUtil.exists(repo.getBranchTrackInfos(), new Condition<GitBranchTrackInfo>() {
-        @Override
-        public boolean value(GitBranchTrackInfo info) {
-          return remoteBranch ?
-                 info.getRemoteBranch().getNameForLocalOperations().equals(ref.getName()) :
-                 info.getLocalBranch().getName().equals(ref.getName());
-        }
-      });
+      return ContainerUtil.exists(repo.getBranchTrackInfos(), info -> remoteBranch ?
+                                                                  info.getRemoteBranch().getNameForLocalOperations().equals(ref.getName()) :
+                                                                  info.getLocalBranch().getName().equals(ref.getName()));
     }
   }
 }

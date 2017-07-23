@@ -23,17 +23,19 @@ import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.impl.BasePathMacroManager
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
-import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.NamedJDOMExternalizable
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.io.delete
 import com.intellij.util.io.outputStream
+import com.intellij.util.write
 import org.jdom.Element
 
 private class ApplicationPathMacroManager : BasePathMacroManager(null)
 
 const val APP_CONFIG = "\$APP_CONFIG$"
+private val FILE_STORAGE_DIR = "options"
 
 class ApplicationStoreImpl(private val application: Application, pathMacroManager: PathMacroManager? = null) : ComponentStoreImpl() {
   override val storageManager = ApplicationStorageManager(application, pathMacroManager)
@@ -44,7 +46,7 @@ class ApplicationStoreImpl(private val application: Application, pathMacroManage
 
   override fun setPath(path: String) {
     // app config must be first, because collapseMacros collapse from fist to last, so, at first we must replace APP_CONFIG because it overlaps ROOT_CONFIG value
-    storageManager.addMacro(APP_CONFIG, "$path/${ApplicationStorageManager.FILE_STORAGE_DIR}")
+    storageManager.addMacro(APP_CONFIG, "$path/${FILE_STORAGE_DIR}")
     storageManager.addMacro(ROOT_CONFIG, path)
 
     val configDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(path)
@@ -53,7 +55,7 @@ class ApplicationStoreImpl(private val application: Application, pathMacroManage
         // not recursive, config directory contains various data - for example, ICS or shelf should not be refreshed,
         // but we refresh direct children to avoid refreshAndFindFile in SchemeManager (to find schemes directory)
         VfsUtil.markDirtyAndRefresh(false, false, true, configDir)
-        val optionsDir = configDir.findChild(ApplicationStorageManager.FILE_STORAGE_DIR)
+        val optionsDir = configDir.findChild(FILE_STORAGE_DIR)
         if (optionsDir != null) {
           // not recursive, options directory contains only files
           VfsUtil.markDirtyAndRefresh(false, false, true, optionsDir)
@@ -67,7 +69,6 @@ class ApplicationStorageManager(application: Application, pathMacroManager: Path
   companion object {
     private val DEFAULT_STORAGE_SPEC = "${PathManager.DEFAULT_OPTIONS_FILE_NAME}${FileStorageCoreUtil.DEFAULT_EXT}"
 
-    val FILE_STORAGE_DIR = "options"
   }
 
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
@@ -84,18 +85,19 @@ class ApplicationStorageManager(application: Application, pathMacroManager: Path
   override val isUseXmlProlog: Boolean
     get() = false
 
-  override fun dataLoadedFromProvider(storage: FileBasedStorage, element: Element?) {
+  override fun providerDataStateChanged(storage: FileBasedStorage, element: Element?, type: DataStateChanged) {
     // IDEA-144052 When "Settings repository" is enabled changes in 'Path Variables' aren't saved to default path.macros.xml file causing errors in build process
-    try {
+    if (storage.fileSpec != "path.macros.xml") {
+      return
+    }
+
+    LOG.runAndLogException {
       if (element == null) {
         storage.file.delete()
       }
       else {
-        JDOMUtil.writeElement(element, storage.file.outputStream().writer(), "\n")
+        element.write(storage.file.outputStream())
       }
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.concurrency.Semaphore;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -45,7 +47,8 @@ interface WeighingDelegate extends Consumer<CompletionResult> {
   void waitFor();
 }
 
-class SyncCompletion implements CompletionThreading {
+class SyncCompletion extends CompletionThreadingBase {
+  private final List<CompletionResult> myBatchList = new ArrayList<>();
 
   @Override
   public Future<?> startThread(final ProgressIndicator progressIndicator, Runnable runnable) {
@@ -66,14 +69,32 @@ class SyncCompletion implements CompletionThreading {
 
       @Override
       public void consume(CompletionResult result) {
-        indicator.addItem(result);
+        if (ourIsInBatchUpdate.get().booleanValue()) {
+          myBatchList.add(result);
+        } else {
+          indicator.addItem(result);
+        }
       }
     };
   }
+
+  protected void flushBatchResult(CompletionProgressIndicator indicator) {
+    try {
+      indicator.withSingleUpdate(() -> {
+        for (CompletionResult result : myBatchList) {
+          indicator.addItem(result);
+        }
+      });
+    } finally {
+      myBatchList.clear();
+    }
+  }
 }
 
-class AsyncCompletion implements CompletionThreading {
+class AsyncCompletion extends CompletionThreadingBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.AsyncCompletion");
+  private ArrayList<CompletionResult> myBatchList = new ArrayList<>();
+  private final LinkedBlockingQueue<Computable<Boolean>> myQueue = new LinkedBlockingQueue<>();
 
   @Override
   public Future<?> startThread(final ProgressIndicator progressIndicator, final Runnable runnable) {
@@ -86,8 +107,7 @@ class AsyncCompletion implements CompletionThreading {
           ProgressManager.checkCanceled();
           runnable.run();
         });
-      }
-      catch (ProcessCanceledException ignored) {
+      } catch (ProcessCanceledException ignored) {
       }
     }, progressIndicator));
     startSemaphore.waitFor();
@@ -96,22 +116,20 @@ class AsyncCompletion implements CompletionThreading {
 
   @Override
   public WeighingDelegate delegateWeighing(final CompletionProgressIndicator indicator) {
-    final LinkedBlockingQueue<Computable<Boolean>> queue = new LinkedBlockingQueue<>();
 
     class WeighItems implements Runnable {
       @Override
       public void run() {
         try {
           while (true) {
-            Computable<Boolean> next = queue.poll(30, TimeUnit.MILLISECONDS);
+            Computable<Boolean> next = myQueue.poll(30, TimeUnit.MILLISECONDS);
             if (next != null && !next.compute()) {
               indicator.addDelayedMiddleMatches();
               return;
             }
             indicator.checkCanceled();
           }
-        }
-        catch (InterruptedException e) {
+        } catch (InterruptedException e) {
           LOG.error(e);
         }
       }
@@ -121,26 +139,42 @@ class AsyncCompletion implements CompletionThreading {
     return new WeighingDelegate() {
       @Override
       public void waitFor() {
-        queue.offer(new Computable.PredefinedValueComputable<>(false));
+        myQueue.offer(new Computable.PredefinedValueComputable<>(false));
         try {
           future.get();
         }
-        catch (InterruptedException e) {
-          LOG.error(e);
-        }
-        catch (ExecutionException e) {
+        catch (InterruptedException | ExecutionException e) {
           LOG.error(e);
         }
       }
 
       @Override
       public void consume(final CompletionResult result) {
-        queue.offer(() -> {
-          indicator.addItem(result);
-          return true;
-        });
+        if (ourIsInBatchUpdate.get().booleanValue()) {
+          myBatchList.add(result);
+        }
+        else {
+          myQueue.offer(() -> {
+            indicator.addItem(result);
+            return true;
+          });
+        }
       }
     };
+  }
+
+  protected void flushBatchResult(CompletionProgressIndicator indicator) {
+    ArrayList<CompletionResult> batchListCopy = new ArrayList<>(myBatchList);
+    myBatchList.clear();
+
+    myQueue.offer(() -> {
+      indicator.withSingleUpdate(() -> {
+        for (CompletionResult result : batchListCopy) {
+          indicator.addItem(result);
+        }
+      });
+      return true;
+    });
   }
 }
 

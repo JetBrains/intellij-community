@@ -31,7 +31,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.FileContentUtilCore
-import com.intellij.util.GCUtil
+import com.intellij.util.ref.GCUtil
 import com.intellij.util.io.EnumeratorIntegerDescriptor
 import com.intellij.util.io.EnumeratorStringDescriptor
 
@@ -52,6 +52,16 @@ class FileGistTest extends LightCodeInsightFixtureTestCase {
 
   private VirtualFileGist<String> take3Gist() {
     return GistManager.instance.newVirtualFileGist(getTestName(true), 0, EnumeratorStringDescriptor.INSTANCE, { p, f -> LoadTextUtil.loadText(f).toString().substring(0, 3) })
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      ((GistManagerImpl)GistManager.instance).resetReindexCount()
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   void "test data is cached per file"() {
@@ -100,12 +110,13 @@ class FileGistTest extends LightCodeInsightFixtureTestCase {
 
   void "test different data for different projects"() {
     int invocations = 0
-    VirtualFileGist<String> gist = GistManager.instance.newVirtualFileGist(getTestName(true), 0, EnumeratorStringDescriptor.INSTANCE, { p, f -> "$p.name ${++invocations}" as String })
+    VirtualFileGist<String> gist = GistManager.instance.newVirtualFileGist(getTestName(true), 0, EnumeratorStringDescriptor.INSTANCE, { p, f -> "${p?.name} ${++invocations}" as String })
     def file = addFooBarFile()
 
     assert "$project.name 1" == gist.getFileData(project, file)
     assert "$ProjectManager.instance.defaultProject.name 2" == gist.getFileData(ProjectManager.instance.defaultProject, file)
     assert "$project.name 1" == gist.getFileData(project, file)
+    assert "null 3" == gist.getFileData(null, file)
   }
 
   void "test cannot register twice"() {

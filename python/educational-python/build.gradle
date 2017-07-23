@@ -1,17 +1,23 @@
 import org.apache.tools.ant.filters.ReplaceTokens
 
 buildscript {
-  ext.kotlin_version = '1.0.3'
+  ext.kotlin_version = '1.0.6'
   repositories {
     mavenCentral()
+    maven {
+      url "https://oss.sonatype.org/content/repositories/snapshots/"
+    }
+    maven {
+      url 'http://dl.bintray.com/jetbrains/intellij-plugin-service'
+    }
+    maven {
+      url "https://plugins.gradle.org/m2/"
+    }
   }
   dependencies {
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    classpath "org.jetbrains.intellij.plugins:gradle-intellij-plugin:0.2.0-SNAPSHOT"
   }
-}
-
-plugins {
-  id "org.jetbrains.intellij" version "0.0.39"
 }
 
 subprojects {
@@ -20,7 +26,8 @@ subprojects {
   apply plugin: "org.jetbrains.intellij"
 
   tasks.withType(JavaCompile) { options.encoding = 'UTF-8' }
-
+  targetCompatibility = '1.8'
+  sourceCompatibility = '1.8'
   sourceSets {
     main {
       java.srcDirs 'src', '../src', '../gen'
@@ -60,7 +67,7 @@ subprojects {
   task extractPyCharm(type: Copy) {
     from zipTree(configurations.pycharm.filter{dep -> dep.name.startsWith("pycharmPC-") && dep.name.endsWith(".zip")}[0])
     into rootProject.projectDir.toString() + "/gradleBuild/pycharm"
-    include "**/*.jar"
+    include "**/pycharm*.jar"
   }
 
   intellij {
@@ -73,7 +80,7 @@ subprojects {
   buildDir = new File(rootProject.projectDir, "gradleBuild/" + project.name)
 }
 
-project(':student-python') {
+project(':Edu-Python') {
   sourceSets {
     main {
       resources.srcDirs '../resources'
@@ -81,7 +88,7 @@ project(':student-python') {
   }
 
   dependencies {
-    compile project(':educational-core:student') {
+    compile project(':educational-core') {
       dependencies {
         compile fileTree(dir: 'lib', include: ['*.jar'])
       }
@@ -89,39 +96,23 @@ project(':student-python') {
   }
 
   compileJava.dependsOn(extractPyCharm)
+  compileKotlin.dependsOn(extractPyCharm)
 
   intellij {
-    pluginName 'student-python'
-  }
+    pluginName 'Edu-Python'
 
-  afterEvaluate {
-    tasks.getByName('buildPlugin') {
-      archiveName = "$intellij.pluginName-$version-${pycharmVersion}.zip"
-    }
-  }
-
-}
-
-
-project(':course-creator-python') {
-
-  dependencies {
-    compile project(':student-python')
-
-    compile project(':educational-core:course-creator') {
-      dependencies {
-        compile project(':educational-core:student')
+    if (project.hasProperty('ideaPath')) {
+      localPath ideaPath
+    } else {
+      if (project.hasProperty('ideaVersion')) {
+        version ideaVersion
       }
     }
   }
 
-  intellij {
-    pluginName 'course-creator-python'
-  }
-
   afterEvaluate {
     tasks.getByName('buildPlugin') {
-      archiveName = "$intellij.pluginName-$version-${pycharmVersion}.zip"
+      archiveName = "$intellij.pluginName-$version.zip"
     }
   }
 

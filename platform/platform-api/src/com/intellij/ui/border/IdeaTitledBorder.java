@@ -32,6 +32,7 @@ public class IdeaTitledBorder extends TitledBorder {
   private final TitledSeparator titledSeparator;
   private final Insets insideInsets;
   private final Insets outsideInsets;
+  private boolean myShowLine = true;
 
   public IdeaTitledBorder(String title, int indent, Insets insets) {
     super(title);
@@ -69,8 +70,9 @@ public class IdeaTitledBorder extends TitledBorder {
     JSeparator separator = titledSeparator.getSeparator();
     separator.setSize(separatorW, separatorH);
     g.translate(separatorX - labelX, separatorY - labelY);
-    separator.paint(g);
-
+    if (myShowLine) {
+      separator.paint(g);
+    }
     g.translate(-separatorX, -separatorY);
   }
 
@@ -79,6 +81,10 @@ public class IdeaTitledBorder extends TitledBorder {
     return titledSeparator;
   }
 
+  public IdeaTitledBorder setShowLine(boolean showLine) {
+    myShowLine = showLine;
+    return this;
+  }
 
   public void acceptMinimumSize(Component c) {
     Dimension minimumSize = getMinimumSize(c);

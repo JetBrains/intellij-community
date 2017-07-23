@@ -1,0 +1,77 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+buildscript {
+  repositories {
+    maven { url "http://repo.labs.intellij.net/plugins-gradle-org/" }
+    maven { url "https://plugins.gradle.org/m2/" }
+  }
+  dependencies {
+    classpath "de.undercouch:gradle-download-task:3.2.0"
+  }
+}
+
+apply plugin: 'idea'
+idea {
+  module {
+    inheritOutputDirs true
+  }
+}
+
+apply plugin: "de.undercouch.download"
+apply plugin: 'base'
+
+group 'com.intellij.build'
+version '1.0'
+
+try {
+  project.ext.inJetBrainsNetwork = InetAddress.getByName("repo.labs.intellij.net").isReachable(1000)
+  if (!project.ext.inJetBrainsNetwork && org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+    project.ext.inJetBrainsNetwork = Runtime.getRuntime().exec("ping -n 1 repo.labs.intellij.net").waitFor() == 0
+  }
+  if (!project.ext.inJetBrainsNetwork) {
+    logger.info('repo.labs.intellij.net is not reachable')
+  }
+}
+catch (UnknownHostException e) {
+  logger.info('repo.labs.intellij.net is not reachable', e)
+  project.ext.inJetBrainsNetwork = false
+}
+
+apply from: 'setupJdk.gradle'
+apply from: 'setupJbre.gradle'
+apply from: 'setupKotlin.gradle'
+apply from: 'setupJetSign.gradle'
+apply from: 'setupAndroidSdk.gradle'
+
+task setupDependencies(dependsOn: ['setupJdks', 'setupJbre', 'setupKotlinPlugin', 'setupJetSign'], group: 'dependencies')
+clean.dependsOn('cleanSetupJdks', 'cleanSetupJbre', 'cleanSetupKotlinPlugin', 'cleanSetupJetSign')
+
+task dependenciesFile() {
+  description = 'Creates file with all dependencies version, even those that were overloaded by system or env properties'
+  def outputFile = "$project.buildDir/dependencies.properties"
+  outputs.upToDateWhen { false }
+  outputs.file(outputFile)
+  doFirst {
+    def properties = new Properties()
+    file('gradle.properties').withInputStream { properties.load(it) }
+    file(outputFile).text = properties.stringPropertyNames().collect { "$it=${project.ext[it]}" }.join('\n')
+  }
+}
+
+task wrapper(type: Wrapper) {
+  // 2.14 is the latest version supports Java 6 (which is still present on TeamCity build agents)
+  gradleVersion = '2.14'
+}

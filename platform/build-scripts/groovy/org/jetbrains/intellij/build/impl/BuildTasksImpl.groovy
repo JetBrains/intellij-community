@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.BuildTasks
-import org.jetbrains.intellij.build.ProductModulesLayout
+import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
@@ -90,56 +87,78 @@ class BuildTasksImpl extends BuildTasks {
       buildContext.notifyArtifactBuilt(targetFilePath)
     }
   }
-
-  void buildSearchableOptions(File targetDirectory, List<String> modulesToIndex, List<String> pathsToLicenses) {
-    buildContext.executeStep("Build searchable options index", BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, {
-      def javaRuntimeClasses = "${buildContext.projectBuilder.moduleOutput(buildContext.findModule("java-runtime"))}"
-      if (!new File(javaRuntimeClasses).exists()) {
-        buildContext.messages.error("Cannot build searchable options, 'java-runtime' module isn't compiled ($javaRuntimeClasses doesn't exist)")
+  
+  /**
+   * Build a list with modules that the IDE will provide for plugins.
+   */
+  void buildProvidedModulesList(String targetFilePath, List<String> modules, List<String> pathsToLicenses) {
+    buildContext.executeStep("Build provided modules list", BuildOptions.PROVIDED_MODULES_LIST_STEP, {
+      buildContext.messages.progress("Building provided modules list for modules $modules")
+      FileUtil.delete(new File(targetFilePath))
+      // Start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister.
+      runApplicationStarter("$buildContext.paths.temp/builtinModules", modules, pathsToLicenses, ['listBundledPlugins', targetFilePath])
+      if (!new File(targetFilePath).exists()) {
+        buildContext.messages.error("Failed to build provided modules list: $targetFilePath doesn't exist")
       }
+      buildContext.notifyArtifactBuilt(targetFilePath)
+    })
+  }
 
+  /**
+   * Build index which is used to search options in the Settings dialog.
+   */
+  void buildSearchableOptionsIndex(File targetDirectory, List<String> modulesToIndex, List<String> pathsToLicenses) {
+    buildContext.executeStep("Build searchable options index", BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, {
       buildContext.messages.progress("Building searchable options for modules $modulesToIndex")
-
       String targetFile = "${targetDirectory.absolutePath}/search/searchableOptions.xml"
       FileUtil.delete(new File(targetFile))
-
-      def tempDir = "$buildContext.paths.temp/searchableOptions"
-      String systemPath = "$tempDir/system"
-      String configPath = "$tempDir/config"
-      buildContext.ant.mkdir(dir: tempDir)
-      pathsToLicenses.each {
-        //todo[nik] previously licenses were copied to systemPath
-        buildContext.ant.copy(file: it, todir: configPath)
-      }
-
-      def ideClasspath = new LinkedHashSet<String>()
-      modulesToIndex.collectMany(ideClasspath) { buildContext.projectBuilder.moduleRuntimeClasspath(buildContext.findModule(it), false) }
-
-      String classpathFile = "$tempDir/classpath.txt"
-      new File(classpathFile).text = ideClasspath.join("\n")
-
-      buildContext.ant.java(classname: "com.intellij.rt.execution.CommandLineWrapper", fork: true, failonerror: true) {
-        jvmarg(line: "-ea -Xmx500m")
-        jvmarg(value: "-Xbootclasspath/a:${buildContext.projectBuilder.moduleOutput(buildContext.findModule("boot"))}")
-        sysproperty(key: "idea.home.path", value: buildContext.paths.projectHome)
-        sysproperty(key: "idea.system.path", value: systemPath)
-        sysproperty(key: "idea.config.path", value: configPath)
-        if (buildContext.productProperties.platformPrefix != null) {
-          sysproperty(key: "idea.platform.prefix", value: buildContext.productProperties.platformPrefix)
-        }
-        arg(value: "$classpathFile")
-        arg(line: "com.intellij.idea.Main traverseUI")
-        arg(value: targetFile)
-
-        classpath() {
-          pathelement(location: "$javaRuntimeClasses")
-        }
-      }
-
+      // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
+      // It'll process all UI elements in Settings dialog and build index for them.
+      runApplicationStarter("$buildContext.paths.temp/searchableOptions", modulesToIndex, pathsToLicenses, ['traverseUI', targetFile])
       if (!new File(targetFile).exists()) {
         buildContext.messages.error("Failed to build searchable options index: $targetFile doesn't exist")
       }
     })
+  }
+
+  private void runApplicationStarter(String tempDir, List<String> modules, List<String> pathsToLicenses, List<String> arguments) {
+    def javaRuntimeClasses = "${buildContext.getModuleOutputPath(buildContext.findModule("java-runtime"))}"
+    if (!new File(javaRuntimeClasses).exists()) {
+      buildContext.messages.error("Cannot run application starter ${arguments}, 'java-runtime' module isn't compiled ($javaRuntimeClasses doesn't exist)")
+    }
+
+    buildContext.ant.mkdir(dir: tempDir)
+    String systemPath = "$tempDir/system"
+    String configPath = "$tempDir/config"
+    pathsToLicenses.each {
+      //todo[nik] previously licenses were copied to systemPath
+      buildContext.ant.copy(file: it, todir: "$tempDir/config")
+    }
+  
+    def ideClasspath = new LinkedHashSet<String>()
+    modules.collectMany(ideClasspath) { buildContext.getModuleRuntimeClasspath(buildContext.findModule(it), false) }
+
+    String classpathFile = "$tempDir/classpath.txt"
+    new File(classpathFile).text = ideClasspath.join("\n")
+
+    buildContext.ant.java(classname: "com.intellij.rt.execution.CommandLineWrapper", fork: true, failonerror: true) {
+      jvmarg(line: "-ea -Xmx500m")
+      jvmarg(value: "-Xbootclasspath/a:${buildContext.getModuleOutputPath(buildContext.findModule("boot"))}")
+      sysproperty(key: "java.awt.headless", value: true)
+      sysproperty(key: "idea.home.path", value: buildContext.paths.projectHome)
+      sysproperty(key: "idea.system.path", value: systemPath)
+      sysproperty(key: "idea.config.path", value: configPath)
+      if (buildContext.productProperties.platformPrefix != null) {
+        sysproperty(key: "idea.platform.prefix", value: buildContext.productProperties.platformPrefix)
+      }
+      arg(value: "$classpathFile")
+      arg(line: "com.intellij.idea.Main")
+      arguments.each { arg(value: it) }
+
+      classpath() {
+        pathelement(location: "$javaRuntimeClasses")
+      }
+    }
   }
 
   File patchIdeaPropertiesFile() {
@@ -182,7 +201,7 @@ idea.fatal.error.notification=disabled
   }
 
   File patchApplicationInfo() {
-    def sourceFile = buildContext.findApplicationInfoInSources()
+    def sourceFile = BuildContextImpl.findApplicationInfoInSources(buildContext.project, buildContext.productProperties, buildContext.messages)
     def targetFile = new File(buildContext.paths.temp, sourceFile.name)
     def date = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMddHHmm"))
     BuildUtils.copyAndPatchFile(sourceFile.path, targetFile.path,
@@ -240,13 +259,28 @@ idea.fatal.error.notification=disabled
   }
 
   @Override
+  void compileModulesFromProduct() {
+    checkProductProperties()
+    def patchedApplicationInfo = patchApplicationInfo()
+    def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo)
+    compileModulesForDistribution(distributionJARsBuilder)
+  }
+
+  private compileModulesForDistribution(DistributionJARsBuilder distributionJARsBuilder) {
+    def moduleNames = buildContext.productProperties.productLayout.includedPluginModules + distributionJARsBuilder.platformModules +
+                      buildContext.productProperties.additionalModulesToCompile +
+                      (buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: [])
+    compileModules(moduleNames, buildContext.productProperties.modulesToCompileTests)
+  }
+
+  @Override
   void buildDistributions() {
     checkProductProperties()
+    copyDependenciesFile()
 
     def patchedApplicationInfo = patchApplicationInfo()
     def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo)
-    compileModules(buildContext.productProperties.productLayout.includedPluginModules + distributionJARsBuilder.platformModules +
-                   buildContext.productProperties.additionalModulesToCompile, buildContext.productProperties.modulesToCompileTests)
+    compileModulesForDistribution(distributionJARsBuilder)
     buildContext.messages.block("Build platform and plugin JARs") {
       if (buildContext.shouldBuildDistributions()) {
         distributionJARsBuilder.buildJARs()
@@ -262,7 +296,7 @@ idea.fatal.error.notification=disabled
       if (buildContext.productProperties.scrambleMainJar) {
         scramble()
       }
-
+      buildContext.gradle.run('Setting up JetBrains JREs', 'setupJbre', "-Dintellij.build.target.os=$buildContext.options.targetOS")
       layoutShared()
 
       def propertiesFile = patchIdeaPropertiesFile()
@@ -291,6 +325,14 @@ idea.fatal.error.notification=disabled
           buildContext.messages.info("Skipping building cross-platform distribution because some OS-specific distributions were skipped")
         }
       }
+    }
+  }
+
+  private def copyDependenciesFile() {
+    if (buildContext.gradle.forceRun('Preparing dependencies file', 'dependenciesFile')) {
+      def outputFile = "$buildContext.paths.artifacts/dependencies.txt"
+      buildContext.ant.copy(file: "$buildContext.paths.communityHome/build/dependencies/build/dependencies.properties", tofile: outputFile)
+      buildContext.notifyArtifactBuilt(outputFile)
     }
   }
 
@@ -328,10 +370,13 @@ idea.fatal.error.notification=disabled
     checkPaths([buildContext.linuxDistributionCustomizer?.iconPngPath], "productProperties.linuxCustomizer.iconPngPath")
 
     def macCustomizer = buildContext.macDistributionCustomizer
-    checkPaths([macCustomizer?.icnsPath], "productProperties.macCustomizer.icnsPath")
-    checkPaths([macCustomizer?.icnsPathForEAP], "productProperties.macCustomizer.icnsPathForEAP")
-    checkPaths([macCustomizer?.dmgImagePath], "productProperties.macCustomizer.dmgImagePath")
-    checkPaths([macCustomizer?.dmgImagePathForEAP], "productProperties.macCustomizer.dmgImagePathForEAP")
+    if (macCustomizer != null) {
+      checkMandatoryField(macCustomizer.bundleIdentifier, "productProperties.macCustomizer.bundleIdentifier")
+      checkMandatoryPath(macCustomizer.icnsPath, "productProperties.macCustomizer.icnsPath")
+      checkPaths([macCustomizer.icnsPathForEAP], "productProperties.macCustomizer.icnsPathForEAP")
+      checkMandatoryPath(macCustomizer.dmgImagePath, "productProperties.macCustomizer.dmgImagePath")
+      checkPaths([macCustomizer.dmgImagePathForEAP], "productProperties.macCustomizer.dmgImagePathForEAP")
+    }
   }
 
   private void checkProductLayout() {
@@ -346,13 +391,20 @@ idea.fatal.error.notification=disabled
     checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules", optionalModules)
     checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish", optionalModules)
 
+    if (layout.prepareCustomPluginRepositoryForPublishedPlugins && layout.pluginModulesToPublish.isEmpty()) {
+      buildContext.messages.error("productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins option is enabled but no pluginModulesToPublish are specified")
+    }
+
     checkModules(layout.platformApiModules, "productProperties.productLayout.platformApiModules")
     checkModules(layout.platformImplementationModules, "productProperties.productLayout.platformImplementationModules")
     checkModules(layout.additionalPlatformJars.values(), "productProperties.productLayout.additionalPlatformJars")
+    checkModules(layout.moduleExcludes.keySet(), "productProperties.productLayout.moduleExcludes")
     checkModules(layout.mainModules, "productProperties.productLayout.mainModules")
+    checkModules([layout.searchableOptionsModule], "productProperties.productLayout.searchableOptionsModule")
+    checkModules(layout.pluginModulesWithRestrictedCompatibleBuildRange, "productProperties.productLayout.pluginModulesWithRestrictedCompatibleBuildRange")
     checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar, "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar")
     nonTrivialPlugins.findAll {layout.enabledPluginModules.contains(it.mainModule)}.each { plugin ->
-      checkModules(plugin.moduleJars.values(), "'$plugin.mainModule' plugin")
+      checkModules(plugin.moduleJars.values() - plugin.optionalModules, "'$plugin.mainModule' plugin")
       checkModules(plugin.moduleExcludes.keySet(), "'$plugin.mainModule' plugin")
       checkProjectLibraries(plugin.includedProjectLibraries, "'$plugin.mainModule' plugin")
     }
@@ -390,6 +442,16 @@ idea.fatal.error.notification=disabled
     }
   }
 
+  private void checkMandatoryField(String value, String fieldName) {
+    if (value == null) {
+      buildContext.messages.error("Mandatory property '$fieldName' is not specified")
+    }
+  }
+
+  private void checkMandatoryPath(String path, String fieldName) {
+    checkMandatoryField(path, fieldName)
+    checkPaths([path], fieldName)
+  }
 
   @Override
   void compileProjectAndTests(List<String> includingTestsInModules = []) {
@@ -398,51 +460,7 @@ idea.fatal.error.notification=disabled
 
   @Override
   void compileModules(List<String> moduleNames, List<String> includingTestsInModules = []) {
-    if (buildContext.options.useCompiledClassesFromProjectOutput) {
-      buildContext.messages.info("Compilation skipped, the compiled classes from the project output will be used")
-      return
-    }
-    if (buildContext.options.pathToCompiledClassesArchive != null) {
-      buildContext.messages.info("Compilation skipped, the compiled classes from '${buildContext.options.pathToCompiledClassesArchive}' will be used")
-      return
-    }
-
-    ensureKotlinCompilerAddedToClassPath()
-
-    buildContext.projectBuilder.cleanOutput()
-    if (moduleNames == null) {
-      buildContext.projectBuilder.buildProduction()
-    }
-    else {
-      List<String> modulesToBuild = ((moduleNames as Set<String>) +
-        buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: []) as List<String>
-      List<String> invalidModules = modulesToBuild.findAll {buildContext.findModule(it) == null}
-      if (!invalidModules.empty) {
-        buildContext.messages.warning("The following modules won't be compiled: $invalidModules")
-      }
-      buildContext.projectBuilder.buildModules(modulesToBuild.collect {buildContext.findModule(it)}.findAll {it != null})
-    }
-    for (String moduleName : includingTestsInModules) {
-      buildContext.projectBuilder.makeModuleTests(buildContext.findModule(moduleName))
-    }
-  }
-
-  private void ensureKotlinCompilerAddedToClassPath() {
-    try {
-      Class.forName("org.jetbrains.kotlin.jps.build.KotlinBuilder")
-      return
-    }
-    catch (ClassNotFoundException ignored) {}
-
-    def kotlinPluginLibPath = "$buildContext.paths.communityHome/build/kotlinc/plugin/Kotlin/lib"
-    if (new File(kotlinPluginLibPath).exists()) {
-      ["jps/kotlin-jps-plugin.jar", "kotlin-plugin.jar", "kotlin-runtime.jar"].each {
-        BuildUtils.addToJpsClassPath("$kotlinPluginLibPath/$it", buildContext.ant)
-      }
-    }
-    else {
-      buildContext.messages.error("Could not find Kotlin JARs at $kotlinPluginLibPath: run download_kotlin.gant script to download them")
-    }
+    CompilationTasks.create(buildContext).compileModules(moduleNames, includingTestsInModules)
   }
 
   private <V> List<V> runInParallel(List<BuildTaskRunnable<V>> tasks) {

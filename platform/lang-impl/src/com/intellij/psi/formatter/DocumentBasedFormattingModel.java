@@ -16,11 +16,7 @@
 
 package com.intellij.psi.formatter;
 
-import com.intellij.formatting.Block;
-import com.intellij.formatting.FormattingDocumentModel;
-import com.intellij.formatting.FormattingModel;
-import com.intellij.formatting.FormattingModelEx;
-import com.intellij.formatting.FormattingModelWithShiftIndentInsideDocumentRange;
+import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
@@ -208,6 +204,9 @@ public class DocumentBasedFormattingModel implements FormattingModelEx {
           if (line > 0) {
             createWhiteSpace(whiteSpaceLength + shift, buffer);
           }
+          else {
+            createWhiteSpace(whiteSpaceLength, buffer);
+          }
           buffer.append(afterWhiteSpace.toString());
           insideWhiteSpace = true;
           whiteSpaceLength = 0;
@@ -237,10 +236,10 @@ public class DocumentBasedFormattingModel implements FormattingModelEx {
           afterWhiteSpace.append(c);
       }
     }
-    if (line > 0) {
+    if (line > 0 && afterWhiteSpace.length() > 0 ) {
       createWhiteSpace(whiteSpaceLength + shift, buffer);
+      buffer.append(afterWhiteSpace.toString());
     }
-    buffer.append(afterWhiteSpace.toString());
     myDocument.replaceString(elementRange.getStartOffset(), elementRange.getEndOffset(), buffer.toString());
     return buffer.length();
   }

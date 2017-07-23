@@ -36,7 +36,7 @@ import java.util.List;
  * @since 3/2/11 11:55 AM
  */
 public class TextChangesStorage {
-  private final List<ChangeEntry> myChanges = new ArrayList<ChangeEntry>();
+  private final List<ChangeEntry> myChanges = new ArrayList<>();
 
   /**
    * @return    list of changes stored previously via {@link #store(TextChange)}. Note that the changes offsets relate to initial
@@ -46,7 +46,7 @@ public class TextChangesStorage {
   @NotNull
   public List<TextChangeImpl> getChanges() {
     if (myChanges.isEmpty()) return Collections.emptyList();
-    List<TextChangeImpl> result = new ArrayList<TextChangeImpl>(myChanges.size());
+    List<TextChangeImpl> result = new ArrayList<>(myChanges.size());
 
     for (ChangeEntry changeEntry : myChanges) {
       result.add(changeEntry.change);
@@ -87,11 +87,11 @@ public class TextChangesStorage {
         break;
       }
       if (result == null) {
-        result = new ArrayList<TextChange>();
+        result = new ArrayList<>();
       }
       result.add(myChanges.get(i).change);
     }
-    return result == null ? Collections.<TextChange>emptyList() : result;
+    return result == null ? Collections.emptyList() : result;
   }
   
   public boolean isEmpty() {

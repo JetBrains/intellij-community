@@ -26,7 +26,6 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
@@ -58,20 +57,17 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
   @NonNls public static final ID<Integer, TIntArrayList> NAME = ID.create("DuplicatesIndex");
   private static final int myBaseVersion = 25;
 
-  private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
-    @Override
-    public boolean acceptInput(@NotNull final VirtualFile file) {
-      if (!ourEnabled ||
-          !file.isInLocalFileSystem()  // skip library sources
-         ) {
-        return false;
-      }
-      DuplicatesProfile duplicatesProfile = findDuplicatesProfile(file.getFileType());
-      if (duplicatesProfile instanceof LightDuplicateProfile) {
-        return ((LightDuplicateProfile)duplicatesProfile).acceptsFile(file);
-      }
-      return duplicatesProfile != null;
+  private final FileBasedIndex.InputFilter myInputFilter = file -> {
+    if (!ourEnabled ||
+        !file.isInLocalFileSystem()  // skip library sources
+       ) {
+      return false;
     }
+    DuplicatesProfile duplicatesProfile = findDuplicatesProfile(file.getFileType());
+    if (duplicatesProfile instanceof LightDuplicateProfile) {
+      return ((LightDuplicateProfile)duplicatesProfile).acceptsFile(file);
+    }
+    return duplicatesProfile != null;
   };
 
   private final DataExternalizer<TIntArrayList> myValueExternalizer = new DataExternalizer<TIntArrayList>() {

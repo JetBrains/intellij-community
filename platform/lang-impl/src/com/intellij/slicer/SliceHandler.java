@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +42,6 @@ public class SliceHandler implements CodeInsightActionHandler {
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments(); // prevents problems with smart pointers creation
     PsiElement expression = getExpressionAtCaret(editor, file);
     if (expression == null) {
       HintManager.getInstance().showErrorHint(editor, "Cannot find what to analyze. Please stand on the expression or variable or method parameter and try again.");
@@ -77,14 +75,13 @@ public class SliceHandler implements CodeInsightActionHandler {
   public SliceAnalysisParams askForParams(PsiElement element, boolean dataFlowToThis, SliceManager.StoredSettingsBean storedSettingsBean, String dialogTitle) {
     AnalysisScope analysisScope = new AnalysisScope(element.getContainingFile());
     Module module = ModuleUtilCore.findModuleForPsiElement(element);
-    String name = module == null ? null : module.getName();
 
     Project myProject = element.getProject();
     AnalysisUIOptions analysisUIOptions = new AnalysisUIOptions();
     analysisUIOptions.save(storedSettingsBean.analysisUIOptions);
 
     BaseAnalysisActionDialog dialog =
-      new BaseAnalysisActionDialog(dialogTitle, "Analyze scope", myProject, analysisScope, name, true, analysisUIOptions,
+      new BaseAnalysisActionDialog(dialogTitle, "Analyze scope", myProject, analysisScope, module, true, analysisUIOptions,
                                    element);
     if (!dialog.showAndGet()) {
       return null;

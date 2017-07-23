@@ -18,10 +18,11 @@ package com.jetbrains.numpy.codeInsight;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.codeInsight.PyCustomMember;
+import com.jetbrains.python.codeInsight.PyPsiPath;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyPsiFacade;
 import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.psi.resolve.QualifiedNameResolver;
+import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
+import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.types.PyModuleMembersProvider;
 
 import java.util.ArrayList;
@@ -54,24 +55,27 @@ public class NumpyModuleMembersProvider extends PyModuleMembersProvider {
   @Override
   protected Collection<PyCustomMember> getMembersByQName(PyFile module, String qName) {
     if ("numpy".equals(qName)) {
-      final List<PyCustomMember> members = new ArrayList<>();
-      for (String type : NUMERIC_TYPES) {
-        members.add(new PyCustomMember(type, DTYPE, false));
+      PsiElement clazz = new PyPsiPath.ToClassQName(DTYPE).resolve(module);
+      if (clazz != null) {
+        final List<PyCustomMember> members = new ArrayList<>();
+        for (String type : NUMERIC_TYPES) {
+          members.add(new PyCustomMember(type, clazz, DTYPE));
+        }
+        for (String type : PYTHON_TYPES) {
+          members.add(new PyCustomMember(type, clazz, DTYPE));
+        }
+        addTestingModule(module, members);
+        return members;
       }
-      for (String type : PYTHON_TYPES) {
-        members.add(new PyCustomMember(type, DTYPE, false));
-      }
-      addTestingModule(module, members);
-      return members;
     }
     return Collections.emptyList();
   }
 
   private static void addTestingModule(PyFile module, List<PyCustomMember> members) {
-    PyPsiFacade psiFacade = PyPsiFacade.getInstance(module.getProject());
-    final QualifiedNameResolver resolver =
-      psiFacade.qualifiedNameResolver(QualifiedName.fromDottedString("numpy.testing")).withPlainDirectories().fromElement(module);
-    PsiElement testingModule = PyUtil.turnDirIntoInit(resolver.firstResult());
+    final PyQualifiedNameResolveContext context = PyResolveImportUtil.fromFoothold(module).copyWithPlainDirectories();
+    final PsiElement resolved = PyResolveImportUtil.resolveQualifiedName(QualifiedName.fromDottedString("numpy.testing"), context)
+      .stream().findFirst().orElse(null);
+    final PsiElement testingModule = PyUtil.turnDirIntoInit(resolved);
     members.add(new PyCustomMember("testing", testingModule));
   }
 }

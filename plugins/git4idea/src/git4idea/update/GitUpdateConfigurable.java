@@ -60,7 +60,7 @@ public class GitUpdateConfigurable implements Configurable {
    */
   public JComponent createComponent() {
     myPanel = new GitUpdateOptionsPanel();
-    return myPanel.getPanel();  //To change body of implemented methods use File | Settings | File Templates.
+    return myPanel.getPanel();
   }
 
   /**

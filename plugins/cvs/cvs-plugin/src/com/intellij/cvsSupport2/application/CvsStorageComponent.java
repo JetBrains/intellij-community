@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@ package com.intellij.cvsSupport2.application;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
+import com.intellij.openapi.vfs.VirtualFileListener;
 
-public abstract class CvsStorageComponent extends VirtualFileAdapter {
+public abstract class CvsStorageComponent implements VirtualFileListener {
   protected boolean myIsActive = false;
   public static final CvsStorageComponent ABSENT_STORAGE = new CvsStorageComponent() {
 

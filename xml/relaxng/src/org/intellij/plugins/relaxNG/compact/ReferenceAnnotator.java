@@ -30,11 +30,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
 
-/**
- * Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 10.08.2007
-*/
 public class ReferenceAnnotator extends RncElementVisitor implements Annotator {
   private AnnotationHolder myHolder;
 

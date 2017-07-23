@@ -20,10 +20,8 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.StubFileElementType;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,15 +43,8 @@ public abstract class SerializationManager {
     if (mySerializersLoaded) return;
     synchronized (this) {
       if (mySerializersLoaded) return;
-      for (StubElementTypeHolderEP holderEP : Extensions.getExtensions(StubElementTypeHolderEP.EP_NAME)) {
-        holderEP.initialize();
-      }
-      final IElementType[] stubElementTypes = IElementType.enumerate(new IElementType.Predicate() {
-        @Override
-        public boolean matches(@NotNull final IElementType type) {
-          return type instanceof StubSerializer;
-        }
-      });
+      IStubElementType.loadRegisteredStubElementTypes();
+      final IElementType[] stubElementTypes = IElementType.enumerate(type -> type instanceof StubSerializer);
       for (IElementType type : stubElementTypes) {
         if (type instanceof StubFileElementType &&
             StubFileElementType.DEFAULT_EXTERNAL_ID.equals(((StubFileElementType)type).getExternalId())) {

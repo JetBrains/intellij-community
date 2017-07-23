@@ -43,6 +43,7 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
     return myFilter;
   }
 
+  @NotNull
   @Override
   public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, @Nullable InspectionTree tree) {
     if (myQuickFixActions == null) {

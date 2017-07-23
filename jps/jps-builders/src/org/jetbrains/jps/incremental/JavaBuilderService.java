@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,12 @@
 package org.jetbrains.jps.incremental;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.backwardRefs.BackwardReferenceIndexBuilder;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.ResourcesTargetType;
-import org.jetbrains.jps.classFilesIndex.indexer.api.ClassFilesIndicesBuilder;
-import org.jetbrains.jps.backwardRefs.BackwardReferenceIndexBuilder;
+import org.jetbrains.jps.incremental.dependencies.DependencyResolvingBuilder;
+import org.jetbrains.jps.incremental.dependencies.ProjectDependenciesResolver;
 import org.jetbrains.jps.incremental.instrumentation.NotNullInstrumentingBuilder;
 import org.jetbrains.jps.incremental.instrumentation.RmiStubsGenerator;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
@@ -38,25 +39,28 @@ public class JavaBuilderService extends BuilderService {
   @NotNull
   @Override
   public List<? extends BuildTargetType<?>> getTargetTypes() {
-    final ArrayList<BuildTargetType<?>> types = new ArrayList<BuildTargetType<?>>();
+    List<BuildTargetType<?>> types = new ArrayList<>();
     types.addAll(JavaModuleBuildTargetType.ALL_TYPES);
     types.addAll(ResourcesTargetType.ALL_TYPES);
+    types.add(ProjectDependenciesResolver.ProjectDependenciesResolvingTargetType.INSTANCE);
     return types;
   }
 
   @NotNull
   @Override
   public List<? extends ModuleLevelBuilder> createModuleLevelBuilders() {
-    return Arrays.asList(new JavaBuilder(SharedThreadPool.getInstance()),
-                         new NotNullInstrumentingBuilder(),
-                         new RmiStubsGenerator(),
-                         new ClassFilesIndicesBuilder(),
-                         new BackwardReferenceIndexBuilder());
+    return Arrays.asList(
+      new JavaBuilder(SharedThreadPool.getInstance()),
+      new NotNullInstrumentingBuilder(),
+      new RmiStubsGenerator(),
+      new DependencyResolvingBuilder(),
+      new BackwardReferenceIndexBuilder()
+    );
   }
 
   @NotNull
   @Override
   public List<? extends TargetBuilder<?, ?>> createBuilders() {
-    return Arrays.asList(new ResourcesBuilder());
+    return Arrays.asList(new ResourcesBuilder(), new ProjectDependenciesResolver());
   }
 }

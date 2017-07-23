@@ -55,6 +55,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.transformations.impl.GroovyObjectTransformationSupport;
 
 import java.util.Collection;
 import java.util.Set;
@@ -101,7 +102,10 @@ public class CodeBlockGenerator extends Generator {
     boolean shouldInsertReturnNull;
     myExitPoints.clear();
     PsiType returnType = context.typeProvider.getReturnType(method);
-    if (!method.isConstructor() && !PsiType.VOID.equals(returnType)) {
+    if (GroovyObjectTransformationSupport.isGroovyObjectSupportMethod(method)) {
+      shouldInsertReturnNull = !(returnType instanceof PsiPrimitiveType);
+    }
+    else if (!method.isConstructor() && !PsiType.VOID.equals(returnType)) {
       myExitPoints.addAll(ControlFlowUtils.collectReturns(block));
       shouldInsertReturnNull = block != null &&
                                !(returnType instanceof PsiPrimitiveType) &&
@@ -112,9 +116,7 @@ public class CodeBlockGenerator extends Generator {
       shouldInsertReturnNull = false;
     }
 
-    if (block != null) {
-      generateCodeBlock(block, shouldInsertReturnNull);
-    }
+    generateCodeBlock(method.getParameters(), block, shouldInsertReturnNull);
   }
 
   @Override
@@ -124,22 +126,19 @@ public class CodeBlockGenerator extends Generator {
 
   @Override
   public void visitOpenBlock(@NotNull GrOpenBlock block) {
-    generateCodeBlock(block, false);
-  }
-
-  public void generateCodeBlock(GrCodeBlock block, boolean shouldInsertReturnNull) {
-    builder.append("{");
     GrParameter[] parameters;
     if (block.getParent() instanceof GrMethod) {
       GrMethod method = (GrMethod)block.getParent();
       parameters = method.getParameters();
     }
-    else if (block instanceof GrClosableBlock) {
-      parameters = ((GrClosableBlock)block).getAllParameters();
-    }
     else {
       parameters = GrParameter.EMPTY_ARRAY;
     }
+    generateCodeBlock(parameters, block, false);
+  }
+
+  public void generateCodeBlock(@NotNull GrParameter[] parameters, @Nullable GrCodeBlock block, boolean shouldInsertReturnNull) {
+    builder.append("{");
 
     for (GrParameter parameter : parameters) {
       if (context.analyzedVars.toWrap(parameter)) {
@@ -154,9 +153,9 @@ public class CodeBlockGenerator extends Generator {
     builder.append("}\n");
   }
 
-  public void visitStatementOwner(GrStatementOwner owner, boolean shouldInsertReturnNull) {
+  public void visitStatementOwner(@Nullable GrStatementOwner owner, boolean shouldInsertReturnNull) {
     boolean hasLineFeed = false;
-    for (PsiElement e = owner.getFirstChild(); e != null; e = e.getNextSibling()) {
+    for (PsiElement e = owner == null ? null : owner.getFirstChild(); e != null; e = e.getNextSibling()) {
       if (e instanceof GrStatement) {
         ((GrStatement)e).accept(this);
         hasLineFeed = false;
@@ -674,10 +673,5 @@ public class CodeBlockGenerator extends Generator {
         return facade.getElementFactory().createTypeFromText(CommonClassNames.JAVA_UTIL_ITERATOR, tupleInitializer);
       }
     }
-  }
-
-  @Override
-  public void visitVariable(@NotNull GrVariable variable) {
-    super.visitVariable(variable);    //To change body of overridden methods use File | Settings | File Templates.
   }
 }

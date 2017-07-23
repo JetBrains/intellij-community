@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: May 13, 2005
- */
 public class SuppressAllForClassFix extends SuppressFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.actions.AddNoInspectionAllForClassFix");
 
@@ -43,8 +39,8 @@ public class SuppressAllForClassFix extends SuppressFix {
 
   @Override
   @Nullable
-  public PsiDocCommentOwner getContainer(final PsiElement element) {
-    PsiDocCommentOwner container = super.getContainer(element);
+  public PsiJavaDocumentedElement getContainer(final PsiElement element) {
+    PsiJavaDocumentedElement container = super.getContainer(element);
     if (container == null) {
       return null;
     }
@@ -55,7 +51,7 @@ public class SuppressAllForClassFix extends SuppressFix {
       }
       container = parentClass;
     }
-    return container;
+    return null;
   }
 
   @Override
@@ -72,10 +68,10 @@ public class SuppressAllForClassFix extends SuppressFix {
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull final PsiElement element) throws IncorrectOperationException {
-    final PsiDocCommentOwner container = getContainer(element);
+    final PsiJavaDocumentedElement container = getContainer(element);
     LOG.assertTrue(container != null);
-    if (use15Suppressions(container)) {
-      final PsiModifierList modifierList = container.getModifierList();
+    if (container instanceof PsiModifierListOwner && use15Suppressions(container)) {
+      final PsiModifierList modifierList = ((PsiModifierListOwner)container).getModifierList();
       if (modifierList != null) {
         final PsiAnnotation annotation = modifierList.findAnnotation(JavaSuppressionUtil.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
         if (annotation != null) {

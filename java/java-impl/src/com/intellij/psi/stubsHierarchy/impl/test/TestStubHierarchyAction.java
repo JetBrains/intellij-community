@@ -51,7 +51,7 @@ public class TestStubHierarchyAction extends InheritanceAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(new TestHierarchy(project)::run),
+      ProgressManager.getInstance().runProcessWithProgressSynchronously((Runnable)() -> ReadAction.run(new TestHierarchy(project)::run),
                                                                         "Testing Hierarchy", true, project);
     }
   }

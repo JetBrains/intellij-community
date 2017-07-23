@@ -16,6 +16,7 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
@@ -30,7 +31,6 @@ import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,12 +53,25 @@ public class SdkConfigurationUtil {
                                final NullableConsumer<Sdk> onSdkCreatedCallBack,
                                final boolean createIfExists,
                                final SdkType... sdkTypes) {
+    createSdk(project, existingSdks, onSdkCreatedCallBack, createIfExists, true, sdkTypes);
+  }
+
+  public static void createSdk(@Nullable final Project project,
+                               final Sdk[] existingSdks,
+                               final NullableConsumer<Sdk> onSdkCreatedCallBack,
+                               final boolean createIfExists,
+                               final boolean followSymLinks,
+                               final SdkType... sdkTypes) {
     if (sdkTypes.length == 0) {
       onSdkCreatedCallBack.consume(null);
       return;
     }
 
     FileChooserDescriptor descriptor = createCompositeDescriptor(sdkTypes);
+    // XXX: Workaround for PY-21787 since the native macOS dialog always follows symlinks
+    if (!followSymLinks) {
+      descriptor.setForcedToUseIdeaFileChooser(true);
+    }
     VirtualFile suggestedDir = getSuggestedSdkRoot(sdkTypes[0]);
     FileChooser.chooseFiles(descriptor, project, suggestedDir, new FileChooser.FileChooserConsumer() {
       @Override
@@ -239,8 +252,8 @@ public class SdkConfigurationUtil {
    */
   @Nullable
   public static Sdk createAndAddSDK(final String path, SdkType sdkType) {
-    VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction(
-      (Computable<VirtualFile>)() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(path));
+    VirtualFile sdkHome =
+      WriteAction.compute(() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(path));
     if (sdkHome != null) {
       final Sdk newSdk = setupSdk(ProjectJdkTable.getInstance().getAllJdks(), sdkHome, sdkType, true, null, null);
       if (newSdk != null) {

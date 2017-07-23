@@ -15,10 +15,10 @@
  */
 package com.intellij.util;
 
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,14 +54,17 @@ public class CachedValuesManagerImpl extends CachedValuesManager {
                                                         @NotNull Key<CachedValue<T>> key,
                                                         @NotNull CachedValueProvider<T> provider,
                                                         boolean trackValue) {
-    CachedValueChecker.checkProvider(provider, key, dataHolder);
+    CachedValueLeakChecker.checkProvider(provider, key, dataHolder);
     CachedValue<T> value;
     if (dataHolder instanceof UserDataHolderEx) {
       UserDataHolderEx dh = (UserDataHolderEx)dataHolder;
       value = dh.getUserData(key);
-      if (isOutdated(value)) {
-        value = null;
-        dh.putUserData(key, null);
+      while (isOutdated(value)) {
+        if (dh.replace(key, value, null)) {
+          value = null;
+          break;
+        }
+        value = dh.getUserData(key);
       }
       if (value == null) {
         value = createCachedValue(provider, trackValue);
@@ -86,7 +89,11 @@ public class CachedValuesManagerImpl extends CachedValuesManager {
 
   private boolean isOutdated(CachedValue<?> value) {
     return value instanceof CachedValueBase &&
-           (!((CachedValueBase)value).isFromMyProject(myProject) || !value.hasUpToDateValue());
+           (!((CachedValueBase)value).isFromMyProject(myProject) || hasOutdatedValue((CachedValueBase)value));
+  }
+
+  private static boolean hasOutdatedValue(CachedValueBase base) {
+    return !base.hasUpToDateValue() && base.getRawData() != null;
   }
 
   public Project getProject() {

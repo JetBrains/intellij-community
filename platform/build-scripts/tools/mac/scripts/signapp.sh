@@ -1,10 +1,15 @@
 #!/bin/bash
+
+#immediately exit script with an error if a command fails
+set -euo pipefail
+
 export COPY_EXTENDED_ATTRIBUTES_DISABLE=true
 export COPYFILE_DISABLE=true
 EXPLODED=$2.exploded
 USERNAME=$3
 PASSWORD=$4
 CODESIGN_STRING=$5
+HELP_DIR_NAME=$6
 
 cd $(dirname $0)
 
@@ -19,8 +24,8 @@ unzip -q $1.sit -d ${EXPLODED}/
 rm $1.sit
 BUILD_NAME=$(ls ${EXPLODED}/)
 
-if [ $# -eq 6 ] && [ -f $6 ]; then
-  archiveJDK="$6"
+if [ $# -eq 7 ] && [ -f $7 ]; then
+  archiveJDK="$7"
   echo "Modifying Info.plist"
   sed -i -e 's/1.6\*/1.6\+/' ${EXPLODED}/"$BUILD_NAME"/Contents/Info.plist
   jdk=jdk-bundled
@@ -37,11 +42,15 @@ if [ $# -eq 6 ] && [ -f $6 ]; then
   rm -f $archiveJDK
 fi
 
-HELP_FILE=`ls ${EXPLODED}/"$BUILD_NAME"/Contents/Resources/ | grep -i help`
-HELP_DIR=${EXPLODED}/"$BUILD_NAME"/Contents/Resources/"$HELP_FILE"/Contents/Resources/English.lproj/
+if [ $HELP_DIR_NAME != "no-help" ]; then
+  HELP_DIR=${EXPLODED}/"$BUILD_NAME"/Contents/Resources/"$HELP_DIR_NAME"/Contents/Resources/English.lproj/
 
-echo "Building help indices for $HELP_DIR"
-hiutil -Cagvf "$HELP_DIR/search.helpindex" "$HELP_DIR"
+  echo "Building help indices for $HELP_DIR"
+  hiutil -Cagvf "$HELP_DIR/search.helpindex" "$HELP_DIR"
+fi
+
+#enable nullglob option to ensure that 'for' cycles don't iterate if nothing matches to the file pattern
+shopt -s nullglob
 
 for f in ${EXPLODED}/"$BUILD_NAME"/Contents/bin/*.jnilib ; do
   if [ -f "$f" ]; then
@@ -56,16 +65,32 @@ for f in ${EXPLODED}/"$BUILD_NAME"/Contents/*.txt ; do
     mv "$f" ${EXPLODED}/"$BUILD_NAME"/Contents/Resources
   fi
 done
+shopt -u nullglob
 
 # Make sure *.p12 is imported into local KeyChain
 security unlock-keychain -p ${PASSWORD} /Users/${USERNAME}/Library/Keychains/login.keychain
 
-echo "signing ${EXPLODED}/$BUILD_NAME"
-codesign -v --deep --force -s "${CODESIGN_STRING}" ${EXPLODED}/"$BUILD_NAME"
-echo "signing is done"
-echo "check sign"
-codesign -v ${EXPLODED}/"$BUILD_NAME" -vvvvv
-echo "check sign done"
+attempt=1
+limit=3
+set +e
+while [ $attempt -le $limit ]
+do
+  echo "signing (attempt $attempt) ${EXPLODED}/$BUILD_NAME"
+  codesign -v --deep --force -s "${CODESIGN_STRING}" "${EXPLODED}/$BUILD_NAME"
+  if [ "$?" != "0" ]; then
+    let "attempt += 1"
+    if [ $attempt -eq $limit ]; then
+      set -e
+    fi
+    echo "wait for 30 sec and try to sign again"
+    sleep 30;
+  else
+    echo "signing done"
+    codesign -v ${EXPLODED}/"$BUILD_NAME" -vvvvv
+    echo "check sign done"
+    let "attempt += $limit"
+  fi
+done
 
 echo "Zipping ${BUILD_NAME} to $1.sit..."
 cd ${EXPLODED}

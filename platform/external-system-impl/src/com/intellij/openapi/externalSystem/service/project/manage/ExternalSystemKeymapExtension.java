@@ -88,7 +88,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
 
     MultiMap<ProjectSystemId, String> projectToActionsMapping = MultiMap.create();
     for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
-      projectToActionsMapping.putValues(manager.getSystemId(), ContainerUtil.<String>emptyList());
+      projectToActionsMapping.putValues(manager.getSystemId(), ContainerUtil.emptyList());
     }
 
     ActionManager actionManager = ActionManager.getInstance();
@@ -194,7 +194,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
 
   private static void createActions(Project project, Collection<DataNode<TaskData>> taskNodes) {
     ActionManager actionManager = ActionManager.getInstance();
-    final ExternalSystemShortcutsManager shortcutsManager = ExternalProjectsManager.getInstance(project).getShortcutsManager();
+    final ExternalSystemShortcutsManager shortcutsManager = ExternalProjectsManagerImpl.getInstance(project).getShortcutsManager();
     if (actionManager != null) {
       for (DataNode<TaskData> each : taskNodes) {
         final DataNode<ModuleData> moduleData = ExternalSystemApiUtil.findParent(each, ProjectKeys.MODULE);
@@ -233,7 +233,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
   }
 
   public static String getActionPrefix(@NotNull Project project, @Nullable String path) {
-    return ExternalProjectsManager.getInstance(project).getShortcutsManager().getActionId(path, null);
+    return ExternalProjectsManagerImpl.getInstance(project).getShortcutsManager().getActionId(path, null);
   }
 
   public static void updateRunConfigurationActions(Project project, ProjectSystemId systemId) {
@@ -251,7 +251,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
     Set<RunnerAndConfigurationSettings> settings = new THashSet<>(
       RunManager.getInstance(project).getConfigurationSettingsList(configurationType));
 
-    final ExternalSystemShortcutsManager shortcutsManager = ExternalProjectsManager.getInstance(project).getShortcutsManager();
+    final ExternalSystemShortcutsManager shortcutsManager = ExternalProjectsManagerImpl.getInstance(project).getShortcutsManager();
     for (RunnerAndConfigurationSettings configurationSettings : settings) {
       ExternalSystemRunConfigurationAction runConfigurationAction =
         new ExternalSystemRunConfigurationAction(project, configurationSettings);

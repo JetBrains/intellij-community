@@ -28,6 +28,7 @@ import java.util.Arrays;
  */
 public class UsageNode extends Node implements Comparable<UsageNode>, Navigatable {
   @Deprecated
+  // todo remove in 2018.1
   public UsageNode(@NotNull Usage usage, UsageViewTreeModelBuilder model) {
     this(null, usage);
   }
@@ -89,6 +90,7 @@ public class UsageNode extends Node implements Comparable<UsageNode>, Navigatabl
     return isExcluded();
   }
 
+  @NotNull
   @Override
   protected String getText(@NotNull final UsageView view) {
     try {
@@ -97,9 +99,5 @@ public class UsageNode extends Node implements Comparable<UsageNode>, Navigatabl
     catch(AbstractMethodError e) {
       return Arrays.asList(getUsage().getPresentation().getText()).toString();
     }
-  }
-
-  void setUsageExcluded(boolean usageExcluded) {
-    setFlag(EXCLUDED_MASK, usageExcluded);
   }
 }

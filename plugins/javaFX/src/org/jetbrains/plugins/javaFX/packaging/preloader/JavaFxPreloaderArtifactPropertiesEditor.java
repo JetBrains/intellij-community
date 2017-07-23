@@ -25,10 +25,6 @@ import org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationClassBrowser;
 
 import javax.swing.*;
 
-/**
- * User: anna
- * Date: 3/19/13
- */
 public class JavaFxPreloaderArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private final JavaFxPreloaderArtifactProperties myProperties;
   private JPanel myPanel;
@@ -75,9 +71,5 @@ public class JavaFxPreloaderArtifactPropertiesEditor extends ArtifactPropertiesE
   @Override
   public void reset() {
     myPreloaderTf.setText(myProperties.getPreloaderClass());
-  }
-
-  @Override
-  public void disposeUIResources() {
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,10 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 28, 2002
- * Time: 9:40:01 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -125,7 +116,8 @@ class StateQueue {
 
     StateMerger merger = new StateMerger();
     while (true) {
-      List<DfaMemoryStateImpl> nextStates = merger.mergeByFacts(group);
+      List<DfaMemoryStateImpl> nextStates = merger.mergeByRanges(group);
+      if (nextStates == null) nextStates = merger.mergeByFacts(group);
       if (nextStates == null) nextStates = merger.mergeByNullability(group);
       if (nextStates == null) nextStates = merger.mergeByUnknowns(group);
       if (nextStates == null) break;

@@ -24,13 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 01.04.2003
- * Time: 16:52:28
- * To change this template use Options | File Templates.
- */
 public interface ProviderBinding {
   class ProviderInfo<Context> {
     public final PsiReferenceProvider provider;

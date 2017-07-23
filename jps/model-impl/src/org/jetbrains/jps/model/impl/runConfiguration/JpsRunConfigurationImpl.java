@@ -42,7 +42,7 @@ public class JpsRunConfigurationImpl<P extends JpsElement> extends JpsNamedCompo
   @NotNull
   @Override
   public JpsRunConfigurationImpl<P> createCopy() {
-    return new JpsRunConfigurationImpl<P>(this);
+    return new JpsRunConfigurationImpl<>(this);
   }
 
   @NotNull

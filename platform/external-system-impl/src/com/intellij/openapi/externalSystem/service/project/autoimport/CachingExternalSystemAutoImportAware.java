@@ -21,6 +21,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -53,5 +55,10 @@ public class CachingExternalSystemAutoImportAware implements ExternalSystemAutoI
       myCache.put(changedFileOrDirPath, result);
     }
     return result;
+  }
+
+  @Override
+  public List<File> getAffectedExternalProjectFiles(String projectPath, @NotNull Project project) {
+    return myDelegate.getAffectedExternalProjectFiles(projectPath, project);
   }
 }

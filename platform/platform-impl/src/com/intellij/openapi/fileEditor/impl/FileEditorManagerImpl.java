@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -172,7 +173,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         });
       }
     });
-    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerAdapter() {
+    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(Project project) {
         if (project == myProject) {
@@ -544,7 +545,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   public void flipTabs() {
     /*
     if (myTabs == null) {
-      myTabs = new EditorTabs (this, UISettings.getInstance().EDITOR_TAB_PLACEMENT);
+      myTabs = new EditorTabs (this, UISettings.getInstance().getEditorTabPlacement());
       remove (mySplitters);
       add (myTabs, BorderLayout.CENTER);
       initTabs ();
@@ -818,7 +819,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         try {
           final FileEditorProvider provider = newProviders[i];
           LOG.assertTrue(provider != null, "Provider for file "+file+" is null. All providers: "+Arrays.asList(newProviders));
-          builders[i] = ApplicationManager.getApplication().runReadAction((Computable<AsyncFileEditorProvider.Builder>)() -> {
+          builders[i] = ReadAction.compute(() -> {
             if (myProject.isDisposed() || !file.isValid()) {
               return null;
             }
@@ -984,7 +985,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   }
 
   private static void clearWindowIfNeeded(@NotNull EditorWindow window) {
-    if (UISettings.getInstance().EDITOR_TAB_PLACEMENT == UISettings.TABS_NONE || UISettings.getInstance().PRESENTATION_MODE) {
+    if (UISettings.getInstance().getEditorTabPlacement() == UISettings.TABS_NONE || UISettings.getInstance().getPresentationMode()) {
       window.clear();
     }
   }
@@ -1449,7 +1450,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     StartupManager.getInstance(myProject).registerPostStartupActivity((DumbAwareRunnable)() -> {
       if (myProject.isDisposed()) return;
-      setTabsMode(UISettings.getInstance().EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE);
+      setTabsMode(UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE);
 
       ToolWindowManager.getInstance(myProject).invokeLater(() -> {
         if (!myProject.isDisposed()) {
@@ -1641,7 +1642,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   /**
    * Closes deleted files. Closes file which are in the deleted directories.
    */
-  private final class MyVirtualFileListener extends VirtualFileAdapter {
+  private final class MyVirtualFileListener implements VirtualFileListener {
     @Override
     public void beforeFileDeletion(@NotNull VirtualFileEvent e) {
       assertDispatchThread();
@@ -1865,14 +1866,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     @Override
     public void uiSettingsChanged(final UISettings uiSettings) {
       assertDispatchThread();
-      setTabsMode(uiSettings.EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE && !uiSettings.PRESENTATION_MODE);
+      setTabsMode(uiSettings.getEditorTabPlacement() != UISettings.TABS_NONE && !uiSettings.getPresentationMode());
 
       for (EditorsSplitters each : getAllSplitters()) {
-        each.setTabsPlacement(uiSettings.EDITOR_TAB_PLACEMENT);
-        each.trimToSize(uiSettings.EDITOR_TAB_LIMIT);
+        each.setTabsPlacement(uiSettings.getEditorTabPlacement());
+        each.trimToSize(uiSettings.getEditorTabLimit());
 
         // Tab layout policy
-        if (uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR) {
+        if (uiSettings.getScrollTabLayoutInEditor()) {
           each.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         }
         else {

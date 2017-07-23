@@ -79,7 +79,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
   private JPanel[] myPanels = new JPanel[0];
   private final MergingUpdateQueue myUpdateQueue;
-  private final String myKey = new String("DATA_SELECTOR");
+  private final String myKey = "DATA_SELECTOR";
 
   // -------------------------------------------------------------------------
   // Constructor

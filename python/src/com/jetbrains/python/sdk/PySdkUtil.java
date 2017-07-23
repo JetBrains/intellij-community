@@ -33,6 +33,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.HashMap;
+import com.jetbrains.python.run.CommandLinePatcher;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,6 +127,14 @@ public class PySdkUtil {
     try {
 
       final GeneralCommandLine commandLine = cmd.withWorkDirectory(homePath).withEnvironment(env);
+
+      final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(commandLine.getExePath());
+
+      final CommandLinePatcher cmdLinePatcher = flavor.commandLinePatcher();
+      if (cmdLinePatcher != null) {
+        cmdLinePatcher.patchCommandLine(cmd);
+      }
+
       final CapturingProcessHandler processHandler = new CapturingProcessHandler(commandLine);
       if (stdin != null) {
         final OutputStream processInput = processHandler.getProcessInput();
@@ -140,10 +150,7 @@ public class PySdkUtil {
       }
       return processHandler.runProcess(timeout);
     }
-    catch (ExecutionException e) {
-      return getOutputForException(e);
-    }
-    catch (IOException e) {
+    catch (ExecutionException | IOException e) {
       return getOutputForException(e);
     }
   }
@@ -202,7 +209,7 @@ public class PySdkUtil {
     if (file != null) {
       final VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile != null) {
-        final Sdk sdk = PythonSdkType.getSdk(element);
+        final Sdk sdk = PythonSdkType.findPythonSdk(element);
         if (sdk != null) {
           final VirtualFile skeletonsDir = findSkeletonsDir(sdk);
           if (skeletonsDir != null && VfsUtilCore.isAncestor(skeletonsDir, virtualFile, false)) {

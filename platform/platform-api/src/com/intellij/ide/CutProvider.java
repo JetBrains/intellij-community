@@ -18,6 +18,10 @@ package com.intellij.ide;
 import com.intellij.openapi.actionSystem.DataContext;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * During indexing, only the providers implementing {@link com.intellij.openapi.project.DumbAware} are queried.
+ * @see com.intellij.openapi.project.DumbService
+ */
 public interface CutProvider {
   void performCut(@NotNull DataContext dataContext);
   boolean isCutEnabled(@NotNull DataContext dataContext);

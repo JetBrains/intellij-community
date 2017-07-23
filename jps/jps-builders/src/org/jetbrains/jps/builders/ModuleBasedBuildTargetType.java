@@ -4,4 +4,11 @@ public abstract class ModuleBasedBuildTargetType<T extends ModuleBasedTarget<?>>
   protected ModuleBasedBuildTargetType(String typeId) {
     super(typeId);
   }
+
+  /**
+   * @see BuildTargetType#BuildTargetType(String, boolean)
+   */
+  protected ModuleBasedBuildTargetType(String typeId, boolean fileBased) {
+    super(typeId, fileBased);
+  }
 }

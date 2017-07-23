@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.actionSystem;
 
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +31,7 @@ public final class CustomShortcutSet implements ShortcutSet {
   private final Shortcut[] myShortcuts;
 
   /**
-   * Creates <code>CustomShortcutSet</code> which contains only one
+   * Creates {@code CustomShortcutSet} which contains only one
    * single stroke keyboard shortcut.
    */
   public CustomShortcutSet(@NotNull KeyStroke keyStroke){
@@ -40,7 +39,7 @@ public final class CustomShortcutSet implements ShortcutSet {
   }
 
   /**
-   * Creates <code>CustomShortcutSet</code> which contains specified keyboard and
+   * Creates {@code CustomShortcutSet} which contains specified keyboard and
    * mouse shortcuts.
    *
    * @param shortcuts keyboard shortcuts
@@ -49,7 +48,7 @@ public final class CustomShortcutSet implements ShortcutSet {
     myShortcuts = shortcuts.length == 0 ? Shortcut.EMPTY_ARRAY : shortcuts.clone();
   }
 
-  public CustomShortcutSet(Integer... keyCodes) {
+  public CustomShortcutSet(@NotNull Integer... keyCodes) {
     myShortcuts = ContainerUtil.map(keyCodes, integer -> new KeyboardShortcut(KeyStroke.getKeyStroke(integer, 0), null), Shortcut.EMPTY_ARRAY);
   }
 

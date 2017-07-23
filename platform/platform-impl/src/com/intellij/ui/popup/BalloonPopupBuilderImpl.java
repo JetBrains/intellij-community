@@ -72,9 +72,15 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   private boolean myBlockClicks = false;
   private boolean myRequestFocus = false;
 
+  private Dimension myPointerSize;
+  private int       myCornerToPointerDistance = -1;
+
   public BalloonPopupBuilderImpl(@Nullable Map<Disposable, List<Balloon>> storage, @NotNull final JComponent content) {
     myStorage = storage;
     myContent = content;
+    if (UIUtil.isClientPropertyTrue(myContent, BalloonImpl.FORCED_NO_SHADOW)) {
+      myShadow = false;
+    }
   }
 
   @NotNull
@@ -261,12 +267,26 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
 
   @NotNull
   @Override
+  public BalloonBuilder setPointerSize(Dimension size) {
+    myPointerSize = size;
+    return this;
+  }
+
+  @NotNull
+  @Override
+  public BalloonBuilder setCornerToPointerDistance(int distance) {
+    myCornerToPointerDistance = distance;
+    return this;
+  }
+
+  @NotNull
+  @Override
   public Balloon createBalloon() {
     final BalloonImpl result = new BalloonImpl(
       myContent, myBorder, myBorderInsets, myFill, myHideOnMouseOutside, myHideOnKeyOutside, myHideOnAction, myHideOnCloseClick,
       myShowCallout, myCloseButtonEnabled, myFadeoutTime, myHideOnFrameResize, myHideOnLinkClick, myClickHandler, myCloseOnClick,
       myAnimationCycle, myCalloutShift, myPositionChangeXShift, myPositionChangeYShift, myDialogMode, myTitle, myContentInsets, myShadow,
-      mySmallVariant, myBlockClicks, myLayer, myRequestFocus);
+      mySmallVariant, myBlockClicks, myLayer, myRequestFocus, myPointerSize, myCornerToPointerDistance);
 
     if (myStorage != null && myAnchor != null) {
       List<Balloon> balloons = myStorage.get(myAnchor);

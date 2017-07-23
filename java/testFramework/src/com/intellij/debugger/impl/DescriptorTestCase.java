@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,10 @@ package com.intellij.debugger.impl;
 import com.intellij.debugger.DebuggerTestCase;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
-import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
-import com.intellij.debugger.ui.impl.watch.LocalVariableDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
@@ -34,6 +30,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.treeStructure.Tree;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
@@ -83,7 +80,7 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
     final DebugProcessImpl localProcess = suspendContext.getDebugProcess();
     invokeRatherLater(new SuspendContextCommandImpl(suspendContext) {
       @Override
-      public void contextAction() throws Exception {
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
         flushDescriptors();
         localProcess.getManagerThread().schedule(localProcess.createResumeCommand(suspendContext, Priority.LOW));
       }
@@ -128,29 +125,6 @@ public abstract class DescriptorTestCase extends DebuggerTestCase {
   private void printDescriptorLog(Pair<NodeDescriptorImpl, List<String>> pair) {
     for (String text : pair.getSecond()) {
       print(text, ProcessOutputTypes.SYSTEM);
-    }
-  }
-
-  protected void disableRenderer(NodeRenderer renderer) {
-    renderer.setEnabled(false);
-  }
-
-  protected void enableRenderer(NodeRenderer renderer) {
-    renderer.setEnabled(true);
-  }
-
-  protected LocalVariableDescriptorImpl localVar(DebuggerTree frameTree,
-                                               EvaluationContextImpl evaluationContext,
-                                               String name) {
-    try {
-      StackFrameProxy frameProxy = evaluationContext.getFrameProxy();
-      assert frameProxy != null;
-      LocalVariableDescriptorImpl local = frameTree.getNodeFactory().getLocalVariableDescriptor(null, frameProxy.visibleVariableByName(name));
-      local.setContext(evaluationContext);
-      return local;
-    } catch (EvaluateException e) {
-      error(e);
-      return null;
     }
   }
 

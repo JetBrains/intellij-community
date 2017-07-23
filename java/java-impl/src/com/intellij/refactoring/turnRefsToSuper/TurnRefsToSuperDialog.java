@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,13 +39,13 @@ import java.util.List;
  * Date: 06.06.2002
  */
 public class TurnRefsToSuperDialog extends RefactoringDialog {
-  @NotNull private final PsiClass mySubClass;
-  private final List mySuperClasses;
+  private final PsiClass mySubClass;
+  private final List<PsiClass> mySuperClasses;
 
-  private JList mySuperClassesList;
+  private JList<PsiClass> mySuperClassesList;
   private final JCheckBox myCbReplaceInstanceOf = new JCheckBox();
 
-  TurnRefsToSuperDialog(Project project, @NotNull PsiClass subClass, List superClasses) {
+  TurnRefsToSuperDialog(Project project, @NotNull PsiClass subClass, List<PsiClass> superClasses) {
     super(project, true);
 
     mySubClass = subClass;
@@ -57,12 +57,7 @@ public class TurnRefsToSuperDialog extends RefactoringDialog {
 
   @Nullable
   public PsiClass getSuperClass() {
-    if(mySuperClassesList != null) {
-      return (PsiClass) mySuperClassesList.getSelectedValue();
-    }
-    else {
-      return null;
-    }
+    return mySuperClassesList != null ? mySuperClassesList.getSelectedValue() : null;
   }
 
   public boolean isUseInInstanceOf() {
@@ -77,7 +72,7 @@ public class TurnRefsToSuperDialog extends RefactoringDialog {
     return mySuperClassesList;
   }
 
-
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel();
     panel.setLayout(new BorderLayout(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
@@ -85,7 +80,7 @@ public class TurnRefsToSuperDialog extends RefactoringDialog {
     final JLabel classListLabel = new JLabel();
     panel.add(classListLabel, BorderLayout.NORTH);
 
-    mySuperClassesList = new JBList(mySuperClasses.toArray());
+    mySuperClassesList = new JBList<>(mySuperClasses);
     mySuperClassesList.setCellRenderer(new ClassCellRenderer(mySuperClassesList.getCellRenderer()));
     mySuperClassesList.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     classListLabel.setText(RefactoringBundle.message("turnRefsToSuper.change.usages.to", mySubClass.getQualifiedName()));
@@ -106,10 +101,12 @@ public class TurnRefsToSuperDialog extends RefactoringDialog {
     return panel;
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperDialog";
   }
 
+  @Override
   protected void doAction() {
     JavaRefactoringSettings.getInstance().TURN_REFS_TO_SUPER_PREVIEW_USAGES = isPreviewUsages();
     final PsiClass superClass = getSuperClass();
@@ -118,6 +115,7 @@ public class TurnRefsToSuperDialog extends RefactoringDialog {
     }
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     return null;
   }

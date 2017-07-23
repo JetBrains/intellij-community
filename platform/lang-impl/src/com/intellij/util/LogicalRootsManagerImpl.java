@@ -129,12 +129,7 @@ public class LogicalRootsManagerImpl extends LogicalRootsManager {
 
   @Override
   public List<LogicalRoot> getLogicalRootsOfType(@NotNull final Module module, @NotNull final LogicalRootType... types) {
-    return ContainerUtil.concat(types, new Function<LogicalRootType, Collection<? extends LogicalRoot>>() {
-      @Override
-      public Collection<? extends LogicalRoot> fun(final LogicalRootType s) {
-        return getLogicalRootsOfType(module, s);
-      }
-    });
+    return ContainerUtil.concat(types, s -> getLogicalRootsOfType(module, s));
   }
 
   @Override

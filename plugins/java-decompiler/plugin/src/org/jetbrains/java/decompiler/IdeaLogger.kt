@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.java.decompiler
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger
+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger.Severity.*
 
 class IdeaLogger : IFernflowerLogger() {
   private val LOG = Logger.getInstance(IdeaDecompiler::class.java)
@@ -29,19 +30,29 @@ class IdeaLogger : IFernflowerLogger() {
   override fun writeMessage(message: String, severity: IFernflowerLogger.Severity) {
     val text = extendMessage(message)
     when (severity) {
-      IFernflowerLogger.Severity.ERROR -> LOG.error(text)
-      IFernflowerLogger.Severity.WARN -> LOG.warn(text)
-      IFernflowerLogger.Severity.INFO -> LOG.info(text)
+      ERROR -> LOG.warn(text)
+      WARN -> LOG.warn(text)
+      INFO -> LOG.info(text)
       else -> LOG.debug(text)
     }
   }
 
-  override fun writeMessage(message: String, t: Throwable) {
-    when (t) {
-      is InternalException -> throw t
-      is ProcessCanceledException -> throw t
-      is InterruptedException -> throw ProcessCanceledException(t)
-      else -> throw InternalException(extendMessage(message), t)
+  override fun writeMessage(message: String, severity: IFernflowerLogger.Severity, t: Throwable) {
+    if (severity == ERROR) {
+      when (t) {
+        is InternalException -> throw t
+        is ProcessCanceledException -> throw t
+        is InterruptedException -> throw ProcessCanceledException(t)
+        else -> throw InternalException(extendMessage(message), t)
+      }
+    }
+    else {
+      val text = extendMessage(message)
+      when (severity) {
+        WARN -> LOG.warn(text, t)
+        INFO -> LOG.info(text, t)
+        else -> LOG.debug(text, t)
+      }
     }
   }
 
@@ -57,27 +68,15 @@ class IdeaLogger : IFernflowerLogger() {
     myClass = null
   }
 
-  override fun startClass(className: String) {
-    LOG.debug("processing class " + className)
-  }
+  override fun startClass(className: String) = LOG.debug("processing class " + className)
 
-  override fun endClass() {
-    LOG.debug("... class processed")
-  }
+  override fun endClass() = LOG.debug("... class processed")
 
-  override fun startMethod(methodName: String) {
-    LOG.debug("processing method " + methodName)
-  }
+  override fun startMethod(methodName: String) = LOG.debug("processing method " + methodName)
 
-  override fun endMethod() {
-    LOG.debug("... method processed")
-  }
+  override fun endMethod() = LOG.debug("... method processed")
 
-  override fun startWriteClass(className: String) {
-    LOG.debug("writing class " + className)
-  }
+  override fun startWriteClass(className: String) = LOG.debug("writing class " + className)
 
-  override fun endWriteClass() {
-    LOG.debug("... class written")
-  }
+  override fun endWriteClass() = LOG.debug("... class written")
 }

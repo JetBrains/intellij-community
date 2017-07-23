@@ -58,32 +58,39 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
     myEditor = new GuiEditor(this, project, module, file);
   }
 
+  @Override
   @NotNull
   public JComponent getComponent(){
     return myEditor;
   }
 
+  @Override
   public void dispose() {
     myEditor.dispose();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent(){
     return myEditor.getPreferredFocusedComponent();
   }
 
+  @Override
   @NotNull
   public String getName(){
     return UIDesignerBundle.message("title.gui.designer");
   }
 
+  @NotNull
   public GuiEditor getEditor() {
     return myEditor;
   }
 
+  @Override
   public boolean isModified(){
     return false;
   }
 
+  @Override
   public boolean isValid(){
     //TODO[anton,vova] fire when changed
     return
@@ -91,20 +98,25 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
       myFile.getFileType() == StdFileTypes.GUI_DESIGNER_FORM;
   }
 
+  @Override
   public void selectNotify(){
   }
 
+  @Override
   public void deselectNotify(){
   }
 
+  @Override
   public void addPropertyChangeListener(@NotNull final PropertyChangeListener listener){
     //TODO[anton,vova]
   }
 
+  @Override
   public void removePropertyChangeListener(@NotNull final PropertyChangeListener listener){
     //TODO[anton,vova]
   }
 
+  @Override
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
     if (myBackgroundEditorHighlighter == null) {
       myBackgroundEditorHighlighter = new MyBackgroundEditorHighlighter(myEditor);
@@ -112,10 +124,12 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
     return myBackgroundEditorHighlighter;
   }
 
+  @Override
   public FileEditorLocation getCurrentLocation() {
     return null;
   }
 
+  @Override
   @NotNull
   public FileEditorState getState(@NotNull final FileEditorStateLevel ignored) {
     final Document document = FileDocumentManager.getInstance().getCachedDocument(myFile);
@@ -128,6 +142,7 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
     return new MyEditorState(modificationStamp, ids);
   }
 
+  @Override
   public void setState(@NotNull final FileEditorState state){
     FormEditingUtil.clearSelection(myEditor.getRootContainer());
     final String[] ids = ((MyEditorState)state).getSelectedComponentIds();
@@ -153,6 +168,7 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
     }
   }
 
+  @Override
   public StructureViewBuilder getStructureViewBuilder() {
     return null;
   }
@@ -162,34 +178,20 @@ public final class UIFormEditor extends UserDataHolderBase implements FileEditor
     return false;
   }
 
-  /*
-  public boolean canNavigateTo(@NotNull final Navigatable navigatable) {
-    if (navigatable instanceof ComponentNavigatable) {
-      return true;
-    }
-    return (navigatable instanceof OpenFileDescriptor) && (((OpenFileDescriptor)navigatable).getOffset() >= 0 || (
-      ((OpenFileDescriptor)navigatable).getLine() != -1 && ((OpenFileDescriptor)navigatable).getColumn() != -1));
-  }
-
-  public void navigateTo(@NotNull final Navigatable navigatable) {
-    if (navigatable instanceof ComponentNavigatable) {
-      String componentId = ((ComponentNavigatable))
-    }
-  }
-  */
-
   private static class MyBackgroundEditorHighlighter implements BackgroundEditorHighlighter {
     private final HighlightingPass[] myPasses;
 
-    public MyBackgroundEditorHighlighter(final GuiEditor editor) {
+    MyBackgroundEditorHighlighter(final GuiEditor editor) {
       myPasses = new HighlightingPass[] { new FormHighlightingPass(editor) };
     }
 
+    @Override
     @NotNull
     public HighlightingPass[] createPassesForEditor() {
       return myPasses;
     }
 
+    @Override
     @NotNull
     public HighlightingPass[] createPassesForVisibleArea() {
       return HighlightingPass.EMPTY_ARRAY;

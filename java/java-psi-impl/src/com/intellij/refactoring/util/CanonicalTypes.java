@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,8 @@ public class CanonicalTypes {
     protected final TypeAnnotationProvider myProvider;
 
     public AnnotatedType(@NotNull TypeAnnotationProvider provider) {
-      myProvider = TypeAnnotationProvider.Static.create(provider.getAnnotations());
+      PsiAnnotation[] annotations = ContainerUtil.map(provider.getAnnotations(), annotation -> (PsiAnnotation)annotation.copy(), PsiAnnotation.EMPTY_ARRAY);
+      myProvider = TypeAnnotationProvider.Static.create(annotations);
     }
   }
 
@@ -263,23 +264,13 @@ public class CanonicalTypes {
     @NotNull
     @Override
     public PsiType getType(final PsiElement context, final PsiManager manager) throws IncorrectOperationException {
-      List<PsiType> types = ContainerUtil.map(myTypes, new Function<Type, PsiType>() {
-        @Override
-        public PsiType fun(Type type) {
-          return type.getType(context, manager);
-        }
-      });
+      List<PsiType> types = ContainerUtil.map(myTypes, type -> type.getType(context, manager));
       return myDisjunction ? new PsiDisjunctionType(types, manager) : PsiIntersectionType.createIntersection(types);
     }
 
     @Override
     public String getTypeText() {
-      return StringUtil.join(myTypes, new Function<Type, String>() {
-        @Override
-        public String fun(Type type) {
-          return type.getTypeText();
-        }
-      }, myDisjunction ? "|" : "&");
+      return StringUtil.join(myTypes, type -> type.getTypeText(), myDisjunction ? "|" : "&");
     }
 
     @Override
@@ -347,24 +338,14 @@ public class CanonicalTypes {
 
     @Override
     public Type visitDisjunctionType(PsiDisjunctionType type) {
-      List<Type> types = ContainerUtil.map(type.getDisjunctions(), new Function<PsiType, Type>() {
-        @Override
-        public Type fun(PsiType type) {
-          return type.accept(Creator.this);
-        }
-      });
+      List<Type> types = ContainerUtil.map(type.getDisjunctions(), type1 -> type1.accept(this));
       return new LogicalOperationType(types, true);
     }
 
     @Nullable
     @Override
     public Type visitIntersectionType(PsiIntersectionType type) {
-      List<Type> types = ContainerUtil.map(type.getConjuncts(), new Function<PsiType, Type>() {
-        @Override
-        public Type fun(PsiType type) {
-          return type.accept(Creator.this);
-        }
-      });
+      List<Type> types = ContainerUtil.map(type.getConjuncts(), type1 -> type1.accept(this));
       return new LogicalOperationType(types, false);
     }
   }

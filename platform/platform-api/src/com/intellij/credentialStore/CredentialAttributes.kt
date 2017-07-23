@@ -26,11 +26,12 @@ import java.nio.CharBuffer
 import java.nio.charset.CodingErrorAction
 import java.util.concurrent.atomic.AtomicReference
 
+const val SERVICE_NAME_PREFIX = "IntelliJ Platform"
+
 /**
  * requestor is deprecated. Never use it in new code.
  */
-data class CredentialAttributes @JvmOverloads constructor(val serviceName: String, val userName: String? = null, val requestor: Class<*>? = null, val isPasswordMemoryOnly: Boolean = false) {
-}
+data class CredentialAttributes @JvmOverloads constructor(val serviceName: String, val userName: String? = null, val requestor: Class<*>? = null, val isPasswordMemoryOnly: Boolean = false)
 
 fun CredentialAttributes.toPasswordStoreable() = if (isPasswordMemoryOnly) CredentialAttributes(serviceName, userName, requestor) else this
 
@@ -92,12 +93,12 @@ fun OneTimeString(value: ByteArray, offset: Int = 0, length: Int = value.size - 
 /**
  * clearable only if specified explicitly.
  *
- * Case —
+ * Case
  * 1) you create OneTimeString manually on user input.
  * 2) you store it in CredentialStore
- * 3) you consume it... BUT native credentials store do not store credentials immediately — write is postponed, so, will be an critical error.
+ * 3) you consume it... BUT native credentials store do not store credentials immediately - write is postponed, so, will be an critical error.
  *
- * so, currently — only credentials store implementations should set this flag on get.
+ * so, currently - only credentials store implementations should set this flag on get.
  */
 @Suppress("EqualsOrHashCode")
 class OneTimeString @JvmOverloads constructor(value: CharArray, offset: Int = 0, length: Int = value.size, private var clearable: Boolean = false) : CharArrayCharSequence(value, offset, offset + length) {

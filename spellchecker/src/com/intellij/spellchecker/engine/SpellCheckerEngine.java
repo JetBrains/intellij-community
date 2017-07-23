@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,16 @@
  */
 package com.intellij.spellchecker.engine;
 
+import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.spellchecker.dictionary.Loader;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-
 public interface SpellCheckerEngine {
-
-
   void loadDictionary(@NotNull Loader loader);
+
+  void addModifiableDictionary(@NotNull EditableDictionary dictionary);
 
   Transformation getTransformation();
 

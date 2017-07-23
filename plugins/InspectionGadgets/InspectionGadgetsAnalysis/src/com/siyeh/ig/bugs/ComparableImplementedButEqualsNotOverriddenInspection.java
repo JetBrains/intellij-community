@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2010 Bas Leijdekkers
+ * Copyright 2006-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,10 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.siyeh.HardcodedMethodConstants;
@@ -26,8 +29,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ComparableImplementedButEqualsNotOverriddenInspection
-  extends BaseInspection {
+public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseInspection {
 
   @Override
   @NotNull
@@ -48,14 +50,15 @@ public class ComparableImplementedButEqualsNotOverriddenInspection
     return new CompareToAndEqualsNotPairedVisitor();
   }
 
-  private static class CompareToAndEqualsNotPairedVisitor
-    extends BaseInspectionVisitor {
+  private static class CompareToAndEqualsNotPairedVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(PsiClass aClass) {
       super.visitClass(aClass);
-      final PsiMethod[] methods = aClass.findMethodsByName(
-        HardcodedMethodConstants.COMPARE_TO, false);
+      if (aClass.isInterface()) {
+        return;
+      }
+      final PsiMethod[] methods = aClass.findMethodsByName(HardcodedMethodConstants.COMPARE_TO, false);
       if (methods.length == 0) {
         return;
       }

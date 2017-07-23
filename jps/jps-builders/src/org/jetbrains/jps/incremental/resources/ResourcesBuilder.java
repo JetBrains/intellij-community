@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
-import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.java.ResourceRootDescriptor;
 import org.jetbrains.jps.builders.java.ResourcesTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
@@ -39,12 +38,14 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/6/11
+ * @since 6.10.2011
  */
 public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, ResourcesTarget> {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.resourses.ResourcesBuilder");
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.resources.ResourcesBuilder");
+
   public static final String BUILDER_NAME = "Resource Compiler";
-  private static final List<StandardResourceBuilderEnabler> ourEnablers = Collections.synchronizedList(new ArrayList<StandardResourceBuilderEnabler>());
+
+  private static final List<StandardResourceBuilderEnabler> ourEnablers = Collections.synchronizedList(new ArrayList<>());
 
   public ResourcesBuilder() {
     super(ResourcesTargetType.ALL_TYPES);
@@ -57,39 +58,33 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
   @Override
   public void build(@NotNull ResourcesTarget target,
                     @NotNull DirtyFilesHolder<ResourceRootDescriptor, ResourcesTarget> holder,
-                    @NotNull final BuildOutputConsumer outputConsumer,
-                    @NotNull final CompileContext context) throws ProjectBuildException, IOException {
-
+                    @NotNull BuildOutputConsumer outputConsumer,
+                    @NotNull CompileContext context) throws ProjectBuildException, IOException {
     if (!isResourceProcessingEnabled(target.getModule())) {
       return;
     }
 
     try {
-      holder.processDirtyFiles(new FileProcessor<ResourceRootDescriptor, ResourcesTarget>() {
-        private final Map<ResourceRootDescriptor, Boolean> mySkippedRoots = new HashMap<ResourceRootDescriptor, Boolean>();
-        public boolean apply(ResourcesTarget target, final File file, final ResourceRootDescriptor sourceRoot) throws IOException {
-          Boolean isSkipped = mySkippedRoots.get(sourceRoot);
-          if (isSkipped == null) {
-            final File outputDir = target.getOutputDir();
-            isSkipped = Boolean.valueOf(outputDir == null || FileUtil.filesEqual(outputDir, sourceRoot.getRootFile()));
-            mySkippedRoots.put(sourceRoot, isSkipped);
-          }
-          if (isSkipped.booleanValue()) {
-            return true;
-          }
-          try {
-            copyResource(context, sourceRoot, file, outputConsumer);
-          }
-          catch (IOException e) {
-            LOG.info(e);
-            context.processMessage(
-              new CompilerMessage(
-                "resources", BuildMessage.Kind.ERROR, e.getMessage(), FileUtil.toSystemIndependentName(file.getPath())
-              )
-            );
-            return false;
-          }
+      Map<ResourceRootDescriptor, Boolean> skippedRoots = new HashMap<>();
+      holder.processDirtyFiles((target_, file, sourceRoot) -> {
+        Boolean isSkipped = skippedRoots.get(sourceRoot);
+        if (isSkipped == null) {
+          File outputDir = target_.getOutputDir();
+          isSkipped = Boolean.valueOf(outputDir == null || FileUtil.filesEqual(outputDir, sourceRoot.getRootFile()));
+          skippedRoots.put(sourceRoot, isSkipped);
+        }
+        if (isSkipped.booleanValue()) {
+          return true;
+        }
+        try {
+          copyResource(context, sourceRoot, file, outputConsumer);
           return !context.getCancelStatus().isCanceled();
+        }
+        catch (IOException e) {
+          LOG.info(e);
+          String sourcePath = FileUtil.toSystemIndependentName(file.getPath());
+          context.processMessage(new CompilerMessage("resources", BuildMessage.Kind.ERROR, e.getMessage(), sourcePath));
+          return false;
         }
       });
 
@@ -97,10 +92,7 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
 
       context.processMessage(new ProgressMessage(""));
     }
-    catch(BuildDataCorruptedException e) {
-      throw e;
-    }
-    catch(ProjectBuildException e) {
+    catch(BuildDataCorruptedException | ProjectBuildException e) {
       throw e;
     }
     catch (Exception e) {
@@ -152,5 +144,4 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
   public String getPresentableName() {
     return "Resource Compiler";
   }
-
 }

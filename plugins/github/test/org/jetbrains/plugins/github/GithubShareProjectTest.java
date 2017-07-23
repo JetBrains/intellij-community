@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.github;
 
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import git4idea.commands.Git;
@@ -90,8 +89,7 @@ public class GithubShareProjectTest extends GithubShareProjectTestBase {
 
     createProjectFiles();
 
-    Git git = ServiceManager.getService(Git.class);
-    git.init(myProject, myProjectRoot);
+    Git.getInstance().init(myProject, myProjectRoot);
 
     GithubShareAction.shareProjectOnGithub(myProject, myProjectRoot);
 

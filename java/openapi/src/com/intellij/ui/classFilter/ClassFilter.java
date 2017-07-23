@@ -38,6 +38,10 @@ public class ClassFilter implements JDOMExternalizable, Cloneable{
   public String PATTERN = "";
   @Attribute("enabled")
   public boolean ENABLED = true;
+
+  @Attribute("include")
+  public boolean INCLUDE = true;
+
   private Matcher myMatcher;  // to speedup matching
 
   public ClassFilter() {
@@ -58,6 +62,11 @@ public class ClassFilter implements JDOMExternalizable, Cloneable{
     return ENABLED;
   }
 
+  @Transient
+  public boolean isInclude() {
+    return INCLUDE;
+  }
+
   public void setPattern(String pattern) {
     if (pattern != null && !pattern.equals(PATTERN)) {
       PATTERN = pattern;
@@ -66,6 +75,10 @@ public class ClassFilter implements JDOMExternalizable, Cloneable{
   }
   public void setEnabled(boolean value) {
     ENABLED = value;
+  }
+
+  public void setInclude(boolean value) {
+    INCLUDE = value;
   }
 
   public String toString() {
@@ -79,7 +92,11 @@ public class ClassFilter implements JDOMExternalizable, Cloneable{
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
+    element.addContent(new Element("option").setAttribute("name", "PATTERN").setAttribute("value", PATTERN));
+    element.addContent(new Element("option").setAttribute("name", "ENABLED").setAttribute("value", String.valueOf(ENABLED)));
+    if (!INCLUDE) {
+      element.addContent(new Element("option").setAttribute("name", "INCLUDE").setAttribute("value", "false"));
+    }
   }
 
   public boolean equals(Object o) {

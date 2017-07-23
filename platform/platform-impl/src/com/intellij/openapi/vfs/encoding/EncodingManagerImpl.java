@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,18 @@
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.concurrency.JobSchedulerImpl;
+import com.intellij.ide.AppLifecycleListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -34,13 +37,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.xmlb.annotations.Attribute;
 import gnu.trove.Equality;
 import gnu.trove.THashSet;
@@ -56,9 +59,12 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.nio.charset.Charset;
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @State(name = "Encoding", storages = @Storage("encoding.xml"))
 public class EncodingManagerImpl extends EncodingManager implements PersistentStateComponent<EncodingManagerImpl.State>, Disposable {
+  private static final Logger LOG = Logger.getInstance(EncodingManagerImpl.class);
   private static final Equality<Reference<Document>> REFERENCE_EQUALITY = new Equality<Reference<Document>>() {
     @Override
     public boolean equals(Reference<Document> o1, Reference<Document> o2) {
@@ -90,11 +96,20 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
 
   private static final Key<Charset> CACHED_CHARSET_FROM_CONTENT = Key.create("CACHED_CHARSET_FROM_CONTENT");
 
-  private final BoundedTaskExecutor changedDocumentExecutor =
-    new BoundedTaskExecutor("EncodingManagerImpl document pool", PooledThreadExecutor.INSTANCE, JobSchedulerImpl.CORES_COUNT, this);
+  private final BoundedTaskExecutor changedDocumentExecutor = new BoundedTaskExecutor("EncodingManagerImpl document pool", PooledThreadExecutor.INSTANCE, JobSchedulerImpl.CORES_COUNT, this);
 
-  public EncodingManagerImpl(@NotNull EditorFactory editorFactory) {
-    editorFactory.getEventMulticaster().addDocumentListener(new DocumentAdapter() {
+  private final AtomicBoolean myDisposed = new AtomicBoolean();
+  public EncodingManagerImpl(@NotNull EditorFactory editorFactory, MessageBus messageBus) {
+    messageBus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+      @Override
+      public void appClosing() {
+        // should call before dispose in write action
+        // prevent any further re-detection and wait for the queue to clear
+        myDisposed.set(true);
+        clearDocumentQueue();
+      }
+    });
+    editorFactory.getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         Document document = e.getDocument();
@@ -156,7 +171,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     }
 
     final Project project = ProjectLocator.getInstance().guessProjectForFile(virtualFile);
-    return ApplicationManager.getApplication().runReadAction((Computable<Charset>)() -> {
+    return ReadAction.compute(() -> {
       Charset charsetFromContent = LoadTextUtil.charsetFromContentOrNull(project, virtualFile, document.getImmutableCharSequence());
       if (charsetFromContent != null) {
         setCachedCharsetFromContent(charsetFromContent, null, document);
@@ -167,23 +182,27 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
 
   @Override
   public void dispose() {
-    clearDocumentQueue();
+    myDisposed.set(true);
   }
 
   private void queueUpdateEncodingFromContent(@NotNull Document document) {
+    if (myDisposed.get()) return; // ignore re-detect requests on app close
     document.putUserData(DETECTING_ENCODING_KEY, "");
-    changedDocumentExecutor.execute(new DocumentEncodingDetectRequest(document));
+    changedDocumentExecutor.execute(new DocumentEncodingDetectRequest(document, myDisposed));
   }
 
   private static class DocumentEncodingDetectRequest implements Runnable {
     private final Reference<Document> ref;
+    @NotNull private final AtomicBoolean myDisposed;
 
-    private DocumentEncodingDetectRequest(@NotNull Document document) {
+    private DocumentEncodingDetectRequest(@NotNull Document document, @NotNull AtomicBoolean disposed) {
       ref = new WeakReference<>(document);
+      myDisposed = disposed;
     }
 
     @Override
     public void run() {
+      if (myDisposed.get()) return;
       Document document = ref.get();
       if (document == null) return; // document gced, don't bother
       ((EncodingManagerImpl)getInstance()).handleDocument(document);
@@ -229,7 +248,17 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   }
 
   public void clearDocumentQueue() {
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      throw new IllegalStateException("Must not call clearDocumentQueue() from under write action because some queued detectors require read action");
+    }
     changedDocumentExecutor.clearAndCancelAll();
+    // after clear and canceling all queued tasks, make sure they all are finished
+    try {
+      changedDocumentExecutor.waitAllTasksExecuted(1, TimeUnit.MINUTES);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.file.exclude;
 
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -30,6 +31,7 @@ import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Map;
@@ -45,7 +47,7 @@ public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener 
   private static final Object LOCK = new Object();
 
   public EnforcedPlainTextFileTypeManager() {
-    ProjectManager.getInstance().addProjectManagerListener(this);
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, this);
   }
 
   public boolean isMarkedAsPlainText(@NotNull VirtualFile file) {
@@ -73,8 +75,9 @@ public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener 
     }
   }
 
-  public static boolean isApplicableFor(@NotNull VirtualFile file) {
+  public static boolean isApplicableFor(@Nullable VirtualFile file) {
     if (!(file instanceof VirtualFileWithId) || file.isDirectory()) return false;
+    if (ScratchUtil.isScratch(file)) return false;
     FileType originalType = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
     return !originalType.isBinary() && originalType != FileTypes.PLAIN_TEXT && originalType != StdFileTypes.JAVA;
   }
@@ -89,13 +92,13 @@ public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener 
 
   private void setPlainTextStatus(@NotNull final Project project, final boolean isAdded, @NotNull final VirtualFile... files) {
     ApplicationManager.getApplication().runWriteAction(() -> {
-      ProjectPlainTextFileTypeManager projectPlainTextFileTypeManager = ProjectPlainTextFileTypeManager.getInstance(project);
+      ProjectPlainTextFileTypeManager projectManager = ProjectPlainTextFileTypeManager.getInstance(project);
       for (VirtualFile file : files) {
-        if (projectPlainTextFileTypeManager.hasProjectContaining(file)) {
-          ensureProjectFileSetAdded(project, projectPlainTextFileTypeManager);
+        if (projectManager.isInContent(file) || projectManager.isInLibrarySource(file)) {
+          ensureProjectFileSetAdded(project, projectManager);
           if (isAdded ?
-              projectPlainTextFileTypeManager.addFile(file) :
-              projectPlainTextFileTypeManager.removeFile(file)) {
+              projectManager.addFile(file) :
+              projectManager.removeFile(file)) {
             FileBasedIndex.getInstance().requestReindex(file);
           }
         }

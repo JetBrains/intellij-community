@@ -41,8 +41,8 @@ import java.io.IOException;
 import java.util.*;
 
 import static com.intellij.dvcs.DvcsUtil.getShortHash;
-import static com.intellij.openapi.vcs.Executor.overwrite;
-import static com.intellij.openapi.vcs.Executor.touch;
+import static com.intellij.openapi.vcs.Executor.cd;
+import static com.intellij.openapi.vcs.Executor.*;
 import static git4idea.test.GitExecutor.*;
 import static git4idea.test.GitTestUtil.USER_EMAIL;
 import static git4idea.test.GitTestUtil.USER_NAME;
@@ -202,7 +202,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     Collections.reverse(commits);
     VirtualFile vFile = VcsUtil.getVirtualFileWithRefresh(new File(filePath));
     assertNotNull(vFile);
-    List<VcsFileRevision> history = GitHistoryUtils.history(myProject, VcsUtil.getFilePath(vFile));
+    List<VcsFileRevision> history = GitFileHistory.collectHistory(myProject, VcsUtil.getFilePath(vFile));
     assertEquals("History size doesn't match. Actual history: \n" + toReadable(history), commits.size(), history.size());
     assertEquals("History is different.", toReadable(commits), toReadable(history));
   }
@@ -250,12 +250,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
 
   @NotNull
   private String toReadable(@NotNull Collection<VcsFileRevision> history) {
-    int maxSubjectLength = findMaxLength(history, new Function<VcsFileRevision, String>() {
-      @Override
-      public String fun(VcsFileRevision revision) {
-        return revision.getCommitMessage();
-      }
-    });
+    int maxSubjectLength = findMaxLength(history, revision -> revision.getCommitMessage());
     StringBuilder sb = new StringBuilder();
     for (VcsFileRevision revision : history) {
       GitFileRevision rev = (GitFileRevision)revision;
@@ -266,12 +261,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
   }
 
   private String toReadable(List<TestCommit> commits) {
-    int maxSubjectLength = findMaxLength(commits, new Function<TestCommit, String>() {
-      @Override
-      public String fun(TestCommit revision) {
-        return revision.getCommitMessage();
-      }
-    });
+    int maxSubjectLength = findMaxLength(commits, revision -> revision.getCommitMessage());
     StringBuilder sb = new StringBuilder();
     for (TestCommit commit : commits) {
       String relPath = FileUtil.getRelativePath(new File(myProjectPath), new File(commit.myPath));
@@ -356,26 +346,16 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
 
   @Test
   public void testHistory() throws Exception {
-    List<VcsFileRevision> revisions = GitHistoryUtils.history(myProject, toFilePath(bfile));
+    List<VcsFileRevision> revisions = GitFileHistory.collectHistory(myProject, toFilePath(bfile));
     assertHistory(revisions);
   }
 
   @Test
   public void testAppendableHistory() throws Exception {
     final List<GitFileRevision> revisions = new ArrayList<>(3);
-    Consumer<GitFileRevision> consumer = new Consumer<GitFileRevision>() {
-      @Override
-      public void consume(GitFileRevision gitFileRevision) {
-        revisions.add(gitFileRevision);
-      }
-    };
-    Consumer<VcsException> exceptionConsumer = new Consumer<VcsException>() {
-      @Override
-      public void consume(VcsException exception) {
-        fail("No exception expected " + ExceptionUtil.getThrowableText(exception));
-      }
-    };
-    GitHistoryUtils.history(myProject, toFilePath(bfile), null, consumer, exceptionConsumer);
+    Consumer<GitFileRevision> consumer = gitFileRevision -> revisions.add(gitFileRevision);
+    Consumer<VcsException> exceptionConsumer = exception -> fail("No exception expected " + ExceptionUtil.getThrowableText(exception));
+    GitFileHistory.loadHistory(myProject, toFilePath(bfile), myRepo.getRoot(), null, consumer, exceptionConsumer);
     assertHistory(revisions);
   }
 
@@ -415,17 +395,18 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
 
     int commitCount = 100;
     for (int i = 0; i < commitCount; i++) {
-      touch("file.txt", "content number " + i);
+      echo("file.txt", "content number " + i);
       add();
       git("commit --allow-empty-message -F " + messageFile);
       expected.add(last());
     }
     expected = ContainerUtil.reverse(expected);
 
-    List<String> actualMessages =
-      GitHistoryUtils.collectDetails(myProject, myRepo.getRoot(), true, false, GitLogRecord::getHash, "--max-count=" + commitCount);
+    List<String> actualHashes = ContainerUtil.map(GitLogUtil.collectFullDetails(myProject, myRepo.getRoot(),
+                                                                                 "--max-count=" + commitCount),
+                                                  detail -> detail.getId().asString());
 
-    assertEquals(expected, actualMessages);
+    assertEquals(expected, actualHashes);
   }
 
   private void assertHistory(@NotNull List<? extends VcsFileRevision> actualRevisions) throws IOException, VcsException {

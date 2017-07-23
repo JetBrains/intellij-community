@@ -42,10 +42,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
-/**
- * User: anna
- * Date: 11/3/11
- */
 class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
   private PsiMethod mySuperMethod;
   private final String[] myModifiers;

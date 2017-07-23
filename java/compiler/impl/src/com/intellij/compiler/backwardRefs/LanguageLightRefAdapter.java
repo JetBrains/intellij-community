@@ -16,15 +16,18 @@
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.backwardRefs.ByteArrayEnumerator;
 import org.jetbrains.jps.backwardRefs.LightRef;
+import org.jetbrains.jps.backwardRefs.NameEnumerator;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 
@@ -33,6 +36,28 @@ import java.util.Set;
  */
 public interface LanguageLightRefAdapter  {
   LanguageLightRefAdapter[] INSTANCES = new LanguageLightRefAdapter[]{new JavaLightUsageAdapter()};
+
+  @Nullable
+  static LanguageLightRefAdapter findAdapter(@NotNull VirtualFile file) {
+    final FileType fileType = file.getFileType();
+    return findAdapter(fileType);
+  }
+
+  @Nullable
+  static LanguageLightRefAdapter findAdapter(@NotNull FileType fileType) {
+    for (LanguageLightRefAdapter adapter : INSTANCES) {
+      if (adapter.getFileTypes().contains(fileType)) {
+        return adapter;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  static LanguageLightRefAdapter findAdapter(@NotNull PsiElement element) {
+    final VirtualFile file = PsiUtilCore.getVirtualFile(element);
+    return file == null ? null : findAdapter(file);
+  }
 
   @NotNull
   Set<FileType> getFileTypes();
@@ -43,7 +68,7 @@ public interface LanguageLightRefAdapter  {
    * @return
    */
   @Nullable
-  LightRef asLightUsage(@NotNull PsiElement element, @NotNull ByteArrayEnumerator names);
+  LightRef asLightUsage(@NotNull PsiElement element, @NotNull NameEnumerator names) throws IOException;
 
   /**
    * @return "hierarchy" of given element inside the libraries scope.
@@ -51,8 +76,8 @@ public interface LanguageLightRefAdapter  {
   @NotNull
   List<LightRef> getHierarchyRestrictedToLibraryScope(@NotNull LightRef baseRef,
                                                       @NotNull PsiElement basePsi,
-                                                      @NotNull ByteArrayEnumerator names,
-                                                      @NotNull GlobalSearchScope libraryScope);
+                                                      @NotNull NameEnumerator names,
+                                                      @NotNull GlobalSearchScope libraryScope) throws IOException;
 
   /**
    * class in java, class or object in some other jvm languages. used in direct inheritor search. This class object will be used to filter
@@ -76,17 +101,21 @@ public interface LanguageLightRefAdapter  {
    * found elements really inheritors.
    */
   @NotNull
-  PsiElement[] findDirectInheritorCandidatesInFile(@NotNull String[] internalNames,
-                                                   @NotNull PsiFileWithStubSupport file,
-                                                   @NotNull PsiNamedElement superClass);
+  PsiElement[] findDirectInheritorCandidatesInFile(@NotNull SearchId[] internalNames,
+                                                   @NotNull PsiFileWithStubSupport file);
 
   /**
    * @param indices - ordinal-numbers (corresponding to compiler tree index visitor) of required functional expressions.
    * @return functional expressions for given functional type. Should return
    */
   @NotNull
-  PsiElement[] findFunExpressionsInFile(@NotNull Integer[] indices,
+  PsiElement[] findFunExpressionsInFile(@NotNull SearchId[] indices,
                                         @NotNull PsiFileWithStubSupport file);
+
+  boolean isClass(@NotNull PsiElement element);
+
+  @NotNull
+  PsiElement[] getInstantiableConstructors(@NotNull PsiElement aClass);
 
   boolean isDirectInheritor(PsiElement candidate, PsiNamedElement baseClass);
 }

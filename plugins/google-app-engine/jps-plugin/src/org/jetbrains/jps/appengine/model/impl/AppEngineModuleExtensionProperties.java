@@ -34,7 +34,7 @@ public class AppEngineModuleExtensionProperties {
 
   @Tag("files-to-enhance")
   @AbstractCollection(surroundWithTag = false, elementTag = "file", elementValueAttribute = "path")
-  public List<String> myFilesToEnhance = new ArrayList<String>();
+  public List<String> myFilesToEnhance = new ArrayList<>();
 
   @Tag("persistence-api")
   public PersistenceApi myPersistenceApi = PersistenceApi.JDO;

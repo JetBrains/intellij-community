@@ -31,7 +31,6 @@ import com.jcraft.jsch.agentproxy.TrileadAgentProxy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.*;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -44,12 +43,14 @@ import java.security.cert.X509Certificate;
 
 public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationProvider {
   private static final Logger LOG = Logger.getInstance(SvnInteractiveAuthenticationProvider.class);
-  private final Project myProject;
+  @NotNull private final SvnVcs myVcs;
+  @NotNull private final Project myProject;
   private static final ThreadLocal<MyCallState> myCallState = new ThreadLocal<>();
   private final SvnAuthenticationManager myManager;
 
-  public SvnInteractiveAuthenticationProvider(final SvnVcs vcs, SvnAuthenticationManager manager) {
+  public SvnInteractiveAuthenticationProvider(@NotNull SvnVcs vcs, SvnAuthenticationManager manager) {
     myManager = manager;
+    myVcs = vcs;
     myProject = vcs.getProject();
   }
 
@@ -74,8 +75,7 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
     final MyCallState callState = new MyCallState(true, false);
     myCallState.set(callState);
     // once we came here, we don't know _correct_ auth todo +-
-    final SvnConfiguration configuration = SvnConfiguration.getInstance(myProject);
-    configuration.clearCredentials(kind, realm);
+    myVcs.getSvnConfiguration().clearCredentials(kind, realm);
 
     final SVNAuthentication[] result = new SVNAuthentication[1];
     Runnable command = null;
@@ -85,14 +85,12 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
     final String userName =
       previousAuth != null && previousAuth.getUserName() != null ? previousAuth.getUserName() : myManager.getDefaultUsername(kind, url);
     if (ISVNAuthenticationManager.PASSWORD.equals(kind)) {// || ISVNAuthenticationManager.USERNAME.equals(kind)) {
-      command = new Runnable() {
-        public void run() {
-          SimpleCredentialsDialog dialog = new SimpleCredentialsDialog(myProject);
-          dialog.setup(realm, userName, authCredsOn);
-          setTitle(dialog, errorMessage);
-          if (dialog.showAndGet()) {
-            result[0] = new SVNPasswordAuthentication(dialog.getUserName(), dialog.getPassword(), dialog.isSaveAllowed(), url, false);
-          }
+      command = () -> {
+        SimpleCredentialsDialog dialog = new SimpleCredentialsDialog(myProject);
+        dialog.setup(realm, userName, authCredsOn);
+        setTitle(dialog, errorMessage);
+        if (dialog.showAndGet()) {
+          result[0] = new SVNPasswordAuthentication(dialog.getUserName(), dialog.getPassword(), dialog.isSaveAllowed(), url, false);
         }
       };
     }
@@ -100,14 +98,12 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         return new SVNUserNameAuthentication(userName, false);
       }
-      command = new Runnable() {
-        public void run() {
-          UserNameCredentialsDialog dialog = new UserNameCredentialsDialog(myProject);
-          dialog.setup(realm, userName, authCredsOn);
-          setTitle(dialog, errorMessage);
-          if (dialog.showAndGet()) {
-            result[0] = new SVNUserNameAuthentication(dialog.getUserName(), dialog.isSaveAllowed(), url, false);
-          }
+      command = () -> {
+        UserNameCredentialsDialog dialog = new UserNameCredentialsDialog(myProject);
+        dialog.setup(realm, userName, authCredsOn);
+        setTitle(dialog, errorMessage);
+        if (dialog.showAndGet()) {
+          result[0] = new SVNUserNameAuthentication(dialog.getUserName(), dialog.isSaveAllowed(), url, false);
         }
       };
     }
@@ -117,47 +113,43 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
       final Connector agentConnector = createSshAgentConnector();
       final boolean isAgentAvailable = agentConnector != null && agentConnector.isAvailable();
 
-      command = new Runnable() {
-        public void run() {
-          SSHCredentialsDialog dialog = new SSHCredentialsDialog(myProject, realm, userName, authCredsOn, url.getPort(), isAgentAvailable);
-          setTitle(dialog, errorMessage);
-          if (dialog.showAndGet()) {
-            int port = dialog.getPortNumber();
-            if (dialog.isSshAgentSelected()) {
-              if (agentConnector != null) {
-                result[0] =
-                  new SVNSSHAuthentication(dialog.getUserName(), new TrileadAgentProxy(agentConnector), port, url, false);
-              }
-            }
-            else if (dialog.getKeyFile() != null && dialog.getKeyFile().trim().length() > 0) {
-              String passphrase = dialog.getPassphrase();
-              if (passphrase != null && passphrase.length() == 0) {
-                passphrase = null;
-              }
+      command = () -> {
+        SSHCredentialsDialog dialog = new SSHCredentialsDialog(myProject, realm, userName, authCredsOn, url.getPort(), isAgentAvailable);
+        setTitle(dialog, errorMessage);
+        if (dialog.showAndGet()) {
+          int port = dialog.getPortNumber();
+          if (dialog.isSshAgentSelected()) {
+            if (agentConnector != null) {
               result[0] =
-                new SVNSSHAuthentication(dialog.getUserName(), new File(dialog.getKeyFile()), passphrase, port, dialog.isSaveAllowed(), url,
-                                         false);
+                new SVNSSHAuthentication(dialog.getUserName(), new TrileadAgentProxy(agentConnector), port, url, false);
             }
-            else {
-              result[0] = new SVNSSHAuthentication(dialog.getUserName(), dialog.getPassword(), port, dialog.isSaveAllowed(), url, false);
+          }
+          else if (dialog.getKeyFile() != null && dialog.getKeyFile().trim().length() > 0) {
+            String passphrase = dialog.getPassphrase();
+            if (passphrase != null && passphrase.length() == 0) {
+              passphrase = null;
             }
+            result[0] =
+              new SVNSSHAuthentication(dialog.getUserName(), new File(dialog.getKeyFile()), passphrase, port, dialog.isSaveAllowed(), url,
+                                       false);
+          }
+          else {
+            result[0] = new SVNSSHAuthentication(dialog.getUserName(), dialog.getPassword(), port, dialog.isSaveAllowed(), url, false);
           }
         }
       };
     } else if (ISVNAuthenticationManager.SSL.equals(kind)) {
-      command = new Runnable() {
-        public void run() {
-          final ISVNHostOptions options = myManager.getHostOptionsProvider().getHostOptions(url);
-          final String file = options.getSSLClientCertFile();
-          final SSLCredentialsDialog dialog = new SSLCredentialsDialog(myProject, realm, authCredsOn);
-          if (!StringUtil.isEmptyOrSpaces(file)) {
-            dialog.setFile(file);
-          }
-          setTitle(dialog, errorMessage);
-          if (dialog.showAndGet()) {
-            result[0] = new SVNSSLAuthentication(new File(dialog.getCertificatePath()), String.valueOf(dialog.getCertificatePassword()),
-                                                 dialog.getSaveAuth(), url, false);
-          }
+      command = () -> {
+        final ISVNHostOptions options = myManager.getHostOptionsProvider().getHostOptions(url);
+        final String file = options.getSSLClientCertFile();
+        final SSLCredentialsDialog dialog = new SSLCredentialsDialog(myProject, realm, authCredsOn);
+        if (!StringUtil.isEmptyOrSpaces(file)) {
+          dialog.setFile(file);
+        }
+        setTitle(dialog, errorMessage);
+        if (dialog.showAndGet()) {
+          result[0] = new SVNSSLAuthentication(new File(dialog.getCertificatePath()), String.valueOf(dialog.getCertificatePassword()),
+                                               dialog.getSaveAuth(), url, false);
         }
       };
     }
@@ -197,25 +189,20 @@ public class SvnInteractiveAuthenticationProvider implements ISVNAuthenticationP
     final int[] result = new int[1];
     Runnable command;
     if (certificate instanceof X509Certificate || certificate instanceof String) {
-      command = new Runnable() {
-        public void run() {
-          ServerSSLDialog dialog = certificate instanceof X509Certificate
-                                   ? new ServerSSLDialog(myProject, (X509Certificate)certificate, resultMayBeStored)
-                                   : new ServerSSLDialog(myProject, (String)certificate, resultMayBeStored);
-          dialog.show();
-          result[0] = dialog.getResult();
-        }
+      command = () -> {
+        ServerSSLDialog dialog = certificate instanceof X509Certificate
+                                 ? new ServerSSLDialog(myProject, (X509Certificate)certificate, resultMayBeStored)
+                                 : new ServerSSLDialog(myProject, (String)certificate, resultMayBeStored);
+        dialog.show();
+        result[0] = dialog.getResult();
       };
     } else if (certificate instanceof byte[]) {
       final String sshKeyAlgorithm = myManager.getSSHKeyAlgorithm();
-      command = new Runnable() {
-        @Override
-        public void run() {
-          final ServerSSHDialog serverSSHDialog =
-            new ServerSSHDialog(myProject, resultMayBeStored, url.toDecodedString(), sshKeyAlgorithm, (byte[])certificate);
-          serverSSHDialog.show();
-          result[0] = serverSSHDialog.getResult();
-        }
+      command = () -> {
+        final ServerSSHDialog serverSSHDialog =
+          new ServerSSHDialog(myProject, resultMayBeStored, url.toDecodedString(), sshKeyAlgorithm, (byte[])certificate);
+        serverSSHDialog.show();
+        result[0] = serverSSHDialog.getResult();
       };
     } else {
       VcsBalloonProblemNotifier.showOverChangesView(myProject, "Subversion: unknown certificate type from " + url.toDecodedString(),

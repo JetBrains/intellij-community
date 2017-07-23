@@ -22,7 +22,7 @@ import com.intellij.ide.passwordSafe.impl.providers.EncryptionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.diagnostic.catchAndLog
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
@@ -123,7 +123,7 @@ internal class PasswordDatabaseConvertor : ApplicationLoadListener {
           @Suppress("DEPRECATION")
           val newDb = convertOldDb(ServiceManager.getService<PasswordDatabase>(PasswordDatabase::class.java))
           if (newDb != null && newDb.isNotEmpty()) {
-            LOG.catchAndLog {
+            LOG.runAndLogException {
               for (factory in CredentialStoreFactory.CREDENTIAL_STORE_FACTORY.extensions) {
                 val store = factory.create() ?: continue
                 copyTo(newDb, store)

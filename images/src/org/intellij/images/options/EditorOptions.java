@@ -30,4 +30,12 @@ public interface EditorOptions extends Cloneable {
     void inject(EditorOptions options);
 
     boolean setOption(String name, Object value);
+
+    boolean isFileNameVisible();
+
+    void setFileNameVisible(boolean fileNameVisible);
+
+    void setFileSizeVisible(boolean fileSizeVisible);
+
+    boolean isFileSizeVisible();
 }

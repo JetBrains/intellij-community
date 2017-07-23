@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -44,12 +45,11 @@ class FilePointerPartNode {
 
   // in case there is file pointer exists for this part, its info is saved here
   volatile Pair<VirtualFile, String> myFileAndUrl; // must not be both null
-  private volatile long myLastUpdated = -1;
+  volatile long myLastUpdated = -1;
   volatile int useCount;
 
   int pointersUnder;   // number of alive pointers in this node plus all nodes beneath
   private static final VirtualFileManager ourFileManager = VirtualFileManager.getInstance();
-  private static final ManagingFS ourManagingFS = ManagingFS.getInstance();
 
   FilePointerPartNode(@NotNull String part, FilePointerPartNode parent, Pair<VirtualFile,String> fileAndUrl) {
     this.part = part;
@@ -134,7 +134,7 @@ class FilePointerPartNode {
 
   private static final boolean UNIT_TEST = ApplicationManager.getApplication().isUnitTestMode();
   void checkConsistency() {
-    if (UNIT_TEST && !ApplicationInfoImpl.isInPerformanceTest()) {
+    if (UNIT_TEST && !ApplicationInfoImpl.isInStressTest()) {
       doCheckConsistency(false);
     }
   }
@@ -171,7 +171,7 @@ class FilePointerPartNode {
     if (index == path.length() // query matched entirely
       && index - start == part.length()) {
       if (leaves == null) {
-        pointersUnder+=pointersToStore; // the pointer is going to be written here
+        pointersUnder += pointersToStore; // the pointer is going to be written here
       }
       return this;
     }
@@ -183,7 +183,7 @@ class FilePointerPartNode {
         if (i != index && (i > index+1 || path.charAt(index) != '/' || index == 0)) {
           FilePointerPartNode node = child.findPointerOrCreate(path, index, fileAndUrl, pointersToStore);
           if (node.leaves == null) {
-            pointersUnder+=pointersToStore; // the new node's been created
+            pointersUnder += pointersToStore; // the new node's been created
           }
           return node;
         }
@@ -191,13 +191,12 @@ class FilePointerPartNode {
       // cannot insert to children, create child node manually
       String pathRest = path.substring(index);
       FilePointerPartNode newNode = new FilePointerPartNode(pathRest, this, fileAndUrl);
-      newNode.pointersUnder+=pointersToStore;
+      newNode.pointersUnder += pointersToStore;
       children = ArrayUtil.append(children, newNode);
-      pointersUnder+=pointersToStore;
+      pointersUnder += pointersToStore;
       return newNode;
     }
-    // else there is no match
-    // split
+    // else there is no match, split
     // try to make "/" start the splitted part
     if (index > start + 1 && index != path.length() && path.charAt(index - 1) == '/') index--;
     String pathRest = path.substring(index);
@@ -214,11 +213,11 @@ class FilePointerPartNode {
     splittedAway.pointersUnder = pointersUnder;
     splittedAway.useCount = useCount;
     splittedAway.associate(leaves, myFileAndUrl);
-    associate(null, null);
     useCount = 0;
     part = commonPredecessor;
     children = newNode == this ? new FilePointerPartNode[]{splittedAway} : new FilePointerPartNode[]{splittedAway, newNode};
     pointersUnder+=pointersToStore;
+    associate(null, null);
     return newNode;
   }
 
@@ -248,12 +247,13 @@ class FilePointerPartNode {
     return indexOfFirstDifferentChar(string, string.length() - end.length(), end, 0) == string.length();
   }
 
-  @NotNull
+  @Nullable("null means this node's myFileAndUrl became invalid (e.g. after splitting into two other nodes)")
   // returns pair.second != null always
   Pair<VirtualFile, String> update() {
-    long lastUpdated = myLastUpdated;
-    Pair<VirtualFile, String> fileAndUrl = myFileAndUrl;
-    long fsModCount = ourManagingFS.getStructureModificationCount();
+    final long lastUpdated = myLastUpdated;
+    final Pair<VirtualFile, String> fileAndUrl = myFileAndUrl;
+    if (fileAndUrl == null) return null;
+    final long fsModCount = ManagingFS.getInstance().getStructureModificationCount();
     if (lastUpdated == fsModCount) return fileAndUrl;
     VirtualFile file = fileAndUrl.first;
     String url = fileAndUrl.second;
@@ -289,12 +289,16 @@ class FilePointerPartNode {
     Pair<VirtualFile, String> result;
     if (changed) {
       result = Pair.create(file, url);
-      myFileAndUrl = result;
+      synchronized (VirtualFilePointerManager.getInstance()) {
+        Pair<VirtualFile, String> storedFileAndUrl = myFileAndUrl;
+        if (storedFileAndUrl == null || storedFileAndUrl != fileAndUrl) return null; // somebody splitted this node in the meantime, try to re-compute
+        myFileAndUrl = result;
+      }
     }
     else {
       result = fileAndUrl;
     }
-    myLastUpdated = fsModCount;
+    myLastUpdated = fsModCount; // must be the last
     return result;
   }
 
@@ -305,7 +309,7 @@ class FilePointerPartNode {
     while (start1 < len1 && start2 < len2) {
       char c1 = s1.charAt(start1);
       char c2 = s2.charAt(start2);
-      if (!StringUtil.charsEqual(c1, c2, ignoreCase)) {
+      if (!StringUtil.charsMatch(c1, c2, ignoreCase)) {
         return start1;
       }
       start1++;
@@ -315,6 +319,9 @@ class FilePointerPartNode {
   }
 
   void associate(Object leaves, Pair<VirtualFile, String> fileAndUrl) {
+    this.leaves = leaves;
+    myFileAndUrl = fileAndUrl;
+    // assign myNode last because .update() reads that field outside lock
     if (leaves != null) {
       if (leaves instanceof VirtualFilePointerImpl) {
         ((VirtualFilePointerImpl)leaves).myNode = this;
@@ -325,8 +332,6 @@ class FilePointerPartNode {
         }
       }
     }
-    this.leaves = leaves;
-    myFileAndUrl = fileAndUrl;
     myLastUpdated = -1;
   }
 

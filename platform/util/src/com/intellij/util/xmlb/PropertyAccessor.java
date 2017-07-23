@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xmlb;
 
+import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,8 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+
+import static com.intellij.util.xmlb.Binding.LOG;
 
 class PropertyAccessor implements MutableAccessor {
   private final String myName;
@@ -59,6 +62,8 @@ class PropertyAccessor implements MutableAccessor {
       throw new XmlSerializationException(e);
     }
     catch (InvocationTargetException e) {
+      Throwable exception = e.getTargetException();
+      ExceptionUtil.rethrowUnchecked(exception);
       throw new XmlSerializationException(e);
     }
   }
@@ -72,7 +77,26 @@ class PropertyAccessor implements MutableAccessor {
       throw new XmlSerializationException(e);
     }
     catch (InvocationTargetException e) {
-      throw new XmlSerializationException(e);
+      Throwable cause = e.getCause();
+      // see KotlinXmlSerializerTest.nullInMap
+      if (cause instanceof IllegalArgumentException && myGenericType instanceof Class && ((Class)myGenericType).isEnum() && cause.getMessage().contains("Parameter specified as non-null is null:")) {
+        Object[] constants = ((Class)myGenericType).getEnumConstants();
+        if (constants.length > 0) {
+          try {
+            LOG.warn("Cannot set enum value, will be set to first enum value", e);
+            myWriteMethod.invoke(host, constants[0]);
+            return;
+          }
+          catch (IllegalAccessException e1) {
+            throw new XmlSerializationException(e);
+          }
+          catch (InvocationTargetException e1) {
+            throw new XmlSerializationException(cause);
+          }
+        }
+      }
+
+      throw new XmlSerializationException(cause);
     }
   }
 

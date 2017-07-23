@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,13 @@
  */
 package com.intellij.openapi.externalSystem.service.project.manage;
 
+import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.projectView.impl.ProjectViewPane;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.model.DataNode;
-import com.intellij.openapi.externalSystem.model.Key;
-import com.intellij.openapi.externalSystem.model.ProjectKeys;
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
+import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.project.ContentRootData;
 import com.intellij.openapi.externalSystem.model.project.ContentRootData.SourceRoot;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
@@ -30,6 +32,7 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettin
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -64,8 +67,10 @@ import java.util.Set;
  */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public class ContentRootDataService extends AbstractProjectDataService<ContentRootData, ContentEntry> {
+  public static final com.intellij.openapi.util.Key<Boolean> CREATE_EMPTY_DIRECTORIES =
+    com.intellij.openapi.util.Key.create("createEmptyDirectories");
 
-  private static final Logger LOG = Logger.getInstance("#" + ContentRootDataService.class.getName());
+  private static final Logger LOG = Logger.getInstance(ContentRootDataService.class);
 
   @NotNull
   @Override
@@ -82,6 +87,14 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
       return;
     }
 
+    boolean isNewlyImportedProject = project.getUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT) == Boolean.TRUE;
+    boolean forceDirectoriesCreation = false;
+    DataNode<ProjectData> projectDataNode = ExternalSystemApiUtil.findParent(toImport.iterator().next(), ProjectKeys.PROJECT);
+    if (projectDataNode != null) {
+      forceDirectoriesCreation = projectDataNode.getUserData(CREATE_EMPTY_DIRECTORIES) == Boolean.TRUE;
+    }
+
+    Set<Module> modulesToExpand = ContainerUtil.newTroveSet();
     MultiMap<DataNode<ModuleData>, DataNode<ContentRootData>> byModule = ExternalSystemApiUtil.groupBy(toImport, ModuleData.class);
     for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> entry : byModule.entrySet()) {
       Module module = entry.getKey().getUserData(AbstractModuleDataService.MODULE_KEY);
@@ -93,13 +106,34 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
         ));
         continue;
       }
-      importData(modelsProvider, entry.getValue(), module);
+      importData(modelsProvider, entry.getValue(), module, forceDirectoriesCreation);
+      if (forceDirectoriesCreation ||
+          (isNewlyImportedProject &&
+           projectData != null &&
+           projectData.getLinkedExternalProjectPath().equals(ExternalSystemApiUtil.getExternalProjectPath(module)))) {
+        modulesToExpand.add(module);
+      }
+    }
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !modulesToExpand.isEmpty()) {
+      for (Module module : modulesToExpand) {
+        String productionModuleName = modelsProvider.getProductionModuleName(module);
+        if (productionModuleName == null || !modulesToExpand.contains(modelsProvider.findIdeModule(productionModuleName))) {
+          VirtualFile[] roots = modelsProvider.getModifiableRootModel(module).getContentRoots();
+          if (roots.length > 0) {
+            VirtualFile virtualFile = roots[0];
+            ExternalSystemUtil.invokeLater(project, ModalityState.NON_MODAL, () -> {
+              final ProjectView projectView = ProjectView.getInstance(project);
+              projectView.changeViewCB(ProjectViewPane.ID, null).doWhenProcessed(() -> projectView.selectCB(null, virtualFile, false));
+            });
+          }
+        }
+      }
     }
   }
 
   private static void importData(@NotNull IdeModifiableModelsProvider modelsProvider,
                                  @NotNull final Collection<DataNode<ContentRootData>> data,
-                                 @NotNull final Module module) {
+                                 @NotNull final Module module, boolean forceDirectoriesCreation) {
     final ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
     final ContentEntry[] contentEntries = modifiableRootModel.getContentEntries();
     final Map<String, ContentEntry> contentEntriesMap = ContainerUtilRt.newHashMap();
@@ -107,13 +141,13 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
       contentEntriesMap.put(contentEntry.getUrl(), contentEntry);
     }
 
-    boolean createEmptyContentRootDirectories = false;
-    if (!data.isEmpty()) {
+    boolean createEmptyContentRootDirectories = forceDirectoriesCreation;
+    if (!forceDirectoriesCreation && !data.isEmpty()) {
       ProjectSystemId projectSystemId = data.iterator().next().getData().getOwner();
       AbstractExternalSystemSettings externalSystemSettings =
         ExternalSystemApiUtil.getSettings(module.getProject(), projectSystemId);
 
-      String path = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
+      String path = ExternalSystemModulePropertyManager.getInstance(module).getRootProjectPath();
       if (path != null) {
         ExternalProjectSettings projectSettings = externalSystemSettings.getLinkedProjectSettings(path);
         createEmptyContentRootDirectories = projectSettings != null && projectSettings.isCreateEmptyContentRootDirectories();

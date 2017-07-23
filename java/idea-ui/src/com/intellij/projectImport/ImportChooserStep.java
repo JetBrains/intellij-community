@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 10-Jul-2007
- */
 package com.intellij.projectImport;
 
 import com.intellij.ide.util.PropertiesComponent;

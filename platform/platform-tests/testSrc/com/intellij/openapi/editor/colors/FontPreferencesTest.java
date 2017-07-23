@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.colors;
 
 
+import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import org.junit.Test;
 
 import java.awt.*;
@@ -26,12 +27,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public class FontPreferencesTest {
-  private final FontPreferences myPreferences = new FontPreferences();
+  private final FontPreferencesImpl myPreferences = new FontPreferencesImpl();
 
   @Test
   public void testDefaults() {
-    checkState(Collections.<String>emptyList(),
-               Collections.<String>emptyList(),
+    checkState(Collections.emptyList(),
+               Collections.emptyList(),
                FontPreferences.DEFAULT_FONT_NAME,
                FontPreferences.DEFAULT_FONT_NAME, null);
   }
@@ -100,7 +101,7 @@ public class FontPreferencesTest {
                namesAndSizes);
 
     // check object copying
-    FontPreferences preferences = new FontPreferences();
+    FontPreferencesImpl preferences = new FontPreferencesImpl();
     myPreferences.copyTo(preferences);
     // check myTemplateFontSize
     String fontName = "Another" + getNonExistingFontName();

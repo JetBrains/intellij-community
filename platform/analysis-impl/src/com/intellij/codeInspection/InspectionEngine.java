@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.lang.Language;
+import com.intellij.lang.MetaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -119,7 +120,6 @@ public class InspectionEngine {
                                                                boolean failFastOnAcquireReadAction,
                                                                @NotNull final ProgressIndicator indicator) {
     if (toolWrappers.isEmpty()) return Collections.emptyMap();
-
 
     TextRange range = file.getTextRange();
     List<Divider.DividedElements> allDivided = new ArrayList<>();
@@ -278,20 +278,33 @@ public class InspectionEngine {
     }
     Language language = Language.findLanguageByID(langId);
     Set<String> result;
-    if (language != null) {
-      List<Language> dialects = language.getDialects();
-      boolean applyToDialects = wrapper.applyToDialects();
-      result = applyToDialects && !dialects.isEmpty() ? new THashSet<>(1 + dialects.size()) : new SmartHashSet<>();
-      result.add(langId);
-      if (applyToDialects) {
-        for (Language dialect : dialects) {
-          result.add(dialect.getID());
-        }
+    if (language == null) {
+      // unknown language in plugin.xml, ignore
+      result = Collections.singleton(langId);
+    }
+    else if (language instanceof MetaLanguage) {
+      Collection<Language> matchingLanguages = ((MetaLanguage) language).getMatchingLanguages();
+      result = new THashSet<>();
+      for (Language matchingLanguage : matchingLanguages) {
+        result.addAll(getLanguageWithDialects(wrapper, matchingLanguage));
       }
     }
     else {
-      // unknown language in plugin.xml, ignore
-      result = Collections.singleton(langId);
+      result = getLanguageWithDialects(wrapper, language);
+    }
+    return result;
+  }
+
+  @NotNull
+  private static Set<String> getLanguageWithDialects(@NotNull LocalInspectionToolWrapper wrapper, Language language) {
+    List<Language> dialects = language.getDialects();
+    boolean applyToDialects = wrapper.applyToDialects();
+    Set<String> result = applyToDialects && !dialects.isEmpty() ? new THashSet<>(1 + dialects.size()) : new SmartHashSet<>();
+    result.add(language.getID());
+    if (applyToDialects) {
+      for (Language dialect : dialects) {
+        result.add(dialect.getID());
+      }
     }
     return result;
   }
@@ -314,14 +327,14 @@ public class InspectionEngine {
   }
 
   private static void addDialects(@NotNull List<PsiElement> elements,
-                                  @NotNull Set<Language> processedLanguages,
-                                  @NotNull Set<String> dialectIds) {
+                                  @NotNull Set<Language> outProcessedLanguages,
+                                  @NotNull Set<String> outDialectIds) {
     for (PsiElement element : elements) {
       Language language = element.getLanguage();
-      dialectIds.add(language.getID());
-      if (processedLanguages.add(language)) {
+      outDialectIds.add(language.getID());
+      if (outProcessedLanguages.add(language)) {
         for (Language dialect : language.getDialects()) {
-          dialectIds.add(dialect.getID());
+          outDialectIds.add(dialect.getID());
         }
       }
     }

@@ -32,6 +32,7 @@ import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBRectangle;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -102,10 +103,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private boolean myEAP;
   private boolean myHasHelp = true;
   private boolean myHasContextHelp = true;
+  @Nullable
   private String myHelpFileName = "ideahelp.jar";
+  @Nullable
   private String myHelpRootName = "idea";
   private String myWebHelpUrl = "https://www.jetbrains.com/idea/webhelp/";
-  private List<PluginChooserPage> myPluginChooserPages = new ArrayList<PluginChooserPage>();
+  private List<PluginChooserPage> myPluginChooserPages = new ArrayList<>();
   private String[] myEssentialPluginsIds;
   private String myStatisticsSettingsUrl;
   private String myStatisticsServiceUrl;
@@ -317,9 +320,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return fullName;
   }
 
+  @Nullable
   @Override
   public String getHelpURL() {
-    return "jar:file:///" + getHelpJarPath() + "!/" + myHelpRootName;
+    String jarPath = getHelpJarPath();
+    return jarPath == null || myHelpRootName == null ? null: "jar:file:///" + jarPath + "!/" + myHelpRootName;
   }
 
   @Override
@@ -337,8 +342,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return myCompanyUrl;
   }
 
+  @Nullable
   private String getHelpJarPath() {
-    return PathManager.getHomePath() + File.separator + "help" + File.separator + myHelpFileName;
+    return myHelpFileName == null ? null: PathManager.getHomePath() + File.separator + "help" + File.separator + myHelpFileName;
   }
 
   @Override
@@ -526,6 +532,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return myAboutForeground;
   }
 
+  @Nullable
   public Color getAboutLinkColor() {
     return myAboutLinkColor;
   }
@@ -748,7 +755,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       if (logoX != null && logoY != null && logoW != null && logoH != null) {
         try {
           myAboutLogoRect =
-            new Rectangle(Integer.parseInt(logoX), Integer.parseInt(logoY), Integer.parseInt(logoW), Integer.parseInt(logoH));
+            new JBRectangle(Integer.parseInt(logoX), Integer.parseInt(logoY), Integer.parseInt(logoW), Integer.parseInt(logoH));
         }
         catch (NumberFormatException nfe) {
           // ignore
@@ -871,18 +878,15 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myMacKeymapUrl = keymapElement.getAttributeValue(ATTRIBUTE_MAC_URL);
     }
 
-    myPluginChooserPages = new ArrayList<PluginChooserPage>();
+    myPluginChooserPages = new ArrayList<>();
     for (Element child : getChildren(parentNode, PLUGINS_PAGE_ELEMENT_NAME)) {
       myPluginChooserPages.add(new PluginChooserPageImpl(child));
     }
 
     List<Element> essentialPluginsElements = getChildren(parentNode, ESSENTIAL_PLUGIN);
-    Collection<String> essentialPluginsIds = ContainerUtil.mapNotNull(essentialPluginsElements, new Function<Element, String>() {
-      @Override
-      public String fun(Element element) {
-        String id = element.getTextTrim();
-        return StringUtil.isNotEmpty(id) ? id : null;
-      }
+    Collection<String> essentialPluginsIds = ContainerUtil.mapNotNull(essentialPluginsElements, element -> {
+      String id = element.getTextTrim();
+      return StringUtil.isNotEmpty(id) ? id : null;
     });
     myEssentialPluginsIds = ArrayUtil.toStringArray(essentialPluginsIds);
 
@@ -915,7 +919,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
         myEvalLicenseUrl = url.trim();
       }
     }
- 
+
     Element licensingElement = getChild(parentNode, ELEMENT_LICENSING);
     if (licensingElement != null) {
       final String url = licensingElement.getAttributeValue(ATTRIBUTE_KEY_CONVERSION_URL);
@@ -1039,12 +1043,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     }
   }
 
-  private static volatile boolean myInPerformanceTest;
-  public static boolean isInPerformanceTest() {
-    return myInPerformanceTest;
+  private static volatile boolean myInStressTest;
+  public static boolean isInStressTest() {
+    return myInStressTest;
   }
   @TestOnly
-  public static void setInPerformanceTest(boolean inPerformanceTest) {
-    myInPerformanceTest = inPerformanceTest;
+  public static void setInStressTest(boolean inStressTest) {
+    myInStressTest = inStressTest;
   }
 }

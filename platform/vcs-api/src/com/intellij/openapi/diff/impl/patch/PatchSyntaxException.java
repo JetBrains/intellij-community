@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 15.11.2006
- * Time: 20:23:22
- */
 package com.intellij.openapi.diff.impl.patch;
 
 public class PatchSyntaxException extends Exception {
@@ -32,5 +26,10 @@ public class PatchSyntaxException extends Exception {
 
   public int getLine() {
     return myLine;
+  }
+
+  @Override
+  public String getMessage() {
+    return String.format(super.getMessage() + " (line:%d)", myLine);
   }
 }

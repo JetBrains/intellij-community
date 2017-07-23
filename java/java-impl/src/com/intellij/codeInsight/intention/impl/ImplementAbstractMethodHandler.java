@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: mike
- * Date: Sep 4, 2002
- * Time: 6:26:27 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -38,12 +30,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 
@@ -67,12 +58,13 @@ public class ImplementAbstractMethodHandler {
   public void invoke() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
+    Ref<String> problemDetected = new Ref<>();
     final PsiElement[][] result = new PsiElement[1][];
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
       final PsiClass psiClass = myMethod.getContainingClass();
       if (!psiClass.isValid()) return;
       if (!psiClass.isEnum()) {
-        result[0] = getClassImplementations(psiClass);
+        result[0] = getClassImplementations(psiClass, problemDetected);
       }
       else {
         final List<PsiElement> enumConstants = new ArrayList<>();
@@ -98,7 +90,7 @@ public class ImplementAbstractMethodHandler {
 
     if (result[0].length == 0) {
       Messages.showMessageDialog(myProject,
-                                 CodeInsightBundle.message("intention.implement.abstract.method.error.no.classes.message"),
+                                 problemDetected.isNull() ? CodeInsightBundle.message("intention.implement.abstract.method.error.no.classes.message") : problemDetected.get(),
                                  CodeInsightBundle.message("intention.implement.abstract.method.error.no.classes.title"),
                                  Messages.getInformationIcon());
       return;
@@ -162,25 +154,37 @@ public class ImplementAbstractMethodHandler {
     }, CodeInsightBundle.message("intention.implement.abstract.method.command.name"), null);
   }
 
-  private PsiClass[] getClassImplementations(final PsiClass psiClass) {
+  private PsiClass[] getClassImplementations(final PsiClass psiClass, Ref<String> problemDetected) {
     ArrayList<PsiClass> list = new ArrayList<>();
+    Set<String> classNamesWithPotentialImplementations = new LinkedHashSet<>();
     for (PsiClass inheritor : ClassInheritorsSearch.search(psiClass)) {
       if (!inheritor.isInterface() || PsiUtil.isLanguageLevel8OrHigher(inheritor)) {
         final PsiSubstitutor classSubstitutor = TypeConversionUtil.getClassSubstitutor(psiClass, inheritor, PsiSubstitutor.EMPTY);
         PsiMethod method = classSubstitutor != null ? MethodSignatureUtil.findMethodBySignature(inheritor, myMethod.getSignature(classSubstitutor), true)
-                                                    : inheritor.findMethodBySignature(myMethod, true);;
-        if (method == null || !psiClass.equals(method.getContainingClass())) continue;
+                                                    : inheritor.findMethodBySignature(myMethod, true);
+        if (method == null) continue;
+        PsiClass containingClass = method.getContainingClass();
+        if (!psiClass.equals(containingClass)) {
+          if (containingClass != null) {
+            classNamesWithPotentialImplementations.add(PsiFormatUtil.formatClass(containingClass, PsiFormatUtilBase.SHOW_NAME));
+          }
+          continue;
+        }
         list.add(inheritor);
       }
     }
 
+    if (!classNamesWithPotentialImplementations.isEmpty()) {
+      problemDetected.set("Potential implementations with weaker access privileges are found: " + StringUtil.join(classNamesWithPotentialImplementations, ", "));
+    }
     return list.toArray(new PsiClass[list.size()]);
   }
 
   private static class MyPsiElementListCellRenderer extends PsiElementListCellRenderer<PsiElement> {
+    private final PsiClassListCellRenderer myRenderer = new PsiClassListCellRenderer();
 
     void sort(PsiElement[] result) {
-      final Comparator<PsiClass> comparator = PsiClassListCellRenderer.INSTANCE.getComparator();
+      final Comparator<PsiClass> comparator = myRenderer.getComparator();
       Arrays.sort(result, (o1, o2) -> {
         if (o1 instanceof PsiEnumConstant && o2 instanceof PsiEnumConstant) {
           return ((PsiEnumConstant)o1).getName().compareTo(((PsiEnumConstant)o2).getName());
@@ -193,7 +197,7 @@ public class ImplementAbstractMethodHandler {
 
     @Override
     public String getElementText(PsiElement element) {
-      return element instanceof PsiClass ? PsiClassListCellRenderer.INSTANCE.getElementText((PsiClass)element)
+      return element instanceof PsiClass ? myRenderer.getElementText((PsiClass)element)
                                          : ((PsiEnumConstant)element).getName();
     }
 

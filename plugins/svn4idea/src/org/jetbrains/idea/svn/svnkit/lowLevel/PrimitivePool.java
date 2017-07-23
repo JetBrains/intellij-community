@@ -15,10 +15,8 @@
  */
 package org.jetbrains.idea.svn.svnkit.lowLevel;
 
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import org.jetbrains.idea.svn.svnkit.SvnKitProgressCanceller;
 import org.tmatesoft.svn.core.ISVNCanceller;
-import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
@@ -30,12 +28,6 @@ import org.tmatesoft.svn.core.wc.ISVNRepositoryPool;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/27/13
- * Time: 10:41 PM
- */
 public class PrimitivePool implements ISVNRepositoryPool, ISVNSession {
   private final ISVNAuthenticationManager myManager;
   private final ISVNTunnelProvider myTunnelProvider;
@@ -51,7 +43,7 @@ public class PrimitivePool implements ISVNRepositoryPool, ISVNSession {
     repos.setAuthenticationManager(myManager);
     repos.setTunnelProvider(myTunnelProvider);
     repos.setDebugLog(new ProxySvnLog(SVNDebugLog.getDefaultLog()));
-    repos.setCanceller(new MyCanceller());
+    repos.setCanceller(new SvnKitProgressCanceller());
     return repos;
   }
 
@@ -94,20 +86,5 @@ public class PrimitivePool implements ISVNRepositoryPool, ISVNSession {
   @Override
   public boolean hasCommitMessage(SVNRepository repository, long revision) {
     return false;
-  }
-
-  private static class MyCanceller implements ISVNCanceller {
-    @Override
-    public void checkCancelled() throws SVNCancelException {
-      final ProgressManager pm = ProgressManager.getInstance();
-      final ProgressIndicator pi = pm.getProgressIndicator();
-      if (pi != null) {
-        if (pi.isCanceled()) throw new SVNCancelException();
-      }
-      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      if (indicator != null && indicator.isCanceled()) {
-        throw new SVNCancelException();
-      }
-    }
   }
 }

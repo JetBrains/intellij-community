@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,8 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import com.intellij.util.NotNullProducer;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -41,13 +39,13 @@ public class ColorProgressBar extends JComponent {
 
   public static final Color GREEN = new JBColor(() -> {
     UISettings settings = UISettings.getInstance();
-    return settings == null || null == settings.COLOR_BLINDNESS
+    return settings == null || null == settings.getColorBlindness()
            ? new JBColor(new Color(0x6cad74), new Color(0x4a8c53))
            : new JBColor(new Color(0x6ca69c), new Color(0x639990));
   });
   public static final Color RED = new JBColor(() -> {
     UISettings settings = UISettings.getInstance();
-    return settings == null || null == settings.COLOR_BLINDNESS
+    return settings == null || null == settings.getColorBlindness()
            ? new JBColor(new Color(0xd67b76), new Color(0xe55757))
            : new JBColor(new Color(0xcc7447), new Color(0xcc7447));
   });

@@ -28,9 +28,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: Vassiliy.Kudryashov
- */
 public final class ExecutionEnvironmentBuilder {
   @NotNull private RunProfile myRunProfile;
   @NotNull private ExecutionTarget myTarget = DefaultExecutionTarget.INSTANCE;

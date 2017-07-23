@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -34,9 +34,12 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -68,10 +71,10 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.vcs.ViewUpdateInfoNotification;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -80,7 +83,7 @@ import java.util.*;
 import java.util.List;
 
 @State(name = "ProjectLevelVcsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements ProjectComponent, PersistentStateComponent<Element> {
+public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements ProjectComponent, PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl");
   @NonNls private static final String SETTINGS_EDITED_MANUALLY = "settingsEditedManually";
 
@@ -142,7 +145,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
     myInitialization = new VcsInitialization(myProject);
     Disposer.register(project, myInitialization); // wait for the thread spawned in VcsInitialization to terminate
-    projectManager.addProjectManagerListener(project, new ProjectManagerAdapter() {
+    projectManager.addProjectManagerListener(project, new ProjectManagerListener() {
       @Override
       public void projectClosing(Project project) {
         Disposer.dispose(myInitialization);
@@ -151,7 +154,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     if (project.isDefault()) {
       // default project is disposed in write action, so treat it differently
       MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-      connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+      connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
         @Override
         public void appClosing() {
           Disposer.dispose(myInitialization);
@@ -217,7 +220,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     releaseConsole();
     myMappings.disposeMe();
     Disposer.dispose(myAnnotationLocalChangesListener);
@@ -283,7 +286,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @Nullable
   public AbstractVcs getVcsFor(final FilePath file) {
     final VirtualFile vFile = ChangesUtil.findValidParentAccurately(file);
-    return ApplicationManager.getApplication().runReadAction((Computable<AbstractVcs>)() -> {
+    return ReadAction.compute(() -> {
       if (!ApplicationManager.getApplication().isUnitTestMode() && !myProject.isInitialized()) return null;
       if (myProject.isDisposed()) throw new ProcessCanceledException();
       if (vFile != null) {
@@ -296,6 +299,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   @Override
   @Nullable
   public VirtualFile getVcsRootFor(@Nullable final VirtualFile file) {
+    if (file == null) return null;
     final VcsDirectoryMapping mapping = myMappings.getMappingFor(file);
     if (mapping == null) {
       return null;
@@ -354,6 +358,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     AllVcses.getInstance(myProject).unregisterManually(vcs);
   }
 
+  @Nullable
   @Override
   public ContentManager getContentManager() {
     if (myContentManager == null) {
@@ -429,7 +434,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       panel.add(myConsole.getComponent(), BorderLayout.CENTER);
 
       ActionToolbar toolbar = ActionManager.getInstance()
-        .createActionToolbar(ActionPlaces.UNKNOWN, new DefaultActionGroup(myConsole.createConsoleActions()), false);
+        .createActionToolbar("VcsManager", new DefaultActionGroup(myConsole.createConsoleActions()), false);
       panel.add(toolbar.getComponent(), BorderLayout.WEST);
 
       content = ContentFactory.SERVICE.getInstance().createContent(panel, displayName, true);
@@ -477,11 +482,15 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return myOptionsAndConfirmations.getOrCreateCustomOption(vcsActionName, vcs);
   }
 
+  @CalledInAwt
   @Override
   public void showProjectOperationInfo(final UpdatedFiles updatedFiles, String displayActionName) {
-    showUpdateProjectInfo(updatedFiles, displayActionName, ActionInfo.STATUS, false);
+    UpdateInfoTree tree = showUpdateProjectInfo(updatedFiles, displayActionName, ActionInfo.STATUS, false);
+    if (tree != null) ViewUpdateInfoNotification.focusUpdateInfoTree(myProject, tree);
   }
 
+  @CalledInAwt
+  @Nullable
   @Override
   public UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles, String displayActionName, ActionInfo actionInfo, boolean canceled) {
     if (!myProject.isOpen() || myProject.isDisposed()) return null;
@@ -490,8 +499,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       return null;  // content manager is made null during dispose; flag is set later
     }
     final UpdateInfoTree updateInfoTree = new UpdateInfoTree(contentManager, myProject, updatedFiles, displayActionName, actionInfo);
-    ContentUtilEx.addTabbedContent(contentManager, updateInfoTree, "Update Info", DateFormatUtil.formatDateTime(System.currentTimeMillis()), true, updateInfoTree);
-    ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS).activate(null);
+    ContentUtilEx.addTabbedContent(contentManager, updateInfoTree, "Update Info", DateFormatUtil.formatDateTime(System.currentTimeMillis()), false, updateInfoTree);
     updateInfoTree.expandRootChildren();
     return updateInfoTree;
   }
@@ -833,7 +841,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public boolean isFileInContent(@Nullable final VirtualFile vf) {
-    return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() ->
+    return ReadAction.compute(() ->
       vf != null && (myExcludedIndex.isInContent(vf) || isFileInBaseDir(vf) || vf.equals(myProject.getBaseDir()) ||
                      hasExplicitMapping(vf) || isInDirectoryBasedRoot(vf)
                      || !Registry.is("ide.hide.excluded.files") && myExcludedIndex.isExcludedFile(vf))
@@ -874,7 +882,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @TestOnly
   public void waitForInitialized() {
-    myInitialization.waitForCompletion();
+    myInitialization.waitFinished();
   }
 
   private static class ActionKey {

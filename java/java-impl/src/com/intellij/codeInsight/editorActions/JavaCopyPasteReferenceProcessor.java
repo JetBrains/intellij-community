@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -59,6 +60,7 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
   }
 
 
+  @NotNull
   @Override
   protected PsiJavaCodeReferenceElement[] findReferencesToRestore(PsiFile file,
                                                                        RangeMarker bounds,

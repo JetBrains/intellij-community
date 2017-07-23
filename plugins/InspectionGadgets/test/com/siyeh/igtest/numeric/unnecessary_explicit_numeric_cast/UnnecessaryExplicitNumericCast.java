@@ -83,3 +83,30 @@ public class UnnecessaryExplicitNumericCast {
   }
 
 }
+enum Numeric {
+  A((byte)10);
+
+  Numeric(byte b) {}
+}
+class S {
+
+  static void doSomething() {
+    //   V --- this cast is reported as unnecessary
+    if ( (int) whatever() < 0 ) {
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private static <T> T whatever() {
+    return (T) (Object) 0;
+  }
+
+  void polyadic() {
+    int a=1;
+    int b=2;
+    System.out.println(((double) a) / b / 10.0);
+    double c = 3.5;
+    System.out.println((<warning descr="'a' unnecessarily cast to 'double'">double</warning>)a / c / 10.0);
+    System.out.println(19/ (double)a / c / 10.0);
+  }
+}

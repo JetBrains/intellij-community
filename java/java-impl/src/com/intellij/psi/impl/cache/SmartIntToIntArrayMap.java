@@ -19,6 +19,7 @@ import com.intellij.util.ArrayUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -28,6 +29,7 @@ public class SmartIntToIntArrayMap {
   @Nullable TIntObjectHashMap<TIntArrayList> myMultipleValuesMap;
   TIntIntHashMap mySingleValueMap = new TIntIntHashMap(10, 0.9f);
 
+  @NotNull
   public int[] keys() {
     int[] multiKeys = myMultipleValuesMap != null ? myMultipleValuesMap.keys() : ArrayUtil.EMPTY_INT_ARRAY;
     int[] singleKeys = mySingleValueMap.keys();
@@ -95,6 +97,7 @@ public class SmartIntToIntArrayMap {
     }
   }
 
+  @NotNull
   public int[] get(int key) {
     if (mySingleValueMap.containsKey(key)) {
       int id = mySingleValueMap.get(key);
@@ -104,6 +107,7 @@ public class SmartIntToIntArrayMap {
     return getFromMultimap(key);
   }
 
+  @NotNull
   private int[] getFromMultimap(int key) {
     TIntArrayList res = myMultipleValuesMap != null ? myMultipleValuesMap.get(key) : null;
     if (res == null) return ArrayUtil.EMPTY_INT_ARRAY;

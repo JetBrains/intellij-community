@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,6 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
 
-/**
- * User: Vassiliy.Kudryashov
- */
 public class TopAnomaliesAction extends ActionGroup {
   private static final Comparator<Pair<?, Integer>> COMPARATOR = (o1, o2) -> {
     int i = o2.getSecond() - o1.getSecond();
@@ -148,13 +145,7 @@ public class TopAnomaliesAction extends ActionGroup {
           }
         }
       }
-      catch (NoSuchMethodException e) {
-      }
-      catch (InvocationTargetException e) {
-      }
-      catch (IllegalAccessException e) {
-      }
-      catch (NoSuchFieldException e) {
+      catch (NoSuchMethodException | NoSuchFieldException | IllegalAccessException | InvocationTargetException e) {
       }
       for (int i = 0; i < component.getComponentCount(); i++) {
         Component child = component.getComponent(i);

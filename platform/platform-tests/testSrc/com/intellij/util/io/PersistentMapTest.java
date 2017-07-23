@@ -20,7 +20,10 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.IntObjectCache;
 import com.intellij.util.io.storage.AbstractStorage;
+import org.jetbrains.annotations.NotNull;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -250,7 +253,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
       }
     };
 
-    PlatformTestUtil.startPerformanceTest("Performance", 9000, () -> {
+    PlatformTestUtil.startPerformanceTest("put/remove", 5000, () -> {
       try {
         stringCache.addDeletedPairsListener(listener);
         for (int i = 0; i < 100000; ++i) {
@@ -269,12 +272,12 @@ public class PersistentMapTest extends PersistentMapTestBase {
       catch (IOException e) {
         throw new RuntimeException(e);
       }
-    }).ioBound().useLegacyScaling().assertTiming();
+    }).ioBound().assertTiming();
 
     myMap.close();
-    System.out.printf("File size = %d bytes\n", myFile.length());
-    System.out
-      .printf("Data file size = %d bytes\n", new File(myDataFile.getParentFile(), myDataFile.getName() + AbstractStorage.DATA_EXTENSION).length());
+    LOG.debug(String.format("File size = %d bytes\n", myFile.length()));
+    LOG.debug(String.format("Data file size = %d bytes\n",
+                            new File(myDataFile.getParentFile(), myDataFile.getName() + AbstractStorage.DATA_EXTENSION).length()));
   }
 
   public void testPerformance1() throws IOException {
@@ -283,7 +286,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
       strings.add(createRandomString());
     }
 
-    PlatformTestUtil.startPerformanceTest("perf1", 5000, () -> {
+    PlatformTestUtil.startPerformanceTest("put/remove", 1500, () -> {
       for (int i = 0; i < 100000; ++i) {
         final String string = strings.get(i);
         myMap.put(string, string);
@@ -302,11 +305,11 @@ public class PersistentMapTest extends PersistentMapTestBase {
       for (String string : strings) {
         myMap.remove(string);
       }
-    }).useLegacyScaling().assertTiming();
+    }).assertTiming();
     myMap.close();
-    System.out.printf("File size = %d bytes\n", myFile.length());
-    System.out
-      .printf("Data file size = %d bytes\n", new File(myDataFile.getParentFile(), myDataFile.getName() + AbstractStorage.DATA_EXTENSION).length());
+    LOG.debug(String.format("File size = %d bytes\n", myFile.length()));
+    LOG.debug(String.format("Data file size = %d bytes\n",
+                            new File(myDataFile.getParentFile(), myDataFile.getName() + AbstractStorage.DATA_EXTENSION).length()));
   }
 
   public void testReadonlyMap() throws IOException {
@@ -343,5 +346,109 @@ public class PersistentMapTest extends PersistentMapTestBase {
       myMap.appendData("AAA", out -> out.writeUTF("BAR"));
       fail();
     } catch (IncorrectOperationException ignore) {}
+  }
+
+  public void testCreatePersistentMapWithoutCompression() throws IOException {
+    clearMap(myFile, myMap);
+    Boolean compressionFlag = PersistentHashMapValueStorage.CreationTimeOptions.DO_COMPRESSION.get();
+    try {
+      PersistentHashMapValueStorage.CreationTimeOptions.DO_COMPRESSION.set(Boolean.FALSE);
+      myMap = new PersistentHashMap<>(myFile, EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE);
+      myMap.put("Foo", "Bar");
+      assertTrue(myMap.containsMapping("Foo"));
+      myMap.close();
+      assertEquals(55,PersistentHashMap.getDataFile(myFile).length());
+    }
+    finally {
+      PersistentHashMapValueStorage.CreationTimeOptions.DO_COMPRESSION.set(compressionFlag);
+    }
+  }
+  
+  public void testFailedReadWriteSetsCorruptedFlag() throws IOException {
+    EnumeratorStringDescriptor throwingException = new EnumeratorStringDescriptor() {
+      @Override
+      public void save(@NotNull DataOutput storage, @NotNull String value) throws IOException {
+        throw new IOException("test");
+      }
+
+      @Override
+      public String read(@NotNull DataInput storage) throws IOException {
+        throw new IOException("test");
+      }
+    };
+
+    PersistentMapPerformanceTest.MapConstructor<String, String> mapConstructorWithBrokenKeyDescriptor =
+      (file) -> IOUtil.openCleanOrResetBroken(
+        () -> new PersistentHashMap<>(file, throwingException, EnumeratorStringDescriptor.INSTANCE), file);
+
+    PersistentMapPerformanceTest.MapConstructor<String, String> mapConstructorWithBrokenValueDescriptor =
+      (file) -> IOUtil.openCleanOrResetBroken(
+        () -> new PersistentHashMap<>(file, EnumeratorStringDescriptor.INSTANCE, throwingException), file);
+
+    runIteration(mapConstructorWithBrokenKeyDescriptor);
+    runIteration(mapConstructorWithBrokenValueDescriptor);
+  }
+
+  private void runIteration(PersistentMapPerformanceTest.MapConstructor<String, String> brokenMapDescritor) throws IOException {
+    String key = "AAA";
+    String value = "AAA_VALUE";
+
+    PersistentMapPerformanceTest.MapConstructor<String, String> defaultMapConstructor =
+      (file) -> IOUtil.openCleanOrResetBroken(
+        () -> new PersistentHashMap<>(file, EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE), file);
+
+    createInitializedMap(key, value, defaultMapConstructor);
+
+    myMap = brokenMapDescritor.createMap(myFile);
+
+    try {
+      myMap.get(key);
+      fail();
+    } catch (IOException ignore) {
+      assertTrue(myMap.isCorrupted());
+    }
+
+    createInitializedMap(key, value, defaultMapConstructor);
+
+    myMap = brokenMapDescritor.createMap(myFile);
+
+    try {
+      myMap.put(key, value + value);
+      fail();
+    } catch (IOException ignore) {
+      assertTrue(myMap.isCorrupted());
+    }
+
+    createInitializedMap(key, value, defaultMapConstructor);
+
+    myMap = brokenMapDescritor.createMap(myFile);
+
+    try {
+      myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
+        @Override
+        public void append(DataOutput out) throws IOException {
+          throw new IOException();
+        }
+      });
+      fail();
+    } catch (IOException ignore) {
+      assertTrue(myMap.isCorrupted());
+    }
+  }
+
+  private void closeMapSilently() throws IOException {
+    try {
+      myMap.close();
+    } catch (IOException ignore) {}
+  }
+
+  private void createInitializedMap(String key,
+                                    String value,
+                                    PersistentMapPerformanceTest.MapConstructor<String, String> defaultMapConstructor)
+    throws IOException {
+    closeMapSilently();
+    myMap = defaultMapConstructor.createMap(myFile);
+    myMap.put(key, value);
+    closeMapSilently();
   }
 }

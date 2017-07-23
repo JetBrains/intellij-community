@@ -35,10 +35,13 @@ public class QualifiedName implements Comparable<QualifiedName> {
   @NotNull private final List<String> myComponents;
 
   private QualifiedName(int count) {
-    myComponents = new ArrayList<String>(count);
+    myComponents = new ArrayList<>(count);
   }
 
   public static QualifiedName fromComponents(Collection<String> components) {
+    for (String component : components) {
+      assertNoDots(component);
+    }
     QualifiedName qName = new QualifiedName(components.size());
     qName.myComponents.addAll(components);
     return qName;
@@ -46,6 +49,9 @@ public class QualifiedName implements Comparable<QualifiedName> {
 
   @NotNull
   public static QualifiedName fromComponents(String... components) {
+    for (String component : components) {
+      assertNoDots(component);
+    }
     QualifiedName result = new QualifiedName(components.length);
     Collections.addAll(result.myComponents, components);
     return result;
@@ -209,5 +215,11 @@ public class QualifiedName implements Comparable<QualifiedName> {
   @Override
   public int compareTo(@NotNull QualifiedName other) {
     return toString().compareTo(other.toString());
+  }
+
+  private static void assertNoDots(@NotNull String component) {
+    if (component.contains(".")) {
+      throw new IllegalArgumentException("Components of QualifiedName cannot contain dots inside them, but got: " + component);
+    }
   }
 }

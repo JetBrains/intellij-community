@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +35,7 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
-import com.jetbrains.python.psi.stubs.PyClassNameIndex;
-import com.jetbrains.python.psi.stubs.PyNamedTupleStub;
-import com.jetbrains.python.psi.stubs.PySuperClassIndex;
-import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
+import com.jetbrains.python.psi.stubs.*;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.Maybe;
@@ -482,24 +479,121 @@ public class PyStubsTest extends PyTestCase {
     doTestNamedTupleArguments();
   }
 
-  public void testImportedNamedTupleName() {
+  public void _testImportedNamedTupleName() {
     doTestUnsupportedNamedTuple();
   }
 
-  public void testImportedNamedTupleFields() {
+  public void _testImportedNamedTupleFields() {
+    doTestUnsupportedNamedTuple();
+  }
+
+  public void testFullyQualifiedTypingNamedTuple() {
+    doTestTypingNamedTuple(
+      QualifiedName.fromDottedString("typing.NamedTuple")
+    );
+  }
+
+  public void testFullyQualifiedTypingNamedTupleWithAs() {
+    doTestTypingNamedTuple(
+      QualifiedName.fromDottedString("T.NamedTuple")
+    );
+  }
+
+  public void testImportedTypingNamedTuple() {
+    doTestTypingNamedTuple(
+      QualifiedName.fromComponents("NamedTuple")
+    );
+  }
+
+  public void testImportedTypingNamedTupleWithAs() {
+    doTestTypingNamedTuple(
+      QualifiedName.fromComponents("NT")
+    );
+  }
+
+  public void testTypingNamedTupleNameReference() {
+    doTestTypingNamedTupleArguments();
+  }
+
+  public void testTypingNamedTupleFieldsReference() {
+    doTestTypingNamedTupleArguments();
+  }
+
+  public void testTypingNamedTupleNameChain() {
+    doTestTypingNamedTupleArguments();
+  }
+
+  public void testTypingNamedTupleFieldsChain() {
+    doTestTypingNamedTupleArguments();
+  }
+
+  public void _testImportedTypingNamedTupleName() {
+    doTestUnsupportedNamedTuple();
+  }
+
+  public void _testImportedTypingNamedTupleFields() {
+    doTestUnsupportedNamedTuple();
+  }
+
+  public void testFullyQualifiedTypingNamedTupleKwargs() {
+    doTestTypingNamedTuple(
+      QualifiedName.fromDottedString("typing.NamedTuple")
+    );
+  }
+
+  public void testFullyQualifiedTypingNamedTupleKwargsWithAs() {
+    doTestTypingNamedTuple(
+      QualifiedName.fromDottedString("T.NamedTuple")
+    );
+  }
+
+  public void testImportedTypingNamedTupleKwargs() {
+    doTestTypingNamedTuple(
+      QualifiedName.fromComponents("NamedTuple")
+    );
+  }
+
+  public void testImportedTypingNamedTupleKwargsWithAs() {
+    doTestTypingNamedTuple(
+      QualifiedName.fromComponents("NT")
+    );
+  }
+
+  public void testTypingNamedTupleKwargsNameReference() {
+    doTestTypingNamedTupleArguments();
+  }
+
+  public void testTypingNamedTupleKwargsNameChain() {
+    doTestTypingNamedTupleArguments();
+  }
+
+  public void _testImportedTypingNamedTupleKwargsName() {
+    doTestUnsupportedNamedTuple();
+  }
+
+  public void _testImportedTypingNamedTupleKwargsFields() {
     doTestUnsupportedNamedTuple();
   }
 
   private void doTestNamedTuple(@NotNull QualifiedName expectedCalleeName) {
-    doTestNamedTuple("name", Collections.singletonList("field"), expectedCalleeName);
+    doTestNamedTuple("name", Collections.singletonList("field"), Collections.singletonList(null), expectedCalleeName);
+  }
+
+  private void doTestTypingNamedTuple(@NotNull QualifiedName expectedCalleeName) {
+    doTestNamedTuple("name", Collections.singletonList("field"), Collections.singletonList("str"), expectedCalleeName);
   }
 
   private void doTestNamedTupleArguments() {
-    doTestNamedTuple("name", Arrays.asList("x", "y"), QualifiedName.fromComponents("namedtuple"));
+    doTestNamedTuple("name", Arrays.asList("x", "y"), Arrays.asList(null, null), QualifiedName.fromComponents("namedtuple"));
+  }
+
+  private void doTestTypingNamedTupleArguments() {
+    doTestNamedTuple("name", Arrays.asList("x", "y"), Arrays.asList("str", "int"), QualifiedName.fromComponents("NamedTuple"));
   }
 
   private void doTestNamedTuple(@NotNull String expectedName,
-                                @NotNull List<String> expectedFields,
+                                @NotNull List<String> expectedFieldsNames,
+                                @NotNull List<String> expectedFieldsTypes,
                                 @NotNull QualifiedName expectedCalleeName) {
     final PyFile file = getTestFile();
 
@@ -511,14 +605,14 @@ public class PyStubsTest extends PyTestCase {
     assertEquals(expectedCalleeName, stub.getCalleeName());
 
     final PyType typeFromStub = TypeEvalContext.codeInsightFallback(myFixture.getProject()).getType(attribute);
-    doTestNamedTuple(expectedName, expectedFields, typeFromStub);
+    doTestNamedTuple(expectedName, expectedFieldsNames, expectedFieldsTypes, typeFromStub);
     assertNotParsed(file);
 
     final FileASTNode astNode = file.getNode();
     assertNotNull(astNode);
 
     final PyType typeFromAst = TypeEvalContext.userInitiated(myFixture.getProject(), file).getType(attribute);
-    doTestNamedTuple(expectedName, expectedFields, typeFromAst);
+    doTestNamedTuple(expectedName, expectedFieldsNames, expectedFieldsTypes, typeFromAst);
   }
 
   private void doTestUnsupportedNamedTuple() {
@@ -539,14 +633,34 @@ public class PyStubsTest extends PyTestCase {
   }
 
   private static void doTestNamedTuple(@NotNull String expectedName,
-                                       @NotNull List<String> expectedFields,
+                                       @NotNull List<String> expectedFieldsNames,
+                                       @NotNull List<String> expectedFieldsTypes,
                                        @Nullable PyType type) {
     assertInstanceOf(type, PyNamedTupleType.class);
 
     final PyNamedTupleType namedTupleType = (PyNamedTupleType)type;
 
     assertEquals(expectedName, namedTupleType.getName());
-    assertEquals(expectedFields, namedTupleType.getElementNames());
+
+    final Iterator<String> fieldsNamesIterator = expectedFieldsNames.iterator();
+    final Iterator<String> fieldsTypesIterator = expectedFieldsTypes.iterator();
+
+    for (Map.Entry<String, PyNamedTupleType.FieldTypeAndDefaultValue> entry : namedTupleType.getFields().entrySet()) {
+      assertTrue(fieldsNamesIterator.hasNext());
+      assertTrue(fieldsTypesIterator.hasNext());
+
+      final String fieldName = entry.getKey();
+      final PyNamedTupleType.FieldTypeAndDefaultValue fieldTypeAndDefaultValue = entry.getValue();
+
+      assertEquals(fieldsNamesIterator.next(), fieldName);
+
+      final PyType fieldType = fieldTypeAndDefaultValue.getType();
+      assertEquals(fieldsTypesIterator.next(), fieldType == null ? null : fieldType.getName());
+      assertNull(fieldTypeAndDefaultValue.getDefaultValue());
+    }
+
+    assertFalse(fieldsNamesIterator.hasNext());
+    assertFalse(fieldsTypesIterator.hasNext());
   }
 
   // PY-19461
@@ -604,9 +718,157 @@ public class PyStubsTest extends PyTestCase {
       final PyTargetExpression attr = current.findTopLevelAttribute("x");
       assertNotNull(attr);
       final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), current);
-      // Will turn into concrete type when we start saving annotations in stubs 
-      assertNull(context.getType(attr));
+      assertType("int", attr, context);
       assertNotParsed(external);
+    });
+  }
+
+  // PY-18116
+  public void testParameterAnnotation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+      final PyFile file = getTestFile();
+      final PyFunction func = file.findTopLevelFunction("func");
+      final PyNamedParameter param = func.getParameterList().findParameterByName("x");
+      final String annotation = param.getAnnotationValue();
+      assertEquals("int", annotation);
+      assertNotParsed(file);
+      final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+      assertType("int", param, context);
+      assertNotParsed(file);
+    });
+  }
+
+  // PY-18116
+  public void testFunctionAnnotation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+      final PyFile file = getTestFile();
+      final PyFunction func = file.findTopLevelFunction("func");
+      final String annotation = func.getAnnotationValue();
+      assertEquals("int", annotation);
+      assertNotParsed(file);
+      assertType("() -> int", func, TypeEvalContext.codeInsightFallback(myFixture.getProject()));
+      assertNotParsed(file);
+    });
+  }
+
+  // PY-18116
+  public void testVariableAnnotation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
+      final PyFile file = getTestFile();
+      final PyTargetExpression assignmentTarget = file.findTopLevelAttribute("x");
+      final String assignmentAnnotation = assignmentTarget.getAnnotationValue();
+      assertEquals("int", assignmentAnnotation);
+      assertNotParsed(file);
+      assertType("int", assignmentTarget, TypeEvalContext.codeInsightFallback(myFixture.getProject()));
+      assertNotParsed(file);
+
+      final PyTargetExpression typeDecTarget = file.findTopLevelAttribute("y");
+      final String typeDecAnnotation = typeDecTarget.getAnnotationValue();
+      assertEquals("str", typeDecAnnotation);
+      assertNotParsed(file);
+      assertType("str", typeDecTarget, TypeEvalContext.codeInsightFallback(myFixture.getProject()));
+      assertNotParsed(file);
+    });
+  }
+
+  // PY-18116
+  public void testAttributeTypeDeclaration() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
+      final PyFile file = getTestFile();
+      final PyClass pyClass = file.findTopLevelClass("MyClass");
+      final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+      final PyTargetExpression classAttr = pyClass.findClassAttribute("foo", false, context);
+      assertType("str", classAttr, context);
+
+      final PyTargetExpression instAttr = pyClass.findInstanceAttribute("bar", false);
+      assertType("int", instAttr, context);
+      assertNotParsed(file);
+    });
+  }
+
+  // PY-18116
+  public void testTypeAliasInParameterAnnotation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+      final PyFile file = getTestFile();
+      final PyFunction func = file.findTopLevelFunction("func");
+      final PyNamedParameter param = func.getParameterList().findParameterByName("x");
+      assertType("Dict[str, Any]", param, TypeEvalContext.codeInsightFallback(myFixture.getProject()));
+      assertNotParsed(file);
+    });
+  }
+
+  // PY-18116
+  public void testTypeAliasStubs() {
+    final PyFile file = getTestFile();
+    final List<PyTargetExpression> attributes = file.getTopLevelAttributes();
+    for (PyTargetExpression attr : attributes) {
+      assertHasTypingAliasStub(attr.getName().endsWith("_ok"), attr);
+    }
+
+    final PyTargetExpression referenceAlias = file.findTopLevelAttribute("plain_ref");
+    final PyTargetExpressionStub referenceAliasStub = referenceAlias.getStub();
+    assertEquals(PyTargetExpressionStub.InitializerType.ReferenceExpression, referenceAliasStub.getInitializerType());
+    assertEquals(QualifiedName.fromDottedString("foo.bar.baz"), referenceAliasStub.getInitializer());
+
+    final PyClass pyClass = file.findTopLevelClass("C");
+    final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+    final PyTargetExpression classAttr = pyClass.findClassAttribute("class_attr", false, context);
+    assertHasTypingAliasStub(false, classAttr);
+
+    final PyTargetExpression instanceAttr = pyClass.findInstanceAttribute("inst_attr", false);
+    assertHasTypingAliasStub(false, instanceAttr);
+    assertNotParsed(file);
+  }
+
+  // PY-18166
+  public void testUnresolvedTypingSymbol() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+      final PyFile file = getTestFile();
+      final PyFunction func = file.findTopLevelFunction("func");
+      assertType("() -> Any", func, TypeEvalContext.codeInsightFallback(file.getProject()));
+      assertNotParsed(file);
+    });
+  }
+
+  @Nullable
+  private static PyTypingAliasStub getAliasStub(@NotNull PyTargetExpression targetExpression) {
+    final PyTargetExpressionStub stub = targetExpression.getStub();
+    return stub != null ? stub.getCustomStub(PyTypingAliasStub.class) : null;
+  }
+
+  private static void assertHasTypingAliasStub(boolean has, @NotNull PyTargetExpression expression) {
+    final String message = "Target '" + expression.getName() + "' should " + (has ? "" : "not ") + "have typing alias stub";
+    final PyTypingAliasStub stub = getAliasStub(expression);
+    if (has) {
+      assertNotNull(message, stub);
+    }
+    else {
+      assertNull(message, stub);
+    }
+  }
+
+  // PY-18816
+  public void testParametrizedBaseClass() {
+    final PyFile file = getTestFile();
+    final PyClass genericClass = file.findTopLevelClass("Class");
+    final PyClassStub stub = genericClass.getStub();
+    assertNotNull(stub);
+    final List<String> genericBases = stub.getSubscriptedSuperClasses();
+    assertContainsOrdered(genericBases, "Generic[T, V]");
+    assertNotParsed(file);
+  }
+
+  // PY-18816
+  public void testComplexGenericType() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+      myFixture.copyDirectoryToProject(getTestName(true), "");
+      final PsiManager manager = PsiManager.getInstance(myFixture.getProject());
+      final PyFile originFile = (PyFile)manager.findFile(myFixture.findFileInTempDir("a.py"));
+      final PyFile libFile = (PyFile)manager.findFile(myFixture.findFileInTempDir("mod.py"));
+
+      final PyTargetExpression instance = originFile.findTopLevelAttribute("expr");
+      assertType("Tuple[int, None, str]", instance, TypeEvalContext.codeAnalysis(myFixture.getProject(), originFile));
+      assertNotParsed(libFile);
     });
   }
 }

@@ -6,7 +6,7 @@ import javax.swing.*;
 
 /**
  * NOTE THIS FILE IS AUTO-GENERATED
- * DO NOT EDIT IT BY HAND, run build/scripts/icons.gant instead
+ * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public class VcsLogIcons {
   private static Icon load(String path) {
@@ -30,4 +30,5 @@ public class VcsLogIcons {
 
   }
   public static final Icon ShowHideLongEdges = load("/icons/ShowHideLongEdges.png"); // 16x16
+  public static final Icon ShowOtherBranches = load("/icons/ShowOtherBranches.png"); // 16x16
 }

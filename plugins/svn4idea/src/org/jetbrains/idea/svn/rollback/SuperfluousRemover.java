@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.rollback;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -52,20 +51,11 @@ public class SuperfluousRemover {
   }
 
   public void check(@NotNull final File file) {
-    boolean parentAlreadyRegistered = ContainerUtil.or(myParentPaths, new Condition<File>() {
-      @Override
-      public boolean value(@NotNull File parentCandidate) {
-        return VfsUtilCore.isAncestor(parentCandidate, file, true);
-      }
-    });
+    boolean parentAlreadyRegistered =
+      ContainerUtil.or(myParentPaths, parentCandidate -> VfsUtilCore.isAncestor(parentCandidate, file, true));
 
     if (!parentAlreadyRegistered) {
-      ContainerUtil.retainAll(myParentPaths, new Condition<File>() {
-        @Override
-        public boolean value(@NotNull File childCandidate) {
-          return !VfsUtilCore.isAncestor(file, childCandidate, true);
-        }
-      });
+      ContainerUtil.retainAll(myParentPaths, childCandidate -> !VfsUtilCore.isAncestor(file, childCandidate, true));
 
       myParentPaths.add(file);
     }

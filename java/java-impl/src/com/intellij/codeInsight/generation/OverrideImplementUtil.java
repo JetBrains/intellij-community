@@ -33,6 +33,7 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -70,6 +71,7 @@ import java.util.*;
 
 public class OverrideImplementUtil extends OverrideImplementExploreUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.OverrideImplementUtil");
+  public static final String IMPLEMENT_COMMAND_MARKER = "implement";
 
   private OverrideImplementUtil() { }
 
@@ -299,8 +301,13 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
 
   @NotNull
   public static String callSuper(PsiMethod superMethod, PsiMethod overriding) {
+    return callSuper(superMethod, overriding, true);
+  }
+
+  @NotNull
+  private static String callSuper(PsiMethod superMethod, PsiMethod overriding, boolean prependReturn) {
     @NonNls StringBuilder buffer = new StringBuilder();
-    if (!superMethod.isConstructor() && !PsiType.VOID.equals(superMethod.getReturnType())) {
+    if (prependReturn && !superMethod.isConstructor() && !PsiType.VOID.equals(superMethod.getReturnType())) {
       buffer.append("return ");
     }
     buffer.append("super");
@@ -346,8 +353,9 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     }
     Properties properties = FileTemplateManager.getInstance(targetClass.getProject()).getDefaultProperties();
     properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnType.getPresentableText());
-    properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, PsiTypesUtil.getDefaultValueOfType(returnType));
+    properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, PsiTypesUtil.getDefaultValueOfType(returnType, true));
     properties.setProperty(FileTemplate.ATTRIBUTE_CALL_SUPER, callSuper(originalMethod, result));
+    properties.setProperty(FileTemplate.ATTRIBUTE_PLAIN_CALL_SUPER, callSuper(originalMethod, result, false));
     JavaTemplateUtil.setClassAndMethodNameProperties(properties, targetClass, result);
 
     JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), originalMethod.getProject());
@@ -384,7 +392,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
       return false;
     }
     String commandName = CommandProcessor.getInstance().getCurrentCommandName();
-    return commandName != null && StringUtil.containsIgnoreCase(commandName, "implement");
+    return commandName != null && StringUtil.containsIgnoreCase(commandName, IMPLEMENT_COMMAND_MARKER);
   }
 
   public static void chooseAndOverrideMethods(Project project, Editor editor, PsiClass aClass){
@@ -406,7 +414,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
 
     Collection<CandidateInfo> candidates = getMethodsToOverrideImplement(aClass, toImplement);
     Collection<CandidateInfo> secondary = toImplement || aClass.isInterface() ?
-                                          ContainerUtil.<CandidateInfo>newArrayList() : getMethodsToOverrideImplement(aClass, true);
+                                          ContainerUtil.newArrayList() : getMethodsToOverrideImplement(aClass, true);
 
     final MemberChooser<PsiMethodMember> chooser = showOverrideImplementChooser(editor, aClass, toImplement, candidates, secondary);
     if (chooser == null) return;
@@ -485,8 +493,8 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
               chooser.close(DialogWrapper.CANCEL_EXIT_CODE);
 
               // invoke later in order to close previous modal dialog
-              ApplicationManager.getApplication().invokeLater(() -> {
-                final CodeInsightActionHandler handler = toImplement ? new OverrideMethodsHandler(): new ImplementMethodsHandler();
+              TransactionGuard.getInstance().submitTransactionLater(project, () -> {
+                CodeInsightActionHandler handler = toImplement ? new OverrideMethodsHandler(): new ImplementMethodsHandler();
                 handler.invoke(project, editor, aClass.getContainingFile());
               });
             }

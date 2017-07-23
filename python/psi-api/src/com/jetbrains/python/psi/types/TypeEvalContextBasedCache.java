@@ -15,13 +15,15 @@
  */
 package com.jetbrains.python.psi.types;
 
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Engine to cache something in map, where {@link TypeEvalContext} is used as key.
@@ -30,13 +32,8 @@ import java.util.Map;
  * @author Ilya.Kazakevich
  */
 public final class TypeEvalContextBasedCache<T> {
-  /**
-   * Lock to sync
-   */
   @NotNull
-  private final Object myLock = new Object();
-  @NotNull
-  private final CachedValue<Map<TypeEvalConstraints, T>> myCachedMapStorage;
+  private final CachedValue<ConcurrentMap<TypeEvalConstraints, T>> myCachedMapStorage;
 
   @NotNull
   private final Function<TypeEvalContext, T> myProvider;
@@ -52,37 +49,39 @@ public final class TypeEvalContextBasedCache<T> {
   }
 
   /**
-   * Returns value (executes provider to obtain new if no any and stores it in cache)
+   * Returns value (executes provider to obtain new if no any and stores it in cache).
+   * It is better to run this method under read action to make sure PSI not modified in the middle of its execution
+   *
    * @param context to be used as key
    * @return value
    */
   @NotNull
   public T getValue(@NotNull final TypeEvalContext context) {
 
-    // Map is not thread safe, and "getValue" is not atomic. I do not want several maps to be created.
-    synchronized (myLock) {
-      final Map<TypeEvalConstraints, T> map = myCachedMapStorage.getValue();
-      T value = map.get(context.getConstraints());
-      if (value != null) {
-        return value;
-      }
-      // This is the same value, semantically: value for context-key
-      //noinspection ReuseOfLocalVariable
-      value = myProvider.fun(context);
-      map.put(context.getConstraints(), value);
+    // map is thread safe but not atomic nor getValue() is, so in worst case several threads may produce same result
+    // myProvider.fun should never be launched under lock to prevent deadlocks like PY-24300 and PY-24625
+    // both explicit locking and computeIfAbsent leads to deadlock
+    final ConcurrentMap<TypeEvalConstraints, T> map = myCachedMapStorage.getValue();
+    final TypeEvalConstraints key = context.getConstraints();
+    final T value = map.get(key);
+    if (value != null) {
       return value;
     }
+    final T newValue = myProvider.fun(context);
+    map.put(key, newValue); // ConcurrentMap guarantees happens-before so from this moment get() should work in other threads
+    return newValue;
   }
 
   /**
    * Provider that creates map to store cache. Map depends on PSI modification
    */
-  private static final class MapCreator<T> implements CachedValueProvider<Map<TypeEvalConstraints, T>> {
-    @Nullable
+  private static final class MapCreator<T> implements CachedValueProvider<ConcurrentMap<TypeEvalConstraints, T>> {
+    @NotNull
     @Override
-    public Result<Map<TypeEvalConstraints, T>> compute() {
+    public Result<ConcurrentMap<TypeEvalConstraints, T>> compute() {
       // This method is called if cache is empty. Create new map for it.
-      final HashMap<TypeEvalConstraints, T> map = new HashMap<>();
+      // Concurrent map allows several threads to call get and put, so it is thread safe but not atomic
+      final ConcurrentHashMap<TypeEvalConstraints, T> map = new ConcurrentHashMap<>();
       return new Result<>(map, PsiModificationTracker.MODIFICATION_COUNT);
     }
   }

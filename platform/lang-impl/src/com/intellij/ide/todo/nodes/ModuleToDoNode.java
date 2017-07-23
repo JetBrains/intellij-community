@@ -22,15 +22,15 @@ import com.intellij.ide.todo.HighlightedRegionProvider;
 import com.intellij.ide.todo.TodoTreeBuilder;
 import com.intellij.ide.todo.TodoTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.HighlightedRegion;
@@ -82,6 +82,7 @@ public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedR
 
   @Override
   public void update(PresentationData presentation) {
+    if (DumbService.getInstance(getProject()).isDumb()) return;
     String newName = getValue().getName();
     int nameEndOffset = newName.length();
     int todoItemCount = getTodoItemCount(getValue());
@@ -132,12 +133,7 @@ public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedR
     int count = 0;
     while (iterator.hasNext()) {
       final PsiFile psiFile = iterator.next();
-      count += ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
-        @Override
-        public Integer compute() {
-          return getTreeStructure().getTodoItemCount(psiFile);
-        }
-      });
+      count += ReadAction.compute(() -> getTreeStructure().getTodoItemCount(psiFile));
     }
     return count;
   }

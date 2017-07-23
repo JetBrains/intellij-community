@@ -69,6 +69,7 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
       return result.wasSuccessful() ? 0 : -1;
     }
     catch (Exception e) {
+      e.printStackTrace(System.err);
       return -2;
     }
   }

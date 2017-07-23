@@ -39,7 +39,7 @@ import java.util.concurrent.ConcurrentMap;
 public class KeyedExtensionCollector<T, KeyT> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.KeyedExtensionCollector");
 
-  private final Map<String, List<T>> myExplicitExtensions = new THashMap<String, List<T>>();
+  private final Map<String, List<T>> myExplicitExtensions = new THashMap<>();
   private final ConcurrentMap<String, List<T>> myCache = ContainerUtil.newConcurrentMap();
 
   @NonNls private final String lock;
@@ -72,7 +72,7 @@ public class KeyedExtensionCollector<T, KeyT> {
       final String skey = keyToString(key);
       List<T> list = myExplicitExtensions.get(skey);
       if (list == null) {
-        list = new ArrayList<T>();
+        list = new ArrayList<>();
         myExplicitExtensions.put(skey, list);
       }
       list.add(t);
@@ -137,7 +137,7 @@ public class KeyedExtensionCollector<T, KeyT> {
         if (keys.contains(key)) {
           List<T> list = entry.getValue();
           if (result == null) {
-            result = new ArrayList<T>(list);
+            result = new ArrayList<>(list);
           }
           else {
             result.addAll(list);
@@ -165,12 +165,12 @@ public class KeyedExtensionCollector<T, KeyT> {
               LOG.error(e);
               continue;
             }
-            if (result == null) result = new SmartList<T>();
+            if (result == null) result = new SmartList<>();
             result.add(instance);
           }
         }
       }
-      return result == null ? Collections.<T>emptyList() : result;
+      return result == null ? Collections.emptyList() : result;
     }
   }
 

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NonNls;
 /**
  * @author traff
  */
-abstract public class AbstractServerPythonRunConfiguration<T extends AbstractServerPythonRunConfiguration> extends AbstractPythonRunConfiguration<T>{
+abstract public class AbstractServerPythonRunConfiguration<T extends AbstractServerPythonRunConfiguration<T>> extends AbstractPythonRunConfiguration<T>{
   @NonNls private static final String LAUNCH_JAVASCRIPT_DEBUGGER = "launchJavascriptDebuger";
   private boolean myLaunchJavascriptDebugger;
 

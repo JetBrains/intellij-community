@@ -11,17 +11,18 @@ class MockStreamProvider(private val dir: Path) : StreamProvider {
     dir.resolve(fileSpec).write(content, 0, size)
   }
 
-  override fun read(fileSpec: String, roamingType: RoamingType): InputStream? {
+  override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
     val file = dir.resolve(fileSpec)
     try {
-      return file.inputStream()
+      file.inputStream().use(consumer)
     }
     catch (e: NoSuchFileException) {
-      return null
+      consumer(null)
     }
+    return true
   }
 
-  override fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean) {
+  override fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean): Boolean {
     dir.resolve(path).directoryStreamIfExists({ filter(it.fileName.toString()) }) {
       for (file in it) {
         val attributes = file.basicAttributesIfExists()
@@ -40,9 +41,12 @@ class MockStreamProvider(private val dir: Path) : StreamProvider {
         }
       }
     }
+
+    return true
   }
 
-  override fun delete(fileSpec: String, roamingType: RoamingType) {
+  override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
     dir.resolve(fileSpec).delete()
+    return true
   }
 }

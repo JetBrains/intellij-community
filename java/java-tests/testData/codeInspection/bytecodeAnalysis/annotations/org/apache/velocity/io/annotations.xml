@@ -18,12 +18,32 @@
     <item name='org.apache.velocity.io.UnicodeInputStream void pushback(org.apache.velocity.io.UnicodeInputStream.UnicodeBOM) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.velocity.io.UnicodeInputStream.UnicodeBOM UnicodeBOM(java.lang.String, byte[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.io.UnicodeInputStream.UnicodeBOM byte[] getBytes()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.io.UnicodeInputStream.UnicodeBOM java.lang.String getEncoding()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.io.VelocityWriter VelocityWriter(int, boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.io.VelocityWriter VelocityWriter(java.io.Writer)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.io.VelocityWriter VelocityWriter(java.io.Writer, int, boolean)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -45,6 +65,12 @@
     </item>
     <item name='org.apache.velocity.io.VelocityWriter int min(int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.io.VelocityWriter void bufferOverflow()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>

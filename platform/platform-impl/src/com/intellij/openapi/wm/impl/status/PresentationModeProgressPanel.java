@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,37 +15,30 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.InplaceButton;
 import com.intellij.ui.TransparentPanel;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class PresentationModeProgressPanel {
   private final InlineProgressIndicator myProgress;
+  private final JBIterable<ProgressButton> myEastButtons;
   private JLabel myText;
   private JProgressBar myProgressBar;
-  private InplaceButton myCancelButton;
   private JLabel myText2;
   private JPanel myRootPanel;
-  private MergingUpdateQueue myUpdateQueue;
-  private Update myUpdate;
+  private JPanel myButtonPanel;
 
   public PresentationModeProgressPanel(InlineProgressIndicator progress) {
     myProgress = progress;
@@ -54,17 +47,8 @@ public class PresentationModeProgressPanel {
     myText2.setFont(font);
     myText.setIcon(JBUI.scale(EmptyIcon.create(1, 16)));
     myText2.setIcon(JBUI.scale(EmptyIcon.create(1, 16)));
-    myUpdateQueue = new MergingUpdateQueue("Presentation Mode Progress", 100, true, null);
-    myUpdate = new Update("Update UI") {
-      @Override
-      public void run() {
-        updateImpl();
-      }
-    };
-  }
-
-  public void update() {
-    myUpdateQueue.queue(myUpdate);
+    myEastButtons = myProgress.createEastButtons();
+    myButtonPanel.add(InlineProgressIndicator.createButtonPanel(myEastButtons.map(b -> b.button)));
   }
 
   @NotNull
@@ -72,7 +56,7 @@ public class PresentationModeProgressPanel {
     return EditorColorsManager.getInstance().getGlobalScheme().getDefaultForeground();
   }
 
-  private void updateImpl() {
+  void update() {
     Color color = getTextForeground();
     myText.setForeground(color);
     myText2.setForeground(color);
@@ -92,6 +76,8 @@ public class PresentationModeProgressPanel {
     if (!myProgressBar.isIndeterminate()) {
       myProgressBar.setValue((int)(myProgress.getFraction() * 99) + 1);
     }
+
+    myEastButtons.forEach(b -> b.updateAction.run());
   }
 
   @NotNull
@@ -104,16 +90,8 @@ public class PresentationModeProgressPanel {
       @Override
       public boolean isVisible() {
         UISettings ui = UISettings.getInstance();
-        return ui.PRESENTATION_MODE || !ui.SHOW_STATUS_BAR && Registry.is("ide.show.progress.without.status.bar");
+        return ui.getPresentationMode() || !ui.getShowStatusBar() && Registry.is("ide.show.progress.without.status.bar");
       }
     };
-    IconButton iconButton = new IconButton(myProgress.getInfo().getCancelTooltipText(),
-                                                 AllIcons.Process.Stop,
-                                                 AllIcons.Process.StopHovered);
-    myCancelButton = new InplaceButton(iconButton, new ActionListener() {
-      public void actionPerformed(@NotNull ActionEvent e) {
-        myProgress.cancelRequest();
-      }
-    }).setFillBg(false);
   }
 }

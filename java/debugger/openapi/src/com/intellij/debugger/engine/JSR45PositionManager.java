@@ -169,11 +169,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
             }
           }
         }
-        catch(ObjectCollectedException ignored) {
-        }
-        catch(AbsentInformationException ignored) {
-        }
-        catch(ClassNotPreparedException ignored) {
+        catch(ObjectCollectedException | ClassNotPreparedException | AbsentInformationException ignored) {
         }
         catch (InternalError ignored) {
           myDebugProcess.printToConsole(

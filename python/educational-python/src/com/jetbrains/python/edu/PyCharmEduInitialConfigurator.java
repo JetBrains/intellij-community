@@ -53,11 +53,13 @@ import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
@@ -72,6 +74,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -99,6 +102,7 @@ public class PyCharmEduInitialConfigurator {
   @NonNls private static final String CONFIGURED = "PyCharmEDU.InitialConfiguration";
   @NonNls private static final String CONFIGURED_V1 = "PyCharmEDU.InitialConfiguration.V1";
   @NonNls private static final String CONFIGURED_V2 = "PyCharmEDU.InitialConfiguration.V2";
+  @NonNls private static final String CONFIGURED_V3 = "PyCharmEDU.InitialConfiguration.V3";
 
   private static final Set<String> UNRELATED_TIPS = Sets.newHashSet("LiveTemplatesDjango.html", "TerminalOpen.html",
                                                                     "Terminal.html", "ConfiguringTerminal.html");
@@ -153,7 +157,7 @@ public class PyCharmEduInitialConfigurator {
     }
     if (!propertiesComponent.getBoolean(CONFIGURED_V1)) {
       patchMainMenu();
-      uiSettings.SHOW_NAVIGATION_BAR = false;
+      uiSettings.setShowNavigationBar(false);
       propertiesComponent.setValue(CONFIGURED_V1, true);
       propertiesComponent.setValue("ShowDocumentationInToolWindow", true);
     }
@@ -162,10 +166,10 @@ public class PyCharmEduInitialConfigurator {
       propertiesComponent.setValue(CONFIGURED, "true");
       propertiesComponent.setValue("toolwindow.stripes.buttons.info.shown", "true");
 
-      uiSettings.HIDE_TOOL_STRIPES = false;
-      uiSettings.SHOW_MEMORY_INDICATOR = false;
-      uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
-      uiSettings.SHOW_MAIN_TOOLBAR = false;
+      uiSettings.setHideToolStripes(false);
+      uiSettings.setShowMemoryIndicator(false);
+      uiSettings.setShowDirectoryForNonUniqueFilenames(true);
+      uiSettings.setShowMainToolbar(false);
 
       codeInsightSettings.REFORMAT_ON_PASTE = CodeInsightSettings.NO_REFORMAT;
 
@@ -176,8 +180,8 @@ public class PyCharmEduInitialConfigurator {
       final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance().getCurrentSettings();
       settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
       settings.getCommonSettings(PythonLanguage.getInstance()).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-      uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
-      uiSettings.SHOW_MEMORY_INDICATOR = false;
+      uiSettings.setShowDirectoryForNonUniqueFilenames(true);
+      uiSettings.setShowMemoryIndicator(false);
       final String ignoredFilesList = fileTypeManager.getIgnoredFilesList();
       ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> FileTypeManager.getInstance().setIgnoredFilesList(ignoredFilesList + ";*$py.class")));
       PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP = false;
@@ -185,28 +189,33 @@ public class PyCharmEduInitialConfigurator {
     final EditorColorsScheme editorColorsScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
     editorColorsScheme.setEditorFontSize(14);
 
-    if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
-
-      bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
-        @Override
-        public void welcomeScreenDisplayed() {
-
+    MessageBusConnection connection = bus.connect();
+    connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+      @Override
+      public void welcomeScreenDisplayed() {
+        if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
           ApplicationManager.getApplication().invokeLater(() -> {
             if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
               GeneralSettings.getInstance().setShowTipsOnStartup(false);
-              propertiesComponent.setValue(DISPLAYED_PROPERTY, "true");
-
               patchKeymap();
+              propertiesComponent.setValue(DISPLAYED_PROPERTY, "true");
             }
           });
         }
-      });
-    }
+      }
 
-    bus.connect().subscribe(ProjectManager.TOPIC, new ProjectManagerAdapter() {
+      @Override
+      public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
+        if (!propertiesComponent.isValueSet(CONFIGURED_V3)) {
+          showInitialConfigurationDialog();
+          propertiesComponent.setValue(CONFIGURED_V3, "true");
+        }
+      }
+    });
+
+    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(final Project project) {
-        if (project.isDefault()) return;
         if (FileChooserUtil.getLastOpenedFile(project) == null) {
           FileChooserUtil.setLastOpenedFile(project, VfsUtil.getUserHomeDir());
         }
@@ -225,6 +234,7 @@ public class PyCharmEduInitialConfigurator {
             ToolWindowManager.getInstance(project).invokeLater(new Runnable() {
               int count = 0;
 
+              @Override
               public void run() {
                 if (project.isDisposed()) return;
                 if (count++ < 3) { // we need to call this after ToolWindowManagerImpl.registerToolWindowsFromBeans
@@ -244,7 +254,7 @@ public class PyCharmEduInitialConfigurator {
             final VirtualFile baseDir = project.getBaseDir();
             final PsiDirectory directory = PsiManager.getInstance(project).findDirectory(baseDir);
             if (directory != null) {
-              InspectionProjectProfileManager.getInstance(project).getInspectionProfile().modifyToolSettings(
+              InspectionProjectProfileManager.getInstance(project).getCurrentProfile().modifyToolSettings(
                 Key.<PyPep8Inspection>create(PyPep8Inspection.INSPECTION_SHORT_NAME), directory,
                 inspection -> Collections.addAll(inspection.ignoredErrors, codes)
               );
@@ -308,6 +318,7 @@ public class PyCharmEduInitialConfigurator {
   private static void patchRootAreaExtensions() {
     ExtensionsArea rootArea = Extensions.getArea(null);
 
+    rootArea.unregisterExtensionPoint("com.intellij.runLineMarkerContributor");
     for (ToolWindowEP ep : Extensions.getExtensions(ToolWindowEP.EP_NAME)) {
       if (ToolWindowId.FAVORITES_VIEW.equals(ep.id) || ToolWindowId.TODO_VIEW.equals(ep.id) || EventLog.LOG_TOOL_WINDOW_ID.equals(ep.id)
           || ToolWindowId.STRUCTURE_VIEW.equals(ep.id)) {
@@ -394,5 +405,12 @@ public class PyCharmEduInitialConfigurator {
       }
     }
   }
-
+  private static void showInitialConfigurationDialog() {
+    DialogBuilder dialog = new DialogBuilder();
+    final CustomizeEduStepPanel panel = new CustomizeEduStepPanel();
+    dialog.setPreferredFocusComponent(panel.getStudentButton());
+    dialog.title("Are you Student or Teacher?").centerPanel(panel);
+    dialog.addOkAction().setText("Start using Pycharm Edu");
+    dialog.show();
+  }
 }

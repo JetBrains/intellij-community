@@ -15,11 +15,6 @@
  */
 package com.jetbrains.python;
 
-import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.util.Computable;
-import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
@@ -72,27 +67,7 @@ public class PyAutoUnindentTest extends PyTestCase {
   private void doTypingTest() throws Exception {
     final String testName = "editing/" + getTestName(true);
     myFixture.configureByFile(testName + ".py");
-    doTyping(':');
+    myFixture.type(':');
     myFixture.checkResultByFile(testName + ".after.py");
   }
-
-  private void doTyping(final char character) {
-    final int offset = myFixture.getEditor().getCaretModel().getOffset();
-    final PsiFile file = WriteCommandAction.runWriteCommandAction(null, new Computable<PsiFile>() {
-      @Override
-      public PsiFile compute() {
-        myFixture.getEditor().getCaretModel().moveToOffset(offset);
-        myFixture.type(character);
-        return myFixture.getFile();
-      }
-    });
-  }
-
-  private void doCompletionTest() throws Exception {
-    final String testName = "editing/" + getTestName(true);
-    myFixture.configureByFile(testName + ".py");
-    LookupElement[] variants = myFixture.complete(CompletionType.SMART);
-    myFixture.checkResultByFile(testName + ".after.py");
-  }
-
 }

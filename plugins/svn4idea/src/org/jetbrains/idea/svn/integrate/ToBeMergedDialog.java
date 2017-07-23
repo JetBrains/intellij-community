@@ -231,20 +231,17 @@ public class ToBeMergedDialog extends DialogWrapper {
   }
 
   private void initUI() {
-    final ListSelectionListener selectionListener = new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        List<SvnChangeList> changeLists = myRevisionsList.getSelectedObjects();
+    final ListSelectionListener selectionListener = e -> {
+      List<SvnChangeList> changeLists = myRevisionsList.getSelectedObjects();
 
-        myAlreadyMerged.clear();
-        for (SvnChangeList changeList : changeLists) {
-          myAlreadyMerged.addAll(getAlreadyMergedPaths(changeList));
-        }
-        myRepositoryChangesBrowser.setChangesToDisplay(collectChanges(changeLists, false));
-
-        mySplitter.doLayout();
-        myRepositoryChangesBrowser.repaint();
+      myAlreadyMerged.clear();
+      for (SvnChangeList changeList : changeLists) {
+        myAlreadyMerged.addAll(getAlreadyMergedPaths(changeList));
       }
+      myRepositoryChangesBrowser.setChangesToDisplay(collectChanges(changeLists, false));
+
+      mySplitter.doLayout();
+      myRepositoryChangesBrowser.repaint();
     };
     final MyListCellRenderer listCellRenderer = new MyListCellRenderer();
     myRevisionsList = new TableView<SvnChangeList>() {
@@ -309,7 +306,7 @@ public class ToBeMergedDialog extends DialogWrapper {
   private ActionToolbar createToolbar() {
     DefaultActionGroup actions = new DefaultActionGroup(new MySelectAll(), new MyUnselectAll(), myMore100Action, myMore500Action);
 
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actions, true);
+    return ActionManager.getInstance().createActionToolbar("SvnToBeMerged", actions, true);
   }
 
   @NotNull
@@ -326,11 +323,6 @@ public class ToBeMergedDialog extends DialogWrapper {
     myRepositoryChangesBrowser.setDecorator(new ChangeNodeDecorator() {
       @Override
       public void decorate(Change change, SimpleColoredComponent component, boolean isShowFlatten) {
-      }
-
-      @Override
-      public List<Pair<String, Stress>> stressPartsOfFileName(Change change, String parentPath) {
-        return null;
       }
 
       @Override

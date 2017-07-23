@@ -110,88 +110,82 @@ public class MavenManifestGenerationBuildTaskProvider extends ArtifactBuildTaskP
       if (earClasspath == null) return;
 
       final Map<String, String> earClasspathMap = ContainerUtil.map2Map(
-        StringUtil.split(earClasspath, " "), new Function<String, Pair<String, String>>() {
-          @Override
-          public Pair<String, String> fun(String s) {
-            final int idx = s.lastIndexOf("/");
-            return Pair.create(s.substring(idx == -1 ? 0 : idx + 1), s);
-          }
+        StringUtil.split(earClasspath, " "), s -> {
+          final int idx = s.lastIndexOf("/");
+          return Pair.create(s.substring(idx == -1 ? 0 : idx + 1), s);
         });
 
-      JpsArtifactUtil.processPackagingElements(myArtifact.getRootElement(), new Processor<JpsPackagingElement>() {
-        @Override
-        public boolean process(JpsPackagingElement element) {
-          if (!(element instanceof JpsFileCopyPackagingElement)) return true;
-          final JpsFileCopyPackagingElement fileCopyPackagingElement = (JpsFileCopyPackagingElement)element;
+      JpsArtifactUtil.processPackagingElements(myArtifact.getRootElement(), element -> {
+        if (!(element instanceof JpsFileCopyPackagingElement)) return true;
+        final JpsFileCopyPackagingElement fileCopyPackagingElement = (JpsFileCopyPackagingElement)element;
 
-          final String filePath = fileCopyPackagingElement.getFilePath();
-          final File skinnyManifest = new File(filePath);
-          if (!"SKINNY_MANIFEST.MF".equals(skinnyManifest.getName())) return true;
+        final String filePath = fileCopyPackagingElement.getFilePath();
+        final File skinnyManifest = new File(filePath);
+        if (!"SKINNY_MANIFEST.MF".equals(skinnyManifest.getName())) return true;
 
-          final String skinnyWarModuleName = skinnyManifest.getParentFile().getParentFile().getName();
-          final MavenModuleResourceConfiguration warConfiguration = projectConfiguration.moduleConfigurations.get(skinnyWarModuleName);
-          if (warConfiguration == null || warConfiguration.classpath == null) return true;
+        final String skinnyWarModuleName = skinnyManifest.getParentFile().getParentFile().getName();
+        final MavenModuleResourceConfiguration warConfiguration = projectConfiguration.moduleConfigurations.get(skinnyWarModuleName);
+        if (warConfiguration == null || warConfiguration.classpath == null) return true;
 
+        try {
+          final byte[] warManifestData = Base64.decode(warConfiguration.manifest);
+          Manifest warManifest = new Manifest(new ByteArrayInputStream(warManifestData));
+
+          List<String> skinnyWarClasspath = ContainerUtil.newArrayList();
+          for (String entry : StringUtil.split(warConfiguration.classpath, " ")) {
+            final int idx = entry.lastIndexOf("/");
+            final String entryName = entry.substring(idx == -1 ? 0 : idx + 1);
+            final String earEntryPath = earClasspathMap.get(entryName);
+            skinnyWarClasspath.add(earEntryPath == null ? entry : earEntryPath);
+          }
+
+          final Attributes warManifestMainAttributes = warManifest.getMainAttributes();
+          warManifestMainAttributes.putValue("Class-Path", StringUtil.join(skinnyWarClasspath, " "));
+
+          File skinnyManifestTargetFile = null;
+          FileUtil.createParentDirs(skinnyManifest);
+          FileOutputStream outputStream = new FileOutputStream(skinnyManifest);
           try {
-            final byte[] warManifestData = Base64.decode(warConfiguration.manifest);
-            Manifest warManifest = new Manifest(new ByteArrayInputStream(warManifestData));
+            warManifest.write(outputStream);
 
-            List<String> skinnyWarClasspath = ContainerUtil.newArrayList();
-            for (String entry : StringUtil.split(warConfiguration.classpath, " ")) {
-              final int idx = entry.lastIndexOf("/");
-              final String entryName = entry.substring(idx == -1 ? 0 : idx + 1);
-              final String earEntryPath = earClasspathMap.get(entryName);
-              skinnyWarClasspath.add(earEntryPath == null ? entry : earEntryPath);
-            }
+            if (fileCopyPackagingElement instanceof JpsElementBase) {
+              final LinkedList<String> pathParts = new LinkedList<>();
+              pathParts.add(fileCopyPackagingElement.getRenamedOutputFileName());
 
-            final Attributes warManifestMainAttributes = warManifest.getMainAttributes();
-            warManifestMainAttributes.putValue("Class-Path", StringUtil.join(skinnyWarClasspath, " "));
-
-            File skinnyManifestTargetFile = null;
-            FileUtil.createParentDirs(skinnyManifest);
-            FileOutputStream outputStream = new FileOutputStream(skinnyManifest);
-            try {
-              warManifest.write(outputStream);
-
-              if (fileCopyPackagingElement instanceof JpsElementBase) {
-                final LinkedList<String> pathParts = new LinkedList<String>();
-                pathParts.add(fileCopyPackagingElement.getRenamedOutputFileName());
-
-                JpsElementBase parent = ((JpsElementBase)fileCopyPackagingElement).getParent();
-                while (parent != null) {
-                  if (parent instanceof JpsDirectoryPackagingElement) {
-                    pathParts.addFirst(((JpsDirectoryPackagingElement)parent).getDirectoryName());
-                  }
-                  else if (parent instanceof JpsArtifact) {
-                    final String outputPath = ((JpsArtifact)parent).getOutputPath();
-                    if (outputPath != null) {
-                      pathParts.addFirst(outputPath);
-                      skinnyManifestTargetFile = new File(StringUtil.join(pathParts, "/"));
-                      break;
-                    }
-                  }
-                  parent = parent.getParent();
+              JpsElementBase parent = ((JpsElementBase)fileCopyPackagingElement).getParent();
+              while (parent != null) {
+                if (parent instanceof JpsDirectoryPackagingElement) {
+                  pathParts.addFirst(((JpsDirectoryPackagingElement)parent).getDirectoryName());
                 }
+                else if (parent instanceof JpsArtifact) {
+                  final String outputPath = ((JpsArtifact)parent).getOutputPath();
+                  if (outputPath != null) {
+                    pathParts.addFirst(outputPath);
+                    skinnyManifestTargetFile = new File(StringUtil.join(pathParts, "/"));
+                    break;
+                  }
+                }
+                parent = parent.getParent();
               }
             }
-            finally {
-              StreamUtil.closeStream(outputStream);
-            }
-
-            if (skinnyManifestTargetFile != null) {
-              FileUtil.createParentDirs(skinnyManifestTargetFile);
-              FileUtil.copy(skinnyManifest, skinnyManifestTargetFile);
-            }
-
-            FSOperations.markDirtyIfNotDeleted(context, CompilationRound.NEXT, skinnyManifest);
-            FSOperations.markDirtyIfNotDeleted(context, CompilationRound.NEXT, skinnyManifestTargetFile);
           }
-          catch (IOException e) {
-            LOG.debug(e);
+          finally {
+            StreamUtil.closeStream(outputStream);
           }
 
-          return true;
+          if (skinnyManifestTargetFile != null) {
+            FileUtil.createParentDirs(skinnyManifestTargetFile);
+            FileUtil.copy(skinnyManifest, skinnyManifestTargetFile);
+          }
+
+          FSOperations.markDirtyIfNotDeleted(context, CompilationRound.NEXT, skinnyManifest);
+          FSOperations.markDirtyIfNotDeleted(context, CompilationRound.NEXT, skinnyManifestTargetFile);
         }
+        catch (IOException e) {
+          LOG.debug(e);
+        }
+
+        return true;
       });
     }
 

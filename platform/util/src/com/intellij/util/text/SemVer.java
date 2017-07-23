@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Holds <a href="http://semver.org">Semantic Version</a>.
  */
-public class SemVer implements Comparable<SemVer> {
+public final class SemVer implements Comparable<SemVer> {
+  /** @deprecated */
   public static final SemVer UNKNOWN = new SemVer("?", 0, 0, 0);
 
   private final String myRawVersion;
@@ -60,17 +61,29 @@ public class SemVer implements Comparable<SemVer> {
   }
 
   @Override
+  public int compareTo(SemVer other) {
+    int diff = myMajor - other.myMajor;
+    if (diff != 0) return diff;
+
+    diff = myMinor - other.myMinor;
+    if (diff != 0) return diff;
+
+    return myPatch - other.myPatch;
+  }
+
+  public boolean isGreaterOrEqualThan(int major, int minor, int patch) {
+    if (myMajor != major) return myMajor > major;
+    if (myMinor != minor) return myMinor > minor;
+    return myPatch >= patch;
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
     SemVer semVer = (SemVer)o;
-
-    if (myMajor != semVer.myMajor) return false;
-    if (myMinor != semVer.myMinor) return false;
-    if (myPatch != semVer.myPatch) return false;
-
-    return true;
+    return myMajor == semVer.myMajor && myMinor == semVer.myMinor && myPatch == semVer.myPatch;
   }
 
   @Override
@@ -87,51 +100,35 @@ public class SemVer implements Comparable<SemVer> {
   }
 
   @Nullable
-  public static SemVer parseFromText(@NotNull String text) {
-    int majorEndInd = text.indexOf('.');
-    if (majorEndInd < 0) {
-      return null;
+  public static SemVer parseFromText(@Nullable String text) {
+    if (text != null) {
+      int majorEndIdx = text.indexOf('.');
+      if (majorEndIdx >= 0) {
+        int minorEndIdx = text.indexOf('.', majorEndIdx + 1);
+        if (minorEndIdx >= 0) {
+          int patchEndIdx = text.indexOf('-', minorEndIdx + 1);
+          if (patchEndIdx < 0) patchEndIdx = text.length();
+
+          int major = StringUtil.parseInt(text.substring(0, majorEndIdx), -1);
+          int minor = StringUtil.parseInt(text.substring(majorEndIdx + 1, minorEndIdx), -1);
+          int patch = StringUtil.parseInt(text.substring(minorEndIdx + 1, patchEndIdx), -1);
+          if (major >= 0 && minor >= 0 && patch >= 0) {
+            return new SemVer(text, major, minor, patch);
+          }
+        }
+      }
     }
-    int major = StringUtil.parseInt(text.substring(0, majorEndInd), -1);
-    int minorEndInd = text.indexOf('.', majorEndInd + 1);
-    if (minorEndInd < 0) {
-      return null;
-    }
-    int minor = StringUtil.parseInt(text.substring(majorEndInd + 1, minorEndInd), -1);
-    final String patchStr;
-    int dashInd = text.indexOf('-', minorEndInd + 1);
-    if (dashInd >= 0) {
-      patchStr = text.substring(minorEndInd + 1, dashInd);
-    }
-    else {
-      patchStr = text.substring(minorEndInd + 1);
-    }
-    int patch = StringUtil.parseInt(patchStr, -1);
-    if (major >= 0 && minor >= 0 && patch >= 0) {
-      return new SemVer(text, major, minor, patch);
-    }
+
     return null;
   }
 
-  @NotNull
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated use {@code ObjectUtils.notNull(SemVer.parseFromText(...), SemVer.UNKNOWN)} (to be removed in IDEA 2019) */
+  @SuppressWarnings("SpellCheckingInspection")
   public static SemVer parseFromTextNonNullize(@Nullable final String text) {
     if (text == null) return UNKNOWN;
     final SemVer ver = parseFromText(text);
     return ver == null ? UNKNOWN : ver;
   }
-
-  @Override
-  public int compareTo(SemVer other) {
-    // null is not permitted
-    if (getMajor() != other.getMajor()) {
-      return getMajor() - other.getMajor();
-    }
-    if (getMinor() != other.getMinor()) {
-      return getMinor() - other.getMinor();
-    }
-    if (getPatch() != other.getPatch()) {
-      return getPatch() - other.getPatch();
-    }
-    return 0;
-  }
+  //</editor-fold>
 }

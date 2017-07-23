@@ -1,7 +1,3 @@
-/*
- * User: anna
- * Date: 18-Aug-2009
- */
 package com.intellij.refactoring.typeMigration.rules;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,6 +12,8 @@ import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
+import com.intellij.util.ObjectUtils;
+import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.atomic.*;
 
 public class AtomicConversionRule extends TypeConversionRule {
-  private static final Logger LOG = Logger.getInstance("#" + AtomicConversionRule.class.getName());
+  private static final Logger LOG = Logger.getInstance(AtomicConversionRule.class);
 
 
   @Override
@@ -42,13 +40,13 @@ public class AtomicConversionRule extends TypeConversionRule {
   }
 
   private static boolean isAtomicTypeMigration(PsiType from, PsiClassType to, PsiExpression context) {
-    if (PsiType.INT.equals(from) && to.getCanonicalText().equals(AtomicInteger.class.getName())) {
+    if (PsiType.INT.isAssignableFrom(from) && to.getCanonicalText().equals(AtomicInteger.class.getName())) {
+      return true;
+    }
+    if (PsiType.LONG.isAssignableFrom(from) && to.getCanonicalText().equals(AtomicLong.class.getName())) {
       return true;
     }
     if (from.equals(PsiType.INT.createArrayType()) && to.getCanonicalText().equals(AtomicIntegerArray.class.getName())) {
-      return true;
-    }
-    if (PsiType.LONG.equals(from) && to.getCanonicalText().equals(AtomicLong.class.getName())) {
       return true;
     }
     if (from.equals(PsiType.LONG.createArrayType()) && to.getCanonicalText().equals(AtomicLongArray.class.getName())) {
@@ -89,6 +87,9 @@ public class AtomicConversionRule extends TypeConversionRule {
     final PsiClass toTypeClass = PsiUtil.resolveClassInType(to);
     LOG.assertTrue(toTypeClass != null);
     final String qualifiedName = toTypeClass.getQualifiedName();
+    if (context instanceof PsiParenthesizedExpression) {
+      context = ParenthesesUtils.stripParentheses((PsiExpression)context);
+    }
     if (qualifiedName != null) {
       if (qualifiedName.equals(AtomicInteger.class.getName()) || qualifiedName.equals(AtomicLong.class.getName())) {
 
@@ -273,12 +274,33 @@ public class AtomicConversionRule extends TypeConversionRule {
           final PsiClassType boxedFromType = ((PsiPrimitiveType)from).getBoxedType(atomicClass);
           LOG.assertTrue(boxedFromType != null);
           if (!TypeConversionUtil.isAssignable(initial, boxedFromType)) {
-            return new TypeConversionDescriptor("$val$", "new " + typeText + "((" + unboxedInitialType.getCanonicalText() + ")$val$)", expression);
+            return new ArrayInitializerAwareConversionDescriptor("$val$", "new " + typeText + "((" + unboxedInitialType.getCanonicalText() + ")$val$)", expression);
           }
         }
       }
     }
-    return new TypeConversionDescriptor("$val$", "new " + typeText + "($val$)", expression);
+    return new ArrayInitializerAwareConversionDescriptor("$val$", "new " + typeText + "($val$)", expression);
+  }
+
+  static class ArrayInitializerAwareConversionDescriptor extends TypeConversionDescriptor {
+    public ArrayInitializerAwareConversionDescriptor(String stringToReplace,
+                                                     String replaceByString,
+                                                     PsiExpression expression) {
+      super(stringToReplace, replaceByString, expression);
+    }
+
+    @NotNull
+    @Override
+    protected PsiExpression adjustExpressionBeforeReplacement(@NotNull PsiExpression expression) {
+      if (expression instanceof PsiArrayInitializerExpression) {
+        PsiElementFactory elementFactory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
+        return (PsiExpression)expression.replace(elementFactory.createExpressionFromText("new " +
+                                                                                         TypeConversionUtil.erasure(expression.getType()).getCanonicalText() +
+                                                                                         expression.getText(),
+                                                                                         expression));
+      }
+      return expression;
+    }
   }
 
   @Nullable
@@ -288,6 +310,9 @@ public class AtomicConversionRule extends TypeConversionRule {
     final PsiElement parent = context.getParent();
     final PsiElement parentParent = parent.getParent();
 
+    if (context instanceof PsiReferenceExpression && isReferenceToLengthField((PsiReferenceExpression)context)) {
+      return new TypeConversionDescriptor("$qualifier$.length", "$qualifier$.length()");
+    }
     if (parent instanceof PsiAssignmentExpression) {
       final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
       final IElementType operationSign = assignmentExpression.getOperationTokenType();
@@ -440,6 +465,15 @@ public class AtomicConversionRule extends TypeConversionRule {
       }
     }
     return null;
+  }
+
+  private static boolean isReferenceToLengthField(@NotNull PsiReferenceExpression refExpr) {
+    if (!"length".equals(refExpr.getReferenceName())) {
+      return false;
+    }
+    PsiClass aClass = JavaPsiFacade.getElementFactory(refExpr.getProject()).getArrayClass(PsiUtil.getLanguageLevel(refExpr));
+    PsiField lengthField = ObjectUtils.notNull(aClass.findFieldByName(HardcodedMethodConstants.LENGTH, false));
+    return refExpr.isReferenceTo(lengthField);
   }
 
 }

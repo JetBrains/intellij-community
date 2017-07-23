@@ -136,7 +136,7 @@ public class SetupTaskIntrospector {
 
       final PyTargetExpression negativeOpt = taskClass.findClassAttribute("negative_opt", true, null);
       final Map<String, String> negativeOptMap = negativeOpt == null
-                                                 ? Collections.<String, String>emptyMap()
+                                                 ? Collections.emptyMap()
                                                  : parseNegativeOpt(negativeOpt.findAssignedValue());
 
 

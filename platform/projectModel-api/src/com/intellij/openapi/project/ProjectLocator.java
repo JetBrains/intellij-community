@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public abstract class ProjectLocator {
+
+  private static final Key<ThreadLocal<Project>> PREFERRED_PROJECT_KEY = Key.create("PREFERRED_PROJECT_KEY");
 
   public static ProjectLocator getInstance() {
     return ServiceManager.getService(ProjectLocator.class);
@@ -40,7 +44,7 @@ public abstract class ProjectLocator {
    * @return project which probably contains the file, or null if couldn't guess (for example, there are no open projects).
    */
   @Nullable
-  public abstract Project guessProjectForFile(VirtualFile file);
+  public abstract Project guessProjectForFile(@Nullable VirtualFile file);
 
   /**
   * Gets all open projects containing the given file.
@@ -50,4 +54,26 @@ public abstract class ProjectLocator {
   */
   @NotNull
   public abstract Collection<Project> getProjectsForFile(VirtualFile file);
+
+  public static <T, E extends Throwable> T computeWithPreferredProject(@NotNull VirtualFile file,
+                                                                       @NotNull Project preferredProject,
+                                                                       @NotNull ThrowableComputable<T, E> action) throws E {
+    ThreadLocal<Project> local = file.getUserData(PREFERRED_PROJECT_KEY);
+    if (local == null) {
+      local = file.putUserDataIfAbsent(PREFERRED_PROJECT_KEY, new ThreadLocal<>());
+    }
+    local.set(preferredProject);
+    try {
+      return action.compute();
+    }
+    finally {
+      local.remove();
+    }
+  }
+
+  @Nullable
+  static Project getPreferredProject(@NotNull VirtualFile file) {
+    ThreadLocal<Project> local = file.getUserData(PREFERRED_PROJECT_KEY);
+    return local != null ? local.get() : null;
+  }
 }

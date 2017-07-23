@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,15 @@ import com.intellij.ide.util.projectWizard.SettingsStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.importing.ImportSpec;
+import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.project.ProjectId;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalModuleBuilder;
 import com.intellij.openapi.externalSystem.service.project.wizard.ExternalModuleSettingsStep;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
@@ -119,8 +123,33 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     final String originModuleFilePath = getModuleFilePath();
     LOG.assertTrue(originModuleFilePath != null);
 
-    String moduleName = myProjectId == null ? getName() : myProjectId.getArtifactId();
-    String moduleFilePath = myWizardContext.getProjectFileDirectory() + "/.idea/modules/" + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
+    String moduleName;
+    if (myProjectId == null) {
+      moduleName = getName();
+    }
+    else {
+      moduleName = ModuleGrouperKt.isQualifiedModuleNamesEnabled() && StringUtil.isNotEmpty(myProjectId.getGroupId())
+                   ? (myProjectId.getGroupId() + '.' + myProjectId.getArtifactId())
+                   : myProjectId.getArtifactId();
+    }
+    Project contextProject = myWizardContext.getProject();
+    String projectFileDirectory = null;
+    if (myWizardContext.isCreatingNewProject() || contextProject == null || contextProject.getBasePath() == null) {
+      projectFileDirectory = myWizardContext.getProjectFileDirectory();
+    }
+    else if (myWizardContext.getProjectStorageFormat() == StorageScheme.DEFAULT) {
+      String moduleFileDirectory = getModuleFileDirectory();
+      if (moduleFileDirectory != null) {
+        projectFileDirectory = moduleFileDirectory;
+      }
+    }
+    if (projectFileDirectory == null) {
+      projectFileDirectory = contextProject.getBasePath();
+    }
+    if (myWizardContext.getProjectStorageFormat() == StorageScheme.DIRECTORY_BASED) {
+      projectFileDirectory += "/.idea/modules";
+    }
+    String moduleFilePath = projectFileDirectory + "/" + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
     deleteModuleFile(moduleFilePath);
     final ModuleType moduleType = getModuleType();
     final Module module = moduleModel.newModule(moduleFilePath, moduleType.getId());
@@ -184,8 +213,14 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     try {
       if (buildScriptDataBuilder != null) {
         buildScriptFile = buildScriptDataBuilder.getBuildScriptFile();
-        final String text = buildScriptDataBuilder.build();
-        appendToFile(buildScriptFile, "\n" + text);
+        String lineSeparator = lineSeparator(buildScriptFile);
+        String configurationPart = StringUtil.convertLineSeparators(buildScriptDataBuilder.buildConfigurationPart(), lineSeparator);
+        String existingText = StringUtil.trimTrailing(VfsUtilCore.loadText(buildScriptFile));
+        String content = (!configurationPart.isEmpty() ? configurationPart + lineSeparator : "") +
+                         (!existingText.isEmpty() ? existingText + lineSeparator : "") +
+                         lineSeparator +
+                         StringUtil.convertLineSeparators(buildScriptDataBuilder.buildMainPart(), lineSeparator);
+        VfsUtil.saveText(buildScriptFile, content);
       }
     }
     catch (IOException e) {
@@ -212,9 +247,12 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
           settings.linkProject(gradleProjectSettings);
         }
 
-        ExternalSystemUtil.refreshProject(
-          project, GradleConstants.SYSTEM_ID, rootProjectPath, false,
-          ProgressExecutionMode.IN_BACKGROUND_ASYNC);
+        ImportSpec importSpec = new ImportSpecBuilder(project, GradleConstants.SYSTEM_ID)
+          .use(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
+          .createDirectoriesForEmptyContentRoots()
+          .useDefaultCallback()
+          .build();
+        ExternalSystemUtil.refreshProject(rootProjectPath, importSpec);
 
         final PsiFile psiFile;
         if (finalBuildScriptFile != null) {
@@ -413,18 +451,35 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
   }
 
   public static void appendToFile(@NotNull VirtualFile file, @NotNull String text) throws IOException {
-    String lineSeparator = LoadTextUtil.detectLineSeparator(file, true);
-    if (lineSeparator == null) {
-      lineSeparator = CodeStyleSettingsManager.getSettings(ProjectManagerEx.getInstanceEx().getDefaultProject()).getLineSeparator();
-    }
+    String lineSeparator = lineSeparator(file);
     final String existingText = StringUtil.trimTrailing(VfsUtilCore.loadText(file));
     String content = (StringUtil.isNotEmpty(existingText) ? existingText + lineSeparator : "") +
                      StringUtil.convertLineSeparators(text, lineSeparator);
     VfsUtil.saveText(file, content);
   }
 
+  @NotNull
+  private static String lineSeparator(@NotNull VirtualFile file) {
+    String lineSeparator = LoadTextUtil.detectLineSeparator(file, true);
+    if (lineSeparator == null) {
+      lineSeparator = CodeStyleSettingsManager.getSettings(ProjectManagerEx.getInstanceEx().getDefaultProject()).getLineSeparator();
+    }
+    return lineSeparator;
+  }
+
   @Nullable
   public static BuildScriptDataBuilder getBuildScriptData(@Nullable Module module) {
     return module == null ? null : module.getUserData(BUILD_SCRIPT_DATA);
+  }
+
+  @Nullable
+  @Override
+  public Project createProject(String name, String path) {
+    Project project = super.createProject(name, path);
+    if (project != null) {
+      GradleProjectSettings settings = getExternalProjectSettings();
+      ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(settings.isStoreProjectFilesExternally());
+    }
+    return project;
   }
 }

@@ -17,12 +17,20 @@ package org.jetbrains.plugins.groovy.regexp;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.JavaRegExpHost;
+import org.intellij.lang.regexp.RegExpLanguageHost;
 import org.intellij.lang.regexp.psi.RegExpChar;
+import org.intellij.lang.regexp.psi.RegExpElement;
 import org.intellij.lang.regexp.psi.RegExpGroup;
 import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
 
 /**
  * @author Bas Leijdekkers
@@ -31,7 +39,7 @@ public class GroovyRegExpHost extends JavaRegExpHost {
 
   @Override
   public boolean supportsNamedGroupSyntax(RegExpGroup group) {
-    if (group.isNamedGroup()) {
+    if (group.getType() == RegExpGroup.Type.NAMED_GROUP) {
       final String version = getGroovyVersion(group);
       return version != null && version.compareTo(GroovyConfigUtils.GROOVY2_0) >= 0;
     }
@@ -45,6 +53,16 @@ public class GroovyRegExpHost extends JavaRegExpHost {
       return version != null && version.compareTo(GroovyConfigUtils.GROOVY2_0) >= 0;
     }
     return false;
+  }
+
+  @NotNull
+  @Override
+  public EnumSet<RegExpGroup.Type> getSupportedNamedGroupTypes(RegExpElement context) {
+    final String version = getGroovyVersion(context);
+    if (version == null || version.compareTo(GroovyConfigUtils.GROOVY2_0) < 0) {
+      return EMPTY_NAMED_GROUP_TYPES;
+    }
+    return SUPPORTED_NAMED_GROUP_TYPES;
   }
 
   @Override

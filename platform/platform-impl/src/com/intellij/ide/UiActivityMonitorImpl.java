@@ -32,32 +32,32 @@ import javax.swing.*;
 import java.util.*;
 
 public class UiActivityMonitorImpl extends UiActivityMonitor implements ModalityStateListener, Disposable {
-  private final FactoryMap<Project, BusyContainer> myObjects = new FactoryMap<Project, BusyContainer>() {
-    @Override
-    protected BusyContainer create(Project key) {
-      if (isEmpty()) {
-        installListener();
-      }
-      return key == null ? new BusyContainer(null) : new BusyContainer(null) {
-            @NotNull
-            @Override
-            protected BusyImpl createBusyImpl(@NotNull Set<UiActivity> key) {
-              return new BusyImpl(key, this) {
-                @Override
-                public boolean isReady() {
-                  for (Map.Entry<Project, BusyContainer> entry : myObjects.entrySet()) {
-                    final BusyContainer eachContainer = entry.getValue();
-                    final BusyImpl busy = eachContainer.getOrCreateBusy(myToWatchArray);
-                    if (busy == this) continue;
-                    if (!busy.isOwnReady()) return false;
-                  }
-                  return isOwnReady();
-                }
-              };
-            }
-      };
+  private final Map<Project, BusyContainer> myObjects = FactoryMap.createMap(this::create);
+
+  @NotNull
+  private BusyContainer create(Project key) {
+    if (myObjects.isEmpty()) {
+      installListener();
     }
-  };
+    return key == null ? new BusyContainer(null) : new BusyContainer(null) {
+          @NotNull
+          @Override
+          protected BusyImpl createBusyImpl(@NotNull Set<UiActivity> key) {
+            return new BusyImpl(key, this) {
+              @Override
+              public boolean isReady() {
+                for (Map.Entry<Project, BusyContainer> entry : myObjects.entrySet()) {
+                  final BusyContainer eachContainer = entry.getValue();
+                  final BusyImpl busy = eachContainer.getOrCreateBusy(myToWatchArray);
+                  if (busy == this) continue;
+                  if (!busy.isOwnReady()) return false;
+                }
+                return isOwnReady();
+              }
+            };
+          }
+    };
+  }
 
   private boolean myActive;
 

@@ -15,8 +15,7 @@
  */
 package com.intellij.slicer;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.usageView.UsageInfo;
 import gnu.trove.THashMap;
@@ -45,16 +44,13 @@ public class DuplicateMap {
   private final Map<SliceUsage, SliceNode> myDuplicates = new THashMap<>(USAGE_INFO_EQUALITY);
 
   SliceNode putNodeCheckDupe(@NotNull final SliceNode node) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<SliceNode>() {
-      @Override
-      public SliceNode compute() {
-        SliceUsage usage = node.getValue();
-        SliceNode eq = myDuplicates.get(usage);
-        if (eq == null) {
-          myDuplicates.put(usage, node);
-        }
-        return eq;
+    return ReadAction.compute(() -> {
+      SliceUsage usage = node.getValue();
+      SliceNode eq = myDuplicates.get(usage);
+      if (eq == null) {
+        myDuplicates.put(usage, node);
       }
+      return eq;
     });
   }
 

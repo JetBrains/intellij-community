@@ -9,8 +9,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="external-system-rt" />
     <orderEntry type="module" module-name="annotations" />
-    <orderEntry type="module" module-name="testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="library" exported="" name="Slf4j" level="project" />
     <orderEntry type="library" exported="" name="Gradle" level="project" />
     <orderEntry type="module-library" scope="PROVIDED">

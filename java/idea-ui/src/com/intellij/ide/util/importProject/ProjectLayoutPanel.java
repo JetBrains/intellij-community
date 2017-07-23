@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
@@ -210,76 +209,61 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
   protected static String getElementText(Object element) {
     if (element instanceof LibraryDescriptor) {
-      final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-      try {
-        builder.append(((LibraryDescriptor)element).getName());
-        final Collection<File> jars = ((LibraryDescriptor)element).getJars();
-        if (jars.size() == 1) {
-          final File parentFile = jars.iterator().next().getParentFile();
-          if (parentFile != null) {
-            builder.append(" (");
-            builder.append(parentFile.getPath());
-            builder.append(")");
-          }
-        }
-        return builder.toString();
-      }
-      finally {
-        StringBuilderSpinAllocator.dispose(builder);
-      }
-    }
-    
-    if (element instanceof File) {
-      final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-      try {
-        builder.append(((File)element).getName());
-        final File parentFile = ((File)element).getParentFile();
+      final StringBuilder builder = new StringBuilder();
+      builder.append(((LibraryDescriptor)element).getName());
+      final Collection<File> jars = ((LibraryDescriptor)element).getJars();
+      if (jars.size() == 1) {
+        final File parentFile = jars.iterator().next().getParentFile();
         if (parentFile != null) {
           builder.append(" (");
           builder.append(parentFile.getPath());
           builder.append(")");
         }
-        return builder.toString();
       }
-      finally {
-        StringBuilderSpinAllocator.dispose(builder);
+      return builder.toString();
+    }
+    
+    if (element instanceof File) {
+      final StringBuilder builder = new StringBuilder();
+      builder.append(((File)element).getName());
+      final File parentFile = ((File)element).getParentFile();
+      if (parentFile != null) {
+        builder.append(" (");
+        builder.append(parentFile.getPath());
+        builder.append(")");
       }
+      return builder.toString();
     }
     
     if (element instanceof ModuleDescriptor) {
       final ModuleDescriptor moduleDescriptor = (ModuleDescriptor)element;
-      final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-      try {
-        builder.append(moduleDescriptor.getName());
-        
-        final Set<File> contents = moduleDescriptor.getContentRoots();
-        final int rootCount = contents.size();
-        if (rootCount > 0) {
-          builder.append(" (");
-          builder.append(contents.iterator().next().getPath());
-          if (rootCount > 1) {
-            builder.append("...");
-          }
-          builder.append(")");
-        }
+      final StringBuilder builder = new StringBuilder();
+      builder.append(moduleDescriptor.getName());
 
-        final Collection<? extends DetectedProjectRoot> sourceRoots = moduleDescriptor.getSourceRoots();
-        if (sourceRoots.size() > 0) {
-          builder.append(" [");
-          for (Iterator<? extends DetectedProjectRoot> it = sourceRoots.iterator(); it.hasNext();) {
-            DetectedProjectRoot root = it.next();
-            builder.append(root.getDirectory().getName());
-            if (it.hasNext()) {
-              builder.append(",");
-            }
-          }
-          builder.append("]");
+      final Set<File> contents = moduleDescriptor.getContentRoots();
+      final int rootCount = contents.size();
+      if (rootCount > 0) {
+        builder.append(" (");
+        builder.append(contents.iterator().next().getPath());
+        if (rootCount > 1) {
+          builder.append("...");
         }
-        return builder.toString();
+        builder.append(")");
       }
-      finally {
-        StringBuilderSpinAllocator.dispose(builder);
+
+      final Collection<? extends DetectedProjectRoot> sourceRoots = moduleDescriptor.getSourceRoots();
+      if (sourceRoots.size() > 0) {
+        builder.append(" [");
+        for (Iterator<? extends DetectedProjectRoot> it = sourceRoots.iterator(); it.hasNext();) {
+          DetectedProjectRoot root = it.next();
+          builder.append(root.getDirectory().getName());
+          if (it.hasNext()) {
+            builder.append(",");
+          }
+        }
+        builder.append("]");
       }
+      return builder.toString();
     }
     
     return "";
@@ -397,7 +381,6 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
             myEntriesChooser.sort(COMPARATOR);
             myEntriesChooser.selectElements(Collections.singleton(extracted));
           }
-          ;
         }
       }
     }

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 19-Nov-2008
- */
 package com.intellij.refactoring.extractclass.usageInfo;
 
 import com.intellij.openapi.project.Project;

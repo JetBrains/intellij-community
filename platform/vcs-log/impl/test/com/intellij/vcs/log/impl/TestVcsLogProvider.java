@@ -131,8 +131,9 @@ public class TestVcsLogProvider implements VcsLogProvider {
 
   @Override
   public void readFullDetails(@NotNull VirtualFile root,
-                              @Nullable List<String> hashes,
-                              @NotNull Consumer<VcsFullCommitDetails> commitConsumer) throws VcsException {
+                              @NotNull List<String> hashes,
+                              @NotNull Consumer<VcsFullCommitDetails> commitConsumer,
+                              boolean fast) throws VcsException {
     throw new UnsupportedOperationException();
   }
 
@@ -231,6 +232,12 @@ public class TestVcsLogProvider implements VcsLogProvider {
   @Nullable
   @Override
   public String getCurrentBranch(@NotNull VirtualFile root) {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public VcsLogDiffHandler getDiffHandler() {
     return null;
   }
 

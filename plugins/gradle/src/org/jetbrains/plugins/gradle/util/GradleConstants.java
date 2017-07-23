@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Holds object representation of icons used at the <code>Gradle</code> plugin.
+ * Holds object representation of icons used at the {@code Gradle} plugin.
  * 
  * @author Denis Zhdanov
  * @since 8/1/11 3:10 PM

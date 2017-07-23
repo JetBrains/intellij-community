@@ -38,7 +38,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.proxy.CommonProxy;
@@ -62,7 +61,6 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.net.*;
 import java.util.*;
 import java.util.List;
@@ -112,21 +110,18 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
 
     final Ref<Boolean> resultRef = new Ref<>();
 
-    final Runnable checker = new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final boolean result =
-            interactiveValidation(obj.myProject, obj.getUrl(), obj.getRealm(), obj.getKind());
-          log("ask result for: " + obj.getUrl() + " is: " + result);
-          resultRef.set(result);
-          if (result) {
-            onStateChangedToSuccess(obj);
-          }
+    final Runnable checker = () -> {
+      try {
+        final boolean result =
+          interactiveValidation(obj.myProject, obj.getUrl(), obj.getRealm(), obj.getKind());
+        log("ask result for: " + obj.getUrl() + " is: " + result);
+        resultRef.set(result);
+        if (result) {
+          onStateChangedToSuccess(obj);
         }
-        finally {
-          myVerificationInProgress = false;
-        }
+      }
+      finally {
+        myVerificationInProgress = false;
       }
     };
     final Application application = ApplicationManager.getApplication();
@@ -173,12 +168,9 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
       }
     }
     log("on state changed ");
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        for (SVNURL key : outdatedRequests) {
-          removeLazyNotificationByKey(key);
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      for (SVNURL key : outdatedRequests) {
+        removeLazyNotificationByKey(key);
       }
     }, ModalityState.NON_MODAL);
   }
@@ -239,8 +231,7 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     if (Boolean.FALSE.equals(keptResult)) return ThreeState.NO;
 
     // check have credentials
-    final boolean calculatedResult =
-      factory == null ? passiveValidation(myVcs.getProject(), wcCopy.getUrl()) : passiveValidation(factory, wcCopy.getUrl());
+    boolean calculatedResult = factory == null ? passiveValidation(myVcs, wcCopy.getUrl()) : passiveValidation(factory, wcCopy.getUrl());
     myCopiesPassiveResults.put(wcCopy.getUrl(), calculatedResult);
     return calculatedResult ? ThreeState.YES : ThreeState.NO;
   }
@@ -325,10 +316,10 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
     LOG.debug(s);
   }
 
-  public static boolean passiveValidation(final Project project, final SVNURL url) {
-    final SvnConfiguration configuration = SvnConfiguration.getInstance(project);
-    final SvnAuthenticationManager passiveManager = configuration.getPassiveAuthenticationManager(project);
-    return validationImpl(project, url, configuration, passiveManager, false, null, null, false);
+  public static boolean passiveValidation(@NotNull SvnVcs vcs, final SVNURL url) {
+    SvnConfiguration configuration = vcs.getSvnConfiguration();
+    SvnAuthenticationManager passiveManager = configuration.getPassiveAuthenticationManager(vcs);
+    return validationImpl(vcs.getProject(), url, configuration, passiveManager, false, null, null, false);
   }
 
   public static boolean interactiveValidation(final Project project, final SVNURL url, final String realm, final String kind) {
@@ -379,11 +370,8 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
       // start svnkit authentication cycle
       SvnVcs.getInstance(project).getSvnKitManager().createWCClient(manager).doInfo(url, SVNRevision.UNDEFINED, SVNRevision.HEAD);
       //SvnVcs.getInstance(project).getInfo(url, SVNRevision.HEAD, manager);
-    } catch (SVNAuthenticationException e) {
+    } catch (SVNAuthenticationException | SVNCancelException e) {
       log(e);
-      return false;
-    } catch (SVNCancelException e) {
-      log(e); // auth canceled
       return false;
     } catch (final SVNException e) {
       if (e.getErrorMessage().getErrorCode().isAuthentication()) {
@@ -432,35 +420,23 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
   private static void showAuthenticationFailedWithHotFixes(final Project project,
                                                            final SvnConfiguration configuration,
                                                            final SVNException e) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        VcsBalloonProblemNotifier.showOverChangesView(project, "Authentication failed: " + e.getMessage(), MessageType.ERROR,
-                                                      new NamedRunnable(
-                                                        SvnBundle.message("confirmation.title.clear.authentication.cache")) {
-                                                        @Override
-                                                        public void run() {
-                                                          clearAuthenticationCache(project, null, configuration
-                                                            .getConfigurationDirectory());
-                                                        }
-                                                      },
-                                                      new NamedRunnable(SvnBundle.message("action.title.select.configuration.directory")) {
-                                                        @Override
-                                                        public void run() {
-                                                          SvnConfigurable
-                                                            .selectConfigurationDirectory(configuration.getConfigurationDirectory(),
-                                                                                          new Consumer<String>() {
-                                                                                            @Override
-                                                                                            public void consume(String s) {
-                                                                                              configuration
-                                                                                                .setConfigurationDirParameters(false, s);
-                                                                                            }
-                                                                                          }, project, null);
-                                                        }
-                                                      }
-        );
-      }
-    }, ModalityState.NON_MODAL, project.getDisposed());
+    ApplicationManager.getApplication().invokeLater(() -> VcsBalloonProblemNotifier
+      .showOverChangesView(project, "Authentication failed: " + e.getMessage(), MessageType.ERROR, new NamedRunnable(
+                             SvnBundle.message("confirmation.title.clear.authentication.cache")) {
+                             @Override
+                             public void run() {
+                               clearAuthenticationCache(project, null, configuration
+                                 .getConfigurationDirectory());
+                             }
+                           }, new NamedRunnable(
+                             SvnBundle.message("action.title.select.configuration.directory")) {
+                             @Override
+                             public void run() {
+                               SvnConfigurable.selectConfigurationDirectory(configuration.getConfigurationDirectory(),
+                                                                            s -> configuration.setConfigurationDirParameters(false, s), project, null);
+                             }
+                           }
+      ), ModalityState.NON_MODAL, project.getDisposed());
   }
 
   public static void clearAuthenticationCache(@NotNull final Project project, final Component component, final String configDirPath) {
@@ -485,27 +461,19 @@ public class SvnAuthenticationNotifier extends GenericNotifierImpl<SvnAuthentica
   public static void clearAuthenticationDirectory(@NotNull SvnConfiguration configuration) {
     final File authDir = new File(configuration.getConfigurationDirectory(), "auth");
     if (authDir.exists()) {
-      final Runnable process = new Runnable() {
-        @Override
-        public void run() {
-          final ProgressIndicator ind = ProgressManager.getInstance().getProgressIndicator();
-          if (ind != null) {
-            ind.setIndeterminate(true);
-            ind.setText("Clearing stored credentials in " + authDir.getAbsolutePath());
-          }
-          final File[] files = authDir.listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(@NotNull File dir, @NotNull String name) {
-              return ourAuthKinds.contains(name);
-            }
-          });
+      final Runnable process = () -> {
+        final ProgressIndicator ind = ProgressManager.getInstance().getProgressIndicator();
+        if (ind != null) {
+          ind.setIndeterminate(true);
+          ind.setText("Clearing stored credentials in " + authDir.getAbsolutePath());
+        }
+        final File[] files = authDir.listFiles((dir, name) -> ourAuthKinds.contains(name));
 
-          for (File dir : files) {
-            if (ind != null) {
-              ind.setText("Deleting " + dir.getAbsolutePath());
-            }
-            FileUtil.delete(dir);
+        for (File dir : files) {
+          if (ind != null) {
+            ind.setText("Deleting " + dir.getAbsolutePath());
           }
+          FileUtil.delete(dir);
         }
       };
       final Application application = ApplicationManager.getApplication();

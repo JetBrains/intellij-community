@@ -85,7 +85,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     }
 
     DummyHolderFactory.setFactory(new JavaDummyHolderFactory());
-    myElementFinders = new SimpleSmartExtensionPoint<PsiElementFinder>(Collections.<PsiElementFinder>emptyList()) {
+    myElementFinders = new SimpleSmartExtensionPoint<PsiElementFinder>(Collections.emptyList()) {
       @NotNull
       @Override
       protected ExtensionPoint<PsiElementFinder> getExtensionPoint() {
@@ -172,7 +172,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     for (PsiElementFinder finder : finders) {
       PsiClass[] finderClasses = finder.findClasses(qualifiedName, scope);
       if (finderClasses.length != 0) {
-        if (result == null) result = new ArrayList<PsiClass>(finderClasses.length);
+        if (result == null) result = new ArrayList<>(finderClasses.length);
         filterClassesAndAppend(finder, classesFilter, finderClasses, result);
       }
     }
@@ -248,7 +248,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
   @NotNull
   public Set<String> getClassNames(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-    Set<String> result = new THashSet<String>();
+    Set<String> result = new THashSet<>();
     for (PsiElementFinder finder : filteredFinders()) {
       result.addAll(finder.getClassNames(psiPackage, scope));
     }
@@ -264,7 +264,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     for (PsiElementFinder finder : finders) {
       PsiClass[] classes = finder.getClasses(psiPackage, scope);
       if (classes.length == 0) continue;
-      if (result == null) result = new ArrayList<PsiClass>(classes.length);
+      if (result == null) result = new ArrayList<>(classes.length);
       filterClassesAndAppend(finder, classesFilter, classes, result);
     }
 
@@ -302,7 +302,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       }
     }
 
-    Set<PsiFile> result = new LinkedHashSet<PsiFile>();
+    Set<PsiFile> result = new LinkedHashSet<>();
     PsiDirectory[] directories = psiPackage.getDirectories(scope);
     for (PsiDirectory directory : directories) {
       for (PsiFile file : directory.getFiles()) {
@@ -332,7 +332,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
 
   @NotNull
   public PsiPackage[] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-    LinkedHashMap<String, PsiPackage> result = new LinkedHashMap<String, PsiPackage>();
+    LinkedHashMap<String, PsiPackage> result = new LinkedHashMap<>();
     for (PsiElementFinder finder : filteredFinders()) {
       // Ensure uniqueness of names in the returned list of subpackages. If a plugin PsiElementFinder
       // returns the same package from its getSubPackages() implementation that Java already knows about

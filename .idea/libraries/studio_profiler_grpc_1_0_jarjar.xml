@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="studio-profiler-grpc-1.0-jarjar">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/android/android/lib/studio-profiler-grpc-1.0-jarjar.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

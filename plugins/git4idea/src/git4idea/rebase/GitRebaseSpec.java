@@ -16,14 +16,12 @@
 package git4idea.rebase;
 
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import git4idea.GitLocalBranch;
@@ -85,9 +83,9 @@ public class GitRebaseSpec {
                                                           @NotNull GitRepository repository,
                                                           @NotNull ProgressIndicator indicator) {
     if (!repository.isRebaseInProgress()) return null;
-    GitRebaseStatus suspended = new GitRebaseStatus(GitRebaseStatus.Type.SUSPENDED, Collections.<GitRebaseUtils.CommitInfo>emptyList());
+    GitRebaseStatus suspended = new GitRebaseStatus(GitRebaseStatus.Type.SUSPENDED, Collections.emptyList());
     return new GitRebaseSpec(null, Collections.singletonMap(repository, suspended),
-                             Collections.<GitRepository, String>emptyMap(), Collections.<GitRepository, String>emptyMap(), newSaver(project, indicator), false);
+                             Collections.emptyMap(), Collections.emptyMap(), newSaver(project, indicator), false);
   }
 
   public boolean isValid() {
@@ -121,12 +119,7 @@ public class GitRebaseSpec {
 
   @NotNull
   public Map<GitRepository,String> getHeadPositionsToRollback() {
-    return ContainerUtil.filter(myInitialHeadPositions, new Condition<GitRepository>() {
-      @Override
-      public boolean value(GitRepository repository) {
-        return myStatuses.get(repository).getType() == GitRebaseStatus.Type.SUCCESS;
-      }
-    });
+    return ContainerUtil.filter(myInitialHeadPositions, repository -> myStatuses.get(repository).getType() == GitRebaseStatus.Type.SUCCESS);
   }
 
   /**
@@ -156,31 +149,24 @@ public class GitRebaseSpec {
     List<GitRepository> incompleteRepositories = ContainerUtil.newArrayList();
     final GitRepository ongoingRebase = getOngoingRebase();
     if (ongoingRebase != null) incompleteRepositories.add(ongoingRebase);
-    incompleteRepositories.addAll(DvcsUtil.sortRepositories(ContainerUtil.filter(myStatuses.keySet(), new Condition<GitRepository>() {
-      @Override
-      public boolean value(@NotNull GitRepository repository) {
-        return !repository.equals(ongoingRebase) && myStatuses.get(repository).getType() != GitRebaseStatus.Type.SUCCESS;
-      }
-    })));
+    incompleteRepositories.addAll(DvcsUtil.sortRepositories(ContainerUtil.filter(myStatuses.keySet(),
+                                                                                 repository -> !repository.equals(ongoingRebase) && myStatuses.get(repository).getType() != GitRebaseStatus.Type.SUCCESS)));
     return incompleteRepositories;
   }
 
   @NotNull
   private static GitStashChangesSaver newSaver(@NotNull Project project, @NotNull ProgressIndicator indicator) {
-    Git git = ServiceManager.getService(Git.class);
-    return new GitStashChangesSaver(project, git, indicator, "Uncommitted changes before rebase");
+    Git git = Git.getInstance();
+    return new GitStashChangesSaver(project, git, indicator, VcsBundle.message("stash.changes.message", "rebase"));
   }
 
   @NotNull
   private static Map<GitRepository, String> findInitialHeadPositions(@NotNull Collection<GitRepository> repositories,
                                                                      @Nullable final String branchToCheckout) {
-    return ContainerUtil.map2Map(repositories, new Function<GitRepository, Pair<GitRepository, String>>() {
-      @Override
-      public Pair<GitRepository, String> fun(@NotNull GitRepository repository) {
-        String currentRevision = findCurrentRevision(repository, branchToCheckout);
-        LOG.debug("Current revision in [" + repository.getRoot().getName() + "] is [" + currentRevision + "]");
-        return Pair.create(repository, currentRevision);
-      }
+    return ContainerUtil.map2Map(repositories, repository -> {
+      String currentRevision = findCurrentRevision(repository, branchToCheckout);
+      LOG.debug("Current revision in [" + repository.getRoot().getName() + "] is [" + currentRevision + "]");
+      return Pair.create(repository, currentRevision);
     });
   }
 
@@ -206,24 +192,16 @@ public class GitRebaseSpec {
 
   @NotNull
   private static Map<GitRepository, String> findInitialBranchNames(@NotNull Collection<GitRepository> repositories) {
-    return ContainerUtil.map2Map(repositories, new Function<GitRepository, Pair<GitRepository, String>>() {
-      @Override
-      public Pair<GitRepository, String> fun(@NotNull GitRepository repository) {
-        String currentBranchName = repository.getCurrentBranchName();
-        LOG.debug("Current branch in [" + repository.getRoot().getName() + "] is [" + currentBranchName + "]");
-        return Pair.create(repository, currentBranchName);
-      }
+    return ContainerUtil.map2Map(repositories, repository -> {
+      String currentBranchName = repository.getCurrentBranchName();
+      LOG.debug("Current branch in [" + repository.getRoot().getName() + "] is [" + currentBranchName + "]");
+      return Pair.create(repository, currentBranchName);
     });
   }
 
   @NotNull
   private Collection<GitRepository> getOngoingRebases() {
-    return ContainerUtil.filter(myStatuses.keySet(), new Condition<GitRepository>() {
-      @Override
-      public boolean value(@NotNull GitRepository repository) {
-        return myStatuses.get(repository).getType() == GitRebaseStatus.Type.SUSPENDED;
-      }
-    });
+    return ContainerUtil.filter(myStatuses.keySet(), repository -> myStatuses.get(repository).getType() == GitRebaseStatus.Type.SUSPENDED);
   }
 
   private boolean singleOngoingRebase() {
@@ -253,18 +231,10 @@ public class GitRebaseSpec {
 
   @Override
   public String toString() {
-    String initialHeadPositions = StringUtil.join(myInitialHeadPositions.keySet(), new Function<GitRepository, String>() {
-      @Override
-      public String fun(@NotNull GitRepository repository) {
-        return DvcsUtil.getShortRepositoryName(repository) + ": " + myInitialHeadPositions.get(repository);
-      }
-    }, ", ");
-    String statuses = StringUtil.join(myStatuses.keySet(), new Function<GitRepository, String>() {
-      @Override
-      public String fun(GitRepository repository) {
-        return DvcsUtil.getShortRepositoryName(repository) + ": " + myStatuses.get(repository);
-      }
-    }, ", ");
+    String initialHeadPositions = StringUtil.join(myInitialHeadPositions.keySet(),
+                                                  repository -> DvcsUtil.getShortRepositoryName(repository) + ": " + myInitialHeadPositions.get(repository), ", ");
+    String statuses = StringUtil.join(myStatuses.keySet(),
+                                      repository -> DvcsUtil.getShortRepositoryName(repository) + ": " + myStatuses.get(repository), ", ");
     return String.format("{Params: [%s].\nInitial positions: %s.\nStatuses: %s.\nSaver: %s}", myParams, initialHeadPositions, statuses, mySaver);
   }
 }

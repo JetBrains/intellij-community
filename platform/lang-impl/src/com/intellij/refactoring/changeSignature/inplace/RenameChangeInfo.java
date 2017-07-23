@@ -26,10 +26,6 @@ import com.intellij.refactoring.rename.RenameProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
-* User: anna
-* Date: 10/29/10
-*/
 public abstract class RenameChangeInfo implements ChangeInfo {
   private final PsiFile myFile;
   private final int myOffset;

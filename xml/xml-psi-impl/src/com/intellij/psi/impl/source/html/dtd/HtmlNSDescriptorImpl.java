@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -147,9 +148,10 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
     myDelegate.init(element);
   }
 
+  @NotNull
   @Override
   public Object[] getDependences() {
-    return myDelegate == null ? null : myDelegate.getDependences();
+    return myDelegate == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : myDelegate.getDependences();
   }
 
   @Override

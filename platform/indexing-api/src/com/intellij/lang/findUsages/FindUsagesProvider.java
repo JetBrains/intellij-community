@@ -17,6 +17,7 @@ package com.intellij.lang.findUsages;
 
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +55,7 @@ public interface FindUsagesProvider {
    * @param psiElement the element for which the help topic is requested.
    * @return the help topic ID, or null if no help is available.
    */
-  @Nullable
+  @Nullable @NonNls
   String getHelpId(@NotNull PsiElement psiElement);
 
   /**

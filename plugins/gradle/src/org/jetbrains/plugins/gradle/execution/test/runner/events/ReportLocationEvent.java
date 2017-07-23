@@ -15,8 +15,8 @@
  */
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
-import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
 
 import java.io.File;
 
@@ -31,9 +31,8 @@ public class ReportLocationEvent extends AbstractTestEvent {
   }
 
   @Override
-  public void process(XmlXpathHelper eventXml) throws XmlXpathHelper.XmlParserException {
-    final String testReport = eventXml.queryXml("/ijLog/event/@testReport");
-    assert testReport != null;
+  public void process(@NotNull final TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException {
+    final String testReport = eventXml.getEventTestReport();
     getProperties().setGradleTestReport(new File(testReport));
   }
 }

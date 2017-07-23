@@ -120,36 +120,6 @@ def test_is_not_empty():
         failed("The file is empty. Please, reload the task and try again.")
 
 
-def test_is_initial_text(error_text="You should modify the file"):
-    """
-        Checks that file was modified
-    """
-    path = sys.argv[-1]
-    text = get_initial_text(path)
-    file_text = get_file_text(path)
-
-    if file_text.strip() == text.strip():
-        failed(error_text)
-    else:
-        passed()
-
-
-def get_initial_text(path):
-    """
-        Returns the initial task text
-    """
-    course_lib = sys.argv[-2]
-    test_dir = sys.argv[-3]
-    import os
-    lesson_task = os.sep.join(test_dir.split(os.sep)[-3:-1])
-    task_dir = os.sep.join(test_dir.split(os.sep)[:-1])
-    relative_path = lesson_task + os.sep + path[len(task_dir):]
-
-    # path format is "project_root/lessonX/taskY/.../file.py"
-    initial_file_path = os.path.join(course_lib, relative_path)
-    return get_file_text(initial_file_path)
-
-
 def test_text_equals(text, error_text):
     """
         Checks that answer equals text.
@@ -248,15 +218,7 @@ def check_samples(samples=()):
     passed()
 
 
-def do_not_run_on_check():
-    """
-    Do not execute task file on check
-    """
-    print("#educational_plugin DO_NOT_RUN_ON_CHECK")
-
-
 def run_common_tests(error_text="Please, reload file and try again"):
-    test_is_initial_text()
     test_is_not_empty()
     test_answer_placeholders_text_deleted()
     test_file_importable()

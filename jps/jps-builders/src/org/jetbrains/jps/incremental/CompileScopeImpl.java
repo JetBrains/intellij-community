@@ -43,7 +43,7 @@ public class CompileScopeImpl extends CompileScope {
                           Collection<BuildTarget<?>> targets,
                           @NotNull Map<BuildTarget<?>, Set<File>> files) {
     myTypes = types;
-    myTypesToForceBuild = new HashSet<BuildTargetType<?>>();
+    myTypesToForceBuild = new HashSet<>();
     boolean forceBuildAllModuleBasedTargets = false;
     for (BuildTargetType<?> type : typesToForceBuild) {
       myTypesToForceBuild.add(type);
@@ -67,7 +67,7 @@ public class CompileScopeImpl extends CompileScope {
 
   @Override
   public boolean isWholeTargetAffected(@NotNull BuildTarget<?> target) {
-    return myTypes.contains(target.getTargetType()) || myTargets.contains(target) || isAffectedByAssociatedModule(target);
+    return (myTypes.contains(target.getTargetType()) || myTargets.contains(target) || isAffectedByAssociatedModule(target)) && !myFiles.containsKey(target);
   }
 
   @Override

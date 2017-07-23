@@ -31,7 +31,7 @@ public abstract class DirDiffManager {
     return ServiceManager.getService(project, DirDiffManager.class);
   }
   
-  public abstract void showDiff(@NotNull DiffElement dir1, @NotNull DiffElement dir2, DirDiffSettings settings, @Nullable Runnable onWindowClose);
+  public abstract void showDiff(@NotNull DiffElement dir1, @NotNull DiffElement dir2, DirDiffSettings settings, @Nullable Runnable onWindowClosing);
 
   public abstract void showDiff(@NotNull DiffElement dir1, @NotNull DiffElement dir2, DirDiffSettings settings);
 

@@ -23,12 +23,12 @@ import com.intellij.ide.todo.ToDoSummary;
 import com.intellij.ide.todo.TodoFileDirAndModuleComparator;
 import com.intellij.ide.todo.TodoTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -56,13 +56,7 @@ public class SummaryNode extends BaseToDoNode<ToDoSummary> {
           continue;
         }
         final VirtualFile virtualFile = psiFile.getVirtualFile();
-        Module module = projectFileIndex.getModuleForFile(virtualFile);
-        if (module != null) {
-          ModuleToDoNode moduleToDoNode = new ModuleToDoNode(getProject(), module, myBuilder);
-          if (!children.contains(moduleToDoNode)) {
-            children.add(moduleToDoNode);
-          }
-        }
+        createModuleTodoNodeForFile(children, projectFileIndex, virtualFile);
       }
     }
     else {
@@ -94,8 +88,19 @@ public class SummaryNode extends BaseToDoNode<ToDoSummary> {
 
   }
 
+  protected void createModuleTodoNodeForFile(ArrayList<AbstractTreeNode> children, ProjectFileIndex projectFileIndex, VirtualFile virtualFile) {
+    Module module = projectFileIndex.getModuleForFile(virtualFile);
+    if (module != null) {
+      ModuleToDoNode moduleToDoNode = new ModuleToDoNode(getProject(), module, myBuilder);
+      if (!children.contains(moduleToDoNode)) {
+        children.add(moduleToDoNode);
+      }
+    }
+  }
+
   @Override
   public void update(PresentationData presentation) {
+    if (DumbService.getInstance(getProject()).isDumb()) return;
     int todoItemCount = getTodoItemCount(getValue());
     int fileCount = getFileCount(getValue());
     presentation.setPresentableText(IdeBundle.message("node.todo.summary", todoItemCount, fileCount));
@@ -125,14 +130,7 @@ public class SummaryNode extends BaseToDoNode<ToDoSummary> {
   public int getTodoItemCount(final ToDoSummary val) {
     int count = 0;
     for(final Iterator<PsiFile> i=myBuilder.getAllFiles();i.hasNext();){
-        count+= ApplicationManager.getApplication().runReadAction(
-            new Computable<Integer>() {
-              @Override
-              public Integer compute() {
-                return getTreeStructure().getTodoItemCount(i.next());
-              }
-            }
-        );
+      count += ReadAction.compute(() -> getTreeStructure().getTodoItemCount(i.next()));
       }
     return count;
   }

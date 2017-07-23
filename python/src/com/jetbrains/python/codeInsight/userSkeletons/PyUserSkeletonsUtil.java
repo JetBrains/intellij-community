@@ -17,7 +17,6 @@ package com.jetbrains.python.codeInsight.userSkeletons;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
@@ -32,6 +31,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
@@ -117,7 +117,7 @@ public class PyUserSkeletonsUtil {
 
   @Nullable
   public static PyFile getUserSkeletonForModuleQName(@NotNull String qName, @NotNull PsiElement foothold) {
-    final Sdk sdk = PythonSdkType.getSdk(foothold);
+    final Sdk sdk = PythonSdkType.findPythonSdk(foothold);
     if (sdk != null) {
       final Project project = foothold.getProject();
       final PythonSdkPathCache cache = PythonSdkPathCache.getInstance(project, sdk);
@@ -132,7 +132,9 @@ public class PyUserSkeletonsUtil {
       final VirtualFile directory = getUserSkeletonsDirectory();
       if (directory != null) {
         final PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(directory);
-        PsiElement fileSkeleton = new QualifiedNameResolverImpl(qName).resolveModuleAt(psiDirectory);
+        PsiElement fileSkeleton = PyResolveImportUtil.resolveModuleAt(QualifiedName.fromDottedString(qName), psiDirectory,
+                                                                      PyResolveImportUtil.fromFoothold(foothold))
+          .stream().findFirst().orElse(null);
         if (fileSkeleton instanceof PsiDirectory) {
           fileSkeleton = PyUtil.getPackageElement((PsiDirectory)fileSkeleton, foothold);
         }
@@ -141,7 +143,7 @@ public class PyUserSkeletonsUtil {
           return (PyFile)fileSkeleton;
         }
       }
-      cache.put(cacheQName, Collections.<PsiElement>emptyList());
+      cache.put(cacheQName, Collections.emptyList());
     }
     return null;
   }
@@ -190,12 +192,14 @@ public class PyUserSkeletonsUtil {
     if (moduleVirtualFile != null) {
       String moduleName = QualifiedNameFinder.findShortestImportableName(file, moduleVirtualFile);
       if (moduleName != null) {
+        // TODO: Delete user-skeletons altogether, meanwhile disabled user-skeletons for modules already covered by PyTypeShed
+        if (PyTypeShed.INSTANCE.getWHITE_LIST().contains(moduleName)) {
+          return null;
+        }
         final QualifiedName qName = QualifiedName.fromDottedString(moduleName);
-        for (PyCanonicalPathProvider provider : Extensions.getExtensions(PyCanonicalPathProvider.EP_NAME)) {
-          final QualifiedName restored = provider.getCanonicalPath(qName, null);
-          if (restored != null) {
-            moduleName = restored.toString();
-          }
+        final QualifiedName restored = QualifiedNameFinder.canonizeQualifiedName(qName, null);
+        if (restored != null) {
+          moduleName = restored.toString();
         }
         final PyFile skeletonFile = getUserSkeletonForModuleQName(moduleName, file);
         file.putUserData(HAS_SKELETON, skeletonFile != null);

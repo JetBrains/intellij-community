@@ -15,12 +15,6 @@
  */
 package org.jetbrains.idea.svn;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/7/13
- * Time: 4:44 PM
- */
 public class SSLExceptionsHelper {
   private final static ThreadLocal<String> myAdditionalInfo = new ThreadLocal<>();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,10 @@ public class PyBuiltinAnnotator extends PyAnnotator {
     final String name = node.getName();
     if (name == null) return;
     final boolean highlightedAsAttribute = highlightAsAttribute(node, name);
-    if (!highlightedAsAttribute && PyBuiltinCache.isInBuiltins(node)) {
+    if (highlightedAsAttribute) {
+      return;
+    }
+    if (PyBuiltinCache.isInBuiltins(node) || PyUtil.isPy2ReservedWord(node)) {
       final Annotation ann;
       final PsiElement parent = node.getParent();
       if (parent instanceof PyDecorator) {
@@ -67,7 +70,7 @@ public class PyBuiltinAnnotator extends PyAnnotator {
    */
   private boolean highlightAsAttribute(@NotNull PyQualifiedExpression node, @NotNull String name) {
     final LanguageLevel languageLevel = LanguageLevel.forElement(node);
-    if (PyNames.UnderscoredAttributes.contains(name) || PyNames.getBuiltinMethods(languageLevel).containsKey(name)) {
+    if (PyNames.UNDERSCORED_ATTRIBUTES.contains(name) || PyNames.getBuiltinMethods(languageLevel).containsKey(name)) {
       // things like __len__: foo.__len__ or class Foo: ... __len__ = my_len_impl
       if (node.isQualified() || ScopeUtil.getScopeOwner(node) instanceof PyClass) {
         final ASTNode astNode = node.getNode();

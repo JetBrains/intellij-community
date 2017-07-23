@@ -30,10 +30,6 @@ import com.intellij.util.graph.*;
 
 import java.util.*;
 
-/**
- * User: anna
- * Date: Jan 30, 2005
- */
 public class CyclicDependenciesBuilder{
   private final Project myProject;
   private final AnalysisScope myScope;

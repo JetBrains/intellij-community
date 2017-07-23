@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -200,6 +200,9 @@ public class MavenIndex {
         dataDir = new File(myDir, myDataDirName);
         dataDir.mkdirs();
       }
+      if (myData != null) {
+        myData.close(true);
+      }
       myData = new IndexData(dataDir);
     }
     catch (Exception e) {
@@ -369,6 +372,13 @@ public class MavenIndex {
   }
 
   private void updateData(MavenProgressIndicator progress, File newDataDir, boolean fullUpdate) throws MavenIndexException {
+    synchronized (this) {
+      IndexData oldData = myData;
+
+      if(oldData != null) {
+        oldData.close(true);
+      }
+    }
 
     IndexData newData = new IndexData(newDataDir);
     try {
@@ -385,17 +395,11 @@ public class MavenIndex {
     }
 
     synchronized (this) {
-      IndexData oldData = myData;
-
       myData = newData;
       myDataDirName = newDataDir.getName();
 
       if (fullUpdate) {
         myUpdateTimestamp = System.currentTimeMillis();
-      }
-
-      if(oldData != null) {
-        oldData.close(true);
       }
 
       for (File each : FileUtil.notNullize(myDir.listFiles())) {
@@ -520,16 +524,16 @@ public class MavenIndex {
       public Collection<String> doTask() throws Exception {
         return myData.groupToArtifactMap.getAllDataObjects(null);
       }
-    }, Collections.<String>emptySet());
+    }, Collections.emptySet());
   }
 
   public synchronized Set<String> getArtifactIds(final String groupId) {
     return doIndexTask(new IndexTask<Set<String>>() {
       public Set<String> doTask() throws Exception {
         Set<String> result = myData.groupToArtifactMap.get(groupId);
-        return result == null ? Collections.<String>emptySet() : result;
+        return result == null ? Collections.emptySet() : result;
       }
-    }, Collections.<String>emptySet());
+    }, Collections.emptySet());
   }
 
   @TestOnly
@@ -538,18 +542,18 @@ public class MavenIndex {
       public Set<String> doTask() throws Exception {
         System.out.println("BaseFile: " + myData.groupToArtifactMap.getBaseFile());
         System.out.println("All data objects: " + myData.groupToArtifactMap.getAllDataObjects(null));
-        return Collections.<String>emptySet();
+        return Collections.emptySet();
       }
-    }, Collections.<String>emptySet());
+    }, Collections.emptySet());
   }
 
   public synchronized Set<String> getVersions(final String groupId, final String artifactId) {
     return doIndexTask(new IndexTask<Set<String>>() {
       public Set<String> doTask() throws Exception {
         Set<String> result = myData.groupWithArtifactToVersionMap.get(groupId + ":" + artifactId);
-        return result == null ? Collections.<String>emptySet() : result;
+        return result == null ? Collections.emptySet() : result;
       }
-    }, Collections.<String>emptySet());
+    }, Collections.emptySet());
   }
 
   public synchronized boolean hasGroupId(String groupId) {
@@ -606,7 +610,7 @@ public class MavenIndex {
       public Set<MavenArtifactInfo> doTask() throws Exception {
         return myData.search(query, maxResult);
       }
-    }, Collections.<MavenArtifactInfo>emptySet());
+    }, Collections.emptySet());
   }
 
   private <T> T doIndexTask(IndexTask<T> task, T defaultValue) {
@@ -660,11 +664,7 @@ public class MavenIndex {
 
         indexId = createContext(getDataContextDir(dir), dir.getName());
       }
-      catch (IOException e) {
-        close(true);
-        throw new MavenIndexException(e);
-      }
-      catch (MavenServerIndexerException e) {
+      catch (IOException | MavenServerIndexerException e) {
         close(true);
         throw new MavenIndexException(e);
       }

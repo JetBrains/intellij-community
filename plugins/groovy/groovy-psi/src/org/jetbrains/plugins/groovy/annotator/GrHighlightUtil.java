@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryE
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTraitTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
@@ -94,7 +95,7 @@ public class GrHighlightUtil {
 
   private static boolean isWriteAccess(GrReferenceExpression element) {
     return PsiUtil.isLValue(element) ||
-        element.getParent() instanceof GrUnaryExpression && ((GrUnaryExpression)element.getParent()).isPostfix();
+           element.getParent() instanceof GrUnaryExpression && ((GrUnaryExpression)element.getParent()).isPostfix();
   }
 
   static boolean isReassigned(final GrVariable var) {
@@ -106,13 +107,12 @@ public class GrHighlightUtil {
   }
 
   /**
-   *
-   * @param resolved declaration element
+   * @param resolved   declaration element
    * @param refElement reference to highlight. if null, 'resolved' is highlighted and no resolve is allowed.
    * @return
    */
   @Nullable
-  static TextAttributesKey getDeclarationHighlightingAttribute(PsiElement resolved, @Nullable PsiElement refElement) {
+  public static TextAttributesKey getDeclarationHighlightingAttribute(PsiElement resolved, @Nullable PsiElement refElement) {
     if (refElement != null && isReferenceWithLiteralName(refElement)) return null; //don't highlight literal references
 
     if (resolved instanceof PsiField || resolved instanceof GrVariable && ResolveUtil.isScriptField((GrVariable)resolved)) {
@@ -142,26 +142,36 @@ public class GrHighlightUtil {
         }
       }
       else {
-        boolean isStatic = ((PsiMethod)resolved).hasModifierProperty(PsiModifier.STATIC);
-        if (GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)resolved)) {
-          return isStatic ? GroovySyntaxHighlighter.STATIC_PROPERTY_REFERENCE : GroovySyntaxHighlighter.INSTANCE_PROPERTY_REFERENCE;
-        }
-        else {
-          if (refElement != null) {
-            return isStatic ? GroovySyntaxHighlighter.STATIC_METHOD_ACCESS : GroovySyntaxHighlighter.METHOD_CALL;
+        if (refElement != null) {
+          boolean isStatic = ((PsiMethod)resolved).hasModifierProperty(PsiModifier.STATIC);
+          if (GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)resolved)) {
+            return isStatic ? GroovySyntaxHighlighter.STATIC_PROPERTY_REFERENCE : GroovySyntaxHighlighter.INSTANCE_PROPERTY_REFERENCE;
           }
           else {
-            return GroovySyntaxHighlighter.METHOD_DECLARATION;
+            return isStatic ? GroovySyntaxHighlighter.STATIC_METHOD_ACCESS : GroovySyntaxHighlighter.METHOD_CALL;
           }
+        }
+        else {
+          return GroovySyntaxHighlighter.METHOD_DECLARATION;
         }
       }
     }
     else if (resolved instanceof PsiTypeParameter) {
       return GroovySyntaxHighlighter.TYPE_PARAMETER;
     }
+    else if (resolved instanceof GrTraitTypeDefinition) {
+      return GroovySyntaxHighlighter.TRAIT_NAME;
+    }
     else if (resolved instanceof PsiClass) {
-      if (((PsiClass)resolved).isAnnotationType()) {
+      PsiClass clazz = (PsiClass)resolved;
+      if (clazz.isAnnotationType()) {
         return GroovySyntaxHighlighter.ANNOTATION;
+      }
+      else if (clazz.isInterface()) {
+        return GroovySyntaxHighlighter.INTERFACE_NAME;
+      }
+      else if (clazz.isEnum()) {
+        return GroovySyntaxHighlighter.ENUM_NAME;
       }
       else {
         return GroovySyntaxHighlighter.CLASS_REFERENCE;
@@ -289,7 +299,6 @@ public class GrHighlightUtil {
     int endOffset = block.getLBrace().getTextRange().getEndOffset() + 1;
 
     return new TextRange(startOffset, endOffset);
-
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ class DocPreviewUtilTest {
     
     def header = '''\
 [&lt; 1.7 &gt;] java.lang
- public final class java.lang.String extends Object
- implements java.io.Serializable, java.lang.Comparable&lt;java.lang.String&gt;, java.lang.CharSequence\
+ public final class String extends Object
+ implements Serializable, Comparable&lt;String&gt;, CharSequence\
 '''
     
     def fullText = '''\
@@ -112,28 +112,10 @@ java.lang<br/> public final class <a href="psi_element://java.lang.String">Strin
   }
 
   @Test
-  void fieldTypeSubstitution() {
-    def header = '''\
-Bar
- java.util.List&lt;java.lang.String&gt; foo (java.lang.String param)\
-'''
-    
-    def fullText = '''\
-<html><head>    <style type="text/css">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head><body><small><b><a href="psi_element://Bar"><code>Bar</code></a></b></small><PRE><a href="psi_element://java.util.List"><code>java.util.List</code></a>&lt;T&gt;&nbsp;<b>foo</b>(T&nbsp;param)</PRE></body></html>\
-'''
-    
-    def expected = '''\
-<a href="psi_element://Bar">Bar</a><br/> <a href="psi_element://java.util.List">List</a>&lt;<a href="psi_element://java.lang.String">String</a>&gt; foo (<a href="psi_element://java.lang.String">String</a> param)\
-'''
-    def actual = DocPreviewUtil.buildPreview(header, "java.lang.String", fullText)
-    assertEquals(expected, actual)
-  }
-
-  @Test
   void crossingLinks() {
     def header = '''\
 OCCompletionPriority
-com.jetbrains.objc.lang.completion.OCCompletionPriority SMART_COMPLETION_PRIORITY'''
+OCCompletionPriority SMART_COMPLETION_PRIORITY'''
     
     def fullText = '''\
 <html><head>    <style type="text/css">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head><body><small><b><a href="psi_element://com.jetbrains.objc.lang.completion.OCCompletionPriority"><code>com.jetbrains.objc.lang.completion.OCCompletionPriority</code></a></b></small><PRE><a href="psi_element://com.jetbrains.objc.lang.completion.OCCompletionPriority"><code>OCCompletionPriority</code></a> <b>SMART_COMPLETION_PRIORITY</b></PRE></body></html>
@@ -150,7 +132,7 @@ Qname'''
   void tailSubstrings() {
     def header = '''\
 PsiResolveHelperImpl
-public static com.intellij.openapi.util.Pair&lt;com.intellij.psi.PsiType, com.intellij.psi.ConstraintType&gt; getSubstitutionForTypeParameterConstraint (com.intellij.psi.PsiTypeParameter typeParam, com.intellij.psi.PsiType param, com.intellij.psi.PsiType arg, boolean isContraVariantPosition, com.intellij.pom.java.LanguageLevel languageLevel)'''
+public static Pair&lt;PsiType, ConstraintType&gt; getSubstitutionForTypeParameterConstraint (PsiTypeParameter typeParam, PsiType param, PsiType arg, boolean isContraVariantPosition, LanguageLevel languageLevel)'''
     
     def fullText = '''\
 <html><head>    <style type="text/css">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head><body><small><b><a href="psi_element://com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl"><code>com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl</code></a></b></small><PRE>@<a href="psi_element://org.jetbrains.annotations.Nullable"><code>Nullable</code></a>&nbsp;public static&nbsp;<a href="psi_element://com.intellij.openapi.util.Pair"><code>Pair</code></a>&lt;<a href="psi_element://com.intellij.psi.PsiType"><code>PsiType</code></a>, <a href="psi_element://com.intellij.psi.ConstraintType"><code>ConstraintType</code></a>&gt;&nbsp;<b>getSubstitutionForTypeParameterConstraint</b>(<a href="psi_element://com.intellij.psi.PsiTypeParameter"><code>PsiTypeParameter</code></a>&nbsp;typeParam,
@@ -169,7 +151,7 @@ public static com.intellij.openapi.util.Pair&lt;com.intellij.psi.PsiType, com.in
   void headSubstrings() {
     def header = '''\
 ASTNode
-com.intellij.openapi.util.TextRange getTextRange ()'''
+TextRange getTextRange ()'''
     
     def fullText = '''\
 <html><head>    <style type="text/css">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head><body><small><b><a href="psi_element://com.intellij.lang.ASTNode"><code>com.intellij.lang.ASTNode</code></a></b></small><PRE><a href="psi_element://com.intellij.openapi.util.TextRange"><code>TextRange</code></a>&nbsp;<b>getTextRange</b>()</PRE>
@@ -187,7 +169,7 @@ com.intellij.openapi.util.TextRange getTextRange ()'''
   void "single letter 'from' substitution"() {
     def header = '''\
 E
-org.denis.E A
+E A
 Enum constant ordinal: 0'''
     
     def fullText = '''\

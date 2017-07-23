@@ -17,11 +17,6 @@ package org.intellij.lang.xpath.psi;
 
 import org.jetbrains.annotations.Nullable;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 18.01.11
-*/
 public interface XPath2TypeReference extends XPathElement {
   @Nullable
   XPathType getTargetType();

@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +83,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
 
     init();
     initData(initDataFiles);
-    myView.setMinimumSize(new Dimension(100, 100));
+    myView.setMinimumSize(new JBDimension(100, 100));
   }
 
 
@@ -95,8 +96,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
   private void initData(@NotNull final List<VirtualFile> files) {
     final TreeState state = TreeState.createOn(myView, (ChangesBrowserNode)myView.getModel().getRoot());
 
-    TreeModelBuilder builder = new TreeModelBuilder(myProject, myView.isShowFlatten());
-    final DefaultTreeModel model = builder.buildModelFromFiles(files);
+    final DefaultTreeModel model = TreeModelBuilder.buildFromVirtualFiles(myProject, myView.isShowFlatten(), files);
     myView.setModel(model);
     myView.expandPath(new TreePath(((ChangesBrowserNode)model.getRoot()).getPath()));
 

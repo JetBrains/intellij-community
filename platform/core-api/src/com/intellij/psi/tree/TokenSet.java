@@ -78,7 +78,7 @@ public class TokenSet {
         types = IElementType.EMPTY_ARRAY;
       }
       else {
-        List<IElementType> list = new ArrayList<IElementType>();
+        List<IElementType> list = new ArrayList<>();
         for (short i = (short)Math.max(1, myShift << 6); i <= myMax; i++) {
           if (!get(i)) continue;
           IElementType type = IElementType.find(i);

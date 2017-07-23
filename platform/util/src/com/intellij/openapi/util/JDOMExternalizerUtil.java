@@ -37,6 +37,12 @@ public class JDOMExternalizerUtil {
     root.addContent(element);
   }
 
+  public static void writeField(@NotNull Element root, @NotNull String fieldName, @Nullable String value, @NotNull String defaultValue) {
+    if (!defaultValue.equals(value)) {
+      writeField(root, fieldName, value);
+    }
+  }
+
   @NotNull
   public static String readField(@NotNull Element parent, @NotNull @NonNls String fieldName, @NotNull String defaultValue) {
     String val = readField(parent, fieldName);

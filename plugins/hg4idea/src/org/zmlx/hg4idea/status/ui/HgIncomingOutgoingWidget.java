@@ -108,11 +108,7 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
   @Override
   // Updates branch information on click
   public Consumer<MouseEvent> getClickConsumer() {
-    return new Consumer<MouseEvent>() {
-      public void consume(MouseEvent mouseEvent) {
-        update();
-      }
-    };
+    return mouseEvent -> update();
   }
 
 
@@ -123,23 +119,20 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
   @Override
   public void update(final Project project, @Nullable VirtualFile root) {
     if (!isVisible()) return;
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if ((project == null) || project.isDisposed()) {
-          emptyTooltip();
-          return;
-        }
-
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if ((project == null) || project.isDisposed()) {
         emptyTooltip();
-        myCurrentIcon = AllIcons.Ide.IncomingChangesOff;
-        if (myChangesStatus.getNumChanges() > 0) {
-          myCurrentIcon = myIsIncoming ? AllIcons.Ide.IncomingChangesOn : AllIcons.Ide.OutgoingChangesOn;
-          myTooltip = "\n" + myChangesStatus.getToolTip();
-        }
-        if (!isVisible() || !isAlreadyShown) return;
-        myStatusBar.updateWidget(ID());
+        return;
       }
+
+      emptyTooltip();
+      myCurrentIcon = AllIcons.Ide.IncomingChangesOff;
+      if (myChangesStatus.getNumChanges() > 0) {
+        myCurrentIcon = myIsIncoming ? AllIcons.Ide.IncomingChangesOn : AllIcons.Ide.OutgoingChangesOn;
+        myTooltip = "\n" + myChangesStatus.getToolTip();
+      }
+      if (!isVisible() || !isAlreadyShown) return;
+      myStatusBar.updateWidget(ID());
     });
   }
 
@@ -167,29 +160,21 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
   }
 
   public void show() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (isAlreadyShown) {
-          return;
-        }
-        StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-        if (null != statusBar && isVisible()) {
-          statusBar.addWidget(HgIncomingOutgoingWidget.this, myProject);
-          isAlreadyShown = true;
-          myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject, null);
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (isAlreadyShown) {
+        return;
+      }
+      StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+      if (null != statusBar && isVisible()) {
+        statusBar.addWidget(HgIncomingOutgoingWidget.this, myProject);
+        isAlreadyShown = true;
+        myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject, null);
       }
     }, ModalityState.any());
   }
 
   public void hide() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        deactivate();
-      }
-    }, ModalityState.any());
+    ApplicationManager.getApplication().invokeLater(() -> deactivate(), ModalityState.any());
   }
 
   @CalledInAny

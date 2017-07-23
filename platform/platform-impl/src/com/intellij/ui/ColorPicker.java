@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -917,7 +917,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     private ColorPicker myColorPicker;
     private final boolean myEnableOpacity;
     private final boolean myOpacityInPercent;
-    
+
     public ColorPickerDialog(@NotNull Component parent, String caption, @Nullable Color preselectedColor, boolean enableOpacity,
                              List<ColorPickerListener> listeners, boolean opacityInPercent) {
       super(parent, true);
@@ -931,7 +931,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       setOKButtonText("Choose");
       super.init();
     }
-    
+
     @Override
     protected JComponent createCenterPanel() {
       if (myColorPicker == null) {
@@ -1047,11 +1047,11 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     private static final int SIZE = 30;
     private static final int DIALOG_SIZE = SIZE - 4;
     private static final Point HOT_SPOT = new Point(DIALOG_SIZE / 2, DIALOG_SIZE / 2);
-    
+
     private final Rectangle myCaptureRect = new Rectangle(-4, -4, 8, 8);
     private final Rectangle myZoomRect = new Rectangle(0, 0, SIZE, SIZE);
     private final Point myPreviousLocation = new Point();
-    
+
     private Graphics2D myGraphics;
     private BufferedImage myImage;
     private BufferedImage myPipetteImage;
@@ -1151,7 +1151,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
       return pickerDialog;
     }
-    
+
     private void updatePipette() {
       Dialog pickerDialog = getPickerDialog();
       if (pickerDialog != null && pickerDialog.isShowing()) {
@@ -1162,7 +1162,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
           setColor(c);
           myPreviousLocation.setLocation(mouseLoc);
           myCaptureRect.setBounds(mouseLoc.x - HOT_SPOT.x + SIZE / 2 - 2, mouseLoc.y - HOT_SPOT.y + SIZE / 2 - 2, 5, 5);
-          
+
           BufferedImage capture = myRobot.createScreenCapture(myCaptureRect);
 
           // Clear the cursor graphics

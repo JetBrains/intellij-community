@@ -83,8 +83,6 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
   }
 
   private void addToPopup(@NotNull BalloonImpl balloon, @NotNull BalloonLayoutData layoutData) {
-    balloon.traceDispose(false);
-
     layoutData.doLayout = this::layoutPopup;
     layoutData.configuration = layoutData.configuration.replace(JBUI.scale(myPopupBalloon == null ? 7 : 5), JBUI.scale(12));
 
@@ -107,7 +105,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
 
       myPopupBalloon =
         new BalloonImpl(pane, BORDER_COLOR, new Insets(0, 0, 0, 0), FILL_COLOR, true, false, false, true, false, true, 0, false, false,
-                        null, false, 0, 0, 0, 0, false, null, null, false, false, false, null, false);
+                        null, false, 0, 0, 0, 0, false, null, null, false, false, false, null, false, null, -1);
       myPopupBalloon.setAnimationEnabled(false);
       myPopupBalloon.setShadowBorderProvider(
         new NotificationBalloonShadowBorderProvider(FILL_COLOR, BORDER_COLOR));

@@ -204,6 +204,7 @@ public class ControlFlowBuilder {
   }
 
 
+  @FunctionalInterface
   public interface PendingProcessor {
     void process(PsiElement pendingScope, Instruction instruction);
   }

@@ -60,7 +60,7 @@ class ForkedGroovyc implements GroovycFlavor {
                                         File tempFile,
                                         final GroovycOutputParser parser)
     throws Exception {
-    List<String> classpath = new ArrayList<String>();
+    List<String> classpath = new ArrayList<>();
     if (myOptimizeClassLoading) {
       classpath.addAll(GroovyBuilder.getGroovyRtRoots());
       classpath.add(ClasspathBootstrap.getResourcePath(Function.class));
@@ -91,7 +91,7 @@ class ForkedGroovyc implements GroovycFlavor {
     final List<String> cmd = ExternalProcessUtil.buildJavaCommandLine(
       getJavaExecutable(myChunk),
       "org.jetbrains.groovy.compiler.rt.GroovycRunner",
-      Collections.<String>emptyList(), classpath,
+      Collections.emptyList(), classpath,
       vmParams,
       getProgramParams(tempFile, settings, forStubs)
     );

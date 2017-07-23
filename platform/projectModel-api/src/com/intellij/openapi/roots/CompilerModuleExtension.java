@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 27-Dec-2007
- */
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
@@ -30,7 +26,8 @@ public abstract class CompilerModuleExtension extends ModuleExtension {
   @NonNls public static final String PRODUCTION = "production";
   @NonNls public static final String TEST = "test";
 
-  public static @Nullable CompilerModuleExtension getInstance(final Module module) {
+  @Nullable
+  public static CompilerModuleExtension getInstance(final Module module) {
     return ModuleRootManager.getInstance(module).getModuleExtension(CompilerModuleExtension.class);
   }
 
@@ -80,12 +77,12 @@ public abstract class CompilerModuleExtension extends ModuleExtension {
 
    /**
    * Makes this module inheriting compiler output from its project
-   * @param inherit wether or not compiler output is inherited
+   * @param inherit whether or not compiler output is inherited
    */
   public abstract void inheritCompilerOutputPath(boolean inherit);
 
   /**
-   * Returns <code>true</code> if compiler output for this module is inherited from a project
+   * Returns {@code true} if compiler output for this module is inherited from a project
    * @return true if compiler output path is inherited, false otherwise
    */
   public abstract boolean isCompilerOutputPathInherited();

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 14-May-2007
- */
 package com.intellij.execution.configuration;
 
 import com.intellij.execution.ExecutionBundle;

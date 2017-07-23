@@ -17,6 +17,7 @@ package com.intellij.ide;
 
 import com.intellij.pom.Navigatable;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -25,17 +26,19 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 
 public abstract class OccurenceNavigatorSupport implements OccurenceNavigator {
   private final JTree myTree;
 
-  public OccurenceNavigatorSupport(JTree tree) {
+  public OccurenceNavigatorSupport(@NotNull JTree tree) {
     myTree = tree;
   }
 
   @Nullable
   protected abstract Navigatable createDescriptorForNode(DefaultMutableTreeNode node);
 
+  @Override
   public OccurenceInfo goNextOccurence() {
     Counters counters = new Counters();
     DefaultMutableTreeNode node = findNode(myTree, true, counters);
@@ -47,6 +50,7 @@ public abstract class OccurenceNavigatorSupport implements OccurenceNavigator {
     return new OccurenceInfo(editSourceDescriptor, counters.myFoundOccurenceNumber, counters.myOccurencesCount);
   }
 
+  @Override
   public OccurenceInfo goPreviousOccurence() {
     Counters counters = new Counters();
     DefaultMutableTreeNode node = findNode(myTree, false, counters);
@@ -58,11 +62,13 @@ public abstract class OccurenceNavigatorSupport implements OccurenceNavigator {
     return new OccurenceInfo(editSourceDescriptor, counters.myFoundOccurenceNumber, counters.myOccurencesCount);
   }
 
+  @Override
   public boolean hasNextOccurence() {
     DefaultMutableTreeNode node = findNode(myTree, true, null);
     return node != null;
   }
 
+  @Override
   public boolean hasPreviousOccurence() {
     DefaultMutableTreeNode node = findNode(myTree, false, null);
     return node != null;
@@ -70,28 +76,31 @@ public abstract class OccurenceNavigatorSupport implements OccurenceNavigator {
 
   protected static class Counters {
     /**
-     * Equals to <code>-1</code> if this value is unsupported.
+     * Equals to {@code -1} if this value is unsupported.
      */
-    public int myFoundOccurenceNumber;
+    int myFoundOccurenceNumber;
     /**
-     * Equals to <code>-1</code> if this value is unsupported.
+     * Equals to {@code -1} if this value is unsupported.
      */
-    public int myOccurencesCount;
+    int myOccurencesCount;
   }
 
-  protected DefaultMutableTreeNode findNode(JTree tree, boolean forward, Counters counters) {
+  private DefaultMutableTreeNode findNode(@NotNull JTree tree, boolean forward, Counters counters) {
     TreePath selectionPath = tree.getSelectionPath();
     TreeNode selectedNode = null;
-    boolean[] ready = new boolean[] {true};
     if (selectionPath != null) {
       selectedNode = (TreeNode)selectionPath.getLastPathComponent();
-      ready[0] = false;
     }
+    return findNode(tree, selectedNode, forward, counters);
+  }
+
+  public DefaultMutableTreeNode findNode(@NotNull JTree tree, TreeNode selectedNode, boolean forward, Counters counters) {
+    boolean[] ready = {selectedNode == null};
 
     DefaultMutableTreeNode root = (DefaultMutableTreeNode)tree.getModel().getRoot();
 
     Enumeration enumeration = root.preorderEnumeration();
-    ArrayList<TreeNode> nodes = new ArrayList<>();
+    List<TreeNode> nodes = new ArrayList<>();
     while (enumeration.hasMoreElements()) {
       TreeNode node = (TreeNode)enumeration.nextElement();
       nodes.add(node);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,15 +29,18 @@ public interface CaretListener extends EventListener {
    *
    * @param e the event containing information about the caret movement.
    */
-  void caretPositionChanged(CaretEvent e);
+  default void caretPositionChanged(CaretEvent e) {
+  }
 
   /**
    * Called when a new caret was added to the document.
    */
-  void caretAdded(CaretEvent e);
+  default void caretAdded(CaretEvent e) {
+  }
 
   /**
    * Called when a caret was removed from the document.
    */
-  void caretRemoved(CaretEvent e);
+  default void caretRemoved(CaretEvent e) {
+  }
 }

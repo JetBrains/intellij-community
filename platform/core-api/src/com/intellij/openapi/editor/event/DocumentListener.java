@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.editor.event;
 
+import com.intellij.util.ArrayFactory;
+
 import java.util.EventListener;
 
 /**
@@ -27,17 +29,21 @@ import java.util.EventListener;
 @SuppressWarnings("JavadocReference")
 public interface DocumentListener extends EventListener{
   DocumentListener[] EMPTY_ARRAY = new DocumentListener[0];
+  ArrayFactory<DocumentListener> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new DocumentListener[count];
+
   /**
    * Called before the text of the document is changed.
    *
    * @param event the event containing the information about the change.
    */
-  void beforeDocumentChange(DocumentEvent event);
+  default void beforeDocumentChange(DocumentEvent event) {
+  }
 
   /**
    * Called after the text of the document has been changed.
    *
    * @param event the event containing the information about the change.
    */
-  void documentChanged(DocumentEvent event);
+  default void documentChanged(DocumentEvent event) {
+  }
 }

@@ -42,12 +42,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/25/13
- * Time: 4:56 PM
- */
 public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
 
   private static final Logger LOG = Logger.getInstance(CmdCheckinClient.class);

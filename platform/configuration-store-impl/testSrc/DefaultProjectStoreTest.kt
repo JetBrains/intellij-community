@@ -11,11 +11,12 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.refreshVfs
 import com.intellij.testFramework.*
+import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.delete
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.isEmpty
 import com.intellij.util.loadElement
-import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
 import org.junit.ClassRule
 import org.junit.Rule
@@ -41,6 +42,10 @@ internal class DefaultProjectStoreTest {
       }
     }
   }
+
+  @JvmField
+  @Rule
+  val fsRule = InMemoryFsRule()
 
   private val tempDirManager = TemporaryDirectory()
 
@@ -106,9 +111,135 @@ internal class DefaultProjectStoreTest {
   @Test fun `new project from default - remove workspace component configuration`() {
     val element = loadElement("""
     <state>
+      <component name="CopyrightManager">
+        <copyright>
+          <option name="myName" value="Foo" />
+          <option name="notice" value="where" />
+        </copyright>
+      </component>
+      <component name="InspectionProjectProfileManager">
+        <profile version="1.0">
+          <option name="myName" value="Project Default" />
+          <inspection_tool class="AntDuplicateTargetsInspection" enabled="false" level="ERROR" enabled_by_default="false" />
+          <inspection_tool class="AntMissingPropertiesFileInspection" enabled="false" level="ERROR" enabled_by_default="false" />
+          <inspection_tool class="AntResolveInspection" enabled="false" level="ERROR" enabled_by_default="false" />
+          <inspection_tool class="ArgNamesErrorsInspection" enabled="false" level="ERROR" enabled_by_default="false" />
+          <inspection_tool class="ArgNamesWarningsInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+          <inspection_tool class="AroundAdviceStyleInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+          <inspection_tool class="DeclareParentsInspection" enabled="false" level="ERROR" enabled_by_default="false" />
+          <inspection_tool class="EmptyEventHandler" enabled="false" level="WARNING" enabled_by_default="false" />
+          <inspection_tool class="PointcutMethodStyleInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+        </profile>
+        <version value="1.0" />
+      </component>
       <component name="ProjectLevelVcsManager" settingsEditedManually="false" />
+      <component name="masterDetails">
+        <states>
+          <state key="Copyright.UI">
+            <settings>
+              <last-edited>Foo</last-edited>
+              <splitter-proportions>
+                <option name="proportions">
+                  <list>
+                    <option value="0.2" />
+                  </list>
+                </option>
+              </splitter-proportions>
+            </settings>
+          </state>
+          <state key="ProjectJDKs.UI">
+            <settings>
+              <last-edited>1.4</last-edited>
+              <splitter-proportions>
+                <option name="proportions">
+                  <list>
+                    <option value="0.2" />
+                  </list>
+                </option>
+              </splitter-proportions>
+            </settings>
+          </state>
+        </states>
+      </component>
+      <component name="ProjectModuleManager">
+        <modules>
+          <module fileurl="file://USER_HOME$/PycharmProjects/ttt002/.idea/ttt002.iml" filepath="USER_HOME$/PycharmProjects/ttt002/.idea/ttt002.iml" />
+        </modules>
+      </component>
+      <component name="PropertiesComponent">
+        <property name="settings.editor.selected.configurable" value="preferences.lookFeel" />
+        <property name="settings.editor.splitter.proportion" value="0.2" />
+      </component>
     </state>""")
-    removeWorkspaceComponentConfiguration(ProjectManager.getInstance().defaultProject, element)
+
+    val tempDir = fsRule.fs.getPath("")
+    normalizeDefaultProjectElement(ProjectManager.getInstance().defaultProject, element, tempDir)
     assertThat(element.isEmpty()).isTrue()
+
+    val directoryTree = printDirectoryTree(tempDir)
+    assertThat(directoryTree.trim()).isEqualTo("""
+    ├──/
+      ├──copyright/
+        ├──Foo.xml
+    <component name="CopyrightManager">
+      <copyright>
+        <option name="myName" value="Foo" />
+        <option name="notice" value="where" />
+      </copyright>
+    </component>
+
+      ├──inspectionProfiles/
+        ├──Project_Default.xml
+    <component name="InspectionProjectProfileManager">
+      <profile version="1.0">
+        <option name="myName" value="Project Default" />
+        <inspection_tool class="AntDuplicateTargetsInspection" enabled="false" level="ERROR" enabled_by_default="false" />
+        <inspection_tool class="AntMissingPropertiesFileInspection" enabled="false" level="ERROR" enabled_by_default="false" />
+        <inspection_tool class="AntResolveInspection" enabled="false" level="ERROR" enabled_by_default="false" />
+        <inspection_tool class="ArgNamesErrorsInspection" enabled="false" level="ERROR" enabled_by_default="false" />
+        <inspection_tool class="ArgNamesWarningsInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+        <inspection_tool class="AroundAdviceStyleInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+        <inspection_tool class="DeclareParentsInspection" enabled="false" level="ERROR" enabled_by_default="false" />
+        <inspection_tool class="EmptyEventHandler" enabled="false" level="WARNING" enabled_by_default="false" />
+        <inspection_tool class="PointcutMethodStyleInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+      </profile>
+    </component>
+
+      ├──workspace.xml
+    <project version="4">
+      <component name="ProjectLevelVcsManager" settingsEditedManually="false" />
+      <component name="masterDetails">
+        <states>
+          <state key="Copyright.UI">
+            <settings>
+              <last-edited>Foo</last-edited>
+              <splitter-proportions>
+                <option name="proportions">
+                  <list>
+                    <option value="0.2" />
+                  </list>
+                </option>
+              </splitter-proportions>
+            </settings>
+          </state>
+          <state key="ProjectJDKs.UI">
+            <settings>
+              <last-edited>1.4</last-edited>
+              <splitter-proportions>
+                <option name="proportions">
+                  <list>
+                    <option value="0.2" />
+                  </list>
+                </option>
+              </splitter-proportions>
+            </settings>
+          </state>
+        </states>
+      </component>
+      <component name="PropertiesComponent">
+        <property name="settings.editor.selected.configurable" value="preferences.lookFeel" />
+        <property name="settings.editor.splitter.proportion" value="0.2" />
+      </component>
+    </project>""".trimIndent())
   }
 }

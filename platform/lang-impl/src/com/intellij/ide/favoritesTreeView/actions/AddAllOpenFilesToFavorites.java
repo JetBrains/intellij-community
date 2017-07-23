@@ -28,10 +28,6 @@ import com.intellij.psi.PsiManager;
 
 import java.util.ArrayList;
 
-/**
- * User: anna
- * Date: Apr 5, 2005
- */
 public class AddAllOpenFilesToFavorites extends AnAction implements DumbAware {
   private final String myFavoritesName;
 

@@ -104,7 +104,7 @@ public class SuspiciousCollectionsMethodCallsInspection extends BaseJavaBatchLoc
                                                        final boolean reportConvertibleMethodCalls, final List<PsiMethod> patternMethods,
                                                        final IntArrayList indices) {
     final PsiExpression[] args = methodCall.getArgumentList().getExpressions();
-    if (args.length != 1) return null;
+    if (args.length < 1) return null;
 
     PsiType argType = args[0].getType();
     boolean exactType = args[0] instanceof PsiNewExpression;

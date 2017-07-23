@@ -24,10 +24,6 @@ import com.siyeh.ig.imports.UnusedImportInspection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- * Date: 17-Feb-2006
- */
 public class UnusedImportLocalInspection extends BaseJavaBatchLocalInspectionTool implements PairedUnfairLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "UNUSED_IMPORT";
   public static final String DISPLAY_NAME = InspectionsBundle.message("unused.import");

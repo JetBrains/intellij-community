@@ -15,12 +15,6 @@
  */
 package com.intellij.openapi.vcs.history;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 10/12/12
- * Time: 12:06 PM
- */
 public interface LongRevisionNumber {
   long getLongRevisionNumber();
 }

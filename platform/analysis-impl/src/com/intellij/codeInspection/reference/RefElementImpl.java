@@ -14,26 +14,19 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Oct 21, 2001
- * Time: 4:28:53 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,12 +46,12 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   private final SmartPsiElementPointer myID;
 
-  private List<RefElement> myOutReferences;
-  private List<RefElement> myInReferences;
+  private List<RefElement> myOutReferences; // guarded by this
+  private List<RefElement> myInReferences; // guarded by this
 
-  private String[] mySuppressions = null;
+  private String[] mySuppressions;
 
-  private boolean myIsDeleted ;
+  private volatile boolean myIsDeleted;
   protected static final int IS_REACHABLE_MASK = 0x40;
 
   protected RefElementImpl(@NotNull String name, @NotNull RefElement owner) {
@@ -77,24 +70,25 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     myFlags = 0;
   }
 
+  protected boolean isDeleted() {
+    return myIsDeleted;
+  }
+
   @Override
   public boolean isValid() {
     if (myIsDeleted) return false;
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        if (getRefManager().getProject().isDisposed()) return false;
+    return ReadAction.compute(() -> {
+      if (getRefManager().getProject().isDisposed()) return false;
 
-        final PsiFile file = myID.getContainingFile();
-        //no need to check resolve in offline mode
-        if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-          return file != null && file.isPhysical();
-        }
-
-        final PsiElement element = getElement();
-        return element != null && element.isPhysical();
+      final PsiFile file = myID.getContainingFile();
+      //no need to check resolve in offline mode
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        return file != null && file.isPhysical();
       }
-    }).booleanValue();
+
+      final PsiElement element = getElement();
+      return element != null && element.isPhysical();
+    });
   }
 
   @Override
@@ -161,37 +155,33 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   @Override
   @NotNull
-  public Collection<RefElement> getOutReferences() {
-    if (myOutReferences == null){
-      return ContainerUtil.emptyList();
-    }
-    return myOutReferences;
+  public synchronized Collection<RefElement> getOutReferences() {
+    return ObjectUtils.notNull(myOutReferences, ContainerUtil.emptyList());
   }
 
   @Override
   @NotNull
-  public Collection<RefElement> getInReferences() {
-    if (myInReferences == null){
-      return ContainerUtil.emptyList();
-    }
-    return myInReferences;
+  public synchronized Collection<RefElement> getInReferences() {
+    return ObjectUtils.notNull(myInReferences, ContainerUtil.emptyList());
   }
 
-  public void addInReference(RefElement refElement) {
-    if (!getInReferences().contains(refElement)) {
-      if (myInReferences == null){
-        myInReferences = new ArrayList<>(1);
-      }
-      myInReferences.add(refElement);
+  synchronized void addInReference(RefElement refElement) {
+    List<RefElement> inReferences = myInReferences;
+    if (inReferences == null){
+      myInReferences = inReferences = new ArrayList<>(1);
+    }
+    if (!inReferences.contains(refElement)) {
+      inReferences.add(refElement);
     }
   }
 
-  public void addOutReference(RefElement refElement) {
-    if (!getOutReferences().contains(refElement)) {
-      if (myOutReferences == null){
-        myOutReferences = new ArrayList<>(1);
-      }
-      myOutReferences.add(refElement);
+  synchronized void addOutReference(RefElement refElement) {
+    List<RefElement> outReferences = myOutReferences;
+    if (outReferences == null){
+      myOutReferences = outReferences = new ArrayList<>(1);
+    }
+    if (!outReferences.contains(refElement)) {
+      outReferences.add(refElement);
     }
   }
 
@@ -252,7 +242,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   protected abstract void initialize();
 
-  public void addSuppression(final String text) {
+  void addSuppression(final String text) {
     mySuppressions = text.split("[, ]");
   }
 

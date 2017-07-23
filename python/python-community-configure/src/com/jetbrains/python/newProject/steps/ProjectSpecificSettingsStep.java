@@ -17,6 +17,7 @@ package com.jetbrains.python.newProject.steps;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.facet.ui.ValidationResult;
+import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,7 +36,6 @@ import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HideableDecorator;
 import com.intellij.ui.TextAccessor;
-import com.intellij.util.NullableConsumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -65,7 +65,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase implements DumbAware {
+public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> implements DumbAware {
   private static final Logger LOGGER = Logger.getInstance(ProjectSpecificSettingsStep.class);
   private PythonSdkChooserCombo mySdkCombo;
   private boolean myInstallFramework;
@@ -79,8 +79,8 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
    */
   private boolean myRemotePathRequired;
 
-  public ProjectSpecificSettingsStep(@NotNull final DirectoryProjectGenerator projectGenerator,
-                                     @NotNull final NullableConsumer<ProjectSettingsStepBase> callback) {
+  public ProjectSpecificSettingsStep(@NotNull final DirectoryProjectGenerator<T> projectGenerator,
+                                     @NotNull final AbstractNewProjectStep.AbstractCallback callback) {
     super(projectGenerator, callback);
   }
 
@@ -109,7 +109,7 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
       advancedSettings = ((PythonProjectGenerator)myProjectGenerator).getSettingsPanel(myProjectDirectory);
     }
     else if (myProjectGenerator instanceof WebProjectTemplate) {
-      advancedSettings = ((WebProjectTemplate)myProjectGenerator).getPeer().getComponent();
+      advancedSettings = getPeer().getComponent();
     }
     if (advancedSettings != null) {
       final JPanel jPanel = new JPanel(new VerticalFlowLayout());
@@ -177,6 +177,11 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
           }, "Refreshing List of Packages, Please Wait", false, null);
         }
       });
+
+      if (myRemotePathField != null) {
+        myRemotePathField.addTextChangeListener(this::checkValid);
+      }
+      
       UiNotifyConnector.doWhenFirstShown(mySdkCombo, this::checkValid);
     }
   }
@@ -236,6 +241,18 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
       if (myProjectGenerator instanceof PyFrameworkProjectGenerator) {
         PyFrameworkProjectGenerator frameworkProjectGenerator = (PyFrameworkProjectGenerator)myProjectGenerator;
         String frameworkName = frameworkProjectGenerator.getFrameworkTitle();
+
+        if (isPy3k && !((PyFrameworkProjectGenerator)myProjectGenerator).supportsPython3()) {
+          setErrorText(frameworkName + " is not supported for the selected interpreter");
+          return false;
+        }
+
+        if (PythonSdkType.isRemote(sdk)) {
+          return true;
+        }
+        // All code beyond this line may be heavy in case of remote sdk and should not be called on AWT
+        // pretend everything is ok for remote and check package later
+
         if (!isFrameworkInstalled(sdk)) {
           if (PyPackageUtil.packageManagementEnabled(sdk)) {
             myInstallFramework = true;
@@ -263,10 +280,6 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
         if (!warningList.isEmpty()) {
           final String warning = StringUtil.join(warningList, "<br/>");
           setWarningText(warning);
-        }
-        if (isPy3k && !((PyFrameworkProjectGenerator)myProjectGenerator).supportsPython3()) {
-          setErrorText(frameworkName + " is not supported for the selected interpreter");
-          return false;
         }
       }
     }
@@ -348,7 +361,6 @@ public class ProjectSpecificSettingsStep extends ProjectSettingsStepBase impleme
 
     mySdkCombo.addChangedListener(e -> configureMappingField(remoteInterpreterManager));
     panelToAddField.add(myRemotePathField.getMainPanel());
-    myRemotePathField.addTextChangeListener(() -> checkValid());
     configureMappingField(remoteInterpreterManager);
   }
 

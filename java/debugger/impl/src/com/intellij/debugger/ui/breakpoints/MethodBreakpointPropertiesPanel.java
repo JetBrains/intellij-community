@@ -97,7 +97,6 @@ public class MethodBreakpointPropertiesPanel extends XBreakpointCustomProperties
 
   @Override
   public void loadFrom(@NotNull XBreakpoint<JavaMethodBreakpointProperties> breakpoint) {
-    myEmulatedCheckBox.setVisible(breakpoint.getType() instanceof JavaMethodBreakpointType);
     myEmulatedCheckBox.setSelected(breakpoint.getProperties().EMULATED);
 
     myWatchEntryCheckBox.setSelected(breakpoint.getProperties().WATCH_ENTRY);

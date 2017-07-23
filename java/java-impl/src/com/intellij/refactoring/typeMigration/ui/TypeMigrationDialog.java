@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,15 @@ import com.intellij.find.FindSettings;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -78,6 +79,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     myScopeChooserCombo = new ScopeChooserCombo(project, false, true, FindSettings.getInstance().getDefaultScopeName());
     Disposer.register(myDisposable, myScopeChooserCombo);
     myScopeChooserCombo.getChildComponent().addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         validateButtons();
       }
@@ -86,18 +88,17 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
   }
 
   @Override
-  protected void canRun() throws ConfigurationException {
-    if (myScopeChooserCombo.getSelectedScope() == null) throw new ConfigurationException("Scope is not chosen");
-  }
-
-  @Override
   protected void doAction() {
+    if (myScopeChooserCombo.getSelectedScope() == null) {
+      Messages.showErrorDialog("Scope is not chosen", "Error");
+      return;
+    }
     FindSettings.getInstance().setDefaultScopeName(myScopeChooserCombo.getSelectedScopeName());
     if (myRules == null) {
       myRules = new TypeMigrationRules();
       myRules.setBoundScope(myScopeChooserCombo.getSelectedScope());
     }
-    invokeRefactoring(new TypeMigrationProcessor(myProject, myRoots, getMigrationTypeFunction(), myRules));
+    invokeRefactoring(new TypeMigrationProcessor(myProject, myRoots, getMigrationTypeFunction(), myRules, true));
   }
 
   @NotNull
@@ -179,7 +180,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       myToTypeEditor = new EditorComboBox(document, project, StdFileTypes.JAVA);
       final String[] types = getValidTypes(project, root);
       myToTypeEditor.setHistory(types != null ? types : new String[]{document.getText()});
-      document.addDocumentListener(new DocumentAdapter() {
+      document.addDocumentListener(new DocumentListener() {
         @Override
         public void documentChanged(final DocumentEvent e) {
           documentManager.commitDocument(document);
@@ -201,6 +202,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       return myToTypeEditor;
     }
 
+    @Override
     protected void appendMigrationTypeEditor(JPanel panel, GridBagConstraints gc) {
       final PsiType type = getRootType();
       final String typeText = type != null ? type.getPresentableText() : "<unknown>";
@@ -235,11 +237,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
           return history;
         }
       }
-      catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-        LOG.info(e);
-        return null;
-      }
-      catch (PsiTypeCodeFragment.NoTypeException e) {
+      catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException e) {
         LOG.info(e);
         return null;
       }
@@ -268,11 +266,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       try {
         return myTypeCodeFragment.getType();
       }
-      catch (PsiTypeCodeFragment.TypeSyntaxException e) {
-        LOG.info(e);
-        return null;
-      }
-      catch (PsiTypeCodeFragment.NoTypeException e) {
+      catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException e) {
         LOG.info(e);
         return null;
       }

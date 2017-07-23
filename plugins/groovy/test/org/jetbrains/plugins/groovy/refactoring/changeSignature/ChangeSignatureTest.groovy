@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,14 @@ class ChangeSignatureTest extends ChangeSignatureTestCase {
 
   void testOneNewParameter() throws Exception {
     doTest(new SimpleInfo("p", -1, '"5"', null, CommonClassNames.JAVA_LANG_STRING))
+  }
+  
+  void testRemoveParameterMultiline() throws Exception {
+    doTest(new SimpleInfo(0), new SimpleInfo(2))
+  }
+  \
+  void testMoveParametersMultiline() throws Exception {
+    doTest(new SimpleInfo(1), new SimpleInfo(0), new SimpleInfo(2))
   }
 
   void testRemoveParameter() throws Exception {
@@ -257,6 +265,9 @@ class ChangeSignatureTest extends ChangeSignatureTestCase {
     doTest(new SimpleInfo(1))
   }
 
+  void testTraitMethod() {
+    doTest(null, null, null, [new SimpleInfo('a', -1)], [], false)
+  }
 
   private PsiType createType(String typeText) {
     return JavaPsiFacade.getElementFactory(project).createTypeByFQClassName(typeText, GlobalSearchScope.allScope(project))

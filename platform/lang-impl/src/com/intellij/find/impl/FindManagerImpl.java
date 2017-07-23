@@ -26,12 +26,20 @@ import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.impl.livePreview.SearchResults;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -39,12 +47,14 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -59,7 +69,7 @@ import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.usages.ChunkExtractor;
 import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.impl.SyntaxHighlighterOverEditorHighlighter;
-import com.intellij.util.Consumer;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Predicate;
 import com.intellij.util.messages.MessageBus;
@@ -67,7 +77,6 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +86,6 @@ import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 public class FindManagerImpl extends FindManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.impl.FindManagerImpl");
@@ -96,7 +104,8 @@ public class FindManagerImpl extends FindManager {
   private final MessageBus myBus;
   private static final Key<Boolean> HIGHLIGHTER_WAS_NOT_FOUND_KEY = Key.create("com.intellij.find.impl.FindManagerImpl.HighlighterNotFoundKey");
 
-  private FindDialog myFindDialog;
+  private FindUIHelper myHelper;
+  private static final NotificationGroup GROUP = new NotificationGroup("Find Problems", NotificationDisplayType.STICKY_BALLOON, false);
 
   public FindManagerImpl(Project project, FindSettings findSettings, UsageViewManager anotherManager, MessageBus bus) {
     myProject = project;
@@ -111,6 +120,14 @@ public class FindManagerImpl extends FindManager {
     myFindInProjectModel.setMultipleFiles(true);
 
     NotificationsConfigurationImpl.remove("FindInPath");
+    Disposer.register(project, new Disposable() {
+      @Override
+      public void dispose() {
+        if (myHelper != null) {
+          Disposer.dispose(myHelper);
+        }
+      }
+    });
   }
 
   @Override
@@ -154,66 +171,6 @@ public class FindManagerImpl extends FindManager {
     return replacePromptDialog.getExitCode();
   }
 
-  @Override
-  public void showFindDialog(@NotNull final FindModel model, @NotNull final Runnable okHandler) {
-    final Consumer<FindModel> handler = findModel -> {
-      changeGlobalSettings(findModel);
-      okHandler.run();
-    };
-    if(myFindDialog==null || Disposer.isDisposed(myFindDialog.getDisposable())){
-      myFindDialog = new FindDialog(myProject, model, handler) {
-        @Override
-        protected void dispose() {
-          super.dispose();
-          myFindDialog = null; // avoid strong ref!
-        }
-      };
-      myFindDialog.setModal(true);
-    }
-    else if (myFindDialog.getModel().isReplaceState() != model.isReplaceState() ||
-             !Comparing.equal(myFindDialog.getModel().getStringToFind(), model.getStringToFind())
-            ) {
-      myFindDialog.setModel(model);
-      myFindDialog.setOkHandler(handler);
-      return;
-    }
-    registerAction("ReplaceInPath");
-    registerAction("FindInPath");
-
-    myFindDialog.show();
-  }
-
-  private void registerAction(String aciotnName) {
-    AnAction action = ActionManager.getInstance().getAction(aciotnName);
-    JRootPane findDialogRootComponent = ((JDialog)myFindDialog.getWindow()).getRootPane();
-    new AnAction() {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        DataContextWrapper newDataContext = prepareDataContextForFind(e); // DataContext should be prepared before dialog invalidation
-        myFindDialog.doCancelAction();
-        action.actionPerformed(AnActionEvent.createFromDataContext(e.getPlace(), null, newDataContext));
-      }
-
-      @NotNull
-      private DataContextWrapper prepareDataContextForFind(@NotNull AnActionEvent e) {
-        DataContext dataContext = e.getDataContext();
-        Project project = CommonDataKeys.PROJECT.getData(dataContext);
-        Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-        final String selection = editor != null ? editor.getSelectionModel().getSelectedText() : null;
-
-        return new DataContextWrapper(dataContext) {
-          @Nullable
-          @Override
-          public Object getData(@NonNls String dataId) {
-            if (CommonDataKeys.PROJECT.is(dataId)) return project;
-            if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) return selection;
-            return super.getData(dataId);
-          }
-        };
-      }
-    }.registerCustomShortcutSet(action.getShortcutSet(), findDialogRootComponent);
-  }
-
   void changeGlobalSettings(FindModel findModel) {
     String stringToFind = findModel.getStringToFind();
     FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(myProject);
@@ -235,8 +192,21 @@ public class FindManagerImpl extends FindManager {
   }
 
   @Override
-  public void showFindPopup(@NotNull FindModel model, DataContext dataContext) {
-    FindPopupPanel.showBalloon(myProject, model, dataContext);
+  public void showFindDialog(@NotNull FindModel model, @NotNull Runnable okHandler) {
+    if (myHelper == null || Disposer.isDisposed(myHelper)) {
+      myHelper = new FindUIHelper(myProject, model, okHandler);
+        Disposer.register(myHelper, new Disposable() {
+          @Override
+          public void dispose() {
+            myHelper = null;
+          }
+        });
+    }
+    else {
+      myHelper.setModel(model);
+      myHelper.setOkHandler(okHandler);
+    }
+    myHelper.showUI();
   }
 
   @Override
@@ -511,7 +481,7 @@ public class FindManagerImpl extends FindManager {
     }
 
     if (model.isRegularExpressions()){
-      return findStringByRegularExpression(text, offset, model);
+      return findStringByRegularExpression(text, offset, model, file);
     }
 
     final StringSearcher searcher = createStringSearcher(model);
@@ -576,10 +546,7 @@ public class FindManagerImpl extends FindManager {
                                                       @NotNull final VirtualFile file) {
     synchronized (model) {
       FileType ftype = file.getFileType();
-      Language lang = null;
-      if (ftype instanceof LanguageFileType) {
-        lang = ((LanguageFileType)ftype).getLanguage();
-      }
+      Language lang = LanguageUtil.getLanguageForPsi(myProject, file);
 
       CommentsLiteralsSearchData data = model.getUserData(ourCommentsLiteralsSearchDataKey);
       if (data == null || !Comparing.equal(data.lastFile, file) || !data.model.equals(model)) {
@@ -594,21 +561,18 @@ public class FindManagerImpl extends FindManager {
         Set<Language> relevantLanguages;
         if (lang != null) {
           final Language finalLang = lang;
-          relevantLanguages = ApplicationManager.getApplication().runReadAction(new Computable<Set<Language>>() {
-            @Override
-            public Set<Language> compute() {
-              THashSet<Language> result = new THashSet<>();
+          relevantLanguages = ReadAction.compute(() -> {
+            THashSet<Language> result = new THashSet<>();
 
-              FileViewProvider viewProvider = PsiManager.getInstance(myProject).findViewProvider(file);
-              if (viewProvider != null) {
-                result.addAll(viewProvider.getLanguages());
-              }
-
-              if (result.isEmpty()) {
-                result.add(finalLang);
-              }
-              return result;
+            FileViewProvider viewProvider = PsiManager.getInstance(myProject).findViewProvider(file);
+            if (viewProvider != null) {
+              result.addAll(viewProvider.getLanguages());
             }
+
+            if (result.isEmpty()) {
+              result.add(finalLang);
+            }
+            return result;
           });
 
           for (Language relevantLanguage : relevantLanguages) {
@@ -772,32 +736,54 @@ public class FindManagerImpl extends FindManager {
     return syntaxHighlighter;
   }
 
-  private static FindResult findStringByRegularExpression(CharSequence text, int startOffset, FindModel model) {
+  private FindResult findStringByRegularExpression(CharSequence text,
+                                                   int startOffset,
+                                                   FindModel model,
+                                                   VirtualFile file) {
     Matcher matcher = compileRegExp(model, text);
     if (matcher == null) {
       return NOT_FOUND_RESULT;
     }
-    if (model.isForward()){
-      if (matcher.find(startOffset)) {
-        if (matcher.end() <= text.length()) {
-          return new FindResultImpl(matcher.start(), matcher.end());
+    try {
+      if (model.isForward()) {
+        if (matcher.find(startOffset)) {
+          if (matcher.end() <= text.length()) {
+            return new FindResultImpl(matcher.start(), matcher.end());
+          }
         }
+        return NOT_FOUND_RESULT;
+      }
+      else {
+        int start = -1;
+        int end = -1;
+        while (matcher.find() && matcher.end() < startOffset) {
+          start = matcher.start();
+          end = matcher.end();
+        }
+        if (start < 0) {
+          return NOT_FOUND_RESULT;
+        }
+        return new FindResultImpl(start, end);
+      }
+    } catch (StackOverflowError soe) {
+      String stringToFind = model.getStringToFind();
+      
+      if (!ApplicationManager.getApplication().isHeadlessEnvironment() &&
+          ourReportedPatterns.put(stringToFind.hashCode(), Boolean.TRUE) == null) {
+        String content = stringToFind + " produced stack overflow when matching content of the file";
+        LOG.info(content);
+        //noinspection SSBasedInspection
+        GROUP.createNotification("Regular expression failed to match",
+                                     content + " " + file.getPath(),
+                                     NotificationType.ERROR,
+                                     null
+                                   ).notify(myProject);
       }
       return NOT_FOUND_RESULT;
     }
-    else {
-      int start = -1;
-      int end = -1;
-      while(matcher.find() && matcher.end() < startOffset){
-        start = matcher.start();
-        end = matcher.end();
-      }
-      if (start < 0){
-        return NOT_FOUND_RESULT;
-      }
-      return new FindResultImpl(start, end);
-    }
   }
+  
+  private static final ConcurrentIntObjectMap<Boolean> ourReportedPatterns = ContainerUtil.createConcurrentIntObjectMap();
 
   private static Matcher compileRegExp(FindModel model, CharSequence text) {
     Pattern pattern = model.compileRegExp();
@@ -836,6 +822,7 @@ public class FindManagerImpl extends FindManager {
   }
 
   private static Matcher compileRegexAndFindFirst(FindModel model, CharSequence text, int startOffset) {
+    model = normalizeIfMultilined(model);
     Matcher matcher = compileRegExp(model, text);
 
     if (model.isForward()){
@@ -860,38 +847,6 @@ public class FindManagerImpl extends FindManager {
 
   private static MalformedReplacementStringException createMalformedReplacementException(FindModel model, Exception e) {
     return new MalformedReplacementStringException(FindBundle.message("find.replace.invalid.replacement.string", model.getStringToReplace()), e);
-  }
-
-  private static String getStringToReplaceByRegexp0(String foundString, final FindModel model) throws MalformedReplacementStringException{
-    String toFind = model.getStringToFind();
-    String toReplace = model.getStringToReplace();
-    Pattern pattern;
-    try{
-      int flags = Pattern.MULTILINE;
-      if (!model.isCaseSensitive()) {
-        flags |= Pattern.CASE_INSENSITIVE;
-      }
-      pattern = Pattern.compile(toFind, flags);
-    }
-    catch(PatternSyntaxException e){
-      return toReplace;
-    }
-
-    Matcher matcher = pattern.matcher(foundString);
-    if (matcher.matches()) {
-      try {
-        return matcher.replaceAll(StringUtil.unescapeStringCharacters(toReplace));
-      }
-      catch (Exception e) {
-        throw createMalformedReplacementException(model, e);
-      }
-    }
-    else {
-      // There are valid situations (for example, IDEADEV-2543 or positive lookbehind assertions)
-      // where an expression which matches a string in context will not match the same string
-      // separately).
-      return toReplace;
-    }
   }
 
   private static String replaceWithCaseRespect(String toReplace, String foundString) {

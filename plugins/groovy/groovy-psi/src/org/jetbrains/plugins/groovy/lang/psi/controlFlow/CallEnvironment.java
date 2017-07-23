@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,21 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Deque;
 
 /**
+ * @author ven
  * @see org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder#visitTryStatement(org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement)
  * @see ReturnInstruction#successors(CallEnvironment)
  * @see CallInstruction#successors(CallEnvironment)
  * @see AfterCallInstruction#predecessors(CallEnvironment)
- *
- * @author ven
  */
 public interface CallEnvironment {
-  Deque<CallInstruction> callStack(Instruction instruction);
 
-  void update(Deque<CallInstruction> callStack, Instruction instruction);
+  @NotNull
+  Deque<CallInstruction> callStack(@NotNull Instruction instruction);
+
+  void update(@NotNull Deque<CallInstruction> callStack, @NotNull Instruction instruction);
 }

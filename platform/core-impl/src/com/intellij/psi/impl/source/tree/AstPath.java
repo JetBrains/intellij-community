@@ -40,6 +40,7 @@ import java.util.List;
  * @author peter
  */
 public abstract class AstPath extends SubstrateRef {
+  private static final CompositeElement[] REMOVED_PATH_CHILDREN = new CompositeElement[0];
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.AstPath");
   private static final Key<CompositeElement[]> PATH_CHILDREN = Key.create("PATH_CHILDREN");
   private static final Key<AstPath> NODE_PATH = Key.create("NODE_PATH");
@@ -56,6 +57,18 @@ public abstract class AstPath extends SubstrateRef {
   }
 
   protected abstract int getDepth();
+
+  @Nullable
+  @Override
+  public Stub getStub(int stubIndex) {
+    if (stubIndex < 0) return null;
+
+    StubTree stubTree = getFileStubTree();
+    return stubTree == null ? null : stubTree.getPlainList().get(stubIndex);
+  }
+
+  @Nullable
+  protected abstract StubTree getFileStubTree();
 
   @Nullable
   @Override
@@ -103,14 +116,14 @@ public abstract class AstPath extends SubstrateRef {
         super.visitComposite(composite);
       }
     });
-    parent.putUserData(PATH_CHILDREN, children.toArray(new CompositeElement[0]));
+    parent.putUserData(PATH_CHILDREN, children.isEmpty() ? CompositeElement.EMPTY_ARRAY : children.toArray(CompositeElement.EMPTY_ARRAY));
   }
 
   public static void invalidatePaths(@NotNull LazyParseableElement scope) {
     CompositeElement[] children = scope.getUserData(PATH_CHILDREN);
     if (children == null) return;
 
-    scope.putUserData(PATH_CHILDREN, null);
+    scope.putUserData(PATH_CHILDREN, REMOVED_PATH_CHILDREN);
     for (CompositeElement child : children) {
       child.putUserData(NODE_PATH, null);
       assertConsistency(child.getCachedPsi());
@@ -151,8 +164,9 @@ public abstract class AstPath extends SubstrateRef {
       //noinspection ResultOfMethodCallIgnored
       parentNode.getFirstChildNode(); // expand chameleons, populate PATH_CHILDREN array
       CompositeElement[] children = parentNode.getUserData(PATH_CHILDREN);
-      if (children == null) {
-        throw new AssertionError(parentNode + " of " + parentNode.getClass());
+      boolean removed = children == REMOVED_PATH_CHILDREN;
+      if (children == null || removed) {
+        throw reportMissingChildren(parentNode, removed);
       }
       if (myIndex >= children.length) {
         throw new AssertionError(myIndex + " >= " + children.length + "; " + parentNode + " of " + parentNode.getClass());
@@ -160,9 +174,29 @@ public abstract class AstPath extends SubstrateRef {
       return children[myIndex];
     }
 
+    private AssertionError reportMissingChildren(CompositeElement parentNode, boolean removed) {
+      String message = "No path children in " + parentNode + " of " + parentNode.getClass() + "; removed=" + removed;
+
+      PsiFileImpl file = getContainingFile();
+      message += "\n  file: " + file + " of " + file.getClass() + "; physical=" + file.isPhysical() + "; useStrongRefs=" + file.useStrongRefs();
+
+      FileElement fileElement = file.getTreeElement();
+      message += "\n  ast=" + fileElement;
+      if (fileElement != null) {
+        CompositeElement[] rootChildren = fileElement.getUserData(PATH_CHILDREN);
+        message += "; root.children=" + (rootChildren == REMOVED_PATH_CHILDREN ? "removed" : rootChildren == null ? "null" : "nonNull");
+      }
+      return new AssertionError(message);
+    }
+
     @Override
     protected int getDepth() {
       return 1 + myParent.getDepth();
+    }
+
+    @Override
+    protected StubTree getFileStubTree() {
+      return myParent.getFileStubTree();
     }
 
     @Override
@@ -198,10 +232,15 @@ public abstract class AstPath extends SubstrateRef {
       if (node == null) {
         node = super.getNode();
         if (myFile.mayCacheAst()) {
-          myNode = new WeakReference<CompositeElement>(node);
+          myNode = new WeakReference<>(node);
         }
       }
       return node;
+    }
+
+    @Override
+    protected StubTree getFileStubTree() {
+      return SoftReference.dereference(myNode) == null ? myFile.getStubTree() : null;
     }
 
     @NotNull
@@ -248,6 +287,11 @@ public abstract class AstPath extends SubstrateRef {
     @Override
     protected int getDepth() {
       return 0;
+    }
+
+    @Override
+    protected StubTree getFileStubTree() {
+      return myFile.getStubTree();
     }
   }
 

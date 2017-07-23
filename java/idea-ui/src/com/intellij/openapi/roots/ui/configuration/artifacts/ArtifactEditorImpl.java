@@ -64,6 +64,7 @@ import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.event.DocumentEvent;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -114,6 +115,12 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
                                                    CompilerBundle.message("chooser.description.select.output.directory.for.0.artifact",
                                                                           getArtifact().getName()), myProject,
                                                    FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    myOutputDirectoryField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        queueValidation();
+      }
+    });
     myShowSpecificContentOptionsGroup = createShowSpecificContentOptionsGroup();
     myShowSpecificContentOptionsButton.addActionListener(new ActionListener() {
       @Override
@@ -235,7 +242,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
       protected void hyperlinkActivated(HyperlinkEvent e) {
         final JLabel label = new JLabel(ProjectBundle.message("artifact.source.items.tree.tooltip"));
         label.setBorder(HintUtil.createHintBorder());
-        label.setBackground(HintUtil.INFORMATION_COLOR);
+        label.setBackground(HintUtil.getInformationColor());
         label.setOpaque(true);
         HintManager.getInstance().showHint(label, RelativePoint.getSouthWestOf(link), HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE, -1);
       }
@@ -282,7 +289,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
       }
     });
 
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, createToolbarActionGroup(), true);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ProjectStructureArtifactEditor", createToolbarActionGroup(), true);
     JComponent toolbarComponent = toolbar.getComponent();
     if (UIUtil.isUnderDarcula()) {
       toolbarComponent.setBorder(new CustomLineBorder(0,0,1,0));
@@ -489,6 +496,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
         myLayoutTreeComponent.updateRootNode();
       }
     }
+    queueValidation();
   }
 
   @Override

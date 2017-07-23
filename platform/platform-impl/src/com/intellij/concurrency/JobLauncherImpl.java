@@ -282,7 +282,7 @@ public class JobLauncherImpl extends JobLauncher {
         ProgressManager.getInstance().executeProcessUnderProgress(() -> {
           try {
             while (true) {
-              progress.checkCanceled();
+              ProgressManager.checkCanceled();
               T element = failedToProcess.poll();
               if (element == null) element = things.take();
 

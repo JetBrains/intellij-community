@@ -20,9 +20,6 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IKeywordElementType;
 
-/**
- * User: anna
- */
 public interface SPITokenType extends JavaTokenType {
   IElementType SHARP = new IKeywordElementType("SHARP");
   IElementType DOLLAR = new IKeywordElementType("DOLLAR");

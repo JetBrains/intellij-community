@@ -27,7 +27,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -104,7 +103,7 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
   }
 
   @Attribute("enabledByDefault")
-  public boolean enabledByDefault = false;
+  public boolean enabledByDefault;
 
   @Attribute("applyToDialects")
   public boolean applyToDialects = true;
@@ -113,7 +112,7 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
    * If true, the inspection can run as part of the code cleanup action.
    */
   @Attribute("cleanupTool")
-  public boolean cleanupTool = false;
+  public boolean cleanupTool;
 
   /**
    * Highlighting level for this inspection tool that is used in default settings.
@@ -126,7 +125,7 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
     if (level == null) return HighlightDisplayLevel.WARNING;
     HighlightDisplayLevel displayLevel = HighlightDisplayLevel.find(level);
     if (displayLevel == null) {
-      LOG.error("Can't find highlight display level: " + level);
+      LOG.error("Can't find highlight display level: " + level + "; registered for: " + implementationClass + "; and short name: " + shortName);
       return HighlightDisplayLevel.WARNING;
     }
     return displayLevel;
@@ -184,7 +183,7 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
    * Do not show internal inspections if internal mode is off
    */
   @Attribute("isInternal") 
-  public boolean isInternal = false;
+  public boolean isInternal;
 
   @Override
   public String toString() {

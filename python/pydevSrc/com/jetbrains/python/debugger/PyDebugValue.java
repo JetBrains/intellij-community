@@ -1,6 +1,7 @@
 package com.jetbrains.python.debugger;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,6 +19,9 @@ import java.util.regex.Pattern;
 // todo: null modifier for modify modules, class objects etc.
 public class PyDebugValue extends XNamedValue {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.PyDebugValue");
+  private static final String DATA_FRAME = "DataFrame";
+  private static final String SERIES = "Series";
+  private static final Map<String, String> EVALUATOR_POSTFIXES = ImmutableMap.of("ndarray", "Array", DATA_FRAME, DATA_FRAME, SERIES, SERIES);
   public static final int MAX_VALUE = 256;
 
   public static final String RETURN_VALUES_PREFIX = "__pydevd_ret_val_dict";
@@ -204,23 +209,16 @@ public class PyDebugValue extends XNamedValue {
     node.setPresentation(getValueIcon(), myType, value, myContainer);
   }
 
-  private boolean isDataFrame() {
-    return "DataFrame".equals(myType);
-  }
-
-  private boolean isNdarray() {
-    return "ndarray".equals(myType);
-  }
-
   private void setFullValueEvaluator(XValueNode node, String value) {
     String treeName = getFullTreeName();
-    if (!isDataFrame() && !isNdarray()) {
+    String postfix = EVALUATOR_POSTFIXES.get(myType);
+    if (postfix == null) {
       if (value.length() >= MAX_VALUE) {
         node.setFullValueEvaluator(new PyFullValueEvaluator(myFrameAccessor, treeName));
       }
       return;
     }
-    String linkText = "...View as " + (isDataFrame() ? "DataFrame" : "Array");
+    String linkText = "...View as " + postfix;
     node.setFullValueEvaluator(new PyNumericContainerValueEvaluator(linkText, myFrameAccessor, treeName));
   }
 
@@ -354,5 +352,9 @@ public class PyDebugValue extends XNamedValue {
 
   public String getTypeQualifier() {
     return myTypeQualifier;
+  }
+
+  public boolean isTemporary() {
+    return myTempName != null;
   }
 }

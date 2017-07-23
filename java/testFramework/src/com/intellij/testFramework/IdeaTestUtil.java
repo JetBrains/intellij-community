@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,6 +72,12 @@ public class IdeaTestUtil extends PlatformTestUtil {
     modifiable.commit();
   }
 
+  public static void setModuleLanguageLevel(Module module, final LanguageLevel level, Disposable parentDisposable) {
+    LanguageLevel prev = LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel();
+    setModuleLanguageLevel(module, level);
+    Disposer.register(parentDisposable, () -> setModuleLanguageLevel(module, prev));
+  }
+
   @TestOnly
   public static Sdk getMockJdk17() {
     return getMockJdk17("java 1.7");
@@ -94,6 +100,11 @@ public class IdeaTestUtil extends PlatformTestUtil {
   }
 
   @TestOnly
+  public static Sdk getMockJdk9() {
+    return createMockJdk("java 9", getMockJdk9Path().getPath());
+  }
+
+  @TestOnly
   public static Sdk getMockJdk14() {
     return createMockJdk("java 1.4", getMockJdk14Path().getPath());
   }
@@ -108,6 +119,10 @@ public class IdeaTestUtil extends PlatformTestUtil {
 
   public static File getMockJdk18Path() {
     return getPathForJdkNamed(MOCK_JDK_DIR_NAME_PREFIX + "1.8");
+  }
+
+  public static File getMockJdk9Path() {
+    return getPathForJdkNamed(MOCK_JDK_DIR_NAME_PREFIX + "1.9");
   }
 
   public static String getMockJdkVersion(String path) {
@@ -171,7 +186,7 @@ public class IdeaTestUtil extends PlatformTestUtil {
     List<String> paths =
       ContainerUtil.packNullables(javaHome, new File(javaHome).getParent(), System.getenv("JDK_16_x64"), System.getenv("JDK_16"));
     for (String path : paths) {
-      if (JdkUtil.checkForJdk(new File(path))) {
+      if (JdkUtil.checkForJdk(path)) {
         return path;
       }
     }

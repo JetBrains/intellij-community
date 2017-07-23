@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.TextFieldWithAutoCompletion;
 import com.intellij.ui.components.JBRadioButton;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.util.XmlUtil;
@@ -88,6 +89,11 @@ public class DefaultSchemasConfigurable implements Configurable {
     myHtml4RadioButton.addActionListener(listener);
     myHtml5RadioButton.addActionListener(listener);
     myOtherRadioButton.addActionListener(listener);
+
+    if (UIUtil.isUnderWin10LookAndFeel()) {
+      myOtherRadioButton.setBorder(JBUI.Borders.empty());
+    }
+
     return myContentPanel;
   }
 
@@ -138,9 +144,5 @@ public class DefaultSchemasConfigurable implements Configurable {
     else {
       myXMLSchema11JBRadioButton.setSelected(true);
     }
-  }
-
-  @Override
-  public void disposeUIResources() {
   }
 }

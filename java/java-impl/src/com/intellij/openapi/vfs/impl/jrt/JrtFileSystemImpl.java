@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs.impl.jrt;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -33,7 +34,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -52,7 +52,7 @@ public class JrtFileSystemImpl extends JrtFileSystem {
     return PROTOCOL;
   }
 
-  @Nullable
+  @NotNull
   @Override
   protected String normalize(@NotNull String path) {
     int p = path.indexOf(SEPARATOR);
@@ -87,7 +87,7 @@ public class JrtFileSystemImpl extends JrtFileSystem {
     String homePath = extractLocalPath(extractRootPath(entryFile.getPath()));
     ArchiveHandler handler = myHandlers.get(homePath);
     if (handler == null) {
-      handler = isSupported() ? new JrtHandler(homePath) : new JrtHandlerStub(homePath);
+      handler = new JrtHandler(homePath);
       myHandlers.put(homePath, handler);
       ApplicationManager.getApplication().invokeLater(
         () -> LocalFileSystem.getInstance().refreshAndFindFileByPath(homePath + "/release"),
@@ -100,7 +100,7 @@ public class JrtFileSystemImpl extends JrtFileSystem {
     if (mySubscribed.getAndSet(true)) return;
 
     Application app = ApplicationManager.getApplication();
-    app.getMessageBus().connect(app).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
+    app.getMessageBus().connect(app).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         Set<VirtualFile> toRefresh = null;
@@ -110,7 +110,9 @@ public class JrtFileSystemImpl extends JrtFileSystem {
             VirtualFile file = event.getFile();
             if (file != null && "release".equals(file.getName())) {
               String homePath = file.getParent().getPath();
-              if (myHandlers.remove(homePath) != null) {
+              ArchiveHandler handler = myHandlers.remove(homePath);
+              if (handler != null) {
+                handler.dispose();
                 VirtualFile root = findFileByPath(composeRootPath(homePath));
                 if (root != null) {
                   ((NewVirtualFile)root).markDirtyRecursively();
@@ -152,6 +154,6 @@ public class JrtFileSystemImpl extends JrtFileSystem {
 
   @Override
   protected boolean isCorrectFileType(@NotNull VirtualFile local) {
-    return isModularJdk(FileUtil.toSystemDependentName(local.getPath()));
+    return JdkUtil.isModularRuntime(local.getPath());
   }
 }

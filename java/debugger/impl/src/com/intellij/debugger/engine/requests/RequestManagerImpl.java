@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,8 @@ import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.FilteredRequestor;
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
@@ -144,7 +143,8 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       request.setSuspendPolicy(EventRequest.SUSPEND_EVENT_THREAD);
     }
 
-    if (requestor.isCountFilterEnabled() && requestor.getCountFilter() > 0) {
+    // count filter has to be applied manually if condition is specified
+    if (requestor.isCountFilterEnabled() && !requestor.isConditionEnabled()) {
       request.addCountFilter(requestor.getCountFilter());
     }
 
@@ -155,14 +155,12 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
           if (!filter.isEnabled()) {
             continue;
           }
-          final JVMName jvmClassName = ApplicationManager.getApplication().runReadAction(new Computable<JVMName>() {
-            public JVMName compute() {
-              PsiClass psiClass = DebuggerUtils.findClass(filter.getPattern(), myDebugProcess.getProject(), myDebugProcess.getSearchScope());
-              if (psiClass == null) {
-                return null;
-              }
-              return JVMNameUtil.getJVMQualifiedName(psiClass);
+          final JVMName jvmClassName = ReadAction.compute(() -> {
+            PsiClass psiClass = DebuggerUtils.findClass(filter.getPattern(), myDebugProcess.getProject(), myDebugProcess.getSearchScope());
+            if (psiClass == null) {
+              return null;
             }
+            return JVMNameUtil.getJVMQualifiedName(psiClass);
           });
           String pattern = filter.getPattern();
           try {

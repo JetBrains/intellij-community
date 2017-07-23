@@ -19,10 +19,6 @@ package com.intellij.psi.impl.source;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
-/*
- * User: max
- * Date: Sep 16, 2006
- */
 public class IdentityCharTable implements CharTable {
   private IdentityCharTable() { }
 

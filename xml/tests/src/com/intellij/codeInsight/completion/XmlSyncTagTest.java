@@ -16,9 +16,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
@@ -43,10 +40,7 @@ public abstract class XmlSyncTagTest extends LightPlatformCodeInsightFixtureTest
   }
 
   protected void type(String toType) {
-    for (int i = 0; i < toType.length(); i++) {
-      final char c = toType.charAt(i);
-      CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> myFixture.type(c)), "Typing", DocCommandGroupId.noneGroupId(myFixture.getEditor().getDocument()), myFixture.getEditor().getDocument());
-    }
+    myFixture.type(toType);
   }
 
   protected void doTestCompletion(final String text, final String toType, final String result) {
@@ -58,10 +52,8 @@ public abstract class XmlSyncTagTest extends LightPlatformCodeInsightFixtureTest
                                   final String toType,
                                   final String result) {
     myFixture.configureByText(fileType, text);
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      myFixture.completeBasic();
-      if (toType != null) myFixture.type(toType);
-    }), "Typing", DocCommandGroupId.noneGroupId(myFixture.getEditor().getDocument()), myFixture.getEditor().getDocument());
+    myFixture.completeBasic();
+    if (toType != null) myFixture.type(toType);
     myFixture.checkResult(result);
   }
 }

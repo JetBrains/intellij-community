@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 
 /**
@@ -39,7 +38,7 @@ import java.net.URL;
 public class LibraryJarStatisticsService extends SettingsConnectionService implements StartupActivity, DumbAware {
   private static final String FILE_NAME = "statistics/library-jar-statistics.xml";
   private static final String DEFAULT_SETTINGS_URL = "https://www.jetbrains.com/idea/download-assistant.xml";
-  private static final String DEFAULT_SERVICE_URL = "http://frameworks.jetbrains.com";
+  private static final String DEFAULT_SERVICE_URL = "https://frameworks.jetbrains.com";
 
   private static final LibraryJarStatisticsService myInstance = new LibraryJarStatisticsService();
   private LibraryJarDescriptor[] myDescriptors;
@@ -88,10 +87,8 @@ public class LibraryJarStatisticsService extends SettingsConnectionService imple
 
         return new URL(url);
       }
-      catch (MalformedURLException ignored) {
-      }
       catch (IOException e) {
-        // no route to host, unknown host, etc.
+        // no route to host, unknown host, malformed url, etc.
       }
     }
 
@@ -103,6 +100,5 @@ public class LibraryJarStatisticsService extends SettingsConnectionService imple
     final Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode() || application.isHeadlessEnvironment()) return;
     ApplicationManager.getApplication().executeOnPooledThread((Runnable)() -> getInstance().getTechnologyDescriptors());
-    ;
   }
 }

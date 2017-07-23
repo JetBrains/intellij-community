@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,20 @@ package com.intellij.codeInsight.unwrap;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.List;
 
 public class JavaMethodParameterUnwrapper extends JavaUnwrapper {
-  private static final Logger LOG = Logger.getInstance("#" + JavaMethodParameterUnwrapper.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaMethodParameterUnwrapper.class);
 
   public JavaMethodParameterUnwrapper() {
     super("");
   }
 
   private static PsiElement adjustElementToTheLeft(PsiElement element) {
-    if (element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == JavaTokenType.RPARENTH) {
+    if (PsiUtil.isJavaToken(element, JavaTokenType.RPARENTH)) {
       PsiElement prevSibling = element.getPrevSibling();
       if (prevSibling != null) {
         return prevSibling;

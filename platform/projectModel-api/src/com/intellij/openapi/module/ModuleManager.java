@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,13 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.util.graph.Graph;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
@@ -64,8 +66,7 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    * @throws ModuleWithNameAlreadyExists if a module with such a name already exists in the project.
    */
   @NotNull
-  public abstract Module loadModule(@NotNull String filePath)
-    throws InvalidDataException, IOException, JDOMException, ModuleWithNameAlreadyExists;
+  public abstract Module loadModule(@NotNull String filePath) throws IOException, JDOMException, ModuleWithNameAlreadyExists;
 
   /**
    * Disposes of the specified module and removes it from the project.
@@ -125,8 +126,8 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    * Checks if one of the specified modules directly depends on the other module.
    *
    * @param module   the module to check the dependency for.
-   * @param onModule the module on which <code>module</code> may depend.
-   * @return true if <code>module</code> directly depends on <code>onModule</code>, false otherwise.
+   * @param onModule the module on which {@code module} may depend.
+   * @return true if {@code module} directly depends on {@code onModule}, false otherwise.
    */
   public abstract boolean isModuleDependent(@NotNull Module module, @NotNull Module onModule);
 
@@ -159,12 +160,36 @@ public abstract class ModuleManager extends SimpleModificationTracker {
 
 
   /**
-   * Returns the path to the group to which the specified module belongs, as an
-   * array of group names starting from the project root.
-   *
+   * Returns the path to the group to which the specified module belongs, as an array of group names starting from the project root.
+   * <p>
+   * <strong>Use {@link com.intellij.openapi.module.ModuleGrouper#getGroupPath()} instead.</strong> Exlicit module groups will be replaced
+   * by automatical module grouping accordingly to qualified names of modules, see https://youtrack.jetbrains.com/issue/IDEA-166061 for details.
+   * </p>
    * @param module the module for which the path is requested.
    * @return the path to the group for the module, or null if the module does not belong to any group.
    */
   @Nullable
   public abstract String[] getModuleGroupPath(@NotNull Module module);
+
+  public abstract boolean hasModuleGroups();
+
+  /**
+   * @return description of all modules in the project including unloaded
+   */
+  @ApiStatus.Experimental
+  public abstract Collection<ModuleDescription> getAllModuleDescriptions();
+
+  @ApiStatus.Experimental
+  public abstract Collection<UnloadedModuleDescription> getUnloadedModuleDescriptions();
+
+  @ApiStatus.Experimental
+  @Nullable
+  public abstract UnloadedModuleDescription getUnloadedModuleDescription(@NotNull String moduleName);
+
+  /**
+   * Specify list of modules which will be unloaded from the project.
+   * @see UnloadedModuleDescription
+   */
+  @ApiStatus.Experimental
+  public abstract void setUnloadedModules(@NotNull List<String> unloadedModuleNames);
 }

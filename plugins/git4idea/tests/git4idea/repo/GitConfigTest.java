@@ -15,10 +15,8 @@
  */
 package git4idea.repo;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsTestUtil;
@@ -31,10 +29,8 @@ import git4idea.GitStandardRemoteBranch;
 import git4idea.test.GitPlatformTest;
 import git4idea.test.GitTestUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.*;
 
@@ -70,13 +66,8 @@ public class GitConfigTest extends GitPlatformTest {
     GitBranchState state = reader.readState(config.parseRemotes());
     Collection<GitBranchTrackInfo> trackInfos = config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());
     assertTrue("Couldn't find correct a#branch tracking information among: [" + trackInfos + "]",
-               ContainerUtil.exists(trackInfos, new Condition<GitBranchTrackInfo>() {
-                 @Override
-                 public boolean value(GitBranchTrackInfo info) {
-                   return info.getLocalBranch().getName().equals("a#branch") &&
-                          info.getRemoteBranch().getNameForLocalOperations().equals("origin/a#branch");
-                 }
-               }));
+               ContainerUtil.exists(trackInfos, info -> info.getLocalBranch().getName().equals("a#branch") &&
+                                                    info.getRemoteBranch().getNameForLocalOperations().equals("origin/a#branch")));
   }
 
   // IDEA-143363 Check that remote.pushdefault (generic, without remote name) doesn't fail the config parsing procedure
@@ -125,19 +116,13 @@ public class GitConfigTest extends GitPlatformTest {
 
   private void doTestBranches(String testName, File configFile, File resultFile) throws IOException {
     Collection<GitBranchTrackInfo> expectedInfos = readBranchResults(resultFile);
-    Collection<GitLocalBranch> localBranches = Collections2.transform(expectedInfos, new Function<GitBranchTrackInfo, GitLocalBranch>() {
-      @Override
-      public GitLocalBranch apply(@Nullable GitBranchTrackInfo input) {
-        assert input != null;
-        return input.getLocalBranch();
-      }
+    Collection<GitLocalBranch> localBranches = Collections2.transform(expectedInfos, input -> {
+      assert input != null;
+      return input.getLocalBranch();
     });
-    Collection<GitRemoteBranch> remoteBranches = Collections2.transform(expectedInfos, new Function<GitBranchTrackInfo, GitRemoteBranch>() {
-      @Override
-      public GitRemoteBranch apply(@Nullable GitBranchTrackInfo input) {
-        assert input != null;
-        return input.getRemoteBranch();
-      }
+    Collection<GitRemoteBranch> remoteBranches = Collections2.transform(expectedInfos, input -> {
+      assert input != null;
+      return input.getRemoteBranch();
     });
 
     VcsTestUtil.assertEqualCollections(testName,
@@ -160,12 +145,7 @@ public class GitConfigTest extends GitPlatformTest {
 
   @NotNull
   public static Collection<TestSpec> loadConfigData(@NotNull File dataFolder) throws IOException {
-    File[] tests = dataFolder.listFiles(new FilenameFilter() {
-      @Override
-      public boolean accept(File dir, String name) {
-        return !name.startsWith(".");
-      }
-    });
+    File[] tests = dataFolder.listFiles((dir, name) -> !name.startsWith("."));
     Collection<TestSpec> data = ContainerUtil.newArrayList();
     for (File testDir : tests) {
       File descriptionFile = null;
@@ -257,7 +237,7 @@ public class GitConfigTest extends GitPlatformTest {
   }
 
   private static List<String> getSingletonOrEmpty(String[] array, int i) {
-    return array.length < i + 1 ? Collections.<String>emptyList() : Collections.singletonList(array[i]);
+    return array.length < i + 1 ? Collections.emptyList() : Collections.singletonList(array[i]);
   }
 
   private static class TestSpec {

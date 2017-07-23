@@ -20,10 +20,8 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsTaskHandler;
-import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
@@ -54,12 +52,8 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
   @Override
   public TaskInfo startNewTask(@NotNull final String taskName) {
     List<R> repositories = myRepositoryManager.getRepositories();
-    List<R> problems = ContainerUtil.filter(repositories, new Condition<R>() {
-      @Override
-      public boolean value(R repository) {
-        return hasBranch(repository, new TaskInfo(taskName, Collections.emptyList()));
-      }
-    });
+    List<R> problems = ContainerUtil.filter(repositories,
+                                            repository -> hasBranch(repository, new TaskInfo(taskName, Collections.emptyList())));
     List<R> map = new ArrayList<>();
     if (!problems.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode() ||
@@ -79,24 +73,14 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
     }
 
     map.addAll(repositories);
-    return new TaskInfo(taskName, ContainerUtil.map(map, new Function<R, String>() {
-      @Override
-      public String fun(R r) {
-        return r.getPresentableUrl();
-      }
-    }));
+    return new TaskInfo(taskName, ContainerUtil.map(map, r -> r.getPresentableUrl()));
   }
 
   @Override
   public void switchToTask(@NotNull TaskInfo taskInfo, @Nullable Runnable invokeAfter) {
     final String branchName = taskInfo.getName();
     List<R> repositories = getRepositories(taskInfo.getRepositories());
-    List<R> notFound = ContainerUtil.filter(repositories, new Condition<R>() {
-      @Override
-      public boolean value(R repository) {
-        return !hasBranch(repository, taskInfo);
-      }
-    });
+    List<R> notFound = ContainerUtil.filter(repositories, repository -> !hasBranch(repository, taskInfo));
     if (!notFound.isEmpty()) {
       checkoutAsNewBranch(branchName, notFound);
     }
@@ -108,12 +92,8 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
 
   @Override
   public void closeTask(@NotNull final TaskInfo taskInfo, @NotNull TaskInfo original) {
-    checkout(original.getName(), getRepositories(original.getRepositories()), new Runnable() {
-      @Override
-      public void run() {
-        mergeAndClose(taskInfo.getName(), getRepositories(taskInfo.getRepositories()));
-      }
-    });
+    checkout(original.getName(), getRepositories(original.getRepositories()),
+             () -> mergeAndClose(taskInfo.getName(), getRepositories(taskInfo.getRepositories())));
   }
 
   @Override
@@ -126,13 +106,7 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
   public TaskInfo[] getCurrentTasks() {
     List<R> repositories = myRepositoryManager.getRepositories();
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-    FactoryMap<String, TaskInfo> tasks = new FactoryMap<String, TaskInfo>() {
-      @Nullable
-      @Override
-      protected TaskInfo create(String key) {
-        return new TaskInfo(key, new ArrayList<>());
-      }
-    };
+    Map<String, TaskInfo> tasks = FactoryMap.createMap(key -> new TaskInfo(key, new ArrayList<>()));
     for (R repository : repositories) {
       String branch = getActiveBranch(repository);
       if (branch != null) {
@@ -157,36 +131,21 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
         tasks.putValue(branch.getName(), branch);
       }
     }
-    return ContainerUtil.map2Array(tasks.entrySet(), TaskInfo.class, new Function<Map.Entry<String, Collection<TaskInfo>>, TaskInfo>() {
-      @Override
-      public TaskInfo fun(Map.Entry<String, Collection<TaskInfo>> entry) {
-        Set<String> repositories = new HashSet<>();
-        boolean remote = false;
-        for (TaskInfo info : entry.getValue()) {
-          remote |= info.isRemote();
-          repositories.addAll(info.getRepositories());
-        }
-        return new TaskInfo(entry.getKey(), repositories, remote);
+    return ContainerUtil.map2Array(tasks.entrySet(), TaskInfo.class, entry -> {
+      Set<String> repositories1 = new HashSet<>();
+      boolean remote = false;
+      for (TaskInfo info : entry.getValue()) {
+        remote |= info.isRemote();
+        repositories1.addAll(info.getRepositories());
       }
+      return new TaskInfo(entry.getKey(), repositories1, remote);
     });
   }
 
   @NotNull
   private List<R> getRepositories(@NotNull Collection<String> urls) {
     final List<R> repositories = myRepositoryManager.getRepositories();
-    return ContainerUtil.mapNotNull(urls, new NullableFunction<String, R>() {
-      @Nullable
-      @Override
-      public R fun(final String s) {
-
-        return ContainerUtil.find(repositories, new Condition<R>() {
-          @Override
-          public boolean value(R repository) {
-            return s.equals(repository.getPresentableUrl());
-          }
-        });
-      }
-    });
+    return ContainerUtil.mapNotNull(urls, (NullableFunction<String, R>)s -> ContainerUtil.find(repositories, repository -> s.equals(repository.getPresentableUrl())));
   }
 
   protected abstract void checkout(@NotNull String taskName, @NotNull List<R> repos, @Nullable Runnable callInAwtLater);

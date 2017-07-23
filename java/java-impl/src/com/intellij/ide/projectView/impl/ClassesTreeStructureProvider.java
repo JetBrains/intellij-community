@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,14 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ide.util.treeView.AbstractTreeUi;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
@@ -48,8 +49,15 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
   @NotNull
   @Override
   public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children, ViewSettings settings) {
+    return AbstractTreeUi.calculateYieldingToWriteAction(() -> doModify(parent, children));
+  }
+
+  @NotNull
+  private Collection<AbstractTreeNode> doModify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children) {
     ArrayList<AbstractTreeNode> result = new ArrayList<>();
     for (final AbstractTreeNode child : children) {
+      ProgressManager.checkCanceled();
+
       Object o = child.getValue();
       if (o instanceof PsiClassOwner && !(o instanceof ServerPageFile)) {
         final ViewSettings settings1 = ((ProjectViewNode)parent).getSettings();
@@ -74,15 +82,12 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
         }
 
         if (fileInRoots(file)) {
-          PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
-            @Override
-            public PsiClass[] compute() {
-              try {
-                return classOwner.getClasses();
-              }
-              catch (IndexNotReadyException e) {
-                return PsiClass.EMPTY_ARRAY;
-              }
+          PsiClass[] classes = ReadAction.compute(() -> {
+            try {
+              return classOwner.getClasses();
+            }
+            catch (IndexNotReadyException e) {
+              return PsiClass.EMPTY_ARRAY;
             }
           });
           if (classes.length == 1 && !(classes[0] instanceof SyntheticElement) &&
@@ -102,11 +107,6 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
   private boolean fileInRoots(VirtualFile file) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     return file != null && (index.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) || index.isInLibraryClasses(file) || index.isInLibrarySource(file));
-  }
-
-  @Override
-  public Object getData(Collection<AbstractTreeNode> selected, String dataName) {
-    return null;
   }
 
   @Override

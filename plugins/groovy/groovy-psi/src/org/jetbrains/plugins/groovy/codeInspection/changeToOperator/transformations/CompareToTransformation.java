@@ -18,40 +18,58 @@ package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformat
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.MethodCallData;
-import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.data.OptionsData;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeInspection.changeToOperator.ChangeToOperatorInspection.Options;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 
-import static com.google.common.base.MoreObjects.firstNonNull;
+import static java.lang.String.format;
+import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.replaceExpression;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ComparisonUtils.isComparison;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.*;
 
 class CompareToTransformation extends BinaryTransformation {
-
-  @NotNull
   @Override
-  protected GrExpression getExpandedElement(@NotNull GrMethodCallExpression callExpression) {
-    PsiElement parent = callExpression.getParent();
-    return isComparison(parent) ? (GrExpression)parent : super.getExpandedElement(callExpression);
+  public void apply(@NotNull GrMethodCall methodCall, @NotNull Options options) {
+    GrExpression rhs = getRhs(methodCall);
+    GrExpression rhsParenthesized = checkPrecedenceForNonBinaryOps(rhs, RELATIONAL_PRECEDENCE) ? parenthesize(rhs) : rhs;
+    GrExpression replacedElement = methodCall;
+    IElementType changeToOperator = shouldChangeToOperator(methodCall, options);
+    if (changeToOperator != mCOMPARE_TO) {
+        replacedElement = (GrExpression) methodCall.getParent();
+    }
+
+    replaceExpression(replacedElement, format("%s %s %s", getLhs(methodCall).getText(), changeToOperator, rhsParenthesized.getText()));
   }
 
-  @Override
-  protected String getOperator(MethodCallData methodInfo, OptionsData optionsData) {
-    IElementType comparison = methodInfo.getComparison();
-    if (shouldChangeCompareToEqualityToEquals(optionsData, comparison)) {
-      return firstNonNull(comparison, mCOMPARE_TO).toString();
+  @Nullable
+  private static IElementType shouldChangeToOperator(@NotNull GrMethodCall call, Options options) {
+    PsiElement parent = call.getParent();
+    if (isComparison(parent)) {
+      IElementType token = ((GrBinaryExpression)parent).getOperationTokenType();
+      if (isEquality(token) && !options.shouldChangeCompareToEqualityToEquals()) {
+        return null;
+      }
+      return token;
     }
-    else {
-      return null;
-    }
-  }
+    return mCOMPARE_TO;
 
-  private static boolean shouldChangeCompareToEqualityToEquals(OptionsData optionsData, IElementType comparison) {
-    return !isEquality(comparison) || optionsData.shouldChangeCompareToEqualityToEquals();
   }
 
   private static boolean isEquality(IElementType comparison) {
     return (comparison == mNOT_EQUAL) || (comparison == mEQUAL);
+  }
+
+  @Override
+  public boolean couldApplyInternal(@NotNull GrMethodCall methodCall, @NotNull Options options) {
+    return super.couldApplyInternal(methodCall, options) && shouldChangeToOperator(methodCall, options) != null;
+  }
+
+  @Override
+  protected boolean needParentheses(@NotNull GrMethodCall methodCall, @NotNull Options options) {
+    GrExpression rhs = getRhs(methodCall);
+    return checkPrecedenceForNonBinaryOps(rhs, RELATIONAL_PRECEDENCE) || checkPrecedence(RELATIONAL_PRECEDENCE, methodCall);
   }
 }

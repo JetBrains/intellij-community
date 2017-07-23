@@ -17,8 +17,6 @@ package com.intellij.refactoring.convertToInstanceMethod;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -28,9 +26,11 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -71,10 +71,9 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
       return;
     }
     final PsiParameter[] parameters = method.getParameterList().getParameters();
-    List<PsiParameter> suitableParameters = new ArrayList<>();
+    List<Object> targetQualifiers = new ArrayList<>();
     boolean classTypesFound = false;
     boolean resolvableClassesFound = false;
-    boolean classesInProjectFound = false;
     for (final PsiParameter parameter : parameters) {
       final PsiType type = parameter.getType();
       if (type instanceof PsiClassType) {
@@ -82,33 +81,39 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
         final PsiClass psiClass = ((PsiClassType)type).resolve();
         if (psiClass != null && !(psiClass instanceof PsiTypeParameter)) {
           resolvableClassesFound = true;
-          final boolean inProject = method.getManager().isInProject(psiClass);
-          if (inProject) {
-            classesInProjectFound = true;
-            suitableParameters.add(parameter);
+          if (method.getManager().isInProject(psiClass)) {
+            targetQualifiers.add(parameter);
           }
         }
       }
     }
-    if (suitableParameters.isEmpty()) {
-      String message = null;
+    PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null || containingClass.getQualifiedName() == null) return;
+    String className = containingClass.getName();
+    PsiMethod[] constructors = containingClass.getConstructors();
+    boolean noArgConstructor =
+      constructors.length == 0 || Arrays.stream(constructors).anyMatch(constructor -> constructor.getParameterList().getParametersCount() == 0);
+    if (noArgConstructor) {
+      targetQualifiers.add("this / new " + className + "()");
+    }
+
+    if (targetQualifiers.isEmpty()) {
+      String message;
       if (!classTypesFound) {
         message = RefactoringBundle.message("convertToInstanceMethod.no.parameters.with.reference.type");
       }
       else if (!resolvableClassesFound) {
         message = RefactoringBundle.message("convertToInstanceMethod.all.reference.type.parametres.have.unknown.types");
       }
-      else if (!classesInProjectFound) {
+      else {
         message = RefactoringBundle.message("convertToInstanceMethod.all.reference.type.parameters.are.not.in.project");
       }
-      LOG.assertTrue(message != null);
+      message += " and containing class doesn't have default constructor";
       Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
       CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(message), REFACTORING_NAME, HelpID.CONVERT_TO_INSTANCE_METHOD);
       return;
     }
-
-    new ConvertToInstanceMethodDialog(
-      method,
-      suitableParameters.toArray(new PsiParameter[suitableParameters.size()])).show();
+    
+    new ConvertToInstanceMethodDialog(method, ArrayUtil.toObjectArray(targetQualifiers)).show();
   }
 }

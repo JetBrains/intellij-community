@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,19 +39,31 @@ public class AssignmentExpression {
   public static boolean parse(PsiBuilder builder, GroovyParser parser, boolean comExprAllowed) {
     Marker marker = builder.mark();
     final boolean isTuple = ParserUtils.lookAhead(builder, GroovyTokenTypes.mLPAREN, GroovyTokenTypes.mIDENT, GroovyTokenTypes.mCOMMA);
-    if (parseSide(builder, parser, isTuple,comExprAllowed)) {
-      if (ParserUtils.getToken(builder, TokenSets.ASSIGNMENTS)) {
-        ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
-        if (!parse(builder, parser, comExprAllowed)) {
-          builder.error(GroovyBundle.message("expression.expected"));
+    if (parseSide(builder, parser, isTuple, comExprAllowed)) {
+      if (isTuple) {
+        if (ParserUtils.getToken(builder, GroovyTokenTypes.mASSIGN)) {
+          ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
+          if (!parse(builder, parser, comExprAllowed)) {
+            builder.error(GroovyBundle.message("expression.expected"));
+          }
+          marker.done(GroovyElementTypes.TUPLE_ASSIGNMENT_EXPRESSION);
         }
-        marker.done(GroovyElementTypes.ASSIGNMENT_EXPRESSION);
+        else {
+          builder.error(GroovyBundle.message("assign.expected"));
+          marker.drop();
+        }
       }
       else {
-        if (isTuple) {
-          builder.error(GroovyBundle.message("assign.expected"));
+        if (ParserUtils.getToken(builder, TokenSets.ASSIGNMENTS)) {
+          ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
+          if (!parse(builder, parser, comExprAllowed)) {
+            builder.error(GroovyBundle.message("expression.expected"));
+          }
+          marker.done(GroovyElementTypes.ASSIGNMENT_EXPRESSION);
         }
-        marker.drop();
+        else {
+          marker.drop();
+        }
       }
       return true;
     }

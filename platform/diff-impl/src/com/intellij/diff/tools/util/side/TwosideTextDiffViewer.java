@@ -29,14 +29,13 @@ import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.tools.util.SyncScrollSupport;
 import com.intellij.diff.tools.util.SyncScrollSupport.TwosideSyncScrollSupport;
 import com.intellij.diff.tools.util.base.InitialScrollPositionSupport;
-import com.intellij.diff.tools.util.base.TextDiffSettingsHolder;
+import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.LineCol;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -54,8 +53,6 @@ import javax.swing.*;
 import java.util.List;
 
 public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditorHolder> {
-  public static final Logger LOG = Logger.getInstance(TwosideTextDiffViewer.class);
-
   @NotNull private final List<? extends EditorEx> myEditableEditors;
   @Nullable private List<? extends EditorEx> myEditors;
 
@@ -131,7 +128,7 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   //
 
   @NotNull
-  public TextDiffSettingsHolder.TextDiffSettings getTextSettings() {
+  public TextDiffSettings getTextSettings() {
     return TextDiffViewerUtil.getTextSettings(myContext);
   }
 

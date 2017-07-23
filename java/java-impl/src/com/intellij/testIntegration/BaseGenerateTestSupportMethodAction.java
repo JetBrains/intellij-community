@@ -51,7 +51,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
-  protected static final Logger LOG = Logger.getInstance("#" + BaseGenerateTestSupportMethodAction.class.getName());
+  protected static final Logger LOG = Logger.getInstance(BaseGenerateTestSupportMethodAction.class);
 
   public BaseGenerateTestSupportMethodAction(TestIntegrationUtils.MethodKind methodKind) {
     super(new MyHandler(methodKind));

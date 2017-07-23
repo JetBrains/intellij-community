@@ -22,17 +22,13 @@ import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.ProgressTracker;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
+import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.SVNStatusClient;
 
 import java.io.File;
 import java.util.Collection;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/24/12
- * Time: 9:47 AM
- */
 public class SvnKitStatusClient extends BaseSvnClient implements StatusClient {
 
   private SVNStatusClient myStatusClient;
@@ -59,13 +55,8 @@ public class SvnKitStatusClient extends BaseSvnClient implements StatusClient {
                        @NotNull final StatusConsumer handler,
                        @Nullable Collection changeLists) throws SvnBindException {
     try {
-      return getStatusClient()
-        .doStatus(path, revision, toDepth(depth), remote, reportAll, includeIgnored, collectParentExternals, new ISVNStatusHandler() {
-          @Override
-          public void handleStatus(SVNStatus status) throws SVNException {
-            handler.consume(Status.create(status));
-          }
-        }, changeLists);
+      return getStatusClient().doStatus(path, revision, toDepth(depth), remote, reportAll, includeIgnored, collectParentExternals,
+                                        status -> handler.consume(Status.create(status)), changeLists);
     }
     catch (SVNException e) {
       throw new SvnBindException(e);

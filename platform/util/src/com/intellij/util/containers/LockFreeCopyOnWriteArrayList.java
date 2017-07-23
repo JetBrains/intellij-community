@@ -68,8 +68,6 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
   }
 
   /**
-   * Returns <tt>true</tt> if this list contains no elements.
-   *
    * @return <tt>true</tt> if this list contains no elements
    */
   @Override
@@ -310,10 +308,9 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
    * Replaces the element at the specified position in this list with the
    * specified element.
    *
-   * @throws IndexOutOfBoundsException {@inheritDoc}
    */
   @Override
-  public E set(int index, E element) {
+  public E set(int index, E element) throws IndexOutOfBoundsException {
     E oldValue;
     Object[] elements;
     Object[] newElements;
@@ -372,10 +369,9 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
    * list. Shifts the element currently at that position (if any) and
    * any subsequent elements to the right (adds one to their indices).
    *
-   * @throws IndexOutOfBoundsException {@inheritDoc}
    */
   @Override
-  public void add(int index, E element) {
+  public void add(int index, E element) throws IndexOutOfBoundsException {
     while (true) {
       Object[] elements = array;
       Object[] newElements = createArrayAdd(elements, index, element);
@@ -406,10 +402,9 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
    * Shifts any subsequent elements to the left (subtracts one from their
    * indices).  Returns the element that was removed from the list.
    *
-   * @throws IndexOutOfBoundsException {@inheritDoc}
    */
   @Override
-  public E remove(int index) {
+  public E remove(int index) throws IndexOutOfBoundsException {
     E oldValue;
     while (true) {
       Object[] elements = array;
@@ -766,12 +761,11 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess, Concurre
    *              from the specified collection
    * @param c     collection containing elements to be added to this list
    * @return <tt>true</tt> if this list changed as a result of the call
-   * @throws IndexOutOfBoundsException {@inheritDoc}
    * @throws NullPointerException      if the specified collection is null
    * @see #add(int, Object)
    */
   @Override
-  public boolean addAll(int index, @NotNull Collection<? extends E> c) {
+  public boolean addAll(int index, @NotNull Collection<? extends E> c) throws IndexOutOfBoundsException {
     Object[] cs = c.toArray();
     if (cs.length == 0) {
       return false;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,19 @@ package org.jetbrains.plugins.groovy.mvc;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +43,7 @@ import java.util.Map;
 public class MvcProjectWithoutLibraryNotificator implements StartupActivity, DumbAware {
   @Override
   public void runActivity(@NotNull final Project project) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
     ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ReadTask() {
       @Override
       public void computeInReadAction(@NotNull ProgressIndicator indicator) {
@@ -74,6 +76,11 @@ public class MvcProjectWithoutLibraryNotificator implements StartupActivity, Dum
             }
           }
         ).notify(project);
+      }
+
+      @Override
+      public Continuation runBackgroundProcess(@NotNull final ProgressIndicator indicator) {
+        return DumbService.getInstance(project).runReadActionInSmartMode(() -> performInReadAction(indicator));
       }
 
       @Override

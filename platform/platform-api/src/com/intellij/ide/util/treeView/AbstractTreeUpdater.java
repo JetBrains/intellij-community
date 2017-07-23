@@ -51,7 +51,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     myTreeBuilder = treeBuilder;
     final JTree tree = myTreeBuilder.getTree();
     final JComponent component = tree instanceof TreeTableTree ? ((TreeTableTree)tree).getTreeTable() : tree;
-    myUpdateQueue = new MergingUpdateQueue("UpdateQueue", 300, component.isShowing(), component) {
+    myUpdateQueue = new MergingUpdateQueue("UpdateQueue", 100, component.isShowing(), component) {
       @Override
       protected Alarm createAlarm(@NotNull Alarm.ThreadToUse thread, Disposable parent) {
         return new Alarm(thread, parent) {
@@ -127,7 +127,9 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
       for (Iterator<TreeUpdatePass> iterator = myNodeQueue.iterator(); iterator.hasNext();) {
         final TreeUpdatePass passInQueue = iterator.next();
 
-        if (toAdd.isUpdateStructure() == passInQueue.isUpdateStructure()) {
+        boolean isMatchingPass =
+          toAdd.isUpdateStructure() == passInQueue.isUpdateStructure() && toAdd.isUpdateChildren() == passInQueue.isUpdateChildren();
+        if (isMatchingPass) {
           if (passInQueue == toAdd) {
             toAdd.expire();
             break;
@@ -328,12 +330,11 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   }
 
   public void runAfterUpdate(final Runnable runnable) {
-    if (runnable == null) return;
-    synchronized (myRunAfterUpdate) {
-      myRunAfterUpdate.add(runnable);
+    if (runnable != null) {
+      synchronized (myRunAfterUpdate) {
+        myRunAfterUpdate.add(runnable);
+      }
     }
-
-    maybeRunAfterUpdate();
   }
 
   public synchronized void runBeforeUpdate(final Runnable runnable) {

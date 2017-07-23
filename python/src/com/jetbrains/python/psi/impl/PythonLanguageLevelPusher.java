@@ -230,7 +230,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
         if (project.isDisposed()) {
           return;
         }
-        FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
+        FileContentUtil.reparseFiles(project, Collections.emptyList(), true);
       });
     }
   }
@@ -252,7 +252,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     final VirtualFile[] files = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
     final Application application = ApplicationManager.getApplication();
     PyUtil.invalidateLanguageLevelCache(project);
-    application.executeOnPooledThread(() -> application.runReadAction(() -> {
+    final Runnable markFiles = () -> application.runReadAction(() -> {
       if (project.isDisposed()) {
         return;
       }
@@ -266,7 +266,13 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
           markRecursively(project, file, languageLevel, suppressSizeLimit);
         }
       }
-    }));
+    });
+    if (application.isUnitTestMode()) {
+      markFiles.run();
+    }
+    else {
+      application.executeOnPooledThread(markFiles);
+    }
   }
 
   private void markRecursively(final Project project,

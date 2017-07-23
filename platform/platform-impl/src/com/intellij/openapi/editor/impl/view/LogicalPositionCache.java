@@ -22,7 +22,8 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
-import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -66,8 +67,17 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
   public void documentChanged(DocumentEvent event) {
     int startLine = myDocument.getLineNumber(event.getOffset());
     int newEndLine = getAdjustedLineNumber(event.getOffset() + event.getNewLength());
-    invalidateLines(startLine, myDocumentChangeOldEndLine, newEndLine, CharArrayUtil.indexOf(event.getNewFragment(), "\t", 0) == -1);
+    invalidateLines(startLine, myDocumentChangeOldEndLine, newEndLine, isSimpleText(event.getNewFragment()));
     myUpdateInProgress = false;
+  }
+
+  // text for which offset<->logicalColumn conversion is trivial
+  private static boolean isSimpleText(@NotNull CharSequence text) {
+    for (int i = 0; i < text.length(); i++) {
+      char c = text.charAt(i);
+      if (c == '\t' || c >= Character.MIN_SURROGATE && c <= Character.MAX_SURROGATE) return false;
+    }
+    return true;
   }
 
   synchronized void reset(boolean force) {
@@ -121,12 +131,29 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
       if (text.charAt(i) == '\t') {
         currentColumn = (currentColumn / tabSize + 1) * tabSize;
       }
+      else if (DocumentUtil.isSurrogatePair(document, i)) {
+        if (currentColumn == column) return i;
+      }
       else {
         currentColumn++;
       }
       if (currentColumn > column) return i;
     }
     return endOffset;
+  }
+
+  static int calcColumn(@NotNull CharSequence text, int startOffset, int startColumn, int offset, int tabSize) {
+    int column = startColumn;
+    for (int i = startOffset; i < offset; i++) {
+      char c = text.charAt(i);
+      if (c == '\t') {
+        column = (column / tabSize + 1) * tabSize;
+      }
+      else if (i + 1 >= text.length() || !Character.isHighSurrogate(c) || !Character.isLowSurrogate(text.charAt(i + 1))) {
+        column++;
+      }
+    }
+    return column;
   }
 
   private int getAdjustedLineNumber(int offset) {
@@ -176,7 +203,7 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
   private void checkDisposed() {
     if (myLines == null) myView.getEditor().throwDisposalError("Editor is already disposed");
   }
-  
+
   synchronized void validateState() {
     int lineCount = myDocument.getLineCount();
     int cacheSize = myLines.size();
@@ -203,7 +230,7 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
     }
   }
 
-  private static class LineData {    
+  private static class LineData {
     private static final LineData TRIVIAL = new LineData(null);
     private static final int CACHE_FREQUENCY = 1024; // logical column will be cached for each CACHE_FREQUENCY-th character on the line
     
@@ -212,29 +239,37 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
     private LineData(int[] columnData) {
       columnCache = columnData;
     }
-    
+
     private static LineData create(@NotNull Document document, int line, int tabSize) {
       int start = document.getLineStartOffset(line);
       int end = document.getLineEndOffset(line);
       int cacheSize = (end - start) / CACHE_FREQUENCY;
-      int[] cache = new int[cacheSize];
+      int[] cache = ArrayUtil.newIntArray(cacheSize);
       CharSequence text = document.getImmutableCharSequence();
       int column = 0;
-      boolean hasTabs = false;
+      boolean hasTabsOrSurrogates = false;
       for (int i = start; i < end; i++) {
         if (i > start && (i - start) % CACHE_FREQUENCY == 0) {
           cache[(i - start) / CACHE_FREQUENCY - 1] = column;
         }
-        if (text.charAt(i) == '\t') {
+        char c = text.charAt(i);
+        if (c == '\t') {
           column = (column / tabSize + 1) * tabSize;
-          hasTabs = true;
+          hasTabsOrSurrogates = true;
         }
         else {
+          if (Character.isHighSurrogate(c)) {
+            hasTabsOrSurrogates = true;
+            if (i + 1 < text.length() && Character.isLowSurrogate(text.charAt(i + 1))) continue;
+          }
+          else {
+            hasTabsOrSurrogates |= Character.isLowSurrogate(c);
+          }
           column++;
         }
       }
       if (cacheSize > 0 && (end - start) % CACHE_FREQUENCY == 0) cache[cacheSize - 1] = column;
-      return hasTabs ? new LineData(cache) : TRIVIAL;
+      return hasTabsOrSurrogates ? new LineData(cache) : TRIVIAL;
     }
 
     private int offsetToLogicalColumn(@NotNull Document document, int line, int tabSize, int offset) {
@@ -244,17 +279,8 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
       if (columnCache == null) return relOffset;
       int cacheIndex = relOffset / CACHE_FREQUENCY;
       int startOffset = lineStartOffset + cacheIndex * CACHE_FREQUENCY;
-      int column = cacheIndex == 0 ? 0 : columnCache[cacheIndex - 1];
-      CharSequence text = document.getImmutableCharSequence();
-      for (int i = startOffset; i < offset; i++) {
-        if (text.charAt(i) == '\t') {
-          column = (column / tabSize + 1) * tabSize;
-        }
-        else {
-          column++;
-        }
-      }
-      return column;
+      int startColumn = cacheIndex == 0 ? 0 : columnCache[cacheIndex - 1];
+      return calcColumn(document.getImmutableCharSequence(), startOffset, startColumn, offset, tabSize);
     }
     
     private int logicalColumnToOffset(@NotNull Document document, int line, int tabSize, int logicalColumn) {
@@ -266,7 +292,10 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
                result > lineEndOffset ? lineEndOffset : result;
       }
       int pos = Arrays.binarySearch(columnCache, logicalColumn);
-      if (pos >= 0) return lineStartOffset + (pos + 1) * CACHE_FREQUENCY;
+      if (pos >= 0) {
+        int result = lineStartOffset + (pos + 1) * CACHE_FREQUENCY;
+        return DocumentUtil.isInsideSurrogatePair(document, result) ? result - 1 : result;
+      }
       int startOffset = lineStartOffset + (- pos - 1) * CACHE_FREQUENCY;
       int column = pos == -1 ? 0 : columnCache[- pos - 2];
       return calcOffset(document, logicalColumn, column, startOffset, lineEndOffset, tabSize);

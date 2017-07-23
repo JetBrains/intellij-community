@@ -15,9 +15,8 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -42,49 +41,36 @@ public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListO
     final PsiClass annClass = p.getAnnotationClass();
     if (!annClass.isAnnotationType()) throw new IllegalArgumentException("Annotation type should be passed to annotated members search but got: "+annClass);
 
-    String annotationFQN = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        return annClass.getQualifiedName();
-      }
-    });
+    String annotationFQN = ReadAction.compute(() -> annClass.getQualifiedName());
     if (annotationFQN == null) throw new IllegalArgumentException("FQN is null for "+annClass);
 
-    final PsiManager psiManager = ApplicationManager.getApplication().runReadAction(new Computable<PsiManager>() {
-      @Override
-      public PsiManager compute() {
-        return annClass.getManager();
-      }
-    });
+    final PsiManager psiManager = ReadAction.compute(() -> annClass.getManager());
 
     final SearchScope useScope = p.getScope();
     final Class<? extends PsiModifierListOwner>[] types = p.getTypes();
 
     for (final PsiAnnotation ann : getAnnotationCandidates(annClass, useScope, psiManager.getProject())) {
-      final PsiModifierListOwner candidate = ApplicationManager.getApplication().runReadAction(new Computable<PsiModifierListOwner>() {
-        @Override
-        public PsiModifierListOwner compute() {
-          PsiElement parent = ann.getContext();
-          if (!(parent instanceof PsiModifierList)) {
-            return null; // Can be a PsiNameValuePair, if annotation is used to annotate annotation parameters
-          }
+      final PsiModifierListOwner candidate = ReadAction.compute(() -> {
+        PsiElement parent = ann.getContext();
+        if (!(parent instanceof PsiModifierList)) {
+          return null; // Can be a PsiNameValuePair, if annotation is used to annotate annotation parameters
+        }
 
-          final PsiElement owner = parent.getParent();
-          if (!isInstanceof(owner, types)) {
-            return null;
-          }
+        final PsiElement owner = parent.getParent();
+        if (!isInstanceof(owner, types)) {
+          return null;
+        }
 
-          if (p.isApproximate()) {
-            return (PsiModifierListOwner)owner;
-          }
-
-          final PsiJavaCodeReferenceElement ref = ann.getNameReferenceElement();
-          if (ref == null || !psiManager.areElementsEquivalent(ref.resolve(), annClass)) {
-            return null;
-          }
-
+        if (p.isApproximate()) {
           return (PsiModifierListOwner)owner;
         }
+
+        final PsiJavaCodeReferenceElement ref = ann.getNameReferenceElement();
+        if (ref == null || !psiManager.areElementsEquivalent(ref.resolve(), annClass)) {
+          return null;
+        }
+
+        return (PsiModifierListOwner)owner;
       });
 
       if (candidate != null && !consumer.process(candidate)) {
@@ -98,19 +84,16 @@ public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListO
   @NotNull
   private static Collection<PsiAnnotation> getAnnotationCandidates(@NotNull PsiClass annClass,
                                                                    @NotNull SearchScope useScope, @NotNull Project project) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Collection<PsiAnnotation>>() {
-      @Override
-      public Collection<PsiAnnotation> compute() {
-        if (useScope instanceof GlobalSearchScope) {
-          return JavaAnnotationIndex.getInstance().get(annClass.getName(), project, (GlobalSearchScope)useScope);
-        }
-
-        List<PsiAnnotation> result = new ArrayList<>();
-        for (PsiElement element : ((LocalSearchScope)useScope).getScope()) {
-          result.addAll(PsiTreeUtil.findChildrenOfType(element, PsiAnnotation.class));
-        }
-        return result;
+    return ReadAction.compute(() -> {
+      if (useScope instanceof GlobalSearchScope) {
+        return JavaAnnotationIndex.getInstance().get(annClass.getName(), project, (GlobalSearchScope)useScope);
       }
+
+      List<PsiAnnotation> result = new ArrayList<>();
+      for (PsiElement element : ((LocalSearchScope)useScope).getScope()) {
+        result.addAll(PsiTreeUtil.findChildrenOfType(element, PsiAnnotation.class));
+      }
+      return result;
     });
   }
 

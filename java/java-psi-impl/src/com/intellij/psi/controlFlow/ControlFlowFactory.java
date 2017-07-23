@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Aug 13, 2002
- * Time: 12:07:14 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.psi.controlFlow;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -47,12 +39,7 @@ public class ControlFlowFactory {
 
 
   public ControlFlowFactory(PsiManagerEx psiManager) {
-    psiManager.registerRunnableToRunOnChange(new Runnable(){
-      @Override
-      public void run() {
-        clearCache();
-      }
-    });
+    psiManager.registerRunnableToRunOnChange(() -> clearCache());
   }
 
   private void clearCache() {
@@ -108,7 +95,7 @@ public class ControlFlowFactory {
       if (enableShortCircuit != this.enableShortCircuit) return false;
 
       // optimization: when no constant condition were computed, both control flows are the same
-      if (!controlFlow.isConstantConditionOccurred()) return true;
+      if (this.evaluateConstantIfCondition && !controlFlow.isConstantConditionOccurred()) return true;
 
       return evaluateConstantIfCondition == this.evaluateConstantIfCondition;
     }

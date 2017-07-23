@@ -50,7 +50,7 @@ public class ChangeUtil {
   private static void encodeInformation(TreeElement element, ASTNode original) {
     DebugUtil.startPsiModification(null);
     try {
-      encodeInformation(element, original, new HashMap<Object, Object>());
+      encodeInformation(element, original, new HashMap<>());
     }
     finally {
       DebugUtil.finishPsiModification();
@@ -76,7 +76,7 @@ public class ChangeUtil {
   public static TreeElement decodeInformation(TreeElement element) {
     DebugUtil.startPsiModification(null);
     try {
-      return decodeInformation(element, new HashMap<Object, Object>());
+      return decodeInformation(element, new HashMap<>());
     }
     finally {
       DebugUtil.finishPsiModification();

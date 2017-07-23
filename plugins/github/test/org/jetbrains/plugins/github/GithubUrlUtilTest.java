@@ -16,8 +16,8 @@
 package org.jetbrains.plugins.github;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.Convertor;
+import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubFullPath;
@@ -30,7 +30,7 @@ import static org.jetbrains.plugins.github.util.GithubUrlUtil.*;
 /**
  * @author Aleksey Pivovarov
  */
-public class GithubUrlUtilTest extends UsefulTestCase {
+public class GithubUrlUtilTest extends TestCase {
   private static class TestCase<T> {
     @NotNull final public List<Pair<String, T>> tests = new ArrayList<>();
 
@@ -55,12 +55,7 @@ public class GithubUrlUtilTest extends UsefulTestCase {
     tests.add("http://github.com/user/repo/", "http://github.com/user/repo");
     tests.add("http://github.com/user/repo", "http://github.com/user/repo");
 
-    runTestCase(tests, new Convertor<String, String>() {
-      @Override
-      public String convert(String in) {
-        return removeTrailingSlash(in);
-      }
-    });
+    runTestCase(tests, in -> removeTrailingSlash(in));
   }
 
   public void testRemoveProtocolPrefix() throws Throwable {
@@ -82,12 +77,7 @@ public class GithubUrlUtilTest extends UsefulTestCase {
     tests.add("HTTP://GITHUB.com/user/repo/", "GITHUB.com/user/repo/");
     tests.add("HttP://GitHub.com/user/repo/", "GitHub.com/user/repo/");
 
-    runTestCase(tests, new Convertor<String, String>() {
-      @Override
-      public String convert(String in) {
-        return removeProtocolPrefix(in);
-      }
-    });
+    runTestCase(tests, in -> removeProtocolPrefix(in));
   }
 
   public void testIsGithubUrl1() throws Throwable {
@@ -115,18 +105,8 @@ public class GithubUrlUtilTest extends UsefulTestCase {
     tests.add("api.github.com", false);
     tests.add("site.com//github.com", false);
 
-    runTestCase(tests, new Convertor<String, Boolean>() {
-      @Override
-      public Boolean convert(String in) {
-        return isGithubUrl(in, "https://github.com/");
-      }
-    });
-    runTestCase(tests, new Convertor<String, Boolean>() {
-      @Override
-      public Boolean convert(String in) {
-        return isGithubUrl(in, "http://GitHub.com");
-      }
-    });
+    runTestCase(tests, in -> isGithubUrl(in, "https://github.com/"));
+    runTestCase(tests, in -> isGithubUrl(in, "http://GitHub.com"));
   }
 
   public void testIsGithubUrl2() throws Throwable {
@@ -140,30 +120,10 @@ public class GithubUrlUtilTest extends UsefulTestCase {
     tests.add("http://git.code.example.co/user/repo", false);
     tests.add("http://code.example.co.jp/user/repo", false);
 
-    runTestCase(tests, new Convertor<String, Boolean>() {
-      @Override
-      public Boolean convert(String in) {
-        return isGithubUrl(in, "git.code.example.co.jp");
-      }
-    });
-    runTestCase(tests, new Convertor<String, Boolean>() {
-      @Override
-      public Boolean convert(String in) {
-        return isGithubUrl(in, "http://git.code.example.co.jp");
-      }
-    });
-    runTestCase(tests, new Convertor<String, Boolean>() {
-      @Override
-      public Boolean convert(String in) {
-        return isGithubUrl(in, "https://git.code.example.co.jp/github/server");
-      }
-    });
-    runTestCase(tests, new Convertor<String, Boolean>() {
-      @Override
-      public Boolean convert(String in) {
-        return isGithubUrl(in, "git.code.example.co.jp/api");
-      }
-    });
+    runTestCase(tests, in -> isGithubUrl(in, "git.code.example.co.jp"));
+    runTestCase(tests, in -> isGithubUrl(in, "http://git.code.example.co.jp"));
+    runTestCase(tests, in -> isGithubUrl(in, "https://git.code.example.co.jp/github/server"));
+    runTestCase(tests, in -> isGithubUrl(in, "git.code.example.co.jp/api"));
   }
 
   public void testGetApiUrlWithoutProtocol() throws Throwable {
@@ -180,12 +140,7 @@ public class GithubUrlUtilTest extends UsefulTestCase {
     tests.add("HTTP://GITHUB.com", "api.github.com");
     tests.add("HttP://GitHub.com/", "api.github.com");
 
-    runTestCase(tests, new Convertor<String, String>() {
-      @Override
-      public String convert(String in) {
-        return getApiUrlWithoutProtocol(in);
-      }
-    });
+    runTestCase(tests, in -> getApiUrlWithoutProtocol(in));
   }
 
   public void testGetUserAndRepositoryFromRemoteUrl() throws Throwable {
@@ -210,13 +165,7 @@ public class GithubUrlUtilTest extends UsefulTestCase {
     tests.add("git@github.com:user/", null);
     tests.add("https://user:pass@github.com/", null);
 
-    runTestCase(tests, new Convertor<String, GithubFullPath>() {
-      @Override
-      @Nullable
-      public GithubFullPath convert(String in) {
-        return getUserAndRepositoryFromRemoteUrl(in);
-      }
-    });
+    runTestCase(tests, in -> getUserAndRepositoryFromRemoteUrl(in));
   }
 
   public void testMakeGithubRepoFromRemoteUrl() throws Throwable {
@@ -242,13 +191,7 @@ public class GithubUrlUtilTest extends UsefulTestCase {
     tests.add("git@github.com:user/", null);
     tests.add("https://user:pass@github.com/", null);
 
-    runTestCase(tests, new Convertor<String, String>() {
-      @Override
-      @Nullable
-      public String convert(String in) {
-        return makeGithubRepoUrlFromRemoteUrl(in, "https://github.com");
-      }
-    });
+    runTestCase(tests, in -> makeGithubRepoUrlFromRemoteUrl(in, "https://github.com"));
   }
 
   public void testGetHostFromUrl() throws Throwable {
@@ -275,12 +218,7 @@ public class GithubUrlUtilTest extends UsefulTestCase {
     tests.add("HTTP://GITHUB.com/user/repo/", "GITHUB.com");
     tests.add("HttP://GitHub.com/user/repo/", "GitHub.com");
 
-    runTestCase(tests, new Convertor<String, String>() {
-      @Override
-      public String convert(String in) {
-        return getHostFromUrl(in);
-      }
-    });
+    runTestCase(tests, in -> getHostFromUrl(in));
   }
 
   public void testGetApiUrl() throws Throwable {
@@ -305,11 +243,6 @@ public class GithubUrlUtilTest extends UsefulTestCase {
     tests.add("HTTP://GITHUB.com", "http://api.github.com");
     tests.add("HttP://GitHub.com/", "http://api.github.com");
 
-    runTestCase(tests, new Convertor<String, String>() {
-      @Override
-      public String convert(String in) {
-        return getApiUrl(in);
-      }
-    });
+    runTestCase(tests, in -> getApiUrl(in));
   }
 }

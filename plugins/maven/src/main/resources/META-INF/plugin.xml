@@ -28,7 +28,6 @@
     <extensionPoint name="pluginDescriptor" beanClass="org.jetbrains.idea.maven.plugins.api.MavenPluginDescriptor" />
 
     <extensionPoint name="repositoryProvider" interface="org.jetbrains.idea.maven.indices.MavenRepositoryProvider"/>
-    <extensionPoint name="mavenCoordinates" beanClass="org.jetbrains.idea.maven.utils.library.RepositoryLibraryBean"/>
   </extensionPoints>
 
   <depends>com.intellij.properties</depends>
@@ -43,10 +42,10 @@
     <moduleBuilder builderClass="org.jetbrains.idea.maven.wizards.MavenModuleBuilder"/>
     <frameworkSupport implementation="org.jetbrains.idea.maven.wizards.MavenFrameworkSupportProvider"/>
     <moduleExtension implementation="org.jetbrains.idea.maven.importing.MavenSourceFoldersModuleExtension"/>
+    <moduleService serviceImplementation="org.jetbrains.idea.maven.importing.MavenPomPathModuleService"/>
 
     <applicationService serviceImplementation="org.jetbrains.idea.maven.server.MavenServerManager"/>
     <applicationService serviceImplementation="org.jetbrains.idea.maven.indices.MavenIndicesManager"/>
-    <applicationService serviceImplementation="org.jetbrains.idea.maven.services.MavenRepositoryServicesManager"/>
 
     <projectConfigurable groupId="build.tools" groupWeight="120" instance="org.jetbrains.idea.maven.utils.MavenSettings" id="MavenSettings" displayName="Maven" order="last">
       <configurable instance="org.jetbrains.idea.maven.project.MavenImportingConfigurable" id="reference.settings.project.maven.importing"
@@ -65,13 +64,14 @@
 
     <stepsBeforeRunProvider implementation="org.jetbrains.idea.maven.tasks.MavenBeforeRunTasksProvider"/>
     <externalSystemKeymapProvider implementation="org.jetbrains.idea.maven.tasks.MavenKeymapExtension"/>
+    <externalSystemWorkspaceContributor implementation="org.jetbrains.idea.maven.importing.MavenWorkspaceContributor"/>
     <configurationType implementation="org.jetbrains.idea.maven.execution.MavenRunConfigurationType"/>
     <configurationProducer implementation="org.jetbrains.idea.maven.execution.MavenConfigurationProducer"/>
     <orderEnumerationHandlerFactory implementation="org.jetbrains.idea.maven.execution.MavenOrderEnumeratorHandler$FactoryImpl"/>
 
     <junitPatcher implementation="org.jetbrains.idea.maven.execution.MavenJUnitPatcher" />
 
-    <compileServer.plugin classpath="maven-jps-plugin.jar;aether-dependency-resolver.jar;aether-1.1.0-all.jar;maven-aether-provider-3.3.9-all.jar;maven3/lib/plexus-utils-2.0.6.jar"/>
+    <compileServer.plugin classpath="maven-jps-plugin.jar;maven3/lib/plexus-utils-2.0.6.jar"/>
 
     <languageInjector implementation="org.jetbrains.idea.maven.plugins.api.MavenPluginConfigurationLanguageInjector"/>
 
@@ -115,7 +115,10 @@
     <localInspection language="XML" shortName="MavenRedundantGroupId" bundle="MavenDomBundle" key="inspection.redundant.groupId.name"
                      groupKey="inspection.group" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenRedundantGroupIdInspection"/>
-
+    <localInspection language="XML" shortName="MavenPropertyInParent" bundle="MavenDomBundle" key="inspection.property.in.parent.name"
+                     groupKey="inspection.group" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenPropertyInParentInspection"/>
+    <xml.xmlExtension implementation="org.jetbrains.idea.maven.dom.MavenXmlExtension"/>
     <dom.extender domClass="org.jetbrains.idea.maven.dom.model.MavenDomConfiguration"
                   extenderClass="org.jetbrains.idea.maven.dom.MavenPluginConfigurationDomExtender"/>
     <dom.extender domClass="org.jetbrains.idea.maven.dom.model.MavenDomConfigurationParameter"
@@ -152,8 +155,6 @@
     <applicationService serviceImplementation="org.jetbrains.idea.maven.dom.converters.repositories.MavenRepositoriesProvider"/>
 
     <typedHandler implementation="org.jetbrains.idea.maven.dom.code.MavenTypedHandlerDelegate"/>
-    <library.type implementation="org.jetbrains.idea.maven.utils.library.RepositoryLibraryType"/>
-    <postStartupActivity implementation="org.jetbrains.idea.maven.utils.library.RepositoryLibrarySynchronizer"/>
     <backspaceHandlerDelegate implementation="org.jetbrains.idea.maven.dom.code.MavenBackspaceHandlerDelegate"/>
 
     <intentionAction>
@@ -180,7 +181,6 @@
     <postStartupActivity implementation="org.jetbrains.idea.maven.utils.MavenRehighlighter$MavenRehighlighterPostStartupActivity"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.utils.MavenRehighlighter"/>
     <projectModelModifier implementation="org.jetbrains.idea.maven.importing.MavenProjectModelModifier"/>
-    <library.dependencyScopeSuggester implementation="org.jetbrains.idea.maven.utils.library.RepositoryLibraryDependencyScopeSuggester"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
@@ -314,14 +314,6 @@
   <project-components>
     <component>
       <implementation-class>org.jetbrains.idea.maven.project.MavenProjectsManager</implementation-class>
-      <loadForDefaultProject/>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.idea.maven.utils.library.remote.MavenVersionsRemoteManager</implementation-class>
-      <loadForDefaultProject/>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.idea.maven.utils.library.remote.MavenDependenciesRemoteManager</implementation-class>
       <loadForDefaultProject/>
     </component>
     <component>

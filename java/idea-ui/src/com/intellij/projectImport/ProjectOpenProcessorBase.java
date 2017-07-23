@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,8 +45,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
 
 /**
  * @author anna
@@ -82,12 +80,9 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
     return false;
   }
 
-  private static Collection<VirtualFile> getFileChildren(VirtualFile file) {
-    if (file instanceof NewVirtualFile) {
-      return ((NewVirtualFile)file).getCachedChildren();
-    }
-
-    return Arrays.asList(file.getChildren());
+  @NotNull
+  private static VirtualFile[] getFileChildren(VirtualFile file) {
+    return ObjectUtils.chooseNotNull(file.getChildren(), VirtualFile.EMPTY_ARRAY);
   }
 
   protected static boolean canOpenFile(VirtualFile file, String[] supported) {
@@ -116,7 +111,7 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
   public Project doOpenProject(@NotNull VirtualFile virtualFile, Project projectToClose, boolean forceOpenInNewFrame) {
     try {
       getBuilder().setUpdate(false);
-      final WizardContext wizardContext = new WizardContext(null);
+      final WizardContext wizardContext = new WizardContext(null, null);
       if (virtualFile.isDirectory()) {
         final String[] supported = getSupportedExtensions();
         for (VirtualFile file : getFileChildren(virtualFile)) {
@@ -220,7 +215,7 @@ public abstract class ProjectOpenProcessorBase<T extends ProjectImportBuilder> e
           }
 
           String projectDirPath = wizardContext.getProjectFileDirectory();
-          String path = StringUtil.endsWithChar(projectDirPath, '/') ? projectDirPath + "classes" : projectDirPath + "/classes";
+          String path = projectDirPath + (StringUtil.endsWithChar(projectDirPath, '/') ? "classes" : "/classes");
           CompilerProjectExtension extension = CompilerProjectExtension.getInstance(projectToOpen);
           if (extension != null) {
             extension.setCompilerOutputUrl(getUrl(path));

@@ -31,7 +31,7 @@ public final class ColorKey implements Comparable<ColorKey> {
 
   private final String myExternalName;
   private Color myDefaultColor = NULL_COLOR;
-  private static final Map<String, ColorKey> ourRegistry = new HashMap<String, ColorKey>();
+  private static final Map<String, ColorKey> ourRegistry = new HashMap<>();
 
   private ColorKey(@NotNull String externalName) {
     myExternalName = externalName;

@@ -18,10 +18,6 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyElsePart;
 
-/**
- * User: dcheryasov
- * Date: Mar 15, 2009 9:40:35 PM
- */
 public class PyElsePartImpl extends PyStatementPartImpl implements PyElsePart {
   
   public PyElsePartImpl(ASTNode astNode) {

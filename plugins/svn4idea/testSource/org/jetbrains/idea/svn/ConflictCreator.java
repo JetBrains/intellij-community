@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Processor;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.containers.Convertor;
 import junit.framework.Assert;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.StatusType;
 
@@ -36,12 +36,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 5/2/12
- * Time: 2:02 PM
- */
 public class ConflictCreator {
   private final Project myProject;
   private final VirtualFile myTheirsDir;
@@ -107,44 +101,22 @@ public class ConflictCreator {
         }
       }
     }
-    final IOException[] ioe = new IOException[1];
-    VfsUtil.processFilesRecursively(myTheirsDir, new Processor<VirtualFile>() {
+
+    VfsUtilCore.visitChildrenRecursively(myTheirsDir, new VirtualFileVisitor() {
+      @NotNull
       @Override
-      public boolean process(VirtualFile file) {
-        if (myTheirsDir.equals(file)) return true;
-        if (file.isDirectory() && file.getChildren().length == 0) {
+      public Result visitFileEx(@NotNull VirtualFile file) {
+        if (!myTheirsDir.equals(file) && file.isDirectory() && file.getChildren().length == 0) {
           try {
             myClientRunner.delete(myTheirsDir, file.getPath());
           }
           catch (IOException e) {
-            ioe[0] = e;
+            throw new VisitorException(e);
           }
         }
-        return true;
+        return file.isDirectory() && SvnUtil.isAdminDirectory(file) ? SKIP_CHILDREN : CONTINUE;
       }
-    }, new Convertor<VirtualFile, Boolean>() {
-                                      @Override
-                                      public Boolean convert(VirtualFile o) {
-                                        return ! SvnUtil.isAdminDirectory(o);
-                                      }
-                                    });
-    /*FileUtil.processFilesRecursively(new File(myTheirsDir.getPath()), new Processor<File>() {
-      @Override
-      public boolean process(File file) {
-        if (file.isDirectory() && file.listFiles().length == 0) {
-          try {
-            myClientRunner.delete(myTheirsDir, file.getPath());
-          }
-          catch (IOException e) {
-            ioe[0] = e;
-          }
-        }
-        return true;
-      }
-    });*/
-    if (ioe[0] != null) {
-      throw ioe[0];
-    }
+    }, IOException.class);
 
     // this will commit all patch changes
     myClientRunner.checkin(myTheirsDir);

@@ -2,6 +2,7 @@ package com.intellij.tasks.jira;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.*;
+import icons.TasksCoreIcons;
 import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,7 +88,7 @@ public abstract class JiraTask extends Task {
   @NotNull
   protected final Icon getIconByUrl(@Nullable String iconUrl) {
     if (StringUtil.isEmpty(iconUrl)) {
-      return TasksIcons.Jira;
+      return TasksCoreIcons.Jira;
     }
     Icon icon;
     if (isClosed()) {

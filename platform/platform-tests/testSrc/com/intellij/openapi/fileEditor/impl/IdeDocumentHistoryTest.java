@@ -80,6 +80,20 @@ public class IdeDocumentHistoryTest extends PlatformTestCase {
       }
     };
   }
+
+  @Override
+  protected void tearDown() throws Exception {
+    myHistory = null;
+    mySelectedEditor = null;
+    myEditorState = null;
+    myProvider = null;
+    mySelectedFile = null;
+    myState1 = null;
+    myState2 = null;
+    myState3 = null;
+    super.tearDown();
+  }
+
   public void testNoHistoryRecording() throws Throwable {
     myHistory.onCommandStarted();
     myHistory.onCommandFinished(null);

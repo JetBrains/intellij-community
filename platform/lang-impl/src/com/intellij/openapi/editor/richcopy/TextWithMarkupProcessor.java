@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,8 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.impl.FontInfo;
+import com.intellij.openapi.editor.impl.FontFallbackIterator;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -66,7 +65,7 @@ import java.util.List;
  *   MS Office 2010 (Word, PowerPoint, Outlook), OpenOffice (Writer, Impress), Gmail, Mac TextEdit, Mac Mail.
  */
 public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithMarkup> {
-  private static final Logger LOG = Logger.getInstance("#" + TextWithMarkupProcessor.class.getName());
+  private static final Logger LOG = Logger.getInstance(TextWithMarkupProcessor.class);
 
   private List<RawTextWithMarkup> myResult;
 
@@ -665,11 +664,7 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
       try {
         findNextSuitableRange();
       }
-      catch (RuntimeException e) {
-        myIterator.dispose();
-        throw e;
-      }
-      catch (Error e) {
+      catch (RuntimeException | Error e) {
         myIterator.dispose();
         throw e;
       }
@@ -736,7 +731,8 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
       return layer != HighlighterLayer.CARET_ROW
              && layer != HighlighterLayer.SELECTION
              && layer != HighlighterLayer.ERROR
-             && layer != HighlighterLayer.WARNING;
+             && layer != HighlighterLayer.WARNING
+             && layer != HighlighterLayer.ELEMENT_UNDER_CARET;
     }
 
     @Override
@@ -830,60 +826,45 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
   }
 
   private static class SegmentIterator {
+    private final FontFallbackIterator myIterator = new FontFallbackIterator();
     private final CharSequence myCharSequence;
-    private final FontPreferences myFontPreferences;
-
-    private int myCurrentStartOffset;
-    private int myCurrentOffset;
     private int myEndOffset;
-    private int myFontStyle;
-    private String myCurrentFontFamilyName;
-    private String myNextFontFamilyName;
+    private boolean myAdvanceCalled;
 
     private SegmentIterator(CharSequence charSequence, FontPreferences fontPreferences) {
       myCharSequence = charSequence;
-      myFontPreferences = fontPreferences;
+      myIterator.setPreferredFonts(fontPreferences);
     }
 
     public void reset(int startOffset, int endOffset, int fontStyle) {
-      myCurrentOffset = startOffset;
+      myIterator.setFontStyle(fontStyle);
+      myIterator.start(myCharSequence, startOffset, endOffset);
       myEndOffset = endOffset;
-      myFontStyle = fontStyle;
+      myAdvanceCalled = false;
     }
 
     public boolean atEnd() {
-      return myCurrentOffset >= myEndOffset;
+      return myIterator.atEnd() || myIterator.getEnd() == myEndOffset;
     }
 
     public void advance() {
-      myCurrentFontFamilyName = myNextFontFamilyName;
-      myCurrentStartOffset = myCurrentOffset;
-      for (; myCurrentOffset < myEndOffset; myCurrentOffset++) {
-        FontInfo fontInfo = ComplementaryFontsRegistry.getFontAbleToDisplay(myCharSequence.charAt(myCurrentOffset),
-                                                                            myFontStyle,
-                                                                            myFontPreferences);
-        String fontFamilyName = fontInfo.getFont().getFamily();
-
-        if (myCurrentFontFamilyName == null) {
-          myCurrentFontFamilyName = fontFamilyName;
-        }
-        else if (!myCurrentFontFamilyName.equals(fontFamilyName)) {
-          myNextFontFamilyName = fontFamilyName;
-          break;
-        }
+      if (!myAdvanceCalled) {
+        myAdvanceCalled = true;
+        return;
       }
+      myIterator.advance();
     }
 
     public int getCurrentStartOffset() {
-      return myCurrentStartOffset;
+      return myIterator.getStart();
     }
 
     public int getCurrentEndOffset() {
-      return myCurrentOffset;
+      return myIterator.getEnd();
     }
 
     public String getCurrentFontFamilyName() {
-      return myCurrentFontFamilyName;
+      return myIterator.getFont().getFamily();
     }
   }
 

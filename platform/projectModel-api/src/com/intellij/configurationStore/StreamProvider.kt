@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,16 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import org.jetbrains.annotations.TestOnly
 import java.io.InputStream
 
+@set:TestOnly
+var IS_EXTERNAL_STORAGE_ENABLED = false
+
 interface StreamProvider {
   val enabled: Boolean
     get() = true
 
+  /**
+   * Called only on `write`
+   */
   fun isApplicable(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT) = true
 
   /**
@@ -33,21 +39,27 @@ interface StreamProvider {
    */
   fun write(fileSpec: String, content: ByteArray, size: Int = content.size, roamingType: RoamingType = RoamingType.DEFAULT)
 
-  fun read(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT): InputStream?
+  fun write(path: String, content: BufferExposingByteArrayOutputStream, roamingType: RoamingType = RoamingType.DEFAULT) = write(path, content.internalBuffer, content.size(), roamingType)
 
-  fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean)
+  /**
+   * `true` if provider is applicable for file.
+   */
+  fun read(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT, consumer: (InputStream?) -> Unit): Boolean
+
+  /**
+   * `true` if provider is fully responsible and local sources must be not used.
+   */
+  fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean): Boolean
 
   /**
    * Delete file or directory
+   *
+   * `true` if provider is fully responsible and local sources must be not used.
    */
-  fun delete(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT)
+  fun delete(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT): Boolean
 }
 
 @TestOnly
 fun StreamProvider.write(path: String, content: String) {
   write(path, content.toByteArray())
-}
-
-fun StreamProvider.write(path: String, content: BufferExposingByteArrayOutputStream, roamingType: RoamingType = RoamingType.DEFAULT) {
-  write(path, content.internalBuffer, content.size(), roamingType)
 }

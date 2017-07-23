@@ -21,9 +21,9 @@ import com.intellij.ui.EngravedTextGraphics;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.content.Content;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WatermarkIcon;
-import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import java.awt.*;
@@ -75,7 +75,7 @@ public class BaseLabel extends JLabel {
   protected void paintComponent(final Graphics g) {
     final Color fore = myUi.myWindow.isActive() ? myActiveFg : myPassiveFg;
     setForeground(fore);
-    putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, AntialiasingType.getAAHintForSwingComponent());
+    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
     super.paintComponent(_getGraphics((Graphics2D)g));
   }
 

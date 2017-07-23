@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 27-Dec-2007
- */
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.JDOMExternalizable;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class ModuleExtension<T extends ModuleExtension> implements JDOMExternalizable, Disposable, Comparable<ModuleExtension> {
+/**
+ * Extend this class to provide additional module-level properties which can be edited in Project Structure dialog. For ordinary module-level
+ * properties use {@link com.intellij.openapi.module.ModuleServiceManager module service} instead.
+ * <p/>
+ * If the inheritor implements {@link com.intellij.openapi.components.PersistentStateComponent} its state will be persisted in the module
+ * configuration file.
+ */
+public abstract class ModuleExtension implements Disposable {
   public static final ExtensionPointName<ModuleExtension> EP_NAME = ExtensionPointName.create("com.intellij.moduleExtension");
 
   /**
@@ -41,9 +44,9 @@ public abstract class ModuleExtension<T extends ModuleExtension> implements JDOM
    *   }
    * </pre>
    * The point is that call to commit() on CompilerModuleExtension obtained like
-   * <code>'CompilerModuleExtension.getInstance(module).getModifiableModel(true)'</code> doesn't dispose the model.
+   * {@code 'CompilerModuleExtension.getInstance(module).getModifiableModel(true)'} doesn't dispose the model.
    * <p/>
-   * Call to <code>ModifiableRootModel.commit()</code> not only commits linked extensions but disposes them as well.
+   * Call to {@code ModifiableRootModel.commit()} not only commits linked extensions but disposes them as well.
    * 
    * @param writable  flag which identifies if resulting model is writable
    * @return          extension model
@@ -54,8 +57,27 @@ public abstract class ModuleExtension<T extends ModuleExtension> implements JDOM
 
   public abstract boolean isChanged();
 
-  @Override
+  /**
+   * Explicit comparator is used. To be deleted in 2018
+   */
+  @Deprecated
   public int compareTo(@NotNull final ModuleExtension o) {
     return getClass().getName().compareTo(o.getClass().getName());
+  }
+
+  /**
+   * @deprecated Please implement PersistentStateComponent instead.
+   */
+  @Deprecated
+  public void readExternal(@NotNull Element element) {
+    throw new UnsupportedOperationException("Implement PersistentStateComponent");
+  }
+
+  /**
+   * @deprecated Please implement PersistentStateComponent instead.
+   */
+  @Deprecated
+  public void writeExternal(@NotNull Element element) {
+    throw new UnsupportedOperationException("Implement PersistentStateComponent");
   }
 }

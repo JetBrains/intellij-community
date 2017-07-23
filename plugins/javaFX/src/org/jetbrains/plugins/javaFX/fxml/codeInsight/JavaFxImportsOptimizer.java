@@ -46,10 +46,6 @@ import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxStaticSetterAttribute
 
 import java.util.*;
 
-/**
- * User: anna
- * Date: 2/22/13
- */
 public class JavaFxImportsOptimizer implements ImportOptimizer {
   @Override
   public boolean supports(PsiFile file) {

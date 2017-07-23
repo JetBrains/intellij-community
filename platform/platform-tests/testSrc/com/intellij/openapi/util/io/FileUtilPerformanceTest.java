@@ -16,7 +16,6 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ThrowableRunnable;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -31,35 +30,35 @@ public class FileUtilPerformanceTest {
   public void toCanonicalPath() throws Exception {
     assertEquals(myCanonicalPath, FileUtil.toCanonicalPath(myTestPath));
 
-    PlatformTestUtil.startPerformanceTest("", 1000, () -> {
+    PlatformTestUtil.startPerformanceTest("toCanonicalPath", 650, () -> {
       for (int i = 0; i < 1000000; ++i) {
         final String canonicalPath = FileUtil.toCanonicalPath(myTestPath, '/');
         assert canonicalPath != null && canonicalPath.length() == 18 : canonicalPath;
       }
-    }).cpuBound().useLegacyScaling().assertTiming();
+    }).assertTiming();
   }
 
   @Test
   public void toCanonicalPathSimple() throws Exception {
     assertEquals(mySimpleTestPath, FileUtil.toCanonicalPath(mySimpleTestPath));
 
-    PlatformTestUtil.startPerformanceTest("", 50, () -> {
+    PlatformTestUtil.startPerformanceTest("toCanonicalPathSimple", 210, () -> {
       for (int i = 0; i < 1000000; ++i) {
         final String canonicalPath = FileUtil.toCanonicalPath(mySimpleTestPath, '/');
         assert canonicalPath != null && canonicalPath.length() == 8 : canonicalPath;
       }
-    }).cpuBound().useLegacyScaling().assertTiming();
+    }).assertTiming();
   }
 
   @Test
   public void isAncestor() throws Exception {
     assertTrue(FileUtil.isAncestor(myTestPath, myCanonicalPath, false));
 
-    PlatformTestUtil.startPerformanceTest("", 4000, () -> {
+    PlatformTestUtil.startPerformanceTest("isAncestor", 3000, () -> {
       for (int i = 0; i < 1000000; ++i) {
         assert FileUtil.isAncestor(myTestPath, myCanonicalPath, false);
         assert !FileUtil.isAncestor(myTestPath, myCanonicalPath, true);
       }
-    }).cpuBound().useLegacyScaling().assertTiming();
+    }).assertTiming();
   }
 }

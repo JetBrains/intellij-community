@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,8 @@ public class TraitTransformationSupport implements AstTransformationSupport {
     process(context, (trait, substitutor) -> {
       if (trait instanceof GrTypeDefinition) {
         for (PsiMethod method : trait.getMethods()) {
-          if (!method.getModifierList().hasExplicitModifier(PsiModifier.ABSTRACT)) {
+          if (!method.getModifierList().hasExplicitModifier(PsiModifier.ABSTRACT) &&
+              !method.getModifierList().hasExplicitModifier(PsiModifier.PRIVATE)) {
             context.addMethods(getExpandingMethods(context.getCodeClass(), method, substitutor));
           }
         }

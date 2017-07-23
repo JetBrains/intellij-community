@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,6 +133,7 @@ public class ReferenceParser {
       type.drop();
       if (anno != null && isSet(flags, INCOMPLETE_ANNO)) {
         error(builder, JavaErrorMessages.message("expected.type"));
+        typeInfo.marker = anno;
         typeInfo.hasErrors = true;
         return typeInfo;
       }
@@ -214,7 +215,7 @@ public class ReferenceParser {
     if (parameterList) {
       typeInfo.isParameterized = parseReferenceParameterList(builder, true, diamonds);
     }
-    else {
+    else if (!isStaticImport) {
       emptyElement(builder, JavaElementType.REFERENCE_PARAMETER_LIST);
     }
 
@@ -377,15 +378,17 @@ public class ReferenceParser {
     return param;
   }
 
-  @NotNull
-  public PsiBuilder.Marker parseReferenceList(PsiBuilder builder, IElementType start, @Nullable IElementType type, IElementType delimiter) {
-    final PsiBuilder.Marker element = builder.mark();
+  public boolean parseReferenceList(PsiBuilder builder, IElementType start, @Nullable IElementType type, IElementType delimiter) {
+    PsiBuilder.Marker element = builder.mark();
 
+    boolean endsWithError = false;
     if (expect(builder, start)) {
       while (true) {
-        final PsiBuilder.Marker classReference = parseJavaCodeReference(builder, true, true, false, false);
+        endsWithError = false;
+        PsiBuilder.Marker classReference = parseJavaCodeReference(builder, true, true, false, false);
         if (classReference == null) {
           error(builder, JavaErrorMessages.message("expected.identifier"));
+          endsWithError = true;
         }
         if (!expect(builder, delimiter)) {
           break;
@@ -399,7 +402,7 @@ public class ReferenceParser {
     else {
       element.error(JavaErrorMessages.message("bound.not.expected"));
     }
-    return element;
+    return endsWithError;
   }
 
   private static boolean isKeywordAny(PsiBuilder builder) {

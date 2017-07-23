@@ -32,10 +32,6 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 1/17/13
- */
 public class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferenceProvider {
   @Override
   protected PsiReference[] getReferencesByElement(@NotNull final PsiClass aClass,

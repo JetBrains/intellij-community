@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.io.PathKt;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
@@ -48,6 +49,7 @@ import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.*;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -88,6 +90,7 @@ public class MavenProjectsTree {
   private final Project myProject;
 
   private final MavenProjectReaderProjectLocator myProjectLocator = new MavenProjectReaderProjectLocator() {
+    @Override
     public VirtualFile findProjectFile(MavenId coordinates) {
       MavenProject project = findProject(coordinates);
       return project == null ? null : project.getFile();
@@ -99,11 +102,10 @@ public class MavenProjectsTree {
   }
 
   @Nullable
-  public static MavenProjectsTree read(Project project, File file) throws IOException {
+  public static MavenProjectsTree read(Project project, Path file) throws IOException {
     MavenProjectsTree result = new MavenProjectsTree(project);
 
-    DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
-    try {
+    try (DataInputStream in = new DataInputStream(new BufferedInputStream(PathKt.inputStream(file)))) {
       try {
         if (!STORAGE_VERSION.equals(in.readUTF())) return null;
         result.myManagedFilesPaths = readCollection(in, new LinkedHashSet<>());
@@ -115,15 +117,12 @@ public class MavenProjectsTree {
       }
       catch (IOException e) {
         in.close();
-        file.delete();
+        PathKt.delete(file);
         throw e;
       }
       catch (Throwable e) {
         throw new IOException(e);
       }
-    }
-    finally {
-      in.close();
     }
     return result;
   }
@@ -165,13 +164,11 @@ public class MavenProjectsTree {
     return result;
   }
 
-  public void save(File file) throws IOException {
+  public void save(@NotNull Path file) throws IOException {
     synchronized (myStateLock) {
       readLock();
       try {
-        file.getParentFile().mkdirs();
-        DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
-        try {
+        try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(PathKt.outputStream(file)))) {
           out.writeUTF(STORAGE_VERSION);
           writeCollection(out, myManagedFilesPaths);
           writeCollection(out, myIgnoredFilesPaths);
@@ -179,9 +176,6 @@ public class MavenProjectsTree {
           writeCollection(out, myExplicitProfiles.getEnabledProfiles());
           writeCollection(out, myExplicitProfiles.getDisabledProfiles());
           writeProjectsRecursively(out, myRootProjects);
-        }
-        finally {
-          out.close();
         }
       }
       finally {
@@ -373,8 +367,8 @@ public class MavenProjectsTree {
     }
   }
 
-  private void updateExplicitProfiles(Collection<String> explicitProfiles, Collection<String> temporarilyRemovedExplicitProfiles,
-                                      Collection<String> available) {
+  private static void updateExplicitProfiles(Collection<String> explicitProfiles, Collection<String> temporarilyRemovedExplicitProfiles,
+                                             Collection<String> available) {
     Collection<String> removedProfiles = new THashSet<>(explicitProfiles);
     removedProfiles.removeAll(available);
     temporarilyRemovedExplicitProfiles.addAll(removedProfiles);
@@ -1250,7 +1244,13 @@ public class MavenProjectsTree {
       String baseDir = entry.getKey().getPath();
       MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE, baseDir, baseDir);
       try {
-        embedder.customizeForResolve(getWorkspaceMap(), console, process, generalSettings.isAlwaysUpdateSnapshots());
+        Properties userProperties = new Properties();
+        for (MavenProject mavenProject : mavenProjects) {
+          for (MavenImporter mavenImporter : mavenProject.getSuitableImporters()) {
+            mavenImporter.customizeUserProperties(project, mavenProject, userProperties);
+          }
+        }
+        embedder.customizeForResolve(getWorkspaceMap(), console, process, generalSettings.isAlwaysUpdateSnapshots(), userProperties);
         doResolve(project, entry.getValue(), generalSettings, embedder, context, process);
       }
       finally {
@@ -1357,6 +1357,7 @@ public class MavenProjectsTree {
                         console,
                         process,
                         new EmbedderTask() {
+                          @Override
                           public void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException {
                             process.checkCanceled();
                             process.setText(ProjectBundle.message("maven.updating.folders.pom", mavenProject.getDisplayName()));
@@ -1656,48 +1657,30 @@ public class MavenProjectsTree {
   }
 
   public interface Listener extends EventListener {
-    void profilesChanged();
-
-    void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, boolean fromImport);
-
-    void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted);
-
-    void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                         @Nullable NativeMavenProjectHolder nativeMavenProject);
-
-    void pluginsResolved(MavenProject project);
-
-    void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges);
-
-    void artifactsDownloaded(MavenProject project);
-  }
-
-  public static class ListenerAdapter implements Listener {
-    public void profilesChanged() {
+    default void profilesChanged() {
     }
 
-    public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, boolean fromImport) {
+    default void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, boolean fromImport) {
     }
 
-    public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
+    default void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
     }
 
-    public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                @Nullable NativeMavenProjectHolder nativeMavenProject) {
+    default void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+                         @Nullable NativeMavenProjectHolder nativeMavenProject) {
     }
 
-    public void pluginsResolved(MavenProject project) {
+    default void pluginsResolved(MavenProject project) {
     }
 
-    public void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
+    default void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
     }
 
-    public void artifactsDownloaded(MavenProject project) {
+    default void artifactsDownloaded(MavenProject project) {
     }
   }
 
   private static class MavenCoordinateHashCodeStrategy implements TObjectHashingStrategy<MavenCoordinate> {
-
     @Override
     public int computeHashCode(MavenCoordinate object) {
       String artifactId = object.getArtifactId();

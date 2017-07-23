@@ -15,10 +15,8 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
@@ -39,7 +37,7 @@ import java.util.Set;
 public class CustomResourceBundleState {
 
   @Property(surroundWithTag = false)
-  @AbstractCollection(surroundWithTag = false, elementTag = "file", elementValueAttribute = "value")
+  @AbstractCollection(surroundWithTag = false, elementTag = "file")
   public Set<String> myFileUrls = new HashSet<>();
 
   @Tag("base-name")

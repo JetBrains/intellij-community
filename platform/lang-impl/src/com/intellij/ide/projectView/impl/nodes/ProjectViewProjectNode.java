@@ -46,6 +46,7 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
   @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
+    if (myProject.isDisposed()) return Collections.emptyList();
     List<VirtualFile> topLevelContentRoots = ProjectViewDirectoryHelper.getInstance(myProject).getTopLevelRoots();
 
     Set<Module> modules = new LinkedHashSet<>(topLevelContentRoots.size());

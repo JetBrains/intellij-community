@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -31,7 +32,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.WatchedRootsProvider;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -140,6 +140,11 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
       initCause(cause);
       this.url = url;
     }
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 
   @Override
@@ -452,18 +457,15 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
                                                           @Nullable final VirtualFile contextVFile,
                                                           final PsiManager psiManager,
                                                           final String url) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Set<String>>() {
-      @Override
-      public Set<String> compute() {
-        PsiFile file = psiManager.findFile(vFile);
+    return ReadAction.compute(() -> {
+      PsiFile file = psiManager.findFile(vFile);
 
-        if (file instanceof XmlFile) {
-          PsiFile contextFile = contextVFile != null ? psiManager.findFile(contextVFile) : null;
-          return extractEmbeddedFileReferences((XmlFile)file, contextFile instanceof XmlFile ? (XmlFile)contextFile : null, url);
-        }
-
-        return Collections.emptySet();
+      if (file instanceof XmlFile) {
+        PsiFile contextFile = contextVFile != null ? psiManager.findFile(contextVFile) : null;
+        return extractEmbeddedFileReferences((XmlFile)file, contextFile instanceof XmlFile ? (XmlFile)contextFile : null, url);
       }
+
+      return Collections.emptySet();
     });
   }
 

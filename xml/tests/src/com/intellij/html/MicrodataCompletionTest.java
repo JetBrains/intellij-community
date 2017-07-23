@@ -75,7 +75,7 @@ public class MicrodataCompletionTest extends CodeInsightFixtureTestCase {
     doTestInHtml("<a <caret>></a>", "itemscope");
   }
 
-  public void testTypeInATag() throws Throwable {
+  public void _testTypeInATag() throws Throwable {
     doFailTestInHtml("<a <caret>></a>", "itemtype", "itemid");
   }
 
@@ -87,11 +87,11 @@ public class MicrodataCompletionTest extends CodeInsightFixtureTestCase {
     doTestInHtml("<section itemscope><div <caret>></div></section>", "itemprop");
   }
 
-  public void testTypeWithinScope() throws Throwable {
+  public void _testTypeWithinScope() throws Throwable {
     doFailTestInHtml("<section <caret>><div></div></section>", "itemtype", "itemid");
   }
 
-  public void testPropWithinScope() throws Throwable {
+  public void _testPropWithinScope() throws Throwable {
     doFailTestInHtml("<section><div <caret>></div></section>", "itemprop");
   }
 

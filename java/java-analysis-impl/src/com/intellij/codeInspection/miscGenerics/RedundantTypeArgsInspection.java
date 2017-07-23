@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.miscGenerics.RedundantTypeArgsInspection");
 
   private final static LocalQuickFix ourQuickFixAction = new MyQuickFixAction();
+  public static final String SHORT_NAME = "RedundantTypeArguments";
 
   @Override
   @NotNull
@@ -51,7 +52,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
   @Override
   @NotNull
   public String getShortName() {
-    return "RedundantTypeArguments";
+    return SHORT_NAME;
   }
 
 
@@ -134,13 +135,13 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
     if (qualifierTypeElement != null) {
       final PsiType psiType = qualifierTypeElement.getType();
       if (psiType instanceof PsiClassType && !(((PsiClassType)psiType).isRaw())) {
+        PsiClass aClass = ((PsiClassType)psiType).resolve();
+        if (aClass == null) return;
         final JavaResolveResult result = expression.advancedResolve(false);
         final PsiElement element = result.getElement();
         if (element instanceof PsiTypeParameterListOwner) {
-          final PsiMethodReferenceExpression copy = createMethodReference(expression, qualifierTypeElement);
-          final JavaResolveResult simplifiedResolve = copy.advancedResolve(false);
-          final PsiElement candidate = simplifiedResolve.getElement();
-          if (candidate == element) {
+          PsiMethod method = element instanceof PsiMethod ? (PsiMethod)element : null;
+          if (PsiDiamondTypeUtil.areTypeArgumentsRedundant(((PsiClassType)psiType).getParameters(), expression, false, method, aClass.getTypeParameters())) {
             final PsiJavaCodeReferenceElement referenceElement = qualifierTypeElement.getInnermostComponentReferenceElement();
             LOG.assertTrue(referenceElement != null, qualifierTypeElement);
             final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
@@ -152,15 +153,6 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
         }
       }
     }
-  }
-
-  private static PsiMethodReferenceExpression createMethodReference(PsiMethodReferenceExpression expression,
-                                                                    PsiTypeElement typeElement) {
-    final PsiType type = typeElement.getType();
-    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expression.getProject());
-    final PsiMethodReferenceExpression copy = (PsiMethodReferenceExpression)expression.copy();
-    copy.getQualifierType().replace(elementFactory.createTypeElement(((PsiClassType)type).rawType()));
-    return copy;
   }
 
   private static class MyQuickFixAction implements LocalQuickFix {
@@ -200,7 +192,15 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
       final PsiTypeElement typeElement = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiTypeElement.class);
       final PsiMethodReferenceExpression expression = PsiTreeUtil.getParentOfType(typeElement, PsiMethodReferenceExpression.class);
       if (expression != null) {
-        expression.replace(createMethodReference(expression, typeElement));
+        final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expression.getProject());
+        final PsiClass aClass = ((PsiClassType)typeElement.getType()).resolve();
+        if (aClass != null) {
+          final PsiMethodReferenceExpression copy = (PsiMethodReferenceExpression)expression.copy();
+          final PsiTypeElement qualifier = copy.getQualifierType();
+          assert qualifier != null;
+          qualifier.replace(elementFactory.createReferenceExpression(aClass));
+          expression.replace(copy);
+        }
       }
     }
   }

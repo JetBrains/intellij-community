@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   @NotNull
   @Override
   public RunResult<T> execute() {
-    final RunResult<T> result = new RunResult<T>(this);
+    final RunResult<T> result = new RunResult<>(this);
 
     Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
@@ -47,16 +47,13 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
       LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
     }
 
-    TransactionGuard.getInstance().submitTransactionAndWait(new Runnable() {
-      @Override
-      public void run() {
-        AccessToken token = start(WriteAction.this.getClass());
-        try {
-          result.run();
-        }
-        finally {
-          token.finish();
-        }
+    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+      AccessToken token = start(this.getClass());
+      try {
+        result.run();
+      }
+      finally {
+        token.finish();
       }
     });
 

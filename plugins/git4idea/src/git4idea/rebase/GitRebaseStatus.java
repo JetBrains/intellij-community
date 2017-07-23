@@ -52,7 +52,7 @@ class GitRebaseStatus {
 
   @NotNull
   static GitRebaseStatus notStarted() {
-    return new GitRebaseStatus(Type.NOT_STARTED, Collections.<GitRebaseUtils.CommitInfo>emptyList());
+    return new GitRebaseStatus(Type.NOT_STARTED, Collections.emptyList());
   }
 
   GitRebaseStatus(@NotNull Type type, @NotNull Collection<GitRebaseUtils.CommitInfo> skippedCommits) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,6 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -54,8 +53,9 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
+import java.lang.reflect.Field;
 
-public class IdeTooltipManager implements ApplicationComponent, AWTEventListener {
+public class IdeTooltipManager implements Disposable, AWTEventListener, ApplicationComponent {
   private static final Key<IdeTooltip> CUSTOM_TOOLTIP = Key.create("custom.tooltip");
   private static final MouseEventAdapter<Void> DUMMY_LISTENER = new MouseEventAdapter<>(null);
   public static final String IDE_TOOLTIP_PLACE = "IdeTooltip";
@@ -129,7 +129,12 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       }
     }
     else if (me.getID() == MouseEvent.MOUSE_EXITED) {
-      if (c == myCurrentComponent || c == myQueuedComponent) {
+      //We hide tooltip (but not hint!) when it's shown over myComponent and mouse exits this component
+      if (c == myCurrentComponent && myCurrentTooltip != null && !myCurrentTooltip.isHint() && myCurrentTipUi != null) {
+        myCurrentTipUi.setAnimationEnabled(false);
+        hideCurrent(null, null, null, null, false);
+      }
+      else if (c == myCurrentComponent || c == myQueuedComponent) {
         hideCurrent(me, null, null);
       }
     }
@@ -184,14 +189,21 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     int shift = centerStrict ? 0 : centerDefault ? 4 : 0;
 
     // Balloon may appear exactly above useful content, such behavior is rather annoying.
+    Rectangle rowBounds = null;
     if (c instanceof JTree) {
       TreePath path = ((JTree)c).getClosestPathForLocation(me.getX(), me.getY());
       if (path != null) {
-        Rectangle pathBounds = ((JTree)c).getPathBounds(path);
-        if (pathBounds != null && pathBounds.y + 4 < me.getY()) {
-          shift += me.getY() - pathBounds.y - 4;
-        }
+        rowBounds = ((JTree)c).getPathBounds(path);
       }
+    }
+    else if (c instanceof JList) {
+      int row = ((JList)c).locationToIndex(me.getPoint());
+      if (row > -1) {
+        rowBounds = ((JList)c).getCellBounds(row, row);
+      }
+    }
+    if (rowBounds != null && rowBounds.y + 4 < me.getY()) {
+      shift += me.getY() - rowBounds.y - 4;
     }
 
     queueShow(comp, me, centerStrict || centerDefault, shift, -shift, -shift);
@@ -446,14 +458,14 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
     if (myCurrentTipUi != null) {
       RelativePoint target = me != null ? new RelativePoint(me) : null;
-      boolean isInside = target != null && myCurrentTipUi.isInside(target);
-      boolean isMovingForward = target != null && myCurrentTipUi.isMovingForward(target);
-      boolean canAutoHide = myCurrentTooltip.canAutohideOn(new TooltipEvent(me, isInside || isMovingForward, action, event));
+      boolean isInsideOrMovingForward = target != null && (myCurrentTipUi.isInside(target) || myCurrentTipUi.isMovingForward(target));
+      boolean canAutoHide = myCurrentTooltip.canAutohideOn(new TooltipEvent(me, isInsideOrMovingForward, action, event));
       boolean implicitMouseMove = me != null &&
                                   (me.getID() == MouseEvent.MOUSE_MOVED ||
                                    me.getID() == MouseEvent.MOUSE_EXITED ||
                                    me.getID() == MouseEvent.MOUSE_ENTERED);
       if (!canAutoHide
+          || (isInsideOrMovingForward && implicitMouseMove)
           || (myCurrentTooltip.isExplicitClose() && implicitMouseMove)
           || (tooltipToShow != null && !tooltipToShow.isHint() && Comparing.equal(myCurrentTooltip, tooltipToShow))) {
         if (myHideRunnable != null) {
@@ -512,7 +524,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   @Override
-  public void disposeComponent() {
+  public void dispose() {
     hideCurrentNow(false);
     if (myLastDisposable != null) {
       Disposer.dispose(myLastDisposable);
@@ -546,6 +558,9 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     final JEditorPane pane = new JEditorPane() {
       @Override
       public Dimension getPreferredSize() {
+        if (!isShowing() && layeredPane != null) {
+          AppUIUtil.targetToDevice(this, layeredPane);
+        }
         if (!prefSizeWasComputed[0] && hintHint.isAwtTooltip()) {
           JLayeredPane lp = layeredPane;
           if (lp == null) {
@@ -600,7 +615,16 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
         if (o instanceof HTML.Tag) {
           HTML.Tag kind = (HTML.Tag)o;
           if (kind == HTML.Tag.HR) {
-            return new CustomHrView(elem, hintHint.getTextForeground());
+            View view = super.create(elem);
+            try {
+              Field field = view.getClass().getDeclaredField("size");
+              field.setAccessible(true);
+              field.set(view, JBUI.scale(1));
+              return view;
+            }
+            catch (Exception ignored) {
+              //ignore
+            }
           }
         }
         return super.create(elem);
@@ -645,19 +669,13 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
   public static void setColors(JComponent pane) {
     pane.setForeground(JBColor.foreground());
-    pane.setBackground(HintUtil.INFORMATION_COLOR);
+    pane.setBackground(HintUtil.getInformationColor());
     pane.setOpaque(true);
   }
 
   public static void setBorder(JComponent pane) {
     pane.setBorder(
       BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black), JBUI.Borders.empty(0, 5)));
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "IDE Tooltip Manager";
   }
 
   public boolean isQueuedToShow(IdeTooltip tooltip) {

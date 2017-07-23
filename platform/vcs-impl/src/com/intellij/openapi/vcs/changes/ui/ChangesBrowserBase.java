@@ -48,12 +48,13 @@ import javax.swing.border.Border;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterRevisionsFiles;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getAllFiles;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.*;
@@ -158,11 +159,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
 
   @NotNull
   protected Runnable getDoubleClickHandler() {
-    return new Runnable() {
-      public void run() {
-        showDiff();
-      }
-    };
+    return () -> showDiff();
   }
 
   protected void setInitialSelection(final List<? extends ChangeList> changeLists,
@@ -365,7 +362,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
       treeActionsGroup.add(action);
     }
 
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, toolbarGroups, true);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ChangesBrowser", toolbarGroups, true);
     toolbar.setTargetComponent(this);
     return toolbar.getComponent();
   }
@@ -373,14 +370,14 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   protected void buildToolBar(final DefaultActionGroup toolBarGroup) {
     myDiffAction = new DumbAwareAction() {
       public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(canShowDiff());
+        e.getPresentation().setEnabled(canShowDiff() || e.getInputEvent() instanceof KeyEvent);
       }
 
       public void actionPerformed(AnActionEvent e) {
         showDiff();
       }
     };
-    ActionUtil.copyFrom(myDiffAction, "ChangesView.Diff");
+    ActionUtil.copyFrom(myDiffAction, IdeActions.ACTION_SHOW_DIFF_COMMON);
     myDiffAction.registerCustomShortcutSet(myViewer, null);
     toolBarGroup.add(myDiffAction);
   }
@@ -448,7 +445,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   @NotNull
   protected Stream<VirtualFile> getSelectedFiles() {
     return Stream.concat(
-      getAfterRevisionsFiles(getSelectedChanges().stream()),
+      getAllFiles(getSelectedChanges().stream()),
       getVirtualFiles(myViewer.getSelectionPaths(), null)
     ).distinct();
   }

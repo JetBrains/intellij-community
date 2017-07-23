@@ -17,10 +17,9 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.javadoc.AnnotationDocGenerator;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifierListOwner;
@@ -29,7 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.codeInsight.ExternalAnnotationsLineMarkerProvider.*;
+import static com.intellij.codeInsight.ExternalAnnotationsLineMarkerProvider.getAnnotationOwner;
 
 /**
  * @author peter
@@ -47,9 +46,9 @@ public class ToggleSourceInferredAnnotations extends BaseIntentionAction {
   public boolean isAvailable(@NotNull final Project project, Editor editor, PsiFile file) {
     final PsiElement leaf = file.findElementAt(editor.getCaretModel().getOffset());
     final PsiModifierListOwner owner = getAnnotationOwner(leaf);
-    if (owner != null && isSourceCode(owner)) {
-      boolean hasSrcInferredAnnotation = ContainerUtil.or(findSignatureNonCodeAnnotations(owner, true),
-                                                          annotation -> AnnotationUtil.isInferredAnnotation(annotation));
+    if (owner != null) {
+      boolean hasSrcInferredAnnotation = ContainerUtil.exists(AnnotationDocGenerator.getAnnotationsToShow(owner),
+                                                              AnnotationDocGenerator::isInferredFromSource);
       if (hasSrcInferredAnnotation) {
         setText((CodeInsightSettings.getInstance().SHOW_SOURCE_INFERRED_ANNOTATIONS ? "Hide" : "Show") + " annotations inferred from source code");
         return true;

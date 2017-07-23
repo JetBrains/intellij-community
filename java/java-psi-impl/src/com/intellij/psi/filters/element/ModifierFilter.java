@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,82 +15,72 @@
  */
 package com.intellij.psi.filters.element;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.filters.ClassFilter;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.util.containers.ContainerUtil;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 28.01.2003
- * Time: 20:29:25
- * To change this template use Options | File Templates.
- */
-public class ModifierFilter extends ClassFilter{
-  public final List<ModifierRestriction> myModifierRestrictions = new ArrayList<ModifierRestriction>();
+public class ModifierFilter extends ClassFilter {
+  public final List<ModifierRestriction> myModifierRestrictions;
 
-  private ModifierFilter(){
+  public ModifierFilter(@PsiModifier.ModifierConstant String modifier, boolean hasToBe) {
+    this(Collections.singletonList(new ModifierRestriction(modifier, hasToBe)));
+  }
+
+  public ModifierFilter(String... modifiers) {
+    this(ContainerUtil.map(modifiers, modifier -> new ModifierRestriction(modifier, true)));
+  }
+
+  private ModifierFilter(List<ModifierRestriction> restrictions) {
     super(PsiModifierListOwner.class);
-  }
-
-  public ModifierFilter(@PsiModifier.ModifierConstant String modifier, boolean hasToBe){
-    this();
-    addModiferRestriction(modifier, hasToBe);
-  }
-
-  public ModifierFilter(String... modifiers){
-    this();
-    for (@PsiModifier.ModifierConstant String modifier : modifiers) {
-      addModiferRestriction(modifier, true);
-    }
-  }
-
-  private void addModiferRestriction(@PsiModifier.ModifierConstant String mod, boolean hasToBe){
-    myModifierRestrictions.add(new ModifierRestriction(mod, hasToBe));
+    myModifierRestrictions = restrictions;
   }
 
   @Override
-  public boolean isAcceptable(Object element, PsiElement context){
-    if(element instanceof PsiModifierListOwner){
-      final PsiModifierList list = ((PsiModifierListOwner)element).getModifierList();
-      if(list == null) return true;
-      for (final Object myModifierRestriction : myModifierRestrictions) {
-        final ModifierRestriction psiModifer = (ModifierRestriction)myModifierRestriction;
-        boolean shouldHave = psiModifer.myIsSet;
-        if (shouldHave != list.hasModifierProperty(psiModifer.myModifierName)) {
+  public boolean isAcceptable(Object element, PsiElement context) {
+    if (!(element instanceof PsiModifierListOwner)) return false;
+
+    PsiModifierList list = ((PsiModifierListOwner)element).getModifierList();
+    if (list != null) {
+      for (ModifierRestriction psiModifier : myModifierRestrictions) {
+        boolean shouldHave = psiModifier.isSet;
+        if (shouldHave != list.hasModifierProperty(psiModifier.modifierName)) {
           return false;
         }
       }
-      return true;
     }
-    return false;
+
+    return true;
   }
 
-  protected static final class ModifierRestriction{
-    @PsiModifier.ModifierConstant public final String myModifierName;
-    public final boolean myIsSet;
+  private static final class ModifierRestriction {
+    public final String modifierName;
+    public final boolean isSet;
 
-    ModifierRestriction(@PsiModifier.ModifierConstant String modifierName, boolean isSet){
-      myModifierName = modifierName;
-      myIsSet = isSet;
+    ModifierRestriction(String modifierName, boolean isSet) {
+      this.modifierName = modifierName;
+      this.isSet = isSet;
     }
   }
 
-  public String toString(){
-    @NonNls String ret = "modifiers(";
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder("modifiers(");
     Iterator<ModifierRestriction> iter = myModifierRestrictions.iterator();
-    while(iter.hasNext()){
-      final ModifierRestriction rest = iter.next();
-      ret += rest.myModifierName + "=" + rest.myIsSet;
-      if(iter.hasNext()){
-        ret += ", ";
+    while (iter.hasNext()) {
+      ModifierRestriction rest = iter.next();
+      sb.append(rest.modifierName).append("=").append(rest.isSet);
+      if (iter.hasNext()) {
+        sb.append(", ");
       }
     }
-    ret += ")";
-    return ret;
+    sb.append(")");
+    return sb.toString();
   }
 }

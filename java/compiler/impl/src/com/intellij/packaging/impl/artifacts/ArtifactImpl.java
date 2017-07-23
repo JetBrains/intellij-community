@@ -15,6 +15,7 @@
  */
 package com.intellij.packaging.impl.artifacts;
 
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -23,8 +24,8 @@ import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.util.EventDispatcher;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -43,20 +44,24 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
   private final EventDispatcher<ArtifactListener> myDispatcher;
   private ArtifactType myArtifactType;
   private Map<ArtifactPropertiesProvider, ArtifactProperties<?>> myProperties;
+  private final ProjectModelExternalSource myExternalSource;
 
-  public ArtifactImpl(@NotNull String name, @NotNull ArtifactType artifactType, boolean buildOnMake, @NotNull CompositePackagingElement<?> rootElement,
-                      String outputPath) {
-    this(name, artifactType, buildOnMake, rootElement, outputPath, null);
+  public ArtifactImpl(@NotNull String name, @NotNull ArtifactType artifactType, boolean buildOnMake,
+                      @NotNull CompositePackagingElement<?> rootElement, String outputPath,
+                      @Nullable ProjectModelExternalSource externalSource) {
+    this(name, artifactType, buildOnMake, rootElement, outputPath, externalSource, null);
   }
-  public ArtifactImpl(@NotNull String name, @NotNull ArtifactType artifactType, boolean buildOnMake, @NotNull CompositePackagingElement<?> rootElement,
-                      String outputPath,
-                      EventDispatcher<ArtifactListener> dispatcher) {
+
+  public ArtifactImpl(@NotNull String name, @NotNull ArtifactType artifactType, boolean buildOnMake,
+                      @NotNull CompositePackagingElement<?> rootElement, String outputPath,
+                      @Nullable ProjectModelExternalSource externalSource, EventDispatcher<ArtifactListener> dispatcher) {
     myName = name;
     myArtifactType = artifactType;
     myBuildOnMake = buildOnMake;
     myRootElement = rootElement;
     myOutputPath = outputPath;
     myDispatcher = dispatcher;
+    myExternalSource = externalSource;
     myProperties = new HashMap<>();
     resetProperties();
   }
@@ -96,8 +101,15 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
     return Collections.unmodifiableCollection(myProperties.keySet());
   }
 
+  @Nullable
+  @Override
+  public ProjectModelExternalSource getExternalSource() {
+    return myExternalSource;
+  }
+
   public ArtifactImpl createCopy(EventDispatcher<ArtifactListener> dispatcher) {
-    final ArtifactImpl artifact = new ArtifactImpl(myName, myArtifactType, myBuildOnMake, myRootElement, myOutputPath, dispatcher);
+    final ArtifactImpl artifact = new ArtifactImpl(myName, myArtifactType, myBuildOnMake, myRootElement, myOutputPath, myExternalSource,
+                                                   dispatcher);
     for (Map.Entry<ArtifactPropertiesProvider, ArtifactProperties<?>> entry : myProperties.entrySet()) {
       final ArtifactProperties newProperties = artifact.myProperties.get(entry.getKey());
       //noinspection unchecked

@@ -19,7 +19,6 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -121,7 +120,7 @@ public class GitRebaseUtils {
     GitRebaseSpec spec = GitUtil.getRepositoryManager(project).getOngoingRebaseSpec();
     if (spec != null) {
       new GitAbortRebaseProcess(project, spec.getOngoingRebase(), spec.getHeadPositionsToRollback(), spec.getInitialBranchNames(),
-                                indicator, spec.getSaver()).abortWithConfirmation();
+                                indicator, spec.getSaver(), true).abortWithConfirmation();
     }
     else {
       LOG.warn("Refusing to abort: no rebase spec");
@@ -133,8 +132,8 @@ public class GitRebaseUtils {
    * Abort the ongoing rebase process in the given repository.
    */
   public static void abort(@NotNull final Project project, @Nullable final GitRepository repository, @NotNull ProgressIndicator indicator) {
-    new GitAbortRebaseProcess(project, repository, Collections.<GitRepository, String>emptyMap(),
-                              Collections.<GitRepository, String>emptyMap(), indicator, null).abortWithConfirmation();
+    new GitAbortRebaseProcess(project, repository, Collections.emptyMap(),
+                              Collections.emptyMap(), indicator, null, true).abortWithConfirmation();
   }
 
   private static boolean isRebaseAllowed(@NotNull Project project, @NotNull Collection<GitRepository> repositories) {
@@ -278,12 +277,7 @@ public class GitRebaseUtils {
 
   @NotNull
   public static Collection<GitRepository> getRebasingRepositories(@NotNull Project project) {
-    return ContainerUtil.filter(GitUtil.getRepositories(project), new Condition<GitRepository>() {
-      @Override
-      public boolean value(@NotNull GitRepository repository) {
-        return repository.getState() == Repository.State.REBASING;
-      }
-    });
+    return ContainerUtil.filter(GitUtil.getRepositories(project), repository -> repository.getState() == Repository.State.REBASING);
   }
 
   /**

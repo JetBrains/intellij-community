@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
+import javax.swing.plaf.basic.BasicComboPopup;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -55,24 +56,18 @@ public class SearchUtil {
   private SearchUtil() { }
 
   public static void processProjectConfigurables(Project project, Map<SearchableConfigurable, Set<OptionDescription>> options) {
-    processConfigurables(ShowSettingsUtilImpl.getConfigurables(project, false), options);
+    processConfigurables(ShowSettingsUtilImpl.getConfigurables(project, true), options);
   }
 
   private static void processConfigurables(Configurable[] configurables, Map<SearchableConfigurable, Set<OptionDescription>> options) {
     for (Configurable configurable : configurables) {
       if (configurable instanceof SearchableConfigurable) {
-        Set<OptionDescription> configurableOptions = new TreeSet<>();
-
-        if (configurable instanceof Configurable.Composite) {
-          final Configurable[] children = ((Configurable.Composite)configurable).getConfigurables();
-          processConfigurables(children, options);
-        }
-
         //ignore invisible root nodes
         if (configurable instanceof SearchableConfigurable.Parent && !((SearchableConfigurable.Parent)configurable).isVisible()) {
           continue;
         }
 
+        Set<OptionDescription> configurableOptions = new TreeSet<>();
         options.put((SearchableConfigurable)configurable, configurableOptions);
 
         if (configurable instanceof MasterDetails) {
@@ -105,31 +100,17 @@ public class SearchUtil {
         processUILabel(title, configurableOptions, path);
       }
     }
-    if (component instanceof JLabel) {
-      final String label = ((JLabel)component).getText();
-      if (label != null) {
-        processUILabel(label, configurableOptions, path);
+    String label = getLabelFromComponent(component);
+    if (label != null) {
+      processUILabel(label, configurableOptions, path);
+    }
+    else if (component instanceof JComboBox) {
+      List<String> labels = getItemsFromComboBox((JComboBox)component);
+      for (String each : labels) {
+        processUILabel(each, configurableOptions, path);
       }
     }
-    else if (component instanceof JCheckBox) {
-      final String checkBoxTitle = ((JCheckBox)component).getText();
-      if (checkBoxTitle != null) {
-        processUILabel(checkBoxTitle, configurableOptions, path);
-      }
-    }
-    else if (component instanceof JRadioButton) {
-      final String radioButtonTitle = ((JRadioButton)component).getText();
-      if (radioButtonTitle != null) {
-        processUILabel(radioButtonTitle, configurableOptions, path);
-      }
-    }
-    else if (component instanceof JButton) {
-      final String buttonTitle = ((JButton)component).getText();
-      if (buttonTitle != null) {
-        processUILabel(buttonTitle, configurableOptions, path);
-      }
-    }
-    if (component instanceof JTabbedPane) {
+    else if (component instanceof JTabbedPane) {
       final JTabbedPane tabbedPane = (JTabbedPane)component;
       final int tabCount = tabbedPane.getTabCount();
       for (int i = 0; i < tabCount; i++) {
@@ -164,6 +145,45 @@ public class SearchUtil {
         }
       }
     }
+  }
+
+  @Nullable
+  private static String getLabelFromComponent(@Nullable Component component) {
+    String label = null;
+    if (component instanceof JLabel) {
+      label = ((JLabel)component).getText();
+    }
+    else if (component instanceof JCheckBox) {
+      label = ((JCheckBox)component).getText();
+    }
+    else if (component instanceof JRadioButton) {
+      label = ((JRadioButton)component).getText();
+    }
+    else if (component instanceof JButton) {
+      label = ((JButton)component).getText();
+    }
+    return StringUtil.nullize(label, true);
+  }
+
+  @NotNull
+  private static List<String> getItemsFromComboBox(@NotNull JComboBox comboBox) {
+    ListCellRenderer renderer = comboBox.getRenderer();
+    if (renderer == null) renderer = new DefaultListCellRenderer();
+
+    JList jList = new BasicComboPopup(comboBox).getList();
+
+    List<String> result = new ArrayList<>();
+
+    int count = comboBox.getItemCount();
+    for (int i = 0; i < count; i++) {
+      Object value = comboBox.getItemAt(i);
+      //noinspection unchecked
+      Component labelComponent = renderer.getListCellRendererComponent(jList, value, i, false, false);
+      String label = getLabelFromComponent(labelComponent);
+      if (label != null) result.add(label);
+    }
+
+    return result;
   }
 
   private static void processUILabel(String title, Set<OptionDescription> configurableOptions, String path) {
@@ -220,32 +240,19 @@ public class SearchUtil {
 
     if (option == null || option.trim().length() == 0) return false;
     boolean highlight = false;
-    if (rootComponent instanceof JCheckBox) {
-      final JCheckBox checkBox = ((JCheckBox)rootComponent);
-      if (isComponentHighlighted(checkBox.getText(), option, force, configurable)) {
+
+    String label = getLabelFromComponent(rootComponent);
+    if (label != null) {
+      if (isComponentHighlighted(label, option, force, configurable)) {
         highlight = true;
-        glassPanel.addSpotlight(checkBox);
+        glassPanel.addSpotlight(rootComponent);
       }
     }
-    else if (rootComponent instanceof JRadioButton) {
-      final JRadioButton radioButton = ((JRadioButton)rootComponent);
-      if (isComponentHighlighted(radioButton.getText(), option, force, configurable)) {
+    else if (rootComponent instanceof JComboBox) {
+      List<String> labels = getItemsFromComboBox(((JComboBox)rootComponent));
+      if (ContainerUtil.exists(labels, it -> isComponentHighlighted(it, option, force, configurable))) {
         highlight = true;
-        glassPanel.addSpotlight(radioButton);
-      }
-    }
-    else if (rootComponent instanceof JLabel) {
-      final JLabel label = ((JLabel)rootComponent);
-      if (isComponentHighlighted(label.getText(), option, force, configurable)) {
-        highlight = true;
-        glassPanel.addSpotlight(label);
-      }
-    }
-    else if (rootComponent instanceof JButton) {
-      final JButton button = ((JButton)rootComponent);
-      if (isComponentHighlighted(button.getText(), option, force, configurable)) {
-        highlight = true;
-        glassPanel.addSpotlight(button);
+        glassPanel.addSpotlight(rootComponent);
       }
     }
     else if (rootComponent instanceof JTabbedPane) {

@@ -17,6 +17,7 @@ package com.intellij.openapi.util.objectTree;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
@@ -71,26 +72,45 @@ public class ThrowableInterner {
     }
   });
 
-  private static final long BACKTRACE_FIELD_OFFSET;
+  private static final Field BACKTRACE_FIELD;
+  // can be UNKNOWN if the memory layout or JDK is unknown or ancient so we skip interning altogether, (e.g. jdk <=6)
+  // or LUCKILY_NOT_NEEDED when the JDK supports reflection to the "backtrace" field (e.g. jdk 9)
+  // or the real offset of the "backtrace" field into the Throwable class (for jdk 7 and 8)
+  private static final int BACKTRACE_FIELD_OFFSET;
+  private static final int UNKNOWN = -1;
+  private static final int LUCKILY_NOT_NEEDED = -2;
+
   static {
-    if ((SystemInfo.isOracleJvm || SystemInfo.isJetbrainsJvm) && SystemInfo.isJavaVersionAtLeast("1.7")) {
+    BACKTRACE_FIELD = ReflectionUtil.getDeclaredField(Throwable.class, "backtrace");
+    if (BACKTRACE_FIELD != null) {
+      BACKTRACE_FIELD_OFFSET = LUCKILY_NOT_NEEDED;
+    }
+    else if ((SystemInfo.isOracleJvm || SystemInfo.isJetBrainsJvm) && SystemInfo.isJavaVersionAtLeast("1.7")) {
       Field firstField = Throwable.class.getDeclaredFields()[1];
       long firstFieldOffset = AtomicFieldUpdater.getUnsafe().objectFieldOffset(firstField);
-      BACKTRACE_FIELD_OFFSET = firstFieldOffset == 12 ? 8 : firstFieldOffset == 16 ? 12 : firstFieldOffset == 24 ? 16 : -1;
-      if (BACKTRACE_FIELD_OFFSET == -1
+      BACKTRACE_FIELD_OFFSET = firstFieldOffset == 12 ? 8 : firstFieldOffset == 16 ? 12 : firstFieldOffset == 24 ? 16 : UNKNOWN;
+      if (BACKTRACE_FIELD_OFFSET == UNKNOWN
           || !firstField.getName().equals("detailMessage")
-          || !(AtomicFieldUpdater.getUnsafe().getObject(new Throwable(), BACKTRACE_FIELD_OFFSET) instanceof Object[])) {
+          || !(AtomicFieldUpdater.getUnsafe().getObject(new Throwable(), (long)BACKTRACE_FIELD_OFFSET) instanceof Object[])) {
         throw new RuntimeException("Unknown layout: "+firstField+";"+firstFieldOffset+". Please specify -Didea.disposer.debug=off in idea.properties to suppress");
       }
     }
     else {
-      BACKTRACE_FIELD_OFFSET = -1;
+      BACKTRACE_FIELD_OFFSET = UNKNOWN;
     }
   }
 
   private static Object[] getBacktrace(@NotNull Throwable throwable) {
     // the JVM blocks access to Throwable.backtrace via reflection
-    Object backtrace = BACKTRACE_FIELD_OFFSET == -1 ? null : AtomicFieldUpdater.getUnsafe().getObject(throwable, BACKTRACE_FIELD_OFFSET);
+    Object backtrace;
+    try {
+      backtrace = BACKTRACE_FIELD != null ? BACKTRACE_FIELD.get(throwable) :
+                  BACKTRACE_FIELD_OFFSET == UNKNOWN ? null :
+                  AtomicFieldUpdater.getUnsafe().getObject(throwable, (long)BACKTRACE_FIELD_OFFSET);
+    }
+    catch (IllegalAccessException e) {
+      return null;
+    }
     // obsolete jdk
     return backtrace instanceof Object[] && ((Object[])backtrace).length == 5 ? (Object[])backtrace : null;
   }

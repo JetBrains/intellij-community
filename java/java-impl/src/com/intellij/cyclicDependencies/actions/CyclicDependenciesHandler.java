@@ -28,10 +28,6 @@ import com.intellij.ui.content.ContentFactory;
 
 import javax.swing.*;
 
-/**
- * User: anna
- * Date: Jan 31, 2005
- */
 public class CyclicDependenciesHandler {
   private final Project myProject;
   private final AnalysisScope myScope;

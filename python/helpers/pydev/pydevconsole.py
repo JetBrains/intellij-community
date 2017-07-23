@@ -16,7 +16,7 @@ import os
 import sys
 
 from _pydev_imps._pydev_saved_modules import threading
-from _pydevd_bundle.pydevd_constants import dict_iter_items
+from _pydevd_bundle.pydevd_constants import INTERACTIVE_MODE_AVAILABLE
 
 import traceback
 from _pydev_bundle import fix_getpass
@@ -177,6 +177,9 @@ def init_mpl_in_console(interpreter):
         return False
 
     set_return_control_callback(return_control)
+
+    if not INTERACTIVE_MODE_AVAILABLE:
+        return
 
     from _pydev_bundle.pydev_import_hook import import_hook_manager
     from pydev_ipython.matplotlibtools import activate_matplotlib, activate_pylab, activate_pyplot
@@ -463,6 +466,7 @@ def console_exec(thread_id, frame_id, expression, dbg):
     """
     frame = pydevd_vars.find_frame(thread_id, frame_id)
 
+    is_multiline = expression.count('@LINE@') > 1
     expression = str(expression.replace('@LINE@', '\n'))
 
     #Not using frame.f_globals because of https://sourceforge.net/tracker2/?func=detail&aid=2541355&group_id=85796&atid=577329
@@ -481,16 +485,18 @@ def console_exec(thread_id, frame_id, expression, dbg):
 
     interpreter = ConsoleWriter()
 
-    try:
-        code = compile_command(expression)
-    except (OverflowError, SyntaxError, ValueError):
-        # Case 1
-        interpreter.showsyntaxerror()
-        return False
-
-    if code is None:
-        # Case 2
-        return True
+    if not is_multiline:
+        try:
+            code = compile_command(expression)
+        except (OverflowError, SyntaxError, ValueError):
+            # Case 1
+            interpreter.showsyntaxerror()
+            return False
+        if code is None:
+            # Case 2
+            return True
+    else:
+        code = expression
 
     #Case 3
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
@@ -25,6 +27,10 @@ import java.awt.*;
  */
 @SuppressWarnings("UseJBColor")
 public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
+
+  public DefaultEditorTabsPainter(JBEditorTabs tabs) {
+    super(tabs);
+  }
 
   @Override
   public void doPaintInactive(Graphics2D g2d,
@@ -37,7 +43,6 @@ public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
                               int row,
                               int column,
                               boolean vertical) {
-    ;
     g2d.setColor(tabColor != null ? tabColor : getDefaultTabColor());
     g2d.fillRect(x, y, w, h);
     g2d.setColor(getInactiveMaskColor());
@@ -58,7 +63,7 @@ public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
 
   @Override
   public Color getBackgroundColor() {
-    return UIUtil.CONTRAST_BORDER_COLOR;
+    return myTabs.hasUnderlineSelection() ? new JBColor(Gray._255, Gray.x4B) : UIUtil.CONTRAST_BORDER_COLOR;
   }
 
   protected Color getDefaultTabColor() {

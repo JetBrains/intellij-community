@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,10 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> extends CopyPastePostProcessor<ReferenceTransferableData> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.CopyPasteReferenceProcessor");
@@ -54,11 +57,13 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
     }
 
     final ArrayList<ReferenceData> array = new ArrayList<>();
+    int refOffset = 0; // this is an offset delta for conversion from absolute offset to an offset inside clipboard contents
     for (int j = 0; j < startOffsets.length; j++) {
-      final int startOffset = startOffsets[j];
-      for (final PsiElement element : CollectHighlightsUtil.getElementsInRange(file, startOffset, endOffsets[j])) {
-        addReferenceData(file, startOffset, element, array);
+      refOffset += startOffsets[j];
+      for (final PsiElement element : CollectHighlightsUtil.getElementsInRange(file, startOffsets[j], endOffsets[j])) {
+        addReferenceData(file, refOffset, element, array);
       }
+      refOffset -= endOffsets[j] + 1; // 1 accounts for line break inserted between contents corresponding to different carets
     }
 
     if (array.isEmpty()) {
@@ -81,9 +86,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
           referenceData = (ReferenceTransferableData)content.getTransferData(flavor);
         }
       }
-      catch (UnsupportedFlavorException ignored) {
-      }
-      catch (IOException ignored) {
+      catch (UnsupportedFlavorException | IOException ignored) {
       }
     }
 
@@ -133,6 +136,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
             qClassName, staticMemberName));
   }
 
+  @NotNull
   protected abstract TRef[] findReferencesToRestore(PsiFile file,
                                                                            RangeMarker bounds,
                                                                            ReferenceData[] referenceData);
@@ -151,7 +155,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
   protected abstract void restoreReferences(ReferenceData[] referenceData,
                                             TRef[] refs);
 
-  private static void askReferencesToRestore(Project project, PsiElement[] refs,
+  private static void askReferencesToRestore(Project project, @NotNull PsiElement[] refs,
                                       ReferenceData[] referenceData) {
     PsiManager manager = PsiManager.getInstance(project);
 

@@ -64,6 +64,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   private boolean mySearchInCommentsAndStrings;
   private boolean mySearchNonJava;
   private boolean myPreviewNonCodeUsages = true;
+  private Runnable myAfterRefactoringCallback;
 
   private SafeDeleteProcessor(Project project, @Nullable Runnable prepareSuccessfulCallback,
                               PsiElement[] elementsToDelete, boolean isSearchInComments, boolean isSearchNonJava) {
@@ -150,8 +151,10 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
         addNonCodeUsages(element, usages, getDefaultInsideDeletedCondition(myElements), mySearchNonJava, mySearchInCommentsAndStrings);
       }
     }
-    final UsageInfo[] result = usages.toArray(new UsageInfo[usages.size()]);
-    return UsageViewUtil.removeDuplicatedUsages(result);
+    UsageInfo[] result = usages.toArray(new UsageInfo[usages.size()]);
+    result = UsageViewUtil.removeDuplicatedUsages(result);
+    Arrays.sort(result, (o1, o2) -> PsiUtilCore.compareElementsByPosition(o2.getElement(), o1.getElement()));
+    return result;
   }
 
   public static Condition<PsiElement> getDefaultInsideDeletedCondition(final PsiElement[] elements) {
@@ -391,6 +394,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
         element.delete();
       }
+      if (myAfterRefactoringCallback != null) myAfterRefactoringCallback.run();
     } catch (IncorrectOperationException e) {
       RefactoringUIUtil.processIncorrectOperation(myProject, e);
     }
@@ -496,5 +500,9 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   @Override
   protected boolean skipNonCodeUsages() {
     return true;
+  }
+
+  public void setAfterRefactoringCallback(Runnable afterRefactoringCallback) {
+    myAfterRefactoringCallback = afterRefactoringCallback;
   }
 }

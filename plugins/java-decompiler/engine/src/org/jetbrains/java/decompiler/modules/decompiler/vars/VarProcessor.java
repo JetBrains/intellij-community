@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,9 @@ public class VarProcessor {
   }
 
   public void setVarVersions(RootStatement root) {
+    VarVersionsProcessor oldProcessor = varVersions;
     varVersions = new VarVersionsProcessor(method, methodDescriptor);
-    varVersions.setVarVersions(root);
+    varVersions.setVarVersions(root, oldProcessor);
   }
 
   public void setVarDefinitions(Statement root) {
@@ -57,7 +58,7 @@ public class VarProcessor {
     Map<Integer, Integer> mapOriginalVarIndices = varVersions.getMapOriginalVarIndices();
 
     List<VarVersionPair> listVars = new ArrayList<>(mapVarNames.keySet());
-    Collections.sort(listVars, (o1, o2) -> o1.var - o2.var);
+    Collections.sort(listVars, Comparator.comparingInt(o -> o.var));
 
     Map<String, Integer> mapNames = new HashMap<>();
 
@@ -73,7 +74,7 @@ public class VarProcessor {
       }
 
       Integer counter = mapNames.get(name);
-      mapNames.put(name, counter == null ? counter = new Integer(0) : ++counter);
+      mapNames.put(name, counter == null ? counter = 0 : ++counter);
 
       if (counter > 0) {
         name += String.valueOf(counter);
@@ -81,6 +82,14 @@ public class VarProcessor {
 
       mapVarNames.put(pair, name);
     }
+  }
+
+  public Integer getVarOriginalIndex(int index) {
+    if (varVersions == null) {
+      return null;
+    }
+
+    return varVersions.getMapOriginalVarIndices().get(index);
   }
 
   public void refreshVarNames(VarNamesCollector vc) {
@@ -104,6 +113,10 @@ public class VarProcessor {
 
   public void setVarName(VarVersionPair pair, String name) {
     mapVarNames.put(pair, name);
+  }
+
+  public Collection<String> getVarNames() {
+    return mapVarNames != null ? mapVarNames.values() : Collections.emptySet();
   }
 
   public int getVarFinal(VarVersionPair pair) {

@@ -52,10 +52,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import javax.swing.*;
 import java.util.List;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 18.12.2007
- */
 public abstract class DynamicDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(DynamicDialog.class);
 

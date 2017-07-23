@@ -137,8 +137,6 @@ public class AnActionListEditor<T> extends JPanel {
         myListController = new ReorderableListToolbar<>(myList);
         return;  // Preview mode
       }
-      DefaultActionGroup actionGroup = new DefaultActionGroup();
-      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, true);
       myListController = new ReorderableListToolbar<>(myList);
     }
 

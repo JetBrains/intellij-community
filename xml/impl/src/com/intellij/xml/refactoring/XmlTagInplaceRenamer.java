@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: spleaner
- * Date: Aug 8, 2007
- * Time: 2:20:33 PM
- */
 package com.intellij.xml.refactoring;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression;

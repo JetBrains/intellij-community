@@ -79,7 +79,7 @@ public class ObjectUtils {
     return value == null ? defaultValue : value;
   }
 
-  @Nullable
+  @Contract("null, _ -> null")
   public static <T> T tryCast(@Nullable Object obj, @NotNull Class<T> clazz) {
     if (clazz.isInstance(obj)) {
       return clazz.cast(obj);
@@ -94,6 +94,11 @@ public class ObjectUtils {
       return convertor.convert((T)obj);
     }
     return null;
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <T> void consumeIfCast(@Nullable Object obj, @NotNull Class<T> clazz, final Consumer<T> consumer) {
+    if (clazz.isInstance(obj)) consumer.consume((T)obj);
   }
 
   @Nullable

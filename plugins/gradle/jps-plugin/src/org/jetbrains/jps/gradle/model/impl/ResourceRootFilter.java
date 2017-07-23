@@ -65,13 +65,11 @@ public class ResourceRootFilter {
           propertiesMap.put("matcher", matcher);
         }
       }
-      catch (JsonSyntaxException e) {
-        throw new RuntimeException("Unsupported filter: " + properties , e);
-      } catch (JsonParseException e) {
+      catch (JsonParseException e) {
         throw new RuntimeException("Unsupported filter: " + properties , e);
       }
       if(propertiesMap == null) {
-        propertiesMap = new HashMap<Object, Object>();
+        propertiesMap = new HashMap<>();
       }
     }
     return propertiesMap;

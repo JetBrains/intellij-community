@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ import com.intellij.projectImport.ProjectAttachProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.EnumSet;
 import java.util.List;
 
 public class OpenFileAction extends AnAction implements DumbAware {
@@ -85,7 +86,8 @@ public class OpenFileAction extends AnAction implements DumbAware {
       if (file.isDirectory()) {
         Project openedProject;
         if (ProjectAttachProcessor.canAttachToProject()) {
-          openedProject = PlatformProjectOpenProcessor.doOpenProject(file, project, false, -1, null, false);
+          EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.noneOf(PlatformProjectOpenProcessor.Option.class);
+          openedProject = PlatformProjectOpenProcessor.doOpenProject(file, project, -1, null, options);
         }
         else {
           openedProject = ProjectUtil.openOrImport(file.getPath(), project, false);
@@ -106,7 +108,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
                                                 IdeBundle.message("button.cancel"),
                                                 Messages.getQuestionIcon());
         if (answer == Messages.CANCEL)  return;
-        
+
         if (answer == Messages.YES) {
           Project openedProject = ProjectUtil.openOrImport(file.getPath(), project, false);
           if (openedProject != null) {
@@ -147,7 +149,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
     }
 
     NonProjectFileWritingAccessProvider.allowWriting(file);
-    
+
     OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file);
     FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
   }

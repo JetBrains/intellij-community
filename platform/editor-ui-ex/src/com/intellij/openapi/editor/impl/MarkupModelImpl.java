@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Apr 19, 2002
- * Time: 2:26:19 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
@@ -103,8 +95,8 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
       if (size == 0) return RangeHighlighter.EMPTY_ARRAY;
       List<RangeHighlighterEx> list = new ArrayList<>(size);
       CommonProcessors.CollectProcessor<RangeHighlighterEx> collectProcessor = new CommonProcessors.CollectProcessor<>(list);
-      myHighlighterTree.process(collectProcessor);
-      myHighlighterTreeForLines.process(collectProcessor);
+      myHighlighterTree.processAll(collectProcessor);
+      myHighlighterTreeForLines.processAll(collectProcessor);
       myCachedHighlighters = list.toArray(new RangeHighlighter[list.size()]);
     }
     return myCachedHighlighters;
@@ -157,7 +149,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
                                   boolean greedyToRight,
                                   int layer) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    treeFor(marker).addInterval(marker, start, end, greedyToLeft, greedyToRight, layer);
+    treeFor(marker).addInterval(marker, start, end, greedyToLeft, greedyToRight, false, layer);
   }
 
   private RangeHighlighterTree treeFor(RangeHighlighter marker) {

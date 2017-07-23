@@ -2,10 +2,6 @@ package com.intellij.codeInspection.htmlInspections;
 
 import org.jetbrains.annotations.NonNls;
 
-/**
- * User: anna
- * Date: 16-Dec-2005
- */
 public interface XmlEntitiesInspection {
   @NonNls String BOOLEAN_ATTRIBUTE_SHORT_NAME = "HtmlUnknownBooleanAttribute";
   @NonNls String ATTRIBUTE_SHORT_NAME = "HtmlUnknownAttribute";

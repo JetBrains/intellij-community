@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,8 +71,8 @@ public class JpsAntModelSerializerExtension extends JpsModelSerializerExtension 
 
     @Override
     public JpsAntArtifactExtension loadExtension(@Nullable Element optionsTag) {
-      AntArtifactExtensionProperties properties = optionsTag != null ? XmlSerializer.deserialize(optionsTag, AntArtifactExtensionProperties.class) : null;
-      return new JpsAntArtifactExtensionImpl(properties != null ? properties : null);
+      return new JpsAntArtifactExtensionImpl(
+        optionsTag != null ? XmlSerializer.deserialize(optionsTag, AntArtifactExtensionProperties.class) : null);
     }
 
     @Override
@@ -98,8 +98,8 @@ public class JpsAntModelSerializerExtension extends JpsModelSerializerExtension 
       for (Element antTag : JDOMUtil.getChildren(componentTag.getChild("registeredAnts"), "ant")) {
         String name = getValueAttribute(antTag, "name");
         String homeDir = getValueAttribute(antTag, "homeDir");
-        List<String> classpath = new ArrayList<String>();
-        List<String> jarDirectories = new ArrayList<String>();
+        List<String> classpath = new ArrayList<>();
+        List<String> jarDirectories = new ArrayList<>();
         for (Element classpathItemTag : JDOMUtil.getChildren(antTag.getChild("classpath"), "classpathItem")) {
           String fileUrl = classpathItemTag.getAttributeValue("path");
           String dirUrl = classpathItemTag.getAttributeValue("dir");
@@ -128,7 +128,7 @@ public class JpsAntModelSerializerExtension extends JpsModelSerializerExtension 
 
     @Override
     public void loadExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
-      Map<String, JpsAntBuildFileOptions> optionsMap = new HashMap<String, JpsAntBuildFileOptions>();
+      Map<String, JpsAntBuildFileOptions> optionsMap = new HashMap<>();
       for (Element buildFileTag : JDOMUtil.getChildren(componentTag, "buildFile")) {
         String url = buildFileTag.getAttributeValue("url");
         JpsAntBuildFileOptionsImpl options = new JpsAntBuildFileOptionsImpl();

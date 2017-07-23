@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.text.StringFactory;
@@ -60,7 +59,7 @@ public abstract class ModuleInsight {
     myExistingModuleNames = existingModuleNames;
     myExistingProjectLibraryNames = existingProjectLibraryNames;
     myProgress = new ProgressIndicatorWrapper(progress);
-    setRoots(Collections.<File>emptyList(), Collections.<DetectedSourceRoot>emptyList(), Collections.<String>emptySet());
+    setRoots(Collections.emptyList(), Collections.emptyList(), Collections.emptySet());
   }
 
   public final void setRoots(final List<File> contentRoots, final List<? extends DetectedSourceRoot> sourceRoots, final Set<String> ignoredNames) {
@@ -414,19 +413,7 @@ public abstract class ModuleInsight {
       boolean includeParentName = false;
       for (File file : files) {
         if (file.isDirectory()) {
-          final String subPackageName;
-          final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-          try {
-            builder.append(parentPackageName);
-            if (builder.length() > 0) {
-              builder.append(".");
-            }
-            builder.append(file.getName());
-            subPackageName = builder.toString();
-          }
-          finally {
-            StringBuilderSpinAllocator.dispose(builder);
-          }
+          String subPackageName = parentPackageName + (parentPackageName.isEmpty() ? "" : ".") + file.getName();
           scanSources(file, subPackageName, usedPackages, selfPackages);
         }
         else {

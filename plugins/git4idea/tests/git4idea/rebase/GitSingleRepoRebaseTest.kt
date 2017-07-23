@@ -25,11 +25,7 @@ import git4idea.branch.GitBranchUiHandler
 import git4idea.branch.GitBranchWorker
 import git4idea.branch.GitRebaseParams
 import git4idea.repo.GitRepository
-import git4idea.test.GitExecutor.file
-import git4idea.test.GitExecutor.git
-import git4idea.test.RepoBuilder
-import git4idea.test.UNKNOWN_ERROR_TEXT
-import git4idea.test.build
+import git4idea.test.*
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
 import kotlin.properties.Delegates
@@ -37,54 +33,54 @@ import kotlin.test.assertFailsWith
 
 class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
-  protected var myRepo: GitRepository by Delegates.notNull()
+  private var repo: GitRepository by Delegates.notNull()
 
   override fun setUp() {
     super.setUp()
-    myRepo = createRepository(myProjectPath)
+    repo = createRepository(myProjectPath)
   }
 
   fun `test simple case`() {
-    myRepo.`diverge feature and master`()
+    repo.`diverge feature and master`()
 
     rebaseOnMaster()
 
     assertSuccessfulRebaseNotification("Rebased feature on master")
-    myRepo.`assert feature rebased on master`()
-    assertNoRebaseInProgress(myRepo)
+    repo.`assert feature rebased on master`()
+    assertNoRebaseInProgress(repo)
   }
 
   fun `test up-to-date`() {
-    myRepo.`place feature above master`()
+    repo.`place feature above master`()
 
     rebaseOnMaster()
 
     assertSuccessfulRebaseNotification("feature is up-to-date with master")
-    myRepo.`assert feature rebased on master`()
-    assertNoRebaseInProgress(myRepo)
+    repo.`assert feature rebased on master`()
+    assertNoRebaseInProgress(repo)
   }
 
   fun test_ff() {
-    myRepo.`place feature below master`()
+    repo.`place feature below master`()
 
     rebaseOnMaster()
 
     assertSuccessfulRebaseNotification("Fast-forwarded feature to master")
-    myRepo.`assert feature rebased on master`()
-    assertNoRebaseInProgress(myRepo)
+    repo.`assert feature rebased on master`()
+    assertNoRebaseInProgress(repo)
   }
 
   fun `test conflict resolver is shown`() {
-    myRepo.`prepare simple conflict`()
+    repo.`prepare simple conflict`()
     `do nothing on merge`()
 
     rebaseOnMaster()
 
-    assertTrue(myVcsHelper.mergeDialogWasShown())
+    `assert merge dialog was shown`()
   }
 
   fun `test fail on 2nd commit should show notification with proposal to abort`() {
-    myRepo.`make rebase fail on 2nd commit`()
+    repo.`make rebase fail on 2nd commit`()
 
     rebaseOnMaster()
 
@@ -104,43 +100,43 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     }
 
     var conflicts = 0
-    myVcsHelper.onMerge {
+    vcsHelper.onMerge {
         conflicts++
-        myRepo.assertConflict("c.txt")
-        resolveConflicts(myRepo)
+        repo.assertConflict("c.txt")
+      repo.resolveConflicts()
     }
 
     rebaseOnMaster()
 
     assertEquals("Incorrect number of conflicting patches", 2, conflicts)
-    myRepo.`assert feature rebased on master`()
+    repo.`assert feature rebased on master`()
     assertSuccessfulRebaseNotification("Rebased feature on master")
   }
 
   fun `test continue rebase after resolving all conflicts`() {
-    myRepo.`prepare simple conflict`()
+    repo.`prepare simple conflict`()
 
-    myVcsHelper.onMerge {
-        resolveConflicts(myRepo)
+    vcsHelper.onMerge {
+        repo.resolveConflicts()
     }
 
     rebaseOnMaster()
     assertSuccessfulRebaseNotification("Rebased feature on master")
-    myRepo.`assert feature rebased on master`()
-    assertNoRebaseInProgress(myRepo)
+    repo.`assert feature rebased on master`()
+    assertNoRebaseInProgress(repo)
   }
 
   fun `test warning notification if conflicts were not resolved`() {
-    myRepo.`prepare simple conflict`()
+    repo.`prepare simple conflict`()
     `do nothing on merge`()
 
     rebaseOnMaster()
     `assert conflict not resolved notification`()
-    myRepo.assertRebaseInProgress()
+    repo.assertRebaseInProgress()
   }
 
   fun `test skip if user decides to skip`() {
-    myRepo.`prepare simple conflict`()
+    repo.`prepare simple conflict`()
     `do nothing on merge`()
 
     rebaseOnMaster()
@@ -148,71 +144,71 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     GitRebaseUtils.skipRebase(myProject)
 
     assertSuccessfulRebaseNotification("Rebased feature on master")
-    myRepo.`assert feature rebased on master`()
-    assertNoRebaseInProgress(myRepo)
+    repo.`assert feature rebased on master`()
+    assertNoRebaseInProgress(repo)
   }
 
   fun `test rebase failed for unknown reason`() {
-    myRepo.`diverge feature and master`()
+    repo.`diverge feature and master`()
     myGit.setShouldRebaseFail { true }
     rebaseOnMaster()
     `assert unknown error notification`()
   }
 
   fun `test propose to abort when rebase failed after continue`() {
-    myRepo.`prepare simple conflict`()
+    repo.`prepare simple conflict`()
     `do nothing on merge`()
 
     rebaseOnMaster()
 
-    myRepo.`assert feature not rebased on master`()
-    myRepo.assertRebaseInProgress()
-    resolveConflicts(myRepo)
+    repo.`assert feature not rebased on master`()
+    repo.assertRebaseInProgress()
+    repo.resolveConflicts()
 
     myGit.setShouldRebaseFail { true }
 
     GitRebaseUtils.continueRebase(myProject)
 
     `assert unknown error notification with link to abort`(true)
-    myRepo.`assert feature not rebased on master`()
-    myRepo.assertRebaseInProgress()
+    repo.`assert feature not rebased on master`()
+    repo.assertRebaseInProgress()
   }
 
   fun `test local changes auto-saved initially`() {
-    myRepo.`diverge feature and master`()
-    val localChange = LocalChange(myRepo, "new.txt").generate()
+    repo.`diverge feature and master`()
+    val localChange = LocalChange(repo, "new.txt").generate()
 
-    object : GitTestingRebaseProcess(myProject, simpleParams("master"), myRepo) {
+    object : GitTestingRebaseProcess(myProject, simpleParams("master"), repo) {
       override fun getDirtyRoots(repositories: Collection<GitRepository>): Collection<GitRepository> {
-        return listOf(myRepo)
+        return listOf(repo)
       }
     }.rebase()
 
     assertSuccessfulRebaseNotification("Rebased feature on master")
-    assertRebased(myRepo, "feature", "master")
-    assertNoRebaseInProgress(myRepo)
+    assertRebased(repo, "feature", "master")
+    assertNoRebaseInProgress(repo)
     localChange.verify()
   }
 
   fun `test local changes are saved even if not detected initially`() {
-    myRepo.`diverge feature and master`()
-    val localChange = LocalChange(myRepo, "new.txt").generate()
+    repo.`diverge feature and master`()
+    val localChange = LocalChange(repo, "new.txt").generate()
 
-    object : GitTestingRebaseProcess(myProject, simpleParams("master"), myRepo) {
+    object : GitTestingRebaseProcess(myProject, simpleParams("master"), repo) {
       override fun getDirtyRoots(repositories: Collection<GitRepository>): Collection<GitRepository> {
         return emptyList()
       }
     }.rebase()
 
     assertSuccessfulRebaseNotification("Rebased feature on master")
-    assertRebased(myRepo, "feature", "master")
-    assertNoRebaseInProgress(myRepo)
+    assertRebased(repo, "feature", "master")
+    assertNoRebaseInProgress(repo)
     localChange.verify()
   }
 
   fun `test local changes are not restored in case of error even if nothing was rebased`() {
-    myRepo.`diverge feature and master`()
-    LocalChange(myRepo, "new.txt", "content").generate()
+    repo.`diverge feature and master`()
+    LocalChange(repo, "new.txt", "content").generate()
 
     myGit.setShouldRebaseFail { true }
 
@@ -224,25 +220,25 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
         <a>Retry.</a><br/>
         Note that some local changes were <a>stashed</a> before rebase.
         """)
-    assertNoRebaseInProgress(myRepo)
-    myRepo.assertNoLocalChanges()
+    assertNoRebaseInProgress(repo)
+    repo.assertNoLocalChanges()
     assertFalse(file("new.txt").exists())
   }
 
   fun `test critical error should show notification and not restore local changes`() {
-    myRepo.`diverge feature and master`()
-    LocalChange(myRepo, "new.txt", "content").generate()
+    repo.`diverge feature and master`()
+    LocalChange(repo, "new.txt", "content").generate()
     myGit.setShouldRebaseFail { true }
 
     rebaseOnMaster()
 
     `assert unknown error notification with link to stash`()
-    myRepo.assertNoLocalChanges()
+    repo.assertNoLocalChanges()
   }
 
   fun `test successful retry from notification on critical error restores local changes`() {
-    myRepo.`diverge feature and master`()
-    val localChange = LocalChange(myRepo, "new.txt", "content").generate()
+    repo.`diverge feature and master`()
+    val localChange = LocalChange(repo, "new.txt", "content").generate()
 
     var attempt = 0
     myGit.setShouldRebaseFail { attempt == 0 }
@@ -254,15 +250,15 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     GitRebaseUtils.continueRebase(myProject)
 
-    assertNoRebaseInProgress(myRepo)
-    myRepo.`assert feature rebased on master`()
+    assertNoRebaseInProgress(repo)
+    repo.`assert feature rebased on master`()
     localChange.verify()
   }
 
   fun `test local changes are restored after successful abort`() {
-    myRepo.`prepare simple conflict`()
-    val localChange = LocalChange(myRepo, "new.txt", "content").generate()
-    myVcsHelper.onMerge {}
+    repo.`prepare simple conflict`()
+    val localChange = LocalChange(repo, "new.txt", "content").generate()
+    `do nothing on merge`()
     myDialogManager.onMessage { Messages.YES }
 
     rebaseOnMaster()
@@ -271,15 +267,15 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     GitRebaseUtils.abort(myProject, EmptyProgressIndicator())
 
-    assertNoRebaseInProgress(myRepo)
-    myRepo.`assert feature not rebased on master`()
+    assertNoRebaseInProgress(repo)
+    repo.`assert feature not rebased on master`()
     localChange.verify()
   }
 
   fun `test local changes are not restored after failed abort`() {
-    myRepo.`prepare simple conflict`()
-    LocalChange(myRepo, "new.txt", "content").generate()
-    myVcsHelper.onMerge {}
+    repo.`prepare simple conflict`()
+    LocalChange(repo, "new.txt", "content").generate()
+    `do nothing on merge`()
     myDialogManager.onMessage { Messages.YES }
 
     rebaseOnMaster()
@@ -289,9 +285,9 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     myGit.setShouldRebaseFail { true }
     GitRebaseUtils.abort(myProject, EmptyProgressIndicator())
 
-    myRepo.assertRebaseInProgress()
-    myRepo.`assert feature not rebased on master`()
-    myRepo.assertConflict("c.txt")
+    repo.assertRebaseInProgress()
+    repo.`assert feature not rebased on master`()
+    repo.assertConflict("c.txt")
     assertErrorNotification("Rebase Abort Failed",
         """
         unknown error<br/>
@@ -302,22 +298,22 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
   // git rebase --continue should be either called from a commit dialog, either from the GitRebaseProcess.
   // both should prepare the working tree themselves by adding all necessary changes to the index.
   fun `test local changes in the conflicting file should lead to error on continue rebase`() {
-    myRepo.`prepare simple conflict`()
+    repo.`prepare simple conflict`()
     `do nothing on merge`()
 
     rebaseOnMaster()
-    myRepo.assertConflict("c.txt")
+    repo.assertConflict("c.txt")
 
     //manually resolve conflicts
-    resolveConflicts(myRepo)
+    repo.resolveConflicts()
     file("c.txt").append("more changes after resolving")
     // forget to git add afterwards
 
     GitRebaseUtils.continueRebase(myProject)
 
     `assert error about unstaged file before continue rebase`("c.txt")
-    myRepo.`assert feature not rebased on master`()
-    myRepo.assertRebaseInProgress()
+    repo.`assert feature not rebased on master`()
+    repo.assertRebaseInProgress()
   }
 
   fun `test local changes in some other file should lead to error on continue rebase`() {
@@ -335,10 +331,10 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     `do nothing on merge`()
 
     rebaseOnMaster()
-    myRepo.assertConflict("c.txt")
+    repo.assertConflict("c.txt")
 
     //manually resolve conflicts
-    resolveConflicts(myRepo)
+    repo.resolveConflicts()
     // add more changes to some other file
 
     file("d.txt").append("more changes after resolving")
@@ -347,25 +343,25 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     `assert error about unstaged file before continue rebase`("d.txt")
 
-    myRepo.`assert feature not rebased on master`()
-    myRepo.assertRebaseInProgress()
+    repo.`assert feature not rebased on master`()
+    repo.assertRebaseInProgress()
   }
 
   fun `test unresolved conflict should lead to conflict resolver with continue rebase`() {
-    myRepo.`prepare simple conflict`()
+    repo.`prepare simple conflict`()
     `do nothing on merge`()
 
     rebaseOnMaster()
-    myRepo.assertConflict("c.txt")
+    repo.assertConflict("c.txt")
 
-    myVcsHelper.onMerge {
-      resolveConflicts(myRepo)
+    vcsHelper.onMerge {
+      repo.resolveConflicts()
     }
     GitRebaseUtils.continueRebase(myProject)
 
     assertSuccessfulRebaseNotification("Rebased feature on master")
-    myRepo.`assert feature rebased on master`()
-    assertNoRebaseInProgress(myRepo)
+    repo.`assert feature rebased on master`()
+    assertNoRebaseInProgress(repo)
   }
 
   fun `test skipped commit`() {
@@ -382,15 +378,15 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     val hash2skip = DvcsUtil.getShortHash(git("log -2 --pretty=%H").lines()[1])
 
-    myVcsHelper.onMerge {
+    vcsHelper.onMerge {
       file("c.txt").write("base\nmaster")
-      resolveConflicts(myRepo)
+      repo.resolveConflicts()
     }
 
     rebaseOnMaster()
 
-    assertRebased(myRepo, "feature", "master")
-    assertNoRebaseInProgress(myRepo)
+    assertRebased(repo, "feature", "master")
+    assertNoRebaseInProgress(repo)
 
     assertSuccessfulRebaseNotification(
         """
@@ -423,24 +419,24 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     rebaseInteractively()
 
     assertSuccessfulNotification("Rebase Stopped for Editing", "Once you are satisfied with your changes you may <a href='continue'>continue</a>")
-    assertEquals("The repository must be in the 'SUSPENDED' state", myRepo, myGitRepositoryManager.ongoingRebaseSpec!!.ongoingRebase)
+    assertEquals("The repository must be in the 'SUSPENDED' state", repo, myGitRepositoryManager.ongoingRebaseSpec!!.ongoingRebase)
 
     GitRebaseUtils.continueRebase(myProject)
 
     assertSuccessfulRebaseNotification("Rebased feature on master")
-    myRepo.`assert feature rebased on master`()
-    assertNoRebaseInProgress(myRepo)
+    repo.`assert feature rebased on master`()
+    assertNoRebaseInProgress(repo)
   }
 
   fun `test cancel in interactive rebase should show no error notification`() {
-    myRepo.`diverge feature and master`()
+    repo.`diverge feature and master`()
 
     myDialogManager.onDialog(GitRebaseEditor::class.java) { DialogWrapper.CANCEL_EXIT_CODE }
     assertFailsWith(ProcessCanceledException::class) { rebaseInteractively() }
 
     assertNoNotification()
-    assertNoRebaseInProgress(myRepo)
-    myRepo.`assert feature not rebased on master`()
+    assertNoRebaseInProgress(repo)
+    repo.`assert feature not rebased on master`()
   }
 
   fun `test cancel in noop case should show no error notification`() {
@@ -456,37 +452,36 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     assertFailsWith(ProcessCanceledException::class) { rebaseInteractively() }
 
     assertNoNotification()
-    assertNoRebaseInProgress(myRepo)
-    myRepo.`assert feature not rebased on master`()
+    assertNoRebaseInProgress(repo)
+    repo.`assert feature not rebased on master`()
   }
 
   private fun rebaseInteractively() {
-    GitTestingRebaseProcess(myProject, GitRebaseParams(null, null, "master", true, false), myRepo).rebase()
+    GitTestingRebaseProcess(myProject, GitRebaseParams(null, null, "master", true, false), repo).rebase()
   }
 
   fun `test checkout with rebase`() {
-    myRepo.`diverge feature and master`()
-    git(myRepo, "checkout master")
+    repo.`diverge feature and master`()
+    git(repo, "checkout master")
 
     val uiHandler = Mockito.mock(GitBranchUiHandler::class.java)
     `when`(uiHandler.progressIndicator).thenReturn(EmptyProgressIndicator())
-    GitBranchWorker(myProject, myGit, uiHandler).rebaseOnCurrent(listOf(myRepo), "feature")
+    GitBranchWorker(myProject, myGit, uiHandler).rebaseOnCurrent(listOf(repo), "feature")
 
     assertSuccessfulRebaseNotification("Checked out feature and rebased it on master")
-    myRepo.`assert feature rebased on master`()
-    assertNoRebaseInProgress(myRepo)
+    repo.`assert feature rebased on master`()
+    assertNoRebaseInProgress(repo)
   }
 
   private fun build(f: RepoBuilder.() -> Unit) {
-    build(myRepo, f)
+    build(repo, f)
   }
 
   private fun rebaseOnMaster() {
-    GitTestingRebaseProcess(myProject, simpleParams("master"), myRepo).rebase()
+    GitTestingRebaseProcess(myProject, simpleParams("master"), repo).rebase()
   }
 
   private fun simpleParams(newBase: String): GitRebaseParams {
     return GitRebaseParams(newBase)
   }
 }
-

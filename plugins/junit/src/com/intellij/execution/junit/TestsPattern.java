@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 11-Jun-2010
- */
 package com.intellij.execution.junit;
 
 import com.intellij.execution.CantRunException;
@@ -27,6 +23,7 @@ import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SearchForTestsTask;
+import com.intellij.execution.testframework.SourceScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -71,26 +68,29 @@ public class TestsPattern extends TestPackage {
     if (classNames.size() == data.getPatterns().size()) {
       return new SearchForTestsTask(project, myServerSocket) {
         @Override
-        protected void search() throws ExecutionException {
-          final Function<String, String> nameFunction = StringUtil.isEmpty(data.METHOD_NAME)
-                                                        ? FunctionUtil.<String>id()
-                                                        : (Function<String, String>)className -> className;
-          addClassesListToJavaParameters(classNames, nameFunction, "", false, getJavaParameters());
-        }
+        protected void search() throws ExecutionException { }
 
         @Override
-        protected void onFound() {}
+        protected void onFound() throws ExecutionException {
+          final Function<String, String> nameFunction = StringUtil.isEmpty(data.METHOD_NAME) ? FunctionUtil.id() : className -> className;
+          addClassesListToJavaParameters(classNames, nameFunction, "", false, getJavaParameters());
+        }
       };
     }
 
     return super.createSearchingForTestsTask();
   }
 
-  private static PsiClass getTestClass(Project project, String className) {
-    return JavaExecutionUtil.findMainClass(project,
-                                           (className.contains(",")
-                                           ? className.substring(0, className.indexOf(','))
-                                           : className).trim(), GlobalSearchScope.allScope(project));
+  @Override
+  protected boolean acceptClassName(String className) {
+    String pattern = getConfiguration().getPersistentData().getPatternPresentation();
+    return TestClassFilter.getClassNamePredicate(pattern).test(className);
+  }
+
+  private PsiClass getTestClass(Project project, String className) {
+    SourceScope sourceScope = getSourceScope();
+    GlobalSearchScope searchScope = sourceScope != null ? sourceScope.getGlobalSearchScope() : GlobalSearchScope.allScope(project);
+    return JavaExecutionUtil.findMainClass(project, className.contains(",") ? StringUtil.getPackageName(className, ',') : className, searchScope);
   }
 
   @Override

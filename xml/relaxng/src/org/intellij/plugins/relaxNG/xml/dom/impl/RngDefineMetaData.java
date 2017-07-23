@@ -26,11 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 19.08.2007
- */
 public class RngDefineMetaData extends DomMetaData<RngDefine> {
 
   @Override

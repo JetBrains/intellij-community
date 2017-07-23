@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
+import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -32,9 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-/**
- * Created by Max Medvedev on 05/02/14
- */
 public class GrListOrMapInfo implements ConstructorCallInfo<GrListOrMap> {
   private final GrListOrMap myListOrMap;
   private final LiteralConstructorReference myReference;
@@ -59,11 +57,11 @@ public class GrListOrMapInfo implements ConstructorCallInfo<GrListOrMap> {
       GrNamedArgument[] args = myListOrMap.getNamedArguments();
       if (args.length == 0) return new PsiType[]{myListOrMap.getType()};
 
-      return PsiUtil.getArgumentTypes(args, GrExpression.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY, true, null, false);
+      return PsiUtil.getArgumentTypes(args, GrExpression.EMPTY_ARRAY, GrClosableBlock.EMPTY_ARRAY, true, null);
     }
     else {
       GrExpression[] args = myListOrMap.getInitializers();
-      return PsiUtil.getArgumentTypes(GrNamedArgument.EMPTY_ARRAY, args, GrClosableBlock.EMPTY_ARRAY, true, null, false);
+      return PsiUtil.getArgumentTypes(GrNamedArgument.EMPTY_ARRAY, args, GrClosableBlock.EMPTY_ARRAY, true, null);
     }
   }
 
@@ -119,7 +117,7 @@ public class GrListOrMapInfo implements ConstructorCallInfo<GrListOrMap> {
     if (type == null) return GroovyResolveResult.EMPTY_ARRAY;
 
     final GroovyResolveResult result = GroovyResolveResultImpl.from(type.resolveGenerics());
-    if (result == GroovyResolveResult.EMPTY_RESULT) return GroovyResolveResult.EMPTY_ARRAY;
+    if (result == EmptyGroovyResolveResult.INSTANCE) return GroovyResolveResult.EMPTY_ARRAY;
     return new GroovyResolveResult[]{result};
   }
 

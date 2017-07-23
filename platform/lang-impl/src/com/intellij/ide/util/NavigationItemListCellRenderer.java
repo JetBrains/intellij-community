@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,7 +32,6 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.FileColorManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -62,7 +62,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
     boolean cellHasFocus) {
     removeAll();
 
-    final boolean hasRightRenderer = UISettings.getInstance().SHOW_ICONS_IN_QUICK_NAVIGATION;
+    final boolean hasRightRenderer = UISettings.getInstance().getShowIconInQuickNavigation();
     final ModuleRendererFactory factory = ModuleRendererFactory.findInstance(value);
 
     final LeftRenderer left = new LeftRenderer(!hasRightRenderer || !factory.rendersLocationString(), MatcherHolder.getAssociatedMatcher(list));
@@ -96,8 +96,8 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
                                     ? (PsiElement)value
                                     : CommonDataKeys.PSI_ELEMENT.getData((DataProvider) value);
       if (psiElement != null && psiElement.isValid()) {
-        final FileColorManager fileColorManager = FileColorManager.getInstance(psiElement.getProject());
-        final Color fileColor = fileColorManager.getRendererBackground(psiElement.getContainingFile());
+        VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);
+        Color fileColor = virtualFile == null ? null : EditorTabbedContainer.calcTabColor(psiElement.getProject(), virtualFile);
         if (fileColor != null) {
           return fileColor;
         }
@@ -153,8 +153,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
             final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);
             isProblemFile = WolfTheProblemSolver.getInstance(project).isProblemFile(virtualFile);
 
-            final FileColorManager fileColorManager = FileColorManager.getInstance(project);
-            final Color fileColor = fileColorManager.getRendererBackground(psiElement.getContainingFile());
+            Color fileColor = virtualFile == null ? null : EditorTabbedContainer.calcTabColor(project, virtualFile);
             if (fileColor != null) {
               bgColor = fileColor;
             }

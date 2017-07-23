@@ -19,11 +19,6 @@ package org.intellij.plugins.xsltDebugger.rt.engine;
 import java.io.File;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 23.05.2007
- */
 public interface BreakpointManager {
   Breakpoint setBreakpoint(File file, int line);
 

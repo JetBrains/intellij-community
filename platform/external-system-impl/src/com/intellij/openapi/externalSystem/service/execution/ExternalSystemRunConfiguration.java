@@ -1,10 +1,23 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
-import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.LocatableConfigurationBase;
-import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.console.DuplexConsoleView;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -19,43 +32,52 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
-import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.xmlb.Accessor;
+import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.List;
+import java.io.*;
 
 /**
  * @author Denis Zhdanov
  * @since 23.05.13 18:30
  */
-public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
+public class ExternalSystemRunConfiguration extends LocatableConfigurationBase implements SearchScopeProvidingRunProfile {
+  public static final Key<InputStream> RUN_INPUT_KEY = Key.create("RUN_INPUT_KEY");
 
-  private static final Logger LOG = Logger.getInstance("#" + ExternalSystemRunConfiguration.class.getName());
-
+  private static final Logger LOG = Logger.getInstance(ExternalSystemRunConfiguration.class);
   private ExternalSystemTaskExecutionSettings mySettings = new ExternalSystemTaskExecutionSettings();
 
   public ExternalSystemRunConfiguration(@NotNull ProjectSystemId externalSystemId,
@@ -90,7 +112,20 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-    element.addContent(XmlSerializer.serialize(mySettings));
+    element.addContent(XmlSerializer.serialize(mySettings, new SerializationFilter() {
+      @Override
+      public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
+        // only these fields due to backward compatibility
+        switch (accessor.getName()) {
+          case "passParentEnvs":
+            return !mySettings.isPassParentEnvs();
+          case "env":
+            return !mySettings.getEnv().isEmpty();
+          default:
+            return true;
+        }
+      }
+    }));
   }
 
   @NotNull
@@ -114,6 +149,24 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
       new MyRunnableState(mySettings, getProject(), DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId()), this, env);
     copyUserDataTo(runnableState);
     return runnableState;
+  }
+
+  @Nullable
+  @Override
+  public GlobalSearchScope getSearchScope() {
+    GlobalSearchScope scope = null;
+    ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(mySettings.getExternalSystemId());
+    if (manager != null) {
+      scope = manager.getSearchScope(getProject(), mySettings);
+    }
+    if (scope == null) {
+      VirtualFile file = VfsUtil.findFileByIoFile(new File(mySettings.getExternalProjectPath()), false);
+      if (file != null) {
+        Module module = DirectoryIndex.getInstance(getProject()).getInfoForFile(file).getModule();
+        scope = SearchScopeProvider.createSearchScope(ContainerUtil.ar(module));
+      }
+    }
+    return scope;
   }
 
   public static class MyRunnableState extends UserDataHolderBase implements RunProfileState {
@@ -159,27 +212,29 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
     public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
       if (myProject.isDisposed()) return null;
 
-      final List<ExternalTaskPojo> tasks = ContainerUtilRt.newArrayList();
-      for (String taskName : mySettings.getTaskNames()) {
-        tasks.add(new ExternalTaskPojo(taskName, mySettings.getExternalProjectPath(), null));
-      }
-      if (tasks.isEmpty()) {
+      if (mySettings.getTaskNames().isEmpty()) {
         throw new ExecutionException(ExternalSystemBundle.message("run.error.undefined.task"));
       }
-      String debuggerSetup = null;
+      String jvmAgentSetup = null;
       if (myDebugPort > 0) {
-        debuggerSetup = "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=" + myDebugPort;
+        jvmAgentSetup = "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=" + myDebugPort;
+      } else {
+        ParametersList parametersList = myEnv.getUserData(ExternalSystemTaskExecutionSettings.JVM_AGENT_SETUP_KEY);
+        if (parametersList != null) {
+          for (String parameter : parametersList.getList()) {
+            if (parameter.startsWith("-agentlib:")) continue;
+            if (parameter.startsWith("-agentpath:")) continue;
+            if (parameter.startsWith("-javaagent:")) continue;
+            throw new ExecutionException(ExternalSystemBundle.message("run.invalid.jvm.agent.configuration", parameter));
+          }
+          jvmAgentSetup = parametersList.getParametersString();
+        }
       }
 
       ApplicationManager.getApplication().assertIsDispatchThread();
       FileDocumentManager.getInstance().saveAllDocuments();
 
-      final ExternalSystemExecuteTaskTask task = new ExternalSystemExecuteTaskTask(mySettings.getExternalSystemId(),
-                                                                                   myProject,
-                                                                                   tasks,
-                                                                                   mySettings.getVmOptions(),
-                                                                                   mySettings.getScriptParameters(),
-                                                                                   debuggerSetup);
+      final ExternalSystemExecuteTaskTask task = new ExternalSystemExecuteTaskTask(myProject, mySettings, jvmAgentSetup);
       copyUserDataTo(task);
 
       final MyProcessHandler processHandler = new MyProcessHandler(task);
@@ -203,7 +258,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
         }
         processHandler.notifyTextAvailable(greeting, ProcessOutputTypes.SYSTEM);
         foldGreetingOrFarewell(consoleView, greeting, true);
-        task.execute(new ExternalSystemTaskNotificationListenerAdapter() {
+        ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
 
           private boolean myResetGreeting = true;
 
@@ -241,7 +296,8 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
             foldGreetingOrFarewell(consoleView, farewell, false);
             processHandler.notifyProcessTerminated(0);
           }
-        });
+        };
+        task.execute(ArrayUtil.prepend(taskListener, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
       });
       DefaultExecutionResult result = new DefaultExecutionResult(consoleView, processHandler);
       result.setRestartActions(consoleManager.getRestartActions(consoleView));
@@ -297,9 +353,19 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
   private static class MyProcessHandler extends ProcessHandler implements AnsiEscapeDecoder.ColoredTextAcceptor {
     private final ExternalSystemExecuteTaskTask myTask;
     private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
+    @Nullable
+    private OutputStream myProcessInput;
 
     public MyProcessHandler(ExternalSystemExecuteTaskTask task) {
       myTask = task;
+      try {
+        PipedInputStream inputStream = new PipedInputStream();
+        myProcessInput = new PipedOutputStream(inputStream);
+        task.putUserData(RUN_INPUT_KEY, inputStream);
+      }
+      catch (IOException e) {
+        LOG.warn("Unable to setup process input", e);
+      }
     }
 
     @Override
@@ -309,33 +375,41 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
 
     @Override
     protected void destroyProcessImpl() {
+      myTask.cancel();
+      closeInput();
     }
 
     @Override
     protected void detachProcessImpl() {
-      myTask.cancel();
       notifyProcessDetached();
+      closeInput();
     }
 
     @Override
     public boolean detachIsDefault() {
-      return true;
+      return false;
     }
 
     @Nullable
     @Override
     public OutputStream getProcessInput() {
-      return null;
+      return myProcessInput;
     }
 
     @Override
     public void notifyProcessTerminated(int exitCode) {
       super.notifyProcessTerminated(exitCode);
+      closeInput();
     }
 
     @Override
-    public void coloredTextAvailable(String text, Key attributes) {
+    public void coloredTextAvailable(@NotNull String text, @NotNull Key attributes) {
       super.notifyTextAvailable(text, attributes);
+    }
+
+    private void closeInput() {
+      StreamUtil.closeStream(myProcessInput);
+      myProcessInput = null;
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.BidirectionalMap;
@@ -30,25 +31,26 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.List;
 import java.util.Map;
 
 /**
  * @author oleg
  */
-public class CheckBoxList<T> extends JBList {
+public class CheckBoxList<T> extends JBList<JCheckBox> {
+  private final static int    RESET_ROLLOVER = -1;
+
   private final CellRenderer myCellRenderer;
   private CheckBoxListListener checkBoxListListener;
   private final BidirectionalMap<T, JCheckBox> myItemMap = new BidirectionalMap<>();
+  private int rollOverIndex = RESET_ROLLOVER;
 
   public CheckBoxList(final CheckBoxListListener checkBoxListListener) {
-    this(new DefaultListModel(), checkBoxListListener);
+    this(new DefaultListModel<>(), checkBoxListListener);
   }
 
-  public CheckBoxList(final DefaultListModel dataModel, final CheckBoxListListener checkBoxListListener) {
+  public CheckBoxList(DefaultListModel<JCheckBox> dataModel, CheckBoxListListener checkBoxListListener) {
     this(dataModel);
     setCheckBoxListListener(checkBoxListListener);
   }
@@ -67,6 +69,10 @@ public class CheckBoxList<T> extends JBList {
     addKeyListener(new KeyAdapter() {
       @Override
       public void keyTyped(KeyEvent e) {
+        SpeedSearchSupply supply = SpeedSearchSupply.getSupply(CheckBoxList.this);
+        if (supply != null && supply.isPopupActive()) {
+          return;
+        }
         if (e.getKeyChar() == ' ') {
           Boolean value = null;
           for (int index : getSelectedIndices()) {
@@ -103,6 +109,57 @@ public class CheckBoxList<T> extends JBList {
         return false;
       }
     }.installOn(this);
+
+    if (UIUtil.isUnderWin10LookAndFeel()) {
+      addMouseMotionListener(new MouseMotionAdapter() {
+        @Override public void mouseMoved(MouseEvent e) {
+          Point point = e.getPoint();
+          int index = locationToIndex(point);
+          fireRollOverUpdated(index);
+        }
+      });
+
+      addMouseListener(new MouseAdapter() {
+        @Override public void mouseExited(MouseEvent e) {
+          fireRollOverUpdated(RESET_ROLLOVER);
+        }
+
+        @Override public void mousePressed(MouseEvent e) {
+          setPressed(e, true);
+        }
+
+        @Override public void mouseReleased(MouseEvent e) {
+          setPressed(e, false);
+        }
+
+        private void setPressed(MouseEvent e, boolean pressed) {
+          Point point = e.getPoint();
+          int index = locationToIndex(point);
+          JCheckBox cb = getModel().getElementAt(index);
+          cb.getModel().setPressed(pressed);
+          UIUtil.repaintViewport(CheckBoxList.this);
+        }
+      });
+    }
+  }
+
+  /**
+   * Reset old rollover row and set new rollover row.
+   * @param newIndex new rollover row. If newIndex is -1 then reset old rollover row only.
+   */
+  private void fireRollOverUpdated(int newIndex) {
+    if (rollOverIndex >= 0) {
+      JCheckBox oldRollover = getModel().getElementAt(rollOverIndex);
+      oldRollover.getModel().setRollover(false);
+    }
+
+    rollOverIndex = newIndex;
+
+    if (rollOverIndex >= 0) {
+      JCheckBox newRollover = getModel().getElementAt(rollOverIndex);
+      newRollover.getModel().setRollover(true);
+    }
+    UIUtil.repaintViewport(this);
   }
 
   @NotNull
@@ -184,7 +241,7 @@ public class CheckBoxList<T> extends JBList {
 
   @NotNull
   private JCheckBox getCheckBoxAt(int index) {
-    return (JCheckBox)getModel().getElementAt(index);
+    return getModel().getElementAt(index);
   }
 
   public void setStringItems(final Map<String, Boolean> items) {
@@ -215,7 +272,7 @@ public class CheckBoxList<T> extends JBList {
     JCheckBox checkBox = myItemMap.remove(oldItem);
     myItemMap.put(newItem, checkBox);
     checkBox.setText(newText);
-    DefaultListModel model = (DefaultListModel)getModel();
+    DefaultListModel<JCheckBox> model = (DefaultListModel<JCheckBox>)getModel();
     int ind = model.indexOf(checkBox);
     if (ind >= 0) {
       model.set(ind, checkBox); // to fire contentsChanged event
@@ -224,7 +281,7 @@ public class CheckBoxList<T> extends JBList {
 
   @Nullable
   public T getItemAt(int index) {
-    JCheckBox checkBox = (JCheckBox)getModel().getElementAt(index);
+    JCheckBox checkBox = getModel().getElementAt(index);
     List<T> value = myItemMap.getKeysByValue(checkBox);
     return value == null || value.isEmpty() ? null : value.get(0);
   }
@@ -235,7 +292,7 @@ public class CheckBoxList<T> extends JBList {
   }
 
   public boolean isItemSelected(int index) {
-    return ((JCheckBox)getModel().getElementAt(index)).isSelected();
+    return getModel().getElementAt(index).isSelected();
   }
 
   public boolean isItemSelected(T item) {
@@ -278,7 +335,7 @@ public class CheckBoxList<T> extends JBList {
     return rootComponent;
   }
 
-  private class CellRenderer implements ListCellRenderer {
+  private class CellRenderer implements ListCellRenderer<JCheckBox> {
     private final Border mySelectedBorder;
     private final Border myBorder;
     private final Insets myBorderInsets;
@@ -290,9 +347,7 @@ public class CheckBoxList<T> extends JBList {
     }
 
     @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      JCheckBox checkbox = (JCheckBox)value;
-
+    public Component getListCellRendererComponent(JList list, JCheckBox checkbox, int index, boolean isSelected, boolean cellHasFocus) {
       Color textColor = getForeground(isSelected);
       Color backgroundColor = getBackground(isSelected);
       Font font = getFont();
@@ -336,7 +391,9 @@ public class CheckBoxList<T> extends JBList {
 
       rootComponent.setBorder(isSelected ? mySelectedBorder : myBorder);
 
+      boolean isRollOver = checkbox.getModel().isRollover();
       rootComponent = adjustRendering(rootComponent, checkbox, index, isSelected, cellHasFocus);
+      checkbox.getModel().setRollover(isRollOver);
 
       return rootComponent;
     }

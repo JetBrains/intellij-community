@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
@@ -31,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public class CodeBlockReformattingProcessor implements TemplateOptionalProcessor {
+public class CodeBlockReformattingProcessor implements TemplateOptionalProcessor, DumbAware {
 
   @Override
   public void processText(Project project,
@@ -68,10 +69,6 @@ public class CodeBlockReformattingProcessor implements TemplateOptionalProcessor
   @Override
   public boolean isEnabled(Template template) {
     return true;
-  }
-
-  @Override
-  public void setEnabled(Template template, boolean value) {
   }
 
   @Override

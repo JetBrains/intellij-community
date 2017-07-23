@@ -31,7 +31,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.SkipEmptySerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Tag;
-import com.jetbrains.python.run.AbstractPythonRunConfiguration;
+import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import com.jetbrains.serialization.AnnotationSerializationFilter;
 import com.jetbrains.serialization.CompoundFilter;
 import org.jdom.Element;
@@ -43,7 +43,7 @@ import java.util.List;
 /**
  * @author Ilya.Kazakevich
  */
-public final class PyToxConfiguration extends AbstractPythonRunConfiguration<PyToxConfiguration> {
+public final class PyToxConfiguration extends AbstractPythonTestRunConfiguration<PyToxConfiguration> {
 
   @NotNull
   private final Project myProject;

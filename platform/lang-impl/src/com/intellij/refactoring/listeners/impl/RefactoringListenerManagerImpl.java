@@ -51,6 +51,6 @@ public class RefactoringListenerManagerImpl extends RefactoringListenerManager {
   public RefactoringTransaction startTransaction() {
     List<RefactoringElementListenerProvider> providers = new ArrayList<>(myListenerProviders);
     Collections.addAll(providers, Extensions.getExtensions(RefactoringElementListenerProvider.EP_NAME, myProject));
-    return new RefactoringTransactionImpl(providers);
+    return new RefactoringTransactionImpl(myProject, providers);
   }
 }

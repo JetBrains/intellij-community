@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.StreamToLoopReplacementContext;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import one.util.streamex.StreamEx;
@@ -29,16 +30,16 @@ import java.util.List;
 /**
  * This class represents a variable which holds stream element. Its lifecycle is the following:
  * 1. Construction: fast, in case you don't need to perform a fix actually
- * 2. Gather name candidates (addBestNameCandidate/addOtherNameCandidate can be called).
+ * 2. Preprocessing (addBestNameCandidate/addOtherNameCandidate/markFinal can be called).
  * 3. Register variable in {@code StreamToLoopReplacementContext}: actual variable name is assigned here
- * 4. Usage in code generation: getName()/getType() could be called.
+ * 4. Usage in code generation: getName()/getType()/isFinal() could be called.
  *
  * @author Tagir Valeev
  */
 class StreamVariable {
   private static final Logger LOG = Logger.getInstance(StreamVariable.class);
 
-  static StreamVariable STUB = new StreamVariable("") {
+  static StreamVariable STUB = new StreamVariable(PsiType.VOID) {
     @Override
     public void addBestNameCandidate(String candidate) {
     }
@@ -54,18 +55,26 @@ class StreamVariable {
   };
 
   String myName;
-  @NotNull String myType;
+  @NotNull PsiType myType;
+  boolean myFinal;
 
   private Collection<String> myBestCandidates = new LinkedHashSet<>();
   private Collection<String> myOtherCandidates = new LinkedHashSet<>();
 
-  StreamVariable(@NotNull String type) {
+  StreamVariable(@NotNull PsiType type) {
     myType = type;
   }
 
-  StreamVariable(@NotNull String type, @NotNull String name) {
+  StreamVariable(@NotNull PsiType type, @NotNull String name) {
     myType = type;
     myName = name;
+  }
+
+  /**
+   * Call if the resulting variable must be declared final (e.g. used in lambdas)
+   */
+  public void markFinal() {
+    myFinal = true;
   }
 
   /**
@@ -95,7 +104,7 @@ class StreamVariable {
   void register(StreamToLoopReplacementContext context) {
     LOG.assertTrue(myName == null);
     String[] fromType = JavaCodeStyleManager.getInstance(context.getProject())
-      .suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, context.createType(myType), true).names;
+      .suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, myType, true).names;
     List<String> variants = StreamEx.of(myBestCandidates).append(myOtherCandidates).append(fromType).distinct().toList();
     if (variants.isEmpty()) variants.add("val");
     myName = context.registerVarName(variants);
@@ -108,12 +117,20 @@ class StreamVariable {
   }
 
   @NotNull
-  String getType() {
+  PsiType getType() {
     return myType;
   }
 
   String getDeclaration() {
-    return getType() + " " + getName();
+    return getType().getCanonicalText() + " " + getName();
+  }
+
+  String getDeclaration(String initializer) {
+    return getType().getCanonicalText() + " " + getName() + "=" + initializer + ";\n";
+  }
+
+  public boolean isFinal() {
+    return myFinal;
   }
 
   @Override

@@ -23,6 +23,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,6 +72,7 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
     myEnumerated = myDecl.isEnumerated();
   }
 
+  @NotNull
   @Override
   public Object[] getDependences(){
     return new Object[]{myDecl};

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -250,7 +250,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       for (PsiStatement psiStatement : statements) {
         psiStatement.accept(this);
         if (myResult != null) { // for example declaration w/o initializer produces empty evaluator now
-          evaluators.add(new DisableGC(myResult));
+          evaluators.add(DisableGC.create(myResult));
         }
         myResult = null;
       }
@@ -432,7 +432,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     // constructs binary evaluator handling unboxing and numeric promotion issues
-    private static BinaryExpressionEvaluator createBinaryEvaluator(Evaluator lResult,
+    private static Evaluator createBinaryEvaluator(Evaluator lResult,
                                                                    PsiType lType,
                                                                    Evaluator rResult,
                                                                    @NotNull PsiType rType,
@@ -506,7 +506,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         rResult = handleUnaryNumericPromotion(rType, rResult);
       }
 
-      return new BinaryExpressionEvaluator(lResult, rResult, operation, expressionExpectedType.getCanonicalText());
+      return DisableGC.create(new BinaryExpressionEvaluator(lResult, rResult, operation, expressionExpectedType.getCanonicalText()));
     }
 
     private static boolean isBinaryNumericPromotionApplicable(PsiType lType, PsiType rType, IElementType opType) {
@@ -968,7 +968,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
       if(operation == JavaTokenType.PLUSPLUS || operation == JavaTokenType.MINUSMINUS) {
         try {
-          final BinaryExpressionEvaluator rightEval = createBinaryEvaluator(
+          final Evaluator rightEval = createBinaryEvaluator(
             operandEvaluator, operandType,
             new LiteralEvaluator(Integer.valueOf(1), "int"), PsiType.INT,
             operation == JavaTokenType.PLUSPLUS ? JavaTokenType.PLUS : JavaTokenType.MINUS,
@@ -1009,7 +1009,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           // cannot build evaluator
           throwExpressionInvalid(psiExpression);
         }
-        argumentEvaluators[idx] = new DisableGC(myResult);
+        argumentEvaluators[idx] = DisableGC.create(myResult);
       }
       PsiReferenceExpression methodExpr = expression.getMethodExpression();
 
@@ -1313,7 +1313,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           PsiExpression argExpression = argExpressions[idx];
           argExpression.accept(this);
           if (myResult != null) {
-            argumentEvaluators[idx] = new DisableGC(myResult);
+            argumentEvaluators[idx] = DisableGC.create(myResult);
           }
           else {
             throwExpressionInvalid(argExpression);
@@ -1369,7 +1369,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         if (myResult != null) {
           final Evaluator coerced =
             primitive ? handleUnaryNumericPromotion(initializer.getType(), myResult) : new BoxingEvaluator(myResult);
-          evaluators[idx] = new DisableGC(coerced);
+          evaluators[idx] = DisableGC.create(coerced);
         }
         else {
           throwExpressionInvalid(initializer);

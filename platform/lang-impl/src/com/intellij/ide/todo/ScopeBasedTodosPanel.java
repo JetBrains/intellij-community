@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 27-Jul-2007
- */
 package com.intellij.ide.todo;
 
 import com.intellij.ide.util.PropertiesComponent;

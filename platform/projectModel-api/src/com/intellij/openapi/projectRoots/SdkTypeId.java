@@ -33,4 +33,11 @@ public interface SdkTypeId {
 
   @Nullable
   SdkAdditionalData loadAdditionalData(@NotNull Sdk currentSdk, Element additional);
+
+  /**
+   * An SDK can be located on a local machine or on a remote or virtual machine. In the latter case this method returns false.
+   */
+  default boolean isLocalSdk(@NotNull Sdk sdk) {
+    return true;
+  }
 }

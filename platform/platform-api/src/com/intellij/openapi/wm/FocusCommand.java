@@ -17,6 +17,7 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.ActionCallback;
@@ -33,7 +34,7 @@ import java.awt.event.FocusEvent;
 import java.util.Arrays;
 
 /**
- * The container class for focus requests for <code>IdeFocusManager</code>
+ * The container class for focus requests for {@code IdeFocusManager}
  * @see IdeFocusManager
  */
 public abstract class FocusCommand extends ActiveRunnable implements Expirable {
@@ -161,14 +162,16 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
 
   public static class ByComponent extends FocusCommand {
     private Component myToFocus;
+    @Nullable private final Project myProject;
     private Throwable myAllocation;
 
     public ByComponent(@Nullable Component toFocus, @NotNull Throwable allocation) {
-      this(toFocus, toFocus, allocation);
+      this(toFocus, toFocus, null, allocation);
     }
 
-    public ByComponent(@Nullable Component toFocus, @Nullable Component dominationComponent, @NotNull Throwable allocation) {
+    public ByComponent(@Nullable Component toFocus, @Nullable Component dominationComponent, @Nullable Project project, @NotNull Throwable allocation) {
       super(toFocus, dominationComponent);
+      myProject = project;
       myAllocation = allocation;
       myToFocus = toFocus;
     }
@@ -198,9 +201,12 @@ public abstract class FocusCommand extends ActiveRunnable implements Expirable {
             LOG.info(myAllocation);
           }
           if (ApplicationManager.getApplication().isActive()) {
-            myToFocus.requestFocus();
-            if (shouldLogFocuses) {
-              LOG.info("Force request focus on " + myToFocus.getClass().getName());
+            IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
+            if (frame == null || myProject == null || myProject == frame.getProject()) {
+              myToFocus.requestFocus();
+              if (shouldLogFocuses) {
+                LOG.info("Force request focus on " + myToFocus.getClass().getName());
+              }
             }
           }
         }

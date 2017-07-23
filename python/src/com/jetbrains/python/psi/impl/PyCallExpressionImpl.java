@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,14 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.FunctionParameter;
-import com.jetbrains.python.nameResolver.FQNamesProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author yole
@@ -49,79 +48,16 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
     return seeker instanceof PyExpression ? (PyExpression) seeker : null;
   }
 
-  public PyArgumentList getArgumentList() {
-    return PsiTreeUtil.getChildOfType(this, PyArgumentList.class);
-  }
-
   @NotNull
-  public PyExpression[] getArguments() {
-    final PyArgumentList argList = getArgumentList();
-    return argList != null ? argList.getArguments() : PyExpression.EMPTY_ARRAY;
-  }
-
   @Override
-  public <T extends PsiElement> T getArgument(int index, Class<T> argClass) {
-    PyExpression[] args = getArguments();
-    return args.length > index && argClass.isInstance(args[index]) ? argClass.cast(args[index]) : null;
-  }
-
-  @Override
-  public <T extends PsiElement> T getArgument(int index, String keyword, Class<T> argClass) {
-    final PyExpression argument = getKeywordArgument(keyword);
-    if (argument != null) {
-      return argClass.isInstance(argument) ? argClass.cast(argument) : null;
-    }
-    return getArgument(index, argClass);
-  }
-
-  @Nullable
-  @Override
-  public <T extends PsiElement> T getArgument(@NotNull final FunctionParameter parameter, @NotNull final Class<T> argClass) {
-    return PyCallExpressionHelper.getArgument(parameter, argClass, this);
-  }
-
-  @Override
-  public PyExpression getKeywordArgument(String keyword) {
-    return PyCallExpressionHelper.getKeywordArgument(this, keyword);
-  }
-
-  public void addArgument(PyExpression expression) {
-    PyCallExpressionHelper.addArgument(this, expression);
-  }
-
-  public PyMarkedCallee resolveCallee(PyResolveContext resolveContext) {
-    return PyCallExpressionHelper.resolveCallee(this, resolveContext);
-  }
-
-  @Override
-  public PyCallable resolveCalleeFunction(PyResolveContext resolveContext) {
-    return PyCallExpressionHelper.resolveCalleeFunction(this, resolveContext);
-  }
-
-  public PyMarkedCallee resolveCallee(PyResolveContext resolveContext, int offset) {
-    return PyCallExpressionHelper.resolveCallee(this, resolveContext, offset);
+  public List<PyRatedMarkedCallee> multiResolveRatedCallee(@NotNull PyResolveContext resolveContext, int implicitOffset) {
+    return PyCallExpressionHelper.multiResolveRatedCallee(this, resolveContext, implicitOffset);
   }
 
   @NotNull
   @Override
-  public PyArgumentsMapping mapArguments(@NotNull PyResolveContext resolveContext) {
-    return PyCallExpressionHelper.mapArguments(this, resolveContext, 0);
-  }
-
-  @NotNull
-  @Override
-  public PyArgumentsMapping mapArguments(@NotNull PyResolveContext resolveContext, int implicitOffset) {
-    return PyCallExpressionHelper.mapArguments(this, resolveContext, implicitOffset);
-  }
-
-  @Override
-  public boolean isCalleeText(@NotNull String... nameCandidates) {
-    return PyCallExpressionHelper.isCalleeText(this, nameCandidates);
-  }
-
-  @Override
-  public boolean isCallee(@NotNull final FQNamesProvider... name) {
-    return PyCallExpressionHelper.isCallee(this, name);
+  public List<PyArgumentsMapping> multiMapArguments(@NotNull PyResolveContext resolveContext, int implicitOffset) {
+    return PyCallExpressionHelper.multiMapArguments(this, resolveContext, implicitOffset);
   }
 
   @Override

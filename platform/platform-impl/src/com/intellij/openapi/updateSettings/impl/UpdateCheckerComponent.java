@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
@@ -41,19 +42,23 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
 
+import static java.lang.Math.max;
+
 /**
  * @author yole
  */
-public class UpdateCheckerComponent implements ApplicationComponent {
+public class UpdateCheckerComponent implements Disposable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance(UpdateCheckerComponent.class);
 
   private static final long CHECK_INTERVAL = DateFormatUtil.DAY;
 
   private final Alarm myCheckForUpdatesAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  private final Runnable myCheckRunnable = () -> UpdateChecker.updateAndShowResult().doWhenDone(() -> queueNextCheck(CHECK_INTERVAL));
+  private final Runnable myCheckRunnable = () -> UpdateChecker.updateAndShowResult().doWhenProcessed(() -> queueNextCheck(CHECK_INTERVAL));
   private final UpdateSettings mySettings;
 
   public UpdateCheckerComponent(@NotNull Application app, @NotNull UpdateSettings settings) {
+    Disposer.register(this, myCheckForUpdatesAlarm);
+
     mySettings = settings;
     updateDefaultChannel();
     checkSecureConnection(app);
@@ -103,18 +108,18 @@ public class UpdateCheckerComponent implements ApplicationComponent {
       return;
     }
 
-    app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+    app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
         BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
-        BuildNumber lastBuildChecked = BuildNumber.fromString(mySettings.getLasBuildChecked());
-        long timeToNextCheck = mySettings.getLastTimeChecked() + CHECK_INTERVAL - System.currentTimeMillis();
+        BuildNumber lastBuildChecked = BuildNumber.fromString(mySettings.getLastBuildChecked());
+        long timeSinceLastCheck = max(System.currentTimeMillis() - mySettings.getLastTimeChecked(), 0);
 
-        if (lastBuildChecked == null || currentBuild.compareTo(lastBuildChecked) > 0 || timeToNextCheck <= 0) {
+        if (lastBuildChecked == null || currentBuild.compareTo(lastBuildChecked) > 0 || timeSinceLastCheck >= CHECK_INTERVAL) {
           myCheckRunnable.run();
         }
         else {
-          queueNextCheck(timeToNextCheck);
+          queueNextCheck(CHECK_INTERVAL - timeSinceLastCheck);
         }
       }
     });
@@ -139,14 +144,7 @@ public class UpdateCheckerComponent implements ApplicationComponent {
   }
 
   @Override
-  public void disposeComponent() {
-    Disposer.dispose(myCheckForUpdatesAlarm);
-  }
-
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return "UpdateCheckerComponent";
+  public void dispose() {
   }
 
   public void queueNextCheck() {

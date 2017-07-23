@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public class GrReplacePrimitiveTypeWithWrapperFix extends GroovyFix {
     final PsiType type = typeElement.getType();
     LOG.assertTrue(type instanceof PsiPrimitiveType);
 
-    myBoxedName = ((PsiPrimitiveType)type).getBoxedType(typeElement).getClassName();
+    myBoxedName = ((PsiPrimitiveType)type).getBoxedTypeName();
   }
 
   @NotNull
@@ -69,6 +69,7 @@ public class GrReplacePrimitiveTypeWithWrapperFix extends GroovyFix {
     if (!(type instanceof PsiPrimitiveType)) return;
 
     final PsiClassType boxed = ((PsiPrimitiveType)type).getBoxedType(typeElement);
+    if (boxed == null) return;
     final GrTypeElement newTypeElement = GroovyPsiElementFactory.getInstance(project).createTypeElement(boxed);
 
     final PsiElement replaced = typeElement.replace(newTypeElement);

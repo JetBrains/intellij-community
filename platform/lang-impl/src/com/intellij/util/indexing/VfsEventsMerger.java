@@ -20,21 +20,24 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.stream.Stream;
 
 /**
  * @author Maxim.Mossienko on 11/10/2016.
  */
 public class VfsEventsMerger {
-  public void recordFileEvent(int fileId, VirtualFile file, boolean contentChange) {
+  public void recordFileEvent(int fileId, @NotNull VirtualFile file, boolean contentChange) {
     updateChange(fileId, file, contentChange ? FILE_CONTENT_CHANGED : FILE_ADDED);
   }
 
-  public void recordBeforeFileEvent(int fileId, VirtualFile file, boolean contentChanged) {
+  public void recordBeforeFileEvent(int fileId, @NotNull VirtualFile file, boolean contentChanged) {
     updateChange(fileId, file, contentChanged ? BEFORE_FILE_CONTENT_CHANGED : FILE_REMOVED);
   }
 
-  private void updateChange(int fileId, VirtualFile file, short mask) {
+  private void updateChange(int fileId, @NotNull VirtualFile file, short mask) {
     while (true) {
       ChangeInfo existingChangeInfo = myChangeInfos.get(fileId);
       ChangeInfo newChangeInfo = new ChangeInfo(file, mask, existingChangeInfo);
@@ -42,8 +45,9 @@ public class VfsEventsMerger {
     }
   }
 
+  @FunctionalInterface
   public interface VfsEventProcessor {
-    boolean process(ChangeInfo changeInfo);
+    boolean process(@NotNull ChangeInfo changeInfo);
   }
 
   // 1. Method can be invoked in several threads
@@ -51,7 +55,7 @@ public class VfsEventsMerger {
   // with the processing then set of events will be not empty
   // 3. Method regularly checks for cancellations (thus can finish with PCEs) but event processor should process the change info atomically
   // (without PCE)
-  public boolean processChanges(VfsEventProcessor eventProcessor) {
+  public boolean processChanges(@NotNull VfsEventProcessor eventProcessor) {
     if (!myChangeInfos.isEmpty()) {
       int[] fileIds = myChangeInfos.keys(); // snapshot of the keys
       for (int fileId : fileIds) {
@@ -75,8 +79,12 @@ public class VfsEventsMerger {
     return !myChangeInfos.isEmpty();
   }
 
-  public int getApproximateChangesCount() {
+  int getApproximateChangesCount() {
     return myChangeInfos.size();
+  }
+
+  Stream<VirtualFile> getChangedFiles() {
+    return myChangeInfos.values().stream().map(ChangeInfo::getFile);
   }
 
   private final ConcurrentIntObjectMap<ChangeInfo> myChangeInfos = ContainerUtil.createConcurrentIntObjectMap();
@@ -90,7 +98,7 @@ public class VfsEventsMerger {
     private final VirtualFile file;
     private final short eventMask;
 
-    ChangeInfo(VirtualFile file, short eventMask, @Nullable ChangeInfo previous) {
+    ChangeInfo(@NotNull VirtualFile file, short eventMask, @Nullable ChangeInfo previous) {
       this.file = file;
       this.eventMask = mergeEventMask(previous != null ? previous.eventMask : 0, eventMask);
     }
@@ -130,12 +138,13 @@ public class VfsEventsMerger {
       return (eventMask & FILE_ADDED) != 0;
     }
 
+    @NotNull
     VirtualFile getFile() {
       return file;
     }
 
     int getFileId() {
-      int fileId = FileBasedIndexImpl.getIdMaskingNonIdBasedFile(this.file);
+      int fileId = FileBasedIndexImpl.getIdMaskingNonIdBasedFile(file);
       if (fileId < 0) fileId = -fileId;
       return fileId;
     }

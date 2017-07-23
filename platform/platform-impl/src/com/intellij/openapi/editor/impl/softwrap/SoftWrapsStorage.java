@@ -42,7 +42,7 @@ public class SoftWrapsStorage implements Dumpable {
   private final List<SoftWrapChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   /**
-   * @return    <code>true</code> if there is at least one soft wrap registered at the current storage; <code>false</code> otherwise
+   * @return    {@code true} if there is at least one soft wrap registered at the current storage; {@code false} otherwise
    */
   public boolean isEmpty() {
     return myWraps.isEmpty();
@@ -63,12 +63,12 @@ public class SoftWrapsStorage implements Dumpable {
   }
 
   /**
-   * Tries to find index of the target soft wrap stored at {@link #myWraps} collection. <code>'Target'</code> soft wrap is the one
+   * Tries to find index of the target soft wrap stored at {@link #myWraps} collection. {@code 'Target'} soft wrap is the one
    * that starts at the given offset.
    *
    * @param offset    target offset
    * @return          index that conforms to {@link Collections#binarySearch(List, Object)} contract, i.e. non-negative returned
-   *                  index points to soft wrap that starts at the given offset; <code>'-(negative value) - 1'</code> points
+   *                  index points to soft wrap that starts at the given offset; {@code '-(negative value) - 1'} points
    *                  to position at {@link #myWraps} collection where soft wrap for the given index should be inserted
    */
   public int getSoftWrapIndex(int offset) {
@@ -96,7 +96,7 @@ public class SoftWrapsStorage implements Dumpable {
 
   /**
    * Allows to answer how many soft wraps which {@link TextChange#getStart() start offsets} belong to given
-   * <code>[start; end]</code> interval are registered withing the current storage.
+   * {@code [start; end]} interval are registered withing the current storage.
    * 
    * @param startOffset   target start offset (inclusive)
    * @param endOffset     target end offset (inclusive)
@@ -127,7 +127,7 @@ public class SoftWrapsStorage implements Dumpable {
    * Inserts given soft wrap to {@link #myWraps} collection at the given index.
    *
    * @param softWrap          soft wrap to store
-   * @return                  previous soft wrap object stored for the same offset if any; <code>null</code> otherwise
+   * @return                  previous soft wrap object stored for the same offset if any; {@code null} otherwise
    */
   public void storeOrReplace(SoftWrapImpl softWrap) {
     int i = getSoftWrapIndex(softWrap.getStart());
@@ -192,7 +192,7 @@ public class SoftWrapsStorage implements Dumpable {
    * Registers given listener within the current model
    *
    * @param listener    listener to register
-   * @return            <code>true</code> if given listener was not registered before; <code>false</code> otherwise
+   * @return            {@code true} if given listener was not registered before; {@code false} otherwise
    */
   public boolean addSoftWrapChangeListener(@NotNull SoftWrapChangeListener listener) {
     return myListeners.add(listener);

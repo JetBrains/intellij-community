@@ -245,6 +245,15 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResultByFile("fixAll_after.xml");
   }
 
+  public void testImplicitPrefixes() throws Exception {
+    myFixture.configureByText(XmlFileType.INSTANCE, "<schema xmlns=\"http://www.w3.org/2001/XMLSchema\" \n" +
+                                                    "        xmlns:x=\"http://www.w3.org/2001/XMLSchema\"\n" +
+                                                    "        <warning descr=\"Namespace declaration is never used\">xmlns:y=\"http://www.w3.org/2001/XMLSchema\"</warning>>\n" +
+                                                    "    <element name=\"a\" default=\"x:y\"/>\n" +
+                                                    "</schema>");
+    myFixture.testHighlighting();
+  }
+
   private void doUnusedDeclarationTest(String text, String after, String name) throws Exception {
     doUnusedDeclarationTest(text, after, name, true);
   }
@@ -279,11 +288,11 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
     super.setUp();
     myFixture.enableInspections(new XmlInspectionToolProvider());
     ExternalResourceManagerExImpl.registerResourceTemporarily("http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd",
-                                                              getTestDataPath() + "/web-app_2_5.xsd", getTestRootDisposable());
+                                                              getTestDataPath() + "/web-app_2_5.xsd", myFixture.getTestRootDisposable());
     ExternalResourceManagerExImpl.registerResourceTemporarily("http://xml.apache.org/axis/wsdd/",
-                                                              getTestDataPath() + "/wsdd.dtd", getTestRootDisposable());
+                                                              getTestDataPath() + "/wsdd.dtd", myFixture.getTestRootDisposable());
     ExternalResourceManagerExImpl.registerResourceTemporarily("http://xml.apache.org/axis/wsdd/providers/java",
-                                                              getTestDataPath() + "/wsdd_provider_java.xsd", getTestRootDisposable());
+                                                              getTestDataPath() + "/wsdd_provider_java.xsd", myFixture.getTestRootDisposable());
   }
 
   @Override

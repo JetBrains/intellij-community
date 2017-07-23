@@ -71,6 +71,9 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     return createDummyFile(langLevel, contents, false);
   }
 
+  /**
+   * TODO: Use {@link PsiFileFactory} instead?
+   */
   public PsiFile createDummyFile(LanguageLevel langLevel, String contents, boolean physical) {
     final PsiFileFactory factory = PsiFileFactory.getInstance(myProject);
     final String name = getDummyFileName();

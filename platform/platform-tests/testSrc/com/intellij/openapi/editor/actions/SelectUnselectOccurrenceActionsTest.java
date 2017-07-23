@@ -26,7 +26,6 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 import com.intellij.ui.LightweightHint;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.stream.Collectors;
 
 public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsightFixtureTestCase {
@@ -41,7 +40,7 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
         hintCount++;
       }
     };
-    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(EditorHintListener.TOPIC, listener);
+    ApplicationManager.getApplication().getMessageBus().connect(myFixture.getTestRootDisposable()).subscribe(EditorHintListener.TOPIC, listener);
   }
 
   public void testAllWithoutInitialSelection() throws Exception {

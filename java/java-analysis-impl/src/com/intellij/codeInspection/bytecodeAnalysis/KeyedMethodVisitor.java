@@ -49,9 +49,9 @@ abstract class KeyedMethodVisitor extends ClassVisitor {
     Method method = new Method(className, node.name, node.desc);
     boolean stable = stableClass || (node.access & STABLE_FLAGS) != 0 || "<init>".equals(node.name);
 
-    return visitMethod(node, new Key(method, Out, stable));
+    return visitMethod(node, method, new EKey(method, Out, stable));
   }
 
   @Nullable
-  abstract MethodVisitor visitMethod(final MethodNode node, final Key key);
+  abstract MethodVisitor visitMethod(final MethodNode node, Method method, final EKey key);
 }

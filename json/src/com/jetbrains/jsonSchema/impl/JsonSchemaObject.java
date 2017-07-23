@@ -1,25 +1,36 @@
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.json.psi.JsonObject;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.SLRUMap;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 
 /**
  * @author Irina.Chernushina on 8/28/2015.
  */
 public class JsonSchemaObject {
-  private String myDefinitionAddress;
-  private Map<String, JsonSchemaObject> myDefinitions;
+  @NonNls public static final String DEFINITIONS = "definitions";
+  @NonNls public static final String PROPERTIES = "properties";
+  @NotNull private final JsonObject myJsonObject;
+  @Nullable private JsonObject myDefinitions;
+  private Map<String, JsonSchemaObject> myDefinitionsMap;
   private Map<String, JsonSchemaObject> myProperties;
-  private Map<String, JsonSchemaObject> myPatternProperties;
-  private final PatternCalculator myPatternCalculator = new PatternCalculator();
+
+  private PatternProperties myPatternProperties;
+  private PropertyNamePattern myPattern;
 
   private String myId;
   private String mySchema;
@@ -39,7 +50,6 @@ public class JsonSchemaObject {
   private boolean myExclusiveMinimum;
   private Integer myMaxLength;
   private Integer myMinLength;
-  private String myPattern;
 
   private Boolean myAdditionalPropertiesAllowed;
   private JsonSchemaObject myAdditionalPropertiesSchema;
@@ -68,65 +78,26 @@ public class JsonSchemaObject {
   private List<JsonSchemaObject> myAnyOf;
   private List<JsonSchemaObject> myOneOf;
   private JsonSchemaObject myNot;
+  private boolean myShouldValidateAgainstJSType;
 
-  public JsonSchemaObject() {
+  public JsonSchemaObject(@NotNull JsonObject object) {
+    myJsonObject = object;
     myProperties = new HashMap<>();
   }
 
-  // full copy. allows to first apply properties for ref, then from definition itself, "in place"
-  public void copyValues(JsonSchemaObject other) {
-    myId = other.myId;
-    mySchema = other.mySchema;
-    myDescription = other.myDescription;
-    myTitle = other.myTitle;
-
-    myProperties = other.myProperties;
-    myDefinitions = other.myDefinitions;
-    myPatternProperties = other.myPatternProperties;
-    myPatternCalculator.clear();
-
-    myType = other.myType;
-    myDefault = other.myDefault;
-    myRef = other.myRef;
-    myFormat = other.myFormat;
-    myTypeVariants = other.myTypeVariants;
-    myMultipleOf = other.myMultipleOf;
-    myMaximum = other.myMaximum;
-    myExclusiveMaximum = other.myExclusiveMaximum;
-    myMinimum = other.myMinimum;
-    myExclusiveMinimum = other.myExclusiveMinimum;
-    myMaxLength = other.myMaxLength;
-    myMinLength = other.myMinLength;
-    myPattern = other.myPattern;
-    myAdditionalPropertiesAllowed = other.myAdditionalPropertiesAllowed;
-    myAdditionalPropertiesSchema = other.myAdditionalPropertiesSchema;
-    myAdditionalItemsAllowed = other.myAdditionalItemsAllowed;
-    myAdditionalItemsSchema = other.myAdditionalItemsSchema;
-    myItemsSchema = other.myItemsSchema;
-    myItemsSchemaList = other.myItemsSchemaList;
-    myMaxItems = other.myMaxItems;
-    myMinItems = other.myMinItems;
-    myUniqueItems = other.myUniqueItems;
-    myMaxProperties = other.myMaxProperties;
-    myMinProperties = other.myMinProperties;
-    myRequired = other.myRequired;
-    myPropertyDependencies = other.myPropertyDependencies;
-    mySchemaDependencies = other.mySchemaDependencies;
-    myEnum = other.myEnum;
-    myAllOf = other.myAllOf;
-    myAnyOf = other.myAnyOf;
-    myOneOf = other.myOneOf;
-    myNot = other.myNot;
-    myDefinitionAddress = other.myDefinitionAddress;
-  }
-
+  // peer pointer is not merged!
   public void mergeValues(JsonSchemaObject other) {
-    // we do not copy id, schema, title and description
+    // we do not copy id, schema
 
     myProperties.putAll(other.myProperties);
-    myDefinitions = copyMap(myDefinitions, other.myDefinitions);
-    myPatternProperties = copyMap(myPatternProperties, other.myPatternProperties);
-    myPatternCalculator.clear();
+    myDefinitionsMap = copyMap(myDefinitionsMap, other.myDefinitionsMap);
+    final Map<String, JsonSchemaObject> map = copyMap(myPatternProperties == null ? null : myPatternProperties.mySchemasMap,
+                                                      other.myPatternProperties == null ? null : other.myPatternProperties.mySchemasMap);
+    myPatternProperties = map == null ? null : new PatternProperties(map);
+
+    if (!StringUtil.isEmptyOrSpaces(other.myTitle)) {
+      myTitle = other.myTitle;
+    }
     if (!StringUtil.isEmptyOrSpaces(other.myDescription)) {
       myDescription = other.myDescription;
     }
@@ -163,6 +134,15 @@ public class JsonSchemaObject {
     myAnyOf = copyList(myAnyOf, other.myAnyOf);
     myOneOf = copyList(myOneOf, other.myOneOf);
     if (other.myNot != null) myNot = other.myNot;
+    myShouldValidateAgainstJSType |= other.myShouldValidateAgainstJSType;
+  }
+
+  public void shouldValidateAgainstJSType() {
+    myShouldValidateAgainstJSType = true;
+  }
+
+  public boolean isShouldValidateAgainstJSType() {
+    return myShouldValidateAgainstJSType;
   }
 
   private static <T> List<T> copyList(List<T> target, List<T> source) {
@@ -179,12 +159,31 @@ public class JsonSchemaObject {
     return target;
   }
 
-  public Map<String, JsonSchemaObject> getDefinitions() {
+  @NotNull
+  public VirtualFile getSchemaFile() {
+    return myJsonObject.getContainingFile().getViewProvider().getVirtualFile();
+  }
+
+  @NotNull
+  public JsonObject getJsonObject() {
+    return myJsonObject;
+  }
+
+  @Nullable
+  public JsonObject getDefinitions() {
     return myDefinitions;
   }
 
-  public void setDefinitions(Map<String, JsonSchemaObject> definitions) {
+  public void setDefinitions(@Nullable JsonObject definitions) {
     myDefinitions = definitions;
+  }
+
+  public Map<String, JsonSchemaObject> getDefinitionsMap() {
+    return myDefinitionsMap;
+  }
+
+  public void setDefinitionsMap(@NotNull Map<String, JsonSchemaObject> definitionsMap) {
+    myDefinitionsMap = definitionsMap;
   }
 
   public Map<String, JsonSchemaObject> getProperties() {
@@ -195,15 +194,11 @@ public class JsonSchemaObject {
     myProperties = properties;
   }
 
-  public Map<String, JsonSchemaObject> getPatternProperties() {
-    return myPatternProperties;
-  }
-
   public void setPatternProperties(Map<String, JsonSchemaObject> patternProperties) {
-    myPatternProperties = patternProperties;
-    myPatternCalculator.clear();
+    myPatternProperties = new PatternProperties(patternProperties);
   }
 
+  @Nullable
   public JsonSchemaType getType() {
     return myType;
   }
@@ -269,11 +264,11 @@ public class JsonSchemaObject {
   }
 
   public String getPattern() {
-    return myPattern;
+    return myPattern == null ? null : myPattern.getPattern();
   }
 
   public void setPattern(String pattern) {
-    myPattern = pattern;
+    myPattern = pattern == null ? null : new PropertyNamePattern(pattern);
   }
 
   public Boolean getAdditionalPropertiesAllowed() {
@@ -497,103 +492,198 @@ public class JsonSchemaObject {
     return myType != null || (myTypeVariants != null && !myTypeVariants.isEmpty());
   }
 
-  public String getDefinitionAddress() {
-    return myDefinitionAddress;
+  @Nullable
+  public JsonSchemaObject getMatchingPatternPropertySchema(@NotNull String name) {
+    if (myPatternProperties == null) return null;
+    return myPatternProperties.getPatternPropertySchema(name);
   }
 
-  public void setDefinitionAddress(String definitionAddress) {
-    myDefinitionAddress = definitionAddress;
+  public boolean checkByPattern(@NotNull String value) {
+    return myPattern != null && myPattern.checkByPattern(value);
+  }
+
+  public String getPatternError() {
+    return myPattern == null ? null : myPattern.getPatternError();
+  }
+
+  public Map<JsonObject, String> getInvalidPatternProperties() {
+    if (myPatternProperties != null) {
+      final Map<String, String> patterns = myPatternProperties.getInvalidPatterns();
+      if (patterns == null) return null;
+
+      return patterns.entrySet().stream().map(entry -> {
+        final JsonSchemaObject object = myPatternProperties.getSchemaForPattern(entry.getKey());
+        assert object != null;
+        return Pair.create(object.getJsonObject(), entry.getValue());
+      }).filter(o -> o != null).collect(Collectors.toMap(o -> o.getFirst(), o -> o.getSecond()));
+    }
+    return null;
   }
 
   @Nullable
-  public JsonSchemaObject getMatchingPatternPropertySchema(@NotNull String name) {
-    return myPatternCalculator.getMatchingPatternPropertySchema(myPatternProperties, name);
+  public JsonSchemaObject findRelativeDefinition(@NotNull String ref) {
+    if ("#".equals(ref) || StringUtil.isEmpty(ref)) {
+      return this;
+    }
+    if (!ref.startsWith("#/")) {
+      return null;
+    }
+    ref = ref.substring(2);
+    final List<String> parts = StringUtil.split(ref, "/");
+    JsonSchemaObject current = this;
+    for (int i = 0; i < parts.size(); i++) {
+      if (current == null) return null;
+      final String part = parts.get(i);
+      if (DEFINITIONS.equals(part)) {
+        if (i == (parts.size() - 1)) return null;
+        //noinspection AssignmentToForLoopParameter
+        current = current.getDefinitionsMap().get(parts.get(++i));
+        continue;
+      }
+      if (PROPERTIES.equals(part)) {
+        if (i == (parts.size() - 1)) return null;
+        //noinspection AssignmentToForLoopParameter
+        current = current.getProperties().get(parts.get(++i));
+        continue;
+      }
+
+      current = current.getDefinitionsMap().get(part);
+    }
+    return current;
+  }
+
+  @Nullable
+  public String getDocumentation(final boolean preferShort) {
+    if (preferShort) return StringUtil.isEmptyOrSpaces(myTitle) ? myDescription : myTitle;
+    return StringUtil.isEmptyOrSpaces(myDescription) ? myTitle : myDescription;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    JsonSchemaObject object = (JsonSchemaObject)o;
+
+    if (!myJsonObject.equals(object.myJsonObject)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myJsonObject.hashCode();
   }
 
   @NotNull
   private static String adaptSchemaPattern(String pattern) {
     pattern = pattern.startsWith("^") || pattern.startsWith("*") || pattern.startsWith(".") ? pattern : (".*" + pattern);
-    pattern = pattern.endsWith("+") || pattern.endsWith("*") ? pattern : (pattern + ".*");
+    pattern = pattern.endsWith("+") || pattern.endsWith("*") || pattern.endsWith("$") ? pattern : (pattern + ".*");
+    pattern = pattern.replace("\\\\", "\\");
     return pattern;
   }
 
-  private static class PatternCalculator {
-    private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
-    private Map<String, Pattern> myCachedPatterns;
-    private SLRUMap<String, String> myCachedPatternProperties;
+
+  private static Pair<Pattern, String> compilePattern(@NotNull final String pattern) {
+    try {
+      return Pair.create(Pattern.compile(adaptSchemaPattern(pattern)), null);
+    } catch (PatternSyntaxException e) {
+      return Pair.create(null, e.getMessage());
+    }
+  }
+
+  private static boolean matchPattern(@NotNull final Pattern pattern, @NotNull final String s) {
+    try {
+      return pattern.matcher(StringUtil.newBombedCharSequence(s, 300)).matches();
+    } catch (ProcessCanceledException e) {
+      // something wrong with the pattern
+      return false;
+    }
+  }
+
+  private static class PropertyNamePattern {
+    @NotNull private final String myPattern;
+    @Nullable private final Pattern myCompiledPattern;
+    @Nullable private final String myPatternError;
+    @NotNull private final Map<String, Boolean> myValuePatternCache;
+
+    public PropertyNamePattern(@NotNull String pattern) {
+      myPattern = StringUtil.unescapeBackSlashes(pattern);
+      final Pair<Pattern, String> pair = compilePattern(pattern);
+      myPatternError = pair.getSecond();
+      myCompiledPattern = pair.getFirst();
+      myValuePatternCache = ContainerUtil.createConcurrentWeakKeyWeakValueMap();
+    }
 
     @Nullable
-    public JsonSchemaObject getMatchingPatternPropertySchema(@Nullable final Map<String, JsonSchemaObject> patternProperties,
-                                                             @NotNull final String name) {
-      if (patternProperties == null || patternProperties.isEmpty()) return null;
-      myLock.readLock().lock();
-      try {
-        if (myCachedPatterns == null) {
-          initPatternCache(patternProperties);
-        }
-        assert myCachedPatternProperties != null;
-        final String s = myCachedPatternProperties.get(name);
-        if (s != null) return patternProperties.get(s);
-        return matchPatternsToString(name, patternProperties);
-      } finally {
-        myLock.readLock().unlock();
-      }
+    public String getPatternError() {
+      return myPatternError;
     }
 
-    public void clear() {
-      myLock.writeLock().lock();
-      try {
-        myCachedPatterns = null;
-        myCachedPatternProperties = null;
-      } finally {
-        myLock.writeLock().unlock();
-      }
+    boolean checkByPattern(@NotNull final String name) {
+      if (myPatternError != null) return true;
+      if (Boolean.TRUE.equals(myValuePatternCache.get(name))) return true;
+      assert myCompiledPattern != null;
+      boolean matches = matchPattern(myCompiledPattern, name);
+      myValuePatternCache.put(name, matches);
+      return matches;
     }
 
-    private JsonSchemaObject matchPatternsToString(@NotNull final String name, @NotNull final Map<String, JsonSchemaObject> patternProperties) {
-      final List<String> strings = new ArrayList<>(patternProperties.keySet());
-      Collections.sort(strings);
+    @NotNull
+    public String getPattern() {
+      return myPattern;
+    }
+  }
 
-      return underWrite(() -> {
-        for (final String pattern : strings) {
-          try {
-            final Pattern compiledPattern = myCachedPatterns.get(pattern);
-            assert compiledPattern != null;
-            final boolean matches = compiledPattern.matcher(StringUtil.newBombedCharSequence(name, 300)).matches();
-            if (matches) {
-              myCachedPatternProperties.put(name, pattern);
-              return patternProperties.get(pattern);
-            }
-          } catch (ProcessCanceledException e) {
-            //ignored
-          }
+  private static class PatternProperties {
+    private final Map<String, JsonSchemaObject> mySchemasMap;
+    private final Map<String, Pattern> myCachedPatterns;
+    private final Map<String, String> myCachedPatternProperties;
+    private final Map<String, String> myInvalidPatterns;
+
+    public PatternProperties(@NotNull final Map<String, JsonSchemaObject> schemasMap) {
+      mySchemasMap = new HashMap<>();
+      schemasMap.keySet().forEach(key -> mySchemasMap.put(StringUtil.unescapeBackSlashes(key), schemasMap.get(key)));
+      myCachedPatterns = new HashMap<>();
+      myCachedPatternProperties = ContainerUtil.createConcurrentWeakKeyWeakValueMap();
+      myInvalidPatterns = new HashMap<>();
+      mySchemasMap.keySet().forEach(key -> {
+        final Pair<Pattern, String> pair = compilePattern(key);
+        if (pair.getSecond() != null) {
+          myInvalidPatterns.put(key, pair.getSecond());
+        } else {
+          assert pair.getFirst() != null;
+          myCachedPatterns.put(key, pair.getFirst());
         }
-        myCachedPatternProperties.put(name, "");
-        return null;
       });
     }
 
-    private <T> T underWrite(@NotNull final Computable<T> computable) {
-      myLock.readLock().unlock();
-      myLock.writeLock().lock();
-      try {
-        final T t = computable.compute();
-        myLock.readLock().lock();
-        return t;
-      } finally {
-        myLock.writeLock().unlock();
+    @Nullable
+    public JsonSchemaObject getPatternPropertySchema(@NotNull final String name) {
+      String value = myCachedPatternProperties.get(name);
+      if (value != null) {
+        assert mySchemasMap.containsKey(value);
+        return mySchemasMap.get(value);
       }
+
+      value = myCachedPatterns.keySet().stream()
+        .filter(key -> matchPattern(myCachedPatterns.get(key), name))
+        .findFirst()
+        .orElse(null);
+      if (value != null) {
+        myCachedPatternProperties.put(name, value);
+        assert mySchemasMap.containsKey(value);
+        return mySchemasMap.get(value);
+      }
+      return null;
     }
 
-    private void initPatternCache(@NotNull final Map<String, JsonSchemaObject> patternProperties) {
-      underWrite(() -> {
-        myCachedPatterns = new HashMap<>(patternProperties.size(), 1.0f);
-        myCachedPatternProperties = new SLRUMap<>(100, 100);
-        for (String pattern : patternProperties.keySet()) {
-          myCachedPatterns.put(pattern, Pattern.compile(adaptSchemaPattern(pattern)));
-        }
-        return true;
-      });
+    public Map<String, String> getInvalidPatterns() {
+      return myInvalidPatterns;
+    }
+
+    public JsonSchemaObject getSchemaForPattern(@NotNull String key) {
+      return mySchemasMap.get(key);
     }
   }
 }

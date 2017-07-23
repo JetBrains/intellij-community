@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.lang.ASTNode;
@@ -32,15 +31,18 @@ import org.jetbrains.annotations.Nullable;
  * @author spleaner
  */
 public abstract class StatementUpDownMover {
-  public static final ExtensionPointName<StatementUpDownMover> STATEMENT_UP_DOWN_MOVER_EP = ExtensionPointName.create("com.intellij.statementUpDownMover");
+  public static final ExtensionPointName<StatementUpDownMover> STATEMENT_UP_DOWN_MOVER_EP =
+    ExtensionPointName.create("com.intellij.statementUpDownMover");
 
   public static class MoveInfo extends UserDataHolderBase {
-    /** Source line range */
-    @NotNull
+    /**
+     * Source line range
+     */
     public LineRange toMove;
 
     /**
      * Target line range, or {@code null} if move not available
+     *
      * @see #prohibitMove()
      */
     public LineRange toMove2;
@@ -52,7 +54,8 @@ public abstract class StatementUpDownMover {
     public boolean indentTarget = true;
 
     /**
-     * Use this method in {@link StatementUpDownMover#checkAvailable(com.intellij.openapi.editor.Editor, com.intellij.psi.PsiFile, com.intellij.codeInsight.editorActions.moveUpDown.StatementUpDownMover.MoveInfo, boolean)}
+     * Use this method in {@link StatementUpDownMover#checkAvailable(Editor, PsiFile, StatementUpDownMover.MoveInfo, boolean)}.
+     *
      * @return true to suppress further movers processing
      */
     public final boolean prohibitMove() {
@@ -61,28 +64,25 @@ public abstract class StatementUpDownMover {
     }
   }
 
-  public abstract boolean checkAvailable(@NotNull final Editor editor, @NotNull final PsiFile file, @NotNull final MoveInfo info, final boolean down);
+  public abstract boolean checkAvailable(@NotNull Editor editor, @NotNull PsiFile file, @NotNull MoveInfo info, boolean down);
 
-  public void beforeMove(@NotNull final Editor editor, @NotNull final MoveInfo info, final boolean down) {
-  }
+  public void beforeMove(@NotNull Editor editor, @NotNull MoveInfo info, boolean down) { }
 
-  public void afterMove(@NotNull final Editor editor, @NotNull final PsiFile file, @NotNull final MoveInfo info, final boolean down) {
-  }
+  public void afterMove(@NotNull Editor editor, @NotNull PsiFile file, @NotNull MoveInfo info, boolean down) { }
 
   public static int getLineStartSafeOffset(@NotNull Document document, int line) {
-    if (line == document.getLineCount()) return document.getTextLength();
-    return document.getLineStartOffset(line);
+    return line == document.getLineCount() ? document.getTextLength() : document.getLineStartOffset(line);
   }
 
   @NotNull
   protected static LineRange getLineRangeFromSelection(@NotNull Editor editor) {
-    final int startLine;
-    final int endLine;
-    final SelectionModel selectionModel = editor.getSelectionModel();
+    int startLine;
+    int endLine;
+    SelectionModel selectionModel = editor.getSelectionModel();
     LineRange range;
     if (selectionModel.hasSelection()) {
       startLine = editor.offsetToLogicalPosition(selectionModel.getSelectionStart()).line;
-      final LogicalPosition endPos = editor.offsetToLogicalPosition(selectionModel.getSelectionEnd());
+      LogicalPosition endPos = editor.offsetToLogicalPosition(selectionModel.getSelectionEnd());
       endLine = endPos.column == 0 ? endPos.line : endPos.line+1;
       range = new LineRange(startLine, endLine);
     }
@@ -96,10 +96,10 @@ public abstract class StatementUpDownMover {
 
   @Nullable
   protected static Pair<PsiElement, PsiElement> getElementRange(@NotNull Editor editor, @NotNull PsiFile file, @NotNull LineRange range) {
-    final int startOffset = editor.logicalPositionToOffset(new LogicalPosition(range.startLine, 0));
+    int startOffset = editor.logicalPositionToOffset(new LogicalPosition(range.startLine, 0));
     PsiElement startingElement = firstNonWhiteElement(startOffset, file, true);
     if (startingElement == null) return null;
-    final int endOffset = editor.logicalPositionToOffset(new LogicalPosition(range.endLine, 0)) -1;
+    int endOffset = editor.logicalPositionToOffset(new LogicalPosition(range.endLine, 0)) -1;
 
     PsiElement endingElement = firstNonWhiteElement(endOffset, file, false);
     if (endingElement == null) return null;
@@ -114,13 +114,13 @@ public abstract class StatementUpDownMover {
   }
 
   @Nullable
-  protected static PsiElement firstNonWhiteElement(int offset, @NotNull PsiFile file, final boolean lookRight) {
-    final ASTNode leafElement = file.getNode().findLeafElementAt(offset);
+  protected static PsiElement firstNonWhiteElement(int offset, @NotNull PsiFile file, boolean lookRight) {
+    ASTNode leafElement = file.getNode().findLeafElementAt(offset);
     return leafElement == null ? null : firstNonWhiteElement(leafElement.getPsi(), lookRight);
   }
 
   @Nullable
-  protected static PsiElement firstNonWhiteElement(PsiElement element, final boolean lookRight) {
+  protected static PsiElement firstNonWhiteElement(PsiElement element, boolean lookRight) {
     if (element instanceof PsiWhiteSpace) {
       element = lookRight ? element.getNextSibling() : element.getPrevSibling();
     }

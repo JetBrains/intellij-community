@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -244,6 +244,7 @@ public class ActionsTree {
     model.nodeStructureChanged(myRoot);
 
     pathsKeeper.restorePaths();
+    getComponent().repaint();
   }
 
   public void filterTree(Shortcut shortcut, QuickList[] currentQuickListIds) {
@@ -518,8 +519,8 @@ public class ActionsTree {
       myRow = row;
       myHaveLink = false;
       myLink.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-      final boolean showIcons = UISettings.getInstance().SHOW_ICONS_IN_MENUS;
-      Keymap originalKeymap = myKeymap != null ? myKeymap.getParent() : null;
+      final boolean showIcons = UISettings.getInstance().getShowIconsInMenus();
+      Keymap originalKeymap = myKeymap == null ? null : myKeymap.getParent();
       Icon icon = null;
       String text;
       String actionId = null;

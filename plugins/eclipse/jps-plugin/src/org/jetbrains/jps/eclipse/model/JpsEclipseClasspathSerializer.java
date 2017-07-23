@@ -61,7 +61,7 @@ public class JpsEclipseClasspathSerializer extends JpsModuleClasspathSerializer 
 
       final String eml = module.getName() + EclipseXml.IDEA_SETTINGS_POSTFIX;
       final File emlFile = new File(baseModulePath, eml);
-      final Map<String, String> levels = new HashMap<String, String>();
+      final Map<String, String> levels = new HashMap<>();
       final JpsIdeaSpecificSettings settings;
       final Element root;
       if (emlFile.isFile()) {
@@ -73,7 +73,7 @@ public class JpsEclipseClasspathSerializer extends JpsModuleClasspathSerializer 
         root = null;
       }
 
-      final JpsEclipseClasspathReader reader = new JpsEclipseClasspathReader(classpathDir, paths, new HashSet<String>(), levels);
+      final JpsEclipseClasspathReader reader = new JpsEclipseClasspathReader(classpathDir, paths, new HashSet<>(), levels);
       reader.readClasspath(module, null, JDOMUtil.load(classpathFile), expander);//todo
       if (settings != null) {
         settings.updateEntries(root, module, projectSdkType);

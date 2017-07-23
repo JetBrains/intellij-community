@@ -39,11 +39,6 @@ public class FillParagraphAction extends BaseCodeInsightAction implements DumbAw
         paragraphFillHandler.performOnElement(element, editor);
       }
     }
-
-    @Override
-    public boolean startInWriteAction() {
-      return true;
-    }
   }
 
   @Override

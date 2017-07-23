@@ -24,15 +24,15 @@ import org.jetbrains.annotations.Nullable;
  * <p>
  * It's supposed to be used from EDT only.
  */
-public abstract class EditorLastActionTracker {
-  public static EditorLastActionTracker getInstance() {
+public interface EditorLastActionTracker {
+  static EditorLastActionTracker getInstance() {
     return ApplicationManager.getApplication().getComponent(EditorLastActionTracker.class);
   }
 
   /**
-   * Returns the id of the previously invoked action or <code>null</code>, if no history exists yet, or last user activity was of
+   * Returns the id of the previously invoked action or {@code null}, if no history exists yet, or last user activity was of
    * non-action type, like mouse clicking in editor or text typing, or previous action was invoked for a different editor.
    */
   @Nullable
-  public abstract String getLastActionId();
+  String getLastActionId();
 }

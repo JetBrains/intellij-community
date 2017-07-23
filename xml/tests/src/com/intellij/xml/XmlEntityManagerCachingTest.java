@@ -27,19 +27,14 @@ import java.io.File;
  */
 public class XmlEntityManagerCachingTest extends LightPlatformCodeInsightFixtureTestCase {
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-
+  public void testXmlEntityManagerCaching() {
     ExternalResourceManagerExImpl.registerResourceTemporarily("http://dl.google.com/gwt/DTD/xhtml.ent",
-                                                              getTestDataPath() + "xhtml.ent", getTestRootDisposable());
+                                                              getTestDataPath() + "xhtml.ent", myFixture.getTestRootDisposable());
     ExternalResourceManagerExImpl.registerResourceTemporarily("urn:ui:com.google.gwt.uibinder",
-                                                              getTestDataPath() + "UiBinder.xsd", getTestRootDisposable());
+                                                              getTestDataPath() + "UiBinder.xsd", myFixture.getTestRootDisposable());
 
     myFixture.enableInspections(CheckXmlFileWithXercesValidatorInspection.class);
-  }
 
-  public void testXmlEntityManagerCaching() {
     myFixture.configureByFile(getTestName(false) + ".ui.xml");
     myFixture.checkHighlighting();
     myFixture.type('\b'); // edit content, document has to be valid after that

@@ -20,6 +20,4 @@ package com.intellij.openapi.editor.colors;
  */
 @Deprecated
 public abstract class EditorColorsAdapter implements EditorColorsListener {
-  public void globalSchemeChange(EditorColorsScheme scheme) {
-  }
 }

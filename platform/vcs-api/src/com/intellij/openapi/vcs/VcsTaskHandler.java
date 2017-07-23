@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,12 +31,7 @@ public abstract class VcsTaskHandler {
 
   public static VcsTaskHandler[] getAllHandlers(final Project project) {
     VcsTaskHandler[] extensions = EXTENSION_POINT_NAME.getExtensions(project);
-    List<VcsTaskHandler> handlers = ContainerUtil.filter(extensions, new Condition<VcsTaskHandler>() {
-      @Override
-      public boolean value(VcsTaskHandler handler) {
-        return handler.isEnabled();
-      }
-    });
+    List<VcsTaskHandler> handlers = ContainerUtil.filter(extensions, handler -> handler.isEnabled());
     return handlers.toArray(new VcsTaskHandler[handlers.size()]);
   }
 

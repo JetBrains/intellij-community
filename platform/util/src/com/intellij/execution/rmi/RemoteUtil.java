@@ -17,6 +17,7 @@ package com.intellij.execution.rmi;
 
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import gnu.trove.THashMap;
@@ -29,6 +30,7 @@ import java.rmi.ServerError;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Gregory.Shrago
@@ -37,35 +39,41 @@ public class RemoteUtil {
   RemoteUtil() {
   }
 
-  private static final ConcurrentFactoryMap<Couple<Class<?>>, Map<Method, Method>> ourRemoteToLocalMap =
-    new ConcurrentFactoryMap<Couple<Class<?>>, Map<Method, Method>>() {
-      @Override
-      protected Map<Method, Method> create(Couple<Class<?>> key) {
-        final THashMap<Method, Method> map = new THashMap<Method, Method>();
-        for (Method method : key.second.getMethods()) {
-          Method m = null;
-          main:
-          for (Method candidate : key.first.getMethods()) {
-            if (!candidate.getName().equals(method.getName())) continue;
-            Class<?>[] cpts = candidate.getParameterTypes();
-            Class<?>[] mpts = method.getParameterTypes();
-            if (cpts.length != mpts.length) continue;
-            for (int i = 0; i < mpts.length; i++) {
-              Class<?> mpt = mpts[i];
-              Class<?> cpt = castArgumentClassToLocal(cpts[i]);
-              if (!cpt.isAssignableFrom(mpt)) continue main;
-            }
-            m = candidate;
-            break;
-          }
-          if (m != null) map.put(method, m);
-        }
-        return map;
-      }
-    };
+  private static final ConcurrentMap<Couple<Class<?>>, Map<Method, Method>> ourRemoteToLocalMap =
+    ConcurrentFactoryMap.createMap(new Function<Couple<Class<?>>, Map<Method, Method>>() {
+     @Override
+     public Map<Method, Method> fun(Couple<Class<?>> key) {
+       final THashMap<Method, Method> map = new THashMap<Method, Method>();
+       for (Method method : key.second.getMethods()) {
+         Method m = null;
+         main:
+         for (Method candidate : key.first.getMethods()) {
+           if (!candidate.getName().equals(method.getName())) continue;
+           Class<?>[] cpts = candidate.getParameterTypes();
+           Class<?>[] mpts = method.getParameterTypes();
+           if (cpts.length != mpts.length) continue;
+           for (int i = 0; i < mpts.length; i++) {
+             Class<?> mpt = mpts[i];
+             Class<?> cpt = castArgumentClassToLocal(cpts[i]);
+             if (!cpt.isAssignableFrom(mpt)) continue main;
+           }
+           m = candidate;
+           break;
+         }
+         if (m != null) map.put(method, m);
+       }
+       return map;
+     }
+     }
+    );
+
+  @NotNull
+  public static <T> T castToRemoteNotNull(Object object, Class<T> clazz) {
+    return ObjectUtils.notNull(castToRemote(object, clazz));
+  }
 
   @Nullable
-  public static <T> T castToRemote(final Object object, final Class<T> clazz) {
+  public static <T> T castToRemote(Object object, Class<T> clazz) {
     if (!Proxy.isProxyClass(object.getClass())) return null;
     final InvocationHandler handler = Proxy.getInvocationHandler(object);
     if (handler instanceof RemoteInvocationHandler) {
@@ -77,8 +85,9 @@ public class RemoteUtil {
     return null;
   }
 
-  public static <T> T castToLocal(final Object remote, final Class<T> clazz) {
-    final ClassLoader loader = clazz.getClassLoader();
+  @NotNull
+  public static <T> T castToLocal(Object remote, Class<T> clazz) {
+    ClassLoader loader = clazz.getClassLoader();
     //noinspection unchecked
     return (T)Proxy.newProxyInstance(loader, new Class[]{clazz}, new RemoteInvocationHandler(remote, clazz, loader));
   }
@@ -175,13 +184,13 @@ public class RemoteUtil {
       if (cause instanceof ServerError) cause = ObjectUtils.chooseNotNull(cause.getCause(), cause);
       if (cause instanceof RuntimeException) throw (RuntimeException)cause;
       else if (canThrowError && cause instanceof Error || cause instanceof LinkageError) throw (Error)cause;
-      else if (canThrow(cause, localMethod)) throw (Exception)cause;
+      else if (cause instanceof Exception && canThrow(cause, localMethod)) throw (Exception)cause;
       throw new RuntimeException(cause);
     }
   }
 
   public static <T> T handleRemoteResult(Object value, Class<? super T> clazz, Object requestor) throws Exception {
-    return RemoteUtil.<T>handleRemoteResult(value, clazz, requestor.getClass().getClassLoader(), false);
+    return handleRemoteResult(value, clazz, requestor.getClass().getClassLoader(), false);
   }
 
   private static <T> T handleRemoteResult(Object value, Class<?> methodReturnType, ClassLoader classLoader, boolean substituteClassLoader) throws Exception {
@@ -210,7 +219,7 @@ public class RemoteUtil {
     return (T)result;
   }
 
-  private static boolean canThrow(Throwable cause, Method method) {
+  private static boolean canThrow(@NotNull Throwable cause, @NotNull Method method) {
     for (Class<?> each : method.getExceptionTypes()) {
       if (each.isInstance(cause)) return true;
     }

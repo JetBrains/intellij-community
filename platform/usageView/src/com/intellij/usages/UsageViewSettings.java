@@ -34,21 +34,22 @@ import java.io.File;
 )
 public class UsageViewSettings implements PersistentStateComponent<UsageViewSettings> {
   @NonNls public String EXPORT_FILE_NAME = "report.txt";
-  public boolean IS_EXPANDED = false;
+  public boolean IS_EXPANDED;
   public boolean IS_SHOW_PACKAGES = true;
-  public boolean IS_SHOW_METHODS = false;
-  public boolean IS_AUTOSCROLL_TO_SOURCE = false;
+  public boolean IS_SHOW_METHODS;
+  public boolean IS_AUTOSCROLL_TO_SOURCE;
   public boolean IS_FILTER_DUPLICATED_LINE = true;
-  public boolean IS_SHOW_MODULES = false;
-  public boolean IS_PREVIEW_USAGES = false;
+  public boolean IS_SHOW_MODULES;
+  public boolean IS_PREVIEW_USAGES;
   public boolean IS_SORT_MEMBERS_ALPHABETICALLY = true;
   public float PREVIEW_USAGES_SPLITTER_PROPORTIONS = 0.5f;
 
   public boolean GROUP_BY_USAGE_TYPE = true;
   public boolean GROUP_BY_MODULE = true;
+  public boolean FLATTEN_MODULES = true;
   public boolean GROUP_BY_PACKAGE = true;
   public boolean GROUP_BY_FILE_STRUCTURE = true;
-  public boolean GROUP_BY_SCOPE = false;
+  public boolean GROUP_BY_SCOPE;
 
   public static UsageViewSettings getInstance() {
     return ServiceManager.getService(UsageViewSettings.class);

@@ -35,12 +35,6 @@ import org.junit.Test;
 import java.io.File;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/21/12
- * Time: 10:02 AM
- */
 public class SvnExternalCommitNoticedTest extends Svn17TestCase {
   private ChangeListManagerImpl clManager;
   private SvnVcs myVcs;

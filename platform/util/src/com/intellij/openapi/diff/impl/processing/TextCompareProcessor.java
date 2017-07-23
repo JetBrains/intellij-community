@@ -73,7 +73,7 @@ public class TextCompareProcessor {
 
     DiffFragment[] woFormattingBlocks = myDiffPolicy.buildFragments(diffText1, diffText2);
     DiffFragment[] step1lineFragments = new DiffCorrection.TrueLineBlocks(myComparisonPolicy).correctAndNormalize(woFormattingBlocks);
-    ArrayList<LineFragment> lineBlocks = new DiffFragmentsProcessor().process(step1lineFragments);
+    ArrayList<LineFragment> lineBlocks = processFragments(step1lineFragments);
 
     int badLinesCount = 0;
     if (myHighlightMode == HighlightMode.BY_WORD) {
@@ -115,6 +115,14 @@ public class TextCompareProcessor {
           subLine.setChildren(processInlineFragments(subLineFragments));
         }
       }
+    }
+    return collector.getFragments();
+  }
+
+  private static ArrayList<LineFragment> processFragments(DiffFragment[] fragments) {
+    LineFragmentsCollector collector = new LineFragmentsCollector();
+    for (DiffFragment fragment : fragments) {
+      collector.addDiffFragment(fragment);
     }
     return collector.getFragments();
   }

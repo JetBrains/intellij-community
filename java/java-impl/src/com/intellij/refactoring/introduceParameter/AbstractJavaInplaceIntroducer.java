@@ -8,13 +8,12 @@ import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -27,9 +26,6 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- */
 public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntroducer<PsiVariable, PsiExpression> {
   protected TypeSelectorManagerImpl myTypeSelectorManager;
 
@@ -83,12 +79,8 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
   protected void correctExpression() {
     final PsiElement parent = getExpr().getParent();
     if (parent instanceof PsiExpressionStatement && parent.getLastChild() instanceof PsiErrorElement) {
-      myExpr = ((PsiExpressionStatement)ApplicationManager.getApplication().runWriteAction(new Computable<PsiElement>() {
-        @Override
-        public PsiElement compute() {
-          return parent.replace(JavaPsiFacade.getElementFactory(myProject).createStatementFromText(parent.getText() + ";", parent));
-        }
-      })).getExpression();
+      myExpr = ((PsiExpressionStatement)WriteAction
+        .compute(() -> parent.replace(JavaPsiFacade.getElementFactory(myProject).createStatementFromText(parent.getText() + ";", parent)))).getExpression();
       myEditor.getCaretModel().moveToOffset(myExpr.getTextRange().getStartOffset());
     }
   }

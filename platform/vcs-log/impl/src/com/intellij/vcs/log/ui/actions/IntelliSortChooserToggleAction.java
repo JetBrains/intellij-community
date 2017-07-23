@@ -21,6 +21,9 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.graph.PermanentGraph;
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.util.BekUtil;
 import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
@@ -35,14 +38,19 @@ public class IntelliSortChooserToggleAction extends ToggleAction implements Dumb
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    VcsLogUi logUI = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    return logUI != null && !logUI.getBekType().equals(PermanentGraph.SortType.Normal);
+    VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
+    return properties != null &&
+           properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE) &&
+           !properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE).equals(PermanentGraph.SortType.Normal);
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    VcsLogUi logUI = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
-    logUI.setBekType(state ? PermanentGraph.SortType.Bek : PermanentGraph.SortType.Normal);
+    VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
+    if (properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE)) {
+      PermanentGraph.SortType bekSortType = state ? PermanentGraph.SortType.Bek : PermanentGraph.SortType.Normal;
+      properties.set(MainVcsLogUiProperties.BEK_SORT_TYPE, bekSortType);
+    }
   }
 
   @Override
@@ -50,11 +58,12 @@ public class IntelliSortChooserToggleAction extends ToggleAction implements Dumb
     super.update(e);
 
     VcsLogUi logUI = e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
     e.getPresentation().setVisible(BekUtil.isBekEnabled());
     e.getPresentation().setEnabled(BekUtil.isBekEnabled() && logUI != null);
 
-    if (logUI != null) {
-      boolean off = logUI.getBekType() == PermanentGraph.SortType.Normal;
+    if (properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE)) {
+      boolean off = properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.Normal;
       String description = "Turn IntelliSort " + (off ? "on" : "off") + ": " +
                            (off
                             ? PermanentGraph.SortType.Bek.getDescription().toLowerCase()

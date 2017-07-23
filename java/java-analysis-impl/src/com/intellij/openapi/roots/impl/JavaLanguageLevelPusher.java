@@ -43,7 +43,13 @@ import java.io.IOException;
 public class JavaLanguageLevelPusher implements FilePropertyPusher<LanguageLevel> {
 
   public static void pushLanguageLevel(@NotNull final Project project) {
-    PushedFilePropertiesUpdater.getInstance(project).pushAll(new JavaLanguageLevelPusher());
+    PushedFilePropertiesUpdater instance = PushedFilePropertiesUpdater.getInstance(project);
+    FilePropertyPusher[] extensions = EP_NAME.getExtensions();
+    for (FilePropertyPusher pusher : extensions) {
+      if (pusher instanceof JavaLanguageLevelPusher) {
+        instance.pushAll(pusher);
+      }
+    }
   }
 
   @Override

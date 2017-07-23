@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -244,14 +244,13 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final List<String> generatedFilePaths = new ArrayList<>();
-    getCompilerManager().addCompilationStatusListener(new CompilationStatusAdapter() {
+    myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusAdapter() {
       @Override
       public void fileGenerated(String outputRoot, String relativePath) {
         generatedFilePaths.add(relativePath);
       }
-    }, getTestRootDisposable());
+    });
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-
       final CompileStatusNotification callback = new CompileStatusNotification() {
         @Override
         public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
@@ -335,6 +334,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     return iprFile;
   }
 
+  @NotNull
   @Override
   protected Module doCreateRealModule(String moduleName) {
     //todo[nik] reuse code from PlatformTestCase
@@ -353,6 +353,9 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     }.execute().getResultObject();
   }
 
+  protected CompilationLog buildAllModules() {
+    return make(getCompilerManager().createProjectCompileScope(myProject), CompilerFilter.ALL);
+  }
 
   protected static void assertOutput(Module module, TestFileSystemBuilder item) {
     assertOutput(module, item, false);

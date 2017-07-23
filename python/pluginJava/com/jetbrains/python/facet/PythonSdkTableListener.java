@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package com.jetbrains.python.facet;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableModelsProvider;
@@ -31,10 +31,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class PythonSdkTableListener implements ApplicationComponent {
+public class PythonSdkTableListener implements Disposable {
   public PythonSdkTableListener(MessageBus messageBus) {
     ProjectJdkTable.Listener jdkTableListener = new ProjectJdkTable.Listener() {
-      public void jdkAdded(final Sdk sdk) {
+      @Override
+      public void jdkAdded(@NotNull final Sdk sdk) {
         if (sdk.getSdkType() instanceof PythonSdkType) {
           ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
             addLibrary(sdk);
@@ -42,19 +43,21 @@ public class PythonSdkTableListener implements ApplicationComponent {
         }
       }
 
-      public void jdkRemoved(final Sdk sdk) {
+      @Override
+      public void jdkRemoved(@NotNull final Sdk sdk) {
         if (sdk.getSdkType() instanceof PythonSdkType) {
           removeLibrary(sdk);
         }
       }
 
-      public void jdkNameChanged(final Sdk sdk, final String previousName) {
+      @Override
+      public void jdkNameChanged(@NotNull final Sdk sdk, @NotNull final String previousName) {
         if (sdk.getSdkType() instanceof PythonSdkType) {
           renameLibrary(sdk, previousName);
         }
       }
     };
-    messageBus.connect().subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, jdkTableListener);
+    messageBus.connect(this).subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, jdkTableListener);
   }
 
   static Library addLibrary(Sdk sdk) {
@@ -96,14 +99,7 @@ public class PythonSdkTableListener implements ApplicationComponent {
     }), ModalityState.NON_MODAL);
   }
 
-  @NotNull
-  public String getComponentName() {
-    return "PythonSdkTableListener";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
+  @Override
+  public void dispose() {
   }
 }

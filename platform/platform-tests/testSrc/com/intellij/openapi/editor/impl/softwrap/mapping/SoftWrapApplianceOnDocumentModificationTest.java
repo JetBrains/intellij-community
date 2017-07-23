@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.TestFileType;
@@ -865,7 +866,10 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     VisualPosition caretPositionBefore = getEditor().getCaretModel().getVisualPosition();
 
     // Change tab size.
-    final CommonCodeStyleSettings.IndentOptions indentOptions = getCurrentCodeStyleSettings().getIndentOptions();
+    final CommonCodeStyleSettings.IndentOptions indentOptions = getCurrentCodeStyleSettings()
+      .getCommonSettings(PlainTextLanguage.INSTANCE)
+      .getIndentOptions();
+
     assertNotNull(indentOptions);
     indentOptions.TAB_SIZE++;
 

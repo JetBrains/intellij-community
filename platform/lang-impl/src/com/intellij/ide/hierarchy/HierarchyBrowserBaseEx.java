@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -377,7 +378,9 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       }
     }
 
-    getCurrentTree().requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(getCurrentTree(), true);
+    });
   }
 
   @SuppressWarnings("deprecation")
@@ -450,7 +453,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   protected final HierarchyTreeBuilder getBuilderForType(String viewType) {
-    return myType2BuilderMap.get(viewType);
+    return viewType == null ? null : myType2BuilderMap.get(viewType);
   }
 
   protected final Iterable<HierarchyTreeBuilder> getBuilders() {
@@ -528,7 +531,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       changeView(currentViewType);
       final HierarchyTreeBuilder builder = getCurrentBuilder();
       builder.restoreExpandedAndSelectedInfo(storedInfo.get());
-    }, __->!myAlarm.isDisposed());
+    }, __-> isDisposed());
   }
 
   protected String getCurrentScopeType() {

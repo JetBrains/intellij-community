@@ -36,10 +36,12 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -155,6 +157,44 @@ public class GenericInlineHandler {
     return inliners;
   }
 
+  public static Map<Language, InlineHandler.Inliner> initInliners(PsiElement elementToInline,
+                                                                  UsageInfo[] usagesIn,
+                                                                  InlineHandler.Settings settings,
+                                                                  MultiMap<PsiElement, String> conflicts,
+                                                                  Language... emptyInliners) {
+    ArrayList<PsiReference> refs = new ArrayList<>();
+    for (UsageInfo info : usagesIn) {
+      if (info instanceof NonCodeUsageInfo) continue;
+      PsiElement element = info.getElement();
+      if (element != null) {
+        PsiReference[] references = element.getReferences();
+        if (references.length > 0) {
+          refs.add(references[0]);
+        }
+      }
+    }
+
+    Map<Language, InlineHandler.Inliner> inliners = initializeInliners(elementToInline, settings, refs);
+    for (Language language : emptyInliners) {
+      inliners.put(language, new InlineHandler.Inliner() {
+        @Nullable
+        @Override
+        public MultiMap<PsiElement, String> getConflicts(@NotNull PsiReference reference, @NotNull PsiElement referenced) {
+          return null;
+        }
+
+        @Override
+        public void inlineUsage(@NotNull UsageInfo usage, @NotNull PsiElement referenced) { }
+      });
+    }
+
+    for (PsiReference ref : refs) {
+      collectConflicts(ref, elementToInline, inliners, conflicts);
+    }
+    
+    return inliners;
+  }
+  
   public static void collectConflicts(final PsiReference reference,
                                       final PsiElement element,
                                       final Map<Language, InlineHandler.Inliner> inliners,

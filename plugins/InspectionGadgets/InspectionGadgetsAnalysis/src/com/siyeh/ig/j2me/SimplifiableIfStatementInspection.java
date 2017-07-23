@@ -56,7 +56,7 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiIfStatement statement = (PsiIfStatement)infos[0];
-    return InspectionGadgetsBundle.message("simplifiable.if.statement.problem.descriptor", 
+    return InspectionGadgetsBundle.message("simplifiable.if.statement.problem.descriptor",
                                            StringUtil.escapeXml(calculateReplacementStatement(statement)));
   }
 
@@ -69,7 +69,7 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
     }
     PsiStatement elseBranch = statement.getElseBranch();
     if (elseBranch == null) {
-      final PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(statement, PsiWhiteSpace.class);
+      final PsiElement nextStatement = PsiTreeUtil.skipWhitespacesForward(statement);
       if (nextStatement instanceof PsiStatement) {
         elseBranch = (PsiStatement)nextStatement;
       }
@@ -238,7 +238,7 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
       }
       codeBlockText.append('}');
       if (ifStatement.getElseBranch() == null) {
-        final PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(ifStatement, PsiWhiteSpace.class);
+        final PsiElement nextStatement = PsiTreeUtil.skipWhitespacesForward(ifStatement);
         if (nextStatement != null) {
           nextStatement.delete();
         }
@@ -303,7 +303,7 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
       PsiStatement elseBranch = ifStatement.getElseBranch();
       elseBranch = ControlFlowUtils.stripBraces(elseBranch);
       if (elseBranch == null) {
-        final PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(ifStatement, PsiWhiteSpace.class);
+        final PsiElement nextStatement = PsiTreeUtil.skipWhitespacesForward(ifStatement);
         if (nextStatement instanceof PsiStatement) {
           elseBranch = (PsiStatement)nextStatement;
         }

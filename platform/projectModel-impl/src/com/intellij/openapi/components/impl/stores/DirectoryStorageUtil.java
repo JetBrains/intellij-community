@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.util.JdomKt.loadElement;
+
 public class DirectoryStorageUtil {
   private static final Logger LOG = Logger.getInstance(DirectoryStorageUtil.class);
 
@@ -56,7 +58,7 @@ public class DirectoryStorageUtil {
           continue;
         }
 
-        Element element = JDOMUtil.load(file.getInputStream());
+        Element element = loadElement(file.getInputStream());
         String componentName = FileStorageCoreUtil.getComponentNameIfValid(element);
         if (componentName == null) {
           continue;

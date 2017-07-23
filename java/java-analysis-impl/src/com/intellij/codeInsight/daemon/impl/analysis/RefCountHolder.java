@@ -29,7 +29,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.psi.util.PsiMatchers;
@@ -110,15 +109,15 @@ class RefCountHolder {
   GlobalUsageHelper getGlobalUsageHelper(@NotNull PsiFile file,
                                          @Nullable final UnusedDeclarationInspectionBase deadCodeInspection,
                                          boolean isUnusedToolEnabled) {
-    final FileViewProvider viewProvider = file.getViewProvider();
+    FileViewProvider viewProvider = file.getViewProvider();
     Project project = file.getProject();
 
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     VirtualFile virtualFile = viewProvider.getVirtualFile();
     boolean inLibrary = fileIndex.isInLibraryClasses(virtualFile) || fileIndex.isInLibrarySource(virtualFile);
 
-    final boolean myDeadCodeEnabled = deadCodeInspection != null && isUnusedToolEnabled && deadCodeInspection.isGlobalEnabledInEditor();
-    @NotNull final Predicate<PsiElement> myIsEntryPointPredicate = member -> !myDeadCodeEnabled || deadCodeInspection.isEntryPoint(member);
+    boolean myDeadCodeEnabled = deadCodeInspection != null && isUnusedToolEnabled && deadCodeInspection.isGlobalEnabledInEditor();
+    Predicate<PsiElement> myIsEntryPointPredicate = (@NotNull PsiElement member) -> !myDeadCodeEnabled || deadCodeInspection.isEntryPoint(member);
 
     return new GlobalUsageHelper() {
       @Override
@@ -195,20 +194,12 @@ class RefCountHolder {
         myLocalRefsMap.remove(pair.first, pair.second);
       }
     }
-    for (Iterator<PsiReference> iterator = myImportStatements.keySet().iterator(); iterator.hasNext();) {
-      PsiReference ref = iterator.next();
-      if (!ref.getElement().isValid()) {
-        iterator.remove();
-      }
-    }
+    myImportStatements.keySet().removeIf(ref -> !ref.getElement().isValid());
     removeInvalidFrom(myDclsUsedMap.keySet());
   }
 
   private static void removeInvalidFrom(@NotNull Collection<? extends PsiAnchor> collection) {
-    for (Iterator<? extends PsiAnchor> it = collection.iterator(); it.hasNext();) {
-      PsiAnchor element = it.next();
-      if (element.retrieve() == null) it.remove();
-    }
+    collection.removeIf(element -> element.retrieve() == null);
   }
 
   boolean isReferenced(@NotNull PsiElement element) {
@@ -286,13 +277,10 @@ class RefCountHolder {
 
   // "var++;"
   private static boolean isJustIncremented(@NotNull ReadWriteAccessDetector.Access access, @NotNull PsiElement refElement) {
-    if (access == ReadWriteAccessDetector.Access.ReadWrite  &&
-        refElement instanceof PsiExpression &&
-        refElement.getParent() instanceof PsiExpression &&
-        refElement.getParent().getParent() instanceof PsiExpressionStatement) {
-      return true;
-    }
-    return false;
+    return access == ReadWriteAccessDetector.Access.ReadWrite &&
+           refElement instanceof PsiExpression &&
+           refElement.getParent() instanceof PsiExpression &&
+           refElement.getParent().getParent() instanceof PsiExpressionStatement;
   }
 
   boolean isReferencedForWrite(@NotNull PsiVariable variable) {

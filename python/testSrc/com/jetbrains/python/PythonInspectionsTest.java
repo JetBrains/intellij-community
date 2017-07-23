@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,67 +79,13 @@ public class PythonInspectionsTest extends PyTestCase {
     doTest(getTestName(false), inspection);
   }
 
-  public void testPyRedeclarationInspection() {
-    doHighlightingTest(PyRedeclarationInspection.class);
-  }
-
   public void testPyTrailingSemicolonInspection() {
     LocalInspectionTool inspection = new PyTrailingSemicolonInspection();
     doTest(getTestName(false), inspection);
   }
 
-  public void testPyUnusedLocalVariableInspection() {
-    PyUnusedLocalInspection inspection = new PyUnusedLocalInspection();
-    inspection.ignoreTupleUnpacking = false;
-    inspection.ignoreLambdaParameters = false;
-    doHighlightingTest(inspection, LanguageLevel.PYTHON27);
-  }
-
-  public void testPyUnusedLocalVariableInspection3K() {
-    doHighlightingTest(PyUnusedLocalInspection.class, LanguageLevel.PYTHON30);
-  }
-
-  public void testPyUnusedVariableTupleUnpacking() {
-    doHighlightingTest(PyUnusedLocalInspection.class, LanguageLevel.PYTHON26);
-  }
-
-  public void testPyUnusedLocalFunctionInspection() {
-    PyUnusedLocalInspection inspection = new PyUnusedLocalInspection();
-    doTest(getTestName(false), inspection);
-  }
-
-  // PY-9778
-  public void testPyUnusedLocalCoroutine() {
-    myFixture.copyDirectoryToProject("inspections/" + getTestName(false), "");
-    doHighlightingTest(PyUnusedLocalInspection.class, LanguageLevel.PYTHON34);
-  }
-
-  public void testPyUnusedParameterInspection() {
-    doHighlightingTest(PyUnusedLocalInspection.class);
-  }
-
-  // PY-20805
-  public void testUnusedLocalFStringReferences() {
-    doHighlightingTest(PyUnusedLocalInspection.class, LanguageLevel.PYTHON36);
-  }
-
-  // PY-8219
-  public void testUnusedLocalDoctestReference() {
-    doHighlightingTest(PyUnusedLocalInspection.class);
-  }
-
   public void testPyDictCreationInspection() {
     doHighlightingTest(PyDictCreationInspection.class, LanguageLevel.PYTHON26);
-  }
-
-  public void testPyTupleAssignmentBalanceInspection() {
-    LocalInspectionTool inspection = new PyTupleAssignmentBalanceInspection();
-    doTest(getTestName(false), inspection);
-  }
-
-  public void testPyTupleAssignmentBalanceInspection2() {
-    LocalInspectionTool inspection = new PyTupleAssignmentBalanceInspection();
-    doTestWithPy3k(getTestName(false), inspection);
   }
 
   public void testPyClassicStyleClassInspection() {
@@ -218,8 +164,12 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   public void testPyInitNewSignatureInspection() {
-    LocalInspectionTool inspection = new PyInitNewSignatureInspection();
-    doTest(getTestName(false), inspection);
+    final String folderPath = "inspections/" + getTestName(false) + "/";
+
+    myFixture.copyDirectoryToProject(folderPath, "");
+    myFixture.configureFromTempProjectFile("test.py");
+    myFixture.enableInspections(PyInitNewSignatureInspection.class);
+    myFixture.checkHighlighting(true, false, true);
   }
 
   public void testPyCallByClassInspection() {
@@ -295,16 +245,6 @@ public class PythonInspectionsTest extends PyTestCase {
     doHighlightingTest(PyDictDuplicateKeysInspection.class);
   }
 
-
-  public void testPyTupleAssignmentBalanceInspection3() {
-    try {
-      setLanguageLevel(LanguageLevel.PYTHON27);
-      doHighlightingTest(PyTupleAssignmentBalanceInspection.class);
-    } finally {
-      setLanguageLevel(null);
-    }
-  }
-
   public void testPyListCreationInspection() {         //PY-2823
     doHighlightingTest(PyListCreationInspection.class);
   }
@@ -346,10 +286,6 @@ public class PythonInspectionsTest extends PyTestCase {
 
   public void testPyShadowingNamesInspection() {
     doHighlightingTest(PyShadowingNamesInspection.class);
-  }
-
-  public void testPyDunderSlotsInspection() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doHighlightingTest(PyDunderSlotsInspection.class));
   }
 
   // PY-21645

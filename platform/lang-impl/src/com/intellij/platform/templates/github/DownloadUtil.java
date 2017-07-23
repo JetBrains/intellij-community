@@ -20,9 +20,6 @@ import java.io.OutputStream;
 import java.util.Locale;
 import java.util.concurrent.Callable;
 
-/**
- * @author Sergey Simonchik
- */
 public class DownloadUtil {
 
   public static final String CONTENT_LENGTH_TEMPLATE = "${content-length}";
@@ -159,36 +156,30 @@ public class DownloadUtil {
     }
   }
 
-  private static void download(@Nullable final ProgressIndicator progress,
+  private static void download(@Nullable ProgressIndicator progress,
                                @NotNull String location,
-                               @NotNull final OutputStream output) throws IOException {
-    final String originalText = progress != null ? progress.getText() : null;
+                               @NotNull OutputStream output) throws IOException {
+    String originalText = progress != null ? progress.getText() : null;
     substituteContentLength(progress, originalText, -1);
     if (progress != null) {
       progress.setText2("Downloading " + location);
     }
-
-    try {
-      HttpRequests.request(location)
-        .productNameAsUserAgent()
-        .connect(new HttpRequests.RequestProcessor<Object>() {
-          @Override
-          public Object process(@NotNull HttpRequests.Request request) throws IOException {
-            try {
-              int contentLength = request.getConnection().getContentLength();
-              substituteContentLength(progress, originalText, contentLength);
-              NetUtils.copyStreamContent(progress, request.getInputStream(), output, contentLength);
-            }
-            catch (IOException e) {
-              throw new IOException(HttpRequests.createErrorMessage(e, request, true), e);
-            }
-            return null;
+    HttpRequests.request(location)
+      .productNameAsUserAgent()
+      .connect(new HttpRequests.RequestProcessor<Object>() {
+        @Override
+        public Object process(@NotNull HttpRequests.Request request) throws IOException {
+          try {
+            int contentLength = request.getConnection().getContentLength();
+            substituteContentLength(progress, originalText, contentLength);
+            NetUtils.copyStreamContent(progress, request.getInputStream(), output, contentLength);
           }
-        });
-    }
-    catch (IOException e) {
-      throw new IOException("Cannot download " + location, e);
-    }
+          catch (IOException e) {
+            throw new IOException(HttpRequests.createErrorMessage(e, request, true), e);
+          }
+          return null;
+        }
+      });
   }
 
   private static void substituteContentLength(@Nullable ProgressIndicator progress, @Nullable String text, int contentLengthInBytes) {

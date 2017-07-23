@@ -17,8 +17,12 @@ package com.intellij.diagnostic
 
 import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
+import com.intellij.credentialStore.SERVICE_NAME_PREFIX
 import com.intellij.ide.passwordSafe.PasswordSafe
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.util.io.decodeBase64
 
 @State(name = "ErrorReportConfigurable", storages = arrayOf(Storage(value = "other.xml", deprecated = true, roamingType = RoamingType.DISABLED)))
@@ -33,10 +37,7 @@ internal class ErrorReportConfigurable : PersistentStateComponent<OldState> {
 
   companion object {
     @JvmStatic
-    val SERVICE_NAME = "IntelliJ Platform — JetBrains Account"
-
-    val instance: ErrorReportConfigurable
-      get() = ServiceManager.getService(ErrorReportConfigurable::class.java)
+    val SERVICE_NAME = "$SERVICE_NAME_PREFIX — JetBrains Account"
 
     @JvmStatic
     fun getCredentials() = PasswordSafe.getInstance().get(CredentialAttributes(SERVICE_NAME))

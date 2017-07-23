@@ -17,15 +17,16 @@ package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashMap;
-import gnu.trove.TIntObjectHashMap;
 
+import java.util.Iterator;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 /**
  * @author yole
  */
 public class UniqueNameBuilder<T> {
-  public static final char INTERNAL_PATH_DELIMITER = '/';
+  private static final String VFS_SEPARATOR = "/";
   private final Map<T, String> myPaths = new THashMap<T, String>();
   private final String mySeparator;
   private final int myMaxLength;
@@ -42,85 +43,141 @@ public class UniqueNameBuilder<T> {
   }
 
   private static class Node {
-    final char myChar;
-    final TIntObjectHashMap<Node> myChildren;
+    final String myText;
+    final THashMap<String, Node> myChildren;
     final Node myParentNode;
+    int myNestedChildrenCount;
 
-    Node(char ch, Node parentNode) {
-      myChar = ch;
+    Node(String text, Node parentNode) {
+      myText = text;
       myParentNode = parentNode;
-      myChildren = new TIntObjectHashMap<Node>(1);
+      myChildren = new THashMap<String, Node>(1);
+    }
+
+    Node findOrAddChild(String word) {
+      Node node = myChildren.get(word);
+      if (node == null) myChildren.put(word, node = new Node(word, this));
+      return node;
     }
   }
 
-  private final Node myRootNode = new Node('\0', null);
+  private final Node myRootNode = new Node("", null);
 
-  public void addPath(T key, String value) {
-    value = StringUtil.trimStart(value, myRoot);
-    myPaths.put(key, value);
+  // Build a trie from path components starting from end
+  // E.g. following try will be build from example
+  //                                                                                   |<-------[/fabrique]  <-  [/idea]
+  // /idea/pycharm/download/index.html                                                 |
+  // /idea/fabrique/download/index.html           [RootNode] <- [/index.html] <- [/download] <- [/pycharm]  <- [/idea]
+  // /idea/pycharm/documentation/index.html                              |
+  //                                                                     |<------[/documentation] <- [/pycharm]  <- [/idea]
+  public void addPath(T key, String path) {
+    path = StringUtil.trimStart(path, myRoot);
+    myPaths.put(key, path);
 
     Node current = myRootNode;
+    Iterator<String> pathComponentsIterator = new PathComponentsIterator(path);
 
-    for (int i = value.length() - 1; i >= 0; --i) {
-      char ch = value.charAt(i);
-      Node node = current.myChildren.get(ch);
-      if (node == null) current.myChildren.put(ch, node = new Node(ch, current));
-      current = node;
+    while(pathComponentsIterator.hasNext()) {
+      String word = pathComponentsIterator.next();
+      current = current.findOrAddChild(word);
     }
+    for(Node c = current; c != null; c = c.myParentNode) ++c.myNestedChildrenCount;
   }
 
   public String getShortPath(T key) {
     String path = myPaths.get(key);
     if (path == null) return key.toString();
-    Node current = myRootNode, firstDirNodeWithSingleChildAfterNodeWithManyChildren = null;
 
-    Node firstDirNode = null;
+    Node current = myRootNode;
+    Node firstNodeWithBranches = null;
+    Node firstNodeBeforeNodeWithBranches = null;
+    Node fileNameNode = null;
 
-    boolean searchingForManyChildren = current.myChildren.size() == 1;
-    for(int i = path.length() - 1; i >= 0; --i) {
-      Node node = current.myChildren.get(path.charAt(i));
-      if (node == null) return path;
-      if (firstDirNode == null && node.myChar == INTERNAL_PATH_DELIMITER) {
-        firstDirNode = node;
+    Iterator<String> pathComponentsIterator = new PathComponentsIterator(path);
+
+    while(pathComponentsIterator.hasNext()) {
+      String pathComponent = pathComponentsIterator.next();
+      current = current.findOrAddChild(pathComponent);
+
+      if (fileNameNode == null) fileNameNode = current;
+      if (firstNodeBeforeNodeWithBranches == null &&
+          firstNodeWithBranches != null &&
+          current.myChildren.size() <= 1) {
+        if(current.myParentNode.myNestedChildrenCount - current.myParentNode.myChildren.size() < 1) {
+          firstNodeBeforeNodeWithBranches = current;
+        }
       }
-      if (searchingForManyChildren && node.myChildren.size() > 1) {
-        searchingForManyChildren = false;
-      } else if (!searchingForManyChildren &&
-                 firstDirNodeWithSingleChildAfterNodeWithManyChildren == null &&
-                 node.myChildren.size() == 1 && node.myChar == INTERNAL_PATH_DELIMITER) {
-        firstDirNodeWithSingleChildAfterNodeWithManyChildren = node;
+      
+      if (current.myChildren.size() != 1 && firstNodeWithBranches == null) {
+        firstNodeWithBranches = current;
       }
-      current = node;
     }
-
-
-    if (firstDirNodeWithSingleChildAfterNodeWithManyChildren == null) {
-      firstDirNodeWithSingleChildAfterNodeWithManyChildren = current;
-    }
-
-    final boolean skipDirs = firstDirNodeWithSingleChildAfterNodeWithManyChildren != firstDirNode;
 
     StringBuilder b = new StringBuilder();
-    final Node firstCharacterOfDirectoryName = firstDirNodeWithSingleChildAfterNodeWithManyChildren != current || current.myChar==
-                                                                                                                  INTERNAL_PATH_DELIMITER
-                ? firstDirNodeWithSingleChildAfterNodeWithManyChildren.myParentNode // firstDirNodeWithSingleChildAfterNodeWithManyChildren.myChar == /
-                : firstDirNodeWithSingleChildAfterNodeWithManyChildren;
-    for(Node n = firstCharacterOfDirectoryName; n != myRootNode; ) {
-      if (n.myChar == INTERNAL_PATH_DELIMITER) b.append(mySeparator);
-      else b.append(n.myChar);
+    if (firstNodeBeforeNodeWithBranches == null) {
+      firstNodeBeforeNodeWithBranches = current;
+    }
 
-      if (skipDirs && n.myChar == INTERNAL_PATH_DELIMITER && n != firstDirNode) {
-        // Skip intermediate path content which is the same till file name
-        n = n.myParentNode;
-        while(n != firstDirNode) n = n.myParentNode;
-        b.append("\u2026").append(mySeparator);
+    boolean skipFirstSeparator = true;
+    for(Node c = firstNodeBeforeNodeWithBranches; c!= myRootNode; c = c.myParentNode) {
+      if (c != fileNameNode && c != firstNodeBeforeNodeWithBranches && c.myParentNode.myChildren.size() == 1) {
+        b.append(mySeparator);
+        b.append("\u2026");
+
+        while(c.myParentNode != fileNameNode && c.myParentNode.myChildren.size() == 1) c = c.myParentNode;
+      } else {
+        if (c.myText.startsWith(VFS_SEPARATOR)) {
+          if (!skipFirstSeparator) b.append(mySeparator);
+          skipFirstSeparator = false;
+          b.append(c.myText, VFS_SEPARATOR.length(), c.myText.length());
+        } else {
+          b.append(c.myText);
+        }
       }
-      n = n.myParentNode;
     }
     return b.toString();
   }
 
   public String getSeparator() {
     return mySeparator;
+  }
+
+  private static class PathComponentsIterator implements Iterator<String> {
+    private final String myPath;
+    private int myLastPos;
+    private int mySeparatorPos;
+
+    PathComponentsIterator(String path) {
+      myPath = path;
+      myLastPos = path.length();
+      mySeparatorPos = path.lastIndexOf(VFS_SEPARATOR);
+    }
+
+    @Override
+    public boolean hasNext() {
+      return myLastPos != 0;
+    }
+
+    @Override
+    public String next() {
+      if (myLastPos == 0) throw new NoSuchElementException();
+      String pathComponent;
+      
+      if (mySeparatorPos != -1) {
+        pathComponent = myPath.substring(mySeparatorPos, myLastPos);
+        myLastPos = mySeparatorPos;
+        mySeparatorPos = myPath.lastIndexOf(VFS_SEPARATOR, myLastPos - 1);
+      } else {
+        pathComponent = myPath.substring(0, myLastPos);
+        if (!pathComponent.startsWith(VFS_SEPARATOR)) pathComponent = VFS_SEPARATOR + pathComponent;
+        myLastPos = 0;
+      }
+      return pathComponent;
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException("remove");
+    }
   }
 }

@@ -6,13 +6,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-
-
-
 interface TestInter{}
 
 public class OverlyStrongTypeCast
 {
+  void g() {
+    f((<warning descr="Cast to 'Number' can be weakened to 'Object'">Number</warning>) null);
+  }
+  void f(char[] cs) {}
+  void f(String n) {}
+  void f(Object o) {}
+
   void iterate(Object o) {
     for (Object object : (<warning descr="Cast to 'ArrayList' can be weakened to 'Iterable'">ArrayList</warning>) o) {}
     for (String s : (<warning descr="Cast to 'ArrayList<String>' can be weakened to 'Iterable<String>'">ArrayList<String></warning>) o) {}

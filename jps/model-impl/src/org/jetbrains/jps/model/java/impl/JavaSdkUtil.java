@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,7 @@ public class JavaSdkUtil {
     File[] jarDirs;
     if (SystemInfo.isMac && !home.getName().startsWith("mockJDK")) {
       File openJdkRtJar = new File(home, "jre/lib/rt.jar");
-      if (openJdkRtJar.exists() && !openJdkRtJar.isDirectory()) {
+      if (openJdkRtJar.isFile()) {
         File libDir = new File(home, "lib");
         File classesDir = openJdkRtJar.getParentFile();
         File libExtDir = new File(openJdkRtJar.getParentFile(), "ext");
@@ -56,9 +57,8 @@ public class JavaSdkUtil {
         jarDirs = new File[]{libEndorsedDir, libDir, classesDir, libExtDir};
       }
     }
-    else if (new File(home, "lib/modules").exists()) {
-      File libDir = new File(home, "lib");
-      jarDirs = new File[]{libDir};
+    else if (new File(home, "lib/jrt-fs.jar").exists()) {
+      jarDirs = ArrayUtil.EMPTY_FILE_ARRAY;
     }
     else {
       File libDir = new File(home, isJre ? "lib" : "jre/lib");
@@ -70,6 +70,12 @@ public class JavaSdkUtil {
     FileFilter jarFileFilter = FileFilters.filesWithExtension("jar");
     Set<String> pathFilter = ContainerUtil.newTroveSet(FileUtil.PATH_HASHING_STRATEGY);
     List<File> rootFiles = ContainerUtil.newArrayList();
+    if (Registry.is("project.structure.add.tools.jar.to.new.jdk")) {
+      File toolsJar = new File(home, "lib/tools.jar");
+      if (toolsJar.isFile()) {
+        rootFiles.add(toolsJar);
+      }
+    }
     for (File jarDir : jarDirs) {
       if (jarDir != null && jarDir.isDirectory()) {
         File[] jarFiles = notNull(jarDir.listFiles(jarFileFilter), ArrayUtil.EMPTY_FILE_ARRAY);

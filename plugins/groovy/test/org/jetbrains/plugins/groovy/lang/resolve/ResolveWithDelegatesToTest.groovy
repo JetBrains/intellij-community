@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,277 +16,174 @@
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.PsiMethod
-import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import com.intellij.testFramework.LightProjectDescriptor
+import groovy.transform.CompileStatic
+import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 
 /**
  * @author Max Medvedev
  */
-class ResolveWithDelegatesToTest extends LightGroovyTestCase {
+@CompileStatic
+class ResolveWithDelegatesToTest extends GroovyResolveTestCase {
 
-  @Override
-  void setUp() throws Exception {
-    super.setUp()
+  final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
 
-    myFixture.addClass('''\
-package groovy.lang;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.PARAMETER})
-public @interface DelegatesTo {
-    Class value() default Target.class;
-    int strategy() default Closure.OWNER_FIRST;
-
-    String target() default "";
-
-    @Retention(RetentionPolicy.RUNTIME)
-    @java.lang.annotation.Target({ElementType.PARAMETER})
-    public static @interface Target {
-        String value() default ""; // optional id
-    }
+  void 'test owner first method'() {
+    assertScript '''\
+class Delegate {
+  int foo() { 2 }
 }
-''')
+class Owner {
+  int foo() { 1 }
+  int doIt(@DelegatesTo(Delegate) Closure cl) {}
+  int test() {
+    doIt {
+      fo<caret>o() // as the delegation strategy is owner first, should return 1
+    }
+  }
+}
+''', 'Owner'
   }
 
-  void testShouldChooseMethodFromOwner() {
-    assertScript '''
-            class Delegate {
-                int foo() { 2 }
-            }
-            class Owner {
-                int foo() { 1 }
-                int doIt(@DelegatesTo(Delegate) Closure cl) {
-                    cl.delegate = new Delegate()
-                    cl() as int
-                }
-                int test() {
-                    doIt {
-                        @ASTTest(phase=INSTRUCTION_SELECTION, value={
-                            node = node.rightExpression
-                            def target = node.getNodeMetaData(DIRECT_METHOD_CALL_TARGET)
-                            assert target != null
-                            assert target.declaringClass.name == 'Owner'
-                        })
-                        def x = fo<caret>o() // as the delegation strategy is owner first, should return 1
-                        x
-                    }
-                }
-            }
-            def o = new Owner()
-            assert o.test() == 1
-        ''', 'Owner'
+  void 'test delegate first method'() {
+    assertScript '''\
+class Delegate {
+  int foo() { 2 }
+}
+class Owner {
+  int foo() { 1 }
+  int doIt(@DelegatesTo(strategy=Closure.DELEGATE_FIRST, value=Delegate) Closure cl) {}
+  int test() {
+    doIt {
+      f<caret>oo() // as the delegation strategy is delegate first, should return 2
+    }
+  }
+}
+''', 'Delegate'
   }
 
-  void testShouldChooseMethodFromDelegate() {
-    assertScript '''
-            class Delegate {
-                int foo() { 2 }
-            }
-            class Owner {
-                int foo() { 1 }
-                int doIt(@DelegatesTo(strategy=Closure.DELEGATE_FIRST, value=Delegate) Closure cl) {
-                    cl.delegate = new Delegate()
-                    cl.resolveStrategy = Closure.DELEGATE_FIRST
-                    cl() as int
-                }
-                int test() {
-                    doIt {
-                        @ASTTest(phase=INSTRUCTION_SELECTION, value={
-                            node = node.rightExpression
-                            def target = node.getNodeMetaData(DIRECT_METHOD_CALL_TARGET)
-                            assert target != null
-                            assert target.declaringClass.name == 'Delegate'
-                        })
-                        def x = f<caret>oo() // as the delegation strategy is delegate first, should return 2
-                        x
-                    }
-                }
-            }
-            def o = new Owner()
-            assert o.test() == 2
-        ''', 'Delegate'
+  void 'test owner closure method'() {
+    assertScript '''\
+class Xml {
+  void bar() {}
+  void foo(@DelegatesTo(Xml) Closure cl) {}
+}
+new Xml().foo {              // closure owner which in turn is another closure with a delegate
+  [1].each { b<caret>ar() }  // the closure
+}
+''', 'Xml'
   }
 
-  void testShouldAcceptMethodCall() {
-    assertScript '''
-            class ExecSpec {
-                boolean called = false
-                void foo() {
-                    called = true
-                }
-            }
+  void 'test nested closure delegates with same method'() {
+    fixture.addFileToProject 'classes.groovy', '''\
+class A {
+    int foo() { 1 }
+}
+class B {
+    int foo() { 2 }
+}
+'''
 
-            ExecSpec spec = new ExecSpec()
+    assertScript '''\
+new A().with {
+  new B().with {
+    fo<caret>o()
+  }
+}
+''', 'B'
 
-            void exec(ExecSpec spec, @DelegatesTo(value=ExecSpec, strategy=Closure.DELEGATE_FIRST) Closure param) {
-                param.delegate = spec
-                param()
-            }
-
-            exec(spec) {
-                fo<caret>o() // should be recognized because param is annotated with @DelegatesTo(ExecSpec)
-            }
-            assert spec.isCalled()
-        ''', 'ExecSpec'
+    assertScript '''\
+new B().with {
+  new A().with {
+    fo<caret>o()
+  }
+}
+''', 'A'
   }
 
-  void testCallMethodFromOwner() {
-    assertScript '''
-            class Xml {
-                boolean called = false
-                void bar() { called = true }
-                void foo(@DelegatesTo(Xml)Closure cl) { cl.delegate=this;cl() }
-            }
-            def mylist = [1]
-            def xml = new Xml()
-            xml.foo {
-             mylist.each { b<caret>ar() }
-            }
-            assert xml.called
-        ''', 'Xml'
+  void 'test nested closure delegates with same method and owner'() {
+    fixture.addFileToProject 'classes.groovy', '''\
+class A {
+    int foo() { 1 }
+}
+class B {
+    int foo() { 2 }
+}
+'''
+    assertScript '''\
+class C {             // closure owner
+  int foo() { 3 }
+  void test() {
+    new B().with {    // closure delegate
+      new A().with {  // the closure
+        fo<caret>o()
+      }
+    }
   }
+}
+''', 'A'
 
-  void testEmbeddedWithAndShadowing() {
-    assertScript '''
-            class A {
-                int foo() { 1 }
-            }
-            class B {
-                int foo() { 2 }
-            }
-            def a = new A()
-            def b = new B()
-            int result
-            a.with {
-                b.with {
-                    result = fo<caret>o()
-                }
-            }
-            assert result == 2
-        ''', 'B'
+    assertScript '''\
+class C {
+  int foo() { 3 }
+  void test() {
+    new B().with {
+      new A().with {
+        this.f<caret>oo() // explicit qualifier 'this' which is instance of C
+      }
+    }
   }
-
-  void testEmbeddedWithAndShadowing2() {
-    assertScript '''
-            class A {
-                int foo() { 1 }
-            }
-            class B {
-                int foo() { 2 }
-            }
-            def a = new A()
-            def b = new B()
-            int result
-            b.with {
-                a.with {
-                    result = fo<caret>o()
-                }
-            }
-            assert result == 1
-        ''', 'A'
-  }
-
-  void testEmbeddedWithAndShadowing3() {
-    assertScript '''
-            class A {
-                int foo() { 1 }
-            }
-            class B {
-                int foo() { 2 }
-            }
-            class C {
-                int foo() { 3 }
-                void test() {
-                    def a = new A()
-                    def b = new B()
-                    int result
-                    b.with {
-                        a.with {
-                            result = fo<caret>o()
-                        }
-                    }
-                    assert result == 1
-                }
-            }
-            new C().test()
-        ''', 'A'
-  }
-
-  void testEmbeddedWithAndShadowing4() {
-    assertScript '''
-            class A {
-                int foo() { 1 }
-            }
-            class B {
-                int foo() { 2 }
-            }
-            class C {
-                int foo() { 3 }
-                void test() {
-                    def a = new A()
-                    def b = new B()
-                    int result
-                    b.with {
-                        a.with {
-                            result = this.f<caret>oo()
-                        }
-                    }
-                    assert result == 3
-                }
-            }
-            new C().test()
-        ''', 'C'
+}
+''', 'C'
   }
 
   void testShouldDelegateToParameter() {
-    assertScript '''
-        class Foo {
-            boolean called = false
-            def foo() { called = true }
-        }
+    assertScript '''\
+class Foo {
+    boolean called = false
+    def foo() { called = true }
+}
 
-        def with(@DelegatesTo.Target Object target, @DelegatesTo Closure arg) {
-            arg.delegate = target
-            arg()
-        }
+def with(@DelegatesTo.Target Object target, @DelegatesTo Closure arg) {
+    arg.delegate = target
+    arg()
+}
 
-        def test() {
-            def obj = new Foo()
-            with(obj) { fo<caret>o() }
-            assert obj.called
-        }
-        test()
-        ''', 'Foo'
+def test() {
+    def obj = new Foo()
+    with(obj) { fo<caret>o() }
+    assert obj.called
+}
+test()
+''', 'Foo'
   }
 
   void testShouldDelegateToParameterUsingExplicitId() {
-    assertScript '''
-        class Foo {
-            boolean called = false
-            def foo() { called = true }
-        }
+    assertScript '''\
+class Foo {
+    boolean called = false
+    def foo() { called = true }
+}
 
-        def with(@DelegatesTo.Target('target') Object target, @DelegatesTo(target='target') Closure arg) {
-            arg.delegate = target
-            arg()
-        }
+def with(@DelegatesTo.Target('target') Object target, @DelegatesTo(target='target') Closure arg) {
+    arg.delegate = target
+    arg()
+}
 
-        def test() {
-            def obj = new Foo()
-            with(obj) { f<caret>oo() }
-            assert obj.called
-        }
-        test()
-        ''', 'Foo'
+def test() {
+    def obj = new Foo()
+    with(obj) { f<caret>oo() }
+    assert obj.called
+}
+test()
+''', 'Foo'
   }
 
-  @SuppressWarnings("GroovyUnusedDeclaration")
-  void ignoreTestInConstructor() {
+  void testInConstructor() {
     assertScript '''
         class Foo {
           def foo() {}
@@ -711,7 +608,7 @@ doX {
   }
 
   void 'test delegate type'() {
-    def reference = myFixture.configureByText('_a.groovy', '''\
+    def ref = configureByText('_.groovy', '''\
 class X {
     void method() {}
 }
@@ -723,18 +620,8 @@ void doX(@DelegatesTo(X) Closure c) {
 doX {
     deleg<caret>ate
 }
-''').findReferenceAt(myFixture.editor.caretModel.offset)
-    assert reference instanceof GrReferenceExpression
-    assert reference.type.equalsToText('X')
-  }
-
-  void assertScript(String text, String resolvedClass) {
-    myFixture.configureByText('_a.groovy', text)
-
-    final ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
-    final resolved = assertInstanceOf(ref.resolve(), PsiMethod)
-    final containingClass = resolved.containingClass.qualifiedName
-    assertEquals(resolvedClass, containingClass)
+''', GrReferenceExpression)
+    assert ref.type.equalsToText('X')
   }
 
   void 'test delegate within implicit call()'() {
@@ -751,23 +638,6 @@ def a = new A()
 a {
     f<caret>oo()
 }
-''', 'Boo'
-  }
-
-  void 'test delegate within index property'() {
-    assertScript '''\
-class A {
-    def getAt(@DelegatesTo(Boo) Closure c) {}
-}
-
-class Boo {
-    def foo() {}
-}
-
-def a = new A()
-a[{
-    fo<caret>o()
-}]
 ''', 'Boo'
   }
 
@@ -825,5 +695,56 @@ new A().foo {
   get(0).toUpp<caret>erCase()
 }
 ''', 'java.lang.String'
+  }
+
+  void 'test delegate only local variables'() {
+    fixture.addFileToProject 'Methods.groovy', '''\
+class Methods {
+  static m1(@DelegatesTo(value = String, strategy = Closure.DELEGATE_ONLY) Closure c) {}
+}
+'''
+    // resolve to outer closure parameter
+    resolveByText('''\
+def c = { String s1 ->
+  Methods.m1 { s<caret>1 + toUpperCase() }
+}
+''').with {
+      assert it instanceof GrParameter
+    }
+
+    // resolve to outer closure local variable
+    resolveByText('''\
+def c = { String s1 ->
+  def s2 = "123"
+  Methods.m1 { s<caret>2 + toUpperCase() }
+}
+''').with {
+      assert it instanceof GrVariable && !(it instanceof GrField) && !(it instanceof GrParameter)
+    }
+
+    // resolve to outer method parameter
+    resolveByText('''\
+def m(String s1) {
+  Methods.m1 {s<caret>1 + toUpperCase() }
+}
+''').with {
+      assert it instanceof GrParameter
+    }
+
+    // resolve to outer method local variable
+    resolveByText('''\
+def m(String s1) {
+  def s2 = "123"
+  Methods.m1 { s1 + s<caret>2 + toUpperCase() }
+}
+''').with {
+      assert it instanceof GrVariable && !(it instanceof GrField) && !(it instanceof GrParameter)
+    }
+  }
+
+  private void assertScript(String text, String resolvedClass) {
+    def resolved = resolveByText(text, PsiMethod)
+    final containingClass = resolved.containingClass.qualifiedName
+    assertEquals(resolvedClass, containingClass)
   }
 }

@@ -40,6 +40,7 @@ import com.intellij.pom.tree.events.ChangeInfo;
 import com.intellij.pom.tree.events.TreeChange;
 import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -70,19 +71,14 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     private static final boolean STORE_REFORMAT_ORIGINATOR_STACKTRACE = ApplicationManager.getApplication().isInternal();
   }
 
-  private final ThreadLocal<Context> myContext = new ThreadLocal<Context>() {
-    @Override
-    protected Context initialValue() {
-      return new Context();
-    }
-  };
+  private final ThreadLocal<Context> myContext = ThreadLocal.withInitial(() -> new Context());
 
   public PostprocessReformattingAspect(Project project, PsiManager psiManager, TreeAspect treeAspect,final CommandProcessor processor) {
     myProject = project;
     myPsiManager = psiManager;
     myTreeAspect = treeAspect;
     PomManager.getModel(psiManager.getProject())
-      .registerAspect(PostprocessReformattingAspect.class, this, Collections.singleton((PomModelAspect)treeAspect));
+      .registerAspect(PostprocessReformattingAspect.class, this, Collections.singleton(treeAspect));
 
     ApplicationListener applicationListener = new ApplicationAdapter() {
       @Override
@@ -229,17 +225,13 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     });
   }
 
-  public void postponedFormatting(@NotNull FileViewProvider viewProvider) {
-    postponedFormattingImpl(viewProvider, true);
-  }
-
   public void doPostponedFormatting(@NotNull FileViewProvider viewProvider) {
-    postponedFormattingImpl(viewProvider, false);
+    postponedFormattingImpl(viewProvider);
   }
 
-  private void postponedFormattingImpl(@NotNull final FileViewProvider viewProvider, final boolean check) {
+  private void postponedFormattingImpl(@NotNull final FileViewProvider viewProvider) {
     atomic(() -> {
-      if (isDisabled() || check && !getContext().myUpdatedProviders.contains(viewProvider)) return;
+      if (isDisabled()) return;
 
       try {
         disablePostprocessFormattingInside(() -> doPostponedFormattingInner(viewProvider));
@@ -256,15 +248,38 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     return getContext().myReformatElements.containsKey(fileViewProvider);
   }
 
-  public void beforeDocumentChanged(@NotNull FileViewProvider viewProvider) {
+  /**
+   * Checks that view provider doesn't contain any PSI modifications which will be used in postponed formatting and may conflict with
+   * changes made to the document.
+   *
+   * @param viewProvider The view provider to validate.
+   * @throws RuntimeException If the assertion fails.
+   */
+  public void assertDocumentChangeIsAllowed(@NotNull FileViewProvider viewProvider) {
     if (isViewProviderLocked(viewProvider)) {
       Throwable cause = viewProvider.getUserData(REFORMAT_ORIGINATOR);
       @NonNls String message = "Document is locked by write PSI operations. " +
                                "Use PsiDocumentManager.doPostponedOperationsAndUnblockDocument() to commit PSI changes to the document." +
-                               (cause == null ? "" : " See cause stacktrace for the reason to lock.");
+                               "\nUnprocessed elements: " + dumpUnprocessedElements(viewProvider) +
+                               (cause == null ? "" : " \nSee cause stacktrace for the reason to lock.");
       throw cause == null ? new RuntimeException(message): new RuntimeException(message, cause);
     }
-    postponedFormatting(viewProvider);
+  }
+
+  private String dumpUnprocessedElements(@NotNull FileViewProvider provider) {
+    StringBuilder sb = new StringBuilder();
+    int count = 0;
+    List<ASTNode> nodes = myContext.get().myReformatElements.get(provider);
+    for (ASTNode node : nodes) {
+      if (count >= 5) {
+        sb.append(" and ").append(nodes.size() - count).append(" more.");
+        break;
+      }
+      if (sb.length() > 0) sb.append(", ");
+      sb.append(node.getElementType().toString()).append(node.getTextRange());
+      count ++;
+    }
+    return sb.toString();
   }
 
   public static PostprocessReformattingAspect getInstance(Project project) {
@@ -330,16 +345,11 @@ public class PostprocessReformattingAspect implements PomModelAspect {
         toDispose.addAll(normalizedActions);
 
         // only in following loop real changes in document are made
+        final FileViewProvider viewProvider = key;
         for (final PostponedAction normalizedAction : normalizedActions) {
-          CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myPsiManager.getProject());
-          boolean old = settings.ENABLE_JAVADOC_FORMATTING;
-          settings.ENABLE_JAVADOC_FORMATTING = false;
-          try {
-            normalizedAction.execute(key);
-          }
-          finally {
-            settings.ENABLE_JAVADOC_FORMATTING = old;
-          }
+          CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myPsiManager.getProject());
+          codeStyleManager.runWithDocCommentFormattingDisabled(
+            viewProvider.getPsi(viewProvider.getBaseLanguage()), () -> normalizedAction.execute(viewProvider));
         }
       }
     }

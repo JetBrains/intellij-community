@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.ide.navigationToolbar.ui;
 import com.intellij.ide.navigationToolbar.NavBarItem;
 import com.intellij.ide.navigationToolbar.NavBarPanel;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -35,6 +34,8 @@ import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.image.BufferedImage;
 import java.util.Map;
+
+import static com.intellij.ui.RelativeFont.SMALL;
 
 /**
  * @author Konstantin Bulenkov
@@ -60,7 +61,8 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public Font getElementFont(NavBarItem navBarItem) {
-    return SystemInfo.isMac ? UIUtil.getLabelFont(UIUtil.FontSize.SMALL) : UIUtil.getLabelFont();
+    Font font = UIUtil.getLabelFont();
+    return UISettings.getInstance().getUseSmallLabelsOnTabs() ? SMALL.derive(font) : font;
   }
 
   @Override
@@ -88,7 +90,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
   @Override
   public void doPaintNavBarItem(Graphics2D g, NavBarItem item, NavBarPanel navbar) {
     final boolean floating = navbar.isInFloatingMode();
-    boolean toolbarVisible = UISettings.getInstance().SHOW_MAIN_TOOLBAR;
+    boolean toolbarVisible = UISettings.getInstance().getShowMainToolbar();
     final boolean selected = item.isSelected() && item.isFocused();
     boolean nextSelected = item.isNextSelected() && navbar.hasFocus();
 
@@ -118,7 +120,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     item.doPaintText(g, textOffset);
   }
 
-  private BufferedImage drawToBuffer(NavBarItem item, boolean floating, boolean toolbarVisible, boolean selected, NavBarPanel navbar) {
+  private static BufferedImage drawToBuffer(NavBarItem item, boolean floating, boolean toolbarVisible, boolean selected, NavBarPanel navbar) {
     int w = item.getWidth();
     int h = item.getHeight();
     int offset = (w - getDecorationOffset());
@@ -260,11 +262,11 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     }
   }
 
-  private int getDecorationOffset() {
+  private static int getDecorationOffset() {
      return JBUI.scale(8);
    }
 
-   private int getFirstElementLeftOffset() {
+   private static int getFirstElementLeftOffset() {
      return JBUI.scale(6);
    }
 

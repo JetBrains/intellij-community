@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ public class UninitializedReadCollector {
     uninitializedReads = new HashSet<>();
   }
 
+  @NotNull
   public PsiExpression[] getUninitializedReads() {
     return uninitializedReads.toArray(new PsiExpression[uninitializedReads.size()]);
   }
@@ -406,7 +407,7 @@ public class UninitializedReadCollector {
 
   private boolean assignmentExpressionAssignsVariable(@NotNull PsiAssignmentExpression assignment, @NotNull PsiVariable variable,
     int stamp, @NotNull Set<MethodSignature> checkedMethods) {
-    final PsiExpression lhs = assignment.getLExpression();
+    final PsiExpression lhs = ParenthesesUtils.stripParentheses(assignment.getLExpression());
     if (expressionAssignsVariable(lhs, variable, stamp, checkedMethods)) {
       return true;
     }
@@ -430,7 +431,7 @@ public class UninitializedReadCollector {
       return true;
     }
     if (variable.equals(referenceExpression.resolve())) {
-      final PsiElement parent = referenceExpression.getParent();
+      final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(referenceExpression);
       if (parent instanceof PsiAssignmentExpression) {
         final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
         final PsiExpression rhs = assignmentExpression.getRExpression();
@@ -438,7 +439,7 @@ public class UninitializedReadCollector {
           checkReferenceExpression(referenceExpression, variable, qualifierExpression);
         }
       }
-      else {
+      else if (!(parent instanceof PsiExpression) || !ComparisonUtils.isNullComparison((PsiExpression)parent)) {
         checkReferenceExpression(referenceExpression, variable, qualifierExpression);
       }
     }

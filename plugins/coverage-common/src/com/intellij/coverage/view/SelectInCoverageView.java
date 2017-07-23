@@ -8,10 +8,6 @@ import com.intellij.ide.StandardTargetWeights;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
-/**
- * User: anna
- * Date: 1/3/12
- */
 public class SelectInCoverageView implements  SelectInTarget {
   private final Project myProject;
 

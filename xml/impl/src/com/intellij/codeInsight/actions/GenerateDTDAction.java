@@ -38,12 +38,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 22.05.2003
- * Time: 13:46:54
- */
 public class GenerateDTDAction extends BaseCodeInsightAction{
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.actions.GenerateDTDAction");
   @Override
@@ -77,11 +71,6 @@ public class GenerateDTDAction extends BaseCodeInsightAction{
             LOG.error(e);
           }
         }
-      }
-
-      @Override
-      public boolean startInWriteAction(){
-        return true;
       }
     };
   }

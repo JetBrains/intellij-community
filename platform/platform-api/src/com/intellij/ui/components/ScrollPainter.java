@@ -125,7 +125,7 @@ class ScrollPainter extends RegionPainter.Alpha {
   }
 
   protected void draw(Graphics2D g, int x, int y, int width, int height) {
-    g.drawRect(x, y, width - 1, height - 1);
+    RectanglePainter.DRAW.paint(g, x, y, width, height, null);
   }
 
   private static class Round extends ScrollPainter {

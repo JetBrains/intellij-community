@@ -22,7 +22,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.changeSignature.MethodNodeBase;
 import com.intellij.refactoring.changeSignature.inCallers.JavaCallerChooser;
 import com.intellij.refactoring.changeSignature.inCallers.JavaMethodNode;
@@ -53,8 +55,7 @@ abstract class MakeStaticJavaCallerChooser extends JavaCallerChooser {
          OverridingMethodsSearch.search(containingMethod).findFirst() == null) {
       final PsiClass containingClass = containingMethod.getContainingClass();
       if (containingClass != null) {
-        final PsiClass gContainingClass = containingClass.getContainingClass();
-        if (gContainingClass == null || gContainingClass.hasModifierProperty(PsiModifier.STATIC)) {
+        if (ClassUtil.isTopLevelClass(containingClass) || containingClass.hasModifierProperty(PsiModifier.STATIC)) {
           final InternalUsageInfo[] refsInMember = MakeStaticUtil.findClassRefsInMember(containingMethod, true);
           for (InternalUsageInfo info : refsInMember) {
             final PsiElement referencedElement = info.getReferencedElement();

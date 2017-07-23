@@ -25,7 +25,7 @@ public class MethodOverridesPrivateMethodInspectionTest extends LightInspectionT
 
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new MethodOverridesPrivateMethodInspection();
+    return new MethodOverridesInaccessibleMethodOfSuperInspection();
   }
 
   @Override
@@ -36,6 +36,11 @@ public class MethodOverridesPrivateMethodInspectionTest extends LightInspectionT
       "private void readObject(java.io.ObjectInputStream s){}" +
       "private void writeObject(java.io.ObjectOutputStream s){}" +
       "private void other() {}" +
+      "}",
+      "package test; " +
+      "public class Parent<T> {" +
+       "void foo(){}" +
+       "void bar(T t){}" +
       "}"
     };
   }
@@ -51,6 +56,20 @@ public class MethodOverridesPrivateMethodInspectionTest extends LightInspectionT
     doTest("import test.Super;" +
            "class B extends Super {" +
            "  private void /*Method 'other()' overrides a 'private' method of a superclass*/other/**/() {}" +
+           "}");
+  }
+  
+  public void testPackageLocal() {
+    doTest("import test.Parent;" +
+           "class Child extends Parent<String> {" +
+           "  void /*Method 'foo()' overrides a package-private method of a superclass located in another package*/foo/**/() {}" +
+           "}");
+  }
+
+  public void testGenericSuperClass() throws Exception {
+    doTest("import test.Parent;" +
+           "class Child extends Parent<String> {" +
+           "  void /*Method 'bar()' overrides a package-private method of a superclass located in another package*/bar/**/(String s) {}" +
            "}");
   }
 }

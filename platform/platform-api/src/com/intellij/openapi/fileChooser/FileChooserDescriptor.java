@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,8 +55,9 @@ public class FileChooserDescriptor implements Cloneable {
   private boolean myTreeRootVisible = false;
   private boolean myShowHiddenFiles = false;
   private Condition<VirtualFile> myFileFilter = null;
+  private boolean myForcedToUseIdeaFileChooser = false;
 
-  private final Map<String, Object> myUserData = new HashMap<>();
+  private final Map<String, Object> myUserData = new THashMap<>();
 
   /**
    * Creates new instance. Use methods from {@link FileChooserDescriptorFactory} for most used descriptors.
@@ -172,6 +174,7 @@ public class FileChooserDescriptor implements Cloneable {
   }
 
   public FileChooserDescriptor withRoots(@NotNull List<VirtualFile> roots) {
+    if (roots.contains(null)) throw new IllegalArgumentException("'null' in roots: " + roots);
     myRoots.clear();
     myRoots.addAll(roots);
     return this;
@@ -295,6 +298,14 @@ public class FileChooserDescriptor implements Cloneable {
   public void validateSelectedFiles(VirtualFile[] files) throws Exception {
   }
 
+  public boolean isForcedToUseIdeaFileChooser() {
+    return myForcedToUseIdeaFileChooser;
+  }
+
+  public void setForcedToUseIdeaFileChooser(boolean forcedToUseIdeaFileChooser) {
+    myForcedToUseIdeaFileChooser = forcedToUseIdeaFileChooser;
+  }
+
   private boolean acceptAsGeneralFile(VirtualFile file) {
     if (FileElement.isArchive(file)) return false; // should be handle by acceptsAsJarFile
     return !file.isDirectory() && myChooseFiles;
@@ -334,7 +345,7 @@ public class FileChooserDescriptor implements Cloneable {
   }
 
   @Nullable
-  public Object getUserData(String dataId) {
+  public Object getUserData(@NotNull String dataId) {
     return myUserData.get(dataId);
   }
 

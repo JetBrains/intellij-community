@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,8 +45,6 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ComparatorDelegate;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.AnnotationProviderEx;
 import com.intellij.vcs.log.VcsUserRegistry;
@@ -82,6 +80,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Function;
+
+import static java.util.Comparator.comparing;
 
 /**
  * Git VCS implementation
@@ -358,12 +359,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
         buffer.append(exception.getMessage());
       }
       final String msg = buffer.toString();
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          Messages.showErrorDialog(myProject, msg, GitBundle.getString("error.dialog.title"));
-        }
-      });
+      UIUtil.invokeLaterIfNeeded(() -> Messages.showErrorDialog(myProject, msg, GitBundle.getString("error.dialog.title")));
     }
   }
 
@@ -459,13 +455,14 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     return true;
   }
 
+  @NotNull
   @Override
-  public <S> List<S> filterUniqueRoots(final List<S> in, final Convertor<S, VirtualFile> convertor) {
-    Collections.sort(in, new ComparatorDelegate<>(convertor, FilePathComparator.getInstance()));
+  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
+    Collections.sort(in, comparing(convertor, FilePathComparator.getInstance()));
 
     for (int i = 1; i < in.size(); i++) {
       final S sChild = in.get(i);
-      final VirtualFile child = convertor.convert(sChild);
+      final VirtualFile child = convertor.apply(sChild);
       final VirtualFile childRoot = GitUtil.gitRootOrNull(child);
       if (childRoot == null) {
         // non-git file actually, skip it
@@ -473,7 +470,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       }
       for (int j = i - 1; j >= 0; --j) {
         final S sParent = in.get(j);
-        final VirtualFile parent = convertor.convert(sParent);
+        final VirtualFile parent = convertor.apply(sParent);
         // the method check both that parent is an ancestor of the child and that they share common git root
         if (VfsUtilCore.isAncestor(parent, child, false) && VfsUtilCore.isAncestor(childRoot, parent, false)) {
           in.remove(i);
@@ -515,8 +512,8 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   public List<CommitExecutor> getCommitExecutors() {
     return myCommitAndPushExecutor != null
-           ? Collections.<CommitExecutor>singletonList(myCommitAndPushExecutor)
-           : Collections.<CommitExecutor>emptyList();
+           ? Collections.singletonList(myCommitAndPushExecutor)
+           : Collections.emptyList();
   }
 
   @NotNull
@@ -532,16 +529,14 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   @CalledInAwt
   public void enableIntegration() {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        Collection<VcsRoot> roots = ServiceManager.getService(myProject, VcsRootDetector.class).detect();
-        new GitIntegrationEnabler(GitVcs.this, myGit).enable(roots);
-      }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      Collection<VcsRoot> roots = ServiceManager.getService(myProject, VcsRootDetector.class).detect();
+      new GitIntegrationEnabler(GitVcs.this, myGit).enable(roots);
     });
   }
 
   @Override
   public CheckoutProvider getCheckoutProvider() {
-    return new GitCheckoutProvider(ServiceManager.getService(Git.class));
+    return new GitCheckoutProvider(Git.getInstance());
   }
 }

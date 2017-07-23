@@ -189,11 +189,10 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
 
     RemoteSdkCredentialsHolder holder = (RemoteSdkCredentialsHolder)o;
 
-    if (isAnonymous() != holder.isAnonymous()) return false;
     if (getLiteralPort() != null ? !getLiteralPort().equals(holder.getLiteralPort()) : holder.getLiteralPort() != null) return false;
     if (isStorePassphrase() != holder.isStorePassphrase()) return false;
     if (isStorePassword() != holder.isStorePassword()) return false;
-    if (isUseKeyPair() != holder.isUseKeyPair()) return false;
+    if (getAuthType() != holder.getAuthType()) return false;
     if (getHost() != null ? !getHost().equals(holder.getHost()) : holder.getHost() != null) return false;
     if (getKnownHostsFile() != null ? !getKnownHostsFile().equals(holder.getKnownHostsFile()) : holder.getKnownHostsFile() != null) {
       return false;
@@ -216,10 +215,9 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
   public int hashCode() {
     int result = getHost() != null ? getHost().hashCode() : 0;
     result = 31 * result + (getLiteralPort() != null ? getLiteralPort().hashCode() : 0);
-    result = 31 * result + (isAnonymous() ? 1 : 0);
     result = 31 * result + (getUserName() != null ? getUserName().hashCode() : 0);
     result = 31 * result + (getPassword() != null ? getPassword().hashCode() : 0);
-    result = 31 * result + (isUseKeyPair() ? 1 : 0);
+    result = 31 * result + getAuthType().hashCode();
     result = 31 * result + (getPrivateKeyFile() != null ? getPrivateKeyFile().hashCode() : 0);
     result = 31 * result + (getKnownHostsFile() != null ? getKnownHostsFile().hashCode() : 0);
     result = 31 * result + (getPassphrase() != null ? getPassphrase().hashCode() : 0);
@@ -237,8 +235,6 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
            '\'' +
            ", getLiteralPort()=" +
            getLiteralPort() +
-           ", isAnonymous()=" +
-           isAnonymous() +
            ", getUserName()='" +
            getUserName() +
            '\'' +

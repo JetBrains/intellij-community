@@ -16,34 +16,17 @@
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.VcsLogUi;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.vcs.log.impl.CommonUiProperties;
+import com.intellij.vcs.log.impl.VcsLogUiProperties;
 
-public class ShowDetailsAction extends ToggleAction implements DumbAware {
+public class ShowDetailsAction extends BooleanPropertyToggleAction {
 
   public ShowDetailsAction() {
     super("Show Details", "Display details panel", AllIcons.Actions.Preview);
   }
 
   @Override
-  public boolean isSelected(@NotNull AnActionEvent e) {
-    VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    Project project = e.getProject();
-    if (project == null || ui == null) return false;
-    return !project.isDisposed() && ui.isShowDetails();
-  }
-
-  @Override
-  public void setSelected(@NotNull AnActionEvent e, boolean state) {
-    VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    Project project = e.getProject();
-    if (project != null && !project.isDisposed() && ui != null) {
-      ui.setShowDetails(state);
-    }
+  protected VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty() {
+    return CommonUiProperties.SHOW_DETAILS;
   }
 }

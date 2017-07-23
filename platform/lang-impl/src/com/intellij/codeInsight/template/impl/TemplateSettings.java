@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,11 +69,13 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   public static final char ENTER_CHAR = '\n';
   public static final char DEFAULT_CHAR = 'D';
   public static final char CUSTOM_CHAR = 'C';
+  public static final char NONE_CHAR = 'N';
 
   @NonNls private static final String SPACE = "SPACE";
   @NonNls private static final String TAB = "TAB";
   @NonNls private static final String ENTER = "ENTER";
   @NonNls private static final String CUSTOM = "CUSTOM";
+  @NonNls private static final String NONE = "NONE";
 
   @NonNls private static final String NAME = "name";
   @NonNls private static final String VALUE = "value";
@@ -115,6 +117,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       return TAB.equals(shortcut) ? TAB_CHAR :
              ENTER.equals(shortcut) ? ENTER_CHAR :
              CUSTOM.equals(shortcut) ? CUSTOM_CHAR :
+             NONE.equals(shortcut) ? NONE_CHAR :
              SPACE_CHAR;
     }
 
@@ -124,6 +127,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       return shortcut == TAB_CHAR ? TAB :
              shortcut == ENTER_CHAR ? ENTER :
              shortcut == CUSTOM_CHAR ? CUSTOM :
+             shortcut == NONE_CHAR ? NONE :
              SPACE;
     }
   }
@@ -195,12 +199,20 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       @Nullable
       @Override
       public TemplateGroup readScheme(@NotNull Element element, boolean duringLoad) {
-        return readTemplateFile(element, element.getAttributeValue("group"), false, false, getClass().getClassLoader());
+        TemplateGroup group = readTemplateFile(element, element.getAttributeValue("group"), false, false, getClass().getClassLoader());
+        if (group != null) {
+          group.setModified(false);
+        }
+        return group;
       }
 
       @NotNull
       @Override
       public SchemeState getState(@NotNull TemplateGroup template) {
+        if (template.isModified()) {
+          return SchemeState.POSSIBLY_CHANGED;
+        }
+
         for (TemplateImpl t : template.getElements()) {
           if (differsFromDefault(t)) {
             return SchemeState.POSSIBLY_CHANGED;
@@ -213,16 +225,26 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       @Override
       public Element writeScheme(@NotNull TemplateGroup template) {
         Element templateSetElement = new Element(TEMPLATE_SET);
-        templateSetElement.setAttribute(GROUP, template.getName());
 
-        Lazy<Map<String, TemplateContextType>> idToType = TemplateContext.getIdToType();
-        for (TemplateImpl t : template.getElements()) {
-          TemplateImpl defaultTemplate = getDefaultTemplate(t);
-          if (defaultTemplate == null || !t.equals(defaultTemplate) || !t.contextsEqual(defaultTemplate)) {
-            templateSetElement.addContent(serializeTemplate(t, defaultTemplate, idToType));
+        List<TemplateImpl> elements = template.getElements();
+        if (!elements.isEmpty()) {
+          boolean isGroupAttributeAdded = false;
+          Lazy<Map<String, TemplateContextType>> idToType = TemplateContext.getIdToType();
+          for (TemplateImpl t : elements) {
+            TemplateImpl defaultTemplate = getDefaultTemplate(t);
+            if (defaultTemplate == null || !t.equals(defaultTemplate) || !t.contextsEqual(defaultTemplate)) {
+              if (!isGroupAttributeAdded) {
+                isGroupAttributeAdded = true;
+                // add attribute only if not empty to avoid empty file (due to group attribute element will be not considered as empty)
+                templateSetElement.setAttribute(GROUP, template.getName());
+              }
+
+              templateSetElement.addContent(serializeTemplate(t, defaultTemplate, idToType));
+            }
           }
         }
 
+        template.setModified(false);
         return templateSetElement;
       }
 
@@ -416,7 +438,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
   @NotNull
   private static TemplateImpl createTemplate(@NotNull String key, String string, @NotNull String group, String description, @Nullable String shortcut, String id) {
-    TemplateImpl template = new TemplateImpl(key, string, group);
+    TemplateImpl template = new TemplateImpl(key, string, group, false);
     template.setId(id);
     template.setDescription(description);
     if (TAB.equals(shortcut)) {
@@ -427,6 +449,9 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     }
     else if (SPACE.equals(shortcut)) {
       template.setShortcutChar(SPACE_CHAR);
+    }
+    else if (NONE.equals(shortcut)) {
+      template.setShortcutChar(NONE_CHAR);
     }
     else {
       template.setShortcutChar(DEFAULT_CHAR);
@@ -602,6 +627,9 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     }
     else if (template.getShortcutChar() == SPACE_CHAR) {
       element.setAttribute(SHORTCUT, SPACE);
+    }
+    else if (template.getShortcutChar() == NONE_CHAR) {
+      element.setAttribute(SHORTCUT, NONE);
     }
     if (template.getDescription() != null) {
       element.setAttribute(DESCRIPTION, template.getDescription());

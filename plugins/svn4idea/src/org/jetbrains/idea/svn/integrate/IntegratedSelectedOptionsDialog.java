@@ -18,13 +18,13 @@ package org.jetbrains.idea.svn.integrate;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IconUtil;
@@ -40,10 +40,10 @@ import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNURL;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.io.File;
 import java.util.*;
+
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 public class IntegratedSelectedOptionsDialog extends DialogWrapper {
   private JPanel contentPane;
@@ -77,11 +77,8 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     init();
 
     myWorkingCopiesList.setModel(new DefaultListModel());
-    myWorkingCopiesList.addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(final ListSelectionEvent e) {
-        setOKActionEnabled((! myMustSelectBeforeOk) || (myWorkingCopiesList.getSelectedIndex() != -1));
-      }
-    });
+    myWorkingCopiesList
+      .addListSelectionListener(e -> setOKActionEnabled((!myMustSelectBeforeOk) || (myWorkingCopiesList.getSelectedIndex() != -1)));
     setOKActionEnabled((! myMustSelectBeforeOk) || (myWorkingCopiesList.getSelectedIndex() != -1));
 
     final List<WorkingCopyInfo> workingCopyInfoList = new ArrayList<>();
@@ -100,7 +97,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
       myWorkingCopiesList.setSelectedIndex(0);
     }
 
-    SvnConfiguration svnConfig = SvnConfiguration.getInstance(myVcs.getProject());
+    SvnConfiguration svnConfig = myVcs.getSvnConfiguration();
     myDryRunCheckbox.setSelected(svnConfig.isMergeDryRun());
     myIgnoreWhitespacesCheckBox.setSelected(svnConfig.isIgnoreSpacesInMerge());
 
@@ -116,7 +113,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
       public void actionPerformed(final AnActionEvent e) {
         final VirtualFile vFile = FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFolderDescriptor(), myProject, null);
         if (vFile != null) {
-          final File file = new File(vFile.getPath());
+          final File file = virtualToIoFile(vFile);
           if (hasDuplicate(file)) {
             return; // silently do not add duplicate
           }
@@ -186,7 +183,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
 
   private void createUIComponents() {
     myGroup = new DefaultActionGroup();
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, myGroup, false);
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("SvnIntegratedSelectedOptionsDialog", myGroup, false);
     myToolbar = actionToolbar.getComponent();
   }
 
@@ -212,12 +209,9 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
   }
 
   private boolean underProject(final File file) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        final VirtualFile vf = SvnUtil.getVirtualFile(file.getAbsolutePath());
-        return (vf == null) || PeriodicalTasksCloser.getInstance().safeGetService(myProject, FileIndexFacade.class).isInContent(vf);
-      }
+    return ReadAction.compute(() -> {
+      final VirtualFile vf = SvnUtil.getVirtualFile(file.getAbsolutePath());
+      return (vf == null) || PeriodicalTasksCloser.getInstance().safeGetService(myProject, FileIndexFacade.class).isInContent(vf);
     });
   }
 
@@ -226,7 +220,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
   }
 
   public void saveOptions() {
-    SvnConfiguration svnConfig = SvnConfiguration.getInstance(myVcs.getProject());
+    SvnConfiguration svnConfig = myVcs.getSvnConfiguration();
     svnConfig.setMergeDryRun(myDryRunCheckbox.isSelected());
     svnConfig.setIgnoreSpacesInMerge(myIgnoreWhitespacesCheckBox.isSelected());
   }

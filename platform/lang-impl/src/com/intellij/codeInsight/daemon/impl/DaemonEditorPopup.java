@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,13 +90,13 @@ public class DaemonEditorPopup extends PopupHandler {
       }
     });
 
-    final JBCheckboxMenuItem previewCheckbox = new JBCheckboxMenuItem(IdeBundle.message("checkbox.show.editor.preview.popup"), UISettings.getInstance().SHOW_EDITOR_TOOLTIP);
+    final JBCheckboxMenuItem previewCheckbox = new JBCheckboxMenuItem(IdeBundle.message("checkbox.show.editor.preview.popup"), UISettings.getInstance().getShowEditorToolTip());
     popupMenu.addSeparator();
     popupMenu.add(previewCheckbox);
     previewCheckbox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        UISettings.getInstance().SHOW_EDITOR_TOOLTIP = previewCheckbox.isSelected();
+        UISettings.getInstance().setShowEditorToolTip(previewCheckbox.isSelected());
         UISettings.getInstance().fireUISettingsChanged();
       }
     });

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,15 @@ import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacerUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.siyeh.ig.psiutils.ImportUtils;
 import com.siyeh.ig.psiutils.PsiElementOrderComparator;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Eugene.Kudelevsky
@@ -301,11 +305,14 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     if (originalModifierList == null || queryModifierList == null || replacementModifierList == null) {
       return;
     }
-    if (originalModifierList.getTextLength() != 0 && queryModifierList.getTextLength() == 0) {
+    if (originalModifierList.getTextLength() != 0) {
       final PsiModifierList copy = (PsiModifierList)originalModifierList.copy();
       for (String modifier : PsiModifier.MODIFIERS) {
         if (replacementModifierList.hasExplicitModifier(modifier)) {
           copy.setModifierProperty(modifier, true);
+        }
+        else if (queryModifierList.hasExplicitModifier(modifier) && !replacementModifierList.hasModifierProperty(modifier)) {
+          copy.setModifierProperty(modifier, false);
         }
       }
       final PsiElement anchor = copy.getFirstChild();
@@ -398,7 +405,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
             }
             final PsiElement lastElement = unmatchedElements.get(unmatchedElements.size() - 1);
             if (lastElement instanceof PsiCodeBlock) {
-              final PsiElement finallyKeyword = PsiTreeUtil.skipSiblingsBackward(lastElement, PsiWhiteSpace.class);
+              final PsiElement finallyKeyword = PsiTreeUtil.skipWhitespacesBackward(lastElement);
               assert finallyKeyword != null;
               final PsiElement finallyAnchor = tryStatement.getLastChild();
               addElementAfterAnchor(tryStatement, lastElement, finallyAnchor);
@@ -491,8 +498,8 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         }
         else if (element instanceof PsiField) {
           while (PsiUtil.isJavaToken(nextSibling, JavaTokenType.COMMA)) {
-            lastToDelete = PsiTreeUtil.skipSiblingsForward(nextSibling, PsiWhiteSpace.class);
-            nextSibling = PsiTreeUtil.skipSiblingsForward(lastToDelete, PsiWhiteSpace.class);
+            lastToDelete = PsiTreeUtil.skipWhitespacesForward(nextSibling);
+            nextSibling = PsiTreeUtil.skipWhitespacesForward(lastToDelete);
           }
         }
 
@@ -560,7 +567,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     final int elementOffset = affectedElement.getTextOffset();
     final int finalStartOffset = startOffset + elementOffset;
     final int finalEndOffset = endOffset + elementOffset;
-    final List<PsiJavaCodeReferenceElement> references = new ArrayList<>();
+    final List<PsiJavaCodeReferenceElement> references = new SmartList<>();
     final JavaRecursiveElementVisitor collector = new JavaRecursiveElementVisitor() {
       @Override
       public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ComponentSerializationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.RootProvider;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtilCore;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.impl.RootProviderBaseImpl;
 import com.intellij.openapi.roots.libraries.*;
@@ -49,6 +49,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.openapi.components.StateSplitterEx.EXTERNAL_SYSTEM_ID_ATTRIBUTE;
 import static com.intellij.openapi.vfs.VirtualFileVisitor.ONE_LEVEL_DEEP;
 import static com.intellij.openapi.vfs.VirtualFileVisitor.SKIP_ROOT;
 
@@ -74,17 +75,25 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   private LibraryProperties myProperties;
 
   private final MyRootProviderImpl myRootProvider = new MyRootProviderImpl();
+  @Nullable
   private final ModifiableRootModel myRootModel;
   private boolean myDisposed;
   private final Disposable myPointersDisposable = Disposer.newDisposable();
   private final JarDirectoryWatcher myRootsWatcher = JarDirectoryWatcherFactory.getInstance().createWatcher(myJarDirectories, myRootProvider);
+  private final ProjectModelExternalSource myExternalSource;
 
   LibraryImpl(LibraryTable table, @NotNull Element element, ModifiableRootModel rootModel) throws InvalidDataException {
-    this(table, rootModel, null, element.getAttributeValue(LIBRARY_NAME_ATTR), findPersistentLibraryKind(element));
+    this(table, rootModel, null, element.getAttributeValue(LIBRARY_NAME_ATTR), findPersistentLibraryKind(element), findExternalSource(element));
     readProperties(element);
     myJarDirectories.readExternal(element);
     readRoots(element);
     myRootsWatcher.updateWatchedRoots();
+  }
+
+  @Nullable
+  private static ProjectModelExternalSource findExternalSource(Element element) {
+    @Nullable String externalSourceId = element.getAttributeValue(EXTERNAL_SYSTEM_ID_ATTRIBUTE);
+    return externalSourceId != null ? ExternalProjectSystemRegistry.getInstance().getSourceById(externalSourceId) : null;
   }
 
   @Nullable
@@ -98,15 +107,16 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     return (PersistentLibraryKind<?>)kind;
   }
 
-  LibraryImpl(String name, @Nullable final PersistentLibraryKind<?> kind, LibraryTable table, ModifiableRootModel rootModel) {
-    this(table, rootModel, null, name, kind);
+  LibraryImpl(String name, @Nullable final PersistentLibraryKind<?> kind, LibraryTable table, ModifiableRootModel rootModel,
+              ProjectModelExternalSource externalSource) {
+    this(table, rootModel, null, name, kind, externalSource);
     if (kind != null) {
       myProperties = kind.createDefaultProperties();
     }
   }
 
   private LibraryImpl(@NotNull LibraryImpl from, LibraryImpl newSource, ModifiableRootModel rootModel) {
-    this(from.myLibraryTable, rootModel, newSource, from.myName, from.myKind);
+    this(from.myLibraryTable, rootModel, newSource, from.myName, from.myKind, from.myExternalSource);
     from.checkDisposed();
 
     if (from.myKind != null && from.myProperties != null) {
@@ -126,13 +136,15 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   }
 
   // primary
-  private LibraryImpl(LibraryTable table, ModifiableRootModel rootModel, LibraryImpl newSource, String name, @Nullable final PersistentLibraryKind<?> kind) {
+  private LibraryImpl(LibraryTable table, @Nullable ModifiableRootModel rootModel, LibraryImpl newSource, String name,
+                      @Nullable final PersistentLibraryKind<?> kind, @Nullable ProjectModelExternalSource externalSource) {
     super(true);
     myLibraryTable = table;
     myRootModel = rootModel;
     mySource = newSource;
     myKind = kind;
     myName = name;
+    myExternalSource = externalSource;
     //init roots depends on my myKind
     myRoots = initRoots();
     Disposer.register(this, myRootsWatcher);
@@ -279,6 +291,12 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     return result;
   }
 
+  @Nullable
+  @Override
+  public ProjectModelExternalSource getExternalSource() {
+    return myExternalSource;
+  }
+
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     readName(element);
@@ -355,6 +373,22 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
         }
       }
     }
+
+    if (myExternalSource != null) {
+      Module module = getModule();
+      Project project;
+      if (module == null) {
+        project = myLibraryTable instanceof ProjectLibraryTable ? ((ProjectLibraryTable)myLibraryTable).getProject() : null;
+      }
+      else {
+        project = module.getProject();
+      }
+      if (ProjectUtilCore.isExternalStorageEnabled(project)) {
+        //we can add this attribute only if the library configuration will be stored separately, otherwise we will get modified files in .idea/libraries.
+        element.setAttribute(EXTERNAL_SYSTEM_ID_ATTRIBUTE, myExternalSource.getId());
+      }
+    }
+
     ArrayList<OrderRootType> storableRootTypes = new ArrayList<>();
     storableRootTypes.addAll(Arrays.asList(OrderRootType.getAllTypes()));
     if (myKind != null) {

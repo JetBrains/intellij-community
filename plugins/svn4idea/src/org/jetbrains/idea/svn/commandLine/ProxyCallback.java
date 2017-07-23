@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -75,12 +74,7 @@ public class ProxyCallback extends AuthCallbackCase {
     // TODO: This is quite messy logic for determining group for host - either ProxyCallback could be unified with ProxyModule
     // TODO: or group name resolved in ProxyModule could be saved in Command instance.
     // TODO: This will be done later after corresponding refactorings.
-    String proxyHostParameter = ContainerUtil.find(command.getParameters(), new Condition<String>() {
-      @Override
-      public boolean value(String s) {
-        return s.contains("http-proxy-port");
-      }
-    });
+    String proxyHostParameter = ContainerUtil.find(command.getParameters(), s -> s.contains("http-proxy-port"));
 
     if (!StringUtil.isEmpty(proxyHostParameter) && myUrl != null && myProxyAuthentication != null) {
       String group = getHostGroup(proxyHostParameter);

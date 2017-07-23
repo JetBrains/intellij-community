@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
-import com.intellij.codeInspection.reference.RefUtil;
 import com.intellij.codeInspection.reference.UnusedDeclarationFixProvider;
 import com.intellij.find.findUsages.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
@@ -40,7 +40,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class UnusedSymbolUtil {
-  private static final ImplicitUsageProvider[] ourImplicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
 
   public static boolean isInjected(@NotNull Project project, @NotNull PsiModifierListOwner modifierListOwner) {
     return EntryPointsManagerBase.getInstance(project).isEntryPoint(modifierListOwner);
@@ -48,10 +47,10 @@ public class UnusedSymbolUtil {
 
   public static boolean isImplicitUsage(@NotNull Project project,
                                         @NotNull PsiModifierListOwner element,
-                                        @NotNull ProgressIndicator progress) {
+                                        @Nullable ProgressIndicator progress) {
     if (isInjected(project, element)) return true;
-    for (ImplicitUsageProvider provider : ourImplicitUsageProviders) {
-      progress.checkCanceled();
+    for (ImplicitUsageProvider provider : Extensions.getExtensions(ImplicitUsageProvider.EP_NAME)) {
+      ProgressManager.checkCanceled();
       if (provider.isImplicitUsage(element)) {
         return true;
       }
@@ -60,9 +59,13 @@ public class UnusedSymbolUtil {
     return false;
   }
 
-  public static boolean isImplicitRead(@NotNull Project project, @NotNull PsiVariable element, @NotNull ProgressIndicator progress) {
-    for(ImplicitUsageProvider provider: ourImplicitUsageProviders) {
-      progress.checkCanceled();
+  public static boolean isImplicitRead(@NotNull PsiVariable variable) {
+    return isImplicitRead(variable.getProject(), variable, null);
+  }
+
+  public static boolean isImplicitRead(@NotNull Project project, @NotNull PsiVariable element, @Nullable ProgressIndicator progress) {
+    for(ImplicitUsageProvider provider: Extensions.getExtensions(ImplicitUsageProvider.EP_NAME)) {
+      ProgressManager.checkCanceled();
       if (provider.isImplicitRead(element)) {
         return true;
       }
@@ -70,11 +73,15 @@ public class UnusedSymbolUtil {
     return isInjected(project, element);
   }
 
+  public static boolean isImplicitWrite(@NotNull PsiVariable variable) {
+    return isImplicitWrite(variable.getProject(), variable, null);
+  }
+
   public static boolean isImplicitWrite(@NotNull Project project,
                                         @NotNull PsiVariable element,
-                                        @NotNull ProgressIndicator progress) {
-    for(ImplicitUsageProvider provider: ourImplicitUsageProviders) {
-      progress.checkCanceled();
+                                        @Nullable ProgressIndicator progress) {
+    for(ImplicitUsageProvider provider: Extensions.getExtensions(ImplicitUsageProvider.EP_NAME)) {
+      ProgressManager.checkCanceled();
       if (provider.isImplicitWrite(element)) {
         return true;
       }

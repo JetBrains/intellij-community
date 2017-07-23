@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
       throw new IncorrectOperationException(JavaCoreBundle.message("psi.error.attempt.to.edit.class.file", element.getContainingFile()));
     }
     PsiElementFactory factory = PsiElementFactory.SERVICE.getInstance(element.getProject());
-    PsiJavaModuleReferenceElement newElement = factory.createModuleFromText("module " + newName + " {}").getNameElement();
+    PsiJavaModuleReferenceElement newElement = factory.createModuleFromText("module " + newName + " {}").getNameIdentifier();
     return element.replace(newElement);
   }
 
@@ -83,6 +83,14 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
     public ResolveResult[] resolve(@NotNull PsiJavaModuleReference reference, boolean incompleteCode) {
       PsiFile file = reference.getElement().getContainingFile();
       String moduleName = reference.getCanonicalText();
+
+      if (file instanceof PsiJavaFile) {
+        PsiJavaModule module = ((PsiJavaFile)file).getModuleDeclaration();
+        if (module != null && module.getName().equals(moduleName)) {
+          return new ResolveResult[]{new PsiElementResolveResult(module)};
+        }
+      }
+
       Collection<PsiJavaModule> modules = findModules(file, moduleName, incompleteCode);
       if (!modules.isEmpty()) {
         ResolveResult[] result = new ResolveResult[modules.size()];
@@ -98,7 +106,7 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
     private static Collection<PsiJavaModule> findModules(PsiFile file, String moduleName, boolean incompleteCode) {
       Project project = file.getProject();
       GlobalSearchScope scope = incompleteCode ? GlobalSearchScope.allScope(project) : file.getResolveScope();
-      return JavaFileManager.SERVICE.getInstance(project).findModules(moduleName, scope);
+      return JavaFileManager.getInstance(project).findModules(moduleName, scope);
     }
   }
 
@@ -116,12 +124,9 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
     if (StringUtil.isEmpty(refText)) return Collections.emptyList();
     CachedValuesManager manager = CachedValuesManager.getManager(refOwner.getProject());
     Key<CachedValue<Collection<PsiJavaModule>>> key = incompleteCode ? K_INCOMPLETE : K_COMPLETE;
-    return manager.getCachedValue(refOwner, key, new CachedValueProvider<Collection<PsiJavaModule>>() {
-      @Override
-      public Result<Collection<PsiJavaModule>> compute() {
-        Collection<PsiJavaModule> modules = Resolver.findModules(refOwner.getContainingFile(), refText, incompleteCode);
-        return Result.create(modules, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-      }
+    return manager.getCachedValue(refOwner, key, () -> {
+      Collection<PsiJavaModule> modules = Resolver.findModules(refOwner.getContainingFile(), refText, incompleteCode);
+      return CachedValueProvider.Result.create(modules, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
     }, false);
   }
 }

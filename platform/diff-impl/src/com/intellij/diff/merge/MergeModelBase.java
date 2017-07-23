@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntArrayList;
@@ -40,7 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class MergeModelBase<S extends MergeModelBase.State> implements Disposable {
-  public static final Logger LOG = Logger.getInstance(MergeModelBase.class);
+  private static final Logger LOG = Logger.getInstance(MergeModelBase.class);
 
   @Nullable private final Project myProject;
   @NotNull private final Document myDocument;
@@ -184,7 +184,7 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
     return oldState;
   }
 
-  private class MyDocumentListener extends DocumentAdapter {
+  private class MyDocumentListener implements DocumentListener {
     @Override
     public void beforeDocumentChange(DocumentEvent e) {
       if (isDisposed()) return;
@@ -218,14 +218,14 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
     }
   }
 
-  public void executeMergeCommand(@Nullable String commandName,
-                                  @Nullable String commandGroupId,
-                                  @NotNull UndoConfirmationPolicy confirmationPolicy,
-                                  boolean underBulkUpdate,
-                                  @Nullable TIntArrayList affectedChanges,
-                                  @NotNull Runnable task) {
+  public boolean executeMergeCommand(@Nullable String commandName,
+                                     @Nullable String commandGroupId,
+                                     @NotNull UndoConfirmationPolicy confirmationPolicy,
+                                     boolean underBulkUpdate,
+                                     @Nullable TIntArrayList affectedChanges,
+                                     @NotNull Runnable task) {
     TIntArrayList allAffectedChanges = affectedChanges != null ? collectAffectedChanges(affectedChanges) : null;
-    DiffUtil.executeWriteCommand(myProject, myDocument, commandName, commandGroupId, confirmationPolicy, underBulkUpdate, () -> {
+    return DiffUtil.executeWriteCommand(myProject, myDocument, commandName, commandGroupId, confirmationPolicy, underBulkUpdate, () -> {
       LOG.assertTrue(!myInsideCommand);
 
       // We should restore states after changes in document (by DocumentUndoProvider) to avoid corruption by our onBeforeDocumentChange()

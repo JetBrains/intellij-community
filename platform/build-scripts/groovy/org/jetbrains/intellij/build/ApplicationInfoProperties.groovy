@@ -29,6 +29,10 @@ class ApplicationInfoProperties {
   final String patchVersion
   final String fullVersionFormat
   final String shortProductName
+  /**
+   * The first number from 'minor' part of the version. This property is temporary added because some products specify composite number (like '1.3')
+   * in 'minor version' attribute instead of using 'micro version' (i.e. set minor='1' micro='3').
+   */
   final String minorVersionMainPart
   final String productName
   final String companyName

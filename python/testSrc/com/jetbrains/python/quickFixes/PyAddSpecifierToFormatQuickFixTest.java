@@ -43,4 +43,7 @@ public class PyAddSpecifierToFormatQuickFixTest extends PyQuickFixTestCase {
     doQuickFixTest(PyStringFormatInspection.class, PyBundle.message("QFIX.NAME.add.specifier"));
   }
 
+  public void testUnicodeEscapes()  {
+    doQuickFixTest(PyStringFormatInspection.class, PyBundle.message("QFIX.NAME.add.specifier"));
+  }
 }

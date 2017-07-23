@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.module.Module;
@@ -71,7 +70,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
     myProject = project;
     
     if (myInitialized.compareAndSet(false, true)) {
-      VirtualFileManager.getInstance().addVirtualFileListener(new OurVirtualFileAdapter());
+      VirtualFileManager.getInstance().addVirtualFileListener(new OurVirtualFileListener());
     }
   }
 
@@ -212,7 +211,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
 
   public enum UnlockOption {UNLOCK, UNLOCK_DIR, UNLOCK_ALL}
 
-  private static class OurVirtualFileAdapter extends VirtualFileAdapter {
+  private static class OurVirtualFileListener implements VirtualFileListener {
     @Override
     public void fileCreated(@NotNull VirtualFileEvent event) {
       unlock(event);

@@ -39,6 +39,13 @@ public class MavenProjectsNavigatorTest extends MavenImportingTestCase {
     myStructure = myNavigator.getStructureForTests();
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    myNavigator = null;
+    myStructure = null;
+    super.tearDown();
+  }
+
   public void testActivation() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

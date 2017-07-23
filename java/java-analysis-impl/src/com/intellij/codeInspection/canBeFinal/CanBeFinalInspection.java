@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 24, 2001
- * Time: 2:46:32 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.canBeFinal;
 
 import com.intellij.analysis.AnalysisScope;
@@ -39,8 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
 
 public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
@@ -70,34 +60,19 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
 
       myReportClassesCheckbox = new JCheckBox(InspectionsBundle.message("inspection.can.be.final.option"));
       myReportClassesCheckbox.setSelected(REPORT_CLASSES);
-      myReportClassesCheckbox.getModel().addChangeListener(new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          REPORT_CLASSES = myReportClassesCheckbox.isSelected();
-        }
-      });
+      myReportClassesCheckbox.getModel().addItemListener(e -> REPORT_CLASSES = myReportClassesCheckbox.isSelected());
       gc.gridy = 0;
       add(myReportClassesCheckbox, gc);
 
       myReportMethodsCheckbox = new JCheckBox(InspectionsBundle.message("inspection.can.be.final.option1"));
       myReportMethodsCheckbox.setSelected(REPORT_METHODS);
-      myReportMethodsCheckbox.getModel().addChangeListener(new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          REPORT_METHODS = myReportMethodsCheckbox.isSelected();
-        }
-      });
+      myReportMethodsCheckbox.getModel().addItemListener(e -> REPORT_METHODS = myReportMethodsCheckbox.isSelected());
       gc.gridy++;
       add(myReportMethodsCheckbox, gc);
 
       myReportFieldsCheckbox = new JCheckBox(InspectionsBundle.message("inspection.can.be.final.option2"));
       myReportFieldsCheckbox.setSelected(REPORT_FIELDS);
-      myReportFieldsCheckbox.getModel().addChangeListener(new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          REPORT_FIELDS = myReportFieldsCheckbox.isSelected();
-        }
-      });
+      myReportFieldsCheckbox.getModel().addItemListener(e -> REPORT_FIELDS = myReportFieldsCheckbox.isSelected());
 
       gc.weighty = 1;
       gc.gridy++;
@@ -161,6 +136,7 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
         psiIdentifier = ((PsiMethod)psiMember).getNameIdentifier();
       }
       else if (refElement instanceof RefField) {
+        if (!((RefField)refElement).isUsedForWriting()) return null;
         if (!isReportFields()) return null;
         psiIdentifier = ((PsiField)psiMember).getNameIdentifier();
       }

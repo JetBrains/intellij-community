@@ -27,9 +27,9 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 
 /**
- * Implementation of the {@link java.util.List} interface which:
+ * Implementation of the {@link List} interface which:
  * <ul>
- *  <li>Stores elements using weak semantics (see {@link java.lang.ref.WeakReference})</li>
+ *  <li>Stores elements using weak semantics (see {@link WeakReference})</li>
  *  <li>Automatically reclaims storage for garbage collected elements</li>
  *  <li>Is NOT thread safe</li>
  *  <li>Is NOT RandomAccess, because garbage collector can remove element at any time</li>
@@ -153,7 +153,7 @@ public class UnsafeWeakList<T> extends AbstractList<T> {
       findNext();
     }
 
-    private boolean findNext() {
+    private void findNext() {
       if (modCount != startModCount) throw new ConcurrentModificationException();
       curIndex = nextIndex;
       curElement = nextElement;
@@ -164,10 +164,9 @@ public class UnsafeWeakList<T> extends AbstractList<T> {
         if (t != null) {
           nextElement = t;
           nextIndex = i;
-          return true;
+          break;
         }
       }
-      return false;
     }
 
     @Override

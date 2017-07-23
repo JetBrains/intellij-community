@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.ResolveScopeProvider;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -33,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
  * @author Max Medvedev
  */
 public class GroovyResolveScopeProvider extends ResolveScopeProvider {
+
   @Override
   public GlobalSearchScope getResolveScope(@NotNull VirtualFile file, Project project) {
     if (file.getFileType() != GroovyFileType.GROOVY_FILE_TYPE) return null;
@@ -43,7 +45,13 @@ public class GroovyResolveScopeProvider extends ResolveScopeProvider {
     if (module == null) return null; //groovy files are only in modules
 
     boolean includeTests = projectFileIndex.isInTestSourceContent(file) || !projectFileIndex.isInSourceContent(file);
-    final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, includeTests);
+    final GlobalSearchScope scope;
+    if (projectFileIndex.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.RESOURCES)) {
+      scope = GlobalSearchScope.moduleRuntimeScope(module, includeTests);
+    }
+    else {
+      scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, includeTests);
+    }
 
     final PsiFile psi = PsiManager.getInstance(project).findFile(file);
     if (psi instanceof GroovyFile && ((GroovyFile)psi).isScript()) {

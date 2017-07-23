@@ -24,6 +24,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 public class SingleRowLayout extends TabLayout {
@@ -166,7 +167,7 @@ public class SingleRowLayout extends TabLayout {
     }
 
     if (selected != null) {
-      data.comp = selected.getComponent();
+      data.comp = new WeakReference<>(selected.getComponent());
       getStrategy().layoutComp(data);
     }
 
@@ -196,11 +197,15 @@ public class SingleRowLayout extends TabLayout {
 
   protected void prepareLayoutPassInfo(SingleRowPassInfo data, TabInfo selected) {
     data.insets = myTabs.getLayoutInsets();
-    data.insets.left += myTabs.getFirstTabOffset();
+    if (myTabs.isHorizontalTabs()) {
+      data.insets.left += myTabs.getFirstTabOffset();
+    }
 
     final JBTabsImpl.Toolbar selectedToolbar = myTabs.myInfo2Toolbar.get(selected);
-    data.hToolbar = selectedToolbar != null && myTabs.myHorizontalSide && !selectedToolbar.isEmpty() ? selectedToolbar : null;
-    data.vToolbar = selectedToolbar != null && !myTabs.myHorizontalSide && !selectedToolbar.isEmpty() ? selectedToolbar : null;
+    data.hToolbar =
+      new WeakReference<>(selectedToolbar != null && myTabs.myHorizontalSide && !selectedToolbar.isEmpty() ? selectedToolbar : null);
+    data.vToolbar =
+      new WeakReference<>(selectedToolbar != null && !myTabs.myHorizontalSide && !selectedToolbar.isEmpty() ?  selectedToolbar : null);
     data.toFitLength = getStrategy().getToFitLength(data);
 
     if (myTabs.isGhostsAlwaysVisible()) {

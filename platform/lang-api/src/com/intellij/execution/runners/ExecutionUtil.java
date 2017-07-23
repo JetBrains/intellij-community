@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.NotificationGroup;
@@ -66,13 +67,15 @@ public class ExecutionUtil {
   }
 
   public static void handleExecutionError(@NotNull ExecutionEnvironment environment, @NotNull ExecutionException e) {
-    handleExecutionError(environment.getProject(), environment.getExecutor().getToolWindowId(), environment.getRunProfile().getName(), e);
+    handleExecutionError(environment.getProject(),
+                         ExecutionManager.getInstance(environment.getProject()).getContentManager().getToolWindowIdByEnvironment(environment),
+                         environment.getRunProfile().getName(), e);
   }
 
   public static void handleExecutionError(@NotNull final Project project,
                                           @NotNull final String toolWindowId,
                                           @NotNull String taskName,
-                                          @NotNull ExecutionException e) {
+                                          @NotNull Throwable e) {
     if (e instanceof RunCanceledByUserException) {
       return;
     }
@@ -186,7 +189,13 @@ public class ExecutionUtil {
       return ExecutionEnvironmentBuilder.create(executor, settings);
     }
     catch (ExecutionException e) {
-      handleExecutionError(settings.getConfiguration().getProject(), executor.getToolWindowId(), settings.getConfiguration().getName(), e);
+      Project project = settings.getConfiguration().getProject();
+      RunContentManager manager = ExecutionManager.getInstance(project).getContentManager();
+      String toolWindowId = manager.getContentDescriptorToolWindowId(settings);
+      if (toolWindowId == null) {
+        toolWindowId = executor.getToolWindowId();
+      }
+      handleExecutionError(project, toolWindowId, settings.getConfiguration().getName(), e);
       return null;
     }
   }

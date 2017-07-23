@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,14 +57,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.refactoring.GroovyChangeContextUtil;
 import org.jetbrains.plugins.groovy.refactoring.classMembers.GrClassMemberReferenceVisitor;
+import org.jetbrains.plugins.groovy.util.GroovyChangeContextUtil;
 
 import java.util.*;
 
-/**
- * Created by Max Medvedev on 10/4/13
- */
 public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
   private static final Logger LOG = Logger.getInstance(GrPullUpHelper.class);
 

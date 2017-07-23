@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.actionSystem.*;
@@ -103,7 +102,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog<VirtualFile> {
     }
 
     protected DefaultTreeModel buildTreeModel(final List<VirtualFile> changes, ChangeNodeDecorator changeNodeDecorator) {
-      return new TreeModelBuilder(myProject, isShowFlatten()).buildModelFromFiles(changes);
+      return TreeModelBuilder.buildFromVirtualFiles(myProject, isShowFlatten(), changes);
     }
 
     protected List<VirtualFile> getSelectedObjects(final ChangesBrowserNode node) {
@@ -130,12 +129,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog<VirtualFile> {
     }
 
     public void refresh() {
-      setChangesToDisplay(new ArrayList<>(Collections2.filter(getIncludedChanges(), new Predicate<VirtualFile>() {
-        @Override
-        public boolean apply(@Nullable VirtualFile input) {
-          return input != null && input.isValid();
-        }
-      })));
+      setChangesToDisplay(new ArrayList<>(Collections2.filter(getIncludedChanges(), input -> input != null && input.isValid())));
     }
 
   }

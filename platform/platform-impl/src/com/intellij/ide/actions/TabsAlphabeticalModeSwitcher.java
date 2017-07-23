@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,8 @@ public class TabsAlphabeticalModeSwitcher extends ToggleAction {
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
-    final int place = UISettings.getInstance().EDITOR_TAB_PLACEMENT;
-    e.getPresentation().setEnabled(UISettings.getInstance().SCROLL_TAB_LAYOUT_IN_EDITOR
+    final int place = UISettings.getInstance().getEditorTabPlacement();
+    e.getPresentation().setEnabled(UISettings.getInstance().getScrollTabLayoutInEditor()
                                    || place == SwingConstants.LEFT
                                    || place == SwingConstants.RIGHT);
   }

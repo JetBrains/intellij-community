@@ -39,11 +39,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 09.06.2007
- */
 public class GeneratedStructureModel extends DefaultTreeModel {
   @NonNls
   private static final String PENDING = "...";

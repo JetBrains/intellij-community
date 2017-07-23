@@ -5,7 +5,6 @@ com.jetbrains.php
 org.intellij.clojure
 NodeJS
 Pythonid
-PythonCore
 com.jetbrains.lang.ejs
 com.jetbrains.twig
 Karma
@@ -25,7 +24,7 @@ IDETalk
 com.intellij.commander
 SourceSafe
 TFS
-ro.redeul.google.go
+org.jetbrains.plugins.go
 com.intellij.plugins.html.instantEditing
 com.jetbrains.intellij.api.watcher
 com.jetbrains.php.framework
@@ -39,3 +38,4 @@ org.jetbrains.plugins.phpstorm-remote-interpreter
 com.jetbrains.php.behat
 com.jetbrains.php.blade
 com.jetbrains.performancePlugin
+Docker

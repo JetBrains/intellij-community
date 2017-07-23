@@ -6,7 +6,9 @@ class Test {
   }
 
   void m(List l){
-    boolean foo = foo<error descr="'foo(java.util.List<T>)' in 'Test' cannot be applied to '(java.util.List)'">(l)</error>;
-    String s = foo<error descr="'foo(java.util.List<T>)' in 'Test' cannot be applied to '(java.util.List)'">(l)</error>;
+    boolean foo = <error descr="Incompatible types. Required boolean but 'foo' was inferred to T:
+Incompatible types: Object is not convertible to boolean">foo(l);</error>
+    String s = <error descr="Incompatible types. Required String but 'foo' was inferred to T:
+Incompatible types: Object is not convertible to String">foo(l);</error>
   }
 }

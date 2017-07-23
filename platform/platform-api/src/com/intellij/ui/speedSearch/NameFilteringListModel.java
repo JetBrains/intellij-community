@@ -38,7 +38,7 @@ public class NameFilteringListModel<T> extends FilteringListModel<T> {
   private int myStartsWithIndex = -1;
   private final Computable<String> myPattern;
 
-  public NameFilteringListModel(JList list,
+  public NameFilteringListModel(JList<T> list,
                                 final Function<T, String> namer,
                                 final Condition<String> filter,
                                 final SpeedSearch speedSearch) {

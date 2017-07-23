@@ -68,7 +68,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
 
   private final MyVcsListener myVcsListener = new MyVcsListener();
 
-  TodoView(@NotNull Project project) {
+  public TodoView(@NotNull Project project) {
     myProject = project;
 
     state.all.arePackagesShown = true;
@@ -123,7 +123,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     myAllTodos = new TodoPanel(myProject, state.all, false, allTodosContent) {
       @Override
       protected TodoTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project) {
-        AllTodosTreeBuilder builder = new AllTodosTreeBuilder(tree, treeModel, project);
+        AllTodosTreeBuilder builder = createAllTodoBuilder(tree, treeModel, project);
         builder.init();
         return builder;
       }
@@ -190,6 +190,11 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     myPanels.add(scopeBasedTodos);
   }
 
+  @NotNull
+  protected AllTodosTreeBuilder createAllTodoBuilder(JTree tree, DefaultTreeModel treeModel, Project project) {
+    return new AllTodosTreeBuilder(tree, treeModel, project);
+  }
+
   private final class MyVcsListener implements VcsListener {
     private boolean myIsVisible;
 
@@ -224,11 +229,13 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
 
     private void _updateFilters() {
       try {
-        updateFilters();
+        if (!DumbService.isDumb(myProject)) {
+          updateFilters();
+          return;
+        }
       }
-      catch (ProcessCanceledException e) {
-        DumbService.getInstance(myProject).smartInvokeLater(this::_updateFilters, ModalityState.NON_MODAL);
-      }
+      catch (ProcessCanceledException ignore) { }
+      DumbService.getInstance(myProject).smartInvokeLater(this::_updateFilters);
     }
 
     private void updateFilters() {
@@ -261,6 +268,20 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
         }, ModalityState.NON_MODAL);
       }, IdeBundle.message("progress.looking.for.todos"), false, myProject));
     }
+  }
+
+  public void refresh() {
+    ApplicationManager.getApplication().runReadAction(() -> {
+          for (TodoPanel panel : myPanels) {
+            panel.rebuildCache();
+          }
+        }
+    );
+    ApplicationManager.getApplication().invokeLater(() -> {
+      for (TodoPanel panel : myPanels) {
+        panel.updateTree();
+      }
+    }, ModalityState.NON_MODAL);
   }
 
   public void addCustomTodoView(final TodoTreeBuilderFactory factory, final String title, final TodoPanelSettings settings) {

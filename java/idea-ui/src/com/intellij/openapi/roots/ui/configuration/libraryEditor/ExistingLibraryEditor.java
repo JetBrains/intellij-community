@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.util.Disposer;
@@ -62,6 +63,12 @@ public class ExistingLibraryEditor extends LibraryEditorBase implements Disposab
       return LibraryType.findByKind(kind);
     }
     return detectType();
+  }
+
+  @Nullable
+  @Override
+  public ProjectModelExternalSource getExternalSource() {
+    return myLibrary.getExternalSource();
   }
 
   @Override

@@ -26,9 +26,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import java.util.HashSet;
 import java.util.List;
 
-/**
- * User: anna
- */
 public class StrictSubtypingConstraint implements ConstraintFormula {
   private PsiType myS;
   private PsiType myT;
@@ -48,7 +45,7 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
 
   @Override
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
-    final HashSet<InferenceVariable> dependencies = new HashSet<InferenceVariable>();
+    final HashSet<InferenceVariable> dependencies = new HashSet<>();
     final boolean reduceResult = doReduce(session, dependencies, constraints);
     if (!reduceResult) {
       session.registerIncompatibleErrorMessage(dependencies, session.getPresentableText(myS) + " conforms to " + session.getPresentableText(myT));
@@ -153,18 +150,19 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
 
         if (SClass == null) return false;
 
+        if (((PsiClassType)myT).isRaw()) {
+          return InheritanceUtil.isInheritorOrSelf(SClass, CClass, true);
+        }
+
         PsiSubstitutor substitutor = SResult.getSubstitutor();
         for (PsiTypeParameter typeParameter : SClass.getTypeParameters()) {
           substitutor = substitutor.put(typeParameter, substitutor.substituteWithBoundsPromotion(typeParameter));
         }
 
-        if (((PsiClassType)myT).isRaw()) {
-          return InheritanceUtil.isInheritorOrSelf(SClass, CClass, true);
-        }
         final PsiSubstitutor tSubstitutor = TResult.getSubstitutor();
         final PsiSubstitutor sSubstitutor = TypeConversionUtil.getClassSubstitutor(CClass, SClass, substitutor);
         if (sSubstitutor != null) {
-          for (PsiTypeParameter parameter : CClass.getTypeParameters()) {
+          for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(CClass)) {
             final PsiType tSubstituted = tSubstitutor.substitute(parameter);
             final PsiType sSubstituted = sSubstitutor.substitute(parameter);
             if (tSubstituted == null ^ sSubstituted == null) {
@@ -183,6 +181,13 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
         constraints.add(new StrictSubtypingConstraint(conjunct, myS));
       }
       return true;
+    }
+
+    if (myT instanceof PsiCapturedWildcardType) {
+      PsiType lowerBound = ((PsiCapturedWildcardType)myT).getLowerBound();
+      if (lowerBound != PsiType.NULL) {
+        constraints.add(new StrictSubtypingConstraint(lowerBound, myS));
+      }
     }
 
     return true;

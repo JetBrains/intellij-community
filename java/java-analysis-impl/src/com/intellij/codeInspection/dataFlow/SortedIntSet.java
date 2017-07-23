@@ -17,13 +17,6 @@ package com.intellij.codeInspection.dataFlow;
 
 import gnu.trove.TIntArrayList;
 
-/**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Aug 3, 2003
- * Time: 6:16:20 PM
- * To change this template use Options | File Templates.
- */
 public class SortedIntSet extends TIntArrayList implements Comparable<SortedIntSet> {
   public SortedIntSet() {
   }

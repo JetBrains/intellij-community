@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 17.06.2002
- * Time: 15:40:16
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.memberPullUp;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -154,8 +146,7 @@ public class PullUpConflictsUtil {
       ContainerUtil.addIfNotNull(checkModuleConflictsList, method.getReturnTypeElement());
       ContainerUtil.addIfNotNull(checkModuleConflictsList, method.getTypeParameterList());
     }
-    RefactoringConflictsUtil.analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList,
-                                                    UsageInfo.EMPTY_ARRAY, targetRepresentativeElement, conflicts);
+    RefactoringConflictsUtil.analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList, UsageInfo.EMPTY_ARRAY, targetDirectory, conflicts);
 
     final PsiFile psiFile = PsiTreeUtil.getParentOfType(subclass, PsiClassOwner.class);
     final boolean toDifferentPackage = !Comparing.strEqual(targetPackage.getQualifiedName(),

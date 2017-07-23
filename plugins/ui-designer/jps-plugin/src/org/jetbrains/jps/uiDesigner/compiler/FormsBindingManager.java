@@ -104,9 +104,9 @@ public class FormsBindingManager extends FormsBuilder {
       return exitCode;
     }
 
-    final Map<File, ModuleBuildTarget> filesToCompile = new THashMap<File, ModuleBuildTarget>(FileUtil.FILE_HASHING_STRATEGY);
-    final Map<File, ModuleBuildTarget> formsToCompile = new THashMap<File, ModuleBuildTarget>(FileUtil.FILE_HASHING_STRATEGY);
-    final Map<File, Collection<File>> srcToForms = new THashMap<File, Collection<File>>(FileUtil.FILE_HASHING_STRATEGY);
+    final Map<File, ModuleBuildTarget> filesToCompile = new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
+    final Map<File, ModuleBuildTarget> formsToCompile = new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
+    final Map<File, Collection<File>> srcToForms = new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
 
     if (!JavaBuilderUtil.isForcedRecompilationAllJavaModules(context) && config.isInstrumentClasses() && FORCE_FORMS_REBUILD_FLAG.get(context, Boolean.FALSE)) {
       // force compilation of all forms, but only once per chunk
@@ -180,7 +180,7 @@ public class FormsBindingManager extends FormsBuilder {
               exitCode = ExitCode.OK;
               // now inform others about files just copied
               for (File file : generatedFiles) {
-                outputConsumer.registerOutputFile(target, file, Collections.<String>emptyList());
+                outputConsumer.registerOutputFile(target, file, Collections.emptyList());
               }
             }
           }
@@ -221,7 +221,7 @@ public class FormsBindingManager extends FormsBuilder {
       }
     }
 
-    final Set<File> candidates = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+    final Set<File> candidates = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
     for (JavaSourceRootDescriptor rd : targetRoots) {
       candidates.addAll(findPossibleSourcesForClass(rd, className));
     }

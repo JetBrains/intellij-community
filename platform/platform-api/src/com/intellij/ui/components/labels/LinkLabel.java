@@ -216,7 +216,9 @@ public class LinkLabel<T> extends JLabel {
   }
 
   protected Color getTextColor() {
-    return myIsLinkActive ? getActive() : isVisited() ? getVisited() : getNormal();
+    return myIsLinkActive ? getActive() :
+            myUnderline ? getHover() :
+              isVisited() ? getVisited() : getNormal();
   }
 
   public void setPaintUnderline(boolean paintUnderline) {
@@ -272,7 +274,7 @@ public class LinkLabel<T> extends JLabel {
   }
 
   private void enableUnderline() {
-    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    UIUtil.setCursor(this, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     myUnderline = true;
     if (myHoveringIcon != null) {
       super.setIcon(myHoveringIcon);
@@ -286,7 +288,7 @@ public class LinkLabel<T> extends JLabel {
   }
 
   private void disableUnderline() {
-    setCursor(Cursor.getDefaultCursor());
+    UIUtil.setCursor(this, Cursor.getDefaultCursor());
     myUnderline = false;
     super.setIcon(myInactiveIcon);
     setStatusBarText(null);
@@ -315,6 +317,10 @@ public class LinkLabel<T> extends JLabel {
 
   protected Color getNormal() {
     return UI.getColor("link.foreground");
+  }
+
+  protected Color getHover() {
+    return UI.getColor("link.hover.foreground");
   }
 
   public void entered(MouseEvent e) {

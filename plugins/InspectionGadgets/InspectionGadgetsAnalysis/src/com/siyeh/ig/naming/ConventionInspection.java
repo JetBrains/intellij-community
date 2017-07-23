@@ -104,6 +104,7 @@ public abstract class ConventionInspection extends BaseInspection {
     m_regexPattern = Pattern.compile(m_regex);
   }
 
+  @NotNull
   public JComponent[] createExtraOptions() {
     return EMPTY_JCOMPONENT_ARRAY;
   }

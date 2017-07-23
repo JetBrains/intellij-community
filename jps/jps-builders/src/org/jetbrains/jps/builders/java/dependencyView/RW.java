@@ -61,16 +61,13 @@ public class RW {
   public static <X> void save(final TIntHashSet x, final DataOutput out) {
     try {
       DataInputOutputUtil.writeINT(out, x.size());
-      x.forEach(new TIntProcedure() {
-        @Override
-        public boolean execute(int value) {
-          try {
-            DataInputOutputUtil.writeINT(out, value);
-            return true;
-          }
-          catch (IOException e) {
-            throw new BuildDataCorruptedException(e);
-          }
+      x.forEach(value -> {
+        try {
+          DataInputOutputUtil.writeINT(out, value);
+          return true;
+        }
+        catch (IOException e) {
+          throw new BuildDataCorruptedException(e);
         }
       });
     }

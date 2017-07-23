@@ -48,7 +48,7 @@ public class DarculaButtonPainter implements Border, UIResource {
       if (DarculaButtonUI.isHelpButton((JComponent)c)) {
           DarculaUIUtil.paintFocusOval(g2d, (w - diam) / 2, (h - diam) / 2, diam, diam);
       } else {
-        DarculaUIUtil.paintFocusRing(g2d, offset, yOff, width - 2 * offset, height - 2 * yOff);
+        DarculaUIUtil.paintFocusRing(g2d, new Rectangle(offset, yOff, width - 2 * offset, height - 2 * yOff));
       }
     } else {
       final GraphicsConfig config = new GraphicsConfig(g);

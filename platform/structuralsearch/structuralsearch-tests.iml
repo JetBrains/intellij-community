@@ -5,7 +5,7 @@
     <content url="file://$MODULE_DIR$/testSource">
       <sourceFolder url="file://$MODULE_DIR$/testSource" isTestSource="true" />
     </content>
-    <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="module" module-name="structuralsearch" />

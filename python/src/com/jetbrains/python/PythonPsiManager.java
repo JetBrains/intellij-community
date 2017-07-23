@@ -15,11 +15,10 @@
  */
 package com.jetbrains.python;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.PsiTreeChangePreprocessorBase;
 import com.jetbrains.python.psi.PyFile;
@@ -27,34 +26,27 @@ import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
 
 public class PythonPsiManager extends PsiTreeChangePreprocessorBase {
-  public PythonPsiManager(@NotNull Project project) {
-    super(project);
+  public PythonPsiManager(@NotNull PsiManager psiManager) {
+    super(psiManager);
   }
 
-  public void treeChanged(@NotNull PsiTreeChangeEventImpl event) {
-    if (event.getFile() instanceof PyFile) {
-      super.treeChanged(event);
-    }
+  @Override
+  protected boolean acceptsEvent(@NotNull PsiTreeChangeEventImpl event) {
+    return event.getFile() instanceof PyFile;
   }
 
-  protected boolean isInsideCodeBlock(PsiElement element) {
-    if (element instanceof PsiFileSystemItem) {
-      return false;
-    }
-
-    if (element == null || !element.isValid() || element.getParent() == null) return true;
-
+  protected boolean isOutOfCodeBlock(@NotNull PsiElement element) {
     while (true) {
       if (element instanceof PyFile) {
-        return false;
+        return true;
       }
       if (element instanceof PsiFile || element instanceof PsiDirectory || element == null) {
-        return true;
+        return false;
       }
       PsiElement pparent = element.getParent();
       if (pparent instanceof PyFunction) {
-        final PyFunction pyFunction = (PyFunction)pparent;
-        return !(element == pyFunction.getParameterList() || element == pyFunction.getNameIdentifier());
+        PyFunction pyFunction = (PyFunction)pparent;
+        return element == pyFunction.getParameterList() || element == pyFunction.getNameIdentifier();
       }
       element = pparent;
     }

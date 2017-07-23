@@ -40,8 +40,8 @@ public class FormInspectionUtil {
   private FormInspectionUtil() {
   }
 
-  public static boolean isComponentClass(final Module module, final IComponent component,
-                                         final Class componentClass) {
+  static boolean isComponentClass(final Module module, final IComponent component,
+                                  final Class componentClass) {
     final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
     final PsiManager psiManager = PsiManager.getInstance(module.getProject());
     final PsiClass aClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(component.getComponentClassName(), scope);
@@ -79,7 +79,7 @@ public class FormInspectionUtil {
   }
 
   @Nullable
-  public static IProperty findProperty(final IComponent component, final String name) {
+  public static IProperty findProperty(@NotNull IComponent component, final String name) {
     IProperty[] props = component.getModifiedProperties();
     for(IProperty prop: props) {
       if (prop.getName().equals(name)) return prop;
@@ -87,11 +87,11 @@ public class FormInspectionUtil {
     return null;
   }
 
-  public static void updateStringPropertyValue(GuiEditor editor,
-                                               RadComponent component,
-                                               IntroStringProperty prop,
-                                               StringDescriptor descriptor,
-                                               String result) {
+  static void updateStringPropertyValue(GuiEditor editor,
+                                        RadComponent component,
+                                        IntroStringProperty prop,
+                                        StringDescriptor descriptor,
+                                        String result) {
     if (descriptor.getBundleName() == null) {
       prop.setValueEx(component, StringDescriptor.create(result));
     }

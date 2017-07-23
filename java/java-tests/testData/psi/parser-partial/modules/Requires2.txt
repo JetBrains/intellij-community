@@ -1,5 +1,9 @@
 PsiJavaFile:Requires2.java
+  PsiImportList
+    <empty list>
   PsiJavaModule:M
+    PsiModifierList:
+      <empty list>
     PsiKeyword:module('module')
     PsiWhiteSpace(' ')
     PsiJavaModuleReference
@@ -10,7 +14,10 @@ PsiJavaFile:Requires2.java
     PsiRequiresStatement
       PsiKeyword:requires('requires')
       PsiWhiteSpace(' ')
-      PsiKeyword:public('public')
+      PsiModifierList:transitive static
+        PsiKeyword:transitive('transitive')
+        PsiWhiteSpace(' ')
+        PsiKeyword:static('static')
       PsiWhiteSpace(' ')
       PsiJavaModuleReference
         PsiIdentifier:X('X')

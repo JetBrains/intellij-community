@@ -49,7 +49,7 @@ public class GithubOpenCommitInBrowserFromAnnotateAction extends GithubOpenInBro
     Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
     if (document == null) return null;
 
-    GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForFile(virtualFile);
+    GitRepository repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(virtualFile);
     if (repository == null || !GithubUtil.isRepositoryOnGitHub(repository)) return null;
 
     VcsRevisionNumber revisionNumber = myAnnotation.getLineRevisionNumber(myLineNumber);

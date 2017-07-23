@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,19 +31,18 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
-import com.sun.jdi.ClassType;
-import com.sun.jdi.ReferenceType;
-import com.sun.jdi.Type;
-import com.sun.jdi.Value;
+import com.sun.jdi.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
-public class ToStringRenderer extends NodeRendererImpl {
+public class ToStringRenderer extends NodeRendererImpl implements OnDemandRenderer {
   public static final @NonNls String UNIQUE_ID = "ToStringRenderer";
 
   private boolean USE_CLASS_FILTERS = false;
+  private boolean ON_DEMAND;
   private ClassFilter[] myClassFilters = ClassFilter.EMPTY_ARRAY;
 
   public ToStringRenderer() {
@@ -79,6 +78,11 @@ public class ToStringRenderer extends NodeRendererImpl {
   @Override
   public String calcLabel(final ValueDescriptor valueDescriptor, EvaluationContext evaluationContext, final DescriptorLabelListener labelListener)
     throws EvaluateException {
+
+    if (!isShowValue(valueDescriptor, evaluationContext)) {
+      return "";
+    }
+
     final Value value = valueDescriptor.getValue();
     BatchEvaluator.getBatchEvaluator(evaluationContext.getDebugProcess()).invoke(new ToStringCommand(evaluationContext, value) {
       @Override
@@ -99,6 +103,12 @@ public class ToStringRenderer extends NodeRendererImpl {
     return XDebuggerUIConstants.COLLECTING_DATA_MESSAGE;
   }
 
+  @NotNull
+  @Override
+  public String getLinkText() {
+    return DebuggerBundle.message("message.node.toString");
+  }
+
   public boolean isUseClassFilters() {
     return USE_CLASS_FILTERS;
   }
@@ -108,33 +118,31 @@ public class ToStringRenderer extends NodeRendererImpl {
   }
 
   @Override
+  public boolean isOnDemand(EvaluationContext evaluationContext, ValueDescriptor valueDescriptor) {
+    if (ON_DEMAND || (USE_CLASS_FILTERS && !isFiltered(valueDescriptor.getType()))) {
+      return true;
+    }
+    return OnDemandRenderer.super.isOnDemand(evaluationContext, valueDescriptor);
+  }
+
+  @Override
   public boolean isApplicable(Type type) {
-    if(!(type instanceof ReferenceType)) {
+    if (!(type instanceof ReferenceType)) {
       return false;
     }
 
-    if(JAVA_LANG_STRING.equals(type.name())) {
+    if (JAVA_LANG_STRING.equals(type.name())) {
       return false; // do not render 'String' objects for performance reasons
     }
 
-    if(!overridesToString(type)) {
-      return false;
-    }
-
-    if (USE_CLASS_FILTERS) {
-      if (!isFiltered(type)) {
-        return false;
-      }
-    }
-
-    return true;
+    return overridesToString(type);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static boolean overridesToString(Type type) {
     if (type instanceof ClassType) {
-      return !CommonClassNames.JAVA_LANG_OBJECT
-        .equals(((ClassType)type).concreteMethodByName("toString", "()Ljava/lang/String;").declaringType().name());
+      Method toStringMethod = ((ClassType)type).concreteMethodByName("toString", "()Ljava/lang/String;");
+      return toStringMethod != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(toStringMethod.declaringType().name());
     }
     return false;
   }
@@ -160,7 +168,8 @@ public class ToStringRenderer extends NodeRendererImpl {
   public void readExternal(Element element) {
     super.readExternal(element);
 
-    USE_CLASS_FILTERS = "true".equalsIgnoreCase(JDOMExternalizerUtil.readField(element, "USE_CLASS_FILTERS"));
+    ON_DEMAND = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "ON_DEMAND"));
+    USE_CLASS_FILTERS = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "USE_CLASS_FILTERS"));
     myClassFilters = DebuggerUtilsEx.readFilters(element.getChildren("filter"));
   }
 
@@ -169,6 +178,9 @@ public class ToStringRenderer extends NodeRendererImpl {
   public void writeExternal(Element element) {
     super.writeExternal(element);
 
+    if (ON_DEMAND) {
+      JDOMExternalizerUtil.writeField(element, "ON_DEMAND", "true");
+    }
     if (USE_CLASS_FILTERS) {
       JDOMExternalizerUtil.writeField(element, "USE_CLASS_FILTERS", "true");
     }
@@ -192,5 +204,13 @@ public class ToStringRenderer extends NodeRendererImpl {
       }
     }
     return DebuggerUtilsEx.isFiltered(t.name(), myClassFilters);
+  }
+
+  public boolean isOnDemand() {
+    return ON_DEMAND;
+  }
+
+  public void setOnDemand(boolean value) {
+    ON_DEMAND = value;
   }
 }

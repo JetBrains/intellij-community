@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class Singleton{
+public class <warning descr="Class 'Singleton' is a singleton">Singleton</warning>{
     private static Singleton ourInstance = new Singleton();
 
     public static Singleton getInstance(){
@@ -36,5 +36,17 @@ class NonSingleton {
         List<String> copy = new ArrayList<String>(values);
         copy.add(s);
         return new NonSingleton(copy);
+    }
+}
+class <warning descr="Class 'Singleton2' is a singleton">Singleton2</warning> {
+
+    private Singleton2() {}
+
+    public static Singleton2 getInstance() {
+        return SingletonHolder.INSTANCE;
+    }
+
+    private static class SingletonHolder {
+        private static final Singleton2 INSTANCE = new Singleton2();
     }
 }

@@ -6,6 +6,7 @@ import sys
 from django.core.management import ManagementUtility
 
 from pycharm_run_utils import import_system_module
+from teamcity import teamcity_presence_env_var
 
 inspect = import_system_module("inspect")
 
@@ -106,7 +107,29 @@ class PycharmTestManagementUtility(ManagementUtility):
     ManagementUtility.__init__(self, argv)
 
   def execute(self):
-    PycharmTestCommand().run_from_argv(self.argv)
+    from django_test_runner import is_nosetest
+    if is_nosetest(settings) and "_JB_USE_OLD_RUNNERS" not in os.environ:
+      # New way to run django-nose is to install teamcity-runners plugin
+      # there is no easy way to get qname in 2.7 so string is used
+      name = "teamcity.nose_report.TeamcityReport"
+
+      # emulate TC to enable plugin
+      os.environ.update({teamcity_presence_env_var: "1"})
+
+      # NOSE_PLUGINS could be list or tuple. Adding teamcity plugin to it
+      try:
+        settings.NOSE_PLUGINS += [name]
+      except TypeError:
+        settings.NOSE_PLUGINS += (name, )
+      except AttributeError:
+        settings.NOSE_PLUGINS = [name]
+
+      # This file is required to init and monkeypatch new runners
+      # noinspection PyUnresolvedReferences
+      import _jb_runner_tools
+      super(PycharmTestManagementUtility, self).execute()
+    else:
+      PycharmTestCommand().run_from_argv(self.argv)
 
 if __name__ == "__main__":
 

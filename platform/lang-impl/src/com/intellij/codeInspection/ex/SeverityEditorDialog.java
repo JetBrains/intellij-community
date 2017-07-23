@@ -17,7 +17,6 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.application.options.colors.ColorAndFontDescriptionPanel;
-import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.application.options.colors.InspectionColorSettingsPage;
 import com.intellij.application.options.colors.TextAttributesDescription;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -27,16 +26,11 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
@@ -58,12 +52,9 @@ import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.application.options.colors.ColorAndFontOptions.selectOrEditColor;
 import static com.intellij.codeInsight.daemon.impl.SeverityRegistrar.SeverityBasedTextAttributes;
 
-/**
- * User: anna
- * Date: 24-Feb-2006
- */
 public class SeverityEditorDialog extends DialogWrapper {
   private final JPanel myPanel;
 
@@ -238,34 +229,7 @@ public class SeverityEditorDialog extends DialogWrapper {
     }
     myOptionsList.clearSelection();
     final DataContext dataContext = DataManager.getInstance().getDataContext(myPanel);
-    Settings settings = Settings.KEY.getData(dataContext);
-    if (settings != null) {
-      ColorAndFontOptions colorAndFontOptions = settings.find(ColorAndFontOptions.class);
-      assert colorAndFontOptions != null;
-      final SearchableConfigurable javaPage = colorAndFontOptions.findSubConfigurable(InspectionColorSettingsPage.class);
-      LOG.assertTrue(javaPage != null);
-      settings.select(javaPage).doWhenDone(() -> {
-        final Runnable runnable = javaPage.enableSearch(toConfigure);
-        if (runnable != null) {
-          SwingUtilities.invokeLater(runnable);
-        }
-      });
-    }
-    else {
-      ColorAndFontOptions colorAndFontOptions = new ColorAndFontOptions();
-      final Configurable[] configurables = colorAndFontOptions.buildConfigurables();
-      try {
-        final SearchableConfigurable javaPage = colorAndFontOptions.findSubConfigurable(InspectionColorSettingsPage.class);
-        LOG.assertTrue(javaPage != null);
-        ShowSettingsUtil.getInstance().editConfigurable(CommonDataKeys.PROJECT.getData(dataContext), javaPage);
-      }
-      finally {
-        for (Configurable configurable : configurables) {
-          configurable.disposeUIResources();
-        }
-        colorAndFontOptions.disposeUIResources();
-      }
-    }
+    selectOrEditColor(dataContext, toConfigure, InspectionColorSettingsPage.class);
   }
 
   private void fillList(final @Nullable HighlightSeverity severity) {

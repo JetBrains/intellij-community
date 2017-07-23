@@ -138,7 +138,7 @@ public class DslActivationStatus implements PersistentStateComponent<DslActivati
       });
 
       if (myStatus.isEmpty()) {
-        return new State(Collections.<Entry>emptyList());
+        return new State(Collections.emptyList());
       }
 
       Entry[] entries = myStatus.values().toArray(new Entry[myStatus.size()]);

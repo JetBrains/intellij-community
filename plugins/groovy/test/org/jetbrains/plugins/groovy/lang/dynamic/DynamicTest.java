@@ -16,9 +16,9 @@
 package org.jetbrains.plugins.groovy.lang.dynamic;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.psi.PsiType;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
@@ -35,10 +35,6 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 01.04.2008
- */                                  
 public class DynamicTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
@@ -74,13 +70,17 @@ public class DynamicTest extends JavaCodeInsightFixtureTestCase {
 
     final List<IntentionAction> actions = myFixture.getAvailableIntentions(getTestName(false) + ".groovy");
 
-    DynamicPropertyFix dynamicFix = ContainerUtil.findInstance(actions, DynamicPropertyFix.class);
+    DynamicPropertyFix dynamicFix = (DynamicPropertyFix)actions.stream()
+      .map(a->((IntentionActionDelegate)a).getDelegate())
+      .filter(DynamicPropertyFix.class::isInstance).findFirst().orElse(null);
     if (dynamicFix != null) {
       dynamicFix.invoke(getProject());
       return dynamicFix.getReferenceExpression();
     }
     else {
-      final DynamicMethodFix fix = ContainerUtil.findInstance(actions, DynamicMethodFix.class);
+      DynamicMethodFix fix = (DynamicMethodFix)actions.stream()
+        .map(a->((IntentionActionDelegate)a).getDelegate())
+        .filter(DynamicMethodFix.class::isInstance).findFirst().orElse(null);
       assertNotNull(fix);
       fix.invoke(getProject());
       return fix.getReferenceExpression();

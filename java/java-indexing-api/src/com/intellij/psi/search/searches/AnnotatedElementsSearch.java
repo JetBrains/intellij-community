@@ -54,6 +54,7 @@ public class AnnotatedElementsSearch extends ExtensibleQueryFactory<PsiModifierL
       return myScope;
     }
 
+    @NotNull
     public Class<? extends PsiModifierListOwner>[] getTypes() {
       return myTypes;
     }

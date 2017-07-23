@@ -126,7 +126,7 @@ public class PyDebugRunner extends GenericProgramRunner {
     Sdk sdk = pyState.getSdk();
     PyDebugSessionFactory sessionCreator = PyDebugSessionFactory.findExtension(sdk);
     if (sessionCreator != null) {
-      return sessionCreator.createSession(this, pyState, environment);
+      return sessionCreator.createSession(pyState, environment);
     }
 
     final ServerSocket serverSocket = PythonCommandLineState.createServerSocket();
@@ -351,7 +351,8 @@ public class PyDebugRunner extends GenericProgramRunner {
     }
 
     if (PyDebuggerOptionsProvider.getInstance(project).isSupportQtDebugging()) {
-      debugParams.addParameter("--qt-support");
+      String pyQtBackend = PyDebuggerOptionsProvider.getInstance(project).getPyQtBackend().toLowerCase();
+      debugParams.addParameter(String.format("--qt-support=%s", pyQtBackend));
     }
   }
 

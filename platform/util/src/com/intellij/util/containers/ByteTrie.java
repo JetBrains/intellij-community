@@ -16,15 +16,14 @@
 
 package com.intellij.util.containers;
 
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 
 public class ByteTrie {
   private static final String EMPTY_STRING = "";
-  @NonNls private static final String UTF_8_CHARSET_NAME = "UTF-8";
   private final ArrayList<Node> myAllNodes;
 
   private static class Node {
@@ -54,48 +53,28 @@ public class ByteTrie {
    * @return negative - an error occured, 0 - no such string in trie, positive - actual hashcode
    */
   public int getHashCode(String s) {
-    try {
-      return getHashCode(s.getBytes(UTF_8_CHARSET_NAME));
-    }
-    catch (UnsupportedEncodingException e) {
-      return -1;
-    }
+    return getHashCode(s.getBytes(CharsetToolkit.UTF8_CHARSET));
   }
 
   /**
    * Returns string by unique hash code.
    */
   public String getString(int hashCode) {
-    try {
-      return new String(getBytes(hashCode), UTF_8_CHARSET_NAME);
-    }
-    catch (UnsupportedEncodingException e) {
-      return EMPTY_STRING;
-    }
+    return new String(getBytes(hashCode), CharsetToolkit.UTF8_CHARSET);
   }
 
   /**
    * Returns unique hash code for a reversed string.
    */
   public int getHashCodeForReversedString(String s) {
-    try {
-      return getHashCodeForReversedBytes(s.getBytes(UTF_8_CHARSET_NAME));
-    }
-    catch (UnsupportedEncodingException e) {
-      return -1;
-    }
+    return getHashCodeForReversedBytes(s.getBytes(CharsetToolkit.UTF8_CHARSET));
   }
 
   /**
    * Returns reversed string by unique hash code.
    */
   public String getReversedString(int hashCode) {
-    try {
-      return new String(getReversedBytes(hashCode), UTF_8_CHARSET_NAME);
-    }
-    catch (UnsupportedEncodingException e) {
-      return EMPTY_STRING;
-    }
+    return new String(getReversedBytes(hashCode), CharsetToolkit.UTF8_CHARSET);
   }
 
   public int getHashCode(byte[] bytes) {
@@ -125,6 +104,7 @@ public class ByteTrie {
     return index + (((long)resultingLength) << 32);
   }
 
+  @NotNull
   public byte[] getBytes(int hashCode) {
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
     while (hashCode > 0) {
@@ -154,6 +134,7 @@ public class ByteTrie {
     return index;
   }
 
+  @NotNull
   public byte[] getReversedBytes(int hashCode) {
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
     while (hashCode > 0) {

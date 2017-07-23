@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 10-Jan-2007
- */
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -47,7 +43,7 @@ import java.util.*;
 import java.util.function.UnaryOperator;
 
 public abstract class InspectionRVContentProvider {
-  private static final Logger LOG = Logger.getInstance("#" + InspectionRVContentProvider.class.getName());
+  private static final Logger LOG = Logger.getInstance(InspectionRVContentProvider.class);
   private final Project myProject;
 
   public InspectionRVContentProvider(@NotNull Project project) {
@@ -132,7 +128,7 @@ public abstract class InspectionRVContentProvider {
     return false;
   }
 
-  @Nullable
+  @NotNull
   public abstract QuickFixAction[] getQuickFixes(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionTree tree);
 
 

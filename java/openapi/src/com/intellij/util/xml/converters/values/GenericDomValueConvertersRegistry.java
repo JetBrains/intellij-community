@@ -20,7 +20,9 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.xml.Converter;
 import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NotNull;
@@ -31,9 +33,6 @@ import java.math.BigInteger;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class GenericDomValueConvertersRegistry {
 
   public interface Provider {
@@ -67,7 +66,16 @@ public class GenericDomValueConvertersRegistry {
   }
 
   public void registerClassValueConverters() {
-    registerConverter(ClassValueConverter.getClassValueConverter(), Class.class);
+    registerConverter(ClassValueConverter.getClassValueConverter(), pair -> {
+      PsiType psiType = pair.getFirst();
+      if (psiType instanceof PsiClassType) {
+        PsiClass resolve = ((PsiClassType)psiType).resolve();
+        if (resolve != null) {
+          return (CommonClassNames.JAVA_LANG_CLASS.equals(resolve.getQualifiedName()));
+        }
+      }
+      return false;
+    });
     registerConverter(ClassArrayConverter.getClassArrayConverter(), Class[].class);
   }
 
@@ -122,5 +130,4 @@ public class GenericDomValueConvertersRegistry {
     final String name = type.getCanonicalName();
     registerConverter(provider, pair -> pair.first != null && Comparing.equal(name, pair.first.getCanonicalText()));
   }
-
 }

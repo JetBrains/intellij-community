@@ -198,8 +198,8 @@ public interface JBPopup extends Disposable, LightweightWindow {
    * The popup has a right to decide if its further processing should be continued (method return value).
    * 
    * @param e  new key event being processed
-   * @return   <code>true</code> if the event is completely dispatched, i.e. no further processing is necessary;
-   *           <code>false</code> otherwise
+   * @return   {@code true} if the event is completely dispatched, i.e. no further processing is necessary;
+   *           {@code false} otherwise
    */
   boolean dispatchKeyEvent(@NotNull KeyEvent e);
 }

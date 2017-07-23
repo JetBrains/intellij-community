@@ -22,6 +22,7 @@ package com.intellij.psi.impl.search;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -92,28 +93,23 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
   public static Project processClassNames(final Project project, final GlobalSearchScope scope, final Consumer<String> consumer) {
     final ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
 
-    DumbService.getInstance(project).runReadActionInSmartMode(new Computable<Void>() {
-      @Override
-      public Void compute() {
-        PsiShortNamesCache.getInstance(project).processAllClassNames(new Processor<String>() {
-          int i;
+    DumbService.getInstance(project).runReadActionInSmartMode((Computable<Void>)() -> {
+      PsiShortNamesCache.getInstance(project).processAllClassNames(new Processor<String>() {
+        int i;
 
-          @Override
-          public boolean process(String s) {
-            if (indicator != null && i++ % 512 == 0) {
-              indicator.checkCanceled();
-            }
-            consumer.consume(s);
-            return true;
+        @Override
+        public boolean process(String s) {
+          if (i++ % 512 == 0) {
+            ProgressManager.checkCanceled();
           }
-        }, scope, IdFilter.getProjectIdFilter(project, true));
-        return null;
-      }
+          consumer.consume(s);
+          return true;
+        }
+      }, scope, IdFilter.getProjectIdFilter(project, true));
+      return null;
     });
 
-    if (indicator != null) {
-      indicator.checkCanceled();
-    }
+    ProgressManager.checkCanceled();
     return project;
   }
 

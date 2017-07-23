@@ -36,16 +36,30 @@ public class PyEnvTaskRunner {
 
     List<String> passedRoots = Lists.newArrayList();
 
-    for (String root : myRoots) {
-      LOG.warn(String.format("Running on root %s", root));
+    final Set<String> requiredTags = Sets.union(testTask.getTags(), Sets.newHashSet(tagsRequiedByTest));
 
-      final Set<String> requredTags = Sets.union(testTask.getTags(), Sets.newHashSet(tagsRequiedByTest));
-      final boolean suitableForTask = isSuitableForTask(PyEnvTestCase.loadEnvTags(root), requredTags);
+    final Set<String> tagsToCover = null;
+
+    for (String root : myRoots) {
+
+      List<String> envTags = PyEnvTestCase.loadEnvTags(root);
+      final boolean suitableForTask = isSuitableForTask(envTags, requiredTags);
       final boolean shouldRun = shouldRun(root, testTask);
       if (!suitableForTask || !shouldRun) {
         LOG.warn(String.format("Skipping %s (compatible with tags: %s, should run:%s)", root, suitableForTask, shouldRun));
         continue;
       }
+
+      if (tagsToCover != null && envTags.size() > 0 && !isNeededToRun(tagsToCover, envTags)) {
+        LOG.warn(String.format("Skipping %s (test already was executed on a similar environment)", root));
+        continue;
+      }
+
+      if (tagsToCover != null) {
+        tagsToCover.removeAll(envTags);
+      }
+
+      LOG.warn(String.format("Running on root %s", root));
 
       try {
         testTask.setUp(testName);
@@ -108,6 +122,16 @@ public class PyEnvTaskRunner {
     }
   }
 
+  private static boolean isNeededToRun(@NotNull Set<String> tagsToCover, @NotNull List<String> envTags) {
+    for (String tag : envTags) {
+      if (tagsToCover.contains(tag)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   /**
    * Create SDK by path to python exectuable
    *
@@ -159,7 +183,6 @@ public class PyEnvTaskRunner {
 
     return necessaryTags.isEmpty();
   }
-
 
   public static boolean isJython(@NotNull String sdkHome) {
     return sdkHome.toLowerCase().contains("jython");

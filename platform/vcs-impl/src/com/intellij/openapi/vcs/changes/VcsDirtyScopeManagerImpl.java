@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -69,23 +68,21 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
   @Override
   public void projectOpened() {
-    myVcsManager.addInitializationRequest(VcsInitObject.DIRTY_SCOPE_MANAGER, new Runnable() {
-      @Override
-      public void run() {
-        boolean ready = false;
-        synchronized (LOCK) {
-          if (!myProject.isDisposed()) {
-            myReady = ready = true;
-          }
+    myVcsManager.addInitializationRequest(VcsInitObject.DIRTY_SCOPE_MANAGER, () -> {
+      boolean ready = false;
+      synchronized (LOCK) {
+        if (!myProject.isDisposed() && myProject.isOpen()) {
+          myReady = ready = true;
         }
-        if (ready) {
-          VcsDirtyScopeVfsListener.install(myProject);
-          markEverythingDirty();
-        }
+      }
+      if (ready) {
+        VcsDirtyScopeVfsListener.install(myProject);
+        markEverythingDirty();
       }
     });
   }
 
+  @Override
   public void markEverythingDirty() {
     if ((! myProject.isOpen()) || myProject.isDisposed() || myVcsManager.getAllActiveVcss().length == 0) return;
 
@@ -103,18 +100,12 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   @Override
-  public void projectClosed() {
-  }
-
-  @Override
   @NotNull @NonNls
   public String getComponentName() {
     return "VcsDirtyScopeManager";
   }
 
   @Override
-  public void initComponent() {}
-
   public void disposeComponent() {
     synchronized (LOCK) {
       myReady = false;
@@ -178,6 +169,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     }
   }
 
+  @Override
   public void filesDirty(@Nullable final Collection<VirtualFile> filesDirty, @Nullable final Collection<VirtualFile> dirsRecursivelyDirty) {
     filePathsDirty(toFilePaths(filesDirty), toFilePaths(dirsRecursivelyDirty));
   }
@@ -185,12 +177,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   @NotNull
   private static Collection<FilePath> toFilePaths(@Nullable Collection<VirtualFile> files) {
     if (files == null) return Collections.emptyList();
-    return ContainerUtil.map(files, new Function<VirtualFile, FilePath>() {
-      @Override
-      public FilePath fun(VirtualFile virtualFile) {
-        return VcsUtil.getFilePath(virtualFile);
-      }
-    });
+    return ContainerUtil.map(files, virtualFile -> VcsUtil.getFilePath(virtualFile));
   }
 
   @Override
@@ -298,17 +285,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
 
   @NotNull
   private static String toString(@NotNull final MultiMap<AbstractVcs, FilePath> filesByVcs) {
-    return StringUtil.join(filesByVcs.keySet(), new Function<AbstractVcs, String>() {
-      @Override
-      public String fun(@NotNull AbstractVcs vcs) {
-        return vcs.getName() + ": " + StringUtil.join(filesByVcs.get(vcs), new Function<FilePath, String>() {
-          @Override
-          public String fun(@NotNull FilePath path) {
-            return path.getPath();
-          }
-        }, "\n");
-      }
-    }, "\n");
+    return StringUtil.join(filesByVcs.keySet(), vcs -> vcs.getName() + ": " + StringUtil.join(filesByVcs.get(vcs), path -> path.getPath(), "\n"), "\n");
   }
 
   @Nullable

@@ -1,9 +1,9 @@
 package com.jetbrains.env;
 
 import com.google.common.collect.Sets;
-import com.intellij.openapi.util.io.FileUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -82,5 +82,17 @@ public abstract class PyTestTask {
    */
   public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
     return true;
+  }
+
+  /**
+   * Provides a way to filter out non-relevant environments
+   *
+   * @return the set of a tags that interpreter should run on, if an environment doesn't contain one of them, it won't be
+   * used to run this test task.
+   * null in case filtering shouldn't be used
+   */
+  @Nullable
+  public Set<String> getTagsToCover() {
+    return null;
   }
 }

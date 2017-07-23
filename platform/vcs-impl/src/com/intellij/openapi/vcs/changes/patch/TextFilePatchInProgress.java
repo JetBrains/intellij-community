@@ -27,7 +27,6 @@ import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -54,18 +53,15 @@ public class TextFilePatchInProgress extends AbstractFilePatchInProgress<TextFil
       myConflicts = null;
       if (FilePatchStatus.ADDED.equals(myStatus)) {
         final FilePath newFilePath = VcsUtil.getFilePath(myIoCurrentBase, false);
-        final String content = myPatch.getNewFileText();
+        final String content = myPatch.getSingleHunkPatchText();
         myNewContentRevision = new SimpleContentRevision(content, newFilePath, myPatch.getAfterVersionId());
       }
       else {
         final FilePath newFilePath = detectNewFilePathForMovedOrModified();
         myNewContentRevision = new LazyPatchContentRevision(myCurrentBase, newFilePath, myPatch.getAfterVersionId(), myPatch);
         if (myCurrentBase != null) {
-          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-            public void run() {
-              ((LazyPatchContentRevision)myNewContentRevision).getContent();
-            }
-          });
+          ApplicationManager.getApplication().executeOnPooledThread(
+            (Runnable)() -> ((LazyPatchContentRevision)myNewContentRevision).getContent());
         }
       }
     }
@@ -78,12 +74,6 @@ public class TextFilePatchInProgress extends AbstractFilePatchInProgress<TextFil
     final PatchChange change = getChange();
     final FilePatch patch = getPatch();
     final String path = patch.getBeforeName() == null ? patch.getAfterName() : patch.getBeforeName();
-    final Getter<CharSequence> baseContentGetter = new Getter<CharSequence>() {
-      @Override
-      public CharSequence get() {
-        return patchReader.getBaseRevision(project, path);
-      }
-    };
     return new DiffRequestProducer() {
       @NotNull
       @Override
@@ -96,16 +86,13 @@ public class TextFilePatchInProgress extends AbstractFilePatchInProgress<TextFil
         if (isConflictingChange()) {
           final VirtualFile file = getCurrentBase();
 
-          Getter<ApplyPatchForBaseRevisionTexts> getter = new Getter<ApplyPatchForBaseRevisionTexts>() {
-            @Override
-            public ApplyPatchForBaseRevisionTexts get() {
-              return ApplyPatchForBaseRevisionTexts.create(project, file, VcsUtil.getFilePath(file), getPatch(), baseContentGetter);
-            }
-          };
+          ApplyPatchForBaseRevisionTexts texts =
+            ApplyPatchForBaseRevisionTexts
+              .create(project, file, VcsUtil.getFilePath(file), getPatch(), patchReader.getBaseRevision(project, path));
 
           String afterTitle = getPatch().getAfterVersionId();
           if (afterTitle == null) afterTitle = "Patched Version";
-          return PatchDiffRequestFactory.createConflictDiffRequest(project, file, getPatch(), afterTitle, getter, getName(), context, indicator);
+          return PatchDiffRequestFactory.createConflictDiffRequest(project, file, getPatch(), afterTitle, texts, getName());
         }
         else {
           return PatchDiffRequestFactory.createDiffRequest(project, change, getName(), context, indicator);

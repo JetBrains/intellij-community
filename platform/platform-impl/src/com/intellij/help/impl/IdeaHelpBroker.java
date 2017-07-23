@@ -28,6 +28,7 @@ import javax.help.UnsupportedOperationException;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.Enumeration;
@@ -644,13 +645,9 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
         if(m!=null&&myDialog!=null){
           owner=(Window)m.invoke(myDialog,null);
         }
-      } catch(NoSuchMethodError ex){
+      } catch(NoSuchMethodError | NoSuchMethodException ex){
         // as in JDK1.1
-      } catch(NoSuchMethodException ex){
-        // as in JDK1.1
-      } catch(java.lang.reflect.InvocationTargetException ex){
-        //
-      } catch(java.lang.IllegalAccessException ex){
+      } catch(InvocationTargetException | IllegalAccessException ex){
         //
       }
 

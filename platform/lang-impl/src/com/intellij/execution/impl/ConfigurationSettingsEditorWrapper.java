@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,10 +37,6 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 27-Mar-2006
- */
 public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAndConfigurationSettings>
   implements BeforeRunStepsPanel.StepsBeforeRunListener {
   public static final DataKey<ConfigurationSettingsEditorWrapper> CONFIGURATION_EDITOR_KEY = DataKey.create("ConfigurationSettingsEditor");
@@ -126,7 +122,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   private void doApply(final RunnerAndConfigurationSettings settings) {
     final RunConfiguration runConfiguration = settings.getConfiguration();
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
-    runManager.setBeforeRunTasks(runConfiguration, myBeforeRunStepsPanel.getTasks(true), false);
+    runManager.setBeforeRunTasks(runConfiguration, myBeforeRunStepsPanel.getTasks(true));
     RunnerAndConfigurationSettings runManagerSettings = runManager.getSettings(runConfiguration);
     if (runManagerSettings != null) {
       runManagerSettings.setEditBeforeRun(myBeforeRunStepsPanel.needEditBeforeRun());

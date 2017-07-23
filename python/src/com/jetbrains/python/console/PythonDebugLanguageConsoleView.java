@@ -61,7 +61,7 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
   @Override
   public void executeCode(@NotNull String code, @Nullable Editor e) {
     enableConsole(false);
-    getPydevConsoleView().executeCode(code, e);
+    getPydevConsoleView().executeInConsole(code);
   }
 
   @NotNull
@@ -89,8 +89,10 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
     if (!primary && !isPrimaryConsoleEnabled()) {
       PythonConsoleView console = getPydevConsoleView();
       if (!myDebugConsoleInitialized && console.getExecuteActionHandler() != null) {
-        console.addConsoleFolding(true);
-        showStartMessageForFirstExecution(DEBUG_CONSOLE_START_COMMAND, console);
+        if (!console.getExecuteActionHandler().getConsoleCommunication().isWaitingForInput()) {
+          console.addConsoleFolding(true);
+          showStartMessageForFirstExecution(DEBUG_CONSOLE_START_COMMAND, console);
+        }
         myDebugConsoleInitialized = true;
       }
 

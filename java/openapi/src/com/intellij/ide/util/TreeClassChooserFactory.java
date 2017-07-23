@@ -25,10 +25,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: Jan 25, 2005
- */
 public abstract class TreeClassChooserFactory {
 
   public static TreeClassChooserFactory getInstance(Project project) {

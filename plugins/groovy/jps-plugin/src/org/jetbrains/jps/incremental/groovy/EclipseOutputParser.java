@@ -53,7 +53,7 @@ class EclipseOutputParser {
                                                            "'"));
     }
 
-    List<CompilerMessage> parsedMessages = new ArrayList<CompilerMessage>();
+    List<CompilerMessage> parsedMessages = new ArrayList<>();
 
     String[] msgs = StringUtil.convertLineSeparators(input).split(PROB_SEPARATOR);
     for (String msg : msgs) {
@@ -104,11 +104,11 @@ class EclipseOutputParser {
     BuildMessage.Kind kind;
     boolean isNormal = false;
     if (dotIndex > 0) {
-      if (msgText.substring(dotIndex, dotIndex + ". WARNING".length()).equals(". WARNING")) {
+      if (msgText.substring(dotIndex).startsWith(". WARNING")) {
         kind = BuildMessage.Kind.WARNING;
         isNormal = true;
         dotIndex += ". WARNING in ".length();
-      } else if (msgText.substring(dotIndex, dotIndex + ". ERROR".length()).equals(". ERROR")) {
+      } else if (msgText.substring(dotIndex).startsWith(". ERROR")) {
         kind = BuildMessage.Kind.ERROR;
         isNormal = true;
         dotIndex += ". ERROR in ".length();

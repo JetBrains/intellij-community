@@ -26,9 +26,7 @@ import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.execution.testframework.sm.runner.ui.SMRootTestProxyFormatter;
 import com.intellij.execution.testframework.sm.runner.ui.TestTreeRenderer;
-import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
@@ -46,12 +44,12 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.action.GradleRerunFailedTestsAction;
-import org.jetbrains.plugins.gradle.execution.test.runner.events.*;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
+
+import java.io.File;
 
 /**
  * @author Vladislav.Soroka
@@ -59,7 +57,6 @@ import org.jetbrains.plugins.gradle.util.XmlXpathHelper;
  */
 public class GradleTestsExecutionConsoleManager
   implements ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration, GradleTestsExecutionConsole, ProcessHandler> {
-  private static final Logger LOG = Logger.getInstance(GradleTestsExecutionConsoleManager.class);
 
   @NotNull
   @Override
@@ -112,8 +109,8 @@ public class GradleTestsExecutionConsoleManager
 
     if (task instanceof ExternalSystemExecuteTaskTask) {
       final ExternalSystemExecuteTaskTask executeTask = (ExternalSystemExecuteTaskTask)task;
-      if (executeTask.getScriptParameters() == null || !StringUtil.contains(executeTask.getScriptParameters(), "--tests")) {
-        executeTask.appendScriptParameters("--tests *");
+      if (executeTask.getArguments() == null || !StringUtil.contains(executeTask.getArguments(), "--tests")) {
+        executeTask.appendArguments("--tests *");
       }
     }
 
@@ -125,61 +122,7 @@ public class GradleTestsExecutionConsoleManager
                        @NotNull ProcessHandler processHandler,
                        @NotNull String text,
                        @NotNull Key processOutputType) {
-    final StringBuilder consoleBuffer = executionConsole.getBuffer();
-    if (StringUtil.endsWith(text, "<ijLogEol/>\n")) {
-      consoleBuffer.append(StringUtil.trimEnd(text, "<ijLogEol/>\n")).append('\n');
-      return;
-    }
-    else {
-      consoleBuffer.append(text);
-    }
-
-    String trimmedText = consoleBuffer.toString().trim();
-    consoleBuffer.setLength(0);
-
-    if (!StringUtil.startsWith(trimmedText, "<ijLog>") || !StringUtil.endsWith(trimmedText, "</ijLog>")) {
-      if (text.trim().isEmpty()) return;
-      executionConsole.print(text, ConsoleViewContentType.getConsoleViewType(processOutputType));
-      return;
-    }
-
-    try {
-      final XmlXpathHelper xml = new XmlXpathHelper(trimmedText);
-
-      final TestEventType eventType = TestEventType.fromValue(xml.queryXml("/ijLog/event/@type"));
-      TestEvent testEvent = null;
-      switch (eventType) {
-        case CONFIGURATION_ERROR:
-          testEvent = new ConfigurationErrorEvent(executionConsole);
-          break;
-        case REPORT_LOCATION:
-          testEvent = new ReportLocationEvent(executionConsole);
-          break;
-        case BEFORE_TEST:
-          testEvent = new BeforeTestEvent(executionConsole);
-          break;
-        case ON_OUTPUT:
-          testEvent = new OnOutputEvent(executionConsole);
-          break;
-        case AFTER_TEST:
-          testEvent = new AfterTestEvent(executionConsole);
-          break;
-        case BEFORE_SUITE:
-          testEvent = new BeforeSuiteEvent(executionConsole);
-          break;
-        case AFTER_SUITE:
-          testEvent = new AfterSuiteEvent(executionConsole);
-          break;
-        case UNKNOWN_EVENT:
-          break;
-      }
-      if (testEvent != null) {
-        testEvent.process(xml);
-      }
-    }
-    catch (XmlXpathHelper.XmlParserException e) {
-      LOG.error("Gradle test events parser error", e);
-    }
+    GradleTestsExecutionConsoleOutputProcessor.onOutput(executionConsole, text, processOutputType);
   }
 
   @Override
@@ -188,13 +131,18 @@ public class GradleTestsExecutionConsoleManager
       final ExternalSystemExecuteTaskTask taskTask = (ExternalSystemExecuteTaskTask)task;
       if (!StringUtil.equals(taskTask.getExternalSystemId().getId(), GradleConstants.SYSTEM_ID.getId())) return false;
 
-      return ContainerUtil.find(taskTask.getTasksToExecute(), pojo -> {
+      return ContainerUtil.find(taskTask.getTasksToExecute(), taskToExecute -> {
+        String projectPath = taskTask.getExternalProjectPath();
+        File file = new File(projectPath);
+        if (file.isFile()) {
+          projectPath = StringUtil.trimEnd(projectPath, "/" + file.getName());
+        }
         final ExternalProjectInfo externalProjectInfo =
-          ExternalSystemUtil.getExternalProjectInfo(taskTask.getIdeProject(), getExternalSystemId(), pojo.getLinkedExternalProjectPath());
+          ExternalSystemUtil.getExternalProjectInfo(taskTask.getIdeProject(), getExternalSystemId(), projectPath);
         if (externalProjectInfo == null) return false;
 
         final DataNode<TaskData> taskDataNode = GradleProjectResolverUtil.findTask(
-          externalProjectInfo.getExternalProjectStructure(), pojo.getLinkedExternalProjectPath(), pojo.getName());
+          externalProjectInfo.getExternalProjectStructure(), projectPath, taskToExecute);
         return taskDataNode != null &&
                (("check".equals(taskDataNode.getData().getName()) && "verification".equals(taskDataNode.getData().getGroup())
                  || GradleCommonClassNames.GRADLE_API_TASKS_TESTING_TEST.equals(taskDataNode.getData().getType())));

@@ -5,10 +5,13 @@
     <extensionPoint name="cherryPicker"
                     interface="com.intellij.dvcs.cherrypick.VcsCherryPicker" area="IDEA_PROJECT"/>
     <extensionPoint name="vcsRepositoryCreator" interface="com.intellij.dvcs.repo.VcsRepositoryCreator" area="IDEA_PROJECT"/>
+
+    <extensionPoint name="prePushHandler" interface="com.intellij.dvcs.push.PrePushHandler" area="IDEA_PROJECT"/>
+
   </extensionPoints>
   <actions>
     <action id="Vcs.CherryPick" class="com.intellij.dvcs.cherrypick.VcsCherryPickAction" icon="DvcsImplIcons.CherryPick"/>
-    <action id="Vcs.Push" class="com.intellij.dvcs.push.VcsPushAction" icon="AllIcons.Actions.Commit" text="Push...">
+    <action id="Vcs.Push" class="com.intellij.dvcs.push.VcsPushAction" icon="AllIcons.Vcs.Push" text="Push...">
       <keyboard-shortcut first-keystroke="control shift K" keymap="$default"/>
     </action>
     <group id="Dvcs.Log.ContextMenu">

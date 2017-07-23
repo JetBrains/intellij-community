@@ -23,26 +23,25 @@ import com.intellij.util.EventDispatcher;
 public class SetReadOnly implements ChangeListCommand {
   private final String myName;
   private final boolean myValue;
+
   private boolean myResult;
   private LocalChangeList myListCopy;
 
-  public SetReadOnly(final String name, final boolean value) {
+  public SetReadOnly(String name, boolean value) {
     myName = name;
     myValue = value;
   }
 
   public void apply(final ChangeListWorker worker) {
     myResult = worker.setReadOnly(myName, myValue);
-    myListCopy = worker.getCopyByName(myName);
+
+    myListCopy = worker.getChangeListCopyByName(myName);
   }
 
   public void doNotify(final EventDispatcher<ChangeListListener> dispatcher) {
-    // +-
-    dispatcher.getMulticaster().changeListChanged(myListCopy);
-  }
-
-  public void consume(final ChangeListWorker worker) {
-    myResult = worker.setReadOnly(myName, myValue);
+    if (myListCopy != null && myResult) {
+      dispatcher.getMulticaster().changeListChanged(myListCopy);
+    }
   }
 
   public boolean isResult() {

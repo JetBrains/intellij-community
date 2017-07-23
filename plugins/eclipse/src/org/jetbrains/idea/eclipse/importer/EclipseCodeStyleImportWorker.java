@@ -31,7 +31,7 @@ import java.lang.reflect.Field;
  * @author Irina.Chernushina on 4/21/2015.
  */
 public class EclipseCodeStyleImportWorker implements EclipseXmlProfileElements {
-  private static final Logger LOG = Logger.getInstance("#" + EclipseCodeStyleImportWorker.class.getName());
+  private static final Logger LOG = Logger.getInstance(EclipseCodeStyleImportWorker.class);
 
   private final static String PROGRAMMATIC_IMPORT_KEY = "<Programmatic>";
 

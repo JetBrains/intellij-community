@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -244,12 +244,8 @@ public class MvcModuleStructureUtil {
     // update facets
     if (!actions.second.isEmpty()) {
       final Application application = ApplicationManager.getApplication();
-      final ModifiableFacetModel model = application.runReadAction(new Computable<ModifiableFacetModel>() {
-        @Override
-        public ModifiableFacetModel compute() {
-          return FacetManager.getInstance(module).createModifiableModel();
-        }
-      });
+      final ModifiableFacetModel model = application.runReadAction(
+        (Computable<ModifiableFacetModel>)() -> FacetManager.getInstance(module).createModifiableModel());
       for (Consumer<ModifiableFacetModel> action : actions.second) {
         action.consume(model);
       }
@@ -537,8 +533,7 @@ public class MvcModuleStructureUtil {
 
     ModuleDeleteProvider.removeModule(toRemove, null, usingModels, moduleModel);
 
-    ModifiableRootModel[] rootModels = usingModels.toArray(new ModifiableRootModel[usingModels.size()]);
-    ModifiableModelCommitter.multiCommit(rootModels, moduleModel);
+    ModifiableModelCommitter.multiCommit(usingModels, moduleModel);
   }
 
   @NotNull

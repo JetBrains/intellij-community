@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,8 +56,6 @@ class QuickListsManager(private val myActionManager: ActionManager, schemeManage
       get() = ApplicationManager.getApplication().getComponent(QuickListsManager::class.java)
   }
 
-  override fun getComponentName() = "QuickListsManager"
-
   override fun initComponent() {
     for (provider in BundledQuickListsProvider.EP_NAME.extensions) {
       for (path in provider.bundledListsRelativePaths) {
@@ -66,9 +64,6 @@ class QuickListsManager(private val myActionManager: ActionManager, schemeManage
     }
     mySchemeManager.loadSchemes()
     registerActions()
-  }
-
-  override fun disposeComponent() {
   }
 
   val schemeManager: SchemeManager<QuickList>

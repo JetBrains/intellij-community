@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.RunManager;
-import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -52,7 +51,7 @@ public class DeploymentConfigurationManagerImpl extends DeploymentConfigurationM
   @Override
   public void createAndRunConfiguration(@NotNull ServerType<?> serverType, @Nullable RemoteServer<?> remoteServer) {
     DeployToServerConfigurationType configurationType = DeployToServerConfigurationTypesRegistrar.getDeployConfigurationType(serverType);
-    RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
+    RunManager runManager = RunManager.getInstance(myProject);
     ConfigurationFactoryEx factory = configurationType.getFactory();
     RunnerAndConfigurationSettings settings = runManager.createRunConfiguration(configurationType.getDisplayName(), factory);
     factory.onNewConfigurationCreated(settings.getConfiguration());
@@ -62,8 +61,7 @@ public class DeploymentConfigurationManagerImpl extends DeploymentConfigurationM
     }
     if (RunDialog.editConfiguration(myProject, settings, "Create Deployment Configuration",
                                     DefaultRunExecutor.getRunExecutorInstance())) {
-      runManager.addConfiguration(settings, runManager.isConfigurationShared(settings), runManager.getBeforeRunTasks(runConfiguration),
-                                  false);
+      runManager.addConfiguration(settings, settings.isShared());
       runManager.setSelectedConfiguration(settings);
       ProgramRunnerUtil.executeConfiguration(myProject, settings, DefaultRunExecutor.getRunExecutorInstance());
     }

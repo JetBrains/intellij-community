@@ -31,11 +31,6 @@ import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 20.06.2007
- */
 public class InlineXslAttribute implements IntentionAction {
     @NotNull
     public String getText() {

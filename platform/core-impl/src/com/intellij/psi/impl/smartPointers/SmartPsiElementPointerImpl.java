@@ -28,10 +28,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
-import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +38,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 
-class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx<E> {
+public class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx<E> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SmartPsiElementPointerImpl");
 
   private Reference<E> myElement;
@@ -98,8 +95,8 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
   void cacheElement(@Nullable E element) {
     myElement = element == null ? null : 
-                PsiManagerEx.getInstanceEx(getProject()).isBatchFilesProcessingMode() ? new WeakReference<E>(element) :
-                new SoftReference<E>(element);
+                PsiManagerEx.getInstanceEx(getProject()).isBatchFilesProcessingMode() ? new WeakReference<>(element) :
+                new SoftReference<>(element);
   }
 
   @Override
@@ -144,9 +141,12 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
                                                                                   @NotNull E element,
                                                                                   PsiFile containingFile, boolean forInjected) {
     SmartPointerElementInfo elementInfo = doCreateElementInfo(project, element, containingFile, forInjected);
-    if (ApplicationManager.getApplication().isUnitTestMode() && !element.equals(elementInfo.restoreElement())) {
-      // likely cause: PSI having isPhysical==true, but which can't be restored by containing file and range. To fix, make isPhysical return false
-      LOG.error("Cannot restore " + element + " of " + element.getClass() + " from " + elementInfo);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      PsiElement restored = elementInfo.restoreElement();
+      if (!element.equals(restored)) {
+        // likely cause: PSI having isPhysical==true, but which can't be restored by containing file and range. To fix, make isPhysical return false
+        LOG.error("Cannot restore " + element + " of " + element.getClass() + " from " + elementInfo + "; restored=" + restored + " in " + element.getProject());
+      }
     }
     return elementInfo;
   }
@@ -206,18 +206,13 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
   @Nullable
   private static SmartPointerElementInfo createAnchorInfo(@NotNull PsiElement element, @NotNull PsiFile containingFile) {
-    if (element instanceof StubBasedPsiElement && containingFile instanceof PsiFileWithStubSupport) {
-      PsiFileWithStubSupport stubFile = (PsiFileWithStubSupport)containingFile;
-      StubTree stubTree = stubFile.getStubTree();
-      if (stubTree != null) {
-        // use stubs when tree is not loaded
+    if (element instanceof StubBasedPsiElement && containingFile instanceof PsiFileImpl) {
+      IStubFileElementType stubType = ((PsiFileImpl)containingFile).getElementTypeForStubBuilder();
+      if (stubType != null && stubType.shouldBuildStubFor(containingFile.getViewProvider().getVirtualFile())) {
         StubBasedPsiElement stubPsi = (StubBasedPsiElement)element;
         int stubId = PsiAnchor.calcStubIndex(stubPsi);
-        IStubElementType myStubElementType = stubPsi.getElementType();
-
-        IStubFileElementType elementTypeForStubBuilder = ((PsiFileImpl)containingFile).getElementTypeForStubBuilder();
-        if (stubId != -1 && elementTypeForStubBuilder != null) { // TemplateDataElementType is not IStubFileElementType
-          return new AnchorElementInfo(element, stubFile, stubId, myStubElementType);
+        if (stubId != -1) {
+          return new AnchorElementInfo(element, (PsiFileImpl)containingFile, stubId, stubPsi.getElementType());
         }
       }
     }
@@ -249,9 +244,9 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     return Comparing.equal(pointer1.getElement(), pointer2.getElement());
   }
 
-  synchronized int incrementAndGetReferenceCount(int delta) {
+  public synchronized int incrementAndGetReferenceCount(int delta) {
     if (myReferenceCount == Byte.MAX_VALUE) return Byte.MAX_VALUE; // saturated
-    if (myReferenceCount == 0) return 0; // disposed, not to be reused again
+    if (myReferenceCount == 0) return -1; // disposed, not to be reused again
     return myReferenceCount += delta;
   }
 

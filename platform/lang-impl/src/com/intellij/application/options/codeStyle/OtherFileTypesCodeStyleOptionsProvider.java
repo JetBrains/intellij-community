@@ -15,8 +15,6 @@
  */
 package com.intellij.application.options.codeStyle;
 
-import com.intellij.application.options.CodeStyleAbstractConfigurable;
-import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -34,19 +32,8 @@ public class OtherFileTypesCodeStyleOptionsProvider extends CodeStyleSettingsPro
 
   @NotNull
   @Override
-  public Configurable createSettingsPage(CodeStyleSettings settings, CodeStyleSettings originalSettings) {
-    return new CodeStyleAbstractConfigurable(settings, originalSettings, ApplicationBundle.message("code.style.other.file.types")) {
-      @Override
-      protected CodeStyleAbstractPanel createPanel(CodeStyleSettings settings) {
-        return new OtherFileTypesCodeStyleOptionsForm(settings);
-      }
-
-      @Nullable
-      @Override
-      public String getHelpTopic() {
-        return "settings.editor.codeStyle.other";
-      }
-    };
+  public Configurable createSettingsPage(CodeStyleSettings settings, CodeStyleSettings clonedSettings) {
+    return new OtherFileTypesCodeStyleConfigurable(settings, clonedSettings);
   }
 
   @Nullable

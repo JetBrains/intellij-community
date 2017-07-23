@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 
 package com.intellij.refactoring.util;
+
+import com.intellij.openapi.wm.IdeFocusManager;
 
 import javax.swing.*;
 import java.awt.event.KeyAdapter;
@@ -75,7 +77,9 @@ public class RadioUpDownListener extends KeyAdapter {
 
   private static boolean click(final JRadioButton button) {
     if (button.isEnabled() && button.isVisible()) {
-      button.requestFocus();
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(button, true);
+      });
       button.doClick();
       return true;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Couple;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
@@ -251,7 +252,7 @@ public class ScrollingUtil {
   }
 
   public static void moveDown(JList list, @JdkConstants.InputEventMask final int modifiers) {
-    _moveDown(list, list.getSelectionModel(), modifiers, list.getModel().getSize(), UISettings.getInstance().CYCLE_SCROLLING);
+    _moveDown(list, list.getSelectionModel(), modifiers, list.getModel().getSize(), UISettings.getInstance().getCycleScrolling());
   }
 
   private static void selectOrAddSelection(ListSelectionModel selectionModel,
@@ -361,7 +362,11 @@ public class ScrollingUtil {
     UIUtil.maybeInstall(map, MOVE_END_ID, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0));
   }
 
-  public static abstract class ListScrollAction extends SpeedSearchAwareAction {
+  public interface ScrollingAction extends DumbAware {
+
+  }
+
+  public static abstract class ListScrollAction extends MyScrollingAction {
     protected ListScrollAction(final ShortcutSet shortcutSet, final JComponent component) {
       super(component);
       registerCustomShortcutSet(shortcutSet, component);
@@ -460,7 +465,7 @@ public class ScrollingUtil {
   }
 
   public static void moveUp(JList list, @JdkConstants.InputEventMask int modifiers) {
-    _moveUp(list, list.getSelectionModel(), list.getModel().getSize(), modifiers, UISettings.getInstance().CYCLE_SCROLLING);
+    _moveUp(list, list.getSelectionModel(), list.getModel().getSize(), modifiers, UISettings.getInstance().getCycleScrolling());
   }
 
   public static void moveUp(JTable table, @JdkConstants.InputEventMask int modifiers, boolean cycleScrolling) {
@@ -538,8 +543,8 @@ public class ScrollingUtil {
     int size = table.getModel().getRowCount();
     int increment = visible - 1;
     int index = Math.min(selectionModel.getMinSelectionIndex() + increment, size - 1);
-    int fisrtVisibleRow = getLeadingRow(table, table.getVisibleRect());
-    int top = fisrtVisibleRow + increment;
+    int firstVisibleRow = getLeadingRow(table, table.getVisibleRect());
+    int top = firstVisibleRow + increment;
     int bottom = top + visible - 1;
     if (bottom >= size) {
       bottom = size - 1;
@@ -551,23 +556,33 @@ public class ScrollingUtil {
   }
 
   public static void installActions(final JTable table) {
-    installActions(table, UISettings.getInstance().CYCLE_SCROLLING);
+    installActions(table, UISettings.getInstance().getCycleScrolling());
   }
 
-  public abstract static class SpeedSearchAwareAction extends DumbAwareAction {
+  private abstract static class MyScrollingAction extends DumbAwareAction implements ScrollingAction {
     private final JComponent myComponent;
 
-    public SpeedSearchAwareAction(JComponent component) {
+    MyScrollingAction(JComponent component) {
       myComponent = component;
     }
 
     @Override
     public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(SpeedSearchSupply.getSupply(myComponent) == null);
+      e.getPresentation().setEnabled(SpeedSearchSupply.getSupply(myComponent) == null && !isEmpty(myComponent));
     }
   }
 
+  public static boolean isEmpty(JComponent component) {
+    if (component instanceof JTable) return ((JTable)component).getRowCount() < 1;
+    if (component instanceof JList) return ((JList)component).getModel().getSize() <1;
+    return false;
+  }
+
   public static void installActions(final JTable table, final boolean cycleScrolling) {
+    installActions(table, cycleScrolling, null);
+  }
+
+  public static void installActions(final JTable table, final boolean cycleScrolling, JComponent focusParent) {
     ActionMap actionMap = table.getActionMap();
     actionMap.put(SCROLLUP_ACTION_ID, new MoveAction(SCROLLUP_ACTION_ID, table, cycleScrolling));
     actionMap.put(SCROLLDOWN_ACTION_ID, new MoveAction(SCROLLDOWN_ACTION_ID, table, cycleScrolling));
@@ -577,47 +592,58 @@ public class ScrollingUtil {
     actionMap.put(SELECT_FIRST_ROW_ACTION_ID, new MoveAction(SELECT_FIRST_ROW_ACTION_ID, table, cycleScrolling));
 
     maybeInstallDefaultShortcuts(table);
+    JComponent target = focusParent == null ? table : focusParent;
 
-    new SpeedSearchAwareAction(table) {
+    new MyScrollingAction(table) {
+      @Override
       public void actionPerformed(AnActionEvent e) {
         moveHome(table);
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0)), table);
-    new SpeedSearchAwareAction(table) {
+    new MyScrollingAction(table) {
+      @Override
       public void actionPerformed(AnActionEvent e) {
         moveEnd(table);
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0)), table);
-    new SpeedSearchAwareAction(table) {
-      public void actionPerformed(AnActionEvent e) {
-        moveHome(table);
-      }
-    }.registerCustomShortcutSet(CommonShortcuts.getMoveHome(), table);
-    new SpeedSearchAwareAction(table) {
-      public void actionPerformed(AnActionEvent e) {
-        moveEnd(table);
-      }
-    }.registerCustomShortcutSet(CommonShortcuts.getMoveEnd(), table);
-    new SpeedSearchAwareAction(table) {
+    if (!(focusParent instanceof JTextComponent)) {
+      new MyScrollingAction(table) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          moveHome(table);
+        }
+      }.registerCustomShortcutSet(CommonShortcuts.getMoveHome(), target);
+      new MyScrollingAction(table) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          moveEnd(table);
+        }
+      }.registerCustomShortcutSet(CommonShortcuts.getMoveEnd(), target);
+    }
+    new MyScrollingAction(table) {
+      @Override
       public void actionPerformed(AnActionEvent e) {
         moveDown(table, e.getModifiers(), cycleScrolling);
       }
-    }.registerCustomShortcutSet(CommonShortcuts.getMoveDown(), table);
-    new SpeedSearchAwareAction(table) {
+    }.registerCustomShortcutSet(CommonShortcuts.getMoveDown(), target);
+    new MyScrollingAction(table) {
+      @Override
       public void actionPerformed(AnActionEvent e) {
         moveUp(table, e.getModifiers(), cycleScrolling);
       }
-    }.registerCustomShortcutSet(CommonShortcuts.getMoveUp(), table);
-    new SpeedSearchAwareAction(table) {
+    }.registerCustomShortcutSet(CommonShortcuts.getMoveUp(), target);
+    new MyScrollingAction(table) {
+      @Override
       public void actionPerformed(AnActionEvent e) {
         movePageUp(table);
       }
-    }.registerCustomShortcutSet(CommonShortcuts.getMovePageUp(), table);
-    new SpeedSearchAwareAction(table) {
+    }.registerCustomShortcutSet(CommonShortcuts.getMovePageUp(), target);
+    new MyScrollingAction(table) {
+      @Override
       public void actionPerformed(AnActionEvent e) {
         movePageDown(table);
       }
-    }.registerCustomShortcutSet(CommonShortcuts.getMovePageDown(), table);
+    }.registerCustomShortcutSet(CommonShortcuts.getMovePageDown(), target);
   }
 
   static class MoveAction extends AbstractAction {
@@ -685,7 +711,7 @@ public class ScrollingUtil {
     }
 
     private boolean isCycleScrolling() {
-      return myCycleScrolling == null ? UISettings.getInstance().CYCLE_SCROLLING : myCycleScrolling.booleanValue();
+      return myCycleScrolling == null ? UISettings.getInstance().getCycleScrolling() : myCycleScrolling.booleanValue();
     }
   }
 }

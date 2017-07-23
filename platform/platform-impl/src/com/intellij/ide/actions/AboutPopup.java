@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
@@ -32,16 +33,15 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.UI;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBPoint;
+import com.intellij.util.ui.JBRectangle;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -64,16 +64,15 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class AboutPopup {
-  private static final String COPY_URL = "copy://";
   private static JBPopup ourPopup;
 
-  public static void show(@Nullable Window window) {
+  public static void show(@Nullable Window window, boolean showDebugInfo) {
     ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
 
     final PopupPanel panel = new PopupPanel(new BorderLayout());
     Icon image = IconLoader.getIcon(appInfo.getAboutImageUrl());
     if (appInfo.showLicenseeInfo()) {
-      final InfoSurface infoSurface = new InfoSurface(image);
+      final InfoSurface infoSurface = new InfoSurface(image, showDebugInfo);
       infoSurface.setPreferredSize(new Dimension(image.getIconWidth(), image.getIconHeight()));
       panel.setInfoSurface(infoSurface);
     }
@@ -125,6 +124,7 @@ public class AboutPopup {
     private final Color myColor;
     private final Color myLinkColor;
     private final Icon myImage;
+    private final boolean myShowDebugInfo;
     private Font myFont;
     private Font myBoldFont;
     private final List<AboutBoxLine> myLines = new ArrayList<>();
@@ -135,13 +135,14 @@ public class AboutPopup {
     private float myShowCopyAlpha;
     private Alarm myAlarm = new Alarm();
 
-    public InfoSurface(Icon image) {
+    public InfoSurface(Icon image, final boolean showDebugInfo) {
       ApplicationInfoImpl appInfo = (ApplicationInfoImpl)ApplicationInfoEx.getInstanceEx();
 
       myImage = image;
       //noinspection UseJBColor
       myColor = Color.white;
       myLinkColor = appInfo.getAboutLinkColor() != null ? appInfo.getAboutLinkColor() : UI.getColor("link.foreground");
+      myShowDebugInfo = showDebugInfo;
 
       setOpaque(false);
       setBackground(myColor);
@@ -198,18 +199,18 @@ public class AboutPopup {
         public void mouseClicked(MouseEvent event) {
           if (myActiveLink != null) {
             event.consume();
-            if (COPY_URL.equals(myActiveLink.myUrl)) {
-              copyInfoToClipboard(myInfo.toString());
+            BrowserUtil.browse(myActiveLink.myUrl);
+          }
+
+          if (getCopyIconArea().contains(event.getPoint())) {
+              copyInfoToClipboard(getText());
               if (ourPopup != null) {
                 ourPopup.cancel();
               }
-              return;
-            }
-            BrowserUtil.browse(myActiveLink.myUrl);
           }
         }
 
-        final static double maxAlpha = 0.5;
+        final static double maxAlpha = 1.0;
         final static double fadeStep = 0.05;
         final static int animationDelay = 15;
 
@@ -222,7 +223,7 @@ public class AboutPopup {
               @Override
               public void run() {
                 if (myShowCopyAlpha < maxAlpha) {
-                  myShowCopyAlpha += fadeStep;
+                  myShowCopyAlpha = (float)Math.min(myShowCopyAlpha + fadeStep, maxAlpha);
                   repaint();
                   myAlarm.addRequest(this, animationDelay);
                 }
@@ -253,17 +254,24 @@ public class AboutPopup {
       addMouseMotionListener(new MouseMotionAdapter() {
         @Override
         public void mouseMoved(MouseEvent event) {
-          boolean hadLink = (myActiveLink != null);
+          boolean hadLink = (myActiveLink != null) || getCursor() == Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
           myActiveLink = null;
+          Point point = event.getPoint();
           for (Link link : myLinks) {
-            if (link.myRectangle.contains(event.getPoint())) {
+            if (link.myRectangle.contains(point)) {
               myActiveLink = link;
               if (!hadLink) {
                 setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
               }
-              break;
+              return;
             }
           }
+
+          if (getCopyIconArea().contains(point)) {
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            return;
+          }
+
           if (hadLink && myActiveLink == null) {
             setCursor(Cursor.getDefaultCursor());
           }
@@ -271,23 +279,28 @@ public class AboutPopup {
       });
     }
 
+    private Rectangle getCopyIconArea() {
+      return new Rectangle(getCopyIconCoord(), JBUI.size(16));
+    }
+
     private void appendLast() {
       myInfo.append(myLines.get(myLines.size() - 1).getText()).append("\n");
     }
 
     @Override
-    protected void paintChildren(Graphics g) {
-      super.paintChildren(g);
+    public void paint(Graphics g) {
+      super.paint(g);
 
       Graphics2D g2 = (Graphics2D)g;
+      GraphicsConfig config = new GraphicsConfig(g);
       UISettings.setupAntialiasing(g);
 
       Font labelFont = JBUI.Fonts.label();
       if (SystemInfo.isWindows) {
-        labelFont = JBUI.Fonts.create("Tahoma", 12);
+        labelFont = JBUI.Fonts.create(SystemInfo.isWinVistaOrNewer ? "Segoe UI" : "Tahoma", 14);
       }
 
-      int startFontSize = Registry.is("ide.new.about") ? 14 : 10;
+      int startFontSize = 14;
       for (int labelSize = JBUI.scale(startFontSize); labelSize != JBUI.scale(6); labelSize -= 1) {
         myLinks.clear();
         g2.setPaint(myColor);
@@ -299,7 +312,7 @@ public class AboutPopup {
         myFont = labelFont.deriveFont(Font.PLAIN, labelSize);
         myBoldFont = labelFont.deriveFont(Font.BOLD, labelSize + 1);
         try {
-          renderer.render(30, 0, myLines);
+          renderer.render(0, 0, myLines);
           break;
         }
         catch (TextRenderer.OverflowException ignore) { }
@@ -317,37 +330,57 @@ public class AboutPopup {
           g2.setFont(JBUI.Fonts.miniFont());
         }
         else {
-          g2.setFont(JBUI.Fonts.create("Tahoma", 10));
+          g2.setFont(JBUI.Fonts.create(SystemInfo.isWinVistaOrNewer ? "Segoe UI" : "Tahoma", 12));
         }
       } else {
         g2.setColor(JBColor.BLACK);
       }
 
-      if (Registry.is("ide.new.about")) {
-        g2.setColor(Gray.x33);
-        g2.setFont(JBUI.Fonts.label(12));
+      g2.setColor(((ApplicationInfoEx)appInfo).getAboutForeground());
+
+      JBPoint copyrightCoord = getCopyrightCoord();
+      g2.drawString(getCopyrightText(), copyrightCoord.x, copyrightCoord.y);
+      if (myShowDebugInfo) {
+        g2.setColor(((ApplicationInfoEx)appInfo).getAboutForeground());
+        for (Link link : myLinks) {
+          g2.drawRect(link.myRectangle.x, link.myRectangle.y, link.myRectangle.width, link.myRectangle.height);
+        }
       }
-      final int copyrightX = Registry.is("ide.new.about") ? JBUI.scale(140) : JBUI.scale(30);
-      final int copyrightY = Registry.is("ide.new.about") ? JBUI.scale(390) : JBUI.scale(284);
-      g2.drawString(getCopyrightText(), copyrightX, copyrightY);
+
+      config.restore();
+      if (myShowCopy) {
+        JBPoint coord = getCopyIconCoord();
+        config = new GraphicsConfig(g).paintWithAlpha(myShowCopyAlpha);
+        AllIcons.General.CopyHovered.paintIcon(this, g, coord.x, coord.y);
+        config.restore();
+      }
     }
 
     @NotNull
-    private String getCopyrightText() {
-      ApplicationInfo appInfo = ApplicationInfo.getInstance();
+    protected String getCopyrightText() {
       return "\u00A9 2000\u2013" + Calendar.getInstance(Locale.US).get(Calendar.YEAR) + " JetBrains s.r.o. All rights reserved.";
     }
 
     @NotNull
     private TextRenderer createTextRenderer(Graphics2D g) {
-      if (Registry.is("ide.new.about")) {
-        return new TextRenderer(18, 200, 500, 220, g);
-      }
-      return new TextRenderer(0, 165, 398, 120, g);
+      Rectangle r = getTextRendererRect();
+      return new TextRenderer(r.x, r.y, r.width, r.height, g);
+    }
+
+    protected JBRectangle getTextRendererRect() {
+      return new JBRectangle(115, 156, 500, 220);
+    }
+
+    protected JBPoint getCopyrightCoord() {
+      return new JBPoint(115, 395);
+    }
+
+    protected JBPoint getCopyIconCoord() {
+      return new JBPoint(66, 156);
     }
 
     public String getText() {
-      return myInfo.toString();
+      return myInfo.toString() + SystemInfo.getOsNameAndVersion();
     }
 
     private class TextRenderer {
@@ -367,10 +400,10 @@ public class AboutPopup {
       public class OverflowException extends Exception { }
 
       public TextRenderer(final int xBase, final int yBase, final int w, final int h, final Graphics2D g2) {
-        this.xBase = JBUI.scale(xBase);
-        this.yBase = JBUI.scale(yBase);
-        this.w = JBUI.scale(w);
-        this.h = JBUI.scale(h);
+        this.xBase = xBase;
+        this.yBase = yBase;
+        this.w = w;
+        this.h = h;
         this.g2 = g2;
 
         if (SystemInfo.isWindows) {
@@ -382,7 +415,6 @@ public class AboutPopup {
         x = indentX;
         y = indentY;
         ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
-        boolean showCopyButton = myShowCopy || myShowCopyAlpha > 0;
         for (AboutBoxLine line : lines) {
           final String s = line.getText();
           setFont(line.isBold() ? myBoldFont : myFont);
@@ -392,22 +424,9 @@ public class AboutPopup {
             myLinks.add(new Link(new Rectangle(xBase + x, yBase + y - fontAscent, metrics.stringWidth(s + " "), fontHeight), line.getUrl()));
           }
           else {
-            g2.setColor(Registry.is("ide.new.about") ? Gray.x33 : appInfo.getAboutForeground());
+            g2.setColor(appInfo.getAboutForeground());
           }
           renderString(s, indentX);
-          if (showCopyButton) {
-            final FontMetrics metrics = g2.getFontMetrics(myFont);
-            String copyString = "Copy to Clipboard";
-            final int width = metrics.stringWidth(copyString);
-            g2.setFont(myFont);
-            g2.setColor(myLinkColor);
-            final int xOffset = myImage.getIconWidth() - width - 10;
-            final GraphicsConfig config = GraphicsUtil.paintWithAlpha(g2, Math.max(0, Math.min(1, myShowCopyAlpha)));
-            g2.drawString(copyString, xOffset, yBase + y);
-            config.restore();
-            myLinks.add(new Link(new Rectangle(xOffset, yBase + y - fontAscent, width, fontHeight), COPY_URL));
-            showCopyButton = false;
-          }
           if (!line.isKeepWithNext() && !line.equals(lines.get(lines.size()-1))) {
             lineFeed(indentX, s);
           }
@@ -421,24 +440,16 @@ public class AboutPopup {
           if (x + wordWidth >= w) {
             lineFeed(indentX, word);
           }
-          else {
-            char c = ' ';
-            final int cW = fontmetrics.charWidth(c);
-            if (x + cW < w) {
-              g2.drawChars(new char[]{c}, 0, 1, xBase + x, yBase + y);
-              x += cW;
-            }
-          }
           renderWord(word, indentX);
         }
       }
 
       private void renderWord(final String s, final int indentX) throws OverflowException {
-        for (int j = 0; j != s.length(); ++j) {
-          final char c = s.charAt(j);
-          Font f = null;
-          FontMetrics fm = null;
-          try {
+        FontMetrics fm = null;
+        Font f = null;
+        try {
+          for (int j = 0; j != s.length(); ++j) {
+            final char c = s.charAt(j);
             if (!g2.getFont().canDisplay(c)) {
               f = g2.getFont();
               fm = fontmetrics;
@@ -451,13 +462,16 @@ public class AboutPopup {
             }
             g2.drawChars(new char[]{c}, 0, 1, xBase + x, yBase + y);
             x += cW;
-          } finally {
-            if (f != null) {
-              g2.setFont(f);
-              fontmetrics = fm;
-            }
+          }
+          x += fontmetrics.charWidth(' ');
+        }
+        finally {
+          if (f != null) {
+            g2.setFont(f);
+            fontmetrics = fm;
           }
         }
+
       }
 
       private void lineFeed(int indent, final String s) throws OverflowException {

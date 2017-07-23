@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -182,7 +182,7 @@ public class ChangeListChooserPanel extends JPanel {
     }
     else {
       //update description if changed
-      localChangeList.setComment(myListPanel.getDescription());
+      manager.editComment(changeListName, myListPanel.getDescription());
     }
     rememberSettings(project, localChangeList.isDefault(), myListPanel.getMakeActiveCheckBox().isSelected());
     if (myListPanel.getMakeActiveCheckBox().isSelected()) {
@@ -233,8 +233,9 @@ public class ChangeListChooserPanel extends JPanel {
 
     public MyEditorComboBox() {
       super(PREF_WIDTH);
-      JBColor fg = new JBColor(0x00b53d, 0x24953c);
-      TextIcon icon = new TextIcon("New", fg, ColorUtil.toAlpha(fg, 40), JBUI.scale(2));
+      JBColor fg = new JBColor(0x00b53d, 0x6ba65d);
+      JBColor bg = new JBColor(0xebfcf1, 0x313b32);
+      TextIcon icon = new TextIcon("New", fg, bg, JBUI.scale(2));
       icon.setFont(RelativeFont.TINY.derive(getFont()));
       icon.setRound(JBUI.scale(4));
       JLabel label = new JLabel(icon);
@@ -243,7 +244,7 @@ public class ChangeListChooserPanel extends JPanel {
       panel.setBorder(JBUI.Borders.empty(1, 1, 1, 4));
       panel.add(label, BorderLayout.CENTER);
       myEditorTextField = new LanguageTextField(PlainTextLanguage.INSTANCE, myProject, "");
-      myEditorTextField.addDocumentListener(new DocumentAdapter() {
+      myEditorTextField.addDocumentListener(new DocumentListener() {
         @Override
         public void documentChanged(DocumentEvent e) {
           String changeListName = e.getDocument().getText();

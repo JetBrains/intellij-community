@@ -150,7 +150,7 @@ public class PropertyUtil {
   @NotNull
   public static Map<String, PsiMethod> getAllProperties(final boolean acceptSetters,
                                                         final boolean acceptGetters, PsiMethod[] methods) {
-    final Map<String, PsiMethod> map = new HashMap<String, PsiMethod>();
+    final Map<String, PsiMethod> map = new HashMap<>();
 
     for (PsiMethod method : methods) {
       if (filterMethods(method)) continue;
@@ -176,7 +176,7 @@ public class PropertyUtil {
   public static List<PsiMethod> getSetters(@NotNull final PsiClass psiClass, final String propertyName) {
     final String setterName = suggestSetterName(propertyName);
     final PsiMethod[] psiMethods = psiClass.findMethodsByName(setterName, true);
-    final ArrayList<PsiMethod> list = new ArrayList<PsiMethod>(psiMethods.length);
+    final ArrayList<PsiMethod> list = new ArrayList<>(psiMethods.length);
     for (PsiMethod method : psiMethods) {
       if (filterMethods(method)) continue;
       if (isSimplePropertySetter(method)) {
@@ -189,7 +189,7 @@ public class PropertyUtil {
   @NotNull
   public static List<PsiMethod> getGetters(@NotNull final PsiClass psiClass, final String propertyName) {
     final String[] names = suggestGetterNames(propertyName);
-    final ArrayList<PsiMethod> list = new ArrayList<PsiMethod>();
+    final ArrayList<PsiMethod> list = new ArrayList<>();
     for (String name : names) {
       final PsiMethod[] psiMethods = psiClass.findMethodsByName(name, true);
       for (PsiMethod method : psiMethods) {
@@ -353,7 +353,7 @@ public class PropertyUtil {
 
   @NotNull
   public static String[] getReadableProperties(@NotNull PsiClass aClass, boolean includeSuperClass) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
 
     PsiMethod[] methods = includeSuperClass ? aClass.getAllMethods() : aClass.getMethods();
 
@@ -370,7 +370,7 @@ public class PropertyUtil {
 
   @NotNull
   public static String[] getWritableProperties(@NotNull PsiClass aClass, boolean includeSuperClass) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
 
     PsiMethod[] methods = includeSuperClass ? aClass.getAllMethods() : aClass.getMethods();
 
@@ -452,50 +452,44 @@ public class PropertyUtil {
     VariableKind kind = codeStyleManager.getVariableKind(field);
     String propertyName = codeStyleManager.variableNameToPropertyName(name, kind);
     String setName = suggestSetterName(field);
-    try {
-      PsiMethod setMethod = factory
-        .createMethodFromText(factory.createMethod(setName, returnSelf ? factory.createType(containingClass) : PsiType.VOID).getText(),
-                              field);
-      String parameterName = codeStyleManager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
-      PsiParameter param = factory.createParameter(parameterName, field.getType());
+    PsiMethod setMethod = factory
+      .createMethodFromText(factory.createMethod(setName, returnSelf ? factory.createType(containingClass) : PsiType.VOID).getText(),
+                            field);
+    String parameterName = codeStyleManager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
+    PsiParameter param = factory.createParameter(parameterName, field.getType());
 
-      NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, param);
+    NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, param);
 
-      setMethod.getParameterList().add(param);
-      PsiUtil.setModifierProperty(setMethod, PsiModifier.PUBLIC, true);
-      PsiUtil.setModifierProperty(setMethod, PsiModifier.STATIC, isStatic);
+    setMethod.getParameterList().add(param);
+    PsiUtil.setModifierProperty(setMethod, PsiModifier.PUBLIC, true);
+    PsiUtil.setModifierProperty(setMethod, PsiModifier.STATIC, isStatic);
 
-      @NonNls StringBuilder buffer = new StringBuilder();
-      buffer.append("{\n");
-      if (name.equals(parameterName)) {
-        if (!isStatic) {
-          buffer.append("this.");
-        }
-        else {
-          String className = containingClass.getName();
-          if (className != null) {
-            buffer.append(className);
-            buffer.append(".");
-          }
+    @NonNls StringBuilder buffer = new StringBuilder();
+    buffer.append("{\n");
+    if (name.equals(parameterName)) {
+      if (!isStatic) {
+        buffer.append("this.");
+      }
+      else {
+        String className = containingClass.getName();
+        if (className != null) {
+          buffer.append(className);
+          buffer.append(".");
         }
       }
-      buffer.append(name);
-      buffer.append("=");
-      buffer.append(parameterName);
-      buffer.append(";\n");
-      if (returnSelf) {
-        buffer.append("return this;\n");
-      }
-      buffer.append("}");
-      PsiCodeBlock body = factory.createCodeBlockFromText(buffer.toString(), null);
-      setMethod.getBody().replace(body);
-      setMethod = (PsiMethod)CodeStyleManager.getInstance(project).reformat(setMethod);
-      return setMethod;
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-      return null;
+    buffer.append(name);
+    buffer.append("=");
+    buffer.append(parameterName);
+    buffer.append(";\n");
+    if (returnSelf) {
+      buffer.append("return this;\n");
     }
+    buffer.append("}");
+    PsiCodeBlock body = factory.createCodeBlockFromText(buffer.toString(), null);
+    setMethod.getBody().replace(body);
+    setMethod = (PsiMethod)CodeStyleManager.getInstance(project).reformat(setMethod);
+    return setMethod;
   }
 
   /** @deprecated use {@link NullableNotNullManager#copyNullableOrNotNullAnnotation(PsiModifierListOwner, PsiModifierListOwner)} (to be removed in IDEA 17) */
@@ -508,6 +502,7 @@ public class PropertyUtil {
     return suggestPropertyName(field, field.getName());
   }
 
+  @NotNull
   public static String suggestPropertyName(@NotNull PsiField field, @NotNull String fieldName) {
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(field.getProject());
     VariableKind kind = codeStyleManager.getVariableKind(field);

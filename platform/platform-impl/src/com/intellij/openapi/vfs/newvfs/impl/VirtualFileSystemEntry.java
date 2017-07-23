@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,16 +21,12 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VFileProperty;
-import com.intellij.openapi.vfs.VfsBundle;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
-import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringFactory;
@@ -67,14 +63,14 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   final VfsData.Segment mySegment;
   private final VirtualDirectoryImpl myParent;
-  protected final int myId;
+  final int myId;
 
   static {
     //noinspection ConstantConditions
     assert (~ALL_FLAGS_MASK) == LocalTimeCounter.TIME_MASK;
   }
 
-  public VirtualFileSystemEntry(int id, @NotNull VfsData.Segment segment, @Nullable VirtualDirectoryImpl parent) {
+  VirtualFileSystemEntry(int id, @NotNull VfsData.Segment segment, @Nullable VirtualDirectoryImpl parent) {
     mySegment = segment;
     myId = id;
     myParent = parent;
@@ -167,6 +163,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
   }
 
+  @NotNull
   protected char[] appendPathOnFileSystem(int accumulatedPathLength, int[] positionRef) {
     CharSequence name = FileNameCache.getVFileName(mySegment.getNameId(myId));
 
@@ -323,8 +320,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     VirtualDirectoryImpl parent = getParent();
     parent.removeChild(this);
     mySegment.setNameId(myId, FileNameCache.storeName(newName));
-    ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
     parent.addChild(this);
+    ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
   }
 
   public void setParent(@NotNull VirtualFile newParent) {
@@ -337,6 +334,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     VfsData.changeParent(myId, directory);
     directory.addChild(this);
     updateLinkStatus();
+    ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
   }
 
   @Override
@@ -362,20 +360,17 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       charset = configured == null ? Charset.defaultCharset() : configured;
       setCharset(charset);
     }
-    else if (SingleRootFileViewProvider.isTooLargeForContentLoading(this)) {
-      charset = super.getCharset();
-    }
     else {
       try {
         final byte[] content;
         try {
-          content = contentsToByteArray();
+          content = VfsUtilCore.loadBytes(this);
         }
         catch (FileNotFoundException e) {
           // file has already been deleted on disk
           return super.getCharset();
         }
-        charset = LoadTextUtil.detectCharsetAndSetBOM(this, content);
+        charset = LoadTextUtil.detectCharsetAndSetBOM(this, content, getFileType());
       }
       catch (FileTooBigException e) {
         return super.getCharset();
@@ -389,7 +384,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public String getPresentableName() {
-    if (UISettings.getInstance().HIDE_KNOWN_EXTENSION_IN_TABS && !isDirectory()) {
+    if (UISettings.getInstance().getHideKnownExtensionInTabs() && !isDirectory()) {
       final String nameWithoutExtension = getNameWithoutExtension();
       return nameWithoutExtension.isEmpty() ? getName() : nameWithoutExtension;
     }

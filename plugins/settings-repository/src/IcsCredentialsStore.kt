@@ -17,6 +17,7 @@ package org.jetbrains.settingsRepository
 
 import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
+import com.intellij.credentialStore.SERVICE_NAME_PREFIX
 import com.intellij.ide.passwordSafe.PasswordSafe
 
 /**
@@ -33,7 +34,7 @@ class IcsCredentialsStore() {
 
 private fun CredentialAttributes(host: String?, sshKeyFile: String?, accountName: String?): CredentialAttributes? {
   if (sshKeyFile == null) {
-    return CredentialAttributes("IntelliJ Platform Settings Repository — $host", accountName)
+    return CredentialAttributes("$SERVICE_NAME_PREFIX Settings Repository — $host", accountName)
   }
   else {
     return CredentialAttributes("SSH", sshKeyFile)

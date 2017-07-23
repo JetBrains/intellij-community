@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyMemberType;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,6 +68,12 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
   @NotNull
   @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createImplementMethodsFix(@NotNull PsiElement psiElement) {
+    return QuickFixes.EMPTY_FIX;
+  }
+
+  @NotNull
+  @Override
+  public LocalQuickFixAndIntentionActionOnPsiElement createAssignmentToComparisonFix(PsiAssignmentExpression expr) {
     return QuickFixes.EMPTY_FIX;
   }
 
@@ -205,6 +212,12 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createReuseVariableDeclarationFix(@NotNull PsiLocalVariable psiLocalVariable) {
+    return QuickFixes.EMPTY_FIX;
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createNavigateToAlreadyDeclaredVariableFix(@NotNull PsiLocalVariable variable) {
     return QuickFixes.EMPTY_FIX;
   }
 
@@ -384,6 +397,12 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
 
   @NotNull
   @Override
+  public IntentionAction createInsertThisFix(@NotNull PsiMethod constructor) {
+    return QuickFixes.EMPTY_FIX;
+  }
+
+  @NotNull
+  @Override
   public IntentionAction createInsertSuperFix(@NotNull PsiMethod psiMethod) {
     return QuickFixes.EMPTY_FIX;
   }
@@ -439,6 +458,12 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createStaticImportMethodFix(@NotNull PsiMethodCallExpression psiMethodCallExpression) {
+    return QuickFixes.EMPTY_FIX;
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createQualifyStaticMethodCallFix(@NotNull PsiMethodCallExpression call) {
     return QuickFixes.EMPTY_FIX;
   }
 
@@ -573,6 +598,18 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
 
   @NotNull
   @Override
+  public LocalQuickFixAndIntentionActionOnPsiElement createDeleteFix(@NotNull PsiElement element) {
+    return QuickFixes.EMPTY_FIX;
+  }
+
+  @NotNull
+  @Override
+  public LocalQuickFixAndIntentionActionOnPsiElement createDeleteFix(@NotNull PsiElement element, @Nls @NotNull String text) {
+    return QuickFixes.EMPTY_FIX;
+  }
+
+  @NotNull
+  @Override
   public IntentionAction createSafeDeleteFix(@NotNull PsiElement psiElement) {
     return QuickFixes.EMPTY_FIX;
   }
@@ -642,5 +679,36 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
   @Override
   public List<IntentionAction> createAddAnnotationAttributeNameFixes(@NotNull PsiNameValuePair pair) {
     return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createCollectionToArrayFix(@NotNull PsiExpression collectionExpression, @NotNull PsiArrayType arrayType) {
+    return QuickFixes.EMPTY_FIX;
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createInsertMethodCallFix(@NotNull PsiMethodCallExpression call, PsiMethod method) {
+    return QuickFixes.EMPTY_FIX;
+  }
+
+  @NotNull
+  @Override
+  public LocalQuickFixAndIntentionActionOnPsiElement createAccessStaticViaInstanceFix(PsiReferenceExpression methodRef,
+                                                                                      JavaResolveResult result) {
+    return QuickFixes.EMPTY_FIX;
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createWrapStringWithFileFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
+    return QuickFixes.EMPTY_FIX;
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createDeleteSideEffectAwareFix(@NotNull PsiExpressionStatement statement) {
+    return QuickFixes.EMPTY_FIX;
   }
 }

@@ -105,23 +105,23 @@ public class CommonRefactoringUtil {
   }
 
   public static boolean checkReadOnlyStatus(@NotNull Project project, @NotNull PsiElement... elements) {
-    return checkReadOnlyStatus(project, Collections.<PsiElement>emptySet(), Arrays.asList(elements), RefactoringBundle.message("refactoring.cannot.be.performed"), true);
+    return checkReadOnlyStatus(project, Collections.emptySet(), Arrays.asList(elements), RefactoringBundle.message("refactoring.cannot.be.performed"), true);
   }
 
   public static boolean checkReadOnlyStatus(@NotNull Project project, @NotNull Collection<? extends PsiElement> elements, boolean notifyOnFail) {
-    return checkReadOnlyStatus(project, Collections.<PsiElement>emptySet(), elements, RefactoringBundle.message("refactoring.cannot.be.performed"), notifyOnFail);
+    return checkReadOnlyStatus(project, Collections.emptySet(), elements, RefactoringBundle.message("refactoring.cannot.be.performed"), notifyOnFail);
   }
 
   public static boolean checkReadOnlyStatus(@NotNull PsiElement element, @NotNull Project project, @NotNull String messagePrefix) {
-    return element.isWritable() || checkReadOnlyStatus(project, Collections.<PsiElement>emptySet(), Collections.singleton(element), messagePrefix, true);
+    return element.isWritable() || checkReadOnlyStatus(project, Collections.emptySet(), Collections.singleton(element), messagePrefix, true);
   }
 
   public static boolean checkReadOnlyStatusRecursively(@NotNull Project project, @NotNull Collection<? extends PsiElement> elements) {
-    return checkReadOnlyStatus(project, elements, Collections.<PsiElement>emptySet(), RefactoringBundle.message("refactoring.cannot.be.performed"), false);
+    return checkReadOnlyStatus(project, elements, Collections.emptySet(), RefactoringBundle.message("refactoring.cannot.be.performed"), false);
   }
 
   public static boolean checkReadOnlyStatusRecursively(@NotNull Project project, @NotNull Collection<? extends PsiElement> elements, boolean notifyOnFail) {
-    return checkReadOnlyStatus(project, elements, Collections.<PsiElement>emptySet(), RefactoringBundle.message("refactoring.cannot.be.performed"), notifyOnFail);
+    return checkReadOnlyStatus(project, elements, Collections.emptySet(), RefactoringBundle.message("refactoring.cannot.be.performed"), notifyOnFail);
   }
 
   public static boolean checkReadOnlyStatus(@NotNull Project project,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -236,34 +236,27 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
   protected ConfigurableEP(PicoContainer picoContainer, @Nullable Project project) {
     myProject = project;
     myPicoContainer = picoContainer;
-    myProducer = new AtomicNotNullLazyValue<ObjectProducer>() {
-      @NotNull
-      @Override
-      protected ObjectProducer compute() {
-        try {
-          if (providerClass != null) {
-            return new ProviderProducer((ConfigurableProvider)instantiate(providerClass, myPicoContainer));
-          }
-          if (instanceClass != null) {
-            return new ClassProducer(myPicoContainer, findClass(instanceClass));
-          }
-          if (implementationClass != null) {
-            return new ClassProducer(myPicoContainer, findClass(implementationClass));
-          }
-          throw new RuntimeException("configurable class name is not set");
-        }
-        catch (AssertionError error) {
-          LOG.error(error);
-        }
-        catch (LinkageError error) {
-          LOG.error(error);
-        }
-        catch (Exception exception) {
-          LOG.error(exception);
-        }
-        return new ObjectProducer();
+    myProducer = AtomicNotNullLazyValue.createValue(this::createProducer);
+  }
+
+  @NotNull
+  protected ObjectProducer createProducer() {
+    try {
+      if (providerClass != null) {
+        return new ProviderProducer(instantiate(providerClass, myPicoContainer));
       }
-    };
+      if (instanceClass != null) {
+        return new ClassProducer(myPicoContainer, findClass(instanceClass));
+      }
+      if (implementationClass != null) {
+        return new ClassProducer(myPicoContainer, findClass(implementationClass));
+      }
+      throw new RuntimeException("configurable class name is not set");
+    }
+    catch (AssertionError | Exception | LinkageError error) {
+      LOG.error(error);
+    }
+    return new ObjectProducer();
   }
 
   @Nullable
@@ -301,16 +294,16 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
     return myProducer.getValue().getType();
   }
 
-  private static class ObjectProducer {
-    Object createElement() {
+  protected static class ObjectProducer {
+    protected Object createElement() {
       return null;
     }
 
-    boolean canCreateElement() {
+    protected boolean canCreateElement() {
       return false;
     }
 
-    Class<?> getType() {
+    protected Class<?> getType() {
       return null;
     }
   }
@@ -323,12 +316,12 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
     }
 
     @Override
-    Object createElement() {
+    protected Object createElement() {
       return myProvider == null ? null : myProvider.createConfigurable();
     }
 
     @Override
-    boolean canCreateElement() {
+    protected boolean canCreateElement() {
       return myProvider != null && myProvider.canCreateConfigurable();
     }
   }
@@ -343,7 +336,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
     }
 
     @Override
-    Object createElement() {
+    protected Object createElement() {
       try {
         return instantiate(myType, myContainer, true);
       }
@@ -357,11 +350,11 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
     }
 
     @Override
-    boolean canCreateElement() {
+    protected boolean canCreateElement() {
       return myType != null;
     }
 
-    Class<?> getType() {
+    protected Class<?> getType() {
       return myType;
     }
   }

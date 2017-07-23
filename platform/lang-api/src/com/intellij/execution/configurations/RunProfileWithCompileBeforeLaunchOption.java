@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,5 +29,7 @@ public interface RunProfileWithCompileBeforeLaunchOption extends RunProfile {
    * @return modules to compile before run. Empty list to build project
    */
   @NotNull
-  Module[] getModules();
+  default Module[] getModules() {
+    return Module.EMPTY_ARRAY;
+  }
 }

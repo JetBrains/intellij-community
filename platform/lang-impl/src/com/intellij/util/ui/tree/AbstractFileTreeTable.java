@@ -36,7 +36,6 @@ import com.intellij.ui.treeStructure.treetable.TreeTableCellRenderer;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
@@ -45,7 +44,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -79,19 +81,16 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     myModel = (MyModel)getTableModel();
     myModel.setTreeTable(this);
 
-    new TreeTableSpeedSearch(this, new Convertor<TreePath, String>() {
-      @Override
-      public String convert(final TreePath o) {
-        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)o.getLastPathComponent();
-        final Object userObject = node.getUserObject();
-        if (userObject == null) {
-          return getProjectNodeText();
-        }
-        if (userObject instanceof VirtualFile) {
-          return ((VirtualFile)userObject).getName();
-        }
-        return node.toString();
+    new TreeTableSpeedSearch(this, o -> {
+      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)o.getLastPathComponent();
+      final Object userObject = node.getUserObject();
+      if (userObject == null) {
+        return getProjectNodeText();
       }
+      if (userObject instanceof VirtualFile) {
+        return ((VirtualFile)userObject).getName();
+      }
+      return node.toString();
     });
     final DefaultTreeExpander treeExpander = new DefaultTreeExpander(getTree());
     CommonActionsManager.getInstance().createExpandAllAction(treeExpander, this);

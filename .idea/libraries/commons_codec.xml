@@ -4,6 +4,8 @@
       <root url="jar://$PROJECT_DIR$/lib/commons-codec-1.9.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/src/commons-codec-1.9-sources.jar!/"/>
+    </SOURCES>
   </library>
 </component>

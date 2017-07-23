@@ -1,0 +1,10 @@
+# Pytype blacklist. Files will not be tested with pytype.
+
+stdlib/2/__builtin__.pyi
+stdlib/2/builtins.pyi
+stdlib/2/types.pyi
+stdlib/2/typing.pyi
+
+# Because of 'from . import path':
+stdlib/2/os/__init__.pyi
+stdlib/3/os/__init__.pyi

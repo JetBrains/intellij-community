@@ -22,10 +22,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: 2/14/13
- */
 @State(
   name="JavaFxSettings",
   storages = {

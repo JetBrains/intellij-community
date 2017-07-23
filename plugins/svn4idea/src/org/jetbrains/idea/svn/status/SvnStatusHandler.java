@@ -35,12 +35,6 @@ import org.xml.sax.helpers.DefaultHandler;
 import java.io.File;
 import java.util.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/25/12
- * Time: 7:59 PM
- */
 public class SvnStatusHandler extends DefaultHandler {
 
   private static final Logger LOG = Logger.getInstance(SvnStatusHandler.class);
@@ -89,7 +83,8 @@ public class SvnStatusHandler extends DefaultHandler {
         public void endLock() {
           if (myInRemoteStatus) {
             myPending.setRemoteLock(myLockBuilder.build());
-          } else {
+          }
+          else {
             myPending.setLocalLock(myLockBuilder.build());
           }
           myLockBuilder = null;
@@ -117,7 +112,8 @@ public class SvnStatusHandler extends DefaultHandler {
           dataCallback.switchChangeList(newList);
         }
       };
-    } else {
+    }
+    else {
       myDataCallback = new DataCallback() {
         @Override
         public void startLock() {
@@ -128,7 +124,8 @@ public class SvnStatusHandler extends DefaultHandler {
         public void endLock() {
           if (myInRemoteStatus) {
             myPending.setRemoteLock(myLockBuilder.build());
-          } else {
+          }
+          else {
             myPending.setLocalLock(myLockBuilder.build());
           }
           myLockBuilder = null;
@@ -149,7 +146,8 @@ public class SvnStatusHandler extends DefaultHandler {
           myAnythingReported = true;
           if (myChangelistName == null) {
             myDefaultListStatuses.add(myPending);
-          } else {
+          }
+          else {
             myCurrentListChanges.putValue(myChangelistName, myPending);
           }
           newPending(infoGetter);
@@ -172,12 +170,7 @@ public class SvnStatusHandler extends DefaultHandler {
   private void newPending(final Convertor<File, Info> infoGetter) {
     final PortableStatus status = new PortableStatus();
     myPending = status;
-    status.setInfoGetter(new Getter<Info>() {
-      @Override
-      public Info get() {
-        return infoGetter.convert(status.getFile());
-      }
-    });
+    status.setInfoGetter(() -> infoGetter.convert(status.getFile()));
   }
 
   public PortableStatus getPending() {
@@ -193,98 +186,23 @@ public class SvnStatusHandler extends DefaultHandler {
   }
 
   private void fillElements() {
-    myElementsMap.put("repos-status", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new ReposStatus();
-      }
-    });
-    myElementsMap.put("lock", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new LockElement();
-      }
-    });
+    myElementsMap.put("repos-status", () -> new ReposStatus());
+    myElementsMap.put("lock", () -> new LockElement());
 
-    myElementsMap.put("token", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new LockToken();
-      }
-    });
-    myElementsMap.put("owner", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new LockOwner();
-      }
-    });
-    myElementsMap.put("comment", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new LockComment();
-      }
-    });
-    myElementsMap.put("created", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new LockCreatedDate();
-      }
-    });
-// --
-    myElementsMap.put("status", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new Status();
-      }
-    });
-    myElementsMap.put("author", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new Author();
-      }
-    });
-    myElementsMap.put("changelist", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new Changelist();
-      }
-    });
-    myElementsMap.put("commit", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new Commit();
-      }
-    });
-    myElementsMap.put("date", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new Date();
-      }
-    });
-    myElementsMap.put("entry", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new Entry(myBase);
-      }
-    });
-    myElementsMap.put("target", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new Target();
-      }
-    });
-    myElementsMap.put("against", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new Against();
-      }
-    });
-    myElementsMap.put("wc-status", new Getter<ElementHandlerBase>() {
-      @Override
-      public ElementHandlerBase get() {
-        return new WcStatus();
-      }
-    });
+    myElementsMap.put("token", () -> new LockToken());
+    myElementsMap.put("owner", () -> new LockOwner());
+    myElementsMap.put("comment", () -> new LockComment());
+    myElementsMap.put("created", () -> new LockCreatedDate());
+    // --
+    myElementsMap.put("status", () -> new Status());
+    myElementsMap.put("author", () -> new Author());
+    myElementsMap.put("changelist", () -> new Changelist());
+    myElementsMap.put("commit", () -> new Commit());
+    myElementsMap.put("date", () -> new Date());
+    myElementsMap.put("entry", () -> new Entry(myBase));
+    myElementsMap.put("target", () -> new Target());
+    myElementsMap.put("against", () -> new Against());
+    myElementsMap.put("wc-status", () -> new WcStatus());
   }
 
   @Override
@@ -294,7 +212,7 @@ public class SvnStatusHandler extends DefaultHandler {
 
   @Override
   public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-    assertSAX(! myParseStack.isEmpty());
+    assertSAX(!myParseStack.isEmpty());
     ElementHandlerBase current = myParseStack.get(myParseStack.size() - 1);
     if (mySb.length() > 0) {
       current.characters(mySb.toString().trim(), myPending, myLockBuilder);
@@ -311,11 +229,12 @@ public class SvnStatusHandler extends DefaultHandler {
         newChild.preEffect(myDataCallback);
         myParseStack.add(newChild);
         return;
-      } else {
+      }
+      else {
         // go up
         current.postEffect(myDataCallback);
         myParseStack.remove(myParseStack.size() - 1);
-        assertSAX(! myParseStack.isEmpty());
+        assertSAX(!myParseStack.isEmpty());
         current = myParseStack.get(myParseStack.size() - 1);
       }
     }
@@ -323,14 +242,14 @@ public class SvnStatusHandler extends DefaultHandler {
 
   @Override
   public void characters(char[] ch, int start, int length) throws SAXException {
-    assertSAX(! myParseStack.isEmpty());
+    assertSAX(!myParseStack.isEmpty());
     mySb.append(ch, start, length);
   }
 
   @Override
   public void endDocument() throws SAXException {
-    assertSAX(! myParseStack.isEmpty());
-    for (int i = myParseStack.size() - 1; i >= 0; -- i) {
+    assertSAX(!myParseStack.isEmpty());
+    for (int i = myParseStack.size() - 1; i >= 0; --i) {
       ElementHandlerBase current = myParseStack.get(i);
       current.postEffect(myDataCallback);
     }
@@ -338,7 +257,7 @@ public class SvnStatusHandler extends DefaultHandler {
   }
 
   private static void assertSAX(final boolean shouldBeTrue) throws SAXException {
-    if (! shouldBeTrue) {
+    if (!shouldBeTrue) {
       throw new SAXException("can not parse output");
     }
   }
@@ -680,11 +599,12 @@ public class SvnStatusHandler extends DefaultHandler {
       }
 
       final String revision = attributes.getValue("revision");
-      if (! StringUtil.isEmptyOrSpaces(revision)) {
+      if (!StringUtil.isEmptyOrSpaces(revision)) {
         try {
           final long number = Long.parseLong(revision);
           status.setRevision(SVNRevision.create(number));
-        } catch (NumberFormatException e) {
+        }
+        catch (NumberFormatException e) {
           throw new SAXException(e);
         }
       }
@@ -720,7 +640,8 @@ public class SvnStatusHandler extends DefaultHandler {
       final boolean exists = file.exists();
       if (exists) {
         status.setKind(exists, NodeKind.from(file.isDirectory()));
-      } else {
+      }
+      else {
         // this is a hack. This is done so because of strange svn native client output:
         /*
         c:\TestProjects\sortedProjects\Subversion\local\withExt82420\mod4>svn st --xml
@@ -755,8 +676,8 @@ and no "mod4" under
 
         */
         final StatusType ns = status.getNodeStatus();
-        if (myBase.getName().equals(path) && ! StatusType.MISSING.equals(ns) &&
-            ! StatusType.STATUS_DELETED.equals(ns) ) {
+        if (myBase.getName().equals(path) && !StatusType.MISSING.equals(ns) &&
+            !StatusType.STATUS_DELETED.equals(ns)) {
           status.setKind(true, NodeKind.DIR);
           status.setFile(myBase);
           status.setPath("");
@@ -783,7 +704,7 @@ and no "mod4" under
 
   private static class Changelist extends ElementHandlerBase {
     private String myName;
-    
+
     private Changelist() {
       super(new String[]{}, new String[]{"entry"});
     }
@@ -791,7 +712,7 @@ and no "mod4" under
     @Override
     protected void updateStatus(Attributes attributes, PortableStatus status, Lock.Builder lock) throws SAXException {
       final String name = attributes.getValue("name");
-      assertSAX(! StringUtil.isEmptyOrSpaces(name));
+      assertSAX(!StringUtil.isEmptyOrSpaces(name));
       myName = name;
     }
 
@@ -885,7 +806,9 @@ and no "mod4" under
     }
 
     protected abstract void updateStatus(Attributes attributes, PortableStatus status, Lock.Builder lock) throws SAXException;
+
     public abstract void postEffect(final DataCallback callback);
+
     public abstract void preEffect(final DataCallback callback);
 
     public boolean startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
@@ -902,15 +825,21 @@ and no "mod4" under
 
   public interface ExternalDataCallback {
     void switchPath();
+
     void switchChangeList(final String newList);
   }
 
   private interface DataCallback extends ExternalDataCallback {
     void startRemoteStatus();
+
     void endRemoteStatus();
+
     void startLock();
+
     void endLock();
+
     void switchPath();
+
     void switchChangeList(final String newList);
   }
 }

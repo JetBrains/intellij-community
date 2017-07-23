@@ -21,7 +21,7 @@ import javax.swing.*;
 
 /**
  * NOTE THIS FILE IS AUTO-GENERATED
- * DO NOT EDIT IT BY HAND, run build/scripts/icons.gant instead
+ * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public class PythonIcons {
   private static Icon load(String path) {
@@ -36,11 +36,13 @@ public class PythonIcons {
   }
   
   public static class Python {
+    public static final Icon Anaconda = load("/icons/com/jetbrains/python/anaconda.png"); // 16x16
     
     public static class Buildout {
       public static final Icon Buildout = load("/icons/com/jetbrains/python/buildout/buildout.png"); // 16x16
 
     }
+    public static final Icon DataView = load("/icons/com/jetbrains/python/DataView.png"); // 13x13
     
     public static class Debug {
       public static final Icon CommandLine = load("/icons/com/jetbrains/python/debug/commandLine.png"); // 16x16
@@ -66,7 +68,6 @@ public class PythonIcons {
     public static final Icon Pypy = load("/icons/com/jetbrains/python/pypy.png"); // 16x16
     public static final Icon Python_logo = load("/icons/com/jetbrains/python/python-logo.png"); // 16x16
     public static final Icon Python = load("/icons/com/jetbrains/python/python.png"); // 16x16
-    public static final Icon Python_24 = load("/icons/com/jetbrains/python/python_24.png"); // 24x24
     public static final Icon PythonClosed = load("/icons/com/jetbrains/python/pythonClosed.png"); // 16x16
     public static final Icon PythonConsole = load("/icons/com/jetbrains/python/pythonConsole.png"); // 16x16
     public static final Icon PythonConsoleToolWindow = load("/icons/com/jetbrains/python/pythonConsoleToolWindow.png"); // 13x13

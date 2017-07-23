@@ -20,11 +20,6 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import org.jetbrains.annotations.NotNull;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 04.12.2007
-*/
 public abstract class AbstractIndexTest extends HighlightingTestBase {
 
   @Override

@@ -87,7 +87,7 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
   @NotNull
   @Override
   public List<ResourceRootDescriptor> computeRootDescriptors(JpsModel model, ModuleExcludeIndex index, IgnoredFileIndex ignoredFileIndex, BuildDataPaths dataPaths) {
-    List<ResourceRootDescriptor> roots = new ArrayList<ResourceRootDescriptor>();
+    List<ResourceRootDescriptor> roots = new ArrayList<>();
     JavaSourceRootType type = isTests() ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
     Iterable<ExcludedJavaSourceRootProvider> excludedRootProviders = JpsServiceManager.getInstance().getExtensions(ExcludedJavaSourceRootProvider.class);
 

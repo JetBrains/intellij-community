@@ -1,0 +1,3 @@
+<actions>
+  <action id="CaptureMemorySnapShot" class="com.intellij.util.CaptureMemorySnapshotAction"/>
+</actions>

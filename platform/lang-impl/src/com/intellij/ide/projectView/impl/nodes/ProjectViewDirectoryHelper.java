@@ -14,16 +14,13 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 23-Jan-2008
- */
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.ProjectViewSettings;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -52,7 +49,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import java.util.*;
 
 public class ProjectViewDirectoryHelper {
-  protected static final Logger LOG = Logger.getInstance("#" + ProjectViewDirectoryHelper.class.getName());
+  protected static final Logger LOG = Logger.getInstance(ProjectViewDirectoryHelper.class);
 
   private final Project myProject;
   private final DirectoryIndex myIndex;
@@ -161,6 +158,14 @@ public class ProjectViewDirectoryHelper {
                                                            final ViewSettings settings,
                                                            final boolean withSubDirectories,
                                                            @Nullable PsiFileSystemItemFilter filter) {
+    return AbstractTreeUi.calculateYieldingToWriteAction(() -> doGetDirectoryChildren(psiDirectory, settings, withSubDirectories, filter));
+  }
+
+  @NotNull
+  private Collection<AbstractTreeNode> doGetDirectoryChildren(PsiDirectory psiDirectory,
+                                                              ViewSettings settings,
+                                                              boolean withSubDirectories,
+                                                              @Nullable PsiFileSystemItemFilter filter) {
     final List<AbstractTreeNode> children = new ArrayList<>();
     final Project project = psiDirectory.getProject();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
@@ -221,7 +226,7 @@ public class ProjectViewDirectoryHelper {
       DirectoryInfo info = myIndex.getInfoForFile(parent);
       if (!module.equals(info.getModule())) return true;
       //show inner content root separately only if it won't be shown under outer content root
-      return info.isExcluded() && !shouldShowExcludedFiles(settings);
+      return info.isExcluded(parent) && !shouldShowExcludedFiles(settings);
     });
   }
 
@@ -274,7 +279,7 @@ public class ProjectViewDirectoryHelper {
 
   private boolean shouldBeShown(VirtualFile dir, ViewSettings settings) {
     DirectoryInfo directoryInfo = myIndex.getInfoForFile(dir);
-    return directoryInfo.isInProject() || shouldShowExcludedFiles(settings) && directoryInfo.isExcluded();
+    return directoryInfo.isInProject(dir) || shouldShowExcludedFiles(settings) && directoryInfo.isExcluded(dir);
   }
 
   private static boolean shouldShowExcludedFiles(ViewSettings settings) {

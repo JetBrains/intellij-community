@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * User: catherine
- */
 public class PythonDocTestRunConfigurationEditor extends SettingsEditor<PythonDocTestRunConfiguration> {
   private PythonDocTestRunConfigurationForm myForm;
 

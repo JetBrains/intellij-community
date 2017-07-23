@@ -17,14 +17,16 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Processor;
 import com.intellij.vcsUtil.VcsUtil;
 import junit.framework.Assert;
 import org.jetbrains.idea.svn.info.Info;
@@ -41,6 +43,8 @@ import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 /**
  * @author Irina.Chernushina
@@ -84,12 +88,7 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
                                         return withSvn || ! SvnUtil.isAdminDirectory(o);
                                       }
                                     });*/
-    clearDirInCommand(myWorkingCopyDir, new Processor<VirtualFile>() {
-      @Override
-      public boolean process(VirtualFile file) {
-        return withSvn || ! SvnUtil.isAdminDirectory(file);
-      }
-    });
+    clearDirInCommand(myWorkingCopyDir, file -> withSvn || ! SvnUtil.isAdminDirectory(file));
     myWorkingCopyDir.refresh(false, true);
   }
 
@@ -257,40 +256,37 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
 
     myTheirs.refresh(false, true);
     myWorkingCopyDir.refresh(false, true);
-      VfsUtil.processFileRecursivelyWithoutIgnored(myTheirs, new Processor<VirtualFile>() {
-        @Override
-        public boolean process(VirtualFile file) {
-          final String relative = VfsUtil.getRelativePath(file, myTheirs, File.separatorChar);
-          File workingFile = new File(myWorkingCopyDir.getPath(), relative);
-          boolean exists = workingFile.exists();
-          if (! exists) {
-            String[] excluded = data.getExcludeFromToTheirsCheck();
-            if (excluded != null && Arrays.asList(excluded).contains(relative)) {
-              return true;
-            }
-            Assert.assertTrue("Check failed for test: " + getTestName(data) + " and file: " + relative + " in: " + myWorkingCopyDir.getPath(),
-                          exists);
+      VfsUtil.processFileRecursivelyWithoutIgnored(myTheirs, file -> {
+        final String relative = VfsUtil.getRelativePath(file, myTheirs, File.separatorChar);
+        File workingFile = new File(myWorkingCopyDir.getPath(), relative);
+        boolean exists = workingFile.exists();
+        if (! exists) {
+          String[] excluded = data.getExcludeFromToTheirsCheck();
+          if (excluded != null && Arrays.asList(excluded).contains(relative)) {
+            return true;
           }
-          final File theirsFile = new File(file.getPath());
-          Info theirsInfo = myVcs.getInfo(theirsFile);
-          Info thisInfo = myVcs.getInfo(workingFile);
-          if (theirsInfo != null) {
-            Assert.assertEquals("Check failed for test: " + getTestName(data) + " and file: " + relative + " in: " + myWorkingCopyDir.getPath() +
-                                ", theirs: " + theirsInfo.getRevision().getNumber() + ", mine: " + thisInfo.getRevision().getNumber(),
-                                theirsInfo.getRevision().getNumber(), thisInfo.getRevision().getNumber());
-            if (! theirsFile.isDirectory()){
-              try {
-                final String workText = FileUtil.loadFile(workingFile);
-                final String theirsText = FileUtil.loadFile(theirsFile);
-                Assert.assertEquals(theirsText, workText);
-              }
-              catch (IOException e) {
-                Assert.assertTrue(e.getMessage(), false);
-              }
-            }
-          }
-          return true;
+          Assert.assertTrue("Check failed for test: " + getTestName(data) + " and file: " + relative + " in: " + myWorkingCopyDir.getPath(),
+                        exists);
         }
+        final File theirsFile = virtualToIoFile(file);
+        Info theirsInfo = myVcs.getInfo(theirsFile);
+        Info thisInfo = myVcs.getInfo(workingFile);
+        if (theirsInfo != null) {
+          Assert.assertEquals("Check failed for test: " + getTestName(data) + " and file: " + relative + " in: " + myWorkingCopyDir.getPath() +
+                              ", theirs: " + theirsInfo.getRevision().getNumber() + ", mine: " + thisInfo.getRevision().getNumber(),
+                              theirsInfo.getRevision().getNumber(), thisInfo.getRevision().getNumber());
+          if (! theirsFile.isDirectory()){
+            try {
+              final String workText = FileUtil.loadFile(workingFile);
+              final String theirsText = FileUtil.loadFile(theirsFile);
+              Assert.assertEquals(theirsText, workText);
+            }
+            catch (IOException e) {
+              Assert.assertTrue(e.getMessage(), false);
+            }
+          }
+        }
+        return true;
       });
       ++ cnt;
     }

@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 15.11.2006
- * Time: 17:53:24
- */
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.util.text.StringUtil;

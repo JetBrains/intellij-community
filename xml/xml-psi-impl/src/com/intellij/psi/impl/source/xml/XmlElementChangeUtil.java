@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Oct 18, 2006
- * Time: 3:50:51 PM
- */
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.openapi.project.Project;

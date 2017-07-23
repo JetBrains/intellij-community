@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -320,7 +320,7 @@ class BeforeRunStepsPanel extends JPanel {
       final ListPopup popup =
         popupFactory.createActionGroupPopup(ExecutionBundle.message("add.new.run.configuration.acrtion.name"), actionGroup,
                                             SimpleDataContext.getProjectContext(myRunConfiguration.getProject()), false, false, false, null,
-                                            -1, Conditions.<AnAction>alwaysTrue());
+                                            -1, Conditions.alwaysTrue());
       popup.show(button.getPreferredPopupPoint());
   }
 
@@ -342,7 +342,7 @@ class BeforeRunStepsPanel extends JPanel {
         = (RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)task;
       RunConfiguration configuration = runTask.getSettings().getConfiguration();
 
-      List<BeforeRunTask> tasks = RunManagerImpl.getInstanceImpl(configuration.getProject()).getBeforeRunTasks(configuration);
+      List<BeforeRunTask<?>> tasks = RunManagerImpl.getInstanceImpl(configuration.getProject()).getBeforeRunTasks(configuration);
       for (BeforeRunTask beforeRunTask : tasks) {
         if (beforeRunTask instanceof RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask) {
           if (configurationSet.add(((RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)beforeRunTask).getSettings().getConfiguration()))
@@ -365,7 +365,8 @@ class BeforeRunStepsPanel extends JPanel {
         BeforeRunTask task = (BeforeRunTask)value;
         BeforeRunTaskProvider<BeforeRunTask> provider = BeforeRunTaskProvider.getProvider(myRunConfiguration.getProject(), task.getProviderId());
         if (provider != null) {
-          setIcon(provider.getTaskIcon(task));
+          Icon icon = provider.getTaskIcon(task);
+          setIcon(icon != null ? icon : provider.getIcon());
           setText(provider.getDescription(task));
         }
       }

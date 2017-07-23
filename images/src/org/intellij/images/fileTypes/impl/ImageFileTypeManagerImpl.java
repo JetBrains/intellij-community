@@ -51,7 +51,7 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
   }
 
   public boolean isImage(VirtualFile file) {
-    return file.getFileType() instanceof ImageFileType;
+    return file.getFileType() instanceof ImageFileType || file.getFileType() instanceof SvgFileType;
   }
 
   public FileType getImageFileType() {
@@ -61,6 +61,7 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
 
   public static final class ImageFileType extends UserBinaryFileType {
   }
+
 
   public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
     final Set<String> processed = new THashSet<>();
@@ -74,5 +75,6 @@ final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
     processed.add(IfsUtil.ICO_FORMAT.toLowerCase());
 
     consumer.consume(imageFileType, StringUtil.join(processed, FileTypeConsumer.EXTENSION_DELIMITER));
+    consumer.consume(SvgFileType.INSTANCE, "svg");
   }
 }

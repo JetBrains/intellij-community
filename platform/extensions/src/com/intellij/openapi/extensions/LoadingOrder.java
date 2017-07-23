@@ -57,8 +57,8 @@ public class LoadingOrder {
   @NonNls private final String myName; // for debug only
   private final boolean myFirst;
   private final boolean myLast;
-  private final Set<String> myBefore = new LinkedHashSet<String>(2);
-  private final Set<String> myAfter = new LinkedHashSet<String>(2);
+  private final Set<String> myBefore = new LinkedHashSet<>(2);
+  private final Set<String> myAfter = new LinkedHashSet<>(2);
 
   private LoadingOrder() {
     myName = "ANY";
@@ -126,8 +126,8 @@ public class LoadingOrder {
     // our graph is pretty sparse so do benefit from the fact
     final Map<String, Orderable> map = ContainerUtil.newLinkedHashMap();
     final Map<Orderable, LoadingOrder> cachedMap = ContainerUtil.newLinkedHashMap();
-    final Set<Orderable> first = new LinkedHashSet<Orderable>(1);
-    final Set<Orderable> hasBefore = new LinkedHashSet<Orderable>(orderable.size());
+    final Set<Orderable> first = new LinkedHashSet<>(1);
+    final Set<Orderable> hasBefore = new LinkedHashSet<>(orderable.size());
     for (Orderable o : orderable) {
       String id = o.getOrderId();
       if (StringUtil.isNotEmpty(id)) map.put(id, o);
@@ -149,7 +149,7 @@ public class LoadingOrder {
       public Iterator<Orderable> getIn(Orderable n) {
         LoadingOrder order = cachedMap.get(n);
 
-        Set<Orderable> predecessors = new LinkedHashSet<Orderable>();
+        Set<Orderable> predecessors = new LinkedHashSet<>();
         for (String id : order.myAfter) {
           Orderable o = map.get(id);
           if (o != null) {
@@ -184,14 +184,14 @@ public class LoadingOrder {
       }
     };
 
-    DFSTBuilder<Orderable> builder = new DFSTBuilder<Orderable>(GraphGenerator.generate(CachingSemiGraph.cache(graph)));
+    DFSTBuilder<Orderable> builder = new DFSTBuilder<>(GraphGenerator.generate(CachingSemiGraph.cache(graph)));
 
     if (!builder.isAcyclic()) {
       Couple<Orderable> p = builder.getCircularDependency();
       throw new SortingException("Could not satisfy sorting requirements", p.first.getDescribingElement(), p.second.getDescribingElement());
     }
 
-    Collections.sort(orderable, builder.comparator());
+    orderable.sort(builder.comparator());
   }
 
   public static LoadingOrder readOrder(@NonNls String orderAttr) {

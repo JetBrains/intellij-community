@@ -17,7 +17,6 @@ package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -35,7 +34,7 @@ import java.util.*;
  */
 public class GenericsUtil {
 
-  private static final Logger LOG = Logger.getInstance("#" + GenericsUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance(GenericsUtil.class);
 
   private GenericsUtil() {}
 
@@ -50,7 +49,7 @@ public class GenericsUtil {
     if (TypeConversionUtil.isNullType(type1)) return type2;
     if (TypeConversionUtil.isNullType(type2)) return type1;
     if (Comparing.equal(type1, type2)) return type1;
-    return getLeastUpperBound(type1, type2, new LinkedHashSet<Couple<PsiType>>(), manager);
+    return getLeastUpperBound(type1, type2, new LinkedHashSet<>(), manager);
   }
 
   @NotNull
@@ -85,7 +84,7 @@ public class GenericsUtil {
       return componentType.createArrayType();
     }
     if (type1 instanceof PsiIntersectionType) {
-      Set<PsiType> newConjuncts = new LinkedHashSet<PsiType>();
+      Set<PsiType> newConjuncts = new LinkedHashSet<>();
       final PsiType[] conjuncts = ((PsiIntersectionType)type1).getConjuncts();
       for (PsiType type : conjuncts) {
         newConjuncts.add(getLeastUpperBound(type, type2, compared, manager));
@@ -117,7 +116,7 @@ public class GenericsUtil {
         PsiSubstitutor subst2 = TypeConversionUtil.getSuperClassSubstitutor(aSuper, bClass, classResolveResult2.getSubstitutor());
         PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
 
-        final Couple<PsiType> types = Couple.<PsiType>of(elementFactory.createType(aSuper, subst1), elementFactory.createType(aSuper, subst2));
+        final Couple<PsiType> types = Couple.of(elementFactory.createType(aSuper, subst1), elementFactory.createType(aSuper, subst2));
 
         for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(aSuper)) {
           PsiType mapping1 = subst1.substitute(parameter);
@@ -201,8 +200,8 @@ public class GenericsUtil {
   @NotNull
   public static PsiClass[] getLeastUpperClasses(PsiClass aClass, PsiClass bClass) {
     if (InheritanceUtil.isInheritorOrSelf(aClass, bClass, true)) return new PsiClass[]{bClass};
-    Set<PsiClass> supers = new LinkedHashSet<PsiClass>();
-    Set<PsiClass> visited = new HashSet<PsiClass>();
+    Set<PsiClass> supers = new LinkedHashSet<>();
+    Set<PsiClass> visited = new HashSet<>();
     getLeastUpperClassesInner(aClass, bClass, supers, visited);
     return supers.toArray(new PsiClass[supers.size()]);
   }
@@ -402,15 +401,10 @@ public class GenericsUtil {
   public static PsiSubstitutor substituteByParameterName(final PsiClass psiClass, final PsiSubstitutor parentSubstitutor) {
 
     final Map<PsiTypeParameter, PsiType> substitutionMap = parentSubstitutor.getSubstitutionMap();
-    final List<PsiType> result = new ArrayList<PsiType>(substitutionMap.size());
+    final List<PsiType> result = new ArrayList<>(substitutionMap.size());
     for (PsiTypeParameter typeParameter : psiClass.getTypeParameters()) {
       final String name = typeParameter.getName();
-      final PsiTypeParameter key = ContainerUtil.find(substitutionMap.keySet(), new Condition<PsiTypeParameter>() {
-        @Override
-        public boolean value(final PsiTypeParameter psiTypeParameter) {
-          return name.equals(psiTypeParameter.getName());
-        }
-      });
+      final PsiTypeParameter key = ContainerUtil.find(substitutionMap.keySet(), psiTypeParameter -> name.equals(psiTypeParameter.getName()));
       if (key != null) {
         result.add(substitutionMap.get(key));
       }
@@ -436,7 +430,7 @@ public class GenericsUtil {
       if (aClass != null) {
         PsiManager manager = aClass.getManager();
         PsiTypeParameter[] typeParams = aClass.getTypeParameters();
-        Map<PsiTypeParameter, PsiType> map = new HashMap<PsiTypeParameter, PsiType>();
+        Map<PsiTypeParameter, PsiType> map = new HashMap<>();
         for (PsiTypeParameter typeParam : typeParams) {
           PsiType substituted = resolveResult.getSubstitutor().substitute(typeParam);
           if (substituted instanceof PsiWildcardType) {
@@ -468,8 +462,12 @@ public class GenericsUtil {
   }
 
   public static boolean checkNotInBounds(PsiType type, PsiType bound, PsiReferenceParameterList referenceParameterList) {
+    //4.10.2
+    //Given a generic type declaration C<F1,...,Fn> (n > 0), the direct supertypes of the parameterized type C<R1,...,Rn> where at least one of the Ri is a wildcard
+    //type argument, are the direct supertypes of the parameterized type C<X1,...,Xn> which is the result of applying capture conversion to C<R1,...,Rn>.
+    PsiType capturedType = PsiUtil.captureToplevelWildcards(type, referenceParameterList);
     //allow unchecked conversions in method calls but not in type declaration
-    return checkNotInBounds(type, bound, PsiTreeUtil.getParentOfType(referenceParameterList, PsiCallExpression.class) != null);
+    return checkNotInBounds(capturedType, bound, PsiTreeUtil.getParentOfType(referenceParameterList, PsiCallExpression.class) != null);
   }
 
   public static boolean checkNotInBounds(PsiType type, PsiType bound, boolean uncheckedConversionByDefault) {

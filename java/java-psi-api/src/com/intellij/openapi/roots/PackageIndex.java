@@ -37,6 +37,7 @@ public abstract class PackageIndex {
    * @param includeLibrarySources if true, directories under library sources are included in the returned list.
    * @return the list of directories.
    */
+  @NotNull
   public abstract VirtualFile[] getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources);
 
   /**
@@ -47,5 +48,6 @@ public abstract class PackageIndex {
    * @param includeLibrarySources if true, directories under library sources are included in the returned list.
    * @return the query returning the list of directories.
    */
+  @NotNull
   public abstract Query<VirtualFile> getDirsByPackageName(@NotNull String packageName, boolean includeLibrarySources);
 }

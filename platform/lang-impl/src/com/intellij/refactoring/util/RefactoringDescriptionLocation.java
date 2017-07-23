@@ -18,6 +18,7 @@ package com.intellij.refactoring.util;
 
 import com.intellij.psi.ElementDescriptionLocation;
 import com.intellij.psi.ElementDescriptionProvider;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -36,6 +37,7 @@ public class RefactoringDescriptionLocation extends ElementDescriptionLocation {
     return myWithParent;
   }
 
+  @NotNull
   @Override
   public ElementDescriptionProvider getDefaultProvider() {
     return DefaultRefactoringElementDescriptionProvider.INSTANCE;

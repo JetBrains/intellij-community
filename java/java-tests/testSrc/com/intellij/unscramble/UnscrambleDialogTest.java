@@ -37,6 +37,7 @@ public class UnscrambleDialogTest extends JavaCodeInsightFixtureTestCase {
       Disposer.dispose(myContent);
     }
     finally {
+      myContent = null;
       super.tearDown();
     }
   }
@@ -77,7 +78,7 @@ public class UnscrambleDialogTest extends JavaCodeInsightFixtureTestCase {
   private void showText(String unscramble) {
     RunContentDescriptor descriptor = UnscrambleDialog.showUnscrambledText(null, "foo", null, getProject(), unscramble);
     assertNotNull(descriptor);
-    Disposer.register(getTestRootDisposable(), descriptor);
+    Disposer.register(myFixture.getTestRootDisposable(), descriptor);
     myContent = descriptor;
   }
 

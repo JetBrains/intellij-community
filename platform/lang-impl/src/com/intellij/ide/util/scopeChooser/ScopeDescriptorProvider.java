@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 16-Jan-2008
- */
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.openapi.extensions.ExtensionPointName;

@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
@@ -58,6 +59,11 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
   private static final Logger LOG = Logger.getInstance(PyProcessWithConsoleTestTask.class);
   @NotNull
   private final SdkCreationType myRequiredSdkType;
+  /**
+   * @see #toFullPath(String)
+   */
+  @Nullable
+  private VirtualFile myLatestUsedScript;
 
   /**
    * @param requiredSdkType this task creates sdk and binds it to fixture module. Provide type of SDK your test needs.
@@ -191,11 +197,34 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
   /**
    * Process is finished. Do all checks you need to make sure your test passed.
    *
-   * @param runner runner used to run process. You may access {@link ProcessWithConsoleRunner#getConsole()} and other useful staff.
+   * @param runner runner used to run process. You may access {@link ProcessWithConsoleRunner#getConsole()} and other useful staff like
+   *               {@link PyAbstractTestProcessRunner#getFormattedTestTree()}
    *               Check concrete runner documentation
    * @param stdout process stdout
    * @param stderr process stderr
    * @param all    joined stdout and stderr
    */
   protected abstract void checkTestResults(@NotNull T runner, @NotNull String stdout, @NotNull String stderr, @NotNull String all);
+
+  /**
+   * Converts script or folder name to full path and stores internally to retrived with {@link #getWorkingFolderForScript()}
+   */
+  @NotNull
+  public String toFullPath(@NotNull final String scriptName) {
+    myLatestUsedScript = myFixture.getTempDirFixture().getFile(scriptName);
+    assert myLatestUsedScript != null: "File not found " + scriptName;
+    return myLatestUsedScript.getPath();
+  }
+
+  /**
+   * @see #toFullPath(String)
+   */
+  @Nullable
+  public String getWorkingFolderForScript() {
+    final VirtualFile script = myLatestUsedScript;
+    if (script == null) {
+      return null;
+    }
+    return (script.isDirectory() ? script : script.getParent()).getPath();
+  }
 }

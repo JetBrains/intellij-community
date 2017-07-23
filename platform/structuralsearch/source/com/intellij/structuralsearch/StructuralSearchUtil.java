@@ -1,13 +1,32 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.structuralsearch;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
-import com.intellij.structuralsearch.impl.matcher.MatchUtils;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -15,6 +34,8 @@ import java.util.*;
  * @author Eugene.Kudelevsky
  */
 public class StructuralSearchUtil {
+  private static final String REG_EXP_META_CHARS = ".$|()[]{}^?*+\\";
+  private static final Key<StructuralSearchProfile> STRUCTURAL_SEARCH_PROFILE_KEY = new Key<>("Structural Search Profile");
   private static LanguageFileType ourDefaultFileType = null;
 
   public static boolean ourUseUniversalMatchingAlgorithm = false;
@@ -82,11 +103,18 @@ public class StructuralSearchUtil {
     return ourDefaultFileType;
   }
 
+  @TestOnly
+  public static void clearProfileCache(@NotNull Language language) {
+    language.putUserData(STRUCTURAL_SEARCH_PROFILE_KEY, null);
+  }
+
   @Nullable
   public static StructuralSearchProfile getProfileByLanguage(@NotNull Language language) {
-
+    final StructuralSearchProfile cachedProfile = language.getUserData(STRUCTURAL_SEARCH_PROFILE_KEY);
+    if (cachedProfile != null) return cachedProfile;
     for (StructuralSearchProfile profile : getProfiles()) {
       if (profile.isMyLanguage(language)) {
+        language.putUserData(STRUCTURAL_SEARCH_PROFILE_KEY, profile);
         return profile;
       }
     }
@@ -99,14 +127,11 @@ public class StructuralSearchUtil {
 
   @Nullable
   public static StructuralSearchProfile getProfileByFileType(FileType fileType) {
-
-    for (StructuralSearchProfile profile : getProfiles()) {
-      if (profile.canProcess(fileType)) {
-        return profile;
-      }
+    if (!(fileType instanceof LanguageFileType)) {
+      return null;
     }
-
-    return null;
+    final LanguageFileType languageFileType = (LanguageFileType)fileType;
+    return getProfileByLanguage(languageFileType.getLanguage());
   }
 
   @NotNull
@@ -130,11 +155,19 @@ public class StructuralSearchUtil {
     return result.toArray(new FileType[result.size()]);
   }
 
-  public static String shieldSpecialChars(String word) {
+  public static boolean containsRegExpMetaChar(String s) {
+    return s.chars().anyMatch(StructuralSearchUtil::isRegExpMetaChar);
+  }
+
+  private static boolean isRegExpMetaChar(int ch) {
+    return REG_EXP_META_CHARS.indexOf(ch) >= 0;
+  }
+
+  public static String shieldRegExpMetaChars(String word) {
     final StringBuilder buf = new StringBuilder(word.length());
 
     for (int i = 0; i < word.length(); ++i) {
-      if (MatchUtils.SPECIAL_CHARS.indexOf(word.charAt(i)) != -1) {
+      if (isRegExpMetaChar(word.charAt(i))) {
         buf.append("\\");
       }
       buf.append(word.charAt(i));

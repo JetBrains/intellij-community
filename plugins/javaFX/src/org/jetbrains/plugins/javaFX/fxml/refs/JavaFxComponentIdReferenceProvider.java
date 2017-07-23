@@ -40,9 +40,6 @@ import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyAttributeDesc
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
-* User: anna
-*/
 public class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
 
   @NotNull
@@ -250,7 +247,7 @@ public class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
     @Nullable
     @Override
     public PsiElement resolve() {
-      return JavaFxPsiUtil.collectReadableProperties(myPsiClass).get(myFieldName);
+      return JavaFxPsiUtil.getReadableProperties(myPsiClass).get(myFieldName);
     }
 
     @NotNull
@@ -268,7 +265,7 @@ public class JavaFxComponentIdReferenceProvider extends PsiReferenceProvider {
     private Object[] collectProperties(@NotNull PsiType propertyType, @NotNull Project project) {
       final PsiType resolvedType = JavaFxPsiUtil.getWritablePropertyType(propertyType, project);
       final List<LookupElement> objs = new ArrayList<>();
-      final Collection<PsiMember> readableProperties = JavaFxPsiUtil.collectReadableProperties(myPsiClass).values();
+      final Collection<PsiMember> readableProperties = JavaFxPsiUtil.getReadableProperties(myPsiClass).values();
       for (PsiMember readableMember : readableProperties) {
         final PsiType readableType = JavaFxPsiUtil.getReadablePropertyType(readableMember);
         if (readableType == null) continue;

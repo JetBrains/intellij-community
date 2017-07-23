@@ -48,9 +48,13 @@ class GitRebaseEntry {
    * @param subject the commit subject
    */
   public GitRebaseEntry(String action, final String commit, final String subject) {
+    this(Action.fromString(action), commit, subject);
+  }
+
+  public GitRebaseEntry(Action action, String commit, String subject) {
     myCommit = commit;
     mySubject = subject;
-    myAction = Action.fromString(action);
+    myAction = action;
   }
 
   /**

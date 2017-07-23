@@ -37,7 +37,6 @@ import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,10 +46,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 11/8/10
- */
 public class ReassignVariableUtil {
   static final Key<SmartPsiElementPointer<PsiDeclarationStatement>> DECLARATION_KEY = Key.create("var.type");
   static final Key<RangeMarker[]> OCCURRENCES_KEY = Key.create("occurrences");
@@ -96,7 +91,7 @@ public class ReassignVariableUtil {
         for (PsiVariable var : vars) {
           model.addElement(var);
         }
-        final JBList list = new JBList(model);
+        final JBList<PsiVariable> list = new JBList<>(model);
         list.setCellRenderer(new ListCellRendererWrapper<PsiVariable>() {
           @Override
           public void customize(JList list, PsiVariable value, int index, boolean selected, boolean hasFocus) {
@@ -113,7 +108,7 @@ public class ReassignVariableUtil {
         JBPopupFactory.getInstance().createListPopupBuilder(list)
           .setTitle("Choose variable to reassign")
           .setRequestFocus(true)
-          .setItemChoosenCallback(() -> replaceWithAssignment(declaration, (PsiVariable)list.getSelectedValue(), editor)).createPopup().show(new RelativePoint(editor.getContentComponent(), point));
+          .setItemChoosenCallback(() -> replaceWithAssignment(declaration, list.getSelectedValue(), editor)).createPopup().show(new RelativePoint(editor.getContentComponent(), point));
       }
 
       return true;

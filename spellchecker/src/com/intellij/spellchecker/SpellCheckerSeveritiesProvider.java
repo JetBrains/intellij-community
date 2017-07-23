@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 17-Jun-2009
- */
 package com.intellij.spellchecker;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -50,7 +46,7 @@ public class SpellCheckerSeveritiesProvider extends SeveritiesProvider {
         return AllIcons.General.InspectionsTypos;
       }
     }
-    return Collections.<HighlightInfoType>singletonList(new T(TYPO, TYPO_KEY));
+    return Collections.singletonList(new T(TYPO, TYPO_KEY));
   }
 
   @Override

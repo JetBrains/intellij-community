@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.CatchingConsumer;
@@ -112,19 +113,17 @@ public class ManagePackagesDialog extends DialogWrapper {
             application.invokeLater(() -> {
               //noinspection DialogTitleCapitalization
               Messages.showErrorDialog(myMainPanel, "Error updating package list: " + e1.getMessage(), "Reload List of Packages");
+              LOG.info("Error updating list of repository packages", e1);
               myPackages.setPaintBusy(false);
             }, ModalityState.any());
           }
         });
       }
     };
-    myListSpeedSearch = new ListSpeedSearch(myPackages, new Function<Object, String>() {
-      @Override
-      public String fun(Object o) {
-        if (o instanceof RepoPackage)
-          return ((RepoPackage)o).getName();
-        return "";
-      }
+    myListSpeedSearch = new ListSpeedSearch(myPackages, (Function<Object, String>)o -> {
+      if (o instanceof RepoPackage)
+        return ((RepoPackage)o).getName();
+      return "";
     });
     JPanel packagesPanel = ToolbarDecorator.createDecorator(myPackages)
       .disableAddAction()
@@ -249,6 +248,7 @@ public class ManagePackagesDialog extends DialogWrapper {
   }
 
   private void handleInstallationStarted(String packageName) {
+    myNotificationArea.hide();
     setDownloadStatus(true);
     myCurrentlyInstalling.add(packageName);
     if (myPackageListener != null) {
@@ -282,7 +282,7 @@ public class ManagePackagesDialog extends DialogWrapper {
         });
       }
       catch(IOException e) {
-        LOG.info("Error updating list of installed packages:" + e);
+        LOG.info("Error updating list of installed packages", e);
       }
     });
   }
@@ -306,6 +306,7 @@ public class ManagePackagesDialog extends DialogWrapper {
           if (myMainPanel.isShowing()) {
             Messages.showErrorDialog(myMainPanel, "Error loading package list:" + e.getMessage(), "Packages");
           }
+          LOG.info("Error initializing model", e);
           setDownloadStatus(false);
         }, ModalityState.any());
       }
@@ -353,7 +354,9 @@ public class ManagePackagesDialog extends DialogWrapper {
           if (e.getKeyCode() == KeyEvent.VK_ENTER) {
             e.consume();
             filter();
-            myPackages.requestFocus();
+            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+              IdeFocusManager.getGlobalInstance().requestFocus(myPackages, true);
+            });
           } else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
             onEscape(e);
           }

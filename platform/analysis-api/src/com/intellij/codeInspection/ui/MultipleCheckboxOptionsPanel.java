@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Bas Leijdekkers
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,18 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 
+/**
+ * @author Bas Leijdekkers
+ */
 public class MultipleCheckboxOptionsPanel extends JPanel {
 
     private final OptionAccessor myOptionAccessor;
@@ -36,37 +41,48 @@ public class MultipleCheckboxOptionsPanel extends JPanel {
         myOptionAccessor = optionAccessor;
     }
 
-    public void addCheckbox(String label,
-                            @NonNls String property) {
+    public void addCheckbox(String label, @NonNls String property) {
+        addCheckboxEx(label, property);
+    }
+
+    public JCheckBox addCheckboxEx(String label, @NonNls String property) {
         final boolean selected = myOptionAccessor.getOption(property);
         final JCheckBox checkBox = new JCheckBox(label, selected);
         configureCheckbox(myOptionAccessor, property, checkBox);
+        addComponent(checkBox);
+        return checkBox;
+    }
+
+    public JCheckBox addDependentCheckBox(String label, @NonNls String property, JCheckBox controller) {
+        final JCheckBox checkBox = addCheckboxEx(label, property);
+        checkBox.setBorder(new EmptyBorder(new JBInsets(0, 30, 0, 0)));
+        controller.addChangeListener(e -> {
+            checkBox.setEnabled(controller.isEnabled() && controller.isSelected());
+        });
+        checkBox.setEnabled(controller.isEnabled() && controller.isSelected());
+        return checkBox;
+    }
+
+    public void addComponent(JComponent component) {
         final GridBagConstraints constraints = new GridBagConstraints();
         constraints.anchor = GridBagConstraints.FIRST_LINE_START;
         constraints.gridx = 0;
         constraints.gridy = 0;
         constraints.weightx = 1.0;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
         final Component[] components = getComponents();
         removeAll();
-        for (Component component : components) {
-            add(component, constraints);
+        for (Component component1 : components) {
+            add(component1, constraints);
             constraints.gridy++;
         }
         constraints.weighty = 1.0;
-        add(checkBox, constraints);
+        add(component, constraints);
     }
 
     private static void configureCheckbox(OptionAccessor accessor, String property, JCheckBox checkBox) {
         final ButtonModel model = checkBox.getModel();
         final CheckboxChangeListener changeListener = new CheckboxChangeListener(accessor, property, model);
         model.addChangeListener(changeListener);
-    }
-
-    public static void initAndConfigureCheckbox(InspectionProfileEntry owner, String property, JCheckBox checkBox) {
-        OptionAccessor optionAccessor = new OptionAccessor.Default(owner);
-        checkBox.setSelected(optionAccessor.getOption(property));
-        configureCheckbox(optionAccessor, property, checkBox);
     }
 
     private static class CheckboxChangeListener implements ChangeListener {
@@ -84,6 +100,5 @@ public class MultipleCheckboxOptionsPanel extends JPanel {
         public void stateChanged(ChangeEvent e) {
             myAccessor.setOption(property, model.isSelected());
         }
-
     }
 }

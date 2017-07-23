@@ -19,11 +19,6 @@ package org.intellij.plugins.relaxNG.compact.psi;
 import org.intellij.plugins.relaxNG.model.Ref;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 11.08.2007
- */
 public interface RncRef extends RncPattern, Ref<RncDefine, RncElement> {
   @Override
   @Nullable

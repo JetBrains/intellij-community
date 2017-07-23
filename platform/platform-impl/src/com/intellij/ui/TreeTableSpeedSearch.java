@@ -23,11 +23,9 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 
 public class TreeTableSpeedSearch extends SpeedSearchBase<TreeTable> {
-  private static final Convertor<TreePath, String> TO_STRING = new Convertor<TreePath, String>() {
-    public String convert(TreePath object) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)object.getLastPathComponent();
-      return node.toString();
-    }
+  private static final Convertor<TreePath, String> TO_STRING = object -> {
+    DefaultMutableTreeNode node = (DefaultMutableTreeNode)object.getLastPathComponent();
+    return node.toString();
   };
   private final Convertor<TreePath, String> myToStringConvertor;
 

@@ -64,7 +64,7 @@ public class SequenceIteratorTest extends TestCase {
 
 
   public void testSimple() throws Exception {
-    final Iterator<Integer> iterator = compose(Arrays.<Iterator<Integer>>asList(iter(arr1), iter(arr2), iter(arr3)));
+    final Iterator<Integer> iterator = compose(Arrays.asList(iter(arr1), iter(arr2), iter(arr3)));
     int cnt = 0;
     while (iterator.hasNext()) {
       Integer next = iterator.next();
@@ -78,7 +78,7 @@ public class SequenceIteratorTest extends TestCase {
   }
 
   public void testOne() throws Exception {
-    final Iterator<Integer> iterator = compose(Arrays.<Iterator<Integer>>asList(iter(arr1)));
+    final Iterator<Integer> iterator = compose(Arrays.asList(iter(arr1)));
     int cnt = 0;
     while (iterator.hasNext()) {
       Integer next = iterator.next();
@@ -88,7 +88,7 @@ public class SequenceIteratorTest extends TestCase {
   }
 
   public void testOneOne() throws Exception {
-    final Iterator<Integer> iterator = compose(Arrays.<Iterator<Integer>>asList(iter(new Integer[]{1})));
+    final Iterator<Integer> iterator = compose(Arrays.asList(iter(new Integer[]{1})));
     int cnt = 0;
     while (iterator.hasNext()) {
       Integer next = iterator.next();
@@ -98,7 +98,7 @@ public class SequenceIteratorTest extends TestCase {
   }
 
   public void testEmpty() throws Exception {
-    final Iterator<Integer> iterator = compose(Arrays.<Iterator<Integer>>asList(iter(new Integer[]{})));
+    final Iterator<Integer> iterator = compose(Arrays.asList(iter(new Integer[]{})));
     int cnt = 0;
     while (iterator.hasNext()) {
       Integer next = iterator.next();
@@ -109,7 +109,7 @@ public class SequenceIteratorTest extends TestCase {
 
   public void testManyEmpty() throws Exception {
     final Iterator<Integer> iterator =
-      compose(Arrays.<Iterator<Integer>>asList(iter(new Integer[]{}), iter(new Integer[]{}), iter(new Integer[]{})));
+      compose(Arrays.asList(iter(new Integer[]{}), iter(new Integer[]{}), iter(new Integer[]{})));
     int cnt = 0;
     while (iterator.hasNext()) {
       Integer next = iterator.next();
@@ -124,7 +124,7 @@ public class SequenceIteratorTest extends TestCase {
     final ArrayList<Integer> list3 = new ArrayList<>(Arrays.asList(arr3));
 
     final Iterator<Integer> iterator =
-      compose(Arrays.<Iterator<Integer>>asList(list1.iterator(), list2.iterator(), list3.iterator()));
+      compose(Arrays.asList(list1.iterator(), list2.iterator(), list3.iterator()));
     int cnt = 0;
     while (iterator.hasNext()) {
       Integer next = iterator.next();
@@ -152,7 +152,7 @@ public class SequenceIteratorTest extends TestCase {
     final ArrayList<Integer> list3 = new ArrayList<>(Arrays.asList(arr3));
 
     final Iterator<Integer> iterator =
-      compose(Arrays.<Iterator<Integer>>asList(list1.iterator(), list2.iterator(), list3.iterator()));
+      compose(Arrays.asList(list1.iterator(), list2.iterator(), list3.iterator()));
     while (iterator.hasNext()) {
       Integer next = iterator.next();
     }
@@ -162,14 +162,14 @@ public class SequenceIteratorTest extends TestCase {
 
   public void testRemoveOnlyOne() throws Exception {
     final ArrayList<Integer> list1 = new ArrayList<>(Arrays.asList(new Integer[]{1}));
-    final Iterator<Integer> iterator = compose(Arrays.<Iterator<Integer>>asList(list1.iterator()));
+    final Iterator<Integer> iterator = compose(Arrays.asList(list1.iterator()));
     iterator.next();
     iterator.remove();
     Assert.assertTrue(list1.isEmpty());
   }
 
   public void testIterateWithEmptyInside() throws Exception {
-    final Iterator<Integer> iterator = compose(Arrays.<Iterator<Integer>>asList(iter(arr1), iter(new Integer[]{}), iter(arr3)));
+    final Iterator<Integer> iterator = compose(Arrays.asList(iter(arr1), iter(new Integer[]{}), iter(arr3)));
     int cnt = 0;
     int sum = 0;
     while (iterator.hasNext()) {
@@ -183,7 +183,7 @@ public class SequenceIteratorTest extends TestCase {
 
   public void testRemoveIfNextNotCalled() throws Exception {
     final ArrayList<Integer> list1 = new ArrayList<>(Arrays.asList(new Integer[]{1}));
-    final Iterator<Integer> iterator = compose(Arrays.<Iterator<Integer>>asList(list1.iterator()));
+    final Iterator<Integer> iterator = compose(Arrays.asList(list1.iterator()));
     try {
       iterator.remove();
       Assert.assertTrue(false);
@@ -194,7 +194,7 @@ public class SequenceIteratorTest extends TestCase {
 
   public void testRemoveTwice() throws Exception {
     final ArrayList<Integer> list1 = new ArrayList<>(Arrays.asList(new Integer[]{1, 2, 3, 4, 5}));
-    final Iterator<Integer> iterator = compose(Arrays.<Iterator<Integer>>asList(list1.iterator()));
+    final Iterator<Integer> iterator = compose(Arrays.asList(list1.iterator()));
     try {
       iterator.next();
       iterator.remove();
@@ -211,7 +211,7 @@ public class SequenceIteratorTest extends TestCase {
     final ArrayList<Integer> list3 = new ArrayList<>(Arrays.asList(5, 6));
 
     final Iterator<Integer> iterator =
-      compose(Arrays.<Iterator<Integer>>asList(list1.iterator(), list2.iterator(), list3.iterator()));
+      compose(Arrays.asList(list1.iterator(), list2.iterator(), list3.iterator()));
     while (iterator.hasNext()) {
       Integer next = iterator.next();
       iterator.remove();
@@ -227,7 +227,7 @@ public class SequenceIteratorTest extends TestCase {
     final ArrayList<Integer> list3 = new ArrayList<>(Arrays.asList(5, 6));
 
     final Iterator<Integer> iterator =
-      compose(Arrays.<Iterator<Integer>>asList(list1.iterator(), list2.iterator(), list3.iterator()));
+      compose(Arrays.asList(list1.iterator(), list2.iterator(), list3.iterator()));
     while (iterator.hasNext()) {
       Integer next = iterator.next();
       iterator.remove();
@@ -243,7 +243,7 @@ public class SequenceIteratorTest extends TestCase {
     final ArrayList<Integer> list3 = new ArrayList<>(Arrays.asList(5, 6));
 
     final Iterator<Integer> iterator =
-      compose(Arrays.<Iterator<Integer>>asList(list1.iterator(), list2.iterator(), list3.iterator()));
+      compose(Arrays.asList(list1.iterator(), list2.iterator(), list3.iterator()));
     iterator.next();
     iterator.next();
     iterator.remove();

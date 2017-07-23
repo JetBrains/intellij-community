@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,12 +63,13 @@ public class PyStaticCallHierarchyUtil {
       }
 
       @Override
-      public void visitPyCallExpression(PyCallExpression callExpression) {
-        super.visitPyCallExpression(callExpression);
-        PsiElement calleeFunction = callExpression.resolveCalleeFunction(PyResolveContext.defaultContext());
-        if (calleeFunction instanceof PyFunction) {
-          callees.add(calleeFunction);
-        }
+      public void visitPyCallExpression(PyCallExpression node) {
+        super.visitPyCallExpression(node);
+
+        StreamEx
+          .of(node.multiResolveCalleeFunction(PyResolveContext.defaultContext()))
+          .select(PyFunction.class)
+          .forEach(callees::add);
       }
     };
 

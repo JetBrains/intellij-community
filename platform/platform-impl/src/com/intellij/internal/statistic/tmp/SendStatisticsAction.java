@@ -18,6 +18,8 @@ package com.intellij.internal.statistic.tmp;
 import com.intellij.internal.statistic.StatisticsUploadAssistant;
 import com.intellij.internal.statistic.connect.StatisticsResult;
 import com.intellij.internal.statistic.connect.StatisticsService;
+import com.intellij.internal.statistic.persistence.ApplicationStatisticsPersistenceComponent;
+import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,9 +41,14 @@ public class SendStatisticsAction extends AnAction {
       return;
     }
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Sending Statistics", false) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Collecting And Sending Statistics", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
+        UsageStatisticsPersistenceComponent statisticsPersistenceComponent = UsageStatisticsPersistenceComponent.getInstance();
+        boolean sendAllowed = statisticsPersistenceComponent.isAllowed();
+        statisticsPersistenceComponent.setAllowed(true);
+        ApplicationStatisticsPersistenceComponent.persistOpenedProjects();
+        statisticsPersistenceComponent.setAllowed(sendAllowed);
         StatisticsService service = StatisticsUploadAssistant.getStatisticsService();
         final StatisticsResult result = service.send();
 

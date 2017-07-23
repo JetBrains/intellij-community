@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.SchemeFactory;
 import com.intellij.openapi.options.SchemeImportException;
+import com.intellij.openapi.options.SchemeImportUtil;
 import com.intellij.openapi.options.SchemeImporter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -49,7 +50,7 @@ public class CodeStyleSchemeXmlImporter extends CodeStyleSettingsLoader implemen
                                       @NotNull VirtualFile selectedFile,
                                       @NotNull CodeStyleScheme currentScheme,
                                       @NotNull SchemeFactory<CodeStyleScheme> schemeFactory) throws SchemeImportException {
-    Element rootElement = loadSchemeDom(selectedFile);
+    Element rootElement = SchemeImportUtil.loadSchemeDom(selectedFile);
     Element schemeRoot = getSchemeRoot(rootElement);
     final Pair<String, CodeStyleScheme> importPair =
       !ApplicationManager.getApplication().isUnitTestMode() ?
@@ -96,11 +97,5 @@ public class CodeStyleSchemeXmlImporter extends CodeStyleSettingsLoader implemen
     loadSettings(rootElement, newSettings);
     ((CodeStyleSchemeImpl)scheme).setCodeStyleSettings(newSettings);
     return scheme;
-  }
-
-  @Nullable
-  @Override
-  public String getAdditionalImportInfo(@NotNull CodeStyleScheme scheme) {
-    return null;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import org.jdom.Parent
+import java.nio.file.Path
 
 @Deprecated("Please use SchemeManager")
 abstract class SchemesManager<T : Scheme> : SchemeManager<T>()
@@ -38,11 +39,11 @@ abstract class SchemeManagerFactory {
   }
 
   /**
-   * directoryName — like "keymaps".
+   * directoryName - like "keymaps".
    */
   @JvmOverloads
-  fun <SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> create(directoryName: String, processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>, presentableName: String? = null): SchemeManager<SCHEME> {
-    return create(directoryName, processor, presentableName, RoamingType.DEFAULT)
+  fun <SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> create(directoryName: String, processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>, presentableName: String? = null, directoryPath: Path? = null): SchemeManager<SCHEME> {
+    return create(directoryName, processor, presentableName, RoamingType.DEFAULT, directoryPath = directoryPath)
   }
 
   abstract fun <SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> create(directoryName: String,
@@ -50,14 +51,18 @@ abstract class SchemeManagerFactory {
                                                                  presentableName: String? = null,
                                                                  roamingType: RoamingType = RoamingType.DEFAULT,
                                                                  isUseOldFileNameSanitize: Boolean = false,
-                                                                 streamProvider: StreamProvider? = null): SchemeManager<SCHEME>
+                                                                 streamProvider: StreamProvider? = null,
+                                                                 directoryPath: Path? = null,
+                                                                 autoSave: Boolean = true): SchemeManager<SCHEME>
+  open fun dispose(schemeManager: SchemeManager<*>) {
+  }
 }
 
 enum class SchemeState {
   UNCHANGED, NON_PERSISTENT, POSSIBLY_CHANGED
 }
 
-abstract class SchemeProcessor<SCHEME : Scheme, in MUTABLE_SCHEME: SCHEME> {
+abstract class SchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME: SCHEME> {
   open fun isExternalizable(scheme: SCHEME) = scheme is ExternalizableScheme
 
   /**
@@ -77,5 +82,9 @@ abstract class SchemeProcessor<SCHEME : Scheme, in MUTABLE_SCHEME: SCHEME> {
   open fun onCurrentSchemeSwitched(oldScheme: SCHEME?, newScheme: SCHEME?) {
   }
 
-  open fun getState(scheme: SCHEME): SchemeState = SchemeState.POSSIBLY_CHANGED
+  /**
+   * If scheme implements [com.intellij.configurationStore.SerializableScheme], this method will be called only if [com.intellij.configurationStore.SerializableScheme.getSchemeState] returns `null`
+   */
+  @Suppress("KDocUnresolvedReference")
+  open fun getState(scheme: SCHEME) = SchemeState.POSSIBLY_CHANGED
 }

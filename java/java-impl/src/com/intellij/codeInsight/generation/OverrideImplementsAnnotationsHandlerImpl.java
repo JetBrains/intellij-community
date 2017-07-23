@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 19-Aug-2008
- */
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -28,17 +24,22 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ArrayUtil;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 
 public class OverrideImplementsAnnotationsHandlerImpl implements OverrideImplementsAnnotationsHandler {
   @Override
   public String[] getAnnotations(Project project) {
-    final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
-    final Collection<String> anns = new ArrayList<>(manager.getNotNulls());
-    anns.addAll(manager.getNullables());
-    anns.add(AnnotationUtil.NLS);
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
-    anns.addAll(settings.getRepeatAnnotations());
-    return ArrayUtil.toStringArray(anns);
+    List<String> annotations = new ArrayList<>();
+
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
+    annotations.addAll(manager.getNotNulls());
+    annotations.addAll(manager.getNullables());
+
+    annotations.add(AnnotationUtil.NLS);
+
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+    annotations.addAll(settings.getRepeatAnnotations());
+
+    return ArrayUtil.toStringArray(annotations);
   }
 }

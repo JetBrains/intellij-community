@@ -141,12 +141,8 @@ public abstract class FindUsagesHandler {
   public boolean processUsagesInText(@NotNull final PsiElement element,
                                      @NotNull Processor<UsageInfo> processor,
                                      @NotNull GlobalSearchScope searchScope) {
-    Collection<String> stringToSearch = ApplicationManager.getApplication().runReadAction(new NullableComputable<Collection<String>>() {
-      @Override
-      public Collection<String> compute() {
-        return getStringsToSearch(element);
-      }
-    });
+    Collection<String> stringToSearch = ApplicationManager.getApplication().runReadAction(
+      (NullableComputable<Collection<String>>)() -> getStringsToSearch(element));
     if (stringToSearch == null) return true;
     return FindUsagesHelper.processUsagesInText(element, stringToSearch, searchScope, processor);
   }

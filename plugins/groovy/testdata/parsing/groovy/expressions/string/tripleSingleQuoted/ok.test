@@ -1,0 +1,58 @@
+''''''
+'''\\'''
+
+'''\
+'''
+
+'''\
+
+
+'''
+
+'''\\
+'''
+
+'''\'''
+'''
+
+'''
+
+
+'''
+
+'''foo'''
+'''\r\n'''
+'''\j\i'''
+
+-----
+Groovy script
+  Literal
+    PsiElement(string)('''''''')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(string)(''''\\'''')
+  PsiElement(new line)('\n\n')
+  Literal
+    PsiElement(string)(''''\\n'''')
+  PsiElement(new line)('\n\n')
+  Literal
+    PsiElement(string)(''''\\n\n\n'''')
+  PsiElement(new line)('\n\n')
+  Literal
+    PsiElement(string)(''''\\\n'''')
+  PsiElement(new line)('\n\n')
+  Literal
+    PsiElement(string)(''''\'''\n'''')
+  PsiElement(new line)('\n\n')
+  Literal
+    PsiElement(string)(''''\n\n\n'''')
+  PsiElement(new line)('\n\n')
+  Literal
+    PsiElement(string)(''''foo'''')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(string)(''''\r\n'''')
+  PsiElement(new line)('\n')
+  Literal
+    PsiElement(string)(''''\j\i'''')
+  PsiElement(new line)('\n')

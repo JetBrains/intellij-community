@@ -43,11 +43,12 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.util.*;
 
 public class CopyClassesHandler extends CopyHandlerDelegateBase {
-  private static final Logger LOG = Logger.getInstance("#" + CopyClassesHandler.class.getName());
+  private static final Logger LOG = Logger.getInstance(CopyClassesHandler.class);
 
   @Override
   public boolean forbidToClone(PsiElement[] elements, boolean fromUpdate) {
@@ -208,18 +209,19 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       } else {
         defaultTargetDirectory = CopyFilesOrDirectoriesHandler.resolveDirectory(defaultTargetDirectory);
         if (defaultTargetDirectory == null) return;
-        PsiElement[] files = PsiUtilCore.toPsiFileArray(classes.keySet());
-        if (classes.keySet().size() == 1) {
-          //do not choose a new name for a file when multiple classes exist in one file
-          final PsiClass[] psiClasses = classes.values().iterator().next();
-          if (psiClasses != null) {
-            files = psiClasses;
+        PsiFile[] files = PsiUtilCore.toPsiFileArray(classes.keySet());
+        final CopyFilesOrDirectoriesDialog dialog = new CopyFilesOrDirectoriesDialog(files, defaultTargetDirectory, project, false) {
+          @Override
+          public JComponent getPreferredFocusedComponent() {
+            return files.length == 1 ? getTargetDirectoryComponent() : super.getPreferredFocusedComponent();
           }
-        }
-        final CopyFilesOrDirectoriesDialog dialog = new CopyFilesOrDirectoriesDialog(files, defaultTargetDirectory, project, false);
+        };
         if (dialog.showAndGet()) {
           targetDirectory = dialog.getTargetDirectory();
-          className = dialog.getNewName();
+          String newName = dialog.getNewName();
+          if (files.length == 1) { //strip file extension when multiple classes exist in one file
+            className = StringUtil.trimEnd(newName, "." + getFileExtension(files[0]));
+          }
           openInEditor = dialog.openInEditor();
         }
       }
@@ -337,13 +339,14 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
           }
           continue;
         }
-        for (final PsiClass destination : ((PsiClassOwner)createdFile).getClasses()) {
+        PsiClass[] classes = ((PsiClassOwner)createdFile).getClasses();
+        for (final PsiClass destination : classes) {
           if (isSynthetic(destination)) {
             continue;
           }
           PsiClass source = findByName(sources, destination.getName());
           if (source != null) {
-            final PsiClass copy = copy(source, copyClassName);
+            final PsiClass copy = copy(source, classes.length > 1 ? null : copyClassName);
             newElement = WriteAction.compute(() -> destination.replace(copy));
             oldToNewMap.put(source, newElement);
           }
@@ -419,16 +422,21 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
 
   private static String getNewFileName(PsiFile file, String name) {
     if (name != null) {
-      if (file instanceof PsiClassOwner) {
-        for (final PsiClass psiClass : ((PsiClassOwner)file).getClasses()) {
-          if (!isSynthetic(psiClass)) {
-            return name + "." + file.getViewProvider().getVirtualFile().getExtension();
-          }
-        }
-      }
-      return name;
+      String fileExtension = getFileExtension(file);
+      return fileExtension.isEmpty() ? name : StringUtil.getQualifiedName(name, fileExtension);
     }
     return file.getName();
+  }
+
+  private static String getFileExtension(PsiFile file) {
+    if (file instanceof PsiClassOwner) {
+      for (final PsiClass psiClass : ((PsiClassOwner)file).getClasses()) {
+        if (!isSynthetic(psiClass)) {
+          return file.getViewProvider().getVirtualFile().getExtension();
+        }
+      }
+    }
+    return "";
   }
 
   @NotNull

@@ -51,7 +51,9 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ResourceBundle;
 
+import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static java.awt.Toolkit.getDefaultToolkit;
+import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.SwingUtilities.isDescendingFrom;
 
 /**
@@ -185,7 +187,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     }
   }
 
-  private void requestUpdate() {
+  void requestUpdate() {
     final Configurable configurable = myConfigurable;
     myQueue.queue(new Update(this) {
       @Override
@@ -296,7 +298,9 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
         }
       }
     }
-    return content;
+    JScrollPane pane = createScrollPane(content, true);
+    pane.setHorizontalScrollBarPolicy(HORIZONTAL_SCROLLBAR_NEVER);
+    return pane;
   }
 
   private static String getString(Configurable configurable, String key) {

@@ -159,7 +159,7 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
 
     @Override
     public boolean isToolEnabled(HighlightDisplayKey key, PsiElement element) {
-      return myUseSpellCheck && SPELL_CHECK_TOOLS.containsKey(key.toString());
+      return SPELL_CHECK_TOOLS.containsKey(key.toString()) ? myUseSpellCheck : super.isToolEnabled(key, element);
     }
 
     public void setUseSpellCheck(boolean useSpellCheck) {

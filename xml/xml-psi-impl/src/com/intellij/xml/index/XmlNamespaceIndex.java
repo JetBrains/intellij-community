@@ -100,7 +100,7 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
       public Map<String, XsdNamespaceBuilder> map(@NotNull final FileContent inputData) {
         final XsdNamespaceBuilder builder;
         if ("dtd".equals(inputData.getFile().getExtension())) {
-          builder = new XsdNamespaceBuilder(inputData.getFileName(), "", Collections.<String>emptyList(), Collections.<String>emptyList());
+          builder = new XsdNamespaceBuilder(inputData.getFileName(), "", Collections.emptyList(), Collections.emptyList());
         }
         else {
           builder = XsdNamespaceBuilder.computeNamespace(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()));

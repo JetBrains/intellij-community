@@ -21,11 +21,12 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.rules.UsageFilteringRule;
-import com.intellij.usages.rules.UsageFilteringRuleEx;
 import com.intellij.usages.rules.UsageGroupingRule;
-import com.intellij.usages.rules.UsageGroupingRuleEx;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author max
@@ -58,15 +59,7 @@ class UsageNodeTreeBuilder {
   }
 
   public boolean isVisible(@NotNull Usage usage) {
-    for (final UsageFilteringRule rule : myFilteringRules) {
-      boolean visible = rule instanceof UsageFilteringRuleEx ?
-                        ((UsageFilteringRuleEx)rule).isVisible(usage, myTargets) :
-                        rule.isVisible(usage);
-      if (!visible) {
-        return false;
-      }
-    }
-    return true;
+    return Arrays.stream(myFilteringRules).allMatch(rule -> rule.isVisible(usage, myTargets));
   }
 
   UsageNode appendUsage(@NotNull Usage usage, @NotNull Consumer<Node> edtInsertedUnderQueue, boolean filterDuplicateLines) {
@@ -79,11 +72,9 @@ class UsageNodeTreeBuilder {
       UsageGroupingRule rule = myGroupingRules[i];
       if (dumb && !DumbService.isDumbAware(rule)) continue;
 
-      UsageGroup group = rule instanceof UsageGroupingRuleEx ?
-                         ((UsageGroupingRuleEx)rule).groupUsage(usage, myTargets) :
-                         rule.groupUsage(usage);
-      if (group != null) {
-        groupNode = groupNode.addGroup(group, i, edtInsertedUnderQueue);
+      List<UsageGroup> groups = rule.getParentGroupsFor(usage, myTargets);
+      for (UsageGroup group : groups) {
+        groupNode = groupNode.addOrGetGroup(group, i, edtInsertedUnderQueue);
       }
     }
 

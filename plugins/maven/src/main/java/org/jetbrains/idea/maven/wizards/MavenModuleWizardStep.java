@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArchetype;
+import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.navigator.SelectMavenProjectDialog;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -204,7 +205,8 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   public MavenProject findPotentialParentProject(Project project) {
     if (!MavenProjectsManager.getInstance(project).isMavenizedProject()) return null;
 
-    VirtualFile parentPom = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myContext.getProjectFileDirectory(), "pom.xml"));
+    VirtualFile parentPom = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myContext.getProjectFileDirectory(),
+                                                                                              MavenConstants.POM_XML));
     if (parentPom == null) return null;
 
     return MavenProjectsManager.getInstance(project).findProject(parentPom);

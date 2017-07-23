@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -42,7 +43,7 @@ public class EditChangelistDialog extends DialogWrapper {
       @Override
       protected void nameChanged(String errorMessage) {
         setOKActionEnabled(errorMessage == null);
-        setErrorText(errorMessage);
+        setErrorText(errorMessage, myPanel);
       }
     };
     myPanel.setChangeListName(list.getName());
@@ -69,20 +70,19 @@ public class EditChangelistDialog extends DialogWrapper {
       return;
     }
 
-    if (!Comparing.equal(oldName, myPanel.getChangeListName(), true) || !Comparing.equal(oldComment, myPanel.getDescription(), true)) {
-      final ChangeListManager clManager = ChangeListManager.getInstance(myProject);
+    final ChangeListManager clManager = ChangeListManager.getInstance(myProject);
 
-      final String newName = myPanel.getChangeListName();
-      if (! myList.getName().equals(newName)) {
-        clManager.editName(myList.getName(), newName);
-      }
-      final String newDescription = myPanel.getDescription();
-      if (! myList.getComment().equals(newDescription)) {
-        clManager.editComment(myList.getName(), newDescription);
-      }
+    final String newDescription = myPanel.getDescription();
+    if (!StringUtil.equals(oldComment, newDescription)) {
+      clManager.editComment(oldName, newDescription);
+    }
+
+    final String newName = myPanel.getChangeListName();
+    if (!StringUtil.equals(oldName, newName)) {
+      clManager.editName(oldName, newName);
     }
     if (!myList.isDefault() && myPanel.getMakeActiveCheckBox().isSelected()) {
-      ChangeListManager.getInstance(myProject).setDefaultChangeList(myList);  
+      clManager.setDefaultChangeList(newName);
     }
     myPanel.changelistCreatedOrChanged(myList);
     super.doOKAction();

@@ -30,14 +30,13 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiExpressionTrimRenderer;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.BlockUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,8 +62,8 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
     PsiClass aClass = member.getContainingClass();
     if (aClass == null) return "";
     return QuickFixBundle.message("access.static.via.class.reference.text",
-                                  HighlightMessageUtil.getSymbolName(member, substitutor),
-                                  HighlightUtil.formatClass(aClass),
+                                  HighlightMessageUtil.getSymbolName(member, substitutor, PsiFormatUtilBase.SHOW_TYPE),
+                                  HighlightUtil.formatClass(aClass, false),
                                   HighlightUtil.formatClass(aClass, false));
   }
 
@@ -99,7 +98,7 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
         try {
           PsiElement newQualifier = qualifierExpression.replace(factory.createReferenceExpression(containingClass));
           PsiElement qualifiedWithClassName = myExpression.copy();
-          if (myExpression.getTypeParameters().length == 0) {
+          if (myExpression.getTypeParameters().length == 0 && !(containingClass.isInterface() && !containingClass.equals(PsiTreeUtil.getParentOfType(myExpression, PsiClass.class)))) {
             newQualifier.delete();
             if (myExpression.resolve() != myMember) {
               myExpression.replace(qualifiedWithClassName);
@@ -151,25 +150,13 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
         @Override
         protected String sideEffectsDescription() {
           if (canCopeWithSideEffects) {
-            return "<html><body>" +
-                   "  There are possible side effects found in expression '" +
-                   qualifierExpression.getText() +
-                   "'<br>" +
-                   "  You can:<ul><li><b>Remove</b> class reference along with whole expressions involved, or</li>" +
-                   "  <li><b>Transform</b> qualified expression into the statement on its own.<br>" +
-                   "  That is,<br>" +
-                   "  <table border=1><tr><td><code>" +
-                   myExpression.getText() +
-                   "</code></td></tr></table><br> becomes: <br>" +
-                   "  <table border=1><tr><td><code>" +
-                   qualifierExpression.getText() +
-                   ";<br>" +
-                   qualifiedWithClassName.getText() +
-                   "       </code></td></tr></table></li>" +
-                   "  </body></html>";
+            return MessageFormat.format(getFormatString(),
+                                        "expression '" + qualifierExpression.getText() + "'",
+                                        myExpression.getText(), //before text
+                                        qualifierExpression.getText() + ";<br>" + qualifiedWithClassName.getText());//after text
           }
           return "<html><body>  There are possible side effects found in expression '" + qualifierExpression.getText() + "'<br>" +
-                 "You can:<ul><li><b>Remove</b> class reference along with whole expressions involved, or</li></body></html>";
+                 "You can <b>Remove</b> class reference along with whole expressions involved</body></html>";
         }
       };
     dialog.show();
@@ -180,7 +167,8 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
       LOG.assertTrue(statement != null);
       WriteAction.run(() -> {
         try {
-          statement.getParent().addBefore(statementFromText, statement);
+          PsiElement parent = statement.getParent();
+          BlockUtils.addBefore(parent instanceof PsiForStatement ? (PsiStatement)parent : statement, statementFromText);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);

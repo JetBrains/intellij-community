@@ -34,25 +34,17 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   private final HashMap<String, Node> myNodeByIdMap = new HashMap<>();
   private final Set<Node> myRunningTestNodes = ContainerUtil.newHashSet();
   private final Set<Node> myRunningSuiteNodes = ContainerUtil.newHashSet();
-  private final SMTestProxy.SMRootTestProxy myTestsRootProxy;
   private final Node myTestsRootNode;
 
   private boolean myIsTestingFinished = false;
-  private SMTestLocator myLocator = null;
   private TestProxyPrinterProvider myTestProxyPrinterProvider = null;
 
   public GeneralIdBasedToSMTRunnerEventsConvertor(Project project,
                                                   @NotNull SMTestProxy.SMRootTestProxy testsRootProxy,
                                                   @NotNull String testFrameworkName) {
-    super(project, testFrameworkName);
-    myTestsRootProxy = testsRootProxy;
+    super(project, testFrameworkName, testsRootProxy);
     myTestsRootNode = new Node(TreeNodeEvent.ROOT_NODE_ID, null, testsRootProxy);
     myNodeByIdMap.put(myTestsRootNode.getId(), myTestsRootNode);
-  }
-
-  @Override
-  public void setLocator(@NotNull SMTestLocator locator) {
-    myLocator = locator;
   }
 
   public void onStartTesting() {
@@ -123,18 +115,27 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       return;
     }
 
+    node = createNode(startedNodeEvent, suite);
+    if (node == null) return;
+    if (startedNodeEvent.isRunning()) {
+      setNodeAndAncestorsRunning(node);
+    }
+  }
+
+  private Node createNode(@NotNull BaseStartedNodeEvent startedNodeEvent, boolean suite) {
     Node parentNode = findValidParentNode(startedNodeEvent);
     if (parentNode == null) {
-      return;
+      return null;
     }
 
     String nodeId = validateAndGetNodeId(startedNodeEvent);
     if (nodeId == null) {
-      return;
+      return null;
     }
 
     String nodeName = startedNodeEvent.getName();
     SMTestProxy childProxy = new SMTestProxy(nodeName, suite, startedNodeEvent.getLocationUrl(), true);
+    childProxy.setTreeBuildBeforeStart();
     TestProxyPrinterProvider printerProvider = myTestProxyPrinterProvider;
     String nodeType = startedNodeEvent.getNodeType();
     if (printerProvider != null && nodeType != null && nodeName != null) {
@@ -143,15 +144,26 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
         childProxy.setPreferredPrinter(printer);
       }
     }
-    node = new Node(nodeId, parentNode, childProxy);
+
+    Node node = new Node(nodeId, parentNode, childProxy);
     myNodeByIdMap.put(startedNodeEvent.getId(), node);
     if (myLocator != null) {
       childProxy.setLocator(myLocator);
     }
     parentNode.getProxy().addChild(childProxy);
-    if (startedNodeEvent.isRunning()) {
-      setNodeAndAncestorsRunning(node);
-    }
+    return node;
+  }
+
+  @Override
+  protected SMTestProxy createSuite(String suiteName, String locationHint, String id, String parentNodeId) {
+    Node node = createNode(new TestSuiteStartedEvent(suiteName, id, parentNodeId, locationHint, null, null, false), true);
+    return node.getProxy();
+  }
+
+  @Override
+  protected SMTestProxy createProxy(String testName, String locationHint, String id, String parentNodeId) {
+    Node node = createNode(new TestStartedEvent(testName, id, parentNodeId, locationHint, null, null, false), false);
+    return node.getProxy();
   }
 
   @Nullable
@@ -178,7 +190,10 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       Node node = findNodeToTerminate(testFinishedEvent);
       if (node != null) {
         SMTestProxy testProxy = node.getProxy();
-        testProxy.setDuration(testFinishedEvent.getDuration());
+        final Long duration = testFinishedEvent.getDuration();
+        if (duration != null) {
+          testProxy.setDuration(duration);
+        }
         testProxy.setFrameworkOutputFile(testFinishedEvent.getOutputFile());
         testProxy.setFinished();
         if (node.getState() != State.FAILED) {
@@ -233,13 +248,26 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   public void onError(@NotNull final String localizedMessage,
                       @Nullable final String stackTrace,
                       final boolean isCritical) {
+    onError(null, localizedMessage, stackTrace, isCritical);
+  }
+
+  public void onError(@Nullable final String nodeId,
+                      @NotNull final String localizedMessage,
+                      @Nullable final String stackTrace,
+                      final boolean isCritical) {
     addToInvokeLater(() -> {
-      Node activeNode = findActiveNode();
-      SMTestProxy activeProxy = activeNode.getProxy();
+      SMTestProxy activeProxy = null;
+      if (nodeId != null) {
+        activeProxy = findProxyById(nodeId);
+      }
+      if (activeProxy == null) {
+        Node activeNode = findActiveNode();
+        activeProxy = activeNode.getProxy();
+      }
       activeProxy.addError(localizedMessage, stackTrace, isCritical);
     });
   }
-
+  
   public void onTestFailure(@NotNull final TestFailedEvent testFailedEvent) {
     addToInvokeLater(() -> {
       Node node = findNodeToTerminate(testFailedEvent);
@@ -254,10 +282,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       String failureMessage = testFailedEvent.getLocalizedFailureMessage();
       String stackTrace = testFailedEvent.getStacktrace();
       if (comparisonFailureActualText != null && comparisonFailureExpectedText != null) {
-        testProxy.setTestComparisonFailed(failureMessage, stackTrace,
-                                          comparisonFailureActualText, comparisonFailureExpectedText,
-                                          testFailedEvent.getExpectedFilePath(),
-                                          testFailedEvent.getActualFilePath());
+        testProxy.setTestComparisonFailed(failureMessage, stackTrace, comparisonFailureActualText, comparisonFailureExpectedText, testFailedEvent);
       } else if (comparisonFailureActualText == null && comparisonFailureExpectedText == null) {
         testProxy.setTestFailed(failureMessage, stackTrace, testFailedEvent.isTestError());
       } else {
@@ -387,18 +412,6 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       return myRunningSuiteNodes.iterator().next();
     }
     return myTestsRootNode;
-  }
-
-  @Override
-  public void onRootPresentationAdded(final String rootName, final String comment, final String rootLocation) {
-    addToInvokeLater(() -> {
-      myTestsRootProxy.setPresentation(rootName);
-      myTestsRootProxy.setComment(comment);
-      myTestsRootProxy.setRootLocationUrl(rootLocation);
-      if (myLocator != null) {
-        myTestsRootProxy.setLocator(myLocator);
-      }
-    });
   }
 
   private enum State {

@@ -15,23 +15,22 @@
  */
 package com.intellij.openapi.vcs.checkin;
 
+import com.intellij.diff.comparison.ComparisonManager;
+import com.intellij.diff.comparison.ComparisonPolicy;
+import com.intellij.diff.comparison.DiffTooBigException;
+import com.intellij.diff.fragments.LineFragment;
+import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.TextDiffType;
 import com.intellij.ide.todo.TodoFilter;
 import com.intellij.ide.todo.TodoIndexPatternProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.ex.DiffFragment;
-import com.intellij.openapi.diff.impl.ComparisonPolicy;
-import com.intellij.openapi.diff.impl.fragments.LineFragment;
-import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
-import com.intellij.openapi.diff.impl.processing.DiffCorrection;
-import com.intellij.openapi.diff.impl.processing.DiffFragmentsProcessor;
-import com.intellij.openapi.diff.impl.processing.DiffPolicy;
-import com.intellij.openapi.diff.impl.string.DiffString;
-import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
+import com.intellij.openapi.progress.DumbProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -49,14 +48,15 @@ import com.intellij.psi.search.IndexPatternOccurrence;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.search.searches.IndexPatternSearch;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * @author irengrig
@@ -117,12 +117,7 @@ public class TodoCheckinHandlerWorker {
       myPsiFile = null;
 
       if (afterFile.isValid()) {
-        myPsiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
-          @Override
-          public PsiFile compute() {
-            return myPsiManager.findFile(afterFile);
-          }
-        });
+        myPsiFile = ReadAction.compute(() -> myPsiManager.findFile(afterFile));
       }
       if (myPsiFile == null) {
         mySkipped.add(Pair.create(change.getAfterRevision().getFile(), ourInvalidFile));
@@ -210,42 +205,23 @@ public class TodoCheckinHandlerWorker {
           myAcceptor.skipped(Pair.create(myAfterFile, ourCannotLoadPreviousRevision));
           return;
         }
-        ArrayList<LineFragment> lineFragments = getLineFragments(myAfterFile.getPath(), myBeforeContent, myAfterContent);
-        for (Iterator<LineFragment> iterator = lineFragments.iterator(); iterator.hasNext(); ) {
+        List<LineFragment> lineFragments = getLineFragments(myAfterFile.getPath(), myBeforeContent, myAfterContent);
+        lineFragments = ContainerUtil.filter(lineFragments, it -> DiffUtil.getLineDiffType(it) != TextDiffType.DELETED);
+        final StepIntersection<TodoItem, LineFragment> intersection = new StepIntersection<>(
+          TODO_ITEM_CONVERTOR, LINE_FRAGMENT_CONVERTOR, lineFragments);
+
+        intersection.process(newTodoItems, (todoItem, lineFragment) -> {
           ProgressManager.checkCanceled();
-          final LineFragment next = iterator.next();
-          final TextDiffTypeEnum type = next.getType();
-          assert ! TextDiffTypeEnum.CONFLICT.equals(type);
-          if (type == null || TextDiffTypeEnum.DELETED.equals(type) || TextDiffTypeEnum.NONE.equals(type)) {
-            iterator.remove();
+          if (myCurrentLineFragment == null || myCurrentLineFragment != lineFragment) {
+            myCurrentLineFragment = lineFragment;
+            myOldTodoTexts = null;
           }
-        }
-        final StepIntersection<TodoItem, LineFragment> intersection =
-          new StepIntersection<>(TodoItemConvertor.getInstance(), LineFragmentConvertor.getInstance(), lineFragments,
-                                 new Getter<String>() {
-                                   @Override
-                                   public String get() {
-                                     return myAfterContent;
-                                   }
-                                 });
-
-        intersection.process(newTodoItems, new PairConsumer<TodoItem, LineFragment>() {
-
-          @Override
-          public void consume(TodoItem todoItem, LineFragment lineFragment) {
-            ProgressManager.checkCanceled();
-            if (myCurrentLineFragment == null || ! myCurrentLineFragment.getRange(FragmentSide.SIDE2).equals(
-              lineFragment.getRange(FragmentSide.SIDE2))) {
-              myCurrentLineFragment = lineFragment;
-              myOldTodoTexts = null;
-            }
-            final TextDiffTypeEnum type = lineFragment.getType();
-            if (TextDiffTypeEnum.INSERT.equals(type)) {
-              myAcceptor.addedOrEdited(todoItem);
-            } else {
-              // change
-              checkEditedFragment(todoItem);
-            }
+          if (DiffUtil.getLineDiffType(lineFragment) == TextDiffType.INSERTED) {
+            myAcceptor.addedOrEdited(todoItem);
+          }
+          else {
+            // change
+            checkEditedFragment(todoItem);
           }
         });
       } catch (VcsException e) {
@@ -256,12 +232,8 @@ public class TodoCheckinHandlerWorker {
 
     private void checkEditedFragment(TodoItem newTodoItem) {
       if (myBeforeFile == null) {
-        myBeforeFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
-          @Override
-          public PsiFile compute() {
-            return myPsiFileFactory.createFileFromText("old" + myAfterFile.getName(), myAfterFile.getFileType(), myBeforeContent);
-          }
-        });
+        myBeforeFile = ReadAction
+          .compute(() -> myPsiFileFactory.createFileFromText("old" + myAfterFile.getName(), myAfterFile.getFileType(), myBeforeContent));
       }
       if (myOldItems == null)  {
         final Collection<IndexPatternOccurrence> all =
@@ -281,19 +253,10 @@ public class TodoCheckinHandlerWorker {
       }
       if (myOldTodoTexts == null) {
         final StepIntersection<LineFragment, TodoItem> intersection = new StepIntersection<>(
-          LineFragmentConvertor.getInstance(), TodoItemConvertor.getInstance(), myOldItems, new Getter<String>() {
-          @Override
-          public String get() {
-            return myBeforeContent;
-          }
-        });
+          LINE_FRAGMENT_CONVERTOR, TODO_ITEM_CONVERTOR, myOldItems);
         myOldTodoTexts = new HashSet<>();
-        intersection.process(Collections.singletonList(myCurrentLineFragment), new PairConsumer<LineFragment, TodoItem>() {
-          @Override
-          public void consume(LineFragment lineFragment, TodoItem todoItem) {
-            myOldTodoTexts.add(getTodoText(todoItem, myBeforeContent));
-          }
-        });
+        intersection.process(Collections.singletonList(myCurrentLineFragment),
+                             (lineFragment, todoItem) -> myOldTodoTexts.add(getTodoText(todoItem, myBeforeContent)));
       }
       final String text = getTodoText(newTodoItem, myAfterContent);
       if (! myOldTodoTexts.contains(text)) {
@@ -327,14 +290,13 @@ public class TodoCheckinHandlerWorker {
     return StringUtil.join(fragment.split("\\s"), " ");
   }
 
-  private static ArrayList<LineFragment> getLineFragments(final String fileName, String beforeContent, String afterContent) throws VcsException {
+  private static List<LineFragment> getLineFragments(@NotNull String fileName, @NotNull String beforeContent, @NotNull String afterContent)
+    throws VcsException {
     try {
-      DiffFragment[] woFormattingBlocks =
-        DiffPolicy.LINES_WO_FORMATTING.buildFragments(DiffString.create(beforeContent), DiffString.create(afterContent));
-      DiffFragment[] step1lineFragments =
-        new DiffCorrection.TrueLineBlocks(ComparisonPolicy.IGNORE_SPACE).correctAndNormalize(woFormattingBlocks);
-      return new DiffFragmentsProcessor().process(step1lineFragments);
-    } catch (FilesTooBigForDiffException e) {
+      ProgressIndicator indicator = notNull(ProgressManager.getInstance().getProgressIndicator(), DumbProgressIndicator.INSTANCE);
+      return ComparisonManager.getInstance().compareLines(beforeContent, afterContent, ComparisonPolicy.IGNORE_WHITESPACES, indicator);
+    }
+    catch (DiffTooBigException e) {
       throw new VcsException("File " + fileName + " is too big and there are too many changes to build a diff", e);
     }
   }
@@ -343,33 +305,16 @@ public class TodoCheckinHandlerWorker {
   private final static String ourCannotLoadPreviousRevision = "Can not load previous revision";
   private final static String ourCannotLoadCurrentRevision = "Can not load current revision";
 
-  private static class TodoItemConvertor implements Convertor<TodoItem, TextRange> {
-    private static final TodoItemConvertor ourInstance = new TodoItemConvertor();
+  private static final Convertor<TodoItem, TextRange> TODO_ITEM_CONVERTOR = o -> {
+    final TextRange textRange = o.getTextRange();
+    return new TextRange(textRange.getStartOffset(), textRange.getEndOffset() - 1);
+  };
 
-    public static TodoItemConvertor getInstance() {
-      return ourInstance;
-    }
-
-    @Override
-    public TextRange convert(TodoItem o) {
-      final TextRange textRange = o.getTextRange();
-      return new TextRange(textRange.getStartOffset(), textRange.getEndOffset() - 1);
-    }
-  }
-
-  private static class LineFragmentConvertor implements Convertor<LineFragment, TextRange> {
-    private static final LineFragmentConvertor ourInstance = new LineFragmentConvertor();
-
-    public static LineFragmentConvertor getInstance() {
-      return ourInstance;
-    }
-
-    @Override
-    public TextRange convert(LineFragment o) {
-      final TextRange textRange = o.getRange(FragmentSide.SIDE2);
-      return new TextRange(textRange.getStartOffset(), textRange.getEndOffset() - 1);
-    }
-  }
+  private static final Convertor<LineFragment, TextRange> LINE_FRAGMENT_CONVERTOR = o -> {
+    int start = o.getStartOffset2();
+    int end = o.getEndOffset2();
+    return new TextRange(start, Math.max(start, end - 1));
+  };
 
   public List<TodoItem> inOneList() {
     final List<TodoItem> list = new ArrayList<>();

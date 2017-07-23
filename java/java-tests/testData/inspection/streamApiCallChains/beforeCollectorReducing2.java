@@ -1,4 +1,4 @@
-// "Replace Stream.collect(reducing()) with Stream.reduce()" "true"
+// "Replace 'collect(reducing())' with 'reduce()'" "true"
 
 import java.util.List;
 import java.util.stream.Collectors;

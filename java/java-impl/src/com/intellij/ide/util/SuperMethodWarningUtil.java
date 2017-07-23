@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -43,11 +44,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class SuperMethodWarningUtil {
+  public static Key<PsiMethod[]> SIBLINGS = Key.create("MULTIPLE_INHERITANCE");
   private SuperMethodWarningUtil() {}
 
   @NotNull
   public static PsiMethod[] checkSuperMethods(@NotNull PsiMethod method, @NotNull String actionString) {
-    return checkSuperMethods(method, actionString, Collections.<PsiElement>emptyList());
+    return checkSuperMethods(method, actionString, Collections.emptyList());
   }
 
   @NotNull
@@ -86,7 +88,7 @@ public class SuperMethodWarningUtil {
   }
 
   @NotNull
-  static Collection<PsiMethod> getSuperMethods(@NotNull PsiMethod method, PsiClass aClass, @NotNull Collection<PsiElement> ignore) {
+  public static Collection<PsiMethod> getSuperMethods(@NotNull PsiMethod method, PsiClass aClass, @NotNull Collection<PsiElement> ignore) {
     final Collection<PsiMethod> superMethods = DeepestSuperMethodsSearch.search(method).findAll();
     superMethods.removeAll(ignore);
 
@@ -138,37 +140,52 @@ public class SuperMethodWarningUtil {
       return;
     }
 
-    PsiMethod superMethod = method.findDeepestSuperMethod();
-    if (superMethod == null) {
+    PsiMethod[] superMethods = method.findDeepestSuperMethods();
+    if (superMethods.length == 0) {
       processor.execute(method);
       return;
     }
 
-    final PsiClass containingClass = superMethod.getContainingClass();
+    final PsiClass containingClass = superMethods[0].getContainingClass();
     if (containingClass == null) {
       processor.execute(method);
       return;
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      processor.execute(superMethod);
+      processor.execute(superMethods[0]);
       return;
     }
 
-    final PsiMethod[] methods = {superMethod, method};
-    final String renameBase = actionString + " base method";
+    final PsiMethod[] methods = {superMethods[0], method};
+    final String renameBase = actionString + " base method" + (superMethods.length > 1 ? "s" : "");
     final String renameCurrent = actionString + " only current method";
-    final JBList list = new JBList(renameBase, renameCurrent);
+    final JBList<String> list = new JBList<>(renameBase, renameCurrent);
+    String title = method.getName() +
+                   (superMethods.length > 1 ? " has super methods" 
+                                            : (containingClass.isInterface() && !aClass.isInterface() ? " implements" 
+                                                                                                      : " overrides") + 
+                                              " method of " + SymbolPresentationUtil.getSymbolPresentableText(containingClass));
     JBPopupFactory.getInstance().createListPopupBuilder(list)
-      .setTitle(method.getName() + (containingClass.isInterface() && !aClass.isInterface() ? " implements" : " overrides") + " method of " +
-                SymbolPresentationUtil.getSymbolPresentableText(containingClass))
+      .setTitle(title)
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
       .setItemChoosenCallback(() -> {
         final Object value = list.getSelectedValue();
-        if (value instanceof String) {
-          processor.execute(methods[value.equals(renameBase) ? 0 : 1]);
+        if (value != null) {
+          if (value.equals(renameBase)) {
+            try {
+              methods[0].putUserData(SIBLINGS, superMethods);
+              processor.execute(methods[0]);
+            }
+            finally {
+              methods[0].putUserData(SIBLINGS, null);
+            }
+          }
+          else {
+            processor.execute(methods[1]);
+          }
         }
       }).createPopup().showInBestPositionFor(editor);
   }

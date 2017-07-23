@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,21 @@
  */
 package org.jetbrains.plugins.gradle.service.project;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.gradle.cli.CommandLineArgumentException;
 import org.gradle.tooling.UnsupportedVersionException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler;
 import org.jetbrains.plugins.gradle.service.notification.ApplyGradlePluginCallback;
 import org.jetbrains.plugins.gradle.service.notification.GotoSourceNotificationCallback;
 import org.jetbrains.plugins.gradle.service.notification.OpenGradleSettingsCallback;
 
+import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.ConnectException;
@@ -39,16 +41,17 @@ import java.net.UnknownHostException;
  */
 public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHandler {
 
-  private static final Logger LOG = Logger.getInstance("#" + BaseProjectImportErrorHandler.class.getName());
+  private static final Logger LOG = Logger.getInstance(BaseProjectImportErrorHandler.class);
 
   @NotNull
   @Override
   public ExternalSystemException getUserFriendlyError(@NotNull Throwable error,
                                                       @NotNull String projectPath,
                                                       @Nullable String buildFilePath) {
-    if (error instanceof ExternalSystemException) {
-      // This is already a user-friendly error.
-      return (ExternalSystemException)error;
+    GradleExecutionErrorHandler executionErrorHandler = new GradleExecutionErrorHandler(error, projectPath, buildFilePath);
+    ExternalSystemException friendlyError = executionErrorHandler.getUserFriendlyError();
+    if (friendlyError != null) {
+      return friendlyError;
     }
 
     LOG.info(String.format("Failed to import Gradle project at '%1$s'", projectPath), error);
@@ -57,12 +60,8 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
       return new ExternalSystemException("Project import was cancelled");
     }
 
-    Pair<Throwable, String> rootCauseAndLocation = getRootCauseAndLocation(error);
-
-    //noinspection ThrowableResultOfMethodCallIgnored
-    Throwable rootCause = rootCauseAndLocation.getFirst();
-
-    String location = rootCauseAndLocation.getSecond();
+    Throwable rootCause = executionErrorHandler.getRootCause();
+    String location = executionErrorHandler.getLocation();
     if (location == null && !StringUtil.isEmpty(buildFilePath)) {
       location = String.format("Build file: '%1$s'", buildFilePath);
     }
@@ -144,10 +143,18 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
       }
     }
 
+    if (rootCause instanceof FileNotFoundException) {
+      Throwable errorCause = error.getCause();
+      if (errorCause instanceof IllegalArgumentException &&
+          GradleExecutionErrorHandler.DOWNLOAD_GRADLE_DISTIBUTION_ERROR_PATTERN.matcher(errorCause.getMessage()).matches()) {
+        return createUserFriendlyError(errorCause.getMessage(), null);
+      }
+    }
+
     if (rootCause instanceof RuntimeException) {
       String msg = rootCauseMessage;
 
-      if (msg != null && UNSUPPORTED_GRADLE_VERSION_ERROR_PATTERN.matcher(msg).matches()) {
+      if (msg != null && GradleExecutionErrorHandler.UNSUPPORTED_GRADLE_VERSION_ERROR_PATTERN.matcher(msg).matches()) {
         if (!msg.endsWith(".")) {
           msg += ".";
         }
@@ -158,8 +165,11 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
     }
 
     final String errMessage;
-    if (rootCauseMessage == null) {
+    if (rootCauseMessage == null || ApplicationManager.getApplication().isUnitTestMode()) {
       StringWriter writer = new StringWriter();
+      if (rootCauseMessage != null) {
+        writer.write(rootCauseMessage + "\n");
+      }
       rootCause.printStackTrace(new PrintWriter(writer));
       errMessage = writer.toString();
     }

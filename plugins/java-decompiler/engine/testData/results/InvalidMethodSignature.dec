@@ -4,7 +4,6 @@ import a.a.a.a.a.k;
 import a.a.a.a.c.c;
 import a.a.a.a.c.j;
 import a.a.a.a.e.bg;
-import a.a.a.a.e.f.b;
 import java.io.File;
 
 class i implements bg {
@@ -18,7 +17,7 @@ class i implements bg {
 
    public void a(c var1, k var2, boolean var3) {
       File var4 = this.a.b().a(var1);// 2
-      b.a(this.b).add(var4);// 3
+      a.a.a.a.e.f.b.a(this.b).add(var4);// 3
    }// 4
 
    public void a(a.a.a.a.c.b var1) {
@@ -27,30 +26,30 @@ class i implements bg {
 
 class 'a/a/a/a/e/f/i' {
    method '<init> (La/a/a/a/e/f/b;La/a/a/a/c/j;)V' {
-      2      14
-      7      15
-      e      16
+      2      13
+      7      14
+      e      15
    }
 
    method 'a (La/a/a/a/c/c;La/a/a/a/a/k;Z)V' {
-      1      19
-      4      19
-      a      19
-      f      19
-      12      20
-      15      20
-      1a      20
-      20      21
+      1      18
+      4      18
+      a      18
+      f      18
+      12      19
+      15      19
+      1a      19
+      20      20
    }
 
    method 'a (La/a/a/a/c/b;)V' {
-      0      24
+      0      23
    }
 }
 
 Lines mapping:
-0 <-> 25
-1 <-> 15
-2 <-> 20
-3 <-> 21
-4 <-> 22
+0 <-> 24
+1 <-> 14
+2 <-> 19
+3 <-> 20
+4 <-> 21

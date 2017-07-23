@@ -54,6 +54,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
@@ -174,9 +175,13 @@ public class IdeBackgroundUtil {
 
   @NotNull
   public static String getBackgroundSpec(@Nullable Project project, @NotNull String propertyName) {
-    String spec = project == null ? null : PropertiesComponent.getInstance(project).getValue(propertyName);
+    String spec = project == null || project.isDisposed() ? null : PropertiesComponent.getInstance(project).getValue(propertyName);
     if (spec == null) spec = PropertiesComponent.getInstance().getValue(propertyName);
     return StringUtil.notNullize(spec, System.getProperty(propertyName, ""));
+  }
+
+  public static boolean isEditorBackgroundImageSet(@Nullable Project project) {
+    return StringUtil.isNotEmpty(getBackgroundSpec(project, EDITOR_PROP));
   }
 
   public static void repaintAllWindows() {
@@ -218,43 +223,94 @@ public class IdeBackgroundUtil {
     @Override
     public void clearRect(int x, int y, int width, int height) {
       super.clearRect(x, y, width, height);
-      runAllPainters(x, y, width, height, getColor());
+      runAllPainters(x, y, width, height, null, getColor());
     }
 
     @Override
     public void fillRect(int x, int y, int width, int height) {
       super.fillRect(x, y, width, height);
-      runAllPainters(x, y, width, height, getColor());
+      runAllPainters(x, y, width, height, null, getColor());
+    }
+
+    @Override
+    public void fillArc(int x, int y, int width, int height, int startAngle, int arcAngle) {
+      super.fillArc(x, y, width, height, startAngle, arcAngle);
+      runAllPainters(x, y, width, height, new Arc2D.Double(x, y, width, height, startAngle, arcAngle, Arc2D.PIE), getColor());
+    }
+
+    @Override
+    public void fillOval(int x, int y, int width, int height) {
+      super.fillOval(x, y, width, height);
+      runAllPainters(x, y, width, height, new Ellipse2D.Double(x, y, width, height), getColor());
+    }
+
+    @Override
+    public void fillPolygon(int[] xPoints, int[] yPoints, int nPoints) {
+      super.fillPolygon(xPoints, yPoints, nPoints);
+      Polygon s = new Polygon(xPoints, yPoints, nPoints);
+      Rectangle r = s.getBounds();
+      runAllPainters(r.x, r.y, r.width, r.height, s, getColor());
+    }
+
+    @Override
+    public void fillPolygon(Polygon s) {
+      super.fillPolygon(s);
+      Rectangle r = s.getBounds();
+      runAllPainters(r.x, r.y, r.width, r.height, s, getColor());
+    }
+
+    @Override
+    public void fillRoundRect(int x, int y, int width, int height, int arcWidth, int arcHeight) {
+      super.fillRoundRect(x, y, width, height, arcWidth, arcHeight);
+      runAllPainters(x, y, width, height, new RoundRectangle2D.Double(x, y, width, height, arcHeight, arcHeight), getColor());
     }
 
     @Override
     public void fill(Shape s) {
       super.fill(s);
       Rectangle r = s.getBounds();
-      runAllPainters(r.x, r.y, r.width, r.height, getColor());
+      runAllPainters(r.x, r.y, r.width, r.height, s, getColor());
     }
 
     @Override
     public void drawImage(BufferedImage img, BufferedImageOp op, int x, int y) {
       super.drawImage(img, op, x, y);
-      runAllPainters(x, y, img.getWidth(), img.getHeight(), img);
+      runAllPainters(x, y, img.getWidth(), img.getHeight(), null, img);
     }
 
     @Override
     public boolean drawImage(Image img, int x, int y, int width, int height, ImageObserver observer) {
       boolean b = super.drawImage(img, x, y, width, height, observer);
-      runAllPainters(x, y, width, height, img);
+      runAllPainters(x, y, width, height, null, img);
       return b;
     }
 
     @Override
     public boolean drawImage(Image img, int x, int y, ImageObserver observer) {
       boolean b = super.drawImage(img, x, y, observer);
-      runAllPainters(x, y, img.getWidth(null), img.getHeight(null), img);
+      runAllPainters(x, y, img.getWidth(null), img.getHeight(null), null, img);
       return b;
     }
 
-    void runAllPainters(int x, int y, int width, int height, Object reason) {
+    @Nullable
+    private Shape setTempClip(int x, int y, int width, int height, @Nullable Shape sourceShape) {
+      Shape prevClip = getClip();
+      Shape forcedClip = sourceShape != null ? sourceShape : new Rectangle(x, y, width, height);
+      if (prevClip == null) {
+        setClip(forcedClip);
+      }
+      else if (prevClip instanceof Rectangle2D && forcedClip instanceof Rectangle2D) {
+        setClip(((Rectangle2D)prevClip).createIntersection((Rectangle2D)forcedClip));
+      }
+      else {
+        Area area = new Area(prevClip);
+        area.intersect(new Area(forcedClip));
+        setClip(area);
+      }
+      return prevClip;
+    }
+
+    void runAllPainters(int x, int y, int width, int height, @Nullable Shape sourceShape, @Nullable Object reason) {
       if (width <= 1 || height <= 1) return;
       // skip painters for transparent 'reasons'
       if (reason instanceof Color && ((Color)reason).getAlpha() < 255) return;
@@ -267,12 +323,9 @@ public class IdeBackgroundUtil {
         myDelegate.setRenderingHint(ADJUST_ALPHA, Boolean.TRUE);
       }
 
-      Shape s = getClip();
-      Rectangle newClip = s == null ? new Rectangle(x, y, width, height) :
-                          SwingUtilities.computeIntersection(x, y, width, height, s.getBounds());
-      setClip(newClip);
+      Shape prevClip = setTempClip(x, y, width, height, sourceShape);
       helper.runAllPainters(myDelegate, offsets);
-      setClip(s);
+      setClip(prevClip);
       if (preserve) {
         myDelegate.setRenderingHint(ADJUST_ALPHA, Boolean.FALSE);
       }
@@ -281,6 +334,8 @@ public class IdeBackgroundUtil {
 
   private static final JBIterable<Object> ourPreservedKeys = JBIterable.of(
     EditorColors.SELECTION_BACKGROUND_COLOR,
+    EditorColors.ADDED_LINES_COLOR, EditorColors.MODIFIED_LINES_COLOR, EditorColors.DELETED_LINES_COLOR,
+    EditorColors.WHITESPACES_MODIFIED_LINES_COLOR, EditorColors.BORDER_LINES_COLOR,
     DiffColors.DIFF_INSERTED, DiffColors.DIFF_DELETED, DiffColors.DIFF_MODIFIED, DiffColors.DIFF_CONFLICT);
 
   private static class MyTransform implements PairFunction<JComponent, Graphics2D, Graphics2D> {

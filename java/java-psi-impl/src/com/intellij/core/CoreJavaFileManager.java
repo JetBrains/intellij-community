@@ -35,7 +35,7 @@ import java.util.*;
 public class CoreJavaFileManager implements JavaFileManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.core.CoreJavaFileManager");
 
-  private final List<VirtualFile> myClasspath = new ArrayList<VirtualFile>();
+  private final List<VirtualFile> myClasspath = new ArrayList<>();
   private final PsiManager myPsiManager;
 
   public CoreJavaFileManager(PsiManager psiManager) {
@@ -56,7 +56,7 @@ public class CoreJavaFileManager implements JavaFileManager {
   }
 
   private List<VirtualFile> findDirectoriesByPackageName(String packageName) {
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
+    List<VirtualFile> result = new ArrayList<>();
     String dirName = packageName.replace(".", "/");
     for (VirtualFile root : roots()) {
       VirtualFile classDir = root.findFileByRelativePath(dirName);
@@ -183,7 +183,7 @@ public class CoreJavaFileManager implements JavaFileManager {
   @NotNull
   @Override
   public PsiClass[] findClasses(@NotNull String qName, @NotNull GlobalSearchScope scope) {
-    List<PsiClass> result = new ArrayList<PsiClass>();
+    List<PsiClass> result = new ArrayList<>();
     for (VirtualFile file : roots()) {
       final PsiClass psiClass = findClassInClasspathRoot(qName, file, myPsiManager, scope);
       if (psiClass != null) {

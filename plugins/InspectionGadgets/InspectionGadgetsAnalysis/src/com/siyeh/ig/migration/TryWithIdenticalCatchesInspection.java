@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.refactoring.util.duplicates.Match;
-import com.intellij.refactoring.util.duplicates.ReturnStatementReturnValue;
 import com.intellij.refactoring.util.duplicates.ReturnValue;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
@@ -36,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -108,12 +108,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
         if (parameter == null) {
           continue;
         }
-        final InputVariables inputVariables = new InputVariables(Collections.singletonList(parameter),
-                                                                 statement.getProject(),
-                                                                 new LocalSearchScope(catchBlock),
-                                                                 false);
-        final DuplicatesFinder finder = new DuplicatesFinder(new PsiElement[]{catchBlock},
-                                                             inputVariables, null, Collections.emptyList());
+        final DuplicatesFinder finder = buildDuplicatesFinder(catchBlock, parameter);
         for (int j = i + 1; j < catchSections.length; j++) {
           if (duplicates[j]) {
             continue;
@@ -123,44 +118,47 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
           if (otherCatchBlock == null) {
             continue;
           }
+          final PsiParameter otherParameter = otherSection.getParameter();
+          if (otherParameter == null) {
+            continue;
+          }
           final Match match = finder.isDuplicate(otherCatchBlock, true);
           if (match == null) {
             continue;
           }
-          final ReturnValue returnValue = match.getReturnValue();
-          if (returnValue != null && !(returnValue instanceof ReturnStatementReturnValue)) {
+          final DuplicatesFinder reverseFinder = buildDuplicatesFinder(otherCatchBlock, otherParameter);
+          final Match otherMatch = reverseFinder.isDuplicate(catchBlock, true);
+          if (otherMatch == null) {
             continue;
           }
-          final List<PsiElement> parameterValues = match.getParameterValues(parameter);
-          if (parameterValues != null) {
-            if (parameterValues.size() != 1) {
+          final ReturnValue returnValue = match.getReturnValue();
+          final ReturnValue otherReturnValue = otherMatch.getReturnValue();
+          if (returnValue == null) {
+            if (otherReturnValue != null) {
               continue;
             }
-            final PsiElement element = parameterValues.get(0);
-            if (!(element instanceof PsiReferenceExpression)) {
-              continue;
-            }
-            final PsiElement target = ((PsiReferenceExpression)element).resolve();
-            if (!(target instanceof PsiParameter)) {
-              continue;
-            }
-            final PsiElement scope = ((PsiParameter)target).getDeclarationScope();
-            if (!otherSection.equals(scope)) {
-              continue;
-            }
+          }
+          else if (!returnValue.isEquivalent(otherReturnValue)) {
+            continue;
           }
           if (j > i ? !canCollapse(parameters, i, j) : !canCollapse(parameters, j, i)) {
             continue;
           }
           final PsiJavaToken rParenth = otherSection.getRParenth();
           if (rParenth != null) {
-            registerErrorAtOffset(otherSection, 0, rParenth.getStartOffsetInParent() + 1, parameter.getType(),
+            registerErrorAtOffset(otherSection, 0, rParenth.getStartOffsetInParent() + 1, catchSection.getParameter().getType(),
                                   Integer.valueOf(i), Integer.valueOf(j));
           }
           duplicates[i] = true;
           duplicates[j] = true;
         }
       }
+    }
+
+    private static DuplicatesFinder buildDuplicatesFinder(@NotNull PsiCodeBlock catchBlock, @NotNull PsiParameter parameter) {
+      final InputVariables inputVariables =
+        new InputVariables(Collections.singletonList(parameter), parameter.getProject(), new LocalSearchScope(catchBlock), false);
+      return new DuplicatesFinder(new PsiElement[]{catchBlock}, inputVariables, null, Collections.emptyList());
     }
 
     private static boolean canCollapse(PsiParameter[] parameters, int index1, int index2) {
@@ -252,14 +250,12 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
         }
         return;
       }
-      final int size = out.size();
-      for (int i = 0; i < size; i++) {
-        final PsiType collectedType = out.get(i);
+      for (Iterator<PsiType> iterator = out.iterator(); iterator.hasNext(); ) {
+        final PsiType collectedType = iterator.next();
         if (TypeConversionUtil.isAssignable(type, collectedType)) {
-          out.remove(i);
-          out.add(type);
-          return;
-        } else if (TypeConversionUtil.isAssignable(collectedType, type)) {
+          iterator.remove();
+        }
+        else if (TypeConversionUtil.isAssignable(collectedType, type)) {
           return;
         }
       }

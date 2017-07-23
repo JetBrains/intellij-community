@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
       }
 
       @Override
-      String getBaseDownloadUrlForJre64() { "https://download.jetbrains.com/idea" }
+      String getBaseDownloadUrlForJre() { "https://download.jetbrains.com/idea" }
     }
   }
 
@@ -89,6 +89,10 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     return new LinuxDistributionCustomizer() {
       {
         iconPngPath = "$projectHome/platform/icons/src/icon_CE_128.png"
+        //snapName = "intellij-idea-community"
+        //snapDescription =
+        //  "The most intelligent Java IDE. Every aspect of IntelliJ IDEA is specifically designed to maximize developer productivity. " +
+        //  "Together, powerful static code analysis and ergonomic design make development not only productive but also an enjoyable experience."
       }
 
       @Override
@@ -100,12 +104,13 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
   MacDistributionCustomizer createMacCustomizer(String projectHome) {
     return new MacDistributionCustomizer() {
       {
-        helpId = "IJ"
+        icnsPath = "$projectHome/build/conf/ideaCE/mac/images/idea.icns"
         urlSchemes = ["idea"]
         associateIpr = true
         enableYourkitAgentInEAP = false
         bundleIdentifier = "com.jetbrains.intellij.ce"
-        dmgImagePath = "$projectHome/build/conf/mac/communitydmg.png"
+        dmgImagePath = "$projectHome/build/conf/ideaCE/mac/images/communitydmg.png"
+        icnsPathForEAP = "$projectHome/build/conf/ideaCE/mac/images/communityEAP.icns"
       }
 
       @Override

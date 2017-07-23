@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,7 @@ package com.intellij.codeInspection.ex
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.configurationStore.PROJECT_CONFIG_DIR
 import com.intellij.configurationStore.StoreAwareProjectManager
-import com.intellij.configurationStore.loadAndUseProject
-import com.intellij.configurationStore.saveStore
 import com.intellij.ide.highlighter.ProjectFileType
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.project.stateStore
@@ -88,12 +85,12 @@ class ProjectInspectionManagerTest {
       file.delete()
 
       project.baseDir.refresh(false, true)
-      (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedAlarm()
+      (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedProjectFileAlarm()
       assertThat(projectInspectionProfileManager.state).isEmpty()
 
       file.write(doNotUseProjectProfileData)
       project.baseDir.refresh(false, true)
-      (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedAlarm()
+      (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedProjectFileAlarm()
       assertThat(projectInspectionProfileManager.state).isEqualTo(doNotUseProjectProfileState)
     }
   }
@@ -131,7 +128,7 @@ class ProjectInspectionManagerTest {
       // cause to use app profile
       val currentProfile = projectInspectionProfileManager.currentProfile
       assertThat(currentProfile.isProjectLevel).isTrue()
-      currentProfile.disableTool("Convert2Diamond", project)
+      currentProfile.setToolEnabled("Convert2Diamond", false)
 
       project.saveStore()
 
@@ -157,7 +154,7 @@ class ProjectInspectionManagerTest {
       </component>""".trimIndent())
 
       project.baseDir.refresh(false, true)
-      (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedAlarm()
+      (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedProjectFileAlarm()
       assertThat(projectInspectionProfileManager.currentProfile.getToolDefaultState("Convert2Diamond", project).level).isEqualTo(HighlightDisplayLevel.ERROR)
     }
   }
@@ -177,7 +174,7 @@ class ProjectInspectionManagerTest {
 
       val currentProfile = projectInspectionProfileManager.currentProfile
       assertThat(currentProfile.isProjectLevel).isTrue()
-      currentProfile.disableTool("Convert2Diamond", project)
+      currentProfile.setToolEnabled("Convert2Diamond", false)
       currentProfile.profileChanged()
 
       project.saveStore()
@@ -198,17 +195,11 @@ class ProjectInspectionManagerTest {
       </project>""".trimIndent()
       assertThat(projectFile.readText()).isEqualTo(expected)
 
-      currentProfile.disableAllTools(project)
+      currentProfile.disableAllTools()
       currentProfile.profileChanged()
       project.saveStore()
       assertThat(projectFile.readText()).isNotEqualTo(expected)
       assertThat(projectFile.parent.resolve(".inspectionProfiles")).doesNotExist()
     }
-  }
-}
-
-fun InspectionProfileImpl.disableAllTools(project: Project?) {
-  for (entry in getInspectionTools(null)) {
-    disableTool(entry.shortName, project)
   }
 }

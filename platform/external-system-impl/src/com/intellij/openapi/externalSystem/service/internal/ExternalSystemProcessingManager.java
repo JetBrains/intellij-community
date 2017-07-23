@@ -74,8 +74,8 @@ public class ExternalSystemProcessingManager implements ExternalSystemTaskNotifi
    * Allows to check if any task of the given type is being executed at the moment.  
    *
    * @param type  target task type
-   * @return      <code>true</code> if any task of the given type is being executed at the moment;
-   *              <code>false</code> otherwise
+   * @return      {@code true} if any task of the given type is being executed at the moment;
+   *              {@code false} otherwise
    */
   public boolean hasTaskOfTypeInProgress(@NotNull ExternalSystemTaskType type, @NotNull Project project) {
     String projectId = ExternalSystemTaskId.getProjectId(project);
@@ -131,6 +131,11 @@ public class ExternalSystemProcessingManager implements ExternalSystemTaskNotifi
 
   @Override
   public void onQueued(@NotNull ExternalSystemTaskId id, String workingDir) {
+    onStart(id, workingDir);
+  }
+
+  @Override
+  public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
     myTasksInProgress.put(id, System.currentTimeMillis() + TOO_LONG_EXECUTION_MS);
     if (myAlarm.getActiveRequestCount() <= 0) {
       myAlarm.addRequest(() -> update(), TOO_LONG_EXECUTION_MS);

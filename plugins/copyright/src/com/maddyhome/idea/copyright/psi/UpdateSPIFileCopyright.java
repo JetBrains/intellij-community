@@ -23,9 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 
-/**
- * User: anna
- */
 public class UpdateSPIFileCopyright extends UpdateCopyrightsProvider {
   @Override
   public UpdateCopyright createInstance(Project project, Module module, VirtualFile file, FileType base, CopyrightProfile options) {

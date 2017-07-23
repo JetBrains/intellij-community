@@ -37,7 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance("#" + RemoveMiddlemanProcessor.class.getName());
+  private static final Logger LOG = Logger.getInstance(RemoveMiddlemanProcessor.class);
 
   private final PsiField field;
   private final PsiClass containingClass;

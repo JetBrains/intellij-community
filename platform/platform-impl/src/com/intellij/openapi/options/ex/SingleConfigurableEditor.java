@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -217,7 +217,10 @@ public class SingleConfigurableEditor extends DialogWrapper {
       };
 
       // invokeLater necessary to make sure dialog is already shown so we calculate modality state correctly.
-      SwingUtilities.invokeLater(() -> addUpdateRequest(updateRequest));
+      SwingUtilities.invokeLater(() -> {
+        // schedule if not already disposed
+        if (myConfigurable != null) addUpdateRequest(updateRequest);
+      });
     }
 
     private void addUpdateRequest(final Runnable updateRequest) {

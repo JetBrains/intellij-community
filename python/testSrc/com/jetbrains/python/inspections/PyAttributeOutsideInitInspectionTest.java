@@ -17,9 +17,6 @@ package com.jetbrains.python.inspections;
 
 import com.jetbrains.python.fixtures.PyTestCase;
 
-/**
- * User: ktisha
- */
 public class PyAttributeOutsideInitInspectionTest extends PyTestCase {
 
   public void testTruePositive() {
@@ -71,6 +68,7 @@ public class PyAttributeOutsideInitInspectionTest extends PyTestCase {
   }
 
   private void doTest() {
+    myFixture.configureByFile("unittest.py");
     myFixture.configureByFile("inspections/PyAttributeOutsideInitInspection/" + getTestName(true) + ".py");
     myFixture.enableInspections(PyAttributeOutsideInitInspection.class);
     myFixture.checkHighlighting(false, false, true);

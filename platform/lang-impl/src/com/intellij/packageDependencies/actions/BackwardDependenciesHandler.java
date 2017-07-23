@@ -29,10 +29,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: Jan 16, 2005
- */
 public class BackwardDependenciesHandler extends DependenciesHandlerBase {
   private final AnalysisScope myScopeOfInterest;
 

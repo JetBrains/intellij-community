@@ -19,11 +19,6 @@ package org.intellij.plugins.relaxNG.compact.psi;
 import com.intellij.psi.PsiComment;
 import org.jetbrains.annotations.Nullable;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 24.08.2007
-*/
 public interface RncAnnotation extends RncElement, PsiComment {
   @Nullable
   RncName getNameElement();

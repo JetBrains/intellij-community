@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CatchingConsumer;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.webcore.packaging.PackageVersionComparator;
@@ -44,20 +44,18 @@ import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.parser.ParserDelegator;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-/**
- * User: catherine
- */
 public class PyPIPackageUtil {
   private static final Logger LOG = Logger.getInstance(PyPIPackageUtil.class);
   private static final Gson GSON = new GsonBuilder().create();
@@ -67,9 +65,9 @@ public class PyPIPackageUtil {
   public static final String PYPI_LIST_URL = PYPI_HOST + "/simple";
 
   /**
-   * Contains mapping "importable top-level package" -> "package name on PyPI".
+   * Contains mapping "importable top-level package" -> "package names on PyPI".
    */
-  public static final ImmutableMap<String, String> PACKAGES_TOPLEVEL = loadPackageAliases();
+  public static final ImmutableMap<String, List<String>> PACKAGES_TOPLEVEL = loadPackageAliases();
 
   public static final PyPIPackageUtil INSTANCE = new PyPIPackageUtil();
 
@@ -141,15 +139,17 @@ public class PyPIPackageUtil {
   }
 
   @NotNull
-  private static ImmutableMap<String, String> loadPackageAliases() {
-    final ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    try (FileReader reader = new FileReader(PythonHelpersLocator.getHelperPath("/tools/packages"))) {
-      final String text = FileUtil.loadTextAndClose(reader);
-      final List<String> lines = StringUtil.split(text, "\n");
-      for (String line : lines) {
-        final List<String> split = StringUtil.split(line, " ");
-        builder.put(split.get(0), split.get(1));
-      }
+  private static ImmutableMap<String, List<String>> loadPackageAliases() {
+    final ImmutableMap.Builder<String, List<String>> builder = ImmutableMap.builder();
+    try {
+      Files
+        .lines(Paths.get(PythonHelpersLocator.getHelperPath("/tools/packages")))
+        .forEach(
+          line -> {
+            final List<String> split = StringUtil.split(line, " ");
+            builder.put(split.get(0), new SmartList<>(ContainerUtil.subList(split, 1)));
+          }
+        );
     }
     catch (IOException e) {
       LOG.error("Cannot find \"packages\". " + e.getMessage());
@@ -487,27 +487,27 @@ public class PyPIPackageUtil {
       
       @NotNull
       public String getVersion() {
-        return version;
+        return StringUtil.notNullize(version);
       }
 
       @NotNull
       public String getAuthor() {
-        return author;
+        return StringUtil.notNullize(author);
       }
 
       @NotNull
       public String getAuthorEmail() {
-        return authorEmail;
+        return StringUtil.notNullize(authorEmail);
       }
 
       @NotNull
       public String getHomePage() {
-        return homePage;
+        return StringUtil.notNullize(homePage);
       }
 
       @NotNull
       public String getSummary() {
-        return summary;
+        return StringUtil.notNullize(summary);
       }
     }
 

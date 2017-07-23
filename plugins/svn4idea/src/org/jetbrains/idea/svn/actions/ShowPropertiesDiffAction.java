@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.exists;
 
@@ -66,11 +67,10 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    Change[] changes = e.getData(VcsDataKeys.CHANGES);
-    boolean showAction = checkThatChangesAreUnderSvn(changes);
+    boolean isVisible = checkThatChangesAreUnderSvn(e.getData(VcsDataKeys.CHANGES));
 
-    e.getPresentation().setVisible(changes != null && showAction);
-    e.getPresentation().setEnabled(showAction);
+    e.getPresentation().setVisible(isVisible);
+    e.getPresentation().setEnabled(isVisible && e.getProject() != null);
   }
 
   private static boolean checkThatChangesAreUnderSvn(@Nullable Change[] changes) {
@@ -86,7 +86,7 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
     Change[] changes = e.getData(VcsDataKeys.CHANGE_LEAD_SELECTION);
 
     if (checkThatChangesAreUnderSvn(changes)) {
-      new CalculateAndShow(e.getProject(), changes[0], e.getPresentation().getText()).queue();
+      new CalculateAndShow(e.getRequiredData(PROJECT), changes[0], e.getPresentation().getText()).queue();
     }
   }
 
@@ -99,7 +99,7 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
     private Exception myException;
     private final String myErrorTitle;
 
-    private CalculateAndShow(@Nullable final Project project, final Change change, final String errorTitle) {
+    private CalculateAndShow(@NotNull Project project, final Change change, final String errorTitle) {
       super(project, SvnBundle.message("fetching.properties.contents.progress.title"), true, PerformInBackgroundOption.DEAF);
       myChange = change;
       myErrorTitle = errorTitle;
@@ -117,10 +117,7 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
         // gets exactly WORKING revision property
         myAfterContent = getPropertyList(vcs, myChange.getAfterRevision(), myAfterRevision);
       }
-      catch (SVNException exc) {
-        myException = exc;
-      }
-      catch (VcsException exc) {
+      catch (SVNException | VcsException exc) {
         myException = exc;
       }
     }

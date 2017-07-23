@@ -39,12 +39,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/4/13
- * Time: 2:07 PM
- */
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+
 public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
   private ChangeListManager clManager;
 
@@ -71,7 +67,7 @@ public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
     Assert.assertEquals("new content", text1.toString());
 
     sleep(100);
-    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(subTree.myS1File.getPath()));
+    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(virtualToIoFile(subTree.myS1File));
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     clManager.ensureUpToDate(false);
     final VcsException updateException = ((ChangeListManagerImpl)clManager).getUpdateException();

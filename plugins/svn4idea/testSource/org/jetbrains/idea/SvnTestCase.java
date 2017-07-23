@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,10 @@ package org.jetbrains.idea;
 
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
@@ -41,7 +44,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.vcs.AbstractJunitVcsTestCase;
@@ -53,7 +55,6 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
@@ -68,6 +69,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static org.junit.Assert.*;
 
 /**
@@ -121,63 +123,60 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
       myTestDataDir = property;
     }
 
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
-          myTempDirFixture = fixtureFactory.createTempDirTestFixture();
-          myTempDirFixture.setUp();
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
+        myTempDirFixture = fixtureFactory.createTempDirTestFixture();
+        myTempDirFixture.setUp();
 
-          myRepoRoot = new File(myTempDirFixture.getTempDirPath(), "svnroot");
-          assert myRepoRoot.mkdir() || myRepoRoot.isDirectory() : myRepoRoot;
+        myRepoRoot = new File(myTempDirFixture.getTempDirPath(), "svnroot");
+        assert myRepoRoot.mkdir() || myRepoRoot.isDirectory() : myRepoRoot;
 
-          myPluginRoot = new File(PluginPathManager.getPluginHomePath("svn4idea"));
-          if (!myPluginRoot.isDirectory()) {
-            // try standalone mode
-            Class aClass = SvnTestCase.class;
-            String rootPath = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
-            myPluginRoot = new File(rootPath).getParentFile().getParentFile().getParentFile();
-          }
-
-          File svnBinDir =  new File(myPluginRoot, getTestDataDir() + "/svn/bin");
-          File svnExecutable = null;
-          if (SystemInfo.isWindows) {
-            svnExecutable = new File(svnBinDir, "windows/svn.exe");
-          }
-          else if (SystemInfo.isLinux) {
-            svnExecutable = new File(svnBinDir, "linux/svn");
-          }
-          else if (SystemInfo.isMac) {
-            svnExecutable = new File(svnBinDir, "mac/svn");
-          }
-          assertTrue("No Subversion executable was found: " + svnExecutable + ", " + SystemInfo.OS_NAME,
-                     svnExecutable != null && svnExecutable.canExecute());
-          myClientBinaryPath = svnExecutable.getParentFile();
-          myRunner = SystemInfo.isMac
-                     ? createClientRunner(Collections.singletonMap("DYLD_LIBRARY_PATH", myClientBinaryPath.getPath()))
-                     : createClientRunner();
-
-          ZipUtil.extract(new File(myPluginRoot, getTestDataDir() + "/svn/newrepo.zip"), myRepoRoot, null);
-
-          myWcRoot = new File(myTempDirFixture.getTempDirPath(), myWcRootName);
-          assert myWcRoot.mkdir() || myWcRoot.isDirectory() : myWcRoot;
-
-          myRepoUrl = (SystemInfo.isWindows ? "file:///" : "file://") + FileUtil.toSystemIndependentName(myRepoRoot.getPath());
-
-          verify(runSvn("co", myRepoUrl, myWcRoot.getPath()));
-
-          initProject(myWcRoot, SvnTestCase.this.getTestName());
-          activateVCS(SvnVcs.VCS_NAME);
-
-          myGate = new MockChangeListManagerGate(ChangeListManager.getInstance(myProject));
-
-          ((StartupManagerImpl) StartupManager.getInstance(myProject)).runPostStartupActivities();
-          refreshSvnMappingsSynchronously();
+        myPluginRoot = new File(PluginPathManager.getPluginHomePath("svn4idea"));
+        if (!myPluginRoot.isDirectory()) {
+          // try standalone mode
+          Class aClass = SvnTestCase.class;
+          String rootPath = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
+          myPluginRoot = new File(rootPath).getParentFile().getParentFile().getParentFile();
         }
-        catch (Exception e) {
-          throw new RuntimeException(e);
+
+        File svnBinDir =  new File(myPluginRoot, getTestDataDir() + "/svn/bin");
+        File svnExecutable = null;
+        if (SystemInfo.isWindows) {
+          svnExecutable = new File(svnBinDir, "windows/svn.exe");
         }
+        else if (SystemInfo.isLinux) {
+          svnExecutable = new File(svnBinDir, "linux/svn");
+        }
+        else if (SystemInfo.isMac) {
+          svnExecutable = new File(svnBinDir, "mac/svn");
+        }
+        assertTrue("No Subversion executable was found: " + svnExecutable + ", " + SystemInfo.OS_NAME,
+                   svnExecutable != null && svnExecutable.canExecute());
+        myClientBinaryPath = svnExecutable.getParentFile();
+        myRunner = SystemInfo.isMac
+                   ? createClientRunner(Collections.singletonMap("DYLD_LIBRARY_PATH", myClientBinaryPath.getPath()))
+                   : createClientRunner();
+
+        ZipUtil.extract(new File(myPluginRoot, getTestDataDir() + "/svn/newrepo.zip"), myRepoRoot, null);
+
+        myWcRoot = new File(myTempDirFixture.getTempDirPath(), myWcRootName);
+        assert myWcRoot.mkdir() || myWcRoot.isDirectory() : myWcRoot;
+
+        myRepoUrl = (SystemInfo.isWindows ? "file:///" : "file://") + FileUtil.toSystemIndependentName(myRepoRoot.getPath());
+
+        verify(runSvn("co", myRepoUrl, myWcRoot.getPath()));
+
+        initProject(myWcRoot, this.getTestName());
+        activateVCS(SvnVcs.VCS_NAME);
+
+        myGate = new MockChangeListManagerGate(ChangeListManager.getInstance(myProject));
+
+        ((StartupManagerImpl) StartupManager.getInstance(myProject)).runPostStartupActivities();
+        refreshSvnMappingsSynchronously();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
 
@@ -196,12 +195,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     }
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    ((SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping()).realRefresh(new Runnable() {
-      @Override
-      public void run() {
-        semaphore.up();
-      }
-    });
+    ((SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping()).realRefresh(() -> semaphore.up());
     semaphore.waitFor();
   }
 
@@ -216,27 +210,24 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   public void tearDown() throws Exception {
     ((ChangeListManagerImpl) ChangeListManager.getInstance(myProject)).stopEveryThingIfInTestMode();
     sleep(100);
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          tearDownProject();
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        tearDownProject();
 
-          if (myWcRoot != null && myWcRoot.exists()) {
-            FileUtil.delete(myWcRoot);
-          }
-          if (myRepoRoot != null && myRepoRoot.exists()) {
-            FileUtil.delete(myRepoRoot);
-          }
+        if (myWcRoot != null && myWcRoot.exists()) {
+          FileUtil.delete(myWcRoot);
+        }
+        if (myRepoRoot != null && myRepoRoot.exists()) {
+          FileUtil.delete(myRepoRoot);
+        }
 
-          if (myTempDirFixture != null) {
-            myTempDirFixture.tearDown();
-            myTempDirFixture = null;
-          }
+        if (myTempDirFixture != null) {
+          myTempDirFixture.tearDown();
+          myTempDirFixture = null;
         }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
   }
@@ -269,16 +260,13 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   }
 
   protected void undo() {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        final TestDialog oldTestDialog = Messages.setTestDialog(TestDialog.OK);
-        try {
-          UndoManager.getInstance(myProject).undo(null);
-        }
-        finally {
-          Messages.setTestDialog(oldTestDialog);
-        }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      final TestDialog oldTestDialog = Messages.setTestDialog(TestDialog.OK);
+      try {
+        UndoManager.getInstance(myProject).undo(null);
+      }
+      finally {
+        Messages.setTestDialog(oldTestDialog);
       }
     });
   }
@@ -298,7 +286,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     checkin();
     clManager.stopEveryThingIfInTestMode();
     sleep(100);
-    final File rootFile = new File(subTree.myRootDir.getPath());
+    final File rootFile = virtualToIoFile(subTree.myRootDir);
     FileUtil.delete(rootFile);
     FileUtil.delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn"));
     assertTrue(!rootFile.exists());
@@ -432,7 +420,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     checkin();
     clManager.stopEveryThingIfInTestMode();
     sleep(100);
-    final File rootFile = new File(subTree.myRootDir.getPath());
+    final File rootFile = virtualToIoFile(subTree.myRootDir);
     FileUtil.delete(rootFile);
     FileUtil.delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn"));
     assertTrue(!rootFile.exists());
@@ -485,15 +473,11 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     final CommonUpdateProjectAction action = new CommonUpdateProjectAction();
     action.getTemplatePresentation().setText("1");
     action.actionPerformed(new AnActionEvent(null,
-                                             new DataContext() {
-                                               @Nullable
-                                               @Override
-                                               public Object getData(@NonNls String dataId) {
-                                                 if (CommonDataKeys.PROJECT.is(dataId)) {
-                                                   return project;
-                                                 }
-                                                 return null;
+                                             dataId -> {
+                                               if (CommonDataKeys.PROJECT.is(dataId)) {
+                                                 return project;
                                                }
+                                               return null;
                                              }, "test", new Presentation(), ActionManager.getInstance(), 0));
 
     final ChangeListManager clManager = ChangeListManager.getInstance(project);
@@ -511,29 +495,23 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   }
 
   private void runStatusAcrossLocks(@Nullable File workingDir, final boolean sorted, final String... stdoutLines) throws IOException {
-    final Processor<ProcessOutput> primitiveVerifier = new Processor<ProcessOutput>() {
-      @Override
-      public boolean process(ProcessOutput output) {
-        if (sorted) {
-          verifySorted(output, stdoutLines);  // will assert if err not empty
-        } else {
-          verify(output, stdoutLines);  // will assert if err not empty
-        }
-        return false;
+    final Processor<ProcessOutput> primitiveVerifier = output -> {
+      if (sorted) {
+        verifySorted(output, stdoutLines);  // will assert if err not empty
+      } else {
+        verify(output, stdoutLines);  // will assert if err not empty
       }
+      return false;
     };
-    runAndVerifyAcrossLocks(workingDir, new String[]{"status"}, new Processor<ProcessOutput>() {
-      @Override
-      public boolean process(ProcessOutput output) {
-        final List<String> lines = output.getStdoutLines();
-        for (String line : lines) {
-          if (line.trim().startsWith("L")) {
-            return true; // i.e. continue tries
-          }
+    runAndVerifyAcrossLocks(workingDir, new String[]{"status"}, output -> {
+      final List<String> lines = output.getStdoutLines();
+      for (String line : lines) {
+        if (line.trim().startsWith("L")) {
+          return true; // i.e. continue tries
         }
-        primitiveVerifier.process(output);
-        return false;
       }
+      primitiveVerifier.process(output);
+      return false;
     }, primitiveVerifier);
   }
 
@@ -543,12 +521,9 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   }
 
   private static Processor<ProcessOutput> createPrimitiveExitCodeVerifier() {
-    return new Processor<ProcessOutput>() {
-      @Override
-      public boolean process(ProcessOutput output) {
-        assertEquals(output.getStderr(), 0, output.getExitCode());
-        return false;
-      }
+    return output -> {
+      assertEquals(output.getStderr(), 0, output.getExitCode());
+      return false;
     };
   }
 

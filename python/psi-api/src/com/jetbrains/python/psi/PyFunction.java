@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public interface PyFunction extends PsiNamedElement, StubBasedPsiElement<PyFunct
                                     PyPossibleClassMember, PyTypeCommentOwner, PyAnnotationOwner {
 
   PyFunction[] EMPTY_ARRAY = new PyFunction[0];
-  ArrayFactory<PyFunction> ARRAY_FACTORY = count -> new PyFunction[count];
+  ArrayFactory<PyFunction> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PyFunction[count];
 
   /**
    * Returns the AST node for the function name identifier.
@@ -52,9 +52,6 @@ public interface PyFunction extends PsiNamedElement, StubBasedPsiElement<PyFunct
 
   @Nullable
   PyType getReturnStatementType(TypeEvalContext typeEvalContext);
-
-  @Nullable
-  PyType getReturnTypeFromDocString();
 
   /**
    * If the function raises a DeprecationWarning or a PendingDeprecationWarning, returns the explanation text provided for the warning..
@@ -71,6 +68,11 @@ public interface PyFunction extends PsiNamedElement, StubBasedPsiElement<PyFunct
    */
   @Nullable
   Modifier getModifier();
+
+  /**
+   * Checks whether the function contains a yield expression in its body.
+   */
+  boolean isGenerator();
 
   boolean isAsync();
 

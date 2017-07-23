@@ -89,12 +89,7 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
           patches.addAll(IdeaTextPatchBuilder.buildPatch(project, preprocessed, baseDir.getPresentableUrl(), true));
         }
         catch (final VcsException ex) {
-          WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-            @Override
-            public void run() {
-              Messages.showErrorDialog(project, "Failed to revert changes: " + ex.getMessage(), VcsBundle.message("revert.changes.title"));
-            }
-          }, null, myProject);
+          WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> Messages.showErrorDialog(project, "Failed to revert changes: " + ex.getMessage(), VcsBundle.message("revert.changes.title")), null, myProject);
           indicator.cancel();
         }
       }

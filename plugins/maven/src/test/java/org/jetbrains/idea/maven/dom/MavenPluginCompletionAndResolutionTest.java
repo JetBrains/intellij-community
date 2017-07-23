@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlTag;
@@ -29,7 +28,7 @@ import java.util.List;
 public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
   @Override
   protected MavenIndicesTestFixture createIndicesFixture() {
-    return new MavenIndicesTestFixture(myDir, myProject, "plugins");
+    return new MavenIndicesTestFixture(myDir.toPath(), myProject, "plugins");
   }
 
   @Override
@@ -207,11 +206,6 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
   public void testIncludingConfigurationParametersFromAllTheMojos() throws Exception {
     putCaretInConfigurationSection();
     assertCompletionVariantsInclude(myProjectPom, "excludes", "testExcludes");
-  }
-
-  public void testDoesNotIncludeNonEditableConfigurationParameters() throws Exception {
-    putCaretInConfigurationSection();
-    assertCompletionVariantsDoNotInclude(myProjectPom, "basedir", "buildDirectory");
   }
 
   private void putCaretInConfigurationSection() throws IOException {
@@ -813,7 +807,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  </plugins>" +
                      "</build>");
 
-    assertDocumentation("Type: <b>java.lang.String</b><br>Default Value: <b>1.5</b><br>Expression: <b>${maven.compiler.source}</b><br><br><i>The -source argument for the Java compiler.</i>");
+    assertDocumentation("Type: <b>java.lang.String</b><br>Expression: <b>${maven.compiler.source}</b><br><br><i>The -source argument for the Java compiler.</i>");
   }
 
   public void testDoNotCompleteNorHighlightNonPluginConfiguration() throws Throwable {

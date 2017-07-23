@@ -108,10 +108,8 @@ public class EventDispatcher<T extends EventListener> {
       }
       catch (Exception e) {
         final Throwable cause = e.getCause();
-        if (cause instanceof RuntimeException) {
-          throw (RuntimeException)cause;
-        }
-        else if (!(cause instanceof AbstractMethodError)) { // AbstractMethodError means this listener doesn't implement some new method in interface
+        ExceptionUtil.rethrowUnchecked(cause);
+        if (!(cause instanceof AbstractMethodError)) { // AbstractMethodError means this listener doesn't implement some new method in interface
           LOG.error(cause);
         }
       }

@@ -11,15 +11,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="platform-impl" />
-    <orderEntry type="module-library" exported="">
-      <library name="jediterm-pty">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/jediterm-pty-2.2.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="pty4j" level="project" />
     <orderEntry type="library" name="jna" level="project" />
@@ -27,5 +18,7 @@
     <orderEntry type="module" module-name="remote-servers-api" />
     <orderEntry type="module" module-name="remote-servers-impl" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="testFramework" scope="TEST" />
+    <orderEntry type="library" name="jediterm-pty" level="project" />
   </component>
 </module>

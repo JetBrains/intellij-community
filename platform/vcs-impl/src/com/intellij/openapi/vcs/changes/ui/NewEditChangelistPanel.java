@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
@@ -26,9 +26,11 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.UniqueNameGenerator;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +63,9 @@ public abstract class NewEditChangelistPanel extends JPanel {
     ComponentWithTextFieldWrapper componentWithTextField = createComponentWithTextField(project);
     myNameTextField = componentWithTextField.getEditorTextField();
     myNameTextField.setOneLineMode(true);
-    myNameTextField.setText("New changelist");
+    String generateUniqueName = UniqueNameGenerator
+      .generateUniqueName("New changelist", "", "", " (", ")", s -> ChangeListManager.getInstance(myProject).findChangeList(s) == null);
+    myNameTextField.setText(generateUniqueName);
     myNameTextField.selectAll();
     add(componentWithTextField.myComponent, gb);
     nameLabel.setLabelFor(myNameTextField);
@@ -109,7 +113,7 @@ public abstract class NewEditChangelistPanel extends JPanel {
       support.installSearch(myNameTextField, myDescriptionTextArea);
       myConsumer = support.addControls(myAdditionalControlsPanel, initial);
     }
-    myNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
+    myNameTextField.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent event) {
         nameChangedImpl(myProject, initial);
@@ -155,8 +159,9 @@ public abstract class NewEditChangelistPanel extends JPanel {
     return this;
   }
 
+  @Override
   public void requestFocus() {
-    myNameTextField.requestFocus();
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myNameTextField, true));
   }
 
   public JComponent getPreferredFocusedComponent() {

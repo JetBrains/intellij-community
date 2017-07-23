@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,10 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResult;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -108,7 +109,7 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
       boolean isApplicable = PsiUtil.isApplicable(myArgumentTypes, method, partialSubstitutor, myPlace, true);
       boolean isValidResult = isStaticsOK && isAccessible && isApplicable;
 
-      GroovyMethodResult candidate = new GroovyMethodResult(
+      GroovyMethodResultImpl candidate = new GroovyMethodResultImpl(
         method, resolveContext, spreadState, partialSubstitutor, substitutorComputer, isAccessible, isStaticsOK, isValidResult
       );
 

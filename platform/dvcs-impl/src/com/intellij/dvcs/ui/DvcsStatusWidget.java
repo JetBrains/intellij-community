@@ -42,7 +42,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   implements StatusBarWidget.MultipleTextValuesPresentation, StatusBarWidget.Multiframe
 {
   protected static final Logger LOG = Logger.getInstance(DvcsStatusWidget.class);
-  private static final String MAX_STRING = "VCS: Rebasing feature-12345";
+  private static final String MAX_STRING = "VCS: Rebasing feature-12345 in custom development branch";
 
   @NotNull private final String myPrefix;
 
@@ -156,13 +156,13 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   }
 
   protected void updateLater() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
+    Project project = getProject();
+    if (project != null && !project.isDisposed()) {
+      ApplicationManager.getApplication().invokeLater(() -> {
         LOG.debug("update after repository change");
         update();
-      }
-    });
+      }, project.getDisposed());
+    }
   }
 
   @CalledInAwt
@@ -197,30 +197,24 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   }
 
   private void installWidgetToStatusBar(@NotNull final Project project, @NotNull final StatusBarWidget widget) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-        if (statusBar != null && !isDisposed()) {
-          statusBar.addWidget(widget, "after " + (SystemInfo.isMac ? "Encoding" : "InsertOverwrite"), project);
-          subscribeToMappingChanged();
-          subscribeToRepoChangeEvents(project);
-          update();
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+      if (statusBar != null && !isDisposed()) {
+        statusBar.addWidget(widget, "after " + (SystemInfo.isMac ? "Encoding" : "InsertOverwrite"), project);
+        subscribeToMappingChanged();
+        subscribeToRepoChangeEvents(project);
+        update();
       }
-    });
+    }, project.getDisposed());
   }
 
   private void removeWidgetFromStatusBar(@NotNull final Project project, @NotNull final StatusBarWidget widget) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-        if (statusBar != null && !isDisposed()) {
-          statusBar.removeWidget(widget.ID());
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+      if (statusBar != null && !isDisposed()) {
+        statusBar.removeWidget(widget.ID());
       }
-    });
+    }, project.getDisposed());
   }
 
   private void subscribeToMappingChanged() {

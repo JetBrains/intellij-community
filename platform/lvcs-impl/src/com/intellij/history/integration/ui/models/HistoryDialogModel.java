@@ -25,9 +25,8 @@ import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.patches.PatchCreator;
 import com.intellij.history.integration.revertion.Reverter;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -84,16 +83,14 @@ public abstract class HistoryDialogModel {
   }
 
   protected Pair<Revision, List<RevisionItem>> calcRevisionsCache() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Pair<Revision, List<RevisionItem>>>() {
-      public Pair<Revision, List<RevisionItem>> compute() {
-        myGateway.registerUnsavedDocuments(myVcs);
-        String path = myFile.getPath();
-        RootEntry root = myGateway.createTransientRootEntry();
-        RevisionsCollector collector = new RevisionsCollector(myVcs, root, path, myProject.getLocationHash(), myFilter);
+    return ReadAction.compute(() -> {
+      myGateway.registerUnsavedDocuments(myVcs);
+      String path = myFile.getPath();
+      RootEntry root = myGateway.createTransientRootEntry();
+      RevisionsCollector collector = new RevisionsCollector(myVcs, root, path, myProject.getLocationHash(), myFilter);
 
-        List<Revision> all = collector.getResult();
-        return Pair.create(all.get(0), groupRevisions(all.subList(1, all.size())));
-      }
+      List<Revision> all = collector.getResult();
+      return Pair.create(all.get(0), groupRevisions(all.subList(1, all.size())));
     });
   }
 

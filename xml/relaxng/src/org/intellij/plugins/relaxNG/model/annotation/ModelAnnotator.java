@@ -43,11 +43,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 04.12.2007
-*/
 public final class ModelAnnotator implements Annotator, DomElementsAnnotator {
 
   @Override

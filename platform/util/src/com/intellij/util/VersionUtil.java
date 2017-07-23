@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Version;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -46,44 +47,22 @@ public class VersionUtil {
 
     return new Version(Integer.parseInt(versions[0]),
                        Integer.parseInt(versions[1]),
-                       (versions.length > 2) ? Integer.parseInt(versions[2]) : 0);
+                       versions.length > 2 ? Integer.parseInt(versions[2]) : 0);
   }
 
-  @Nullable
-  public static Pair<Version,Integer> parseVersionAndUpdate(@NotNull String version, @NotNull Pattern... patterns) {
-    String[] versions = null;
-    String updateStr = null;
-
-    for (Pattern pattern : patterns) {
+  static Pair<Version,Integer> parseNewVersionAndUpdate(@NotNull String version, @NotNull Map<Pattern, Function<Matcher, Pair<Version, Integer>>> patterns) {
+    for (Map.Entry<Pattern, Function<Matcher, Pair<Version, Integer>>> entry : patterns.entrySet()) {
+      Pattern pattern = entry.getKey();
       Matcher matcher = pattern.matcher(version);
       if (matcher.find()) {
-        String versionGroup = matcher.group(1);
-        if (versionGroup != null) {
-          updateStr = matcher.groupCount() > 1 ? matcher.group(2) : null;
-          versions = versionGroup.split("\\.");
-          break;
+        Function<Matcher, Pair<Version, Integer>> parser = entry.getValue();
+        Pair<Version, Integer> result = parser.fun(matcher);
+        if (result != null) {
+          return result;
         }
       }
     }
 
-    if (versions == null || versions.length < 2) {
-      return null;
-    }
-
-    Integer update = null;
-    if (updateStr != null) {
-      try {
-        update = Integer.parseInt(updateStr);
-      }
-      catch (NumberFormatException e) {
-        // ignore
-      }
-    }
-
-    if (update == null) update = new Integer(0); // Treating no update info as update 0
-
-    return Pair.create(
-      new Version(Integer.parseInt(versions[0]), Integer.parseInt(versions[1]), (versions.length > 2) ? Integer.parseInt(versions[2]) : 0),
-      update);
+   return null;
   }
 }

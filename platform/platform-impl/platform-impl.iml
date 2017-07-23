@@ -48,5 +48,6 @@
     <orderEntry type="library" name="pty4j" level="project" />
     <orderEntry type="module" module-name="credential-store" scope="RUNTIME" />
     <orderEntry type="library" exported="" name="StreamEx" level="project" />
+    <orderEntry type="library" name="jediterm-pty" level="project" />
   </component>
 </module>

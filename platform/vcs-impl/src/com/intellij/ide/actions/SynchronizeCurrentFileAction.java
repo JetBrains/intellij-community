@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -57,23 +56,15 @@ public class SynchronizeCurrentFileAction extends AnAction implements DumbAware 
     final VirtualFile[] files = getFiles(e);
     if (project == null || files == null || files.length == 0) return;
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        for (VirtualFile file : files) {
-          if (file instanceof NewVirtualFile) {
-            ((NewVirtualFile)file).markDirtyRecursively();
-          }
-        }
+    for (VirtualFile file : files) {
+      if (file.isDirectory()) file.getChildren();
+      if (file instanceof NewVirtualFile) {
+        ((NewVirtualFile)file).markClean();
+        ((NewVirtualFile)file).markDirtyRecursively();
       }
-    });
+    }
 
-    RefreshQueue.getInstance().refresh(true, true, new Runnable() {
-      @Override
-      public void run() {
-        postRefresh(project, files);
-      }
-    }, files);
+    RefreshQueue.getInstance().refresh(true, true, () -> postRefresh(project, files), files);
   }
 
   private static void postRefresh(Project project, VirtualFile[] files) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,7 +129,7 @@ public class PyAugmentAssignmentInspection extends PyInspection {
       if (!changedParts && OPERATIONS.contains(operator) || changedParts && COMMUTATIVE_OPERATIONS.contains(operator)) {
         final PyType otherOperandType = myTypeEvalContext.getType(otherOperandExpression);
 
-        if (!PyTypeChecker.isUnknown(otherOperandType)) {
+        if (!PyTypeChecker.isUnknown(otherOperandType, myTypeEvalContext)) {
           if (changedParts) {
             if (hasAnySequenceMethod(otherOperandType, otherOperandExpression)) {
               return false;
@@ -167,5 +167,10 @@ public class PyAugmentAssignmentInspection extends PyInspection {
     private boolean isNumeric(@NotNull PyType type, @NotNull PyBuiltinCache cache) {
       return PyTypeChecker.match(cache.getComplexType(), type, myTypeEvalContext);
     }
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return false;
   }
 }

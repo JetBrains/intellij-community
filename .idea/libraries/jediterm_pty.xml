@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="jediterm-pty">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/jediterm-pty-2.5.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/src/jediterm-pty-2.5-src.jar!/" />
+    </SOURCES>
+  </library>
+</component>

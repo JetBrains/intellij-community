@@ -1,3 +1,3 @@
 class Test {
-}<caret> // this line is mandatory
+}<caret>// this line is mandatory
 

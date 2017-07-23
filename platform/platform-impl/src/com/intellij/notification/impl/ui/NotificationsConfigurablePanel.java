@@ -16,7 +16,10 @@
 package com.intellij.notification.impl.ui;
 
 import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.impl.*;
+import com.intellij.notification.impl.NotificationParentGroup;
+import com.intellij.notification.impl.NotificationParentGroupBean;
+import com.intellij.notification.impl.NotificationSettings;
+import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.StripeTable;

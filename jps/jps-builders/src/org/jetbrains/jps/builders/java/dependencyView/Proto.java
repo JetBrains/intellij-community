@@ -50,7 +50,7 @@ class Proto implements RW.Savable, Streamable {
       access = DataInputOutputUtil.readINT(in);
       signature = DataInputOutputUtil.readINT(in);
       name = DataInputOutputUtil.readINT(in);
-      annotations = (Set<TypeRepr.ClassType>)RW.read(TypeRepr.classTypeExternalizer(context), new THashSet<TypeRepr.ClassType>(), in);
+      annotations = (Set<TypeRepr.ClassType>)RW.read(TypeRepr.classTypeExternalizer(context), new THashSet<>(), in);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);

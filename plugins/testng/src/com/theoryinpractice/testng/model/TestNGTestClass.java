@@ -19,14 +19,12 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.testframework.SourceScope;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -41,23 +39,13 @@ public class TestNGTestClass extends TestNGTestObject {
     throws CantRunException {
     final TestData data = myConfig.getPersistantData();
     //it's a class
-    final PsiClass psiClass = ApplicationManager.getApplication().runReadAction(
-      new Computable<PsiClass>() {
-        @Nullable
-        public PsiClass compute() {
-          return ClassUtil.findPsiClass(PsiManager.getInstance(myConfig.getProject()), data.getMainClassName().replace('/', '.'), null, true, getSearchScope());
-        }
-      }
-    );
+    final PsiClass psiClass = ReadAction.compute(() -> ClassUtil
+      .findPsiClass(PsiManager.getInstance(myConfig.getProject()), data.getMainClassName().replace('/', '.'), null, true,
+                    getSearchScope()));
     if (psiClass == null) {
       throw new CantRunException("No tests found in the class \"" + data.getMainClassName() + '\"');
     }
-    if (null == ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Nullable
-      public String compute() {
-        return psiClass.getQualifiedName();
-      }
-    })) {
+    if (null == ReadAction.compute(() -> psiClass.getQualifiedName())) {
       throw new CantRunException("Cannot test anonymous or local class \"" + data.getMainClassName() + '\"');
     }
     calculateDependencies(null, classes, getSearchScope(), psiClass);

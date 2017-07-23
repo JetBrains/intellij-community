@@ -19,9 +19,6 @@ import com.google.common.base.MoreObjects;
 import com.jetbrains.python.debugger.ArrayChunk;
 import com.jetbrains.python.debugger.containerview.PyNumericViewUtil;
 
-/**
- * Created by Yuli Fiterman on 4/26/2016.
- */
 public class TableValueDescriptor {
   private final String myValue;
   private final ArrayChunk.ColHeader myHeader;

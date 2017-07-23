@@ -44,6 +44,7 @@ import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.Splash;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import net.miginfocom.layout.PlatformDefaults;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +53,7 @@ import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 
 public class IdeaApplication {
@@ -73,7 +75,7 @@ public class IdeaApplication {
   }
 
   private final String[] myArgs;
-  private boolean myPerformProjectLoad = true;
+  private static boolean myPerformProjectLoad = true;
   private ApplicationStarter myStarter;
   private volatile boolean myLoaded = false;
 
@@ -148,10 +150,19 @@ public class IdeaApplication {
     System.setProperty("sun.awt.noerasebackground", "true");
 
     IdeEventQueue.getInstance(); // replace system event queue
-    
+
     if (headless) return;
 
-    if (Patches.SUN_BUG_ID_6209673) {
+    /* Using custom RepaintManager disables BufferStrategyPaintManager (and so, true double buffering)
+       because the only non-private constructor forces RepaintManager.BUFFER_STRATEGY_TYPE = BUFFER_STRATEGY_SPECIFIED_OFF.
+
+       At the same time, http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6209673 seems to be now fixed.
+
+       This matters only if swing.bufferPerWindow = true and we don't invoke JComponent.getGraphics() directly.
+
+       True double buffering is needed to eliminate tearing on blit-accelerated scrolling and to restore
+       frame buffer content without the usual repainting, even when the EDT is blocked. */
+    if (Patches.REPAINT_MANAGER_LEAK) {
       RepaintManager.setCurrentManager(new IdeRepaintManager());
     }
 
@@ -162,6 +173,9 @@ public class IdeaApplication {
         X11UiUtil.patchDetectedWm(wmName);
       }
     }
+
+    //IDEA-170295
+    PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE);
 
     IconLoader.activate();
 
@@ -213,7 +227,7 @@ public class IdeaApplication {
     catch (ClassNotFoundException ignored) { }
   }
 
-  protected class IdeStarter extends ApplicationStarterEx {
+  public static class IdeStarter extends ApplicationStarterEx {
     private Splash mySplash;
 
     @Override
@@ -291,11 +305,21 @@ public class IdeaApplication {
                 LOG.error("Wrong line number:" + args[2]);
               }
             }
-            PlatformProjectOpenProcessor.doOpenProject(virtualFile, null, false, line, null, false);
+            EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.noneOf(PlatformProjectOpenProcessor.Option.class);
+            PlatformProjectOpenProcessor.doOpenProject(virtualFile, null, line, null, options);
           }
         }
         throw new IncorrectOperationException("Can't find file:" + file);
       }
+    }
+
+    private Project loadProjectFromExternalCommandLine(String[] args) {
+      Project project = null;
+      if (args != null && args.length > 0 && args[0] != null) {
+        LOG.info("IdeaApplication.loadProject");
+        project = CommandLineProcessor.processExternalCommandLine(Arrays.asList(args), null);
+      }
+      return project;
     }
 
     @Override
@@ -335,7 +359,7 @@ public class IdeaApplication {
       }, ModalityState.any());
 
       TransactionGuard.submitTransaction(app, () -> {
-        Project projectFromCommandLine = myPerformProjectLoad ? loadProjectFromExternalCommandLine() : null;
+        Project projectFromCommandLine = myPerformProjectLoad ? loadProjectFromExternalCommandLine(args) : null;
         app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appStarting(projectFromCommandLine);
 
         //noinspection SSBasedInspection
@@ -345,15 +369,7 @@ public class IdeaApplication {
         UsageTrigger.trigger(app.getName() + "app.started");
       });
     }
-  }
 
-  private Project loadProjectFromExternalCommandLine() {
-    Project project = null;
-    if (myArgs != null && myArgs.length > 0 && myArgs[0] != null) {
-      LOG.info("IdeaApplication.loadProject");
-      project = CommandLineProcessor.processExternalCommandLine(Arrays.asList(myArgs), null);
-    }
-    return project;
   }
 
   /**

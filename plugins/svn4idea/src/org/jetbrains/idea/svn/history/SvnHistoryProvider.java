@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -42,7 +41,10 @@ import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnRevisionNumber;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -123,13 +125,10 @@ public class SvnHistoryProvider
       field.setEditable(false);
       field.setOpaque(false);
       field.setWrapStyleWord(true);
-      listener = new Consumer<VcsFileRevision>() {
-        @Override
-        public void consume(VcsFileRevision vcsFileRevision) {
-          field.setText(mergeSourceColumn.getText(vcsFileRevision));
-          field.setCaretPosition(0);
-          field.repaint();
-        }
+      listener = vcsFileRevision -> {
+        field.setText(mergeSourceColumn.getText(vcsFileRevision));
+        field.setCaretPosition(0);
+        field.repaint();
       };
 
       final MergeSourceDetailsAction sourceAction = new MergeSourceDetailsAction();
@@ -223,7 +222,7 @@ public class SvnHistoryProvider
       }
     }
 
-    final boolean showMergeSources = SvnConfiguration.getInstance(myVcs.getProject()).isShowMergeSourcesInAnnotate();
+    boolean showMergeSources = myVcs.getSvnConfiguration().isShowMergeSourcesInAnnotate();
     final LogLoader logLoader;
     if (path.isNonLocal()) {
       logLoader = new RepositoryLoader(myVcs, committedPath, from, to, limit, peg, forceBackwards, showMergeSources);
@@ -235,9 +234,6 @@ public class SvnHistoryProvider
     try {
       logLoader.preliminary();
     }
-    catch (SVNCancelException e) {
-      throw new VcsException(e);
-    }
     catch (SVNException e) {
       throw new VcsException(e);
     }
@@ -247,7 +243,7 @@ public class SvnHistoryProvider
     }
 
     final SvnHistorySession historySession =
-      new SvnHistorySession(myVcs, Collections.<VcsFileRevision>emptyList(), committedPath, showMergeSources && Boolean.TRUE.equals(logLoader.mySupport15), null, false,
+      new SvnHistorySession(myVcs, Collections.emptyList(), committedPath, showMergeSources && Boolean.TRUE.equals(logLoader.mySupport15), null, false,
                             ! path.isNonLocal());
 
     final Ref<Boolean> sessionReported = new Ref<>();
@@ -255,15 +251,12 @@ public class SvnHistoryProvider
     if (indicator != null) {
       indicator.setText(SvnBundle.message("progress.text2.collecting.history", path.getName()));
     }
-    final Consumer<VcsFileRevision> consumer = new Consumer<VcsFileRevision>() {
-      @Override
-      public void consume(VcsFileRevision vcsFileRevision) {
-        if (!Boolean.TRUE.equals(sessionReported.get())) {
-          partner.reportCreatedEmptySession(historySession);
-          sessionReported.set(true);
-        }
-        partner.acceptRevision(vcsFileRevision);
+    final Consumer<VcsFileRevision> consumer = vcsFileRevision -> {
+      if (!Boolean.TRUE.equals(sessionReported.get())) {
+        partner.reportCreatedEmptySession(historySession);
+        sessionReported.set(true);
       }
+      partner.acceptRevision(vcsFileRevision);
     };
 
     logLoader.setConsumer(consumer);
@@ -372,12 +365,7 @@ public class SvnHistoryProvider
   }
 
   private static ThrowableConsumer<VcsFileRevision, SVNException> createConsumerAdapter(final Consumer<VcsFileRevision> consumer) {
-    return new ThrowableConsumer<VcsFileRevision, SVNException>() {
-      @Override
-      public void consume(VcsFileRevision revision) throws SVNException {
-        consumer.consume(revision);
-      }
-    };
+    return revision -> consumer.consume(revision);
   }
 
   private static class RepositoryLoader extends LogLoader {
@@ -459,13 +447,7 @@ public class SvnHistoryProvider
       }
 
       final RepositoryLogEntryHandler repositoryLogEntryHandler =
-          new RepositoryLogEntryHandler(myVcs, myUrl, SVNRevision.UNDEFINED, relativeUrl,
-                                        new ThrowableConsumer<VcsFileRevision, SVNException>() {
-                                          @Override
-                                          public void consume(VcsFileRevision revision) throws SVNException {
-                                            myConsumer.consume(revision);
-                                          }
-                                        }, rootURL);
+        new RepositoryLogEntryHandler(myVcs, myUrl, SVNRevision.UNDEFINED, relativeUrl, revision -> myConsumer.consume(revision), rootURL);
       repositoryLogEntryHandler.setThrowCancelOnMeetPathCreation(true);
 
       SvnTarget target = SvnTarget.fromURL(rootURL, myFrom);
@@ -536,56 +518,53 @@ public class SvnHistoryProvider
       myPegRevision = pegRevision;
       myUrl = url;
       myRepositoryRoot = repoRootURL;
-      myTracker = new SvnMergeSourceTracker(new ThrowableConsumer<Pair<LogEntry, Integer>, SVNException>() {
-        @Override
-        public void consume(final Pair<LogEntry, Integer> svnLogEntryIntegerPair) throws SVNException {
-          final LogEntry logEntry = svnLogEntryIntegerPair.getFirst();
+      myTracker = new SvnMergeSourceTracker(svnLogEntryIntegerPair -> {
+        final LogEntry logEntry = svnLogEntryIntegerPair.getFirst();
 
-          if (myIndicator != null) {
-            if (myIndicator.isCanceled()) {
-              SVNErrorManager.cancel(SvnBundle.message("exception.text.update.operation.cancelled"), SVNLogType.DEFAULT);
-            }
-            myIndicator.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
+        if (myIndicator != null) {
+          if (myIndicator.isCanceled()) {
+            SVNErrorManager.cancel(SvnBundle.message("exception.text.update.operation.cancelled"), SVNLogType.DEFAULT);
           }
-          LogEntryPath entryPath = null;
-          String copyPath = null;
-          final int mergeLevel = svnLogEntryIntegerPair.getSecond();
+          myIndicator.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
+        }
+        LogEntryPath entryPath = null;
+        String copyPath = null;
+        final int mergeLevel = svnLogEntryIntegerPair.getSecond();
 
-          if (! myLastPathCorrector.isRoot()) {
-            myLastPathCorrector.consume(logEntry);
-            entryPath = myLastPathCorrector.getDirectlyMentioned();
-            copyPath = null;
-            if (entryPath != null) {
-              copyPath = entryPath.getCopyPath();
-            } else {
-              // if there are no path with exact match, check whether parent or child paths had changed
-              // "entry path" is allowed to be null now; if it is null, last path would be taken for revision construction
-
-              // Separate LogEntry is issued for each "merge source" revision. These "merge source" revisions are treated as child
-              // revisions of some other revision - this way we construct merge hierarchy.
-              // mergeLevel >= 0 indicates that we are currently processing some "merge source" revision. This "merge source" revision
-              // contains changes from some other branch - so checkForChildChanges() and checkForParentChanges() return "false".
-              // Because of this case we apply these methods only for non-"merge source" revisions - this means mergeLevel < 0.
-              // TODO: Do not apply path filtering even for log entries on the first level => just output of 'svn log' should be returned.
-              // TODO: Looks like there is no cases when we issue 'svn log' for some parent paths or some other cases where we need such
-              // TODO: filtering. Check user feedback on this.
-//              if (mergeLevel < 0 && !checkForChildChanges(logEntry) && !checkForParentChanges(logEntry)) return;
-            }
-          }
-
-          final SvnFileRevision revision = createRevision(logEntry, copyPath, entryPath);
-          if (mergeLevel >= 0) {
-            addToListByLevel((SvnFileRevision)myPrevious, revision, mergeLevel);
+        if (!myLastPathCorrector.isRoot()) {
+          myLastPathCorrector.consume(logEntry);
+          entryPath = myLastPathCorrector.getDirectlyMentioned();
+          copyPath = null;
+          if (entryPath != null) {
+            copyPath = entryPath.getCopyPath();
           }
           else {
-            myResult.consume(revision);
-            myPrevious = revision;
-          }
-          if (myThrowCancelOnMeetPathCreation && myUrl.equals(revision.getURL()) && entryPath != null && entryPath.getType() == 'A') {
-            throw new SVNCancelException();
+            // if there are no path with exact match, check whether parent or child paths had changed
+            // "entry path" is allowed to be null now; if it is null, last path would be taken for revision construction
+
+            // Separate LogEntry is issued for each "merge source" revision. These "merge source" revisions are treated as child
+            // revisions of some other revision - this way we construct merge hierarchy.
+            // mergeLevel >= 0 indicates that we are currently processing some "merge source" revision. This "merge source" revision
+            // contains changes from some other branch - so checkForChildChanges() and checkForParentChanges() return "false".
+            // Because of this case we apply these methods only for non-"merge source" revisions - this means mergeLevel < 0.
+            // TODO: Do not apply path filtering even for log entries on the first level => just output of 'svn log' should be returned.
+            // TODO: Looks like there is no cases when we issue 'svn log' for some parent paths or some other cases where we need such
+            // TODO: filtering. Check user feedback on this.
+//              if (mergeLevel < 0 && !checkForChildChanges(logEntry) && !checkForParentChanges(logEntry)) return;
           }
         }
 
+        final SvnFileRevision revision = createRevision(logEntry, copyPath, entryPath);
+        if (mergeLevel >= 0) {
+          addToListByLevel((SvnFileRevision)myPrevious, revision, mergeLevel);
+        }
+        else {
+          myResult.consume(revision);
+          myPrevious = revision;
+        }
+        if (myThrowCancelOnMeetPathCreation && myUrl.equals(revision.getURL()) && entryPath != null && entryPath.getType() == 'A') {
+          throw new SVNCancelException();
+        }
       });
     }
 

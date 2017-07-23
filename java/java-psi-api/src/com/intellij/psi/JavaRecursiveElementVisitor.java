@@ -31,7 +31,7 @@ import com.intellij.util.containers.Stack;
 public abstract class JavaRecursiveElementVisitor extends JavaElementVisitor {
   // This stack thing is intended to prevent exponential child traversing due to visitReferenceExpression calls both visitRefElement
   // and visitExpression.
-  private final Stack<PsiReferenceExpression> myRefExprsInVisit = new Stack<PsiReferenceExpression>();
+  private final Stack<PsiReferenceExpression> myRefExprsInVisit = new Stack<>();
 
   @Override
   public void visitElement(PsiElement element) {

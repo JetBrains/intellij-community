@@ -17,6 +17,7 @@ package com.intellij.diff;
 
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,6 +47,12 @@ public abstract class DiffContentFactoryEx extends DiffContentFactory {
                                               @NotNull byte[] content,
                                               @NotNull VirtualFile highlightFile) throws IOException;
 
+
+  @NotNull
+  public abstract DocumentContent createDocumentFromBytes(@Nullable Project project,
+                                                          @NotNull byte[] content,
+                                                          @NotNull FileType fileType,
+                                                          @NotNull String fileName);
 
   @NotNull
   public abstract DocumentContent createDocumentFromBytes(@Nullable Project project,

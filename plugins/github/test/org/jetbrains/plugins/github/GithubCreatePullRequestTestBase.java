@@ -67,7 +67,7 @@ public abstract class GithubCreatePullRequestTestBase extends GithubTest {
   protected void deleteRemoteBranch() {
     GitRepository repository = GithubUtil.getGitRepository(myProject, myProjectRoot);
     if (repository != null) {
-      ServiceManager.getService(Git.class).push(repository, "origin", PROJECT_URL, ":" + BRANCH_NAME, false);
+      Git.getInstance().push(repository, "origin", PROJECT_URL, ":" + BRANCH_NAME, false);
     }
   }
 

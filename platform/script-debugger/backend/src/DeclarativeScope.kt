@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,11 @@ import org.jetbrains.concurrency.cancelledPromise
 import org.jetbrains.debugger.values.ObjectValue
 import org.jetbrains.debugger.values.ValueManager
 
-abstract class DeclarativeScope<VALUE_MANAGER : ValueManager>(type: Scope.Type, description: String? = null) : ScopeBase(type, description) {
+abstract class DeclarativeScope<VALUE_MANAGER : ValueManager>(type: ScopeType, description: String? = null) : ScopeBase(type, description) {
   protected abstract val childrenManager: VariablesHost<VALUE_MANAGER>
+
+  override val variablesHost: VariablesHost<*>
+    get() = childrenManager
 
   protected fun loadScopeObjectProperties(value: ObjectValue): Promise<List<Variable>> {
     if (childrenManager.valueManager.isObsolete) {
@@ -30,6 +33,4 @@ abstract class DeclarativeScope<VALUE_MANAGER : ValueManager>(type: Scope.Type, 
 
     return value.properties.done { childrenManager.updateCacheStamp() }
   }
-
-  override fun getVariablesHost() = childrenManager
 }

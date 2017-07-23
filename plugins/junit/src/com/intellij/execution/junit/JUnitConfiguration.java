@@ -16,7 +16,7 @@
 
 package com.intellij.execution.junit;
 
-import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.MetaAnnotationUtil;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.actions.RunConfigurationProducer;
@@ -42,9 +42,11 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.rt.execution.junit.RepeatCount;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -304,6 +306,28 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     setGeneratedName();
   }
 
+  @Override
+  public boolean isConfiguredByElement(PsiElement element) {
+    final PsiClass testClass = JUnitUtil.getTestClass(element);
+    final PsiMethod testMethod = JUnitUtil.getTestMethod(element, false);
+    final PsiPackage testPackage;
+    if (element instanceof PsiPackage) {
+      testPackage = (PsiPackage)element;
+    } else if (element instanceof PsiDirectory){
+      testPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
+    } else {
+      testPackage = null;
+    }
+    PsiDirectory testDir = element instanceof PsiDirectory ? (PsiDirectory)element : null;
+
+    return getTestObject().isConfiguredByElement(this, testClass, testMethod, testPackage, testDir);
+  }
+
+  @Override
+  public TestSearchScope getTestSearchScope() {
+    return getPersistentData().getScope();
+  }
+
   public void beFromSourcePosition(PsiLocation<PsiMethod> sourceLocation) {
     myData.setTestMethod(sourceLocation);
     myData.TEST_OBJECT = BY_SOURCE_POSITION;
@@ -499,6 +523,34 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     return "j";
   }
 
+  public String getPreferredRunner(final GlobalSearchScope globalSearchScope) {
+    Data data = getPersistentData();
+    Project project = getProject();
+    boolean isMethodConfiguration = TEST_METHOD.equals(data.TEST_OBJECT);
+    boolean isClassConfiguration = TEST_CLASS.equals(data.TEST_OBJECT);
+    final PsiClass psiClass = isMethodConfiguration || isClassConfiguration
+                              ? JavaExecutionUtil.findMainClass(project, data.getMainClassName(), globalSearchScope) : null;
+    if (psiClass != null) {
+      if (JUnitUtil.isJUnit5TestClass(psiClass, false)) {
+        return JUnitStarter.JUNIT5_PARAMETER;
+      }
+
+      if (isClassConfiguration || JUnitUtil.isJUnit4TestClass(psiClass)) {
+        return JUnitStarter.JUNIT4_PARAMETER;
+      }
+
+      final String methodName = data.getMethodName();
+      final PsiMethod[] methods = psiClass.findMethodsByName(methodName, true);
+      for (PsiMethod method : methods) {
+        if (JUnitUtil.isTestAnnotated(method)) {
+          return JUnitStarter.JUNIT4_PARAMETER;
+        }
+      }
+      return JUnitStarter.JUNIT3_PARAMETER;
+    }
+    return JUnitUtil.isJUnit5(globalSearchScope, project) ? JUnitStarter.JUNIT5_PARAMETER : null;
+  }
+
   public static class Data implements Cloneable {
     public String PACKAGE_NAME;
     public String MAIN_CLASS_NAME;
@@ -526,7 +578,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       return Comparing.equal(TEST_OBJECT, second.TEST_OBJECT) &&
              Comparing.equal(getMainClassName(), second.getMainClassName()) &&
              Comparing.equal(getPackageName(), second.getPackageName()) &&
-             Comparing.equal(getMethodName(), second.getMethodName()) &&
+             Comparing.equal(getMethodNameWithSignature(), second.getMethodNameWithSignature()) &&
              Comparing.equal(getWorkingDirectory(), second.getWorkingDirectory()) &&
              Comparing.equal(VM_PARAMETERS, second.VM_PARAMETERS) &&
              Comparing.equal(PARAMETERS, second.PARAMETERS) &&
@@ -542,7 +594,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       return Comparing.hashcode(TEST_OBJECT) ^
              Comparing.hashcode(getMainClassName()) ^
              Comparing.hashcode(getPackageName()) ^
-             Comparing.hashcode(getMethodName()) ^
+             Comparing.hashcode(getMethodNameWithSignature()) ^
              Comparing.hashcode(getWorkingDirectory()) ^
              Comparing.hashcode(VM_PARAMETERS) ^
              Comparing.hashcode(PARAMETERS) ^
@@ -608,11 +660,45 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     }
 
     public static String getMethodPresentation(PsiMethod method) {
-      return method.getParameterList().getParametersCount() > 0 && AnnotationUtil.isAnnotated(method, JUnitUtil.TEST5_ANNOTATIONS)
-             ? PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
-                                          PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
-                                          PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES)
-             : method.getName();
+      if (method.getParameterList().getParametersCount() > 0 && MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_ANNOTATIONS)) {
+        return method.getName() + "(" + StringUtil.join(method.getParameterList().getParameters(),
+                                                        param -> {
+                                                          PsiType type = TypeConversionUtil.erasure(param.getType());
+                                                          return type != null ? type.accept(createSignatureVisitor()) : "";
+                                                        },
+                                                        ",") + ")";
+      }
+      else {
+        return method.getName();
+      }
+    }
+
+    private static PsiTypeVisitor<String> createSignatureVisitor() {
+      return new PsiTypeVisitor<String>() {
+        @Override
+        public String visitPrimitiveType(PsiPrimitiveType primitiveType) {
+          return primitiveType.getCanonicalText();
+        }
+
+        @Override
+        public String visitClassType(PsiClassType classType) {
+          PsiClass aClass = classType.resolve();
+          if (aClass == null) {
+            return "";
+          }
+          return ClassUtil.getJVMClassName(aClass);
+        }
+
+        @Override
+        public String visitArrayType(PsiArrayType arrayType) {
+          PsiType componentType = arrayType.getComponentType();
+          String typePresentation = componentType.accept(this);
+          if (componentType instanceof PsiClassType) {
+            typePresentation = "L" + typePresentation + ";";
+          }
+          return "[" + typePresentation;
+        }
+      };
     }
 
     public String getGeneratedName(final JavaRunConfigurationModule configurationModule) {
@@ -639,7 +725,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
         String fqName = myPattern.iterator().next();
         String firstName =
           fqName.contains("*") ? fqName
-                               : StringUtil.getShortName(fqName.contains(",") ? StringUtil.getPackageName(fqName, ',') : fqName);
+                               : StringUtil.getShortName(fqName.contains("(") ? StringUtil.getPackageName(fqName, '(') : fqName);
         return firstName + (size > 1 ? " and " + (size - 1) + " more" : "");
       }
       if (TEST_CATEGORY.equals(TEST_OBJECT)) {
@@ -662,6 +748,12 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     }
 
     public String getMethodName() {
+      String signature = getMethodNameWithSignature();
+      int paramsIdx = signature.lastIndexOf("(");
+      return paramsIdx > -1 ? signature.substring(0, paramsIdx) : signature;
+    }
+
+    public String getMethodNameWithSignature() {
       return METHOD_NAME != null ? METHOD_NAME : "";
     }
 

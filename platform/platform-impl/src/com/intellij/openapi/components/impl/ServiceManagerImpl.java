@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceDescriptor;
@@ -30,12 +29,10 @@ import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.PairProcessor;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.pico.AssignableToComponentAdapter;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.*;
 import org.picocontainer.defaults.InstanceComponentAdapter;
@@ -43,8 +40,9 @@ import org.picocontainer.defaults.InstanceComponentAdapter;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.BiPredicate;
 
-public class ServiceManagerImpl implements BaseComponent {
+public class ServiceManagerImpl implements Disposable {
   private static final Logger LOG = Logger.getInstance(ServiceManagerImpl.class);
 
   private static final ExtensionPointName<ServiceDescriptor> APP_SERVICES = new ExtensionPointName<>("com.intellij.applicationService");
@@ -80,6 +78,11 @@ public class ServiceManagerImpl implements BaseComponent {
           }
         }
 
+        if ("org.jetbrains.uast.UastContext".equals(descriptor.serviceInterface) &&
+            picoContainer.getComponentInstance(descriptor.getInterface()) != null) {
+          return;
+        }
+
         if (!Extensions.isComponentSuitableForOs(descriptor.os)) {
           return;
         }
@@ -103,7 +106,7 @@ public class ServiceManagerImpl implements BaseComponent {
     return Arrays.asList(extensions);
   }
 
-  public static void processAllImplementationClasses(@NotNull ComponentManagerImpl componentManager, @NotNull PairProcessor<Class<?>, PluginDescriptor> processor) {
+  public static void processAllImplementationClasses(@NotNull ComponentManagerImpl componentManager, @NotNull BiPredicate<Class<?>, PluginDescriptor> processor) {
     Collection adapters = componentManager.getPicoContainer().getComponentAdapters();
     if (adapters.isEmpty()) {
       return;
@@ -136,7 +139,7 @@ public class ServiceManagerImpl implements BaseComponent {
           continue;
         }
 
-        if (!processor.process(aClass, pluginDescriptor)) {
+        if (!processor.test(aClass, pluginDescriptor)) {
           break;
         }
       }
@@ -152,25 +155,14 @@ public class ServiceManagerImpl implements BaseComponent {
             continue;
           }
 
-          processor.process(aClass, pluginId == null ? null : PluginManager.getPlugin(pluginId));
+          processor.test(aClass, pluginId == null ? null : PluginManager.getPlugin(pluginId));
         }
       }
     }
   }
-
+  
   @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return getClass().getName();
-  }
-
-  @Override
-  public void initComponent() {
-  }
-
-  @Override
-  public void disposeComponent() {
+  public void dispose() {
     final ExtensionPoint<ServiceDescriptor> extensionPoint = Extensions.getArea(null).getExtensionPoint(myExtensionPointName);
     extensionPoint.removeExtensionPointListener(myExtensionPointListener);
   }

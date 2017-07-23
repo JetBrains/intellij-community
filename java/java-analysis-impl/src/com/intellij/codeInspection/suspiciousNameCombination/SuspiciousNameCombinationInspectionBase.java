@@ -26,21 +26,39 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.ig.psiutils.MethodMatcher;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SuspiciousNameCombinationInspectionBase extends BaseJavaBatchLocalInspectionTool {
   @NonNls private static final String ELEMENT_GROUPS = "group";
   @NonNls private static final String ATTRIBUTE_NAMES = "names";
+  @NonNls private static final String ELEMENT_IGNORED_METHODS = "ignored";
   protected final List<String> myNameGroups = new ArrayList<>();
   private final Map<String, String> myWordToGroupMap = new HashMap<>();
+  final MethodMatcher myIgnoredMethods = new MethodMatcher()
+    // parameter name is 'x' which is completely unrelated to coordinates
+    .add("java.io.PrintStream", "println")
+    .add("java.io.PrintWriter", "println")
+    .add("java.lang.System", "identityHashCode")
+    .add("java.sql.PreparedStatement", "set.*")
+    .add("java.sql.ResultSet", "update.*")
+    .add("java.sql.SQLOutput", "write.*")
+    // parameters for compare methods are x and y which is also unrelated to coordinates
+    .add("java.lang.Integer", "compare.*")
+    .add("java.lang.Long", "compare.*")
+    .add("java.lang.Short", "compare")
+    .add("java.lang.Byte", "compare")
+    .add("java.lang.Character", "compare")
+    .add("java.lang.Boolean", "compare")
+    // parameter names for addExact, multiplyFull, floorDiv, hypot etc. are x and y,
+    // but either unlikely to be related to coordinates or their order does not matter (like in hypot)
+    .add("java.lang.Math", ".*")
+    .add("java.lang.StrictMath", ".*");
 
   public SuspiciousNameCombinationInspectionBase() {
     addNameGroup("x,width,left,right");
@@ -61,8 +79,13 @@ public class SuspiciousNameCombinationInspectionBase extends BaseJavaBatchLocalI
     myNameGroups.add(group);
     List<String> words = StringUtil.split(group, ",");
     for(String word: words) {
-      myWordToGroupMap.put(word.trim().toLowerCase(), group);
+      myWordToGroupMap.put(canonicalize(word), group);
     }
+  }
+
+  @NotNull
+  private static String canonicalize(String word) {
+    return word.trim().toLowerCase(Locale.ENGLISH);
   }
 
   @Override
@@ -96,6 +119,10 @@ public class SuspiciousNameCombinationInspectionBase extends BaseJavaBatchLocalI
       Element e = (Element) o;
       addNameGroup(e.getAttributeValue(ATTRIBUTE_NAMES));
     }
+    Element ignoredMethods = node.getChild(ELEMENT_IGNORED_METHODS);
+    if (ignoredMethods != null) {
+      myIgnoredMethods.readSettings(ignoredMethods);
+    }
   }
 
   @Override public void writeSettings(@NotNull Element node) throws WriteExternalException {
@@ -104,6 +131,9 @@ public class SuspiciousNameCombinationInspectionBase extends BaseJavaBatchLocalI
       node.addContent(e);
       e.setAttribute(ATTRIBUTE_NAMES, group);
     }
+    Element ignoredMethods = new Element(ELEMENT_IGNORED_METHODS);
+    node.addContent(ignoredMethods);
+    myIgnoredMethods.writeSettings(ignoredMethods);
   }
 
   private class MyVisitor extends JavaElementVisitor {
@@ -135,6 +165,7 @@ public class SuspiciousNameCombinationInspectionBase extends BaseJavaBatchLocalI
 
     @Override public void visitCallExpression(PsiCallExpression expression) {
       final PsiMethod psiMethod = expression.resolveMethod();
+      if (myIgnoredMethods.matches(psiMethod)) return;
       final PsiExpressionList argList = expression.getArgumentList();
       if (psiMethod != null && argList != null) {
         final PsiExpression[] args = argList.getExpressions();
@@ -181,7 +212,7 @@ public class SuspiciousNameCombinationInspectionBase extends BaseJavaBatchLocalI
       String[] words = NameUtil.splitNameIntoWords(name);
       String result = null;
       for(String word: words) {
-        String group = myWordToGroupMap.get(word.toLowerCase());
+        String group = myWordToGroupMap.get(canonicalize(word));
         if (group != null) {
           if (result == null) {
             result = group;

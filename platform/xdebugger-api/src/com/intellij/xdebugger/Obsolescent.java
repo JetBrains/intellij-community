@@ -22,7 +22,7 @@ package com.intellij.xdebugger;
 public interface Obsolescent extends org.jetbrains.concurrency.Obsolescent {
 
   /**
-   * @return <code>true</code> if result of computation won't be used so computation may be interrupted 
+   * @return {@code true} if result of computation won't be used so computation may be interrupted
    */
   boolean isObsolete();
 }

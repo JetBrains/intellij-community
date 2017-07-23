@@ -15,10 +15,10 @@
  */
 package com.intellij.diff.statistics
 
-import com.intellij.diff.impl.DiffSettingsHolder
+import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings
 import com.intellij.diff.tools.fragmented.UnifiedDiffTool
 import com.intellij.diff.tools.simple.SimpleDiffTool
-import com.intellij.diff.tools.util.base.TextDiffSettingsHolder
+import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.internal.statistic.UsagesCollector
 import com.intellij.internal.statistic.beans.GroupDescriptor
@@ -41,8 +41,8 @@ class DiffUsagesCollector : UsagesCollector() {
 
 
     listOf(DiffPlaces.DEFAULT, DiffPlaces.CHANGES_VIEW, DiffPlaces.COMMIT_DIALOG).forEach { place ->
-      val diffSettings = DiffSettingsHolder.getInstance().getSettings(place)
-      val textSettings = TextDiffSettingsHolder.getInstance().getSettings(place)
+      val diffSettings = DiffSettings.getSettings(place)
+      val textSettings = TextDiffSettings.getSettings(place)
 
       usages.increment("TextDiffSettings.IgnorePolicy", textSettings.ignorePolicy)
       usages.increment("TextDiffSettings.HighlightPolicy", textSettings.highlightPolicy)
@@ -51,14 +51,14 @@ class DiffUsagesCollector : UsagesCollector() {
     }
 
 
-    val diffSettings = DiffSettingsHolder.getInstance().getSettings(null)
+    val diffSettings = DiffSettings.getSettings(null)
     usages.increment("DiffSettings.IterateNextFile", diffSettings.isGoToNextFileOnNextDifference)
 
 
     return usages.map { it -> UsageDescriptor("diff.$VERSION.${it.key}", it.value) }.toSet()
   }
 
-  private fun isUnifiedToolDefault(settings: DiffSettingsHolder.DiffSettings): Boolean {
+  private fun isUnifiedToolDefault(settings: DiffSettings): Boolean {
     val toolOrder = settings.diffToolsOrder
     val defaultToolIndex = ContainerUtil.indexOf(toolOrder, SimpleDiffTool::class.java.canonicalName)
     val unifiedToolIndex = ContainerUtil.indexOf(toolOrder, UnifiedDiffTool::class.java.canonicalName)

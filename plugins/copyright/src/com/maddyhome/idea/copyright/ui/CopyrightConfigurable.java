@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,20 +74,25 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
     myEditorPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
   }
 
+  @Override
   public void setDisplayName(String s) {
     myCopyrightProfile.setName(s);
   }
 
+  @Override
   public CopyrightProfile getEditableObject() {
     return myCopyrightProfile;
   }
 
+  @Override
   public String getBannerSlogan() {
     return myCopyrightProfile.getName();
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     myValidateButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         try {
           VelocityHelper.verify(myEditor.getDocument().getText());
@@ -101,53 +106,59 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
     return myWholePanel;
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return myCopyrightProfile.getName();
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpTopic() {
     return null;
   }
 
+  @Override
   public boolean isModified() {
     return myModified ||
            !Comparing.strEqual(EntityUtil.encode(myEditor.getDocument().getText()), myCopyrightProfile.getNotice()) ||
            !Comparing.strEqual(myKeywordTf.getText().trim(), myCopyrightProfile.getKeyword()) ||
-           !Comparing.strEqual(myAllowReplaceTextField.getText().trim(), myCopyrightProfile.getAllowReplaceKeyword()) ||
+           !Comparing.strEqual(myAllowReplaceTextField.getText().trim(), myCopyrightProfile.getAllowReplaceRegexp()) ||
            !Comparing.strEqual(myDisplayName, myCopyrightProfile.getName());
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     myCopyrightProfile.setNotice(EntityUtil.encode(myEditor.getDocument().getText()));
-    final String keyword = myKeywordTf.getText().trim();
-    try {
-      if (!StringUtil.isEmptyOrSpaces(keyword)) {
-        Pattern.compile(keyword);
-      }
-    }
-    catch (PatternSyntaxException e) {
-      throw new ConfigurationException("Keyword pattern syntax is incorrect: " + e.getMessage());
-    }
-
-    myCopyrightProfile.setKeyword(keyword);
-    myCopyrightProfile.setAllowReplaceKeyword(myAllowReplaceTextField.getText().trim());
+    myCopyrightProfile.setKeyword(validateRegexpAndGet(myKeywordTf.getText().trim(), "Detect copyright regexp is incorrect: "));
+    myCopyrightProfile.setAllowReplaceRegexp(validateRegexpAndGet(myAllowReplaceTextField.getText().trim(), "Replace copyright regexp is incorrect: "));
     CopyrightManager.getInstance(myProject).replaceCopyright(myDisplayName, myCopyrightProfile);
     myDisplayName = myCopyrightProfile.getName();
     myModified = false;
   }
 
+  @NotNull
+  private static String validateRegexpAndGet(final String regexp, final String message) throws ConfigurationException {
+    try {
+      if (!StringUtil.isEmptyOrSpaces(regexp)) {
+        //noinspection ResultOfMethodCallIgnored
+        Pattern.compile(regexp);
+      }
+    }
+    catch (PatternSyntaxException e) {
+      throw new ConfigurationException(message + e.getMessage());
+    }
+    return regexp;
+  }
+
+  @Override
   public void reset() {
     myDisplayName = myCopyrightProfile.getName();
     SwingUtilities.invokeLater(() -> DocumentUtil.writeInRunUndoTransparentAction(
       () -> myEditor.getDocument().setText(EntityUtil.decode(myCopyrightProfile.getNotice()))));
     myKeywordTf.setText(myCopyrightProfile.getKeyword());
-    myAllowReplaceTextField.setText(myCopyrightProfile.getAllowReplaceKeyword());
-  }
-
-  public void disposeUIResources() {
+    myAllowReplaceTextField.setText(myCopyrightProfile.getAllowReplaceRegexp());
   }
 
   public void setModified(boolean modified) {

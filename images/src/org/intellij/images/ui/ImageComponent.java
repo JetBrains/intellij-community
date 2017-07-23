@@ -19,10 +19,12 @@
 package org.intellij.images.ui;
 
 import com.intellij.util.containers.ContainerUtil;
+import org.intellij.images.ImagesBundle;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.options.GridOptions;
 import org.intellij.images.options.TransparencyChessboardOptions;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -53,6 +55,10 @@ public class ImageComponent extends JComponent {
     private static final String GRID_LINE_COLOR_PROP = "Grid.lineColor";
     @NonNls
     private static final String GRID_VISIBLE_PROP = "Grid.visible";
+    @NonNls
+    private static final String FILE_SIZE_VISIBLE_PROP = "FileSize.visible";
+    @NonNls
+    private static final String FILE_NAME_VISIBLE_PROP = "FileName.visible";
 
     /**
      * @see #getUIClassID
@@ -68,6 +74,9 @@ public class ImageComponent extends JComponent {
     private final ImageDocument document = new ImageDocumentImpl();
     private final Grid grid = new Grid();
     private final Chessboard chessboard = new Chessboard();
+    private boolean myFileSizeVisible = true;
+    private boolean myFileNameVisible = true;
+    private double zoomFactor = 1d;
 
     public ImageComponent() {
         updateUI();
@@ -75,6 +84,14 @@ public class ImageComponent extends JComponent {
 
     public ImageDocument getDocument() {
         return document;
+    }
+
+    public double getZoomFactor() {
+        return zoomFactor;
+    }
+
+    public void setZoomFactor(double zoomFactor) {
+        this.zoomFactor = zoomFactor;
     }
 
     public void setTransparencyChessboardCellSize(int cellSize) {
@@ -125,6 +142,26 @@ public class ImageComponent extends JComponent {
         return chessboard.isVisible();
     }
 
+    public boolean isFileSizeVisible() {
+        return myFileSizeVisible;
+    }
+
+    public void setFileSizeVisible(boolean fileSizeVisible) {
+        boolean oldValue = myFileSizeVisible;
+        myFileSizeVisible = fileSizeVisible;
+        firePropertyChange(FILE_SIZE_VISIBLE_PROP, oldValue, fileSizeVisible);
+    }
+
+    public boolean isFileNameVisible() {
+        return myFileNameVisible;
+    }
+
+    public void setFileNameVisible(boolean fileNameVisible) {
+        boolean oldValue = myFileNameVisible;
+        myFileNameVisible = fileNameVisible;
+        firePropertyChange(FILE_NAME_VISIBLE_PROP, oldValue, fileNameVisible);
+    }
+
     public void setGridLineZoomFactor(int lineZoomFactor) {
         int oldValue = grid.getLineZoomFactor();
         if (oldValue != lineZoomFactor) {
@@ -173,6 +210,15 @@ public class ImageComponent extends JComponent {
         return grid.isVisible();
     }
 
+    @Nullable
+    public String getDescription() {
+        BufferedImage image = getDocument().getValue();
+        if (image != null) {
+            return ImagesBundle.message("icon.dimensions", image.getWidth(), image.getHeight(), image.getColorModel().getPixelSize());
+        }
+        return null;
+    }
+
     public void setCanvasSize(int width, int height) {
         setSize(width + 4, height + 4);
     }
@@ -194,9 +240,9 @@ public class ImageComponent extends JComponent {
         setUI(UIManager.getUI(this));
     }
 
-    private static final class ImageDocumentImpl implements ImageDocument {
+    private static class ImageDocumentImpl implements ImageDocument {
         private final List<ChangeListener> listeners = ContainerUtil.createLockFreeCopyOnWriteList();
-        private BufferedImage image;
+        private ScaledImageProvider imageProvider;
         private String format;
         private Image renderer;
 
@@ -204,13 +250,28 @@ public class ImageComponent extends JComponent {
             return renderer;
         }
 
+        @Override
+        public Image getRenderer(double scale) {
+            return getValue(scale);
+        }
+
         public BufferedImage getValue() {
-            return image;
+            return getValue(1d);
+        }
+
+        @Override
+        public BufferedImage getValue(double scale) {
+            return imageProvider != null ? imageProvider.apply(scale) : null;
         }
 
         public void setValue(BufferedImage image) {
-            this.image = image;
             this.renderer = image != null ? Toolkit.getDefaultToolkit().createImage(image.getSource()) : null;
+            setValue(image != null ? ignore -> image : null);
+        }
+
+        @Override
+        public void setValue(ScaledImageProvider imageProvider) {
+            this.imageProvider = imageProvider;
             fireChangeEvent(new ChangeEvent(this));
         }
 

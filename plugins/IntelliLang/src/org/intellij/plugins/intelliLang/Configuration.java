@@ -41,7 +41,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CachedValueImpl;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.PairProcessor;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
@@ -59,6 +62,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
+
+import static com.intellij.util.JdomKt.loadElement;
 
 /**
  * Configuration that holds configured xml tag, attribute and method parameter
@@ -187,12 +192,8 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   @NonNls private static final String INCLUDE_UNCOMPUTABLES_AS_LITERALS = "INCLUDE_UNCOMPUTABLES_AS_LITERALS";
   @NonNls private static final String SOURCE_MODIFICATION_ALLOWED = "SOURCE_MODIFICATION_ALLOWED";
 
-  private final Map<String, List<BaseInjection>> myInjections = new ConcurrentFactoryMap<String, List<BaseInjection>>() {
-    @Override
-    protected List<BaseInjection> create(final String key) {
-      return ContainerUtil.createLockFreeCopyOnWriteList();
-    }
-  };
+  private final Map<String, List<BaseInjection>> myInjections =
+    ConcurrentFactoryMap.createMap(key -> ContainerUtil.createLockFreeCopyOnWriteList());
 
   protected Collection<BaseInjection> getAllInjections() {
     List<BaseInjection> injections = new ArrayList<>();
@@ -353,7 +354,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   @Nullable
   public static Configuration load(final InputStream is) throws IOException, JDOMException {
     final List<Element> elements = new ArrayList<>();
-    final Element rootElement = JDOMUtil.load(is);
+    final Element rootElement = loadElement(is);
     final Element state;
     if (rootElement.getName().equals(COMPONENT_NAME)) {
       state = rootElement;
@@ -372,13 +373,8 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     return null;
   }
 
-  private int importPlaces(final List<BaseInjection> injections) {
-    final Map<String, Set<BaseInjection>> map = ContainerUtil.classify(injections.iterator(), new Convertor<BaseInjection, String>() {
-      @Override
-      public String convert(final BaseInjection o) {
-        return o.getSupportId();
-      }
-    });
+  private void importPlaces(final List<BaseInjection> injections) {
+    final Map<String, Set<BaseInjection>> map = ContainerUtil.classify(injections.iterator(), o -> o.getSupportId());
     List<BaseInjection> originalInjections = new ArrayList<>();
     List<BaseInjection> newInjections = new ArrayList<>();
     for (String supportId : InjectorUtils.getActiveInjectionSupportIds()) {
@@ -388,7 +384,6 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     }
     if (!newInjections.isEmpty()) configurationModified();
     replaceInjections(newInjections, originalInjections, true);
-    return newInjections.size();
   }
 
   static void importInjections(final Collection<BaseInjection> existingInjections, final Collection<BaseInjection> importingInjections,
@@ -661,29 +656,34 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       return myInstrumentationType;
     }
 
-    private void writeState(final Element element) {
-      JDOMExternalizerUtil.writeField(element, INSTRUMENTATION_TYPE_NAME, myInstrumentationType.toString());
-      JDOMExternalizerUtil.writeField(element, LANGUAGE_ANNOTATION_NAME, myLanguageAnnotation);
-      JDOMExternalizerUtil.writeField(element, PATTERN_ANNOTATION_NAME, myPatternAnnotation);
-      JDOMExternalizerUtil.writeField(element, SUBST_ANNOTATION_NAME, mySubstAnnotation);
+    private void writeState(@NotNull Element element) {
+      AdvancedConfiguration defaults = new AdvancedConfiguration();
+      if (myInstrumentationType != defaults.myInstrumentationType) {
+        JDOMExternalizerUtil.writeField(element, INSTRUMENTATION_TYPE_NAME, myInstrumentationType.toString());
+      }
+
+      JDOMExternalizerUtil.writeField(element, LANGUAGE_ANNOTATION_NAME, myLanguageAnnotation, defaults.myLanguageAnnotation);
+      JDOMExternalizerUtil.writeField(element, PATTERN_ANNOTATION_NAME, myPatternAnnotation, defaults.myPatternAnnotation);
+      JDOMExternalizerUtil.writeField(element, SUBST_ANNOTATION_NAME, mySubstAnnotation, defaults.mySubstAnnotation);
       if (myIncludeUncomputablesAsLiterals) {
         JDOMExternalizerUtil.writeField(element, INCLUDE_UNCOMPUTABLES_AS_LITERALS, "true");
       }
       if (mySourceModificationAllowed) {
         JDOMExternalizerUtil.writeField(element, SOURCE_MODIFICATION_ALLOWED, "true");
       }
-      switch (myDfaOption) {
-        case OFF:
-          break;
-        case RESOLVE:
-          JDOMExternalizerUtil.writeField(element, RESOLVE_REFERENCES, Boolean.TRUE.toString());
-          break;
-        case ASSIGNMENTS:
-          JDOMExternalizerUtil.writeField(element, LOOK_FOR_VAR_ASSIGNMENTS, Boolean.TRUE.toString());
-          break;
-        case DFA:
-          JDOMExternalizerUtil.writeField(element, USE_DFA_IF_AVAILABLE, Boolean.TRUE.toString());
-          break;
+
+      if (myDfaOption != DfaOption.RESOLVE) {
+        //noinspection EnumSwitchStatementWhichMissesCases
+        switch (myDfaOption) {
+          case OFF:
+            break;
+          case ASSIGNMENTS:
+            JDOMExternalizerUtil.writeField(element, LOOK_FOR_VAR_ASSIGNMENTS, Boolean.TRUE.toString());
+            break;
+          case DFA:
+            JDOMExternalizerUtil.writeField(element, USE_DFA_IF_AVAILABLE, Boolean.TRUE.toString());
+            break;
+        }
       }
     }
 

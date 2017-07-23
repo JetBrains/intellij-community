@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,8 +47,10 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNamePopupComponent {
+public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNamePopupComponent, Disposable {
   public static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<>("ChooseByNamePopup");
+  public static final Key<String> CURRENT_SEARCH_PATTERN = new Key<String>("ChooseByNamePattern");
+
   private Component myOldFocusOwner = null;
   private boolean myShowListForEmptyPattern = false;
   private final boolean myMayRequestCurrentWindow;
@@ -95,7 +98,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       if (selEnd > selStart) {
         myTextField.select(selStart, selEnd);
       }
-      rebuildList(myInitialIndex, 0, ModalityState.current(), null);
+      rebuildList(SelectionPolicyKt.fromIndex(myInitialIndex), 0, ModalityState.current(), null);
     }
     if (myOldFocusOwner != null) {
       myPreviouslyFocusedComponent = myOldFocusOwner;
@@ -132,7 +135,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
   @Override
   protected boolean isCloseByFocusLost() {
-    return UISettings.getInstance().HIDE_NAVIGATION_ON_FOCUS_LOSS;
+    return UISettings.getInstance().getHideNavigationOnFocusLoss();
   }
 
   @Override
@@ -148,6 +151,13 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     preferredScrollPaneSize.height = visibleBounds != null ? visibleBounds.height : UIManager.getFont("Label.font").getSize();
 
     preferredScrollPaneSize.width = Math.max(myTextFieldPanel.getWidth(), preferredScrollPaneSize.width);
+
+    // in 'focus follows mouse' mode, to avoid focus escaping to editor, don't reduce popup size when list size is reduced
+    if (myDropdownPopup != null && !isCloseByFocusLost()) {
+      Dimension currentSize = myDropdownPopup.getSize();
+      if (preferredScrollPaneSize.width < currentSize.width) preferredScrollPaneSize.width = currentSize.width;
+      if (preferredScrollPaneSize.height < currentSize.height) preferredScrollPaneSize.height = currentSize.height;
+    }
 
     Rectangle preferredBounds = new Rectangle(bounds.x, bounds.y, preferredScrollPaneSize.width, preferredScrollPaneSize.height);
     Rectangle original = new Rectangle(preferredBounds);
@@ -187,13 +197,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     }
     else {
       myDropdownPopup.setLocation(preferredBounds.getLocation());
-
-      // in 'focus follows mouse' mode, to avoid focus escaping to editor, don't reduce popup size when list size is reduced
-      final Dimension currentSize = myDropdownPopup.getSize();
-      if (UISettings.getInstance().HIDE_NAVIGATION_ON_FOCUS_LOSS ||
-          preferredBounds.width > currentSize.width || preferredBounds.height > currentSize.height) {
-        myDropdownPopup.setSize(preferredBounds.getSize());
-      }
+      myDropdownPopup.setSize(preferredBounds.getSize());
     }
   }
 
@@ -254,12 +258,10 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
         return;
       }
     }
-
+    Disposer.dispose(this);
     setDisposed(true);
     myAlarm.cancelAllRequests();
-    if (myProject != null) {
-      myProject.putUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, null);
-    }
+
 
     cleanupUI(isOk);
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
@@ -338,7 +340,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
 
   private static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+?)" + // name, non-greedy matching
-                                                                                "(?::|@|,| |#L| on line | at line |:?\\(|:?\\[)" + // separator
+                                                                                "(?::|@|,| |#|#L|\\?l=| on line | at line |:?\\(|:?\\[)" + // separator
                                                                                 "(\\d+)(?:(?:\\D)(\\d+)?)?" + // line + column
                                                                                 "[)\\]]?" // possible closing paren/brace
   );
@@ -353,7 +355,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
   public static String getTransformedPattern(String pattern, ChooseByNameModel model) {
     Pattern regex = null;
-    if (StringUtil.containsAnyChar(pattern, ":,;@[( #") || pattern.contains(" line ")) { // quick test if reg exp should be used
+    if (StringUtil.containsAnyChar(pattern, ":,;@[( #") || pattern.contains(" line ") || pattern.contains("?l=")) { // quick test if reg exp should be used
       regex = patternToDetectLinesAndColumns;
     }
 
@@ -468,5 +470,13 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
   public void repaintListImmediate() {
     myList.repaint();
+  }
+
+  @Override
+  public void dispose() {
+    if (myProject != null) {
+      myProject.putUserData(CURRENT_SEARCH_PATTERN, null);
+      myProject.putUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, null);
+    }
   }
 }

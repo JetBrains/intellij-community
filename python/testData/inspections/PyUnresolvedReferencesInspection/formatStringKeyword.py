@@ -1,1 +1,0 @@
-'{<warning descr="Unresolved reference 'foo'">foo</warning>}'.format(boo=1)

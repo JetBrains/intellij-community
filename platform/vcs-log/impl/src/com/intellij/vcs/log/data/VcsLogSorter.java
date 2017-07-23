@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.data;
 
-import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.TimedVcsCommit;
 import org.jetbrains.annotations.NotNull;
 

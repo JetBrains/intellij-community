@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,10 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
+import com.intellij.debugger.memory.component.InstancesTracker;
+import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
+import com.intellij.debugger.memory.component.MemoryViewManager;
+import com.intellij.debugger.memory.ui.ClassesFilteredView;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.AlternativeSourceNotificationProvider;
 import com.intellij.debugger.ui.DebuggerContentInfo;
@@ -42,8 +46,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.content.Content;
@@ -114,7 +118,7 @@ public class JavaDebugProcess extends XDebugProcess {
               (shouldApplyContext(newContext) || event == DebuggerSession.Event.REFRESH_WITH_STACK)) {
             process.getManagerThread().schedule(new SuspendContextCommandImpl(newSuspendContext) {
               @Override
-              public void contextAction() throws Exception {
+              public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
                 ThreadReferenceProxyImpl threadProxy = newContext.getThreadProxy();
                 newSuspendContext.initExecutionStacks(threadProxy);
 
@@ -144,6 +148,7 @@ public class JavaDebugProcess extends XDebugProcess {
     });
 
     myNodeManager = new NodeManagerImpl(session.getProject(), null) {
+      @NotNull
       @Override
       public DebuggerTreeNodeImpl createNode(final NodeDescriptor descriptor, EvaluationContext evaluationContext) {
         return new DebuggerTreeNodeImpl(null, descriptor);
@@ -154,12 +159,13 @@ public class JavaDebugProcess extends XDebugProcess {
         return new DebuggerTreeNodeImpl(null, descriptor);
       }
 
+      @NotNull
       @Override
       public DebuggerTreeNodeImpl createMessageNode(String message) {
         return new DebuggerTreeNodeImpl(null, new MessageDescriptor(message));
       }
     };
-    session.addSessionListener(new XDebugSessionAdapter() {
+    session.addSessionListener(new XDebugSessionListener() {
       @Override
       public void sessionPaused() {
         saveNodeHistory();
@@ -310,11 +316,29 @@ public class JavaDebugProcess extends XDebugProcess {
     return new XDebugTabLayouter() {
       @Override
       public void registerAdditionalContent(@NotNull RunnerLayoutUi ui) {
+        registerThreadsPanel(ui);
+        registerMemoryViewPanel(ui);
+      }
+
+      @NotNull
+      @Override
+      public Content registerConsoleContent(@NotNull RunnerLayoutUi ui, @NotNull ExecutionConsole console) {
+        Content content = null;
+        if (console instanceof ExecutionConsoleEx) {
+          ((ExecutionConsoleEx)console).buildUi(ui);
+          content = ui.findContent(DebuggerContentInfo.CONSOLE_CONTENT);
+        }
+        if (content == null) {
+          content = super.registerConsoleContent(ui, console);
+        }
+        return content;
+      }
+
+      private void registerThreadsPanel(@NotNull RunnerLayoutUi ui) {
         final ThreadsPanel panel = new ThreadsPanel(myJavaSession.getProject(), getDebuggerStateManager());
         final Content threadsContent = ui.createContent(
           DebuggerContentInfo.THREADS_CONTENT, panel, XDebuggerBundle.message("debugger.session.tab.threads.title"),
           AllIcons.Debugger.Threads, null);
-        Disposer.register(threadsContent, panel);
         threadsContent.setCloseable(false);
         ui.addContent(threadsContent, 0, PlaceInGrid.left, true);
         ui.addListener(new ContentManagerAdapter() {
@@ -335,24 +359,49 @@ public class JavaDebugProcess extends XDebugProcess {
         }, threadsContent);
       }
 
-      @NotNull
-      @Override
-      public Content registerConsoleContent(@NotNull RunnerLayoutUi ui, @NotNull ExecutionConsole console) {
-        Content content = null;
-        if (console instanceof ExecutionConsoleEx) {
-          ((ExecutionConsoleEx)console).buildUi(ui);
-          content = ui.findContent(DebuggerContentInfo.CONSOLE_CONTENT);
-        }
-        if (content == null) {
-          content = super.registerConsoleContent(ui, console);
-        }
-        return content;
+      private void registerMemoryViewPanel(@NotNull RunnerLayoutUi ui) {
+        if (!Registry.get("debugger.enable.memory.view").asBoolean()) return;
+        final XDebugSession session = getSession();
+        final DebugProcessImpl process = myJavaSession.getProcess();
+        final InstancesTracker tracker = InstancesTracker.getInstance(myJavaSession.getProject());
+
+        final ClassesFilteredView classesFilteredView = new ClassesFilteredView(session, process, tracker);
+
+        final Content memoryViewContent =
+          ui.createContent(MemoryViewManager.MEMORY_VIEW_CONTENT, classesFilteredView, "Memory View",
+                           AllIcons.Debugger.MemoryView.Active, null);
+
+        memoryViewContent.setCloseable(false);
+        memoryViewContent.setShouldDisposeContent(true);
+
+        final MemoryViewDebugProcessData data = new MemoryViewDebugProcessData();
+        process.putUserData(MemoryViewDebugProcessData.KEY, data);
+        session.addSessionListener(new XDebugSessionListener() {
+          @Override
+          public void sessionStopped() {
+            session.removeSessionListener(this);
+            data.getTrackedStacks().clear();
+          }
+        });
+
+        ui.addContent(memoryViewContent, 0, PlaceInGrid.right, true);
+        final DebuggerManagerThreadImpl managerThread = process.getManagerThread();
+        ui.addListener(new ContentManagerAdapter() {
+          @Override
+          public void selectionChanged(ContentManagerEvent event) {
+            if (event != null && event.getContent() == memoryViewContent) {
+              classesFilteredView.setActive(memoryViewContent.isSelected(), managerThread);
+            }
+          }
+        }, memoryViewContent);
       }
     };
   }
 
   @Override
-  public void registerAdditionalActions(@NotNull DefaultActionGroup leftToolbar, @NotNull DefaultActionGroup topToolbar, @NotNull DefaultActionGroup settings) {
+  public void registerAdditionalActions(@NotNull DefaultActionGroup leftToolbar,
+                                        @NotNull DefaultActionGroup topToolbar,
+                                        @NotNull DefaultActionGroup settings) {
     Constraints beforeRunner = new Constraints(Anchor.BEFORE, "Runner.Layout");
     leftToolbar.add(Separator.getInstance(), beforeRunner);
     leftToolbar.add(ActionManager.getInstance().getAction(DebuggerActions.DUMP_THREADS), beforeRunner);

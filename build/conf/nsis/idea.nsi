@@ -1,9 +1,15 @@
 !verbose 2
 
+Unicode true
+ManifestDPIAware true
+!addplugindir "${NSIS_DIR}\Plugins\x86-unicode"
+!addincludedir "${NSIS_DIR}\Include"
+
 !include "paths.nsi"
 !include "strings.nsi"
 !include "Registry.nsi"
 !include "version.nsi"
+!include WinVer.nsh
 !include x64.nsh
 !define JAVA_REQUIREMENT 1.8
 
@@ -38,7 +44,6 @@ ${StrRep}
 
 ReserveFile "desktop.ini"
 ReserveFile "DeleteSettings.ini"
-ReserveFile '${NSISDIR}\Plugins\InstallOptions.dll'
 !insertmacro MUI_RESERVEFILE_LANGDLL
 
 !define MUI_ICON "${IMAGES_LOCATION}\${PRODUCT_ICON_FILE}"
@@ -49,14 +54,23 @@ ReserveFile '${NSISDIR}\Plugins\InstallOptions.dll'
 !define MUI_WELCOMEFINISHPAGE_BITMAP "${IMAGES_LOCATION}\${PRODUCT_LOGO_FILE}"
 
 ;------------------------------------------------------------------------------
+; Variables
+;------------------------------------------------------------------------------
+  Var STARTMENU_FOLDER
+  Var config_path
+  Var system_path
+  Var productLauncher
+  Var baseRegKey
+  Var downloadJreX86
+  Var productDir
+  Var control_fields
+  Var max_fields
+
+;------------------------------------------------------------------------------
 ; on GUI initialization installer checks whether IDEA is already installed
 ;------------------------------------------------------------------------------
 
 !define MUI_CUSTOMFUNCTION_GUIINIT GUIInit
-
-Var baseRegKey
-Var IS_UPGRADE_60
-
 !define MUI_LANGDLL_REGISTRY_ROOT "HKCU"
 !define MUI_LANGDLL_REGISTRY_KEY "Software\JetBrains\${MUI_PRODUCT}\${VER_BUILD}\"
 !define MUI_LANGDLL_REGISTRY_VALUENAME "Installer Language"
@@ -68,9 +82,7 @@ Var IS_UPGRADE_60
     ;The platform is returned into $0, minor version into $1.
     ;Windows 7 is equals values of 6 as platform and 1 as minor version.
     ;Windows 8 is equals values of 6 as platform and 2 as minor version.
-    nsisos::osversion
-    ${If} $0 == "6"
-      ${AndIf} $1 >= "1"
+    ${If} ${AtLeastWin8}
       StrCpy $0 "1"
     ${else}
       StrCpy $0 "0"
@@ -327,28 +339,27 @@ Function ConfirmDesktopShortcut
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Text" $R0
 
   ${If} $R1 != ""
-    ${StrRep} $R0 ${PRODUCT_EXE_FILE_64} "64.exe" ".exe"
-    ${If} $R0 == ${PRODUCT_EXE_FILE}
-      call searchJava64
-      ${If} $3 != ""
-        !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Type" "checkbox"
-        !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Text" $R1
-      ${EndIf}
-      ${If} ${RunningX64}
-        ; if 64-bit Win OS and jre64 for the build is available then add checkbox to Installation Options dialog
-        StrCmp "${LINK_TO_JRE64}" "null" customPreActions 0
-        inetc::head /SILENT /TOSTACK ${LINK_TO_JRE64} "" /END
-        Pop $0
-        ${If} $0 == "OK"
-          !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "Type" "checkbox"
-          !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "Text" "Download and install 64-bit JRE by JetBrains (will be used with 64-bit launcher)"
-        ${EndIf}
-      ${EndIf}
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Type" "checkbox"
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Text" $R1
+  ${EndIf}
+
+  ; if jre x86 for the build is available then add checkbox to Installation Options dialog
+  StrCmp "${LINK_TO_JRE}" "null" customPreActions 0
+  inetc::head /SILENT /TOSTACK ${LINK_TO_JRE} "" /END
+  Pop $0
+  ${If} $0 == "OK"
+    ; download jre x86: optional if OS is not 32-bit
+    ${If} ${RunningX64}
+      StrCpy $downloadJreX86 "0"
+    ${Else}
+      StrCpy $downloadJreX86 "1"
     ${EndIf}
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "Type" "checkbox"
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "State" $downloadJreX86
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "Text" "Download and install JRE x86 by JetBrains"
   ${EndIf}
 customPreActions:
   Call customPreInstallActions
-association:
   StrCmp "${ASSOCIATION}" "NoAssociation" skip_association
   StrCpy $R0 ${INSTALL_OPTION_ELEMENTS}
   push "${ASSOCIATION}"
@@ -366,32 +377,26 @@ done:
   !insertmacro INSTALLOPTIONS_DISPLAY "Desktop.ini"
 FunctionEnd
 
-Function downloadJre64
+Function downloadJre
   !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field 4" "State"
   ${If} $R0 == 1
-    inetc::get ${LINK_TO_JRE64} "$TEMP\jre64.tar.gz" /END
+    inetc::get ${LINK_TO_JRE} "$TEMP\jre.tar.gz" /END
     Pop $0
     ${If} $0 == "OK"
-      untgz::extract "-d" "$INSTDIR\jre64" "$TEMP\jre64.tar.gz"
-      StrCmp $R0 "success" removeTempJre64
-      DetailPrint "Failed to extract jre64.tar.gz"
-      MessageBox MB_OK|MB_ICONEXCLAMATION|MB_DEFBUTTON1 "Failed to extract $TEMP\jre64.tar.gz"
-removeTempJre64:
-      IfFileExists "$TEMP\jre64.tar.gz" 0 done
-      Delete "$TEMP\jre64.tar.gz"
+      untgz::extract "-d" "$INSTDIR\jre32" "$TEMP\jre.tar.gz"
+      StrCmp $R0 "success" removeTempJre
+      DetailPrint "Failed to extract jre.tar.gz"
+      MessageBox MB_OK|MB_ICONEXCLAMATION|MB_DEFBUTTON1 "Failed to extract $TEMP\jre.tar.gz"
+removeTempJre:
+      IfFileExists "$TEMP\jre.tar.gz" 0 done
+      Delete "$TEMP\jre.tar.gz"
     ${Else}
-      MessageBox MB_OK|MB_ICONEXCLAMATION "The ${LINK_TO_JRE64} download is failed: $0"
+      MessageBox MB_OK|MB_ICONEXCLAMATION "The ${LINK_TO_JRE} download is failed: $0"
     ${EndIf}
   ${EndIf}
 done:
 FunctionEnd
 
-;------------------------------------------------------------------------------
-; Variables
-;------------------------------------------------------------------------------
-  Var STARTMENU_FOLDER
-  Var config_path
-  Var system_path
 
 ;------------------------------------------------------------------------------
 ; configuration
@@ -400,10 +405,6 @@ FunctionEnd
 !insertmacro MUI_PAGE_WELCOME
 
 Page custom uninstallOldVersionDialog
-
-Var productDir
-Var control_fields
-Var max_fields
 
 !ifdef LICENSE_FILE
 !insertmacro MUI_PAGE_LICENSE "$(myLicenseData)"
@@ -436,14 +437,11 @@ InstallDir "$PROGRAMFILES\${MANUFACTURER}\${PRODUCT_WITH_VER}"
 BrandingText " "
 
 Function PageFinishRun
-  IfFileExists $INSTDIR\bin\${PRODUCT_EXE_FILE_64} runExe64
-  IfFileExists $INSTDIR\bin\${PRODUCT_EXE_FILE} runExe32
-runExe64:
-  !insertmacro UAC_AsUser_ExecShell "" "${PRODUCT_EXE_FILE_64}" "" "$INSTDIR\bin" ""
-  goto done
-runExe32:
-  !insertmacro UAC_AsUser_ExecShell "" "${PRODUCT_EXE_FILE}" "" "$INSTDIR\bin" ""
-done:
+  ${If} ${RunningX64}
+    !insertmacro UAC_AsUser_ExecShell "" "${PRODUCT_EXE_FILE_64}" "" "$INSTDIR\bin" ""
+  ${Else}
+    !insertmacro UAC_AsUser_ExecShell "" "${PRODUCT_EXE_FILE}" "" "$INSTDIR\bin" ""
+  ${EndIf}
 FunctionEnd
 
 ;------------------------------------------------------------------------------
@@ -478,7 +476,11 @@ UAC_Success:
     StrCmp 3 $1 0 UAC_ElevationAborted ;Try again?
     goto UAC_Elevate
 UAC_Admin:
-    StrCpy $INSTDIR "$PROGRAMFILES\${MANUFACTURER}\${PRODUCT_WITH_VER}"
+    ${If} ${RunningX64}
+      StrCpy $INSTDIR "$PROGRAMFILES64\${MANUFACTURER}\${PRODUCT_WITH_VER}"
+    ${Else}
+      StrCpy $INSTDIR "$PROGRAMFILES\${MANUFACTURER}\${PRODUCT_WITH_VER}"
+    ${EndIf}
     SetShellVarContext all
     StrCpy $baseRegKey "HKLM"
 UAC_Done:
@@ -723,7 +725,11 @@ continue_enum_versions_hklm:
 end_enum_versions_hklm:
 
   StrCmp $INSTDIR "" 0 skip_default_instdir
-  StrCpy $INSTDIR "$PROGRAMFILES\${MANUFACTURER}\${MUI_PRODUCT} ${MUI_VERSION_MAJOR}.${MUI_VERSION_MINOR}"
+  ${If} ${RunningX64}
+    StrCpy $INSTDIR "$PROGRAMFILES64\${MANUFACTURER}\${MUI_PRODUCT} ${MUI_VERSION_MAJOR}.${MUI_VERSION_MINOR}"
+  ${Else}
+    StrCpy $INSTDIR "$PROGRAMFILES\${MANUFACTURER}\${MUI_PRODUCT} ${MUI_VERSION_MAJOR}.${MUI_VERSION_MINOR}"
+  ${EndIf}
 skip_default_instdir:
 
   Pop $5
@@ -750,7 +756,7 @@ createRegistration:
   call OMWriteRegStr
   StrCpy $1 "Applications\${PRODUCT_EXE_FILE}\shell\open\command"
   StrCpy $2 ""
-  StrCpy $3 '$INSTDIR\bin\${PRODUCT_EXE_FILE} "%1"'
+  StrCpy $3 '"$productLauncher" "%1"'
   call OMWriteRegStr
 FunctionEnd
 
@@ -766,11 +772,11 @@ skip_backup:
   StrCmp $0 "" 0 command_exists
 	WriteRegStr HKCR ${PRODUCT_PATHS_SELECTOR} "" "${PRODUCT_FULL_NAME}"
 	WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\shell" "" "open"
-	WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\DefaultIcon" "" "$INSTDIR\bin\${PRODUCT_EXE_FILE},0"
+	WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\DefaultIcon" "" "$productLauncher,0"
 command_exists:
- WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\DefaultIcon" "" " $INSTDIR\bin\${PRODUCT_EXE_FILE},0"
+ WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\DefaultIcon" "" " $productLauncher,0"
  WriteRegStr HKCR "${PRODUCT_PATHS_SELECTOR}\shell\open\command" "" \
-                  '$INSTDIR\bin\${PRODUCT_EXE_FILE} "%1"'
+                  '"$productLauncher" "%1"'
 FunctionEnd
 
 ;------------------------------------------------------------------------------
@@ -778,12 +784,19 @@ FunctionEnd
 ;------------------------------------------------------------------------------
 Section "IDEA Files" CopyIdeaFiles
 
-  ;download and install JRE 64
-  StrCmp "${LINK_TO_JRE64}" "null" shortcuts 0
-  Call downloadJre64
+; set up a launcher for associations
+  ${If} ${RunningX64}
+     StrCpy $productLauncher "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}"
+  ${Else}
+     StrCpy $productLauncher "$INSTDIR\bin\${PRODUCT_EXE_FILE}"
+  ${EndIf}
+
+  StrCmp "${LINK_TO_JRE}" "null" shortcuts 0
+; download and install JRE x86
+  Call downloadJre
 
 shortcuts:
-  ;create shortcuts
+; create shortcuts
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 2" "State"
   StrCmp $R2 1 "" exe_64
   CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk" \
@@ -791,7 +804,7 @@ shortcuts:
 exe_64:
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 3" "State"
   StrCmp $R2 1 "" skip_desktop_shortcut
-  CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}(64).lnk" \
+  CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk" \
                  "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}" "" "" "" SW_SHOWNORMAL
 
 skip_desktop_shortcut:
@@ -809,18 +822,17 @@ next_association:
   IntCmp $R1 $R2 get_user_choice done get_user_choice
 
 done:
-
   Call customInstallActions
 
-  ;registration application to be presented in Open With list
+; registration application to be presented in Open With list
   call ProductRegistration
-!insertmacro MUI_STARTMENU_WRITE_BEGIN Application
+  !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
 ; $STARTMENU_FOLDER stores name of IDEA folder in Start Menu,
 ; save it name in the "MenuFolder" RegValue
   CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER"
 
   CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\${PRODUCT_FULL_NAME_WITH_VER}.lnk" \
-                 "$INSTDIR\bin\${PRODUCT_EXE_FILE}" "" "" "" SW_SHOWNORMAL
+                 "$productLauncher" "" "" "" SW_SHOWNORMAL
 ;  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Uninstall ${PRODUCT_FULL_NAME_WITH_VER}.lnk" \
 ;                 "$INSTDIR\bin\Uninstall.exe"
   StrCpy $0 $baseRegKey
@@ -832,7 +844,7 @@ done:
 
   StrCmp ${IPR} "false" skip_ipr
 
-  ; back up old value of .ipr
+; back up old value of .ipr
 !define Index "Line${__LINE__}"
   ReadRegStr $1 HKCR ".ipr" ""
   StrCmp $1 "" "${Index}-NoBackup"
@@ -845,9 +857,9 @@ done:
 	WriteRegStr HKCR "IntelliJIdeaProjectFile" "" "IntelliJ IDEA Project File"
 	WriteRegStr HKCR "IntelliJIdeaProjectFile\shell" "" "open"
 "${Index}-Skip:"
-  WriteRegStr HKCR "IntelliJIdeaProjectFile\DefaultIcon" "" "$INSTDIR\bin\${PRODUCT_EXE_FILE},0"
+  WriteRegStr HKCR "IntelliJIdeaProjectFile\DefaultIcon" "" "$productLauncher,0"
   WriteRegStr HKCR "IntelliJIdeaProjectFile\shell\open\command" "" \
-    '$INSTDIR\bin\${PRODUCT_EXE_FILE} "%1"'
+    '"$productLauncher" "%1"'
 !undef Index
 
 skip_ipr:
@@ -856,11 +868,9 @@ skip_ipr:
   SectionIn RO
 !include "idea_win.nsh"
 
-  IntCmp $IS_UPGRADE_60 1 skip_properties
   SetOutPath $INSTDIR\bin
   File "${PRODUCT_PROPERTIES_FILE}"
   File "${PRODUCT_VM_OPTIONS_FILE}"
-skip_properties:
 
   StrCpy $0 $baseRegKey
   StrCpy $1 "Software\${MANUFACTURER}\${PRODUCT_REG_VER}"
@@ -880,7 +890,7 @@ skip_properties:
   WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" \
               "InstallLocation" "$INSTDIR"
   WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" \
-              "DisplayIcon" "$INSTDIR\bin\${PRODUCT_EXE_FILE}"
+              "DisplayIcon" "$productLauncher"
   WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" \
               "DisplayVersion" "${VER_BUILD}"
   WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" \
@@ -894,10 +904,18 @@ skip_properties:
   WriteRegDWORD SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" \
               "NoRepair" 1
 
-  ExecWait "$INSTDIR\jre\jre\bin\javaw.exe -Xshare:dump"
+  ; Regenerating the Shared Archives for java x64 and x86 bit.
+  ; http://docs.oracle.com/javase/8/docs/technotes/guides/vm/class-data-sharing.html
+  IfFileExists $INSTDIR\jre32\bin\javaw.exe 0 java64
+  ExecWait "$INSTDIR\jre32\bin\javaw.exe -Xshare:dump"
+java64:
+  IfFileExists $INSTDIR\jre64\bin\javaw.exe 0 skip_regeneration_shared_archive_for_java_64
+  ExecWait "$INSTDIR\jre64\bin\javaw.exe -Xshare:dump"
+
+skip_regeneration_shared_archive_for_java_64:
   SetOutPath $INSTDIR\bin
-  ; set the current time for installation files under $INSTDIR\bin
-  ExecCmd::exec 'copy "$INSTDIR\bin\*.*s" +,,'
+; set the current time for installation files under $INSTDIR\bin
+  ExecDos::exec 'copy "$INSTDIR\bin\*.*s" +,,'
   call winVersion
   ${If} $0 == "1"
     ;ExecCmd::exec 'icacls "$INSTDIR" /grant %username%:F /T >"$INSTDIR"\installation_log.txt 2>"$INSTDIR"\installation_error.txt'
@@ -910,7 +928,7 @@ skip_properties:
       "$INSTDIR\bin\$0" "(S-1-5-32-545)" "GenericRead + GenericWrite"
   ${EndIf}
 
-  ;reset icon cache
+; reset icon cache
   System::Call 'shell32.dll::SHChangeNotify(i, i, i, i) v (0x08000000, 0, 0, 0)'
 SectionEnd
 
@@ -921,7 +939,6 @@ SectionEnd
 Function un.getRegKey
   ReadRegStr $R2 HKCU "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" ""
   StrCpy $R2 "$R2\bin"
-user:
   StrCmp $R2 $INSTDIR HKCU admin
 HKCU:
   StrCpy $baseRegKey "HKCU"
@@ -935,7 +952,11 @@ HKLM:
   goto Done
 cant_find_installation:
   ;admin perm. is required to uninstall?
-  ${UnStrStr} $R0 $INSTDIR $PROGRAMFILES
+  ${If} ${RunningX64}
+    ${UnStrStr} $R0 $INSTDIR $PROGRAMFILES64
+  ${Else}
+    ${UnStrStr} $R0 $INSTDIR $PROGRAMFILES
+  ${EndIf}
   StrCmp $R0 $INSTDIR HKLM HKCU
 Done:
 FunctionEnd
@@ -1090,6 +1111,7 @@ custom:
 complete:
   FileClose $3
   ${UnStrRep} $2 $2 "/" "\"
+  DetailPrint "path to config/system: $2"
 FunctionEnd
 
 Function un.isIDEInUse
@@ -1121,6 +1143,19 @@ FunctionEnd
 
 
 Section "Uninstall"
+  StrCpy $0 $baseRegKey
+  StrCpy $1 "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}"
+  StrCpy $2 "InstallLocation"
+  Call un.OMReadRegStr
+  StrCmp $INSTDIR "$3\bin" check_if_IDE_in_use invalid_installation_dir
+invalid_installation_dir:
+  ;check if uninstaller runs from not installation folder
+  IfFileExists "$INSTDIR\IdeaWin32.dll" 0 end_of_uninstall
+  IfFileExists "$INSTDIR\IdeaWin64.dll" 0 end_of_uninstall
+  IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE_64}" 0 end_of_uninstall
+  IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE}" check_if_IDE_in_use 0
+  goto end_of_uninstall
+check_if_IDE_in_use:
   ;check if the uninstalled application is running
   Call un.checkIfIDEInUse
   ; Uninstaller is in the \bin directory, we need upper level dir
@@ -1160,7 +1195,7 @@ skip_delete_settings:
 
 ; Delete uninstaller itself
   Delete "$INSTDIR\bin\Uninstall.exe"
-  Delete "$INSTDIR\jre\jre\bin\client\classes.jsa"
+  Delete "$INSTDIR\jre32\bin\client\classes.jsa"
 
   Push "Complete"
   Push "$INSTDIR\bin\${PRODUCT_EXE_FILE}.vmoptions"
@@ -1193,7 +1228,7 @@ keep_current_user:
   RMDir  "$SMPROGRAMS\$R9"
 
   Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
-  Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}(64).lnk"
+  Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk"
 
 registry:
   StrCpy $5 "Software\${MANUFACTURER}"
@@ -1233,6 +1268,10 @@ finish:
   Call un.OMDeleteRegKey
   StrCpy $0 "HKCR"
   StrCpy $1 "${PRODUCT_PATHS_SELECTOR}"
+  Call un.OMDeleteRegKey
+
+  StrCpy $0 "${MUI_LANGDLL_REGISTRY_ROOT}"
+  StrCpy $1 "${MUI_LANGDLL_REGISTRY_KEY}"
   Call un.OMDeleteRegKey
 
   StrCpy $0 "HKCR"

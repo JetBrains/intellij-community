@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.contents;
 
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.LineCol;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -86,7 +87,7 @@ public class DocumentContentImpl extends DiffContentBase implements DocumentCont
   @Nullable
   @Override
   public Navigatable getNavigatable(@NotNull LineCol position) {
-    if (myProject == null || getHighlightFile() == null || !getHighlightFile().isValid()) return null;
+    if (!DiffUtil.canNavigateToFile(myProject, getHighlightFile())) return null;
     return new MyNavigatable(myProject, getHighlightFile(), getDocument(), position);
   }
 

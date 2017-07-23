@@ -60,13 +60,13 @@ public abstract class FunctionalParserBase<R, T> implements FunctionalParser<R, 
 
   @NotNull
   public static <R, T> FunctionalParser<R, T> maybe(@NotNull final FunctionalParser<R, T> parser) {
-    return parser.or(FunctionalParserBase.<R, T>pure(null));
+    return parser.or(FunctionalParserBase.pure(null));
   }
 
   @NotNull
   @Override
   public FunctionalParser<R, T> endOfInput() {
-    return this.thenSkip(FunctionalParserBase.<T>finished());
+    return this.thenSkip(FunctionalParserBase.finished());
   }
 
   @NotNull

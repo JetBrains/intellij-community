@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,10 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.LookupValueWithPriority;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlToken;
@@ -43,7 +46,7 @@ import java.util.List;
  */
 public class UserColorLookup extends LookupElementDecorator<LookupElement> {
   private static final String COLOR_STRING = XmlBundle.message("choose.color.in.color.lookup");
-  private static final Function<Color,String> COLOR_TO_STRING_CONVERTER = color -> '#' + ColorUtil.toHex(color);
+  private static final Function<Color, String> COLOR_TO_STRING_CONVERTER = color -> '#' + ColorUtil.toHex(color);
 
   public UserColorLookup() {
     this(COLOR_TO_STRING_CONVERTER);
@@ -64,26 +67,26 @@ public class UserColorLookup extends LookupElementDecorator<LookupElement> {
   }
 
   private static void handleUserSelection(InsertionContext context, @NotNull Function<Color, String> colorToStringConverter) {
-    Color myColorAtCaret = null;
+    Project project = context.getProject();
+    Editor editor = context.getEditor();
+    int startOffset = context.getStartOffset();
 
-    Editor selectedTextEditor = context.getEditor();
-    PsiElement element = context.getFile().findElementAt(selectedTextEditor.getCaretModel().getOffset());
+    context.getDocument().deleteString(startOffset, context.getTailOffset());
+    PsiElement element = context.getFile().findElementAt(editor.getCaretModel().getOffset());
+    Color myColorAtCaret = element instanceof XmlToken ? getColorFromElement(element) : null;
 
-    if (element instanceof XmlToken) {
-      myColorAtCaret = getColorFromElement(element);
-    }
-
-    context.getDocument().deleteString(context.getStartOffset(), context.getTailOffset());
-
-    List<ColorPickerListener> listeners = ColorPickerListenerFactory.createListenersFor(element);
-    Color color = ColorChooser.chooseColor(WindowManager.getInstance().suggestParentWindow(context.getProject()),
-                                           XmlBundle.message("choose.color.dialog.title"), myColorAtCaret, true, listeners, true);
-
-    if (color != null) {
-      String colorString = colorToStringConverter.fun(color);
-      context.getDocument().insertString(context.getStartOffset(), colorString);
-      context.getEditor().getCaretModel().moveToOffset(context.getTailOffset());
-    }
+    context.setLaterRunnable(() -> {
+      if (editor.isDisposed() || project.isDisposed()) return;
+      List<ColorPickerListener> listeners = ColorPickerListenerFactory.createListenersFor(element);
+      Color color = ColorChooser.chooseColor(WindowManager.getInstance().suggestParentWindow(project),
+                                             XmlBundle.message("choose.color.dialog.title"), myColorAtCaret, true, listeners, true);
+      if (color != null) {
+        WriteCommandAction.runWriteCommandAction(project, () -> {
+          editor.getCaretModel().moveToOffset(startOffset);
+          EditorModificationUtil.insertStringAtCaret(editor, colorToStringConverter.fun(color));
+        });
+      }
+    });
   }
 
   @Nullable

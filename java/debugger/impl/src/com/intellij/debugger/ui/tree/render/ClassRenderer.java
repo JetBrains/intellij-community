@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,11 +51,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * User: lex
- * Date: Sep 17, 2003
- * Time: 2:04:00 PM
- */
 public class ClassRenderer extends NodeRendererImpl{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.ClassRenderer");
   
@@ -76,8 +71,9 @@ public class ClassRenderer extends NodeRendererImpl{
     myProperties.setEnabled(true);
   }
 
-  public final String renderTypeName(final String typeName) {
-    if (SHOW_FQ_TYPE_NAMES) {
+  @Nullable
+  public final String renderTypeName(@Nullable final String typeName) {
+    if (SHOW_FQ_TYPE_NAMES || typeName == null) {
       return typeName;
     }
     String baseLambdaClassName = DebuggerUtilsEx.getLambdaBaseClassName(typeName);
@@ -206,7 +202,10 @@ public class ClassRenderer extends NodeRendererImpl{
         final StackFrameProxy frameProxy = context.getFrameProxy();
         if (frameProxy != null) {
           final Location location = frameProxy.location();
-          if (location != null && objInstance.equals(context.getThisObject()) && Comparing.equal(objInstance.referenceType(), location.declaringType()) && StringUtil.startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
+          if (location != null &&
+              objInstance.equals(context.computeThisObject()) &&
+              Comparing.equal(objInstance.referenceType(), location.declaringType()) &&
+              StringUtil.startsWith(field.name(), FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
             return false;
           }
         }

@@ -5,7 +5,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogBranchFilter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -38,10 +37,10 @@ public class VcsLogBranchFilterImpl implements VcsLogBranchFilter {
     myExcludedPatterns = new ArrayList<>();
   }
 
-  @Nullable
-  public static VcsLogBranchFilterImpl fromBranch(@NotNull final String branchName) {
-    return new VcsLogBranchFilterImpl(Collections.singletonList(branchName), Collections.<Pattern>emptyList(),
-                                      Collections.<String>emptyList(), Collections.<Pattern>emptyList());
+  @NotNull
+  public static VcsLogBranchFilterImpl fromBranch(@NotNull String branchName) {
+    return new VcsLogBranchFilterImpl(Collections.singletonList(branchName), Collections.emptyList(),
+                                      Collections.emptyList(), Collections.emptyList());
   }
 
   @NotNull

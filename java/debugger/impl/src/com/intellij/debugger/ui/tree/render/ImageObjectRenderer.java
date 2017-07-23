@@ -38,9 +38,6 @@ import java.awt.image.BufferedImage;
 import java.util.Collections;
 import java.util.List;
 
-/**
-* Created by Egor on 04.10.2014.
-*/
 class ImageObjectRenderer extends CompoundReferenceRenderer implements FullValueEvaluatorProvider {
   private static final Logger LOG = Logger.getInstance(ImageObjectRenderer.class);
 

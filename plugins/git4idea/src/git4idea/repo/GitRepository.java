@@ -114,4 +114,10 @@ public interface GitRepository extends Repository {
   @NotNull
   @Override
   GitVcs getVcs();
+
+  /**
+   * Returns direct submodules of this repository.
+   */
+  @NotNull
+  Collection<GitSubmoduleInfo> getSubmodules();
 }

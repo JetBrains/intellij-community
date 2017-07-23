@@ -28,9 +28,13 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+/**
+ * @deprecated Use {@link GitPushOptionsPanel}.
+ */
+@Deprecated
 public class GitPushTagPanel extends VcsPushOptionsPanel {
 
-  private final ComboBox myCombobox;
+  private final ComboBox<GitPushTagMode> myCombobox;
   private final JBCheckBox myCheckBox;
 
   public GitPushTagPanel(@Nullable GitPushTagMode defaultMode, boolean followTagsSupported) {
@@ -46,7 +50,7 @@ public class GitPushTagPanel extends VcsPushOptionsPanel {
     add(myCheckBox, BorderLayout.WEST);
 
     if (followTagsSupported) {
-      myCombobox = new ComboBox(GitPushTagMode.getValues());
+      myCombobox = new ComboBox<>(GitPushTagMode.getValues());
       myCombobox.setRenderer(new ListCellRendererWrapper<GitPushTagMode>() {
         @Override
         public void customize(JList list, GitPushTagMode value, int index, boolean selected, boolean hasFocus) {
@@ -69,13 +73,13 @@ public class GitPushTagPanel extends VcsPushOptionsPanel {
     else {
       myCombobox = null;
     }
-
   }
 
   @Nullable
   @Override
   public VcsPushOptionValue getValue() {
-    return myCheckBox.isSelected() ? myCombobox == null ? GitPushTagMode.ALL : (VcsPushOptionValue)myCombobox.getSelectedItem() : null;
+    GitPushTagMode mode =
+      myCheckBox.isSelected() ? myCombobox == null ? GitPushTagMode.ALL : (GitPushTagMode)myCombobox.getSelectedItem() : null;
+    return new GitVcsPushOptionValue(mode, false);
   }
-
 }

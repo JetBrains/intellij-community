@@ -29,10 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * User: anna
- * Date: 30-Jan-2006
- */
 public class BasePsiNode<T extends PsiElement> extends PackageDependenciesNode {
   private final SmartPsiElementPointer myPsiElementPointer;
   private Icon myIcon;

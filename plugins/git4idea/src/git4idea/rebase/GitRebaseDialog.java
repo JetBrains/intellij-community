@@ -30,7 +30,6 @@ import git4idea.branch.GitRebaseParams;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitRebaseSettings;
 import git4idea.i18n.GitBundle;
-import git4idea.merge.GitMergeUtil;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -87,17 +86,9 @@ public class GitRebaseDialog extends DialogWrapper {
    */
   private JCheckBox myShowTagsCheckBox;
   /**
-   * Merge strategy drop down
-   */
-  private ComboBox myMergeStrategyComboBox;
-  /**
    * If selected, rebase is interactive
    */
   protected JCheckBox myInteractiveCheckBox;
-  /**
-   * No merges are performed if selected.
-   */
-  private JCheckBox myDoNotUseMergeCheckBox;
   /**
    * The root panel of the dialog
    */
@@ -157,11 +148,7 @@ public class GitRebaseDialog extends DialogWrapper {
     myProject = project;
     mySettings = ServiceManager.getService(myProject, GitRebaseSettings.class);
     myRepositoryManager = GitUtil.getRepositoryManager(myProject);
-    final Runnable validateRunnable = new Runnable() {
-      public void run() {
-        validateFields();
-      }
-    };
+    final Runnable validateRunnable = () -> validateFields();
     myOntoValidator = new GitReferenceValidator(myProject, myGitRootComboBox, GitUIUtil.getTextField(myOntoComboBox), myOntoValidateButton,
                                                 validateRunnable);
     myFromValidator = new GitReferenceValidator(myProject, myGitRootComboBox, GitUIUtil.getTextField(myFromComboBox), myFromValidateButton,
@@ -174,7 +161,6 @@ public class GitRebaseDialog extends DialogWrapper {
     });
 
     setupBranches();
-    setupStrategy();
 
     myInteractiveCheckBox.setSelected(mySettings.isInteractive());
     myPreserveMergesCheckBox.setSelected(mySettings.isPreserveMerges());
@@ -238,22 +224,6 @@ public class GitRebaseDialog extends DialogWrapper {
   }
 
   /**
-   * Setup strategy
-   */
-  private void setupStrategy() {
-    for (String s : GitMergeUtil.getMergeStrategies(1)) {
-      myMergeStrategyComboBox.addItem(s);
-    }
-    myMergeStrategyComboBox.setSelectedItem(GitMergeUtil.DEFAULT_STRATEGY);
-    myDoNotUseMergeCheckBox.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        myMergeStrategyComboBox.setEnabled(!myDoNotUseMergeCheckBox.isSelected());
-      }
-    });
-  }
-
-
-  /**
    * Validate fields
    */
   private void validateFields() {
@@ -263,12 +233,12 @@ public class GitRebaseDialog extends DialogWrapper {
       return;
     }
     else if (myOntoValidator.isInvalid()) {
-      setErrorText(GitBundle.getString("rebase.invalid.onto"));
+      setErrorText(GitBundle.getString("rebase.invalid.onto"), myOntoComboBox);
       setOKActionEnabled(false);
       return;
     }
     if (GitUIUtil.getTextField(myFromComboBox).getText().length() != 0 && myFromValidator.isInvalid()) {
-      setErrorText(GitBundle.getString("rebase.invalid.from"));
+      setErrorText(GitBundle.getString("rebase.invalid.from"), myFromComboBox);
       setOKActionEnabled(false);
       return;
     }

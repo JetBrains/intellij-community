@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,11 +88,6 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
   }
 
   @Override
-  public void before(@NotNull List<? extends VFileEvent> events) {
-    // everything is handled in #after()
-  }
-
-  @Override
   public void after(@NotNull List<? extends VFileEvent> events) {
     // which files in .hg were changed
     boolean branchHeadsChanged = false;
@@ -162,7 +157,12 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
       myUpdateQueue.queue(new MyUpdater("hgrepositoryUpdate"));
     }
     if (configHgrcChanged) {
-      myUpdateConfigQueue.queue(new MyUpdater("hgconfigUpdate"));
+      myUpdateConfigQueue.queue(new MyUpdater("hgconfigUpdate"){
+        @Override
+        public void run() {
+          myRepository.updateConfig();
+        }
+      });
     }
     if (dirstateFileChanged || hgIgnoreChanged) {
       myRepository.getLocalIgnoredHolder().startRescan();

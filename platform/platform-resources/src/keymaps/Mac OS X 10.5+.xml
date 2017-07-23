@@ -380,6 +380,7 @@
   </action>
   <action id="Resume">
     <keyboard-shortcut first-keystroke="meta alt R"/>
+    <keyboard-shortcut first-keystroke="F9"/>
   </action>
 
   <action id="ChooseRunConfiguration">
@@ -588,5 +589,9 @@
   </action>
   <action id="EditorMatchBrace">
     <keyboard-shortcut first-keystroke="control M" replace-all="true"/>
+  </action>
+
+  <action id="EmojiAndSymbols">
+    <keyboard-shortcut first-keystroke="control meta SPACE"/>
   </action>
 </keymap>

@@ -43,7 +43,7 @@ public class PublicSshKeyFilePanel {
   private void createUIComponents() {
     myPublicSshKeyTooltipHyperlink =
       TooltipUtil.createTooltip(
-        "Specify the location of your public SSH key file (.pub). You won’t be able to use the cloud unless you register you public key there. However, if you’ve already done that, you don’t have to specify the key now.");
+        "Specify the location of your public SSH key file (.pub). You won't be able to use the cloud unless you register you public key there. However, if you've already done that, you don't have to specify the key now.");
   }
 
   public JComponent getMainPanel() {

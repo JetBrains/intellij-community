@@ -21,12 +21,8 @@ import com.intellij.util.containers.HashSet;
 
 import java.util.Set;
 
-/**
- * User: anna
- * Date: Aug 12, 2010
- */
 public class TypesDistinctProver {
-  public static final Set<String> ARRAY_SUPER_CLASSES = new HashSet<String>();
+  public static final Set<String> ARRAY_SUPER_CLASSES = new HashSet<>();
   static {
     ARRAY_SUPER_CLASSES.add(CommonClassNames.JAVA_IO_SERIALIZABLE);
     ARRAY_SUPER_CLASSES.add(CommonClassNames.JAVA_LANG_CLONEABLE);
@@ -111,11 +107,11 @@ public class TypesDistinctProver {
     final PsiClass boundClass2 = classResolveResult2.getElement();
 
     if (boundClass1 instanceof PsiTypeParameter && level < 2) {
-      if (!distinguishFromTypeParam((PsiTypeParameter)boundClass1, boundClass2, type1)) return false;
+      if (!distinguishFromTypeParam((PsiTypeParameter)boundClass1, boundClass2, type1, type2)) return false;
     }
 
     if (boundClass2 instanceof PsiTypeParameter && level < 2) {
-      if (!distinguishFromTypeParam((PsiTypeParameter)boundClass2, boundClass1, type2)) return false;
+      if (!distinguishFromTypeParam((PsiTypeParameter)boundClass2, boundClass1, type2, type1)) return false;
     }
 
     if (Comparing.equal(TypeConversionUtil.erasure(type1), TypeConversionUtil.erasure(type2))) {
@@ -150,7 +146,10 @@ public class TypesDistinctProver {
             !InheritanceUtil.isInheritorOrSelf(boundClass2, boundClass1, true));
   }
 
-  private static boolean distinguishFromTypeParam(PsiTypeParameter typeParam, PsiClass boundClass, PsiType type1) {
+  private static boolean distinguishFromTypeParam(PsiTypeParameter typeParam,
+                                                  PsiClass boundClass,
+                                                  PsiType type1,
+                                                  PsiType type2) {
     final PsiClassType[] paramBounds = typeParam.getExtendsListTypes();
     if (paramBounds.length == 0 && type1 instanceof PsiClassType) return false;
     for (PsiClassType classType : paramBounds) {
@@ -158,6 +157,9 @@ public class TypesDistinctProver {
       if (paramBound != null &&
           (InheritanceUtil.isInheritorOrSelf(paramBound, boundClass, true) ||
            InheritanceUtil.isInheritorOrSelf(boundClass, paramBound, true))) {
+        return false;
+      }
+      if (type2 instanceof PsiArrayType && TypeConversionUtil.isAssignable(classType, type2)) {
         return false;
       }
     }

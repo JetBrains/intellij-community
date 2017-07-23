@@ -1,0 +1,18 @@
+<node text="A.testMethod()  ()" base="true">
+  <node text="Arrays.asList(T...)  (java.util)"/>
+  <node text="Collection.stream()  (java.util)">
+    <node text="SynchronizedCollection in Collections.stream()  (java.util)"/>
+    <node text="CheckedCollection in Collections.stream()  (java.util)"/>
+    <node text="UnmodifiableCollection in Collections.stream()  (java.util)">
+      <node text="UnmodifiableEntrySet in UnmodifiableMap in Collections.stream()  (java.util)"/>
+    </node>
+    <node text="SetFromMap in Collections.stream()  (java.util)"/>
+    <node text="AsLIFOQueue in Collections.stream()  (java.util)"/>
+    <node text="CopiesList in Collections.stream()  (java.util)"/>
+    <node text="UnmodifiableEntrySet in UnmodifiableMap in Collections.stream()  (java.util)"/>
+  </node>
+  <node text="A.returnAString(String)  ()"/>
+  <node text="Stream.map(Function&lt;? super T, ? extends R&gt;)  (java.util.stream)">
+    <node text="ReferencePipeline.map(Function&lt;? super P_OUT, ? extends R&gt;)  (java.util.stream)"/>
+  </node>
+</node>

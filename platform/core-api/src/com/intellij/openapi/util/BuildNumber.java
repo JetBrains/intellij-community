@@ -42,14 +42,14 @@ public class BuildNumber implements Comparable<BuildNumber> {
     private static final BuildNumber CURRENT_VERSION = fromFile();
   }
 
-  @NotNull  private final String myProductCode;
-  private final int[] myComponents;
+  @NotNull private final String myProductCode;
+  @NotNull private final int[] myComponents;
   
   public BuildNumber(@NotNull String productCode, int baselineVersion, int buildNumber) {
     this(productCode, new int[]{baselineVersion, buildNumber});
   }
 
-  public BuildNumber(@NotNull String productCode, int... components) {
+  public BuildNumber(@NotNull String productCode, @NotNull int... components) {
     myProductCode = productCode;
     myComponents = components;
   }
@@ -163,7 +163,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
   private static BuildNumber fromFile() {
     try {
       String home = PathManager.getHomePath();
-      File buildTxtFile = FileUtil.findFirstThatExist(home + "/build.txt", home + "/Resources/build.txt", home + "/community/build.txt");
+      File buildTxtFile = FileUtil.findFirstThatExist(home + "/build.txt", home + "/Resources/build.txt", home + "/community/build.txt", home + "/ultimate/community/build.txt");
       if (buildTxtFile != null) {
         String text = FileUtil.loadFile(buildTxtFile).trim();
         return fromString(text);
@@ -221,6 +221,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
     return myComponents[1];
   }
 
+  @NotNull
   public int[] getComponents() {
     return myComponents;
   }

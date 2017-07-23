@@ -15,11 +15,14 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -27,26 +30,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
-* User: cdr
-*/
 abstract class FoldRegionsTree {
-  private static final Key<Boolean> VISIBLE = Key.create("visible.fold.region");
-  
+  private final RangeMarkerTree<FoldRegionImpl> myMarkerTree;
   @NotNull private volatile CachedData myCachedData = new CachedData();
 
-  //sorted using RangeMarker.BY_START_OFFSET comparator
-  //i.e., first by start offset, then, if start offsets are equal, by end offset
-  @NotNull
-  private List<FoldRegion> myRegions = ContainerUtil.newArrayList();
-
-  private static final Comparator<FoldRegion> BY_END_OFFSET = (r1, r2) -> {
-    int end1 = r1.getEndOffset();
-    int end2 = r2.getEndOffset();
-    if (end1 < end2) return -1;
-    if (end1 > end2) return 1;
-    return 0;
-  };
+  private static final Comparator<FoldRegion> BY_END_OFFSET = Comparator.comparingInt(RangeMarker::getEndOffset);
   private static final Comparator<? super FoldRegion> BY_END_OFFSET_REVERSE = Collections.reverseOrder(BY_END_OFFSET);
 
   private static final TObjectHashingStrategy<FoldRegion> OFFSET_BASED_HASHING_STRATEGY = new TObjectHashingStrategy<FoldRegion>() {
@@ -60,15 +48,14 @@ abstract class FoldRegionsTree {
       return o1.getStartOffset() == o2.getStartOffset() && o1.getEndOffset() == o2.getEndOffset();
     }
   };
-  
+
+  FoldRegionsTree(@NotNull RangeMarkerTree<FoldRegionImpl> markerTree) {
+    myMarkerTree = markerTree;
+  }
+
   void clear() {
     clearCachedValues();
-
-    for (FoldRegion region : myRegions) {
-      region.dispose();
-    }
-
-    myRegions = new ArrayList<>();
+    myMarkerTree.clear();
   }
 
   void clearCachedValues() {
@@ -77,77 +64,121 @@ abstract class FoldRegionsTree {
 
   protected abstract boolean isFoldingEnabled();
 
-  void rebuild() {
-    List<FoldRegion> topLevels = new ArrayList<>(myRegions.size() / 2);
-    List<FoldRegion> visible = new ArrayList<>(myRegions.size());
-    List<FoldRegion> allValid = new ArrayList<>(myRegions.size());
-    
-    THashMap<FoldRegion, FoldRegion> distinctRegions = new THashMap<>(myRegions.size(), OFFSET_BASED_HASHING_STRATEGY);
-    for (FoldRegion region : myRegions) {
-      if (!region.isValid()) {
-        continue;
-      }
-      if (distinctRegions.contains(region)) {
-        if (region.getUserData(VISIBLE) == null) {
-          region.dispose();
-          continue;
+  CachedData rebuild() {
+    List<FoldRegion> visible = new ArrayList<>(myMarkerTree.size());
+
+    List<FoldRegion> duplicatesToKill = new ArrayList<>();
+    SweepProcessor.Generator<FoldRegion> generator = processor -> myMarkerTree.processOverlappingWith(0, Integer.MAX_VALUE, processor);
+    // current regions which are nested with each other.
+    // to determine visible regions (i.e. all regions which are not inside collapsed), for each endpoint
+    // we should sort this list by inclusion (from the biggest to the smallest length), find the longest collapsed (with index i) and report all (0..i] as visible
+    final List<FoldRegion> nested = new ArrayList<>();
+    SweepProcessor.sweep(generator, new SweepProcessor<FoldRegion>() {
+      int lastEnd = -1; // offset (with atStart==false) which was reported last by sweep
+
+      @Override
+      public boolean process(int offset, @NotNull FoldRegion region, boolean atStart, @NotNull Collection<FoldRegion> overlapping) {
+        if (atStart) {
+          if (!isNestedWithLast(nested, region)) {
+            reportVisible(nested, lastEnd, visible, duplicatesToKill);
+          }
+          addToNested(nested, region);
         }
         else {
-          FoldRegion identicalRegion = distinctRegions.remove(region);
-          identicalRegion.dispose();
+          if (lastEnd != offset) {
+            reportVisible(nested, lastEnd, visible, duplicatesToKill);
+            lastEnd = offset;
+          }
         }
+        return true;
       }
-      distinctRegions.put(region, region);
-    }
-    
-    for (FoldRegion region : myRegions) {
-      if (region.isValid()) {
-        allValid.add(region);
-      }
+    });
+    if (!nested.isEmpty()) {
+      reportVisible(nested, nested.get(nested.size()-1).getEndOffset(), visible, duplicatesToKill);
     }
 
-    if (allValid.size() < myRegions.size()) {
-      myRegions = allValid;
-    }
-    Collections.sort(myRegions, RangeMarker.BY_START_OFFSET); // the order could have changed due to document changes 
-
-    FoldRegion currentCollapsed = null;
-    for (FoldRegion region : myRegions) {
-      if (!region.isExpanded()) {
-        removeRegionsWithSameStartOffset(visible, region);
-        removeRegionsWithSameStartOffset(topLevels, region);
-      }
-
-      if (currentCollapsed == null || !contains(currentCollapsed, region)) {
-        visible.add(region);
-        region.putUserData(VISIBLE, Boolean.TRUE);
-        if (!region.isExpanded()) {
-          currentCollapsed = region;
-          topLevels.add(region);
-        }
-      }
-      else {
-        region.putUserData(VISIBLE, null);
-      }
+    for (FoldRegion region : duplicatesToKill) {
+      region.dispose();
     }
 
-    FoldRegion[] topLevelRegions = toFoldArray(topLevels);
     FoldRegion[] visibleRegions = toFoldArray(visible);
 
-    Arrays.sort(topLevelRegions, BY_END_OFFSET);
     Arrays.sort(visibleRegions, BY_END_OFFSET_REVERSE);
 
-    updateCachedOffsets(visibleRegions, topLevelRegions);
+    return updateCachedAndSortOffsets(visibleRegions);
   }
 
-  private static void removeRegionsWithSameStartOffset(List<FoldRegion> regions, FoldRegion region) {
-    for (int i = regions.size() - 1; i >= 0 ; i--) {
-      if (regions.get(i).getStartOffset() == region.getStartOffset()) {
-        regions.remove(i);
-      }
-      else {
+  private static boolean isNestedWithLast(List<FoldRegion> nested, @NotNull FoldRegion region) {
+    if (nested.isEmpty()) return true;
+    FoldRegion last = nested.get(nested.size() - 1);
+    return TextRange.containsRange(last, region) || TextRange.containsRange(region, last);
+  }
+
+  private static void addToNested(List<FoldRegion> nested, @NotNull FoldRegion region) {
+    // maintain invariant: nested list should be sorted by inclusion: from biggest to smallest and then first expanded then collapsed
+    for (int i=nested.size();i>=0;i--) {
+      FoldRegion prev = i==0 ? null : nested.get(i - 1);
+      if (prev == null ||
+          TextRange.containsRange(prev, region) && (!TextRange.containsRange(region, prev) || prev.isExpanded() || !region.isExpanded())) {
+        nested.add(i,region);
         break;
       }
+    }
+  }
+
+  // process and report regions which getEndOffset() == endOffset
+  private static void reportVisible(List<FoldRegion> nested,
+                                    int endOffset,
+                                    List<FoldRegion> outVisible,
+                                    List<FoldRegion> outDuplicatesToKill) {
+    if (nested.isEmpty()) return;
+    FoldRegion topCollapsed = null;
+
+    int start;
+    for (start = nested.size()-1; start>=0; start--) {
+      FoldRegion region = nested.get(start);
+      if (!region.isExpanded()) topCollapsed = region;
+
+      if (endOffset != region.getEndOffset()) {
+        break;
+      }
+    }
+
+    if (start != nested.size()-1) {
+      for (int i = start-1; i>=0; i--) {
+        FoldRegion region = nested.get(i);
+        if (!region.isExpanded()) topCollapsed = region;
+      }
+      boolean toReport = true;
+      for (int i = start+1; i < nested.size(); i++) {
+        FoldRegion region = nested.get(i);
+        FoldRegion next = i==nested.size()-1?null:nested.get(i+1);
+
+        // there can be multiple regions with the same offsets, collapsed and expanded.
+        // in that case dispose the expanded and preserve collapsed (to reduce flickering)
+        if (next != null && Segment.BY_START_OFFSET_THEN_END_OFFSET.compare(next, region) == 0) {
+          // regions are sorted by expanded, so expanded are first
+          outDuplicatesToKill.add(region);
+          if (topCollapsed == region) {
+            // should update topCollapsed or it will be disposed otherwise
+            topCollapsed = next.isExpanded() ? null : next;
+          }
+          continue;
+        }
+
+        // report all these top regions as visible, until we met collapsed
+        if (topCollapsed != null && topCollapsed != region) {
+          // no, all these regions are inside collapsed, nothing to report
+          toReport = false;
+        }
+        if (toReport) {
+          outVisible.add(region);
+          if (!region.isExpanded()) {
+            toReport = false;
+          }
+        }
+      }
+      nested.subList(start+1, nested.size()).clear();
     }
   }
 
@@ -158,34 +189,38 @@ abstract class FoldRegionsTree {
 
   void updateCachedOffsets() {
     CachedData cachedData = myCachedData;
-    updateCachedOffsets(cachedData.visibleRegions, cachedData.topLevelRegions);
+    updateCachedAndSortOffsets(cachedData.visibleRegions);
   }
   
-  private void updateCachedOffsets(FoldRegion[] visibleRegions, FoldRegion[] topLevelRegions) {
+  private CachedData updateCachedAndSortOffsets(FoldRegion[] visibleRegions) {
     if (!isFoldingEnabled()) {
-      return;
+      return null;
     }
     if (visibleRegions == null) {
-      rebuild();
-      return;
+      return rebuild();
     }
-    
+
+    List<FoldRegion> topLevel = new ArrayList<>(visibleRegions.length/2);
+
     Set<FoldRegion> distinctRegions = new THashSet<>(visibleRegions.length, OFFSET_BASED_HASHING_STRATEGY);
 
-    for (FoldRegion foldRegion : visibleRegions) {
-      if (!foldRegion.isValid() || !distinctRegions.add(foldRegion)) {
-        rebuild();
-        return;
+    for (FoldRegion region : visibleRegions) {
+      if (!region.isValid() || !distinctRegions.add(region)) {
+        return rebuild();
+      }
+      if (!region.isExpanded()) {
+        topLevel.add(region);
       }
     }
+    FoldRegion[] topLevelRegions = topLevel.toArray(new FoldRegion[topLevel.size()]);
+    Arrays.sort(topLevelRegions, BY_END_OFFSET);
 
-    int length = topLevelRegions.length;
-    int[] startOffsets = ArrayUtil.newIntArray(length);
-    int[] endOffsets = ArrayUtil.newIntArray(length);
-    int[] foldedLines = ArrayUtil.newIntArray(length);
+    int[] startOffsets = ArrayUtil.newIntArray(topLevelRegions.length);
+    int[] endOffsets = ArrayUtil.newIntArray(topLevelRegions.length);
+    int[] foldedLines = ArrayUtil.newIntArray(topLevelRegions.length);
     
     int sum = 0;
-    for (int i = 0; i < length; i++) {
+    for (int i = 0; i < topLevelRegions.length; i++) {
       FoldRegion region = topLevelRegions[i];
       startOffsets[i] = region.getStartOffset();
       endOffsets[i] = region.getEndOffset() - 1;
@@ -193,16 +228,15 @@ abstract class FoldRegionsTree {
       sum += document.getLineNumber(region.getEndOffset()) - document.getLineNumber(region.getStartOffset());
       foldedLines[i] = sum;
     }
-    
-    myCachedData = new CachedData(visibleRegions, topLevelRegions, startOffsets, endOffsets, foldedLines);
+
+    CachedData data = new CachedData(visibleRegions, topLevelRegions, startOffsets, endOffsets, foldedLines);
+    myCachedData = data;
+    return data;
   }
 
-  boolean addRegion(@NotNull FoldRegion range) {
-    int start = range.getStartOffset();
-    int end = range.getEndOffset();
-    int insertionIndex = myRegions.size();
-    for (int i = 0; i < myRegions.size(); i++) {
-      FoldRegion region = myRegions.get(i);
+  boolean checkIfValidToCreate(int start, int end) {
+    // check that range doesn't strictly overlaps other regions and is distinct from everything else
+    return myMarkerTree.processOverlappingWith(start, end, region->{
       int rStart = region.getStartOffset();
       int rEnd = region.getEndOffset();
       if (rStart < start) {
@@ -214,32 +248,34 @@ abstract class FoldRegionsTree {
         if (rEnd == end) {
           return false;
         }
-        else if (rEnd > end) {
-          insertionIndex = Math.min(insertionIndex, i);
-        }
       }
       else {
-        insertionIndex = Math.min(insertionIndex, i);
         if (rStart > end) {
-          break;
+          return true;
         }
         if (region.isValid() && rStart < end && end < rEnd) {
           return false;
         }
       }
-    }
+      return true;
+    });
+  }
 
-    myRegions.add(insertionIndex, range);
-    return true;
+  private CachedData ensureAvailableData() {
+    CachedData cachedData = myCachedData;
+    if (!cachedData.isAvailable()) {
+      return rebuild();
+    }
+    return cachedData;
   }
 
   @Nullable
   FoldRegion fetchOutermost(int offset) {
-    CachedData cachedData = myCachedData;
-    if (cachedData.isUnavailable()) return null;
+    if (!isFoldingEnabled()) return null;
+    CachedData cachedData = ensureAvailableData();
 
-    final int[] starts = cachedData.startOffsets;
-    final int[] ends = cachedData.endOffsets;
+    final int[] starts = cachedData.topStartOffsets;
+    final int[] ends = cachedData.topEndOffsets;
     if (starts == null || ends == null) {
       return null;
     }
@@ -251,7 +287,8 @@ abstract class FoldRegionsTree {
       int i = (start + end) / 2;
       if (offset < starts[i]) {
         end = i - 1;
-      } else if (offset > ends[i]) {
+      }
+      else if (offset > ends[i]) {
         start = i + 1;
       }
       else {
@@ -263,80 +300,84 @@ abstract class FoldRegionsTree {
   }
 
   FoldRegion[] fetchVisible() {
-    CachedData cachedData = myCachedData;
-    return cachedData.isUnavailable() ? FoldRegion.EMPTY_ARRAY : cachedData.visibleRegions;
+    if (!isFoldingEnabled()) return null;
+    CachedData cachedData = ensureAvailableData();
+
+    return cachedData.visibleRegions;
   }
 
   @Nullable
   FoldRegion[] fetchTopLevel() {
-    CachedData cachedData = myCachedData;
-    return cachedData.isUnavailable() ? null : cachedData.topLevelRegions;
+    if (!isFoldingEnabled()) return null;
+    CachedData cachedData = ensureAvailableData();
+    return cachedData.topLevelRegions;
   }
 
-  private static boolean contains(FoldRegion outer, FoldRegion inner) {
-    return outer.getStartOffset() <= inner.getStartOffset() && outer.getEndOffset() >= inner.getEndOffset();
-  }
-
-  static boolean contains(FoldRegion region, int offset) {
-    return region.getStartOffset() < offset && region.getEndOffset() > offset;
+  static boolean containsStrict(FoldRegion region, int offset) {
+    return region.getStartOffset() < offset && offset < region.getEndOffset();
   }
 
   @NotNull
   FoldRegion[] fetchCollapsedAt(int offset) {
-    if (myCachedData.isUnavailable()) return FoldRegion.EMPTY_ARRAY;
-    ArrayList<FoldRegion> allCollapsed = new ArrayList<>();
-    for (FoldRegion region : myRegions) {
-      if (!region.isExpanded() && contains(region, offset)) {
+    if (!isFoldingEnabled()) return FoldRegion.EMPTY_ARRAY;
+    List<FoldRegion> allCollapsed = new ArrayList<>();
+    myMarkerTree.processContaining(offset, region->{
+      if (!region.isExpanded() && containsStrict(region, offset)) {
         allCollapsed.add(region);
       }
-    }
-
+      return true;
+    });
     return toFoldArray(allCollapsed);
   }
 
   boolean intersectsRegion(int startOffset, int endOffset) {
     if (!isFoldingEnabled()) return true;
-    for (FoldRegion region : myRegions) {
-      boolean contains1 = contains(region, startOffset);
-      boolean contains2 = contains(region, endOffset);
-      if (contains1 != contains2) {
-        return true;
-      }
-    }
-    return false;
+    return !myMarkerTree.processAll(region -> {
+      boolean contains1 = containsStrict(region, startOffset);
+      boolean contains2 = containsStrict(region, endOffset);
+      return contains1 == contains2;
+    });
   }
 
+  @NotNull
   FoldRegion[] fetchAllRegions() {
-    if (myCachedData.isUnavailable()) return FoldRegion.EMPTY_ARRAY;
-
-    return toFoldArray(myRegions);
+    if (!isFoldingEnabled()) return FoldRegion.EMPTY_ARRAY;
+    List<FoldRegion> regions = new ArrayList<>();
+    myMarkerTree.processOverlappingWith(0, Integer.MAX_VALUE, new CommonProcessors.CollectProcessor<>(regions));
+    return toFoldArray(regions);
   }
 
-  void removeRegion(@NotNull FoldRegion range) {
-    myRegions.remove(range);
+  private void forEach(@NotNull Consumer<? super FoldRegion> consumer) {
+    myMarkerTree.processAll(region -> { consumer.consume(region); return true; });
   }
 
   int getFoldedLinesCountBefore(int offset) {
-    CachedData snapshot = myCachedData;
-    int idx = getLastTopLevelIndexBefore(snapshot, offset);
+    if (!isFoldingEnabled()) return 0;
+    CachedData cachedData = ensureAvailableData();
+    int idx = getLastTopLevelIndexBefore(cachedData, offset);
     if (idx == -1) return 0;
-    return snapshot.foldedLines[idx];
+    return cachedData.topFoldedLines[idx];
   }
 
   int getTotalNumberOfFoldedLines() {
-    CachedData snapshot = myCachedData;
-    int[] foldedLines = snapshot.foldedLines;
-    if (snapshot.isUnavailable() || foldedLines == null || foldedLines.length == 0) return 0;
+    if (!isFoldingEnabled()) return 0;
+    CachedData cachedData = ensureAvailableData();
+    int[] foldedLines = cachedData.topFoldedLines;
+
+    if (foldedLines == null || foldedLines.length == 0) return 0;
     return foldedLines[foldedLines.length - 1];
   }
 
   int getLastTopLevelIndexBefore(int offset) {
-    return getLastTopLevelIndexBefore(myCachedData, offset);
+    if (!isFoldingEnabled()) return -1;
+    CachedData cachedData = ensureAvailableData();
+    return getLastTopLevelIndexBefore(cachedData, offset);
   }
   
-  private static int getLastTopLevelIndexBefore(CachedData snapshot, int offset) {
-    int[] endOffsets = snapshot.endOffsets;
-    if (snapshot.isUnavailable() || endOffsets == null) return -1;
+  private static int getLastTopLevelIndexBefore(CachedData cachedData, int offset) {
+    int[] endOffsets = cachedData.topEndOffsets;
+
+    if (endOffsets == null) return -1;
 
     offset--; // end offsets are decremented in cache
     int start = 0;
@@ -359,146 +400,50 @@ abstract class FoldRegionsTree {
 
   @Nullable
   FoldRegion getRegionAt(int startOffset, int endOffset) {
-    int index = Collections.binarySearch(myRegions, new DummyFoldRegion(startOffset, endOffset), RangeMarker.BY_START_OFFSET);
-    return index < 0 ? null : myRegions.get(index);
+    FoldRegionImpl[] found = {null};
+    myMarkerTree.processOverlappingWith(startOffset, endOffset, region -> {
+      if (region.getStartOffset() == startOffset && region.getEndOffset() == endOffset) {
+        found[0] = region;
+        return false;
+      }
+      return true;
+    });
+    return found[0];
   }
 
   void clearDocumentRangesModificationStatus() {
-    for (FoldRegion region : myRegions) {
-      if (region instanceof FoldRegionImpl) {
-        ((FoldRegionImpl)region).resetDocumentRegionChanged();
-      }
-    }
+    forEach(region -> ((FoldRegionImpl)region).resetDocumentRegionChanged());
   }
 
-  private class CachedData implements Cloneable {
-    private final FoldRegion[] visibleRegions;
-    private final FoldRegion[] topLevelRegions;
-    private final int[] startOffsets;
-    private final int[] endOffsets;
-    private final int[] foldedLines;
+  private static class CachedData {
+    private final FoldRegion[] visibleRegions;  // all foldings outside collapsed regions
+    private final FoldRegion[] topLevelRegions; // all visible regions which are collapsed
+    private final int[] topStartOffsets;
+    private final int[] topEndOffsets;
+    private final int[] topFoldedLines;
 
     private CachedData() {
       visibleRegions = null;
       topLevelRegions = null;
-      startOffsets = null;
-      endOffsets = null;
-      foldedLines = null;
+      topStartOffsets = null;
+      topEndOffsets = null;
+      topFoldedLines = null;
     }
 
     private CachedData(@NotNull FoldRegion[] visibleRegions,
                        @NotNull FoldRegion[] topLevelRegions,
-                       @NotNull int[] startOffsets,
-                       @NotNull int[] endOffsets,
-                       @NotNull int[] foldedLines) {
+                       @NotNull int[] topStartOffsets,
+                       @NotNull int[] topEndOffsets,
+                       @NotNull int[] topFoldedLines) {
       this.visibleRegions = visibleRegions;
       this.topLevelRegions = topLevelRegions;
-      this.startOffsets = startOffsets;
-      this.endOffsets = endOffsets;
-      this.foldedLines = foldedLines;
+      this.topStartOffsets = topStartOffsets;
+      this.topEndOffsets = topEndOffsets;
+      this.topFoldedLines = topFoldedLines;
     }
 
-    private boolean isUnavailable() {
-      return !isFoldingEnabled() || visibleRegions == null;
-    }
-  }
-
-  private static class DummyFoldRegion implements FoldRegion {
-    private final int myStartOffset;
-    private final int myEndOffset;
-
-    private DummyFoldRegion(int startOffset, int endOffset) {
-      myStartOffset = startOffset;
-      myEndOffset = endOffset;
-    }
-
-    @Override
-    public boolean isExpanded() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void setExpanded(boolean expanded) {
-      throw new UnsupportedOperationException();
-    }
-
-    @NotNull
-    @Override
-    public String getPlaceholderText() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Editor getEditor() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Nullable
-    @Override
-    public FoldingGroup getGroup() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean shouldNeverExpand() {
-      throw new UnsupportedOperationException();
-    }
-
-    @NotNull
-    @Override
-    public Document getDocument() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public int getStartOffset() {
-      return myStartOffset;
-    }
-
-    @Override
-    public int getEndOffset() {
-      return myEndOffset;
-    }
-
-    @Override
-    public boolean isValid() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void setGreedyToLeft(boolean greedy) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void setGreedyToRight(boolean greedy) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean isGreedyToRight() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean isGreedyToLeft() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void dispose() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Nullable
-    @Override
-    public <T> T getUserData(@NotNull Key<T> key) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-      throw new UnsupportedOperationException();
+    private boolean isAvailable() {
+      return visibleRegions != null;
     }
   }
 }

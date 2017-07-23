@@ -19,10 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.execution.ExecutionException;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -43,6 +40,7 @@ import com.intellij.util.PathMappingSettings;
 import com.intellij.util.concurrency.BlockingSet;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.PyUtil;
@@ -135,6 +133,9 @@ public class PythonSdkUpdater implements StartupActivity {
           return;
         }
         ourScheduledToRefresh.remove(key);
+      }
+      if (project != null && project.isDisposed()) {
+        return;
       }
       ProgressManager.getInstance().run(new Task.Backgroundable(project, PyBundle.message("sdk.gen.updating.interpreter"), false) {
         @Override
@@ -278,6 +279,7 @@ public class PythonSdkUpdater implements StartupActivity {
       .addAll(filterRootPaths(sdk, evaluateSysPath(sdk), project))
       .addAll(getSkeletonsPaths(sdk))
       .addAll(getUserAddedPaths(sdk))
+      .addAll(PyTypeShed.INSTANCE.findRootsForSdk(sdk))
       .build();
   }
 
@@ -292,6 +294,7 @@ public class PythonSdkUpdater implements StartupActivity {
       .addAll(getRemoteSdkMappedPaths(sdk, project))
       .addAll(getSkeletonsPaths(sdk))
       .addAll(getUserAddedPaths(sdk))
+      .addAll(PyTypeShed.INSTANCE.findRootsForSdk(sdk))
       .build();
   }
 
@@ -329,7 +332,7 @@ public class PythonSdkUpdater implements StartupActivity {
    * Filters valid paths from an initial set of Python paths and returns them as virtual files.
    */
   @NotNull
-  private static List<VirtualFile> filterRootPaths(@NotNull Sdk sdk, @NotNull List<String> paths, @Nullable Project project) {
+  public static List<VirtualFile> filterRootPaths(@NotNull Sdk sdk, @NotNull List<String> paths, @Nullable Project project) {
     final PythonSdkAdditionalData pythonAdditionalData = PyUtil.as(sdk.getSdkAdditionalData(), PythonSdkAdditionalData.class);
     final Collection<VirtualFile> excludedPaths = pythonAdditionalData != null ? pythonAdditionalData.getExcludedPathFiles() :
                                                   Collections.emptyList();
@@ -420,6 +423,7 @@ public class PythonSdkUpdater implements StartupActivity {
     final SdkModificator modificatorToGetRoots = sdkModificator != null ? sdkModificator : sdk.getSdkModificator();
     final List<VirtualFile> currentSdkPaths = Arrays.asList(modificatorToGetRoots.getRoots(OrderRootType.CLASSES));
     if (forceCommit || !Sets.newHashSet(sdkPaths).equals(Sets.newHashSet(currentSdkPaths))) {
+      TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
       ApplicationManager.getApplication().invokeAndWait(() -> {
         final Sdk sdkInsideInvoke = PythonSdkType.findSdkByKey(key);
         final SdkModificator modificatorToCommit = sdkModificator != null ? sdkModificator :

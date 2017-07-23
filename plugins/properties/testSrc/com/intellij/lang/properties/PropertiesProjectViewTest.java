@@ -30,7 +30,7 @@ public class PropertiesProjectViewTest extends LightPlatformCodeInsightFixtureTe
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myStructure = new TestProjectTreeStructure(getProject(), getTestRootDisposable());
+    myStructure = new TestProjectTreeStructure(getProject(), myFixture.getTestRootDisposable());
   }
 
   @Override

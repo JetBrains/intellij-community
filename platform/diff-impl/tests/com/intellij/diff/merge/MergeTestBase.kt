@@ -16,13 +16,15 @@
 package com.intellij.diff.merge
 
 import com.intellij.diff.DiffContentFactoryImpl
-import com.intellij.diff.DiffTestCase
+import com.intellij.diff.HeavyDiffTestCase
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.merge.MergeTestBase.SidesState.*
 import com.intellij.diff.merge.TextMergeViewer.MyThreesideViewer
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
 import com.intellij.diff.util.TextDiffType
+import com.intellij.diff.util.ThreeSide
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -36,27 +38,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.util.ui.UIUtil
 
-abstract class MergeTestBase : DiffTestCase() {
-  private var projectFixture: IdeaProjectTestFixture? = null
-  private var project: Project? = null
-
-  override fun setUp() {
-    super.setUp()
-    projectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getTestName(true)).fixture
-    projectFixture!!.setUp()
-    project = projectFixture!!.project
-  }
-
-  override fun tearDown() {
-    projectFixture?.tearDown()
-    project = null
-    super.tearDown()
-  }
-
+abstract class MergeTestBase : HeavyDiffTestCase() {
   fun test1(left: String, base: String, right: String, f: TestBuilder.() -> Unit) {
     test(left, base, right, 1, f)
   }
@@ -114,10 +98,14 @@ abstract class MergeTestBase : DiffTestCase() {
     // Actions
     //
 
-    fun runActionByTitle(name: String): Boolean {
-      val action = actions.filter { name == it.templatePresentation.text }
-      assertTrue(action.size == 1, action.toString())
-      return runAction(action[0])
+    fun runApplyNonConflictsAction(side: ThreeSide) {
+      runActionById(side.select("Diff.ApplyNonConflicts.Left", "Diff.ApplyNonConflicts", "Diff.ApplyNonConflicts.Right")!!)
+    }
+
+    private fun runActionById(id: String): Boolean {
+      val text = ActionsBundle.actionText(id)
+      val action = actions.filter { text == it.templatePresentation.text }.single()
+      return runAction(action)
     }
 
     private fun runAction(action: AnAction): Boolean {
@@ -153,6 +141,19 @@ abstract class MergeTestBase : DiffTestCase() {
     fun Int.apply(side: Side, modifier: Boolean = false) {
       val change = change(this)
       command(change) { viewer.replaceChange(change, side, modifier) }
+    }
+
+    fun Int.resolve() {
+      val change = change(this)
+      command(change) {
+        assertTrue(change.isConflict && viewer.canApplyNonConflictedChange(change, ThreeSide.BASE))
+        viewer.applyNonConflictedChange(change, ThreeSide.BASE)
+      }
+    }
+
+    fun Int.canResolveConflict(): Boolean {
+      val change = change(this)
+      return viewer.canApplyNonConflictedChange(change, ThreeSide.BASE)
     }
 
     //
@@ -370,8 +371,8 @@ abstract class MergeTestBase : DiffTestCase() {
     LEFT, RIGHT, BOTH, NONE
   }
 
-  private data class ViewerState private constructor(private val content: CharSequence,
-                                                     private val changes: List<ViewerState.ChangeState>) {
+  private data class ViewerState constructor(private val content: CharSequence,
+                                             private val changes: List<ViewerState.ChangeState>) {
     companion object {
       fun recordState(viewer: MyThreesideViewer): ViewerState {
         val content = viewer.editor.document.immutableCharSequence

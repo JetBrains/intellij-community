@@ -14,14 +14,10 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 09-Jan-2007
- */
 package com.intellij.codeInspection.offlineViewer;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -34,10 +30,9 @@ import org.jetbrains.annotations.NotNull;
 public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
   private OfflineProblemDescriptorNode(RefEntity refEntity,
                                CommonProblemDescriptor descriptor,
-                               @NotNull InspectionToolWrapper toolWrapper,
                                @NotNull InspectionToolPresentation presentation,
                                @NotNull OfflineProblemDescriptor offlineDescriptor) {
-    super(refEntity, descriptor, toolWrapper, presentation, false, offlineDescriptor::getLine);
+    super(refEntity, descriptor, presentation, false, offlineDescriptor::getLine);
     if (descriptor == null) {
       setUserObject(offlineDescriptor);
     }
@@ -46,11 +41,9 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
 
   static OfflineProblemDescriptorNode create(@NotNull OfflineProblemDescriptor offlineDescriptor,
                                              @NotNull OfflineDescriptorResolveResult resolveResult,
-                                             @NotNull InspectionToolWrapper toolWrapper,
                                              @NotNull InspectionToolPresentation presentation) {
     return new OfflineProblemDescriptorNode(resolveResult.getResolvedEntity(),
                                             resolveResult.getResolvedDescriptor(),
-                                            toolWrapper,
                                             presentation,
                                             offlineDescriptor);
   }
@@ -65,7 +58,7 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
   protected String calculatePresentableName() {
     String presentableName = super.calculatePresentableName();
     return presentableName.isEmpty() && getUserObject() instanceof OfflineProblemDescriptor
-           ? StringUtil.notNullize(((OfflineProblemDescriptor)getUserObject()).getDescription())
+           ? ProblemDescriptorUtil.unescapeTags(StringUtil.notNullize(((OfflineProblemDescriptor)getUserObject()).getDescription())).trim()
            : presentableName;
   }
 
@@ -73,7 +66,7 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
   protected boolean calculateIsValid() {
     boolean isValid = super.calculateIsValid();
     if (!isValid) {
-      if (getDescriptor() == null && !(myToolWrapper instanceof LocalInspectionToolWrapper)) {
+      if (getDescriptor() == null && !(getToolWrapper() instanceof LocalInspectionToolWrapper)) {
         isValid = myElement != null && myElement.isValid();
       }
     }

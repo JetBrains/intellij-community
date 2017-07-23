@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 23-Oct-2008
- */
 package com.intellij.refactoring.util.duplicates;
 
 import org.jetbrains.annotations.NonNls;

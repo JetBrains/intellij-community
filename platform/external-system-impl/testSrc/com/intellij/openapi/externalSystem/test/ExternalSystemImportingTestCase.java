@@ -15,8 +15,6 @@
  */
 package com.intellij.openapi.externalSystem.test;
 
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
@@ -26,13 +24,15 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
+import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.*;
@@ -44,14 +44,12 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.BooleanFunction;
-import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -74,8 +72,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public abstract class ExternalSystemImportingTestCase extends ExternalSystemTestCase {
 
-  protected void assertModules(String... expectedNames) {
-    Module[] actual = ModuleManager.getInstance(myProject).getModules();
+  protected void assertModules(@NotNull Project project, String... expectedNames) {
+    Module[] actual = ModuleManager.getInstance(project).getModules();
     List<String> actualNames = new ArrayList<>();
 
     for (Module m : actual) {
@@ -83,6 +81,10 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     }
 
     assertUnorderedElementsAreEqual(actualNames, expectedNames);
+  }
+
+  protected void assertModules(String... expectedNames) {
+    assertModules(myProject, expectedNames);
   }
 
   protected void assertContentRoots(String moduleName, String... expectedRoots) {
@@ -157,7 +159,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     List<String> actual = new ArrayList<>();
     for (ContentEntry contentRoot : contentRoots) {
       for (SourceFolder f : contentRoot.getSourceFolders(rootType)) {
-        rootUrl = rootUrl == null ? VirtualFileManager.extractPath(contentRoot.getUrl()) : VirtualFileManager.extractPath(rootUrl);
+        rootUrl = VirtualFileManager.extractPath(rootUrl == null ? contentRoot.getUrl() : rootUrl);
         String folderUrl = VirtualFileManager.extractPath(f.getUrl());
         if (folderUrl.startsWith(rootUrl)) {
           int length = rootUrl.length() + 1;
@@ -210,7 +212,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   }
 
   private static String getAbsolutePath(String path) {
-    path = VfsUtil.urlToPath(path);
+    path = VfsUtilCore.urlToPath(path);
     path = PathUtil.getCanonicalPath(path);
     return FileUtil.toSystemIndependentName(path);
   }
@@ -359,26 +361,10 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
 
   protected void assertArtifacts(String... expectedNames) {
     final List<String> actualNames = ContainerUtil.map(
-      ArtifactManager.getInstance(myProject).getAllArtifactsIncludingInvalid(), new Function<Artifact, String>() {
-        @Override
-        public String fun(Artifact artifact) {
-          return artifact.getName();
-        }
-      });
+      ArtifactManager.getInstance(myProject).getAllArtifactsIncludingInvalid(),
+      (Function<Artifact, String>)artifact -> artifact.getName());
 
     assertUnorderedElementsAreEqual(actualNames, expectedNames);
-  }
-
-  protected Module getModule(final String name) {
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-    try {
-      Module m = ModuleManager.getInstance(myProject).findModuleByName(name);
-      assertNotNull("Module " + name + " not found", m);
-      return m;
-    }
-    finally {
-      accessToken.finish();
-    }
   }
 
   private ContentEntry getContentRoot(String moduleName) {
@@ -410,7 +396,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
   }
 
   protected void ignoreData(BooleanFunction<DataNode<?>> booleanFunction, final boolean ignored) {
-    final ExternalProjectInfo externalProjectInfo = ProjectDataManager.getInstance().getExternalProjectData(
+    final ExternalProjectInfo externalProjectInfo = ProjectDataManagerImpl.getInstance().getExternalProjectData(
       myProject, getExternalSystemId(), getCurrentExternalProjectSettings().getExternalProjectPath());
     assertNotNull(externalProjectInfo);
 

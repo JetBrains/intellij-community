@@ -26,12 +26,6 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 
 import javax.net.ssl.TrustManager;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/15/12
- * Time: 3:13 PM
- */
 public class QuicklyDisposableISVNAuthenticationManager extends QuicklyDisposableProxy<ISVNAuthenticationManager> implements ISVNAuthenticationManager {
   public QuicklyDisposableISVNAuthenticationManager(ISVNAuthenticationManager manager) {
     super(manager);

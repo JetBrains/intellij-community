@@ -1,4 +1,9 @@
 <root>
+    <item name='org.apache.velocity.anakia.AnakiaElement java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.anakia.AnakiaElement java.util.List getAttributes()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -34,6 +39,11 @@
     <item name='org.apache.velocity.anakia.AnakiaTask void setTemplatePath(java.io.File) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.velocity.anakia.AnakiaTask.Context Context()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.anakia.AnakiaTask.Context java.lang.String getName()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -48,10 +58,18 @@
         </annotation>
     </item>
     <item name='org.apache.velocity.anakia.Escape java.lang.String getText(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.velocity.anakia.Escape java.lang.String getText(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.anakia.NodeList NodeList()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.velocity.anakia.NodeList NodeList(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -69,6 +87,16 @@
     </item>
     <item name='org.apache.velocity.anakia.NodeList boolean equals(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.velocity.anakia.NodeList java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.anakia.NodeList java.util.Iterator iterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.velocity.anakia.NodeList java.util.List getList()'>
         <annotation name='org.jetbrains.annotations.Contract'>

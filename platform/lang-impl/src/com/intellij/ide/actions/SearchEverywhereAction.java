@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,6 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
@@ -86,10 +85,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -104,7 +100,6 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -120,6 +115,7 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -127,6 +123,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
@@ -134,6 +131,9 @@ import java.util.*;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
+import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 /**
  * @author Konstantin Bulenkov
@@ -149,12 +149,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private static final int MAX_SYMBOLS = 6;
   private static final int MAX_SETTINGS = 5;
   private static final int MAX_ACTIONS = 5;
-  private static final int MAX_STRUCTURE = 10;
   private static final int MAX_RECENT_FILES = 10;
   private static final int DEFAULT_MORE_STEP_COUNT = 15;
   public static final int MAX_SEARCH_EVERYWHERE_HISTORY = 50;
   public static final int MAX_TOP_HIT = 15;
-  private static final Logger LOG = Logger.getInstance("#" + SearchEverywhereAction.class.getName());
+  private static final Logger LOG = Logger.getInstance(SearchEverywhereAction.class);
+  private static final Border RENDERER_BORDER = JBUI.Borders.empty(1, 0);
+  private static final Border RENDERER_TITLE_BORDER = JBUI.Borders.emptyTop(3);
 
   private SearchEverywhereAction.MyListRenderer myRenderer;
   MySearchTextField myPopupField;
@@ -178,6 +179,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private volatile ActionCallback myCurrentWorker = ActionCallback.DONE;
   private int myHistoryIndex = 0;
   boolean mySkipFocusGain = false;
+
+  public static final Key<JBPopup> SEARCH_EVERYWHERE_POPUP = new Key<>("SearchEverywherePopup");
 
   static {
     ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_SEARCH_EVERYWHERE, KeyEvent.VK_SHIFT, -1, false);
@@ -209,7 +212,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   @Override
   public JComponent createCustomComponent(Presentation presentation) {
-    JPanel panel = JBUI.Panels.simplePanel();
+    JPanel panel = new BorderLayoutPanel() {
+      @Override
+      public Dimension getPreferredSize() {
+        return JBUI.size(25);
+      }
+    };
     panel.setOpaque(false);
 
     final JLabel label = new JBLabel(AllIcons.Actions.FindPlain) {
@@ -293,7 +301,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         final int i = myList.locationToIndex(e.getPoint());
         if (i != -1) {
           mySkipFocusGain = true;
-          getField().requestFocus();
+          getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(getField(), true));
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(() -> {
             myList.setSelectedIndex(i);
@@ -343,14 +351,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   private static String getShortcut() {
-    String shortcutText;
-    final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE);
+    Shortcut[] shortcuts = getActiveKeymapShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE).getShortcuts();
     if (shortcuts.length == 0) {
-      shortcutText = "Double " + (SystemInfo.isMac ? MacKeymapUtil.SHIFT : "Shift");
-    } else {
-      shortcutText = KeymapUtil.getShortcutsText(shortcuts);
+      return "Double" + (SystemInfo.isMac ? FontUtil.thinSpace() + MacKeymapUtil.SHIFT : " Shift");
     }
-    return shortcutText;
+    return KeymapUtil.getShortcutsText(shortcuts);
   }
 
   private void initSearchField(final MySearchTextField search) {
@@ -402,7 +407,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
         if (myNonProjectCheckBox == e.getOppositeComponent()) {
           mySkipFocusGain = true;
-          editor.requestFocus();
+          getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(editor, true));
           return;
         }
         onFocusLost();
@@ -497,7 +502,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       option.setOptionState(!option.isOptionEnabled());
       myList.revalidate();
       myList.repaint();
-      getField().requestFocus();
+      getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(getField(), true));
       return;
     }
 
@@ -689,7 +694,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }.installOn(settings);
     controls.add(settings, BorderLayout.EAST);
     myNonProjectCheckBox.setForeground(new JBColor(Gray._240, Gray._200));
-    myNonProjectCheckBox.setText("Include non-project items (" + getShortcut() + ")  ");
+    myNonProjectCheckBox.setText("<html>Include non-project items <b>" + getShortcut() + "</b>  </html>");
     if (!NonProjectScopeDisablerEP.isSearchInNonProjectDisabled()) {
       controls.add(myNonProjectCheckBox, BorderLayout.WEST);
     }
@@ -723,7 +728,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     registerDataProvider(panel, project);
     final RelativePoint showPoint;
     if (parent != null) {
-      int height = UISettings.getInstance().SHOW_MAIN_TOOLBAR ? 135 : 115;
+      int height = UISettings.getInstance().getShowMainToolbar() ? 135 : 115;
       if (parent instanceof IdeFrameImpl && ((IdeFrameImpl)parent).isInFullScreen()) {
         height -= 20;
       }
@@ -840,9 +845,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     Executor executor = ourShiftIsPressed.get() ? runExecutor : debugExecutor;
     RunConfiguration runConf = settings.getConfiguration();
-    if (executor == null || runConf == null) {
-      return null;
-    }
+    if (executor == null) return null;
     ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), runConf);
     if (runner == null) {
       executor = runExecutor == executor ? debugExecutor : runExecutor;
@@ -1029,6 +1032,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       private Accessible myAccessible;
       public MyAccessibleComponent(LayoutManager layout) {
         super(layout);
+        setOpaque(false);
       }
       void setAccessible(Accessible comp) {
         myAccessible = comp;
@@ -1064,12 +1068,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
 
       if (cmp == null) {
-        cmp = tryFileRenderer(matcher, list, value, index, isSelected, cellHasFocus);
+        cmp = tryFileRenderer(matcher, list, value, index, isSelected);
       }
 
       if (cmp == null) {
         if (value instanceof GotoActionModel.ActionWrapper) {
           cmp = myActionsRenderer.getListCellRendererComponent(list, new GotoActionModel.MatchedValue(((GotoActionModel.ActionWrapper)value), pattern), index, isSelected, isSelected);
+          if (cmp instanceof JComponent) ((JComponent)cmp).setBorder(null);
         } else {
           cmp = super.getListCellRendererComponent(list, value, index, isSelected, isSelected);
           final JPanel p = new JPanel(new BorderLayout());
@@ -1100,14 +1105,17 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         cmp.setBackground(UIUtil.getListBackground(isSelected));
         bg = cmp.getBackground();
       }
-      myMainPanel.setBorder(new CustomLineBorder(bg, 0, 0, 2, 0));
       String title = getModel().titleIndex.getTitle(index);
       myMainPanel.removeAll();
       if (title != null) {
         myTitle.setText(title);
         myMainPanel.add(createTitle(" " + title), BorderLayout.NORTH);
       }
-      myMainPanel.add(cmp, BorderLayout.CENTER);
+      JPanel wrapped = new JPanel(new BorderLayout());
+      wrapped.setBackground(bg);
+      wrapped.setBorder(RENDERER_BORDER);
+      wrapped.add(cmp, BorderLayout.CENTER);
+      myMainPanel.add(wrapped, BorderLayout.CENTER);
       if (cmp instanceof Accessible) {
         myMainPanel.setAccessible((Accessible)cmp);
       }
@@ -1120,9 +1128,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     @Nullable
-    private Component tryFileRenderer(Matcher matcher, JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      if (value instanceof VirtualFile && myProject != null) {
-        value = ((VirtualFile)value).isDirectory() ? PsiManager.getInstance(myProject).findDirectory((VirtualFile)value) : PsiManager.getInstance(myProject).findFile((VirtualFile)value);
+    private Component tryFileRenderer(Matcher matcher, JList list, Object value, int index, boolean isSelected) {
+      if (myProject != null && value instanceof VirtualFile) {
+        PsiManager psiManager = PsiManager.getInstance(myProject);
+        VirtualFile virtualFile = (VirtualFile)value;
+        value = !virtualFile.isValid() ? virtualFile :
+                virtualFile.isDirectory() ? psiManager.findDirectory(virtualFile) :
+                psiManager.findFile(virtualFile);
       }
 
       if (value instanceof PsiElement) {
@@ -1214,9 +1226,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           }
           append(text, attrs);
           final String id = ((OptionDescription)value).getConfigurableId();
-          final String name1 = myConfigurables.get(id);
-          if (name1 != null) {
-            setLocationString(name1);
+          String location = myConfigurables.get(id);
+          if (location == null) location = ((OptionDescription)value).getValue();
+          if (location != null) {
+            setLocationString(location);
           }
         }
         else if (value instanceof OptionsTopHitProvider) {
@@ -1360,6 +1373,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           updatePopup();
           check();
 
+          checkModelsUpToDate();
           runReadAction(() -> buildRunConfigurations(pattern), true);
           runReadAction(() -> buildClasses(pattern), true);
           runReadAction(() -> buildFiles(pattern), false);
@@ -1444,7 +1458,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         myActionProvider = createActionProvider();
       }
 
-      myActionProvider.filterElements(pattern, true, matched -> {
+      myActionProvider.filterElements(pattern, matched -> {
         check();
         Object object = matched.value;
         if (myListModel.contains(object)) return true;
@@ -1665,7 +1679,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                                   //some elements are non-physical like DB columns
                                   boolean isElementWithoutFile = element != null && element.getContainingFile() == null;
                                   boolean isFileInScope = virtualFile != null && (includeLibs || scope.accept(virtualFile));
-                                  if (isElementWithoutFile || isFileInScope) {
+                                  boolean isSpecialElement = element == null && virtualFile == null; //all Rider elements don't have any psi elements within
+                                  if (isElementWithoutFile || isFileInScope || isSpecialElement) {
                                     symbols.add(o);
                                   }
                                 }
@@ -2027,11 +2042,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               .setShowShadow(false)
               .setShowBorder(false)
               .createPopup();
+            project.putUserData(SEARCH_EVERYWHERE_POPUP, myPopup);
             //myPopup.setMinimumSize(new Dimension(myBalloon.getSize().width, 30));
             myPopup.getContent().setBorder(null);
             Disposer.register(myPopup, new Disposable() {
               @Override
               public void dispose() {
+                project.putUserData(SEARCH_EVERYWHERE_POPUP, null);
                 ApplicationManager.getApplication().executeOnPooledThread(() -> {
                   resetFields();
                   myNonProjectCheckBox.setSelected(false);
@@ -2214,12 +2231,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         final int extraHeight = pane.getHorizontalScrollBar().getHeight() + 1;
         sz = new Dimension(Math.min(getPopupMaxWidth(), Math.max(getField().getWidth(), sz.width + extraWidth)), Math.min(getPopupMaxWidth(), sz.height + extraHeight));
         sz.width += 20;
-        sz.height+=2;
       } else {
-        sz.width+=2;
-        sz.height+=2;
+        sz.width += 2;
       }
     }
+    sz.height += 2;
     sz.width = Math.max(sz.width, myPopup.getSize().width);
     myPopup.setSize(sz);
     if (myActionEvent != null && myActionEvent.getInputEvent() == null) {
@@ -2496,6 +2512,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     return JBUI.Panels.simplePanel(5, 10)
       .addToCenter(separatorComponent)
       .addToLeft(titleLabel)
+      .withBorder(RENDERER_TITLE_BORDER)
       .withBackground(UIUtil.getListBackground());
   }
 

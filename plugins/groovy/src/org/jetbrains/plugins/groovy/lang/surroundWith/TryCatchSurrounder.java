@@ -21,10 +21,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 22.05.2007
- */
 public class TryCatchSurrounder extends TrySurrounder {
   @Override
   public String getTemplateDescription() {

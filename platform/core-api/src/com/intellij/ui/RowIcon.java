@@ -28,7 +28,7 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
-public class RowIcon extends JBUI.AuxScalableJBIcon {
+public class RowIcon extends JBUI.UpdatingScalableJBIcon<RowIcon> {
   private final Alignment myAlignment;
 
   private int myWidth;
@@ -64,11 +64,13 @@ public class RowIcon extends JBUI.AuxScalableJBIcon {
     myScaledIcons = null;
   }
 
+  @NotNull
   @Override
   protected RowIcon copy() {
     return new RowIcon(this);
   }
 
+  @NotNull
   private Icon[] myScaledIcons() {
     if (myScaledIcons != null) {
       return myScaledIcons;

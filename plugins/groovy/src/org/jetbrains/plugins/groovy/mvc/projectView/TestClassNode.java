@@ -30,10 +30,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 
 import javax.swing.*;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 15.04.2009
- */
 public class TestClassNode extends ClassNode {
   private final Icon myMethodIcon;
 

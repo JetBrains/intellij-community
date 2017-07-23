@@ -19,10 +19,6 @@ import com.intellij.openapi.application.PluginPathManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxUnusedImportsInspection;
 
-/**
- * User: anna
- * Date: 1/10/13
- */
 public class JavaFXUnusedImportInspectionTest extends AbstractJavaFXTestCase {
 
   @Override

@@ -27,6 +27,7 @@ import java.util.List;
 
 public class FileStatusFactory {
   private static final FileStatusFactory ourInstance = new FileStatusFactory();
+  public static final String FILESTATUS_COLOR_KEY_PREFIX = "FILESTATUS_";
   private final List<FileStatus> myStatuses = new ArrayList<>();
 
   private FileStatusFactory() {
@@ -37,7 +38,7 @@ public class FileStatusFactory {
   }
 
   public synchronized FileStatus createFileStatus(@NonNls @NotNull String id, @NotNull String description, @Nullable Color color) {
-    FileStatusImpl result = new FileStatusImpl(id, ColorKey.createColorKey("FILESTATUS_" + id, color), description);
+    FileStatusImpl result = new FileStatusImpl(id, ColorKey.createColorKey(FILESTATUS_COLOR_KEY_PREFIX + id, color), description);
     myStatuses.add(result);
     return result;
   }

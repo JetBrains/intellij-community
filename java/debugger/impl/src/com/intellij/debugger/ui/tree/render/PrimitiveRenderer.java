@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,28 +16,18 @@
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.DebuggerContext;
-import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.settings.NodeRendererSettings;
-import com.intellij.debugger.ui.tree.DebuggerTreeNode;
-import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiExpression;
 import com.sun.jdi.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-/**
- * User: lex
- * Date: Sep 18, 2003
- * Time: 3:07:27 PM
- */
 public class PrimitiveRenderer extends NodeRendererImpl {
   public static final @NonNls String UNIQUE_ID = "PrimitiveRenderer";
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.PrimitiveRenderer");
@@ -115,19 +105,6 @@ public class PrimitiveRenderer extends NodeRendererImpl {
       HexRenderer.appendHexValue(value, buf);
       buf.append(')');
     }
-  }
-
-  public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-  }
-
-  public PsiExpression getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) {
-    LOG.assertTrue(false);
-    return null;
-  }
-
-  public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
-    return false;
   }
 
   public boolean isShowHexValue() {

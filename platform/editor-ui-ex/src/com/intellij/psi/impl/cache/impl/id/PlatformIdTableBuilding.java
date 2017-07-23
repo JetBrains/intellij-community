@@ -118,6 +118,7 @@ public abstract class PlatformIdTableBuilding {
     public Map<TodoIndexEntry, Integer> map(@NotNull FileContent inputData) {
       Map<TodoIndexEntry, Integer> result = ContainerUtil.newTroveMap();
       for (DataIndexer<TodoIndexEntry, Integer, FileContent> indexer : indexers) {
+        if (indexer == null) continue;
         for (Map.Entry<TodoIndexEntry, Integer> entry : indexer.map(inputData).entrySet()) {
           TodoIndexEntry key = entry.getKey();
           if (result.containsKey(key)) {

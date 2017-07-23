@@ -25,12 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: 20.02.2010
- * Time: 15:49:35
- */
 public class ConvertDictCompQuickFix implements LocalQuickFix {
   @NotNull
   @Override

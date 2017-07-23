@@ -15,8 +15,10 @@
  */
 package com.intellij.ide;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 public interface HelpIdProvider {
-  @Nullable String getHelpId();
+  @Nullable @NonNls
+  String getHelpId();
 }

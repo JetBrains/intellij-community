@@ -53,7 +53,7 @@ public class GradleUrlProvider implements SMTestLocator {
 
     final String methodName = extractMethodName(path);
     if (methodName == null) {
-      return Collections.<Location>singletonList(new PsiLocation<>(project, testClass));
+      return Collections.singletonList(new PsiLocation<>(project, testClass));
     }
 
     final PsiMethod[] methods = testClass.findMethodsByName(methodName, true);

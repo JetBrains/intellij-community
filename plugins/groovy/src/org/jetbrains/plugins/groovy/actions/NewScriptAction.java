@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,15 +37,15 @@ public class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFil
 
   public NewScriptAction() {
     super(GroovyBundle.message("newscript.menu.action.text"), GroovyBundle.message("newscript.menu.action.description"),
-          JetgroovyIcons.Groovy.Groovy_16x16, false);
+          JetgroovyIcons.Groovy.GroovyFile, false);
   }
 
   @Override
   protected void buildDialog(Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
     builder
       .setTitle(GroovyBundle.message("newscript.dlg.prompt"))
-      .addKind("Groovy script", JetgroovyIcons.Groovy.Groovy_16x16, GroovyTemplates.GROOVY_SCRIPT)
-      .addKind("GroovyDSL script", JetgroovyIcons.Groovy.Groovy_16x16, GroovyTemplates.GROOVY_DSL_SCRIPT);
+      .addKind("Groovy script", JetgroovyIcons.Groovy.GroovyFile, GroovyTemplates.GROOVY_SCRIPT)
+      .addKind("GroovyDSL script", JetgroovyIcons.Groovy.GroovyFile, GroovyTemplates.GROOVY_DSL_SCRIPT);
   }
 
   @Override

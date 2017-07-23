@@ -161,12 +161,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
 
   protected void clearAllBreakpoints() {
 
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        XDebuggerTestUtil.removeAllBreakpoints(getProject());
-      }
-    });
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> XDebuggerTestUtil.removeAllBreakpoints(getProject()));
   }
 
   /**
@@ -176,12 +171,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
    * @param line starting with 0
    */
   protected void toggleBreakpoint(final String file, final int line) {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        doToggleBreakpoint(file, line);
-      }
-    });
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> doToggleBreakpoint(file, line));
     setBreakpointSuspendPolicy(getProject(), line, myDefaultSuspendPolicy);
 
     addOrRemoveBreakpoint(file, line);
@@ -197,17 +187,14 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   }
 
   protected void toggleBreakpointInEgg(final String file, final String innerPath, final int line) {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        VirtualFile f = LocalFileSystem.getInstance().findFileByPath(file);
-        Assert.assertNotNull(f);
-        final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(f);
-        Assert.assertNotNull(jarRoot);
-        VirtualFile innerFile = jarRoot.findFileByRelativePath(innerPath);
-        Assert.assertNotNull(innerFile);
-        XDebuggerTestUtil.toggleBreakpoint(getProject(), innerFile, line);
-      }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      VirtualFile f = LocalFileSystem.getInstance().findFileByPath(file);
+      Assert.assertNotNull(f);
+      final VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(f);
+      Assert.assertNotNull(jarRoot);
+      VirtualFile innerFile = jarRoot.findFileByRelativePath(innerPath);
+      Assert.assertNotNull(innerFile);
+      XDebuggerTestUtil.toggleBreakpoint(getProject(), innerFile, line);
     });
 
     addOrRemoveBreakpoint(file, line);
@@ -327,16 +314,14 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
 
   @Override
   public void tearDown() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      public void run() {
-        try {
-          finishSession();
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        finishSession();
 
-          PyBaseDebuggerTask.super.tearDown();
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+        PyBaseDebuggerTask.super.tearDown();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
   }

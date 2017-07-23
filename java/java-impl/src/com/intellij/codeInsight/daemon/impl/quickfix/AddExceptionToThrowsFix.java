@@ -111,6 +111,7 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
     });
   }
 
+  @NotNull
   private static PsiMethod[] getSuperMethods(@NotNull PsiMethod targetMethod) {
     List<PsiMethod> result = new ArrayList<>();
     collectSuperMethods(targetMethod, result);

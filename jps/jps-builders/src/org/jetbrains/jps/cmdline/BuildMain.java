@@ -18,6 +18,7 @@ package org.jetbrains.jps.cmdline;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ConcurrencyUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -85,7 +86,7 @@ public class BuildMain {
       // IDEA-123132, let's try again
       for (int attempt = 0; attempt < 3; attempt++) {
         try {
-          ourEventLoopGroup = new NioEventLoopGroup(1, SharedThreadPool.getInstance());
+          ourEventLoopGroup = new NioEventLoopGroup(1, ConcurrencyUtil.newNamedThreadFactory("JPS event loop"));
           break;
         }
         catch (IllegalStateException e) {
@@ -229,21 +230,18 @@ public class BuildMain {
               final CmdlineRemoteProto.Message.ControllerMessage.FSEvent delta = controllerMessage.hasFsEvent()? controllerMessage.getFsEvent() : null;
               final BuildSession session = new BuildSession(mySessionId, channel, controllerMessage.getParamsMessage(), delta, ourPreloadedData);
               mySession = session;
-              SharedThreadPool.getInstance().executeOnPooledThread(new Runnable() {
-                @Override
-                public void run() {
-                  //noinspection finally
+              SharedThreadPool.getInstance().executeOnPooledThread(() -> {
+                //noinspection finally
+                try {
                   try {
-                    try {
-                      session.run();
-                    }
-                    finally {
-                      channel.close();
-                    }
+                    session.run();
                   }
                   finally {
-                    System.exit(0);
+                    channel.close();
                   }
+                }
+                finally {
+                  System.exit(0);
                 }
               });
             }

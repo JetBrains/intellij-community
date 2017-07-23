@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,12 +43,15 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -470,8 +473,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   @NotNull
   public static CodeFragmentFactory findAppropriateCodeFragmentFactory(final TextWithImports text, final PsiElement context) {
-    CodeFragmentFactory factory = ApplicationManager.getApplication().runReadAction(
-      (Computable<CodeFragmentFactory>)() -> getCodeFragmentFactory(context, text.getFileType()));
+    CodeFragmentFactory factory = ReadAction.compute(() -> getCodeFragmentFactory(context, text.getFileType()));
     return new CodeFragmentFactoryContextWrapper(factory);
   }
 
@@ -588,14 +590,47 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return new SigReader(s).getSignature();
   }
 
-  @NotNull
+  @Nullable
   public static List<Location> allLineLocations(Method method) {
     try {
       return method.allLineLocations();
     }
     catch (AbsentInformationException ignored) {
+      return null;
+    }
+  }
+
+  @Nullable
+  public static List<Location> allLineLocations(ReferenceType cls) {
+    try {
+      return cls.allLineLocations();
+    }
+    catch (AbsentInformationException ignored) {
+      return null;
+    }
+    catch (ObjectCollectedException ignored) {
       return Collections.emptyList();
     }
+  }
+
+  public static int getLineNumber(Location location, boolean zeroBased) {
+    try {
+      return location.lineNumber() - (zeroBased ? 1 : 0);
+    }
+    catch (InternalError | IllegalArgumentException e) {
+      return -1;
+    }
+  }
+
+  @Nullable
+  public static Method getMethod(Location location) {
+    try {
+      return location.method();
+    }
+    catch (IllegalArgumentException e) { // Invalid method id
+      LOG.info(e);
+    }
+    return null;
   }
 
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, double value) {
@@ -716,15 +751,31 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   @Nullable
-  public static XSourcePosition toXSourcePosition(@NotNull SourcePosition position) {
-    VirtualFile file = position.getFile().getVirtualFile();
-    if (file == null) {
-      file = position.getFile().getOriginalFile().getVirtualFile();
+  public static XSourcePosition toXSourcePosition(@Nullable SourcePosition position) {
+    if (position != null) {
+      VirtualFile file = position.getFile().getVirtualFile();
+      if (file == null) {
+        file = position.getFile().getOriginalFile().getVirtualFile();
+      }
+      if (file != null) {
+        return new JavaXSourcePosition(position, file);
+      }
     }
-    if (file == null) {
-      return null;
+    return null;
+  }
+
+  @Nullable
+  public static SourcePosition toSourcePosition(@Nullable XSourcePosition position, Project project) {
+    if (position != null) {
+      if (position instanceof JavaXSourcePosition) {
+        return ((JavaXSourcePosition)position).mySourcePosition;
+      }
+      PsiFile psiFile = getPsiFile(position, project);
+      if (psiFile != null) {
+        return SourcePosition.createFromLine(psiFile, position.getLine());
+      }
     }
-    return new JavaXSourcePosition(position, file);
+    return null;
   }
 
   private static class JavaXSourcePosition implements XSourcePosition, ExecutionPointHighlighter.HighlighterProvider {
@@ -763,6 +814,18 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     public TextRange getHighlightRange() {
       return SourcePositionHighlighter.getHighlightRangeFor(mySourcePosition);
     }
+  }
+
+  @Nullable
+  public static PsiFile getPsiFile(@Nullable XSourcePosition position, Project project) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    if (position != null) {
+      VirtualFile file = position.getFile();
+      if (file.isValid()) {
+        return PsiManager.getInstance(project).findFile(file);
+      }
+    }
+    return null;
   }
 
   /**
@@ -804,6 +867,24 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return !StringUtil.isEmpty(name) && name.startsWith("lambda$");
   }
 
+  public static boolean isLambda(@Nullable Method method) {
+    return method != null && isLambdaName(method.name());
+  }
+
+  public static final Comparator<Method> LAMBDA_ORDINAL_COMPARATOR = Comparator.comparingInt(m -> getLambdaOrdinal(m.name()));
+
+  public static int getLambdaOrdinal(@NotNull String name) {
+    int pos = name.lastIndexOf('$');
+    if (pos > -1) {
+      try {
+        return Integer.parseInt(name.substring(pos + 1));
+      }
+      catch (NumberFormatException ignored) {
+      }
+    }
+    return -1;
+  }
+
   public static List<PsiLambdaExpression> collectLambdas(@NotNull SourcePosition position, final boolean onlyOnTheLine) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     PsiFile file = position.getFile();
@@ -813,6 +894,9 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       return Collections.emptyList();
     }
     PsiElement element = position.getElementAt();
+    if (element == null) {
+      return Collections.emptyList();
+    }
     final TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
     do {
       PsiElement parent = element.getParent();
@@ -957,9 +1041,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return getContainingMethod(position.getElementAt());
   }
 
-  public static final Comparator<Method> LAMBDA_ORDINAL_COMPARATOR =
-    Comparator.comparingInt(m -> LambdaMethodFilter.getLambdaOrdinal(m.name()));
-
   public static void disableCollection(ObjectReference reference) {
     try {
       reference.disableCollection();
@@ -978,6 +1059,12 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
+  /**
+   * Provides mapping from decompiled file line number to the original source code line numbers
+   * @param psiFile decompiled file
+   * @param originalLine zero-based decompiled file line number
+   * @return zero-based source code line number
+   */
   public static int bytecodeToSourceLine(PsiFile psiFile, int originalLine) {
     VirtualFile file = psiFile.getVirtualFile();
     if (file != null) {
@@ -985,10 +1072,22 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       if (mapping != null) {
         int line = mapping.bytecodeToSource(originalLine + 1);
         if (line > -1) {
-          return line;
+          return line - 1;
         }
       }
     }
     return -1;
+  }
+
+  public static boolean isInLibraryContent(@Nullable VirtualFile file, @NotNull Project project) {
+    return ReadAction.compute(() -> {
+      if (file == null) {
+        return true;
+      }
+      else {
+        ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+        return projectFileIndex.isInLibraryClasses(file) || projectFileIndex.isInLibrarySource(file);
+      }
+    });
   }
 }

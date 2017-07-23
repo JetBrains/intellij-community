@@ -20,12 +20,6 @@ import org.tmatesoft.svn.core.internal.io.fs.FSRepository;
 import org.tmatesoft.svn.core.io.ISVNConnectionListener;
 import org.tmatesoft.svn.core.io.ISVNSession;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/2/12
- * Time: 7:30 PM
- */
 public class MockSvnRepository extends FSRepository {
   private long myCreationTime;
   private boolean mySessionWasClosed;

@@ -55,6 +55,10 @@ public class ProgramRunnerUtil {
   }
 
   public static void executeConfiguration(@NotNull final ExecutionEnvironment environment, boolean showSettings, boolean assignNewId) {
+    executeConfigurationAsync(environment, showSettings, assignNewId, null);
+  }
+
+  public static void executeConfigurationAsync(@NotNull final ExecutionEnvironment environment, boolean showSettings, boolean assignNewId, ProgramRunner.Callback callback) {
     if (ExecutorRegistry.getInstance().isStarting(environment)) {
       return;
     }
@@ -104,7 +108,7 @@ public class ProgramRunnerUtil {
             return;
           }
 
-          final String toolWindowId = environment.getExecutor().getToolWindowId();
+          final String toolWindowId = ExecutionManager.getInstance(project).getContentManager().getToolWindowIdByEnvironment(environment);
           ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
           if (toolWindowManager.canShowNotification(toolWindowId)) {
             //noinspection SSBasedInspection
@@ -115,7 +119,11 @@ public class ProgramRunnerUtil {
 
       }
 
-      environment.getRunner().execute(environment);
+      if (callback != null) {
+        environment.getRunner().execute(environment, callback);
+      } else {
+        environment.getRunner().execute(environment);
+      }
     }
     catch (ExecutionException e) {
       String name = runnerAndConfigurationSettings != null ? runnerAndConfigurationSettings.getName() : null;
@@ -128,7 +136,9 @@ public class ProgramRunnerUtil {
       if (name == null) {
         name = "<Unknown>";
       }
-      ExecutionUtil.handleExecutionError(project, environment.getExecutor().getToolWindowId(), name, e);
+      ExecutionUtil.handleExecutionError(project,
+                                         ExecutionManager.getInstance(project).getContentManager().getToolWindowIdByEnvironment(environment),
+                                         name, e);
     }
   }
 

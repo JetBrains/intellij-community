@@ -110,7 +110,7 @@ public abstract class Spacing {
    */
   public static Spacing createDependentLFSpacing(int minSpaces,
                                                  int maxSpaces,
-                                                 TextRange dependency,
+                                                 @NotNull TextRange dependency,
                                                  boolean keepLineBreaks,
                                                  int keepBlankLines)
   {
@@ -127,7 +127,7 @@ public abstract class Spacing {
    */
   public static Spacing createDependentLFSpacing(int minSpaces,
                                                  int maxSpaces,
-                                                 List<TextRange> dependency,
+                                                 @NotNull List<TextRange> dependency,
                                                  boolean keepLineBreaks,
                                                  int keepBlankLines)
   {

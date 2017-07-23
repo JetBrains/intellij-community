@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -222,5 +222,64 @@ public class ClassUtils {
     }
     final PsiClass parentClass = (PsiClass)parent;
     return !parentClass.isInterface();
+  }
+
+  /**
+   * Returns "double brace" initialization for given anonymous class.
+   *
+   * @param aClass anonymous class to extract the "double brace" initializer from
+   * @return "double brace" initializer or null if the class does not follow double brace initialization anti-pattern
+   */
+  @Nullable
+  public static PsiClassInitializer getDoubleBraceInitializer(PsiAnonymousClass aClass) {
+    final PsiClassInitializer[] initializers = aClass.getInitializers();
+    if (initializers.length != 1) return null;
+    final PsiClassInitializer initializer = initializers[0];
+    if (initializer.hasModifierProperty(PsiModifier.STATIC)) return null;
+    final PsiField[] fields = aClass.getFields();
+    if (fields.length != 0) return null;
+    final PsiMethod[] methods = aClass.getMethods();
+    if (methods.length != 0) return null;
+    final PsiClass[] innerClasses = aClass.getInnerClasses();
+    if (innerClasses.length != 0) return null;
+    final PsiJavaCodeReferenceElement reference = aClass.getBaseClassReference();
+    if (reference.resolve() == null) return null;
+    return initializer;
+  }
+
+  public static boolean isFinalClassWithDefaultEquals(@Nullable PsiClass aClass) {
+    if (aClass == null) {
+      return false;
+    }
+    if (!aClass.hasModifierProperty(PsiModifier.FINAL) && !hasOnlyPrivateConstructors(aClass)) {
+      return false;
+    }
+    final PsiMethod[] methods = aClass.findMethodsByName("equals", true);
+    for (PsiMethod method : methods) {
+      if (!MethodUtils.isEquals(method)) {
+        continue;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null || !CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public static boolean hasOnlyPrivateConstructors(PsiClass aClass) {
+    if (aClass == null) {
+      return false;
+    }
+    final PsiMethod[] constructors = aClass.getConstructors();
+    if (constructors.length == 0) {
+      return false;
+    }
+    for (PsiMethod constructor : constructors) {
+      if (!constructor.hasModifierProperty(PsiModifier.PRIVATE)) {
+        return false;
+      }
+    }
+    return true;
   }
 }

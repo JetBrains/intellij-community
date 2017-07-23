@@ -27,8 +27,6 @@ import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteMethodCalleeUsage
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceJavaDeleteUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -126,7 +124,7 @@ abstract class SafeDeleteJavaCalleeChooser extends JavaCallerChooser {
         return callees;
       }
       else {
-        return Collections.<PsiMethod>emptyList();
+        return Collections.emptyList();
       }
     }
 

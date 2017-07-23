@@ -7,10 +7,10 @@
     <option name="DEFAULT_COMPILER" value="Javac" />
     <option name="BUILD_PROCESS_HEAP_SIZE" value="1100" />
     <excludeFromCompile>
-      <file url="file://$PROJECT_DIR$/jps/jps-builders/src/org/jetbrains/jps/incremental/java/OptimizedFileManager.java" />
-      <file url="file://$PROJECT_DIR$/jps/jps-builders/src/org/jetbrains/jps/javac/OptimizedFileManager.java" />
-      <file url="file://$PROJECT_DIR$/jps/jps-builders/src/org/jetbrains/jps/javac/OptimizedFileManager17.java" />
+      <file url="file://$PROJECT_DIR$/jps/jps-builders-6/src/org/jetbrains/jps/javac/OptimizedFileManager.java" />
+      <file url="file://$PROJECT_DIR$/jps/jps-builders-6/src/org/jetbrains/jps/javac/OptimizedFileManager17.java" />
       <file url="file://$PROJECT_DIR$/java/java-tests/testSrc/com/intellij/index/IndexTestGenerator.scala" />
+      <file url="file://$PROJECT_DIR$/java/execution/jshell-frontend/src/com/intellij/execution/jshell/frontend/Main.java" />
     </excludeFromCompile>
     <resourceExtensions>
       <entry name=".+\.(properties|gif|png|jpeg|jpg|xml|dtd|tld|xsd|ft|html|template)" />
@@ -31,8 +31,8 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="java-runtime" target="1.1" />
-      <module name="junit_rt" target="1.1" />
+      <module name="java-runtime" target="1.2" />
+      <module name="junit_rt" target="1.2" />
     </bytecodeTargetLevel>
   </component>
   <component name="EclipseCompilerSettings">
@@ -44,6 +44,7 @@
     <option name="DEPRECATION" value="false" />
   </component>
   <component name="JavacSettings">
+    <option name="PREFER_TARGET_JDK_COMPILER" value="false"/>
     <option name="MAXIMUM_HEAP_SIZE" value="400" />
   </component>
 </project>

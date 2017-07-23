@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,8 +151,7 @@ public class StartupUtil {
    * Checks if the program can run under the JDK it was started with.
    */
   private static boolean checkJdkVersion() {
-    String jreCheck = System.getProperty("idea.jre.check");
-    if (jreCheck != null && "true".equals(jreCheck)) {
+    if ("true".equals(System.getProperty("idea.jre.check"))) {
       try {
         // try to find a class from tools.jar
         Class.forName("com.sun.jdi.Field", false, StartupUtil.class.getClassLoader());
@@ -169,18 +168,12 @@ public class StartupUtil {
         Main.showMessage("JDK Required", message, true);
         return false;
       }
-
-      if (StringUtil.containsIgnoreCase(System.getProperty("java.vm.name", ""), "OpenJDK") && !SystemInfo.isJavaVersionAtLeast("1.7")) {
-        String message = "OpenJDK 6 is not supported. Please use Oracle Java or newer OpenJDK.";
-        Main.showMessage("Unsupported JVM", message, true);
-        return false;
-      }
     }
-    jreCheck = System.getProperty("idea.64bit.check");
-    if (jreCheck != null && "true".equals(jreCheck)) {
+
+    if ("true".equals(System.getProperty("idea.64bit.check"))) {
       if (PlatformUtils.isCidr() && !SystemInfo.is64Bit) {
-          String message = "32-bit JVM is not supported. Please install 64-bit version.";
-          Main.showMessage("Unsupported JVM", message, true);
+        String message = "32-bit JVM is not supported. Please install 64-bit version.";
+        Main.showMessage("Unsupported JVM", message, true);
         return false;
       }
     }
@@ -331,12 +324,11 @@ public class StartupUtil {
   }
 
   private static void loadSystemLibraries(final Logger log) {
-    // load JNA and Snappy in own temp directory - to avoid collisions and work around no-exec /tmp
+    // load JNA in own temp directory - to avoid collisions and work around no-exec /tmp
     File ideTempDir = new File(PathManager.getTempPath());
     if (!(ideTempDir.mkdirs() || ideTempDir.exists())) {
       throw new RuntimeException("Unable to create temp directory '" + ideTempDir + "'");
     }
-
     if (System.getProperty("jna.tmpdir") == null) {
       System.setProperty("jna.tmpdir", ideTempDir.getPath());
     }
@@ -347,7 +339,7 @@ public class StartupUtil {
       JnaLoader.load(log);
     }
     catch (Throwable t) {
-      logError(log, "Unable to load JNA library", t);
+      log.error("Unable to load JNA library (OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION + ")", t);
     }
 
     if (SystemInfo.isWin2kOrNewer) {
@@ -368,11 +360,6 @@ public class StartupUtil {
       // WinP should not unpack .dll files into parent directory
       System.setProperty("winp.unpack.dll.to.parent.dir", "false");
     }
-  }
-
-  private static void logError(Logger log, String message, Throwable t) {
-    message = message + " (OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION + ")";
-    log.error(message, t);
   }
 
   private static void startLogging(final Logger log) {

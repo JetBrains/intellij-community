@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,14 +28,19 @@ import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.edt.GuiTask;
+import org.fest.swing.exception.ComponentLookupException;
+import org.fest.swing.exception.WaitTimedOutError;
 import org.fest.swing.timing.Condition;
-import org.fest.swing.timing.Pause;
 import org.fest.swing.timing.Timeout;
 import org.fest.swing.util.TextMatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.fest.swing.timing.Pause.pause;
@@ -49,8 +54,8 @@ public abstract class ToolWindowFixture {
   protected ToolWindowFixture(@NotNull final String toolWindowId, @NotNull final Project project, @NotNull Robot robot) {
     myToolWindowId = toolWindowId;
     myProject = project;
-    final Ref<ToolWindow> toolWindowRef = new Ref<ToolWindow>();
-    Pause.pause(new Condition("Find tool window with ID '" + toolWindowId + "'") {
+    final Ref<ToolWindow> toolWindowRef = new Ref<>();
+    pause(new Condition("Find tool window with ID '" + toolWindowId + "'") {
       @Override
       public boolean test() {
         ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId);
@@ -65,21 +70,31 @@ public abstract class ToolWindowFixture {
   @Nullable
   protected Content getContent(@NotNull final String displayName) {
     activateAndWaitUntilIsVisible();
-    final Ref<Content> contentRef = new Ref<Content>();
-    Pause.pause(new Condition("finding content '" + displayName + "'") {
-      @Override
-      public boolean test() {
-        Content[] contents = getContents();
-        for (Content content : contents) {
-          if (displayName.equals(content.getDisplayName())) {
-            contentRef.set(content);
-            return true;
+    final Ref<Content> contentRef = new Ref<>();
+    try {
+      pause(new Condition("finding content '" + displayName + "'") {
+        @Override
+        public boolean test() {
+          Content[] contents = getContents();
+          for (Content content : contents) {
+            if (displayName.equals(content.getDisplayName())) {
+              contentRef.set(content);
+              return true;
+            }
           }
+          return false;
         }
-        return false;
-      }
-    }, GuiTestUtil.SHORT_TIMEOUT);
+      }, GuiTestUtil.SHORT_TIMEOUT);
+    } catch (WaitTimedOutError e) {
+      throw new ComponentLookupException("Cannot find content with " + displayName);
+    }
     return contentRef.get();
+  }
+
+  @Nullable
+  protected Content getSelectedContent() {
+    activateAndWaitUntilIsVisible();
+    return myToolWindow.getContentManager().getSelectedContent();
   }
 
   @Nullable
@@ -89,7 +104,7 @@ public abstract class ToolWindowFixture {
     activateAndWaitUntilIsVisible(Timeout.timeout(budget));
     long revisedNow = System.currentTimeMillis();
     budget -= (revisedNow - now);
-    final Ref<Content> contentRef = new Ref<Content>();
+    final Ref<Content> contentRef = new Ref<>();
     pause(new Condition("finding content with display name " + displayName) {
       @Override
       public boolean test() {
@@ -118,8 +133,7 @@ public abstract class ToolWindowFixture {
     activateAndWaitUntilIsVisible(Timeout.timeout(budget));
     long revisedNow = System.currentTimeMillis();
     budget -= (revisedNow - now);
-    now = revisedNow;
-    final Ref<Content> contentRef = new Ref<Content>();
+    final Ref<Content> contentRef = new Ref<>();
     pause(new Condition("finding content matching " + displayNameMatcher.formattedValues()) {
       @Override
       public boolean test() {
@@ -177,7 +191,7 @@ public abstract class ToolWindowFixture {
       }
     });
 
-    Pause.pause(new Condition("Wait for ToolWindow '" + myToolWindowId + "' to be activated") {
+    pause(new Condition("Wait for ToolWindow '" + myToolWindowId + "' to be activated") {
       @Override
       public boolean test() {
         return callback.finished;
@@ -215,6 +229,21 @@ public abstract class ToolWindowFixture {
     });
   }
 
+  public void selectContent(String tabName) {
+    execute(new GuiTask() {
+      @Override
+      protected void executeInEDT() throws Throwable {
+        Stream<Content> contentStream = Arrays.stream(myToolWindow.getContentManager().getContents());
+        Optional<Content> contentOptional = contentStream.filter(content -> content.getTabName().equals(tabName)).findAny();
+        if (!contentOptional.isPresent()) throw new ComponentLookupException("Unable to find content with tab name: \"" + tabName +
+                                                                             "\" for ToolWindow with id: \"" + myToolWindowId + "\"");
+        Content content = contentOptional.get();
+        if(Objects.equals(myToolWindow.getContentManager().getSelectedContent(), content)) return; // no need to select already selected content
+        myToolWindow.getContentManager().setSelectedContent(content);
+      }
+    });
+  }
+
   public static void clickToolwindowButton(String toolWindowStripeButtonName, Robot robot){
     final StripeButton stripeButton = robot.finder().find(new GenericTypeMatcher<StripeButton>(StripeButton.class) {
       @Override
@@ -226,7 +255,7 @@ public abstract class ToolWindowFixture {
   }
 
   public static void showToolwindowStripes(Robot robot){
-    if (UISettings.getInstance().HIDE_TOOL_STRIPES) {
+    if (UISettings.getInstance().getHideToolStripes()) {
       final JLabel toolwindowsWidget = robot.finder().find(new GenericTypeMatcher<JLabel>(JLabel.class) {
         @Override
         protected boolean isMatching(@NotNull JLabel label) {
@@ -239,8 +268,7 @@ public abstract class ToolWindowFixture {
           return false;
         }
       });
-      if (toolwindowsWidget == null) return;
-      else {
+      if (toolwindowsWidget != null) {
         robot.click(toolwindowsWidget);
       }
     }

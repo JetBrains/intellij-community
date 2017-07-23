@@ -23,8 +23,10 @@ import com.intellij.facet.impl.ui.actions.AddFacetToModuleAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.ide.impl.FlattenModulesToggleAction;
 import com.intellij.ide.projectView.impl.ModuleGroup;
-import com.intellij.ide.projectView.impl.ModuleGroupUtil;
+import com.intellij.ide.projectView.impl.ModuleGroupingImplementation;
+import com.intellij.ide.projectView.impl.ModuleGroupingTreeHelper;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.NamePathComponent;
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
@@ -53,12 +55,12 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NullableComputable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformIcons;
@@ -69,18 +71,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 02-Jun-2006
- */
 public class ModuleStructureConfigurable extends BaseStructureConfigurable implements Place.Navigator {
   private static final Comparator<MyNode> NODE_COMPARATOR = (o1, o2) -> {
     final NamedConfigurable configurable1 = o1.getConfigurable();
@@ -97,13 +92,17 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     if (editableObject2 instanceof Module && editableObject1 instanceof String) return 1;
     if (editableObject1 instanceof Module && editableObject2 instanceof String) return -1;
 
+    if (editableObject2 instanceof Module && editableObject1 instanceof Facet) return 1;
+    if (editableObject1 instanceof Module && editableObject2 instanceof Facet) return -1;
+
     if (editableObject2 instanceof ModuleGroup && editableObject1 instanceof String) return 1;
     if (editableObject1 instanceof ModuleGroup && editableObject2 instanceof String) return -1;
 
     return 0;
   };
 
-  private boolean myPlainMode;
+  private boolean myHideModuleGroups;
+  private boolean myFlattenModules;
 
   private final ModuleManager myModuleManager;
 
@@ -151,7 +150,11 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     final ArrayList<AnAction> result = super.createActions(fromPopup);
     if (fromPopup) {
       result.add(Separator.getInstance());
-      result.add(new MyGroupAction());
+      result.add(new FlattenModulesToggleAction(myProject, () -> true, () -> myFlattenModules, (value) -> {
+        myFlattenModules = value;
+        regroupModules();
+      }));
+      result.add(new HideGroupsAction());
       addCollapseExpandActions(result);
     }
     return result;
@@ -167,7 +170,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   protected void loadTree() {
     createProjectNodes();
 
-    ((DefaultTreeModel)myTree.getModel()).reload();
+    getTreeModel().reload();
 
     myUiDisposed = false;
   }
@@ -183,7 +186,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   @Override
-  protected void updateSelection(@Nullable final NamedConfigurable configurable) {
+  protected void updateSelection(@Nullable NamedConfigurable configurable) {
     FacetStructureConfigurable.getInstance(myProject).disposeMultipleSettingsEditor();
     ApplicationManager.getApplication().assertIsDispatchThread();
     super.updateSelection(configurable);
@@ -204,7 +207,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   private void updateModuleEditorSelection(final NamedConfigurable configurable) {
-    if (configurable instanceof ModuleConfigurable){
+    if (configurable instanceof ModuleConfigurable) {
       final ModuleConfigurable moduleConfigurable = (ModuleConfigurable)configurable;
       final ModuleEditor editor = moduleConfigurable.getModuleEditor();
       if (editor != null) { //already deleted
@@ -217,32 +220,15 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
 
-
   private void createProjectNodes() {
-    final Map<ModuleGroup, MyNode> moduleGroup2NodeMap = new HashMap<>();
-    final Module[] modules = myModuleManager.getModules();
-    for (final Module module : modules) {
-      ModuleConfigurable configurable = new ModuleConfigurable(myContext.myModulesConfigurator, module, TREE_UPDATER);
-      final MyNode moduleNode = new MyNode(configurable);
-      boolean nodesAdded = myFacetEditorFacade.addFacetsNodes(module, moduleNode);
-      nodesAdded |= addNodesFromExtensions(module, moduleNode);
-      if (nodesAdded) {
-        myTree.setShowsRootHandles(true);
-      }
-      final String[] groupPath = myPlainMode ? null : myContext.myModulesConfigurator.getModuleModel().getModuleGroupPath(module);
-      if (groupPath == null || groupPath.length == 0){
-        myRoot.add(moduleNode);
-      }
-      else {
-        final MyNode moduleGroupNode = ModuleGroupUtil
-          .buildModuleGroupPath(new ModuleGroup(groupPath), myRoot, moduleGroup2NodeMap,
-                                parentChildRelation -> parentChildRelation.getParent().add(parentChildRelation.getChild()),
-                                moduleGroup -> {
-                                  final NamedConfigurable moduleGroupConfigurable = createModuleGroupConfigurable(moduleGroup);
-                                  return new MyNode(moduleGroupConfigurable, true);
-                                });
-        moduleGroupNode.add(moduleNode);
-      }
+    ModuleGrouper moduleGrouper = getModuleGrouper();
+    ModuleGroupingTreeHelper<Module, MyNode> helper = ModuleGroupingTreeHelper.forEmptyTree(!myHideModuleGroups && !myFlattenModules,
+                                                                                    ModuleGroupingTreeHelper.createDefaultGrouping(moduleGrouper),
+                                                                                    ModuleStructureConfigurable::createModuleGroupNode,
+                                                                                    m -> createModuleNode(m, moduleGrouper), getNodeComparator());
+    helper.createModuleNodes(Arrays.asList(myModuleManager.getModules()), myRoot, getTreeModel());
+    if (containsSecondLevelNodes(myRoot)) {
+      myTree.setShowsRootHandles(true);
     }
     sortDescendants(myRoot);
     if (myProject.isDefault()) {  //do not add modules node in case of template project
@@ -257,50 +243,74 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     //myProjectNode.add(myLevel2Nodes.get(LibraryTablesRegistrar.PROJECT_LEVEL));
   }
 
+  private static boolean containsSecondLevelNodes(TreeNode rootNode) {
+    int count = rootNode.getChildCount();
+    for (int i = 0; i < count; i++) {
+      TreeNode child = rootNode.getChildAt(i);
+      if (child.getChildCount() > 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @NotNull
+  private ModuleNode createModuleNode(Module module, ModuleGrouper moduleGrouper) {
+    ModuleConfigurable configurable = new ModuleConfigurable(myContext.myModulesConfigurator, module, TREE_UPDATER, moduleGrouper);
+    List<String> groupPath = moduleGrouper.getModuleAsGroupPath(module);
+    ModuleNode node = new ModuleNode(configurable, groupPath != null ? new ModuleGroup(groupPath) : null);
+    myFacetEditorFacade.addFacetsNodes(module, node);
+    addNodesFromExtensions(module, node);
+    return node;
+  }
+
+  @NotNull
+  private static MyNode createModuleGroupNode(ModuleGroup moduleGroup) {
+    final NamedConfigurable moduleGroupConfigurable = new TextConfigurable<>(moduleGroup, moduleGroup.toString(),
+                                                                             ProjectBundle.message("module.group.banner.text", moduleGroup.toString()),
+                                                                             ProjectBundle.message("project.roots.module.groups.text"),
+                                                                             PlatformIcons.CLOSED_MODULE_GROUP_ICON);
+    return new ModuleGroupNodeImpl(moduleGroupConfigurable, moduleGroup);
+  }
+
   private void addRootNodesFromExtensions(final MyNode root, final Project project) {
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
       extension.addRootNodes(root, project, TREE_UPDATER);
     }
   }
 
-  private boolean addNodesFromExtensions(final Module module, final MyNode moduleNode) {
-    boolean nodesAdded = false;
+  private void addNodesFromExtensions(final Module module, final MyNode moduleNode) {
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
-      nodesAdded |= extension.addModuleNodeChildren(module, moduleNode, TREE_UPDATER);
+      extension.addModuleNodeChildren(module, moduleNode, TREE_UPDATER);
     }
-    return nodesAdded;
   }
 
-  public boolean updateProjectTree(final Module[] modules, final ModuleGroup group) {
+  public boolean updateProjectTree(final Module[] modules) {
     if (myRoot.getChildCount() == 0) return false; //isn't visible
-    final MyNode [] nodes = new MyNode[modules.length];
-    int i = 0;
+    List<Pair<MyNode, Module>> nodes = new ArrayList<>(modules.length);
     for (Module module : modules) {
       MyNode node = findModuleNode(module);
       LOG.assertTrue(node != null, "Module " + module.getName() + " is not in project.");
-      node.removeFromParent();
-      nodes[i ++] = node;
+      nodes.add(Pair.create(node, module));
     }
-    for (final MyNode moduleNode : nodes) {
-      final String[] groupPath = myPlainMode
-                                 ? null
-                                 : group != null ? group.getGroupPath() : null;
-      if (groupPath == null || groupPath.length == 0){
-        myRoot.add(moduleNode);
-      } else {
-        final MyNode moduleGroupNode = ModuleGroupUtil
-          .updateModuleGroupPath(new ModuleGroup(groupPath), myRoot, group1 -> findNodeByObject(myRoot, group1), parentChildRelation -> parentChildRelation.getParent().add(parentChildRelation.getChild()), moduleGroup -> {
-            final NamedConfigurable moduleGroupConfigurable = createModuleGroupConfigurable(moduleGroup);
-            return new MyNode(moduleGroupConfigurable, true);
-          });
-        moduleGroupNode.add(moduleNode);
-      }
-      Module module = (Module)moduleNode.getConfigurable().getEditableObject();
-      myFacetEditorFacade.addFacetsNodes(module, moduleNode);
-      addNodesFromExtensions(module, moduleNode);
-    }
-    sortDescendants(myRoot);
+    ModuleGroupingTreeHelper<Module, MyNode> helper = createGroupingHelper();
+    helper.moveModuleNodesToProperGroup(nodes, myRoot, getTreeModel(), myTree);
     return true;
+  }
+
+  private DefaultTreeModel getTreeModel() {
+    return (DefaultTreeModel)myTree.getModel();
+  }
+
+  @NotNull
+  private ModuleGroupingTreeHelper<Module, MyNode> createGroupingHelper() {
+    ModuleGrouper grouper = getModuleGrouper();
+    ModuleGroupingImplementation<Module> grouping = ModuleGroupingTreeHelper.createDefaultGrouping(grouper);
+    return ModuleGroupingTreeHelper.forTree(myRoot, (node) -> node instanceof ModuleGroupNode ? ((ModuleGroupNode)node).getModuleGroup() : null,
+                                            (node) -> node instanceof ModuleNode ? ((ModuleNode)node).getModule() : null,
+                                            !myHideModuleGroups && !myFlattenModules,
+                                            grouping, ModuleStructureConfigurable::createModuleGroupNode,
+                                            module -> createModuleNode(module, grouper), getNodeComparator());
   }
 
   @Override
@@ -323,7 +333,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           if (node != null) {
             final TreeNode parent = node.getParent();
             node.removeFromParent();
-            ((DefaultTreeModel)myTree.getModel()).reload(parent);
+            getTreeModel().reload(parent);
           }
           myContext.getDaemonAnalyzer().removeElement(new LibraryProjectStructureElement(myContext, library));
         }
@@ -395,7 +405,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   @Override
   public void dispose() {}
 
-
+  @NotNull
   @Override
   public JComponent createComponent() {
     return new MyDataProviderWrapper(super.createComponent());
@@ -427,7 +437,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return "reference.settingsdialog.project.structure.module";
   }
 
-  public ActionCallback selectOrderEntry(@NotNull final Module module, @Nullable final OrderEntry orderEntry) {
+  public ActionCallback selectOrderEntry(@NotNull Module module, @Nullable OrderEntry orderEntry) {
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
       final ActionCallback callback = extension.selectOrderEntry(module, orderEntry);
       if (callback != null) {
@@ -457,6 +467,10 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return r != null ? result.doWhenDone(r) : result;
   }
 
+  private ModuleGrouper getModuleGrouper() {
+    return ModuleGrouper.instanceFor(myProject, myContext.myModulesConfigurator.getModuleModel());
+  }
+
 
   public static ModuleStructureConfigurable getInstance(final Project project) {
     return ServiceManager.getService(project, ModuleStructureConfigurable.class);
@@ -470,7 +484,8 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     if (myContext.myModulesConfigurator != null) {
       final ModifiableModuleModel model = myContext.myModulesConfigurator.getModuleModel();
       return model.getModules();
-    } else {
+    }
+    else {
       return myModuleManager.getModules();
     }
   }
@@ -492,15 +507,13 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   public void addLibraryOrderEntry(final Module module, final Library library) {
-    Component parent = WindowManager.getInstance().suggestParentWindow(module.getProject());
-
     final ModuleEditor moduleEditor = myContext.myModulesConfigurator.getModuleEditor(module);
     LOG.assertTrue(moduleEditor != null, "Current module editor was not initialized");
     final ModifiableRootModel modelProxy = moduleEditor.getModifiableRootModelProxy();
     final OrderEntry[] entries = modelProxy.getOrderEntries();
     for (OrderEntry entry : entries) {
       if (entry instanceof LibraryOrderEntry && Comparing.strEqual(entry.getPresentableName(), library.getName())) {
-        if (Messages.showYesNoDialog(parent,
+        if (Messages.showYesNoDialog(module.getProject(),
                                      ProjectBundle.message("project.roots.replace.library.entry.message", entry.getPresentableName()),
                                      ProjectBundle.message("project.roots.replace.library.entry.title"),
                                      Messages.getInformationIcon()) == Messages.YES) {
@@ -537,7 +550,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   private void addModuleNode(final Module module) {
-    final MyNode node = new MyNode(new ModuleConfigurable(myContext.myModulesConfigurator, module, TREE_UPDATER));
     final TreePath selectionPath = myTree.getSelectionPath();
     MyNode parent = null;
     if (selectionPath != null) {
@@ -546,20 +558,19 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       if (o instanceof ModuleGroup) {
         myContext.myModulesConfigurator.getModuleModel().setModuleGroupPath(module, ((ModuleGroup)o).getGroupPath());
         parent = selected;
-      } else if (o instanceof Module) { //create near selected
+      }
+      else if (o instanceof Module) { //create near selected
         final ModifiableModuleModel modifiableModuleModel = myContext.myModulesConfigurator.getModuleModel();
         final String[] groupPath = modifiableModuleModel.getModuleGroupPath((Module)o);
         if (groupPath != null) {
           modifiableModuleModel.setModuleGroupPath(module, groupPath);
-          parent = findNodeByObject(myRoot, new ModuleGroup(groupPath));
+          parent = findNodeByObject(myRoot, new ModuleGroup(Arrays.asList(groupPath)));
         }
       }
     }
     if (parent == null) parent = myRoot;
-    addNode(node, parent);
-    myFacetEditorFacade.addFacetsNodes(module, node);
-    addNodesFromExtensions(module, node);
-    ((DefaultTreeModel)myTree.getModel()).reload(parent);
+    MyNode node = createModuleNode(module, getModuleGrouper());
+    TreeUtil.insertNode(node, parent, getTreeModel(), getNodeComparator());
     selectNodeInTree(node);
     final ProjectStructureDaemonAnalyzer daemonAnalyzer = myContext.getDaemonAnalyzer();
     daemonAnalyzer.queueUpdate(new ModuleProjectStructureElement(myContext, module));
@@ -591,21 +602,16 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   @Nullable
   public Module getModule(final String moduleName) {
     if (moduleName == null) return null;
-    return (myContext != null && myContext.myModulesConfigurator != null) ? myContext.myModulesConfigurator.getModule(moduleName) : myModuleManager.findModuleByName(moduleName);
+    return (myContext != null && myContext.myModulesConfigurator != null)
+           ? myContext.myModulesConfigurator.getModule(moduleName)
+           : myModuleManager.findModuleByName(moduleName);
   }
 
   public StructureConfigurableContext getContext() {
     return myContext;
   }
 
-  private static TextConfigurable<ModuleGroup> createModuleGroupConfigurable(final ModuleGroup moduleGroup) {
-    return new TextConfigurable<>(moduleGroup, moduleGroup.toString(),
-                                  ProjectBundle.message("module.group.banner.text", moduleGroup.toString()),
-                                  ProjectBundle.message("project.roots.module.groups.text"),
-                                  PlatformIcons.CLOSED_MODULE_GROUP_ICON);
-  }
-
-  private boolean canBeCopiedByExtension(final NamedConfigurable configurable) {
+  private static boolean canBeCopiedByExtension(final NamedConfigurable configurable) {
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
       if (extension.canBeCopied(configurable)) {
         return true;
@@ -617,6 +623,71 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   private void copyByExtension(final NamedConfigurable configurable) {
     for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {
       extension.copy(configurable, TREE_UPDATER);
+    }
+  }
+
+  private class ModuleNode extends MyNode implements ModuleGroupNode {
+    private final ModuleGroup myModuleAsGroup;
+
+    public ModuleNode(@NotNull ModuleConfigurable configurable, @Nullable ModuleGroup moduleAsGroup) {
+      super(configurable);
+      myModuleAsGroup = moduleAsGroup;
+    }
+
+    public ModuleGroup getModuleGroup() {
+      return myModuleAsGroup;
+    }
+
+    @NotNull
+    @Override
+    public String getDisplayName() {
+      return myFlattenModules ? getModule().getName() : getModuleGrouper().getShortenedName(getModule());
+    }
+
+    private ModuleGrouper getModuleGrouper() {
+      return getConfigurable().getModuleGrouper();
+    }
+
+    @Override
+    public ModuleConfigurable getConfigurable() {
+      return (ModuleConfigurable)super.getConfigurable();
+    }
+
+    private Module getModule() {
+      return getConfigurable().getModule();
+    }
+
+    @Override
+    protected void reloadNode(DefaultTreeModel treeModel) {
+      boolean autoScrollWasEnabled = myAutoScrollEnabled;
+      try {
+        myAutoScrollEnabled = false;
+        ModuleGroupingTreeHelper<Module, MyNode> helper = createGroupingHelper();
+        MyNode newNode = helper.moveModuleNodeToProperGroup(this, getModule(), myRoot, treeModel, myTree);
+        treeModel.reload(newNode);
+      }
+      finally {
+        myAutoScrollEnabled = autoScrollWasEnabled;
+      }
+    }
+  }
+
+  private interface ModuleGroupNode extends MutableTreeNode {
+    @Nullable
+    ModuleGroup getModuleGroup();
+  }
+
+  private static class ModuleGroupNodeImpl extends MyNode implements ModuleGroupNode {
+    private final ModuleGroup myModuleGroup;
+
+    public ModuleGroupNodeImpl(@NotNull NamedConfigurable configurable, @NotNull ModuleGroup moduleGroup) {
+      super(configurable, true);
+      myModuleGroup = moduleGroup;
+    }
+
+    @Override
+    public ModuleGroup getModuleGroup() {
+      return myModuleGroup;
     }
   }
 
@@ -669,7 +740,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     @Override
     @Nullable
     public Object getData(@NonNls String dataId) {
-      if (DataKeys.MODULE_CONTEXT_ARRAY.is(dataId)){
+      if (LangDataKeys.MODULE_CONTEXT_ARRAY.is(dataId)) {
         final TreePath[] paths = myTree.getSelectionPaths();
         if (paths != null) {
           ArrayList<Module> modules = new ArrayList<>();
@@ -685,10 +756,10 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           return !modules.isEmpty() ? modules.toArray(new Module[modules.size()]) : null;
         }
       }
-      if (DataKeys.MODULE_CONTEXT.is(dataId)){
+      if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
         return getSelectedModule();
       }
-      if (LangDataKeys.MODIFIABLE_MODULE_MODEL.is(dataId)){
+      if (LangDataKeys.MODIFIABLE_MODULE_MODEL.is(dataId)) {
         return myContext.myModulesConfigurator.getModuleModel();
       }
 
@@ -696,21 +767,20 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
   }
 
+  private class HideGroupsAction extends ToggleAction implements DumbAware {
 
-  private class MyGroupAction extends ToggleAction implements DumbAware {
-
-    public MyGroupAction() {
+    public HideGroupsAction() {
       super("", "", AllIcons.ObjectBrowser.CompactEmptyPackages);
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull
+                       final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      String text = ProjectBundle.message("project.roots.plain.mode.action.text.disabled");
-      if (myPlainMode){
-        text = ProjectBundle.message("project.roots.plain.mode.action.text.enabled");
-      }
+      String text;
+      text = ProjectBundle
+        .message(myHideModuleGroups ? "project.roots.plain.mode.action.text.enabled" : "project.roots.plain.mode.action.text.disabled");
       presentation.setText(text);
       presentation.setDescription(text);
 
@@ -721,39 +791,25 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return myPlainMode;
+      return myHideModuleGroups;
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      myPlainMode = state;
-      DefaultMutableTreeNode selection = null;
-      final TreePath selectionPath = myTree.getSelectionPath();
-      if (selectionPath != null){
-        selection = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
-      }
-      final ModifiableModuleModel model = myContext.myModulesConfigurator.getModuleModel();
-      final Module[] modules = model.getModules();
-      for (Module module : modules) {
-        final String[] groupPath = model.getModuleGroupPath(module);
-        updateProjectTree(new Module[]{module}, groupPath != null ? new ModuleGroup(groupPath) : null);
-      }
-      if (state) {
-        removeModuleGroups();
-      }
-      if (selection != null){
-        TreeUtil.selectInTree(selection, true, myTree);
-      }
+      myHideModuleGroups = state;
+      regroupModules();
     }
+  }
 
-    private void removeModuleGroups() {
-      for(int i = myRoot.getChildCount() - 1; i >=0; i--){
-        final MyNode node = (MyNode)myRoot.getChildAt(i);
-        if (node.getConfigurable().getEditableObject() instanceof ModuleGroup){
-          node.removeFromParent();
-        }
-      }
-      ((DefaultTreeModel)myTree.getModel()).reload(myRoot);
+  private void regroupModules() {
+    DefaultMutableTreeNode selection = null;
+    final TreePath selectionPath = myTree.getSelectionPath();
+    if (selectionPath != null) {
+      selection = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
+    }
+    createGroupingHelper().moveAllModuleNodesToProperGroups(myRoot, getTreeModel());
+    if (selection != null) {
+      TreeUtil.selectInTree(selection, true, myTree);
     }
   }
 
@@ -762,7 +818,8 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return new AbstractAddGroup(ProjectBundle.message("add.new.header.text")) {
       @Override
       @NotNull
-      public AnAction[] getChildren(@Nullable final AnActionEvent e) {
+      public AnAction[] getChildren(@Nullable
+                                    final AnActionEvent e) {
 
         ArrayList<AnAction> result = new ArrayList<>();
 
@@ -827,8 +884,11 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
         try {
           final ModuleEditor moduleEditor = ((ModuleConfigurable)namedConfigurable).getModuleEditor();
           final String modulePresentation = IdeBundle.message("project.new.wizard.module.identification");
-          final NamePathComponent component = new NamePathComponent(IdeBundle.message("label.module.name"), IdeBundle.message("label.component.file.location", StringUtil.capitalize(modulePresentation)), IdeBundle.message("title.select.project.file.directory", modulePresentation),
-                                                                    IdeBundle.message("description.select.project.file.directory", StringUtil.capitalize(modulePresentation)), true,
+          final NamePathComponent component = new NamePathComponent(IdeBundle.message("label.module.name"), IdeBundle
+            .message("label.component.file.location", StringUtil.capitalize(modulePresentation)), IdeBundle
+                                                                      .message("title.select.project.file.directory", modulePresentation),
+                                                                    IdeBundle.message("description.select.project.file.directory",
+                                                                                      StringUtil.capitalize(modulePresentation)), true,
                                                                     false);
           final Module originalModule = moduleEditor.getModule();
           if (originalModule != null) {
@@ -846,7 +906,8 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
               return;
             }
             if (getModule(name) != null) {
-              Messages.showErrorDialog(ProjectBundle.message("module.0.already.exists.error.message", name), CommonBundle.message("title.error"));
+              Messages
+                .showErrorDialog(ProjectBundle.message("module.0.already.exists.error.message", name), CommonBundle.message("title.error"));
               return;
             }
 
@@ -856,10 +917,11 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
               return;
             }
             if (!ProjectWizardUtil
-               .createDirectoryIfNotExists(IdeBundle.message("directory.project.file.directory", modulePresentation), component.getPath(),
-                                           true)) {
-              Messages.showErrorDialog(ProjectBundle.message("path.0.is.invalid.error.message", component.getPath()), CommonBundle.message("title.error"));
-               return;
+              .createDirectoryIfNotExists(IdeBundle.message("directory.project.file.directory", modulePresentation), component.getPath(),
+                                          true)) {
+              Messages.showErrorDialog(ProjectBundle.message("path.0.is.invalid.error.message", component.getPath()),
+                                       CommonBundle.message("title.error"));
+              return;
             }
             dialogBuilder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
           });
@@ -926,7 +988,8 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       TreePath[] selectionPaths = myTree.getSelectionPaths();
       if (selectionPaths == null || selectionPaths.length != 1) {
         e.getPresentation().setEnabled(false);
-      } else {
+      }
+      else {
         final NamedConfigurable selectedConfigurable = getSelectedConfigurable();
         e.getPresentation().setEnabled(selectedConfigurable instanceof ModuleConfigurable || canBeCopiedByExtension(selectedConfigurable));
       }
@@ -964,5 +1027,4 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       return 0;
     }
   }
-
 }

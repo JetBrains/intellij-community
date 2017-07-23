@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SemKey<T extends SemElement> {
   private static final AtomicInteger counter = new AtomicInteger(0);
   private final String myDebugName;
-  private final SemKey<? super T>[] mySupers;
+  @NotNull private final SemKey<? super T>[] mySupers;
   private final List<SemKey> myInheritors = ContainerUtil.createEmptyCOWList();
   private final int myUniqueId;
 
@@ -54,6 +54,7 @@ public class SemKey<T extends SemElement> {
     }
   }
 
+  @NotNull
   public SemKey<? super T>[] getSupers() {
     return mySupers;
   }

@@ -113,6 +113,13 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
 
       TestFileStructure.delete(myWorkingDirectory.getVirtualFile());
     } finally {
+      myRealChangeListManager = null;
+      myRealCodeStyleManger = null;
+      myRealVcsContextFactory = null;
+      myMockChangeListManager = null;
+      myMockCodeStyleManager = null;
+      myMockPlainTextFormattingModelBuilder = null;
+      myMockPlainTextImportOptimizer = null;
       super.tearDown();
     }
   }

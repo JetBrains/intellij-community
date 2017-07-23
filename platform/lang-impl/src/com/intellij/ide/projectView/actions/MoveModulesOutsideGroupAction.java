@@ -30,9 +30,14 @@ public class MoveModulesOutsideGroupAction extends AnAction {
   }
 
   @Override
+  public void update(AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(e.getData(LangDataKeys.MODULE_CONTEXT_ARRAY) != null);
+  }
+
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
+    final Module[] modules = e.getRequiredData(LangDataKeys.MODULE_CONTEXT_ARRAY);
     MoveModulesToGroupAction.doMove(modules, null, dataContext);
   }
 }

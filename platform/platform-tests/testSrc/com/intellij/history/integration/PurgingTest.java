@@ -33,6 +33,12 @@ public class PurgingTest extends IntegrationTestCase {
     getVcs().getChangeListInTests().setIntervalBetweenActivities(2);
   }
 
+  @Override
+  protected void setUpInWriteAction() throws Exception {
+    Clock.setTime(0);
+    super.setUpInWriteAction();
+  }
+
   @Test
   public void testPurgeWithoutGapsBetweenChanges() {
     createChangesWithTimestamps(1, 2, 3);
@@ -51,7 +57,7 @@ public class PurgingTest extends IntegrationTestCase {
   public void testPurgeNothing() {
     createChangesWithTimestamps(1, 2, 3);
     getVcs().getChangeListInTests().purgeObsolete(10);
-    assertRemainedChangesTimestamps(3, 2, 1);
+    assertRemainedChangesTimestamps(3, 2, 1, 0);
   }
 
   @Test

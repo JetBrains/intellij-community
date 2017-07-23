@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,18 @@ import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.completion.CompletionMemory;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.resolve.CompletionParameterTypeInferencePolicy;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -37,7 +41,6 @@ import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +55,7 @@ import java.util.Set;
  * @author Maxim.Mossienko
  */
 public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabActionSupport<PsiExpressionList, Object, PsiExpression>, DumbAware {
-  private static final Set<Class> ourArgumentListAllowedParentClassesSet = ContainerUtil.<Class>newHashSet(
+  private static final Set<Class> ourArgumentListAllowedParentClassesSet = ContainerUtil.newHashSet(
     PsiMethodCallExpression.class, PsiNewExpression.class, PsiAnonymousClass.class, PsiEnumConstant.class);
 
   private static final Set<? extends Class> ourStopSearch = Collections.singleton(PsiMethod.class);
@@ -121,7 +124,46 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
   @Override
   public PsiExpressionList findElementForUpdatingParameterInfo(@NotNull final UpdateParameterInfoContext context) {
-    return findArgumentList(context.getFile(), context.getOffset(), context.getParameterListStart());
+    PsiExpressionList expressionList = findArgumentList(context.getFile(), context.getOffset(), context.getParameterListStart());
+    if (expressionList == null) return null;
+    Object[] candidates = context.getObjectsToView();
+    if (candidates == null || candidates.length == 0) return null;
+    Object currentMethodInfo = context.getHighlightedParameter();
+    if (currentMethodInfo == null) currentMethodInfo = candidates[0];
+    if (!(currentMethodInfo instanceof CandidateInfo)) return null;
+    PsiElement element = ((CandidateInfo)currentMethodInfo).getElement();
+    if (!(element instanceof PsiMethod)) return null;
+    
+    PsiMethod method = (PsiMethod)element;
+    PsiElement parent = expressionList.getParent();
+    int currentNumberOfParameters = expressionList.getExpressions().length;
+    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(context.getProject());
+    Document document = psiDocumentManager.getCachedDocument(context.getFile());
+    if ((context.getHighlightedParameter() != null || candidates.length == 1) && parent != null &&
+        document != null && psiDocumentManager.isCommitted(document) && 
+        isIncompatibleParameterCount(method, currentNumberOfParameters)) {
+      parent.putUserData(JavaMethodCallElement.COMPLETION_HINTS, null);
+    }
+    
+    String originalMethodName = method.getName();
+    PsiQualifiedReference currentMethodReference = null;
+    if (parent instanceof PsiMethodCallExpression && !method.isConstructor()) {
+      currentMethodReference = ((PsiMethodCallExpression)parent).getMethodExpression();
+    }
+    else if (parent instanceof PsiNewExpression) {
+      currentMethodReference = ((PsiNewExpression)parent).getClassReference();
+    }
+    else if (parent instanceof PsiAnonymousClass) {
+      currentMethodReference = ((PsiAnonymousClass)parent).getBaseClassReference();
+    }
+    return (currentMethodReference == null || originalMethodName.equals(currentMethodReference.getReferenceName())) ? expressionList : null;
+  }
+
+  private static boolean isIncompatibleParameterCount(@NotNull PsiMethod method, int numberOfParameters) {
+    int originalNumberOfParameters = method.getParameterList().getParametersCount();
+    return PsiImplUtil.isVarArgs(method) 
+           ? originalNumberOfParameters > 2 && numberOfParameters < originalNumberOfParameters - 1 
+           : originalNumberOfParameters != numberOfParameters && !(originalNumberOfParameters == 1 && numberOfParameters == 0);
   }
 
   @Override
@@ -137,7 +179,12 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
     Object[] candidates = context.getObjectsToView();
     PsiExpression[] args = o.getExpressions();
-    PsiElement realResolve = null;
+    PsiCall call = getCall(o);
+    PsiElement realResolve = call != null ? call.resolveMethod() : null;
+
+    PsiMethod chosenMethod = CompletionMemory.getChosenMethod(call);
+    CandidateInfo chosenInfo = null;
+    CandidateInfo completeMatch = null;
 
     for (int i = 0; i < candidates.length; i++) {
       CandidateInfo candidate = (CandidateInfo)candidates[i];
@@ -202,17 +249,23 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       }
 
       context.setUIComponentEnabled(i, enabled);
-      if (candidates.length > 1 &&
-          enabled &&
-          parms.length == args.length &&
-          isAssignableParametersBeforeGivenIndex(parms, args, args.length, substitutor)) {
-        if (realResolve == null) {
-          PsiCall call = getCall(o);
-          if (call != null) realResolve = call.resolveMethod();
-          if (realResolve == null) realResolve = PsiUtilCore.NULL_PSI_ELEMENT;
+      if (candidates.length > 1 && enabled) {
+        if (chosenMethod == method) {
+          chosenInfo = candidate;
         }
-        if (realResolve == PsiUtilCore.NULL_PSI_ELEMENT || realResolve == method) context.setHighlightedParameter(candidate);
+
+        if (parms.length == args.length && realResolve == method &&
+            isAssignableParametersBeforeGivenIndex(parms, args, args.length, substitutor)) {
+          completeMatch = candidate;
+        }
       }
+    }
+
+    if (chosenInfo != null) {
+      context.setHighlightedParameter(chosenInfo);
+    }
+    else if (completeMatch != null) {
+      context.setHighlightedParameter(completeMatch);
     }
   }
 
@@ -234,7 +287,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       PsiType parmType = parm.getType();
       PsiType argType = arg.getType();
       if (argType == null) continue;
-      if (parmType instanceof PsiEllipsisType && parmType.getArrayDimensions() == argType.getArrayDimensions() + 1) {
+      if (parmType instanceof PsiEllipsisType ) {
         parmType = ((PsiEllipsisType)parmType).getComponentType();
       }
       parmType = substitutor.substitute(parmType);
@@ -475,7 +528,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       if (element != null) {
         final PsiElement resolved = element.resolve();
         if (resolved instanceof PsiClass &&
-            (!JavaDocInfoGenerator.isDocumentedAnnotationType(resolved) ||
+            (!JavaDocInfoGenerator.isDocumentedAnnotationType((PsiClass)resolved) ||
              AnnotationTargetUtil.findAnnotationTarget((PsiClass)resolved, PsiAnnotation.TargetType.TYPE_USE) != null)) {
           continue;
         }

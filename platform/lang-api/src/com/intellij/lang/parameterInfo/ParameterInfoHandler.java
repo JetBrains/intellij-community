@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 public interface ParameterInfoHandler <ParameterOwner, ParameterType> {
   boolean couldShowInLookup();
   @Nullable Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context);
-  @Nullable Object[] getParametersForDocumentation(ParameterType p, ParameterInfoContext context);
 
   // Find element for parameter info should also set ItemsToShow in context and may set highlighted element
   @Nullable
@@ -36,11 +35,14 @@ public interface ParameterInfoHandler <ParameterOwner, ParameterType> {
   ParameterOwner findElementForUpdatingParameterInfo(@NotNull UpdateParameterInfoContext context);
   void updateParameterInfo(@NotNull final ParameterOwner parameterOwner, @NotNull UpdateParameterInfoContext context);
 
-  // Can be null if parameter info does not track parameter index
-  @Nullable
-  String getParameterCloseChars();
-  boolean tracksParameterIndex();
-
   // context.setEnabled / context.setupUIComponentPresentation
   void updateUI(ParameterType p, @NotNull ParameterInfoUIContext context);
+
+
+  // methods below are not currently used by IntelliJ platform code
+
+  @Nullable Object[] getParametersForDocumentation(ParameterType p, ParameterInfoContext context);
+  // Can be null if parameter info does not track parameter index
+  @Nullable String getParameterCloseChars();
+  boolean tracksParameterIndex();
 }

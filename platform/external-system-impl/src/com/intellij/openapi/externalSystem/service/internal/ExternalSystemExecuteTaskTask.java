@@ -17,6 +17,7 @@ package com.intellij.openapi.externalSystem.service.internal;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
@@ -34,7 +35,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Denis Zhdanov
@@ -42,26 +45,45 @@ import java.util.List;
  */
 public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
 
-  @NotNull private final List<ExternalTaskPojo> myTasksToExecute;
+  @NotNull private final List<String> myTasksToExecute;
   @Nullable private final String myVmOptions;
-  @Nullable private String myScriptParameters;
-  @Nullable private final String myDebuggerSetup;
+  @Nullable private String myArguments;
+  @Nullable private final String myJvmAgentSetup;
+  private final boolean myPassParentEnvs;
+  private final Map<String, String> myEnv;
 
+  public ExternalSystemExecuteTaskTask(@NotNull Project project,
+                                       @NotNull ExternalSystemTaskExecutionSettings settings,
+                                       @Nullable String jvmAgentSetup) throws IllegalArgumentException {
+    super(settings.getExternalSystemId(), ExternalSystemTaskType.EXECUTE_TASK, project, settings.getExternalProjectPath());
+    myTasksToExecute = ContainerUtilRt.newArrayList(settings.getTaskNames());
+    myVmOptions = settings.getVmOptions();
+    myArguments = settings.getScriptParameters();
+    myPassParentEnvs = settings.isPassParentEnvs();
+    myEnv = settings.getEnv();
+    myJvmAgentSetup = jvmAgentSetup;
+  }
+
+  /**
+   * @deprecated use {@link #ExternalSystemExecuteTaskTask(Project, ExternalSystemTaskExecutionSettings, String)}
+   */
   public ExternalSystemExecuteTaskTask(@NotNull ProjectSystemId externalSystemId,
                                        @NotNull Project project,
                                        @NotNull List<ExternalTaskPojo> tasksToExecute,
                                        @Nullable String vmOptions,
-                                       @Nullable String scriptParameters,
-                                       @Nullable String debuggerSetup) throws IllegalArgumentException {
+                                       @Nullable String arguments,
+                                       @Nullable String jvmAgentSetup) throws IllegalArgumentException {
     super(externalSystemId, ExternalSystemTaskType.EXECUTE_TASK, project, getLinkedExternalProjectPath(tasksToExecute));
-    myTasksToExecute = tasksToExecute;
+    myTasksToExecute = ContainerUtil.map(tasksToExecute, ExternalTaskPojo::getName);
     myVmOptions = vmOptions;
-    myScriptParameters = scriptParameters;
-    myDebuggerSetup = debuggerSetup;
+    myArguments = arguments;
+    myJvmAgentSetup = jvmAgentSetup;
+    myPassParentEnvs = true;
+    myEnv = Collections.emptyMap();
   }
 
   @NotNull
-  public List<ExternalTaskPojo> getTasksToExecute() {
+  public List<String> getTasksToExecute() {
     return myTasksToExecute;
   }
 
@@ -71,14 +93,15 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
   }
 
   @Nullable
-  public String getScriptParameters() {
-    return myScriptParameters;
+  public String getArguments() {
+    return myArguments;
   }
 
-  public void appendScriptParameters(@NotNull String scriptParameters) {
-    myScriptParameters = myScriptParameters == null ? scriptParameters : myScriptParameters + ' ' + scriptParameters;
+  public void appendArguments(@NotNull String arguments) {
+    myArguments = myArguments == null ? arguments : myArguments + ' ' + arguments;
   }
 
+  @Deprecated
   @NotNull
   private static String getLinkedExternalProjectPath(@NotNull Collection<ExternalTaskPojo> tasks) throws IllegalArgumentException {
     if (tasks.isEmpty()) {
@@ -118,12 +141,15 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
     
     RemoteExternalSystemFacade facade = manager.getFacade(getIdeProject(), getExternalProjectPath(), getExternalSystemId());
     RemoteExternalSystemTaskManager taskManager = facade.getTaskManager();
-    List<String> taskNames = ContainerUtilRt.map2List(myTasksToExecute, ExternalTaskPojo::getName);
-
     final List<String> vmOptions = parseCmdParameters(myVmOptions);
-    final List<String> scriptParametersList = parseCmdParameters(myScriptParameters);
+    final List<String> arguments = parseCmdParameters(myArguments);
+    settings
+      .withVmOptions(vmOptions)
+      .withArguments(arguments)
+      .withEnvironmentVariables(myEnv)
+      .passParentEnvs(myPassParentEnvs);
 
-    taskManager.executeTasks(getId(), taskNames, getExternalProjectPath(), settings, vmOptions, scriptParametersList, myDebuggerSetup);
+    taskManager.executeTasks(getId(), myTasksToExecute, getExternalProjectPath(), settings, myJvmAgentSetup);
   }
 
   @Override
@@ -136,6 +162,6 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
   }
 
   private static List<String> parseCmdParameters(@Nullable String cmdArgsLine) {
-    return cmdArgsLine != null ? ParametersListUtil.parse(cmdArgsLine) : ContainerUtil.<String>newArrayList();
+    return cmdArgsLine != null ? ParametersListUtil.parse(cmdArgsLine) : ContainerUtil.newArrayList();
   }
 }

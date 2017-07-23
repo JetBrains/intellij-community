@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,14 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.GlobalInspectionContext;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefPackage;
 import com.intellij.codeInspection.ui.ConventionOptionsPanel;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiPackageStatement;
-import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -76,12 +73,15 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
     if (!(refEntity instanceof RefPackage)) {
       return null;
     }
-    @NonNls final String name = refEntity.getName();
-    if ("default package".equals(name)) {
+    @NonNls final String name = StringUtil.getShortName(refEntity.getQualifiedName());
+    if (InspectionsBundle.message("inspection.reference.default.package").equals(name)) {
       return null;
     }
 
     final int length = name.length();
+    if (length == 0) {
+      return null;
+    }
     if (length < m_minLength) {
       final String errorString = InspectionGadgetsBundle.message("package.naming.convention.problem.descriptor.short", name);
       return new CommonProblemDescriptor[]{inspectionManager.createProblemDescriptor(errorString)};
@@ -120,13 +120,11 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
     if (m_maxLength > 0 && length > m_maxLength) {
       return false;
     }
-    if (HardcodedMethodConstants.SERIAL_VERSION_UID.equals(name)) {
-      return true;
-    }
     final Matcher matcher = m_regexPattern.matcher(name);
     return matcher.matches();
   }
 
+  @Override
   @Nullable
   public LocalInspectionTool getSharedLocalInspectionTool() {
     return new LocalPackageNamingConventionInspection(this);
@@ -176,7 +174,7 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
             index = text.indexOf('.', start);
           }
           final String lastName = text.substring(start);
-          if (!mySettingsDelegate.isValid(lastName)) {
+          if (!lastName.isEmpty() && !mySettingsDelegate.isValid(lastName)) {
             registerErrorAtOffset(reference, start, lastName.length(), lastName);
           }
         }

@@ -23,8 +23,6 @@ import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.components.impl.stores.StateStorageManager
-import com.intellij.openapi.components.impl.stores.StorageManagerListener
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.module.Module
@@ -42,7 +40,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.util.SingleAlarm
 import com.intellij.util.containers.MultiMap
 import gnu.trove.THashSet
-import org.jetbrains.annotations.TestOnly
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -92,7 +89,7 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
   private val changedFilesAlarm = SingleAlarm(restartApplicationOrReloadProjectTask, 300, this)
 
   init {
-    ApplicationManager.getApplication().messageBus.connect().subscribe(StateStorageManager.STORAGE_TOPIC, object : StorageManagerListener {
+    ApplicationManager.getApplication().messageBus.connect().subscribe(STORAGE_TOPIC, object : StorageManagerListener {
       override fun storageFileChanged(event: VFileEvent, storage: StateStorage, componentManager: ComponentManager) {
         if (event is VFilePropertyChangeEvent) {
           // ignore because doesn't affect content
@@ -149,7 +146,7 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
     }
   }
 
-  @TestOnly fun flushChangedAlarm() {
+  override fun flushChangedProjectFileAlarm() {
     changedFilesAlarm.flush()
   }
 

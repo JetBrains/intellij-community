@@ -1,12 +1,5 @@
 package com.intellij.dupLocator.treeHash;
 
-/**
-* Created by IntelliJ IDEA.
-* User: Eugene.Kudelevsky
-* Date: 15.05.2009
-* Time: 16:24:08
-* To change this template use File | Settings | File Templates.
-*/
 public class GroupNodeDescription {
   private final int myFilesCount;
   private final String myTitle;

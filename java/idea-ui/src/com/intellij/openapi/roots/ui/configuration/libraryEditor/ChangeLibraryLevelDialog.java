@@ -82,12 +82,12 @@ public class ChangeLibraryLevelDialog extends DialogWrapper {
     final String name = getLibraryName();
     if (name.isEmpty()) {
       if (!myAllowEmptyName) {
-        setErrorText("Library name is not specified");
+        setErrorText("Library name is not specified", myNameField);
       }
       return;
     }
     if (LibraryEditingUtil.libraryAlreadyExists(myModifiableModel, name)) {
-      setErrorText("Library '" + name + "' already exists");
+      setErrorText("Library '" + name + "' already exists", myNameField);
       return;
     }
     setErrorText(null);

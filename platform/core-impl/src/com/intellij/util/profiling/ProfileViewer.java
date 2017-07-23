@@ -23,9 +23,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * Created by Max Medvedev on 30/03/15
- */
 class ProfileViewer {
   private class Ref {
     private final String text;
@@ -34,7 +31,7 @@ class ProfileViewer {
 
     private int totalTime;
 
-    private final List<Occurrence> occurrences = new ArrayList<Occurrence>();
+    private final List<Occurrence> occurrences = new ArrayList<>();
 
     Ref(String text, int hashcode, String filename) {
       this.text = text;
@@ -68,7 +65,7 @@ class ProfileViewer {
     private int time;
     private String type;
 
-    private final List<Occurrence> subOccurrences = new ArrayList<Occurrence>();
+    private final List<Occurrence> subOccurrences = new ArrayList<>();
 
     void setData(String line) {
       String[] split = line.split(" :: ");
@@ -113,13 +110,13 @@ class ProfileViewer {
     }
   }
 
-  HashMap<Integer, Ref> map = new HashMap<Integer, Ref>();
+  HashMap<Integer, Ref> map = new HashMap<>();
 
   public static void main(String[] args) throws IOException {
     new ProfileViewer().run();
   }
   void run() throws IOException {
-    List<String> list = new ArrayList<String>();
+    List<String> list = new ArrayList<>();
     File dir = new File("/users/maxmedvedev/work/resolve_info");
 
     for (File file : dir.listFiles()) {
@@ -140,7 +137,7 @@ class ProfileViewer {
 
     Occurrence root = new Occurrence();
 
-    ArrayDeque<Occurrence> stack = new ArrayDeque<Occurrence>();
+    ArrayDeque<Occurrence> stack = new ArrayDeque<>();
     stack.push(root);
     int curSpaces = 0;
 
@@ -165,14 +162,9 @@ class ProfileViewer {
     }
 
 
-    List<Ref> refs = new ArrayList<Ref>(map.values());
+    List<Ref> refs = new ArrayList<>(map.values());
 
-    ContainerUtil.sort(refs, new Comparator<Ref>() {
-      @Override
-      public int compare(Ref ref1, Ref ref2) {
-        return ref2.totalTime - ref1.totalTime;
-      }
-    });
+    ContainerUtil.sort(refs, (ref1, ref2) -> ref2.totalTime - ref1.totalTime);
 
     int var = 1;
   }

@@ -87,11 +87,8 @@ public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain
       setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
       setChangesToDisplay(changes);
 
-      UiNotifyConnector.doWhenFirstShown(this, new Runnable() {
-        @Override
-        public void run() {
-          if (currentChange != null) select(Collections.singletonList(currentChange));
-        }
+      UiNotifyConnector.doWhenFirstShown(this, () -> {
+        if (currentChange != null) select(Collections.singletonList(currentChange));
       });
 
       myPopup = popup;
@@ -113,12 +110,9 @@ public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain
       Change change = getSelectedChanges().get(0);
       final int index = findSelectedStep(change);
       myPopup.get().cancel();
-      IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new Runnable() {
-        @Override
-        public void run() {
-          //noinspection unchecked
-          myOnSelected.consume(index);
-        }
+      IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(() -> {
+        //noinspection unchecked
+        myOnSelected.consume(index);
       });
     }
   }

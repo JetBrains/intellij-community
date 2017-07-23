@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,17 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -60,16 +61,14 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.ContainerEvent;
 import java.io.File;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-
-/**
- * Author: msk
- */
 public class EditorsSplitters extends IdePanePanel implements UISettingsListener, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorsSplitters");
   private static final String PINNED = "pinned";
@@ -92,6 +91,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     myManager = manager;
     myFocusWatcher = new MyFocusWatcher();
     setFocusTraversalPolicy(new MyFocusTraversalPolicy());
+    setTransferHandler(new MyTransferHandler());
     clear();
 
     if (createOwnDockableContainer) {
@@ -184,9 +184,9 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       res.setAttribute("split-orientation", splitter.getOrientation() ? "vertical" : "horizontal");
       res.setAttribute("split-proportion", Float.toString(splitter.getProportion()));
       final Element first = new Element("split-first");
-      first.addContent(writePanel(splitter.getFirstComponent()));
+      first.addContent(writePanel(splitter.getFirstComponent().getComponent(0)));
       final Element second = new Element("split-second");
-      second.addContent(writePanel(splitter.getSecondComponent()));
+      second.addContent(writePanel(splitter.getSecondComponent().getComponent(0)));
       res.addContent(first);
       res.addContent(second);
       return res;
@@ -235,7 +235,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   public void openFiles() {
     if (mySplittersElement != null) {
-      initializeProgress();
       final JPanel comp = myUIBuilder.process(mySplittersElement, getTopPanel());
       UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
         if (comp != null) {
@@ -252,13 +251,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
           }
         }
       });
-    }
-  }
-
-  private static void initializeProgress() {
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator != null) {
-      indicator.setText(IdeBundle.message("loading.editors"));
     }
   }
 
@@ -390,7 +382,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   public void trimToSize(final int editor_tab_limit) {
     for (final EditorWindow window : myWindows) {
-      window.trimToSize(editor_tab_limit, null, true);
+      window.trimToSize(editor_tab_limit, window.getSelectedFile(), true);
     }
   }
 
@@ -773,6 +765,24 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
   }
 
+  private final class MyTransferHandler extends TransferHandler {
+    private final FileDropHandler myFileDropHandler = new FileDropHandler(null);
+
+    @Override
+    public boolean importData(JComponent comp, Transferable t) {
+      if (myFileDropHandler.canHandleDrop(t.getTransferDataFlavors())) {
+        myFileDropHandler.handleDrop(t, myManager.getProject(), myCurrentWindow);
+        return true;
+      }
+      return false;
+    }
+
+    @Override
+    public boolean canImport(JComponent comp, DataFlavor[] transferFlavors) {
+      return myFileDropHandler.canHandleDrop(transferFlavors);
+    }
+  }
+
   private abstract static class ConfigTreeReader<T> {
     @Nullable
     public T process(@Nullable Element element, @Nullable T context) {
@@ -795,7 +805,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       final List<Element> children = new ArrayList<>(fileElements.size());
 
       // trim to EDITOR_TAB_LIMIT, ignoring CLOSE_NON_MODIFIED_FILES_FIRST policy
-      int toRemove = fileElements.size() - UISettings.getInstance().EDITOR_TAB_LIMIT;
+      int toRemove = fileElements.size() - UISettings.getInstance().getEditorTabLimit();
       for (Element fileElement : fileElements) {
         if (toRemove <= 0 || Boolean.valueOf(fileElement.getAttributeValue(PINNED)).booleanValue()) {
           children.add(fileElement);
@@ -846,8 +856,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
           final HistoryEntry entry = HistoryEntry.createLight(fileEditorManager.getProject(), historyElement);
           final VirtualFile virtualFile = entry.getFile();
           if (virtualFile == null) throw new InvalidDataException("No file exists: " + entry.getFilePointer().getUrl());
-          Document document = ApplicationManager.getApplication().runReadAction(
-            (Computable<Document>)() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);
+          Document document = ReadAction.compute(() -> virtualFile.isValid() ? FileDocumentManager.getInstance().getDocument(virtualFile) : null);
           final boolean isCurrentInTab = Boolean.valueOf(file.getAttributeValue(CURRENT_IN_TAB)).booleanValue();
           Boolean pin = Boolean.valueOf(file.getAttributeValue(PINNED));
           fileEditorManager.openFileImpl4(window, virtualFile, entry, false, false, pin, i);

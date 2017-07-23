@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.command.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.editor.Document;
@@ -69,7 +70,7 @@ abstract class UndoRedo {
   }
 
   private Set<DocumentReference> getDecRefs() {
-    return myEditor == null ? Collections.<DocumentReference>emptySet() : UndoManagerImpl.getDocumentReferences(myEditor);
+    return myEditor == null ? Collections.emptySet() : UndoManagerImpl.getDocumentReferences(myEditor);
   }
 
   protected abstract UndoRedoStacksHolder getStackHolder();
@@ -106,7 +107,7 @@ abstract class UndoRedo {
       if (!askUser()) return false;
     }
     else {
-      if (restore(getBeforeState())) {
+      if (restore(getBeforeState(), true)) {
         setBeforeState(new EditorAndState(myEditor, myEditor.getState(FileEditorStateLevel.UNDO)));
         return true;
       }
@@ -142,7 +143,7 @@ abstract class UndoRedo {
 
     performAction();
 
-    restore(getAfterState());
+    restore(getAfterState(), false);
 
     return true;
   }
@@ -194,17 +195,21 @@ abstract class UndoRedo {
   }
 
   private boolean askUser() {
-    String actionText = getActionName(myUndoableGroup.getCommandName());
+    final boolean[] isOk = new boolean[1];
+    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+      String actionText = getActionName(myUndoableGroup.getCommandName());
 
-    if (actionText.length() > 80) {
-      actionText = actionText.substring(0, 80) + "... ";
-    }
+      if (actionText.length() > 80) {
+        actionText = actionText.substring(0, 80) + "... ";
+      }
 
-    return Messages.showOkCancelDialog(myManager.getProject(), actionText + "?", getActionName(),
-                                       Messages.getQuestionIcon()) == Messages.OK;
+      isOk[0] = Messages.showOkCancelDialog(myManager.getProject(), actionText + "?", getActionName(),
+                                            Messages.getQuestionIcon()) == Messages.OK;
+    });
+    return isOk[0];
   }
 
-  private boolean restore(EditorAndState pair) {
+  private boolean restore(EditorAndState pair, boolean onlyIfDiffers) {
     if (myEditor == null ||
         !myEditor.isValid() || // editor can be invalid if underlying file is deleted during undo (e.g. after undoing scratch file creation)
         pair == null || pair.getEditor() == null) {
@@ -226,7 +231,7 @@ abstract class UndoRedo {
     // not possible to restore it. For example, it's not possible to
     // restore scroll proportion if editor doesn not have scrolling any more.
     FileEditorState currentState = myEditor.getState(FileEditorStateLevel.UNDO);
-    if (currentState.equals(pair.getState())) {
+    if (onlyIfDiffers && currentState.equals(pair.getState())) {
       return false;
     }
 

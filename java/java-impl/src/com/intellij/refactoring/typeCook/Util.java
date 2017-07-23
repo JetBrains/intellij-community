@@ -26,13 +26,6 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: 30.07.2003
- * Time: 18:57:30
- * To change this template use Options | File Templates.
- */
 public class Util {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeCook.Util");
 

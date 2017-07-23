@@ -1,5 +1,3 @@
-include 'student-python', 'course-creator-python'
-include "educational-core:student"
-project(":educational-core:student").projectDir = new File(rootDir, "../educational-core/student")
-include "educational-core:course-creator"
-project(":educational-core:course-creator").projectDir = new File(rootDir, "../educational-core/course-creator")
+include 'Edu-Python'
+include "educational-core"
+project(":educational-core").projectDir = new File(rootDir, "../educational-core")

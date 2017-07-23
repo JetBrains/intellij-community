@@ -23,14 +23,16 @@ import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.LocalFilePath
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.containers.HashMap
 import com.intellij.util.text.CharSequenceSubSequence
 import junit.framework.ComparisonFailure
+import junit.framework.TestCase
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 
-abstract class DiffTestCase : UsefulTestCase() {
+abstract class DiffTestCase : TestCase() {
   companion object {
     private val DEFAULT_CHAR_COUNT = 12
     private val DEFAULT_CHAR_TABLE: Map<Int, Char> = {
@@ -57,6 +59,8 @@ abstract class DiffTestCase : UsefulTestCase() {
     super.tearDown()
   }
 
+  fun getTestName() = UsefulTestCase.getTestName(name, true)
+
   //
   // Assertions
   //
@@ -75,6 +79,10 @@ abstract class DiffTestCase : UsefulTestCase() {
 
   fun assertEquals(expected: CharSequence?, actual: CharSequence?, message: String = "") {
     if (!StringUtil.equals(expected, actual)) throw ComparisonFailure(message, expected?.toString(), actual?.toString())
+  }
+
+  fun assertOrderedEquals(expected: Collection<*>, actual: Collection<*>, message: String = "") {
+    UsefulTestCase.assertOrderedEquals(message, actual, expected)
   }
 
   fun assertEqualsCharSequences(chunk1: CharSequence, chunk2: CharSequence, ignoreSpaces: Boolean, skipLastNewline: Boolean) {
@@ -108,6 +116,18 @@ abstract class DiffTestCase : UsefulTestCase() {
     }
   }
 
+  fun assertSetsEquals(expected: BitSet, actual: BitSet, message: String = "") {
+    val sb = StringBuilder(message)
+    sb.append(": \"")
+    for (i in 0..actual.length()) {
+      sb.append(if (actual[i]) '-' else ' ')
+    }
+    sb.append('"')
+    val fullMessage = sb.toString()
+
+    assertEquals(expected, actual, fullMessage)
+  }
+
   //
   // Parsing
   //
@@ -133,7 +153,7 @@ abstract class DiffTestCase : UsefulTestCase() {
     return Math.max(1, document.lineCount)
   }
 
-  infix fun Int.until(a: Int): IntRange = this..a - 1
+  fun createFilePath(path: String) = LocalFilePath(path, path.endsWith('/') || path.endsWith('\\'))
 
   //
   // AutoTests
@@ -203,7 +223,7 @@ abstract class DiffTestCase : UsefulTestCase() {
     }
   }
 
-  class DebugData() {
+  class DebugData {
     private val data: MutableList<Pair<String, Any>> = ArrayList()
 
     fun put(key: String, value: Any) {

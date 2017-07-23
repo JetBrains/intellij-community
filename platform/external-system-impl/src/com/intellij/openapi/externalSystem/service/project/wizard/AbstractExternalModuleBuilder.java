@@ -31,7 +31,7 @@ import javax.swing.*;
  */
 public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSettings> extends ModuleBuilder {
 
-  private static final Logger LOG = Logger.getInstance("#" + AbstractExternalModuleBuilder.class.getName());
+  private static final Logger LOG = Logger.getInstance(AbstractExternalModuleBuilder.class);
 
   @NotNull private final Icon myIcon;
   @NotNull private final ProjectSystemId myExternalSystemId;

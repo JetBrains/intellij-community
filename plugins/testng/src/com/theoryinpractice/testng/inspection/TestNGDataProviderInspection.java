@@ -22,6 +22,8 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -31,7 +33,6 @@ import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.DataProvider;
 
-import java.io.IOException;
 import java.util.Properties;
 
 public class TestNGDataProviderInspection extends BaseJavaLocalInspectionTool {
@@ -62,6 +63,10 @@ public class TestNGDataProviderInspection extends BaseJavaLocalInspectionTool {
 
                   holder.registerProblem(provider, "Data provider does not exist", fixes);
                 } else {
+                  Version version = TestNGUtil.detectVersion(holder.getProject(), ModuleUtilCore.findModuleForPsiElement(providerClass));
+                  if (version != null && version.isOrGreaterThan(6, 9, 13)) {
+                    break;
+                  }
                   final PsiMethod providerMethod = (PsiMethod)dataProviderMethod;
                   if (providerClass != topLevelClass && !providerMethod.hasModifierProperty(PsiModifier.STATIC)) {
                     holder.registerProblem(provider, "Data provider from foreign class need to be static");

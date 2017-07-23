@@ -130,7 +130,7 @@ public class ChooseActionsDialog extends DialogWrapper {
   private JPanel createToolbarPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
     DefaultActionGroup group = new DefaultActionGroup();
-    final JComponent toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
+    final JComponent toolbar = ActionManager.getInstance().createActionToolbar("ChooseActionsDialog", group, true).getComponent();
     final CommonActionsManager commonActionsManager = CommonActionsManager.getInstance();
     final TreeExpander treeExpander = new TreeExpander() {
       public void expandAll() {
@@ -154,7 +154,7 @@ public class ChooseActionsDialog extends DialogWrapper {
 
     panel.add(toolbar, BorderLayout.WEST);
     group = new DefaultActionGroup();
-    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("ChooseActionsDialog", group, true);
     actionToolbar.setReservePlaceAutoPopupIcon(false);
     final JComponent searchToolbar = actionToolbar.getComponent();
     final Alarm alarm = new Alarm();

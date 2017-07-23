@@ -15,9 +15,6 @@
  */
 package com.intellij.openapi.vcs.history;
 
-/**
- * User: spLeaner
- */
 public interface ShortVcsRevisionNumber extends VcsRevisionNumber {
 
   String toShortString();

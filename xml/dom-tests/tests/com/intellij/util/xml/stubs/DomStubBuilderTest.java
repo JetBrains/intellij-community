@@ -81,7 +81,7 @@ public class DomStubBuilderTest extends DomStubTest {
     DomExtenderEP ep = new DomExtenderEP();
     ep.domClassName = Bar.class.getName();
     ep.extenderClassName = TestExtender.class.getName();
-    PlatformTestUtil.registerExtension(Extensions.getRootArea(), DomExtenderEP.EP_NAME, ep, getTestRootDisposable());
+    PlatformTestUtil.registerExtension(Extensions.getRootArea(), DomExtenderEP.EP_NAME, ep, myFixture.getTestRootDisposable());
 
     doBuilderTest("extender.xml", "File:foo\n" +
                                   "  Element:foo\n" +

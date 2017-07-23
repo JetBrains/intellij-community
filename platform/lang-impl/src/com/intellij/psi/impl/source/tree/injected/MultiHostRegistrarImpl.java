@@ -86,9 +86,9 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
   private final PsiFile myHostPsiFile;
   private ReferenceInjector myReferenceInjector;
 
-  MultiHostRegistrarImpl(@NotNull Project project,
-                         @NotNull PsiFile hostPsiFile,
-                         @NotNull PsiElement contextElement) {
+  public MultiHostRegistrarImpl(@NotNull Project project,
+                                @NotNull PsiFile hostPsiFile,
+                                @NotNull PsiElement contextElement) {
     myProject = project;
     myContextElement = contextElement;
     myHostPsiFile = PsiUtilCore.getTemplateLanguageFile(hostPsiFile);
@@ -231,7 +231,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
 
       SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = ((ShredImpl)shreds.get(0)).getSmartPointer();
 
-      synchronized (PsiLock.LOCK) {
+      synchronized (InjectedLanguageManagerImpl.ourInjectionPsiLock) {
         final ASTNode parsedNode = keepTreeFromChameleoningBack(psiFile);
 
         assert parsedNode instanceof FileElement : "Parsed to "+parsedNode+" instead of FileElement";
@@ -388,7 +388,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     PsiDocumentManagerBase.checkConsistency(psiFile, frozenWindow);
   }
 
-  void addToResults(Place place, PsiFile psiFile, MultiHostRegistrarImpl from) {
+  public void addToResults(Place place, PsiFile psiFile, MultiHostRegistrarImpl from) {
     addToResults(place, psiFile);
     myReferenceInjector = from.myReferenceInjector;
   }
@@ -496,7 +496,6 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
                                          Place shreds,
                                          VirtualFileWindow virtualFile,
                                          Project project) {
-    List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>> tokens = new ArrayList<>(10);
     SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, (VirtualFile)virtualFile);
     Lexer lexer = syntaxHighlighter.getHighlightingLexer();
     lexer.start(outChars);
@@ -508,6 +507,7 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     int suffixLength = 0;
     TextRange rangeInsideHost = null;
     int shredEndOffset = -1;
+    List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>> tokens = new ArrayList<>(10);
     for (IElementType tokenType = lexer.getTokenType(); tokenType != null; lexer.advance(), tokenType = lexer.getTokenType()) {
       TextRange range = new ProperTextRange(lexer.getTokenStart(), lexer.getTokenEnd());
       while (range != null && !range.isEmpty()) {

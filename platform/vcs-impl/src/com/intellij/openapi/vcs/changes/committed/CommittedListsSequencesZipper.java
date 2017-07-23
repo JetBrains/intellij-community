@@ -39,11 +39,7 @@ public class CommittedListsSequencesZipper {
     myVcsPartner = vcsPartner;
     myInLocations = ContainerUtil.newArrayList();
     myInLists = ContainerUtil.newHashMap();
-    myComparator = new Comparator<CommittedChangeList>() {
-      public int compare(final CommittedChangeList o1, final CommittedChangeList o2) {
-        return Comparing.compare(myVcsPartner.getNumber(o1), myVcsPartner.getNumber(o2));
-      }
-    };
+    myComparator = (o1, o2) -> Comparing.compare(myVcsPartner.getNumber(o1), myVcsPartner.getNumber(o2));
   }
 
   public void add(@NotNull RepositoryLocation location, @NotNull List<CommittedChangeList> lists) {

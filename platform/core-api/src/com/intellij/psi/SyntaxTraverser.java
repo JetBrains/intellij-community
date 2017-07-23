@@ -48,12 +48,12 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
 
   @NotNull
   public static <T> SyntaxTraverser<T> syntaxTraverser(@NotNull Api<T> api) {
-    return new SyntaxTraverser<T>(api, null);
+    return new SyntaxTraverser<>(api, null);
   }
 
   @NotNull
   public static SyntaxTraverser<PsiElement> psiTraverser() {
-    return new SyntaxTraverser<PsiElement>(psiApi(), null);
+    return new SyntaxTraverser<>(psiApi(), null);
   }
 
   @NotNull
@@ -63,12 +63,12 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
 
   @NotNull
   public static SyntaxTraverser<PsiElement> revPsiTraverser() {
-    return new SyntaxTraverser<PsiElement>(psiApiReversed(), null);
+    return new SyntaxTraverser<>(psiApiReversed(), null);
   }
 
   @NotNull
   public static SyntaxTraverser<ASTNode> astTraverser() {
-    return new SyntaxTraverser<ASTNode>(astApi(), null);
+    return new SyntaxTraverser<>(astApi(), null);
   }
 
   @NotNull
@@ -79,7 +79,7 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
   @NotNull
   public static SyntaxTraverser<LighterASTNode> lightTraverser(@NotNull PsiBuilder builder) {
     LighterASTApi api = new LighterASTApi(builder);
-    return new SyntaxTraverser<LighterASTNode>(api, Meta.<LighterASTNode>empty().withRoots(JBIterable.of(api.getStructure().getRoot())));
+    return new SyntaxTraverser<>(api, Meta.<LighterASTNode>empty().withRoots(JBIterable.of(api.getStructure().getRoot())));
   }
 
   public final Api<T> api;
@@ -92,7 +92,7 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
   @NotNull
   @Override
   protected SyntaxTraverser<T> newInstance(Meta<T> meta) {
-    return new SyntaxTraverser<T>(api, meta);
+    return new SyntaxTraverser<>(api, meta);
   }
 
   @Override
@@ -141,6 +141,11 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
     return null;
   }
 
+  @NotNull
+  public final SyntaxTraverser<T> onRange(@NotNull final TextRange range) {
+    return onRange(e -> api.rangeOf(e).intersects(range));
+  }
+
   public abstract static class Api<T> implements Function<T, Iterable<? extends T>> {
     @NotNull
     public abstract IElementType typeOf(@NotNull T node);
@@ -164,12 +169,7 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
 
     @NotNull
     public JBIterable<T> parents(@Nullable final T element) {
-      return JBIterable.generate(element, new Function<T, T>() {
-        @Override
-        public T fun(T t) {
-          return parent(t);
-        }
-      });
+      return JBIterable.generate(element, t -> parent(t));
     }
 
     public final Function<T, IElementType> TO_TYPE = new Function<T, IElementType>() {
@@ -225,10 +225,15 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
 
     @NotNull
     @Override
-    public JBIterable<? extends T> children(@NotNull final T node) {
-      final T first = first(node);
+    public JBIterable<? extends T> children(@NotNull T node) {
+      T first = first(node);
       if (first == null) return JBIterable.empty();
-      return JBIterable.generate(first, TO_NEXT);
+      return siblings(first);
+    }
+
+    @NotNull
+    public JBIterable<? extends T> siblings(@NotNull T node) {
+      return JBIterable.generate(node, TO_NEXT);
     }
 
     private final Function<T, T> TO_NEXT = new Function<T, T>() {
@@ -395,7 +400,7 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
         public Iterator<T> iterator() {
           FlyweightCapableTreeStructure<T> structure = getStructure();
           Ref<T[]> ref = Ref.create();
-          int count = structure.getChildren(structure.prepareForGetChildren(node), ref);
+          int count = structure.getChildren(node, ref);
           if (count == 0) return ContainerUtil.emptyIterator();
           T[] array = ref.get();
           LinkedList<T> list = ContainerUtil.newLinkedList();

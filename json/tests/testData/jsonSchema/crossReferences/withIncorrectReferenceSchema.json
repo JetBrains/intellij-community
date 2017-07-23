@@ -1,0 +1,23 @@
+{
+  "definitions": {
+    "midia": {
+      "properties": {
+        "mittel" : {
+          "type": ["integer", "boolean"],
+          "description": "this is found!",
+          "enum": [1,2, false]
+        }
+      }
+    }
+  },
+  "properties": {
+    "call": {
+      "$ref":  "#/definitions/<caret>midia"
+    }
+  },
+  "allOf": [
+    {
+      "$ref": "#/definitions/middle"
+    }
+  ]
+}

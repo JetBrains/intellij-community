@@ -15,24 +15,26 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
+import com.intellij.codeInsight.FileModificationService;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: ktisha
- */
 public class PyConvertMethodToPropertyIntention extends PyBaseIntentionAction {
   @NotNull
   public String getFamilyName() {
@@ -76,6 +78,11 @@ public class PyConvertMethodToPropertyIntention extends PyBaseIntentionAction {
     return available[0];
   }
 
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
   public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiElement element = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
     PyFunction problemFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class);
@@ -83,6 +90,8 @@ public class PyConvertMethodToPropertyIntention extends PyBaseIntentionAction {
     final PyClass containingClass = problemFunction.getContainingClass();
     if (containingClass == null) return;
     final List<UsageInfo> usages = PyRefactoringUtil.findUsages(problemFunction, false);
+
+    if (!prepareForWrite(file, usages)) return;
 
     final PyDecoratorList problemDecoratorList = problemFunction.getDecoratorList();
     List<String> decoTexts = new ArrayList<>();
@@ -94,8 +103,22 @@ public class PyConvertMethodToPropertyIntention extends PyBaseIntentionAction {
       }
     }
 
-    PyElementGenerator generator = PyElementGenerator.getInstance(project);
-    final PyDecoratorList decoratorList = generator.createDecoratorList(decoTexts.toArray(new String[decoTexts.size()]));
+    WriteAction.run(() -> {
+      ensureDecoratorList(problemFunction, problemDecoratorList, decoTexts);
+      deleteUsages(usages);
+    });
+  }
+
+  private static boolean prepareForWrite(PsiFile file, List<UsageInfo> usages) {
+    List<PsiElement> toWrite = ContainerUtil.newArrayList(file);
+    toWrite.addAll(ContainerUtil.mapNotNull(usages, UsageInfo::getElement));
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(toWrite)) return false;
+    return true;
+  }
+
+  private static void ensureDecoratorList(PyFunction problemFunction, @Nullable PyDecoratorList problemDecoratorList, List<String> decoTexts) {
+    PyElementGenerator generator = PyElementGenerator.getInstance(problemFunction.getProject());
+    PyDecoratorList decoratorList = generator.createDecoratorList(ArrayUtil.toStringArray(decoTexts));
 
     if (problemDecoratorList != null) {
       problemDecoratorList.replace(decoratorList);
@@ -103,7 +126,9 @@ public class PyConvertMethodToPropertyIntention extends PyBaseIntentionAction {
     else {
       problemFunction.addBefore(decoratorList, problemFunction.getFirstChild());
     }
+  }
 
+  private static void deleteUsages(List<UsageInfo> usages) {
     for (UsageInfo usage : usages) {
       final PsiElement usageElement = usage.getElement();
       if (usageElement instanceof PyReferenceExpression) {

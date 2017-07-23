@@ -25,6 +25,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -63,6 +64,7 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
     myUse = myTag.getAttributeValue("use");
   }
 
+  @NotNull
   @Override
   public Object[] getDependences(){
     return ArrayUtil.EMPTY_OBJECT_ARRAY;

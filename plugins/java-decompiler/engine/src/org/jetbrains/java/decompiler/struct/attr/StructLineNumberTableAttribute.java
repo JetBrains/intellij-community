@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,9 +33,7 @@ public class StructLineNumberTableAttribute extends StructGeneralAttribute {
   private int[] myLineInfo = InterpreterUtil.EMPTY_INT_ARRAY;
 
   @Override
-  public void initContent(ConstantPool pool) throws IOException {
-    DataInputFullStream data = stream();
-
+  public void initContent(DataInputFullStream data, ConstantPool pool) throws IOException {
     int len = data.readUnsignedShort() * 2;
     if (len > 0) {
       myLineInfo = new int[len];

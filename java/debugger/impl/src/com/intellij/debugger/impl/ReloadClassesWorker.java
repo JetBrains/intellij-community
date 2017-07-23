@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,17 @@ package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.JavaExecutionStack;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.MessageCategory;
@@ -39,6 +43,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 /**
  * @author lex
@@ -110,6 +115,12 @@ class ReloadClassesWorker {
 
     //virtualMachineProxy.suspend();
 
+    if (Registry.is("debugger.resume.yourkit.threads")) {
+      virtualMachineProxy.allThreads().stream()
+        .filter(t -> t.isSuspended() && t.name().startsWith("YJPAgent-"))
+        .forEach(t -> IntStream.range(0, t.getSuspendCount()).forEach(i -> t.resume()));
+    }
+
     try {
       RedefineProcessor redefineProcessor = new RedefineProcessor(virtualMachineProxy);
 
@@ -165,7 +176,7 @@ class ReloadClassesWorker {
       processException(e);
     }
 
-    debugProcess.getPositionManager().clearCache();
+    debugProcess.onHotSwapFinished();
 
     DebuggerContextImpl context = myDebuggerSession.getContextManager().getContext();
     SuspendContextImpl suspendContext = context.getSuspendContext();

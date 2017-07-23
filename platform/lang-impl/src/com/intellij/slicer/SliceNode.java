@@ -17,12 +17,14 @@ package com.intellij.slicer;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ide.util.treeView.AbstractTreeUi;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.DuplicateNodeRenderer;
 import com.intellij.usageView.UsageViewBundle;
@@ -64,46 +66,44 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
 
   @Override
   @NotNull
-  public Collection<? extends AbstractTreeNode> getChildren() {
-    ProgressIndicator current = ProgressManager.getInstance().getProgressIndicator();
-    ProgressIndicator indicator = current == null ? new ProgressIndicatorBase() : current;
-    if (current == null) {
-      indicator.start();
-    }
-    final Collection[] nodes = new Collection[1];
-    ProgressManager.getInstance().executeProcessUnderProgress(
-      () -> nodes[0] = getChildrenUnderProgress(ProgressManager.getInstance().getProgressIndicator()), indicator);
-    if (current == null) {
-      indicator.stop();
-    }
-    return nodes[0];
-  }
-
-  SliceNode getNext(List parentChildren) {
-    return index == parentChildren.size() - 1 ? null : (SliceNode)parentChildren.get(index + 1);
-  }
-
-  SliceNode getPrev(List parentChildren) {
-    return index == 0 ? null : (SliceNode)parentChildren.get(index - 1);
-  }
-
-  @NotNull
-  protected List<? extends AbstractTreeNode> getChildrenUnderProgress(@NotNull final ProgressIndicator progress) {
+  public Collection<SliceNode> getChildren() {
     if (isUpToDate()) return myCachedChildren == null ? Collections.emptyList() : myCachedChildren;
-    final List<SliceNode> children = new ArrayList<>();
-    final SliceManager manager = SliceManager.getInstance(getProject());
-    manager.runInterruptibly(progress, () -> {
+    try {
+      List<SliceNode> nodes;
+      ProgressIndicator current = ProgressManager.getInstance().getProgressIndicator();
+
+      if (current == null) {
+        ProgressIndicator indicator = new ProgressIndicatorBase();
+        indicator.start();
+
+        Ref<List<SliceNode>> nodesRef = Ref.create();
+        try {
+          ProgressManager.getInstance().executeProcessUnderProgress(
+            () -> nodesRef.set(doGetChildren()), indicator);
+        }
+        finally {
+          indicator.stop();
+        }
+
+        nodes = nodesRef.get();
+      } else {
+        nodes = doGetChildren();
+      }
+
+      synchronized (nodes) {
+        myCachedChildren = nodes;
+      }
+      return nodes;
+    } catch (ProcessCanceledException pce) {
       changed = true;
-      //SwingUtilities.invokeLater(new Runnable() {
-      //  public void run() {
-      //    if (getTreeBuilder().isDisposed()) return;
-      //    DefaultMutableTreeNode node = getTreeBuilder().getNodeForElement(getValue());
-      //    //myTreeBuilder.getUi().queueBackgroundUpdate(node, (NodeDescriptor)node.getUserObject(), new TreeUpdatePass(node));
-      //    if (node == null) node = getTreeBuilder().getRootNode();
-      //    getTreeBuilder().addSubtreeToUpdate(node);
-      //  }
-      //});
-    }, () -> {
+      throw pce;
+    }
+  }
+
+  private List<SliceNode> doGetChildren() {
+    return AbstractTreeUi.calculateYieldingToWriteAction(() -> {
+      final List<SliceNode> children = new ArrayList<>();
+      final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
       Processor<SliceUsage> processor = sliceUsage -> {
         progress.checkCanceled();
         SliceNode node = new SliceNode(myProject, sliceUsage, targetEqualUsages);
@@ -115,13 +115,21 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
       };
 
       getValue().processChildren(processor);
-    }
-    );
 
-    synchronized (children) {
-      myCachedChildren = children;
-    }
-    return children;
+      return children;
+    });
+  }
+
+  SliceNode getNext(List parentChildren) {
+    return index == parentChildren.size() - 1 ? null : (SliceNode)parentChildren.get(index + 1);
+  }
+
+  SliceNode getPrev(List parentChildren) {
+    return index == 0 ? null : (SliceNode)parentChildren.get(index - 1);
+  }
+
+  public List<SliceNode> getCachedChildren() {
+    return myCachedChildren;
   }
 
   private boolean isUpToDate() {
@@ -151,7 +159,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     }
   }
 
-  void calculateDupNode() {
+  public void calculateDupNode() {
     if (!dupNodeCalculated) {
       if (!(getValue() instanceof SliceTooComplexDFAUsage)) {
         duplicate = targetEqualUsages.putNodeCheckDupe(this);
@@ -182,12 +190,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   }
 
   public boolean isValid() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        return getValue().isValid();
-      }
-    });
+    return ReadAction.compute(() -> getValue().isValid());
   }
 
   @Override
@@ -229,14 +232,13 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     return LanguageSlicing.getProvider(psiElement);
   }
 
+  public String getNodeText() {
+    return getValue().getPresentation().getPlainText().trim();
+  }
+
   @Override
   public String toString() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-            @Override
-            public String compute() {
-              return getValue()==null?"<null>":getValue().toString();
-            }
-          });
+    return ReadAction.compute(() -> getValue() == null ? "<null>" : getValue().toString());
   }
 
 }

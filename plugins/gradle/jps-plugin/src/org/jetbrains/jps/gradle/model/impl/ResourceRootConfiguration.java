@@ -43,7 +43,7 @@ public class ResourceRootConfiguration extends FilePattern {
 
   @Tag("filters")
   @AbstractCollection(surroundWithTag = false, elementTag = "filter")
-  public List<ResourceRootFilter> filters = new ArrayList<ResourceRootFilter>();
+  public List<ResourceRootFilter> filters = new ArrayList<>();
 
   public int computeConfigurationHash() {
     int result = directory.hashCode();

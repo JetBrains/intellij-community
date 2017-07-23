@@ -96,15 +96,19 @@ public class MemoryIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key,
 
   @Override
   public void clearCaches() {
-    if (myMap.size() == 0) return;
+    try {
+      if (myMap.size() == 0) return;
 
-    if (DebugAssertions.DEBUG) {
-      String message = "Dropping caches for " + (myIndexId != null ? myIndexId:this) + ", number of items:" + myMap.size();
-      FileBasedIndexImpl.LOG.info(message);
-    }
+      if (DebugAssertions.DEBUG) {
+        String message = "Dropping caches for " + (myIndexId != null ? myIndexId : this) + ", number of items:" + myMap.size();
+        FileBasedIndexImpl.LOG.info(message);
+      }
 
-    for(ChangeTrackingValueContainer<Value> v:myMap.values()) {
-      v.dropMergedData();
+      for (ChangeTrackingValueContainer<Value> v : myMap.values()) {
+        v.dropMergedData();
+      }
+    } finally {
+      myBackendStorage.clearCaches();
     }
   }
 

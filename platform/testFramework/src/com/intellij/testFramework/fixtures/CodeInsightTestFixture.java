@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.HighlightTestInfo;
 import com.intellij.testFramework.TestDataFile;
+import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Consumer;
 import org.intellij.lang.annotations.MagicConstant;
@@ -357,6 +358,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @return the matching intention
    * @throws AssertionError if no intentions are found or if multiple intentions match the hint text.
    */
+  @NotNull
   IntentionAction findSingleIntention(@NotNull String hint);
 
   /**
@@ -539,6 +541,10 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void testRainbow(@NotNull String fileName, @NotNull String text, boolean isRainbowOn, boolean withColor);
 
+  void testInlays();
+
+  void checkResultWithInlays(String text);
+
   void assertPreferredCompletionItems(int selected, @NotNull String... expected);
 
   /**
@@ -576,6 +582,23 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   @NotNull
   List<LookupElement> completeBasicAllCarets(@Nullable Character charToTypeAfterCompletion);
+
+  /**
+   * Get elements found by the Goto Class action called with the given pattern
+   * @param pattern a pattern to search for elements
+   * @param searchEverywhere indicates whether "include non-project classes" checkbox is selected
+   * @param contextForSorting a PsiElement used for "proximity sorting" of the results. The sorting will be disabled if null given.
+   * @return a list of the results (likely PsiElements) found for the given pattern
+   */
+  @NotNull
+  List<Object> getGotoClassResults(@NotNull String pattern, boolean searchEverywhere, @Nullable PsiElement contextForSorting);
+
+  /**
+   * Get breadcrumbs to be generated for the current cursor position in the loaded file
+   * @return a list of the breadcrumbs in the order from the topmost element crumb to the deepest
+   */
+  @NotNull
+  List<Crumb> getBreadcrumbsAtCaret();
 
   void saveText(@NotNull VirtualFile file, @NotNull String text);
 }

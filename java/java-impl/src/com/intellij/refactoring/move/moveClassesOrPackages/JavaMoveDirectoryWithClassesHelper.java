@@ -5,13 +5,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.psi.util.FileTypeUtils;
 
 import java.util.*;
 
@@ -51,7 +52,7 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
           for (PsiReference reference : ReferencesSearch.search(aPackage, GlobalSearchScope.projectScope(project))) {
             final PsiElement element = reference.getElement();
             final PsiImportStatementBase statementBase = PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class);
-            if (statementBase != null && statementBase.isOnDemand()) {
+            if (statementBase != null && statementBase.isOnDemand() && !isUnderRefactoring(statementBase, directoriesToMove)) {
               usages.add(new RemoveOnDemandImportStatementsUsageInfo(statementBase));
             }
           }
@@ -60,9 +61,9 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
     }
   }
 
-  private static boolean isUnderRefactoring(PsiDirectory packageDirectory, PsiDirectory[] directoriesToMove) {
+  private static boolean isUnderRefactoring(PsiElement psiElement, PsiDirectory[] directoriesToMove) {
     for (PsiDirectory directory : directoriesToMove) {
-      if (PsiTreeUtil.isAncestor(directory, packageDirectory, true)) {
+      if (PsiTreeUtil.isAncestor(directory, psiElement, true)) {
         return true;
       }
     }
@@ -115,6 +116,12 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
                                PsiDirectory directory,
                                MultiMap<PsiElement, String> conflicts) {
     RefactoringConflictsUtil.analyzeModuleConflicts(project, files, infos, directory, conflicts);
+    if (directory != null) {
+      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
+      if (aPackage != null) {
+        MoveClassesOrPackagesProcessor.detectPackageLocalsUsed(conflicts, files.toArray(PsiElement.EMPTY_ARRAY), new PackageWrapper(aPackage));
+      }
+    }
   }
 
   @Override

@@ -24,7 +24,10 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
+
+import java.util.Collections;
+import java.util.List;
 
 public class MoveModulesToSubGroupAction extends MoveModulesToGroupAction {
   public MoveModulesToSubGroupAction(ModuleGroup moduleGroup) {
@@ -34,6 +37,7 @@ public class MoveModulesToSubGroupAction extends MoveModulesToGroupAction {
   @Override
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
+    presentation.setEnabledAndVisible(e.getData(LangDataKeys.MODULE_CONTEXT_ARRAY) != null);
     String description = IdeBundle.message("action.description.create.new.module.group");
     presentation.setDescription(description);
   }
@@ -41,19 +45,19 @@ public class MoveModulesToSubGroupAction extends MoveModulesToGroupAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
-    final String[] newGroup;
+    final Module[] modules = e.getRequiredData(LangDataKeys.MODULE_CONTEXT_ARRAY);
+    final List<String> newGroup;
     if (myModuleGroup != null) {
       String message = IdeBundle.message("prompt.specify.name.of.module.subgroup", myModuleGroup.presentableText(), whatToMove(modules));
       String subgroup = Messages.showInputDialog(message, IdeBundle.message("title.module.sub.group"), Messages.getQuestionIcon());
       if (subgroup == null || "".equals(subgroup.trim())) return;
-      newGroup = ArrayUtil.append(myModuleGroup.getGroupPath(), subgroup);
+      newGroup = ContainerUtil.append(myModuleGroup.getGroupPathList(), subgroup);
     }
     else {
       String message = IdeBundle.message("prompt.specify.module.group.name", whatToMove(modules));
       String group = Messages.showInputDialog(message, IdeBundle.message("title.module.group"), Messages.getQuestionIcon());
       if (group == null || "".equals(group.trim())) return;
-      newGroup = new String[]{group};
+      newGroup = Collections.singletonList(group);
     }
 
     doMove(modules, new ModuleGroup(newGroup), dataContext);

@@ -486,7 +486,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @Override
   public PsiElement createModifierFromText(@NotNull String name) {
     final GroovyFileBase file = createGroovyFileChecked(name + " foo() {}");
-    final GrTopLevelDefinition[] definitions = file.getTopLevelDefinitions();
+    final GrTopStatement[] definitions = file.getTopStatements();
     if (definitions.length != 1) throw new IncorrectOperationException(name);
     return definitions[0].getFirstChild().getFirstChild();
   }
@@ -495,7 +495,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @Override
   public GrCodeBlock createMethodBodyFromText(@NotNull String text) {
     final GroovyFileBase file = createGroovyFileChecked("def foo () {" + text + "}");
-    final GrMethod method = (GrMethod) file.getTopLevelDefinitions()[0];
+    final GrMethod method = (GrMethod) file.getTopStatements()[0];
     return method.getBlock();
   }
 
@@ -535,15 +535,17 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @Override
   public GrMethod createConstructorFromText(String constructorName, CharSequence constructorText, @Nullable PsiElement context) {
     GroovyFile file = createGroovyFileChecked("class " + constructorName + "{" + constructorText + "}", false, context);
-    GrTopLevelDefinition definition = file.getTopLevelDefinitions()[0];
+    GrTypeDefinition definition = file.getTypeDefinitions()[0];
 
-    if (!( definition != null && definition instanceof GrClassDefinition)) {
+    if (definition == null) {
       throw new IncorrectOperationException("constructorName: " + constructorName + ", text: " + constructorText);
     }
-    GrMethod[] methods = ((GrClassDefinition)definition).getCodeMethods();
+
+    GrMethod[] methods = definition.getCodeMethods();
     if (methods.length != 1) {
       throw new IncorrectOperationException("constructorName: " + constructorName + ", text: " + constructorText);
     }
+
     return methods[0];
   }
 

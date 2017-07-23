@@ -71,7 +71,7 @@ public class PyExecuteFileLineMarkerProvider implements LineMarkerProvider {
         return PlatformUtils.isPyCharmEducational() ? text : actions.get(0).getTemplatePresentation().getText();
       }, null,
       GutterIconRenderer.Alignment.RIGHT) {
-      @Nullable
+
       @Override
       public GutterIconRenderer createGutterRenderer() {
         return new LineMarkerGutterIconRenderer<PsiElement>(this) {

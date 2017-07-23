@@ -66,9 +66,23 @@ public class FontDescriptor {
     if (myFontName == null && defaultFont == null) {
       return null;
     }
-    return new Font(myFontName != null ? myFontName : defaultFont.getFontName(),
-                    myFontStyle >= 0 ? myFontStyle : defaultFont.getStyle(),
-                    myFontSize >= 0 ? myFontSize : defaultFont.getSize());
+    String name = myFontName;
+    if (name == null || name.length() == 0) {
+      if (defaultFont == null) {
+        return null;
+      }
+      name = defaultFont.getName();
+    }
+    else {
+      if (!isValidFontName()) {
+        if (defaultFont == null) {
+          return null;
+        }
+        name = defaultFont.getName();
+      }
+    }
+
+    return new Font(name, myFontStyle >= 0 ? myFontStyle : defaultFont.getStyle(), myFontSize >= 0 ? myFontSize : defaultFont.getSize());
   }
 
   public String getSwingFont() {
@@ -77,9 +91,22 @@ public class FontDescriptor {
 
   public Font getResolvedFont(Font defaultFont) {
     if (mySwingFont != null) {
-      return UIManager.getFont(mySwingFont);
+      Font result = UIManager.getFont(mySwingFont);
+      return result == null ? defaultFont : result;
     }
     return getFont(defaultFont);
+  }
+
+  private boolean isValidFontName() {
+    Font font = new Font(myFontName, Font.PLAIN, 10);
+    return font.canDisplay('a') && font.canDisplay('1');
+  }
+
+  public boolean isValid() {
+    if (mySwingFont == null) {
+      return myFontName == null || isValidFontName();
+    }
+    return UIManager.getFont(mySwingFont) != null;
   }
 
   public boolean equals(Object obj) {

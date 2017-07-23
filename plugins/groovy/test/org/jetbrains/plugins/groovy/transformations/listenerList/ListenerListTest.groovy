@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ class Bean {
     List<MyCoolListener> listeners
 }
 ''') as GroovyFileImpl
+      assert !file.contentsLoaded
 
       configureByText '_.groovy', '''\
 def bean = new Bean()
@@ -56,6 +57,7 @@ bean.fireSomeCoolStuffHappened(new WowEvent())
 '''
       enableInspections(GrUnresolvedAccessInspection)
       checkHighlighting()
+      assert !file.contentsLoaded
 
       configureByText 'Main.java', '''\
 class Main {

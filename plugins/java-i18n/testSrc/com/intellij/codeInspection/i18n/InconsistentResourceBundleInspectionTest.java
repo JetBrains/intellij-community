@@ -25,7 +25,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
  */
 @SuppressWarnings("unchecked")
 public class InconsistentResourceBundleInspectionTest extends JavaCodeInsightFixtureTestCase {
-  private final InconsistentResourceBundleInspection myInspection = new InconsistentResourceBundleInspection();
+  private InconsistentResourceBundleInspection myInspection = new InconsistentResourceBundleInspection();
 
   @Override
   protected String getTestDataPath() {
@@ -41,6 +41,7 @@ public class InconsistentResourceBundleInspectionTest extends JavaCodeInsightFix
   @Override
   protected void tearDown() throws Exception {
     myInspection.clearSettings();
+    myInspection = null;
     super.tearDown();
   }
 

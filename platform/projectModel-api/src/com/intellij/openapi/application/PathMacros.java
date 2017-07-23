@@ -38,7 +38,7 @@ public abstract class PathMacros {
 
   public abstract String getValue(String name);
 
-  public abstract void setMacro(String name, String value);
+  public abstract void setMacro(@NotNull String name, @NotNull String value);
 
   /**
    * Obsolete macros that are to be removed gently from the project files. They can be read, but not written again. Not persisted

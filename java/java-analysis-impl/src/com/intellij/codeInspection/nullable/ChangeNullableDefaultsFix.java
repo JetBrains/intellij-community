@@ -22,10 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* User: anna
-* Date: 2/22/13
-*/
 class ChangeNullableDefaultsFix implements LocalQuickFix {
   private final NullableNotNullManager myManager;
   private final String myNotNullName;

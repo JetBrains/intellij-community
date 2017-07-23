@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBCheckBox;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.groovy.GreclipseSettings;
@@ -47,15 +46,8 @@ public class GreclipseConfigurable implements Configurable {
     myJarPath.addBrowseFolderListener(null, "Select path to groovy-eclipse-batch-*.jar with version matching your Groovy distribution", null, descriptor);
   }
 
-  @Nls
   @Override
   public String getDisplayName() {
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public String getHelpTopic() {
     return null;
   }
 
@@ -89,9 +81,5 @@ public class GreclipseConfigurable implements Configurable {
     myJarPath.setText(FileUtil.toSystemDependentName(mySettings.greclipsePath));
     myCmdLineParams.setText(mySettings.cmdLineParams);
     myGenerateDebugInfo.setSelected(mySettings.debugInfo);
-  }
-
-  @Override
-  public void disposeUIResources() {
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,7 +107,7 @@ public class JBRunnerTabs extends JBEditorTabs {
 
     @Override
     public void apply(UiDecorator.UiDecoration decoration) {
-      setBorder(new EmptyBorder(5, 5, 7, 5));
+      setBorder(new EmptyBorder(5, 5, 7, 5));//Don't use JBUI here, it clips tab text in case of HiDPI
     }
 
     @Override

@@ -51,6 +51,11 @@
     <item name='org.apache.commons.collections.ExtendedProperties java.lang.String unescape(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.collections.ExtendedProperties java.util.Iterator getKeys()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.ExtendedProperties org.apache.commons.collections.ExtendedProperties convertProperties(java.util.Properties) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>

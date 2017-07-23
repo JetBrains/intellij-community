@@ -18,7 +18,6 @@ package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -35,10 +34,7 @@ import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -50,7 +46,9 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,8 +69,14 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     return true;
   }
 
+  @Nullable
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    return null;
+  }
+
   public static void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, Surrounder surrounder) {
-    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
+    if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     if (file instanceof PsiCompiledElement) {
       HintManager.getInstance().showErrorHint(editor, "Can't modify decompiled code");
       return;
@@ -92,12 +96,10 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     SelectionModel selectionModel = editor.getSelectionModel();
     boolean hasSelection = selectionModel.hasSelection();
     if (!hasSelection) {
-      selectionModel.selectLineAtCaret();
+      selectLogicalLineContentsAtCaret(editor);
     }
     int startOffset = selectionModel.getSelectionStart();
     int endOffset = selectionModel.getSelectionEnd();
-
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     PsiElement element1 = file.findElementAt(startOffset);
     PsiElement element2 = file.findElementAt(endOffset - 1);
@@ -154,6 +156,14 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
       }
     }
     return doBuildSurroundActions(project, editor, file, surrounders);
+  }
+
+  public static void selectLogicalLineContentsAtCaret(Editor editor) {
+    int caretOffset = editor.getCaretModel().getOffset();
+    Document document = editor.getDocument();
+    CharSequence text = document.getImmutableCharSequence();
+    editor.getSelectionModel().setSelection(CharArrayUtil.shiftForward(text, DocumentUtil.getLineStartOffset(caretOffset, document), " \t"),
+                                            CharArrayUtil.shiftBackward(text, DocumentUtil.getLineEndOffset(caretOffset, document) - 1, " \t") + 1);
   }
 
   private static void invokeSurrounderInTests(Project project,

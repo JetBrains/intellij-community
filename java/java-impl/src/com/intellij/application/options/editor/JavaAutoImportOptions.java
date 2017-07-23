@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 14-Feb-2008
- */
 package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -35,7 +32,7 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
   private static final String INSERT_IMPORTS_ASK = ApplicationBundle.message("combobox.insert.imports.ask");
   private static final String INSERT_IMPORTS_NONE = ApplicationBundle.message("combobox.insert.imports.none");
 
-  private JComboBox mySmartPasteCombo;
+  private JComboBox<String> mySmartPasteCombo;
   private JCheckBox myCbShowImportPopup;
   private JPanel myWholePanel;
   private JCheckBox myCbAddUnambiguousImports;
@@ -43,8 +40,11 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
   private JCheckBox myCbOptimizeImports;
   private JPanel myExcludeFromImportAndCompletionPanel;
   private final ExcludeTable myExcludePackagesTable;
+  private final Project myProject;
 
   public JavaAutoImportOptions(Project project) {
+    myProject = project;
+
     mySmartPasteCombo.addItem(INSERT_IMPORTS_ALWAYS);
     mySmartPasteCombo.addItem(INSERT_IMPORTS_ASK);
     mySmartPasteCombo.addItem(INSERT_IMPORTS_NONE);
@@ -77,7 +77,7 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
 
 
     myCbShowImportPopup.setSelected(daemonSettings.isImportHintEnabled());
-    myCbOptimizeImports.setSelected(codeInsightSettings.OPTIMIZE_IMPORTS_ON_THE_FLY);
+    myCbOptimizeImports.setSelected(CodeInsightWorkspaceSettings.getInstance(myProject).optimizeImportsOnTheFly);
     myCbAddUnambiguousImports.setSelected(codeInsightSettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY);
     myCbAddMethodImports.setSelected(codeInsightSettings.ADD_MEMBER_IMPORTS_ON_THE_FLY);
 
@@ -94,7 +94,7 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
 
     codeInsightSettings.ADD_IMPORTS_ON_PASTE = getSmartPasteValue();
     daemonSettings.setImportHintEnabled(myCbShowImportPopup.isSelected());
-    codeInsightSettings.OPTIMIZE_IMPORTS_ON_THE_FLY = myCbOptimizeImports.isSelected();
+    CodeInsightWorkspaceSettings.getInstance(myProject).optimizeImportsOnTheFly = myCbOptimizeImports.isSelected();
     codeInsightSettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = myCbAddUnambiguousImports.isSelected();
     codeInsightSettings.ADD_MEMBER_IMPORTS_ON_THE_FLY = myCbAddMethodImports.isSelected();
 
@@ -114,7 +114,7 @@ public class JavaAutoImportOptions implements AutoImportOptionsProvider {
     DaemonCodeAnalyzerSettings daemonSettings = DaemonCodeAnalyzerSettings.getInstance();
 
     boolean isModified = isModified(myCbShowImportPopup, daemonSettings.isImportHintEnabled());
-    isModified |= isModified(myCbOptimizeImports, codeInsightSettings.OPTIMIZE_IMPORTS_ON_THE_FLY);
+    isModified |= isModified(myCbOptimizeImports, CodeInsightWorkspaceSettings.getInstance(myProject).optimizeImportsOnTheFly);
     isModified |= isModified(myCbAddUnambiguousImports, codeInsightSettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY);
     isModified |= isModified(myCbAddMethodImports, codeInsightSettings.ADD_MEMBER_IMPORTS_ON_THE_FLY);
 

@@ -18,7 +18,7 @@ package com.intellij.diff.merge
 import com.intellij.diff.merge.MergeTestBase.SidesState.*
 import com.intellij.diff.util.Side
 import com.intellij.diff.util.TextDiffType.*
-import com.intellij.idea.ActionsBundle
+import com.intellij.diff.util.ThreeSide
 
 class MergeTest : MergeTestBase() {
   fun testChangeTypes() {
@@ -354,6 +354,87 @@ class MergeTest : MergeTestBase() {
     }
   }
 
+  fun testResolve() {
+    test1("y z", "x y z", "x y") {
+      0.resolve()
+      0.assertResolved(BOTH)
+      0.assertContent("y")
+
+      assertContent("y")
+    }
+
+    test2("y z_Y_x y", "x y z_Y_x y z", "x y_Y_y z") {
+      0.resolve()
+      0.assertResolved(BOTH)
+      0.assertContent("y")
+
+      1.resolve()
+      1.assertResolved(BOTH)
+      1.assertContent("y")
+
+      assertContent("y_Y_y")
+    }
+
+    test2("y z_Y_x y", "x y z_Y_x y z", "x y_Y_y z") {
+      0.apply(Side.LEFT, true)
+      0.assertResolved(BOTH)
+      0.assertContent("y z")
+
+      1.resolve()
+      1.assertResolved(BOTH)
+      1.assertContent("y")
+
+      assertContent("y z_Y_y")
+    }
+
+    test1("y z", "x y z", "x y") {
+      assertTrue(0.canResolveConflict())
+
+      replaceText(2, 3, "U")
+      assertContent("x U z")
+
+      assertFalse(0.canResolveConflict())
+    }
+
+    test2("y z_Y_x y", "x y z_Y_x y z", "x y_Y_y z") {
+      assertTrue(0.canResolveConflict())
+      assertTrue(1.canResolveConflict())
+
+
+      replaceText(2, 3, "U")
+
+      assertFalse(0.canResolveConflict())
+      assertTrue(1.canResolveConflict())
+      assertContent("x U z_Y_x y z")
+
+
+      checkUndo(1) {
+        1.resolve()
+      }
+      1.assertResolved(BOTH)
+      1.assertContent("y")
+
+      assertFalse(0.canResolveConflict())
+      assertFalse(1.canResolveConflict())
+      assertContent("x U z_Y_y")
+
+
+      replaceText(2, 3, "y")
+
+      assertTrue(0.canResolveConflict())
+      assertFalse(1.canResolveConflict())
+
+
+      checkUndo(1) {
+        0.resolve()
+      }
+
+      assertFalse(0.canResolveConflict())
+      assertFalse(1.canResolveConflict())
+      assertContent("y_Y_y")
+    }
+  }
+
   fun testUndoSimple() {
     test1("x", "y", "z") {
       checkUndo(1) {
@@ -500,109 +581,158 @@ class MergeTest : MergeTestBase() {
   }
 
   fun testNonConflictsActions() {
-    val applyAllTitle = ActionsBundle.actionText("Diff.ApplyNonConflicts")
-    val applyLeftTitle = ActionsBundle.actionText("Diff.ApplyNonConflicts.Left")
-    val applyRightTitle = ActionsBundle.actionText("Diff.ApplyNonConflicts.Right")
-
-    val text1 =
-      "1 ======\n" +
-      "insert left\n" +
-      "2 ======\n" +
-      "remove right\n" +
-      "3 ======\n" +
-      "new both\n" +
-      "4 ======\n" +
-      "modify both\n" +
-      "5 ======\n" +
-      "modify\n" +
-      "6 ======\n" +
-      "7 ======"
-    val text2 =
-      "1 ======\n" +
-      "2 ======\n" +
-      "remove right\n" +
-      "3 ======\n" +
-      "4 ======\n" +
-      "modify\n" +
-      "5 ======\n" +
-      "modify\n" +
-      "6 ======\n" +
-      "delete modify\n" +
-      "7 ======"
-    val text3 =
-      "1 ======\n" +
-      "2 ======\n" +
-      "3 ======\n" +
-      "new both\n" +
-      "4 ======\n" +
-      "modify both\n" +
-      "5 ======\n" +
-      "modify right\n" +
-      "6 ======\n" +
-      "modify\n" +
-      "7 ======"
+    val text1 = """
+                1 ======
+                insert left
+                2 ======
+                remove right
+                3 ======
+                new both
+                4 ======
+                modify both
+                5 ======
+                modify
+                6 ======
+                7 ======
+                8 ======""".trimIndent()
+    val text2 = """
+                1 ======
+                2 ======
+                remove right
+                3 ======
+                4 ======
+                modify
+                5 ======
+                modify
+                6 ======
+                7 ======
+                delete modify
+                8 ======""".trimIndent()
+    val text3 = """
+                1 ======
+                2 ======
+                3 ======
+                new both
+                4 ======
+                modify both
+                5 ======
+                modify right
+                6 ======
+                7 ======
+                modify
+                8 ======""".trimIndent()
 
     testN(text1, text2, text3) {
       checkUndo(1) {
-        runActionByTitle(applyAllTitle)
+        runApplyNonConflictsAction(ThreeSide.BASE)
       }
 
       assertChangesCount(1)
-      assertContent(
-        "1 ======\n" +
-        "insert left\n" +
-        "2 ======\n" +
-        "3 ======\n" +
-        "new both\n" +
-        "4 ======\n" +
-        "modify both\n" +
-        "5 ======\n" +
-        "modify right\n" +
-        "6 ======\n" +
-        "delete modify\n" +
-        "7 ======")
+      assertContent("""
+                    1 ======
+                    insert left
+                    2 ======
+                    3 ======
+                    new both
+                    4 ======
+                    modify both
+                    5 ======
+                    modify right
+                    6 ======
+                    7 ======
+                    delete modify
+                    8 ======""".trimIndent())
     }
 
     testN(text1, text2, text3) {
       checkUndo(1) {
-        runActionByTitle(applyLeftTitle)
+        runApplyNonConflictsAction(ThreeSide.LEFT)
       }
 
       assertChangesCount(3)
-      assertContent(
-        "1 ======\n" +
-        "insert left\n" +
-        "2 ======\n" +
-        "remove right\n" +
-        "3 ======\n" +
-        "new both\n" +
-        "4 ======\n" +
-        "modify both\n" +
-        "5 ======\n" +
-        "modify\n" +
-        "6 ======\n" +
-        "delete modify\n" +
-        "7 ======")
+      assertContent("""
+                    1 ======
+                    insert left
+                    2 ======
+                    remove right
+                    3 ======
+                    new both
+                    4 ======
+                    modify both
+                    5 ======
+                    modify
+                    6 ======
+                    7 ======
+                    delete modify
+                    8 ======""".trimIndent())
     }
 
     testN(text1, text2, text3) {
       checkUndo(1) {
-        runActionByTitle(applyRightTitle)
+        runApplyNonConflictsAction(ThreeSide.RIGHT)
       }
 
       assertChangesCount(2)
-      assertContent(
-        "1 ======\n" +
-        "2 ======\n" +
-        "3 ======\n" +
-        "new both\n" +
-        "4 ======\n" +
-        "modify both\n" +
-        "5 ======\n" +
-        "modify right\n" +
-        "6 ======\n" +
-        "delete modify\n" +
-        "7 ======")
+      assertContent("""
+                    1 ======
+                    2 ======
+                    3 ======
+                    new both
+                    4 ======
+                    modify both
+                    5 ======
+                    modify right
+                    6 ======
+                    7 ======
+                    delete modify
+                    8 ======""".trimIndent())
+    }
+
+    testN(text1, text2, text3) {
+      replaceText(!5 - 0, !5 - 0, "USER ")
+
+      checkUndo(1) {
+        runApplyNonConflictsAction(ThreeSide.BASE)
+      }
+
+      assertChangesCount(2)
+      assertContent("""
+                    1 ======
+                    insert left
+                    2 ======
+                    3 ======
+                    new both
+                    4 ======
+                    USER modify
+                    5 ======
+                    modify right
+                    6 ======
+                    7 ======
+                    delete modify
+                    8 ======""".trimIndent())
+    }
+
+    testN(text1, text2, text3) {
+      replaceText(!7 - 0, !7 - 0, "USER ")
+
+      checkUndo(1) {
+        runApplyNonConflictsAction(ThreeSide.RIGHT)
+      }
+
+      assertChangesCount(3)
+      assertContent("""
+                    1 ======
+                    2 ======
+                    3 ======
+                    new both
+                    4 ======
+                    modify both
+                    5 ======
+                    USER modify
+                    6 ======
+                    7 ======
+                    delete modify
+                    8 ======""".trimIndent())
     }
   }
 }

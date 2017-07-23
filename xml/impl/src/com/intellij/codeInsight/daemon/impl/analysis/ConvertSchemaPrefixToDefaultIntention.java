@@ -31,6 +31,7 @@ import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.impl.source.xml.SchemaPrefixReference;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SequentialModalProgressTask;
@@ -167,7 +168,7 @@ public class ConvertSchemaPrefixToDefaultIntention extends PsiElementBaseIntenti
   @Nullable
   private static XmlAttribute getXmlnsDeclaration(PsiElement element) {
     final PsiElement parent = element.getParent();
-    if (parent == null) return null;
+    if (!(parent instanceof XmlElement)) return null;
     for (PsiReference ref : parent.getReferences()) {
       if (ref instanceof SchemaPrefixReference) {
         final PsiElement elem = ref.resolve();

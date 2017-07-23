@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Jul 13, 2007
- * Time: 2:09:28 PM
- */
 package com.intellij.psi.util.proximity;
 
 import com.intellij.extapi.psi.MetadataPsiElementBase;
@@ -40,26 +34,24 @@ import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
+import java.util.Map;
 
 public class PsiProximityComparator implements Comparator<Object> {
   public static final Key<ProximityStatistician> STATISTICS_KEY = Key.create("proximity");
   public static final Key<ProximityWeigher> WEIGHER_KEY = Key.create("proximity");
   @SuppressWarnings("unchecked") private static final Weigher<PsiElement, ProximityLocation>[] PROXIMITY_WEIGHERS = ContainerUtil.toArray(WeighingService.getWeighers(WEIGHER_KEY), new Weigher[0]);
   private static final Key<Module> MODULE_BY_LOCATION = Key.create("ModuleByLocation");
-
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") private final FactoryMap<PsiElement, WeighingComparable<PsiElement, ProximityLocation>> myProximities = new FactoryMap<PsiElement, WeighingComparable<PsiElement, ProximityLocation>>() {
-    @Override
-    protected WeighingComparable<PsiElement, ProximityLocation> create(final PsiElement key) {
-      return getProximity(key, myContext);
-    }
-  };
-
   private final PsiElement myContext;
+
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") private final Map<PsiElement, WeighingComparable<PsiElement, ProximityLocation>>
+    myProximities;
+
   private final Module myContextModule;
 
   public PsiProximityComparator(@Nullable PsiElement context) {
     myContext = context;
     myContextModule = context == null ? null : ModuleUtilCore.findModuleForPsiElement(context);
+    myProximities = FactoryMap.createMap(key -> getProximity(key, myContext));
   }
 
   @Override

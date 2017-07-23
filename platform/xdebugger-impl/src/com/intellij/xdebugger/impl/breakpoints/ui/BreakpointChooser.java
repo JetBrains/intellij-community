@@ -180,12 +180,12 @@ public class BreakpointChooser {
 
     @Override
     public JPanel getPropertiesPanel() {
-      return null;  //To change body of implemented methods use File | Settings | File Templates.
+      return null;
     }
 
     @Override
     public void setPropertiesPanel(@Nullable JPanel panel) {
-      //To change body of implemented methods use File | Settings | File Templates.
+
     }
 
     @Override

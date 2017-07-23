@@ -1,0 +1,12 @@
+{
+  "definitions": {
+    "target": {
+      "description": "Description found through definition"
+    }
+  },
+  "properties": {
+    "source": {
+      "$ref": "#/definitions/target"
+    }
+  }
+}

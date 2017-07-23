@@ -24,15 +24,11 @@ import com.intellij.util.IncorrectOperationException;
 
 import java.util.List;
 
-/**
-* User: anna
-* Date: 1/16/12
-*/
 class ConstantMatchProvider implements MatchProvider {
   private final PsiField myField;
   private final Project myProject;
   private final List<Match> myMatches;
-  private static final Logger LOG = Logger.getInstance("#" + ConstantMatchProvider.class.getName());
+  private static final Logger LOG = Logger.getInstance(ConstantMatchProvider.class);
 
   public ConstantMatchProvider(PsiMember member, Project project, List<Match> matches) {
     myField = (PsiField)member;

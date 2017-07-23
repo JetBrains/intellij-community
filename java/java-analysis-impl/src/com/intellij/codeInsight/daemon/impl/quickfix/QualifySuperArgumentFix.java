@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class QualifySuperArgumentFix extends QualifyThisOrSuperArgumentFix {
@@ -40,7 +41,7 @@ public class QualifySuperArgumentFix extends QualifyThisOrSuperArgumentFix {
   public static void registerQuickFixAction(@NotNull PsiSuperExpression expr, HighlightInfo highlightInfo) {
     LOG.assertTrue(expr.getQualifier() == null);
     final PsiClass containingClass = PsiTreeUtil.getParentOfType(expr, PsiClass.class);
-    if (containingClass != null && containingClass.isInterface()) {
+    if (containingClass != null) {
       final PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(expr, PsiMethodCallExpression.class);
       if (callExpression != null) {
         final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(callExpression.getProject());
@@ -50,7 +51,15 @@ public class QualifySuperArgumentFix extends QualifyThisOrSuperArgumentFix {
             final PsiExpression superQualifierCopy = copy.getMethodExpression().getQualifierExpression();
             LOG.assertTrue(superQualifierCopy != null);
             superQualifierCopy.delete();
-            if (((PsiMethodCallExpression)elementFactory.createExpressionFromText(copy.getText(), superClass)).resolveMethod() != null) {
+            PsiMethod method;
+            try {
+              method = ((PsiMethodCallExpression)elementFactory.createExpressionFromText(copy.getText(), superClass)).resolveMethod();
+            }
+            catch (IncorrectOperationException e) {
+              LOG.info(e);
+              return;
+            }
+            if (method != null && !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
               QuickFixAction.registerQuickFixAction(highlightInfo, new QualifySuperArgumentFix(expr, superClass));
             }
           }

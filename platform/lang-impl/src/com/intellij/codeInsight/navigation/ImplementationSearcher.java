@@ -17,13 +17,10 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
@@ -32,7 +29,6 @@ import com.intellij.psi.search.searches.DefinitionsScopedSearch;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Query;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ImplementationSearcher {
@@ -41,9 +37,8 @@ public class ImplementationSearcher {
   @Nullable
   PsiElement[] searchImplementations(Editor editor, PsiElement element, int offset) {
     TargetElementUtil targetElementUtil = TargetElementUtil.getInstance();
-    boolean onRef = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> targetElementUtil.findTargetElement(editor, getFlags() & ~(TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtil.LOOKUP_ITEM_ACCEPTED), offset) == null);
-    return searchImplementations(element, editor, onRef && ApplicationManager.getApplication().runReadAction(
-      (Computable<Boolean>)() -> element == null || targetElementUtil.includeSelfInGotoImplementation(element)), onRef);
+    boolean onRef = ReadAction.compute(() -> targetElementUtil.findTargetElement(editor, getFlags() & ~(TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtil.LOOKUP_ITEM_ACCEPTED), offset) == null);
+    return searchImplementations(element, editor, onRef && ReadAction.compute(() -> element == null || targetElementUtil.includeSelfInGotoImplementation(element)), onRef);
   }
 
   @Nullable
@@ -60,25 +55,18 @@ public class ImplementationSearcher {
   }
 
   protected static SearchScope getSearchScope(PsiElement element, Editor editor) {
-    return ApplicationManager.getApplication().runReadAction(
-      (Computable<SearchScope>)() -> TargetElementUtil.getInstance().getSearchScope(editor, element));
+    return ReadAction.compute(() -> TargetElementUtil.getInstance().getSearchScope(editor, element));
   }
 
   @Nullable("For the case the search has been cancelled")
   protected PsiElement[] searchDefinitions(PsiElement element, Editor editor) {
-    PsiElement[][] result = new PsiElement[1][];
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      try {
-        result[0] = search(element, editor).toArray(PsiElement.EMPTY_ARRAY);
-      }
-      catch (IndexNotReadyException e) {
-        dumbModeNotification(element);
-        result[0] = null;
-      }
-    }, SEARCHING_FOR_IMPLEMENTATIONS, true, element.getProject())) {
+    Ref<PsiElement[]> result = Ref.create();
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> result.set(search(element, editor).toArray(PsiElement.EMPTY_ARRAY)),
+      SEARCHING_FOR_IMPLEMENTATIONS, true, element.getProject())) {
       return null;
     }
-    return result[0];
+    return result.get();
   }
 
   protected Query<PsiElement> search(PsiElement element, Editor editor) {
@@ -87,11 +75,6 @@ public class ImplementationSearcher {
 
   protected boolean isSearchDeep() {
     return true;
-  }
-
-  private static void dumbModeNotification(@NotNull PsiElement element) {
-    Project project = ApplicationManager.getApplication().runReadAction((Computable<Project>)() -> element.getProject());
-    DumbService.getInstance(project).showDumbModeNotification("Implementation information isn't available while indices are built");
   }
 
   protected PsiElement[] filterElements(PsiElement element, PsiElement[] targetElements) {
@@ -110,28 +93,20 @@ public class ImplementationSearcher {
       }
 
       PsiElementProcessor.FindElement<PsiElement> collectProcessor = new PsiElementProcessor.FindElement<>();
-      PsiElement[] result = new PsiElement[1];
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         @Override
         public void run() {
-          try {
-            search(element, editor).forEach(new PsiElementProcessorAdapter<PsiElement>(collectProcessor){
-              @Override
-              public boolean processInReadAction(PsiElement element) {
-                return !accept(element) || super.processInReadAction(element);
-              }
-            });
-            result[0] = collectProcessor.getFoundElement();
-          }
-          catch (IndexNotReadyException e) {
-            ImplementationSearcher.dumbModeNotification(element);
-            result[0] = null;
-          }
+          search(element, editor).forEach(new PsiElementProcessorAdapter<PsiElement>(collectProcessor){
+            @Override
+            public boolean processInReadAction(PsiElement element) {
+              return !accept(element) || super.processInReadAction(element);
+            }
+          });
         }
       }, SEARCHING_FOR_IMPLEMENTATIONS, true, element.getProject())) {
         return null;
       }
-      PsiElement foundElement = result[0];
+      PsiElement foundElement = collectProcessor.getFoundElement();
       return foundElement != null ? new PsiElement[] {foundElement} : PsiElement.EMPTY_ARRAY;
     }
 
@@ -154,13 +129,7 @@ public class ImplementationSearcher {
           return super.process(element);
         }
       };
-      try {
-        search(element, editor).forEach(processor);
-      }
-      catch (IndexNotReadyException e) {
-        ImplementationSearcher.dumbModeNotification(element);
-        return null;
-      }
+      search(element, editor).forEach(processor);
       return processor.toArray(PsiElement.EMPTY_ARRAY);
     }
 

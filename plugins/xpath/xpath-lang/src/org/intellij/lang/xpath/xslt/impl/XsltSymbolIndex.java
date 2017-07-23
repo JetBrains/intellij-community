@@ -43,11 +43,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 15.12.2008
-*/
 public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolIndex.Kind> {
     @NonNls
     public static final ID<String, Kind> NAME = ID.create("XsltSymbolIndex");
@@ -213,7 +208,7 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
         }
 
         @Override
-        public boolean process(VirtualFile file, Kind kind) {
+        public boolean process(@NotNull VirtualFile file, Kind kind) {
             if (myScope.contains(file)) {
                 final PsiFile psiFile = myMgr.findFile(file);
                 if (psiFile != null && XsltSupport.isXsltFile(psiFile)) {

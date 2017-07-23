@@ -69,7 +69,12 @@ public class ExecutionManagerTest extends LightPlatformTestCase {
 
     ExecutionEnvironment env2 = createEnv(project, settings);
     executionManager.restartRunProfile(env2);
-    UIUtil.dispatchInvocationEvent();
+    // Dispatching all events at this point will run into an endless cycle, because
+    // runContentDescriptors of the same type are asked to terminate and then are awaited for termination:
+    // com.intellij.execution.impl.ExecutionManagerImpl.awaitTermination
+    //
+    // However, the created processHandler is not willing to terminate on the first request (surviveSoftKill=true).
+    // It will be terminated on the second request: executionManager.restartRunProfile(env3)
 
     ProcessHandler processHandler2 = getProcessHandler(executionManager);
     assertTrue(processHandler1 == processHandler2);

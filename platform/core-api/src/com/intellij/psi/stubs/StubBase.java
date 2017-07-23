@@ -21,13 +21,13 @@ package com.intellij.psi.stubs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLock;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.AtomicFieldUpdater;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +38,9 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
   private List<StubElement> myChildren;
   private final IStubElementType myElementType;
   private volatile T myPsi;
+
+  private static final AtomicFieldUpdater<StubBase, PsiElement> ourPsiUpdater =
+    AtomicFieldUpdater.forFieldOfType(StubBase.class, PsiElement.class);
 
   @SuppressWarnings("unchecked")
   protected StubBase(final StubElement parent, final IStubElementType elementType) {
@@ -82,7 +85,8 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
     myPsi = psi;
   }
 
-  public T getCachedPsi() {
+  @Nullable
+  final T getCachedPsi() {
     return myPsi;
   }
 
@@ -91,16 +95,9 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
     T psi = myPsi;
     if (psi != null) return psi;
 
-    synchronized (PsiLock.LOCK) {
-      psi = myPsi;
-      if (psi != null) return psi;
-      //noinspection unchecked
-      myPsi = psi = (T)getStubType().createPsi(this);
-    }
-
-    return psi;
+    psi = (T)getStubType().createPsi(this);
+    return ourPsiUpdater.compareAndSet(this, null, psi) ? psi : ObjectUtils.assertNotNull(myPsi);
   }
-
 
   @NotNull
   @Override

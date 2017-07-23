@@ -34,7 +34,7 @@ public abstract class MavenProjectsTreeTestCase extends MavenImportingTestCase {
   protected MavenProjectsTree myTree = new MavenProjectsTree(myProject);
 
   protected void updateAll(VirtualFile... files) throws MavenProcessCanceledException {
-    updateAll(Collections.<String>emptyList(), files);
+    updateAll(Collections.emptyList(), files);
   }
 
   protected void updateAll(List<String> profiles, VirtualFile... files) throws MavenProcessCanceledException {

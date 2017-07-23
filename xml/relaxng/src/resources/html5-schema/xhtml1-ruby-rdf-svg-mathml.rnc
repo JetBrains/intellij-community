@@ -1,6 +1,7 @@
 namespace svg = "http://www.w3.org/2000/svg"
 namespace math = "http://www.w3.org/1998/Math/MathML"
 namespace rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+datatypes w = "http://whattf.org/datatype-draft"
 
 include "xhtml10/xhtml-strict.rnc"
 include "svg11/svg11-inc.rnc"
@@ -8,6 +9,7 @@ include "svg11/inkscape.rnc"
 include "mml3/mathml3-inc.rnc"
 include "rdf/rdf.rnc"
 include "xhtml10/ruby.rnc"
+include "html5/aria.rnc"
 
 head.content &= rdf.elem*
 SVG.metadata.content |= rdf.elem
@@ -36,3 +38,10 @@ annotation-xml.model.xhtml |=
 # cannot; see http://www.w3.org/Bugs/Public/show_bug.cgi?id=9859#c8 for a
 # rationale
 mtext.content |= Inline.class
+
+# datatypes needed for ARIA support
+common.data.float = w:float
+common.data.idref = w:IDREF
+common.data.idrefs = w:IDREFS
+common.data.integer.non-negative = w:integer-non-negative
+common.data.integer.positive = w:integer-positive

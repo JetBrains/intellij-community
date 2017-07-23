@@ -1,8 +1,7 @@
 <html>
 <body>
-The inspection reports the loops which could be collapsed into single <code>Collection.removeIf</code> call.
-<!-- tooltip end -->
-<p>The loops like this are reported:</p>
+Reports loops which could be collapsed into single <code>Collection.removeIf</code> call.
+<p>For example:</p>
 <pre>
   for (Iterator&lt;String&gt; it = collection.iterator(); it.hasNext(); ) {
     String aValue = it.next();
@@ -11,7 +10,8 @@ The inspection reports the loops which could be collapsed into single <code>Coll
     }
   }
 </pre>
-<p>This conversion is available since Java 8 only.</p>
-<small>New in 2016.3</small>
+<!-- tooltip end -->
+<p>This inspection only reports if the project or module is configured to use a language level of 8 or higher.</p>
+<p><small>New in 2016.3</small></p>
 </body>
 </html>

@@ -17,7 +17,7 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -41,8 +40,12 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static com.intellij.util.containers.ContainerUtil.newHashSet;
 
 /**
  * @author yole
@@ -60,7 +63,9 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
   }
 
   @Override
-  public void addDefaultVcsRoots(final NewMappings mappingList, @NotNull final String vcsName, final List<VirtualFile> result) {
+  @NotNull
+  public Collection<VirtualFile> getDefaultVcsRoots(@NotNull NewMappings mappingList, @NotNull String vcsName) {
+    Set<VirtualFile> result = newHashSet();
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (myBaseDir != null && vcsName.equals(mappingList.getVcsFor(myBaseDir))) {
       final AbstractVcs vcsFor = vcsManager.getVcsFor(myBaseDir);
@@ -78,28 +83,24 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
       }
     }
     // assertion for read access inside
-    final Module[] modules = ApplicationManager.getApplication().runReadAction(new Computable<Module[]>() {
-      @Override
-      public Module[] compute() {
-        return myModuleManager.getModules();
-      }
-    });
-    for(Module module: modules) {
+    Module[] modules = ReadAction.compute(myModuleManager::getModules);
+    for (Module module : modules) {
       final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
-      for(VirtualFile file: files) {
+      for (VirtualFile file : files) {
         // if we're currently processing moduleAdded notification, getModuleForFile() will return null, so we pass the module
         // explicitly (we know it anyway)
         VcsDirectoryMapping mapping = mappingList.getMappingFor(file, module);
         final String mappingVcs = mapping != null ? mapping.getVcs() : null;
-        if (vcsName.equals(mappingVcs) && !result.contains(file)) {
+        if (vcsName.equals(mappingVcs) && file.isDirectory()) {
           result.add(file);
         }
       }
     }
+    return result;
   }
 
   @Override
-  public boolean matchesDefaultMapping(final VirtualFile file, final Object matchContext) {
+  public boolean matchesDefaultMapping(@NotNull final VirtualFile file, final Object matchContext) {
     if (matchContext != null) {
       return true;
     }
@@ -114,28 +115,37 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
 
   @Override
   @Nullable
-  public VirtualFile getVcsRootFor(final VirtualFile file) {
-    if (myBaseDir != null && PeriodicalTasksCloser.getInstance().safeGetService(myProject, FileIndexFacade.class)
-      .isValidAncestor(myBaseDir, file)) {
+  public VirtualFile getVcsRootFor(@NotNull VirtualFile file) {
+    FileIndexFacade indexFacade = PeriodicalTasksCloser.getInstance().safeGetService(myProject, FileIndexFacade.class);
+    if (myBaseDir != null && indexFacade.isValidAncestor(myBaseDir, file)) {
+      LOG.debug("File " + file + " is under project base dir " + myBaseDir);
       return myBaseDir;
     }
-    final VirtualFile contentRoot = ProjectRootManager.getInstance(myProject).getFileIndex().getContentRootForFile(file, Registry.is("ide.hide.excluded.files"));
+    VirtualFile contentRoot = ProjectRootManager.getInstance(myProject).getFileIndex().getContentRootForFile(file, Registry.is("ide.hide.excluded.files"));
     if (contentRoot != null) {
-      return contentRoot;
+      LOG.debug("Content root for file " + file + " is " + contentRoot);
+      if (contentRoot.isDirectory()) {
+        return contentRoot;
+      }
+      VirtualFile parent = contentRoot.getParent();
+      LOG.debug("Content root is not a directory, using its parent " + parent);
+      return parent;
     }
     if (ProjectKt.isDirectoryBased(myProject)) {
-      final VirtualFile ideaDir = ProjectKt.getStateStore(myProject).getDirectoryStoreFile();
+      VirtualFile ideaDir = ProjectKt.getStateStore(myProject).getDirectoryStoreFile();
       if (ideaDir != null && VfsUtilCore.isAncestor(ideaDir, file, false)) {
+        LOG.debug("File " + file + " is under .idea");
         return ideaDir;
       }
     }
+    LOG.debug("Couldn't find proper root for " + file);
     return null;
   }
 
   @NotNull
   @Override
   public Collection<VirtualFile> getDirtyRoots() {
-    Collection<VirtualFile> dirtyRoots = ContainerUtil.newHashSet();
+    Collection<VirtualFile> dirtyRoots = newHashSet();
 
     if (ProjectKt.isDirectoryBased(myProject)) {
       VirtualFile ideaDir = ProjectKt.getStateStore(myProject).getDirectoryStoreFile();
@@ -159,15 +169,10 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
 
   @NotNull
   private Collection<VirtualFile> getContentRoots() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<List<VirtualFile>>() {
-      @Override
-      public List<VirtualFile> compute() {
-        List<VirtualFile> contentRoots = ContainerUtil.newArrayList();
-        for (Module module : myModuleManager.getModules()) {
-          ContainerUtil.addAll(contentRoots, ModuleRootManager.getInstance(module).getContentRoots());
-        }
-        return contentRoots;
-      }
-    });
+    Module[] modules = ReadAction.compute(myModuleManager::getModules);
+    return Arrays.stream(modules)
+      .map(module -> ModuleRootManager.getInstance(module).getContentRoots())
+      .flatMap(Arrays::stream)
+      .collect(Collectors.toSet());
   }
 }

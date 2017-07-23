@@ -6,13 +6,25 @@
   <item name="com.intellij.util.containers.ContainerUtil java.lang.Iterable&lt;T&gt; concat(java.lang.Iterable&lt;? extends T&gt;...)">
     <annotation name="java.lang.SafeVarargs" />
   </item>
+  <item name="com.intellij.util.containers.ContainerUtil java.util.LinkedHashMap&lt;K,V&gt; newLinkedHashMap(com.intellij.openapi.util.Pair&lt;K,? extends V&gt;, com.intellij.openapi.util.Pair&lt;K,? extends V&gt;...)">
+    <annotation name="java.lang.SafeVarargs" />
+  </item>
   <item name="com.intellij.util.containers.ContainerUtil java.util.List&lt;T&gt; concat(java.util.List&lt;? extends T&gt;...)">
     <annotation name="java.lang.SafeVarargs" />
   </item>
   <item name="com.intellij.util.containers.ContainerUtil java.util.List&lt;T&gt; list(T...)">
     <annotation name="java.lang.SafeVarargs" />
   </item>
-  <item name="com.intellij.util.containers.ContainerUtil java.util.Map&lt;K, V&gt; newHashMap(com.intellij.openapi.util.Pair&lt;K, ? extends V&gt;, com.intellij.openapi.util.Pair&lt;K, ? extends V&gt;...)">
+  <item name="com.intellij.util.containers.ContainerUtil java.util.Map&lt;K,V&gt; newHashMap(com.intellij.openapi.util.Pair&lt;K,? extends V&gt;, com.intellij.openapi.util.Pair&lt;K,? extends V&gt;...)">
     <annotation name="java.lang.SafeVarargs" />
+  </item>
+  <item name="com.intellij.util.containers.Convertor">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+  <item name="com.intellij.util.containers.InternalIterator">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+  <item name="com.intellij.util.containers.Predicate">
+    <annotation name="java.lang.FunctionalInterface" />
   </item>
 </root>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -155,7 +155,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       }
     };
     psiManager.addPsiTreeChangeListener(changeListener);
-    VirtualFileListener virtualFileListener = new VirtualFileAdapter() {
+    VirtualFileListener virtualFileListener = new VirtualFileListener() {
       @Override
       public void fileDeleted(@NotNull final VirtualFileEvent event) {
         onDeleted(event.getFile());
@@ -439,7 +439,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
                                   final int column,
                                   @NotNull final String[] message) {
     if (virtualFile == null || virtualFile.isDirectory() || virtualFile.getFileType().isBinary()) return null;
-    HighlightInfo info = ApplicationManager.getApplication().runReadAction((Computable<HighlightInfo>)() -> {
+    HighlightInfo info = ReadAction.compute(() -> {
       TextRange textRange = getTextRange(virtualFile, line, column);
       String description = StringUtil.join(message, "\n");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();

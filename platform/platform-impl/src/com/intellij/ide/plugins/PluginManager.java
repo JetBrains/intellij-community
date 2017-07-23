@@ -39,6 +39,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,6 +120,11 @@ public class PluginManager extends PluginManagerCore {
           getLogger().error(t);
         }
         catch (Throwable ignore) { }
+        if (t instanceof StackOverflowError && "Nashorn AST Serializer".equals(Thread.currentThread().getName())) {
+          // workaround for startup's SOE parsing PAC file (JRE-247)
+          // jdk8u_nashorn/blob/master/src/jdk/nashorn/internal/runtime/RecompilableScriptFunctionData.java#createAstSerializerExecutorService
+          return;
+        }
       }
 
       final ImplementationConflictException conflictException = findCause(t, ImplementationConflictException.class);
@@ -225,9 +231,7 @@ public class PluginManager extends PluginManagerCore {
   public static void handleComponentError(Throwable t, @Nullable String componentClassName, @Nullable PluginId pluginId) {
     Application app = ApplicationManager.getApplication();
     if (app != null && app.isUnitTestMode()) {
-      if (t instanceof Error) throw (Error)t;
-      if (t instanceof RuntimeException) throw (RuntimeException)t;
-      throw new RuntimeException(t);
+      ExceptionUtil.rethrow(t);
     }
 
     if (t instanceof StartupAbortedException) {
@@ -246,7 +250,7 @@ public class PluginManager extends PluginManagerCore {
     }
 
     if (pluginId != null && !CORE_PLUGIN_ID.equals(pluginId.getIdString())) {
-      throw new StartupAbortedException(new PluginException(t, pluginId));
+      throw new StartupAbortedException("Fatal error initializing plugin " + pluginId.getIdString(), new PluginException(t, pluginId));
     }
     else {
       throw new StartupAbortedException("Fatal error initializing '" + componentClassName + "'", t);

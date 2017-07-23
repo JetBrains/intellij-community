@@ -16,6 +16,9 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -30,6 +33,29 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class DarculaEditorTextFieldBorder implements Border {
+  protected final JComponent editorTextField;
+
+  public DarculaEditorTextFieldBorder() {
+    this(null, null);
+  }
+
+  public DarculaEditorTextFieldBorder(EditorTextField editorTextField, EditorEx editor) {
+    this.editorTextField = editorTextField;
+    if (editorTextField != null && editor != null) {
+      editor.addFocusListener(new FocusChangeListener() {
+        @Override
+        public void focusGained(Editor editor) {
+          editorTextField.repaint();
+        }
+
+        @Override
+        public void focusLost(Editor editor) {
+          editorTextField.repaint();
+        }
+      });
+    }
+  }
+
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     if (isComboBoxEditor(c) /*|| isCellEditor(c)*/) {
@@ -55,7 +81,7 @@ public class DarculaEditorTextFieldBorder implements Border {
     }
 
     if (textField.isEnabled() && textField.isVisible() && textField.getFocusTarget().hasFocus()) {
-      DarculaUIUtil.paintFocusRing(g, r.x + 1, r.y + 1, r.width - 2, r.height - 2);
+      DarculaUIUtil.paintFocusRing(g, new Rectangle(r.x + 1, r.y + 1, r.width - 2, r.height - 2));
     } else {
       g.setColor(new JBColor(Gray._150, Gray._100));
       g.drawRect(r.x, r.y, r.width, r.height);
@@ -79,7 +105,7 @@ public class DarculaEditorTextFieldBorder implements Border {
     return UIUtil.getParentOfType(JComboBox.class, c) != null;
   }
 
-  public static boolean isCellEditor(Component c) {
-    return UIUtil.getParentOfType(JTable.class, c) != null;
-  }
+  //public static boolean isCellEditor(Component c) {
+  //  return UIUtil.getParentOfType(JTable.class, c) != null;
+  //}
 }

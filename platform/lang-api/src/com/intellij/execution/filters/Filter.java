@@ -250,8 +250,11 @@ public interface Filter {
       return hyperlinkInfo;
     }
 
+    /**
+     * See {@link HighlighterLayer} for available predefined layers. 
+     */
     public int getHighlighterLayer() {
-      return getHyperlinkInfo() != null ? HighlighterLayer.HYPERLINK : HighlighterLayer.HIGHLIGHT_LAYER; 
+      return getHyperlinkInfo() != null ? HighlighterLayer.HYPERLINK : HighlighterLayer.CONSOLE_FILTER; 
     }
 
     @Nullable

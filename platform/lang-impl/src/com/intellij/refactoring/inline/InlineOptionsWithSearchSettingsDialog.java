@@ -19,6 +19,8 @@ package com.intellij.refactoring.inline;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -72,11 +74,12 @@ public abstract class InlineOptionsWithSearchSettingsDialog extends InlineOption
     gbc.fill = GridBagConstraints.HORIZONTAL;
     gbc.weightx = 1.0;
     gbc.gridwidth = 2;
+    gbc.insets.bottom = JBUI.scale(10);
     panel.add(super.createCenterPanel(), gbc);
-
 
     myCbSearchInComments = new JCheckBox(RefactoringBundle.message("search.in.comments.and.strings"), isSearchInCommentsAndStrings());
     myCbSearchTextOccurences = new JCheckBox(RefactoringBundle.message("search.for.text.occurrences"), isSearchForTextOccurrences());
+    gbc.insets.bottom = 0;
     gbc.weightx = 0;
     gbc.gridwidth = 1;
     gbc.gridy = 1;
@@ -87,11 +90,14 @@ public abstract class InlineOptionsWithSearchSettingsDialog extends InlineOption
     final ActionListener actionListener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        setEnabledSearchSettngs(myRbInlineAll.isSelected());
+        setEnabledSearchSettngs(myRbInlineAll.isSelected() || myKeepTheDeclaration != null && myKeepTheDeclaration.isSelected());
       }
     };
     myRbInlineThisOnly.addActionListener(actionListener);
     myRbInlineAll.addActionListener(actionListener);
+    if (myKeepTheDeclaration != null) {
+      myKeepTheDeclaration.addActionListener(actionListener);
+    }
     setEnabledSearchSettngs(myRbInlineAll.isSelected());
     return panel;
   }

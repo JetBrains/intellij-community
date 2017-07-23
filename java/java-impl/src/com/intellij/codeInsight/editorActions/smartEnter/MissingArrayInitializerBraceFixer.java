@@ -22,13 +22,6 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 
-/**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Sep 5, 2003
- * Time: 7:24:03 PM
- * To change this template use Options | File Templates.
- */
 public class MissingArrayInitializerBraceFixer implements Fixer {
   @Override
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {

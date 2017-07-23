@@ -18,7 +18,6 @@ package org.jetbrains.jps.maven.compiler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.incremental.BuilderService;
-import org.jetbrains.jps.incremental.ModuleLevelBuilder;
 import org.jetbrains.jps.incremental.TargetBuilder;
 import org.jetbrains.jps.maven.model.impl.MavenResourcesTargetType;
 
@@ -41,10 +40,5 @@ public class MavenBuilderService extends BuilderService{
   @Override
   public List<? extends TargetBuilder<?, ?>> createBuilders() {
     return Collections.singletonList(new MavenResourcesBuilder());
-  }
-
-  @NotNull
-  public List<? extends ModuleLevelBuilder> createModuleLevelBuilders() {
-    return Collections.singletonList(new DependencyResolvingBuilder());
   }
 }

@@ -15,7 +15,9 @@
  */
 package com.intellij.ui.treeStructure.treetable;
 
+import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.accessibility.ScreenReader;
 
@@ -178,29 +180,14 @@ public class TreeTable extends JBTable {
     final int selColumn = columnModel.getSelectionModel().getAnchorSelectionIndex();
     boolean treeHasFocus = selColumn == -1 || selColumn >= 0 && isTreeColumn(selColumn);
     boolean oneRowSelected = getSelectedRowCount() == 1;
-    int rowToSelect = -1;
     if(treeHasFocus && oneRowSelected && ((keyCode == KeyEvent.VK_LEFT) || (keyCode == KeyEvent.VK_RIGHT))){
-      TreePath selectionPath = myTree.getSelectionPath();
       myTree._processKeyEvent(e);
-      if (myTree.isExpanded(selectionPath)) {
-        myTree.setSelectionPath(selectionPath);
-      } else if (keyCode == KeyEvent.VK_LEFT) {
-        rowToSelect = myTree.getRowForPath(myTree.getSelectionPath());
-        if (!getScrollableTracksViewportHeight()) {
-          int visibleYPosition = getVisibleRect().y;
-          final Rectangle cellRect = getCellRect(rowToSelect, 0, false);
-          int selectedRowYPosition = cellRect.y;
-          if (selectedRowYPosition < visibleYPosition) {
-            scrollRectToVisible(cellRect);
-          }
-        }
-      }
+      int rowToSelect = ObjectUtils.notNull(myTree.getSelectionRows())[0];
+      getSelectionModel().setSelectionInterval(rowToSelect, rowToSelect);
+      TableUtil.scrollSelectionToVisible(this);
     }
     else{
       super.processKeyEvent(e);
-    }
-    if (rowToSelect > -1) {
-      getSelectionModel().setSelectionInterval(rowToSelect, rowToSelect);
     }
   }
 
@@ -239,7 +226,7 @@ public class TreeTable extends JBTable {
     }
 
     /**
-     * This is overriden to set <code>updatingListSelectionModel</code>
+     * This is overriden to set {@code updatingListSelectionModel}
      * and message super. This is the only place DefaultTreeSelectionModel
      * alters the ListSelectionModel.
      */
@@ -286,7 +273,7 @@ public class TreeTable extends JBTable {
     }
 
     /**
-     * If <code>updatingListSelectionModel</code> is false, this will
+     * If {@code updatingListSelectionModel} is false, this will
      * reset the selected paths from the selected rows in the list
      * selection model.
      */

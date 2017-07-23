@@ -34,11 +34,6 @@ import org.xml.sax.ext.Locator2Impl;
 
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 30.07.2007
-*/
 class Psi2SaxAdapter extends XmlElementVisitor implements PsiElementProcessor<PsiElement> {
   private final ContentHandler myHandler;
 

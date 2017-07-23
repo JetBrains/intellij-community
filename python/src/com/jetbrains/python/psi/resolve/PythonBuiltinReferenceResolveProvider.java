@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi.resolve;
 
-import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyFile;
@@ -23,10 +22,8 @@ import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -61,28 +58,13 @@ public class PythonBuiltinReferenceResolveProvider implements PyReferenceResolve
     }
 
     // ...as a builtin symbol
-    if (!PyUtil.isClassPrivateName(referencedName)) {
-      result.addAll(
-        Optional
-          .ofNullable(builtinCache.getBuiltinsFile())
-          .map(builtinsFile -> resolveNameInBuiltins(referencedName, builtinsFile))
-          .map(resultElement -> new ImportedResolveResult(resultElement, PyReferenceImpl.getRate(resultElement, context), null))
-          .map(Collections::singletonList)
-          .orElse(Collections.emptyList())
-      );
+    final PyFile builtinsFile = builtinCache.getBuiltinsFile();
+    if (builtinsFile != null && !PyUtil.isClassPrivateName(referencedName) && PyUtil.getInitialUnderscores(referencedName) != 1) {
+      for (RatedResolveResult resolveResult : builtinsFile.multiResolveName(referencedName)) {
+        result.add(new ImportedResolveResult(resolveResult.getElement(), resolveResult.getRate(), null));
+      }
     }
 
     return result;
-  }
-
-  @Nullable
-  private static PsiElement resolveNameInBuiltins(@NotNull String referencedName, @NotNull PyFile builtinsFile) {
-    final PsiElement resultElement = builtinsFile.getElementNamed(referencedName);
-
-    if (resultElement == null && "__builtins__".equals(referencedName)) {
-      return builtinsFile; // resolve __builtins__ reference
-    }
-
-    return resultElement;
   }
 }

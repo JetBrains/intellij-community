@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,26 +76,26 @@ class UiInfoUsageCollector extends UsagesCollector {
   }
 
   private static int tabPlace() {
-    return UISettings.getInstance().EDITOR_TAB_PLACEMENT;
+    return UISettings.getInstance().getEditorTabPlacement();
   }
 
   private static int recent() {
-    return UISettings.getInstance().RECENT_FILES_LIMIT;
+    return UISettings.getInstance().getRecentFilesLimit();
   }
 
   private static boolean stripes() {
-    return UISettings.getInstance().HIDE_TOOL_STRIPES;
+    return UISettings.getInstance().getHideToolStripes();
   }
 
   private static boolean status() {
-    return UISettings.getInstance().SHOW_STATUS_BAR;
+    return UISettings.getInstance().getShowStatusBar();
   }
 
   private static boolean toolbar() {
-    return UISettings.getInstance().SHOW_MAIN_TOOLBAR;
+    return UISettings.getInstance().getShowMainToolbar();
   }
 
   private static boolean navbar() {
-    return UISettings.getInstance().SHOW_NAVIGATION_BAR;
+    return UISettings.getInstance().getShowNavigationBar();
   }
 }

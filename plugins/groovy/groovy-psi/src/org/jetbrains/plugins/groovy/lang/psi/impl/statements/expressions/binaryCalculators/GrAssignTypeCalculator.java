@@ -17,15 +17,13 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binary
 
 import com.intellij.psi.PsiType;
 import com.intellij.util.Function;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression;
 
-/**
- * Created by Max Medvedev on 12/20/13
- */
-public class GrAssignTypeCalculator implements Function<GrBinaryFacade, PsiType> {
+public class GrAssignTypeCalculator implements Function<GrOperatorExpression, PsiType> {
   public static final GrAssignTypeCalculator INSTANCE = new GrAssignTypeCalculator();
 
   @Override
-  public PsiType fun(GrBinaryFacade expression) {
-    return GrBinaryExpressionUtil.getRightType(expression);
+  public PsiType fun(GrOperatorExpression expression) {
+    return expression.getRightType();
   }
 }

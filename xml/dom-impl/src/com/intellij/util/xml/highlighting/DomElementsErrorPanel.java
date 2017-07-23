@@ -39,9 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class DomElementsErrorPanel extends JPanel implements CommittablePanel, Highlightable {
 
   private static final int ALARM_PERIOD = 241;

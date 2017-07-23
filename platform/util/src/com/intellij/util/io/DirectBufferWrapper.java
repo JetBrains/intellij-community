@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,25 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.concurrency.AtomicFieldUpdater;
 import sun.misc.Cleaner;
+import sun.misc.Unsafe;
 import sun.nio.ch.DirectBuffer;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 
-public abstract class DirectBufferWrapper extends ByteBufferWrapper {
+abstract class DirectBufferWrapper extends ByteBufferWrapper {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.util.io.DirectBufferWrapper");
 
   private volatile ByteBuffer myBuffer;
 
-  protected DirectBufferWrapper(final File file, final long offset, final long length) {
+  DirectBufferWrapper(final File file, final long offset, final long length) {
     super(file, offset, length);
   }
 
@@ -58,23 +60,33 @@ public abstract class DirectBufferWrapper extends ByteBufferWrapper {
     myBuffer = null;
   }
 
- static boolean disposeDirectBuffer(final ByteBuffer buffer) {
-    return AccessController.doPrivileged(new PrivilegedAction<Object>() {
-      @Override
-      @Nullable
-      public Object run() {
-        try {
-          if (buffer instanceof DirectBuffer) {
-            Cleaner cleaner = ((DirectBuffer)buffer).cleaner();
-            if (cleaner != null) cleaner.clean(); // Already cleaned otherwise
-          }
-          return null;
-        }
-        catch (Throwable e) {
-          return buffer;
-        }
+  @ReviseWhenPortedToJDK("9")
+  // return true if successful
+  static boolean disposeDirectBuffer(final ByteBuffer buffer) {
+    if (!buffer.isDirect()) return true;
+    if (SystemInfo.IS_AT_LEAST_JAVA9) {
+      // in JDK9 the "official" dispose method is sun.misc.Unsafe#invokeCleaner
+      // since we have to target both jdk 8 and 9 we have to use reflection
+      Unsafe unsafe = AtomicFieldUpdater.getUnsafe();
+      try {
+        Method invokeCleaner = unsafe.getClass().getMethod("invokeCleaner", ByteBuffer.class);
+        invokeCleaner.setAccessible(true);
+        invokeCleaner.invoke(unsafe, buffer);
+        return true;
       }
-    }) == null;
+      catch (Exception e) {
+        // something serious, needs to be logged
+        LOG.error(e);
+        throw new RuntimeException(e);
+      }
+    }
+    try {
+      Cleaner cleaner = ((DirectBuffer)buffer).cleaner();
+      if (cleaner != null) cleaner.clean(); // Already cleaned otherwise
+      return true;
+    }
+    catch (Throwable e) {
+      return false;
+    }
   }
-
 }

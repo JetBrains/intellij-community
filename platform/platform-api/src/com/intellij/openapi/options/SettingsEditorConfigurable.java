@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ public abstract class SettingsEditorConfigurable<Settings> extends BaseConfigura
     myEditor = editor;
     mySettings = settings;
     myListener = new SettingsEditorListener<Settings>() {
+      @Override
       public void stateChanged(SettingsEditor<Settings> settingsEditor) {
         setModified(true);
       }
@@ -37,20 +38,24 @@ public abstract class SettingsEditorConfigurable<Settings> extends BaseConfigura
     myComponent = myEditor.getComponent();
   }
 
+  @Override
   public JComponent createComponent() {
     return myComponent;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     myEditor.applyTo(mySettings);
     setModified(false);
   }
 
+  @Override
   public void reset() {
     myEditor.resetFrom(mySettings);
     setModified(false);
   }
 
+  @Override
   public void disposeUIResources() {
     if (myEditor != null) {
       myEditor.removeSettingsEditorListener(myListener);

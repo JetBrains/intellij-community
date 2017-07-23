@@ -17,10 +17,6 @@ package com.intellij.featureStatistics;
 
 import java.util.Calendar;
 
-/**
- * User: anna
- * Date: 7/5/12
- */
 public class CumulativeStatistics {
   public int invocations = 0;
   public long startDate = 0;

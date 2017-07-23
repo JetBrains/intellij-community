@@ -16,10 +16,10 @@
 package org.jetbrains.idea.svn.dialogs.browser;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
@@ -27,10 +27,8 @@ import org.tmatesoft.svn.core.SVNURL;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Collections;
+
+import static org.jetbrains.idea.svn.dialogs.browser.CopyOptionsDialog.configureRecentMessagesComponent;
 
 public class MkdirOptionsDialog extends DialogWrapper {
 
@@ -38,7 +36,7 @@ public class MkdirOptionsDialog extends DialogWrapper {
   private JTextArea myCommitMessage;
   private JTextField myNameField;
   private JLabel myURLLabel;
-  private JComboBox myMessagesBox;
+  private ComboBox<String> myMessagesBox;
   private JPanel myMainPanel;
   private JLabel myRecentMessagesLabel;
   private final SVNURL myOriginalURL;
@@ -62,12 +60,10 @@ public class MkdirOptionsDialog extends DialogWrapper {
     });
 
     if (!project.isDefault()) {
-      final ArrayList<String> messages = VcsConfiguration.getInstance(project).getRecentMessages();
-      Collections.reverse(messages);
-
-      final String[] model = ArrayUtil.toStringArray(messages);
-      myMessagesBox.setModel(new DefaultComboBoxModel(model));
-      myMessagesBox.setRenderer(new MessageBoxCellRenderer());
+      configureRecentMessagesComponent(project, myMessagesBox, message -> {
+        myCommitMessage.setText(message);
+        myCommitMessage.selectAll();
+      });
     }
     else {
       myRecentMessagesLabel.setVisible(false);
@@ -79,12 +75,6 @@ public class MkdirOptionsDialog extends DialogWrapper {
       myCommitMessage.setText(lastMessage);
       myCommitMessage.selectAll();
     }
-    myMessagesBox.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myCommitMessage.setText(myMessagesBox.getSelectedItem().toString());
-        myCommitMessage.selectAll();
-      }
-    });
   }
 
   @NonNls

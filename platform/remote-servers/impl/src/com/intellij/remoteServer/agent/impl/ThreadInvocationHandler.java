@@ -34,7 +34,7 @@ import java.util.concurrent.Future;
  */
 public class ThreadInvocationHandler implements InvocationHandler {
 
-  private static final Logger LOG = Logger.getInstance("#" + ThreadInvocationHandler.class.getName());
+  private static final Logger LOG = Logger.getInstance(ThreadInvocationHandler.class);
 
   private final ExecutorService myTaskExecutor;
   private final ClassLoader myCallerClassLoader;
@@ -55,11 +55,7 @@ public class ThreadInvocationHandler implements InvocationHandler {
       try {
         return method.invoke(myTarget, args);
       }
-      catch (IllegalAccessException e) {
-        LOG.error(e);
-        return null;
-      }
-      catch (InvocationTargetException e) {
+      catch (IllegalAccessException | InvocationTargetException e) {
         LOG.error(e);
         return null;
       }

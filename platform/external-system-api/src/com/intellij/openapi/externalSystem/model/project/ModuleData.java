@@ -33,6 +33,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   @Nullable  private String mySourceCompatibility;
   @Nullable private String myTargetCompatibility;
   @Nullable private String myProductionModuleId;
+  @Nullable private ProjectCoordinate myPublication;
 
   private boolean myInheritProjectCompileOutputPath = true;
 
@@ -149,6 +150,15 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   }
 
   @Nullable
+  public ProjectCoordinate getPublication() {
+    return myPublication;
+  }
+
+  public void setPublication(@Nullable ProjectCoordinate publication) {
+    myPublication = publication;
+  }
+
+  @Nullable
   public String getVersion() {
     return myVersion;
   }
@@ -209,6 +219,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
 
     ModuleData that = (ModuleData)o;
 
+    if (!myId.equals(that.myId)) return false;
     if (myGroup != null ? !myGroup.equals(that.myGroup) : that.myGroup != null) return false;
     if (!myModuleTypeId.equals(that.myModuleTypeId)) return false;
     if (myVersion != null ? !myVersion.equals(that.myVersion) : that.myVersion != null) return false;
@@ -220,6 +231,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   @Override
   public int hashCode() {
     int result = super.hashCode();
+    result = 31 * result + myId.hashCode();
     result = 31 * result + myModuleTypeId.hashCode();
     result = 31 * result + (myGroup != null ? myGroup.hashCode() : 0);
     result = 31 * result + (myVersion != null ? myVersion.hashCode() : 0);
@@ -229,9 +241,6 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
 
   @Override
   public String toString() {
-    return String.format("module '%s:%s:%s'",
-                         myGroup == null ? "" : myGroup,
-                         getExternalName(),
-                         myVersion == null ? "" : myVersion);
+    return getId();
   }
 }

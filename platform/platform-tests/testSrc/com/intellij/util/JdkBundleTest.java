@@ -74,7 +74,7 @@ public class JdkBundleTest {
     for (File file : jdk6Files) {
       testPassed = false;
       for (JdkBundle bundle : bundles) {
-        if (FileUtil.filesEqual(bundle.getAbsoluteLocation(), file)) {
+        if (FileUtil.filesEqual(bundle.getLocation(), file)) {
           testPassed = true;
           break;
         }
@@ -85,7 +85,7 @@ public class JdkBundleTest {
 
   @Test
   public void testJre7OnMac() throws Exception {
-    if (!SystemInfo.isMac) return;
+    if (!SystemInfo.isMac || !"true".equals(System.getProperty("idea.jre.check"))) return;
 
     File standardJdkLocationDirectory = new File(STANDARD_JDK_LOCATION_ON_MAC_OS_X);
     File [] jre7Files = findJdkInDirectory(standardJdkLocationDirectory, "1.7.0");
@@ -108,15 +108,12 @@ public class JdkBundleTest {
     ArrayList<JdkBundle> bundles = jdkBundleList.toArrayList();
 
     for (JdkBundle bundle : bundles) {
-      assertTrue("jre \"" + bundle.getAbsoluteLocation().getAbsolutePath() + "\" found among jdk bundles",
-                  new File(bundle.getAbsoluteLocation(), "Contents/Home/lib/tools.jar").exists());
+      assertTrue("jre \"" + bundle.getLocation().getAbsolutePath() + "\" found among jdk bundles",
+                  new File(bundle.getLocation(), "Contents/Home/lib/tools.jar").exists());
     }
   }
 
-  @Test
-  public void testCreateBundle() throws Exception {
-    File homeJDK = new File(System.getProperty("java.home")).getParentFile();
-
+  public void doTestCreateBundle(File homeJDK) throws Exception {
     if (!new File(homeJDK, "lib/tools.jar").exists()) return; // Skip pure jre
 
     File bootJDK = SystemInfo.isMac ? homeJDK.getParentFile().getParentFile() : homeJDK;
@@ -132,13 +129,22 @@ public class JdkBundleTest {
     assertTrue(bundle.isBoot());
     assertFalse(bundle.isBundled());
 
-    assertTrue(FileUtil.filesEqual(bundle.getAbsoluteLocation(), macNonStandardJDK ? homeJDK : bootJDK));
+    assertTrue(FileUtil.filesEqual(bundle.getLocation(), macNonStandardJDK ? homeJDK : bootJDK));
     Pair<Version, Integer> verUpdate = bundle.getVersionUpdate();
 
     assertNotNull(verUpdate);
 
     final String evalVerStr = verUpdate.first.toString() + "_" + verUpdate.second.toString();
     assertTrue(evalVerStr + " is not the same with " + verStr, verStr.contains(evalVerStr));
+  }
+
+  @Test
+  public void testCreateBundle() throws Exception {
+    File home = new File(System.getProperty("java.home"));
+
+    doTestCreateBundle(home);
+
+    doTestCreateBundle(home.getParentFile());
   }
 
   @Test
@@ -158,10 +164,11 @@ public class JdkBundleTest {
     assertTrue(bundle.isBoot());
     assertFalse(bundle.isBundled());
 
-    assertTrue(FileUtil.filesEqual(bundle.getAbsoluteLocation(), macNonStandardJDK ? homeJDK : bootJDK));
+    assertTrue(FileUtil.filesEqual(bundle.getLocation(), macNonStandardJDK ? homeJDK : bootJDK));
     Pair<Version, Integer> verUpdate = bundle.getVersionUpdate();
 
     assertNotNull(verUpdate);
+    assertNotNull(bundle.getUpdateNumber());
 
     final String evalVerStr = verUpdate.first.toString() + "_" + verUpdate.second.toString();
     assertTrue(evalVerStr + " is not the same with " + verStr, verStr.contains(evalVerStr));

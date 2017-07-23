@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 13-May-2010
- */
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.Location;
@@ -83,6 +79,6 @@ public class MavenConfigurationProducer extends RuntimeConfigurationProducer {
   }
 
   public int compareTo(Object o) {
-    return PREFERED;  //To change body of implemented methods use File | Settings | File Templates.
+    return PREFERED;
   }
 }

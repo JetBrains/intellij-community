@@ -1,0 +1,23 @@
+{
+  "definitions": {
+    "koshmar": {
+      "ref": "#/definitions/koshmar"
+    },
+    "all": {
+      "$ref": "#/definitions/one"
+    },
+    "one": {
+      "$ref": "#/definitions/all"
+    }
+  },
+  "properties": {
+    "aaa": {"$ref": "#/definitions/koshmar"},
+    "bbb": {
+      "$ref": "#/definitions/all"
+    },
+    "ccc": {
+      "type": "integer"
+    }
+  },
+  "additionalProperties": "false"
+}

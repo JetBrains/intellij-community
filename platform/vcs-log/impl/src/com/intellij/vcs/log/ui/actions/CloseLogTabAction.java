@@ -25,7 +25,9 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.ContentsUtil;
+import com.intellij.vcs.log.history.VcsLogFileHistoryProviderImpl;
 import com.intellij.vcs.log.impl.VcsLogContentProvider;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +48,8 @@ public class CloseLogTabAction extends CloseTabToolbarAction {
   }
 
   public void actionPerformed(@NotNull AnActionEvent e) {
+    VcsLogUtil.triggerUsage(e);
+
     Project project = e.getProject();
     assert project != null;
 
@@ -61,7 +65,10 @@ public class CloseLogTabAction extends CloseTabToolbarAction {
   private static Content getTabbedContent(@NotNull ContentManager contentManager) {
     Content content = contentManager.getSelectedContent();
     if (content != null) {
-      if (ContentUtilEx.isContentTab(content, VcsLogContentProvider.TAB_NAME)) return content;
+      if (ContentUtilEx.isContentTab(content, VcsLogContentProvider.TAB_NAME) ||
+          ContentUtilEx.isContentTab(content, VcsLogFileHistoryProviderImpl.TAB_NAME)) {
+        return content;
+      }
     }
     return null;
   }

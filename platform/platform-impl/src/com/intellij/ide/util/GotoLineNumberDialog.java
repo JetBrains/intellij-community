@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,56 +16,32 @@
 package com.intellij.ide.util;
 
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.PatternUtil;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class GotoLineNumberDialog extends DialogWrapper {
+public abstract class GotoLineNumberDialog extends DialogWrapper {
+  private final Pattern myPattern = PatternUtil.compileSafe("\\s*(\\d+)?\\s*(?:[,:]?\\s*(\\d+)?)?\\s*", null);
+
   private JTextField myField;
   private JTextField myOffsetField;
-  private final Editor myEditor;
-  private final Pattern myPattern = PatternUtil.compileSafe("\\s*(\\d+)\\s*(?:[,:]?\\s*(\\d+)?)?\\s*", null);
 
-  public GotoLineNumberDialog(Project project, Editor editor) {
+  public GotoLineNumberDialog(Project project) {
     super(project, true);
-    myEditor = editor;
-    setTitle("Go to Line");
-    init();
-  }
-
-  protected void doOKAction() {
-    LogicalPosition position = getLogicalPosition();
-    if (position == null) return;
-
-    myEditor.getCaretModel().removeSecondaryCarets();
-    myEditor.getCaretModel().moveToLogicalPosition(position);
-    myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
-    myEditor.getSelectionModel().removeSelection();
-    IdeFocusManager.getGlobalInstance().requestFocus(myEditor.getContentComponent(), true);
-    super.doOKAction();
-  }
-
-  @Nullable
-  private LogicalPosition getLogicalPosition() {
-    Matcher m = myPattern.matcher(getText());
-    if (!m.matches()) return null;
-
-    int l = StringUtil.parseInt(m.group(1), -1);
-    int c = StringUtil.parseInt(m.group(2), -1);
-    return l > 0 ? new LogicalPosition(l - 1, Math.max(0, c - 1)) : null;
+    setTitle("Go to Line/Column");
   }
 
   private static boolean isInternal() {
@@ -84,10 +60,36 @@ public class GotoLineNumberDialog extends DialogWrapper {
     return myField.getText();
   }
 
+  @Nullable
+  protected final Coordinates getCoordinates() {
+    Matcher m = myPattern.matcher(getText());
+    if (!m.matches()) return null;
+
+    int l = StringUtil.parseInt(m.group(1), getLine() + 1);
+    int c = StringUtil.parseInt(m.group(2), -1);
+    return l > 0 ? new Coordinates(l - 1, Math.max(0, c - 1)) : null;
+  }
+
+  protected abstract int getLine();
+  protected abstract int getColumn();
+  protected abstract int getOffset();
+  protected abstract int getMaxOffset();
+  protected abstract int coordinatesToOffset(@NotNull Coordinates coordinates);
+  @NotNull
+  protected abstract Coordinates offsetToCoordinates(int offset);
+
   protected JComponent createNorthPanel() {
     class MyTextField extends JTextField {
       public MyTextField() {
         super("");
+        addFocusListener(new FocusAdapter() {
+          @Override
+          public void focusGained(FocusEvent e) {
+            if (!e.isTemporary()) {
+              selectAll();
+            }
+          }
+        });
       }
 
       public Dimension getPreferredSize() {
@@ -99,20 +101,19 @@ public class GotoLineNumberDialog extends DialogWrapper {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
-    gbConstraints.insets = new Insets(4, 0, 8, 8);
+    gbConstraints.insets = JBUI.insets(4, 0, 8, 8);
     gbConstraints.fill = GridBagConstraints.VERTICAL;
     gbConstraints.weightx = 0;
     gbConstraints.weighty = 1;
     gbConstraints.anchor = GridBagConstraints.EAST;
-    JLabel label = new JLabel("Line [:column]:");
+    JLabel label = new JLabel("[Line] [:column]:");
     panel.add(label, gbConstraints);
 
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.weightx = 1;
     myField = new MyTextField();
     panel.add(myField, gbConstraints);
-    LogicalPosition position = myEditor.getCaretModel().getLogicalPosition();
-    myField.setText(String.format("%d:%d", position.line + 1, position.column + 1));
+    myField.setText(String.format("%d:%d", getLine() + 1, getColumn() + 1));
 
     if (isInternal()) {
       gbConstraints.gridy = 1;
@@ -126,7 +127,7 @@ public class GotoLineNumberDialog extends DialogWrapper {
       gbConstraints.weightx = 1;
       myOffsetField = new MyTextField();
       panel.add(myOffsetField, gbConstraints);
-      myOffsetField.setText(String.valueOf(myEditor.getCaretModel().getOffset()));
+      myOffsetField.setText(String.valueOf(getOffset()));
 
       DocumentAdapter valueSync = new DocumentAdapter() {
         boolean inSync;
@@ -140,15 +141,14 @@ public class GotoLineNumberDialog extends DialogWrapper {
           try {
             if (e.getDocument() == myField.getDocument()) {
               f = myOffsetField;
-              LogicalPosition p = getLogicalPosition();
-              s = p == null ? s : String.valueOf(myEditor.logicalPositionToOffset(p));
+              Coordinates p = getCoordinates();
+              s = p == null ? s : String.valueOf(coordinatesToOffset(p));
             }
             else {
               f = myField;
               int offset = StringUtil.parseInt(myOffsetField.getText(), -1);
-              LogicalPosition p = offset >= 0 ? myEditor.offsetToLogicalPosition(
-                Math.min(myEditor.getDocument().getTextLength() - 1, offset)) : null;
-              s = p == null ? s : String.format("%d:%d", p.line + 1, p.column + 1);
+              Coordinates p = offset >= 0 ? offsetToCoordinates(Math.min(getMaxOffset() - 1, offset)) : null;
+              s = p == null ? s : String.format("%d:%d", p.row + 1, p.column + 1);
             }
             f.setText(s);
           }
@@ -165,5 +165,15 @@ public class GotoLineNumberDialog extends DialogWrapper {
     }
 
     return panel;
+  }
+
+  protected static class Coordinates {
+    public final int row;
+    public final int column;
+
+    public Coordinates(int row, int column) {
+      this.row = row;
+      this.column = column;
+    }
   }
 }

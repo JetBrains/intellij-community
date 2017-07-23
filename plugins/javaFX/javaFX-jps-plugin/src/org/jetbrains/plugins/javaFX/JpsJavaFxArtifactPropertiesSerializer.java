@@ -7,10 +7,6 @@ import org.jetbrains.jps.model.serialization.artifact.JpsArtifactPropertiesSeria
 
 import java.util.List;
 
-/**
- * User: anna
- * Date: 3/13/13
- */
 public class JpsJavaFxArtifactPropertiesSerializer extends JpsArtifactPropertiesSerializer<JpsJavaFxArtifactProperties> {
   public JpsJavaFxArtifactPropertiesSerializer() {
     super("javafx", JpsJavaFxApplicationArtifactType.INSTANCE);
@@ -39,16 +35,10 @@ public class JpsJavaFxArtifactPropertiesSerializer extends JpsArtifactProperties
   @Override
   public void saveProperties(JpsJavaFxArtifactProperties properties, List<ArtifactPropertiesState> stateList) {
     final ArtifactPropertiesState state = findApplicationProperties(stateList);
-
     if (state == null) {
       return;
     }
-    final Element element = XmlSerializer.serialize(properties);
-
-    if (element == null) {
-      return;
-    }
-    state.setOptions(element);
+    state.setOptions(XmlSerializer.serialize(properties));
   }
 
   private static ArtifactPropertiesState findApplicationProperties(List<ArtifactPropertiesState> stateList) {

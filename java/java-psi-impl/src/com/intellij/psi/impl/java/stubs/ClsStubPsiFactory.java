@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.*;
-import com.intellij.psi.impl.compiled.ClsJavaModuleImpl;
 
+/**
+ * @author max
+ */
 public class ClsStubPsiFactory extends StubPsiFactory {
   public static final ClsStubPsiFactory INSTANCE = new ClsStubPsiFactory();
 
@@ -112,7 +110,17 @@ public class ClsStubPsiFactory extends StubPsiFactory {
   }
 
   @Override
-  public PsiExportsStatement createExportsStatement(PsiExportsStatementStub stub) {
-    return new ClsExportsStatementImpl(stub);
+  public PsiPackageAccessibilityStatement createPackageAccessibilityStatement(PsiPackageAccessibilityStatementStub stub) {
+    return new ClsPackageAccessibilityStatementImpl(stub);
+  }
+
+  @Override
+  public PsiUsesStatement createUsesStatement(PsiUsesStatementStub stub) {
+    return new ClsUsesStatementImpl(stub);
+  }
+
+  @Override
+  public PsiProvidesStatement createProvidesStatement(PsiProvidesStatementStub stub) {
+    return new ClsProvidesStatementImpl(stub);
   }
 }

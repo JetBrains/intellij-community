@@ -27,7 +27,10 @@ import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -94,16 +97,13 @@ public class LatestExistentSearcher {
 
   @NotNull
   private LogEntryConsumer createHandler(@NotNull final Ref<Long> latest) {
-    return new LogEntryConsumer() {
-      @Override
-      public void consume(final LogEntry logEntry) throws SVNException {
-        final Map changedPaths = logEntry.getChangedPaths();
-        for (Object o : changedPaths.values()) {
-          final LogEntryPath path = (LogEntryPath)o;
-          if ((path.getType() == 'D') && (myRelativeUrl.equals(path.getPath()))) {
-            latest.set(logEntry.getRevision());
-            throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE);
-          }
+    return logEntry -> {
+      final Map changedPaths = logEntry.getChangedPaths();
+      for (Object o : changedPaths.values()) {
+        final LogEntryPath path = (LogEntryPath)o;
+        if ((path.getType() == 'D') && (myRelativeUrl.equals(path.getPath()))) {
+          latest.set(logEntry.getRevision());
+          throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE);
         }
       }
     };

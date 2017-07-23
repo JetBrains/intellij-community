@@ -29,12 +29,6 @@ import com.jetbrains.python.psi.PyStatementList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: Aug 27, 2009
- * Time: 8:45:08 PM
- */
 public class PyWithIfElseSurrounder extends PyStatementSurrounder {
   @Override
   @Nullable

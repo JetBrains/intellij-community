@@ -18,11 +18,10 @@ package com.intellij.refactoring.inline;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -47,7 +46,7 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
     myInvokedOnReference = ref != null;
 
     setTitle(REFACTORING_NAME);
-    myOccurrencesNumber = initOccurrencesNumber(method);
+    myOccurrencesNumber = getNumberOfOccurrences(method);
     init();
   }
 
@@ -58,10 +57,11 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
 
   @Override
   protected String getNameLabelText() {
+    final String occurrencesString = myOccurrencesNumber > -1 ? " - " + myOccurrencesNumber + " occurrence" + (myOccurrencesNumber == 1 ? "" : "s") : "";
     String methodText = PsiFormatUtil.formatMethod(myMethod,
                                                    PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
                                                    PsiFormatUtilBase.SHOW_TYPE);
-    return RefactoringBundle.message("inline.method.method.label", methodText);
+    return RefactoringBundle.message("inline.method.method.label", methodText, occurrencesString);
   }
 
   @Override
@@ -76,8 +76,13 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
 
   @Override
   protected String getInlineAllText() {
-    final String occurrencesString = myOccurrencesNumber > -1 ? " (" + myOccurrencesNumber + " occurrence" + (myOccurrencesNumber == 1 ? ")" : "s)") : "";
-    return (RefactoringBundle.message(myMethod.isWritable() ? "all.invocations.and.remove.the.method" : "all.invocations.in.project")) + occurrencesString;
+    return RefactoringBundle.message(myMethod.isWritable() ? "all.invocations.and.remove.the.method" : "all.invocations.in.project");
+  }
+
+  @Override
+  protected String getKeepTheDeclarationText() {
+    if (myMethod.isWritable()) return RefactoringBundle.message("all.invocations.keep.the.method");
+    return super.getKeepTheDeclarationText();
   }
 
   @Override
@@ -85,7 +90,7 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
     super.doAction();
     invokeRefactoring(
       new InlineMethodProcessor(getProject(), myMethod, myReferenceElement, myEditor, isInlineThisOnly(), isSearchInCommentsAndStrings(),
-                                isSearchForTextOccurrences()));
+                                isSearchForTextOccurrences(), !isKeepTheDeclaration()));
     JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
     if(myRbInlineThisOnly.isEnabled() && myRbInlineAll.isEnabled()) {
       settings.INLINE_METHOD_THIS = isInlineThisOnly();
@@ -101,6 +106,11 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
   @Override
   protected boolean canInlineThisOnly() {
     return InlineMethodHandler.checkRecursive(myMethod) || myAllowInlineThisOnly;
+  }
+
+  @Override
+  protected boolean ignoreOccurrence(PsiReference reference) {
+    return PsiTreeUtil.getParentOfType(reference.getElement(), PsiImportStatementBase.class) == null;
   }
 
   @Override

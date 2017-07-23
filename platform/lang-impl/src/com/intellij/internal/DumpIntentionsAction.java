@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 28-Jun-2007
- */
 package com.intellij.internal;
 
 import com.intellij.codeInsight.intention.impl.config.IntentionActionMetaData;
@@ -25,15 +21,13 @@ import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.DumbAware;
-import org.jdom.Document;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.JdomKt;
 import org.jdom.Element;
 
 import java.io.File;
@@ -53,7 +47,7 @@ public class DumpIntentionsAction extends AnAction implements DumbAware {
       FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFolderDescriptor(), e.getData(CommonDataKeys.PROJECT), null);
     if (file != null) {
       final List<IntentionActionMetaData> list = IntentionManagerSettings.getInstance().getMetaData();
-      final File root = VfsUtil.virtualToIoFile(file);
+      final File root = VfsUtilCore.virtualToIoFile(file);
       Element el = new Element("root");
       Map<String, Element> categoryMap = new HashMap<>();
       for (IntentionActionMetaData metaData : list) {
@@ -73,7 +67,7 @@ public class DumpIntentionsAction extends AnAction implements DumbAware {
       }
 
       try {
-        JDOMUtil.writeDocument(new Document(el), new File(root, "intentions.xml"), "\n");
+        JdomKt.write(el, root.toPath().resolve("intentions.xml"));
       }
       catch (IOException e1) {
         e1.printStackTrace();

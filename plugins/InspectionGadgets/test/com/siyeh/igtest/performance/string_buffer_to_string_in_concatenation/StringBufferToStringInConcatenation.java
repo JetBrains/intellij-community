@@ -8,16 +8,16 @@ public class StringBufferToStringInConcatenation
 
     public void foo() {
         final StringBuffer buffer = new StringBuffer(3);
-        String out = "foo" + buffer.toString();
+        String out = "foo" + buffer.<warning descr="Call to 'StringBuffer.toString()' in concatenation">toString</warning>();
         String in = 3 + buffer.toString();
         System.out.println("out = " + out);
     }
 
     public void bar() {
         final StringBuilder builder = new StringBuilder();
-        String one = "bar" + builder.toString();
+        String one = "bar" + builder.<warning descr="Call to 'StringBuilder.toString()' in concatenation">toString</warning>();
         String two = 6 + builder.toString();
-        String three = builder.toString() + "  ";
-        String s = 1 + 2 + "as df" + builder.toString() +  1 + "asdf";
+        String three = builder.<warning descr="Call to 'StringBuilder.toString()' in concatenation">toString</warning>() + "  ";
+        String s = 1 + 2 + "as df" + builder.<warning descr="Call to 'StringBuilder.toString()' in concatenation">toString</warning>() +  1 + "asdf";
     }
 }

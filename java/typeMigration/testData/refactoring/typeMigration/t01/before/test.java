@@ -1,12 +1,3 @@
-
-/**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: Oct 16, 2004
- * Time: 10:10:35 PM
- * To change this template use File | Settings | File Templates.
- */
-
 class Foo {
     Moo moo(int i) {
         return null;

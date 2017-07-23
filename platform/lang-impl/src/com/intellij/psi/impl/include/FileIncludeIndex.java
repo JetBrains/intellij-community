@@ -48,24 +48,18 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
 
   public static List<FileIncludeInfoImpl> getIncludes(VirtualFile file, GlobalSearchScope scope) {
     final List<FileIncludeInfoImpl> result = new ArrayList<>();
-    FileBasedIndex.getInstance().processValues(INDEX_ID, new FileKey(file), file, new FileBasedIndex.ValueProcessor<List<FileIncludeInfoImpl>>() {
-      @Override
-      public boolean process(VirtualFile file, List<FileIncludeInfoImpl> value) {
-        result.addAll(value);
-        return true;
-      }
+    FileBasedIndex.getInstance().processValues(INDEX_ID, new FileKey(file), file, (file1, value) -> {
+      result.addAll(value);
+      return true;
     }, scope);
     return result;
   }
 
   public static MultiMap<VirtualFile, FileIncludeInfoImpl> getIncludingFileCandidates(String fileName, GlobalSearchScope scope) {
     final MultiMap<VirtualFile, FileIncludeInfoImpl> result = new MultiMap<>();
-    FileBasedIndex.getInstance().processValues(INDEX_ID, new IncludeKey(fileName), null, new FileBasedIndex.ValueProcessor<List<FileIncludeInfoImpl>>() {
-      @Override
-      public boolean process(VirtualFile file, List<FileIncludeInfoImpl> value) {
-        result.put(file, value);
-        return true;
-      }
+    FileBasedIndex.getInstance().processValues(INDEX_ID, new IncludeKey(fileName), null, (file, value) -> {
+      result.put(file, value);
+      return true;
     }, scope);
     return result;
   }
@@ -88,12 +82,7 @@ public class FileIncludeIndex extends FileBasedIndexExtension<FileIncludeIndex.K
       @NotNull
       public Map<Key, List<FileIncludeInfoImpl>> map(@NotNull FileContent inputData) {
 
-        Map<Key, List<FileIncludeInfoImpl>> map = new FactoryMap<Key, List<FileIncludeInfoImpl>>() {
-          @Override
-          protected List<FileIncludeInfoImpl> create(Key key) {
-            return new ArrayList<>();
-          }
-        };
+        Map<Key, List<FileIncludeInfoImpl>> map = FactoryMap.createMap(key -> new ArrayList<>());
 
         for (FileIncludeProvider provider : Holder.myProviders) {
           if (!provider.acceptFile(inputData.getFile())) continue;

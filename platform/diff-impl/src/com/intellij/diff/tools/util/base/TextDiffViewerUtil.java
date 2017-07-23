@@ -37,8 +37,8 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.util.Condition;
 import com.intellij.ui.ToggleActionButton;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -51,8 +51,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.util.containers.ContainerUtil.list;
+
 public class TextDiffViewerUtil {
-  public static final Logger LOG = Logger.getInstance(TextDiffViewerUtil.class);
+  private static final Logger LOG = Logger.getInstance(TextDiffViewerUtil.class);
 
   @NotNull
   public static List<AnAction> createEditorPopupActions() {
@@ -73,10 +75,10 @@ public class TextDiffViewerUtil {
 
   @NotNull
   public static TextDiffSettings getTextSettings(@NotNull DiffContext context) {
-    TextDiffSettings settings = context.getUserData(TextDiffSettingsHolder.KEY);
+    TextDiffSettings settings = context.getUserData(TextDiffSettings.KEY);
     if (settings == null) {
       settings = TextDiffSettings.getSettings(context.getUserData(DiffUserDataKeys.PLACE));
-      context.putUserData(TextDiffSettingsHolder.KEY, settings);
+      context.putUserData(TextDiffSettings.KEY, settings);
       if (DiffUtil.isUserDataFlagSet(DiffUserDataKeys.DO_NOT_IGNORE_WHITESPACES, context)) {
         settings.setIgnorePolicy(IgnorePolicy.DEFAULT);
       }
@@ -162,136 +164,180 @@ public class TextDiffViewerUtil {
   // Actions
   //
 
-  // TODO: pretty icons ?
   public static abstract class ComboBoxSettingAction<T> extends ComboBoxAction implements DumbAware {
-    private DefaultActionGroup myChildren;
+    private DefaultActionGroup myActions;
 
     @Override
     public void update(AnActionEvent e) {
       Presentation presentation = e.getPresentation();
-      presentation.setText(getText(getCurrentSetting()));
-    }
-
-    @NotNull
-    public DefaultActionGroup getPopupGroup() {
-      initChildren();
-      return myChildren;
+      presentation.setText(getText(getValue()));
     }
 
     @NotNull
     @Override
     protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-      initChildren();
-      return myChildren;
+      return getActions();
     }
 
-    private void initChildren() {
-      if (myChildren == null) {
-        myChildren = new DefaultActionGroup();
-        for (T setting : getAvailableSettings()) {
-          myChildren.add(new MyAction(setting));
+    @NotNull
+    public DefaultActionGroup getActions() {
+      if (myActions == null) {
+        myActions = new DefaultActionGroup();
+        for (T setting : getAvailableOptions()) {
+          myActions.add(new MyAction(setting));
         }
       }
+      return myActions;
     }
 
     @NotNull
-    protected abstract List<T> getAvailableSettings();
+    protected abstract List<T> getAvailableOptions();
 
     @NotNull
-    protected abstract String getText(@NotNull T setting);
+    protected abstract T getValue();
+
+    protected abstract void setValue(@NotNull T option);
 
     @NotNull
-    protected abstract T getCurrentSetting();
-
-    protected abstract void applySetting(@NotNull T setting, @NotNull AnActionEvent e);
+    protected abstract String getText(@NotNull T option);
 
     private class MyAction extends AnAction implements DumbAware {
-      @NotNull private final T mySetting;
+      @NotNull private final T myOption;
 
-      public MyAction(@NotNull T setting) {
-        super(getText(setting));
-        mySetting = setting;
+      public MyAction(@NotNull T option) {
+        super(getText(option));
+        myOption = option;
       }
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        applySetting(mySetting, e);
+        setValue(myOption);
       }
     }
   }
 
-  public static abstract class HighlightPolicySettingAction extends ComboBoxSettingAction<HighlightPolicy> {
-    @NotNull protected final TextDiffSettings mySettings;
+  private static abstract class EnumPolicySettingAction<T extends Enum> extends TextDiffViewerUtil.ComboBoxSettingAction<T> {
+    @NotNull private final T[] myPolicies;
 
-    public HighlightPolicySettingAction(@NotNull TextDiffSettings settings) {
-      mySettings = settings;
+    public EnumPolicySettingAction(@NotNull T[] policies) {
+      assert policies.length > 0;
+      myPolicies = policies;
     }
 
     @Override
-    protected void applySetting(@NotNull HighlightPolicy setting, @NotNull AnActionEvent e) {
-      if (getCurrentSetting() == setting) return;
-      UsageTrigger.trigger("diff.TextDiffSettings.HighlightPolicy." + setting.name());
-      mySettings.setHighlightPolicy(setting);
-      update(e);
-      onSettingsChanged();
+    public void update(AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setEnabledAndVisible(myPolicies.length > 1);
     }
 
     @NotNull
     @Override
-    protected HighlightPolicy getCurrentSetting() {
+    protected List<T> getAvailableOptions() {
+      //noinspection unchecked
+      return ContainerUtil.sorted(Arrays.asList(myPolicies));
+    }
+
+    @NotNull
+    @Override
+    public T getValue() {
+      T value = getStoredValue();
+      if (ArrayUtil.contains(value, myPolicies)) return value;
+
+      List<T> substitutes = getValueSubstitutes(value);
+      for (T substitute : substitutes) {
+        if (ArrayUtil.contains(substitute, myPolicies)) return substitute;
+      }
+
+      return myPolicies[0];
+    }
+
+    @NotNull
+    protected abstract T getStoredValue();
+
+    @NotNull
+    protected abstract List<T> getValueSubstitutes(@NotNull T value);
+  }
+
+  public static class HighlightPolicySettingAction extends EnumPolicySettingAction<HighlightPolicy> {
+    @NotNull protected final TextDiffSettings mySettings;
+
+    public HighlightPolicySettingAction(@NotNull TextDiffSettings settings,
+                                        @NotNull HighlightPolicy... policies) {
+      super(policies);
+      mySettings = settings;
+    }
+
+    @Override
+    protected void setValue(@NotNull HighlightPolicy option) {
+      if (getValue() == option) return;
+      UsageTrigger.trigger("diff.TextDiffSettings.HighlightPolicy." + option.name());
+      mySettings.setHighlightPolicy(option);
+    }
+
+    @NotNull
+    @Override
+    protected HighlightPolicy getStoredValue() {
       return mySettings.getHighlightPolicy();
     }
 
     @NotNull
     @Override
-    protected String getText(@NotNull HighlightPolicy setting) {
-      return setting.getText();
+    protected List<HighlightPolicy> getValueSubstitutes(@NotNull HighlightPolicy value) {
+      if (value == HighlightPolicy.BY_WORD_SPLIT) {
+        return list(HighlightPolicy.BY_WORD);
+      }
+      if (value == HighlightPolicy.DO_NOT_HIGHLIGHT) {
+        return list(HighlightPolicy.BY_LINE);
+      }
+      return list(HighlightPolicy.BY_WORD);
     }
 
     @NotNull
     @Override
-    protected List<HighlightPolicy> getAvailableSettings() {
-      return Arrays.asList(HighlightPolicy.values());
+    protected String getText(@NotNull HighlightPolicy option) {
+      return option.getText();
     }
-
-    protected abstract void onSettingsChanged();
   }
 
-  public static abstract class IgnorePolicySettingAction extends ComboBoxSettingAction<IgnorePolicy> {
+  public static class IgnorePolicySettingAction extends EnumPolicySettingAction<IgnorePolicy> {
     @NotNull protected final TextDiffSettings mySettings;
 
-    public IgnorePolicySettingAction(@NotNull TextDiffSettings settings) {
+    public IgnorePolicySettingAction(@NotNull TextDiffSettings settings,
+                                     @NotNull IgnorePolicy... policies) {
+      super(policies);
       mySettings = settings;
     }
 
     @Override
-    protected void applySetting(@NotNull IgnorePolicy setting, @NotNull AnActionEvent e) {
-      if (getCurrentSetting() == setting) return;
-      UsageTrigger.trigger("diff.TextDiffSettings.IgnorePolicy." + setting.name());
-      mySettings.setIgnorePolicy(setting);
-      update(e);
-      onSettingsChanged();
+    protected void setValue(@NotNull IgnorePolicy option) {
+      if (getValue() == option) return;
+      UsageTrigger.trigger("diff.TextDiffSettings.IgnorePolicy." + option.name());
+      mySettings.setIgnorePolicy(option);
     }
 
     @NotNull
     @Override
-    protected IgnorePolicy getCurrentSetting() {
+    protected IgnorePolicy getStoredValue() {
       return mySettings.getIgnorePolicy();
     }
 
     @NotNull
     @Override
-    protected String getText(@NotNull IgnorePolicy setting) {
-      return setting.getText();
+    protected List<IgnorePolicy> getValueSubstitutes(@NotNull IgnorePolicy value) {
+      if (value == IgnorePolicy.IGNORE_WHITESPACES_CHUNKS) {
+        return list(IgnorePolicy.IGNORE_WHITESPACES);
+      }
+      if (value == IgnorePolicy.FORMATTING) {
+        return list(IgnorePolicy.TRIM_WHITESPACES);
+      }
+      return list(IgnorePolicy.DEFAULT);
     }
 
     @NotNull
     @Override
-    protected List<IgnorePolicy> getAvailableSettings() {
-      return Arrays.asList(IgnorePolicy.values());
+    protected String getText(@NotNull IgnorePolicy option) {
+      return option.getText();
     }
-
-    protected abstract void onSettingsChanged();
   }
 
   public static class ToggleAutoScrollAction extends ToggleActionButton implements DumbAware {
@@ -412,12 +458,7 @@ public class TextDiffViewerUtil {
 
   @NotNull
   public static List<? extends EditorEx> getEditableEditors(@NotNull List<? extends EditorEx> editors) {
-    return ContainerUtil.filter(editors, new Condition<EditorEx>() {
-      @Override
-      public boolean value(EditorEx editor) {
-        return !editor.isViewer();
-      }
-    });
+    return ContainerUtil.filter(editors, editor -> !editor.isViewer());
   }
 
   public static class EditorFontSizeSynchronizer implements PropertyChangeListener {

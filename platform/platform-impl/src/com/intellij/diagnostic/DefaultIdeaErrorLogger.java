@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,7 +107,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
 
     if (t instanceof OutOfMemoryError) {
       if (message != null && message.contains("unable to create new native thread")) return null;
-      if (message != null && message.contains("PermGen")) return MemoryKind.PERM_GEN;
+      if (message != null && message.contains("Metaspace")) return MemoryKind.METASPACE;
       return MemoryKind.HEAP;
     }
 

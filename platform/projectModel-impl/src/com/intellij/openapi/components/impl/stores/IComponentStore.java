@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
+import com.intellij.configurationStore.StateStorageManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.util.Pair;
@@ -22,15 +23,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.util.List;
 import java.util.Set;
 
 public interface IComponentStore {
-  /**
-   * @param path System-independent path.
-   */
-  void setPath(@NotNull String path);
+  void setPath(@NotNull @SystemIndependent String path);
 
   void initComponent(@NotNull Object component, boolean service);
 
@@ -51,5 +50,5 @@ public interface IComponentStore {
   void save(@NotNull List<Pair<StateStorage.SaveSession, VirtualFile>> readonlyFiles);
 
   @TestOnly
-  void saveApplicationComponent(@NotNull Object component);
+  void saveApplicationComponent(@NotNull PersistentStateComponent<?> component);
 }

@@ -6,11 +6,13 @@ except ImportError:
 else:
     trace._warn = lambda *args: None   # workaround for http://bugs.python.org/issue17143 (PY-8706)
 
+import os
 from _pydevd_bundle.pydevd_comm import CMD_SIGNATURE_CALL_TRACE, NetCommand
 from _pydevd_bundle import pydevd_xml
 from _pydevd_bundle.pydevd_constants import xrange, dict_iter_items
 from _pydevd_bundle import pydevd_utils
 from _pydevd_bundle.pydevd_utils import get_clsname_for_code
+
 
 class Signature(object):
     def __init__(self, file, name):
@@ -75,6 +77,13 @@ def get_type_of_value(value, ignore_module_name=('__main__', '__builtin__', 'bui
     return class_name
 
 
+def _modname(path):
+    """Return a plausible module name for the path"""
+    base = os.path.basename(path)
+    filename, ext = os.path.splitext(base)
+    return filename
+
+
 class SignatureFactory(object):
     def __init__(self):
         self._caller_cache = {}
@@ -99,7 +108,7 @@ class SignatureFactory(object):
         code = frame.f_code
         filename = code.co_filename
         if filename:
-            modulename = trace.modname(filename)
+            modulename = _modname(filename)
         else:
             modulename = None
 

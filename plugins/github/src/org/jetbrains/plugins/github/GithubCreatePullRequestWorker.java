@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -287,21 +287,13 @@ public class GithubCreatePullRequestWorker {
     synchronized (fork.LOCK) {
       if (fork.getFetchTask() != null) return;
 
-      final MasterFutureTask<Void> task = new MasterFutureTask<>(new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          doFetchRemote(fork);
-          return null;
-        }
+      final MasterFutureTask<Void> task = new MasterFutureTask<>(() -> {
+        doFetchRemote(fork);
+        return null;
       });
       fork.setFetchTask(task);
 
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          task.run();
-        }
-      });
+      ApplicationManager.getApplication().executeOnPooledThread(() -> task.run());
     }
   }
 
@@ -316,20 +308,10 @@ public class GithubCreatePullRequestWorker {
       MasterFutureTask<Void> masterTask = branch.getForkInfo().getFetchTask();
       assert masterTask != null;
 
-      final SlaveFutureTask<DiffInfo> task = new SlaveFutureTask<>(masterTask, new Callable<DiffInfo>() {
-        @Override
-        public DiffInfo call() throws VcsException {
-          return doLoadDiffInfo(branch);
-        }
-      });
+      final SlaveFutureTask<DiffInfo> task = new SlaveFutureTask<>(masterTask, () -> doLoadDiffInfo(branch));
       branch.setDiffInfoTask(task);
 
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          task.run();
-        }
-      });
+      ApplicationManager.getApplication().executeOnPooledThread(() -> task.run());
     }
   }
 
@@ -420,7 +402,7 @@ public class GithubCreatePullRequestWorker {
         VcsCommitMetadata targetCommit = commits.get(1);
 
         if (localCommit.getParents().contains(targetCommit.getId())) {
-          return Couple.of(localCommit.getSubject(), localCommit.getFullMessage());
+          return GithubUtil.getGithubLikeFormattedDescriptionMessage(localCommit.getFullMessage());
         }
         return getSimpleDefaultDescriptionMessage(branch);
       }
@@ -808,13 +790,7 @@ public class GithubCreatePullRequestWorker {
       try {
         return super.get();
       }
-      catch (InterruptedException e) {
-        return null;
-      }
-      catch (CancellationException e) {
-        return null;
-      }
-      catch (ExecutionException e) {
+      catch (InterruptedException | ExecutionException | CancellationException e) {
         return null;
       }
     }
@@ -858,12 +834,7 @@ public class GithubCreatePullRequestWorker {
     }
 
     protected void runSlave(@NotNull final SlaveFutureTask slave) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          slave.run();
-        }
-      });
+      ApplicationManager.getApplication().executeOnPooledThread(() -> slave.run());
     }
   }
 }

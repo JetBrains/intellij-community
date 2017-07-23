@@ -15,18 +15,21 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashSet;
+import java.awt.*;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -41,23 +44,32 @@ public class CollectionsMustHaveInitialCapacityInspection
       return classes;
     }
   };
+  public boolean myIgnoreFields;
 
   @Override
   public void readSettings(@NotNull Element node) throws InvalidDataException {
     mySettings.readSettings(node);
+    myIgnoreFields = JDOMExternalizer.readBoolean(node, "ignoreFields");
   }
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     mySettings.writeSettings(node);
+    if (myIgnoreFields) {
+      JDOMExternalizer.write(node, "ignoreFields", true);
+    }
   }
 
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return mySettings.createOptionsPanel();
+    JPanel p = new JPanel(new BorderLayout());
+    p.add(new SingleCheckboxOptionsPanel("don't report field's initializers", this, "myIgnoreFields"), BorderLayout.NORTH);
+    p.add(mySettings.createOptionsPanel(), BorderLayout.CENTER);
+    return p;
   }
 
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
@@ -89,6 +101,10 @@ public class CollectionsMustHaveInitialCapacityInspection
     @Override
     public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
+      if (myIgnoreFields && expression.getParent() instanceof PsiField) {
+        return;
+      }
+
       final PsiType type = expression.getType();
       if (!isCollectionWithInitialCapacity(type)) {
         return;

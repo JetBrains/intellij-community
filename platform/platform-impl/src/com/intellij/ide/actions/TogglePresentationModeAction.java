@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
@@ -55,8 +56,10 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    boolean selected = UISettings.getInstance().PRESENTATION_MODE;
-    e.getPresentation().setText(selected ? "Exit Presentation Mode" : "Enter Presentation Mode");
+    boolean selected = UISettings.getInstance().getPresentationMode();
+    //noinspection ConditionalExpressionWithIdenticalBranches
+    e.getPresentation().setText(selected ? ActionsBundle.message("action.TogglePresentationMode.exit")
+                                         : ActionsBundle.message("action.TogglePresentationMode.enter"));
   }
 
   @Override
@@ -64,7 +67,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
     UISettings settings = UISettings.getInstance();
     Project project = e.getProject();
 
-    setPresentationMode(project, !settings.PRESENTATION_MODE);
+    setPresentationMode(project, !settings.getPresentationMode());
   }
 
   //public static void restorePresentationMode() {
@@ -75,7 +78,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
 
   public static void setPresentationMode(final Project project, final boolean inPresentation) {
     final UISettings settings = UISettings.getInstance();
-    settings.PRESENTATION_MODE = inPresentation;
+    settings.setPresentationMode(inPresentation);
 
     final boolean layoutStored = storeToolWindows(project);
 
@@ -110,7 +113,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
 
   private static void tweakEditorAndFireUpdateUI(UISettings settings, boolean inPresentation) {
     EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    int fontSize = inPresentation ? settings.PRESENTATION_MODE_FONT_SIZE : globalScheme.getEditorFontSize();
+    int fontSize = inPresentation ? settings.getPresentationModeFontSize() : globalScheme.getEditorFontSize();
     if (inPresentation) {
       ourSavedConsoleFontSize = globalScheme.getConsoleFontSize();
       globalScheme.setConsoleFontSize(fontSize);
@@ -145,7 +148,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
           }
         }
       }
-      float scaleFactor = settings.PRESENTATION_MODE_FONT_SIZE / UIUtil.DEF_SYSTEM_FONT_SIZE;
+      float scaleFactor = JBUI.getFontScale(settings.getPresentationModeFontSize());
       ourSavedScaleFactor = JBUI.scale(1f);
       JBUI.setUserScaleFactor(scaleFactor);
       for (Object key : ourSavedValues.keySet()) {

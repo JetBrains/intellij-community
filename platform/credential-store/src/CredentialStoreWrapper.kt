@@ -21,7 +21,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.diagnostic.catchAndLog
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.QueueProcessor
@@ -64,7 +64,7 @@ private class CredentialStoreWrapper(private val store: CredentialStore) : Passw
       return null
     }
 
-    LOG.catchAndLog {
+    LOG.runAndLogException {
       fun setNew(oldKey: CredentialAttributes): Credentials? {
         return store.get(oldKey)?.let {
           set(oldKey, null)
@@ -80,7 +80,7 @@ private class CredentialStoreWrapper(private val store: CredentialStore) : Passw
 
       val appInfo = ApplicationInfoEx.getInstanceEx()
       if (appInfo.isEAP || appInfo.build.isSnapshot) {
-        setNew(CredentialAttributes("IntelliJ Platform", "${requestor.name}/$userName"))?.let { return it }
+        setNew(CredentialAttributes(SERVICE_NAME_PREFIX, "${requestor.name}/$userName"))?.let { return it }
       }
     }
     return null
@@ -104,7 +104,7 @@ private class CredentialStoreWrapper(private val store: CredentialStore) : Passw
       postponedCredentials.set(attributes, null)
     }
 
-    LOG.catchAndLog {
+    LOG.runAndLogException {
       if (fallbackStore.isInitialized()) {
         fallbackStore.value.set(attributes, credentials)
       }

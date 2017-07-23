@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,28 +15,25 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
-/**
- * @author Konstantin Kolosovsky.
- */
+import static com.intellij.openapi.vfs.VfsUtilCore.getRelativePath;
+import static com.intellij.util.containers.ContainerUtil.exists;
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static java.util.Collections.sort;
+import static java.util.Comparator.comparing;
+import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.append;
+
 public class UniqueRootsFilter {
 
-  public <T extends RootUrlPair> List<T> filter(@NotNull final List<T> list) {
-    List<T> result = new ArrayList<>();
+  @NotNull
+  public <T extends RootUrlPair> List<T> filter(@NotNull List<T> list) {
+    List<T> result = newArrayList();
 
-    sort(list);
-    for (final T child : list) {
+    sort(list, comparing(item -> item.getVirtualFile().getPath()));
+    for (T child : list) {
       if (!alreadyRegistered(child, result)) {
         result.add(child);
       }
@@ -45,21 +42,8 @@ public class UniqueRootsFilter {
     return result;
   }
 
-  private static <T extends RootUrlPair> void sort(List<T> list) {
-    Collections.sort(list, new Comparator<RootUrlPair>() {
-      public int compare(final RootUrlPair o1, final RootUrlPair o2) {
-        return o1.getVirtualFile().getPath().compareTo(o2.getVirtualFile().getPath());
-      }
-    });
-  }
-
-  private static <T extends RootUrlPair> boolean alreadyRegistered(@NotNull final T child, @NotNull List<T> registered) {
-    return ContainerUtil.exists(registered, new Condition<T>() {
-      @Override
-      public boolean value(T parent) {
-        return isSamePath(child, parent) || isSameSupposedUrl(child, parent);
-      }
-    });
+  private static <T extends RootUrlPair> boolean alreadyRegistered(@NotNull T child, @NotNull List<T> registered) {
+    return exists(registered, parent -> isSamePath(child, parent) || isSameSupposedUrl(child, parent));
   }
 
   private static <T extends RootUrlPair> boolean isSamePath(@NotNull T child, @NotNull T parent) {
@@ -67,24 +51,8 @@ public class UniqueRootsFilter {
   }
 
   private static <T extends RootUrlPair> boolean isSameSupposedUrl(@NotNull T child, @NotNull T parent) {
-    boolean result = false;
+    String relativePath = getRelativePath(child.getVirtualFile(), parent.getVirtualFile(), '/');
 
-    if (VfsUtilCore.isAncestor(parent.getVirtualFile(), child.getVirtualFile(), true)) {
-      String relativePath = VfsUtilCore.getRelativePath(child.getVirtualFile(), parent.getVirtualFile(), '/');
-      // get child's supposed and real urls
-      final String supposed = getSupposedUrl(parent.getUrl(), relativePath);
-      if (supposed.equals(child.getUrl())) {
-        result = true;
-      }
-    }
-
-    return result;
-  }
-
-  @Nullable
-  private static String getSupposedUrl(final String parentUrl, final String relativePath) {
-    if (parentUrl == null) return null;
-
-    return SVNPathUtil.append(parentUrl, relativePath);
+    return relativePath != null && append(parent.getUrl(), relativePath).equals(child.getUrl());
   }
 }

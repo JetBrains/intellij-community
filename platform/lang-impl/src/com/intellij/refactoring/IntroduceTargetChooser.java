@@ -15,8 +15,11 @@
  */
 package com.intellij.refactoring;
 
+import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
@@ -26,6 +29,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.introduce.IntroduceTarget;
 import com.intellij.refactoring.introduce.PsiIntroduceTarget;
+import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
@@ -39,6 +43,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class IntroduceTargetChooser {
   private IntroduceTargetChooser() {
@@ -90,14 +95,9 @@ public class IntroduceTargetChooser {
                                                                             @NotNull Pass<T> callback,
                                                                             @NotNull @Nls String title,
                                                                             int selection) {
-
-
-    final ScopeHighlighter highlighter = new ScopeHighlighter(editor);
-    final DefaultListModel model = new DefaultListModel();
-    for (T expr : expressions) {
-      model.addElement(expr);
-    }
-    final JList list = new JBList(model);
+    AtomicReference<ScopeHighlighter> highlighter = new AtomicReference<>(new ScopeHighlighter(editor));
+    CollectionListModel<T> model = new CollectionListModel<>(expressions);
+    JBList<T> list = new JBList<>(model);
     // Set the accessible name so that screen readers announce the list tile (e.g. "Expression Types list").
     AccessibleContextUtil.setName(list, title);
     list.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -105,13 +105,13 @@ public class IntroduceTargetChooser {
     list.setCellRenderer(new DefaultListCellRenderer() {
 
       @Override
-      public Component getListCellRendererComponent(final JList list,
-                                                    final Object value,
-                                                    final int index,
-                                                    final boolean isSelected,
-                                                    final boolean cellHasFocus) {
-        final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        final IntroduceTarget expr = (T)value;
+      public Component getListCellRendererComponent(JList list,
+                                                    Object value,
+                                                    int index,
+                                                    boolean isSelected,
+                                                    boolean cellHasFocus) {
+        Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        IntroduceTarget expr = (T)value;
         if (expr.isValid()) {
           String text = expr.render();
           int firstNewLinePos = text.indexOf('\n');
@@ -128,23 +128,23 @@ public class IntroduceTargetChooser {
     });
 
     list.addListSelectionListener(e -> {
-      highlighter.dropHighlight();
-      final int index = list.getSelectedIndex();
-      if (index < 0) return;
-      final T expr = (T)model.get(index);
-      if (expr.isValid()) {
+      ScopeHighlighter h = highlighter.get();
+      if (h == null) return;
+      h.dropHighlight();
+      T expr = list.getSelectedValue();
+      if (expr != null && expr.isValid()) {
         TextRange range = expr.getTextRange();
-        highlighter.highlight(Pair.create(range, Collections.singletonList(range)));
+        h.highlight(Pair.create(range, Collections.singletonList(range)));
       }
     });
 
-    JBPopupFactory.getInstance().createListPopupBuilder(list)
+    JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
       .setTitle(title)
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
       .setItemChoosenCallback(() -> {
-        T expr = (T)list.getSelectedValue();
+        T expr = list.getSelectedValue();
         if (expr != null && expr.isValid()) {
           callback.pass(expr);
         }
@@ -152,10 +152,15 @@ public class IntroduceTargetChooser {
       .addListener(new JBPopupAdapter() {
         @Override
         public void onClosed(LightweightWindowEvent event) {
-          highlighter.dropHighlight();
+          highlighter.getAndSet(null).dropHighlight();
         }
       })
-      .createPopup().showInBestPositionFor(editor);
+      .createPopup();
+    popup.showInBestPositionFor(editor);
+    Project project = editor.getProject();
+    if (project != null) {
+      NavigationUtil.hidePopupIfDumbModeStarts(popup, project);
+    }
   }
 
   private static class MyIntroduceTarget<T extends PsiElement> extends PsiIntroduceTarget<T> {

@@ -53,8 +53,12 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    shutdownIndices();
-    super.tearDown();
+    try {
+      shutdownIndices();
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   private void initIndices() throws Exception {
@@ -62,6 +66,14 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
   }
 
   private void initIndices(String relativeDir) {
+    if (myIndices != null) {
+      try {
+        shutdownIndices();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
     myIndexer = MavenServerManager.getInstance().createIndexer();
     myIndicesDir = new File(myDir, relativeDir);
     myIndices = new MavenIndices(myIndexer, myIndicesDir, new MavenIndex.IndexListener() {
@@ -77,11 +89,12 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     myIndexer.releaseInTests();
   }
 
-  public void testCreatingAndUpdatingLocal() throws Exception {
-    MavenIndex i = myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
-    myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
-
-    assertUnorderedElementsAreEqual(i.getGroupIds(), "junit", "asm", "commons-io", "org.ow2.asm");
+  private static void assertSearchResults(MavenIndex i, Query query, String... expectedArtifacts) {
+    List<String> actualArtifacts = new ArrayList<>();
+    for (MavenArtifactInfo each : i.search(query, 100)) {
+      actualArtifacts.add(each.getGroupId() + ":" + each.getArtifactId() + ":" + each.getVersion());
+    }
+    assertUnorderedElementsAreEqual(actualArtifacts, expectedArtifacts);
   }
 
   public void testCreatingAndUpdatingLocalWhenNoDirectory() throws Exception {
@@ -450,14 +463,6 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     i.addArtifact(new File(myRepositoryHelper.getTestDataPath("local2/jmock/jmock/1.0.0/jmock-1.0.0.jar")));
 
     assertSearchResults(i, new WildcardQuery(new Term(MavenServerIndexer.SEARCH_TERM_COORDINATES, "*jmock*")), "jmock:jmock:1.0.0");
-  }
-
-  private static void assertSearchResults(MavenIndex i, Query query, String... expectedArtifacts) {
-    List<String> actualArtifacts = new ArrayList<>();
-    for (MavenArtifactInfo each : i.search(query, 100)) {
-      actualArtifacts.add(each.getGroupId() + ":" + each.getArtifactId() + ":" + each.getVersion());
-    }
-    assertUnorderedElementsAreEqual(actualArtifacts, expectedArtifacts);
   }
 
   public void testSearchingForClasses() throws Exception {

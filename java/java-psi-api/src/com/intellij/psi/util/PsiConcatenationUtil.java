@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,14 @@ package com.intellij.psi.util;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
-/**
- * User: cdr
- */
 public class PsiConcatenationUtil {
 
   public static void buildFormatString(PsiExpression expression, StringBuilder formatString,
@@ -61,7 +60,7 @@ public class PsiConcatenationUtil {
             PsiElement element = binaryExpression.getTokenBeforeOperand(op);
             if (element.getPrevSibling() instanceof PsiWhiteSpace) element = element.getPrevSibling();
             String text = binaryExpression.getText().substring(0, element.getStartOffsetInParent());
-            PsiExpression subExpression = JavaPsiFacade.getInstance(binaryExpression.getProject()).getElementFactory()
+            PsiExpression subExpression = JavaPsiFacade.getElementFactory(binaryExpression.getProject())
               .createExpressionFromText(text, binaryExpression);
             addFormatParameter(subExpression, formatString, formatParameters, printfFormat);
           }
@@ -85,7 +84,7 @@ public class PsiConcatenationUtil {
     }
   }
 
-  private static void addFormatParameter(PsiExpression expression,
+  private static void addFormatParameter(@NotNull PsiExpression expression,
                                          StringBuilder formatString,
                                          List<PsiExpression> formatParameters, boolean printfFormat) {
     final PsiType type = expression.getType();
@@ -105,9 +104,8 @@ public class PsiConcatenationUtil {
     formatParameters.add(getBoxedArgument(expression));
   }
 
-  private static PsiExpression getBoxedArgument(PsiExpression arg) throws IncorrectOperationException {
-    arg = PsiUtil.deparenthesizeExpression(arg);
-    assert arg != null;
+  private static PsiExpression getBoxedArgument(@NotNull PsiExpression arg) {
+    arg = ObjectUtils.coalesce(unwrapExpression(arg), arg);
     if (PsiUtil.isLanguageLevel5OrHigher(arg)) {
       return arg;
     }
@@ -133,4 +131,35 @@ public class PsiConcatenationUtil {
     return newExpr;
   }
 
+  @Nullable
+  private static PsiExpression unwrapExpression(@NotNull PsiExpression expression) {
+    while (true) {
+      if (expression instanceof PsiParenthesizedExpression) {
+        expression = ((PsiParenthesizedExpression)expression).getExpression();
+        continue;
+      }
+      if (expression instanceof PsiTypeCastExpression) {
+        final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)expression;
+        final PsiType castType = typeCastExpression.getType();
+        final PsiExpression operand = typeCastExpression.getOperand();
+        if (operand == null) {
+          return expression;
+        }
+        if (TypeConversionUtil.isNumericType(castType)) {
+          final PsiType operandType = operand.getType();
+          if (operandType == null) {
+            return expression;
+          }
+          final int castRank = TypeConversionUtil.getTypeRank(castType);
+          final int operandRank = TypeConversionUtil.getTypeRank(operandType);
+          if (castRank < operandRank || castRank == TypeConversionUtil.CHAR_RANK && operandRank != castRank) {
+            return expression;
+          }
+        }
+        expression = operand;
+        continue;
+      }
+      return expression;
+    }
+  }
 }

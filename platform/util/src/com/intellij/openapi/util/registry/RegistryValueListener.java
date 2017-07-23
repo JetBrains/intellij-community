@@ -15,6 +15,12 @@
  */
 package com.intellij.openapi.util.registry;
 
+import com.intellij.openapi.Disposable;
+
+/**
+ * Listener for receiving notifications about registry value state changes.
+ * Use {@link RegistryValue#addListener(RegistryValueListener, Disposable)} to register a listener.
+ */
 public interface RegistryValueListener {
 
   void beforeValueChanged(RegistryValue value);

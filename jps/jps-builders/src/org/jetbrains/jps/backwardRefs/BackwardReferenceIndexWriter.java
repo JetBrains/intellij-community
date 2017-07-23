@@ -15,25 +15,26 @@
  */
 package org.jetbrains.jps.backwardRefs;
 
+import com.intellij.util.Function;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.InvertedIndex;
-import com.sun.tools.javac.code.Flags;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
-import org.jetbrains.jps.builders.java.JavaBuilderUtil;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
+import javax.lang.model.element.Modifier;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-
-import static com.sun.tools.javac.code.Flags.PRIVATE;
 
 public class BackwardReferenceIndexWriter {
   public static final String PROP_KEY = "jps.backward.ref.index.builder";
@@ -46,12 +47,24 @@ public class BackwardReferenceIndexWriter {
     myIndex = index;
   }
 
-  public static void closeIfNeed() {
+  Exception getRebuildRequestCause() {
+    return myIndex.getRebuildRequestCause();
+  }
+
+  void setRebuildCause(Exception e) {
+    myIndex.setRebuildRequestCause(e);
+  }
+
+  public static void closeIfNeed(boolean clearIndex) {
     if (ourInstance != null) {
+      File dir = clearIndex ? ourInstance.myIndex.getIndicesDir() : null;
       try {
         ourInstance.close();
       } finally {
         ourInstance = null;
+        if (dir != null) {
+          FileUtil.delete(dir);
+        }
       }
     }
   }
@@ -60,13 +73,13 @@ public class BackwardReferenceIndexWriter {
     return ourInstance;
   }
 
-  static void initialize(@NotNull final CompileContext context) {
+  static void initialize(@NotNull final CompileContext context, int attempt) {
     final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
     final File buildDir = dataManager.getDataPaths().getDataStorageRoot();
     if (isEnabled()) {
-      boolean isRebuild = JavaBuilderUtil.isForcedRecompilationAllJavaModules(context);
+      boolean isRebuild = isRebuildInAllJavaModules(context);
 
-      if (!JavaCompilers.JAVAC_ID.equals(JavaBuilder.getUsedCompilerId(context))) {
+      if (!JavaCompilers.JAVAC_ID.equals(JavaBuilder.getUsedCompilerId(context)) || !JavaBuilder.IS_ENABLED.get(context, Boolean.TRUE)) {
         CompilerBackwardReferenceIndex.removeIndexFiles(buildDir);
         return;
       }
@@ -74,11 +87,16 @@ public class BackwardReferenceIndexWriter {
         CompilerBackwardReferenceIndex.removeIndexFiles(buildDir);
       }
       else if (CompilerBackwardReferenceIndex.versionDiffers(buildDir)) {
-        throw new BuildDataCorruptedException("backward reference index should be updated to actual version");
+        CompilerBackwardReferenceIndex.removeIndexFiles(buildDir);
+        if ((attempt == 0 && areAllJavaModulesAffected(context)) ) {
+          throw new BuildDataCorruptedException("backward reference index should be updated to actual version");
+        } else {
+          // do not request a rebuild if a project is affected incompletely and version is changed, just disable indices
+        }
       }
 
       if (CompilerBackwardReferenceIndex.exist(buildDir) || isRebuild) {
-        ourInstance = new BackwardReferenceIndexWriter(new CompilerBackwardReferenceIndex(buildDir));
+        ourInstance = new BackwardReferenceIndexWriter(new CompilerBackwardReferenceIndex(buildDir, false));
       }
     } else {
       CompilerBackwardReferenceIndex.removeIndexFiles(buildDir);
@@ -89,11 +107,11 @@ public class BackwardReferenceIndexWriter {
     return SystemProperties.getBooleanProperty(PROP_KEY, false);
   }
 
-  synchronized LightRef.JavaLightClassRef asClassUsage(JavacRef aClass) {
+  synchronized LightRef.JavaLightClassRef asClassUsage(JavacRef aClass) throws IOException {
     return new LightRef.JavaLightClassRef(id(aClass, myIndex.getByteSeqEum()));
   }
 
-  void processDeletedFiles(Collection<String> files) {
+  void processDeletedFiles(Collection<String> files) throws IOException {
     for (String file : files) {
       writeData(enumeratePath(new File(file).getPath()), null);
     }
@@ -105,13 +123,8 @@ public class BackwardReferenceIndexWriter {
     }
   }
 
-  synchronized int enumeratePath(String file) {
-    try {
-      return myIndex.getFilePathEnumerator().enumerate(file);
-    }
-    catch (IOException e) {
-      throw new BuildDataCorruptedException(e);
-    }
+  synchronized int enumeratePath(String file) throws IOException {
+    return myIndex.getFilePathEnumerator().enumerate(file);
   }
 
   private void close() {
@@ -119,24 +132,25 @@ public class BackwardReferenceIndexWriter {
   }
 
   @Nullable
-  LightRef enumerateNames(JavacRef ref) {
-    ByteArrayEnumerator byteArrayEnumerator = myIndex.getByteSeqEum();
+  LightRef enumerateNames(JavacRef ref, Function<String, Integer> ownerIdReplacer) throws IOException {
+    NameEnumerator nameEnumerator = myIndex.getByteSeqEum();
     if (ref instanceof JavacRef.JavacClass) {
       if (!isPrivate(ref) && !((JavacRef.JavacClass)ref).isAnonymous()) {
-        return new LightRef.JavaLightClassRef(id(ref, byteArrayEnumerator));
+        return new LightRef.JavaLightClassRef(id(ref, nameEnumerator));
       }
     }
     else {
-      byte[] ownerName = ref.getOwnerName();
       if (isPrivate(ref)) {
         return null;
       }
+      String ownerName = ref.getOwnerName();
+      final Integer ownerPrecalculatedId = ownerIdReplacer.fun(ownerName);
       if (ref instanceof JavacRef.JavacField) {
-        return new LightRef.JavaLightFieldRef(id(ownerName, byteArrayEnumerator), id(ref, byteArrayEnumerator));
+        return new LightRef.JavaLightFieldRef(ownerPrecalculatedId != null ? ownerPrecalculatedId : id(ownerName, nameEnumerator), id(ref, nameEnumerator));
       }
       else if (ref instanceof JavacRef.JavacMethod) {
         int paramCount = ((JavacRef.JavacMethod) ref).getParamCount();
-        return new LightRef.JavaLightMethodRef(id(ownerName, byteArrayEnumerator), id(ref, byteArrayEnumerator), paramCount);
+        return new LightRef.JavaLightMethodRef(ownerPrecalculatedId != null ? ownerPrecalculatedId : id(ownerName, nameEnumerator), id(ref, nameEnumerator), paramCount);
       }
       else {
         throw new AssertionError("unexpected symbol: " + ref + " class: " + ref.getClass());
@@ -145,17 +159,38 @@ public class BackwardReferenceIndexWriter {
     return null;
   }
 
-  //see Symbol.isPrivate() method
   private static boolean isPrivate(JavacRef ref) {
-    return (ref.getFlags() & Flags.AccessFlags) == PRIVATE;
+    return ref.getModifiers().contains(Modifier.PRIVATE);
   }
 
-  private static int id(JavacRef ref, ByteArrayEnumerator byteArrayEnumerator) {
-    return id(ref.getName(), byteArrayEnumerator);
+  private static int id(JavacRef ref, NameEnumerator nameEnumerator) throws IOException {
+    return id(ref.getName(), nameEnumerator);
   }
 
-  private static int id(byte[] name, ByteArrayEnumerator byteArrayEnumerator) {
-    return byteArrayEnumerator.enumerate(name);
+  private static int id(String name, NameEnumerator nameEnumerator) throws IOException {
+    return nameEnumerator.enumerate(name);
+  }
+
+  private static boolean isRebuildInAllJavaModules(CompileContext context) {
+    for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
+      for (ModuleBuildTarget target : context.getProjectDescriptor().getBuildTargetIndex().getAllTargets(type)) {
+        if (!context.getScope().isBuildForced(target)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  private static boolean areAllJavaModulesAffected(CompileContext context) {
+    for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
+      for (ModuleBuildTarget target : context.getProjectDescriptor().getBuildTargetIndex().getAllTargets(type)) {
+        if (!context.getScope().isWholeTargetAffected(target)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 }
 

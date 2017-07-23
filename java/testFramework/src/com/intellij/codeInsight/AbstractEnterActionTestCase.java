@@ -13,13 +13,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lesya
- * Date: Sep 21, 2005
- * Time: 11:02:33 PM
- * To change this template use File | Settings | File Templates.
- */
 public abstract class AbstractEnterActionTestCase extends LightCodeInsightTestCase {
   private static final String TEST_PATH = "/codeInsight/enterAction/";
 

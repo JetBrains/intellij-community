@@ -1,4 +1,4 @@
-class MyInheritor extends A {
+class MyInheritor<caret> extends A {
 
 }
 
@@ -19,19 +19,3 @@ class C32 extends B3 {}
 class B4 extends A {}
 class C41 extends B4 {}
 class C42 extends B4 {}
-
-class B5 extends A {}
-class C51 extends B5 {}
-class C52 extends B5 {}
-
-class B6 extends A {}
-class C61 extends B6 {}
-class C62 extends B6 {}
-
-class B7 extends A {}
-class C71 extends B7 {}
-class C72 extends B7 {}
-
-class B8 extends A {}
-class C81 extends B8 {}
-class C82 extends B8 {}

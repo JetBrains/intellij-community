@@ -35,7 +35,7 @@ import java.util.List;
 public class BulkChangesMerger {
 
   public static final BulkChangesMerger INSTANCE = new BulkChangesMerger();
-  private static final Logger LOG = Logger.getInstance("#" + BulkChangesMerger.class.getName());
+  private static final Logger LOG = Logger.getInstance(BulkChangesMerger.class);
 
   /**
    * Merges given changes within the given text and returns result as a new char sequence.
@@ -59,6 +59,7 @@ public class BulkChangesMerger {
    *                      are sorted by offsets in ascending order 
    * @return              merge result
    */
+  @NotNull
   public char[] mergeToCharArray(@NotNull char[] text, int textLength, @NotNull List<? extends TextChange> changes) {
     int newLength = textLength;
     for (TextChange change : changes) {

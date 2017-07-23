@@ -1,5 +1,6 @@
 package com.intellij.remoteServer.impl.runtime.ui;
 
+import com.intellij.execution.dashboard.TreeContent;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -13,6 +14,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.remoteServer.configuration.RemoteServer;
+import com.intellij.remoteServer.configuration.RemoteServerListener;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeNodeSelector;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServersTreeStructure;
 import com.intellij.remoteServer.impl.runtime.ui.tree.TreeBuilderBase;
@@ -21,10 +24,11 @@ import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionListener;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.JBSwingUtilities;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,14 +49,42 @@ import java.util.Set;
 /**
  * @author michael.golubev
  */
-public class ServersToolWindowContent extends JPanel implements Disposable, ServersTreeNodeSelector {
+public class ServersToolWindowContent extends JPanel implements Disposable, ServersTreeNodeSelector, TreeContent {
   public static final DataKey<ServersToolWindowContent> KEY = DataKey.create("serversToolWindowContent");
-  @NonNls private static final String PLACE_TOOLBAR = "ServersToolWindowContent#Toolbar";
-  @NonNls private static final String SERVERS_TOOL_WINDOW_TOOLBAR = "RemoteServersViewToolbar";
-  @NonNls private static final String SERVERS_TOOL_WINDOW_POPUP = "RemoteServersViewPopup";
 
-  @NonNls
-  private static final String HELP_ID = "Application_Servers_tool_window";
+  @NonNls private static final String PLACE_TOOLBAR = "ServersToolWindowContent#Toolbar";
+  @NonNls private static final String PLACE_TOOLBAR_TOP = "ServersToolWindowContent#Toolbar.Top";
+
+  public static class ActionGroups {
+    @NotNull private final String myMainToolbarID;
+    @NotNull private final String mySecondaryToolbarID;
+    @NotNull private final String myPopupID;
+
+    public ActionGroups(@NotNull String mainToolbarID, @NotNull String secondaryToolbarID, @NotNull String popupID) {
+      myMainToolbarID = mainToolbarID;
+      mySecondaryToolbarID = secondaryToolbarID;
+      myPopupID = popupID;
+    }
+
+    @NotNull
+    public String getMainToolbarID() {
+      return myMainToolbarID;
+    }
+
+    @NotNull
+    public String getPopupID() {
+      return myPopupID;
+    }
+
+    @NotNull
+    public String getSecondaryToolbarID() {
+      return mySecondaryToolbarID;
+    }
+
+    public static final ActionGroups SHARED_ACTION_GROUPS = new ActionGroups(
+      "RemoteServersViewToolbar", "RemoteServersViewToolbar.Top", "RemoteServersViewPopup");
+  }
+
   private static final String MESSAGE_CARD = "message";
   private static final String EMPTY_SELECTION_MESSAGE = "Select a server or deployment in the tree to view details";
 
@@ -61,7 +93,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
   private final Tree myTree;
   private final CardLayout myPropertiesPanelLayout;
   private final JPanel myPropertiesPanel;
-  private final JBPanelWithEmptyText myMessagePanel;
+  private final JPanelWithHtmlEmptyText myMessagePanel;
   private final Map<String, JComponent> myLogComponents = new HashMap<>();
 
   private final DefaultTreeModel myTreeModel;
@@ -72,7 +104,20 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
   private final Project myProject;
   private final RemoteServersViewContribution myContribution;
 
+  /**
+   * Left for compatibility with 172 stream, will be removed after 173.
+   * Every remoteServers-like view is now expected to explicitly specify its set if Action Group IDs using
+   * {@link #ServersToolWindowContent(Project, RemoteServersViewContribution, ActionGroups)}
+   *
+   * @deprecated
+   */
+  @Deprecated
   public ServersToolWindowContent(@NotNull Project project, @NotNull RemoteServersViewContribution contribution) {
+    this(project, contribution, ActionGroups.SHARED_ACTION_GROUPS);
+  }
+
+  public ServersToolWindowContent(@NotNull Project project, @NotNull RemoteServersViewContribution contribution,
+                                  @NotNull ActionGroups actionGroups) {
     super(new BorderLayout());
     myProject = project;
     myContribution = contribution;
@@ -85,12 +130,14 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
     myTree.setCellRenderer(new NodeRenderer());
     myTree.setLineStyleAngled();
 
-    getMainPanel().add(createToolbar(), BorderLayout.WEST);
+    getMainPanel().add(createTopToolbar(actionGroups.getSecondaryToolbarID()), BorderLayout.NORTH);
+    getMainPanel().add(createMainToolbar(actionGroups.getMainToolbarID()), BorderLayout.WEST);
+
     Splitter splitter = new Splitter(false, 0.3f);
     splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT));
     myPropertiesPanelLayout = new CardLayout();
     myPropertiesPanel = new JPanel(myPropertiesPanelLayout);
-    myMessagePanel = new JBPanelWithEmptyText().withEmptyText(EMPTY_SELECTION_MESSAGE);
+    myMessagePanel = new JPanelWithHtmlEmptyText().withEmptyText(EMPTY_SELECTION_MESSAGE);
     myPropertiesPanel.add(MESSAGE_CARD, myMessagePanel);
     splitter.setSecondComponent(myPropertiesPanel);
     getMainPanel().add(splitter, BorderLayout.CENTER);
@@ -146,8 +193,8 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
     });
 
     DefaultActionGroup popupActionGroup = new DefaultActionGroup();
-    popupActionGroup.add(ActionManager.getInstance().getAction(SERVERS_TOOL_WINDOW_TOOLBAR));
-    popupActionGroup.add(ActionManager.getInstance().getAction(SERVERS_TOOL_WINDOW_POPUP));
+    popupActionGroup.add(ActionManager.getInstance().getAction(actionGroups.getMainToolbarID()));
+    popupActionGroup.add(ActionManager.getInstance().getAction(actionGroups.getPopupID()));
     PopupHandler.installPopupHandler(myTree, popupActionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
 
     new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true);
@@ -204,8 +251,14 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
     }
   }
 
-  private void showMessageLabel(String text) {
-    myMessagePanel.getEmptyText().setText(text);
+  private void showMessageLabel(@NotNull String text) {
+    if (text.contains("<br/>") && !text.startsWith("<html>")) {
+      String html = "<html><center>" + text + "</center></html>";
+      myMessagePanel.setEmptyText(html);
+    }
+    else {
+      myMessagePanel.setEmptyText(text);
+    }
     myPropertiesPanelLayout.show(myPropertiesPanel, MESSAGE_CARD);
   }
 
@@ -242,6 +295,18 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
         updateSelectedServerDetails();
       }
     });
+
+    project.getMessageBus().connect().subscribe(RemoteServerListener.TOPIC, new RemoteServerListener() {
+      @Override
+      public void serverAdded(@NotNull RemoteServer<?> server) {
+        getBuilder().queueUpdate();
+      }
+
+      @Override
+      public void serverRemoved(@NotNull RemoteServer<?> server) {
+        getBuilder().queueUpdate();
+      }
+    });
   }
 
   private void updateSelectedServerDetails() {
@@ -258,11 +323,19 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
     }, POLL_DEPLOYMENTS_DELAY, ModalityState.any()));
   }
 
-  private JComponent createToolbar() {
+  private JComponent createTopToolbar(@NotNull String actionGroupID) {
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(ActionManager.getInstance().getAction(SERVERS_TOOL_WINDOW_TOOLBAR));
+    group.add(ActionManager.getInstance().getAction(actionGroupID));
+    ActionToolbar topToolbar = ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR_TOP, group, true);
+    topToolbar.setTargetComponent(myTree);
+    return topToolbar.getComponent();
+  }
+
+  private JComponent createMainToolbar(@NotNull String actionGroupID) {
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(ActionManager.getInstance().getAction(actionGroupID));
     group.add(new Separator());
-    group.add(new ContextHelpAction(HELP_ID));
+    group.add(new ContextHelpAction(myContribution.getContextHelpId()));
 
     ActionToolbar actionToolBar = ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, group, false);
 
@@ -273,6 +346,9 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
       public Object getData(@NonNls String dataId) {
         if (KEY.getName().equals(dataId)) {
           return ServersToolWindowContent.this;
+        }
+        else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+          return myContribution.getContextHelpId();
         }
         return myContribution.getData(dataId, ServersToolWindowContent.this);
       }
@@ -289,6 +365,8 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
   public void dispose() {
   }
 
+  @Override
+  @NotNull
   public TreeBuilderBase getBuilder() {
     return myBuilder;
   }
@@ -308,12 +386,10 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
   }
 
   public void select(@NotNull final ServerConnection<?> connection, @NotNull final String deploymentName) {
-    myBuilder.getUi().queueUpdate(connection).doWhenDone(() -> myBuilder.select(ServersTreeStructure.DeploymentNodeImpl.class, new TreeVisitor<ServersTreeStructure.DeploymentNodeImpl>() {
-      @Override
-      public boolean visit(@NotNull ServersTreeStructure.DeploymentNodeImpl node) {
-        return isDeploymentNodeMatch(node, connection, deploymentName);
-      }
-    }, null, false));
+    myBuilder.getUi().queueUpdate(connection).doWhenDone(
+      () -> myBuilder.<ServersTreeStructure.DeploymentNodeImpl>select(ServersTreeStructure.DeploymentNodeImpl.class,
+                                                                      node -> isDeploymentNodeMatch(node, connection, deploymentName),
+                                                                      null, false));
   }
 
   public void select(@NotNull final ServerConnection<?> connection,
@@ -335,5 +411,52 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
     ServersTreeStructure.RemoteServerNode serverNode = node.getServerNode();
     return isServerNodeMatch(serverNode, connection)
            && node.getDeployment().getName().equals(deploymentName);
+  }
+
+  private static class JPanelWithHtmlEmptyText extends JPanel {
+    private final JLabel myLabel = new JLabel();
+
+    public JPanelWithHtmlEmptyText withEmptyText(@NotNull String text) {
+      setEmptyText(text);
+      return this;
+    }
+
+    public void setEmptyText(@NotNull String text) {
+      myLabel.setText(text);
+      repaint();
+    }
+
+    @Override
+    protected Graphics getComponentGraphics(Graphics graphics) {
+      return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+      super.paintComponent(g);
+
+      if (!UIUtil.uiChildren(this).filter(Component::isVisible).isEmpty()) {
+        return;
+      }
+
+      myLabel.setFont(getFont());
+      myLabel.setBackground(getBackground());
+      myLabel.setForeground(UIUtil.getInactiveTextColor());
+
+      Rectangle bounds = getBounds();
+      Dimension size = myLabel.getPreferredSize();
+      myLabel.setBounds(0, 0, size.width, size.height);
+
+      int x = (bounds.width - size.width) / 2;
+      int y = (bounds.height - size.height) / 3; // above center
+
+      Graphics g2 = g.create(bounds.x + x, bounds.y + y, bounds.width, bounds.height);
+      try {
+        myLabel.paint(g2);
+      }
+      finally {
+        g2.dispose();
+      }
+    }
   }
 }

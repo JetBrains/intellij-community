@@ -34,13 +34,13 @@ public class TargetOutputIndexImpl implements TargetOutputIndex {
   private final Map<File, List<BuildTarget<?>>> myOutputToTargets;
 
   public TargetOutputIndexImpl(Collection<? extends BuildTarget<?>> allTargets, CompileContext context) {
-    myOutputToTargets = new THashMap<File, List<BuildTarget<?>>>(FileUtil.FILE_HASHING_STRATEGY);
+    myOutputToTargets = new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
     for (BuildTarget<?> target : allTargets) {
       Collection<File> roots = target.getOutputRoots(context);
       for (File root : roots) {
         List<BuildTarget<?>> targets = myOutputToTargets.get(root);
         if (targets == null) {
-          targets = new SmartList<BuildTarget<?>>();
+          targets = new SmartList<>();
           myOutputToTargets.put(root, targets);
         }
         targets.add(target);
@@ -59,12 +59,12 @@ public class TargetOutputIndexImpl implements TargetOutputIndex {
           result = targets;
         }
         else {
-          result = new ArrayList<BuildTarget<?>>(result);
+          result = new ArrayList<>(result);
           result.addAll(targets);
         }
       }
       current = FileUtilRt.getParentFile(current);
     }
-    return result != null ? result : Collections.<BuildTarget<?>>emptyList();
+    return result != null ? result : Collections.emptyList();
   }
 }

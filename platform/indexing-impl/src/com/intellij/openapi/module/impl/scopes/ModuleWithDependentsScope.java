@@ -17,19 +17,23 @@ package com.intellij.openapi.module.impl.scopes;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Queue;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -125,6 +129,13 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
   @Override
   public boolean isSearchInLibraries() {
     return false;
+  }
+
+  @Override
+  public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+    ModuleManager moduleManager = ModuleManager.getInstance(myModule.getProject());
+    return ContainerUtil.mapNotNull(DirectoryIndex.getInstance(myModule.getProject()).getDependentUnloadedModules(myModule),
+                                    moduleManager::getUnloadedModuleDescription);
   }
 
   @NonNls

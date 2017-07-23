@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.application.ex;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -25,18 +26,16 @@ import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.PooledThreadExecutor;
 
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class ApplicationUtil {
   // throws exception if can't grab read action right now
   public static <T> T tryRunReadAction(@NotNull final Computable<T> computable) throws CannotRunReadActionException {
-    final Ref<T> result = new Ref<T>();
-    tryRunReadAction(new Runnable() {
-      @Override
-      public void run() {
-        result.set(computable.compute());
-      }
-    });
+    final Ref<T> result = new Ref<>();
+    tryRunReadAction(() -> result.set(computable.compute()));
     return result.get();
   }
 
@@ -54,22 +53,14 @@ public class ApplicationUtil {
     final Ref<T> result = Ref.create();
     final Ref<Throwable> error = Ref.create();
 
-    Future<?> future = PooledThreadExecutor.INSTANCE.submit(new Runnable() {
-      @Override
-      public void run() {
-        ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              result.set(callable.call());
-            }
-            catch (Throwable t) {
-              error.set(t);
-            }
-          }
-        }, indicator);
+    Future<?> future = PooledThreadExecutor.INSTANCE.submit(() -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+      try {
+        result.set(callable.call());
       }
-    });
+      catch (Throwable t) {
+        error.set(t);
+      }
+    }, indicator));
 
     while (true) {
       try {
@@ -89,6 +80,28 @@ public class ApplicationUtil {
     }
   }
 
+  public static void showDialogAfterWriteAction(@NotNull Runnable runnable) {
+    Application application = ApplicationManager.getApplication();
+    if (application.isWriteAccessAllowed()) {
+      application.invokeLater(runnable);
+    }
+    else {
+      runnable.run();
+    }
+  }
+
   public static class CannotRunReadActionException extends ProcessCanceledException {
+    public CannotRunReadActionException() {
+    }
+
+    // NB. When &@$ing ForkJoinTask joins task which was exceptionally completed from the other thread
+    // it tries to re-create that exception (by reflection) and sets its cause to the original exception.
+    // That horrible hack causes all sorts of confusion when we try to analyze the exception cause, e.g. in GlobalInspectionContextImpl.inspectFile().
+    // To prevent creation of unneeded wrapped exception we supply this method as a bait which stupid ForkJoinTask calls and immediately poisons itself,
+    // causing the original exception to be used unwrapped. (see ForkJoinTask.getThrowableException())
+    @Override
+    public synchronized Throwable initCause(Throwable cause) {
+      throw this;
+    }
   }
 }

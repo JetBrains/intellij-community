@@ -24,7 +24,7 @@ import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjec
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalProjectImportBuilder;
 import com.intellij.openapi.externalSystem.service.ui.ExternalProjectDataSelectorDialog;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
@@ -41,6 +41,7 @@ import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.settings.ImportFromGradleControl;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -53,6 +54,13 @@ import java.util.List;
  * @since 4/15/13 2:29 PM
  */
 public class GradleProjectImportBuilder extends AbstractExternalProjectImportBuilder<ImportFromGradleControl> {
+
+  /**
+   * @deprecated use {@link GradleProjectImportBuilder#GradleProjectImportBuilder(ProjectDataManager)}
+   */
+  public GradleProjectImportBuilder(@NotNull com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager dataManager) {
+    this((ProjectDataManager)dataManager);
+  }
 
   public GradleProjectImportBuilder(@NotNull ProjectDataManager dataManager) {
     super(dataManager, new ImportFromGradleControl(), GradleConstants.SYSTEM_ID);
@@ -106,7 +114,8 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
 
         Runnable importTask = () -> ServiceManager.getService(ProjectDataManager.class).importData(externalProject, project, false);
 
-        if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        boolean showSelectiveImportDialog = GradleSettings.getInstance(project).showSelectiveImportDialogOnInitialImport();
+        if (showSelectiveImportDialog && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
           ApplicationManager.getApplication().invokeLater(() -> {
             selectDataTask.run();
             ApplicationManager.getApplication().executeOnPooledThread(importTask);

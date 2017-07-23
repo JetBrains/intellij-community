@@ -64,7 +64,7 @@ public class CharSequenceSubSequence implements CharSequence, CharArrayExternali
   }
 
   @NotNull
-  public CharSequence getBaseSequence() {
+  CharSequence getBaseSequence() {
     return myChars;
   }
 

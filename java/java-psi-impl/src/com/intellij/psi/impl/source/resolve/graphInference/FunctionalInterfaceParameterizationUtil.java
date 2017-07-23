@@ -18,13 +18,14 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeEqualityConstraint;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 
 public class FunctionalInterfaceParameterizationUtil {
-  private static final Logger LOG = Logger.getInstance("#" + FunctionalInterfaceParameterizationUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance(FunctionalInterfaceParameterizationUtil.class);
 
   public static boolean isWildcardParameterized(@Nullable PsiType classType) {
     if (classType == null) return false;
@@ -92,6 +93,8 @@ public class FunctionalInterfaceParameterizationUtil {
 
       final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
       if (interfaceMethod == null) return null;
+      final PsiClass samClass = interfaceMethod.getContainingClass();
+      if (samClass == null) return null;
 
       PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
       if (typeParameters.length != parameters.length) {
@@ -103,11 +106,13 @@ public class FunctionalInterfaceParameterizationUtil {
         return null;
       }
 
+      final PsiSubstitutor lambdaSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(samClass, psiClass, PsiSubstitutor.EMPTY);
+
       final InferenceSession session = new InferenceSession(typeParameters, PsiSubstitutor.EMPTY, expr.getManager(), expr);
 
       for (int i = 0; i < targetMethodParams.length; i++) {
-        session.addConstraint(new TypeEqualityConstraint(lambdaParams[i].getType(),
-                                                         session.substituteWithInferenceVariables(targetMethodParams[i].getType())));
+        final PsiType qType = lambdaSubstitutor.substitute(targetMethodParams[i].getType());
+        session.addConstraint(new TypeEqualityConstraint(lambdaParams[i].getType(), session.substituteWithInferenceVariables(qType)));
       }
 
       if (!session.repeatInferencePhases()) {
@@ -138,7 +143,7 @@ public class FunctionalInterfaceParameterizationUtil {
         return parameterization;
       }
 
-      //or the non-wildcard parameterization (§9.8) of F<A'1, ..., A'm>, if one or more type arguments are still wildcards.
+      //or the non-wildcard parameterization (p9.8) of F<A'1, ..., A'm>, if one or more type arguments are still wildcards.
       return getNonWildcardParameterization(parameterization);
     }
     return null;
@@ -158,7 +163,7 @@ public class FunctionalInterfaceParameterizationUtil {
 
   /**
      The function type of a parameterized functional interface, F<A1...An>, where one or more of A1...An is a wildcard, is the function type of the non-wildcard parameterization of F, F<T1...Tn> determined as follows. 
-     Let P1, ..., Pn be the type parameters of F and B1, ..., Bn be the corresponding bounds. For all i, 1 ≤ i ≤ n, Ti is derived according to the form of Ai:
+     Let P1, ..., Pn be the type parameters of F and B1, ..., Bn be the corresponding bounds. For all i, 1 <= i <= n, Ti is derived according to the form of Ai:
 
      If Ai is a type, then Ti = Ai.
      If Ai is a wildcard, and the corresponding type parameter bound, Bi, mentions one of P1...Pn, then Ti is undefined and there is no function type.

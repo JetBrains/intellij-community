@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,22 +131,6 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
     return !(rhsType instanceof PsiPrimitiveType);
   }
 
-  private static boolean isNullComparison(PsiExpression expression) {
-    if (!(expression instanceof PsiBinaryExpression)) {
-      return false;
-    }
-    final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
-    if (!ComparisonUtils.isEqualityComparison(binaryExpression)) {
-      return false;
-    }
-    final PsiExpression rhs = binaryExpression.getROperand();
-    if (rhs == null) {
-      return false;
-    }
-    final PsiExpression lhs = binaryExpression.getLOperand();
-    return PsiKeyword.NULL.equals(lhs.getText()) || PsiKeyword.NULL.equals(rhs.getText());
-  }
-
   private class SimplifyAssertFix extends InspectionGadgetsFix {
 
     @Override
@@ -173,7 +157,7 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
         }
         final boolean assertTrue = isAssertTrue(assertTrueFalseHint);
         final PsiExpression position = assertTrueFalseHint.getPosition(callExpression.getArgumentList().getExpressions());
-        if (isNullComparison(position)) {
+        if (ComparisonUtils.isNullComparison(position)) {
           replaceAssertWithAssertNull(callExpression, (PsiBinaryExpression)position, assertTrueFalseHint.getMessage(), assertTrueFalseHint.getArgIndex());
         }
         else if (isIdentityComparison(position)) {
@@ -414,7 +398,7 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
 
         final boolean assertTrue = isAssertTrue(assertTrueFalseHint);
         final PsiExpression position = assertTrueFalseHint.getPosition(expression.getArgumentList().getExpressions());
-        if (isNullComparison(position)) {
+        if (ComparisonUtils.isNullComparison(position)) {
           registerMethodCallError(expression, hasEqEqExpressionArgument(position) ? "assertNull()" : "assertNotNull()");
         }
         else if (isIdentityComparison(position)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.impl.XmlEnumerationDescriptor;
@@ -47,14 +46,21 @@ public class XmlEnumeratedValueReferenceProvider<T extends PsiElement> extends P
     if (XmlSchemaTagsProcessor.PROCESSING_FLAG.get() != null || context.get(SUPPRESS) != null) {
       return PsiReference.EMPTY_ARRAY;
     }
+    
     @SuppressWarnings("unchecked") PsiElement host = getHost((T)element);
     if (host instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)host)) {
       return PsiReference.EMPTY_ARRAY;
     }
-    String unquotedValue = ElementManipulators.getValueText(element);
-    if (XmlHighlightVisitor.skipValidation(element) || !XmlUtil.isSimpleValue(unquotedValue, element)) {
+
+    if (XmlHighlightVisitor.skipValidation(element)) {
       return PsiReference.EMPTY_ARRAY;
     }
+
+    String unquotedValue = ElementManipulators.getValueText(element);
+    if (!XmlUtil.isSimpleValue(unquotedValue, element)) {
+      return PsiReference.EMPTY_ARRAY;
+    }
+
     @SuppressWarnings("unchecked") final Object descriptor = getDescriptor((T)element);
     if (descriptor instanceof XmlEnumerationDescriptor) {
       XmlEnumerationDescriptor enumerationDescriptor = (XmlEnumerationDescriptor)descriptor;

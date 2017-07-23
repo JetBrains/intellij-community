@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,10 +143,5 @@ public class MockModule extends MockComponentManager implements Module {
   @Override
   public void setOption(@NotNull final String optionName, @NotNull final String optionValue) {
     throw new UnsupportedOperationException("Method setOption is not yet implemented in " + getClass().getName());
-  }
-
-  @Override
-  public void clearOption(@NotNull String optionName) {
-    throw new UnsupportedOperationException("Method clearOption is not yet implemented in " + getClass().getName());
   }
 }

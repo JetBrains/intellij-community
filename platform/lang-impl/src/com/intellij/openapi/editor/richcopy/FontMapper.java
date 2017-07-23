@@ -30,7 +30,7 @@ import java.util.Map;
  * the corresponding physical font names.
  */
 public class FontMapper {
-  private static final Logger LOG = Logger.getInstance("#" + FontMapper.class.getName());
+  private static final Logger LOG = Logger.getInstance(FontMapper.class);
 
   private static final String[] logicalFontsToMap = {Font.DIALOG, Font.DIALOG_INPUT, Font.MONOSPACED, Font.SERIF, Font.SANS_SERIF};
   private static final Map<String, String> logicalToPhysicalMapping = new HashMap<>();

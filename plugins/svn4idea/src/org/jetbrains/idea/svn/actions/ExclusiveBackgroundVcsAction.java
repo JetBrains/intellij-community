@@ -32,11 +32,7 @@ public class ExclusiveBackgroundVcsAction {
     } finally {
       final Application application = ApplicationManager.getApplication();
       if (application.isDispatchThread()) {
-        application.executeOnPooledThread(new Runnable() {
-          public void run() {
-            plVcsManager.stopBackgroundVcsOperation();
-          }
-        });
+        application.executeOnPooledThread(() -> plVcsManager.stopBackgroundVcsOperation());
       } else {
         plVcsManager.stopBackgroundVcsOperation();
       }

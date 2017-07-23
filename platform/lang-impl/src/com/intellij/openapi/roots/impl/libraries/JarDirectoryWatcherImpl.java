@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public class JarDirectoryWatcherImpl implements JarDirectoryWatcher {
 
       if (myBusConnection == null) {
         myBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
-        myBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
+        myBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
           @Override
           public void after(@NotNull final List<? extends VFileEvent> events) {
             boolean changesDetected = false;
@@ -72,8 +72,8 @@ public class JarDirectoryWatcherImpl implements JarDirectoryWatcher {
               if (event instanceof VFileCopyEvent) {
                 final VFileCopyEvent copyEvent = (VFileCopyEvent)event;
                 final VirtualFile file = copyEvent.getFile();
-                if (isUnderJarDirectory(copyEvent.getNewParent() + "/" + copyEvent.getNewChildName()) ||
-                    file != null && isUnderJarDirectory(file.getUrl())) {
+                if (isUnderJarDirectory(copyEvent.getNewParent().getUrl() + "/" + copyEvent.getNewChildName()) ||
+                    isUnderJarDirectory(file.getUrl())) {
                   changesDetected = true;
                   break;
                 }
@@ -81,8 +81,7 @@ public class JarDirectoryWatcherImpl implements JarDirectoryWatcher {
               else if (event instanceof VFileMoveEvent) {
                 final VFileMoveEvent moveEvent = (VFileMoveEvent)event;
                 final VirtualFile file = moveEvent.getFile();
-                if (file != null &&
-                    (isUnderJarDirectory(file.getUrl()) || isUnderJarDirectory(moveEvent.getOldParent().getUrl() + "/" + file.getName()))) {
+                if (isUnderJarDirectory(file.getUrl()) || isUnderJarDirectory(moveEvent.getOldParent().getUrl() + "/" + file.getName())) {
                   changesDetected = true;
                   break;
                 }

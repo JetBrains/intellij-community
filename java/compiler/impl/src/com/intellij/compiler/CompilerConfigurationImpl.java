@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
+import com.intellij.openapi.compiler.options.ExcludedEntriesListener;
 import com.intellij.openapi.compiler.options.ExcludesConfiguration;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
@@ -38,7 +39,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.ModuleAdapter;
+import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.InputValidator;
@@ -88,7 +89,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   private final List<CompiledPattern> myNegatedCompiledPatterns = new ArrayList<>();
   private boolean myWildcardPatternsInitialized = false;
   private final Project myProject;
-  private final ExcludesConfigNotificationsWrapper<ExcludedEntriesConfiguration> myExcludesConfiguration;
+  private final ExcludedEntriesConfiguration myExcludesConfiguration;
 
   private final Collection<BackendCompiler> myRegisteredCompilers = new ArrayList<>();
   private JavacCompiler JAVAC_EXTERNAL_BACKEND;
@@ -111,10 +112,9 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   public CompilerConfigurationImpl(Project project) {
     myProject = project;
-    myExcludesConfiguration = new ExcludesConfigNotificationsWrapper<>(project, new ExcludedEntriesConfiguration());
-    Disposer.register(project, myExcludesConfiguration.getDelegate());
+    myExcludesConfiguration = createExcludedEntriesConfiguration(project);
     MessageBusConnection connection = project.getMessageBus().connect(project);
-    connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
+    connection.subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
       public void beforeModuleRemoved(@NotNull Project project, @NotNull Module module) {
         getAnnotationProcessingConfiguration(module).removeModuleName(module.getName());
@@ -125,6 +125,31 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
         myProcessorsProfilesMap = null; // clear cache
       }
     });
+  }
+
+  // Overridden in Upsource
+  @NotNull
+  protected ExcludedEntriesConfiguration createExcludedEntriesConfiguration(@NotNull Project project) {
+    final ExcludedEntriesConfiguration cfg = new ExcludedEntriesConfiguration(project.getMessageBus().syncPublisher(ExcludedEntriesListener.TOPIC));
+    Disposer.register(project, cfg);
+    project.getMessageBus().connect().subscribe(ExcludedEntriesListener.TOPIC, new ExcludedEntriesListener() {
+      @Override
+      public void onEntryAdded(@NotNull ExcludeEntryDescription description) {
+        clearState();
+      }
+
+      @Override
+      public void onEntryRemoved(@NotNull ExcludeEntryDescription description) {
+        clearState();
+      }
+
+      private void clearState() {
+        if (project.isOpen()) {
+          BuildManager.getInstance().clearState(project);
+        }
+      }
+    });
+    return cfg;
   }
 
   private static class State {
@@ -150,7 +175,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     }
 
     if (myExcludesConfiguration.getExcludeEntryDescriptions().length > 0) {
-      myExcludesConfiguration.getDelegate().writeExternal(addChild(state, JpsJavaCompilerConfigurationSerializer.EXCLUDE_FROM_COMPILE));
+      myExcludesConfiguration.writeExternal(addChild(state, JpsJavaCompilerConfigurationSerializer.EXCLUDE_FROM_COMPILE));
     }
 
     Element resourceExtensions = new Element(JpsJavaCompilerConfigurationSerializer.RESOURCE_EXTENSIONS);
@@ -330,18 +355,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       throw new MalformedPatternException(ex);
     }
   }
-
-  @Override
-  public void disposeComponent() {
-  }
-
-  @Override
-  public void initComponent() { }
-
-  @Override
-  public void projectClosed() {
-  }
-
+  
   public JavacCompiler getJavacCompiler() {
     createCompilers();
     return JAVAC_EXTERNAL_BACKEND;
@@ -530,14 +544,12 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   private void addWildcardResourcePattern(@NonNls final String wildcardPattern) throws MalformedPatternException {
     final CompiledPattern pattern = convertToRegexp(wildcardPattern);
-    if (pattern != null) {
-      myWildcardPatterns.add(wildcardPattern);
-      if (isPatternNegated(wildcardPattern)) {
-        myNegatedCompiledPatterns.add(pattern);
-      }
-      else {
-        myCompiledPatterns.add(pattern);
-      }
+    myWildcardPatterns.add(wildcardPattern);
+    if (isPatternNegated(wildcardPattern)) {
+      myNegatedCompiledPatterns.add(pattern);
+    }
+    else {
+      myCompiledPatterns.add(pattern);
     }
   }
 
@@ -703,7 +715,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
     Element node = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.EXCLUDE_FROM_COMPILE);
     if (node != null) {
-      myExcludesConfiguration.getDelegate().readExternal(node);
+      myExcludesConfiguration.readExternal(node);
     }
 
     try {
@@ -1024,65 +1036,4 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     parent.addContent(child);
     return child;
   }
-
-  private static class ExcludesConfigNotificationsWrapper<T extends ExcludesConfiguration> implements ExcludesConfiguration {
-    private final Project myProject;
-    private final T myDelegate;
-
-    public ExcludesConfigNotificationsWrapper(@NotNull Project project, @NotNull T delegate) {
-      myProject = project;
-      myDelegate = delegate;
-    }
-
-    @NotNull
-    public T getDelegate() {
-      return myDelegate;
-    }
-
-    @Override
-    public ExcludeEntryDescription[] getExcludeEntryDescriptions() {
-      return myDelegate.getExcludeEntryDescriptions();
-    }
-
-    @Override
-    public void addExcludeEntryDescription(ExcludeEntryDescription description) {
-      try {
-        myDelegate.addExcludeEntryDescription(description);
-      }
-      finally {
-        BuildManager.getInstance().clearState(myProject);
-      }
-    }
-
-    @Override
-    public void removeExcludeEntryDescription(ExcludeEntryDescription description) {
-      try {
-        myDelegate.removeExcludeEntryDescription(description);
-      }
-      finally {
-        BuildManager.getInstance().clearState(myProject);
-      }
-    }
-
-    @Override
-    public void removeAllExcludeEntryDescriptions() {
-      try {
-        myDelegate.removeAllExcludeEntryDescriptions();
-      }
-      finally {
-        BuildManager.getInstance().clearState(myProject);
-      }
-    }
-
-    @Override
-    public boolean containsExcludeEntryDescription(ExcludeEntryDescription description) {
-      return myDelegate.containsExcludeEntryDescription(description);
-    }
-
-    @Override
-    public boolean isExcluded(VirtualFile virtualFile) {
-      return myDelegate.isExcluded(virtualFile);
-    }
-  }
-  
 }

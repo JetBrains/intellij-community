@@ -33,13 +33,7 @@ public interface PsiNameValuePair extends PsiElement {
    */
   PsiNameValuePair[] EMPTY_ARRAY = new PsiNameValuePair[0];
 
-  ArrayFactory<PsiNameValuePair> ARRAY_FACTORY = new ArrayFactory<PsiNameValuePair>() {
-    @NotNull
-    @Override
-    public PsiNameValuePair[] create(final int count) {
-      return count == 0 ? EMPTY_ARRAY : new PsiNameValuePair[count];
-    }
-  };
+  ArrayFactory<PsiNameValuePair> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiNameValuePair[count];
 
   /**
    * Returns the identifier specifying the name of the element.
@@ -68,17 +62,17 @@ public interface PsiNameValuePair extends PsiElement {
   @Nullable
   PsiAnnotationMemberValue getValue();
 
+  /**
+   * @return a element representing the annotation attribute's value. The main difference to {@link #getValue()} is that this method
+   * avoids expensive AST loading (see {@link com.intellij.extapi.psi.StubBasedPsiElementBase} doc).
+   * The downside is that the result might not be in the same tree as the parent, might be non-physical and so
+   * should only be used for read operations.
+   */
+  @Nullable
+  default PsiAnnotationMemberValue getDetachedValue() {
+    return getValue();
+  }
+
   @NotNull PsiAnnotationMemberValue setValue(@NotNull PsiAnnotationMemberValue newValue);
 
-  interface Detachable extends PsiNameValuePair {
-
-    /**
-     * @return a element representing the annotation attribute's value. The main difference to {@link #getValue()} is that this method
-     * avoids expensive AST loading (see {@link com.intellij.extapi.psi.StubBasedPsiElementBase} doc).
-     * The downside is that the result might not be in the same tree as the parent, might be non-physical and so
-     * should only be used for read operations.
-     */
-    @Nullable
-    PsiAnnotationMemberValue getDetachedValue();
-  }
 }

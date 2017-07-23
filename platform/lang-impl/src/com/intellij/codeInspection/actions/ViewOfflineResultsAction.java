@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 09-Jan-2007
- */
 package com.intellij.codeInspection.actions;
 
 import com.intellij.analysis.AnalysisScope;
@@ -38,16 +34,18 @@ import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -100,43 +98,41 @@ public class ViewOfflineResultsAction extends AnAction {
     final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap =
       new HashMap<>();
     final String [] profileName = new String[1];
-    final Runnable process = () -> {
-      final VirtualFile[] files = virtualFile.getChildren();
-      try {
-        for (final VirtualFile inspectionFile : files) {
-          if (inspectionFile.isDirectory()) continue;
-          final String shortName = inspectionFile.getNameWithoutExtension();
-          final String extension = inspectionFile.getExtension();
-          if (shortName.equals(InspectionApplication.DESCRIPTIONS)) {
-            profileName[0] = ApplicationManager.getApplication().runReadAction(
-              (Computable<String>)() -> OfflineViewParseUtil.parseProfileName(LoadTextUtil.loadText(inspectionFile).toString())
-            );
-          }
-          else if (XML_EXTENSION.equals(extension)) {
-            resMap.put(shortName, ApplicationManager.getApplication().runReadAction(
-                new Computable<Map<String, Set<OfflineProblemDescriptor>>>() {
-                  @Override
-                  public Map<String, Set<OfflineProblemDescriptor>> compute() {
-                    return OfflineViewParseUtil.parse(LoadTextUtil.loadText(inspectionFile).toString());
-                  }
-                }
-            ));
+    ProgressManager.getInstance().run(new Task.Backgroundable(project,
+                                                              InspectionsBundle.message("parsing.inspections.dump.progress.title"),
+                                                              true,
+                                                              new PerformAnalysisInBackgroundOption(project)) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        final VirtualFile[] files = virtualFile.getChildren();
+        try {
+          for (final VirtualFile inspectionFile : files) {
+            if (inspectionFile.isDirectory()) continue;
+            final String shortName = inspectionFile.getNameWithoutExtension();
+            final String extension = inspectionFile.getExtension();
+            if (shortName.equals(InspectionApplication.DESCRIPTIONS)) {
+              profileName[0] = ReadAction.compute(() -> OfflineViewParseUtil.parseProfileName(LoadTextUtil.loadText(inspectionFile).toString()));
+            }
+            else if (XML_EXTENSION.equals(extension)) {
+              resMap.put(shortName, ReadAction.compute(() -> OfflineViewParseUtil.parse(LoadTextUtil.loadText(inspectionFile).toString())));
+            }
           }
         }
+        catch (final Exception e) {  //all parse exceptions
+          ApplicationManager.getApplication()
+            .invokeLater(() -> Messages.showInfoMessage(e.getMessage(), InspectionsBundle.message("offline.view.parse.exception.title")));
+          throw new ProcessCanceledException(); //cancel process
+        }
       }
-      catch (final Exception e) {  //all parse exceptions
-        SwingUtilities.invokeLater(
-          () -> Messages.showInfoMessage(e.getMessage(), InspectionsBundle.message("offline.view.parse.exception.title")));
-        throw new ProcessCanceledException(); //cancel process
+
+      @Override
+      public void onSuccess() {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          final String name = profileName[0];
+          showOfflineView(project, name, resMap, InspectionsBundle.message("offline.view.title") + " (" + (name != null ? name : InspectionsBundle.message("offline.view.editor.settings.title")) + ")");
+        });
       }
-    };
-    ProgressManager.getInstance().runProcessWithProgressAsynchronously(project, InspectionsBundle.message("parsing.inspections.dump.progress.title"), process,
-                                                                       () -> SwingUtilities.invokeLater(() -> {
-                                                                         final String name = profileName[0];
-                                                                         showOfflineView(project, name, resMap,
-                                                                                         InspectionsBundle.message("offline.view.title") +
-                                                                                         " (" + (name != null ? name : InspectionsBundle.message("offline.view.editor.settings.title")) +")");
-                                                                       }), null, new PerformAnalysisInBackgroundOption(project));
+    });
   }
 
   @SuppressWarnings({"WeakerAccess", "UnusedReturnValue"}) //used in TeamCity
@@ -167,7 +163,9 @@ public class ViewOfflineResultsAction extends AnAction {
         }
       };
       for (String id : resMap.keySet()) {
-        inspectionProfile.enableTool(id, project);
+        if (inspectionProfile.getToolsOrNull(id, project) != null) {
+          inspectionProfile.enableTool(id, project);
+        }
       }
     }
     return showOfflineView(project, resMap, inspectionProfile, title);

@@ -39,7 +39,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see IntentionManager#registerIntentionAndMetaData(IntentionAction, String...)
  */
-public interface IntentionAction extends IntentionLike {
+public interface IntentionAction extends FileModifier {
   IntentionAction[] EMPTY_ARRAY = new IntentionAction[0];
   /**
    * Returns text to be shown in the list of available actions, if this action
@@ -94,5 +94,6 @@ public interface IntentionAction extends IntentionLike {
    *
    * @return true if the intention requires a write action, false otherwise.
    */
+  @Override
   boolean startInWriteAction();
 }

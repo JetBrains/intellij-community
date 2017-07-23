@@ -4,5 +4,5 @@ REGEXP_FILE
       RegExpClassImpl: <[\b]>
         PsiElement(CLASS_BEGIN)('[')
         RegExpCharImpl: <\b>
-          PsiElement(ESC_CHARACTER)('\b')
+          PsiElement(ESC_CTRL_CHARACTER)('\b')
         PsiElement(CLASS_END)(']')

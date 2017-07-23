@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
+import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -86,7 +86,7 @@ public abstract class VcsVFSListener implements Disposable {
     myChangeListManager = ChangeListManager.getInstance(project);
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
 
-    final MyVirtualFileAdapter myVFSListener = new MyVirtualFileAdapter();
+    final MyVirtualFileListener myVFSListener = new MyVirtualFileListener();
     final MyCommandAdapter myCommandListener = new MyCommandAdapter();
 
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
@@ -183,7 +183,7 @@ public abstract class VcsVFSListener implements Disposable {
     else {
       final VcsDeleteType type = needConfirmDeletion(file);
       final FilePath filePath =
-        VcsContextFactory.SERVICE.getInstance().createFilePathOnDeleted(new File(file.getPath()), file.isDirectory());
+        VcsContextFactory.SERVICE.getInstance().createFilePathOn(new File(file.getPath()), file.isDirectory());
       if (type == VcsDeleteType.CONFIRM) {
         myDeletedFiles.add(filePath);
       }
@@ -327,7 +327,7 @@ public abstract class VcsVFSListener implements Disposable {
 
   protected abstract boolean isDirectoryVersioningSupported();
 
-  private class MyVirtualFileAdapter extends VirtualFileAdapter {
+  private class MyVirtualFileListener implements VirtualFileListener {
     @Override
     public void fileCreated(@NotNull final VirtualFileEvent event) {
       VirtualFile file = event.getFile();
@@ -426,7 +426,7 @@ public abstract class VcsVFSListener implements Disposable {
     }
   }
 
-  private class MyCommandAdapter extends CommandAdapter {
+  private class MyCommandAdapter implements CommandListener {
     private int myCommandLevel;
 
     @Override

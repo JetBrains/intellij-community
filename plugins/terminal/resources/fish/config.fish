@@ -1,3 +1,9 @@
+if test -n "$OLD_XDG_CONFIG_HOME"
+  set XDG_CONFIG_HOME "$OLD_XDG_CONFIG_HOME"
+else
+  set -e XDG_CONFIG_HOME
+end
+
 if test -f ~/.config/fish/config.fish
   . ~/.config/fish/config.fish
 end

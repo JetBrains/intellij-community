@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,12 +92,15 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
           XDebuggerEvaluator evaluator = myStackFrame.getEvaluator();
           if (evaluator != null) {
             evaluator.evaluate(myExpression, new MyEvaluationCallback(node, place), myStackFrame.getSourcePosition());
+            return;
           }
         }
+        else {
+          return; // do not set anything if view is not visible, otherwise the code in computePresentationIfNeeded() will not work
+        }
       }
-      else {
-        node.setPresentation(AllIcons.Debugger.Watch, EMPTY_PRESENTATION, false);
-      }
+
+      node.setPresentation(AllIcons.Debugger.Watch, EMPTY_PRESENTATION, false);
     }
 
     private class MyEvaluationCallback extends XEvaluationCallbackBase implements Obsolescent {

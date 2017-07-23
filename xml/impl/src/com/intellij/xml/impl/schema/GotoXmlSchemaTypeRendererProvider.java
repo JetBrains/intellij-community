@@ -24,12 +24,6 @@ import com.intellij.psi.impl.source.xml.XmlTagImpl;
 import com.intellij.psi.xml.XmlAttribute;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 7/5/12
- * Time: 8:27 PM
- */
 public class GotoXmlSchemaTypeRendererProvider implements GotoTargetRendererProvider {
   @Override
   public PsiElementListCellRenderer getRenderer(@NotNull PsiElement element, @NotNull GotoTargetHandler.GotoData gotoData) {

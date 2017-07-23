@@ -28,12 +28,6 @@ import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 
 import java.io.File;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/1/12
- * Time: 12:11 PM
- */
 public class SvnKitUpdateClient extends BaseSvnClient implements UpdateClient {
 
   @Nullable protected ProgressTracker myDispatcher;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 // TODO[spLeaner]: eliminate
 public class RunnerRegistryImpl extends RunnerRegistry {
-  @Override
-  public boolean hasRunner(@NotNull String executorId, @NotNull RunProfile settings) {
-    return getRunner(executorId, settings) != null;
-  }
-
   @Override
   public ProgramRunner getRunner(@NotNull String executorId, @Nullable RunProfile settings) {
     if (settings == null) {

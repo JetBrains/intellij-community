@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: May 20, 2002
- * Time: 6:21:42 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.ide.DataManager;
@@ -142,6 +134,8 @@ public class JoinLinesHandler extends EditorActionHandler {
                                      @NotNull PsiFile psiFile,
                                      int startLine,
                                      Ref<Integer> caretRestoreOffset) {
+    if (startLine >= doc.getLineCount() - 1) return;
+
     docManager.doPostponedOperationsAndUnblockDocument(doc);
     docManager.commitDocument(doc);
     CharSequence text = doc.getCharsSequence();
@@ -208,8 +202,8 @@ public class JoinLinesHandler extends EditorActionHandler {
       return;
     }
 
-
-    if (caretRestoreOffset.get() == CANNOT_JOIN) caretRestoreOffset.set(start == offsets.lineEndOffset ? start : start + 1);
+    int replaceStart = start == offsets.lineEndOffset ? start : start + 1;
+    if (caretRestoreOffset.get() == CANNOT_JOIN) caretRestoreOffset.set(replaceStart);
 
 
     if (offsets.isStartLineEndsWithComment && offsets.isNextLineStartsWithComment) {
@@ -222,12 +216,18 @@ public class JoinLinesHandler extends EditorActionHandler {
         while (end < doc.getTextLength() && (text.charAt(end) == ' ' || text.charAt(end) == '\t')) end++;
       }
 
-      doc.replaceString(start == offsets.lineEndOffset ? start : start + 1, end, " ");
+      doc.replaceString(replaceStart, end, " ");
       return;
     }
 
     while (end < doc.getTextLength() && (text.charAt(end) == ' ' || text.charAt(end) == '\t')) end++;
-    doc.replaceString(start == offsets.lineEndOffset ? start : start + 1, end, " ");
+
+    int spacesToCreate = CodeStyleManager.getInstance(project).getSpacing(psiFile, end);
+    if (spacesToCreate < 0) spacesToCreate = 1;
+    String spacing = StringUtil.repeatSymbol(' ', spacesToCreate);
+
+    doc.replaceString(replaceStart, end, spacing);
+    docManager.commitDocument(doc);
 
     if (start <= doc.getLineStartOffset(startLine)) {
       try {
@@ -237,29 +237,6 @@ public class JoinLinesHandler extends EditorActionHandler {
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
-    }
-
-    int prevLineCount = doc.getLineCount();
-
-    docManager.commitDocument(doc);
-    try {
-      CodeStyleManager.getInstance(project).reformatRange(psiFile, start + 1, end, true);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
-
-    if (prevLineCount < doc.getLineCount()) {
-      docManager.doPostponedOperationsAndUnblockDocument(doc);
-      end = doc.getLineEndOffset(startLine) + doc.getLineSeparatorLength(startLine);
-      start = end - doc.getLineSeparatorLength(startLine);
-      int addedLinesCount = doc.getLineCount() - prevLineCount - 1;
-      while (end < doc.getTextLength() &&
-             (text.charAt(end) == ' ' || text.charAt(end) == '\t' || text.charAt(end) == '\n' && addedLinesCount > 0)) {
-        if (text.charAt(end) == '\n') addedLinesCount--;
-        end++;
-      }
-      doc.replaceString(start, end, " ");
     }
 
     docManager.commitDocument(doc);

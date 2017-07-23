@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 10-Jan-2007
- */
 package com.intellij.codeInspection.offlineViewer;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
@@ -42,13 +38,8 @@ import java.util.*;
 
 public class OfflineInspectionRVContentProvider extends InspectionRVContentProvider {
   private final Map<String, Map<String, Set<OfflineProblemDescriptor>>> myContent;
-  private final Map<String, Map<OfflineProblemDescriptor, OfflineDescriptorResolveResult>> myResolvedDescriptor = new FactoryMap<String, Map<OfflineProblemDescriptor, OfflineDescriptorResolveResult>>() {
-    @Nullable
-    @Override
-    protected Map<OfflineProblemDescriptor, OfflineDescriptorResolveResult> create(String key) {
-       return new THashMap<>();
-    }
-  };
+  private final Map<String, Map<OfflineProblemDescriptor, OfflineDescriptorResolveResult>> myResolvedDescriptor =
+    FactoryMap.createMap(key -> new THashMap<>());
 
   public OfflineInspectionRVContentProvider(@NotNull Map<String, Map<String, Set<OfflineProblemDescriptor>>> content,
                                             @NotNull Project project) {
@@ -68,8 +59,8 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     return Collections.singletonList(tools.getDefaultState());
   }
 
+  @NotNull
   @Override
-  @Nullable
   public QuickFixAction[] getQuickFixes(@NotNull final InspectionToolWrapper toolWrapper, @NotNull final InspectionTree tree) {
     final TreePath[] treePaths = tree.getSelectionPaths();
     if (treePaths == null) return QuickFixAction.EMPTY; 
@@ -98,7 +89,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
       });
     }
 
-    if (selectedElements.isEmpty()) return null;
+    if (selectedElements.isEmpty()) return QuickFixAction.EMPTY;
 
     final RefEntity[] selectedRefElements = selectedElements.toArray(new RefEntity[selectedElements.size()]);
 
@@ -191,7 +182,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     for (OfflineProblemDescriptor descriptor : ((RefEntityContainer<OfflineProblemDescriptor>)container).getDescriptors()) {
       final OfflineDescriptorResolveResult resolveResult = myResolvedDescriptor.get(toolWrapper.getShortName())
         .computeIfAbsent(descriptor, d -> OfflineDescriptorResolveResult.resolve(d, toolWrapper, presentation));
-      elemNode.insertByOrder(ReadAction.compute(() -> OfflineProblemDescriptorNode.create(descriptor, resolveResult, toolWrapper, presentation)), true);
+      elemNode.insertByOrder(ReadAction.compute(() -> OfflineProblemDescriptorNode.create(descriptor, resolveResult, presentation)), true);
     }
   }
 }

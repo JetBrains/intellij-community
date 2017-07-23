@@ -38,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 
 /**
@@ -50,12 +49,37 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
   protected final VirtualFile myFile;
   protected final String myFileName;
   protected final FileType myFileType;
-  protected final Charset myCharset;
+  protected Charset myCharset;
   protected byte[] myContent;
   protected CharSequence myContentAsText;
   protected final long myStamp;
   protected byte[] myHash;
   private boolean myLighterASTShouldBeThreadSafe;
+
+  public FileContentImpl(@NotNull final VirtualFile file, @NotNull final CharSequence contentAsText, long documentStamp) {
+    this(file, contentAsText, null, documentStamp);
+  }
+
+  public FileContentImpl(@NotNull final VirtualFile file, @NotNull final byte[] content) {
+    this(file, null, content, -1);
+  }
+
+  FileContentImpl(@NotNull final VirtualFile file) {
+    this(file, null, null, -1);
+  }
+
+  private FileContentImpl(@NotNull VirtualFile file,
+                          CharSequence contentAsText,
+                          byte[] content,
+                          long stamp) {
+    myFile = file;
+    myContentAsText = contentAsText;
+    myContent = content;
+    myFileType = file.getFileType();
+    // remember name explicitly because the file could be renamed afterwards
+    myFileName = file.getName();
+    myStamp = stamp;
+  }
 
   @Override
   public Project getProject() {
@@ -84,7 +108,8 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
     return psi;
   }
 
-  public @NotNull LighterAST getLighterASTForPsiDependentIndex() {
+  @NotNull
+  public LighterAST getLighterASTForPsiDependentIndex() {
     LighterAST lighterAST = getUserData(IndexingDataKeys.LIGHTER_AST_NODE_KEY);
     if (lighterAST == null) {
       FileASTNode node = getPsiFileForPsiDependentIndex().getNode();
@@ -124,40 +149,8 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
     }
   }
 
-  public FileContentImpl(@NotNull final VirtualFile file, @NotNull final CharSequence contentAsText, final Charset charset) {
-    this(file, contentAsText, null, charset, -1);
-  }
-
-  public FileContentImpl(@NotNull final VirtualFile file, @NotNull final CharSequence contentAsText, final Charset charset, long documentStamp) {
-    this(file, contentAsText, null, charset, documentStamp);
-  }
-
-  public FileContentImpl(@NotNull final VirtualFile file, @NotNull final byte[] content) {
-    this(file, null, content, LoadTextUtil.detectCharsetAndSetBOM(file, content), -1);
-  }
-
-  public FileContentImpl(@NotNull final VirtualFile file) {
-    this(file, null, null, null, -1);
-  }
-
-  private FileContentImpl(@NotNull VirtualFile file,
-                          CharSequence contentAsText,
-                          byte[] content,
-                          Charset charset,
-                          long stamp
-  ) {
-    myFile = file;
-    myContentAsText = contentAsText;
-    myContent = content;
-    myCharset = charset;
-    myFileType = file.getFileType();
-    // remember name explicitly because the file could be renamed afterwards
-    myFileName = file.getName();
-    myStamp = stamp;
-  }
-
   @NotNull
-  public FileType getSubstitutedFileType() {
+  private FileType getSubstitutedFileType() {
     return SubstitutedFileType.substituteFileType(myFile, myFileType, getProject());
   }
 
@@ -171,7 +164,7 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
     }
   }
 
-  public FileType getFileTypeWithoutSubstitution() {
+  private FileType getFileTypeWithoutSubstitution() {
     return myFileType;
   }
 
@@ -193,27 +186,27 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
     return myFileName;
   }
 
+  @NotNull
   public Charset getCharset() {
-    return myCharset;
+    Charset charset = myCharset;
+    if (charset == null) {
+      myCharset = charset = myFile.getCharset();
+    }
+    return charset;
   }
 
   public long getStamp() {
     return myStamp;
   }
 
+  @NotNull
   @Override
   public byte[] getContent() {
-    if (myContent == null) {
-      if (myContentAsText != null) {
-        try {
-          myContent = myCharset != null ? myContentAsText.toString().getBytes(myCharset.name()) : myContentAsText.toString().getBytes();
-        }
-        catch (UnsupportedEncodingException e) {
-          throw new RuntimeException(e);
-        }
-      }
+    byte[] content = myContent;
+    if (content == null) {
+      myContent = content = myContentAsText.toString().getBytes(getCharset());
     }
-    return myContent;
+    return content;
   }
 
   @NotNull
@@ -226,13 +219,12 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
     if (content != null) {
       return content;
     }
-    if (myContentAsText == null) {
-      if (myContent != null) {
-        myContentAsText = LoadTextUtil.getTextByBinaryPresentation(myContent, myCharset);
-        myContent = null; // help gc, indices are expected to use bytes or chars but not both
-      }
+    CharSequence contentAsText = myContentAsText;
+    if (contentAsText == null) {
+      myContentAsText = contentAsText = LoadTextUtil.getTextByBinaryPresentation(myContent, myFile);
+      myContent = null; // help gc, indices are expected to use bytes or chars but not both
     }
-    return myContentAsText;
+    return contentAsText;
   }
 
   @Override
@@ -240,7 +232,8 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
     return myFileName;
   }
 
-  public @Nullable byte[] getHash() {
+  @Nullable
+  public byte[] getHash() {
     return myHash;
   }
 

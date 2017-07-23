@@ -15,20 +15,23 @@ public interface ExternalSystemTaskNotificationListener {
     = ExtensionPointName.create("com.intellij.externalSystemTaskNotificationListener");
 
   /**
-   * Notifies that task with the given id is queued for the execution.
-   * <p/>
-   * 'Queued' here means that intellij process-local codebase receives request to execute the target task and even has not been
-   * sent it to the slave gradle api process.
-   *
-   * @param id  target task's id
-   * @param workingDir
+   * @deprecated use {@link #onStart(ExternalSystemTaskId, String)}
    */
   void onQueued(@NotNull ExternalSystemTaskId id, String workingDir);
-  
+
   /**
    * Notifies that task with the given id is about to be started.
-   * 
+   *
    * @param id  target task's id
+   * @param workingDir working directory
+   */
+  default void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
+    onQueued(id, workingDir);
+    onStart(id);
+  }
+
+  /**
+   * @deprecated use {@link #onStart(ExternalSystemTaskId, String)}
    */
   void onStart(@NotNull ExternalSystemTaskId id);
 

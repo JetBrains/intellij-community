@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 
 public class TestFailedEvent extends TreeNodeEvent {
 
@@ -34,6 +35,8 @@ public class TestFailedEvent extends TreeNodeEvent {
   private final String myExpectedFilePath;
   private final String myActualFilePath;
   private final long myDurationMillis;
+  private boolean myExpectedFileTemp;
+  private boolean myActualFileTemp;
 
   public TestFailedEvent(@NotNull TestFailed testFailed, boolean testError) {
     this(testFailed, testError, null);
@@ -71,7 +74,18 @@ public class TestFailedEvent extends TreeNodeEvent {
     }
     myComparisonFailureActualText = actual;
 
-    myDurationMillis = parseDuration(testFailed.getAttributes().get("duration"));
+    Map<String, String> attributes = testFailed.getAttributes();
+    myDurationMillis = parseDuration(attributes.get("duration"));
+    myActualFileTemp = Boolean.parseBoolean(attributes.get("actualIsTempFile"));
+    myExpectedFileTemp = Boolean.parseBoolean(attributes.get("expectedIsTempFile"));
+  }
+
+  public boolean isExpectedFileTemp() {
+    return myExpectedFileTemp;
+  }
+
+  public boolean isActualFileTemp() {
+    return myActualFileTemp;
   }
 
   private static long parseDuration(@Nullable String durationStr) {
@@ -99,6 +113,9 @@ public class TestFailedEvent extends TreeNodeEvent {
          comparisonFailureActualText,
          comparisonFailureExpectedText,
          null,
+         null,
+         false,
+         false,
          -1);
   }
 
@@ -110,6 +127,9 @@ public class TestFailedEvent extends TreeNodeEvent {
                          @Nullable String comparisonFailureActualText,
                          @Nullable String comparisonFailureExpectedText,
                          @Nullable String expectedFilePath,
+                         @Nullable String actualFilePath,
+                         boolean expectedFileTemp,
+                         boolean actualFileTemp,
                          long durationMillis) {
     super(testName, id);
     myLocalizedFailureMessage = localizedFailureMessage;
@@ -124,9 +144,11 @@ public class TestFailedEvent extends TreeNodeEvent {
     }
     myComparisonFailureActualText = comparisonFailureActualText;
 
-    myActualFilePath = null;
+    myActualFilePath = actualFilePath;
     myComparisonFailureExpectedText = comparisonFailureExpectedText;
     myDurationMillis = durationMillis;
+    myExpectedFileTemp = expectedFileTemp;
+    myActualFileTemp = actualFileTemp;
   }
 
   @NotNull

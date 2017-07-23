@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection.ex;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionManager;
@@ -61,7 +62,7 @@ import java.util.*;
  * @author max
  */
 public class QuickFixAction extends AnAction implements CustomComponentAction {
-  private static final Logger LOG = Logger.getInstance("#" + QuickFixAction.class.getName());
+  private static final Logger LOG = Logger.getInstance(QuickFixAction.class);
 
   public static final QuickFixAction[] EMPTY = new QuickFixAction[0];
   protected final InspectionToolWrapper myToolWrapper;
@@ -115,13 +116,15 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
   }
 
   @Override
+  @ReviseWhenPortedToJDK("9")
   public void actionPerformed(final AnActionEvent e) {
     final InspectionResultsView view = getInvoker(e);
     final InspectionTree tree = view.getTree();
     try {
       Ref<CommonProblemDescriptor[]> descriptors = Ref.create();
       Set<VirtualFile> readOnlyFiles = new THashSet<>();
-      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(() -> {
+      //TODO revise when jdk9 arrives. Until then this redundant cast is a workaround to compile under jdk9 b169
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously((Runnable)() -> ReadAction.run(() -> {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         indicator.setText("Checking problem descriptors...");
         descriptors.set(tree.getSelectedDescriptors(true, readOnlyFiles, false, false));
@@ -229,6 +232,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     return readOnlyFiles;
   }
 
+  @NotNull
   private static RefEntity[] getSelectedElements(InspectionResultsView view) {
     if (view == null) return new RefElement[0];
     List<RefEntity> selection = new ArrayList<>(Arrays.asList(view.getTree().getSelectedElements()));

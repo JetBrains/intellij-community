@@ -23,7 +23,6 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.util.containers.FactoryMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeNode;
 import java.util.Map;
@@ -34,21 +33,9 @@ import java.util.Set;
  */
 @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
 public class ExcludedInspectionTreeNodesManager {
-  private final Map<Class, Set<Object>> myExcludedNodeObjects = new FactoryMap<Class, Set<Object>>() {
-    @Nullable
-    @Override
-    protected Set<Object> create(Class key) {
-      return new THashSet<>();
-    }
-  };
+  private final Map<Class, Set<Object>> myExcludedNodeObjects = FactoryMap.createMap(key -> new THashSet<>());
 
-  private final Map<String, Set<Object>> myExcludedByTool = new FactoryMap<String, Set<Object>>() {
-    @Nullable
-    @Override
-    protected Set<Object> create(String key) {
-      return new THashSet<>();
-    }
-  };
+  private final Map<String, Set<Object>> myExcludedByTool = FactoryMap.createMap(key -> new THashSet<>());
 
   private final boolean myOffline;
   private final boolean mySingleInspectionRun;

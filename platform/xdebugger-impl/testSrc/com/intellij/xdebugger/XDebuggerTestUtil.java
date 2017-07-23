@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@ package com.intellij.xdebugger;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -35,6 +35,7 @@ import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
@@ -42,6 +43,7 @@ import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import java.awt.*;
 import java.io.File;
@@ -74,8 +76,17 @@ public class XDebuggerTestUtil {
     assertEquals(errorMessage, breakpoint.getErrorMessage());
   }
 
-  public static void toggleBreakpoint(Project project, VirtualFile file, int line) {
-    XDebuggerUtil.getInstance().toggleLineBreakpoint(project, file, line);
+  @Nullable
+  public static XLineBreakpoint toggleBreakpoint(Project project, VirtualFile file, int line) {
+    return new WriteAction<XLineBreakpoint>() {
+      @Override
+      protected void run(@NotNull Result<XLineBreakpoint> result) throws Throwable {
+        Promise<XLineBreakpoint> promise =
+          ((XDebuggerUtilImpl)XDebuggerUtil.getInstance()).toggleAndReturnLineBreakpoint(project, file, line, false);
+
+        promise.done(result::setResult);
+      }
+    }.execute().getResultObject();
   }
 
   public static <P extends XBreakpointProperties> XBreakpoint<P> insertBreakpoint(final Project project,
@@ -202,10 +213,7 @@ public class XDebuggerTestUtil {
     s.down();
     ApplicationManager.getApplication().invokeLater(() -> s.up());
     s.waitForUnsafe();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      public void run() {
-      }
-    });
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {});
   }
 
   @NotNull
@@ -471,7 +479,7 @@ public class XDebuggerTestUtil {
   }
 
   public static XBreakpoint<?>[] getBreakpoints(final XBreakpointManager breakpointManager) {
-    return ApplicationManager.getApplication().runReadAction((Computable<XBreakpoint<?>[]>)breakpointManager::getAllBreakpoints);
+    return ReadAction.compute(breakpointManager::getAllBreakpoints);
   }
 
   public static <B extends XBreakpoint<?>>

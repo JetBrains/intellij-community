@@ -30,13 +30,7 @@ public interface PsiTypeParameter extends PsiClass, PsiAnnotationOwner {
    */
   PsiTypeParameter[] EMPTY_ARRAY = new PsiTypeParameter[0];
 
-  ArrayFactory<PsiTypeParameter> ARRAY_FACTORY = new ArrayFactory<PsiTypeParameter>() {
-    @NotNull
-    @Override
-    public PsiTypeParameter[] create(final int count) {
-      return count == 0 ? EMPTY_ARRAY : new PsiTypeParameter[count];
-    }
-  };
+  ArrayFactory<PsiTypeParameter> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiTypeParameter[count];
 
   /**
    * Returns the extends list of the type parameter.

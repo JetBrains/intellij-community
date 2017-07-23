@@ -58,7 +58,7 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
   private static Icon getJdkIcon(JdkOrderEntry entry) {
     final Sdk sdk = entry.getJdk();
     if (sdk == null) {
-      return AllIcons.General.Jdk;
+      return AllIcons.Nodes.UnknownJdk;
     }
     final SdkType sdkType = (SdkType) sdk.getSdkType();
     return sdkType.getIcon();

@@ -60,7 +60,7 @@ public abstract class SdkType implements SdkTypeId {
   @NotNull
   public Collection<String> suggestHomePaths() {
     String home = suggestHomePath();
-    return home != null ? Collections.singletonList(home) : Collections.<String>emptyList();
+    return home != null ? Collections.singletonList(home) : Collections.emptyList();
   }
 
   /**
@@ -245,13 +245,24 @@ public abstract class SdkType implements SdkTypeId {
   }
 
   /**
-   * Shows the custom SDK create UI. The returned SDK needs to have the correct name and home path; the framework will call
-   * setupSdkPaths() on the returned SDK.
+   * Shows the custom SDK create UI based on selected SDK in parent component. The returned SDK needs to have the correct name and home path;
+   * the framework will call setupSdkPaths() on the returned SDK.
    *
    * @param sdkModel the list of SDKs currently displayed in the configuration dialog.
    * @param parentComponent the parent component for showing the dialog.
+   * @param selectedSdk current selected sdk in parentComponent
    * @param sdkCreatedCallback the callback to which the created SDK is passed.
-   * @since 12.0
+   * @since 2017.1
+   */
+  public void showCustomCreateUI(@NotNull SdkModel sdkModel,
+                                 @NotNull JComponent parentComponent,
+                                 @Nullable Sdk selectedSdk,
+                                 @NotNull Consumer<Sdk> sdkCreatedCallback) {
+    showCustomCreateUI(sdkModel, parentComponent, sdkCreatedCallback);
+  }
+
+  /**
+   * @deprecated Use {@link #showCustomCreateUI(SdkModel, JComponent, Sdk, Consumer)} method instead
    */
   public void showCustomCreateUI(@NotNull SdkModel sdkModel, @NotNull JComponent parentComponent, @NotNull Consumer<Sdk> sdkCreatedCallback) {
   }

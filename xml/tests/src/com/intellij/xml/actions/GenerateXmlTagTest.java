@@ -83,7 +83,7 @@ public class GenerateXmlTagTest extends LightPlatformCodeInsightFixtureTestCase 
   public void setUp() throws Exception {
     super.setUp();
     ExternalResourceManagerExImpl.registerResourceTemporarily("http://java.sun.com/j2ee/dtds/web-app_2_3.dtd",
-                                                              getTestDataPath() + "/web-app_2_3.dtd", getTestRootDisposable());
+                                                              getTestDataPath() + "/web-app_2_3.dtd", myFixture.getTestRootDisposable());
   }
 
   @Override

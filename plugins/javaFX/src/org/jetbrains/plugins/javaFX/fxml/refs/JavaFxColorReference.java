@@ -28,10 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 
-/**
- * User: anna
- * Date: 3/7/13
- */
 public class JavaFxColorReference extends PsiReferenceBase<XmlAttributeValue> {
   public JavaFxColorReference(XmlAttributeValue value) {
     super(value);

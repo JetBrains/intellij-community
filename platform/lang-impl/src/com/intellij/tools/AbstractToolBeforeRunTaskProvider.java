@@ -29,7 +29,7 @@ import javax.swing.*;
  * @author traff
  */
 public abstract class AbstractToolBeforeRunTaskProvider<T extends AbstractToolBeforeRunTask> extends BeforeRunTaskProvider<T> {
-  protected static final Logger LOG = Logger.getInstance("#" + ToolBeforeRunTaskProvider.class.getName());
+  protected static final Logger LOG = Logger.getInstance(ToolBeforeRunTaskProvider.class);
 
   @Override
   public Icon getIcon() {

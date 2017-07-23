@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
@@ -62,6 +61,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProces
 
 import java.util.List;
 import java.util.Set;
+
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.unwrapClassType;
 
 /**
  * @author Max Medvedev
@@ -311,7 +312,7 @@ public class GdkMethodUtil {
         final String name = signatures.second;
 
         final List<GrMethod> methods = ContainerUtil.newArrayList();
-        final PsiClass closure = GroovyPsiManager.getInstance(statement.getProject()).findClassWithCache(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, statement.getResolveScope());
+        final PsiClass closure = JavaPsiFacade.getInstance(statement.getProject()).findClass(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, statement.getResolveScope());
         if (closure == null) return Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
 
         signatures.first.accept(new GrSignatureVisitor() {
@@ -431,7 +432,7 @@ public class GdkMethodUtil {
           if (qualifier instanceof GrReferenceExpression) {
             GrExpression qqualifier = ((GrReferenceExpression)qualifier).getQualifier();
             if (qqualifier != null) {
-              Pair<PsiClassType, GrReferenceExpression> type1 = getPsiClassFromReference(qqualifier);
+              Pair<PsiClassType, GrReferenceExpression> type1 = getPsiClassFromMetaClassReference(qqualifier);
               if (type1 != null) {
                 return type1;
               }
@@ -474,18 +475,32 @@ public class GdkMethodUtil {
     return mixinRef instanceof GrReferenceExpression && "class".equals(((GrReferenceExpression)mixinRef).getReferenceName());
   }
 
+  /**
+   * Integer.mixin(Foo)
+   * Integer.class.mixin(Foo)
+   */
   @Nullable
-  private static Pair<PsiClassType, GrReferenceExpression> getPsiClassFromReference(GrExpression ref) {
+  private static Pair<PsiClassType, GrReferenceExpression> getPsiClassFromReference(@Nullable GrExpression ref) {
+    if (ref == null) return null;
+
+    final PsiType type = unwrapClassType(ref.getType());
+    if (!(type instanceof PsiClassType)) return null;
+
     if (isClassRef(ref)) ref = ((GrReferenceExpression)ref).getQualifier();
-    if (ref instanceof GrReferenceExpression) {
-      PsiElement resolved = ((GrReferenceExpression)ref).resolve();
-      if (resolved instanceof PsiClass) {
-        PsiType type = ref.getType();
-        LOG.assertTrue(type instanceof PsiClassType, "reference resolved into PsiClass should have PsiClassType");
-        return Pair.create((PsiClassType)type, (GrReferenceExpression)ref);
-      }
-    }
-    return null;
+    if (!(ref instanceof GrReferenceExpression)) return null;
+
+    return Pair.create((PsiClassType)type, (GrReferenceExpression)ref);
+  }
+
+  /**
+   * this.metaClass.mixin(Foo)
+   */
+  private static Pair<PsiClassType, GrReferenceExpression> getPsiClassFromMetaClassReference(@NotNull GrExpression expression) {
+    final PsiType type = expression.getType();
+    if (!(type instanceof PsiClassType)) return null;
+
+    final GrReferenceExpression ref = expression instanceof GrReferenceExpression ? ((GrReferenceExpression)expression) : null;
+    return Pair.create((PsiClassType)type, ref);
   }
 
   public static boolean isCategoryMethod(@NotNull PsiMethod method, @Nullable PsiType qualifierType, @Nullable PsiElement place, @Nullable PsiSubstitutor substitutor) {

@@ -1,7 +1,3 @@
-/*
- * User: anna
- * Date: 19-Aug-2009
- */
 package com.intellij.refactoring;
 
 import com.intellij.psi.CommonClassNames;

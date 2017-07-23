@@ -31,13 +31,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class PsiClassType extends PsiType {
   public static final PsiClassType[] EMPTY_ARRAY = new PsiClassType[0];
-  public static final ArrayFactory<PsiClassType> ARRAY_FACTORY = new ArrayFactory<PsiClassType>() {
-    @NotNull
-    @Override
-    public PsiClassType[] create(int count) {
-      return new PsiClassType[count];
-    }
-  };
+  public static final ArrayFactory<PsiClassType> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiClassType[count];
 
   protected final LanguageLevel myLanguageLevel;
 
@@ -295,7 +289,7 @@ public abstract class PsiClassType extends PsiType {
     };
   }
 
-  public static abstract class Stub extends PsiClassType {
+  public abstract static class Stub extends PsiClassType {
     protected Stub(LanguageLevel languageLevel, @NotNull PsiAnnotation[] annotations) {
       super(languageLevel, annotations);
     }

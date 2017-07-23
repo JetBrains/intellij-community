@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations.Annotation;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifiers;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments.ArgumentList;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.TypeDefinition;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -35,7 +35,7 @@ public class EnumConstant {
     PsiBuilder.Marker ecMarker = builder.mark();
     ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
 
-    Annotation.parseAnnotationOptional(builder, parser);
+    Modifiers.parse(builder, parser, true);
 
     if (!ParserUtils.getToken(builder, GroovyTokenTypes.mIDENT)) {
       ecMarker.rollbackTo();

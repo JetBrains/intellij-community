@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ public abstract class GrCreateFromUsageBaseFix extends Intention {
   protected PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
-      public boolean satisfiedBy(PsiElement element) {
+      public boolean satisfiedBy(@NotNull PsiElement element) {
         return element instanceof GrReferenceExpression;
       }
     };
@@ -102,7 +102,7 @@ public abstract class GrCreateFromUsageBaseFix extends Intention {
     final Project project = classes.get(0).getProject();
 
     final JList list = new JBList(classes);
-    PsiElementListCellRenderer renderer = PsiClassListCellRenderer.INSTANCE;
+    PsiElementListCellRenderer renderer = new PsiClassListCellRenderer();
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(renderer);
     final PopupChooserBuilder builder = new PopupChooserBuilder(list);

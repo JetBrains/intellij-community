@@ -16,11 +16,6 @@
 
 package org.intellij.plugins.relaxNG;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 07.08.2007
-*/
 public class RncParsingTest extends AbstractParsingTest {
   public RncParsingTest() {
     super("complex");

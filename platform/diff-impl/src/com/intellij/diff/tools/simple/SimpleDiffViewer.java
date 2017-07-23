@@ -23,15 +23,14 @@ import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.*;
-import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
+import com.intellij.diff.tools.util.text.TwosideTextDiffProvider;
 import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.editor.Caret;
@@ -54,11 +53,11 @@ import java.util.BitSet;
 import java.util.Iterator;
 import java.util.List;
 
+import static com.intellij.diff.util.DiffUtil.getLineCount;
+import static com.intellij.util.ArrayUtil.toObjectArray;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class SimpleDiffViewer extends TwosideTextDiffViewer {
-  public static final Logger LOG = Logger.getInstance(SimpleDiffViewer.class);
-
   @NotNull private final SyncScrollSupport.SyncScrollable mySyncScrollable;
   @NotNull private final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
   @NotNull private final StatusPanel myStatusPanel;
@@ -71,6 +70,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull private final MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
   @NotNull private final ModifierProvider myModifierProvider;
 
+  @NotNull private final TwosideTextDiffProvider myTextDiffProvider;
+
   public SimpleDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request);
 
@@ -80,6 +81,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     myFoldingModel = new MyFoldingModel(getEditors(), this);
 
     myModifierProvider = new ModifierProvider();
+
+    myTextDiffProvider = DiffUtil.createTextDiffProvider(getProject(), getRequest(), getTextSettings(), this::rediff, this);
 
     DiffUtil.registerAction(new ReplaceSelectedChangesAction(Side.LEFT, true), myPanel);
     DiffUtil.registerAction(new AppendSelectedChangesAction(Side.LEFT, true), myPanel);
@@ -108,8 +111,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   protected List<AnAction> createToolbarActions() {
     List<AnAction> group = new ArrayList<>();
 
-    group.add(new MyIgnorePolicySettingAction());
-    group.add(new MyHighlightPolicySettingAction());
+    group.addAll(myTextDiffProvider.getToolbarActions());
     group.add(new MyToggleExpandByDefaultAction());
     group.add(new MyToggleAutoScrollAction());
     group.add(new MyReadOnlyLockAction());
@@ -126,11 +128,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   protected List<AnAction> createPopupActions() {
     List<AnAction> group = new ArrayList<>();
 
-    group.add(Separator.getInstance());
-    group.add(new MyIgnorePolicySettingAction().getPopupGroup());
-    group.add(Separator.getInstance());
-    group.add(new MyHighlightPolicySettingAction().getPopupGroup());
-    group.add(Separator.getInstance());
+    group.addAll(myTextDiffProvider.getPopupActions());
     group.add(new MyToggleAutoScrollAction());
     group.add(new MyToggleExpandByDefaultAction());
 
@@ -200,10 +198,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         return new CharSequence[]{document1.getImmutableCharSequence(), document2.getImmutableCharSequence()};
       });
 
-      List<LineFragment> lineFragments = null;
-      if (getHighlightPolicy().isShouldCompare()) {
-        lineFragments = DiffUtil.compare(myRequest, texts[0], texts[1], getDiffConfig(), indicator);
-      }
+      List<LineFragment> lineFragments = myTextDiffProvider.compare(texts[0], texts[1], indicator);
 
       boolean isContentsEqual = (lineFragments == null || lineFragments.isEmpty()) &&
                                 StringUtil.equals(texts[0], texts[1]);
@@ -268,16 +263,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     myStatusPanel.setBusy(false);
     myPanel.resetNotifications();
     destroyChangedBlocks();
-  }
-
-  @NotNull
-  private DiffUtil.DiffConfig getDiffConfig() {
-    return new DiffUtil.DiffConfig(getTextSettings().getIgnorePolicy(), getHighlightPolicy());
-  }
-
-  @NotNull
-  private HighlightPolicy getHighlightPolicy() {
-    return getTextSettings().getHighlightPolicy();
   }
 
   //
@@ -665,28 +650,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     myDiffChanges.remove(change);
   }
 
-  private class MyHighlightPolicySettingAction extends TextDiffViewerUtil.HighlightPolicySettingAction {
-    public MyHighlightPolicySettingAction() {
-      super(getTextSettings());
-    }
-
-    @Override
-    protected void onSettingsChanged() {
-      rediff();
-    }
-  }
-
-  private class MyIgnorePolicySettingAction extends TextDiffViewerUtil.IgnorePolicySettingAction {
-    public MyIgnorePolicySettingAction() {
-      super(getTextSettings());
-    }
-
-    @Override
-    protected void onSettingsChanged() {
-      rediff();
-    }
-  }
-
   private class MyToggleExpandByDefaultAction extends TextDiffViewerUtil.ToggleExpandByDefaultAction {
     public MyToggleExpandByDefaultAction() {
       super(getTextSettings());
@@ -775,7 +738,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         if (!helper.process(diffChange.getStartLine(Side.LEFT), diffChange.getStartLine(Side.RIGHT))) return;
         if (!helper.process(diffChange.getEndLine(Side.LEFT), diffChange.getEndLine(Side.RIGHT))) return;
       }
-      helper.process(getEditor1().getDocument().getLineCount(), getEditor2().getDocument().getLineCount());
+      helper.process(getLineCount(getEditor1().getDocument()), getLineCount(getEditor2().getDocument()));
     }
   }
 
@@ -787,7 +750,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       gg.setColor(DiffDrawUtil.getDividerColor(getEditor1()));
       gg.fill(gg.getClipBounds());
 
-      //DividerPolygonUtil.paintSimplePolygons(gg, divider.getWidth(), getEditor1(), getEditor2(), this);
       DiffDividerDrawUtil.paintPolygons(gg, divider.getWidth(), getEditor1(), getEditor2(), this);
 
       myFoldingModel.paintOnDivider(gg, divider);
@@ -811,7 +773,9 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @Nullable
     @Override
     protected String getMessage() {
-      if (getHighlightPolicy() == HighlightPolicy.DO_NOT_HIGHLIGHT) return DiffBundle.message("diff.highlighting.disabled.text");
+      if (myTextDiffProvider.isHighlightingDisabled()) {
+        return DiffBundle.message("diff.highlighting.disabled.text");
+      }
       int changesCount = myDiffChanges.size() + myInvalidDiffChanges.size();
       if (changesCount == 0 && !myIsContentsEqual) {
         return DiffBundle.message("diff.all.differences.ignored.text");
@@ -856,7 +820,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     private final MyPaintable myPaintable = new MyPaintable(0, 1);
 
     public MyFoldingModel(@NotNull List<? extends EditorEx> editors, @NotNull Disposable disposable) {
-      super(editors.toArray(new EditorEx[2]), disposable);
+      super(toObjectArray(editors, EditorEx.class), disposable);
     }
 
     public void install(@Nullable final List<LineFragment> fragments,

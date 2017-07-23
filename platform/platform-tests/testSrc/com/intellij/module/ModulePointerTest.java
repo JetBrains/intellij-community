@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.*;
 import com.intellij.testFramework.PlatformTestCase;
 import org.jetbrains.annotations.NotNull;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author nik
@@ -68,22 +70,22 @@ public class ModulePointerTest extends PlatformTestCase {
     assertEquals("xyz", pointer.getModuleName());
   }
 
-  public void testDisposePointerFromUncommitedModifiableModel() throws Exception {
-    final ModulePointer pointer = getPointerManager().create("xxx");
+  public void testDisposePointerFromUncommittedModifiableModel() throws Exception {
+    ModulePointerManager pointerManager = getPointerManager();
+    final ModulePointer pointer = pointerManager.create("xxx");
 
     final ModifiableModuleModel modifiableModel = getModuleManager().getModifiableModel();
     final Module module = modifiableModel.newModule(myProject.getBaseDir().getPath() + "/xxx.iml", EmptyModuleType.getInstance().getId());
-    assertSame(pointer, getPointerManager().create(module));
-    assertSame(pointer, getPointerManager().create("xxx"));
+    assertThat(pointerManager.create(module)).isSameAs(pointer);
+    assertThat(pointerManager.create("xxx")).isSameAs(pointer);
 
-    assertSame(module, pointer.getModule());
-    assertEquals("xxx", pointer.getModuleName());
+    assertThat(pointer.getModule()).isSameAs(module);
+    assertThat(pointer.getModuleName()).isEqualTo("xxx");
 
     ApplicationManager.getApplication().runWriteAction(() -> modifiableModel.dispose());
 
-
-    assertNull(pointer.getModule());
-    assertEquals("xxx", pointer.getModuleName());
+    assertThat(pointer.getModule()).isNull();
+    assertThat(pointer.getModuleName()).isEqualTo("xxx");
   }
 
   private ModuleManager getModuleManager() {

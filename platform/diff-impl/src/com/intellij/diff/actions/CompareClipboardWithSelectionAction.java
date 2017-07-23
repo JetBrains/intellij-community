@@ -24,6 +24,7 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.Side;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diff.DiffBundle;
@@ -34,6 +35,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -93,6 +95,7 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
     String title = DiffBundle.message("diff.clipboard.vs.editor.dialog.title");
 
     SimpleDiffRequest request = new SimpleDiffRequest(title, content1, content2, title1, title2);
+    request.putUserData(DiffUserDataKeys.SCROLL_TO_LINE, Pair.create(Side.RIGHT, editor.getCaretModel().getLogicalPosition().line));
     if (editor.isViewer()) {
       request.putUserData(DiffUserDataKeys.FORCE_READ_ONLY_CONTENTS, new boolean[]{false, true});
     }

@@ -39,10 +39,15 @@
 
   <depends>com.intellij.modules.lang</depends>
   <depends>org.intellij.groovy</depends>
-  <depends>JUnit</depends>
   <depends optional="true" config-file="gradle-maven-integration.xml">org.jetbrains.idea.maven</depends>
 
   <resource-bundle>i18n.GradleBundle</resource-bundle>
+
+  <application-components>
+    <component>
+      <implementation-class>org.jetbrains.plugins.gradle.GradleCleanupService</implementation-class>
+    </component>
+  </application-components>
 
   <extensionPoints>
     <extensionPoint name="projectResolve" interface="org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension"/>
@@ -55,6 +60,8 @@
     <extensionPoint name="testTasksProvider" interface="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestTasksProvider"/>
     <extensionPoint name="artifactBuildTasksProvider" interface="org.jetbrains.plugins.gradle.execution.build.GradleArtifactBuildTasksProvider"/>
     <extensionPoint name="executionEnvironmentProvider" interface="org.jetbrains.plugins.gradle.execution.build.GradleExecutionEnvironmentProvider"/>
+    <extensionPoint name="orderEnumerationHandlerFactory"
+                    interface="org.jetbrains.plugins.gradle.execution.GradleOrderEnumeratorHandler$FactoryImpl"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
@@ -101,6 +108,7 @@
 
     <externalSystemExecutionConsoleManager implementation="org.jetbrains.plugins.gradle.execution.GradleExecutionConsoleManager" order="last"/>
     <externalSystemExecutionConsoleManager implementation="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsoleManager"/>
+    <externalSystemWorkspaceContributor implementation="org.jetbrains.plugins.gradle.service.project.GradleWorkspaceContributor"/>
     <projectImportProvider implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportProvider"/>
     <projectImportBuilder implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportBuilder"/>
     <moduleBuilder builderClass="org.jetbrains.plugins.gradle.service.project.wizard.GradleModuleBuilder"/>
@@ -123,6 +131,7 @@
     <externalSystemConfigLocator implementation="org.jetbrains.plugins.gradle.service.settings.GradleConfigLocator"/>
     <externalSystemManager implementation="org.jetbrains.plugins.gradle.GradleManager"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.GradleSourceSetDataService"/>
+    <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.CompositeBuildDataService"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.BuildClasspathModuleGradleDataService"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataService"/>
@@ -157,6 +166,8 @@
              id="myWeigher" order="first"/>
     <completion.contributor language="Groovy" order="first"
                             implementationClass="org.jetbrains.plugins.gradle.codeInsight.ConfigurationsCompletionContributor"/>
+    <completion.contributor language="Groovy" order="first"
+                            implementationClass="org.jetbrains.plugins.gradle.codeInsight.PropertiesTasksCompletionContributor"/>
 
     <localInspection language="Groovy" groupPath="Gradle" shortName="MultipleRepositoryUrls"
                      bundle="org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle"
@@ -165,6 +176,7 @@
 
     <copyPastePreProcessor implementation="org.jetbrains.plugins.gradle.action.PasteMvnDependencyPreProcessor"/>
 
+    <attachSourcesProvider implementation="org.jetbrains.plugins.gradle.util.GradleAttachSourcesProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
@@ -190,6 +202,9 @@
             icon="GradleIcons.OfflineMode"/>
     <action id="Gradle.OpenProjectCompositeConfiguration" class="org.jetbrains.plugins.gradle.action.GradleOpenProjectCompositeConfigurationAction"
             text="Composite Build Configuration"/>
+
+    <action id="Gradle.RefreshDependencies" class="org.jetbrains.plugins.gradle.action.GradleRefreshProjectDependenciesAction"
+            text="Refresh dependencies" description="Refresh dependencies in the Gradle cache using --refresh-dependencies argument"/>
     
     <group id="Gradle.GenerateGroup">
       <action id="AddGradleDslPluginAction" class="org.jetbrains.plugins.gradle.codeInsight.actions.AddGradleDslPluginAction"/>
@@ -210,6 +225,11 @@
     <group>
       <reference id="Gradle.OpenProjectCompositeConfiguration"/>
       <add-to-group group-id="ExternalSystemView.ProjectMenu"/>
+    </group>
+
+    <group>
+      <reference id="Gradle.RefreshDependencies"/>
+      <add-to-group group-id="ExternalSystemView.BaseProjectMenu" relative-to-action="ExternalSystem.RefreshProject" anchor="after"/>
     </group>
 
   </actions>

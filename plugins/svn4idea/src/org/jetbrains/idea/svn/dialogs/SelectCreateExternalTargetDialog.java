@@ -27,18 +27,10 @@ import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import javax.swing.*;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 7/6/12
- * Time: 7:53 PM
- */
 public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
   private String mySelectedURL;
   private boolean myCheckout;
@@ -65,15 +57,13 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
     myFollowRemoteTarget = true;
     setTitle("Select Target For External");
     setOKButtonText("Select");
-    getRepositoryBrowser().addChangeListener(new TreeSelectionListener() {
-      public void valueChanged(TreeSelectionEvent e) {
-        if (getOKAction() != null) {
-          final String selectedURL = getRepositoryBrowser().getSelectedURL();
-          if (myFollowRemoteTarget && selectedURL != null) {
-            myFolderName.setText(SVNPathUtil.tail(selectedURL));
-          }
-          checkEnabled();
+    getRepositoryBrowser().addChangeListener(e -> {
+      if (getOKAction() != null) {
+        final String selectedURL = getRepositoryBrowser().getSelectedURL();
+        if (myFollowRemoteTarget && selectedURL != null) {
+          myFolderName.setText(SVNPathUtil.tail(selectedURL));
         }
+        checkEnabled();
       }
     });
     getOKAction().setEnabled(getRepositoryBrowser().getSelectedURL() != null);
@@ -85,7 +75,7 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
     final boolean contains = myUsedNames.contains(text);
     final boolean enabled = selectedURL != null && !StringUtil.isEmptyOrSpaces(text) && !contains;
     if (contains) {
-      setErrorText("Target File Already Exists");
+      setErrorText("Target File Already Exists", myFolderName);
     } else {
       setErrorText(null);
     }
@@ -178,12 +168,7 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
     });
 
     final JCheckBox checkout = new JCheckBox("Checkout");
-    checkout.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myCheckout = checkout.isSelected();
-      }
-    });
+    checkout.addActionListener(e -> myCheckout = checkout.isSelected());
     wrapper.add(checkout, gb);
     return wrapper;
   }

@@ -1,33 +1,17 @@
 /*
- * Copyright (c) 2004 JetBrains s.r.o. All  Rights Reserved.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * -Redistributions of source code must retain the above copyright
- *  notice, this list of conditions and the following disclaimer.
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * -Redistribution in binary form must reproduct the above copyright
- *  notice, this list of conditions and the following disclaimer in
- *  the documentation and/or other materials provided with the distribution.
- *
- * Neither the name of JetBrains or IntelliJ IDEA
- * may be used to endorse or promote products derived from this software
- * without specific prior written permission.
- *
- * This software is provided "AS IS," without a warranty of any kind. ALL
- * EXPRESS OR IMPLIED CONDITIONS, REPRESENTATIONS AND WARRANTIES, INCLUDING
- * ANY IMPLIED WARRANTY OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
- * OR NON-INFRINGEMENT, ARE HEREBY EXCLUDED. JETBRAINS AND ITS LICENSORS SHALL NOT
- * BE LIABLE FOR ANY DAMAGES OR LIABILITIES SUFFERED BY LICENSEE AS A RESULT
- * OF OR RELATING TO USE, MODIFICATION OR DISTRIBUTION OF THE SOFTWARE OR ITS
- * DERIVATIVES. IN NO EVENT WILL JETBRAINS OR ITS LICENSORS BE LIABLE FOR ANY LOST
- * REVENUE, PROFIT OR DATA, OR FOR DIRECT, INDIRECT, SPECIAL, CONSEQUENTIAL,
- * INCIDENTAL OR PUNITIVE DAMAGES, HOWEVER CAUSED AND REGARDLESS OF THE THEORY
- * OF LIABILITY, ARISING OUT OF THE USE OF OR INABILITY TO USE SOFTWARE, EVEN
- * IF JETBRAINS HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
- *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.intellij.projectView;
 
@@ -35,21 +19,21 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.PackageViewPane;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
-import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.lang.properties.projectView.ResourceBundleGrouper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.lang.properties.projectView.ResourceBundleGrouper;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.io.IOException;
 
 public class PackagesTreeStructureTest extends TestSourceBasedTestCase {
-  public void testPackageView() throws IOException {
+  public void testPackageView() throws IOException, InterruptedException {
     ModuleManagerImpl.getInstanceImpl(myProject).setModuleGroupPath(myModule, new String[]{"Group"});
     final VirtualFile srcFile = getSrcDirectory().getVirtualFile();
     if (srcFile.findChild("empty") == null){
@@ -113,6 +97,7 @@ public class PackagesTreeStructureTest extends TestSourceBasedTestCase {
                        "    -PsiPackage: org\n" +
                        "     +PsiPackage: intellij.lang.annotations\n" +
                        "     +PsiPackage: jetbrains.annotations\n" +
+                       "    LICENSE\n" +
                        ""
       , 5);
 
@@ -160,7 +145,8 @@ public class PackagesTreeStructureTest extends TestSourceBasedTestCase {
                         "   MANIFEST.MF\n" +
                         "  -PsiPackage: org\n" +
                         "   +PsiPackage: intellij.lang.annotations\n" +
-                        "   +PsiPackage: jetbrains.annotations\n"
+                        "   +PsiPackage: jetbrains.annotations\n" +
+                        "  LICENSE\n"
       , 3);
 
     doTest(true, false, "-Project\n" +
@@ -180,6 +166,21 @@ public class PackagesTreeStructureTest extends TestSourceBasedTestCase {
                     "   -PsiPackage: javax.servlet\n" +
                     "    Class1.java\n", 4);
 
+    doTest(false, false, true, true, "-Project\n" +
+                     " -PsiPackage: com.package1\n" +
+                     "  Class1.java\n" +
+                     "  Class2.java\n" +
+                     "  Class4.java\n" +
+                     "  emptyClassFile.class\n" +
+                     "  Form1.form\n" +
+                     "  Form1.java\n" +
+                     "  Form2.form\n" +
+                     " PsiPackage: empty\n" +
+                     " -PsiPackage: java\n" +
+                     "  Class1.java\n" +
+                     " -PsiPackage: j.servlet\n" +
+                     "  Class1.java\n", 3);
+
     doTest(false, false, "-Project\n" +
                      " -PsiPackage: com.package1\n" +
                      "  Class1.java\n" +
@@ -194,17 +195,23 @@ public class PackagesTreeStructureTest extends TestSourceBasedTestCase {
                      "  Class1.java\n" +
                      " -PsiPackage: javax.servlet\n" +
                      "  Class1.java\n", 3);
-
   }
 
-  private void doTest(final boolean showModules, final boolean showLibraryContents, @NonNls final String expected, final int levels) {
+  private void doTest(final boolean showModules, final boolean showLibraryContents, @NonNls final String expected, final int levels)
+    throws InterruptedException {
+    doTest(showModules, showLibraryContents, false, false, expected, levels);
+  }
+
+  private void doTest(final boolean showModules, final boolean showLibraryContents, boolean flattenPackages, boolean abbreviatePackageNames, @NonNls final String expected, final int levels)
+    throws InterruptedException {
     final ProjectViewImpl projectView = (ProjectViewImpl)ProjectView.getInstance(myProject);
 
     projectView.setShowModules(showModules, PackageViewPane.ID);
 
     projectView.setShowLibraryContents(showLibraryContents, PackageViewPane.ID);
 
-    projectView.setFlattenPackages(false, PackageViewPane.ID);
+    projectView.setFlattenPackages(flattenPackages, PackageViewPane.ID);
+    projectView.setAbbreviatePackageNames(abbreviatePackageNames, PackageViewPane.ID);
     projectView.setHideEmptyPackages(true, PackageViewPane.ID);
 
     PackageViewPane packageViewPane = new PackageViewPane(myProject);
@@ -213,7 +220,7 @@ public class PackagesTreeStructureTest extends TestSourceBasedTestCase {
     packageViewPane.updateFromRoot(true);
     JTree tree = packageViewPane.getTree();
     TreeUtil.expand(tree, levels);
-    IdeaTestUtil.assertTreeEqual(tree, expected);
+    PlatformTestUtil.assertTreeEqual(tree, expected);
     BaseProjectViewTestCase.checkContainsMethod(packageViewPane.getTreeStructure().getRootElement(), packageViewPane.getTreeStructure());
     Disposer.dispose(packageViewPane);
   }

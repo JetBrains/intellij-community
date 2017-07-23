@@ -1,5 +1,5 @@
 class Test {
-    @NotNull
+    @NotNull()
     public String toString() {
         return null;
     }

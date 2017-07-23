@@ -101,11 +101,8 @@ public class InstallPluginAction extends AnAction implements DumbAware {
           pluginNode = (PluginNode)descr;
         }
         else if (descr instanceof IdeaPluginDescriptorImpl) {
-          PluginId pluginId = descr.getPluginId();
-          pluginNode = new PluginNode(pluginId);
-          pluginNode.setName(descr.getName());
+          pluginNode = new PluginNode(descr.getPluginId(), descr.getName(), "-1");
           pluginNode.setDepends(Arrays.asList(descr.getDependentPluginIds()), descr.getOptionalDependentPluginIds());
-          pluginNode.setSize("-1");
           pluginNode.setRepositoryName(PluginInstaller.UNKNOWN_HOST_MARKER);
         }
 
@@ -156,7 +153,7 @@ public class InstallPluginAction extends AnAction implements DumbAware {
           }
         };
         final List<IdeaPluginDescriptor> plugins = myHost.getPluginsModel().getAllPlugins();
-        PluginManagerMain.downloadPlugins(list, PluginManagerMain.mapToPluginIds(plugins), onInstallRunnable, pluginEnabler, cleanupRunnable);
+        PluginManagerMain.downloadPlugins(list, plugins, onInstallRunnable, pluginEnabler, cleanupRunnable);
       }
       catch (final IOException e1) {
         ourInstallingNodes.removeAll(list);

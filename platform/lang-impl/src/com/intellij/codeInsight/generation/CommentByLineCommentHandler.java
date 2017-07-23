@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.generation;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.CommentUtil;
 import com.intellij.codeInsight.actions.MultiCaretCodeInsightActionHandler;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -66,7 +65,6 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
   // first pass - adjacent carets are grouped into blocks
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull Caret caret, @NotNull PsiFile file) {
     myProject = project;
-    if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
     file = file.getViewProvider().getPsi(file.getViewProvider().getBaseLanguage());
 
     PsiElement context = InjectedLanguageManager.getInstance(file.getProject()).getInjectionHost(file);
@@ -94,18 +92,20 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
     if (document.getTextLength() == 0) return;
 
     while (true) {
-      int lastLineEnd = document.getLineEndOffset(document.getLineNumber(endOffset));
+      int firstLineStart = DocumentUtil.getLineStartOffset(startOffset, document);
+      FoldRegion collapsedAt = editor.getFoldingModel().getCollapsedRegionAtOffset(firstLineStart - 1);
+      if (collapsedAt == null) break;
+      int regionStartOffset = collapsedAt.getStartOffset();
+      if (regionStartOffset >= startOffset) break;
+      startOffset = regionStartOffset;
+    }
+    while (true) {
+      int lastLineEnd = DocumentUtil.getLineEndOffset(endOffset, document);
       FoldRegion collapsedAt = editor.getFoldingModel().getCollapsedRegionAtOffset(lastLineEnd);
-      if (collapsedAt != null) {
-        final int regionEndOffset = collapsedAt.getEndOffset();
-        if (regionEndOffset <= endOffset) {
-          break;
-        }
-        endOffset = regionEndOffset;
-      }
-      else {
-        break;
-      }
+      if (collapsedAt == null) break;
+      int regionEndOffset = collapsedAt.getEndOffset();
+      if (regionEndOffset <= endOffset) break;
+      endOffset = regionEndOffset;
     }
 
     int startLine = document.getLineNumber(startOffset);
@@ -494,6 +494,10 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
     if (commenter == null) return;
 
     final int startOffset = block.startOffsets[line - block.startLine];
+    final int endOffset = block.endOffsets[line - block.startLine];
+    if (startOffset == endOffset) {
+      return;
+    }
 
     if (commenter instanceof SelfManagingCommenter) {
       final SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
@@ -501,10 +505,6 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
       return;
     }
 
-    final int endOffset = block.endOffsets[line - block.startLine];
-    if (startOffset == endOffset) {
-      return;
-    }
     RangeMarker marker = endOffset > startOffset ? block.editor.getDocument().createRangeMarker(startOffset, endOffset) : null;
     try {
       if (doUncommentLine(line, document, commenter, startOffset, endOffset, removeSpace)) return;
