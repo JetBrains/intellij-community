@@ -19,7 +19,6 @@ package com.intellij.psi.util;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +48,7 @@ public class PsiClassUtil {
   }
 
   @NotNull
-  public static Comparator<? super PsiElement> createScopeComparator(@NotNull final GlobalSearchScope scope) {
+  public static Comparator<PsiClass> createScopeComparator(@NotNull final GlobalSearchScope scope) {
     return (c1, c2) -> {
       VirtualFile file1 = PsiUtilCore.getVirtualFile(c1);
       VirtualFile file2 = PsiUtilCore.getVirtualFile(c2);

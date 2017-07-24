@@ -16,6 +16,7 @@
 package com.intellij.lang.jvm.facade;
 
 import com.intellij.lang.jvm.JvmClass;
+import com.intellij.lang.jvm.util.JvmClassUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -33,7 +34,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.psi.util.PsiClassUtil.createScopeComparator;
 import static com.intellij.util.containers.ContainerUtil.createConcurrentWeakKeySoftValueMap;
 
 public class JvmFacadeImpl implements JvmFacade {
@@ -106,7 +106,7 @@ public class JvmFacadeImpl implements JvmFacade {
   @NotNull
   private static List<JvmClass> sortByScope(@NotNull List<JvmClass> classes, @NotNull GlobalSearchScope scope) {
     if (classes.size() == 1) return classes;
-    classes.sort(createScopeComparator(scope));
+    classes.sort(JvmClassUtil.createScopeComparator(scope));
     return classes;
   }
 
