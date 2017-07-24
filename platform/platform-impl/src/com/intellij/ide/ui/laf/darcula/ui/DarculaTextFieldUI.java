@@ -117,6 +117,8 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
     final int width = c.getWidth();
     final int height = c.getHeight();
     final Insets i = border.getBorderInsets(c);
+    IconHolder expand = icons.get("expand");
+    if (expand != null) i.right -= expand.bounds.width + getExpandIconPreferredSpace();
     if (c.hasFocus()) {
       g.fillRoundRect(i.left - JBUI.scale(5), i.top - JBUI.scale(2), width - i.right - i.left + JBUI.scale(10), height - i.top - i.bottom + JBUI.scale(6), JBUI.scale(5), JBUI.scale(5));
     } else {
