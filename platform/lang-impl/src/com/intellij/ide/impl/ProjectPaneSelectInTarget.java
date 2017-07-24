@@ -21,11 +21,6 @@ import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFileSystemItem;
 
 public class ProjectPaneSelectInTarget extends ProjectViewSelectInTarget implements DumbAware {
   public ProjectPaneSelectInTarget(Project project) {
@@ -38,30 +33,8 @@ public class ProjectPaneSelectInTarget extends ProjectViewSelectInTarget impleme
   }
 
   @Override
-  public boolean canSelect(PsiFileSystemItem file) {
-    return super.canSelect(file) && canSelect(file.getVirtualFile());
-  }
-
-  @Override
   public boolean isSubIdSelectable(String subId, SelectInContext context) {
     return canSelect(context);
-  }
-
-  private boolean canSelect(VirtualFile vFile) {
-    if (vFile != null && vFile.isValid()) {
-      ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
-      if (index.getContentRootForFile(vFile, false) != null) {
-        return true;
-      }
-
-      if (index.isInLibraryClasses(vFile) || index.isInLibrarySource(vFile)) {
-        return true;
-      }
-
-      return Comparing.equal(vFile.getParent(), myProject.getBaseDir());
-    }
-
-    return false;
   }
 
   @Override
