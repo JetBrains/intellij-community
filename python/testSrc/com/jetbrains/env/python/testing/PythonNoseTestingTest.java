@@ -119,8 +119,8 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
   @Test
   public void testTestsInSubFolderResolvable() throws Exception {
     runPythonTest(
-      new PyUnitTestProcessWithConsoleTestTask.PyTestsInSubFolderRunner<PyNoseTestProcessRunner>("test_metheggs", "test_funeggs",
-                                                                                                 "test_first") {
+      new PyTestsInSubFolderRunner<PyNoseTestProcessRunner>("test_metheggs", "test_funeggs",
+                                                            "test_first") {
         @NotNull
         @Override
         protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
@@ -141,7 +141,7 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
   @Test
   public void testOutput() throws Exception {
     runPythonTest(
-      new PyUnitTestProcessWithConsoleTestTask.PyTestsOutputRunner<PyNoseTestProcessRunner>("test_metheggs", "test_funeggs", "test_first") {
+      new PyTestsOutputRunner<PyNoseTestProcessRunner>("test_metheggs", "test_funeggs", "test_first") {
         @NotNull
         @Override
         protected PyNoseTestProcessRunner createProcessRunner() throws Exception {

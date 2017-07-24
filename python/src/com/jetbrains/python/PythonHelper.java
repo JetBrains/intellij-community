@@ -60,6 +60,7 @@ public enum PythonHelper implements HelperPackage {
 
   UNITTEST("pycharm", "_jb_unittest_runner"),
   PYTEST("pycharm", "_jb_pytest_runner"),
+  TRIAL("pycharm", "_jb_trialtest_runner"),
   NOSE("pycharm", "_jb_nosetest_runner"),
 
   BEHAVE("pycharm", "behave_runner"),

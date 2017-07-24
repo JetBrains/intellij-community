@@ -38,8 +38,9 @@ public class PyTestFrameworkService implements PersistentStateComponent<PyTestFr
 
   public Map<String, Boolean> SDK_TO_PYTEST = new HashMap<>();
   public Map<String, Boolean> SDK_TO_NOSETEST = new HashMap<>();
+  public Map<String, Boolean> SDK_TO_TRIALTEST = new HashMap<>();
 
-  private static final String[] FRAMEWORK_NAMES = {PyNames.PY_TEST, PyNames.NOSE_TEST};
+  private static final String[] FRAMEWORK_NAMES = {PyNames.PY_TEST, PyNames.NOSE_TEST, PyNames.TRIAL_TEST};
 
   @Override
   public PyTestFrameworkService getState() {
@@ -62,6 +63,17 @@ public class PyTestFrameworkService implements PersistentStateComponent<PyTestFr
     return FRAMEWORK_NAMES.clone();
   }
 
+  /**
+   * @return pypi package that contains this framework
+   */
+  @NotNull
+  public static String getPackageByFramework(@NotNull final String frameworkName) {
+    if (frameworkName.equals(PyNames.TRIAL_TEST)) {
+      return "Twisted";
+    }
+    return frameworkName;
+  }
+
   @NotNull
   public static String getSdkReadableNameByFramework(@NotNull final String frameworkName) {
     switch (frameworkName) {
@@ -70,6 +82,9 @@ public class PyTestFrameworkService implements PersistentStateComponent<PyTestFr
       }
       case PyNames.NOSE_TEST: {
         return PyBundle.message("runcfg.nosetests.display_name");
+      }
+      case PyNames.TRIAL_TEST: {
+        return PyBundle.message("runcfg.trial.display_name");
       }
     }
     throw new IllegalArgumentException("Unknown framework " + frameworkName);
@@ -83,6 +98,9 @@ public class PyTestFrameworkService implements PersistentStateComponent<PyTestFr
       }
       case PyNames.NOSE_TEST: {
         return SDK_TO_NOSETEST;
+      }
+      case PyNames.TRIAL_TEST: {
+        return SDK_TO_TRIALTEST;
       }
     }
     throw new IllegalArgumentException("Unknown framework " + frameworkName);

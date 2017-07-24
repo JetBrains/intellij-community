@@ -76,7 +76,8 @@ import com.jetbrains.reflection.getProperties
 val factories: Array<PythonConfigurationFactoryBase> = arrayOf(
   PyUnitTestFactory,
   PyTestFactory,
-  PyNoseTestFactory)
+  PyNoseTestFactory,
+  PyTrialTestFactory)
 
 internal fun getAdditionalArgumentsPropertyName() = com.jetbrains.python.testing.PyAbstractTestConfiguration::additionalArguments.name
 

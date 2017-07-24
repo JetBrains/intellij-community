@@ -210,6 +210,7 @@ public class PyNames {
 
   public static final String NOSE_TEST = "nose";
   public static final String PY_TEST = "pytest";
+  public static final String TRIAL_TEST = "trial";
 
   public static final String TEST_CASE = "TestCase";
 
