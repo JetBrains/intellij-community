@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,15 @@ import org.jetbrains.annotations.Nullable;
 public class GuavaTypeConversionDescriptor extends TypeConversionDescriptor {
   private static final Logger LOG = Logger.getInstance(GuavaTypeConversionDescriptor.class);
   private final String myReplaceByStringSource;
+  private final boolean myIterable;
   private boolean myConvertParameterAsLambda = true;
 
-  GuavaTypeConversionDescriptor(@NonNls String stringToReplace, @NonNls String replaceByString) {
+  GuavaTypeConversionDescriptor(@NonNls String stringToReplace,
+                                @NonNls String replaceByString,
+                                @NotNull PsiExpression expression) {
     super(stringToReplace, replaceByString);
     myReplaceByStringSource = replaceByString;
+    myIterable = isIterable(expression);
   }
 
   public GuavaTypeConversionDescriptor setConvertParameterAsLambda(boolean convertParameterAsLambda) {
@@ -46,7 +50,7 @@ public class GuavaTypeConversionDescriptor extends TypeConversionDescriptor {
 
   @Override
   public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
-    setReplaceByString(myReplaceByStringSource + (isIterable(expression) ? ".collect(java.util.stream.Collectors.toList())" : ""));
+    setReplaceByString(myReplaceByStringSource + (myIterable ? ".collect(java.util.stream.Collectors.toList())" : ""));
     if (myConvertParameterAsLambda) {
       LOG.assertTrue(expression instanceof PsiMethodCallExpression);
       final PsiExpression[] arguments = ((PsiMethodCallExpression)expression).getArgumentList().getExpressions();
@@ -81,6 +85,9 @@ public class GuavaTypeConversionDescriptor extends TypeConversionDescriptor {
           }
         }
       }
+    }
+    else if (parent instanceof PsiMethodCallExpression) {
+      return isIterable((PsiExpression)parent);
     }
     return false;
   }

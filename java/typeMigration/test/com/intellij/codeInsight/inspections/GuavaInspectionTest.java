@@ -178,6 +178,10 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testConvertFluentIterableAsIterableParameter2() {
+    doTest();
+  }
+
   public void testConvertFunctionAsParameter() {
     doTest();
   }
