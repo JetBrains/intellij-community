@@ -30,7 +30,6 @@ import com.intellij.internal.statistic.persistence.SentUsagesPersistence;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Time;
@@ -43,7 +42,6 @@ import java.util.Map;
 import java.util.Set;
 
 public class StatisticsUploadAssistant {
-  public static final ExtensionPointName<UsagesCollector> EP_NAME = ExtensionPointName.create("com.intellij.statistics.usagesCollector");
   private static final Logger LOG = Logger.getInstance(UsagesCollector.class);
   public static final Object LOCK = new Object();
 
@@ -124,7 +122,7 @@ public class StatisticsUploadAssistant {
   public static Map<GroupDescriptor, Set<UsageDescriptor>> getAllUsages(@NotNull Set<String> disabledGroups) {
     synchronized (LOCK) {
       Map<GroupDescriptor, Set<UsageDescriptor>> usageDescriptors = new LinkedHashMap<>();
-      for (UsagesCollector usagesCollector : EP_NAME.getExtensions()) {
+      for (UsagesCollector usagesCollector : UsagesCollector.EP_NAME.getExtensions()) {
         GroupDescriptor groupDescriptor = usagesCollector.getGroupId();
         if (!disabledGroups.contains(groupDescriptor.getId())) {
           try {

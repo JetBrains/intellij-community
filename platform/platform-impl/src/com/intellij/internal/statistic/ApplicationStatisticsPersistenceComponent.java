@@ -205,7 +205,7 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
           return;
         }
 
-        for (UsagesCollector usagesCollector : StatisticsUploadAssistant.EP_NAME.getExtensions()) {
+        for (UsagesCollector usagesCollector : UsagesCollector.EP_NAME.getExtensions()) {
           if (usagesCollector instanceof AbstractProjectsUsagesCollector) {
             ((AbstractProjectsUsagesCollector)usagesCollector).persistProjectUsages(project);
           }
