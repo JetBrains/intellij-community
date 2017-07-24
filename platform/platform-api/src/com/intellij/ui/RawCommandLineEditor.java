@@ -84,10 +84,6 @@ public class RawCommandLineEditor extends JPanel implements TextAccessor {
 
   public void setDialogCaption(String dialogCaption) {
     myDialogCaption = dialogCaption != null ? dialogCaption : "";
-    if (myEditor instanceof ExpandableTextField) {
-      ExpandableTextField expandable = (ExpandableTextField)myEditor;
-      expandable.setTitle(myDialogCaption);
-    }
   }
 
   @Override
