@@ -2,6 +2,7 @@ package com.jetbrains.python.edu;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.util.ui.JBUI;
 import icons.PythonEducationalIcons;
 
 import javax.swing.*;
@@ -17,7 +18,7 @@ public class CustomizeEduStepPanel extends JPanel {
     final FlowLayout layout = new FlowLayout();
     layout.setHgap(20);
     setLayout(layout);
-    int iconSize = 180;
+    int iconSize = JBUI.scale(180);
     final JPanel studentPanel = new JPanel(new VerticalFlowLayout());
     final JLabel teacher = new JLabel(PythonEducationalIcons.Teacher);
     myStudent = new JLabel(PythonEducationalIcons.StudentHover);
