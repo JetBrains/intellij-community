@@ -173,6 +173,8 @@ public interface IdeActions {
   @NonNls String ACTION_SHOW_DIFF_COMMON = "Diff.ShowDiff";
   @NonNls String ACTION_PREVIOUS_DIFF = "PreviousDiff";
   @NonNls String ACTION_NEXT_DIFF = "NextDiff";
+  @NonNls String ACTION_PREVIOUS_CONFLICT = "Diff.PreviousConflict";
+  @NonNls String ACTION_NEXT_CONFLICT = "Diff.NextConflict";
   @NonNls String GROUP_DIFF_EDITOR_POPUP = "Diff.EditorPopupMenu";
   @NonNls String DIFF_VIEWER_POPUP = "Diff.ViewerPopupMenu";
   @NonNls String DIFF_VIEWER_TOOLBAR = "Diff.ViewerToolbar";

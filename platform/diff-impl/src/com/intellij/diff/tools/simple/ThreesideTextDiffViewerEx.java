@@ -16,6 +16,8 @@
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.DiffContext;
+import com.intellij.diff.actions.impl.NextConflictAction;
+import com.intellij.diff.actions.impl.PrevConflictAction;
 import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.tools.util.*;
@@ -25,12 +27,10 @@ import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffDividerDrawUtil.DividerPaintable;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -41,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -71,8 +72,8 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     myStatusPanel = new MyStatusPanel();
     myFoldingModel = new MyFoldingModel(toObjectArray(getEditors(), EditorEx.class), this);
 
-    DiffUtil.registerAction(new PrevConflictAction(), myPanel);
-    DiffUtil.registerAction(new NextConflictAction(), myPanel);
+    DiffUtil.registerAction(ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_CONFLICT), myPanel);
+    DiffUtil.registerAction(ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_CONFLICT), myPanel);
   }
 
   @Override
@@ -104,6 +105,24 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     super.updateContextHints();
     myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
     myInitialScrollHelper.updateContext(myRequest);
+  }
+
+  @NotNull
+  @Override
+  protected List<AnAction> createEditorPopupActions() {
+    List<AnAction> group = new ArrayList<>();
+
+    DefaultActionGroup navigateGroup = new DefaultActionGroup("Navigate", true);
+    navigateGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_DIFF));
+    navigateGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_DIFF));
+    navigateGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_CONFLICT));
+    navigateGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_CONFLICT));
+    group.add(navigateGroup);
+
+    group.add(Separator.getInstance());
+    group.addAll(super.createEditorPopupActions());
+
+    return group;
   }
 
   //
@@ -260,9 +279,20 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   // Actions
   //
 
-  private class PrevConflictAction extends DumbAwareAction {
-    public PrevConflictAction() {
-      ActionUtil.copyFrom(this, "Diff.PreviousConflict");
+  private class MyPrevConflictAction implements AnActionExtensionProvider {
+    @Override
+    public boolean isActive(@NotNull AnActionEvent e) {
+      return true;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      if (!e.isFromActionToolbar() && !e.isFromContextMenu()) {
+        e.getPresentation().setEnabled(true);
+      }
+      else {
+        e.getPresentation().setEnabled(myPrevNextConflictIterable.canGoPrev());
+      }
     }
 
     @Override
@@ -272,9 +302,20 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     }
   }
 
-  private class NextConflictAction extends DumbAwareAction {
-    public NextConflictAction() {
-      ActionUtil.copyFrom(this, "Diff.NextConflict");
+  private class MyNextConflictAction implements AnActionExtensionProvider {
+    @Override
+    public boolean isActive(@NotNull AnActionEvent e) {
+      return true;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      if (!e.isFromActionToolbar() && !e.isFromContextMenu()) {
+        e.getPresentation().setEnabled(true);
+      }
+      else {
+        e.getPresentation().setEnabled(myPrevNextConflictIterable.canGoNext());
+      }
     }
 
     @Override
@@ -352,6 +393,14 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
         return new LineRange(change.getStartLine(getCurrentSide()), change.getEndLine(getCurrentSide()));
       }
     }
+
+    if (PrevConflictAction.DATA_KEY.is(dataId)) {
+      return new MyPrevConflictAction();
+    }
+    else if (NextConflictAction.DATA_KEY.is(dataId)) {
+      return new MyNextConflictAction();
+    }
+
     return super.getData(dataId);
   }
 

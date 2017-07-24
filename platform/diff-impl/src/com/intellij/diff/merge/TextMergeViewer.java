@@ -34,7 +34,6 @@ import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.tools.util.KeyboardModifierListener;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
-import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.text.LineOffsets;
 import com.intellij.diff.tools.util.text.LineOffsetsUtil;
 import com.intellij.diff.tools.util.text.MergeInnerDifferences;
@@ -277,7 +276,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       group.add(new IgnoreSelectedChangesAction());
 
       group.add(Separator.getInstance());
-      group.addAll(TextDiffViewerUtil.createEditorPopupActions());
+      group.addAll(super.createEditorPopupActions());
 
       return group;
     }
