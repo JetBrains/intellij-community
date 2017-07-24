@@ -31,6 +31,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Arrays;
@@ -89,10 +90,10 @@ public final class ExpandableTextField extends JTextField implements Expandable 
 
     JTextArea area = new JTextArea(parser.fun(getText()));
     area.setFont(font);
-    area.setCaretPosition(0);
     area.setWrapStyleWord(true);
     area.setLineWrap(true);
     area.putClientProperty(Expandable.class, this);
+    copyCaretPosition(this, area);
     UIUtil.addUndoRedoActions(area);
 
     JBScrollPane pane = new JBScrollPane(area);
@@ -143,7 +144,7 @@ public final class ExpandableTextField extends JTextField implements Expandable 
       .setCancelCallback(() -> {
         try {
           setText(joiner.fun(area.getText()));
-          setCaretPosition(0);
+          copyCaretPosition(area, this);
           UIUtil.resetUndoRedoActions(this);
           popup = null;
           return true;
@@ -153,5 +154,14 @@ public final class ExpandableTextField extends JTextField implements Expandable 
         }
       }).createPopup();
     popup.show(new RelativePoint(this, new Point(0, 0)));
+  }
+
+  private static void copyCaretPosition(JTextComponent source, JTextComponent destination) {
+    try {
+      destination.setCaretPosition(source.getCaretPosition());
+    }
+    catch (Exception ignored) {
+      System.out.println("ignored = " + ignored);
+    }
   }
 }
