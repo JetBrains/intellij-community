@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.internal.statistic
+package com.intellij.internal.statistic.utils
 
 import com.intellij.internal.statistic.beans.UsageDescriptor
+import com.intellij.util.containers.ObjectIntHashMap
+import gnu.trove.THashSet
 
 /**
  * Constructs a proper UsageDescriptor for a boolean value,
@@ -83,4 +85,40 @@ private fun humanize(number: Int): String {
   val ks = if (k > 0) "${k}K" else ""
   val rs = if (r > 0) "${r}" else ""
   return ms + ks + rs
+}
+
+fun toUsageDescriptors(result: ObjectIntHashMap<String>): Set<UsageDescriptor> {
+  if (result.isEmpty) {
+    return emptySet()
+  }
+  else {
+    val descriptors = THashSet<UsageDescriptor>(result.size())
+    result.forEachEntry { key, value ->
+      descriptors.add(UsageDescriptor(key, value))
+      true
+    }
+    return descriptors
+  }
+}
+
+fun merge(first: Set<UsageDescriptor>, second: Set<UsageDescriptor>): Set<UsageDescriptor> {
+  if (first.isEmpty()) {
+    return second
+  }
+
+  if (second.isEmpty()) {
+    return first
+  }
+
+  val merged = ObjectIntHashMap<String>()
+  addAll(merged, first)
+  addAll(merged, second)
+  return toUsageDescriptors(merged)
+}
+
+private fun addAll(result: ObjectIntHashMap<String>, usages: Set<UsageDescriptor>) {
+  for (usage in usages) {
+    val key = usage.key
+    result.put(key, result.get(key, 0) + usage.value)
+  }
 }

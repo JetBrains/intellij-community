@@ -17,23 +17,38 @@ package com.intellij.internal.statistic;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.persistence.ApplicationStatisticsPersistence;
-import com.intellij.internal.statistic.persistence.ApplicationStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.persistence.CollectedUsages;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ObjectIntHashMap;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.Set;
 
-public abstract class AbstractApplicationUsagesCollector extends UsagesCollector {
-  private static final Logger LOG = Logger.getInstance(AbstractApplicationUsagesCollector.class);
+// Collects(summarizes) project-level usages.
+// Statistics is regularly sent  with some period of time (see com.intellij.internal.statistic.configurable.SendPeriod).
+// In this period the user can open/close N projects which are not available at the "special send statistics" time.
+// AbstractProjectsUsagesCollector persists the statistics data from opened/closed projects
+// and summarizes collected results when data are requested.
+//
+// Example for groupId="my-team-lead-wants-something":
+// 1. project A:  key_1= a1, key_2=b1, key_3=c1  // this project was opened and closed (not available just now)
+// 2. project B:  key_1= a2, key_2=b2            // this project was opened and closed (not available just now)
+// 3. project C:  key_1= a3, key_4=c3            // this project is open just now
+// if "send statistics" action is invoked this UsageCollector returns :
+// groupId="my-team-lead-wants-something":  key_1=(a1+a2+a3), key_2=(b1+b2), key_3=c1, key_4=c3
+//
+public abstract class AbstractProjectsUsagesCollector extends UsagesCollector {
 
-  public void persistProjectUsages(@NotNull Project project) {
+  @NotNull
+  public abstract Set<UsageDescriptor> getProjectUsages(@NotNull Project project) throws CollectUsagesException;
+
+  private static final Logger LOG = Logger.getInstance(AbstractProjectsUsagesCollector.class);
+
+  // Achtung!!! don't invoke this method directly even you can.
+  void persistProjectUsages(@NotNull Project project) {
     try {
       persistProjectUsages(project, new CollectedUsages(getProjectUsages(project), System.currentTimeMillis()));
     }
@@ -42,23 +57,32 @@ public abstract class AbstractApplicationUsagesCollector extends UsagesCollector
     }
   }
 
-  public void persistProjectUsages(@NotNull Project project, @NotNull CollectedUsages usages) {
+  private void persistProjectUsages(@NotNull Project project, @NotNull CollectedUsages usages) {
     persistProjectUsages(project, usages, ApplicationStatisticsPersistenceComponent.getInstance());
   }
 
-  public void persistProjectUsages(@NotNull Project project,
+  private void persistProjectUsages(@NotNull Project project,
                                    @NotNull CollectedUsages usages,
                                    @NotNull ApplicationStatisticsPersistence persistence) {
     persistence.persistUsages(getGroupId(), project, usages);
   }
 
   @NotNull
-  public Set<UsageDescriptor> getApplicationUsages() {
-    return getApplicationUsages(ApplicationStatisticsPersistenceComponent.getInstance());
+  private Set<UsageDescriptor> getApplicationUsages() {
+    return mergeUsagesPostProcess(getApplicationUsages(ApplicationStatisticsPersistenceComponent.getInstance()));
   }
 
   @NotNull
-  public Set<UsageDescriptor> getApplicationUsages(@NotNull ApplicationStatisticsPersistence persistence) {
+  @Deprecated
+  // this method should be overridden only in exceptional cases.
+  // you have summarized usages from all opened/closed projects here.
+  // do you want to add/merge something? Don't do it!!!
+  protected Set<UsageDescriptor> mergeUsagesPostProcess(@NotNull Set<UsageDescriptor> usagesFromAllProjects) {
+    return usagesFromAllProjects;
+  }
+
+  @NotNull
+  private Set<UsageDescriptor> getApplicationUsages(@NotNull ApplicationStatisticsPersistence persistence) {
     ObjectIntHashMap<String> result = new ObjectIntHashMap<>();
     long lastTimeSent = UsageStatisticsPersistenceComponent.getInstance().getLastTimeSent();
     for (CollectedUsages usageDescriptors : persistence.getApplicationData(getGroupId()).values()) {
@@ -70,56 +94,12 @@ public abstract class AbstractApplicationUsagesCollector extends UsagesCollector
         }
       }
     }
-    return toUsageDescriptors(result);
-  }
-
-  @NotNull
-  private static Set<UsageDescriptor> toUsageDescriptors(@NotNull ObjectIntHashMap<String> result) {
-    if (result.isEmpty()){
-      return Collections.emptySet();
-    }
-    else {
-      final THashSet<UsageDescriptor> descriptors = new THashSet<>(result.size());
-      result.forEachEntry(new TObjectIntProcedure<String>() {
-        @Override
-        public boolean execute(String key, int value) {
-          descriptors.add(new UsageDescriptor(key, value));
-          return true;
-        }
-      });
-      return descriptors;
-    }
-  }
-
-  @NotNull
-  public static Set<UsageDescriptor> merge(@NotNull Set<UsageDescriptor> first, @NotNull Set<UsageDescriptor> second) {
-    if (first.isEmpty()) {
-      return second;
-    }
-
-    if (second.isEmpty()) {
-      return first;
-    }
-
-    final ObjectIntHashMap<String> merged = new ObjectIntHashMap<>();
-    addAll(merged, first);
-    addAll(merged, second);
-    return toUsageDescriptors(merged);
-  }
-
-  private static void addAll(@NotNull ObjectIntHashMap<String> result, @NotNull Set<UsageDescriptor> usages) {
-    for (UsageDescriptor usage : usages) {
-      final String key = usage.getKey();
-      result.put(key, result.get(key, 0) + usage.getValue());
-    }
+    return StatisticsUtilKt.toUsageDescriptors(result);
   }
 
   @Override
   @NotNull
-  public Set<UsageDescriptor> getUsages() throws CollectUsagesException {
+  public final Set<UsageDescriptor> getUsages() throws CollectUsagesException {
     return getApplicationUsages();
   }
-
-  @NotNull
-  public abstract Set<UsageDescriptor> getProjectUsages(@NotNull Project project) throws CollectUsagesException;
 }

@@ -43,7 +43,7 @@
       <implementation-class>com.intellij.ide.MacOSApplicationProvider</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.internal.statistic.ActionsCollector</implementation-class>
+      <implementation-class>com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollector</implementation-class>
     </component>
 
     <component>

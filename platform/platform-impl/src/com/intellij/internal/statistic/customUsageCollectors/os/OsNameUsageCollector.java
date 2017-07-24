@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,43 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.internal.statistic;
+package com.intellij.internal.statistic.customUsageCollectors.os;
 
+import com.intellij.internal.statistic.CollectUsagesException;
+import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
-import com.intellij.util.ui.JBUI;
-import org.jdesktop.swingx.util.OS;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.Set;
 
 /**
- * @author tav
+ * @author peter
  */
-public class ScaleInfoUsageCollector extends UsagesCollector {
+class OsNameUsageCollector extends UsagesCollector {
   @NotNull
   @Override
   public Set<UsageDescriptor> getUsages() throws CollectUsagesException {
-    float scale = JBUI.sysScale();
-
-    int scaleBase = (int)Math.floor(scale);
-    float scaleFract = scale - scaleBase;
-
-    if (scaleFract == 0.0f) scaleFract = 0.0f; // count integer scale on a precise match only
-    else if (scaleFract < 0.375f) scaleFract = 0.25f;
-    else if (scaleFract < 0.625f) scaleFract = 0.5f;
-    else scaleFract = 0.75f;
-
-    scale = scaleBase + scaleFract;
-
-    String os = OS.isWindows() ? "Windows" : OS.isLinux() ? "Linux" : OS.isMacOSX() ? "Mac" : "Unknown OS";
-    return Collections.singleton(new UsageDescriptor(os + " " + scale, 1));
+    String osName = SystemInfo.isLinux ? "Linux" : SystemInfo.isMac ? "Mac OS X" : SystemInfo.isWindows ? "Windows" : SystemInfo.OS_NAME;
+    return Collections.singleton(new UsageDescriptor(osName, 1));
   }
 
   @NotNull
   @Override
   public GroupDescriptor getGroupId() {
-    return GroupDescriptor.create("user.ui.screen.scale");
+    return GroupDescriptor.create("user.os.name");
   }
 }

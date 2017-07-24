@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.internal.statistic;
+package com.intellij.internal.statistic.customUsageCollectors.jdk;
 
+import com.intellij.internal.statistic.CollectUsagesException;
+import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.util.SystemInfo;
@@ -24,19 +26,24 @@ import java.util.Collections;
 import java.util.Set;
 
 /**
- * @author peter
+ * @author Konstantin Bulenkov
  */
-class OsNameUsageCollector extends UsagesCollector {
+class JdkInfoUsageCollector extends UsagesCollector {
   @NotNull
   @Override
   public Set<UsageDescriptor> getUsages() throws CollectUsagesException {
-    String osName = SystemInfo.isLinux ? "Linux" : SystemInfo.isMac ? "Mac OS X" : SystemInfo.isWindows ? "Windows" : SystemInfo.OS_NAME;
-    return Collections.singleton(new UsageDescriptor(osName, 1));
+    final String vendor = System.getProperty("java.vendor", "Unknown");
+    for (String version : new String[]{"1.9", "1.8", "1.7", "1.6"}) {
+      if (SystemInfo.isJavaVersionAtLeast(version)) {
+        return Collections.singleton(new UsageDescriptor(vendor + " " + version, 1));
+      }
+    }
+    return Collections.emptySet();
   }
 
   @NotNull
   @Override
   public GroupDescriptor getGroupId() {
-    return GroupDescriptor.create("user.os.name");
+    return GroupDescriptor.create("user.jdk");
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.internal.statistic;
+package com.intellij.internal.statistic.utils;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
+import com.intellij.internal.statistic.CollectUsagesException;
+import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
@@ -27,16 +29,24 @@ import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.persistence.SentUsagesPersistence;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Time;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
 public class StatisticsUploadAssistant {
+  public static final ExtensionPointName<UsagesCollector> EP_NAME = ExtensionPointName.create("com.intellij.statistics.usagesCollector");
+  private static final Logger LOG = Logger.getInstance(UsagesCollector.class);
+  public static final Object LOCK = new Object();
+
   public String getData() {
     return getData(Collections.emptySet());
   }
@@ -80,7 +90,7 @@ public class StatisticsUploadAssistant {
   @NotNull
   public static String getDataString(@NotNull Set<String> disabledGroups,
                                      int maxSize) {
-    return getDataString(UsagesCollector.getAllUsages(disabledGroups), maxSize);
+    return getDataString(getAllUsages(disabledGroups), maxSize);
   }
 
   public static <T extends UsageDescriptor> String getDataString(@NotNull Map<GroupDescriptor, Set<T>> usages, int maxSize) {
@@ -108,5 +118,24 @@ public class StatisticsUploadAssistant {
     return new RemotelyConfigurableStatisticsService(new StatisticsConnectionService(),
                                                      new StatisticsHttpClientSender(),
                                                      new StatisticsUploadAssistant());
+  }
+
+  @NotNull
+  public static Map<GroupDescriptor, Set<UsageDescriptor>> getAllUsages(@NotNull Set<String> disabledGroups) {
+    synchronized (LOCK) {
+      Map<GroupDescriptor, Set<UsageDescriptor>> usageDescriptors = new LinkedHashMap<>();
+      for (UsagesCollector usagesCollector : EP_NAME.getExtensions()) {
+        GroupDescriptor groupDescriptor = usagesCollector.getGroupId();
+        if (!disabledGroups.contains(groupDescriptor.getId())) {
+          try {
+            usageDescriptors.merge(groupDescriptor, usagesCollector.getUsages(), ContainerUtil::union);
+          }
+          catch (CollectUsagesException e) {
+            LOG.info(e);
+          }
+        }
+      }
+      return usageDescriptors;
+    }
   }
 }

@@ -16,7 +16,7 @@
 package com.intellij.internal.statistic.libraryJar;
 
 import com.intellij.facet.frameworks.SettingsConnectionService;
-import com.intellij.internal.statistic.StatisticsUploadAssistant;
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;

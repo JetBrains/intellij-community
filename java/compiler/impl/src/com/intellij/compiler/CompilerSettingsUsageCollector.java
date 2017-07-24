@@ -15,7 +15,7 @@
  */
 package com.intellij.compiler;
 
-import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
+import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
 import com.intellij.internal.statistic.CollectUsagesException;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
@@ -30,7 +30,7 @@ import java.util.Set;
  * @author Eugene Zhuravlev
  *         Date: 4/11/13
  */
-public class CompilerSettingsUsageCollector extends AbstractApplicationUsagesCollector{
+public class CompilerSettingsUsageCollector extends AbstractProjectsUsagesCollector {
   public static final String GROUP_ID = "compiler";
 
   @NotNull

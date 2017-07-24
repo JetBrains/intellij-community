@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.internal.statistic.persistence;
+package com.intellij.internal.statistic;
 
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.persistence.ApplicationStatisticsPersistence;
+import com.intellij.internal.statistic.persistence.CollectedUsages;
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -167,7 +170,7 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
       @Override
       public void projectOpened(Project project) {
         ScheduledFuture<?> future =
-          JobScheduler.getScheduler().schedule(() -> UsagesCollector.doPersistProjectUsages(project), DELAY_IN_MIN, TimeUnit.MINUTES);
+          JobScheduler.getScheduler().schedule(() -> doPersistProjectUsages(project), DELAY_IN_MIN, TimeUnit.MINUTES);
         persistProjectStatisticsTasks.put(project, future);
       }
 
@@ -191,7 +194,23 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
    */
   public static void persistOpenedProjects() {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      UsagesCollector.doPersistProjectUsages(project);
+      doPersistProjectUsages(project);
+    }
+  }
+
+  public static void doPersistProjectUsages(@NotNull Project project) {
+    if (StatisticsUploadAssistant.isSendAllowed()) {
+      synchronized (StatisticsUploadAssistant.LOCK) {
+        if (!project.isInitialized() || DumbService.isDumb(project)) {
+          return;
+        }
+
+        for (UsagesCollector usagesCollector : StatisticsUploadAssistant.EP_NAME.getExtensions()) {
+          if (usagesCollector instanceof AbstractProjectsUsagesCollector) {
+            ((AbstractProjectsUsagesCollector)usagesCollector).persistProjectUsages(project);
+          }
+        }
+      }
     }
   }
 }

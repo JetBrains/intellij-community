@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.internal.statistic.ideSettings;
+package com.intellij.internal.statistic.customUsageCollectors.ideSettings;
 
 import com.intellij.util.containers.HashSet;
 

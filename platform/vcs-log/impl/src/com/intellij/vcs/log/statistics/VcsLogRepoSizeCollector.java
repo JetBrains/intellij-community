@@ -15,11 +15,11 @@
  */
 package com.intellij.vcs.log.statistics;
 
-import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
+import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
 import com.intellij.internal.statistic.CollectUsagesException;
-import com.intellij.internal.statistic.StatisticsUtilKt;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,7 +39,7 @@ import java.util.Set;
 import static java.util.Arrays.asList;
 
 @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
-public class VcsLogRepoSizeCollector extends AbstractApplicationUsagesCollector {
+public class VcsLogRepoSizeCollector extends AbstractProjectsUsagesCollector {
 
   public static final GroupDescriptor ID = GroupDescriptor.create("VCS Log 2");
 

@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.internal.statistic.ideSettings;
+package com.intellij.internal.statistic.customUsageCollectors.ideSettings;
 
 import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.internal.statistic.CollectUsagesException;
-import com.intellij.internal.statistic.StatisticsUtilKt;
 import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +28,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.intellij.internal.statistic.ideSettings.IdeInitialConfigButtonUsages.*;
+import static com.intellij.internal.statistic.customUsageCollectors.ideSettings.IdeInitialConfigButtonUsages.*;
 
 public final class IdeInitialConfigUsageCollectors {
   public static class ConfigImport extends Base {
