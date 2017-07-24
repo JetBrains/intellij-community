@@ -210,16 +210,22 @@ public class RootIndex {
       Function<Sdk, List<VirtualFile>> fun = policy.getExcludeSdkRootsStrategy();
 
       if (fun != null) {
-        Set<VirtualFile> roots = new HashSet<>();
-        for (Module m : ModuleManager.getInstance(myProject).getModules()) {
-          Sdk sdk = ModuleRootManager.getInstance(m).getSdk();
-          if (sdk != null) {
-            roots.addAll(Arrays.asList(sdk.getRootProvider().getFiles(OrderRootType.CLASSES)));
-          }
-        }
+        Set<Sdk> sdks = new HashSet<>();
 
         for (Module m : ModuleManager.getInstance(myProject).getModules()) {
           Sdk sdk = ModuleRootManager.getInstance(m).getSdk();
+          if (sdk != null) {
+            sdks.add(sdk);
+          }
+        }
+
+        Set<VirtualFile> roots = new HashSet<>();
+
+        for (Sdk sdk: sdks) {
+          roots.addAll(Arrays.asList(sdk.getRootProvider().getFiles(OrderRootType.CLASSES)));
+        }
+
+        for (Sdk sdk: sdks) {
           info.excludedFromProjectSdk
             .addAll(ContainerUtil.filter(fun.fun(sdk), file -> ensureValid(file, policy) && !roots.contains(file)));
         }
