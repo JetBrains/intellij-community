@@ -226,7 +226,7 @@ public class RootIndex {
         }
 
         for (Sdk sdk: sdks) {
-          info.excludedFromProjectSdk
+          info.excludedFromSdkRoots
             .addAll(ContainerUtil.filter(fun.fun(sdk), file -> ensureValid(file, policy) && !roots.contains(file)));
         }
       }
@@ -668,7 +668,7 @@ public class RootIndex {
     @NotNull final MultiMap<VirtualFile, Library> classOfLibraries = MultiMap.createSmart();
     @NotNull final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> sourceOfLibraries = MultiMap.createSmart();
     @NotNull final Set<VirtualFile> excludedFromProject = ContainerUtil.newHashSet();
-    @NotNull final Set<VirtualFile> excludedFromProjectSdk = ContainerUtil.newHashSet();
+    @NotNull final Set<VirtualFile> excludedFromSdkRoots = ContainerUtil.newHashSet();
     @NotNull final Map<VirtualFile, Module> excludedFromModule = ContainerUtil.newHashMap();
     @NotNull final Map<VirtualFile, FileTypeAssocTable<Boolean>> excludeFromContentRootTables = ContainerUtil.newHashMap();
     @NotNull final Map<VirtualFile, String> packagePrefix = ContainerUtil.newHashMap();
@@ -682,7 +682,7 @@ public class RootIndex {
       result.addAll(excludedFromLibraries.keySet());
       result.addAll(excludedFromModule.keySet());
       result.addAll(excludedFromProject);
-      result.addAll(excludedFromProjectSdk);
+      result.addAll(excludedFromSdkRoots);
       return result;
     }
 
@@ -892,7 +892,7 @@ public class RootIndex {
     VirtualFile libraryClassRoot = libraryClassRootInfo != null ? libraryClassRootInfo.first : null;
 
     boolean inProject = moduleContentRoot != null ||
-                        ((libraryClassRoot != null || librarySourceRoot != null) && !info.excludedFromProjectSdk.contains(root));
+                        ((libraryClassRoot != null || librarySourceRoot != null) && !info.excludedFromSdkRoots.contains(root));
 
     VirtualFile nearestContentRoot;
     if (inProject) {
