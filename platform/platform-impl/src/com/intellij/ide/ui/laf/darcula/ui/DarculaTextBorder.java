@@ -46,7 +46,9 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
       return JBUI.insets(3, 3, 2, 2).asUIResource();
     }
     else {
-      return JBUI.insets(vOffset, 7, vOffset, 7).asUIResource();
+      Insets insets = JBUI.insets(vOffset, 7, vOffset, 7).asUIResource();
+      TextFieldWithPopupHandlerUI.updateBorderInsets(c, insets);
+      return insets;
     }
   }
 

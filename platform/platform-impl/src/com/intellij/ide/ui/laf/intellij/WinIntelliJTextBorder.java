@@ -44,7 +44,9 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
     } else if (c instanceof JTextField && c.getParent() instanceof ColorPanel) {
       return JBUI.insets(3, 3, 2, 2).asUIResource();
     } else {
-      return JBUI.insets(4, 5).asUIResource();
+      Insets insets = JBUI.insets(4, 5).asUIResource();
+      TextFieldWithPopupHandlerUI.updateBorderInsets(c, insets);
+      return insets;
     }
   }
 

@@ -86,22 +86,25 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   }
 
   /**
-   * @return a gap between icons and the editable area.
-   */
-  protected int getIconGap() {
-    return scale(2);
-  }
-
-  /**
    * @return a search icon in one of the four states or {@code null} to hide it
    */
   protected Icon getSearchIcon(boolean hovered, boolean clickable) {
     return AllIcons.Actions.Search;
   }
 
+  /**
+   * @return a preferred space to paint the search icon
+   */
   protected int getSearchIconPreferredSpace() {
     Icon icon = getSearchIcon(true, true);
-    return icon == null ? 0 : icon.getIconWidth() + getIconGap();
+    return icon == null ? 0 : icon.getIconWidth() + getSearchIconGap();
+  }
+
+  /**
+   * @return a gap between the search icon and the editable area
+   */
+  protected int getSearchIconGap() {
+    return scale(2);
   }
 
   /**
@@ -111,9 +114,19 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     return !clickable ? null : hovered ? AllIcons.Actions.Clean : AllIcons.Actions.CleanLight;
   }
 
+  /**
+   * @return a preferred space to paint the clear icon
+   */
   protected int getClearIconPreferredSpace() {
     Icon icon = getClearIcon(true, true);
-    return icon == null ? 0 : icon.getIconWidth() + getIconGap();
+    return icon == null ? 0 : icon.getIconWidth() + getClearIconGap();
+  }
+
+  /**
+   * @return a gap between the clear icon and the editable area
+   */
+  protected int getClearIconGap() {
+    return scale(2);
   }
 
   /**
@@ -123,9 +136,19 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     return hovered ? AllIcons.General.ExpandComponentHover : AllIcons.General.ExpandComponent;
   }
 
+  /**
+   * @return a preferred space to paint the expand icon
+   */
   protected int getExpandIconPreferredSpace() {
     Icon icon = getExpandIcon(true);
-    return icon == null ? 0 : icon.getIconWidth() + getIconGap();
+    return icon == null ? 0 : icon.getIconWidth() + getExpandIconGap();
+  }
+
+  /**
+   * @return a gap between the expand icon and the editable area
+   */
+  protected int getExpandIconGap() {
+    return scale(5);
   }
 
   /**
@@ -137,9 +160,9 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   }
 
   protected void updateIconsLayout(Rectangle bounds) {
-    int gap = getIconGap();
     IconHolder search = icons.get("search");
     if (search != null) {
+      int gap = getSearchIconGap();
       bounds.x -= search.bounds.width + gap;
       bounds.width += search.bounds.width + gap;
       search.bounds.x = bounds.x;
@@ -147,12 +170,14 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     }
     IconHolder clear = icons.get("clear");
     if (clear != null) {
+      int gap = getClearIconGap();
       clear.bounds.x = bounds.x + bounds.width + gap;
       clear.bounds.y = bounds.y + (bounds.height - clear.bounds.height) / 2;
       bounds.width += clear.bounds.width + gap;
     }
     IconHolder expand = icons.get("expand");
     if (expand != null) {
+      int gap = getExpandIconGap();
       expand.bounds.x = bounds.x + bounds.width + gap;
       expand.bounds.y = bounds.y + (bounds.height - expand.bounds.height) / 2;
       bounds.width += expand.bounds.width + gap;

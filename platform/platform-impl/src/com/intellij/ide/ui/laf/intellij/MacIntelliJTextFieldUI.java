@@ -63,7 +63,7 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
 
   @Override
   protected int getClearIconPreferredSpace() {
-    return super.getClearIconPreferredSpace() - getIconGap();
+    return super.getClearIconPreferredSpace() - getClearIconGap();
   }
 
   @Override
