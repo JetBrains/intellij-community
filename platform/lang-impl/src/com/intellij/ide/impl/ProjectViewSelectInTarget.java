@@ -27,7 +27,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -106,7 +109,14 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
 
   @Override
   protected boolean canSelect(PsiFileSystemItem file) {
-    return true;
+    VirtualFile vFile = PsiUtilCore.getVirtualFile(file);
+    if (vFile == null || !vFile.isValid()) return false;
+
+    ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
+    return index.getContentRootForFile(vFile, false) != null ||
+           index.isInLibraryClasses(vFile) ||
+           index.isInLibrarySource(vFile) ||
+           Comparing.equal(vFile.getParent(), myProject.getBaseDir());
   }
 
   public String getSubIdPresentableName(String subId) {
