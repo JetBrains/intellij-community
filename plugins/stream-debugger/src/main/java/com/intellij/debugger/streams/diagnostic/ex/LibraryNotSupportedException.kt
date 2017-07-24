@@ -18,5 +18,4 @@ package com.intellij.debugger.streams.diagnostic.ex
 /**
  * @author Vitaliy.Bibaev
  */
-class LibraryNotSupportedException(message: String) : RuntimeException(message) {
-}
+class LibraryNotSupportedException(message: String) : RuntimeException(message)
