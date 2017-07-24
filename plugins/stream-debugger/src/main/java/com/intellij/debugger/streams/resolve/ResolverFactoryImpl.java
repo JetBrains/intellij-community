@@ -17,18 +17,15 @@ package com.intellij.debugger.streams.resolve;
 
 import com.intellij.debugger.streams.resolve.impl.StdLibResolverFactory;
 import com.intellij.debugger.streams.resolve.impl.StreamExResolverFactoryImpl;
-import com.intellij.debugger.streams.trace.TraceElement;
-import com.intellij.debugger.streams.trace.TraceInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author Vitaliy.Bibaev
  */
 public class ResolverFactoryImpl implements ResolverFactory.StrongFactory {
-  private static final ValuesOrderResolver EMPTY_RESOLVER = new MyEmptyResolver();
+  private static final ValuesOrderResolver EMPTY_RESOLVER = new EmptyResolver();
 
   private final List<ResolverFactory> myFactories;
 
@@ -57,21 +54,5 @@ public class ResolverFactoryImpl implements ResolverFactory.StrongFactory {
     }
 
     return EMPTY_RESOLVER;
-  }
-
-  private static class MyEmptyResolver implements ValuesOrderResolver {
-    @NotNull
-    @Override
-    public Result resolve(@NotNull TraceInfo info) {
-      final Map<Integer, TraceElement> orderBefore = info.getValuesOrderBefore();
-      final Map<Integer, TraceElement> orderAfter = info.getValuesOrderAfter();
-
-      return Result.of(toEmptyMap(orderBefore), toEmptyMap(orderAfter));
-    }
-
-    @NotNull
-    private static Map<TraceElement, List<TraceElement>> toEmptyMap(@NotNull Map<Integer, TraceElement> order) {
-      return order.keySet().stream().sorted().collect(Collectors.toMap(order::get, x -> Collections.emptyList()));
-    }
   }
 }
