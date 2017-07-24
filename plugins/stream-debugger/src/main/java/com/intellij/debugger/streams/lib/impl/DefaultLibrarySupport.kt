@@ -15,12 +15,15 @@
  */
 package com.intellij.debugger.streams.lib.impl
 
-import com.intellij.debugger.streams.diagnostic.ex.OperationNotSupportedException
 import com.intellij.debugger.streams.lib.*
+import com.intellij.debugger.streams.resolve.EmptyResolver
 import com.intellij.debugger.streams.resolve.ValuesOrderResolver
 import com.intellij.debugger.streams.trace.CallTraceResolver
 import com.intellij.debugger.streams.trace.IntermediateCallHandler
 import com.intellij.debugger.streams.trace.TerminatorCallHandler
+import com.intellij.debugger.streams.trace.impl.handler.PeekTracerHandler
+import com.intellij.debugger.streams.trace.impl.handler.TerminatorHandler
+import com.intellij.debugger.streams.trace.impl.resolve.SimplePeekCallTraceResolver
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
 
@@ -32,22 +35,23 @@ class DefaultLibrarySupport : LibrarySupport {
 
   override val handlerFactory: HandlerFactory = object : HandlerFactory {
     override fun getForIntermediate(number: Int, call: IntermediateStreamCall): IntermediateCallHandler {
-      throw OperationNotSupportedException(
-        "Intermediate operation ${call.name} is not supported")
+      return PeekTracerHandler(number, call.name, call.typeBefore, call.typeAfter)
     }
 
     override fun getForTermination(call: TerminatorStreamCall, resultExpression: String): TerminatorCallHandler {
-      throw OperationNotSupportedException("Terminal operation ${call.name} is not supported")
+      return TerminatorHandler(call.typeBefore)
     }
   }
+
   override val interpreterFactory: InterpreterFactory = object : InterpreterFactory {
     override fun getInterpreter(callName: String): CallTraceResolver {
-      throw OperationNotSupportedException("Operation $callName is not supported")
+      return SimplePeekCallTraceResolver()
     }
   }
+
   override val resolverFactory: ResolverFactory = object : ResolverFactory {
     override fun getResolver(callName: String): ValuesOrderResolver {
-      throw OperationNotSupportedException("Operation $callName is not supported")
+      return EmptyResolver()
     }
   }
 }
