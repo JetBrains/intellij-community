@@ -1032,6 +1032,10 @@
               use-shortcut-of="EditorDuplicate"/>
       <action id="RunDashboard.RemoveConfiguration" class="com.intellij.execution.dashboard.actions.RemoveConfigurationAction"
               use-shortcut-of="$Delete"/>
+      <separator/>
+      <action id="RunDashboard.GroupConfigurations" class="com.intellij.execution.dashboard.actions.GroupConfigurationsAction"/>
+      <action id="RunDashboard.UngroupConfigurations" class="com.intellij.execution.dashboard.actions.UngroupConfigurationsActions"
+              use-shortcut-of="$Delete"/>
     </group>
 
     <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction">

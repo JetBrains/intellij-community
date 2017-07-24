@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.StopAction;
 import com.intellij.execution.dashboard.tree.DashboardGrouper;
+import com.intellij.execution.dashboard.tree.RunDashboardTreeModel;
 import com.intellij.execution.dashboard.tree.RunDashboardTreeStructure;
 import com.intellij.execution.runners.FakeRerunAction;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -45,6 +46,7 @@ import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.EditableModel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,13 +104,16 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     myProject = project;
     myGroupers = groupers;
 
-    myTreeModel = new DefaultTreeModel(new DefaultMutableTreeNode());
-    myTree = new Tree(myTreeModel);
+    myTree = new Tree();
+    myTreeModel = new RunDashboardTreeModel(new DefaultMutableTreeNode(), myProject, myTree);
+    myTree.setModel(myTreeModel);
     myTree.setRootVisible(false);
 
     myTree.setShowsRootHandles(true);
     myTree.setCellRenderer(new NodeRenderer());
     myTree.setLineStyleAngled();
+
+    RowsDnDSupport.install(myTree, (EditableModel)myTreeModel);
 
     myToolbar = createToolbar();
     add(myToolbar, BorderLayout.WEST);
