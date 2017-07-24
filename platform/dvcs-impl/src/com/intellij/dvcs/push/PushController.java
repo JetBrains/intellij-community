@@ -138,10 +138,12 @@ public class PushController implements Disposable {
     Map<RepositoryNode, MyRepoModel> priorityLoading = ContainerUtil.newLinkedHashMap();
     Map<RepositoryNode, MyRepoModel> others = ContainerUtil.newLinkedHashMap();
     RepositoryNode nodeForCurrentEditor = findNodeByRepo(myCurrentlyOpenedRepository);
-    MyRepoModel<?, ?, ?> currentRepoModel = myView2Model.get(nodeForCurrentEditor);
-    if (nodeForCurrentEditor != null && isPreChecked(currentRepoModel)) {
-      // put current editor repo to be loaded at first
-      priorityLoading.put(nodeForCurrentEditor, currentRepoModel);
+    if (nodeForCurrentEditor != null) {
+      MyRepoModel<?, ?, ?> currentRepoModel = myView2Model.get(nodeForCurrentEditor);
+      if (isPreChecked(currentRepoModel)) {
+        // put current editor repo to be loaded at first
+        priorityLoading.put(nodeForCurrentEditor, currentRepoModel);
+      }
     }
 
     for (Map.Entry<RepositoryNode, MyRepoModel<?, ?, ?>> entry : myView2Model.entrySet()) {
