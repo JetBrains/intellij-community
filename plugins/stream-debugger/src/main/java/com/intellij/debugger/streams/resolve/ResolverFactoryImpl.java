@@ -59,11 +59,6 @@ public class ResolverFactoryImpl implements ResolverFactory.StrongFactory {
     return EMPTY_RESOLVER;
   }
 
-  private static ValuesOrderResolver tryToGetExtensionResolver(@NotNull String methodName) {
-    return EMPTY_RESOLVER;
-  }
-
-
   private static class MyEmptyResolver implements ValuesOrderResolver {
     @NotNull
     @Override
