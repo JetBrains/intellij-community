@@ -19,7 +19,6 @@ import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vitaliy.Bibaev

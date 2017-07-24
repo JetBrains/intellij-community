@@ -20,6 +20,7 @@ import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericTypeUtil;
 import com.intellij.debugger.streams.wrapper.*;
 import com.intellij.debugger.streams.wrapper.impl.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -96,10 +97,15 @@ public class StreamChainTransformerImpl implements StreamChainTransformer {
 
   @NotNull
   private static String resolvePackageName(@NotNull PsiMethodCallExpression expression) {
-    final PsiFile containingFile = expression.getContainingFile();
-    // TODO: need to get a package name for other languages too
-    assert containingFile instanceof PsiJavaFile;
-    return ((PsiJavaFile)containingFile).getPackageName();
+    final PsiMethod psiMethod = expression.resolveMethod();
+    if (psiMethod != null) {
+      final PsiClass psiClass = (PsiClass)psiMethod.getParent();
+      final String className = psiClass.getQualifiedName();
+      if (className != null) {
+        return StringUtil.getPackageName(className);
+      }
+    }
+    return "";
   }
 
   @NotNull
