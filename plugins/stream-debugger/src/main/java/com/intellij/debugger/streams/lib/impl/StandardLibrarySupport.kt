@@ -50,6 +50,8 @@ class StandardLibrarySupport(project: Project)
                                     OptionalResultOperation("min"),
                                     OptionalResultOperation("max"),
                                     OptionalResultOperation("findAny"),
-                                    OptionalResultOperation("findFirst"))
+                                    OptionalResultOperation("findFirst"),
+                                    ToCollectionOperation("toArray"),
+                                    ToCollectionOperation("collect"))
   }
 }

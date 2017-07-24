@@ -16,10 +16,13 @@
 package com.intellij.debugger.streams.lib.impl
 
 import com.intellij.debugger.streams.resolve.AllToResultResolver
+import com.intellij.debugger.streams.resolve.IdentityResolver
 import com.intellij.debugger.streams.resolve.OptionalOrderResolver
 import com.intellij.debugger.streams.trace.CallTraceResolver
 import com.intellij.debugger.streams.trace.impl.handler.MatchHandler
 import com.intellij.debugger.streams.trace.impl.handler.OptionalTerminatorHandler
+import com.intellij.debugger.streams.trace.impl.handler.TerminatorHandler
+import com.intellij.debugger.streams.trace.impl.resolve.CollectIdentityResolver
 import com.intellij.debugger.streams.trace.impl.resolve.OptionalResolver
 
 /**
@@ -31,3 +34,6 @@ class MatchingOperation(name: String, interpreter: CallTraceResolver)
 
 class OptionalResultOperation(name: String)
   : TerminalOperationBase(name, { call, expr -> OptionalTerminatorHandler(call, expr) }, OptionalResolver(), OptionalOrderResolver())
+
+class ToCollectionOperation(name: String)
+  : TerminalOperationBase(name, { call, _ -> TerminatorHandler(call.typeBefore) }, CollectIdentityResolver(), IdentityResolver())
