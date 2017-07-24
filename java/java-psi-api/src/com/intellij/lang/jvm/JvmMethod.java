@@ -29,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface JvmMethod extends JvmTypeParametersOwner {
 
+  boolean isConstructor();
+
   @NotNull
   @Override
   String getName();
