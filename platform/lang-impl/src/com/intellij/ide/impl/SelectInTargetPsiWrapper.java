@@ -39,7 +39,7 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
   public final boolean canSelect(@NotNull SelectInContext context) {
     if (!isContextValid(context)) return false;
 
-    return canWorkWithCustomObjects() || canSelectInner(context);
+    return canSelectInner(context);
   }
 
   protected boolean canSelectInner(@NotNull SelectInContext context) {
@@ -90,7 +90,12 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
 
   protected abstract void select(Object selector, VirtualFile virtualFile, boolean requestFocus);
 
-  protected abstract boolean canWorkWithCustomObjects();
+  /**
+   * @deprecated unused, implement canSelectInner(context) instead
+   */
+  protected boolean canWorkWithCustomObjects() {
+    return false;
+  }
 
   protected abstract void select(PsiElement element, boolean requestFocus);
 

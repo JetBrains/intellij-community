@@ -74,8 +74,4 @@ public class ProjectPaneSelectInTarget extends ProjectViewSelectInTarget impleme
     return StandardTargetWeights.PROJECT_WEIGHT;
   }
 
-  @Override
-  protected boolean canWorkWithCustomObjects() {
-    return false;
-  }
 }

@@ -72,7 +72,4 @@ public class PackagesPaneSelectInTarget extends ProjectViewSelectInTarget {
     return StandardTargetWeights.PACKAGES_WEIGHT;
   }
 
-  protected boolean canWorkWithCustomObjects() {
-    return false;
-  }
 }
