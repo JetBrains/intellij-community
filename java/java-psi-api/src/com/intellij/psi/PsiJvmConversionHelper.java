@@ -105,14 +105,6 @@ class PsiJvmConversionHelper {
     return referenceList.getReferencedTypes();
   }
 
-  @NotNull
-  static JvmType getMethodReturnType(@NotNull PsiMethod method) {
-    LOG.assertTrue(!method.isConstructor());
-    final PsiType type = method.getReturnType();
-    LOG.assertTrue(type != null);
-    return type;
-  }
-
   static class PsiJvmSubstitutor implements JvmSubstitutor {
 
     private final @NotNull PsiSubstitutor mySubstitutor;

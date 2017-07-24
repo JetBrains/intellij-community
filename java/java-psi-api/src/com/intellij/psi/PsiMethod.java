@@ -15,11 +15,9 @@
  */
 package com.intellij.psi;
 
-import com.intellij.lang.jvm.JvmConstructor;
 import com.intellij.lang.jvm.JvmMethod;
 import com.intellij.lang.jvm.JvmParameter;
 import com.intellij.lang.jvm.types.JvmReferenceType;
-import com.intellij.lang.jvm.types.JvmType;
 import com.intellij.pom.PomRenameableTarget;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -37,7 +35,7 @@ import java.util.List;
  * @see PsiClass#getMethods()
  */
 public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifierListOwner, PsiDocCommentOwner, PsiTypeParameterListOwner,
-                                   PomRenameableTarget<PsiElement>, PsiTarget, PsiParameterListOwner, JvmMethod, JvmConstructor {
+                                   PomRenameableTarget<PsiElement>, PsiTarget, PsiParameterListOwner, JvmMethod {
   /**
    * The empty array of PSI methods which can be reused to avoid unnecessary allocations.
    */
@@ -201,12 +199,6 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
 
   @NotNull
   HierarchicalMethodSignature getHierarchicalMethodSignature();
-
-  @NotNull
-  @Override
-  default JvmType returnType() {
-    return PsiJvmConversionHelper.getMethodReturnType(this);
-  }
 
   @NotNull
   @Override

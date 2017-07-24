@@ -38,9 +38,6 @@ public interface JvmClass extends JvmTypeParametersOwner, JvmTypeDeclaration {
   //
 
   @NotNull
-  JvmConstructor[] getConstructors();
-
-  @NotNull
   JvmMethod[] getMethods();
 
   @NotNull

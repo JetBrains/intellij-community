@@ -15,14 +15,32 @@
  */
 package com.intellij.lang.jvm;
 
+import com.intellij.lang.jvm.types.JvmReferenceType;
 import com.intellij.lang.jvm.types.JvmType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
+ * Represents a method or a constructor.
+ *
  * @see java.lang.reflect.Method
+ * @see java.lang.reflect.Constructor
+ * @see java.lang.reflect.Executable
  */
-public interface JvmMethod extends JvmExecutableMember {
+public interface JvmMethod extends JvmTypeParametersOwner {
 
   @NotNull
-  JvmType returnType();
+  @Override
+  String getName();
+
+  @Nullable
+  JvmType getReturnType();
+
+  @NotNull
+  JvmParameter[] getParameters();
+
+  boolean isVarArgs();
+
+  @NotNull
+  JvmReferenceType[] getThrowsTypes();
 }
