@@ -4,3 +4,4 @@ class <warning descr="Class 'CloneableClassInSecureContext' may be cloned, compr
 }
 interface EventListener<E extends Cloneable> {
 }
+class <warning descr="Class 'Sub' may be cloned, compromising security">Sub</warning> extends CloneableClassInSecureContext {}
