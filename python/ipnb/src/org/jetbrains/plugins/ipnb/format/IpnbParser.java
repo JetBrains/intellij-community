@@ -31,10 +31,7 @@ import org.jetbrains.plugins.ipnb.format.cells.output.*;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class IpnbParser {
   private static final Logger LOG = Logger.getInstance(IpnbParser.class);
@@ -68,7 +65,7 @@ public class IpnbParser {
       return new IpnbFile(new HashMap<>(), nbformat, 0, Lists.newArrayList(), path);
     }
     List<IpnbCell> cells = new ArrayList<>();
-    final IpnbWorksheet[] worksheets = rawFile.worksheets;
+    final List<IpnbWorksheet> worksheets = rawFile.worksheets;
     if (worksheets == null) {
       for (IpnbCellRaw rawCell : rawFile.cells) {
         cells.add(rawCell.createCell(validateSource(rawCell)));
@@ -157,7 +154,7 @@ public class IpnbParser {
       for (IpnbCell cell : ipnbFile.getCells()) {
         worksheet.cells.add(IpnbCellRaw.fromCell(cell, ipnbFile.getNbformat()));
       }
-      fileRaw.worksheets = new IpnbWorksheet[]{worksheet};
+      fileRaw.worksheets = Collections.singletonList(worksheet);
     }
     final StringWriter stringWriter = new StringWriter();
     final JsonWriter writer = new JsonWriter(stringWriter);
@@ -194,7 +191,7 @@ public class IpnbParser {
 
   @SuppressWarnings("unused")
   public static class IpnbFileRaw {
-    IpnbWorksheet[] worksheets;
+    List<IpnbWorksheet> worksheets;
     List<IpnbCellRaw> cells = new ArrayList<>();
     Map<String, Object> metadata = new HashMap<>();
     int nbformat = 4;
