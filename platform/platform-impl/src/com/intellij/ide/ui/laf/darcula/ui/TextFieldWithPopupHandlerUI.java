@@ -21,6 +21,7 @@ import com.intellij.ide.ui.laf.intellij.MacIntelliJTextFieldUI;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Expandable;
+import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,12 +53,30 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   private static final String VARIANT = "JTextField.variant";
   private static final String POPUP = "JTextField.Search.FindPopup";
   private static final String ON_CLEAR = "JTextField.Search.CancelAction";
+  @SuppressWarnings("UseDPIAwareInsets")
+  private final Insets insets = new Insets(0, 0, 0, 0);
   protected final HashMap<String, IconHolder> icons = new HashMap<>();
   protected final JTextField myTextField;
   private final Handler handler = new Handler();
   private Object variant;
-  private int iconsWidth;
   private int cursor;
+
+  /**
+   * @param insets a border insets without a space for icons
+   * @see javax.swing.border.Border#getBorderInsets
+   */
+  public static void updateBorderInsets(Component c, Insets insets) {
+    if (c instanceof JTextComponent) {
+      JTextComponent component = (JTextComponent)c;
+      if (component.getUI() instanceof TextFieldWithPopupHandlerUI) {
+        TextFieldWithPopupHandlerUI ui = (TextFieldWithPopupHandlerUI)component.getUI();
+        insets.top += ui.insets.top;
+        insets.left += ui.insets.left;
+        insets.right += ui.insets.right;
+        insets.bottom += ui.insets.bottom;
+      }
+    }
+  }
 
   public TextFieldWithPopupHandlerUI(JTextField textField) {
     myTextField = textField;
@@ -77,11 +96,21 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     return AllIcons.Actions.Search;
   }
 
+  protected int getSearchIconPreferredSpace() {
+    Icon icon = getSearchIcon(true, true);
+    return icon == null ? 0 : icon.getIconWidth() + getIconGap();
+  }
+
   /**
    * @return a clear icon in one of the four states or {@code null} to hide it
    */
   protected Icon getClearIcon(boolean hovered, boolean clickable) {
     return !clickable ? null : hovered ? AllIcons.Actions.Clean : AllIcons.Actions.CleanLight;
+  }
+
+  protected int getClearIconPreferredSpace() {
+    Icon icon = getClearIcon(true, true);
+    return icon == null ? 0 : icon.getIconWidth() + getIconGap();
   }
 
   /**
@@ -91,12 +120,40 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     return hovered ? AllIcons.General.ExpandComponentHover : AllIcons.General.ExpandComponent;
   }
 
+  protected int getExpandIconPreferredSpace() {
+    Icon icon = getExpandIcon(true);
+    return icon == null ? 0 : icon.getIconWidth() + getIconGap();
+  }
+
   /**
    * @return {@code true} if component exists and contains non-empty string
    */
   protected boolean hasText() {
     JTextComponent component = getComponent();
     return (component != null) && !isEmpty(component.getText());
+  }
+
+  protected void updateIconsLayout(Rectangle bounds) {
+    int gap = getIconGap();
+    IconHolder search = icons.get("search");
+    if (search != null) {
+      bounds.x -= search.bounds.width + gap;
+      bounds.width += search.bounds.width + gap;
+      search.bounds.x = bounds.x;
+      search.bounds.y = bounds.y + (bounds.height - search.bounds.height) / 2;
+    }
+    IconHolder clear = icons.get("clear");
+    if (clear != null) {
+      clear.bounds.x = bounds.x + bounds.width + gap;
+      clear.bounds.y = bounds.y + (bounds.height - clear.bounds.height) / 2;
+      bounds.width += clear.bounds.width + gap;
+    }
+    IconHolder expand = icons.get("expand");
+    if (expand != null) {
+      expand.bounds.x = bounds.x + bounds.width + gap;
+      expand.bounds.y = bounds.y + (bounds.height - expand.bounds.height) / 2;
+      bounds.width += expand.bounds.width + gap;
+    }
   }
 
   protected SearchAction getActionUnder(@NotNull Point p) {
@@ -293,40 +350,14 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   }
 
   protected void updatePreferredSize(Dimension size) {
-    size.width += iconsWidth;
+    JBInsets.addTo(size, insets);
   }
 
   @Override
   protected Rectangle getVisibleEditorRect() {
     Rectangle bounds = super.getVisibleEditorRect();
-    if (bounds != null) updateVisibleEditorRect(bounds);
+    if (bounds != null && !icons.isEmpty()) updateIconsLayout(new Rectangle(bounds));
     return bounds;
-  }
-
-  protected void updateVisibleEditorRect(Rectangle bounds) {
-    if (icons.isEmpty()) return;
-    int gap = getIconGap();
-    IconHolder search = icons.get("search");
-    if (search != null && search.icon != null) {
-      search.bounds.x = bounds.x;
-      search.bounds.y = bounds.y + (bounds.height - search.bounds.height) / 2;
-      bounds.width -= search.bounds.width + gap;
-      bounds.x += search.bounds.width + gap;
-    }
-    IconHolder expand = icons.get("expand");
-    if (expand != null && expand.icon != null) {
-      bounds.width -= expand.bounds.width;
-      expand.bounds.x = bounds.x + bounds.width;
-      expand.bounds.y = bounds.y + (bounds.height - expand.bounds.height) / 2;
-      bounds.width -= gap;
-    }
-    IconHolder clear = icons.get("clear");
-    if (clear != null && clear.icon != null) {
-      bounds.width -= clear.bounds.width;
-      clear.bounds.x = bounds.x + bounds.width;
-      clear.bounds.y = bounds.y + (bounds.height - clear.bounds.height) / 2;
-      bounds.width -= gap;
-    }
   }
 
   /**
@@ -414,31 +445,18 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       this.variant = variant;
 
       icons.clear();
-      iconsWidth = 0;
+      insets.set(0, 0, 0, 0);
       if (Expandable.VARIANT.equals(variant)) {
         icons.put("expand", new ExpandIconHolder());
-        iconsWidth = getPreferredWidth(getExpandIcon(true));
+        insets.right = getExpandIconPreferredSpace();
       }
       else if ("search".equals(variant) && this instanceof MacIntelliJTextFieldUI) {
         icons.put("clear", new ClearIconHolder());
+        insets.right = getClearIconPreferredSpace();
         icons.put("search", new SearchIconHolder());
-        iconsWidth = getPreferredWidth(getSearchIcon(true, true), getClearIcon(true, true));
+        insets.left = getSearchIconPreferredSpace();
       }
     }
-  }
-
-  /**
-   * @return a preferred width of the all specified icons including a gap for every icon.
-   */
-  private int getPreferredWidth(Icon... icons) {
-    int gap = getIconGap();
-    int width = 0;
-    for (Icon icon : icons) {
-      if (icon != null) {
-        width += gap + icon.getIconWidth();
-      }
-    }
-    return width;
   }
 
   public static abstract class IconHolder {

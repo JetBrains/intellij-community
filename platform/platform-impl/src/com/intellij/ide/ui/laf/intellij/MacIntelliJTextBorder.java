@@ -37,7 +37,9 @@ import java.awt.geom.Rectangle2D;
 public class MacIntelliJTextBorder implements Border, UIResource, ErrorBorderCapable {
   @Override
   public Insets getBorderInsets(Component c) {
-    return JBUI.insets(3, 6).asUIResource();
+    Insets insets = JBUI.insets(3, 8).asUIResource();
+    TextFieldWithPopupHandlerUI.updateBorderInsets(c, insets);
+    return insets;
   }
 
   @Override

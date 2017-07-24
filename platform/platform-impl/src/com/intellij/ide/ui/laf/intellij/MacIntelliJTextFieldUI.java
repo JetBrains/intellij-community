@@ -62,20 +62,20 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   }
 
   @Override
-  protected void updateVisibleEditorRect(Rectangle bounds) {
-    int gap = getIconGap();
-    bounds.x += gap;
-    bounds.width -= gap;
+  protected int getClearIconPreferredSpace() {
+    return super.getClearIconPreferredSpace() - getIconGap();
+  }
+
+  @Override
+  protected void updateIconsLayout(Rectangle bounds) {
+    super.updateIconsLayout(bounds);
+    JTextComponent component = getComponent();
+    if (component == null || component.hasFocus()) return;
     IconHolder clear = icons.get("clear");
-    if (clear == null || clear.icon == null) bounds.width -= gap;
-    super.updateVisibleEditorRect(bounds);
+    if (clear == null || clear.icon != null) return;
     IconHolder search = icons.get("search");
-    if (search != null && search.icon != null) {
-      JTextComponent component = getComponent();
-      if (component != null && !component.hasFocus() && null == search.getAction()) {
-        search.bounds.x = bounds.x + (bounds.width - search.bounds.width) / 2;
-      }
-    }
+    if (search == null || search.icon == null || null != search.getAction()) return;
+    search.bounds.x = bounds.x + bounds.width / 2;
   }
 
   @Override
