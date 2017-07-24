@@ -19,14 +19,23 @@ import com.intellij.lang.jvm.types.JvmType;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Represents a field.
+ *
  * @see java.lang.reflect.Field
  */
 public interface JvmField extends JvmMember {
 
+  /**
+   * @see java.lang.reflect.Field#getName
+   */
   @NotNull
   @Override
   String getName();
 
+  /**
+   * @see java.lang.reflect.Field#getGenericType
+   * @see java.lang.reflect.Field#getAnnotatedType
+   */
   @NotNull
   JvmType getType();
 }

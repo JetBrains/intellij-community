@@ -22,11 +22,19 @@ import org.jetbrains.annotations.Nullable;
 
 public interface JvmClass extends JvmTypeParametersOwner, JvmTypeDeclaration {
 
+  /**
+   * @return the name, or {@code null} if the class is anonymous
+   * @see Class#getSimpleName
+   */
   @Nullable
   @NonNls
   @Override
   String getName();
 
+  /**
+   * @return the qualified name, of {@code null} if the class is anonymous or local
+   * @see Class#getCanonicalName
+   */
   @Nullable
   @NonNls
   String getQualifiedName();
@@ -34,20 +42,54 @@ public interface JvmClass extends JvmTypeParametersOwner, JvmTypeDeclaration {
   @NotNull
   JvmClassKind getClassKind();
 
+  /**
+   * @return direct super type or {@code null} if this class is an interface or represents {@link Object}
+   * @see Class#getSuperclass
+   * @see Class#getGenericSuperclass
+   * @see Class#getAnnotatedSuperclass
+   */
   @Nullable
   JvmReferenceType getSuperClassType();
 
+  /**
+   * @return interface types which are directly implemented by this class
+   * @see Class#getInterfaces
+   * @see Class#getAnnotatedInterfaces
+   * @see Class#getGenericInterfaces
+   */
   @NotNull
   JvmReferenceType[] getInterfaceTypes();
 
   //
 
+  /**
+   * Returns all (static, private, etc) methods and constructors
+   * declared by this class but excluding inherited ones.
+   *
+   * @return methods and constructors
+   * @see Class#getDeclaredMethods
+   * @see Class#getDeclaredConstructors
+   */
   @NotNull
   JvmMethod[] getMethods();
 
+  /**
+   * Returns all (static, private, etc) fields
+   * declared by this class but excluding inherited ones.
+   *
+   * @return fields
+   * @see Class#getDeclaredFields
+   */
   @NotNull
   JvmField[] getFields();
 
+  /**
+   * Returns all (static, private, etc) inner classes
+   * declared by this class but excluding inherited ones.
+   *
+   * @return inner classes
+   * @see Class#getDeclaredClasses
+   */
   @NotNull
   JvmClass[] getInnerClasses();
 }

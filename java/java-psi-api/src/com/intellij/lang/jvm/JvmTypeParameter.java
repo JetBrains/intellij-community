@@ -20,17 +20,24 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Represents a type parameter.
+ *
  * @see java.lang.reflect.TypeVariable
  */
 public interface JvmTypeParameter extends JvmTypeDeclaration {
 
-  @NotNull
-  @Override
-  String getName();
-
+  /**
+   * @return bounds of this type parameter
+   * @see java.lang.reflect.TypeVariable#getBounds
+   * @see java.lang.reflect.TypeVariable#getAnnotatedBounds
+   */
   @NotNull
   JvmReferenceType[] getBounds();
 
+  /**
+   * @return the element which is parameterized by this type parameter
+   * @see java.lang.reflect.TypeVariable#getGenericDeclaration
+   */
   @Nullable
   JvmTypeParametersOwner getOwner();
 }

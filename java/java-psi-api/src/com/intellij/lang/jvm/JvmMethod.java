@@ -29,20 +29,41 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface JvmMethod extends JvmTypeParametersOwner {
 
+  /**
+   * @return {@code true} if this method is a constructor
+   */
   boolean isConstructor();
 
+  /**
+   * @see java.lang.reflect.Executable#getName
+   */
   @NotNull
   @Override
   String getName();
 
+  /**
+   * @return return type of a method or {@code null} if this method represents a constructor
+   * @see java.lang.reflect.Method#getGenericReturnType
+   * @see java.lang.reflect.Method#getAnnotatedReturnType
+   */
   @Nullable
   JvmType getReturnType();
 
+  /**
+   * @see java.lang.reflect.Executable#getParameters
+   */
   @NotNull
   JvmParameter[] getParameters();
 
+  /**
+   * @see java.lang.reflect.Executable#isVarArgs
+   */
   boolean isVarArgs();
 
+  /**
+   * @see java.lang.reflect.Method#getGenericExceptionTypes
+   * @see java.lang.reflect.Method#getAnnotatedExceptionTypes
+   */
   @NotNull
   JvmReferenceType[] getThrowsTypes();
 }

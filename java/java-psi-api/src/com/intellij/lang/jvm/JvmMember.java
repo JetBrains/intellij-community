@@ -22,6 +22,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface JvmMember extends JvmModifiersOwner, JvmNamedElement {
 
+  /**
+   * @see java.lang.reflect.Member#getDeclaringClass
+   */
   @Nullable
   JvmClass getContainingClass();
 }
