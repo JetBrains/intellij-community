@@ -1113,7 +1113,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       @Override
       protected boolean isVisible(@NotNull ThreeSide side) {
-        return side == ThreeSide.BASE;
+        if (side == ThreeSide.BASE) return true;
+        return side == mySide.select(ThreeSide.LEFT, ThreeSide.RIGHT);
       }
 
       @Override
