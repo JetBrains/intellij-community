@@ -22,9 +22,7 @@ import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.io.*;
-import com.intellij.util.io.DataOutputStream;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
@@ -32,7 +30,7 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value> {
+public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, IndexStorage.Dumpable {
   private static final Logger LOG = Logger.getInstance(MapIndexStorage.class);
   protected PersistentMap<Key, UpdatableValueContainer<Value>> myMap;
   protected SLRUCache<Key, ChangeTrackingValueContainer<Value>> myCache;
@@ -69,69 +67,15 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
     if (initialize) initMapAndCache();
   }
 
-  private static class IndexerKeyDescriptor<T> implements KeyDescriptor<T>{
-    private final KeyDescriptor<T> delegate;
-
-    public IndexerKeyDescriptor(KeyDescriptor<T> delegate){
-      this.delegate = delegate;
-    }
-
-    @Override
-    public void save(@NotNull DataOutput out, T value) throws IOException {
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
-      delegate.save(new DataOutputStream(baos), value);
-      out.writeInt(getHashCode(value));
-      out.writeInt(baos.size());
-      out.write(baos.toByteArray());
-    }
-
-    @Override
-    public T read(@NotNull DataInput in) throws IOException {
-      in.readInt();
-      return delegate.read(in);
-    }
-
-    @Override
-    public int getHashCode(T value) {
-      return delegate.getHashCode(value);
-    }
-
-    @Override
-    public boolean isEqual(T val1, T val2) {
-      return delegate.isEqual(val1, val2);
-    }
-  }
-
-  private static class IndexerDataExternalizer<T> implements DataExternalizer<T> {
-
-    private final DataExternalizer<T> delegate;
-
-    public IndexerDataExternalizer(DataExternalizer<T> delegate){
-      this.delegate = delegate;
-    }
-
-    @Override
-    public void save(@NotNull DataOutput out, T value) throws IOException {
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      delegate.save(new DataOutputStream(baos), value);
-      out.writeInt(baos.size());
-      out.write(baos.toByteArray());
-    }
-
-    @Override
-    public T read(@NotNull DataInput in) throws IOException {
-      in.readInt();
-      return delegate.read(in);
-    }
+  @Override
+  public void dump() {
+    ((PersistentHashMap)myMap).dump();
   }
 
   protected void initMapAndCache() throws IOException {
     final Object lock;
     if (PersistentMap.useIndexServer) {
-      myMap = new TCPPersistentMap<Key, UpdatableValueContainer<Value>>(getStorageFile(),
-                                                                        new IndexerKeyDescriptor<Key>(myKeyDescriptor),
-                                                                        new IndexerDataExternalizer<UpdatableValueContainer<Value>>(new ValueContainerMap.ValueContainerExternalizer<Value>(myDataExternalizer)));
+      myMap = new TCPPersistentMap<Key, UpdatableValueContainer<Value>>(getStorageFile(), myKeyDescriptor, new ValueContainerMap.ValueContainerExternalizer<Value>(myDataExternalizer));
       lock = new Object();
     }
     else {
@@ -144,7 +88,11 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
         });
       PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(Boolean.TRUE);
       try {
-        myMap = new ValueContainerMap<Key, Value>(getStorageFile(), myKeyDescriptor, myDataExternalizer, myKeyIsUniqueForIndexedFile, myReadOnly);
+        myMap = new ValueContainerMap<Key, Value>(getStorageFile(),
+                                                  myKeyDescriptor,
+                                                  myDataExternalizer,
+                                                  myKeyIsUniqueForIndexedFile,
+                                                  myReadOnly);
       }
       finally {
         PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(null);

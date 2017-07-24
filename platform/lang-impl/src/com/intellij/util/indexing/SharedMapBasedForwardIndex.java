@@ -18,6 +18,8 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.indexing.impl.*;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.io.PersistentMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +27,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
-class SharedMapBasedForwardIndex<Key, Value> extends AbstractForwardIndex<Key,Value> {
+class SharedMapBasedForwardIndex<Key, Value> extends AbstractForwardIndex<Key,Value> implements ForwardIndex.Dumpable<Key, Value> {
   private final DataExternalizer<Collection<Key>> mySnapshotIndexExternalizer;
   private final MapBasedForwardIndex<Key, Value> myUnderlying;
 
@@ -85,5 +87,10 @@ class SharedMapBasedForwardIndex<Key, Value> extends AbstractForwardIndex<Key,Va
   @Override
   public void close() throws IOException {
     if (myUnderlying != null) myUnderlying.close();
+  }
+
+  @Override
+  public void dump() {
+    ((PersistentHashMap)myUnderlying.getInputsIndex()).dump();
   }
 }

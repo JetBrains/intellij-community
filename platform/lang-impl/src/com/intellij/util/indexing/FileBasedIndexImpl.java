@@ -166,6 +166,15 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     return state;
   }
 
+  public void dumpIndexToServer() {
+    for (ID<?, ?> id : getState().getIndexIDs()) {
+      UpdatableIndex<?, ?, FileContent> index = getState().getIndex(id);
+      if (index instanceof MapReduceIndex<?, ?, ?>) {
+        ((MapReduceIndex)index).dumpToServer();
+      }
+    }
+  }
+
   public FileBasedIndexImpl(@SuppressWarnings("UnusedParameters") VirtualFileManager vfManager,
                             FileDocumentManager fdm,
                             FileTypeManagerImpl fileTypeManager,

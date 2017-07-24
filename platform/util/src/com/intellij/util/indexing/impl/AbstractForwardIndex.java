@@ -35,4 +35,5 @@ public abstract class AbstractForwardIndex<Key, Value> implements ForwardIndex<K
   public IndexExtension<Key, Value, ?> getIndexExtension() {
     return myIndexExtension;
   }
+
 }

@@ -21,21 +21,19 @@ import com.intellij.openapi.util.ThreadLocalCachedValue;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LimitedPool;
 import com.intellij.util.containers.SLRUCache;
+import gnu.trove.TIntHashSet;
+import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -90,6 +88,80 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   private static final boolean doHardConsistencyChecks = false;
   private volatile boolean myBusyReading;
 
+  public static Set<String> blackList = ContainerUtil.newHashSet("RefQueueIndex.storage");
+
+  public void dump() {
+    if (blackList.contains(myStorageFile.getName())) return;
+    System.out.println("dumping " + myStorageFile);
+    TCPPersistentMap.Connection c = TCPPersistentMap.connection();
+    try {
+    final BufferExposingByteArrayOutputStream baos = new BufferExposingByteArrayOutputStream();
+    final DataOutputStream dos = new DataOutputStream(baos);
+      c.put(new Consumer<DataOutputStream>() {
+        @Override
+        public void consume(final DataOutputStream stream) {
+          try {
+            stream.writeUTF(myStorageFile.getPath());
+            stream.writeByte(TCPPersistentMap.CREATE_MAP);
+            stream.writeBoolean(myKeyDescriptor instanceof InlineKeyDescriptor); //TODO
+            if (myKeyDescriptor instanceof InlineKeyDescriptor) {
+              stream.writeInt(inlineKeysCache.size());
+              inlineKeysCache.forEach(new TIntProcedure() {
+                @Override
+                public boolean execute(int key) {
+                  try {
+                    stream.writeInt(key);
+
+                    Value value = get(((InlineKeyDescriptor<Key>)myKeyDescriptor).fromInt(key));
+                    myValueExternalizer.save(dos, value);
+                    stream.writeInt(baos.size());
+                    stream.write(baos.getInternalBuffer(), 0, baos.size());
+                    baos.reset();
+                  } catch (IOException e) {
+                    throw new RuntimeException(e);
+                  }
+                  return true;
+                }
+              });
+            }
+            else {
+              processKeys(new Processor<Key>() {
+                @Override
+                public boolean process(Key key) {
+                  try {
+                    if (key != null) {
+                      myKeyDescriptor.save(dos, key);
+                      stream.writeInt(baos.size() + 4);
+                      stream.writeInt(myKeyDescriptor.getHashCode(key));
+                      stream.write(baos.getInternalBuffer(), 0, baos.size());
+                      baos.reset();
+
+                      Value value = get(key);
+                      myValueExternalizer.save(dos, value);
+                      stream.writeInt(baos.size());
+                      stream.write(baos.getInternalBuffer(), 0, baos.size());
+                      baos.reset();
+                    }
+                  }
+                  catch (IOException e) {
+                    throw new RuntimeException(e);
+                  }
+                  return true;
+                }
+              });
+              stream.writeInt(0);
+            }
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      });
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   private static class AppendStream extends DataOutputStream {
     private AppendStream() {
       super(null);
@@ -138,14 +210,13 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     super(checkDataFiles(file), keyDescriptor, initialSize, null, version);
 
     myStorageFile = file;
-    myKeyDescriptor = keyDescriptor;
     myIsReadOnly = isReadOnly();
-
+    myKeyDescriptor = keyDescriptor;
     myAppendCache = createAppendCache(keyDescriptor);
     final PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase> recordHandler = myEnumerator.getRecordHandler();
     myParentValueRefOffset = recordHandler.getRecordBuffer(myEnumerator).length;
     myIntMapping = valueExternalizer instanceof IntInlineKeyDescriptor && wantNonnegativeIntegralValues();
-    myDirectlyStoreLongFileOffsetMode = keyDescriptor instanceof InlineKeyDescriptor && myEnumerator instanceof PersistentBTreeEnumerator;
+    myDirectlyStoreLongFileOffsetMode = myKeyDescriptor instanceof InlineKeyDescriptor && myEnumerator instanceof PersistentBTreeEnumerator;
 
     myRecordBuffer = myDirectlyStoreLongFileOffsetMode ? new byte[0]:new byte[myParentValueRefOffset + 8];
     mySmallRecordBuffer = myDirectlyStoreLongFileOffsetMode ? new byte[0]:new byte[myParentValueRefOffset + 4];
@@ -345,10 +416,15 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     return new File(file.getParentFile(), file.getName() + DATA_FILE_EXTENSION);
   }
 
+  private final TIntHashSet inlineKeysCache = new TIntHashSet();
+
   @Override
   public final void put(Key key, Value value) throws IOException {
     if (myIsReadOnly) throw new IncorrectOperationException();
     synchronized (myEnumerator) {
+      if (myKeyDescriptor instanceof InlineKeyDescriptor) {
+        inlineKeysCache.add(((InlineKeyDescriptor<Key>)myKeyDescriptor).toInt(key));
+      }
       doPut(key, value);
     }
   }

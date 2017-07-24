@@ -101,6 +101,12 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponentAdap
     return state;
   }
 
+  public void dumpToServer() {
+    for (MyIndex<?> index : getAsyncState().myIndices.values()) {
+      index.dumpToServer();
+    }
+  }
+
   private static <K> boolean registerIndexer(@NotNull final StubIndexExtension<K, ?> extension, final boolean forceClean, AsyncState state) throws IOException {
     final StubIndexKey<K, ?> indexKey = extension.getKey();
     final int version = extension.getVersion();

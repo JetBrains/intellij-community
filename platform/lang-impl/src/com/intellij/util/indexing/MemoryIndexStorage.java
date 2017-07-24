@@ -34,13 +34,20 @@ import java.util.*;
  * @author Eugene Zhuravlev
  *         Date: Dec 10, 2007
  */
-public class MemoryIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
+public class MemoryIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value>, IndexStorage.Dumpable {
   private final Map<Key, ChangeTrackingValueContainer<Value>> myMap = new HashMap<>();
   @NotNull
   private final IndexStorage<Key, Value> myBackendStorage;
   private final List<BufferingStateListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final ID<?, ?> myIndexId;
   private boolean myBufferingEnabled;
+
+  @Override
+  public void dump() {
+    if (myBackendStorage instanceof Dumpable) {
+      ((Dumpable)myBackendStorage).dump();
+    }
+  }
 
   public interface BufferingStateListener {
     void bufferingStateChanged(boolean newState);

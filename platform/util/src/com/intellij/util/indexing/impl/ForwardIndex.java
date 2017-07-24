@@ -26,6 +26,10 @@ import java.util.Map;
  */
 @ApiStatus.Experimental
 public interface ForwardIndex<Key, Value> {
+
+  interface Dumpable<K, V> extends ForwardIndex<K, V> {
+    void dump();
+  }
   /**
    * Creates a diff builder for given inputId.
    */
