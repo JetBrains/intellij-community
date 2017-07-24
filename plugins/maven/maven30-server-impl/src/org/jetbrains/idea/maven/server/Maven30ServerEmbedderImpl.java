@@ -531,10 +531,6 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     myContainer.addComponent(getComponent(RepositoryMetadataManager.class, "ide"), RepositoryMetadataManager.class.getName());
     myContainer.addComponent(getComponent(PluginDescriptorCache.class, "ide"), PluginDescriptorCache.class.getName());
     ModelInterpolator modelInterpolator = getComponent(ModelInterpolator.class, "ide");
-    if (!"3.0.5".equals(getMavenVersion()) && modelInterpolator instanceof StringSearchModelInterpolator) {
-      ((StringSearchModelInterpolator)modelInterpolator).setPathTranslator(getComponent(org.apache.maven.model.path.PathTranslator.class));
-      ((StringSearchModelInterpolator)modelInterpolator).setUrlNormalizer(getComponent(UrlNormalizer.class));
-    }
     myContainer.addComponent(modelInterpolator, ModelInterpolator.class.getName());
     myContainer.addComponent(getComponent(org.apache.maven.project.interpolation.ModelInterpolator.class, "ide"),
                              org.apache.maven.project.interpolation.ModelInterpolator.ROLE);
@@ -544,6 +540,14 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     DefaultModelBuilder defaultModelBuilder = (DefaultModelBuilder)getComponent(ModelBuilder.class);
     defaultModelBuilder.setModelValidator(modelValidator);
     defaultModelBuilder.setModelInterpolator(modelInterpolator);
+
+    // IDEA-176117 - in older version of maven (3.0 - 3.0.3) "modelInterpolator" component is not fully initialized for some reason
+    // - "pathTranslator" and "urlNormalizer" fields are null, which causes NPE in paths interpolation process.
+    // Latest version (3.0.5) is the stable one so we expect "modelInterpolator" to be already valid in it.
+    if (!"3.0.5".equals(getMavenVersion()) && modelInterpolator instanceof StringSearchModelInterpolator) {
+      ((StringSearchModelInterpolator)modelInterpolator).setPathTranslator(getComponent(org.apache.maven.model.path.PathTranslator.class));
+      ((StringSearchModelInterpolator)modelInterpolator).setUrlNormalizer(getComponent(UrlNormalizer.class));
+    }
   }
 
   private void setConsoleAndIndicator(MavenServerConsole console, MavenServerProgressIndicator indicator) {
