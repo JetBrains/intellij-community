@@ -582,6 +582,41 @@ public class PyNames {
     return name != null && (name.matches("__r[a-z]+__") || CONTAINS.equals(name));
   }
 
+  public static boolean isRightOperatorName(@Nullable String referencedName, @Nullable String calleeName) {
+    if (isRightOperatorName(calleeName)) return true;
+
+    return referencedName != null && calleeName != null && calleeName.equals(leftToRightComparisonOperatorName(referencedName));
+  }
+
+  @Nullable
+  public static String leftToRightOperatorName(@Nullable String name) {
+    if (name == null) return null;
+
+    final String rightComparisonOperatorName = leftToRightComparisonOperatorName(name);
+    if (rightComparisonOperatorName != null) return rightComparisonOperatorName;
+
+    return name.replaceFirst("__([a-z]+)__", "__r$1__");
+  }
+
+  @Nullable
+  private static String leftToRightComparisonOperatorName(@NotNull String name) {
+    switch (name) {
+      case "__lt__":
+        return "__gt__";
+      case "__gt__":
+        return "__lt__";
+      case "__ge__":
+      return "__le__";
+      case "__le__":
+        return "__ge__";
+      case "__eq__":
+      case "__ne__":
+        return name;
+      default:
+        return null;
+    }
+  }
+
   /**
    * Available in Python 3 and Python 2 starting from 2.6.
    * <p/>

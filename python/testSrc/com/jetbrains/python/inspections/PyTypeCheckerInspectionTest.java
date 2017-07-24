@@ -431,4 +431,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testDunderInitAnnotatedAsNonNone() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
+
+  // PY-23367
+  public void testComparingFloatAndInt() {
+    doTest();
+  }
 }
