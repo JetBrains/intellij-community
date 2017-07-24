@@ -896,15 +896,18 @@ class PyDB:
 
     def prepare_to_run(self):
         ''' Shared code to prepare debugging by installing traces and registering threads '''
+        if self.signature_factory is not None or self.thread_analyser is not None:
+            # we need all data to be sent to IDE even after program finishes
+            CheckOutputThread(self).start()
+            # turn off frame evaluation for concurrency visualization
+            self.frame_eval_func = None
+
         self.patch_threads()
         pydevd_tracing.SetTrace(self.trace_dispatch, self.frame_eval_func, self.dummy_trace_dispatch)
         # There is no need to set tracing function if frame evaluation is available. Moreover, there is no need to patch thread
         # functions, because frame evaluation function is set to all threads by default.
 
         PyDBCommandThread(self).start()
-        if self.signature_factory is not None or self.thread_analyser is not None:
-            # we need all data to be sent to IDE even after program finishes
-            CheckOutputThread(self).start()
 
         if show_tracing_warning or show_frame_eval_warning:
             cmd = self.cmd_factory.make_show_cython_warning_message()
