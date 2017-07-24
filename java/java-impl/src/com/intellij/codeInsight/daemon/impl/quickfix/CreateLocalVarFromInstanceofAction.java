@@ -380,6 +380,8 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
           nextSibling.replace(newWhitespace);
           break;
         }
+        nextSibling = nextSibling.getNextSibling();
+        continue;
       }
       else if (!isValidDeclarationStatement(nextSibling) && !(nextSibling instanceof PsiComment)) {
         break;
