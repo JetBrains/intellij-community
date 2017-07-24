@@ -19,6 +19,14 @@ public interface PropertyFailure<T> {
   int getTotalMinimizationExampleCount();
   
   int getMinimizationStageCount();
+  
+  int getIterationNumber();
+  
+  long getIterationSeed();
+  
+  long getGlobalSeed();
+  
+  int getSizeHint();
 
   interface CounterExample<T> {
     T getExampleValue();

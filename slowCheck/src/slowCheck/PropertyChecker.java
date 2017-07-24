@@ -1,200 +1,80 @@
 package slowCheck;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Random;
-import java.util.Set;
+import java.util.function.IntUnaryOperator;
 import java.util.function.Predicate;
 
 /**
- * @author peter
+ * An entry point to property-based testing. The main usage pattern: {@code PropertyChecker.forAll(generator).shouldHold(property)}.
  */
 public class PropertyChecker<T> {
-  private static final Predicate<Object> DATA_IS_DIFFERENT = new Predicate<Object>() {
-    @Override
-    public boolean test(Object o) {
-      return false;
-    }
-
-    @Override
-    public String toString() {
-      return ": cannot generate enough sufficiently different values";
-    }
-  };
   private final Generator<T> generator;
-  private Predicate<T> property;
-  private final Set<Integer> generatedHashes = new HashSet<>();
-  private long seed = new Random().nextLong();
+  private long globalSeed = new Random().nextLong();
+  private IntUnaryOperator sizeHintFun = iteration -> (iteration - 1) % 100 + 1;
   private int iterationCount = 100;
-  private StatusNotifier notifier;
 
   private PropertyChecker(Generator<T> generator) {
     this.generator = generator;
   }
 
+  /**
+   * Creates a property checker for the given generator. It can be further customized using {@code with*}-methods, 
+   * and should finally used for property to check via {@link #shouldHold(Predicate)} call.
+   */
   public static <T> PropertyChecker<T> forAll(Generator<T> generator) {
     return new PropertyChecker<>(generator);
   }
-  
+
+  /**
+   * This function allows to start the test with a fixed random seed. It's useful to reproduce some previous test run and debug it.
+   * @param seed A random seed to use for the first iteration.
+   *             The following iterations will use other, pseudo-random seeds, but still derived from this one.
+   * @return this PropertyChecker
+   */
   public PropertyChecker<T> withSeed(long seed) {
-    this.seed = seed;
+    globalSeed = seed;
     return this;
   }
 
+  /**
+   * @param iterationCount the number of iterations to try. By default it's 100.
+   * @return this PropertyChecker
+   */
   public PropertyChecker<T> withIterationCount(int iterationCount) {
     this.iterationCount = iterationCount;
     return this;
   }
 
+  /**
+   * @param sizeHintFun a function determining how size hint should be distributed depending on the iteration number.
+   *                    By default the size hint will be 1 in the first iteration, 2 in the second one, and so on until 100,
+   *                    then again 1,...,100,1,...,100, etc.
+   * @return this PropertyChecker
+   * @see DataStructure#getSizeHint() 
+   */
+  public PropertyChecker<T> withSizeHint(@NotNull IntUnaryOperator sizeHintFun) {
+    this.sizeHintFun = sizeHintFun;
+    return this;
+  }
+
+  /**
+   * Checks the property within a single iteration by using specified seed and size hint. Useful to debug the test after it's failed.
+   */
+  public PropertyChecker<T> rechecking(long seed, int sizeHint) {
+    return withSeed(seed).withSizeHint(whatever -> sizeHint).withIterationCount(1);
+  }
+
+  /**
+   * Checks that the given property returns {@code true} and doesn't throw exceptions by running the generator and the property
+   * given number of times (see {@link #withIterationCount(int)}).
+   */
   public void shouldHold(@NotNull Predicate<T> property) {
-    if (this.property != null) throw new IllegalArgumentException("Property " + property + " already checked");
-    this.property = property;
-    notifier = new StatusNotifier(iterationCount, this.seed);
-    
-    Random random = new Random(seed);
-    
-    for (int i = 1; i <= iterationCount; i++) {
-      notifier.iterationStarted(i);
-
-      CounterExampleImpl<T> example = findCounterExample(i, random);
-      if (example != null) {
-        notifier.counterExampleFound();
-        PropertyFailureImpl failure = new PropertyFailureImpl(example, i);
-        throw new PropertyFalsified(seed, failure, () -> new ReplayDataStructure(failure.getMinimalCounterexample().data, failure.sizeHint));
-      }
+    Iteration<T> iteration = new CheckSession<>(generator, property, globalSeed, iterationCount, sizeHintFun).firstIteration();
+    while (iteration != null) {
+      iteration = iteration.performIteration();
     }
-  }
-
-  @Nullable
-  private CounterExampleImpl<T> findCounterExample(int sizeHint, Random random) {
-    for (int i = 0; i < 100; i++) {
-      StructureNode node = new StructureNode();
-      T value;
-      try {
-        value = generator.getGeneratorFunction().apply(new GenerativeDataStructure(random, node, sizeHint));
-      }
-      catch (Throwable e) {
-        throw new GeneratorException(seed, e);
-      }
-      if (!generatedHashes.add(node.hashCode())) continue;
-      
-      return CounterExampleImpl.checkProperty(property, value, node);
-    }
-    throw new CannotSatisfyCondition(DATA_IS_DIFFERENT);
-  }
-
-  private class PropertyFailureImpl implements PropertyFailure<T> {
-    private final CounterExampleImpl<T> initial;
-    private CounterExampleImpl<T> minimized;
-    private int totalSteps;
-    private int successfulSteps;
-    private int sizeHint;
-    private Throwable stoppingReason;
-
-    PropertyFailureImpl(@NotNull CounterExampleImpl<T> initial, int sizeHint) {
-      this.initial = initial;
-      this.minimized = initial;
-      this.sizeHint = sizeHint;
-      try {
-        shrink();
-      }
-      catch (Throwable e) {
-        stoppingReason = e;
-      }
-    }
-
-    @NotNull
-    @Override
-    public CounterExampleImpl<T> getFirstCounterExample() {
-      return initial;
-    }
-
-    @NotNull
-    @Override
-    public CounterExampleImpl<T> getMinimalCounterexample() {
-      return minimized;
-    }
-
-    @Nullable
-    @Override
-    public Throwable getStoppingReason() {
-      return stoppingReason;
-    }
-
-    @Override
-    public int getTotalMinimizationExampleCount() {
-      return totalSteps;
-    }
-
-    @Override
-    public int getMinimizationStageCount() {
-      return successfulSteps;
-    }
-
-    private void shrink() {
-      ShrinkRunner shrinkRunner = new ShrinkRunner();
-      while (true) {
-        CounterExampleImpl<T> shrank = shrinkRunner.findShrink(minimized.data, node -> {
-          if (!generatedHashes.add(node.hashCode())) return null;
-
-          notifier.shrinkAttempt(this);
-          
-          try {
-            T value = generator.getGeneratorFunction().apply(new ReplayDataStructure(node, sizeHint));
-            totalSteps++;
-            return CounterExampleImpl.checkProperty(property, value, node);
-          }
-          catch (CannotRestoreValue e) {
-            return null;
-          }
-        });
-        if (shrank != null) {
-          minimized = shrank;
-          successfulSteps++;
-        } else {
-          break;
-        }
-      }
-    }
-
-
-  }
-}
-
-class CounterExampleImpl<T> implements PropertyFailure.CounterExample<T> {
-  final StructureNode data;
-  private final T value;
-  @Nullable private final Throwable exception;
-
-  private CounterExampleImpl(StructureNode data, T value, @Nullable Throwable exception) {
-    this.data = data;
-    this.value = value;
-    this.exception = exception;
-  }
-
-  @Override
-  public T getExampleValue() {
-    return value;
-  }
-
-  @Nullable
-  @Override
-  public Throwable getExceptionCause() {
-    return exception;
-  }
-
-  static <T> CounterExampleImpl<T> checkProperty(Predicate<T> property, T value, StructureNode node) {
-    try {
-      if (!property.test(value)) {
-        return new CounterExampleImpl<>(node, value, null);
-      }
-    }
-    catch (Throwable e) {
-      return new CounterExampleImpl<>(node, value, e);
-    }
-    return null;
   }
 
 }

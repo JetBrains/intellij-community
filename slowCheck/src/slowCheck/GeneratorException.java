@@ -5,7 +5,7 @@ package slowCheck;
  */
 public class GeneratorException extends RuntimeException {
 
-  GeneratorException(long seed, Throwable cause) {
-    super("Exception while generating data, seed=" + seed, cause);
+  GeneratorException(Iteration<?> iteration, Throwable cause) {
+    super("Exception while generating data, " + iteration.printSeeds(), cause);
   }
 }

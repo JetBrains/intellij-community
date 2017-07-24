@@ -8,44 +8,30 @@ import static slowCheck.Generator.*;
 public class ExceptionTest extends PropertyCheckerTestCase {
 
   public void testFailureReasonUnchanged() {
-    try {
-      forAllStable(integers()).shouldHold(i -> {
-        throw new AssertionError("fail");
-      });
-      fail();
-    }
-    catch (PropertyFalsified e) {
-      assertFalse(e.getMessage().contains(PropertyFalsified.FAILURE_REASON_HAS_CHANGED_DURING_MINIMIZATION));
-    }
+    PropertyFalsified e = checkFails(forAllStable(integers()), i -> {
+      throw new AssertionError("fail");
+    });
+
+    assertFalse(e.getMessage().contains(PropertyFalsified.FAILURE_REASON_HAS_CHANGED_DURING_MINIMIZATION));
   }
 
   public void testFailureReasonChangedExceptionClass() {
-    try {
-      forAllStable(integers()).shouldHold(i -> {
-        throw (i == 0 ? new RuntimeException("fail") : new IllegalArgumentException("fail"));
-      });
-      fail();
-    }
-    catch (PropertyFalsified e) {
-      assertTrue(e.getMessage().contains(PropertyFalsified.FAILURE_REASON_HAS_CHANGED_DURING_MINIMIZATION));
-    }
+    PropertyFalsified e = checkFails(forAllStable(integers()), i -> {
+      throw (i == 0 ? new RuntimeException("fail") : new IllegalArgumentException("fail"));
+    });
+    assertTrue(e.getMessage().contains(PropertyFalsified.FAILURE_REASON_HAS_CHANGED_DURING_MINIMIZATION));
   }
 
   public void testFailureReasonChangedExceptionTrace() {
-    try {
-      forAllStable(integers()).shouldHold(i -> {
-        if (i == 0) {
-          throw new AssertionError("fail");
-        }
-        else {
-          throw new AssertionError("fail2");
-        }
-      });
-      fail();
-    }
-    catch (PropertyFalsified e) {
-      assertTrue(e.getMessage().contains(PropertyFalsified.FAILURE_REASON_HAS_CHANGED_DURING_MINIMIZATION));
-    }
+    PropertyFalsified e = checkFails(forAllStable(integers()), i -> {
+      if (i == 0) {
+        throw new AssertionError("fail");
+      }
+      else {
+        throw new AssertionError("fail2");
+      }
+    });
+    assertTrue(e.getMessage().contains(PropertyFalsified.FAILURE_REASON_HAS_CHANGED_DURING_MINIMIZATION));
   }
 
   public void testExceptionWhileGeneratingValue() {
@@ -60,17 +46,13 @@ public class ExceptionTest extends PropertyCheckerTestCase {
   }
 
   public void testExceptionWhileShrinkingValue() {
-    try {
-      forAllStable(listsOf(integers()).suchThat(l -> {
-        if (l.size() == 1 && l.get(0) == 0) throw new RuntimeException("my exception");
-        return true;
-      })).shouldHold(l -> l.stream().allMatch(i -> i > 0));
-      fail();
-    }
-    catch (PropertyFalsified e) {
-      assertEquals("my exception", e.getFailure().getStoppingReason().getMessage());
-      assertTrue(StatusNotifier.printStackTrace(e).contains("my exception"));
-    }
+    PropertyFalsified e = checkFails(PropertyChecker.forAll(listsOf(integers()).suchThat(l -> {
+      if (l.size() == 1 && l.get(0) == 0) throw new RuntimeException("my exception");
+      return true;
+    })), l -> l.stream().allMatch(i -> i > 0));
+
+    assertEquals("my exception", e.getFailure().getStoppingReason().getMessage());
+    assertTrue(StatusNotifier.printStackTrace(e).contains("my exception"));
   }
 
   public void testUnsatisfiableSuchThat() {

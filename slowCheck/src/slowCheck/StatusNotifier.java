@@ -15,13 +15,11 @@ import java.util.Locale;
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 class StatusNotifier {
   private final int iterationCount;
-  private final long seed;
   private int currentIteration;
   private long lastPrinted = System.currentTimeMillis();
 
-  StatusNotifier(int iterationCount, long seed) {
+  StatusNotifier(int iterationCount) {
     this.iterationCount = iterationCount;
-    this.seed = seed;
   }
 
   void iterationStarted(int iteration) {
@@ -31,9 +29,9 @@ class StatusNotifier {
     }
   }
 
-  void counterExampleFound() {
+  void counterExampleFound(Iteration<?> iteration) {
     lastPrinted = System.currentTimeMillis();
-    System.err.println(formatCurrentTime() + ": failed on iteration " + currentIteration + " (seed=" + seed + "), shrinking...");
+    System.err.println(formatCurrentTime() + ": failed on iteration " + currentIteration + " (" + iteration.printSeeds() + "), shrinking...");
   }
 
   private boolean shouldPrint() {
@@ -46,11 +44,11 @@ class StatusNotifier {
 
   private int lastReportedStage = -1;
   private String lastReportedTrace = null;
-  void shrinkAttempt(PropertyFailure<?> failure) {
+  <T> void shrinkAttempt(PropertyFailure<T> failure, Iteration<T> iteration) {
     if (shouldPrint()) {
       int stage = failure.getMinimizationStageCount();
-      System.err.println(formatCurrentTime() + ": still shrinking (seed=" + seed + "). " +
-                         "Examples tried: " + failure.getTotalMinimizationExampleCount() + 
+      System.out.println(formatCurrentTime() + ": still shrinking (" + iteration.printSeeds() + "). " +
+                         "Examples tried: " + failure.getTotalMinimizationExampleCount() +
                          ", successful minimizations: " + stage);
       if (lastReportedStage != stage) {
         lastReportedStage = stage;

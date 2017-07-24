@@ -9,23 +9,28 @@ import java.util.function.Predicate;
  */
 abstract class PropertyCheckerTestCase extends TestCase {
 
-  protected  <T> PropertyFailure<T> checkFalsified(Generator<T> generator, Predicate<T> predicate, int minimizationSteps) {
+  protected <T> PropertyFalsified checkFails(PropertyChecker<T> checker, Predicate<T> predicate) {
     try {
-      forAllStable(generator).shouldHold(predicate);
+      checker.shouldHold(predicate);
       throw new AssertionError("Can't falsify " + getName());
     }
     catch (PropertyFalsified e) {
-      //noinspection unchecked
-      PropertyFailure<T> failure = (PropertyFailure<T>)e.getFailure();
-
-      System.out.println(" " + getName());
-      System.out.println("Value: " + e.getBreakingValue());
-      System.out.println("Data: " + e.getData());
-      assertEquals(minimizationSteps, failure.getTotalMinimizationExampleCount());
-      assertEquals(e.getBreakingValue(), generator.getGeneratorFunction().apply(e.getData()));
-
-      return failure;
+      return e;
     }
+  }
+
+  protected <T> PropertyFailure<T> checkFalsified(Generator<T> generator, Predicate<T> predicate, int minimizationSteps) {
+    PropertyFalsified e = checkFails(forAllStable(generator), predicate);
+    //noinspection unchecked
+    PropertyFailure<T> failure = (PropertyFailure<T>)e.getFailure();
+
+    System.out.println(" " + getName());
+    System.out.println("Value: " + e.getBreakingValue());
+    System.out.println("Data: " + e.getData());
+    assertEquals(minimizationSteps, failure.getTotalMinimizationExampleCount());
+    assertEquals(e.getBreakingValue(), generator.getGeneratorFunction().apply(e.getData()));
+
+    return failure;
   }
 
   protected static <T> PropertyChecker<T> forAllStable(Generator<T> generator) {

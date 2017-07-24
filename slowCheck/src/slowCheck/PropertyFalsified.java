@@ -11,13 +11,11 @@ import java.util.function.Supplier;
 public class PropertyFalsified extends RuntimeException {
   static final String FAILURE_REASON_HAS_CHANGED_DURING_MINIMIZATION = "!!! FAILURE REASON HAS CHANGED DURING MINIMIZATION !!!";
   private static final String SEPARATOR = "\n==========================\n";
-  private final long seed;
-  private final PropertyFailure<?> failure;
+  private final PropertyFailureImpl<?> failure;
   private final Supplier<DataStructure> data;
 
-  PropertyFalsified(long seed, PropertyFailure<?> failure, Supplier<DataStructure> data) {
+  PropertyFalsified(PropertyFailureImpl<?> failure, Supplier<DataStructure> data) {
     super(failure.getMinimalCounterexample().getExceptionCause());
-    this.seed = seed;
     this.failure = failure;
     this.data = data;
   }
@@ -26,7 +24,7 @@ public class PropertyFalsified extends RuntimeException {
   public String getMessage() {
     String msg = "Falsified on " + failure.getMinimalCounterexample().getExampleValue() + "\n" +
                  getMinimizationStats() +
-                 "Seed=" + seed;
+                 failure.iteration.printToReproduce();
 
     if (failure.getStoppingReason() != null) {
       msg += "\n Shrinking stopped because of " + StatusNotifier.printStackTrace(failure.getStoppingReason());

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static slowCheck.Generator.*;
@@ -28,25 +29,25 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   public void testListContainsDivisible() {
     checkFalsified(nonEmptyLists(integers()),
                    l -> l.stream().allMatch(i -> i % 10 != 0),
-                   9);
+                   3);
   }
 
   public void testStringContains() {
     checkFalsified(stringsOf(asciiPrintableChars()),
                    s -> !s.contains("a"),
-                   10);
+                   7);
   }
 
   public void testLetterStringContains() {
     checkFalsified(stringsOf(asciiLetters()),
                    s -> !s.contains("a"),
-                   5);
+                   3);
   }
   
   public void testIsSorted() {
     PropertyFailure<List<Integer>> failure = checkFalsified(nonEmptyLists(integers()),
                                                             l -> l.stream().sorted().collect(Collectors.toList()).equals(l),
-                                                            69);
+                                                            67);
     assertEquals(2, failure.getMinimalCounterexample().getExampleValue().size());
   }
 
@@ -57,7 +58,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   public void testSortedDoublesNonDescending() {
     PropertyFailure<List<Double>> failure = checkFalsified(listsOf(doubles()),
                                                            l -> isSorted(l.stream().sorted().collect(Collectors.toList())),
-                                                           141);
+                                                           76);
     assertEquals(2, failure.getMinimalCounterexample().getExampleValue().size());
   }
 
@@ -77,13 +78,13 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   public void testStringOfStringChecksAllChars() {
     checkFalsified(stringsOf("abc "),
                    s -> !s.contains(" "),
-                   3);
+                   4);
   }
 
   public void testLongListsHappen() {
     PropertyFailure<List<Integer>> failure = checkFalsified(listsOf(integers()),
                                                             l -> l.size() < 200,
-                                                            631);
+                                                            504);
     assertEquals(200, failure.getMinimalCounterexample().getExampleValue().size());
   }
 
@@ -114,15 +115,31 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   public void testBoolean() {
     PropertyFailure<List<Boolean>> failure = checkFalsified(listsOf(booleans()),
                                                             l -> !l.contains(true) || !l.contains(false),
-                                                            4);
+                                                            3);
     assertEquals(2, failure.getMinimalCounterexample().getExampleValue().size());
   }
 
   public void testShrinkingNonEmptyList() {
     PropertyFailure<List<Integer>> failure = checkFalsified(nonEmptyLists(integers(0, 100)),
                                                             l -> !l.contains(42),
-                                                            10);
+                                                            4);
     assertEquals(1, failure.getMinimalCounterexample().getExampleValue().size());
+  }
+
+  public void testRecheckWithGivenSeeds() {
+    Generator<List<Integer>> gen = nonEmptyLists(integers(0, 100));
+    Predicate<List<Integer>> property = l -> !l.contains(42);
+
+    PropertyFailure<?> failure = checkFails(PropertyChecker.forAll(gen), property).getFailure();
+    assertTrue(failure.getIterationNumber() > 1);
+
+    PropertyFalsified e;
+
+    e = checkFails(PropertyChecker.forAll(gen).rechecking(failure.getIterationSeed(), failure.getSizeHint()), property);
+    assertEquals(1, e.getFailure().getIterationNumber());
+
+    e = checkFails(PropertyChecker.forAll(gen).withSeed(failure.getGlobalSeed()), property);
+    assertEquals(failure.getIterationNumber(), e.getFailure().getIterationNumber());
   }
 
 }
