@@ -27,6 +27,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
+import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
@@ -51,24 +52,21 @@ public class ExtensionLocator {
     }
 
     List<ExtensionCandidate> result = new SmartList<>();
-    findExtensionDeclarations(myPsiClass, new ReferenceProcessor(name) {
-      @Override
-      protected boolean handleExtensionTag(XmlTag tag) {
-        result.add(new ExtensionCandidate(
-          SmartPointerManager.getInstance(tag.getProject()).createSmartPsiElementPointer(tag)));
-        return true;
-      }
-    });
+    processExtensionDeclarations(myPsiClass, new ReferenceProcessor(name, tag -> {
+      result.add(new ExtensionCandidate(SmartPointerManager.getInstance(tag.getProject()).createSmartPsiElementPointer(tag)));
+      return true;
+    }));
     return result;
   }
 
+  @SuppressWarnings("unchecked") // it's fine with Processor.FALSE
   public static boolean isRegisteredExtension(@NotNull PsiClass psiClass) {
     String name = psiClass.getQualifiedName();
     //noinspection SimplifiableConditionalExpression
-    return name == null ? false : findExtensionDeclarations(psiClass, new ReferenceProcessor(name));
+    return name == null ? false : processExtensionDeclarations(psiClass, new ReferenceProcessor(name, Processor.FALSE));
   }
 
-  private static boolean findExtensionDeclarations(PsiClass psiClass, PsiNonJavaFileReferenceProcessor referenceProcessor) {
+  private static boolean processExtensionDeclarations(PsiClass psiClass, PsiNonJavaFileReferenceProcessor referenceProcessor) {
     String name = psiClass.getQualifiedName();
     if (name == null) return false;
 
@@ -80,9 +78,11 @@ public class ExtensionLocator {
 
   private static class ReferenceProcessor implements PsiNonJavaFileReferenceProcessor {
     private final String myExtensionClassName;
+    private final Processor<XmlTag> myExtensionTagHandler;
 
-    private ReferenceProcessor(String name) {
+    private ReferenceProcessor(String name, Processor<XmlTag> extensionTagHandler) {
       myExtensionClassName = name;
+      myExtensionTagHandler = extensionTagHandler;
     }
 
     @Override
@@ -96,13 +96,9 @@ public class ExtensionLocator {
 
       DomElement dom = DomUtil.getDomElement(tag);
       if (dom instanceof Extension && ((Extension)dom).getExtensionPoint() != null) {
-        return handleExtensionTag(tag);
+        return myExtensionTagHandler.process(tag);
       }
       return true;
-    }
-
-    protected boolean handleExtensionTag(XmlTag tag) {
-      return false; // default implementation
     }
   }
 }
