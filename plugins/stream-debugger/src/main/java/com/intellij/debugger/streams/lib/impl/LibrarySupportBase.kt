@@ -15,7 +15,6 @@
  */
 package com.intellij.debugger.streams.lib.impl
 
-import com.intellij.debugger.streams.diagnostic.ex.OperationNotSupportedException
 import com.intellij.debugger.streams.lib.*
 import com.intellij.debugger.streams.resolve.ValuesOrderResolver
 import com.intellij.debugger.streams.trace.CallTraceResolver
@@ -30,7 +29,7 @@ import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
 abstract class LibrarySupportBase(override val description: Library,
                                   private val compatibleLibrary: LibrarySupport = LibrarySupportBase.EMPTY) : LibrarySupport {
   companion object {
-    val EMPTY: LibrarySupport = LibrarySupportBase.EmptyLibrarySupport()
+    val EMPTY: LibrarySupport = DefaultLibrarySupport()
   }
 
   private val mySupportedIntermediateOperations: MutableMap<String, IntermediateOperation> = mutableMapOf()
@@ -77,30 +76,4 @@ abstract class LibrarySupportBase(override val description: Library,
   private fun findOperationByName(name: String): Operation? =
     mySupportedIntermediateOperations[name] ?: mySupportedTerminalOperations[name]
 
-  private class EmptyLibrarySupport : LibrarySupport {
-    override val description: Library
-      get() {
-        throw RuntimeException("There is no description for empty library")
-      }
-
-    override val handlerFactory: HandlerFactory = object : HandlerFactory {
-      override fun getForIntermediate(number: Int, call: IntermediateStreamCall): IntermediateCallHandler {
-        throw OperationNotSupportedException("Intermediate operation ${call.name} is not supported")
-      }
-
-      override fun getForTermination(call: TerminatorStreamCall, resultExpression: String): TerminatorCallHandler {
-        throw OperationNotSupportedException("Terminal operation ${call.name} is not supported")
-      }
-    }
-    override val interpreterFactory: InterpreterFactory = object : InterpreterFactory {
-      override fun getInterpreter(callName: String): CallTraceResolver {
-        throw OperationNotSupportedException("Operation $callName is not supported")
-      }
-    }
-    override val resolverFactory: ResolverFactory = object : ResolverFactory {
-      override fun getResolver(callName: String): ValuesOrderResolver {
-        throw OperationNotSupportedException("Operation $callName is not supported")
-      }
-    }
-  }
 }
