@@ -54,7 +54,6 @@ import java.util.function.Function;
 public abstract class TraceExecutionTestCase extends DebuggerTestCase {
   private static final ChainSelector DEFAULT_CHAIN_SELECTOR = ChainSelector.byIndex(0);
   private final DebuggerPositionResolver myPositionResolver = new DebuggerPositionResolverImpl();
-  private final TraceResultInterpreter myResultInterpreter = new TraceResultInterpreterImpl();
   private final StreamChainBuilder myChainBuilder = new AdvancedStreamChainBuilder(new StreamChainTransformerImpl());
 
   @Override
@@ -177,7 +176,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
 
   @SuppressWarnings("WeakerAccess")
   protected TraceResultInterpreter getResultInterpreter() {
-    return myResultInterpreter;
+    return new TraceResultInterpreterImpl(getProject());
   }
 
   @SuppressWarnings("WeakerAccess")
