@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import java.util.Map;
  * @author Dmitry Batkovich
  */
 public class GuavaLambdaConversionRule extends BaseGuavaTypeConversionRule {
-  private final static Logger LOG = Logger.getInstance(GuavaLambdaConversionRule.class);
   private final GuavaLambda myLambda;
 
   protected GuavaLambdaConversionRule(GuavaLambda lambda) {

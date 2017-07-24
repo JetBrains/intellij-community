@@ -93,7 +93,7 @@ public class GuavaTypeConversionDescriptor extends TypeConversionDescriptor {
   }
 
   private static boolean isIterable(@Nullable PsiType type) {
-    PsiClass aClass;
-    return (aClass = PsiTypesUtil.getPsiClass(type)) != null && CommonClassNames.JAVA_LANG_ITERABLE.equals(aClass.getQualifiedName());
+    PsiClass aClass = PsiTypesUtil.getPsiClass(type);
+    return aClass != null && CommonClassNames.JAVA_LANG_ITERABLE.equals(aClass.getQualifiedName());
   }
 }

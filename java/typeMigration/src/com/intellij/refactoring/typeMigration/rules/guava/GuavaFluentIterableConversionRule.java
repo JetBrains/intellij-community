@@ -125,14 +125,13 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
       return buildCompoundDescriptor((PsiMethodCallExpression)context, to, labeler);
     }
 
-    return getOneMethodDescriptor(methodName, method, from, to, context);
+    return getOneMethodDescriptor(methodName, method, from, context);
   }
 
   @Nullable
   private static TypeConversionDescriptorBase getOneMethodDescriptor(@NotNull String methodName,
                                                                      @NotNull PsiMethod method,
                                                                      @NotNull PsiType from,
-                                                                     @Nullable PsiType to,
                                                                      @Nullable PsiExpression context) {
     TypeConversionDescriptor descriptorBase = null;
     PsiType conversionType = null;
@@ -327,7 +326,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
       }
       TypeConversionDescriptorBase descriptor = null;
       if (FLUENT_ITERABLE.equals(containingClass.getQualifiedName())) {
-        descriptor = getOneMethodDescriptor(methodName, method, current.getType(), null, current);
+        descriptor = getOneMethodDescriptor(methodName, method, current.getType(), current);
         if (descriptor == null) {
           return null;
         }
