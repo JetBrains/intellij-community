@@ -143,11 +143,6 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     return ToolWindowId.PROJECT_VIEW;
   }
 
-  @Override
-  protected boolean canWorkWithCustomObjects() {
-    return true;
-  }
-
   public final void setSubId(String subId) {
     mySubId = subId;
   }
