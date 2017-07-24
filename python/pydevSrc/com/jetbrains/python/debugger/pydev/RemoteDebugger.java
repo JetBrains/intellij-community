@@ -322,7 +322,7 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Override
-  public void execute(@NotNull final AbstractCommand command, boolean waitForResult) {
+  public void execute(@NotNull final AbstractCommand command) {
     CountDownLatch myLatch = new CountDownLatch(1);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       if (command instanceof ResumeOrStepCommand) {
@@ -338,7 +338,7 @@ public class RemoteDebugger implements ProcessDebugger {
         LOG.error(e);
       }
     });
-    if (waitForResult) {
+    if (command.isResponseExpected()) {
       // Note: do not wait for result from UI thread
       try {
         myLatch.await(RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
@@ -364,7 +364,7 @@ public class RemoteDebugger implements ProcessDebugger {
   @Override
   public void suspendThread(String threadId) {
     final SuspendCommand command = new SuspendCommand(this, threadId);
-    execute(command, false);
+    execute(command);
   }
 
   @Override
@@ -388,20 +388,20 @@ public class RemoteDebugger implements ProcessDebugger {
   @Override
   public void smartStepInto(String threadId, String functionName) {
     final SmartStepIntoCommand command = new SmartStepIntoCommand(this, threadId, functionName);
-    execute(command, false);
+    execute(command);
   }
 
   @Override
   public void resumeOrStep(String threadId, ResumeOrStepCommand.Mode mode) {
     final ResumeOrStepCommand command = new ResumeOrStepCommand(this, threadId, mode);
-    execute(command, false);
+    execute(command);
   }
 
   @Override
   public void setTempBreakpoint(@NotNull String type, @NotNull String file, int line) {
     final SetBreakpointCommand command =
       new SetBreakpointCommand(this, type, file, line);
-    execute(command, true);  // set temp. breakpoint
+    execute(command);  // set temp. breakpoint
     myTempBreakpoints.put(Pair.create(file, line), type);
   }
 
@@ -410,7 +410,7 @@ public class RemoteDebugger implements ProcessDebugger {
     String type = myTempBreakpoints.get(Pair.create(file, line));
     if (type != null) {
       final RemoveBreakpointCommand command = new RemoveBreakpointCommand(this, type, file, line);
-      execute(command, false);  // remove temp. breakpoint
+      execute(command);  // remove temp. breakpoint
     }
     else {
       LOG.error("Temp breakpoint not found for " + file + ":" + line);
@@ -431,7 +431,7 @@ public class RemoteDebugger implements ProcessDebugger {
                                logExpression,
                                funcName,
                                policy);
-    execute(command, false);
+    execute(command);
   }
 
 
@@ -439,13 +439,13 @@ public class RemoteDebugger implements ProcessDebugger {
   public void removeBreakpoint(@NotNull String typeId, @NotNull String file, int line) {
     final RemoveBreakpointCommand command =
       new RemoveBreakpointCommand(this, typeId, file, line);
-    execute(command, false);
+    execute(command);
   }
 
   @Override
   public void setShowReturnValues(boolean isShowReturnValues) {
     final ShowReturnValuesCommand command = new ShowReturnValuesCommand(this, isShowReturnValues);
-    execute(command, false);
+    execute(command);
   }
 
   // for DebuggerReader only
@@ -628,25 +628,25 @@ public class RemoteDebugger implements ProcessDebugger {
   @Override
   public List<PydevCompletionVariant> getCompletions(String threadId, String frameId, String prefix) {
     final GetCompletionsCommand command = new GetCompletionsCommand(this, threadId, frameId, prefix);
-    execute(command, true);
+    execute(command);
     return command.getCompletions();
   }
 
   @Override
   public String getDescription(String threadId, String frameId, String cmd) {
     final GetDescriptionCommand command = new GetDescriptionCommand(this, threadId, frameId, cmd);
-    execute(command, true);
+    execute(command);
     return command.getResult();
   }
 
   @Override
   public void addExceptionBreakpoint(ExceptionBreakpointCommandFactory factory) {
-    execute(factory.createAddCommand(this), false);
+    execute(factory.createAddCommand(this));
   }
 
   @Override
   public void removeExceptionBreakpoint(ExceptionBreakpointCommandFactory factory) {
-    execute(factory.createRemoveCommand(this), false);
+    execute(factory.createRemoveCommand(this));
   }
 
   @Override
