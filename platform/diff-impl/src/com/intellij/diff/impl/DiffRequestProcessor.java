@@ -325,8 +325,8 @@ public abstract class DiffRequestProcessor implements Disposable {
   @NotNull
   protected List<AnAction> getNavigationActions() {
     return ContainerUtil.list(
-      new MyPrevDifferenceAction(),
-      new MyNextDifferenceAction(),
+      ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_DIFF),
+      ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_DIFF),
       new MyPrevChangeAction(),
       new MyNextChangeAction()
     );
@@ -625,7 +625,12 @@ public abstract class DiffRequestProcessor implements Disposable {
     return false;
   }
 
-  protected class MyNextDifferenceAction extends NextDifferenceAction {
+  private class MyNextDifferenceAction implements AnActionExtensionProvider {
+    @Override
+    public boolean isActive(@NotNull AnActionEvent e) {
+      return true;
+    }
+
     @Override
     public void update(@NotNull AnActionEvent e) {
       if (!ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {
@@ -668,7 +673,12 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
   }
 
-  protected class MyPrevDifferenceAction extends PrevDifferenceAction {
+  private class MyPrevDifferenceAction implements AnActionExtensionProvider {
+    @Override
+    public boolean isActive(@NotNull AnActionEvent e) {
+      return true;
+    }
+
     @Override
     public void update(@NotNull AnActionEvent e) {
       if (!ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {
@@ -858,6 +868,13 @@ public abstract class DiffRequestProcessor implements Disposable {
       }
       else if (DiffDataKeys.DIFF_CONTEXT.is(dataId)) {
         return myContext;
+      }
+
+      if (NextDifferenceAction.DATA_KEY.is(dataId)) {
+        return new MyNextDifferenceAction();
+      }
+      else if (PrevDifferenceAction.DATA_KEY.is(dataId)) {
+        return new MyPrevDifferenceAction();
       }
 
       data = myState.getData(dataId);

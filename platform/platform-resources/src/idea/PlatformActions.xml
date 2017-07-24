@@ -191,8 +191,8 @@
               text="Show Diff in External Tool"/>
       <separator/>
 
-      <action id="NextDiff" class="com.intellij.openapi.diff.actions.NextDiffAction" icon="AllIcons.Actions.MoveDown"/>
-      <action id="PreviousDiff" class="com.intellij.openapi.diff.actions.PreviousDiffAction" icon="AllIcons.Actions.MoveUp"/>
+      <action id="NextDiff" class="com.intellij.diff.actions.impl.NextDifferenceAction" icon="AllIcons.Actions.MoveDown"/>
+      <action id="PreviousDiff" class="com.intellij.diff.actions.impl.PrevDifferenceAction" icon="AllIcons.Actions.MoveUp"/>
       <action id="Diff.NextConflict" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.MoveDown"/>
       <action id="Diff.PreviousConflict" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.MoveUp"/>
       <action id="GotoChangedFile" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.ShowAsTree"/>

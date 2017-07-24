@@ -157,8 +157,8 @@ public abstract class MergeRequestProcessor implements Disposable {
   protected DefaultActionGroup collectToolbarActions(@Nullable List<AnAction> viewerActions) {
     DefaultActionGroup group = new DefaultActionGroup();
 
-    List<AnAction> navigationActions = ContainerUtil.list(new MyPrevDifferenceAction(),
-                                                          new MyNextDifferenceAction());
+    List<AnAction> navigationActions = ContainerUtil.list(ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_DIFF),
+                                                          ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_DIFF));
     DiffUtil.addActionBlock(group, navigationActions);
 
     DiffUtil.addActionBlock(group, viewerActions);
@@ -339,7 +339,12 @@ public abstract class MergeRequestProcessor implements Disposable {
   // Navigation
   //
 
-  private static class MyNextDifferenceAction extends NextDifferenceAction {
+  private static class MyNextDifferenceAction implements AnActionExtensionProvider {
+    @Override
+    public boolean isActive(@NotNull AnActionEvent e) {
+      return true;
+    }
+
     @Override
     public void update(@NotNull AnActionEvent e) {
       if (!ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {
@@ -365,7 +370,12 @@ public abstract class MergeRequestProcessor implements Disposable {
     }
   }
 
-  private static class MyPrevDifferenceAction extends PrevDifferenceAction {
+  private static class MyPrevDifferenceAction implements AnActionExtensionProvider {
+    @Override
+    public boolean isActive(@NotNull AnActionEvent e) {
+      return true;
+    }
+
     @Override
     public void update(@NotNull AnActionEvent e) {
       if (!ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {
@@ -424,6 +434,13 @@ public abstract class MergeRequestProcessor implements Disposable {
       }
       else if (DiffDataKeys.MERGE_VIEWER.is(dataId)) {
         return myViewer;
+      }
+
+      if (NextDifferenceAction.DATA_KEY.is(dataId)) {
+        return new MyNextDifferenceAction();
+      }
+      else if (PrevDifferenceAction.DATA_KEY.is(dataId)) {
+        return new MyPrevDifferenceAction();
       }
 
       DataProvider requestProvider = myRequest.getUserData(DiffUserDataKeys.DATA_PROVIDER);

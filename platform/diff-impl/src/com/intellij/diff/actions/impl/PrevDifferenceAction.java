@@ -15,13 +15,19 @@
  */
 package com.intellij.diff.actions.impl;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.ExtendableAction;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAware;
 
-public abstract class PrevDifferenceAction extends AnAction implements DumbAware {
+public class PrevDifferenceAction extends ExtendableAction implements DumbAware {
+  private static final ExtensionPointName<AnActionExtensionProvider> EP_NAME =
+    ExtensionPointName.create("com.intellij.diff.actions.impl.PrevDifferenceAction.ExtensionProvider");
+  public static final DataKey<AnActionExtensionProvider> DATA_KEY = getDataKey(EP_NAME);
+
   public PrevDifferenceAction() {
-    ActionUtil.copyFrom(this, IdeActions.ACTION_PREVIOUS_DIFF);
+    super(EP_NAME);
+    setEnabledInModalContext(true);
   }
 }

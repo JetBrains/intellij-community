@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.actionSystem.ActionPromoter;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.diff.actions.DiffWalkerAction;
 import com.intellij.openapi.vcs.ex.RollbackLineStatusAction;
 
 import java.util.ArrayList;
@@ -37,9 +36,6 @@ public class VcsActionPromoter implements ActionPromoter {
         list.add(action);
       }
       if (action instanceof ShowMessageHistoryAction) {
-        list.add(action);
-      }
-      if (action instanceof DiffWalkerAction) {
         list.add(action);
       }
     }

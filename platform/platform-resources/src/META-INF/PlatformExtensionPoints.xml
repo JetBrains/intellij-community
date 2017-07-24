@@ -258,6 +258,8 @@
     <extensionPoint name="testStatusListener" interface="com.intellij.execution.testframework.TestStatusListener"/>
 
     <extensionPoint name="diff.actions.ShowDiffAction.ExtensionProvider" interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"/>
+    <extensionPoint name="diff.actions.impl.PrevDifferenceAction.ExtensionProvider" interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"/>
+    <extensionPoint name="diff.actions.impl.NextDifferenceAction.ExtensionProvider" interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"/>
 
     <extensionPoint name="runConfigurationBeforeRunProviderDelegate" interface="com.intellij.execution.impl.RunConfigurationBeforeRunProviderDelegate"/>
 

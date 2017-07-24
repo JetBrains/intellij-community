@@ -21,12 +21,21 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 @ApiStatus.Experimental
 public class ExtendableAction extends AnAction {
   @NotNull private final ExtensionPointName<AnActionExtensionProvider> myExtensionPoint;
+  @NotNull private final DataKey<AnActionExtensionProvider> myDataKey;
 
   public ExtendableAction(@NotNull ExtensionPointName<AnActionExtensionProvider> extensionPoint) {
     myExtensionPoint = extensionPoint;
+    myDataKey = getDataKey(extensionPoint);
+  }
+
+  @NotNull
+  protected static DataKey<AnActionExtensionProvider> getDataKey(@NotNull ExtensionPointName<AnActionExtensionProvider> extensionPoint) {
+    return DataKey.create(extensionPoint.getName());
   }
 
   @Override
@@ -55,7 +64,10 @@ public class ExtendableAction extends AnAction {
 
   @Nullable
   private AnActionExtensionProvider getProvider(@NotNull AnActionEvent e) {
-    return ContainerUtil.find(myExtensionPoint.getExtensions(), provider -> provider.isActive(e));
+    List<AnActionExtensionProvider> localProviders = ContainerUtil.packNullables(e.getData(myDataKey));
+    List<AnActionExtensionProvider> globalProviders = ContainerUtil.list(myExtensionPoint.getExtensions());
+    List<AnActionExtensionProvider> providers = ContainerUtil.concat(localProviders, globalProviders);
+    return ContainerUtil.find(providers, provider -> provider.isActive(e));
   }
 
   protected void defaultUpdate(@NotNull AnActionEvent e) {

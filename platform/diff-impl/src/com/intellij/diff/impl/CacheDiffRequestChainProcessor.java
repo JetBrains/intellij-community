@@ -21,7 +21,9 @@ import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -85,8 +87,8 @@ public abstract class CacheDiffRequestChainProcessor extends CacheDiffRequestPro
   @Override
   protected List<AnAction> getNavigationActions() {
     return ContainerUtil.list(
-      new MyPrevDifferenceAction(),
-      new MyNextDifferenceAction(),
+      ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_DIFF),
+      ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_DIFF),
       new MyPrevChangeAction(),
       new MyNextChangeAction(),
       createGoToChangeAction()

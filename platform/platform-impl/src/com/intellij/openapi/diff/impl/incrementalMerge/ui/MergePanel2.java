@@ -18,13 +18,13 @@ package com.intellij.openapi.diff.impl.incrementalMerge.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
-import com.intellij.openapi.diff.actions.NextDiffAction;
-import com.intellij.openapi.diff.actions.PreviousDiffAction;
 import com.intellij.openapi.diff.actions.ToggleAutoScrollAction;
 import com.intellij.openapi.diff.impl.*;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
@@ -145,8 +145,8 @@ public class MergePanel2 implements DiffViewer {
   private DiffRequest.ToolbarAddons createToolbar() {
     return new DiffRequest.ToolbarAddons() {
       public void customize(DiffToolbar toolbar) {
-        toolbar.addAction(PreviousDiffAction.find());
-        toolbar.addAction(NextDiffAction.find());
+        toolbar.addAction(ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_DIFF));
+        toolbar.addAction(ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_DIFF));
         toolbar.addSeparator();
         toolbar.addAction(new OpenPartialDiffAction(0, 1, AllIcons.Diff.Compare3LeftMiddle));
         toolbar.addAction(new OpenPartialDiffAction(1, 2, AllIcons.Diff.Compare3MiddleRight));

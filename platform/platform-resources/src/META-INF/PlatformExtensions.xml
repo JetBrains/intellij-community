@@ -108,6 +108,9 @@
     <colorAndFontDescriptorProvider implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
     <getDataRule key="diff_navigatable_array" implementationClass="com.intellij.diff.actions.impl.DiffNavigatableArrayRule"/>
 
+    <diff.actions.impl.PrevDifferenceAction.ExtensionProvider implementation="com.intellij.openapi.diff.actions.DiffWalkerAction$Previous"/>
+    <diff.actions.impl.NextDifferenceAction.ExtensionProvider implementation="com.intellij.openapi.diff.actions.DiffWalkerAction$Next"/>
+
     <daemon.highlightInfoFilter implementation="com.intellij.codeInsight.daemon.OutsidersPsiFileSupport$HighlightFilter"/>
     <daemon.intentionActionFilter implementation="com.intellij.codeInsight.daemon.OutsidersPsiFileSupport$IntentionFilter"/>
     <defaultHighlightingSettingProvider id="GeneratedSourcesHighlightingSettingProvider"
