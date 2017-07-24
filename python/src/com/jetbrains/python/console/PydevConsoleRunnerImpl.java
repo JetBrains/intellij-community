@@ -72,8 +72,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.PsiFile;
-import com.intellij.remote.RemoteProcess;
-import com.intellij.remote.Tunnelable;
+import com.intellij.remote.*;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBColor;
@@ -340,7 +339,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     return DefaultRunExecutor.getRunExecutorInstance();
   }
 
-  private static int[] findAvailablePorts(Project project, PyConsoleType consoleType) {
+  public static int[] findAvailablePorts(Project project, PyConsoleType consoleType) {
     final int[] ports;
     try {
       // File "pydev/console/pydevconsole.py", line 223, in <module>
@@ -394,8 +393,31 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
         UsageTrigger.trigger(CONSOLE_FEATURE + ".remote");
-        return createRemoteConsoleProcess(manager, myGeneralCommandLine.getParametersList().getArray(),
-                                          myGeneralCommandLine.getEnvironment(), myGeneralCommandLine.getWorkDirectory());
+
+        PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
+        CredentialsType connectionType = data.getRemoteConnectionType();
+
+        if (connectionType == CredentialsType.SSH_HOST ||
+            connectionType == CredentialsType.WEB_DEPLOYMENT ||
+            connectionType == CredentialsType.VAGRANT) {
+          return createRemoteConsoleProcess(manager,
+                                            myGeneralCommandLine.getParametersList().getArray(),
+                                            myGeneralCommandLine.getEnvironment(),
+                                            myGeneralCommandLine.getWorkDirectory());
+        }
+
+        RemoteConsoleProcessData remoteConsoleProcessData =
+          PythonConsoleRemoteProcessCreatorKt.createRemoteConsoleProcess(manager, myGeneralCommandLine.getParametersList().getArray(),
+                                                                         myGeneralCommandLine.getEnvironment(),
+                                                                         myGeneralCommandLine.getWorkDirectory(),
+                                                                         PydevConsoleRunner.getPathMapper(myProject, mySdk, myConsoleSettings),
+                                                                         myProject, data, getRunnerFileFromHelpers());
+
+        myRemoteProcessHandlerBase = remoteConsoleProcessData.getRemoteProcessHandlerBase();
+        myCommandLine = myRemoteProcessHandlerBase.getCommandLine();
+        myPydevConsoleCommunication = remoteConsoleProcessData.getPydevConsoleCommunication();
+
+        return myRemoteProcessHandlerBase.getProcess();
       }
       throw new PythonRemoteInterpreterManager.PyRemoteInterpreterExecutionException();
     }
@@ -503,7 +525,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
                                                                                                  DOCKER_CONTAINER_PROJECT_PATH)));
   }
 
-  private static Couple<Integer> getRemotePortsFromProcess(RemoteProcess process) throws ExecutionException {
+  public static Couple<Integer> getRemotePortsFromProcess(RemoteProcess process) throws ExecutionException {
     Scanner s = new Scanner(process.getInputStream());
 
     return Couple.of(readInt(s, process), readInt(s, process));
