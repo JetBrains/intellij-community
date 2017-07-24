@@ -29,18 +29,18 @@ public class InsertString extends ActionOnRange {
   }
 
   public static Generator<InsertString> asciiInsertions(@NotNull PsiFile psiFile) {
-    return Generator.zipWith(Generator.integers(0, psiFile.getTextLength()), 
+    return Generator.zipWith(Generator.integers(0, psiFile.getTextLength()).noShrink(), 
                              Generator.stringsOf(Generator.asciiPrintableChars()),
                              (offset, toInsert) -> new InsertString(psiFile, offset, toInsert));
   }
 
   @Override
   public String toString() {
-    return "InsertString: " + getVirtualFile().getPath() + " " + getStartOffset() + " '" + myToInsert + "'";
+    return "InsertString{" + getVirtualFile().getPath() + " " + getCurrentStartOffset() + " '" + myToInsert + "', raw=" + myInitialStart + "}";
   }
 
   public void performAction() {
-    int offset = getStartOffset();
+    int offset = getFinalStartOffset();
     if (offset < 0) return;
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> getDocument().insertString(offset, myToInsert));

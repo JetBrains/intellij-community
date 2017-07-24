@@ -40,7 +40,7 @@ abstract class ActionOnRange implements MadTestingAction {
 
   ActionOnRange(PsiFile file, int start, int end) {
     myInitialStart = start;
-    myInitialEnd = start;
+    myInitialEnd = end;
     myMarker = SmartPointerManager.getInstance(file.getProject()).createSmartPsiFileRangePointer(file, new ProperTextRange(start, end));
     int length = file.getTextLength();
     assert length == getDocument().getTextLength() : file + " " + getDocument();
@@ -67,13 +67,20 @@ abstract class ActionOnRange implements MadTestingAction {
     return FileDocumentManager.getInstance().getDocument(getVirtualFile());
   }
 
-  int getStartOffset() {
-    TextRange range = getFinalRange();
-    return range == null ? -1 : range.getStartOffset();
+  Segment getCurrentRange() {
+    return myFinalRange != null ? myFinalRange : myMarker.getRange();
+  }
+  
+  int getCurrentStartOffset() {
+    return getStartOffset(getCurrentRange());
   }
 
-  Segment getCurrentRange() {
-    return myFinalRange == null ? myMarker.getRange() : myFinalRange;
+  int getFinalStartOffset() {
+    return getStartOffset(getFinalRange());
+  }
+
+  private static int getStartOffset(Segment range) {
+    return range == null ? -1 : range.getStartOffset();
   }
 
   @Nullable

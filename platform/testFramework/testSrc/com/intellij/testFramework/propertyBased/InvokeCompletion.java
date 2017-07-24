@@ -75,7 +75,7 @@ public class InvokeCompletion extends ActionOnRange {
     assert editor != null;
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    int offset = getStartOffset();
+    int offset = getFinalStartOffset();
     if (offset < 0) return;
     
     myLog = "offset=" + offset;
@@ -110,13 +110,13 @@ public class InvokeCompletion extends ActionOnRange {
     if (lookup == null) {
       myLog += ", no lookup";
       if (expectedVariant == null) return;
-      TestCase.fail("No lookup, but expected " + expectedVariant + " among completion variants" + notFound);
+      TestCase.fail("No lookup, but expected '" + expectedVariant + "' among completion variants" + notFound);
     }
 
     List<LookupElement> items = lookup.getItems();
     if (expectedVariant != null) {
       LookupElement sameItem = ContainerUtil.find(items, e -> e.getAllLookupStrings().contains(expectedVariant));
-      TestCase.assertNotNull("No variant " + expectedVariant + " among " + items + notFound, sameItem);
+      TestCase.assertNotNull("No variant '" + expectedVariant + "' among " + items + notFound, sameItem);
     }
 
     checkNoDuplicates(items);

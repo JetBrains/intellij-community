@@ -48,12 +48,12 @@ public class DeleteRange extends ActionOnRange {
       return new DeleteRange(psiFile,
                              commonParent.getTextRange().getStartOffset(),
                              commonParent.getTextRange().getEndOffset());
-    }).suchThat(Objects::nonNull);
+    }).suchThat(Objects::nonNull).noShrink();
   }
 
   @Override
   public String toString() {
-    return "DeleteRange: " + getVirtualFile().getPath() + " " + getCurrentRange();
+    return "DeleteRange{" + getVirtualFile().getPath() + " " + getCurrentRange() + ", raw=(" + myInitialStart + ", " + myInitialEnd + ")}";
   }
 
   public void performAction() {

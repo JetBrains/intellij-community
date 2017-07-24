@@ -61,7 +61,7 @@ public class InvokeIntention extends ActionOnRange {
   }
 
   public void performAction() {
-    int offset = getStartOffset();
+    int offset = getFinalStartOffset();
     myInvocationLog = "offset " + offset;
     if (offset < 0) return;
 
@@ -75,6 +75,7 @@ public class InvokeIntention extends ActionOnRange {
     IntentionAction intention = getRandomIntention(editor, file);
     if (intention == null) return;
     myInvocationLog += ", invoke '" + intention.getText() + "'";
+    String intentionString = intention.toString();
 
     Document changedDocument = getDocumentToBeChanged(intention);
     String textBefore = changedDocument == null ? null : changedDocument.getText();
@@ -92,8 +93,12 @@ public class InvokeIntention extends ActionOnRange {
         throw new AssertionError("Document is left blocked by PSI");
       }
       if (!hasErrors && textBefore != null && textBefore.equals(changedDocument.getText())) {
-        throw new AssertionError("No change was performed in the document" +
-                                 (intention.startInWriteAction() ? ".\nIf this fix doesn't change source files by design, it should return false from 'startInWriteAction'" : ""));
+        String message = "No change was performed in the document";
+        if (intention.startInWriteAction()) {
+          message += ".\nIf it's by design that " + intentionString + " doesn't change source files, " +
+                     "it should return false from 'startInWriteAction'";
+        }
+        throw new AssertionError(message);
       }
 
       PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
