@@ -24,8 +24,8 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 import java.util.Collection;
 
-class LocatorUtils {
-  private LocatorUtils() {
+class PluginRelatedLocatorsUtils {
+  private PluginRelatedLocatorsUtils() {
   }
 
   @NotNull

@@ -71,7 +71,7 @@ public class ExtensionLocator {
     if (name == null) return false;
 
     Project project = psiClass.getProject();
-    GlobalSearchScope scope = LocatorUtils.getCandidatesScope(project);
+    GlobalSearchScope scope = PluginRelatedLocatorsUtils.getCandidatesScope(project);
 
     return !PsiSearchHelper.SERVICE.getInstance(project).processUsagesInNonJavaFiles(name, referenceProcessor, scope);
   }

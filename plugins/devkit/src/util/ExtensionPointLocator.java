@@ -71,7 +71,7 @@ public class ExtensionPointLocator {
     if (name == null) return;
 
     Project project = psiClass.getProject();
-    GlobalSearchScope scope = LocatorUtils.getCandidatesScope(project);
+    GlobalSearchScope scope = PluginRelatedLocatorsUtils.getCandidatesScope(project);
     PsiSearchHelper.SERVICE.getInstance(project).processUsagesInNonJavaFiles(name, (file, startOffset, endOffset) -> {
       PsiElement element = file.findElementAt(startOffset);
       processExtensionPointCandidate(element, list);
