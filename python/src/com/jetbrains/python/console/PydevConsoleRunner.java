@@ -62,22 +62,29 @@ public interface PydevConsoleRunner {
 
 
   @Nullable
-  static PyRemotePathMapper getPathMapper(@NotNull Project project, Sdk sdk, PyConsoleOptions.PyConsoleSettings consoleSettings) {
+  static PyRemotePathMapper getPathMapper(@NotNull Project project,
+                                          Sdk sdk,
+                                          PyConsoleOptions.PyConsoleSettings consoleSettings) {
     if (PySdkUtil.isRemote(sdk)) {
       PythonRemoteInterpreterManager instance = PythonRemoteInterpreterManager.getInstance();
       if (instance != null) {
-        //noinspection ConstantConditions
-        PyRemotePathMapper remotePathMapper =
-          instance.setupMappings(project, (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData(), null);
-
-        PathMappingSettings mappingSettings = consoleSettings.getMappingSettings();
-
-        remotePathMapper.addAll(mappingSettings.getPathMappings(), PyRemotePathMapper.PyPathMappingType.USER_DEFINED);
-
-        return remotePathMapper;
+        PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
+        return getPathMapper(project, consoleSettings, instance, remoteSdkAdditionalData);
       }
     }
     return null;
+  }
+
+  @NotNull
+  static PyRemotePathMapper getPathMapper(@NotNull Project project,
+                                          PyConsoleOptions.PyConsoleSettings consoleSettings,
+                                          PythonRemoteInterpreterManager instance,
+                                          PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData) {
+    //noinspection ConstantConditions
+    PyRemotePathMapper remotePathMapper = instance.setupMappings(project, remoteSdkAdditionalData, null);
+    PathMappingSettings mappingSettings = consoleSettings.getMappingSettings();
+    remotePathMapper.addAll(mappingSettings.getPathMappings(), PyRemotePathMapper.PyPathMappingType.USER_DEFINED);
+    return remotePathMapper;
   }
 
   @NotNull
