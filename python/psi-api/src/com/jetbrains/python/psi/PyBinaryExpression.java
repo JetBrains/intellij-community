@@ -31,15 +31,17 @@ public interface PyBinaryExpression extends PyQualifiedExpression, PyCallSiteExp
   @Nullable
   @Override
   default PyExpression getReceiver(@Nullable PyCallable resolvedCallee) {
-    final boolean isRight = resolvedCallee != null && PyNames.isRightOperatorName(resolvedCallee.getName());
-    return isRight ? getRightExpression() : getLeftExpression();
+    return isRightOperator(resolvedCallee) ? getRightExpression() : getLeftExpression();
   }
 
   @NotNull
   @Override
   default List<PyExpression> getArguments(@Nullable PyCallable resolvedCallee) {
-    final boolean isRight = resolvedCallee != null && PyNames.isRightOperatorName(resolvedCallee.getName());
-    return Collections.singletonList(isRight ? getLeftExpression() : getRightExpression());
+    return Collections.singletonList(isRightOperator(resolvedCallee) ? getLeftExpression() : getRightExpression());
+  }
+
+  default boolean isRightOperator(@Nullable PyCallable resolvedCallee) {
+    return resolvedCallee != null && PyNames.isRightOperatorName(getReferencedName(), resolvedCallee.getName());
   }
 
   PyExpression getLeftExpression();
