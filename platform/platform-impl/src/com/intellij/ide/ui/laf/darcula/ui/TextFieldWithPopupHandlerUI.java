@@ -28,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.plaf.FontUIResource;
+import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicTextFieldUI;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
@@ -58,6 +60,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   protected final HashMap<String, IconHolder> icons = new HashMap<>();
   protected final JTextField myTextField;
   private final Handler handler = new Handler();
+  private boolean monospaced;
   private Object variant;
   private int cursor;
 
@@ -457,10 +460,12 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       this.variant = variant;
 
       icons.clear();
+      boolean monospaced = false;
       insets.set(0, 0, 0, 0);
       if (Expandable.VARIANT.equals(variant)) {
         icons.put("expand", new ExpandIconHolder());
         insets.right = getExpandIconPreferredSpace();
+        monospaced = true;
       }
       else if ("search".equals(variant) && this instanceof MacIntelliJTextFieldUI) {
         icons.put("clear", new ClearIconHolder());
@@ -468,8 +473,24 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         icons.put("search", new SearchIconHolder());
         insets.left = getSearchIconPreferredSpace();
       }
+      setMonospaced(monospaced);
     }
   }
+
+  private void setMonospaced(boolean monospaced) {
+    if (this.monospaced != monospaced) {
+      this.monospaced = monospaced;
+      JTextComponent component = getComponent();
+      if (component != null) {
+        Font font = component.getFont();
+        if (font == null || font instanceof UIResource) {
+          font = UIManager.getFont(getPropertyPrefix() + ".font");
+          component.setFont(!monospaced ? font : new FontUIResource("monospaced", font.getStyle(), font.getSize()));
+        }
+      }
+    }
+  }
+
 
   public static abstract class IconHolder {
     public final Rectangle bounds = new Rectangle();
