@@ -265,12 +265,11 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
         out.append("||");
       }
       firstCaseValue = false;
-      out.append(expressionText);
       if (useEquals) {
-        out.append(".equals(").append(caseValue).append(')');
+        out.append(caseValue).append(".equals(").append(expressionText).append(')');
       }
       else {
-        out.append("==").append(caseValue);
+        out.append(expressionText).append("==").append(caseValue);
       }
     }
     out.append(')');
