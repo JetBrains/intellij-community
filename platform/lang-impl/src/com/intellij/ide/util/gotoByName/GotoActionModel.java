@@ -45,6 +45,7 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.TransferToEDTQueue;
@@ -431,21 +432,20 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   }
 
   private void updateActions(List<ActionWrapper> toUpdate) {
-    TransferToEDTQueue<ActionWrapper> queue = new TransferToEDTQueue<ActionWrapper>("goto action", aw -> {
-      aw.getPresentation();
-      return true;
-    }, Conditions.FALSE, 50) {
-      @Override
-      protected void schedule(@NotNull Runnable updateRunnable) {
-        ApplicationManager.getApplication().invokeLater(updateRunnable, myModality);
-      }
-    };
+    Semaphore semaphore = new Semaphore(toUpdate.size());
     for (ActionWrapper wrapper : toUpdate) {
-      queue.offer(wrapper);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        try {
+          wrapper.getPresentation();
+        }
+        finally {
+          semaphore.up();
+        }
+      }, myModality);
     }
-    while (queue.size() > 0) {
+
+    while (!semaphore.waitFor(10)) {
       ProgressManager.checkCanceled();
-      TimeoutUtil.sleep(50);
     }
   }
 

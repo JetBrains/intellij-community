@@ -25,22 +25,15 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.IconUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,23 +61,15 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
     Presentation presentation = e.getPresentation();
     if (isPlaceGlobal(e)) {
       List<RunContentDescriptor> stoppableDescriptors = getActiveStoppableDescriptors(e.getDataContext());
-      List<Pair<TaskInfo, ProgressIndicator>> cancellableProcesses = getCancellableProcesses(e.getProject());
       int stopCount = stoppableDescriptors.size();
-      int cancelCount = cancellableProcesses.size();
-      if (stopCount > 1 || cancelCount > 0) {
-        enable = true;
-        presentation.setText(getTemplatePresentation().getText()+"...");
+      enable = stopCount >= 1;
+      if (stopCount > 1) {
+        presentation.setText(getTemplatePresentation().getText() + "...");
+        icon = IconUtil.addText(icon, String.valueOf(stopCount));
       }
       else if (stopCount == 1) {
-        enable = true;
           presentation.setText(ExecutionBundle.message("stop.configuration.action.name",
                                                        StringUtil.escapeMnemonics(stoppableDescriptors.get(0).getDisplayName())));
-      } else {
-        enable = false;
-      }
-      int count = stopCount + cancelCount;
-      if (count > 1) {
-        icon = IconUtil.addText(icon, String.valueOf(count));
       }
     }
     else {
@@ -120,18 +105,16 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     Project project = e.getProject();
-    List<Pair<TaskInfo, ProgressIndicator>> cancellableProcesses = getCancellableProcesses(project);
     List<RunContentDescriptor> stoppableDescriptors = getActiveStoppableDescriptors(dataContext);
     int stopCount = stoppableDescriptors.size();
-    int cancelCount = cancellableProcesses.size();
     if (isPlaceGlobal(e)) {
-      if (stopCount == 1 && cancelCount == 0) {
+      if (stopCount == 1) {
         ExecutionManagerImpl.stopProcess(stoppableDescriptors.get(0));
         return;
       }
 
       Pair<List<HandlerItem>, HandlerItem>
-        handlerItems = getItemsList(cancellableProcesses, stoppableDescriptors, getRecentlyStartedContentDescriptor(dataContext));
+        handlerItems = getItemsList(stoppableDescriptors, getRecentlyStartedContentDescriptor(dataContext));
       if (handlerItems == null || handlerItems.first.isEmpty()) {
         return;
       }
@@ -148,7 +131,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
             }
           }
         };
-      if (stopCount + cancelCount > 1) {
+      if (stopCount > 1) {
         ((DefaultListModel<HandlerItem>)list.getModel()).addElement(stopAllItem);
       }
       JBPopup activePopup = SoftReference.dereference(myActivePopupRef);
@@ -214,25 +197,13 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
     }
   }
 
-  @NotNull
-  private static List<Pair<TaskInfo, ProgressIndicator>>  getCancellableProcesses(@Nullable Project project) {
-    IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).findFrameFor(project);
-    StatusBarEx statusBar = frame == null ? null : (StatusBarEx)frame.getStatusBar();
-    if (statusBar == null) return Collections.emptyList();
-
-    return ContainerUtil.findAll(statusBar.getBackgroundProcesses(),
-                                 pair -> pair.first.isCancellable() && !pair.second.isCanceled());
-  }
-
   @Nullable
-  private static Pair<List<HandlerItem>, HandlerItem> getItemsList(List<Pair<TaskInfo, ProgressIndicator>> tasks,
-                                                                   List<RunContentDescriptor> descriptors,
-                                                                   RunContentDescriptor toSelect) {
-    if (tasks.isEmpty() && descriptors.isEmpty()) {
+  private static Pair<List<HandlerItem>, HandlerItem> getItemsList(List<RunContentDescriptor> descriptors, RunContentDescriptor toSelect) {
+    if (descriptors.isEmpty()) {
       return null;
     }
 
-    List<HandlerItem> items = new ArrayList<>(tasks.size() + descriptors.size());
+    List<HandlerItem> items = new ArrayList<>(descriptors.size());
     HandlerItem selected = null;
     for (final RunContentDescriptor descriptor : descriptors) {
       final ProcessHandler handler = descriptor.getProcessHandler();
@@ -250,16 +221,6 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
       }
     }
 
-    boolean hasSeparator = true;
-    for (final Pair<TaskInfo, ProgressIndicator> eachPair : tasks) {
-      items.add(new HandlerItem(eachPair.first.getTitle(), AllIcons.Process.Step_passive, hasSeparator) {
-        @Override
-        void stop() {
-          eachPair.second.cancel();
-        }
-      });
-      hasSeparator = false;
-    }
     return Pair.create(items, selected);
   }
 
@@ -303,12 +264,12 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
                || processHandler instanceof KillableProcess && ((KillableProcess)processHandler).canKillProcess());
   }
 
-  private abstract static class HandlerItem {
+  abstract static class HandlerItem {
     final String displayName;
     final Icon icon;
     final boolean hasSeparator;
 
-    private HandlerItem(String displayName, Icon icon, boolean hasSeparator) {
+    HandlerItem(String displayName, Icon icon, boolean hasSeparator) {
       this.displayName = displayName;
       this.icon = icon;
       this.hasSeparator = hasSeparator;

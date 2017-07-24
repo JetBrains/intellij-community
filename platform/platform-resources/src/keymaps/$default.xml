@@ -502,6 +502,9 @@
   <action id="Stop">
     <keyboard-shortcut first-keystroke="control F2"/>
   </action>
+  <action id="StopBackgroundProcesses">
+    <keyboard-shortcut first-keystroke="control shift F2"/>
+  </action>
   <action id="EditorTextStartWithSelection">
     <keyboard-shortcut first-keystroke="control shift HOME"/>
   </action>

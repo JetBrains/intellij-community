@@ -16,7 +16,7 @@ UFile (package = ) [public class TryCatch {...]
                         UDeclarationsExpression [var b: int = 0] = Undetermined
                             ULocalVariable (name = b) [var b: int = 0]
                                 ULiteralExpression (value = 0) [0] = 0
-                        UTryExpression [try {...] = Phi(1, Undetermined)
+                        UTryExpression [try {...] = Undetermined
                             UBlockExpression [{...}] = 1
                                 UBinaryExpression (operator = =) [sum = sum + Integer.parseInt(part)] = Undetermined
                                     USimpleNameReferenceExpression (identifier = sum) [sum] = Phi((var sum = 0), (var sum = Undetermined))

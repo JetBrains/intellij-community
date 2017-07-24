@@ -20,7 +20,6 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.xmlb.annotations.CollectionBean;
@@ -62,11 +61,11 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
     return ServiceManager.getService(UpdateSettings.class);
   }
 
-  private final boolean myPlatformUpdateEnabled = !SystemProperties.getBooleanProperty("ide.no.platform.update", false);
+  private final String myPackageManager = System.getProperty("ide.no.platform.update");
   private State myState = new State();
 
   public boolean isPlatformUpdateEnabled() {
-    return myPlatformUpdateEnabled;
+    return myPackageManager == null;
   }
 
   @NotNull

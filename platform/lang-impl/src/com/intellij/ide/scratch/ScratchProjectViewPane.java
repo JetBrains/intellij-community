@@ -123,11 +123,6 @@ public class ScratchProjectViewPane extends ProjectViewPane {
       }
 
       @Override
-      protected boolean canWorkWithCustomObjects() {
-        return false;
-      }
-
-      @Override
       public String toString() {
         return getTitle();
       }

@@ -13,7 +13,7 @@ UFile (package = ) [public class DoWhile {...]
                         USimpleNameReferenceExpression (identifier = number) [number] = Phi((var number = Undetermined), (var number = 0), (var number = 4))
                         ULiteralExpression (value = 0) [0] = 0
                     UBlockExpression [{...}] = Undetermined
-                        UIfExpression [if (number % 10 === 7) {...}] = Phi((var count = Undetermined), (var count = 0), (var count = 1), Undetermined)
+                        UIfExpression [if (number % 10 === 7) {...}] = Undetermined
                             UBinaryExpression (operator = ===) [number % 10 === 7] = Undetermined
                                 UBinaryExpression (operator = %) [number % 10] = Undetermined
                                     USimpleNameReferenceExpression (identifier = number) [number] = Phi((var number = Undetermined), (var number = 0), (var number = 4))

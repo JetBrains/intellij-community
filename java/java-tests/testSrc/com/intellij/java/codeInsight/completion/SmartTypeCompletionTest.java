@@ -1249,6 +1249,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testStaticBuilder() { doTest(); }
   public void testStaticBuilderWithArguments() { doTest(); }
+  public void testStaticBuilderWithInterfaceAndGenerics() { doTest(); }
 
   public void testStaticBuilderWithGenerics() {
     configureByTestName();

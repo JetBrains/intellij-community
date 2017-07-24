@@ -125,7 +125,7 @@ public class HtmlUtil {
 
   private static final Set<String> BLOCK_TAGS_MAP = new THashSet<>();
 
-  @NonNls private static final String[] INLINE_ELEMENTS_CONTAINER = {"p", "h1", "h2", "h3", "h4", "h5", "h6", "pre", "dt"};
+  @NonNls private static final String[] INLINE_ELEMENTS_CONTAINER = {"p", "h1", "h2", "h3", "h4", "h5", "h6", "pre"};
   private static final Set<String> INLINE_ELEMENTS_CONTAINER_MAP = new THashSet<>();
   
   private static final Set<String> POSSIBLY_INLINE_TAGS_MAP = new THashSet<>();

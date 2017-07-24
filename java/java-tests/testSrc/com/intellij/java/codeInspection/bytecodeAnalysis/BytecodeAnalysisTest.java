@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
@@ -33,11 +34,14 @@ import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.junit.Assert;
 
+import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.security.MessageDigest;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.stream.Stream;
 
@@ -46,7 +50,7 @@ import java.util.stream.Stream;
  */
 public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
   public static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = Contract.class.getName();
-  private final String myClassesProjectRelativePath = "/classes/" + Test01.class.getPackage().getName().replace('.', '/');
+  private static final String PACKAGE_PATH = Test01.class.getPackage().getName().replace('.', '/');
   private JavaPsiFacade myJavaPsiFacade;
   private ProjectBytecodeAnalysis myBytecodeAnalysisService;
   private MessageDigest myMessageDigest;
@@ -73,6 +77,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     checkAnnotations(Test01.class);
     checkAnnotations(Test02.class);
     checkAnnotations(TestNonStable.class);
+    checkAnnotations(TestConflict.class);
   }
 
   public void testConverter() throws IOException {
@@ -236,12 +241,36 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private void setUpDataClasses() throws Exception {
-    File classesDir = new File(Test01.class.getResource("/" + Test01.class.getPackage().getName().replace('.', '/')).toURI());
-    File destDir = new File(myModule.getProject().getBaseDir().getPath() + myClassesProjectRelativePath);
+    File classesDir = new File(Test01.class.getResource("/" + PACKAGE_PATH).toURI());
+    String basePath = myModule.getProject().getBaseDir().getPath();
+    File destDir = new File(basePath + "/classes/" + PACKAGE_PATH);
     FileUtil.copyDir(classesDir, destDir);
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(destDir);
     assertNotNull(vFile);
     PsiTestUtil.addLibrary(myModule, "dataClasses", vFile.getPath(), new String[]{""}, ArrayUtil.EMPTY_STRING_ARRAY);
+
+    if(getTestName(false).equals("Inference")) {
+      setUpConflictingClasses(basePath);
+    }
   }
 
+  private void setUpConflictingClasses(String basePath) throws IOException {
+    JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+    DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
+    StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, null);
+    File sourcePath = new File(PlatformTestUtil.getCommunityPath() + "/java/java-tests/testSrc/" + PACKAGE_PATH);
+    File[] sourceFiles = new File(sourcePath.getParentFile(), "classConflict").listFiles((dir, name) -> name.endsWith(".java"));
+    assertNotNull(sourceFiles);
+    Iterable<? extends JavaFileObject> sources = manager.getJavaFileObjectsFromFiles(Arrays.asList(sourceFiles));
+    File conflictOutput = new File(basePath + "/conflict/");
+    assertTrue(conflictOutput.mkdirs());
+    manager.setLocation(StandardLocation.CLASS_OUTPUT, Collections.singleton(conflictOutput));
+    JavaCompiler.CompilationTask task = compiler.getTask(null, manager, diagnostics, null, null, sources);
+    if(!task.call()) {
+      fail(diagnostics.getDiagnostics().toString());
+    }
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(conflictOutput);
+    assertNotNull(vFile);
+    PsiTestUtil.addLibrary(myModule, "conflictClasses", vFile.getPath(), new String[]{""}, ArrayUtil.EMPTY_STRING_ARRAY);
+  }
 }

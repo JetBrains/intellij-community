@@ -19,8 +19,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.messages.serviceMessages.MapSerializerUtil;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.engine.descriptor.ClassTestDescriptor;
-import org.junit.jupiter.engine.descriptor.MethodTestDescriptor;
 import org.junit.jupiter.engine.descriptor.TestFactoryTestDescriptor;
+import org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor;
 import org.junit.platform.engine.TestDescriptor;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.UniqueId;
@@ -70,7 +70,7 @@ class JUnit5EventsTest {
   @Test
   void multipleFailures() throws Exception {
 
-    TestDescriptor testDescriptor = new MethodTestDescriptor(UniqueId.forEngine("engine"), TestClass.class,
+    TestDescriptor testDescriptor = new TestMethodTestDescriptor(UniqueId.forEngine("engine"), TestClass.class,
                                                              TestClass.class.getDeclaredMethod("test1"));
     TestIdentifier identifier = TestIdentifier.from(testDescriptor);
     myExecutionListener.executionStarted(identifier);

@@ -84,11 +84,6 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
   }
 
   @Override
-  protected boolean canWorkWithCustomObjects() {
-    return false;
-  }
-
-  @Override
   public boolean isSubIdSelectable(@NotNull String subId, @NotNull SelectInContext context) {
     PsiFileSystemItem file = getContextPsiFile(context);
     if (!(file instanceof PsiFile)) return false;

@@ -357,6 +357,7 @@
       <action id="editRunConfigurations" class="com.intellij.execution.actions.EditRunConfigurationsAction"/>
       <action id="Stop" class="com.intellij.execution.actions.StopAction" icon="AllIcons.Actions.Suspend"/>
       <action id="ShowLiveRunConfigurations" class="com.intellij.execution.actions.ShowRunningListAction"/>
+      <action id="StopBackgroundProcesses" class="com.intellij.execution.actions.StopBackgroundProcessesAction" icon="AllIcons.Process.Stop"/>
 
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="RefactoringMenu"/>
     </group>
@@ -413,6 +414,7 @@
       <separator/>
       <reference ref="RunConfiguration"/>
       <reference ref="RunnerActions"/>
+      <reference ref="Stop"/>
       <add-to-group group-id="MainToolBar" relative-to-action="Forward" anchor="after"/>
     </group>
 
@@ -421,7 +423,6 @@
       <reference ref="ToolbarRunGroup"/>
       <separator/>
       <reference ref="NavBarVcsGroup"/>
-      <reference ref="Stop"/>
       <separator/>
       <reference id="NavBarToolBarOthers"/>
       <separator/>

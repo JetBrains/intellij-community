@@ -95,6 +95,11 @@ public class PyMethodMayBeStaticInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-22091
+  public void testFString() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
   // PY-18866
   public void testSuperSamePy3() {
     runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTest());
@@ -107,6 +112,11 @@ public class PyMethodMayBeStaticInspectionTest extends PyTestCase {
 
   // PY-24817
   public void testDocumentedEmpty() {
+    doTest();
+  }
+
+  // PY-25076
+  public void testAttributeNamedSelf() {
     doTest();
   }
 

@@ -530,9 +530,9 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     }
   }
 
-  private void dropUnregisteredIndices(AsyncState state) {
+  private boolean dropUnregisteredIndices(AsyncState state) {
     if (ApplicationManager.getApplication().isDisposed()) {
-      return;
+      return false;
     }
 
     final Set<String> indicesToDrop =
@@ -547,7 +547,9 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
       for (String s : indicesToDrop) {
         FileUtil.delete(IndexInfrastructure.getIndexRootDir(StubIndexKey.createIndexKey(s)));
       }
+      return true;
     }
+    return false;
   }
 
   @Override
@@ -649,12 +651,15 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
 
     @Override
     protected AsyncState finish() {
+      boolean someIndicesWereDropped = dropUnregisteredIndices(state);
+      if (someIndicesWereDropped) updated.append(" and some indices were dropped");
+
       if (updated.length() > 0) {
         final Throwable e = new Throwable(updated.toString());
         // avoid direct forceRebuild as it produces dependency cycle (IDEA-105485)
         ApplicationManager.getApplication().invokeLater(() -> forceRebuild(e), ModalityState.NON_MODAL);
       }
-      dropUnregisteredIndices(state);
+      
       myInitialized = true;
       return state;
     }
