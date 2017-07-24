@@ -895,7 +895,34 @@ class Test {
 """)
   }
 
-  
+  fun `test if resolved but no hints just return no hints`() {
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+public class Test {
+
+    public void main() {
+        foo(1<caret>);
+    }
+
+    void foo(int a) {}
+    void foo() {}
+}
+""")
+
+    myFixture.doHighlighting()
+
+    var inlays = getHints()
+    assert(inlays.size == 1)
+
+
+    myFixture.type('\b')
+
+    myFixture.performEditorAction("EditorLeft")
+    myFixture.doHighlighting()
+
+    inlays = getHints()
+    assert(inlays.isEmpty())
+  }
+
   fun getHints(): List<String> {
     val document = myFixture.getDocument(myFixture.file)
     val manager = ParameterHintsPresentationManager.getInstance()
