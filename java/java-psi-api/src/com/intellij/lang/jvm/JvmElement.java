@@ -15,10 +15,8 @@
  */
 package com.intellij.lang.jvm;
 
-import com.intellij.lang.Language;
 import com.intellij.pom.PomTarget;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -28,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface JvmElement extends PomTarget {
 
-  @NotNull
-  Language getLanguage();
-
   @Nullable
-  PsiElement getPsiElement();
+  PsiElement getSourceElement();
 }

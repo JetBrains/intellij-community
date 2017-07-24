@@ -30,8 +30,8 @@ public class JvmClassUtil {
   @NotNull
   public static Comparator<JvmClass> createScopeComparator(@NotNull GlobalSearchScope scope) {
     return (c1, c2) -> {
-      VirtualFile file1 = PsiUtilCore.getVirtualFile(c1.getPsiElement());
-      VirtualFile file2 = PsiUtilCore.getVirtualFile(c2.getPsiElement());
+      VirtualFile file1 = PsiUtilCore.getVirtualFile(c1.getSourceElement());
+      VirtualFile file2 = PsiUtilCore.getVirtualFile(c2.getSourceElement());
       if (file1 == null) return file2 == null ? 0 : -1;
       if (file2 == null) return 1;
       return scope.compare(file2, file1);
