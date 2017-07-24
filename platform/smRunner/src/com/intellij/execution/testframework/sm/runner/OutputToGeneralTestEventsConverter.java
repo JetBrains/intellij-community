@@ -233,10 +233,10 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
-  private void fireOnSuiteTreeNodeAdded(String testName, String locationHint) {
+  private void fireOnSuiteTreeNodeAdded(String testName, String locationHint, String id, String parentNodeId) {
     final GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
-      processor.onSuiteTreeNodeAdded(testName, locationHint);
+      processor.onSuiteTreeNodeAdded(testName, locationHint, id, parentNodeId);
     }
   }
 
@@ -248,11 +248,11 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
-  private void fireOnSuiteTreeStarted(String suiteName, String locationHint) {
+  private void fireOnSuiteTreeStarted(String suiteName, String locationHint, String id, String parentNodeId) {
 
     final GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
-      processor.onSuiteTreeStarted(suiteName, locationHint);
+      processor.onSuiteTreeStarted(suiteName, locationHint, id, parentNodeId);
     }
   }
 
@@ -541,13 +541,13 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
         fireOnTestFrameworkAttached();
       }
       else if (SUITE_TREE_STARTED.equals(name)) {
-        fireOnSuiteTreeStarted(msg.getAttributes().get("name"), msg.getAttributes().get(ATTR_KEY_LOCATION_URL));
+        fireOnSuiteTreeStarted(msg.getAttributes().get("name"), msg.getAttributes().get(ATTR_KEY_LOCATION_URL), TreeNodeEvent.getNodeId(msg), msg.getAttributes().get("parentNodeId"));
       }
       else if (SUITE_TREE_ENDED.equals(name)) {
         fireOnSuiteTreeEnded(msg.getAttributes().get("name"));
       }
       else if (SUITE_TREE_NODE.equals(name)) {
-        fireOnSuiteTreeNodeAdded(msg.getAttributes().get("name"), msg.getAttributes().get(ATTR_KEY_LOCATION_URL));
+        fireOnSuiteTreeNodeAdded(msg.getAttributes().get("name"), msg.getAttributes().get(ATTR_KEY_LOCATION_URL), TreeNodeEvent.getNodeId(msg), msg.getAttributes().get("parentNodeId"));
       }
       else if (BUILD_TREE_ENDED_NODE.equals(name)) {
         fireOnBuildTreeEnded();

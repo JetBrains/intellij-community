@@ -28,6 +28,13 @@ import org.jetbrains.annotations.Nullable;
 public class CompletionPolicy {
 
   /**
+   * @return string consisting of characters that can be used to insert the chosen lookup item
+   */
+  public String getPossibleSelectionCharacters() {
+    return "\n\t\r .(";
+  }
+
+  /**
    * @return the lookup string of an element that should be suggested in the given position
    */
   public String getExpectedVariant(Editor editor, PsiFile file) {
@@ -42,6 +49,10 @@ public class CompletionPolicy {
 
   @Nullable
   protected String getExpectedVariant(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement leaf, @Nullable PsiReference ref) {
+    if (MadTestingUtil.isAfterError(file, leaf.getTextRange().getStartOffset())) {
+      return null;
+    }
+    
     String leafText = leaf.getText();
     if (leafText.isEmpty() ||
         !Character.isLetter(leafText.charAt(0)) ||
@@ -53,8 +64,8 @@ public class CompletionPolicy {
     if (isDeclarationName(editor, file, leaf)) return null;
 
     if (ref != null) {
-      PsiElement refTarget = ref.resolve();
-      if (refTarget == null || !shouldSuggestReferenceText(ref)) return null;
+      PsiElement target = getValidResolveResult(ref);
+      if (target == null || !shouldSuggestReferenceText(ref, target)) return null;
     }
     else {
       if (!SyntaxTraverser.psiTraverser(file).filter(PsiErrorElement.class).isEmpty()) {
@@ -63,6 +74,17 @@ public class CompletionPolicy {
       if (!shouldSuggestNonReferenceLeafText(leaf)) return null;
     }
     return leafText;
+  }
+
+  private static PsiElement getValidResolveResult(@NotNull PsiReference ref) {
+    if (ref instanceof PsiPolyVariantReference) {
+      for (ResolveResult result : ((PsiPolyVariantReference)ref).multiResolve(false)) {
+        if (!result.isValidResult()) {
+          return null;
+        }
+      }
+    }
+    return ref.resolve();
   }
 
   private static boolean isDeclarationName(Editor editor, PsiFile file, PsiElement leaf) {
@@ -77,7 +99,7 @@ public class CompletionPolicy {
     return true;
   }
 
-  protected boolean shouldSuggestReferenceText(@NotNull PsiReference ref) { 
+  protected boolean shouldSuggestReferenceText(@NotNull PsiReference ref, @NotNull PsiElement target) { 
     return true;
   }
 }

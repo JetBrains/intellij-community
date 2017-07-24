@@ -66,46 +66,50 @@ public class ModuleHighlightUtil {
     VirtualFile file = fsItem.getVirtualFile();
     if (file == null) return null;
 
-    VirtualFile root;
-    Module module;
     Project project = fsItem.getProject();
     ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
-    if ((root = index.getClassRootForFile(file)) != null) {
-      VirtualFile descriptorFile = root.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE);
-      if (descriptorFile == null) {
-        VirtualFile alt = root.findFileByRelativePath("META-INF/versions/9/" + PsiJavaModule.MODULE_INFO_CLS_FILE);
-        if (alt != null && isMultiReleaseJar(root)) {
-          descriptorFile = alt;
+    if (index.isInLibrary(file)) {
+      VirtualFile root;
+      if ((root = index.getClassRootForFile(file)) != null) {
+        VirtualFile descriptorFile = root.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE);
+        if (descriptorFile == null) {
+          VirtualFile alt = root.findFileByRelativePath("META-INF/versions/9/" + PsiJavaModule.MODULE_INFO_CLS_FILE);
+          if (alt != null && isMultiReleaseJar(root)) {
+            descriptorFile = alt;
+          }
+        }
+        if (descriptorFile != null) {
+          PsiFile psiFile = PsiManager.getInstance(project).findFile(descriptorFile);
+          if (psiFile instanceof PsiJavaFile) {
+            return ((PsiJavaFile)psiFile).getModuleDeclaration();
+          }
+        }
+        else if (root.getFileSystem() instanceof JarFileSystem && "jar".equalsIgnoreCase(root.getExtension())) {
+          return LightJavaModule.getModule(PsiManager.getInstance(project), root);
         }
       }
-      if (descriptorFile != null) {
-        PsiFile psiFile = PsiManager.getInstance(project).findFile(descriptorFile);
-        if (psiFile instanceof PsiJavaFile) {
-          return ((PsiJavaFile)psiFile).getModuleDeclaration();
+      else if ((root = index.getSourceRootForFile(file)) != null) {
+        VirtualFile descriptorFile = root.findChild(MODULE_INFO_FILE);
+        if (descriptorFile != null) {
+          PsiFile psiFile = PsiManager.getInstance(project).findFile(descriptorFile);
+          if (psiFile instanceof PsiJavaFile) {
+            return ((PsiJavaFile)psiFile).getModuleDeclaration();
+          }
         }
-      }
-      else if (root.getFileSystem() instanceof JarFileSystem && "jar".equalsIgnoreCase(root.getExtension())) {
-        return LightJavaModule.getModule(PsiManager.getInstance(project), root);
       }
     }
-    else if ((root = index.getSourceRootForFile(file)) != null) {
-      VirtualFile descriptorFile = root.findChild(MODULE_INFO_FILE);
-      if (descriptorFile != null) {
-        PsiFile psiFile = PsiManager.getInstance(project).findFile(descriptorFile);
-        if (psiFile instanceof PsiJavaFile) {
-          return ((PsiJavaFile)psiFile).getModuleDeclaration();
-        }
-      }
-    }
-    else if ((module = index.getModuleForFile(file)) != null) {
-      boolean isTest = index.isInTestSourceContent(file);
-      List<VirtualFile> files = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, module.getModuleScope()).stream()
-        .filter(f -> index.isInTestSourceContent(f) == isTest)
-        .collect(Collectors.toList());
-      if (files.size() == 1) {
-        PsiFile psiFile = PsiManager.getInstance(project).findFile(files.get(0));
-        if (psiFile instanceof PsiJavaFile) {
-          return ((PsiJavaFile)psiFile).getModuleDeclaration();
+    else {
+      Module module = index.getModuleForFile(file);
+      if (module != null) {
+        boolean isTest = index.isInTestSourceContent(file);
+        List<VirtualFile> files = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, module.getModuleScope()).stream()
+          .filter(f -> index.isInTestSourceContent(f) == isTest)
+          .collect(Collectors.toList());
+        if (files.size() == 1) {
+          PsiFile psiFile = PsiManager.getInstance(project).findFile(files.get(0));
+          if (psiFile instanceof PsiJavaFile) {
+            return ((PsiJavaFile)psiFile).getModuleDeclaration();
+          }
         }
       }
     }

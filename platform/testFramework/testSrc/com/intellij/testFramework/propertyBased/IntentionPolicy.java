@@ -27,6 +27,6 @@ public class IntentionPolicy {
   }
 
   protected boolean shouldSkipIntention(@NotNull String actionText) {
-    return false;
+    return actionText.startsWith("Typo: Change to..."); // doesn't change file text (starts live template);
   }
 }

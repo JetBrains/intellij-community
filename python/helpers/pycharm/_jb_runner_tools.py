@@ -18,7 +18,7 @@ if teamcity_presence_env_var not in os.environ:
 # anything sent to stdout/stderr goes to IDE directly, not after test is over like it is done by default.
 # out and err are not in sync, so output may go to wrong test
 JB_DISABLE_BUFFERING = "JB_DISABLE_BUFFERING" in os.environ
-
+PROJECT_DIR = os.getcwd()
 
 def _parse_parametrized(part):
     """
@@ -179,7 +179,7 @@ class NewTeamcityServiceMessages(_old_service_messages):
             loc = possible_location.find("(")
             if loc > 0:
                 possible_location = possible_location[:loc].strip()
-            properties["locationHint"] = "python<{0}>://{1}".format(os.getcwd(), possible_location)
+            properties["locationHint"] = "python<{0}>://{1}".format(PROJECT_DIR, possible_location)
         except KeyError:
             # If message does not have name, then it is not test
             # Simply pass it
@@ -399,4 +399,4 @@ def jb_doc_args(framework_name, args):
     Runner encouraged to report its arguments to user with aid of this function
 
     """
-    print("Launching {0} with arguments {1} in {2}\n".format(framework_name, " ".join(args), os.getcwd()))
+    print("Launching {0} with arguments {1} in {2}\n".format(framework_name, " ".join(args), PROJECT_DIR))

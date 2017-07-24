@@ -42,8 +42,11 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.rt.execution.junit.RepeatCount;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -520,6 +523,34 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     return "j";
   }
 
+  public String getPreferredRunner(final GlobalSearchScope globalSearchScope) {
+    Data data = getPersistentData();
+    Project project = getProject();
+    boolean isMethodConfiguration = TEST_METHOD.equals(data.TEST_OBJECT);
+    boolean isClassConfiguration = TEST_CLASS.equals(data.TEST_OBJECT);
+    final PsiClass psiClass = isMethodConfiguration || isClassConfiguration
+                              ? JavaExecutionUtil.findMainClass(project, data.getMainClassName(), globalSearchScope) : null;
+    if (psiClass != null) {
+      if (JUnitUtil.isJUnit5TestClass(psiClass, false)) {
+        return JUnitStarter.JUNIT5_PARAMETER;
+      }
+
+      if (isClassConfiguration || JUnitUtil.isJUnit4TestClass(psiClass)) {
+        return JUnitStarter.JUNIT4_PARAMETER;
+      }
+
+      final String methodName = data.getMethodName();
+      final PsiMethod[] methods = psiClass.findMethodsByName(methodName, true);
+      for (PsiMethod method : methods) {
+        if (JUnitUtil.isTestAnnotated(method)) {
+          return JUnitStarter.JUNIT4_PARAMETER;
+        }
+      }
+      return JUnitStarter.JUNIT3_PARAMETER;
+    }
+    return JUnitUtil.isJUnit5(globalSearchScope, project) ? JUnitStarter.JUNIT5_PARAMETER : null;
+  }
+
   public static class Data implements Cloneable {
     public String PACKAGE_NAME;
     public String MAIN_CLASS_NAME;
@@ -630,8 +661,11 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
 
     public static String getMethodPresentation(PsiMethod method) {
       if (method.getParameterList().getParametersCount() > 0 && MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_ANNOTATIONS)) {
-        return method.getName() + "(" + StringUtil.join(method.getParameterList().getParameters(), 
-                                                        param -> param.getType().accept(createSignatureVisitor()),
+        return method.getName() + "(" + StringUtil.join(method.getParameterList().getParameters(),
+                                                        param -> {
+                                                          PsiType type = TypeConversionUtil.erasure(param.getType());
+                                                          return type != null ? type.accept(createSignatureVisitor()) : "";
+                                                        },
                                                         ",") + ")";
       }
       else {

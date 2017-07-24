@@ -40,7 +40,7 @@ public class UniqueNameEditorTabTitleProvider implements EditorTabTitleProvider 
     String uniqueName = uiSettings.getEditorTabPlacement() == UISettings.TABS_NONE ?
                         UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, file) :
                         UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePathWithinOpenedFileEditors(project, file);
-    uniqueName = getEditorTabText(uniqueName, File.separator, uiSettings.getHdeKnownExtensionInTabs());
+    uniqueName = getEditorTabText(uniqueName, File.separator, uiSettings.getHideKnownExtensionInTabs());
     return uniqueName.equals(file.getName()) ? null : uniqueName;
   }
 

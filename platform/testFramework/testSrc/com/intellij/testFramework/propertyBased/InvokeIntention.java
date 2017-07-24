@@ -18,6 +18,7 @@ package com.intellij.testFramework.propertyBased;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -37,16 +38,15 @@ import slowCheck.Generator;
 import java.util.List;
 
 public class InvokeIntention extends ActionOnRange {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.propertyBased.InvokeIntention");
   private final int myIntentionIndex;
   private final IntentionPolicy myPolicy;
-  private final String myConstructorArgs;
   private String myInvocationLog = "not invoked";
 
   InvokeIntention(PsiFile file, int offset, int intentionIndex, IntentionPolicy policy) {
     super(file, offset, offset);
     myIntentionIndex = intentionIndex;
     myPolicy = policy;
-    myConstructorArgs = "_ , " + offset + ", " + intentionIndex + ", _";
   }
 
   @NotNull
@@ -57,7 +57,7 @@ public class InvokeIntention extends ActionOnRange {
 
   @Override
   public String toString() {
-    return "InvokeIntention(" + myConstructorArgs + "){" + getVirtualFile().getPath() + "," + myInvocationLog + "}";
+    return "InvokeIntention{" + getVirtualFile().getPath() + ", " + myInvocationLog + ", initials=" + myInitialStart + "," + myIntentionIndex + "}";
   }
 
   public void performAction() {
@@ -80,21 +80,28 @@ public class InvokeIntention extends ActionOnRange {
     String textBefore = changedDocument == null ? null : changedDocument.getText();
 
     Runnable r = () -> CodeInsightTestFixtureImpl.invokeIntention(intention, file, editor, intention.getText());
-    if (changedDocument != null) {
-      MadTestingUtil.restrictChangesToDocument(changedDocument, r);
-    } else {
-      r.run();
-    }
+    try {
+      if (changedDocument != null) {
+        MadTestingUtil.restrictChangesToDocument(changedDocument, r);
+      } else {
+        r.run();
+      }
 
-    if (changedDocument != null && 
-        PsiDocumentManager.getInstance(project).isDocumentBlockedByPsi(changedDocument)) {
-      throw new AssertionError("Document is left blocked by PSI");
-    }
-    if (!hasErrors && textBefore != null && textBefore.equals(changedDocument.getText())) {
-      throw new AssertionError("No change was performed in the document");
-    }
+      if (changedDocument != null && 
+          PsiDocumentManager.getInstance(project).isDocumentBlockedByPsi(changedDocument)) {
+        throw new AssertionError("Document is left blocked by PSI");
+      }
+      if (!hasErrors && textBefore != null && textBefore.equals(changedDocument.getText())) {
+        throw new AssertionError("No change was performed in the document" +
+                                 (intention.startInWriteAction() ? ".\nIf this fix doesn't change source files by design, it should return false from 'startInWriteAction'" : ""));
+      }
 
-    PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
+      PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
+    }
+    catch (Throwable error) {
+      LOG.debug("Error occurred in " + this + ", text before:\n" + textBefore);
+      throw error;
+    }
   }
 
   @Nullable
@@ -106,8 +113,15 @@ public class InvokeIntention extends ActionOnRange {
 
   @Nullable
   private IntentionAction getRandomIntention(Editor editor, PsiFile file) {
-    List<IntentionAction> actions = ContainerUtil.filter(CodeInsightTestFixtureImpl.getAvailableIntentions(editor, file),
-                                                         myPolicy::mayInvokeIntention);
-    return actions.isEmpty() ? null : actions.get(myIntentionIndex % actions.size());
+    List<IntentionAction> actions = ContainerUtil.filter(CodeInsightTestFixtureImpl.getAvailableIntentions(editor, file), myPolicy::mayInvokeIntention);
+    if (actions.isEmpty()) return null;
+    
+    // skip only after checking intentions for applicability, to catch possible exceptions from them
+    int offset = editor.getCaretModel().getOffset();
+    if (MadTestingUtil.isAfterError(file, offset) || MadTestingUtil.isAfterError(file, offset - 1)) {
+      return null;
+    }
+    
+    return actions.get(myIntentionIndex % actions.size());
   }
 }

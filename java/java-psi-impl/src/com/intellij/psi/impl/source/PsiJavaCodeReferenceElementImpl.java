@@ -218,7 +218,11 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         else {
           getParent().addRangeBefore(getFirstChild(), lastChild, this);
         }
-        deleteChildRange(getFirstChild(), lastChild);
+        // during previous operations, formatter support could have altered the children (if they're whitespace), 
+        // so we retrieve and check them again
+        if (ref != getFirstChild()) {
+          deleteChildRange(getFirstChild(), ref.getPsi().getPrevSibling());
+        }
       }
     }
     else if (child.getElementType() == JavaElementType.REFERENCE_PARAMETER_LIST) {

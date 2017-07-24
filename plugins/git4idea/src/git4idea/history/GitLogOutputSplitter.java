@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
  * and feeds them to the consumer. It does not store output in order to save memory.
  */
 class GitLogOutputSplitter implements GitLineHandlerListener {
-  private static final int OUTPUT_CAPACITY_THRESHOLD = 20000000;
+  private static final int OUTPUT_CAPACITY_THRESHOLD = 5_000_000;
   @NotNull private final GitLineHandler myHandler;
   @NotNull private final Consumer<StringBuilder> myRecordConsumer;
 

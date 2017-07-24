@@ -81,7 +81,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
                                          @Nullable Project project,
                                          @NotNull Presentation presentation) {
     if (project != null && target != null && settings != null) {
-      String name = RunManager.getShortenName(settings.getName());
+      String name = Executor.shortenNameIfNeed(settings.getName());
       if (target != DefaultExecutionTarget.INSTANCE) {
         name += " | " + target.getDisplayName();
       } else {
@@ -207,7 +207,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
         disable(presentation);
       }
       else {
-        presentation.setText(ExecutionBundle.message("save.temporary.run.configuration.action.name", RunManager.getShortenName(settings.getName())));
+        presentation.setText(ExecutionBundle.message("save.temporary.run.configuration.action.name", Executor.shortenNameIfNeed(settings.getName())));
         presentation.setDescription(presentation.getText());
         presentation.setVisible(true);
         presentation.setEnabled(true);
@@ -268,7 +268,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     public SelectConfigAction(final RunnerAndConfigurationSettings configuration, final Project project) {
       myConfiguration = configuration;
       myProject = project;
-      String name = RunManager.getShortenName(configuration.getName());
+      String name = Executor.shortenNameIfNeed(configuration.getName());
       if (name.isEmpty()) {
         name = " ";
       }

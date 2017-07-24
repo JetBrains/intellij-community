@@ -101,6 +101,8 @@
 
     <projectService serviceImplementation="com.jetbrains.python.inspections.PyCompatibilityInspectionAdvertiserSettings"/>
 
+    <projectService serviceImplementation="com.jetbrains.python.findUsages.PyFindUsagesOptions"/>
+
     <applicationService serviceInterface="com.jetbrains.python.packaging.PyPackageService"
                         serviceImplementation="com.jetbrains.python.packaging.PyPackageService"/>
     <applicationService serviceInterface="com.jetbrains.python.packaging.PyCondaPackageService"

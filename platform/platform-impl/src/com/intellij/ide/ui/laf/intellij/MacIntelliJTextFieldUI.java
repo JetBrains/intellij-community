@@ -131,6 +131,7 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
       else {
         super.paintBackground(g);
       }
+      paintIcons(g);
     }
   }
 
@@ -225,26 +226,22 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
     }
   }
 
-
   @Override
-  protected Rectangle getVisibleEditorRect() {
-    Rectangle rect = super.getVisibleEditorRect();
-    if (rect != null) {
-      if (isSearchField(myTextField)) {
-        int extraOffset = isSearchFieldWithHistoryPopup(myTextField) ? 3 : 0;
-        rect.width -= 36 + extraOffset;
-        if (getNewLineAction(myTextField) != null) rect.width -= 24;
-        rect.x += 19 + extraOffset;
-        if (rect.height % 2 == 1) {
-          rect.y += 1;
-        }
-      }
-      else {
-        rect.x += 2;
-        rect.width -= 4;
+  protected void updateVisibleEditorRect(Rectangle rect) {
+    if (isSearchField(myTextField)) {
+      int extraOffset = isSearchFieldWithHistoryPopup(myTextField) ? 3 : 0;
+      rect.width -= 36 + extraOffset;
+      if (getNewLineAction(myTextField) != null) rect.width -= 24;
+      rect.x += 19 + extraOffset;
+      if (rect.height % 2 == 1) {
+        rect.y += 1;
       }
     }
-    return rect;
+    else {
+      rect.x += 2;
+      rect.width -= 4;
+      super.updateVisibleEditorRect(rect);
+    }
   }
 
   @Override

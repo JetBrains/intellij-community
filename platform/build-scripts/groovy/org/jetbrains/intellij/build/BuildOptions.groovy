@@ -69,6 +69,12 @@ class BuildOptions {
   boolean buildDmgWithoutBundledJre = SystemProperties.getBooleanProperty(BUILD_DMG_WITHOUT_BUNDLED_JRE, SystemProperties.getBooleanProperty("artifact.mac.no.jdk", false))
 
   /**
+   * Pass 'true' to this system property to produce .snap packages.
+   * A build configuration should have "docker.version >= 17" in requirements.
+   */
+  boolean buildUnixSnaps = SystemProperties.getBooleanProperty("intellij.build.unix.snaps", false)
+
+  /**
    * Path to a zip file containing 'production' and 'test' directories with compiled classes of the project modules inside.
    */
   String pathToCompiledClassesArchive = System.getProperty("intellij.build.compiled.classes.archive")

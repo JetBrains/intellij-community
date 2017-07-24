@@ -169,7 +169,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     final Project project = getConfiguration().getProject();
     final SourceScope sourceScope = getSourceScope();
     GlobalSearchScope globalSearchScope = getScopeForJUnit(getConfiguration().getConfigurationModule().getModule(), sourceScope, project);
-    String preferredRunner = getPreferredRunner(globalSearchScope);
+    String preferredRunner = getConfiguration().getPreferredRunner(globalSearchScope);
     if (JUnitStarter.JUNIT5_PARAMETER.equals(preferredRunner)) {
       final PathsList classPath = javaParameters.getClassPath();
       File lib = new File(PathUtil.getJarPathForClass(MultipleFailuresError.class)).getParentFile();
@@ -203,11 +203,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     return javaParameters;
   }
 
-  @Nullable
-  protected String getPreferredRunner(GlobalSearchScope globalSearchScope) {
-    return JUnitUtil.isJUnit5(globalSearchScope, getConfiguration().getProject()) ? JUnitStarter.JUNIT5_PARAMETER : null;
-  }
-
   private static boolean hasPackageWithDirectories(JavaPsiFacade psiFacade,
                                                    String packageQName,
                                                    GlobalSearchScope globalSearchScope) {
@@ -222,6 +217,12 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   private static GlobalSearchScope getScopeForJUnit(@Nullable Module module, @Nullable SourceScope sourceScope, Project project) {
     return module != null ? GlobalSearchScope.moduleRuntimeScope(module, true)
                                              : sourceScope != null ? sourceScope.getLibrariesScope() : GlobalSearchScope.allScope(project);
+  }
+
+  public static GlobalSearchScope getScopeForJUnit(JUnitConfiguration configuration) {
+    return getScopeForJUnit(configuration.getConfigurationModule().getModule(),
+                            configuration.getTestSearchScope().getSourceScope(configuration),
+                            configuration.getProject() );
   }
 
   @NotNull

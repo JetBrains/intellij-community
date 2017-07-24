@@ -30,6 +30,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,6 +38,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
@@ -225,6 +227,18 @@ public class MadTestingUtil {
     return Generator.anyOf(DeleteRange.psiRangeDeletions(file),
                            Generator.constant(new CheckPsiTextConsistency(file)),
                            InsertString.asciiInsertions(file));
+  }
+
+  static boolean isAfterError(PsiFile file, int offset) {
+    PsiElement leaf = file.findElementAt(offset);
+    Set<Integer> errorOffsets = SyntaxTraverser.psiTraverser(file)
+      .filter(PsiErrorElement.class)
+      .map(PsiTreeUtil::nextVisibleLeaf)
+      .filter(Condition.NOT_NULL)
+      .map(e -> e.getTextRange().getStartOffset())
+      .toSet();
+    return !errorOffsets.isEmpty() &&
+           SyntaxTraverser.psiApi().parents(leaf).find(e -> errorOffsets.contains(e.getTextRange().getStartOffset())) != null;
   }
 
   private static class FileGenerator implements Function<DataStructure, File> {

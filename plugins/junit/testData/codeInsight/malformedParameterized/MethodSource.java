@@ -1,5 +1,7 @@
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
+import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.TestReporter;
 
 import java.util.Iterator;
 import java.util.stream.Stream;
@@ -78,6 +80,18 @@ class MethodSourcePositive {
     System.out.println(l);
   }
 
+  @ParameterizedTest
+  @MethodSource("intStreamProvider")
+  void injectTestInfo(int x, TestInfo testInfo) {
+    System.out.println(x);
+  }
+
+  @ParameterizedTest
+  @MethodSource("intStreamProvider")
+  void injectTestReporter(int x, TestReporter testReporter) {
+    System.out.println(x);
+  }
+
   static Stream<Arguments> stream() {
     return null;
   }
@@ -117,6 +131,10 @@ class MethodSourceMalformed {
     "d"})
   void testWithParams(Object s) { }
 
+  @ParameterizedTest
+  @MethodSource(value = {<warning descr="Cannot resolve target method source: 'unknown'">"unknown"</warning>})
+  void unknownMethodSource(String s, int i) { }
+
   String[] a() {
     return new String[]{"a", "b"};
   }
@@ -133,7 +151,4 @@ class MethodSourceMalformed {
     return new String[]{"a", "b"};
   }
 
-  @ParameterizedTest
-  @MethodSource(value = {<warning descr="Cannot resolve target method source: 'unknown'">"unknown"</warning>})
-  void unknownMethodSource(String s, int i) { }
 }

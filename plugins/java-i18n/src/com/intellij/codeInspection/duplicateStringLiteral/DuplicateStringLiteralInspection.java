@@ -424,8 +424,13 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   }
 
   private class NavigateToOccurrencesFix extends LocalQuickFixOnPsiElement {
-    public NavigateToOccurrencesFix(PsiLiteralExpression representative) {
+    NavigateToOccurrencesFix(PsiLiteralExpression representative) {
       super(representative);
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
     }
 
     @Override

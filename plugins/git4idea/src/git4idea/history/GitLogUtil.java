@@ -53,6 +53,7 @@ import java.io.OutputStreamWriter;
 import java.util.*;
 
 import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static git4idea.history.GitLogParser.GitLogOption.*;
 
 public class GitLogUtil {
@@ -254,11 +255,23 @@ public class GitLogUtil {
     GitLogRecordCollector recordCollector = new GitLogRecordCollector(project, root) {
       @Override
       public void consume(@NotNull List<GitLogRecord> records) {
+        assertCorrectNumberOfRecords(records);
         commitConsumer.consume(createCommit(project, root, records, factory));
       }
     };
     readRecords(project, root, false, true, true, recordCollector, parameters);
     recordCollector.finish();
+  }
+
+  public static void assertCorrectNumberOfRecords(@NotNull List<GitLogRecord> records) {
+    GitLogRecord firstRecord = notNull(getFirstItem(records));
+    String[] parents = firstRecord.getParentsHashes();
+    LOG.assertTrue(parents.length == 0 || parents.length == records.size(), "Not enough records for commit " +
+                                                                            firstRecord.getHash() +
+                                                                            " expected " +
+                                                                            parents.length +
+                                                                            " records, but got " +
+                                                                            records.size());
   }
 
   private static void readRecords(@NotNull Project project,
@@ -355,6 +368,7 @@ public class GitLogUtil {
     GitLogRecordCollector recordCollector = new GitLogRecordCollector(project, root) {
       @Override
       public void consume(@NotNull List<GitLogRecord> records) {
+        assertCorrectNumberOfRecords(records);
         commitConsumer.consume(createCommit(project, root, records, factory));
       }
     };

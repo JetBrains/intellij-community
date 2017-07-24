@@ -461,7 +461,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       handler("reducing", 3, "map({1}).reduce({0}, {2})", false),
       handler("summingInt", 1, "mapToInt({0}).sum()", false),
       handler("summingLong", 1, "mapToLong({0}).sum()", false),
-      handler("summingDouble", 1, "mapToInt({0}).sum()", false));
+      handler("summingDouble", 1, "mapToDouble({0}).sum()", false));
 
     private final String myCollector;
     private final String myStreamSequence;

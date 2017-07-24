@@ -86,7 +86,7 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
     else {
       final PsiJavaCodeReferenceElement copy = (PsiJavaCodeReferenceElement)gParent.copy();
       final PsiElement qualifier = copy.getQualifier();
-      if (qualifier == null) return null;
+      if (qualifier == null || copy.getReferenceNameElement() == null) return null;
       qualifier.delete();
       final PsiElement target = copy.resolve();
       if (target != null && PsiTreeUtil.getParentOfType(target, PsiClass.class) != psiClass) return null;

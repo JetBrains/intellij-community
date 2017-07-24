@@ -107,6 +107,7 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
     } else {
       super.paintBackground(g);
     }
+    paintIcons(g);
     config.restore();
   }
 
