@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.as;
@@ -45,26 +46,25 @@ public class PyOperatorReference extends PyReferenceImpl {
   @NotNull
   @Override
   protected List<RatedResolveResult> resolveInner() {
-    List<RatedResolveResult> res = new ArrayList<>();
     if (myElement instanceof PyBinaryExpression) {
       final PyBinaryExpression expr = (PyBinaryExpression)myElement;
       final String name = expr.getReferencedName();
       if (PyNames.CONTAINS.equals(name)) {
-        res = resolveMember(expr.getRightExpression(), name);
+        return resolveMember(expr.getRightExpression(), name);
       }
       else {
-        resolveLeftAndRightOperators(res, expr, name);
+        return resolveLeftAndRightOperators(expr, name);
       }
     }
     else if (myElement instanceof PySubscriptionExpression) {
       final PySubscriptionExpression expr = (PySubscriptionExpression)myElement;
-      res = resolveMember(expr.getOperand(), expr.getReferencedName());
+      return resolveMember(expr.getOperand(), expr.getReferencedName());
     }
     else if (myElement instanceof PyPrefixExpression) {
       final PyPrefixExpression expr = (PyPrefixExpression)myElement;
-      res = resolveMember(expr.getOperand(), expr.getReferencedName());
+      return resolveMember(expr.getOperand(), expr.getReferencedName());
     }
-    return res;
+    return Collections.emptyList();
   }
 
   @Override
@@ -117,16 +117,15 @@ public class PyOperatorReference extends PyReferenceImpl {
     return leftOperand;
   }
 
-  private static String leftToRightOperatorName(String name) {
-    return name.replaceFirst("__([a-z]+)__", "__r$1__");
-  }
+  @NotNull
+  private List<RatedResolveResult> resolveLeftAndRightOperators(@NotNull PyBinaryExpression expr, @Nullable String name) {
+    final List<RatedResolveResult> result = new ArrayList<>();
 
-  private void resolveLeftAndRightOperators(List<RatedResolveResult> res, PyBinaryExpression expr, String name) {
     final TypeEvalContext typeEvalContext = myContext.getTypeEvalContext();
     typeEvalContext.trace("Trying to resolve left operator");
     typeEvalContext.traceIndent();
     try {
-      res.addAll(resolveMember(getBinaryOperatorReceiver(expr), name));
+      result.addAll(resolveMember(getBinaryOperatorReceiver(expr), name));
     }
     finally {
       typeEvalContext.traceUnindent();
@@ -134,11 +133,13 @@ public class PyOperatorReference extends PyReferenceImpl {
     typeEvalContext.trace("Trying to resolve right operator");
     typeEvalContext.traceIndent();
     try {
-      res.addAll(resolveMember(expr.getRightExpression(), leftToRightOperatorName(name)));
+      result.addAll(resolveMember(expr.getRightExpression(), PyNames.leftToRightOperatorName(name)));
     }
     finally {
       typeEvalContext.traceUnindent();
     }
+
+    return result;
   }
 
   @NotNull

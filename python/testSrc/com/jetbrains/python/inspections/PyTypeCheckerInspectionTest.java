@@ -432,6 +432,11 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
 
+  // PY-23367
+  public void testComparingFloatAndInt() {
+    doTest();
+  }
+
   // PY-25120
   public void testIterateOverDictValueWhenItsTypeIsUnion() {
     doTest();
