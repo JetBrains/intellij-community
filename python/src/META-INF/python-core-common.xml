@@ -651,6 +651,7 @@
     <extensionPoint qualifiedName="Pythonid.remoteInterpreterManager" interface="com.jetbrains.python.remote.PythonRemoteInterpreterManager"/>
     <extensionPoint qualifiedName="Pythonid.remoteSkeletonGeneratorFactory" interface="com.jetbrains.python.remote.PyRemoteSkeletonGeneratorFactory"/>
     <extensionPoint qualifiedName="Pythonid.remoteProcessStarterManager" interface="com.jetbrains.python.run.PyRemoteProcessStarterManager"/>
+    <extensionPoint qualifiedName="Pythonid.remoteConsoleProcessCreator" interface="com.jetbrains.python.console.PythonConsoleRemoteProcessCreator"/>
     <extensionPoint qualifiedName="Pythonid.keywordArgumentProvider" interface="com.jetbrains.python.psi.impl.PyKeywordArgumentProvider"/>
     <extensionPoint qualifiedName="Pythonid.canonicalPathProvider" interface="com.jetbrains.python.psi.resolve.PyCanonicalPathProvider"/>
     <extensionPoint qualifiedName="Pythonid.pyReferenceResolveProvider" interface="com.jetbrains.python.psi.resolve.PyReferenceResolveProvider"/>
