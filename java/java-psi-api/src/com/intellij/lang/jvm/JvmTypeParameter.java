@@ -25,6 +25,10 @@ import org.jetbrains.annotations.Nullable;
 public interface JvmTypeParameter extends JvmTypeDeclaration {
 
   @NotNull
+  @Override
+  String getName();
+
+  @NotNull
   JvmReferenceType[] getBounds();
 
   @Nullable
