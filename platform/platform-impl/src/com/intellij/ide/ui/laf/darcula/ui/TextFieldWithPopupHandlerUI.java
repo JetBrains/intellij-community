@@ -173,6 +173,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     component.addPropertyChangeListener(handler);
     component.addMouseMotionListener(handler);
     component.addMouseListener(handler);
+    component.addFocusListener(handler);
     setVariant(component.getClientProperty(VARIANT));
   }
 
@@ -182,6 +183,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   @Override
   protected void uninstallListeners() {
     JTextComponent component = getComponent();
+    component.removeFocusListener(handler);
     component.removeMouseListener(handler);
     component.removeMouseMotionListener(handler);
     component.removePropertyChangeListener(handler);
@@ -232,7 +234,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   /**
    * Default handler for mouse moved, mouse clicked, property changed and document modified.
    */
-  private final class Handler extends MouseAdapter implements DocumentListener, PropertyChangeListener {
+  private final class Handler extends MouseAdapter implements DocumentListener, FocusListener, PropertyChangeListener {
     /**
      * Starts listening changes in the specified document.
      */
@@ -259,6 +261,16 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       else if (POPUP.equals(event.getPropertyName())) {
         updateIcon(icons.get("search"));
       }
+    }
+
+    @Override
+    public void focusGained(FocusEvent event) {
+      repaint(false);
+    }
+
+    @Override
+    public void focusLost(FocusEvent event) {
+      repaint(false);
     }
 
     @Override
