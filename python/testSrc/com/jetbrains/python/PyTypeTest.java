@@ -2055,6 +2055,20 @@ public class PyTypeTest extends PyTestCase {
            "    expr = x");
   }
 
+  // PY-25157
+  public void testFunctionWithDifferentNamedTuplesAsParameterAndReturnTypes() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("(a: MyType1) -> MyType2",
+                   "from collections import namedtuple\n" +
+                   "MyType1 = namedtuple('MyType1', 'x y')\n" +
+                   "MyType2 = namedtuple('MyType2', 'x y')\n" +
+                   "def foo(a: MyType1) -> MyType2:\n" +
+                   "    pass\n" +
+                   "expr = foo")
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

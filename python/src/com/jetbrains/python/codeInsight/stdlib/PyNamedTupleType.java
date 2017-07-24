@@ -135,6 +135,23 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
     return "PyNamedTupleType: " + myName;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    if (!super.equals(o)) return false;
+
+    final PyNamedTupleType type = (PyNamedTupleType)o;
+    return Objects.equals(myName, type.myName) &&
+           Objects.equals(myFields.keySet(), type.myFields.keySet()) &&
+           myDefinitionLevel == type.myDefinitionLevel;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), myName, myFields.keySet(), myDefinitionLevel);
+  }
+
   @NotNull
   @Override
   public Set<String> getMemberNames(boolean inherited, @NotNull TypeEvalContext context) {
