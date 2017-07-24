@@ -44,9 +44,4 @@ public class DefaultExecutionTarget extends ExecutionTarget {
   public boolean canRun(@NotNull RunnerAndConfigurationSettings configuration) {
     return true;
   }
-
-  @Override
-  public boolean isReady() {
-    return true;
-  }
 }

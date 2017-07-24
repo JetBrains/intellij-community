@@ -55,7 +55,9 @@ public abstract class ExecutionTarget {
    */
   public abstract boolean canRun(@NotNull RunnerAndConfigurationSettings configuration);
 
-  public abstract boolean isReady();
+  public boolean isReady() {
+    return true;
+  }
 
   @Override
   public boolean equals(Object obj) {
