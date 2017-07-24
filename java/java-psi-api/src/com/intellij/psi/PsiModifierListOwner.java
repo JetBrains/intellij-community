@@ -58,4 +58,10 @@ public interface PsiModifierListOwner extends PsiElement, JvmModifiersOwner {
   default JvmModifier[] getModifiers() {
     return getListModifiers(this);
   }
+
+  @NotNull
+  @Override
+  default PsiElement getPsiElement() {
+    return this;
+  }
 }

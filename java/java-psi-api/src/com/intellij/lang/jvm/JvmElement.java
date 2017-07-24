@@ -15,13 +15,22 @@
  */
 package com.intellij.lang.jvm;
 
+import com.intellij.lang.Language;
 import com.intellij.pom.PomTarget;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Base interface for all JVM elements.
  * <p>
  * JVM element represents a compiled element from perspective of the JVM.
  */
-public interface JvmElement extends PsiElement, PomTarget {
+public interface JvmElement extends PomTarget {
+
+  @NotNull
+  Language getLanguage();
+
+  @Nullable
+  PsiElement getPsiElement();
 }
