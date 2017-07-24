@@ -22,7 +22,12 @@ import org.jetbrains.annotations.Nullable;
 
 public interface JvmClass extends JvmTypeParametersOwner, JvmTypeDeclaration {
 
-  @NotNull
+  @Nullable
+  @NonNls
+  @Override
+  String getName();
+
+  @Nullable
   @NonNls
   String getQualifiedName();
 

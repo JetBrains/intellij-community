@@ -15,14 +15,8 @@
  */
 package com.intellij.lang.jvm;
 
-import org.jetbrains.annotations.NotNull;
-
 /**
  * Represents an element which declares a type, such as class or type parameter.
  */
 public interface JvmTypeDeclaration extends JvmNamedElement, JvmAnnotatedElement {
-
-  @NotNull
-  @Override
-  String getName();
 }
