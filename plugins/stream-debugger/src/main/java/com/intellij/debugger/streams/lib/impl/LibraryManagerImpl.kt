@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.streams.lib.impl
 
+import com.intellij.debugger.streams.diagnostic.ex.LibraryNotSupportedException
 import com.intellij.debugger.streams.lib.LibraryManager
 import com.intellij.debugger.streams.lib.LibrarySupport
 import com.intellij.openapi.project.Project
@@ -36,6 +37,8 @@ class LibraryManagerImpl(project: Project) : LibraryManager {
   override fun isPackageSupported(packageName: String): Boolean = mySupportedPackages.contains(packageName)
 
   override fun getLibraryByPackage(packageName: String): LibrarySupport {
-    return myLibraries.find { packageName == it.description.packageName }!!
+    val library = myLibraries.find { packageName.startsWith(it.description.packageName) }
+                  ?: throw LibraryNotSupportedException("Such library is not supported: $packageName")
+    return library
   }
 }
