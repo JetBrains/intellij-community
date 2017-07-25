@@ -16,7 +16,7 @@
 package com.intellij.debugger.streams.trace.impl;
 
 import com.intellij.debugger.streams.lib.LibraryManager;
-import com.intellij.debugger.streams.trace.CallTraceResolver;
+import com.intellij.debugger.streams.trace.CallTraceInterpreter;
 import com.intellij.debugger.streams.trace.TraceInfo;
 import com.intellij.debugger.streams.trace.TraceResultInterpreter;
 import com.intellij.debugger.streams.trace.TracingResult;
@@ -62,7 +62,7 @@ public class TraceResultInterpreterImpl implements TraceResultInterpreter {
     for (int i = 0; i < callCount; i++) {
       final StreamCall call = chain.getCall(i);
       final Value trace = info.getValue(i);
-      final CallTraceResolver interpreter =
+      final CallTraceInterpreter interpreter =
         LibraryManager.getInstance(myProject).getLibrary(call).getInterpreterFactory().getInterpreter(call.getName());
 
       final TraceInfo traceInfo = trace == null ? ValuesOrderInfo.empty(call) : interpreter.resolve(call, trace);

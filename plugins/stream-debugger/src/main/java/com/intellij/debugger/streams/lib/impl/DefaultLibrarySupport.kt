@@ -18,12 +18,12 @@ package com.intellij.debugger.streams.lib.impl
 import com.intellij.debugger.streams.lib.*
 import com.intellij.debugger.streams.resolve.EmptyResolver
 import com.intellij.debugger.streams.resolve.ValuesOrderResolver
-import com.intellij.debugger.streams.trace.CallTraceResolver
+import com.intellij.debugger.streams.trace.CallTraceInterpreter
 import com.intellij.debugger.streams.trace.IntermediateCallHandler
 import com.intellij.debugger.streams.trace.TerminatorCallHandler
 import com.intellij.debugger.streams.trace.impl.handler.PeekTracerHandler
 import com.intellij.debugger.streams.trace.impl.handler.TerminatorHandler
-import com.intellij.debugger.streams.trace.impl.interpret.SimplePeekCallTraceResolver
+import com.intellij.debugger.streams.trace.impl.interpret.SimplePeekCallTraceInterpreter
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
 
@@ -44,8 +44,8 @@ class DefaultLibrarySupport : LibrarySupport {
   }
 
   override val interpreterFactory: InterpreterFactory = object : InterpreterFactory {
-    override fun getInterpreter(callName: String): CallTraceResolver {
-      return SimplePeekCallTraceResolver()
+    override fun getInterpreter(callName: String): CallTraceInterpreter {
+      return SimplePeekCallTraceInterpreter()
     }
   }
 

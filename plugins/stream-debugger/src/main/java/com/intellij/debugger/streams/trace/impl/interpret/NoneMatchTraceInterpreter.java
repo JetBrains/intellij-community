@@ -25,7 +25,7 @@ import java.util.Collection;
  *
  * @author Vitaliy.Bibaev
  */
-public class NoneMatchResolver extends MatchResolverBase {
+public class NoneMatchTraceInterpreter extends MatchInterpreterBase {
   @Override
   protected boolean getResult(@NotNull Collection<TraceElement> traceBeforeFilter, @NotNull Collection<TraceElement> traceAfterFilter) {
     return traceAfterFilter.isEmpty();

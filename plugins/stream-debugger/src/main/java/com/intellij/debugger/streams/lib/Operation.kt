@@ -16,7 +16,7 @@
 package com.intellij.debugger.streams.lib
 
 import com.intellij.debugger.streams.resolve.ValuesOrderResolver
-import com.intellij.debugger.streams.trace.CallTraceResolver
+import com.intellij.debugger.streams.trace.CallTraceInterpreter
 import com.intellij.debugger.streams.trace.IntermediateCallHandler
 import com.intellij.debugger.streams.trace.TerminatorCallHandler
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
@@ -28,7 +28,7 @@ import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
 interface Operation {
   val name: String
 
-  val traceInterpreter: CallTraceResolver
+  val traceInterpreter: CallTraceInterpreter
 
   val valuesOrderResolver: ValuesOrderResolver
 }

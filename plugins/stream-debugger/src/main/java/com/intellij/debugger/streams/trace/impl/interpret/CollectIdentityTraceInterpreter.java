@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.streams.trace.impl.interpret;
 
-import com.intellij.debugger.streams.trace.CallTraceResolver;
+import com.intellij.debugger.streams.trace.CallTraceInterpreter;
 import com.intellij.debugger.streams.trace.TraceElement;
 import com.intellij.debugger.streams.trace.TraceInfo;
 import com.intellij.debugger.streams.trace.impl.TraceElementImpl;
@@ -32,8 +32,8 @@ import java.util.PrimitiveIterator;
 /**
  * @author Vitaliy.Bibaev
  */
-public class CollectIdentityResolver implements CallTraceResolver {
-  private final SimplePeekCallTraceResolver myPeekResolver = new SimplePeekCallTraceResolver();
+public class CollectIdentityTraceInterpreter implements CallTraceInterpreter {
+  private final SimplePeekCallTraceInterpreter myPeekResolver = new SimplePeekCallTraceInterpreter();
 
   @NotNull
   @Override

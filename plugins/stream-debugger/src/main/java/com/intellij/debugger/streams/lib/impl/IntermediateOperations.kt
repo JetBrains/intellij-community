@@ -19,8 +19,8 @@ import com.intellij.debugger.streams.resolve.*
 import com.intellij.debugger.streams.trace.IntermediateCallHandler
 import com.intellij.debugger.streams.trace.impl.handler.ParallelHandler
 import com.intellij.debugger.streams.trace.impl.handler.PeekTracerHandler
-import com.intellij.debugger.streams.trace.impl.interpret.DistinctCallTraceResolver
-import com.intellij.debugger.streams.trace.impl.interpret.SimplePeekCallTraceResolver
+import com.intellij.debugger.streams.trace.impl.interpret.DistinctCallTraceInterpreter
+import com.intellij.debugger.streams.trace.impl.interpret.SimplePeekCallTraceInterpreter
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 
 /**
@@ -30,7 +30,7 @@ import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 open class OrderBasedOperation(name: String, orderResolver: ValuesOrderResolver)
   : IntermediateOperationBase(name,
                               { num, call -> PeekTracerHandler(num, call.name, call.typeBefore, call.typeAfter) },
-                              SimplePeekCallTraceResolver(),
+                              SimplePeekCallTraceInterpreter(),
                               orderResolver)
 
 class FilterOperation(name: String) : OrderBasedOperation(name, FilterResolver())
@@ -39,11 +39,11 @@ class FlatMappingOperation(name: String) : OrderBasedOperation(name, FlatMapReso
 class SortedOperation(name: String) : OrderBasedOperation(name, IdentityResolver())
 
 class DistinctOperation(name: String, handlerFactory: (Int, IntermediateStreamCall) -> IntermediateCallHandler)
-  : IntermediateOperationBase(name, handlerFactory, DistinctCallTraceResolver(), DistinctResolver())
+  : IntermediateOperationBase(name, handlerFactory, DistinctCallTraceInterpreter(), DistinctResolver())
 
 class ParallelOperation(name: String) : IntermediateOperationBase(name,
                                                                   ::ParallelHandler,
-                                                                  SimplePeekCallTraceResolver(), FilterResolver())
+                                                                  SimplePeekCallTraceInterpreter(), FilterResolver())
 
 class ConcatOperation(name: String, orderResolver: ValuesOrderResolver) : OrderBasedOperation(name, orderResolver)
 class CollapseOperation(name: String) : OrderBasedOperation(name, CollapseResolver())

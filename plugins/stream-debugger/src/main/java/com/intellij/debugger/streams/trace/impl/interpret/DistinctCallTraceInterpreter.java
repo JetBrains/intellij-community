@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.streams.trace.impl.interpret;
 
-import com.intellij.debugger.streams.trace.CallTraceResolver;
+import com.intellij.debugger.streams.trace.CallTraceInterpreter;
 import com.intellij.debugger.streams.trace.TraceElement;
 import com.intellij.debugger.streams.trace.TraceInfo;
 import com.intellij.debugger.streams.trace.impl.interpret.ex.UnexpectedArrayLengthException;
@@ -33,8 +33,8 @@ import java.util.*;
 /**
  * @author Vitaliy.Bibaev
  */
-public class DistinctCallTraceResolver implements CallTraceResolver {
-  private final CallTraceResolver myPeekResolver = new SimplePeekCallTraceResolver();
+public class DistinctCallTraceInterpreter implements CallTraceInterpreter {
+  private final CallTraceInterpreter myPeekResolver = new SimplePeekCallTraceInterpreter();
 
   private enum Direction {
     DIRECT, REVERSE

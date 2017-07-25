@@ -16,9 +16,9 @@
 package com.intellij.debugger.streams.lib.impl
 
 import com.intellij.debugger.streams.trace.impl.handler.DistinctHandler
-import com.intellij.debugger.streams.trace.impl.interpret.AllMatchResolver
-import com.intellij.debugger.streams.trace.impl.interpret.AnyMatchResolver
-import com.intellij.debugger.streams.trace.impl.interpret.NoneMatchResolver
+import com.intellij.debugger.streams.trace.impl.interpret.AllMatchTraceInterpreter
+import com.intellij.debugger.streams.trace.impl.interpret.AnyMatchTraceInterpreter
+import com.intellij.debugger.streams.trace.impl.interpret.NoneMatchTraceInterpreter
 import com.intellij.openapi.project.Project
 
 /**
@@ -46,9 +46,12 @@ class StandardLibrarySupport(project: Project)
                                      SortedOperation("sorted"),
                                      ParallelOperation("parallel"))
 
-    addTerminationOperationsSupport(MatchingOperation("anyMatch", AnyMatchResolver()),
-                                    MatchingOperation("allMatch", AllMatchResolver()),
-                                    MatchingOperation("noneMatch", NoneMatchResolver()),
+    addTerminationOperationsSupport(MatchingOperation("anyMatch",
+                                                      AnyMatchTraceInterpreter()),
+                                    MatchingOperation("allMatch",
+                                                      AllMatchTraceInterpreter()),
+                                    MatchingOperation("noneMatch",
+                                                      NoneMatchTraceInterpreter()),
                                     OptionalResultOperation("min"),
                                     OptionalResultOperation("max"),
                                     OptionalResultOperation("findAny"),

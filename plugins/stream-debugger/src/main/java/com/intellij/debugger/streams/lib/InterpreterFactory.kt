@@ -15,11 +15,11 @@
  */
 package com.intellij.debugger.streams.lib
 
-import com.intellij.debugger.streams.trace.CallTraceResolver
+import com.intellij.debugger.streams.trace.CallTraceInterpreter
 
 /**
  * @author Vitaliy.Bibaev
  */
 interface InterpreterFactory {
-  fun getInterpreter(callName: String): CallTraceResolver
+  fun getInterpreter(callName: String): CallTraceInterpreter
 }

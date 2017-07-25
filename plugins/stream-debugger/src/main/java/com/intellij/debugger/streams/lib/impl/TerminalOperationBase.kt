@@ -17,7 +17,7 @@ package com.intellij.debugger.streams.lib.impl
 
 import com.intellij.debugger.streams.lib.TerminalOperation
 import com.intellij.debugger.streams.resolve.ValuesOrderResolver
-import com.intellij.debugger.streams.trace.CallTraceResolver
+import com.intellij.debugger.streams.trace.CallTraceInterpreter
 import com.intellij.debugger.streams.trace.TerminatorCallHandler
 import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
 
@@ -26,7 +26,7 @@ import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
  */
 abstract class TerminalOperationBase(override val name: String,
                                      private val handlerFactory: (TerminatorStreamCall, String) -> TerminatorCallHandler,
-                                     override val traceInterpreter: CallTraceResolver,
+                                     override val traceInterpreter: CallTraceInterpreter,
                                      override val valuesOrderResolver: ValuesOrderResolver) : TerminalOperation {
   override fun getTraceHandler(call: TerminatorStreamCall, resultExpression: String): TerminatorCallHandler =
     handlerFactory.invoke(call, resultExpression)

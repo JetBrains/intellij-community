@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.streams.trace.impl.interpret;
 
-import com.intellij.debugger.streams.trace.CallTraceResolver;
+import com.intellij.debugger.streams.trace.CallTraceInterpreter;
 import com.intellij.debugger.streams.trace.TraceElement;
 import com.intellij.debugger.streams.trace.TraceInfo;
 import com.intellij.debugger.streams.trace.impl.TraceElementImpl;
@@ -36,8 +36,8 @@ import java.util.stream.Stream;
 /**
  * @author Vitaliy.Bibaev
  */
-public abstract class MatchResolverBase implements CallTraceResolver {
-  private final CallTraceResolver myPeekResolver = new SimplePeekCallTraceResolver();
+public abstract class MatchInterpreterBase implements CallTraceInterpreter {
+  private final CallTraceInterpreter myPeekResolver = new SimplePeekCallTraceInterpreter();
 
   @NotNull
   @Override

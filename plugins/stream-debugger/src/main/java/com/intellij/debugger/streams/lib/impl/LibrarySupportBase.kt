@@ -17,7 +17,7 @@ package com.intellij.debugger.streams.lib.impl
 
 import com.intellij.debugger.streams.lib.*
 import com.intellij.debugger.streams.resolve.ValuesOrderResolver
-import com.intellij.debugger.streams.trace.CallTraceResolver
+import com.intellij.debugger.streams.trace.CallTraceInterpreter
 import com.intellij.debugger.streams.trace.IntermediateCallHandler
 import com.intellij.debugger.streams.trace.TerminatorCallHandler
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
@@ -50,7 +50,7 @@ abstract class LibrarySupportBase(override val description: Library,
   }
 
   final override val interpreterFactory: InterpreterFactory = object : InterpreterFactory {
-    override fun getInterpreter(callName: String): CallTraceResolver {
+    override fun getInterpreter(callName: String): CallTraceInterpreter {
       val operation = findOperationByName(callName)
       return operation?.traceInterpreter
              ?: compatibleLibrary.interpreterFactory.getInterpreter(callName)

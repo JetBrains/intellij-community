@@ -21,14 +21,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 /**
- * anyMatch(condition) -> filter(condition).anyMatch(x -> true);   (result is true <~> any element passed thought filter)
+ * allMatch(condition) -> filter(!condition).noneMatch(x -> true); (result is true <~> no elements which passed thought filter)
  *
  * @author Vitaliy.Bibaev
  */
-public class AnyMatchResolver extends MatchResolverBase {
+public class AllMatchTraceInterpreter extends MatchInterpreterBase {
   @Override
   protected boolean getResult(@NotNull Collection<TraceElement> traceBeforeFilter, @NotNull Collection<TraceElement> traceAfterFilter) {
-    return !traceAfterFilter.isEmpty();
+    return traceBeforeFilter.size() == traceAfterFilter.size();
   }
 
   @NotNull
