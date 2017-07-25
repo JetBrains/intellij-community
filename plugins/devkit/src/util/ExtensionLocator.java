@@ -54,7 +54,7 @@ public class ExtensionLocator {
     List<ExtensionCandidate> result = new SmartList<>();
     processExtensionDeclarations(myPsiClass, new ReferenceProcessor(name, tag -> {
       result.add(new ExtensionCandidate(SmartPointerManager.getInstance(tag.getProject()).createSmartPsiElementPointer(tag)));
-      return true;
+      return true; // continue processing
     }));
     return result;
   }
@@ -62,18 +62,26 @@ public class ExtensionLocator {
   @SuppressWarnings("unchecked") // it's fine with Processor.FALSE
   public static boolean isRegisteredExtension(@NotNull PsiClass psiClass) {
     String name = psiClass.getQualifiedName();
-    //noinspection SimplifiableConditionalExpression
-    return name == null ? false : processExtensionDeclarations(psiClass, new ReferenceProcessor(name, Processor.FALSE));
+    if (name == null) {
+      return false;
+    }
+
+    final boolean[] result = {false};
+    processExtensionDeclarations(psiClass, new ReferenceProcessor(name, tag -> {
+      result[0] = true;
+      return false; // first tag occurrence is enough
+    }));
+    return result[0];
   }
 
-  private static boolean processExtensionDeclarations(PsiClass psiClass, PsiNonJavaFileReferenceProcessor referenceProcessor) {
+  private static void processExtensionDeclarations(PsiClass psiClass, PsiNonJavaFileReferenceProcessor referenceProcessor) {
     String name = psiClass.getQualifiedName();
-    if (name == null) return false;
+    if (name == null) return;
 
     Project project = psiClass.getProject();
     GlobalSearchScope scope = PluginRelatedLocatorsUtils.getCandidatesScope(project);
 
-    return !PsiSearchHelper.SERVICE.getInstance(project).processUsagesInNonJavaFiles(name, referenceProcessor, scope);
+    PsiSearchHelper.SERVICE.getInstance(project).processUsagesInNonJavaFiles(name, referenceProcessor, scope);
   }
 
   private static class ReferenceProcessor implements PsiNonJavaFileReferenceProcessor {
