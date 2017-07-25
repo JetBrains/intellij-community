@@ -202,7 +202,7 @@ public abstract class EmmetParser {
 
   protected boolean setTemplate(final TemplateToken token, TemplateImpl template) {
     if (template == null) {
-      template = myGenerator.createTemplateByKey(token.getKey());
+      template = myGenerator.createTemplateByKey(token.getKey(), token.isForceSingleTag());
     }
     if (template == null) {
       return false;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -170,17 +173,22 @@ public class XmlEmmetParser extends EmmetParser {
       return null;
     }
 
+    boolean forceSingleTag = false;
     TemplateImpl template = myCallback.findApplicableTemplate(templateKey);
+    if (template == null && StringUtil.endsWithChar(templateKey, '/')) {
+      forceSingleTag = true;
+      templateKey = StringUtil.trimEnd(templateKey, '/');
+    }
     if (template == null && !ZenCodingUtil.isXML11ValidQName(templateKey) && !StringUtil.containsChar(templateKey, '$')) {
       return null;
     }
 
-    final Map<String, String> attributes = parseSelectors();
+    Map<String, String> attributes = parseSelectors();
     if (mustHaveSelector && attributes.isEmpty()) {
       return null;
     }
 
-    final TemplateToken templateToken = new TemplateToken(templateKey, attributes);
+    TemplateToken templateToken = new TemplateToken(templateKey, attributes, forceSingleTag);
     if (!setTemplate(templateToken, template)) {
       return null;
     }
@@ -310,7 +318,7 @@ public class XmlEmmetParser extends EmmetParser {
     if (token == ZenCodingTokens.OPENING_SQ_BRACKET) {
       advance();
       final List<Couple<String>> attrList = parseAttributeList();
-      if (attrList == null || getToken() != ZenCodingTokens.CLOSING_SQ_BRACKET) {
+      if (getToken() != ZenCodingTokens.CLOSING_SQ_BRACKET) {
         return null;
       }
       advance();
@@ -336,7 +344,7 @@ public class XmlEmmetParser extends EmmetParser {
     return HtmlUtil.CLASS_ATTRIBUTE_NAME;
   }
 
-  @Nullable
+  @NotNull
   private List<Couple<String>> parseAttributeList() {
     final List<Couple<String>> result = new ArrayList<>();
     while (true) {
