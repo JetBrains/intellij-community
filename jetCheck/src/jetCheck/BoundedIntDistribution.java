@@ -1,4 +1,4 @@
-package slowCheck;
+package jetCheck;
 
 import java.util.Random;
 import java.util.function.ToIntFunction;

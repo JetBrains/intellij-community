@@ -32,8 +32,8 @@ import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.FileContentUtilCore
-import slowCheck.Generator
-import slowCheck.PropertyChecker
+import jetCheck.Generator
+import jetCheck.PropertyChecker
 
 /**
  * @author peter

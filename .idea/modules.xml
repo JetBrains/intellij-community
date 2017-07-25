@@ -257,7 +257,7 @@
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/sdklib/sdklib.iml" filepath="$PROJECT_DIR$/android/tools-base/sdklib/sdklib.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/plugins/settings-repository/settings-repository.iml" filepath="$PROJECT_DIR$/plugins/settings-repository/settings-repository.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/android/sherpa-ui/sherpa-ui.iml" filepath="$PROJECT_DIR$/android/sherpa-ui/sherpa-ui.iml" group="android" />
-      <module fileurl="file://$PROJECT_DIR$/slowCheck/slowCheck.iml" filepath="$PROJECT_DIR$/slowCheck/slowCheck.iml" />
+      <module fileurl="file://$PROJECT_DIR$/jetCheck/jetCheck.iml" filepath="$PROJECT_DIR$/jetCheck/jetCheck.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/smRunner/smRunner.iml" filepath="$PROJECT_DIR$/platform/smRunner/smRunner.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/cvs/smartcvs-src/smartcvs-src.iml" filepath="$PROJECT_DIR$/plugins/cvs/smartcvs-src/smartcvs-src.iml" group="plugins/VCS/cvs" />
       <module fileurl="file://$PROJECT_DIR$/spellchecker/spellchecker.iml" filepath="$PROJECT_DIR$/spellchecker/spellchecker.iml" group="platform" />

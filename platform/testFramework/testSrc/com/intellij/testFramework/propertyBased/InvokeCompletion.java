@@ -38,8 +38,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
-import slowCheck.Generator;
-import slowCheck.IntDistribution;
+import jetCheck.Generator;
+import jetCheck.IntDistribution;
 
 import java.util.Arrays;
 import java.util.HashSet;

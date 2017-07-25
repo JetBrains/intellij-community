@@ -20,8 +20,8 @@ import com.intellij.testFramework.propertyBased.InvokeCompletion;
 import com.intellij.testFramework.propertyBased.MadTestingAction;
 import com.intellij.testFramework.propertyBased.MadTestingUtil;
 import com.intellij.util.SystemProperties;
-import slowCheck.Generator;
-import slowCheck.PropertyChecker;
+import jetCheck.Generator;
+import jetCheck.PropertyChecker;
 
 /**
  * @author peter

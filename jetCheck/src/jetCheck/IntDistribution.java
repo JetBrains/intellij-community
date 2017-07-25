@@ -1,4 +1,4 @@
-package slowCheck;
+package jetCheck;
 
 import java.util.List;
 import java.util.Random;

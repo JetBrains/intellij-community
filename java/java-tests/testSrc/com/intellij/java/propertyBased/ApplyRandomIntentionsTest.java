@@ -23,9 +23,9 @@ import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.propertyBased.*;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import slowCheck.Generator;
-import slowCheck.IntDistribution;
-import slowCheck.PropertyChecker;
+import jetCheck.Generator;
+import jetCheck.IntDistribution;
+import jetCheck.PropertyChecker;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;

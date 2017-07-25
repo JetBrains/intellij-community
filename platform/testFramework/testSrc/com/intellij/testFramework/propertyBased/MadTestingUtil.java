@@ -45,9 +45,9 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import slowCheck.DataStructure;
-import slowCheck.Generator;
-import slowCheck.IntDistribution;
+import jetCheck.DataStructure;
+import jetCheck.Generator;
+import jetCheck.IntDistribution;
 
 import java.io.File;
 import java.io.FileFilter;

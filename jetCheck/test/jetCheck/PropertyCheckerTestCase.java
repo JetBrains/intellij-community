@@ -1,4 +1,4 @@
-package slowCheck;
+package jetCheck;
 
 import junit.framework.TestCase;
 

@@ -24,8 +24,8 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Verifier;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
-import slowCheck.Generator;
-import slowCheck.PropertyChecker;
+import jetCheck.Generator;
+import jetCheck.PropertyChecker;
 
 import java.nio.CharBuffer;
 import java.util.Arrays;

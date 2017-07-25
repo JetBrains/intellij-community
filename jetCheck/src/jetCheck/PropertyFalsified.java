@@ -1,4 +1,4 @@
-package slowCheck;
+package jetCheck;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,7 +69,7 @@ public class PropertyFalsified extends RuntimeException {
     List<String> result = new ArrayList<>();
     for (StackTraceElement element : e.getStackTrace()) {
       String s = element.toString();
-      if (s.startsWith("slowCheck.CounterExampleImpl.checkProperty")) {
+      if (s.startsWith("jetCheck.CounterExampleImpl.checkProperty")) {
         break;
       }
       result.add(s);

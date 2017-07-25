@@ -1,4 +1,4 @@
-package slowCheck;
+package jetCheck;
 
 /**
  * @author peter

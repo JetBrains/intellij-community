@@ -1,4 +1,4 @@
-package slowCheck;
+package jetCheck;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static slowCheck.Generator.*;
+import static jetCheck.Generator.*;
 
 /**
  * @author peter

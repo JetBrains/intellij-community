@@ -1,6 +1,6 @@
-package slowCheck;
+package jetCheck;
 
-import static slowCheck.Generator.*;
+import static jetCheck.Generator.*;
 
 /**
  * @author peter

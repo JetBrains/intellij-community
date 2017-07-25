@@ -18,7 +18,7 @@ package com.intellij.testFramework.propertyBased;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import slowCheck.Generator;
+import jetCheck.Generator;
 
 public class InsertString extends ActionOnRange {
   private final String myToInsert;

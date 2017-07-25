@@ -1,4 +1,4 @@
-package slowCheck;
+package jetCheck;
 
 import org.jetbrains.annotations.NotNull;
 

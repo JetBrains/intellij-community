@@ -55,7 +55,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.*;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import slowCheck.Generator;
+import jetCheck.Generator;
 
 import java.io.File;
 import java.util.ArrayList;

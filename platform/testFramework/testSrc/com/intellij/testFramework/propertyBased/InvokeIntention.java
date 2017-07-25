@@ -33,7 +33,7 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import slowCheck.Generator;
+import jetCheck.Generator;
 
 import java.util.List;
 
