@@ -64,6 +64,17 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
 
     TerminalBlock terminalBlock = terminal.getTerminalBlock();
 
+    String stream = createStreamText(terminal, operation, comparator, name, terminalBlock);
+    PsiLoopStatement loop = terminalBlock.getMainLoop();
+    return replaceWithFindExtremum(loop, terminal.getExtremumHolder(), stream);
+  }
+
+  @NotNull
+  private String createStreamText(ExtremumTerminal terminal,
+                                  String operation,
+                                  String comparator,
+                                  String name,
+                                  TerminalBlock terminalBlock) {
     String stream;
     if (!terminal.isPrimitive()) {
       stream = terminalBlock.generate() + "." + operation + "(" + comparator + ").orElse(null)";
@@ -74,7 +85,7 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
       if (terminal.getStartingValue() != null) {
         startingValue = terminal.getStartingValue().toString();
         String inFilterOperation = terminal.isMax() ? ">=" : "<=";
-        filterOp = ".filter("+ name+"->" + name + inFilterOperation + terminal.getStartingValue().toString() + ")";
+        filterOp = ".filter(" + name + "->" + name + inFilterOperation + terminal.getStartingValue().toString() + ")";
       }
       else {
         startingValue = "";
@@ -82,11 +93,7 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
       }
       stream = terminalBlock.generate() + filterOp + "." + operation + "().orElse(" + startingValue + ")";
     }
-
-
-    PsiLoopStatement loop = terminalBlock.getMainLoop();
-
-    return replaceWithFindExtremum(loop, terminal.getExtremumHolder(), stream);
+    return stream;
   }
 
 
@@ -146,7 +153,6 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
     PsiExpression initializer = extremumHolder.getInitializer();
     Object expressionInitializer = ExpressionUtils.computeConstantExpression(initializer);
     if (expressionInitializer == null) return null;
-    // TODO use it in filtration
 
     final boolean isMax;
     PsiVariable current;
@@ -231,9 +237,9 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
     }
     PsiExpression lOperand = binaryExpression.getLOperand();
     PsiExpression rOperand = binaryExpression.getROperand();
-    if(rOperand == null) return null;
+    if (rOperand == null) return null;
     ExtremumTerminal terminal = extractSimpleRefCaseOriented(lOperand, rOperand, statements, terminalBlock);
-    if(terminal != null) return terminal;
+    if (terminal != null) return terminal;
     return extractSimpleRefCaseOriented(rOperand, lOperand, statements, terminalBlock);
   }
 
@@ -261,7 +267,7 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
     if (type.equals(PsiType.INT)) return "comparingInt";
     if (type.equals(PsiType.DOUBLE)) return "comparingDouble";
     if (type.equals(PsiType.LONG)) return "comparingLong";
-    return null; // TODO more precise handling
+    return null;
   }
 
   @Nullable
