@@ -49,6 +49,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicButtonUI;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
@@ -97,7 +98,8 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   }
 
   private void createTitlePanelToolbar(@NotNull String dimensionKey) {
-    JPanel panel = new NonOpaquePanel(new BorderLayout());
+    JPanel panel = new NonOpaquePanel();
+    panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
     myRestoreSizeButton = new MyToolbarButton("Restore Size", CollapseComponent, CollapseComponentHover, e -> {
       WindowStateService.getInstance(myProject).putSizeFor(myProject, dimensionKey, null);
       myInternalSizeChanged = true;
@@ -118,9 +120,10 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
         return !mySettingsActions.isEmpty();
       }
     };
+    mySettingsButton.setBorder(JBUI.Borders.emptyLeft(4));
 
-    panel.add(myRestoreSizeButton, BorderLayout.WEST);
-    panel.add(mySettingsButton, BorderLayout.EAST);
+    panel.add(myRestoreSizeButton);
+    panel.add(mySettingsButton);
     getTitle().setButtonComponent(new ActiveComponent.Adapter() {
       @Override
       public JComponent getComponent() {
@@ -549,7 +552,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     public MyToolbarButton(@NotNull String text, @NotNull Icon icon, @NotNull Icon rolloverIcon, @NotNull ActionListener buttonListener) {
       super(icon);
       setToolTipText(text);
-      setBorder(null);
+      setBorder(IdeBorderFactory.createEmptyBorder());
       setBorderPainted(false);
       setContentAreaFilled(false);
       setOpaque(false);
@@ -557,6 +560,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       setRolloverIcon(rolloverIcon);
       addActionListener(buttonListener);
       update();
+      setUI(new BasicButtonUI());
     }
 
     public void update() {
