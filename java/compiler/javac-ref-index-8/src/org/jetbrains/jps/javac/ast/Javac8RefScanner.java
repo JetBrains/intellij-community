@@ -31,7 +31,7 @@ import javax.lang.model.util.Types;
 @SuppressWarnings("unused")
 public class Javac8RefScanner extends JavacTreeRefScanner {
   @Override
-  public Tree visitLambdaExpression(LambdaExpressionTree node, JavacReferenceCollectorListener.ReferenceCollector refCollector) {
+  public Tree visitLambdaExpression(LambdaExpressionTree node, JavacReferenceIndexListener.ReferenceCollector refCollector) {
     final TypeMirror type = refCollector.getType(node);
     Types types = refCollector.getTypeUtility();
     if (types != null) {
@@ -47,7 +47,7 @@ public class Javac8RefScanner extends JavacTreeRefScanner {
   }
 
   @Override
-  public Tree visitMemberReference(MemberReferenceTree node, JavacReferenceCollectorListener.ReferenceCollector refCollector) {
+  public Tree visitMemberReference(MemberReferenceTree node, JavacReferenceIndexListener.ReferenceCollector refCollector) {
     final Element element = refCollector.getReferencedElement(node);
     if (element != null) {
       final JavacRef.JavacElementRefBase ref = refCollector.asJavacRef(element);

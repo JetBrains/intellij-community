@@ -43,7 +43,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-final class JavacReferenceCollectorListener implements TaskListener {
+public final class JavacReferenceIndexListener implements TaskListener {
   private final static TObjectIntHashMap<JavacRef> EMPTY_T_OBJ_INT_MAP = new TObjectIntHashMap<JavacRef>(0);
 
   private final boolean myDivideImportRefs;
@@ -60,7 +60,7 @@ final class JavacReferenceCollectorListener implements TaskListener {
 
   private final Map<String, ReferenceCollector> myIncompletelyProcessedFiles = new HashMap<String, ReferenceCollector>(10);
 
-  static void installOn(JavaCompiler.CompilationTask task,
+  public static void installOn(JavaCompiler.CompilationTask task,
                         boolean divideImportRefs,
                         Consumer<JavacFileData> dataConsumer) {
     JavacTask javacTask = (JavacTask)task;
@@ -71,10 +71,10 @@ final class JavacReferenceCollectorListener implements TaskListener {
     catch (NoSuchMethodException e) {
       addTaskMethod = null;
     }
-    final JavacReferenceCollectorListener taskListener = new JavacReferenceCollectorListener(divideImportRefs,
-                                                                                             dataConsumer,
-                                                                                             javacTask,
-                                                                                             addTaskMethod != null);
+    final JavacReferenceIndexListener taskListener = new JavacReferenceIndexListener(divideImportRefs,
+                                                                                     dataConsumer,
+                                                                                     javacTask,
+                                                                                     addTaskMethod != null);
     if (addTaskMethod != null) {
       try {
         addTaskMethod.setAccessible(true);
@@ -92,10 +92,10 @@ final class JavacReferenceCollectorListener implements TaskListener {
     }
   }
 
-  private JavacReferenceCollectorListener(boolean divideImportRefs,
-                                          Consumer<JavacFileData> dataConsumer,
-                                          JavacTask javacTask,
-                                          boolean atLeastJdk8) {
+  private JavacReferenceIndexListener(boolean divideImportRefs,
+                                      Consumer<JavacFileData> dataConsumer,
+                                      JavacTask javacTask,
+                                      boolean atLeastJdk8) {
     myDivideImportRefs = divideImportRefs;
     myDataConsumer = dataConsumer;
     myJavacTask = javacTask;

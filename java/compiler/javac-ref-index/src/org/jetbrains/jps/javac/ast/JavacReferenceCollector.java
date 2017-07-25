@@ -28,6 +28,6 @@ public class JavacReferenceCollector {
   public static void installOn(JavaCompiler.CompilationTask task,
                                boolean divideImportRefs,
                                Consumer<JavacFileData> fileDataConsumer) {
-    JavacReferenceCollectorListener.installOn(task, divideImportRefs, fileDataConsumer);
+    JavacReferenceIndexListener.installOn(task, divideImportRefs, fileDataConsumer);
   }
 }

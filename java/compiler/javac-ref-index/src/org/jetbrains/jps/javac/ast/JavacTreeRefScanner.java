@@ -31,7 +31,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListener.ReferenceCollector> {
+class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceIndexListener.ReferenceCollector> {
   private static final Set<ElementKind> ALLOWED_ELEMENTS = EnumSet.of(ElementKind.ENUM,
                                                                       ElementKind.CLASS,
                                                                       ElementKind.ANNOTATION_TYPE,
@@ -42,14 +42,14 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
                                                                       ElementKind.METHOD);
 
   @Override
-  public Tree visitCompilationUnit(CompilationUnitTree node, JavacReferenceCollectorListener.ReferenceCollector refCollector) {
+  public Tree visitCompilationUnit(CompilationUnitTree node, JavacReferenceIndexListener.ReferenceCollector refCollector) {
     scan(node.getPackageAnnotations(), refCollector);
     scan(node.getTypeDecls(), refCollector);
     return node;
   }
 
   @Override
-  public Tree visitIdentifier(IdentifierTree node, JavacReferenceCollectorListener.ReferenceCollector refCollector) {
+  public Tree visitIdentifier(IdentifierTree node, JavacReferenceIndexListener.ReferenceCollector refCollector) {
     final Element element = refCollector.getReferencedElement(node);
     if (element == null) {
       return null;
@@ -61,7 +61,7 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
   }
 
   @Override
-  public Tree visitNewClass(NewClassTree node, JavacReferenceCollectorListener.ReferenceCollector collector) {
+  public Tree visitNewClass(NewClassTree node, JavacReferenceIndexListener.ReferenceCollector collector) {
     if (node.getClassBody() == null) {
       final Element element = collector.getReferencedElement(node);
       if (element != null) {
@@ -72,7 +72,7 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
   }
 
   @Override
-  public Tree visitVariable(VariableTree node, JavacReferenceCollectorListener.ReferenceCollector refCollector) {
+  public Tree visitVariable(VariableTree node, JavacReferenceIndexListener.ReferenceCollector refCollector) {
     final Element element = refCollector.getReferencedElement(node);
     if (element != null && element.getKind() == ElementKind.FIELD) {
       final JavacRef.JavacElementRefBase ref = refCollector.asJavacRef(element);
@@ -84,7 +84,7 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
   }
 
   @Override
-  public Tree visitMemberSelect(MemberSelectTree node, JavacReferenceCollectorListener.ReferenceCollector refCollector) {
+  public Tree visitMemberSelect(MemberSelectTree node, JavacReferenceIndexListener.ReferenceCollector refCollector) {
     final Element element = refCollector.getReferencedElement(node);
     if (element != null && element.getKind() != ElementKind.PACKAGE) {
       ExpressionTree qualifierExpression = node.getExpression();
@@ -99,7 +99,7 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
   }
 
   @Override
-  public Tree visitMethod(MethodTree node, JavacReferenceCollectorListener.ReferenceCollector refCollector) {
+  public Tree visitMethod(MethodTree node, JavacReferenceIndexListener.ReferenceCollector refCollector) {
     final Element element = refCollector.getReferencedElement(node);
 
     if (refCollector.getNameTable().isInit(node.getName()) &&
@@ -116,7 +116,7 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
     return super.visitMethod(node, refCollector);
   }
 
-  private void processMemberDefinition(JavacReferenceCollectorListener.ReferenceCollector refCollector,
+  private void processMemberDefinition(JavacReferenceIndexListener.ReferenceCollector refCollector,
                                        JavacRef.JavacElementRefBase ref,
                                        Element element,
                                        TypeMirror retType) {
@@ -140,7 +140,7 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
   }
 
   @Override
-  public Tree visitMethodInvocation(MethodInvocationTree node, JavacReferenceCollectorListener.ReferenceCollector collector) {
+  public Tree visitMethodInvocation(MethodInvocationTree node, JavacReferenceIndexListener.ReferenceCollector collector) {
     if (node.getMethodSelect() instanceof IdentifierTree) {
       Element element = collector.getReferencedElement(node.getMethodSelect());
       if (element != null && element.getKind() != ElementKind.CONSTRUCTOR) {
@@ -166,7 +166,7 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
   private final Stack<Long> myCurrentEnclosingElementOffset = new Stack<Long>(1);
 
   @Override
-  public Tree visitClass(ClassTree node, JavacReferenceCollectorListener.ReferenceCollector refCollector) {
+  public Tree visitClass(ClassTree node, JavacReferenceIndexListener.ReferenceCollector refCollector) {
     TypeElement element = (TypeElement)refCollector.getReferencedElement(node);
     if (element == null) return null;
     myCurrentEnclosingElement.add(element);
@@ -240,7 +240,7 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
     return null;
   }
 
-  private static boolean isIterator(TypeElement aClass, JavacReferenceCollectorListener.ReferenceCollector collector) {
+  private static boolean isIterator(TypeElement aClass, JavacReferenceIndexListener.ReferenceCollector collector) {
     JavacNameTable table = collector.getNameTable();
     TypeElement iterable = table.getIterableElement();
     if (iterable != null && isInheritorOrSelf(aClass, iterable)) {
