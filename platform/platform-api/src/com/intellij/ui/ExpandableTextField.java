@@ -44,6 +44,7 @@ import static javax.swing.KeyStroke.getKeyStroke;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS;
 
 public final class ExpandableTextField extends JTextField implements Expandable {
+  private static final int MINIMAL_WIDTH = 50;
   private final Function<String, String> parser;
   private final Function<String, String> joiner;
   private JBPopup popup;
@@ -123,7 +124,7 @@ public final class ExpandableTextField extends JTextField implements Expandable 
     Insets insets = getInsets();
     JBInsets.addTo(size, insets);
     JBInsets.addTo(size, pane.getInsets());
-    if (size.width < getWidth()) size.width = getWidth();
+    if (size.width - MINIMAL_WIDTH < getWidth()) size.width = getWidth();
     pane.setPreferredSize(size);
     pane.setViewportBorder(BorderFactory.createEmptyBorder(insets.top, insets.left, insets.bottom, insets.right));
 
