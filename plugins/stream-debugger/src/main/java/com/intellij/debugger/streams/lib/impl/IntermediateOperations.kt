@@ -44,3 +44,6 @@ class DistinctOperation(name: String, handlerFactory: (Int, IntermediateStreamCa
 class ParallelOperation(name: String) : IntermediateOperationBase(name,
                                                                   ::ParallelHandler,
                                                                   SimplePeekCallTraceResolver(), FilterResolver())
+
+class ConcatOperation(name: String, orderResolver: ValuesOrderResolver) : OrderBasedOperation(name, orderResolver)
+class CollapseOperation(name: String) : OrderBasedOperation(name, CollapseResolver())
