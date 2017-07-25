@@ -129,6 +129,21 @@ public final class ExpandableTextField extends JTextField implements Expandable 
     JBInsets.addTo(size, insets);
     JBInsets.addTo(size, pane.getInsets());
     if (size.width - MINIMAL_WIDTH < getWidth()) size.width = getWidth();
+
+    Point location = new Point(0, 0);
+    SwingUtilities.convertPointToScreen(location, this);
+    Rectangle screen = ScreenUtil.getScreenRectangle(this);
+    int bottom = screen.y - location.y + screen.height;
+    if (bottom < size.height) {
+      int top = location.y - screen.y + getHeight();
+      if (top < bottom) {
+        size.height = bottom;
+      }
+      else {
+        if (size.height > top) size.height = top;
+        location.y -= size.height - getHeight();
+      }
+    }
     pane.setPreferredSize(size);
     pane.setViewportBorder(BorderFactory.createEmptyBorder(insets.top, insets.left, insets.bottom, insets.right));
 
@@ -158,7 +173,7 @@ public final class ExpandableTextField extends JTextField implements Expandable 
           return false;
         }
       }).createPopup();
-    popup.show(new RelativePoint(this, new Point(0, 0)));
+    popup.show(new RelativePoint(location));
   }
 
   private static void copyCaretPosition(JTextComponent source, JTextComponent destination) {
