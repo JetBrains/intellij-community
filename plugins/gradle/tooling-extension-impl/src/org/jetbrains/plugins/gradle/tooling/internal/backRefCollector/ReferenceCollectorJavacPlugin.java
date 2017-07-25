@@ -15,10 +15,11 @@
  */
 package org.jetbrains.plugins.gradle.tooling.internal.backRefCollector;
 
+import com.intellij.util.Consumer;
 import com.sun.source.util.JavacTask;
 import com.sun.source.util.Plugin;
-
-import java.io.PrintWriter;
+import org.jetbrains.jps.javac.ast.JavacReferenceIndexListener;
+import org.jetbrains.jps.javac.ast.api.JavacFileData;
 
 public class ReferenceCollectorJavacPlugin implements Plugin {
   @Override
@@ -28,13 +29,11 @@ public class ReferenceCollectorJavacPlugin implements Plugin {
 
   @Override
   public void init(JavacTask task, String... args) {
-    try {
-      PrintWriter pw = new PrintWriter("/home/user/log1");
-      pw.println(RefCollectorUtil.getRootClassloader());
-      pw.close();
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    JavacReferenceIndexListener.installOn(task, false, new Consumer<JavacFileData>() {
+      @Override
+      public void consume(JavacFileData data) {
+        //TODO save em all
+      }
+    });
   }
 }

@@ -50,5 +50,7 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="javac-ref-index" />
+    <orderEntry type="module" module-name="util-rt" />
   </component>
 </module>

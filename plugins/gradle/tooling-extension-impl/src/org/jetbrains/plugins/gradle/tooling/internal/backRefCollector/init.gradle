@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.RefCollectorUtil
-import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.SomeSingleton
+import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.GradleJavacReferenceIndexWriterHolder
 apply plugin: BackRefCollectorGradlePlugin
 
 initscript {
@@ -27,31 +26,21 @@ initscript {
 class BackRefCollectorGradlePlugin implements Plugin<Gradle> {
   @Override
   void apply(Gradle gradle) {
-    gradle.buildStarted {}
-    gradle.buildFinished {}
+    gradle.buildStarted {
+      GradleJavacReferenceIndexWriterHolder.initialize()
+    }
+    gradle.buildFinished {
+      GradleJavacReferenceIndexWriterHolder.closeIfNeed(false)
+    }
     gradle.allprojects { project ->
       Action<JavaCompile> javaCompilerPluginInstaller =
         new Action<JavaCompile>() {
           @Override
           void execute(JavaCompile task) {
-            PrintWriter pw = new PrintWriter("/home/user/log");
-            try {
-              pw.println(RefCollectorUtil.getRootClassloader());
-
-            }
-            catch (Exception e) {
-              e.printStackTrace(pw)
-              throw new RuntimeException(e);
-            } finally {
-              pw.close();
-            }
-
-
             def args = task.options.compilerArgs
             args.add("-processorpath")
             args.add("${EXTENSIONS_JARS_PATH}")
             args.add("-Xplugin:ReferenceCollectorJavacPlugin")
-            SomeSingleton.VALUE = 239
           }
         }
 
