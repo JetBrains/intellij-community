@@ -31,6 +31,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.AncestorListener;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
@@ -40,6 +41,7 @@ import java.util.List;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText;
 import static java.awt.event.InputEvent.CTRL_MASK;
+import static java.beans.EventHandler.create;
 import static javax.swing.KeyStroke.getKeyStroke;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS;
 
@@ -65,6 +67,8 @@ public final class ExpandableTextField extends JTextField implements Expandable 
     UIUtil.addUndoRedoActions(this);
     this.parser = text -> StringUtil.join(parser.fun(text), "\n");
     this.joiner = text -> joiner.fun(Arrays.asList(StringUtil.splitByLines(text)));
+    addAncestorListener(create(AncestorListener.class, this, "collapse"));
+    addComponentListener(create(ComponentListener.class, this, "collapse"));
   }
 
   public String getTitle() {
@@ -162,7 +166,6 @@ public final class ExpandableTextField extends JTextField implements Expandable 
       destination.setCaretPosition(source.getCaretPosition());
     }
     catch (Exception ignored) {
-      System.out.println("ignored = " + ignored);
     }
   }
 }
