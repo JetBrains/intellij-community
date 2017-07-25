@@ -54,6 +54,12 @@ public interface PsiParameter extends PsiVariable, JvmParameter {
   @Nullable
   PsiTypeElement getTypeElement();
 
+  /* This explicit declaration is required to force javac generate bridge method 'JvmType getType()'; without it calling
+  JvmParameter#getType() method on instances which weren't recompiled against the new API will cause AbstractMethodError. */
+  @NotNull
+  @Override
+  PsiType getType();
+
   @NotNull
   @Override
   default PsiAnnotation[] getAnnotations() {

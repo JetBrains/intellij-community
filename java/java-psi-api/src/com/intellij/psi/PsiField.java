@@ -44,4 +44,10 @@ public interface PsiField extends PsiMember, PsiVariable, PsiDocCommentOwner, Jv
 
   @Override
   @NotNull PsiIdentifier getNameIdentifier();
+
+  /* This explicit declaration is required to force javac generate bridge method 'JvmType getType()'; without it calling
+  JvmField#getType() method on instances which weren't recompiled against the new API will cause AbstractMethodError. */
+  @NotNull
+  @Override
+  PsiType getType();
 }
