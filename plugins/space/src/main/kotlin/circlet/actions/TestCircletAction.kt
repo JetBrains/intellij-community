@@ -5,6 +5,7 @@ import circlet.client.api.*
 import circlet.components.*
 import circlet.utils.*
 import com.intellij.notification.*
+import com.intellij.notification.Notification
 import com.intellij.openapi.actionSystem.*
 import klogging.*
 import runtime.async.*
