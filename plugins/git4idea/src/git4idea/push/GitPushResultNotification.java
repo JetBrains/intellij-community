@@ -104,7 +104,7 @@ class GitPushResultNotification extends Notification {
         if (tree != null) {
           tree.setBefore(pushResult.getBeforeUpdateLabel());
           tree.setAfter(pushResult.getAfterUpdateLabel());
-          notification.addAction(new ViewUpdateInfoNotification(project, tree, VIEW_FILES_UPDATED_DURING_THE_PUSH));
+          notification.addAction(new ViewUpdateInfoNotification(project, tree, VIEW_FILES_UPDATED_DURING_THE_PUSH, notification));
         }
       });
     }
