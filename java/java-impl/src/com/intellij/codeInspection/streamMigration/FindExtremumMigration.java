@@ -75,25 +75,21 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
                                          String comparator,
                                          String name,
                                          TerminalBlock terminalBlock) {
-    String stream;
     if (!terminal.isPrimitive()) {
-      stream = terminalBlock.generate() + "." + operation + "(" + comparator + ").orElse(null)";
+      return terminalBlock.generate() + "." + operation + "(" + comparator + ").orElse(null)";
+    }
+    String startingValue;
+    String filterOp;
+    if (terminal.getStartingValue() != null) {
+      startingValue = terminal.getStartingValue().toString();
+      String inFilterOperation = terminal.isMax() ? ">=" : "<=";
+      filterOp = ".filter(" + name + "->" + name + inFilterOperation + terminal.getStartingValue().toString() + ")";
     }
     else {
-      String startingValue;
-      String filterOp;
-      if (terminal.getStartingValue() != null) {
-        startingValue = terminal.getStartingValue().toString();
-        String inFilterOperation = terminal.isMax() ? ">=" : "<=";
-        filterOp = ".filter(" + name + "->" + name + inFilterOperation + terminal.getStartingValue().toString() + ")";
-      }
-      else {
-        startingValue = "";
-        filterOp = "";
-      }
-      stream = terminalBlock.generate() + filterOp + "." + operation + "().orElse(" + startingValue + ")";
+      startingValue = "";
+      filterOp = "";
     }
-    return stream;
+    return terminalBlock.generate() + filterOp + "." + operation + "().orElse(" + startingValue + ")";
   }
 
 
@@ -156,19 +152,29 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
 
     final boolean isMax;
     PsiVariable current;
+    PsiVariable comparisionExtrmumHolder;
+    PsiVariable comparisionLoopVariable;
     if (extremumHolder.equals(comparision.getFirst().getVariable())) {
       isMax = !comparision.isGreater();
       current = comparision.getSecond().getVariable();
+      comparisionExtrmumHolder = comparision.getFirst().getVariable();
+      comparisionLoopVariable = comparision.getSecond().getVariable();
     }
     else if (extremumHolder.equals(comparision.getSecond().getVariable())) {
       isMax = comparision.isGreater();
       current = comparision.getFirst().getVariable();
+      comparisionExtrmumHolder = comparision.getSecond().getVariable();
+      comparisionLoopVariable = comparision.getFirst().getVariable();
     }
     else {
       return null;
     }
 
-    //TODO check that maxHolder is same for comparision
+    PsiVariable assignmentLoopVariable = assignment.tryExtractVariable();
+    if (assignmentLoopVariable == null || !assignmentLoopVariable.equals(comparisionLoopVariable)) return null;
+    //TODO check if it is really loop variable or use knowledge of non final variables
+
+    if(!comparisionExtrmumHolder.equals(extremumHolder)) return null;
 
     return new ExtremumTerminal(isMax, true, comparision.getFirst(), current, extremumHolder, terminalBlock, expressionInitializer);
   }
@@ -457,6 +463,8 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
     @NotNull
     PsiVariable getVariable();
 
+    boolean equalShape(@NotNull KeySelector keySelector);
+
     @Nullable
     static KeySelector extractKeySelector(@NotNull PsiExpression expression) {
       MethodKeySelector methodKeySelector = MethodKeySelector.extract(expression);
@@ -505,8 +513,8 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
     }
 
     @Override
-    public boolean equals(Object obj) {
-      return obj instanceof MethodKeySelector && ((MethodKeySelector)obj).myMethod == myMethod;
+    public boolean equalShape(@NotNull KeySelector keySelector) {
+      return keySelector instanceof MethodKeySelector && ((MethodKeySelector)keySelector).myMethod.equals(myMethod);
     }
 
     @Nullable
@@ -548,8 +556,8 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
     }
 
     @Override
-    public boolean equals(Object obj) {
-      return obj instanceof VariableKeySelector;
+    public boolean equalShape(@NotNull KeySelector keySelector) {
+      return keySelector instanceof  VariableKeySelector;
     }
 
     @Nullable
@@ -591,7 +599,12 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
 
     @Override
     public boolean equals(Object obj) {
-      return obj instanceof FieldKeySelector && ((FieldKeySelector)obj).myField.equals(this.myField);
+      return obj instanceof FieldKeySelector && ((FieldKeySelector)obj).myField.equals(myField);
+    }
+
+    @Override
+    public boolean equalShape(@NotNull KeySelector keySelector) {
+      return keySelector instanceof  FieldKeySelector && ((FieldKeySelector)keySelector).myField.equals(myField);
     }
 
     @Nullable
@@ -638,6 +651,15 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
     private boolean hasSameVariables(@NotNull PsiVariable extremumHolder, @NotNull PsiVariable current) {
       PsiVariable rVariable = tryCast(myExpression, PsiVariable.class);
       return rVariable != null & myVariable.equals(extremumHolder) && rVariable.equals(current);
+    }
+
+    @Nullable
+    public PsiVariable tryExtractVariable(){
+      PsiReferenceExpression referenceExpression = tryCast(myExpression, PsiReferenceExpression.class);
+      if(referenceExpression == null) return null;
+      PsiVariable variable = tryCast(referenceExpression.resolve(), PsiVariable.class);
+      if(variable == null) return null;
+      return variable;
     }
   }
 
