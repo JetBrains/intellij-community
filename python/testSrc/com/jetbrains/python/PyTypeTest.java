@@ -16,11 +16,13 @@
 package com.jetbrains.python;
 
 import com.google.common.collect.ImmutableList;
+import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
+import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -2053,6 +2055,128 @@ public class PyTypeTest extends PyTestCase {
            "    if True:\n" +
            "        g().x = 'foo'\n" +
            "    expr = x");
+  }
+
+  public void testTypingNTInheritor() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> {
+        final PyExpression definition = parseExpr("from typing import NamedTuple\n" +
+                                                   "class User(NamedTuple):\n" +
+                                                   "    name: str\n" +
+                                                   "    level: int = 0\n" +
+                                                   "expr = User");
+
+        for (TypeEvalContext context : getTypeEvalContexts(definition)) {
+          final PyType type = context.getType(definition);
+          assertInstanceOf(type, PyClassType.class);
+
+          final List<PyClassLikeType> superClassTypes = ((PyClassType)type).getSuperClassTypes(context);
+          assertEquals(1, superClassTypes.size());
+
+          assertInstanceOf(superClassTypes.get(0), PyClassType.class);
+        }
+
+        final PyExpression instance = parseExpr("from typing import NamedTuple\n" +
+                                                   "class User(NamedTuple):\n" +
+                                                   "    name: str\n" +
+                                                   "    level: int = 0\n" +
+                                                   "expr = User(\"name\")");
+
+        for (TypeEvalContext context : getTypeEvalContexts(instance)) {
+          final PyType type = context.getType(instance);
+          assertInstanceOf(type, PyClassType.class);
+
+          final List<PyClassLikeType> superClassTypes = ((PyClassType)type).getSuperClassTypes(context);
+          assertEquals(1, superClassTypes.size());
+
+          assertInstanceOf(superClassTypes.get(0), PyClassType.class);
+        }
+      }
+    );
+  }
+
+  public void testTypingNTTarget() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> {
+        final PyExpression definition = parseExpr("from typing import NamedTuple\n" +
+                                                  "User = NamedTuple(\"User\", name=str, level=int)\n" +
+                                                  "expr = User");
+
+        for (TypeEvalContext context : getTypeEvalContexts(definition)) {
+          assertInstanceOf(context.getType(definition), PyNamedTupleType.class);
+        }
+
+        final PyExpression instance = parseExpr("from typing import NamedTuple\n" +
+                                                  "User = NamedTuple(\"User\", name=str, level=int)\n" +
+                                                  "expr = User(\"name\")");
+
+        for (TypeEvalContext context : getTypeEvalContexts(instance)) {
+          assertInstanceOf(context.getType(instance), PyNamedTupleType.class);
+        }
+      }
+    );
+  }
+
+  public void testCollectionsNTInheritor() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> {
+        final PyExpression definition = parseExpr("from collections import namedtuple\n" +
+                                                  "class User(namedtuple(\"User\", \"name level\")):\n" +
+                                                  "    pass\n" +
+                                                  "expr = User");
+
+        for (TypeEvalContext context : getTypeEvalContexts(definition)) {
+          final PyType type = context.getType(definition);
+          assertInstanceOf(type, PyClassType.class);
+
+          final List<PyClassLikeType> superClassTypes = ((PyClassType)type).getSuperClassTypes(context);
+          assertEquals(1, superClassTypes.size());
+
+          assertInstanceOf(superClassTypes.get(0), PyNamedTupleType.class);
+        }
+
+        final PyExpression instance = parseExpr("from collections import namedtuple\n" +
+                                                  "class User(namedtuple(\"User\", \"name level\")):\n" +
+                                                  "    pass\n" +
+                                                  "expr = User('MrRobot')");
+
+        for (TypeEvalContext context : getTypeEvalContexts(instance)) {
+          final PyType type = context.getType(instance);
+          assertInstanceOf(type, PyClassType.class);
+
+          final List<PyClassLikeType> superClassTypes = ((PyClassType)type).getSuperClassTypes(context);
+          assertEquals(1, superClassTypes.size());
+
+          assertInstanceOf(superClassTypes.get(0), PyNamedTupleType.class);
+        }
+      }
+    );
+  }
+
+  public void testCollectionsNTTarget() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> {
+        final PyExpression definition = parseExpr("from collections import namedtuple\n" +
+                                                  "User = namedtuple(\"User\", \"name level\")\n" +
+                                                  "expr = User");
+
+        for (TypeEvalContext context : getTypeEvalContexts(definition)) {
+          assertInstanceOf(context.getType(definition), PyNamedTupleType.class);
+        }
+
+        final PyExpression instance = parseExpr("from collections import namedtuple\n" +
+                                                  "User = namedtuple(\"User\", \"name level\")\n" +
+                                                  "expr = User('MrRobot')");
+
+        for (TypeEvalContext context : getTypeEvalContexts(instance)) {
+          assertInstanceOf(context.getType(instance), PyNamedTupleType.class);
+        }
+      }
+    );
   }
 
   // PY-25157

@@ -40,7 +40,6 @@ import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PyNamedTupleStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.*;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +76,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     if (type != null) {
       return type;
     }
-    type = getNamedTupleType(referenceTarget, context, anchor);
+    type = getNamedTupleTypeForResolvedCallee(referenceTarget, context, anchor);
     if (type != null) {
       return type;
     }
@@ -101,12 +100,9 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       }
     }
 
-    final PyCallableType typeFromNTInheritorInitializing = Optional
-      .ofNullable(getTypeFromCollectionsNTInheritorInitializing(referenceExpression, context))
-      .orElseGet(() -> getTypeFromTypingNTInheritorInitializing(referenceExpression, context));
-
-    if (typeFromNTInheritorInitializing != null) {
-      return typeFromNTInheritorInitializing;
+    final PyCallableType namedTupleTypeForCallee = getNamedTupleTypeForCallee(referenceExpression, context);
+    if (namedTupleTypeForCallee != null) {
+      return namedTupleTypeForCallee;
     }
 
     return null;
@@ -119,6 +115,21 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
         PyNames.BASESTRING.equals(((PyElement)referenceTarget).getName())) {
       return builtinCache.getStrOrUnicodeType();
     }
+    return null;
+  }
+
+  @Nullable
+  static PyNamedTupleType getNamedTupleTypeForResolvedCallee(@NotNull PsiElement referenceTarget,
+                                                             @NotNull TypeEvalContext context,
+                                                             @Nullable PsiElement anchor) {
+    if (referenceTarget instanceof PyFunction && anchor instanceof PyCallExpression) {
+      return getNamedTupleFunctionType((PyFunction)referenceTarget, context, (PyCallExpression)anchor);
+    }
+
+    if (referenceTarget instanceof PyTargetExpression) {
+      return getNamedTupleTypeForTarget((PyTargetExpression)referenceTarget, context);
+    }
+
     return null;
   }
 
@@ -173,8 +184,8 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static PyCallableType getTypeFromCollectionsNTInheritorInitializing(@NotNull PyReferenceExpression referenceExpression,
-                                                                              @NotNull TypeEvalContext context) {
+  private static PyNamedTupleType getNamedTupleTypeForCallee(@NotNull PyReferenceExpression referenceExpression,
+                                                             @NotNull TypeEvalContext context) {
     if (PyCallExpressionNavigator.getPyCallExpressionByCallee(referenceExpression) == null) {
       return null;
     }
@@ -182,32 +193,35 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
     final ResolveResult[] resolveResults = referenceExpression.getReference(resolveContext).multiResolve(false);
 
-    return StreamEx
-      .of(PyUtil.filterTopPriorityResults(resolveResults))
-      .select(PyTypedElement.class)
-      .map(context::getType)
-      .select(PyClassLikeType.class)
-      .flatCollection(type -> type.getAncestorTypes(context))
-      .select(PyNamedTupleType.class)
-      .findFirst()
-      .orElse(null);
-  }
+    for (PsiElement element : PyUtil.filterTopPriorityResults(resolveResults)) {
+      if (element instanceof PyTargetExpression) {
+        final PyNamedTupleType result = getNamedTupleTypeForTarget((PyTargetExpression)element, context);
+        if (result != null) {
+          return result;
+        }
+      }
 
-  @Nullable
-  private static PyCallableType getTypeFromTypingNTInheritorInitializing(@NotNull PyReferenceExpression referenceExpression,
-                                                                         @NotNull TypeEvalContext context) {
-    if (PyCallExpressionNavigator.getPyCallExpressionByCallee(referenceExpression) == null) {
-      return null;
+      if (element instanceof PyClass) {
+        final PyNamedTupleType result = getNamedTupleTypeForTypingNTInheritorAsCallee((PyClass)element, context);
+        if (result != null) {
+          return result;
+        }
+      }
+
+      if (element instanceof PyTypedElement) {
+        final PyType type = context.getType((PyTypedElement)element);
+        if (type instanceof PyClassLikeType) {
+          final List<PyClassLikeType> superClassTypes = ((PyClassLikeType)type).getSuperClassTypes(context);
+
+          final PyClassLikeType superNTType = ContainerUtil.find(superClassTypes, PyNamedTupleType.class::isInstance);
+          if (superNTType != null) {
+            return as(superNTType, PyNamedTupleType.class);
+          }
+        }
+      }
     }
 
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-    final ResolveResult[] resolveResults = referenceExpression.getReference(resolveContext).multiResolve(false);
-
-    return StreamEx
-      .of(PyUtil.filterTopPriorityResults(resolveResults))
-      .map(element -> getNamedTupleType(element, context, referenceExpression))
-      .findFirst(Objects::nonNull)
-      .orElse(null);
+    return null;
   }
 
   @Nullable
@@ -336,76 +350,88 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  static PyNamedTupleType getNamedTupleType(@NotNull PsiElement referenceTarget,
-                                            @NotNull TypeEvalContext context,
-                                            @Nullable PsiElement anchor) {
-    if (referenceTarget instanceof PyTargetExpression) {
-      final PyTargetExpression target = (PyTargetExpression)referenceTarget;
-      final PyTargetExpressionStub stub = target.getStub();
+  private static PyNamedTupleType getNamedTupleFunctionType(@NotNull PyFunction function,
+                                                            @NotNull TypeEvalContext context,
+                                                            @NotNull PyCallExpression call) {
+    if (PyNames.COLLECTIONS_NAMEDTUPLE.equals(function.getQualifiedName())) {
+      return getNamedTupleTypeFromAST(call, context, PyNamedTupleType.DefinitionLevel.NT_FUNCTION);
+    }
 
-      if (stub != null) {
-        return getNamedTupleTypeFromStub(target,
-                                         stub.getCustomStub(PyNamedTupleStub.class),
-                                         context,
-                                         PyNamedTupleType.DefinitionLevel.NEW_TYPE);
-      }
-      else {
-        return getNamedTupleTypeFromAST(target, context, PyNamedTupleType.DefinitionLevel.NEW_TYPE);
+    if (PyUtil.isInit(function)) {
+      final PyClass cls = function.getContainingClass();
+      if (cls != null && PyTypingTypeProvider.NAMEDTUPLE.equals(cls.getQualifiedName())) {
+        return getNamedTupleTypeFromAST(call, context, PyNamedTupleType.DefinitionLevel.NT_FUNCTION);
       }
     }
-    else if (referenceTarget instanceof PyFunction && anchor instanceof PyCallExpression) {
-      return getNamedTupleTypeFromAST((PyCallExpression)anchor, context, PyNamedTupleType.DefinitionLevel.AS_SUPERCLASS);
+
+    return null;
+  }
+
+  @Nullable
+  private static PyNamedTupleType getNamedTupleTypeForTarget(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
+    final PyTargetExpressionStub stub = target.getStub();
+
+    if (stub != null) {
+      return getNamedTupleTypeFromStub(target,
+                                       stub.getCustomStub(PyNamedTupleStub.class),
+                                       context,
+                                       PyNamedTupleType.DefinitionLevel.NEW_TYPE);
     }
-    else if (referenceTarget instanceof PyClass) {
-      final PyClass cls = (PyClass)referenceTarget;
+    else {
+      return getNamedTupleTypeFromAST(target, context, PyNamedTupleType.DefinitionLevel.NEW_TYPE);
+    }
+  }
 
-      final Condition<PyClassLikeType> isTypingNT =
-        type ->
-          type != null &&
-          !(type instanceof PyNamedTupleType) &&
-          PyTypingTypeProvider.NAMEDTUPLE.equals(type.getClassQName());
+  @Nullable
+  private static PyNamedTupleType getNamedTupleTypeForTypingNTInheritorAsCallee(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    final Condition<PyClassLikeType> isTypingNT =
+      type ->
+        type != null &&
+        !(type instanceof PyNamedTupleType) &&
+        PyTypingTypeProvider.NAMEDTUPLE.equals(type.getClassQName());
 
-      if (ContainerUtil.exists(cls.getSuperClassTypes(context), isTypingNT)) {
-        final String name = cls.getName();
-        if (name != null) {
-          final PsiElement typingNT = PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString(PyTypingTypeProvider.NAMEDTUPLE),
-                                                                                PyResolveImportUtil.fromFoothold(cls));
+    if (ContainerUtil.exists(cls.getSuperClassTypes(context), isTypingNT)) {
+      final String name = cls.getName();
+      if (name != null) {
+        final PsiElement typingNT =
+          PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString(PyTypingTypeProvider.NAMEDTUPLE),
+                                                    PyResolveImportUtil.fromFoothold(cls));
 
-          final PyClass tupleClass = as(typingNT, PyClass.class);
-          if (tupleClass != null) {
-            final Set<PyTargetExpression> fields = new TreeSet<>(Comparator.comparingInt(PyTargetExpression::getTextOffset));
+        final PyClass tupleClass = as(typingNT, PyClass.class);
+        if (tupleClass != null) {
+          final Set<PyTargetExpression> fields = new TreeSet<>(Comparator.comparingInt(PyTargetExpression::getTextOffset));
 
-            cls.processClassLevelDeclarations(
-              new BaseScopeProcessor() {
-                @Override
-                public boolean execute(@NotNull PsiElement element, @NotNull ResolveState substitutor) {
-                  if (element instanceof PyTargetExpression) {
-                    final PyTargetExpression target = (PyTargetExpression)element;
-                    if (target.getAnnotation() != null) {
-                      fields.add(target);
-                    }
+          cls.processClassLevelDeclarations(
+            new BaseScopeProcessor() {
+              @Override
+              public boolean execute(@NotNull PsiElement element, @NotNull ResolveState substitutor) {
+                if (element instanceof PyTargetExpression) {
+                  final PyTargetExpression target = (PyTargetExpression)element;
+                  if (target.getAnnotation() != null) {
+                    fields.add(target);
                   }
-
-                  return true;
                 }
+
+                return true;
               }
-            );
+            }
+          );
 
-            final Collector<PyTargetExpression, ?, LinkedHashMap<String, PyNamedTupleType.FieldTypeAndDefaultValue>> toNTFields =
-              Collectors.toMap(PyTargetExpression::getName,
-                               field -> new PyNamedTupleType.FieldTypeAndDefaultValue(context.getType(field), field.findAssignedValue()),
-                               (v1, v2) -> v2,
-                               LinkedHashMap::new);
+          final Collector<PyTargetExpression, ?, LinkedHashMap<String, PyNamedTupleType.FieldTypeAndDefaultValue>> toNTFields =
+            Collectors.toMap(PyTargetExpression::getName,
+                             field -> new PyNamedTupleType.FieldTypeAndDefaultValue(context.getType(field), field.findAssignedValue()),
+                             (v1, v2) -> v2,
+                             LinkedHashMap::new);
 
-            return new PyNamedTupleType(tupleClass,
-                                        cls,
-                                        name,
-                                        fields.stream().collect(toNTFields),
-                                        PyNamedTupleType.DefinitionLevel.NEW_TYPE);
-          }
+          return new PyNamedTupleType(tupleClass,
+                                      cls,
+                                      name,
+                                      fields.stream().collect(toNTFields),
+                                      PyNamedTupleType.DefinitionLevel.NEW_TYPE);
         }
       }
     }
+
     return null;
   }
 

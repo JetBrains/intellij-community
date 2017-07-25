@@ -613,6 +613,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-25118
+  public void testInnerClassAsNamedTupleDefinitionMember() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
