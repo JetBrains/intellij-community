@@ -18,6 +18,9 @@ package com.intellij.lang.jvm.types;
 import com.intellij.lang.jvm.JvmTypeDeclaration;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Represents a result of resolving a {@link JvmReferenceType reference type}.
+ */
 public interface JvmTypeResolveResult {
 
   @NotNull

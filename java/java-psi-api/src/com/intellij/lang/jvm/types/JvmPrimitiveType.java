@@ -16,7 +16,9 @@
 package com.intellij.lang.jvm.types;
 
 /**
- * Represents primitive types of Java virtual machine.
+ * Represents a primitive type of JVM.
+ *
+ * @see Class#isPrimitive
  */
 public interface JvmPrimitiveType extends JvmType {
 }

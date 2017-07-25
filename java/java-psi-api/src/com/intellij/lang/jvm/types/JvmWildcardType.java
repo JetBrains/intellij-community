@@ -17,12 +17,10 @@ package com.intellij.lang.jvm.types;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.WildcardType;
-
 /**
  * Represents wildcard type, for example {@code ? extends Number} in {@code List<? extends Number>}.
  *
- * @see WildcardType
+ * @see java.lang.reflect.WildcardType
  */
 public interface JvmWildcardType extends JvmType {
 
@@ -37,7 +35,7 @@ public interface JvmWildcardType extends JvmType {
    * <p>
    *
    * @return an upper bound
-   * @see WildcardType#getUpperBounds
+   * @see java.lang.reflect.WildcardType#getUpperBounds
    */
   @NotNull
   JvmType upperBound();
@@ -52,7 +50,7 @@ public interface JvmWildcardType extends JvmType {
    * </ul>
    *
    * @return a lower bound
-   * @see WildcardType#getLowerBounds()
+   * @see java.lang.reflect.WildcardType#getLowerBounds()
    */
   @NotNull
   JvmType lowerBound();

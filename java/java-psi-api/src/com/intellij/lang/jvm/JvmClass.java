@@ -63,10 +63,7 @@ public interface JvmClass extends JvmTypeParametersOwner, JvmTypeDeclaration {
   //
 
   /**
-   * Returns all (static, private, etc) methods and constructors
-   * declared by this class but excluding inherited ones.
-   *
-   * @return methods and constructors
+   * @return all (static, private, etc) methods and constructors declared by this class but excluding inherited ones
    * @see Class#getDeclaredMethods
    * @see Class#getDeclaredConstructors
    */
@@ -74,20 +71,14 @@ public interface JvmClass extends JvmTypeParametersOwner, JvmTypeDeclaration {
   JvmMethod[] getMethods();
 
   /**
-   * Returns all (static, private, etc) fields
-   * declared by this class but excluding inherited ones.
-   *
-   * @return fields
+   * @return all (static, private, etc) fields declared by this class but excluding inherited ones
    * @see Class#getDeclaredFields
    */
   @NotNull
   JvmField[] getFields();
 
   /**
-   * Returns all (static, private, etc) inner classes
-   * declared by this class but excluding inherited ones.
-   *
-   * @return inner classes
+   * @return all (static, private, etc) inner classes declared by this class but excluding inherited ones
    * @see Class#getDeclaredClasses
    */
   @NotNull

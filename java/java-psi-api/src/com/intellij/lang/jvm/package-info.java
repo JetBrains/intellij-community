@@ -13,6 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/**
+ * Classes from this package represent elements of JVM class-files
+ * which will be produced from source code of a JVM-based language after compilation.
+ * They can be used to implement features for all JVM-based languages at once
+ * if these features depend on structure of produced class-files rather than on source code constructions.
+ * <p>
+ * E.g. if a framework provides an annotation and requires that signatures of methods annotated by it must satisfy some requirements
+ * it's possible to write a single inspection which will check this for all JVM-based languages which supports these interfaces.
+ *
+ * @see com.intellij.lang.jvm.JvmElement
+ */
 @Experimental
 package com.intellij.lang.jvm;
 

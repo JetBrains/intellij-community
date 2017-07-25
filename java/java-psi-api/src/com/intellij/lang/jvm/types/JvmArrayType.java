@@ -17,8 +17,19 @@ package com.intellij.lang.jvm.types;
 
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @see Class#isArray
+ */
 public interface JvmArrayType extends JvmType {
 
+  /**
+   * @return component type of an array. That is:
+   * <ul>
+   * <li> for {@code int[]}: {@code int}
+   * <li> for {@code String[][]}: {@code String[]}
+   * </ul>
+   * @see Class#getComponentType
+   */
   @NotNull
   JvmType getComponentType();
 }

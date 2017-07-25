@@ -42,7 +42,7 @@ public interface JvmMethod extends JvmTypeParametersOwner {
   String getName();
 
   /**
-   * @return return type of a method or {@code null} if this method represents a constructor
+   * @return return type of a method or {@code null} if this {@code JvmMethod} represents a constructor
    * @see java.lang.reflect.Method#getGenericReturnType
    * @see java.lang.reflect.Method#getAnnotatedReturnType
    */
