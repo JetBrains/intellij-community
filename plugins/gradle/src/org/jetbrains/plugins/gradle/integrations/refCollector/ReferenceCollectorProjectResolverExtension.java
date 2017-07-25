@@ -24,6 +24,7 @@ import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
 import gnu.trove.TObjectIntHashMap;
@@ -40,6 +41,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Order(ExternalSystemConstants.UNORDERED)
 public class ReferenceCollectorProjectResolverExtension extends AbstractProjectResolverExtension {
@@ -56,11 +58,13 @@ public class ReferenceCollectorProjectResolverExtension extends AbstractProjectR
         if (stream == null) {
           throw new IllegalStateException("can't find reference collector gradle script");
         }
-        String classPath = getToolingExtensionsJarPaths(ImmutableSet.of(ReferenceIndexJavacPlugin.class,
-                                                                        LightRef.class,
-                                                                        TObjectIntHashMap.class));
+        ImmutableSet<Class> requiredClasses = ImmutableSet.of(ReferenceIndexJavacPlugin.class,
+                                                 LightRef.class,
+                                                 TObjectIntHashMap.class,
+                                                 Consumer.class);
         String initScript = FileUtil.loadTextAndClose(stream)
-          .replaceAll(Pattern.quote("${EXTENSIONS_JARS_PATH}"), classPath);
+          .replaceAll(Pattern.quote("${EXTENSIONS_JARS_PATH}"), getToolingExtensionsJarPaths(requiredClasses, true))
+          .replaceAll(Pattern.quote("${JAVAC_PLUGIN_PATH}"), getToolingExtensionsJarPaths(requiredClasses, false));
         initScriptConsumer.consume(initScript);
       }
       catch (Exception e) {
@@ -73,11 +77,15 @@ public class ReferenceCollectorProjectResolverExtension extends AbstractProjectR
   }
 
   @NotNull
-  public static String getToolingExtensionsJarPaths(@NotNull Set<Class> toolingExtensionClasses) {
-    return toolingExtensionClasses.stream().map(c -> {
+  private static String getToolingExtensionsJarPaths(@NotNull Set<Class> toolingExtensionClasses, boolean wrapWithQuotes) {
+    Stream<String> paths = toolingExtensionClasses.stream().map(c -> {
       String path = PathManager.getJarPathForClass(c);
       return path == null ? null : PathUtil.getCanonicalPath(path);
-    }).collect(Collectors.joining(","));
+    });
+    if (wrapWithQuotes) {
+      paths = paths.map(p -> StringUtil.wrapWithDoubleQuote(p));
+    }
+    return paths.collect(Collectors.joining(","));
   }
 
   @NotNull

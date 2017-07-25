@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.GradleJavacReferenceIndexWriterHolder
-import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.ReferenceIndexJavacPlugin
-
 apply plugin: BackRefCollectorGradlePlugin
 
 initscript {
   dependencies {
-    classpath files(["${EXTENSIONS_JARS_PATH}"])
+    classpath files([${EXTENSIONS_JARS_PATH}])
   }
 }
 
@@ -29,10 +26,10 @@ class BackRefCollectorGradlePlugin implements Plugin<Gradle> {
   @Override
   void apply(Gradle gradle) {
     gradle.buildStarted {
-      GradleJavacReferenceIndexWriterHolder.initialize()
+      org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.GradleJavacReferenceIndexWriterHolder.initialize()
     }
     gradle.buildFinished {
-      GradleJavacReferenceIndexWriterHolder.closeIfNeed(false)
+      org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.GradleJavacReferenceIndexWriterHolder.closeIfNeed(false)
     }
     gradle.allprojects { project ->
       Action<JavaCompile> javaCompilerPluginInstaller =
@@ -41,8 +38,8 @@ class BackRefCollectorGradlePlugin implements Plugin<Gradle> {
           void execute(JavaCompile task) {
             def args = task.options.compilerArgs
             args.add("-processorpath")
-            args.add("${EXTENSIONS_JARS_PATH}")
-            args.add("-Xplugin:" + ReferenceIndexJavacPlugin.PLUGIN_NAME)
+            args.add("${JAVAC_PLUGIN_PATH}")
+            args.add("-Xplugin:" + org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.ReferenceIndexJavacPlugin.PLUGIN_NAME)
           }
         }
 
