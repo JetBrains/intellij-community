@@ -435,4 +435,9 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
   public String ruleToClass() {
     return StreamApiConstants.JAVA_UTIL_STREAM_STREAM;
   }
+
+  @Override
+  protected TypeConversionDescriptorBase getUnknownMethodConversion() {
+    return null;
+  }
 }

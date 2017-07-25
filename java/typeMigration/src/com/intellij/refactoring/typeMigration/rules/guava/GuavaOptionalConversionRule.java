@@ -112,9 +112,7 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
 
   @Nullable
   @Override
-  protected TypeConversionDescriptorBase findConversionForVariableReference(@NotNull PsiReferenceExpression referenceExpression,
-                                                                            @NotNull PsiVariable psiVariable,
-                                                                            @Nullable PsiExpression context) {
+  protected TypeConversionDescriptorBase findConversionForVariableReference(@Nullable PsiExpression context) {
     if (GuavaOptionalConversionUtil.isOptionalOrContext(context)) {
       return new TypeConversionDescriptor("$o$", "com.google.common.base." + OPTIONAL_CONVERTOR_PATTERN);
     }
@@ -170,5 +168,10 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
   @Override
   public String ruleToClass() {
     return JAVA_OPTIONAL;
+  }
+
+  @Override
+  protected TypeConversionDescriptorBase getUnknownMethodConversion() {
+    return null;
   }
 }
