@@ -163,24 +163,24 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     IconHolder search = icons.get("search");
     if (search != null) {
       int gap = getSearchIconGap();
-      bounds.x -= search.bounds.width + gap;
-      bounds.width += search.bounds.width + gap;
       search.bounds.x = bounds.x;
       search.bounds.y = bounds.y + (bounds.height - search.bounds.height) / 2;
+      bounds.width -= search.bounds.width + gap;
+      bounds.x += search.bounds.width + gap;
     }
     IconHolder clear = icons.get("clear");
     if (clear != null) {
       int gap = getClearIconGap();
+      bounds.width -= clear.bounds.width + gap;
       clear.bounds.x = bounds.x + bounds.width + gap;
       clear.bounds.y = bounds.y + (bounds.height - clear.bounds.height) / 2;
-      bounds.width += clear.bounds.width + gap;
     }
     IconHolder expand = icons.get("expand");
     if (expand != null) {
       int gap = getExpandIconGap();
+      bounds.width -= expand.bounds.width + gap;
       expand.bounds.x = bounds.x + bounds.width + gap;
       expand.bounds.y = bounds.y + (bounds.height - expand.bounds.height) / 2;
-      bounds.width += expand.bounds.width + gap;
     }
   }
 
@@ -396,7 +396,10 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   @Override
   protected Rectangle getVisibleEditorRect() {
     Rectangle bounds = super.getVisibleEditorRect();
-    if (bounds != null && !icons.isEmpty()) updateIconsLayout(new Rectangle(bounds));
+    if (bounds != null && !icons.isEmpty()) {
+      JBInsets.addTo(bounds, insets);
+      updateIconsLayout(bounds);
+    }
     return bounds;
   }
 

@@ -75,7 +75,7 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
     if (clear == null || clear.icon != null) return;
     IconHolder search = icons.get("search");
     if (search == null || search.icon == null || null != search.getAction()) return;
-    search.bounds.x = bounds.x + bounds.width / 2;
+    search.bounds.x = bounds.x + (bounds.width - search.bounds.width) / 2;
   }
 
   @Override
