@@ -2,14 +2,17 @@ package slowCheck;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
  * @author peter
  */
 interface StructureElement {
-  Collection<? extends Shrink> shrink();
+  void shrink(Predicate<StructureElement> suitable);
 }
 
 class StructureNode implements StructureElement {
@@ -46,23 +49,67 @@ class StructureNode implements StructureElement {
   }
 
   @Override
-  public List<Shrink> shrink() {
-    if (shrinkProhibited) return Collections.emptyList();
+  public void shrink(Predicate<StructureElement> suitable) {
+    if (shrinkProhibited) return;
 
-    return isList() ? shrinkList(children.size() - 1) : Collections.singletonList(Shrink.SHRINK_ALL_CHILDREN);
+    List<StructureElement> children = this.children;
+    boolean isList = isList();
+    if (isList) {
+      children = shrinkList(suitable, children);
+    }
+
+    for (int i = isList ? 1 : 0; i < children.size(); i++) {
+      children = shrinkChild(suitable, children, i);
+    }
   }
 
-  private static List<Shrink> shrinkList(int size) {
-    List<Shrink> result = new ArrayList<>();
-    if (size > 4) {
-      result.add(new RemoveListRange(size / 2, size));
-      result.add(new RemoveListRange(0, size / 2));
-    }
-    for (int i = 0; i < size; i++) {
-      result.add(new RemoveListRange(i, i + 1));
-    }
-    result.add(Shrink.SHRINK_LIST_ELEMENTS);
+  private static List<StructureElement> shrinkChild(Predicate<StructureElement> suitable, List<StructureElement> children, int index) {
+    List<StructureElement> result = new ArrayList<>(children);
+    children.get(index).shrink(less -> {
+      List<StructureElement> copy = new ArrayList<>(result);
+      copy.set(index, less);
+      if (suitable.test(new StructureNode(copy))) {
+        result.set(index, less);
+        return true;
+      }
+      return false;
+    });
     return result;
+  }
+
+  private static List<StructureElement> shrinkList(Predicate<StructureElement> suitable, List<StructureElement> listChildren) {
+    int start = 1;
+    int length = 1;
+    int limit = listChildren.size();
+    while (limit > 0) {
+      int lastSuccessfulRemove = -1;
+      while (start < limit && start < listChildren.size()) {
+        StructureNode less = removeRange(listChildren, start, length);
+        if (suitable.test(less)) {
+          listChildren = less.children;
+          length = Math.min(length * 2, listChildren.size() - start);
+          lastSuccessfulRemove = start;
+        } else {
+          if (length > 1) {
+            length /= 2;
+          } else {
+            start++;
+          }
+        }
+      }
+      limit = lastSuccessfulRemove;
+    }
+    return listChildren;
+  }
+
+  @NotNull
+  private static StructureNode removeRange(List<StructureElement> listChildren, int start, int length) {
+    int newSize = listChildren.size() - length - 1;
+    List<StructureElement> lessItems = new ArrayList<>(newSize + 1);
+    lessItems.add(new IntData(newSize, IntDistribution.uniform(0, newSize)));
+    lessItems.addAll(listChildren.subList(1, start));
+    lessItems.addAll(listChildren.subList(start + length, listChildren.size()));
+    return new StructureNode(lessItems);
   }
 
   private boolean isList() {
@@ -88,7 +135,7 @@ class StructureNode implements StructureElement {
 
 }
 
-class IntData implements StructureElement, Shrink.ElementaryShrink {
+class IntData implements StructureElement {
   final int value;
   final IntDistribution distribution;
 
@@ -98,27 +145,22 @@ class IntData implements StructureElement, Shrink.ElementaryShrink {
   }
 
   @Override
-  public Collection<IntData> shrink() {
-    if (value == 0) return Collections.emptyList();
+  public void shrink(Predicate<StructureElement> suitable) {
+    if (value == 0 || tryInt(0, suitable)) return;
 
-    Set<IntData> builder = new LinkedHashSet<>();
-    if (distribution.isValidValue(0)) {
-      builder.add(new IntData(0, distribution));
+    int value = this.value;
+    if (value < 0 && tryInt(-value, suitable)) {
+      value = -value;
     }
-    if (value < 0 && distribution.isValidValue(-value)) {
-      builder.add(new IntData(-value, distribution));
+    while (value != 0 && tryInt(value / 2, suitable)) {
+      value /= 2;
     }
-    if (distribution.isValidValue(value / 2)) {
-      builder.add(new IntData(value / 2, distribution));
-    }
-    return builder;
   }
 
-  @NotNull
-  @Override
-  public StructureElement shrinkNode(@NotNull StructureElement source) {
-    return this;
+  private boolean tryInt(int value, Predicate<StructureElement> suitable) {
+    return distribution.isValidValue(value) && suitable.test(new IntData(value, distribution));
   }
+
 
   @Override
   public String toString() {

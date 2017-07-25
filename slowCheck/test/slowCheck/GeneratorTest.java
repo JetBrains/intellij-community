@@ -33,9 +33,10 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   }
 
   public void testStringContains() {
-    checkFalsified(stringsOf(asciiPrintableChars()),
-                   s -> !s.contains("a"),
-                   7);
+    PropertyFailure<String> failure = checkFalsified(stringsOf(asciiPrintableChars()),
+                                               s -> !s.contains("a"),
+                                               17);
+    assertEquals("a", failure.getMinimalCounterexample().getExampleValue());
   }
 
   public void testLetterStringContains() {
@@ -47,8 +48,10 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   public void testIsSorted() {
     PropertyFailure<List<Integer>> failure = checkFalsified(nonEmptyLists(integers()),
                                                             l -> l.stream().sorted().collect(Collectors.toList()).equals(l),
-                                                            67);
-    assertEquals(2, failure.getMinimalCounterexample().getExampleValue().size());
+                                                            35);
+    List<Integer> value = failure.getMinimalCounterexample().getExampleValue();
+    assertEquals(2, value.size());
+    assertTrue(value.toString(), value.stream().allMatch(i -> Math.abs(i) < 2));
   }
 
   public void testSuccess() {
@@ -58,7 +61,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   public void testSortedDoublesNonDescending() {
     PropertyFailure<List<Double>> failure = checkFalsified(listsOf(doubles()),
                                                            l -> isSorted(l.stream().sorted().collect(Collectors.toList())),
-                                                           76);
+                                                           58);
     assertEquals(2, failure.getMinimalCounterexample().getExampleValue().size());
   }
 
@@ -84,7 +87,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   public void testLongListsHappen() {
     PropertyFailure<List<Integer>> failure = checkFalsified(listsOf(integers()),
                                                             l -> l.size() < 200,
-                                                            504);
+                                                            419);
     assertEquals(200, failure.getMinimalCounterexample().getExampleValue().size());
   }
 
@@ -115,7 +118,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   public void testBoolean() {
     PropertyFailure<List<Boolean>> failure = checkFalsified(listsOf(booleans()),
                                                             l -> !l.contains(true) || !l.contains(false),
-                                                            3);
+                                                            2);
     assertEquals(2, failure.getMinimalCounterexample().getExampleValue().size());
   }
 
@@ -140,6 +143,15 @@ public class GeneratorTest extends PropertyCheckerTestCase {
 
     e = checkFails(PropertyChecker.forAll(gen).withSeed(failure.getGlobalSeed()), property);
     assertEquals(failure.getIterationNumber(), e.getFailure().getIterationNumber());
+  }
+
+  public void testShrinkingComplexString() {
+    checkFalsified(listsOf(stringsOf(asciiPrintableChars())),
+                   l -> {
+                     String s = l.toString();
+                     return !"abcdefghijklmnopqrstuvwxyz()[]#!".chars().allMatch(c -> s.indexOf((char)c) >= 0);
+                   },
+                   153);
   }
 
 }

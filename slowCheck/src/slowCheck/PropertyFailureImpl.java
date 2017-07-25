@@ -72,29 +72,26 @@ class PropertyFailureImpl<T> implements PropertyFailure<T> {
   }
 
   private void shrink() {
-    ShrinkRunner shrinkRunner = new ShrinkRunner();
-    while (true) {
-      CounterExampleImpl<T> shrank = shrinkRunner.findShrink(minimized.data, node -> {
-        if (!iteration.session.generatedHashes.add(node.hashCode())) return null;
+    minimized.data.shrink(node -> {
+      if (!iteration.session.generatedHashes.add(node.hashCode())) return false;
 
-        iteration.session.notifier.shrinkAttempt(this, iteration);
+      iteration.session.notifier.shrinkAttempt(this, iteration);
 
-        try {
-          T value = iteration.session.generator.getGeneratorFunction().apply(new ReplayDataStructure(node, iteration.sizeHint));
-          totalSteps++;
-          return CounterExampleImpl.checkProperty(iteration.session.property, value, node);
+      try {
+        T value = iteration.session.generator.getGeneratorFunction().apply(new ReplayDataStructure((StructureNode)node, iteration.sizeHint));
+        totalSteps++;
+        CounterExampleImpl<T> example = CounterExampleImpl.checkProperty(iteration.session.property, value, (StructureNode)node);
+        if (example != null) {
+          minimized = example;
+          successfulSteps++;
+          return true;
         }
-        catch (CannotRestoreValue e) {
-          return null;
-        }
-      });
-      if (shrank != null) {
-        minimized = shrank;
-        successfulSteps++;
+        return false;
       }
-      else {
-        break;
+      catch (CannotRestoreValue e) {
+        return false;
       }
-    }
+
+    });
   }
 }
