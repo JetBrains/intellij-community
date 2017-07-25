@@ -38,17 +38,14 @@ import git4idea.GitCommit;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitLineHandler;
-import git4idea.commands.GitSimpleHandler;
-import git4idea.commands.GitTextHandler;
+import git4idea.commands.*;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.log.GitLogProvider;
 import git4idea.log.GitRefManager;
+import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.*;
 
@@ -62,6 +59,7 @@ public class GitLogUtil {
    * A parameter to {@code git log} which is equivalent to {@code --all}, but doesn't show the stuff from index or stash.
    */
   public static final List<String> LOG_ALL = Arrays.asList("HEAD", "--branches", "--remotes", "--tags");
+  public static final String STDIN = "--stdin";
 
   @NotNull
   public static List<? extends VcsShortCommitDetails> collectShortDetails(@NotNull Project project,
@@ -373,9 +371,18 @@ public class GitLogUtil {
       }
     };
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG, createConfigParameters(true, fast));
+    sendHashesToStdin(vcs, hashes, handler);
 
+    readRecordsFromHandler(project, root, false, true, recordCollector, handler, getNoWalkParameter(vcs), STDIN);
+    recordCollector.finish();
+
+    if (!handler.errors().isEmpty()) {
+      throw new VcsException(GitUIUtil.stringifyErrors(handler.errors()));
+    }
+  }
+
+  public static void sendHashesToStdin(@NotNull GitVcs vcs, @NotNull Collection<String> hashes, @NotNull GitHandler handler) {
     String separator = getSeparator(vcs);
-    Ref<Exception> inputError = new Ref<>();
     handler.setInputProcessor(stream -> {
       try (OutputStreamWriter writer = new OutputStreamWriter(stream, handler.getCharset())) {
         for (String hash : hashes) {
@@ -385,18 +392,7 @@ public class GitLogUtil {
         writer.write(separator);
         writer.flush();
       }
-      catch (IOException e) {
-        inputError.set(e);
-      }
-      return false;
     });
-
-    readRecordsFromHandler(project, root, false, true, recordCollector, handler, getNoWalkParameter(vcs), "--stdin");
-    recordCollector.finish();
-
-    if (!inputError.isNull()) {
-      throw new VcsException(inputError.get());
-    }
   }
 
   @NotNull
