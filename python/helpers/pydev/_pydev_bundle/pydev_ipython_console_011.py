@@ -335,7 +335,8 @@ class _PyDevFrontEnd:
         ns = self.ipython.user_ns
 
         for key in dict_keys(self.ipython.user_ns):
-            locals[key] = ns[key]
+            if key not in locals:
+                locals[key] = ns[key]
 
         self.ipython.user_global_ns.clear()
         self.ipython.user_global_ns.update(globals)

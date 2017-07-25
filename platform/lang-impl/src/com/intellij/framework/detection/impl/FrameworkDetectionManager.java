@@ -24,10 +24,11 @@ import com.intellij.framework.detection.FrameworkDetector;
 import com.intellij.framework.detection.impl.exclude.DetectionExcludesConfigurationImpl;
 import com.intellij.framework.detection.impl.ui.ConfigureDetectedFrameworksDialog;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -51,7 +52,6 @@ import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.event.HyperlinkEvent;
 import java.util.*;
 
 /**
@@ -191,14 +191,14 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
       String names = StringUtil.join(frameworkNames, ", ");
       final String text = ProjectBundle.message("framework.detected.info.text", names, frameworkNames.size());
       FRAMEWORK_DETECTION_NOTIFICATION
-        .createNotification("Frameworks detected", text, NotificationType.INFORMATION, new NotificationListener() {
+        .createNotification("Frameworks Detected", text, NotificationType.INFORMATION, null)
+        .addAction(new NotificationAction("Configure") {
           @Override
-          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-            if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-              showSetupFrameworksDialog(notification);
-            }
+          public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+            showSetupFrameworksDialog(notification);
           }
-        }).notify(myProject);
+        })
+        .notify(myProject);
     }
   }
 
