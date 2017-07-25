@@ -119,12 +119,18 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
   val isDoNotShowForBuilderLikeMethods = Option("java.build.like.method",
                                                 "Do not show for builder-like methods",
                                                 true)
-  
+
+
+  val ignoreOneCharOneDigitHints = Option("java.simple.sequentially.numbered",
+                                          "Do not show for methods with same-named numbered parameters",
+                                          true)
+
   override fun getSupportedOptions(): List<Option> {
     return listOf(
-      isDoNotShowIfMethodNameContainsParameterName, 
+      isDoNotShowIfMethodNameContainsParameterName,
       isShowForParamsWithSameType,
-      isDoNotShowForBuilderLikeMethods
+      isDoNotShowForBuilderLikeMethods,
+      ignoreOneCharOneDigitHints
     )
   }
 }
