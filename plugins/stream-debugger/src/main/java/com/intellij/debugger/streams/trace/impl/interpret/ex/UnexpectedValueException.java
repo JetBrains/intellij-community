@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.trace.impl.resolve.ex;
+package com.intellij.debugger.streams.trace.impl.interpret.ex;
 
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vitaliy.Bibaev
  */
-class ResolveException extends IllegalStateException {
-  ResolveException(@NotNull String s) {
+public class UnexpectedValueException extends ResolveException {
+  public UnexpectedValueException(@NotNull String s) {
     super(s);
   }
 
-  ResolveException(@NotNull String message, @NotNull Throwable cause) {
+  public UnexpectedValueException(@NotNull String message, @NotNull Throwable cause) {
     super(message, cause);
   }
 }

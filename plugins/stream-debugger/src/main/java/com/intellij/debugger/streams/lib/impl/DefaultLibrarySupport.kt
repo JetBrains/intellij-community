@@ -23,7 +23,7 @@ import com.intellij.debugger.streams.trace.IntermediateCallHandler
 import com.intellij.debugger.streams.trace.TerminatorCallHandler
 import com.intellij.debugger.streams.trace.impl.handler.PeekTracerHandler
 import com.intellij.debugger.streams.trace.impl.handler.TerminatorHandler
-import com.intellij.debugger.streams.trace.impl.resolve.SimplePeekCallTraceResolver
+import com.intellij.debugger.streams.trace.impl.interpret.SimplePeekCallTraceResolver
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
 

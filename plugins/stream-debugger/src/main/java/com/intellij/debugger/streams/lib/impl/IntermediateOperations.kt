@@ -19,8 +19,8 @@ import com.intellij.debugger.streams.resolve.*
 import com.intellij.debugger.streams.trace.IntermediateCallHandler
 import com.intellij.debugger.streams.trace.impl.handler.ParallelHandler
 import com.intellij.debugger.streams.trace.impl.handler.PeekTracerHandler
-import com.intellij.debugger.streams.trace.impl.resolve.DistinctCallTraceResolver
-import com.intellij.debugger.streams.trace.impl.resolve.SimplePeekCallTraceResolver
+import com.intellij.debugger.streams.trace.impl.interpret.DistinctCallTraceResolver
+import com.intellij.debugger.streams.trace.impl.interpret.SimplePeekCallTraceResolver
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 
 /**

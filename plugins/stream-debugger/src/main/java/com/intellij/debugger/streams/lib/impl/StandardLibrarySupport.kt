@@ -16,9 +16,9 @@
 package com.intellij.debugger.streams.lib.impl
 
 import com.intellij.debugger.streams.trace.impl.handler.DistinctHandler
-import com.intellij.debugger.streams.trace.impl.resolve.AllMatchResolver
-import com.intellij.debugger.streams.trace.impl.resolve.AnyMatchResolver
-import com.intellij.debugger.streams.trace.impl.resolve.NoneMatchResolver
+import com.intellij.debugger.streams.trace.impl.interpret.AllMatchResolver
+import com.intellij.debugger.streams.trace.impl.interpret.AnyMatchResolver
+import com.intellij.debugger.streams.trace.impl.interpret.NoneMatchResolver
 import com.intellij.openapi.project.Project
 
 /**

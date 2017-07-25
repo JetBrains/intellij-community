@@ -22,8 +22,8 @@ import com.intellij.debugger.streams.trace.CallTraceResolver
 import com.intellij.debugger.streams.trace.impl.handler.MatchHandler
 import com.intellij.debugger.streams.trace.impl.handler.OptionalTerminatorHandler
 import com.intellij.debugger.streams.trace.impl.handler.TerminatorHandler
-import com.intellij.debugger.streams.trace.impl.resolve.CollectIdentityResolver
-import com.intellij.debugger.streams.trace.impl.resolve.OptionalResolver
+import com.intellij.debugger.streams.trace.impl.interpret.CollectIdentityResolver
+import com.intellij.debugger.streams.trace.impl.interpret.OptionalResolver
 
 /**
  * @author Vitaliy.Bibaev
