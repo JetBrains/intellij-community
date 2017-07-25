@@ -70,11 +70,11 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
   }
 
   @NotNull
-  private String createStreamText(ExtremumTerminal terminal,
-                                  String operation,
-                                  String comparator,
-                                  String name,
-                                  TerminalBlock terminalBlock) {
+  private static String createStreamText(ExtremumTerminal terminal,
+                                         String operation,
+                                         String comparator,
+                                         String name,
+                                         TerminalBlock terminalBlock) {
     String stream;
     if (!terminal.isPrimitive()) {
       stream = terminalBlock.generate() + "." + operation + "(" + comparator + ").orElse(null)";
@@ -351,9 +351,9 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
         KeySelector assignmentKeySelector = KeySelector.extractKeySelector(second.getExpression());
         if (assignmentKeySelector != null && comparisionKeySelector.equals(assignmentKeySelector)) {
           PsiVariable keyExtremumHolder = assignmentKeySelector.getVariable();
-          if (keyExtremumHolder.equals(comparisionCurrent)) {
-
-          }
+          //if (keyExtremumHolder.equals(comparisionCurrent)) {
+          //
+          //}
           //TODO
         }
       }
