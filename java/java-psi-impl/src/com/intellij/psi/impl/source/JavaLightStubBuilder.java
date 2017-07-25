@@ -102,8 +102,8 @@ public class JavaLightStubBuilder extends LightStubBuilder {
 
   private static class CodeBlockVisitor extends RecursiveTreeElementWalkingVisitor implements LighterLazyParseableNode.Visitor {
     private static final TokenSet BLOCK_ELEMENTS = TokenSet.create(
-      JavaElementType.ANNOTATION, JavaElementType.CLASS, JavaElementType.ANONYMOUS_CLASS,
-      JavaElementType.LAMBDA_EXPRESSION, JavaElementType.METHOD_REF_EXPRESSION);
+      JavaElementType.CLASS, JavaElementType.ANONYMOUS_CLASS,
+      JavaTokenType.ARROW, JavaTokenType.DOUBLE_COLON, JavaTokenType.AT);
 
     private boolean result = true;
 

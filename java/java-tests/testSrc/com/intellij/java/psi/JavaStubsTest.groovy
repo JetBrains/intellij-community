@@ -233,4 +233,18 @@ class Foo {
     PsiTestUtil.checkStubsMatchText(psiFile)
   }
 
+  void "test type arguments without type in a method"() {
+    String text = "class Foo { { final Collection<String> contexts; f instanceof -> } }"
+    PsiFile psiFile = myFixture.addFileToProject("a.java", text)
+    Document document = psiFile.getViewProvider().getDocument()
+
+    WriteCommandAction.runWriteCommandAction(project) {
+      def fragment = "Collection"
+      def index = text.indexOf(fragment)
+      document.deleteString(index, index + fragment.size())
+    }
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
+    PsiTestUtil.checkStubsMatchText(psiFile)
+  }
+
 }
