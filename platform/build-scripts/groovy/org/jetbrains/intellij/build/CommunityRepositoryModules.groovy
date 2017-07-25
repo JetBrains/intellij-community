@@ -250,7 +250,7 @@ class CommunityRepositoryModules {
       withModule("designer", "android.jar")
       withModule("manifest-merger")
       withModule("repository")
-      withModule("common", "android-base-common.jar")
+      withModule("common", "android-common.jar")
       withModule("android-common", "android-common.jar", false)
       withModule("android-rt", "android-rt.jar", false)
       withModule("android-annotations", "androidAnnotations.jar")
