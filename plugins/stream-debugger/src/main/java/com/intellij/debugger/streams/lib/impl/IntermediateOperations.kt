@@ -17,6 +17,7 @@ package com.intellij.debugger.streams.lib.impl
 
 import com.intellij.debugger.streams.resolve.*
 import com.intellij.debugger.streams.trace.impl.handler.DistinctHandler
+import com.intellij.debugger.streams.trace.impl.handler.ParallelHandler
 import com.intellij.debugger.streams.trace.impl.handler.PeekTracerHandler
 import com.intellij.debugger.streams.trace.impl.resolve.DistinctCallTraceResolver
 import com.intellij.debugger.streams.trace.impl.resolve.SimplePeekCallTraceResolver
@@ -39,3 +40,7 @@ class SortedOperation(name: String) : OrderBasedOperation(name, IdentityResolver
 class DistinctOperation(name: String) : IntermediateOperationBase(name,
                                                                   { num, call -> DistinctHandler(num, call) },
                                                                   DistinctCallTraceResolver(), DistinctResolver())
+
+class ParallelOperation(name: String) : IntermediateOperationBase(name,
+                                                                  { num, call -> ParallelHandler(num, call) },
+                                                                  SimplePeekCallTraceResolver(), FilterResolver())

@@ -42,7 +42,8 @@ class StandardLibrarySupport(project: Project)
                                      FlatMappingOperation("flatMapToLong"),
                                      FlatMappingOperation("flatMapToDouble"),
                                      DistinctOperation("distinct"),
-                                     SortedOperation("sorted"))
+                                     SortedOperation("sorted"),
+                                     ParallelOperation("parallel"))
 
     addTerminationOperationsSupport(MatchingOperation("anyMatch", AnyMatchResolver()),
                                     MatchingOperation("allMatch", AllMatchResolver()),
