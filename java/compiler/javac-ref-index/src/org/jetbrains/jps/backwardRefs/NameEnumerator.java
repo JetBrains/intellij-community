@@ -13,23 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.references
+package org.jetbrains.jps.backwardRefs;
 
-import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.io.PersistentStringEnumerator;
+import org.jetbrains.annotations.NotNull;
 
-class Java8ReferenceIndexTest : ReferenceIndexTestBase() {
-  fun testLambda() {
-    assertIndexOnRebuild("Lambda.java")
+import java.io.File;
+import java.io.IOException;
+
+public class NameEnumerator extends PersistentStringEnumerator {
+  public NameEnumerator(@NotNull File file) throws IOException {
+    super(file);
   }
 
-  fun testMethodReference() {
-    assertIndexOnRebuild("MethodReference.java")
-  }
-
-  override fun getTestDataRootPath(): String {
-    return FileUtil.toCanonicalPath(PathManagerEx.findFileUnderCommunityHome("jps/javac-ref-scanner-8/testData/referenceIndex").absolutePath, '/')
+  @NotNull
+  public String getName(int idx) {
+    try {
+      return ObjectUtils.notNull(valueOf(idx));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 }
-
 

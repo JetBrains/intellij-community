@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,13 @@ class CompilerReferenceReader {
   private final File myBuildDir;
 
   private CompilerReferenceReader(File buildDir) {
-    myIndex = new CompilerBackwardReferenceIndex(buildDir, true);
+    myIndex = new CompilerBackwardReferenceIndex(buildDir, true) {
+      @NotNull
+      @Override
+      protected RuntimeException createBuildDataCorruptedException(IOException cause) {
+        return new RuntimeException(cause);
+      }
+    };
     myBuildDir = buildDir;
   }
 

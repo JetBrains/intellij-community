@@ -33,5 +33,6 @@
     <orderEntry type="library" scope="TEST" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="library" scope="TEST" name="KotlinTest" level="project" />
     <orderEntry type="library" name="Xerces" level="project" />
+    <orderEntry type="module" module-name="javac-ref-index" />
   </component>
 </module>

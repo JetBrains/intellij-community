@@ -12,5 +12,6 @@
     <orderEntry type="library" scope="TEST" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="module" module-name="core-api" scope="TEST" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="javac-ref-index" />
   </component>
 </module>

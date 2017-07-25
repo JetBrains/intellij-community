@@ -15,15 +15,14 @@
  */
 package org.jetbrains.jps.backwardRefs;
 
+import com.intellij.util.Function;
 import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.builders.java.dependencyView.RW;
-import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
 import java.io.DataOutput;
 import java.io.IOException;
 
-public interface LightRef extends RW.Savable {
+public interface LightRef {
   LightRef[] EMPTY_ARRAY = new LightRef[0];
 
   byte CLASS_MARKER = 0x0;
@@ -33,6 +32,8 @@ public interface LightRef extends RW.Savable {
   byte ANONYMOUS_CLASS_MARKER = 0x4;
 
   LightRef override(int newOwner);
+
+  void save(DataOutput out, Function<IOException, ? extends RuntimeException> exceptionGenerator);
 
   interface NamedLightRef extends LightRef {
     NamedLightRef[] EMPTY_ARRAY = new NamedLightRef[0];
@@ -77,6 +78,19 @@ public interface LightRef extends RW.Savable {
       return new JavaLightMethodRef(newOwner, myName, myParameterCount);
     }
 
+    @Override
+    public void save(DataOutput out, Function<IOException, ? extends RuntimeException> exceptionGenerator) {
+      try {
+        out.writeByte(METHOD_MARKER);
+        DataInputOutputUtil.writeINT(out, myOwner);
+        DataInputOutputUtil.writeINT(out, getName());
+        DataInputOutputUtil.writeINT(out, getParameterCount());
+      }
+      catch (IOException e) {
+        throw exceptionGenerator.fun(e);
+      }
+    }
+
     public int getParameterCount() {
       return myParameterCount;
     }
@@ -85,19 +99,6 @@ public interface LightRef extends RW.Savable {
     @NotNull
     public LightClassHierarchyElementDef getOwner() {
       return new JavaLightClassRef(myOwner);
-    }
-
-    @Override
-    public void save(DataOutput out) {
-      try {
-        out.writeByte(METHOD_MARKER);
-        DataInputOutputUtil.writeINT(out, myOwner);
-        DataInputOutputUtil.writeINT(out, getName());
-        DataInputOutputUtil.writeINT(out, getParameterCount());
-      }
-      catch (IOException e) {
-        throw new BuildDataCorruptedException(e);
-      }
     }
 
     @Override
@@ -142,22 +143,22 @@ public interface LightRef extends RW.Savable {
       return new JavaLightFieldRef(newOwner, myName);
     }
 
-    @NotNull
     @Override
-    public LightClassHierarchyElementDef getOwner() {
-      return new JavaLightClassRef(myOwner);
-    }
-
-    @Override
-    public void save(DataOutput out) {
+    public void save(DataOutput out, Function<IOException, ? extends RuntimeException> exceptionGenerator) {
       try {
         out.writeByte(FIELD_MARKER);
         DataInputOutputUtil.writeINT(out, myOwner);
         DataInputOutputUtil.writeINT(out, getName());
       }
       catch (IOException e) {
-        throw new BuildDataCorruptedException(e);
+        throw exceptionGenerator.fun(e);
       }
+    }
+
+    @NotNull
+    @Override
+    public LightClassHierarchyElementDef getOwner() {
+      return new JavaLightClassRef(myOwner);
     }
 
     @Override
@@ -190,19 +191,19 @@ public interface LightRef extends RW.Savable {
     }
 
     @Override
-    public int getName() {
-      return myName;
-    }
-
-    @Override
-    public void save(DataOutput out) {
+    public void save(DataOutput out, Function<IOException, ? extends RuntimeException> exceptionGenerator) {
       try {
         out.writeByte(ANONYMOUS_CLASS_MARKER);
         DataInputOutputUtil.writeINT(out, getName());
       }
       catch (IOException e) {
-        throw new BuildDataCorruptedException(e);
+        throw exceptionGenerator.fun(e);
       }
+    }
+
+    @Override
+    public int getName() {
+      return myName;
     }
 
     @Override
@@ -241,13 +242,13 @@ public interface LightRef extends RW.Savable {
     }
 
     @Override
-    public void save(DataOutput out) {
+    public void save(DataOutput out, Function<IOException, ? extends RuntimeException> exceptionGenerator) {
       try {
         out.writeByte(CLASS_MARKER);
         DataInputOutputUtil.writeINT(out, getName());
       }
       catch (IOException e) {
-        throw new BuildDataCorruptedException(e);
+        throw exceptionGenerator.fun(e);
       }
     }
 
@@ -287,13 +288,13 @@ public interface LightRef extends RW.Savable {
     }
 
     @Override
-    public void save(DataOutput out) {
+    public void save(DataOutput out, Function<IOException, ? extends RuntimeException> exceptionGenerator) {
       try {
         out.writeByte(FUN_EXPR_MARKER);
         DataInputOutputUtil.writeINT(out, getId());
       }
       catch (IOException e) {
-        throw new BuildDataCorruptedException(e);
+        throw exceptionGenerator.fun(e);
       }
     }
 

@@ -51,13 +51,7 @@ public class JavacNameTable {
 
   @NotNull
   public String parseBinaryName(Element element) {
-    try {
-      return parseName(myElements.getBinaryName((TypeElement)element));
-    }
-    catch (ClassCastException e) {
-      System.out.println(123);
-      throw e;
-    }
+    return parseName(myElements.getBinaryName((TypeElement)element));
   }
 
   public boolean isAsterisk(Name name) {

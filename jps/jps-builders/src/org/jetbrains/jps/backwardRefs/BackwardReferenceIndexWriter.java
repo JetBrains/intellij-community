@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,7 +96,13 @@ public class BackwardReferenceIndexWriter {
       }
 
       if (CompilerBackwardReferenceIndex.exist(buildDir) || isRebuild) {
-        ourInstance = new BackwardReferenceIndexWriter(new CompilerBackwardReferenceIndex(buildDir, false));
+        ourInstance = new BackwardReferenceIndexWriter(new CompilerBackwardReferenceIndex(buildDir, false) {
+          @NotNull
+          @Override
+          protected BuildDataCorruptedException createBuildDataCorruptedException(IOException cause) {
+            return new BuildDataCorruptedException(cause);
+          }
+        });
       }
     } else {
       CompilerBackwardReferenceIndex.removeIndexFiles(buildDir);

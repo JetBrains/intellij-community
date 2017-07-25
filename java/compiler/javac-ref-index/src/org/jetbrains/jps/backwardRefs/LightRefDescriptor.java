@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.backwardRefs;
 
+import com.intellij.util.Function;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.DifferentSerializableBytesImplyNonEqualityPolicy;
 import com.intellij.util.io.KeyDescriptor;
@@ -27,7 +28,9 @@ import java.io.IOException;
 import static org.jetbrains.jps.backwardRefs.LightRef.*;
 
 public final class LightRefDescriptor implements KeyDescriptor<LightRef>, DifferentSerializableBytesImplyNonEqualityPolicy {
-  public static final LightRefDescriptor INSTANCE = new LightRefDescriptor();
+  private final Function<IOException, ? extends RuntimeException> myExceptionGenerator;
+
+  public LightRefDescriptor(Function<IOException, ? extends RuntimeException> generator) {myExceptionGenerator = generator;}
 
   @Override
   public int getHashCode(LightRef value) {
@@ -41,7 +44,7 @@ public final class LightRefDescriptor implements KeyDescriptor<LightRef>, Differ
 
   @Override
   public void save(@NotNull DataOutput out, LightRef value) throws IOException {
-    value.save(out);
+    value.save(out, myExceptionGenerator);
   }
 
   @Override

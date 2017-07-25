@@ -20,6 +20,7 @@ import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.IndexId;
@@ -29,7 +30,6 @@ import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
 import org.jetbrains.jps.backwardRefs.index.CompilerIndices;
-import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
 import java.io.*;
 import java.io.DataOutputStream;
@@ -38,7 +38,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-public class CompilerBackwardReferenceIndex {
+public abstract class CompilerBackwardReferenceIndex {
   private final static Logger LOG = Logger.getInstance(CompilerBackwardReferenceIndex.class);
 
   private final static String FILE_ENUM_TAB = "file.path.enum.tab";
@@ -83,7 +83,13 @@ public class CompilerBackwardReferenceIndex {
       };
 
       myIndices = new HashMap<>();
-      for (IndexExtension<?, ?, CompiledFileData> indexExtension : CompilerIndices.getIndices()) {
+      for (IndexExtension<?, ?, CompiledFileData> indexExtension : CompilerIndices.getIndices(
+        new Function<IOException, RuntimeException>() {
+          @Override
+          public RuntimeException fun(IOException e) {
+            return createBuildDataCorruptedException(e);
+          }
+        })) {
         //noinspection unchecked
         myIndices.put(indexExtension.getName(), new CompilerMapReduceIndex(indexExtension, myIndicesDir, readOnly));
       }
@@ -92,9 +98,12 @@ public class CompilerBackwardReferenceIndex {
     }
     catch (IOException e) {
       removeIndexFiles(myIndicesDir);
-      throw new BuildDataCorruptedException(e);
+      throw createBuildDataCorruptedException(e);
     }
   }
+
+  @NotNull
+  protected abstract RuntimeException createBuildDataCorruptedException(IOException cause);
 
   Collection<InvertedIndex<?, ?, CompiledFileData>> getIndices() {
     return myIndices.values();
@@ -198,7 +207,7 @@ public class CompilerBackwardReferenceIndex {
     }
     catch (IOException ex) {
       LOG.error(ex);
-      throw new BuildDataCorruptedException(ex);
+      throw createBuildDataCorruptedException(ex);
     }
   }
 
@@ -215,14 +224,14 @@ public class CompilerBackwardReferenceIndex {
     }
   }
 
-  private static void close(Closeable closeable, Processor<Exception> exceptionProcessor) {
+  private void close(Closeable closeable, Processor<Exception> exceptionProcessor) {
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (closeable) {
       try {
         closeable.close();
       }
       catch (IOException e) {
-        exceptionProcessor.process(new BuildDataCorruptedException(e));
+        exceptionProcessor.process(createBuildDataCorruptedException(e));
       }
     }
   }

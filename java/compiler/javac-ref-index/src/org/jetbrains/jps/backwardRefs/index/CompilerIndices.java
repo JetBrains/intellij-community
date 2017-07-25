@@ -16,7 +16,10 @@
 package org.jetbrains.jps.backwardRefs.index;
 
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
-import com.intellij.util.indexing.*;
+import com.intellij.util.Function;
+import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.IndexExtension;
+import com.intellij.util.indexing.IndexId;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.KeyDescriptor;
@@ -42,14 +45,15 @@ public class CompilerIndices {
   public final static IndexId<LightRef, Void> BACK_CLASS_DEF = IndexId.create("back.class.def");
   public final static IndexId<SignatureData, Collection<LightRef>> BACK_MEMBER_SIGN = IndexId.create("back.member.sign");
 
-  public static List<IndexExtension<?, ?, CompiledFileData>> getIndices() {
-    return Arrays.asList(createBackwardClassDefinitionExtension(),
-                         createBackwardUsagesExtension(),
-                         createBackwardHierarchyExtension(),
-                         createBackwardSignatureExtension());
+  public static List<IndexExtension<?, ?, CompiledFileData>> getIndices(Function<IOException, ? extends RuntimeException> exceptionGenerator) {
+    LightRefDescriptor descriptor = new LightRefDescriptor(exceptionGenerator);
+    return Arrays.asList(createBackwardClassDefinitionExtension(descriptor),
+                         createBackwardUsagesExtension(descriptor),
+                         createBackwardHierarchyExtension(descriptor),
+                         createBackwardSignatureExtension(descriptor));
   }
 
-  private static IndexExtension<LightRef, Integer, CompiledFileData> createBackwardUsagesExtension() {
+  private static IndexExtension<LightRef, Integer, CompiledFileData> createBackwardUsagesExtension(LightRefDescriptor descriptor) {
     return new IndexExtension<LightRef, Integer, CompiledFileData>() {
       @Override
       public int getVersion() {
@@ -68,7 +72,7 @@ public class CompilerIndices {
 
       @NotNull
       public KeyDescriptor<LightRef> getKeyDescriptor() {
-        return LightRefDescriptor.INSTANCE;
+        return descriptor;
       }
 
       @NotNull
@@ -94,7 +98,7 @@ public class CompilerIndices {
     }
   }
 
-  private static IndexExtension<LightRef, Collection<LightRef>, CompiledFileData> createBackwardHierarchyExtension() {
+  private static IndexExtension<LightRef, Collection<LightRef>, CompiledFileData> createBackwardHierarchyExtension(LightRefDescriptor descriptor) {
     return new IndexExtension<LightRef, Collection<LightRef>, CompiledFileData>() {
       @Override
       public int getVersion() {
@@ -113,17 +117,17 @@ public class CompilerIndices {
 
       @NotNull
       public KeyDescriptor<LightRef> getKeyDescriptor() {
-        return LightRefDescriptor.INSTANCE;
+        return descriptor;
       }
 
       @NotNull
       public DataExternalizer<Collection<LightRef>> getValueExternalizer() {
-        return createLightRefSeqExternalizer();
+        return createLightRefSeqExternalizer(descriptor);
       }
     };
   }
 
-  private static IndexExtension<LightRef, Void, CompiledFileData> createBackwardClassDefinitionExtension() {
+  private static IndexExtension<LightRef, Void, CompiledFileData> createBackwardClassDefinitionExtension(LightRefDescriptor descriptor) {
     return new IndexExtension<LightRef, Void, CompiledFileData>() {
       @Override
       public int getVersion() {
@@ -142,7 +146,7 @@ public class CompilerIndices {
 
       @NotNull
       public KeyDescriptor<LightRef> getKeyDescriptor() {
-        return LightRefDescriptor.INSTANCE;
+        return descriptor;
       }
 
       @NotNull
@@ -152,7 +156,7 @@ public class CompilerIndices {
     };
   }
 
-  private static IndexExtension<SignatureData, Collection<LightRef>, CompiledFileData> createBackwardSignatureExtension() {
+  private static IndexExtension<SignatureData, Collection<LightRef>, CompiledFileData> createBackwardSignatureExtension(LightRefDescriptor descriptor) {
     return new IndexExtension<SignatureData, Collection<LightRef>, CompiledFileData>() {
       @NotNull
       @Override
@@ -175,7 +179,7 @@ public class CompilerIndices {
       @NotNull
       @Override
       public DataExternalizer<Collection<LightRef>> getValueExternalizer() {
-        return createLightRefSeqExternalizer();
+        return createLightRefSeqExternalizer(descriptor);
       }
 
       @Override
@@ -186,16 +190,16 @@ public class CompilerIndices {
   }
 
   @NotNull
-  private static DataExternalizer<Collection<LightRef>> createLightRefSeqExternalizer() {
+  private static DataExternalizer<Collection<LightRef>> createLightRefSeqExternalizer(LightRefDescriptor descriptor) {
     return new DataExternalizer<Collection<LightRef>>() {
       @Override
       public void save(@NotNull final DataOutput out, Collection<LightRef> value) throws IOException {
-        DataInputOutputUtilRt.writeSeq(out, value, lightRef -> LightRefDescriptor.INSTANCE.save(out, lightRef));
+        DataInputOutputUtilRt.writeSeq(out, value, lightRef -> descriptor.save(out, lightRef));
       }
 
       @Override
       public Collection<LightRef> read(@NotNull final DataInput in) throws IOException {
-        return DataInputOutputUtilRt.readSeq(in, () -> LightRefDescriptor.INSTANCE.read(in));
+        return DataInputOutputUtilRt.readSeq(in, () -> descriptor.read(in));
       }
     };
   }

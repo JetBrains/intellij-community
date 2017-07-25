@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,9 @@ import org.jetbrains.jps.backwardRefs.index.CompilerIndices
 import org.jetbrains.jps.builders.JpsBuildTestCase
 import org.jetbrains.jps.builders.TestProjectBuilderLogger
 import org.jetbrains.jps.builders.logging.BuildLoggingManager
+import org.jetbrains.jps.builders.storage.BuildDataCorruptedException
 import java.io.File
+import java.io.IOException
 
 abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
   public override fun setUp() {
@@ -75,7 +77,9 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
     val pd = createProjectDescriptor(BuildLoggingManager(TestProjectBuilderLogger()))
     val manager = pd.dataManager
     val buildDir = manager.dataPaths.dataStorageRoot
-    val index = CompilerBackwardReferenceIndex(buildDir, true)
+    val index = object: CompilerBackwardReferenceIndex(buildDir, true) {
+      override fun createBuildDataCorruptedException(cause: IOException?): RuntimeException = BuildDataCorruptedException(cause)
+    }
 
     try {
       val fileEnumerator = index.filePathEnumerator
