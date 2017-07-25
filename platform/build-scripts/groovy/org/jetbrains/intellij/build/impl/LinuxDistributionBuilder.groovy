@@ -66,16 +66,18 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
   @Override
   void buildArtifacts(String osSpecificDistPath) {
-    if (customizer.buildTarGzWithoutBundledJre) {
-      buildTarGz(null, osSpecificDistPath)
-    }
-    def jreDirectoryPath = buildContext.bundledJreManager.extractLinuxJre()
-    if (jreDirectoryPath != null) {
-      buildTarGz(jreDirectoryPath, osSpecificDistPath)
-      buildSnapPackage(jreDirectoryPath, osSpecificDistPath)
-    }
-    else {
-      buildContext.messages.info("Skipping building Linux distribution with bundled JRE because JRE archive is missing")
+    buildContext.executeStep("Build Linux .tar.gz", BuildOptions.LINUX_TAR_GZ_STEP) {
+      if (customizer.buildTarGzWithoutBundledJre) {
+        buildTarGz(null, osSpecificDistPath)
+      }
+      def jreDirectoryPath = buildContext.bundledJreManager.extractLinuxJre()
+      if (jreDirectoryPath != null) {
+        buildTarGz(jreDirectoryPath, osSpecificDistPath)
+        buildSnapPackage(jreDirectoryPath, osSpecificDistPath)
+      }
+      else {
+        buildContext.messages.info("Skipping building Linux distribution with bundled JRE because JRE archive is missing")
+      }
     }
   }
 
