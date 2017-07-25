@@ -38,9 +38,9 @@ class FlatMappingOperation(name: String) : OrderBasedOperation(name, FlatMapReso
 class SortedOperation(name: String) : OrderBasedOperation(name, IdentityResolver())
 
 class DistinctOperation(name: String) : IntermediateOperationBase(name,
-                                                                  { num, call -> DistinctHandler(num, call) },
+                                                                  ::DistinctHandler,
                                                                   DistinctCallTraceResolver(), DistinctResolver())
 
 class ParallelOperation(name: String) : IntermediateOperationBase(name,
-                                                                  { num, call -> ParallelHandler(num, call) },
+                                                                  ::ParallelHandler,
                                                                   SimplePeekCallTraceResolver(), FilterResolver())
