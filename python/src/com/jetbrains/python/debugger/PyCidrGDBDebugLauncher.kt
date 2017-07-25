@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.debugger;
 
-import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.CommandLineState
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.filters.TextConsoleBuilder
@@ -26,10 +25,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.jetbrains.cidr.cpp.execution.debugger.backend.GDBDriverConfiguration
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains
 import com.jetbrains.cidr.execution.debugger.CidrDebugProcess
-import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver
-import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration
 import com.jetbrains.cidr.execution.debugger.remote.CidrRemoteDebugParameters
-import com.jetbrains.cidr.execution.debugger.remote.createParams
 import com.jetbrains.cidr.execution.testing.CidrLauncher
 import java.io.File
 
@@ -47,36 +43,11 @@ class PyCidrGDBDebugLauncher(val myProject: Project,
 
   override fun createDebugProcess(state: CommandLineState, session: XDebugSession): CidrDebugProcess {
     val configuration = GDBDriverConfiguration(CPPToolchains.getInstance().defaultToolchain, myDebugger?.let { File(it) })
-    return PyCidrGDBDebugProcess(configuration,
+    return MixedCidrDebugProcess(configuration,
                                  generalCommandLine,
                                  myParams,
                                  session,
                                  consoleBuilder,
                                  myEditorProvider)
-  }
-
-  class PyCidrGDBDebugProcess @Throws(ExecutionException::class)
-  constructor(driverConfiguration: DebuggerDriverConfiguration,
-              generalCommandLine: GeneralCommandLine,
-              val parameters: CidrRemoteDebugParameters,
-              session: XDebugSession,
-              consoleBuilder: TextConsoleBuilder,
-              editorProvider: XDebuggerEditorsProvider) : CidrDebugProcess(createParams(driverConfiguration, generalCommandLine),
-                                                                           session,
-                                                                           consoleBuilder,
-                                                                           editorProvider) {
-
-    override fun isDetachDefault() = true
-
-    @Throws(ExecutionException::class)
-    override fun doStart(driver: DebuggerDriver) {
-      driver.loadForLaunch()
-    }
-
-    @Throws(ExecutionException::class)
-    override fun doLaunchTarget(driver: DebuggerDriver) {
-      driver.setRedirectOutputToFiles(true)
-      driver.launch()
-    }
   }
 }

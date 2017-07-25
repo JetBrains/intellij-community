@@ -163,7 +163,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return consoleView;
   }
 
-  public TextConsoleBuilder getPyDebugConsoleBuilder(Project project) {
+  public TextConsoleBuilder createPyDebugConsoleBuilder(Project project) {
     return new PyDebugConsoleBuilder(project, PythonSdkType.findSdkByPath(myConfig.getInterpreterPath()));
   }
 

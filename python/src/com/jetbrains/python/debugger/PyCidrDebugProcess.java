@@ -16,96 +16,183 @@
 package com.jetbrains.python.debugger;
 
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import com.jetbrains.cidr.execution.debugger.CidrDebugProcess;
+import com.jetbrains.cidr.execution.debugger.memory.Address;
+import com.jetbrains.cidr.execution.debugger.memory.AddressRange;
+import com.jetbrains.python.run.PythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
 import javax.swing.event.HyperlinkListener;
-import java.net.ServerSocket;
-import java.util.Arrays;
+import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class PyCidrDebugProcess extends XDebugProcess {
-  private final CidrDebugProcess myCidrDebugProcess;
-  private final PyDebugProcess myPyDebugProcess;
+  private final static Logger LOG = Logger.getInstance(PyCidrDebugProcess.class);
 
-  public PyCidrDebugProcess(CidrDebugProcess cidrDebugProcess, PyDebugProcess pyDebugProcess, XDebugSession session) {
+  private final MixedCidrDebugProcess myCidrProcess;
+  private final PyDebugProcess myPyProcess;
+  private final Collection<SharedLibInfo> mySharedLibInfos = new HashSet<>();
+
+  private static Set<String> myFilesToIndex = new HashSet<String>() {{
+    // this is a mock, will be replaced asap
+    add("/usr/local/lib/python2.7/site-packages/ext.so");
+  }};
+
+  private final static String GET_FUNCTION_POINTER_COMMAND = "(((PyCFunctionObject *)func) -> m_ml -> ml_meth)";
+
+  public PyCidrDebugProcess(@NotNull XDebugSession session,
+                            @NotNull CidrDebugProcess cidrDebugProcess,
+                            @NotNull PyDebugProcess pyDebugProcess) {
     super(session);
-    myCidrDebugProcess = cidrDebugProcess;
-    myPyDebugProcess = pyDebugProcess;
+    myCidrProcess = (MixedCidrDebugProcess)cidrDebugProcess;
+    myPyProcess = pyDebugProcess;
+  }
+
+  private void handleException(Exception e) {
+    LOG.error(e);
+  }
+
+  private static Location getActiveLocation(XSuspendContext context) {
+    if (context instanceof PySuspendContext) {
+      return Location.PY;
+    } else {
+      // CidrSuspendContext has private access in CidrDebugProcess
+      // but we won't get anything else here
+      return Location.CIDR;
+    }
+  }
+
+  private XDebugProcess getActiveProcess(XSuspendContext context) {
+    if (getActiveLocation(context) == Location.PY) {
+      return myPyProcess;
+    } else {
+      return myCidrProcess;
+    }
+  }
+
+  private void updateLibInfo(String[] info) {
+    List<SharedLibInfo> infos = Arrays.stream(info)
+      .map(line -> {
+        String[] tokens = Arrays.stream(line.split(" "))
+          .filter(s -> !s.isEmpty())
+          .toArray(size -> new String[size]);
+        String addressFrom = tokens[0];
+        String addressTo = tokens[1];
+        String fileName = tokens[tokens.length - 1];
+        Predicate<String> isValidAddress = address -> address.matches("(0[xX])?0*[0-9a-fA-F]{1,16}");
+        if (!myFilesToIndex.contains(fileName)
+            || !isValidAddress.test(addressFrom) || !isValidAddress.test(addressTo)) {
+          return null;
+        }
+        AddressRange range = new AddressRange(Address.parseHexString(addressFrom), Address.parseHexString(addressTo));
+        return new SharedLibInfo(range, fileName);
+      })
+      .filter(Objects::nonNull)
+      .collect(Collectors.toList());
+    mySharedLibInfos.addAll(infos);
+    LOG.debug("updated lib info, currently loaded user's libs:");
+    mySharedLibInfos.forEach(libInfo -> LOG.debug(libInfo.toString()));
+  }
+
+  private String getSdkHome() {
+    XDebugSessionImpl session = (XDebugSessionImpl)getSession();
+    ExecutionEnvironment environment = session.getExecutionEnvironment();
+    if (environment == null) {
+      return "<unknown>";
+    }
+    PythonRunConfiguration configuration = (PythonRunConfiguration)environment.getRunProfile();
+    return configuration.getSdkHome();
+  }
+
+  private void addUserCodeBreakpoint(Runnable resumer) {
+    LOG.debug("addUserCodeBreakpoint");
+    myCidrProcess.evaluateAndThen(GET_FUNCTION_POINTER_COMMAND,
+                                  address -> myCidrProcess.addAddressBreakpointWithCallbackAndThen(address, null, null, resumer, this::handleException),
+                                  this::handleException);
+  }
+
+  private String getUserCodeDetectingCondition() {
+    return mySharedLibInfos.stream().map(info ->
+                                           GET_FUNCTION_POINTER_COMMAND + " >= " + info.getRange().getStart() +
+                                           " && " +
+                                           GET_FUNCTION_POINTER_COMMAND + " <= " + info.getRange().getEndInclusive())
+      .collect(Collectors.joining(" || "));
+  }
+
+  private void addJumpDetectingBreakpointsAndThen(Runnable callback) {
+    String condition = getUserCodeDetectingCondition();
+    LOG.debug("Setting breakpoint with condition " + condition);
+    myCidrProcess.addSymbolicBreakpointWithCallbackAndThen("PyCFunction_Call",
+                                                           condition,
+                                                           this::addUserCodeBreakpoint,
+                                                           callback,
+                                                           this::handleException);
   }
 
   @NotNull
   @Override
   public XDebuggerEditorsProvider getEditorsProvider() {
-    return myCidrDebugProcess.getEditorsProvider();
+    return myCidrProcess.getEditorsProvider();
   }
 
   @NotNull
   @Override
   public XBreakpointHandler<?>[] getBreakpointHandlers() {
-    return ContainerUtil.toArray(
-      ContainerUtil.concat(
-        Arrays.asList(myCidrDebugProcess.getBreakpointHandlers()),
-        Arrays.asList(myPyDebugProcess.getBreakpointHandlers())
-      ),
-      size -> new XBreakpointHandler<?>[size]
-      );
+    return ArrayUtil.mergeArrays(myCidrProcess.getBreakpointHandlers(), myPyProcess.getBreakpointHandlers());
   }
 
   public void sessionInitialized() {
-    myPyDebugProcess.sessionInitialized();
-    myCidrDebugProcess.sessionInitialized();
+    myPyProcess.sessionInitialized();
+    myCidrProcess.sessionInitialized();
   }
 
   public void startPausing() {
-    //myPyDebugProcess.startPausing();
-    myCidrDebugProcess.startPausing();
-  }
-
-  @Deprecated
-  public void startStepOver() {
-    myCidrDebugProcess.startStepOver();
+    myPyProcess.startPausing();
+    myCidrProcess.startPausing();
   }
 
   public void startStepOver(@Nullable XSuspendContext context) {
     getActiveProcess(context).startStepOver(context);
   }
 
-  @Deprecated
-  public void startForceStepInto(){
-    myCidrDebugProcess.startForceStepInto();
-  }
-
   public void startForceStepInto(@Nullable XSuspendContext context) {
     getActiveProcess(context).startForceStepInto(context);
   }
 
-  @Deprecated
-  public void startStepInto() {
-    myCidrDebugProcess.startStepInto();
-  }
-
   public void startStepInto(@Nullable XSuspendContext context) {
-    getActiveProcess(context).startStepInto(context);
+    if (getActiveLocation(context) == Location.PY) {
+      myCidrProcess.getLoadedLibsInfoAndThen(info -> {
+        updateLibInfo(info);
+        addJumpDetectingBreakpointsAndThen(() -> doStartStepInto(context));
+      }, this::handleException);
+    } else {
+      getActiveProcess(context).startStepInto(context);
+    }
   }
 
-  @Deprecated
-  public void startStepOut() {
-    myCidrDebugProcess.startStepOut();
+  private void doStartStepInto(@Nullable XSuspendContext context) {
+    LOG.debug("doStartStepInto");
+    myPyProcess.startStepInto(context);
   }
 
   public void startStepOut(@Nullable XSuspendContext context) {
@@ -114,38 +201,16 @@ public class PyCidrDebugProcess extends XDebugProcess {
 
   @Nullable
   public XSmartStepIntoHandler<?> getSmartStepIntoHandler() {
-    return myCidrDebugProcess.getSmartStepIntoHandler();
+    return myCidrProcess.getSmartStepIntoHandler();
   }
 
   public void stop() {
-    myCidrDebugProcess.stop();
-    myPyDebugProcess.stop();
-  }
-
-  @NotNull
-  public Promise stopAsync() {
-    return myCidrDebugProcess.stopAsync();
-  }
-
-  @Deprecated
-  public void resume() {
-    myCidrDebugProcess.resume();
+    myCidrProcess.stop();
+    myPyProcess.stop();
   }
 
   public void resume(@Nullable XSuspendContext context) {
     getActiveProcess(context).resume(context);
-  }
-
-  private XDebugProcess getActiveProcess(XSuspendContext context) {
-    if (context instanceof PySuspendContext) {
-      return myPyDebugProcess;
-    }
-    return myCidrDebugProcess;
-  }
-
-  @Deprecated
-  public void runToPosition(@NotNull XSourcePosition position) {
-    myCidrDebugProcess.runToPosition(position);
   }
 
   public void runToPosition(@NotNull XSourcePosition position, @Nullable XSuspendContext context) {
@@ -153,61 +218,105 @@ public class PyCidrDebugProcess extends XDebugProcess {
   }
 
   public boolean checkCanPerformCommands() {
-    return myCidrDebugProcess.checkCanPerformCommands();
+    return myCidrProcess.checkCanPerformCommands() && myPyProcess.checkCanPerformCommands();
   }
 
   public boolean checkCanInitBreakpoints() {
-    return myCidrDebugProcess.checkCanInitBreakpoints();
+    return myCidrProcess.checkCanInitBreakpoints() && myPyProcess.checkCanInitBreakpoints();
   }
 
   @Nullable
   protected ProcessHandler doGetProcessHandler() {
-    return myCidrDebugProcess.getProcessHandler();
+    return myCidrProcess.getProcessHandler();
   }
 
   @NotNull
   public ExecutionConsole createConsole() {
-    return myCidrDebugProcess.createConsole();
+    return myCidrProcess.createConsole();
     //return TextConsoleBuilderFactory.getInstance().createBuilder(getSession().getProject()).getConsole();
   }
 
   @Nullable
   public XValueMarkerProvider<?,?> createValueMarkerProvider() {
-    return myCidrDebugProcess.createValueMarkerProvider();
+    return myCidrProcess.createValueMarkerProvider();
   }
 
   public void registerAdditionalActions(@NotNull DefaultActionGroup leftToolbar, @NotNull DefaultActionGroup topToolbar,
                                         @NotNull DefaultActionGroup settings) {
-    myPyDebugProcess.registerAdditionalActions(leftToolbar, topToolbar, settings);
+    myPyProcess.registerAdditionalActions(leftToolbar, topToolbar, settings);
   }
 
   public String getCurrentStateMessage() {
     //return mySession.isStopped() ? XDebuggerBundle.message("debugger.state.message.disconnected") : XDebuggerBundle.message("debugger.state.message.connected");
-    return myPyDebugProcess.getCurrentStateMessage();
+    return myPyProcess.getCurrentStateMessage();
   }
 
   @Nullable
   public HyperlinkListener getCurrentStateHyperlinkListener() {
-    return myPyDebugProcess.getCurrentStateHyperlinkListener();
+    return myPyProcess.getCurrentStateHyperlinkListener();
   }
 
   @NotNull
   public XDebugTabLayouter createTabLayouter() {
-    return myPyDebugProcess.createTabLayouter();
+    return myPyProcess.createTabLayouter();
   }
 
   public boolean isValuesCustomSorted() {
-    return myPyDebugProcess.isValuesCustomSorted();
+    return myPyProcess.isValuesCustomSorted();
   }
 
   @Nullable
   public XDebuggerEvaluator getEvaluator() {
-    return myPyDebugProcess.getEvaluator();
-    //XStackFrame frame = getSession().getCurrentStackFrame();
-    //return frame == null ? null : frame.getEvaluator();
+    XStackFrame frame = getSession().getCurrentStackFrame();
+    return frame == null ? null : frame.getEvaluator();
   }
 
   public boolean isLibraryFrameFilterSupported() {
     return false;
+  }
+
+  private enum Location {
+    CIDR, PY
+  }
+
+  private static class SharedLibInfo {
+    @NotNull
+    private final AddressRange myRange;
+    @NotNull
+    private final String myPath;
+
+    SharedLibInfo(@NotNull AddressRange range, @NotNull String path) {
+      myRange = range;
+      myPath = path;
+    }
+
+    @NotNull
+    AddressRange getRange() {
+      return myRange;
+    }
+
+    @NotNull
+    String getPath() {
+      return myPath;
+    }
+
+    @Override
+    public String toString() {
+      return myRange + ", " + myPath;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+      return other instanceof SharedLibInfo && equals((SharedLibInfo) other);
+    }
+
+    private boolean equals(SharedLibInfo other) {
+      return Objects.equals(myRange, other.myRange) && Objects.equals(myPath, other.myPath);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myRange, myPath);
+    }
   }
 }

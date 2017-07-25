@@ -146,7 +146,7 @@ public class PyDebugRunner extends GenericProgramRunner {
                                                                          null,
                                                                          new CidrRemoteDebugParameters(),
                                                                          commandLine,
-                                                                         pyState.getPyDebugConsoleBuilder(environment.getProject()),
+                                                                         pyState.createPyDebugConsoleBuilder(environment.getProject()),
                                                                          new PyDebuggerEditorsProvider());
 
       return XDebuggerManager.getInstance(environment.getProject()).
@@ -162,7 +162,7 @@ public class PyDebugRunner extends GenericProgramRunner {
             PyDebugProcess pyDebugProcess = createDebugProcess(session, serverSocket, result, pyState);
             createConsoleCommunicationAndSetupActions(environment.getProject(), result, pyDebugProcess, session);
 
-            return new PyCidrDebugProcess(cidrDebugProcess, pyDebugProcess, session);
+            return new PyCidrDebugProcess(session, cidrDebugProcess, pyDebugProcess);
           }
         });
     }
