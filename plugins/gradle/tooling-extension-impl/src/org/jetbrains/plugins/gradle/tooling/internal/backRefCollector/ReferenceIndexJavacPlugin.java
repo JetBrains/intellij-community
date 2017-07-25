@@ -24,7 +24,7 @@ import org.jetbrains.jps.javac.ast.JavacReferenceIndexListener;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
 
 public class ReferenceIndexJavacPlugin implements Plugin {
-  public static final String PLUGIN_NAME = "ReferenceCollectorJavacPlugin";
+  public static final String PLUGIN_NAME = "ReferenceIndexJavacPlugin";
 
   @Override
   public String getName() {
@@ -45,7 +45,8 @@ public class ReferenceIndexJavacPlugin implements Plugin {
                                                     data.getDefs(),
                                                     writer);
           }
-        } else {
+        }
+        else {
           //TODO save em all via message processing
         }
       }
