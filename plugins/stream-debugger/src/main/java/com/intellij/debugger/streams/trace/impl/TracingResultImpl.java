@@ -15,7 +15,10 @@
  */
 package com.intellij.debugger.streams.trace.impl;
 
-import com.intellij.debugger.streams.resolve.*;
+import com.intellij.debugger.streams.lib.LibraryManager;
+import com.intellij.debugger.streams.resolve.ResolvedStreamCall;
+import com.intellij.debugger.streams.resolve.ResolvedStreamChain;
+import com.intellij.debugger.streams.resolve.ValuesOrderResolver;
 import com.intellij.debugger.streams.resolve.impl.ResolvedIntermediateCallImpl;
 import com.intellij.debugger.streams.resolve.impl.ResolvedProducerCallImpl;
 import com.intellij.debugger.streams.resolve.impl.ResolvedStreamChainImpl;
@@ -69,12 +72,11 @@ public class TracingResultImpl implements TracingResult {
 
   @NotNull
   @Override
-  public ResolvedTracingResult resolve() {
+  public ResolvedTracingResult resolve(@NotNull LibraryManager libraryManager) {
     assert myTrace.size() == mySourceChain.length();
 
-    final ResolverFactory resolverFactory = ResolverFactoryImpl.getInstance();
     List<ValuesOrderResolver.Result> resolvedTraces = myTrace.stream()
-      .map(x -> resolverFactory.getResolver(x.getCall().getName()).resolve(x))
+      .map(x -> libraryManager.getLibrary(x.getCall()).getResolverFactory().getResolver(x.getCall().getName()).resolve(x))
       .collect(Collectors.toList());
 
     final TraceInfo producerTrace = myTrace.get(0);

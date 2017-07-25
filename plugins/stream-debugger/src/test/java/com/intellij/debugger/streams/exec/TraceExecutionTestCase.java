@@ -18,6 +18,7 @@ package com.intellij.debugger.streams.exec;
 import com.intellij.debugger.DebuggerTestCase;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.OutputChecker;
+import com.intellij.debugger.streams.lib.LibraryManager;
 import com.intellij.debugger.streams.psi.DebuggerPositionResolver;
 import com.intellij.debugger.streams.psi.impl.AdvancedStreamChainBuilder;
 import com.intellij.debugger.streams.psi.impl.DebuggerPositionResolverImpl;
@@ -207,7 +208,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
     final List<TraceInfo> trace = result.getTrace();
     handleTrace(trace);
 
-    final ResolvedTracingResult resolvedTrace = result.resolve();
+    final ResolvedTracingResult resolvedTrace = result.resolve(LibraryManager.getInstance(getProject()));
     handleResolvedTrace(resolvedTrace);
   }
 

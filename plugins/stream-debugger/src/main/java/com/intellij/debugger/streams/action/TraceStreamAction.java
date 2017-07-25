@@ -18,6 +18,7 @@ package com.intellij.debugger.streams.action;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.streams.diagnostic.ex.TraceCompilationException;
 import com.intellij.debugger.streams.diagnostic.ex.TraceEvaluationException;
+import com.intellij.debugger.streams.lib.LibraryManager;
 import com.intellij.debugger.streams.psi.DebuggerPositionResolver;
 import com.intellij.debugger.streams.psi.impl.AdvancedStreamChainBuilder;
 import com.intellij.debugger.streams.psi.impl.DebuggerPositionResolverImpl;
@@ -101,7 +102,7 @@ public class TraceStreamAction extends AnAction {
     tracer.trace(chain, new TracingCallback() {
       @Override
       public void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextImpl context) {
-        final ResolvedTracingResult resolvedTrace = result.resolve();
+        final ResolvedTracingResult resolvedTrace = result.resolve(LibraryManager.getInstance(context.getProject()));
         ApplicationManager.getApplication()
           .invokeLater(() -> window.setTrace(resolvedTrace, context));
       }
