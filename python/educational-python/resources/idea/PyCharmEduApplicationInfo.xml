@@ -4,9 +4,9 @@
   <version major="4" minor="0" eap="false"/>
   <company name="JetBrains s.r.o." url="https://www.jetbrains.com/?fromIDE"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
-  <logo url="/pycharm_edu_logo.png" textcolor="313131" progressColor="20d688" progressY="281" progressTailIcon="/community_progress_tail.png"/>
-  <about url="/pycharm_edu_about.png" logoX="540" logoY="300" logoW="100" logoH="100" foreground="313131"
-         copyrightForeground="313131" linkColor="1f29b2"/>
+  <logo url="/pycharm_edu_logo.png" textcolor="e5e5e5" progressColor="fcf84a" progressY="281" progressTailIcon="/community_progress_tail.png"/>
+  <about url="/pycharm_edu_about.png" logoX="540" logoY="300" logoW="100" logoH="100" foreground="e5e5e5"
+         copyrightForeground="858585" linkColor="589df6"/>
   <icon size32="/PyCharmEdu32.png" size16="/PyCharmEdu16.png" ico="PyCharmEdu.ico"/>
   <package code="__PACKAGE_CODE__"/>
   <names product="PyCharm" fullname="PyCharm Edu" script="charm"/>
