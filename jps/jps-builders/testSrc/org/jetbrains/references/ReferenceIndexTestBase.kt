@@ -35,12 +35,12 @@ import java.io.IOException
 abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
   public override fun setUp() {
     super.setUp()
-    System.setProperty(BackwardReferenceIndexWriter.PROP_KEY, true.toString())
+    System.setProperty(JpsJavacReferenceIndexWriterHolder.PROP_KEY, true.toString())
   }
 
   public override fun tearDown() {
     super.tearDown()
-    System.clearProperty(BackwardReferenceIndexWriter.PROP_KEY)
+    System.clearProperty(JpsJavacReferenceIndexWriterHolder.PROP_KEY)
   }
 
   protected fun assertIndexOnRebuild(vararg files: String) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,12 +51,12 @@ public class BackwardReferenceIndexBuilder extends ModuleLevelBuilder {
 
   @Override
   public void buildStarted(CompileContext context) {
-    BackwardReferenceIndexWriter.initialize(context, myAttempt++);
+    JpsJavacReferenceIndexWriterHolder.initialize(context, myAttempt++);
   }
 
   @Override
   public void buildFinished(CompileContext context) {
-    if (BackwardReferenceIndexWriter.getInstance() != null) {
+    if (JpsJavacReferenceIndexWriterHolder.getInstance() != null) {
       final BuildTargetIndex targetIndex = context.getProjectDescriptor().getBuildTargetIndex();
       for (JpsModule module : context.getProjectDescriptor().getProject().getModules()) {
         boolean allAreDummyOrCompiled = true;
@@ -72,7 +72,7 @@ public class BackwardReferenceIndexBuilder extends ModuleLevelBuilder {
       myCompiledTargets.clear();
     }
 
-    BackwardReferenceIndexWriter.closeIfNeed(false);
+    JpsJavacReferenceIndexWriterHolder.closeIfNeed(false);
   }
 
   @Override
@@ -85,11 +85,11 @@ public class BackwardReferenceIndexBuilder extends ModuleLevelBuilder {
                         ModuleChunk chunk,
                         DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                         OutputConsumer outputConsumer) throws ProjectBuildException, IOException {
-    final BackwardReferenceIndexWriter writer = BackwardReferenceIndexWriter.getInstance();
+    final JavacReferenceIndexWriter writer = JpsJavacReferenceIndexWriterHolder.getInstance();
     if (writer != null) {
       final Exception cause = writer.getRebuildRequestCause();
       if (cause != null) {
-        BackwardReferenceIndexWriter.closeIfNeed(true);
+        JpsJavacReferenceIndexWriterHolder.closeIfNeed(true);
       }
 
       if (dirtyFilesHolder.hasRemovedFiles()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.intellij.compiler;
 
 import com.intellij.compiler.server.BuildProcessParametersProvider;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.backwardRefs.BackwardReferenceIndexWriter;
+import org.jetbrains.jps.backwardRefs.JpsJavacReferenceIndexWriterHolder;
 
 import java.util.Collections;
 import java.util.List;
@@ -27,7 +27,7 @@ public class CompilerReferenceIndexBuildParametersProvider extends BuildProcessP
   @Override
   public List<String> getVMArguments() {
     return CompilerReferenceService.isEnabled()
-           ? Collections.singletonList("-D" + BackwardReferenceIndexWriter.PROP_KEY + "=true")
+           ? Collections.singletonList("-D" + JpsJavacReferenceIndexWriterHolder.PROP_KEY + "=true")
            : Collections.emptyList();
   }
 }
