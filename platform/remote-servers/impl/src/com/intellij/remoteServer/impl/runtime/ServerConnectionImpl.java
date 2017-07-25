@@ -235,7 +235,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   @Override
   public void undeploy(@NotNull Deployment deployment, @NotNull final DeploymentRuntime runtime) {
     String deploymentName = deployment.getName();
-    final StateTransition undeployInProgress = myAllDeployments.startUndeploy(deploymentName);
+    final UndeployTransition undeployInProgress = myAllDeployments.startUndeploy(deploymentName);
 
     myEventDispatcher.queueDeploymentsChanged(this);
 
@@ -507,7 +507,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
     @SuppressWarnings("Duplicates")
     @Nullable
-    public StateTransition startUndeploy(@NotNull String deploymentName) {
+    public UndeployTransition startUndeploy(@NotNull String deploymentName) {
 
       synchronized (myLocalLock) {
         synchronized (myRemoteLock) {
@@ -518,7 +518,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
               @Override
               public void succeeded() {
                 synchronized (myLocalLock) {
-                  if (completeStateChange()) {
+                  if (tryChangeToTerminalState(DeploymentStatus.NOT_DEPLOYED)) {
                     myLocalDeployments.remove(getDeployment().getName());
                     myCachedAllDeployments = null;
                   }
@@ -528,7 +528,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
               @Override
               public void failed() {
                 synchronized (myLocalLock) {
-                  rollbackStateChange();
+                  tryChangeToTerminalState(DeploymentStatus.DEPLOYED);
                 }
               }
             };
@@ -539,7 +539,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
               @Override
               public void succeeded() {
                 synchronized (myRemoteLock) {
-                  if (completeStateChange()) {
+                  if (tryChangeToTerminalState(DeploymentStatus.NOT_DEPLOYED)) {
                     myRemoteDeployments.remove(getDeployment().getName());
                     myCachedAllDeployments = null;
                   }
@@ -549,7 +549,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
               @Override
               public void failed() {
                 synchronized (myRemoteLock) {
-                  rollbackStateChange();
+                  tryChangeToTerminalState(DeploymentStatus.DEPLOYED);
                 }
               }
             };
@@ -558,48 +558,26 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
         }
       }
     }
-
-    private static abstract class UndeployTransition extends StateTransitionImpl {
-      public UndeployTransition(@NotNull DeploymentImpl deployment) {
-        super(deployment, DeploymentStatus.DEPLOYED, DeploymentStatus.DEPLOYING, DeploymentStatus.NOT_DEPLOYED);
-      }
-    }
-
-    private static abstract class StateTransitionImpl implements StateTransition {
-      private final DeploymentImpl myDeployment;
-      private final DeploymentStatus myStartStatus;
-      private final DeploymentStatus myInProgressStatus;
-      private final DeploymentStatus myEndStatus;
-
-      public StateTransitionImpl(@NotNull DeploymentImpl deployment,
-                                 @NotNull DeploymentStatus start, @NotNull DeploymentStatus inProgress, @NotNull DeploymentStatus end) {
-
-        myDeployment = deployment;
-        myStartStatus = start;
-        myEndStatus = end;
-        myInProgressStatus = inProgress;
-        //
-        myDeployment.changeState(start, inProgress, null, null);
-      }
-
-      @NotNull
-      protected final DeploymentImpl getDeployment() {
-        return myDeployment;
-      }
-
-      protected boolean completeStateChange() {
-        return myDeployment.changeState(myInProgressStatus, myEndStatus, null, null);
-      }
-
-      protected boolean rollbackStateChange() {
-        return myDeployment.changeState(myInProgressStatus, myStartStatus, null, null);
-      }
-    }
   }
 
-  private interface StateTransition {
-    void succeeded();
+  private static abstract class UndeployTransition {
+    private final DeploymentImpl myDeployment;
 
-    void failed();
+    public UndeployTransition(@NotNull DeploymentImpl deployment) {
+      myDeployment = deployment;
+      myDeployment.changeState(DeploymentStatus.DEPLOYED, DeploymentStatus.DEPLOYING, null, null);
+    }
+
+    public abstract void succeeded();
+
+    public abstract void failed();
+
+    protected boolean tryChangeToTerminalState(DeploymentStatus terminalState) {
+      return myDeployment.changeState(DeploymentStatus.DEPLOYING, terminalState, null, null);
+    }
+
+    protected DeploymentImpl getDeployment() {
+      return myDeployment;
+    }
   }
 }
