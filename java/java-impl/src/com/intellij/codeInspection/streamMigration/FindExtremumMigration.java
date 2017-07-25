@@ -314,7 +314,7 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
                                                              @NotNull PsiVariable nullCheckedHolder,
                                                              @NotNull TerminalBlock terminalBlock) {
     PsiExpression initializer = nullCheckedHolder.getInitializer();
-    if (initializer == null || !PsiType.NULL.equals(initializer.getType())) return null;
+    if (initializer == null || !PsiType.NULL.equals(initializer.getType())) return null; // TODO constant expression?
 
     ControlFlowUtils.InitializerUsageStatus status =
       ControlFlowUtils.getInitializerUsageStatus(nullCheckedHolder, terminalBlock.getMainLoop());
@@ -355,7 +355,7 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
       Assignment second = assignments[1];
       if (first.getVariable().equals(nullCheckedHolder) && first.hasSameVariables(comparisionExtremumHolder, comparisionLoopVar)) {
         KeySelector assignmentKeySelector = KeySelector.extractKeySelector(second.getExpression());
-        if (assignmentKeySelector != null && comparisionKeySelector.equals(assignmentKeySelector)) {
+        if (assignmentKeySelector != null && comparisionKeySelector.equalShape(assignmentKeySelector)) {
           PsiVariable keyExtremumHolder = assignmentKeySelector.getVariable();
           //if (keyExtremumHolder.equals(comparisionLoopVar)) {
           //
@@ -389,7 +389,7 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
   private static Comparision extractComparision(@NotNull PsiExpression first, @NotNull PsiExpression second, boolean isGreater) {
     KeySelector firstSelector = KeySelector.extractKeySelector(first);
     KeySelector secondSelector = KeySelector.extractKeySelector(second);
-    if (firstSelector == null || secondSelector == null || !firstSelector.equals(secondSelector)) return null;
+    if (firstSelector == null || secondSelector == null || !firstSelector.equalShape(secondSelector)) return null;
     return new Comparision(firstSelector, secondSelector, isGreater);
   }
 

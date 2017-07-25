@@ -1,14 +1,14 @@
-// "Replace with max()" "true"
+// "Replace with min()" "true"
 
 import java.util.*;
 
 public class Main {
   public void work(int[] ints) {
-    int max = 0;
+    int min = 0;
     for <caret> (int anInt : ints) {
       if(anInt < 10) {
-        if(max < anInt) {
-          max = anInt;
+        if(min > anInt) {
+          min = anInt;
         }
       }
     }
