@@ -13,25 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi;
+package com.intellij.lang.jvm.types;
 
-import com.intellij.lang.jvm.JvmMember;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents a member of a Java class (for example, a field or a method).
+ * @see Class#isArray
  */
-public interface PsiMember extends PsiModifierListOwner, NavigatablePsiElement, JvmMember {
-  /**
-   * The empty array of PSI members which can be reused to avoid unnecessary allocations.
-   */
-  PsiMember[] EMPTY_ARRAY = new PsiMember[0];
+public interface JvmArrayType extends JvmType {
 
   /**
-   * Returns the class containing the member.
-   *
-   * @return the containing class.
+   * @return component type of an array. That is:
+   * <ul>
+   * <li> for {@code int[]}: {@code int}
+   * <li> for {@code String[][]}: {@code String[]}
+   * </ul>
+   * @see Class#getComponentType
    */
-  @Nullable
-  PsiClass getContainingClass();
+  @NotNull
+  JvmType getComponentType();
 }

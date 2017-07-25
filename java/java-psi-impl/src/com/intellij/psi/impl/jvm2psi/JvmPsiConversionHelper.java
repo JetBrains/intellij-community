@@ -13,25 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi;
+package com.intellij.psi.impl.jvm2psi;
 
-import com.intellij.lang.jvm.JvmMember;
+import com.intellij.lang.jvm.JvmClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Represents a member of a Java class (for example, a field or a method).
- */
-public interface PsiMember extends PsiModifierListOwner, NavigatablePsiElement, JvmMember {
-  /**
-   * The empty array of PSI members which can be reused to avoid unnecessary allocations.
-   */
-  PsiMember[] EMPTY_ARRAY = new PsiMember[0];
+public class JvmPsiConversionHelper {
 
-  /**
-   * Returns the class containing the member.
-   *
-   * @return the containing class.
-   */
+  private final @NotNull PsiManager myManager;
+
+  public JvmPsiConversionHelper(@NotNull PsiManager manager) {
+    myManager = manager;
+  }
+
+  @NotNull
+  public PsiManager getManager() {
+    return myManager;
+  }
+
+  @Contract("null -> null; !null -> !null")
   @Nullable
-  PsiClass getContainingClass();
+  public PsiClass toPsiClass(@Nullable JvmClass jvmClass) {
+    // TODO
+    throw new RuntimeException("TODO");
+  }
 }

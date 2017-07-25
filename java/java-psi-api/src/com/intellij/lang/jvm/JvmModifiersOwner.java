@@ -13,25 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi;
+package com.intellij.lang.jvm;
 
-import com.intellij.lang.jvm.JvmMember;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.util.ArrayUtil.contains;
 
 /**
- * Represents a member of a Java class (for example, a field or a method).
+ * Represents an element which has modifiers and annotations.
  */
-public interface PsiMember extends PsiModifierListOwner, NavigatablePsiElement, JvmMember {
-  /**
-   * The empty array of PSI members which can be reused to avoid unnecessary allocations.
-   */
-  PsiMember[] EMPTY_ARRAY = new PsiMember[0];
+public interface JvmModifiersOwner extends JvmAnnotatedElement {
+
+  @NotNull
+  JvmModifier[] getModifiers();
 
   /**
-   * Returns the class containing the member.
+   * Checks if the element effectively has the specified modifier.
    *
-   * @return the containing class.
+   * @param modifier the modifier to check
+   * @return true if the element has the modifier, false otherwise
    */
-  @Nullable
-  PsiClass getContainingClass();
+  default boolean hasModifier(@NotNull JvmModifier modifier) {
+    return contains(getModifiers(), modifier);
+  }
 }

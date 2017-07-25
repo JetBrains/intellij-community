@@ -13,25 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi;
+package com.intellij.lang.jvm;
 
-import com.intellij.lang.jvm.JvmMember;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.lang.jvm.types.JvmType;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents a member of a Java class (for example, a field or a method).
+ * Represents a parameter of a method or a constructor.
+ *
+ * @see java.lang.reflect.Parameter
  */
-public interface PsiMember extends PsiModifierListOwner, NavigatablePsiElement, JvmMember {
-  /**
-   * The empty array of PSI members which can be reused to avoid unnecessary allocations.
-   */
-  PsiMember[] EMPTY_ARRAY = new PsiMember[0];
+public interface JvmParameter extends JvmNamedElement, JvmModifiersOwner {
 
   /**
-   * Returns the class containing the member.
-   *
-   * @return the containing class.
+   * @see java.lang.reflect.Parameter#getParameterizedType
+   * @see java.lang.reflect.Parameter#getAnnotatedType
    */
-  @Nullable
-  PsiClass getContainingClass();
+  @NotNull
+  JvmType getType();
 }

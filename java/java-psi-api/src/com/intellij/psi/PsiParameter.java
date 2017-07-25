@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.lang.jvm.JvmParameter;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents the parameter of a Java method, foreach (enhanced for) statement or catch block.
  */
-public interface PsiParameter extends PsiVariable {
+public interface PsiParameter extends PsiVariable, JvmParameter {
   /**
    * The empty array of PSI parameters which can be reused to avoid unnecessary allocations.
    */
@@ -52,4 +53,10 @@ public interface PsiParameter extends PsiVariable {
   @Override
   @Nullable
   PsiTypeElement getTypeElement();
+
+  @NotNull
+  @Override
+  default PsiAnnotation[] getAnnotations() {
+    return PsiVariable.super.getAnnotations();
+  }
 }
