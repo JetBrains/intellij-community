@@ -18,10 +18,12 @@ package org.jetbrains.plugins.gradle.tooling.internal.backRefCollector;
 import com.intellij.util.Consumer;
 import com.sun.source.util.JavacTask;
 import com.sun.source.util.Plugin;
+import org.jetbrains.jps.backwardRefs.BackwardReferenceIndexUtil;
+import org.jetbrains.jps.backwardRefs.JavacReferenceIndexWriter;
 import org.jetbrains.jps.javac.ast.JavacReferenceIndexListener;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
 
-public class ReferenceCollectorJavacPlugin implements Plugin {
+public class ReferenceIndexJavacPlugin implements Plugin {
   @Override
   public String getName() {
     return "ReferenceCollectorJavacPlugin";
@@ -29,10 +31,21 @@ public class ReferenceCollectorJavacPlugin implements Plugin {
 
   @Override
   public void init(JavacTask task, String... args) {
+    boolean inProcessJavac = true;
     JavacReferenceIndexListener.installOn(task, false, new Consumer<JavacFileData>() {
       @Override
       public void consume(JavacFileData data) {
-        //TODO save em all
+        if (inProcessJavac) {
+          JavacReferenceIndexWriter writer = GradleJavacReferenceIndexWriterHolder.getInstance();
+          if (writer != null) {
+            BackwardReferenceIndexUtil.registerFile(data.getFilePath(),
+                                                    data.getRefs(),
+                                                    data.getDefs(),
+                                                    writer);
+          }
+        } else {
+          //TODO save em all via message processing
+        }
       }
     });
   }

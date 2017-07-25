@@ -52,5 +52,6 @@
     </orderEntry>
     <orderEntry type="module" module-name="javac-ref-index" />
     <orderEntry type="module" module-name="util-rt" />
+    <orderEntry type="library" name="Trove4j" level="project" />
   </component>
 </module>

@@ -25,13 +25,16 @@ import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class BackwardReferenceIndexUtil {
-  static void registerFile(String filePath,
-                           TObjectIntHashMap<? extends JavacRef> refs,
-                           List<JavacDef> defs,
-                           final JavacReferenceIndexWriter writer) {
+  public static void registerFile(String filePath,
+                                  TObjectIntHashMap<? extends JavacRef> refs,
+                                  List<JavacDef> defs,
+                                  final JavacReferenceIndexWriter writer) {
 
     try {
       final int fileId = writer.enumeratePath(filePath);

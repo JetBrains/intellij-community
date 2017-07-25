@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.integrations.refCollector;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,18 +26,20 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.backwardRefs.LightRef;
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension;
-import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.ReferenceCollectorJavacPlugin;
+import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.GradleJavacReferenceIndexWriterHolder;
+import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.ReferenceIndexJavacPlugin;
 
 import java.io.InputStream;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Order(ExternalSystemConstants.UNORDERED)
 public class ReferenceCollectorProjectResolverExtension extends AbstractProjectResolverExtension {
@@ -48,13 +51,16 @@ public class ReferenceCollectorProjectResolverExtension extends AbstractProjectR
                                     @NotNull Consumer<String> initScriptConsumer) {
     if (CompilerReferenceService.isEnabled() && (taskNames.contains(":classes") || taskNames.contains(":testClasses"))) {
       InputStream stream =
-        ReferenceCollectorJavacPlugin.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/backRefCollector/init.gradle");
+        ReferenceIndexJavacPlugin.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/backRefCollector/init.gradle");
       try {
         if (stream == null) {
           throw new IllegalStateException("can't find reference collector gradle script");
         }
+        String classPath = getToolingExtensionsJarPaths(ImmutableSet.of(ReferenceIndexJavacPlugin.class,
+                                                                        LightRef.class,
+                                                                        TObjectIntHashMap.class));
         String initScript = FileUtil.loadTextAndClose(stream)
-          .replaceAll(Pattern.quote("${EXTENSIONS_JARS_PATH}"), getToolingExtensionsJarPaths(Collections.singleton(ReferenceCollectorJavacPlugin.class)));
+          .replaceAll(Pattern.quote("${EXTENSIONS_JARS_PATH}"), classPath);
         initScriptConsumer.consume(initScript);
       }
       catch (Exception e) {
@@ -67,6 +73,14 @@ public class ReferenceCollectorProjectResolverExtension extends AbstractProjectR
   }
 
   @NotNull
+  public static String getToolingExtensionsJarPaths(@NotNull Set<Class> toolingExtensionClasses) {
+    return toolingExtensionClasses.stream().map(c -> {
+      String path = PathManager.getJarPathForClass(c);
+      return path == null ? null : PathUtil.getCanonicalPath(path);
+    }).collect(Collectors.joining(","));
+  }
+
+  @NotNull
   @Override
   public List<Pair<String, String>> getExtraJvmArgs() {
     return Collections.singletonList(Pair.create("ref_index_path", "/home/user/index"));
@@ -74,30 +88,7 @@ public class ReferenceCollectorProjectResolverExtension extends AbstractProjectR
 
   @NotNull
   @Override
-  public Set<Class> getExtraProjectModelClasses() {
-    return Collections.singleton(ReferenceCollectorJavacPlugin.class);
-  }
-
-  @NotNull
-  @Override
   public Set<Class> getToolingExtensionsClasses() {
-    return Collections.singleton(ReferenceCollectorJavacPlugin.class);
-  }
-
-  @NotNull
-  private static String getToolingExtensionsJarPaths(@NotNull Set<Class> toolingExtensionClasses) {
-    final Set<String> jarPaths = ContainerUtil.map2SetNotNull(toolingExtensionClasses, aClass -> {
-      String path = PathManager.getJarPathForClass(aClass);
-      return path == null ? null : PathUtil.getCanonicalPath(path);
-    });
-    StringBuilder buf = new StringBuilder();
-    for (Iterator<String> it = jarPaths.iterator(); it.hasNext(); ) {
-      String jarPath = it.next();
-      buf.append(jarPath);
-      if (it.hasNext()) {
-        buf.append(',');
-      }
-    }
-    return buf.toString();
+    return ImmutableSet.of(ReferenceIndexJavacPlugin.class, GradleJavacReferenceIndexWriterHolder.class, TObjectIntHashMap.class);
   }
 }
