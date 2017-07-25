@@ -19,8 +19,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -31,43 +29,23 @@ import org.jetbrains.annotations.NotNull;
 
 public class ViewUpdateInfoNotification extends NotificationAction {
   @NotNull private final Project myProject;
-  @NotNull private final NullableComputable<UpdateInfoTree> myUpdateInfoTabCreator;
+  @NotNull private final UpdateInfoTree myTree;
 
-  @NotNull private UpdateInfoTree myTree;
-
-  public ViewUpdateInfoNotification(@NotNull Project project,
-                                    @NotNull UpdateInfoTree updateInfoTree,
-                                    @NotNull String actionName,
-                                    @NotNull NullableComputable<UpdateInfoTree> updateInfoTabCreator) {
+  public ViewUpdateInfoNotification(@NotNull Project project, @NotNull UpdateInfoTree updateInfoTree, @NotNull String actionName) {
     super(actionName);
     myProject = project;
     myTree = updateInfoTree;
-    myUpdateInfoTabCreator = updateInfoTabCreator;
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-    boolean found = focusUpdateInfoTree(myProject, myTree);
-    if (!found) {
-      UpdateInfoTree tree = myUpdateInfoTabCreator.compute();
-      if (tree != null) {
-        myTree = tree;
-        focusUpdateInfoTree(myProject, myTree);
-      }
-      else {
-        notification.expire();
-      }
-    }
+    focusUpdateInfoTree(myProject, myTree);
   }
 
-  public static boolean focusUpdateInfoTree(@NotNull Project project, @NotNull UpdateInfoTree updateInfoTree) {
-    Ref<Boolean> found = Ref.create(false);
+  public static void focusUpdateInfoTree(@NotNull Project project, @NotNull UpdateInfoTree updateInfoTree) {
     ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS).activate(() -> {
       ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(project).getContentManager();
-      if (contentManager != null) {
-        found.set(ContentUtilEx.selectContent(contentManager, updateInfoTree, true));
-      }
+      if (contentManager != null) ContentUtilEx.selectContent(contentManager, updateInfoTree, true);
     }, true, true);
-    return found.get();
   }
 }

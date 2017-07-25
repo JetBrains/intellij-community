@@ -22,7 +22,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
@@ -101,18 +100,11 @@ class GitPushResultNotification extends Notification {
     UpdatedFiles updatedFiles = pushResult.getUpdatedFiles();
     if (!updatedFiles.isEmpty()) {
       ApplicationManager.getApplication().invokeLater(() -> {
-        NullableComputable<UpdateInfoTree> updateInfoTabCreator = () -> {
-          ProjectLevelVcsManagerEx vcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project);
-          UpdateInfoTree tree = vcsManager.showUpdateProjectInfo(updatedFiles, "Update", UPDATE, false);
-          if (tree != null) {
-            tree.setBefore(pushResult.getBeforeUpdateLabel());
-            tree.setAfter(pushResult.getAfterUpdateLabel());
-          }
-          return tree;
-        };
-        UpdateInfoTree tree = updateInfoTabCreator.compute();
+        UpdateInfoTree tree = ProjectLevelVcsManagerEx.getInstanceEx(project).showUpdateProjectInfo(updatedFiles, "Update", UPDATE, false);
         if (tree != null) {
-          notification.addAction(new ViewUpdateInfoNotification(project, tree, VIEW_FILES_UPDATED_DURING_THE_PUSH, updateInfoTabCreator));
+          tree.setBefore(pushResult.getBeforeUpdateLabel());
+          tree.setAfter(pushResult.getAfterUpdateLabel());
+          notification.addAction(new ViewUpdateInfoNotification(project, tree, VIEW_FILES_UPDATED_DURING_THE_PUSH));
         }
       });
     }

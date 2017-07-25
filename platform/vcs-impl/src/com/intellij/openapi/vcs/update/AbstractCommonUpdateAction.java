@@ -28,7 +28,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AbstractVcsAction;
@@ -547,17 +546,12 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           VcsNotifier.getInstance(myProject).notify(STANDARD_NOTIFICATION.createNotification(content, type));
         }
         else if (!myUpdatedFiles.isEmpty()) {
-          NullableComputable<UpdateInfoTree> updateInfoTabCreator = () -> {
-            UpdateInfoTree tree = showUpdateTree(continueChainFinal && updateSuccess && noMerged, someSessionWasCancelled);
-            CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
-            cache.processUpdatedFiles(myUpdatedFiles, incomingChangeLists -> tree.setChangeLists(incomingChangeLists));
-            return tree;
-          };
+          final UpdateInfoTree tree = showUpdateTree(continueChainFinal && updateSuccess && noMerged, someSessionWasCancelled);
+          final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
+          cache.processUpdatedFiles(myUpdatedFiles, incomingChangeLists -> tree.setChangeLists(incomingChangeLists));
 
-          UpdateInfoTree tree = notNull(updateInfoTabCreator.compute());
           Notification notification = prepareNotification(tree, someSessionWasCancelled);
-          notification.addAction(new ViewUpdateInfoNotification(myProject, tree, "View", updateInfoTabCreator));
-
+          notification.addAction(new ViewUpdateInfoNotification(myProject, tree, "View"));
           VcsNotifier.getInstance(myProject).notify(notification);
         }
 
