@@ -121,7 +121,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withModule("wizard", "android.jar")
       withModule("wizard-model", "android.jar")
       withModule("profilers-android", "android.jar")
-      withModule("instantapp-deploy", "android.jar")
       withModule("perfd-host", "android-profilers.jar")
       withModule("profilers", "android-profilers.jar")
       withModule("profilers-ui", "android-profilers.jar")
