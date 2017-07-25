@@ -49,7 +49,7 @@ public class ExtendedJListCellReader extends BasicJListCellReader implements JLi
     else if (cellRenComp instanceof JPanel) {
       try {
         Component foundComp =
-          BasicRobot.robotWithNewAwtHierarchyWithoutScreenLock().finder().find((JPanel)cellRenComp, component -> component instanceof JLabel);
+          BasicRobot.robotWithNewAwtHierarchyWithoutScreenLock().finder().find((JPanel)cellRenComp, component -> component instanceof JLabel && ((JLabel)component).getText() != null && !((JLabel)component).getText().isEmpty());
         return ((JLabel)foundComp).getText();
       }
       catch (ComponentLookupException ignored) {
