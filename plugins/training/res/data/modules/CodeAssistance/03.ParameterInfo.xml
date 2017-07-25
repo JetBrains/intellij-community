@@ -1,0 +1,19 @@
+<xml type="Scenario" name="Parameter Info"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
+    <MouseBlock><CopyText>import javax.swing.*;
+
+class FrameDemo {
+
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("FrameDemo");
+        frame.setSize();
+
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        frame.setVisible(true);
+    }
+}</CopyText>
+</MouseBlock>
+        <MoveCaret position="7:23" />
+        <Try description="Press &lt;action=&quot;ParameterInfo&quot;&gt; to see method signature." trigger="ParameterInfo"/>
+        <Try description="Use &lt;bold&gt;175&lt;/bold&gt; as width and &lt;bold&gt;100&lt;/bold&gt; as height." check="training.check.CheckParameterInfo"/>
+    <Win/>
+</xml>

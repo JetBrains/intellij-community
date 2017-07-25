@@ -1,0 +1,27 @@
+<xml type="Scenario" name="Quick Popups"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
+    <MouseBlock><CopyText>import java.text.*;
+
+class DecimalFormatDemo {
+    static public void main(String[] args) {
+        customFormat(&quot;###,###.###&quot;, 123456.789);
+        customFormat(&quot;###.##&quot;, 123456.789);
+        customFormat(&quot;000000.000&quot;, 123.78);
+        customFormat(&quot;$###,###.###&quot;, 12345.67);
+    }
+
+    /**
+     * Prints a double value formatted according to a given pattern.
+     */
+    static public void customFormat(String pattern, double value) {
+        DecimalFormat myFormatter = new DecimalFormat(pattern);
+        String output = myFormatter.format(value);
+        System.out.println(value + &quot;  &quot; + pattern + &quot;  &quot; + output);
+    }
+}</CopyText>
+</MouseBlock>
+        <MoveCaret position="5:9" />
+        <Try description="Press &lt;action=&quot;QuickJavaDoc&quot;&gt; to see documentation for the symbol at at caret." trigger="QuickJavaDoc"/>
+        <Try description="Press &lt;action=&quot;EditorEscape&quot;&gt; to close the popup." check="training.check.CheckQuickPopupsQuickDoc"/>
+        <Try description="Press &lt;action=&quot;QuickImplementations&quot;&gt; to see the definition of the symbol at the caret." trigger="QuickImplementations"/>
+    <Win/>
+</xml>

@@ -1,0 +1,58 @@
+<xml type="Scenario" name="Collapse"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
+    <ShowLineNumber/>
+    <MouseBlock>
+    <CaretBlock>
+        <CopyText>import java.lang.Exception;
+import java.lang.String;
+
+class CollapseDemo{
+
+    String model;
+
+    Engine myEngine;
+    Wheel myWheel;
+    float fuelTank;
+    int passengerCapacity;
+
+    public CollapseDemo(String model, Engine engine, Wheel wheel){
+        this.model = model;
+        Engine myEngine = engine;
+        Wheel myWheel = wheel;
+        passengerCapacity = 4;
+    }
+
+    public void startEngine() throws CheckEngineException{
+        myEngine.callStarter();
+    }
+
+    public void rotateWheel(float angle){
+        if (angle &gt; 0) {
+            myWheel.rotateClockwise(Math.abs(angle));
+        } else {
+            myWheel.rotateCounterClockwise(Math.abs(angle));
+        }
+    }
+
+    interface Engine{
+        void callStarter();
+    }
+
+    interface Wheel{
+        void rotateClockwise(float angle);
+        void rotateCounterClockwise(float angle);
+    }
+
+    class CheckEngineException extends Exception{
+
+    }
+
+}</CopyText>
+    <MoveCaret position="13:9"/>
+    <Try description="Sometimes you need to collapse some code for better readability. Try to collapse code, with &lt;action=&quot;CollapseRegion&quot;&gt;" trigger="CollapseRegion"/>
+    <Try description="To expand code region, try &lt;action=&quot;ExpandRegion&quot;&gt;" trigger="ExpandRegion"/>
+    <Try description="If you want to collapse all regions in code, use &lt;action=&quot;CollapseAllRegions&quot;&gt;" trigger="CollapseAllRegions"/>
+    <Try description="And &lt;action=&quot;ExpandAllRegions&quot;&gt; in reverse order." trigger="ExpandAllRegions"/>
+    <Win/>
+</CaretBlock>
+</MouseBlock>
+</xml>

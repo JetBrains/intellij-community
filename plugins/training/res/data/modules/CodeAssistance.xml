@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module name="Code Assistance" lessonsPath="CodeAssistance/" version="0.3" id="code_assistance" fileType="PROJECT" description="Foldings, code format, parameter info and quick popups">
+  <lesson filename="01.Folding.xml" />
+  <lesson filename="02.CodeFormat.xml" />
+  <lesson filename="03.ParameterInfo.xml" />
+  <lesson filename="04.QuickPopups.xml" />
+  <lesson filename="05.EditorCodingAssistance.xml" />
+</module>
+

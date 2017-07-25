@@ -1,0 +1,43 @@
+<xml type="Scenario" name="File Structure"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
+    <MouseBlock>
+        <CopyText>class FileStructureDemo{
+
+
+    final private String DATABASE = "MyDataBase";
+    DataEntry myPerson;
+
+    FileStructureDemo(String name, int age, String cellphone){
+        myPerson = new Person(name, age, cellphone);
+    }
+
+    interface DataEntry{
+        String getCellphone();
+        String getName();
+    }
+
+    class Person implements DataEntry {
+
+        public Person(String name, int age, String cellphone) {
+            this.name = name;
+            this.age = age;
+            this.cellphone = cellphone;
+        }
+
+        private String name;
+        private int age;
+        private String cellphone;
+
+        public String getCellphone() {
+            return cellphone;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+    }
+}</CopyText>
+    </MouseBlock>
+    <Try description="Navigation through large sources is complicated, and sometimes you need an overview of a file. Use &lt;action=&quot;FileStructurePopup&quot;&gt; to see the file structure." action="FileStructurePopup" trigger="FileStructurePopup"/>
+    <Win/>
+</xml>

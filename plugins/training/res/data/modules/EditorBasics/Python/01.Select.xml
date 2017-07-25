@@ -1,0 +1,24 @@
+<xml type="Scenario" name="Selection"  version="0.1" subtype="aimless" projectTree="hide" lang="Python">
+    <MouseBlock>
+        <CopyText>def fib(n):
+    a = 1
+    b = 1
+    if n &lt; 2:
+        return 1
+
+    for i in range(n):
+        tmp = b
+        b = a
+        a += tmp
+
+    return a</CopyText>
+    </MouseBlock>
+    <MoveCaret position="9:9"/>
+    <Try description="Put the caret before any word. Press &lt;action=&quot;EditorNextWordWithSelection&quot;&gt; to move caret to the next word with selection." action="EditorNextWordWithSelection" trigger="EditorNextWordWithSelection"/>
+    <Try description="Press &lt;action=&quot;EditorSelectWord&quot;&gt; to extend selection to the next code block." action="EditorSelectWord" trigger="EditorSelectWord"/>
+    <Try description="Try increase your selection with &lt;action=&quot;EditorSelectWord&quot;&gt; until your file will be selected." trigger="EditorSelectWord"/>
+    <Try description="&lt;action=&quot;EditorUnSelectWord&quot;&gt; shrinks selection. Try to press it." action="EditorUnSelectWord" trigger="EditorUnSelectWord"/>
+    <Try description="Select the whole file with &lt;action=&quot;$SelectAll&quot;&gt;" action="$SelectAll" trigger="$SelectAll"/>
+    <Text description="Awesome, press button to start next lesson or use &lt;action=&quot;learn.next.lesson&quot;&gt;" action="learn.next.lesson" />
+    <Win/>
+</xml>

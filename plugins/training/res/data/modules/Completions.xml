@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module name="Completions" lessonsPath="Completions/" version="0.3" id="completions" fileType="SCRATCH" sdkType="JAVA" description="Basic, statement, smart type and other completions">
+  <lesson filename="01.Basic Completion.xml" solution="training.training.solutions.Completions.BasicCompletionSolution"/>
+  <lesson filename="02.Smart Type Completion.xml" solution="training.training.solutions.Completions.SmartTypeCompletionSolution"/>
+  <!--<lesson filename="03.Postfix Completion.xml" solution="training.training.solutions.Completions.PostfixCompletionSolution" />-->
+  <lesson filename="04.StatementCompletion.xml" />
+  <lesson filename="05.CompletionWithTab.xml" />
+</module>
+

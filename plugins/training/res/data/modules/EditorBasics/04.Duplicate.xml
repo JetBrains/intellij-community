@@ -1,0 +1,14 @@
+<xml type="Scenario" name="Duplicate"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
+    <MouseBlock>
+        <CopyText>class DuplicateDemo {
+
+    public static void main(String[] args){
+        System.out.println(&quot;Hello world!&quot;);
+    }
+
+}</CopyText>
+    </MouseBlock>
+    <Try description="Duplicate any line with &lt;action=&quot;EditorDuplicate&quot;&gt;" action="EditorDuplicate" trigger="EditorDuplicate"/>
+    <Try description="You can do the same thing with a bunch of lines. Just select two or more lines and duplicate with &lt;action=&quot;EditorDuplicate&quot;&gt;" action="EditorDuplicate" trigger="EditorDuplicate" check="training.check.CheckSelectedLines"/>
+    <Win/>
+</xml>

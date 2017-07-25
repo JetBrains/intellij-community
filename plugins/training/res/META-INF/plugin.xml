@@ -1,0 +1,105 @@
+<idea-plugin>
+  <id>training</id>
+  <name>IDE Features Trainer</name>
+  <vendor email="sergey.karashevich@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
+
+  <description>
+    &lt;p&gt;IDE Features Trainer plugin helps to learn shortcuts and useful actions which makes coding easier.&lt;/p&gt;
+  </description>
+
+  <depends>com.intellij.modules.java</depends>
+
+  <depends optional="true" config-file="java-deps.xml">com.intellij.modules.java</depends>
+  <depends optional="true" config-file="python-deps.xml">com.intellij.modules.python</depends>
+  <!--<depends optional="true" config-file="objc-deps.xml">com.intellij.modules.cidr.lang</depends>-->
+  <!--<depends optional="true" config-file="webstorm-deps.xml">com.intellij.modules.webstorm</depends>-->
+  <!--<depends optional="true" config-file="phpstorm-deps.xml">com.jetbrains.php</depends>-->
+  <!--<depends optional="true" config-file="clion-deps.xml">com.intellij.modules.clion</depends>-->
+  <!--<depends optional="true" config-file="rider-deps.xml">com.intellij.modules.rider</depends>-->
+
+  <extensionPoints>
+    <extensionPoint name="TrainingLangExtension"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="training.lang.LangSupport"/>
+    </extensionPoint>
+  </extensionPoints>
+
+
+  <change-notes>
+    &lt;b&gt;Fixed &amp; New:&lt;/b&gt;
+    &lt;ul&gt;
+    &lt;li&gt;Bundled to IntelliJ IDEA CE&lt;/li&gt;
+    &lt;/ul&gt;
+  </change-notes>
+
+  <!-- please see http://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
+  <!--<idea-version since-build="171" until-build="173.*"/>-->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <statistics.usagesCollector implementation="training.statistic.LessonUsageCollector"/>
+
+    <actionPromoter implementation="training.editor.actions.LearnActionPromoter"/>
+    <applicationService
+        serviceInterface="training.learn.CourseManager"
+        serviceImplementation="training.learn.CourseManager">
+    </applicationService>
+    <applicationService
+        serviceInterface="training.learn.LessonManager"
+        serviceImplementation="training.learn.LessonManager">
+    </applicationService>
+    <applicationService
+        serviceInterface="training.lang.LangManager"
+        serviceImplementation="training.lang.LangManager">
+    </applicationService>
+    <applicationService
+        serviceInterface="training.statistic.RequestService"
+        serviceImplementation="training.statistic.SimpleRequestService">
+    </applicationService>
+    <applicationService
+        serviceInterface="training.util.UrlProvider"
+        serviceImplementation="training.util.InternalUrlProvider">
+    </applicationService>
+    <applicationService
+        serviceInterface="training.statistic.FeedbackSender"
+        serviceImplementation="training.statistic.FeedbackSender">
+    </applicationService>
+    <applicationService
+        serviceInterface="training.ui.LearnUIManager"
+        serviceImplementation="training.ui.LearnUIManager">
+    </applicationService>
+
+
+    <toolWindow id="Learn" anchor="left" factoryClass="training.ui.LearnToolWindowFactory"
+                conditionClass="training.ui.LearnCondition"/>
+  </extensions>
+
+  <application-components>
+    <component>
+      <implementation-class>training.components.LearnApplicationComponent</implementation-class>
+      <interface-class>training.components.LearnApplicationComponent</interface-class>
+    </component>
+  </application-components>
+
+  <project-components>
+    <component>
+      <implementation-class>training.components.LearnProjectComponent</implementation-class>
+      <interface-class>training.components.LearnProjectComponent</interface-class>
+    </component>
+  </project-components>
+
+  <actions>
+    <action id="Learn.WelcomeScreen.StartLearn" class="training.actions.StartLearnAction" icon="/img/chevron.png">
+      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="last"/>
+    </action>
+
+    <action id="learn.next.lesson" class="training.actions.NextLessonAction" text="Next lesson">
+      <keyboard-shortcut first-keystroke="alt shift RIGHT" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="control shift RIGHT" keymap="Mac OS X 10.5+"/>
+      <keyboard-shortcut first-keystroke="control shift RIGHT" keymap="Mac OS X"/>
+    </action>
+    <action id="learn.open.lesson" text="Open Lesson" class="training.actions.OpenLessonAction"/>
+    <!--TODO: REMOVE THIS ACTION BEFORE RELEASE-->
+    <action id="learn.open.chooseLang" text="Choose Lang" class="training.actions.ShowChooseLangPanelAction"/>
+  </actions>
+
+</idea-plugin>

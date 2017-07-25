@@ -1,0 +1,25 @@
+<xml type="Scenario" name="Comment Line"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
+    <MouseBlock>
+        <CopyText>import java.awt.Color;
+
+class CommentDemo {
+    public static void main() {
+
+        float hue = 5;
+        float saturation = 10;
+        float brightness = 10;
+
+        int rgb = Color.HSBtoRGB(hue, saturation, brightness);
+        int red = (rgb &gt;&gt; 16) &amp; 0xFF;
+        int green = (rgb &gt;&gt; 8) &amp; 0xFF;
+        int blue = rgb &amp; 0xFF;
+
+    }
+}</CopyText>
+    </MouseBlock>
+    <MoveCaret position="3:1"/>
+    <Try description="Comment out any line with &lt;action=&quot;CommentByLineComment&quot;&gt;" action="CommentByLineComment" trigger="CommentByLineComment"/>
+    <Try description="Uncomment the commented line with the same shortcut &lt;action=&quot;CommentByLineComment&quot;&gt;" action="CommentByLineComment" trigger="CommentByLineComment" check="training.check.CheckCountCommentedLine"/>
+    <Try description="Select several lines with &lt;action=&quot;EditorDownWithSelection&quot;&gt; and comment with &lt;action=&quot;CommentByLineComment&quot;&gt;" action="CommentByLineComment" triggers="EditorDownWithSelection;CommentByLineComment" check="training.check.CheckCountCommentedLines"/>
+    <Win/>
+</xml>

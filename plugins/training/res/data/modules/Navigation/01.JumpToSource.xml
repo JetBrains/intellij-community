@@ -1,0 +1,45 @@
+<xml type="Scenario" name="Jump to Source"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
+    <MouseBlock><CopyText>import java.lang.String;
+import java.util.HashMap;
+
+class JumpToSourceDemo {
+
+    public static boolean checkParam(String checkKey, Params parameters){
+        return parameters.hasParameter(checkKey);
+    }
+
+    class Params {
+
+        public HashMap&lt;String, String&gt; myParameters;
+
+        public Params() {
+            myParameters = new HashMap&lt;String, String&gt;();
+        }
+
+        public Params(HashMap&lt;String, String&gt; myParameters) {
+            this.myParameters = myParameters;
+        }
+
+        public void addParameter(String key, String value) {
+            myParameters.put(key, value);
+        }
+
+        public String getParameter(String key) {
+            return myParameters.get(key);
+        }
+
+        public boolean hasParameter(String key) {
+            return myParameters.containsKey(key);
+        }
+
+    }
+}</CopyText>
+        <CaretBlock>
+        <MoveCaret position="6:59" />
+        <Text description="IntelliJ IDEA has imposing list of navigation features."/>
+        <Try description="Basically lets start from one very frequently used feature - Jump to Source. Try calling this action by &lt;action=&quot;EditSource&quot;&gt; to look up the source of &lt;code&gt;Params&lt;/code&gt;." trigger="EditSource"/>
+    </CaretBlock>
+</MouseBlock>
+        <Try description="You may also Jump to Source of classes implemented in JDK. Press &lt;action=&quot;EditSource&quot;&gt; when the caret is on &lt;code&gt;String&lt;/code&gt;." trigger="EditSource" check="training.check.CheckJumpFromString"/>
+    <Win/>
+</xml>

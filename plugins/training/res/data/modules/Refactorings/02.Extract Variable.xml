@@ -1,0 +1,32 @@
+<xml type="Scenario" name="Extract Variable/Field"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
+    <MouseBlock>
+        <CopyText>class ExtractVar{
+
+    final static int a_const = 10000;
+    final static int b_const = 500;
+
+
+    public void calc(){
+
+        (new InnerCalc()).process(a_const, b_const);
+
+    }
+
+    class InnerCalc{
+
+        final static int some_const = 124136;
+
+        int process(int a, int b){
+            return  a * b + some_const;
+        }
+    }
+
+}</CopyText>
+<CaretBlock>
+    <SetSelection start-position="9:9" end-position="9:52" />
+    <MoveCaret position="9:44" />
+    <Try description="Press &lt;action=&quot;IntroduceVariable&quot;&gt; to extract variable or field." triggers="IntroduceVariable;NextTemplateVariable"/>
+    <Win/>
+</CaretBlock>
+</MouseBlock>
+</xml>

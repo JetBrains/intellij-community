@@ -1,0 +1,36 @@
+<xml type="Scenario" name="MyLesson"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
+    <MouseBlock><CopyText>import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+
+class CodeAssistance {
+
+    public static final String EXT = "txt";
+
+    public static void main(String[] args) throws FileNotFoundException {
+        FileReader fileReader = new FileReader("input." + EXT);
+        BufferedReader reader = new BufferedReader(fileReader);
+        ArrayList&lt;String&gt; lines = new ArrayList&lt;String&gt;();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            lines.add(line);
+        }
+        String[] array = lines.toArray(new String[lines.size()]);
+        Arrays.sort(array);
+        for (String s : array) System.out.println(s);
+    }
+}</CopyText>
+</MouseBlock>
+        <MoveCaret position="1:1" />
+        <Try description="Press &lt;action=&quot;GotoNextError&quot;&gt; to go to the next highlighted error in the file." trigger="GotoNextError"/>
+        <Try description="Press &lt;action=&quot;ShowErrorDescription&quot;&gt; to see the error description." trigger="ShowErrorDescription"/>
+        <Try description="Press &lt;action=&quot;ShowIntentionActions&quot;&gt; and select &lt;bold&gt;Add exception to method signature&lt;/bold&gt;." trigger="ShowIntentionActions" check="training.check.CheckException"/>
+        <SetSelection start-string="BufferedReader reader" end-string="System.out.println(s);"/>
+        <Try description="Press &lt;action=&quot;SurroundWith&quot;&gt; and select &lt;code&gt;try/finally&lt;/code&gt; to surround it with selection." trigger="SurroundWith" check="training.check.CheckTryFinally"/>
+        <Try description="Close the reader in the &lt;code&gt;finally&lt;/code&gt; block by writing &lt;code&gt;fileReader.close()&lt;/code&gt;" check="training.check.CheckReaderClose"/>
+        <MoveCaret string="lines"/>
+        <Try description="Press &lt;action=&quot;HighlightUsagesInFile&quot;&gt; to highlight all usages of the symbol at the caret within the file." trigger="HighlightUsagesInFile"/>
+    <Win/>
+</xml>

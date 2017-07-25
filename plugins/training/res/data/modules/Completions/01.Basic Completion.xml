@@ -1,0 +1,36 @@
+<xml type="Scenario" name="Basic Completion"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
+    <MouseBlock>
+        <CopyText>import java.lang.*;
+import java.util.*;
+
+class BasicCompletionDemo implements Runnable{
+
+    private int i = 0;
+
+    public void systemProcess(){
+        System.out.println(i++);
+    }
+
+    @Override
+    public void run() {
+        Random random = new
+    }
+
+    public BasicCompletionDemo() {
+        byte b = MAX_VALUE
+    }
+}
+        </CopyText>
+    <MoveCaret position="14:29"/>
+    <CaretBlock>
+        <TypeText> </TypeText>
+        <Try description="By default IDEA completes your code instantly. Start typing &lt;code&gt;Ran&lt;/code&gt; right where the caret is, and you will see Lookup Menu of completions. You can choose the first item from Lookup menu by pressing &lt;action=&quot;EditorEnter&quot;&gt;" trigger="EditorChooseLookupItem"/>
+        <Try description="To activate Basic Completion action press &lt;action=&quot;CodeCompletion&quot;&gt; and you will see lookup menu again." trigger="CodeCompletion"/>
+        <Try description="Press &lt;action=&quot;EditorEnter&quot;&gt; to choose top item from lookup menu." trigger="EditorChooseLookupItem"/>
+        <Try description="Press &lt;action=&quot;EditorCompleteStatement&quot;&gt; to complete this statement." trigger="EditorCompleteStatement"/>
+        <MoveCaret position="18:27"/>
+        <Try description="Sometimes you need to find completions for static constants or methods. Press &lt;action=&quot;CodeCompletion&quot;&gt; twice to increase search level of Code Completion." triggers="CodeCompletion;CodeCompletion"/>
+    </CaretBlock>
+    </MouseBlock>
+    <Win/>
+</xml>

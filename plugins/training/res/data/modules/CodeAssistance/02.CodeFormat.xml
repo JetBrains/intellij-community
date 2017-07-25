@@ -1,0 +1,21 @@
+<xml type="Scenario" name="Code Formatting"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
+        <CopyText>class CodeFormatDemo{
+
+    final static int a_const = 10000;
+    final static int b_const = 500;
+
+
+public static void calc(){InnerCalc.process(a_const, b_const); }
+
+    static class InnerCalc{
+
+final static int some_const = 124136; public static int process(int a, int b){ return  a * b + some_const;
+        }
+    }
+
+}</CopyText>
+    <SetSelection start-position="7:1" end-position="7:65" />
+    <Try description="IntelliJ IDEA helps to correct code formatting with one action. Try to reformat selected code with &lt;action=&quot;ReformatCode&quot;&gt;" triggers="ReformatCode"/>
+    <Try description="To reformat a whole source file use &lt;action=&quot;ReformatCode&quot;&gt; when no lines are selected." triggers="ReformatCode"/>
+    <Win/>
+</xml>

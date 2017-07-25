@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<modules version="0.3">
+    <module name="modules/EditorBasics.xml"/>
+    <module name="modules/Completions.xml"/>
+    <module name="modules/Refactorings.xml"/>
+    <module name="modules/CodeAssistance.xml"/>
+    <module name="modules/Navigation.xml"/>
+    <!--<module name="modules/Loops.xml"/>-->
+</modules>
+

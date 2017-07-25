@@ -48,6 +48,7 @@
       <module fileurl="file://$PROJECT_DIR$/colorSchemes/colorSchemes.iml" filepath="$PROJECT_DIR$/colorSchemes/colorSchemes.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/commander/commander.iml" filepath="$PROJECT_DIR$/plugins/commander/commander.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/common/common.iml" filepath="$PROJECT_DIR$/android/tools-base/common/common.iml" group="android/sdktools" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/training/training.iml" filepath="$PROJECT_DIR$/plugins/training/training.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/eclipse/common-eclipse-util/common-eclipse-util.iml" filepath="$PROJECT_DIR$/plugins/eclipse/common-eclipse-util/common-eclipse-util.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/javaFX/common-javaFX-plugin/common-javaFX-plugin.iml" filepath="$PROJECT_DIR$/plugins/javaFX/common-javaFX-plugin/common-javaFX-plugin.iml" group="plugins/JavaFX" />
       <module fileurl="file://$PROJECT_DIR$/community-main.iml" filepath="$PROJECT_DIR$/community-main.iml" />

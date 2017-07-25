@@ -1,0 +1,35 @@
+<xml type="Scenario" name="Extract Method"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
+        <CopyText>import javax.swing.*;
+import java.awt.*;
+
+class Test{
+    private static JButton glassButton;
+    private static JPanel glass;
+
+    public static void main(String[] args) {
+
+        final Dimension myDimension = new Dimension(100, 100);
+
+        JButton button = new JButton("Test");
+        button.setPreferredSize(myDimension);
+
+        glassButton = new JButton("Block");
+        JPanel panel = new JPanel();
+        panel.add(button);
+
+        glass = new JPanel();
+        glass.setOpaque(false);
+        glass.add(glassButton);
+
+        JFrame frame = new JFrame();
+        frame.setGlassPane(glass);
+        glass.setVisible(true);
+        frame.setContentPane(panel);
+        frame.pack();
+        frame.setVisible(true);
+    }
+}</CopyText>
+    <SetSelection start-position="12:9" end-position="21:32"/>
+    <Try description="Extract method action allows to encapsulate selected code into a new method with given parameters and returning type. Let's extract some lines of code into a new method &lt;code&gt;init(Dimension myDimension)&lt;/code&gt; by pressing &lt;action=&quot;ExtractMethod&quot;&gt;" trigger="ExtractMethod"/>
+    <Win/>
+</xml>

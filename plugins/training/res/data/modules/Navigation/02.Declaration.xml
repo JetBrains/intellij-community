@@ -1,0 +1,36 @@
+<xml type="Scenario" name="Declaration/Implementation"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
+        <CopyText>import java.util.LinkedList;
+import java.util.List;
+
+class DeclarationDemo {
+
+    void initPigeonPack() {
+        int count = (int) Math.round(Math.abs(Math.random() * 1000));
+        List&lt;Pigeon&gt; pigeonPack = new LinkedList&lt;Pigeon&gt;();
+        for (int i = 0; i &lt; count; i++) {
+            pigeonPack.add(new Pigeon() {
+                @Override
+                public void consume(String trashTypeName) {
+                    System.out.println(&quot;Pigeon is consuming &quot; + trashTypeName);
+                }
+            });
+        }
+    }
+
+    class PigeonBoss implements Pigeon {
+
+        public void consume(String trashTypeName) {
+            System.out.println("Pigeon boss consumes only a kebab.");
+        }
+    }
+
+    interface Pigeon {
+        void consume(String foodType);
+    }
+}</CopyText>
+    <MoveCaret position="8:16"/>
+    <Try description="Use &lt;action=&quot;GotoDeclaration&quot;&gt; to jump to declaration of a class/interface." triggers="com.intellij.codeInsight.navigation.actions.GotoDeclarationAction"/>
+    <MoveCaret position="26:17"/>
+    <Try description="To see implementations of a class/interface use &lt;action=&quot;GotoImplementation&quot;&gt;" triggers="GotoImplementation"/>
+    <Win/>
+</xml>

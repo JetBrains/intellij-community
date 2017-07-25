@@ -1,0 +1,27 @@
+<xml type="Scenario" name="Move"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
+    <MouseBlock>
+        <CopyText>class MoveDemo extends Thread {
+
+    boolean started = false;
+
+    public void run() {
+        started = true;
+        System.out.println(&quot;Hello from a thread!&quot;);
+    }
+
+    public static void main(String args[]) {
+       (new MoveDemo()).start();
+    }
+
+}</CopyText>
+    <ShowLineNumber/>
+    <CaretBlock>
+        <MoveCaret position="6:9"/>
+        <Try description="You can rearrange lines sequence with one shortcut instead of 3 actions: copy, delete and paste. Pull down the line where cursor stands with &lt;action=&quot;MoveLineDown&quot;&gt;" trigger="MoveLineDown"/>
+        <Try description="It works in a opposite way also &lt;action=&quot;MoveLineUp&quot;&gt;" trigger="MoveLineUp"/>
+        <MoveCaret position="10:5"/>
+        <Try description="Now try to move the whole statement up with &lt;action=&quot;MoveStatementUp&quot;&gt;" trigger="MoveStatementUp"/>
+    </CaretBlock>
+    </MouseBlock>
+    <Win/>
+</xml>

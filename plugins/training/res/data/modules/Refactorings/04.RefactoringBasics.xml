@@ -1,0 +1,36 @@
+<xml type="Scenario" name="Refactoring Basics"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
+    <MouseBlock><CopyText>import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+
+class Refactorings {
+    public static void main(String[] args) throws IOException {
+        BufferedReader reader = new BufferedReader(new FileReader(&quot;input.txt&quot;));
+        ArrayList&lt;String&gt; lines = new ArrayList&lt;String&gt;();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            lines.add(line);
+        }
+        reader.close();
+        String[] array = lines.toArray(new String[lines.size()]);
+        Arrays.sort(array);
+        for (String s : array) {
+            System.out.println(s);
+        }
+    }
+}</CopyText>
+</MouseBlock>
+        <MoveCaret position="9:74" />
+        <SetSelection start-position="9:74" end-position="9:77" />
+        <Try description="Press &lt;action=&quot;IntroduceConstant&quot;&gt; to extract the selected expression to a constant." trigger="IntroduceConstant" check="training.check.CheckExtractConstant"/>
+        <SetSelection start-string="BufferedReader reader" end-string="lines.size()]);" />
+        <Try description="Press &lt;action=&quot;ExtractMethod&quot;&gt; to extract the selected code block into a method." trigger="ExtractMethod"/>
+        <SetSelection start-string="new FileReader" end-string="new FileReader"/>
+        <Action action="EditorSelectWord"/>
+        <Try description="Press &lt;action=&quot;IntroduceParameter&quot;&gt; to extract the selected expression to a parameter." trigger="IntroduceParameter" check="training.check.CheckRefactoringBasics"/>
+        <MoveCaret string="new FileReader("/>
+        <Try description="Press &lt;action=&quot;IntroduceVariable&quot;&gt; and select &lt;code&gt;new FileReader(...)&lt;/code&gt; from the suggested list to extract it to a variable." triggers="IntroduceVariable;NextTemplateVariable"/>
+    <Win/>
+</xml>
