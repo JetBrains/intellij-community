@@ -54,10 +54,10 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
   }
 
   @Override
-  public TemplateImpl createTemplateByKey(@NotNull String key) {
+  public TemplateImpl createTemplateByKey(@NotNull String key, boolean forceSingleTag) {
     StringBuilder builder = new StringBuilder("<");
     builder.append(key).append('>');
-    if (!HtmlUtil.isSingleHtmlTag(key)) {
+    if (!forceSingleTag && !HtmlUtil.isSingleHtmlTag(key)) {
       builder.append("$END$</").append(key).append('>');
     }
     return new TemplateImpl("", builder.toString(), "");
