@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,24 +23,26 @@ import com.siyeh.ipp.IPPTestCase;
  */
 public class ReplaceConditionalWithIfTest extends IPPTestCase {
 
-    public void testConditionalAsArgument() { doTest(); }
-    public void testComment() { doTest(); }
-    public void testParentheses() { doTest(); }
-    public void testConditionalInIf() { doTest(); }
-    public void testConditionalInBinaryExpression() { doTest(); }
-    public void testArrayInitializer() { doTest(); }
-    public void testInsideExprLambda() { doTest(); }
-    public void testInsideExprLambdaWithParams() { doTest(); }
-    public void testCastNeeded() { doTest(); }
+  public void testConditionalAsArgument() { doTest(); }
+  public void testComment() { doTest(); }
+  public void testParentheses() { doTest(); }
+  public void testConditionalInIf() { doTest(); }
+  public void testConditionalInBinaryExpression() { doTest(); }
+  public void testArrayInitializer() { doTest(); }
+  public void testInsideExprLambda() { doTest(); }
+  public void testInsideExprLambdaWithParams() { doTest(); }
+  public void testCastNeeded() { doTest(); }
 
-    @Override
-    protected String getIntentionName() {
-        return IntentionPowerPackBundle.message(
-                "replace.conditional.with.if.intention.name");
-    }
+  public void testBrokenCode() { assertIntentionNotAvailable(); }
 
-    @Override
-    protected String getRelativePath() {
-        return "conditional/withIf";
-    }
+  @Override
+  protected String getIntentionName() {
+    return IntentionPowerPackBundle.message(
+      "replace.conditional.with.if.intention.name");
+  }
+
+  @Override
+  protected String getRelativePath() {
+    return "conditional/withIf";
+  }
 }
