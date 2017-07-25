@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.trace.impl.resolve;
+package com.intellij.debugger.streams.trace.impl.interpret;
 
 import com.intellij.debugger.streams.trace.TraceElement;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +25,7 @@ import java.util.Collection;
  *
  * @author Vitaliy.Bibaev
  */
-public class NoneMatchResolver extends MatchResolverBase {
+public class NoneMatchTraceInterpreter extends MatchInterpreterBase {
   @Override
   protected boolean getResult(@NotNull Collection<TraceElement> traceBeforeFilter, @NotNull Collection<TraceElement> traceAfterFilter) {
     return traceAfterFilter.isEmpty();

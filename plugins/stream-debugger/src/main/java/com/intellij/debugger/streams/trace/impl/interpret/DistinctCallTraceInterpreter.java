@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.trace.impl.resolve;
+package com.intellij.debugger.streams.trace.impl.interpret;
 
-import com.intellij.debugger.streams.trace.CallTraceResolver;
+import com.intellij.debugger.streams.trace.CallTraceInterpreter;
 import com.intellij.debugger.streams.trace.TraceElement;
 import com.intellij.debugger.streams.trace.TraceInfo;
-import com.intellij.debugger.streams.trace.impl.resolve.ex.UnexpectedArrayLengthException;
-import com.intellij.debugger.streams.trace.impl.resolve.ex.UnexpectedValueException;
-import com.intellij.debugger.streams.trace.impl.resolve.ex.UnexpectedValueTypeException;
+import com.intellij.debugger.streams.trace.impl.interpret.ex.UnexpectedArrayLengthException;
+import com.intellij.debugger.streams.trace.impl.interpret.ex.UnexpectedValueException;
+import com.intellij.debugger.streams.trace.impl.interpret.ex.UnexpectedValueTypeException;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.sun.jdi.ArrayReference;
 import com.sun.jdi.IntegerValue;
@@ -33,8 +33,8 @@ import java.util.*;
 /**
  * @author Vitaliy.Bibaev
  */
-public class DistinctCallTraceResolver implements CallTraceResolver {
-  private final CallTraceResolver myPeekResolver = new SimplePeekCallTraceResolver();
+public class DistinctCallTraceInterpreter implements CallTraceInterpreter {
+  private final CallTraceInterpreter myPeekResolver = new SimplePeekCallTraceInterpreter();
 
   private enum Direction {
     DIRECT, REVERSE

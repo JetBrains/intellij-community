@@ -36,7 +36,7 @@ public class DistinctHandler extends HandlerBase.Intermediate {
   private final GenericType myBeforeType;
   private final GenericType myAfterType;
 
-  DistinctHandler(int callNumber, @NotNull IntermediateStreamCall call) {
+  public DistinctHandler(int callNumber, @NotNull IntermediateStreamCall call) {
     myPeekTracer = new PeekTracerHandler(callNumber, "distinct", call.getTypeBefore(), call.getTypeAfter());
 
     myBeforeType = call.getTypeBefore();

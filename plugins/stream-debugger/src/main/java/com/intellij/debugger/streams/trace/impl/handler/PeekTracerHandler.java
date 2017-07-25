@@ -36,7 +36,7 @@ public class PeekTracerHandler extends HandlerBase.Intermediate {
   private final GenericType myTypeBefore;
   private final GenericType myTypeAfter;
 
-  PeekTracerHandler(int num, @NotNull String name, @NotNull GenericType typeBefore, @NotNull GenericType typeAfter) {
+  public PeekTracerHandler(int num, @NotNull String name, @NotNull GenericType typeBefore, @NotNull GenericType typeAfter) {
     myTypeBefore = typeBefore;
     myTypeAfter = typeAfter;
 

@@ -18,6 +18,7 @@ package com.intellij.debugger.streams.exec;
 import com.intellij.debugger.DebuggerTestCase;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.OutputChecker;
+import com.intellij.debugger.streams.lib.LibraryManager;
 import com.intellij.debugger.streams.psi.DebuggerPositionResolver;
 import com.intellij.debugger.streams.psi.impl.AdvancedStreamChainBuilder;
 import com.intellij.debugger.streams.psi.impl.DebuggerPositionResolverImpl;
@@ -54,7 +55,6 @@ import java.util.function.Function;
 public abstract class TraceExecutionTestCase extends DebuggerTestCase {
   private static final ChainSelector DEFAULT_CHAIN_SELECTOR = ChainSelector.byIndex(0);
   private final DebuggerPositionResolver myPositionResolver = new DebuggerPositionResolverImpl();
-  private final TraceResultInterpreter myResultInterpreter = new TraceResultInterpreterImpl();
   private final StreamChainBuilder myChainBuilder = new AdvancedStreamChainBuilder(new StreamChainTransformerImpl());
 
   @Override
@@ -177,7 +177,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
 
   @SuppressWarnings("WeakerAccess")
   protected TraceResultInterpreter getResultInterpreter() {
-    return myResultInterpreter;
+    return new TraceResultInterpreterImpl(getProject());
   }
 
   @SuppressWarnings("WeakerAccess")
@@ -208,7 +208,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
     final List<TraceInfo> trace = result.getTrace();
     handleTrace(trace);
 
-    final ResolvedTracingResult resolvedTrace = result.resolve();
+    final ResolvedTracingResult resolvedTrace = result.resolve(LibraryManager.getInstance(getProject()));
     handleResolvedTrace(resolvedTrace);
   }
 

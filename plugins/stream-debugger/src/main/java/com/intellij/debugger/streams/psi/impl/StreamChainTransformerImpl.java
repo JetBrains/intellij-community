@@ -20,7 +20,9 @@ import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericTypeUtil;
 import com.intellij.debugger.streams.wrapper.*;
 import com.intellij.debugger.streams.wrapper.impl.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,8 +58,12 @@ public class StreamChainTransformerImpl implements StreamChainTransformer {
   @NotNull
   private ProducerStreamCall createProducer(@NotNull PsiMethodCallExpression expression) {
     GenericType prevCallType = resolveType(expression);
+    final PsiType type = TypeConversionUtil.erasure(expression.getType());
+    assert type != null;
+    final String packageName = StringUtil.getPackageName(type.getCanonicalText());
+
     return new ProducerStreamCallImpl(resolveProducerCallName(expression), resolveArguments(expression), prevCallType,
-                                      expression.getTextRange());
+                                      expression.getTextRange(), packageName);
   }
 
   @NotNull
@@ -70,7 +76,8 @@ public class StreamChainTransformerImpl implements StreamChainTransformer {
       final String name = resolveMethodName(callExpression);
       final List<CallArgument> args = resolveArguments(callExpression);
       final GenericType type = resolveType(callExpression);
-      result.add(new IntermediateStreamCallImpl(name, args, typeBefore, type, callExpression.getTextRange()));
+      final String packageName = resolvePackageName(callExpression);
+      result.add(new IntermediateStreamCallImpl(name, args, typeBefore, type, callExpression.getTextRange(), packageName));
       typeBefore = type;
     }
 
@@ -82,12 +89,26 @@ public class StreamChainTransformerImpl implements StreamChainTransformer {
     final String name = resolveMethodName(expression);
     final List<CallArgument> args = resolveArguments(expression);
     final GenericType resultType = resolveTerminationCallType(expression);
-    return new TerminatorStreamCallImpl(name, args, typeBefore, resultType, expression.getTextRange());
+    final String packageName = resolvePackageName(expression);
+    return new TerminatorStreamCallImpl(name, args, typeBefore, resultType, expression.getTextRange(), packageName);
   }
 
   @NotNull
   private static String resolveProducerCallName(@NotNull PsiMethodCallExpression methodCall) {
     return methodCall.getChildren()[0].getText();
+  }
+
+  @NotNull
+  private static String resolvePackageName(@NotNull PsiMethodCallExpression expression) {
+    final PsiMethod psiMethod = expression.resolveMethod();
+    if (psiMethod != null) {
+      final PsiClass psiClass = (PsiClass)psiMethod.getParent();
+      final String className = psiClass.getQualifiedName();
+      if (className != null) {
+        return StringUtil.getPackageName(className);
+      }
+    }
+    return "";
   }
 
   @NotNull

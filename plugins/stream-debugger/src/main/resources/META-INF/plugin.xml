@@ -56,6 +56,14 @@
   <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
   <idea-version since-build="171"/>
 
+  <project-components>
+    <component>
+      <interface-class>com.intellij.debugger.streams.lib.LibraryManager</interface-class>
+      <implementation-class>com.intellij.debugger.streams.lib.impl.LibraryManagerImpl</implementation-class>
+    </component>
+  </project-components>
+
+
   <actions>
     <action id="StreamTracerAction"
             class="com.intellij.debugger.streams.action.TraceStreamAction"

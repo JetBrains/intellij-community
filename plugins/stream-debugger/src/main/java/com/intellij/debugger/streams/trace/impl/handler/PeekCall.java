@@ -47,6 +47,12 @@ public class PeekCall implements IntermediateStreamCall {
 
   @NotNull
   @Override
+  public String getPackageName() {
+    return "java.util.stream";
+  }
+
+  @NotNull
+  @Override
   public List<CallArgument> getArguments() {
     return myLambda;
   }

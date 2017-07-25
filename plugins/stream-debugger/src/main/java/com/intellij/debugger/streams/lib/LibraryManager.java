@@ -13,19 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.trace.impl.resolve.ex;
+package com.intellij.debugger.streams.lib;
 
+import com.intellij.debugger.streams.wrapper.StreamCall;
+import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vitaliy.Bibaev
  */
-class ResolveException extends IllegalStateException {
-  ResolveException(@NotNull String s) {
-    super(s);
+public interface LibraryManager extends ProjectComponent {
+  static LibraryManager getInstance(@NotNull Project project) {
+    return project.getComponent(LibraryManager.class);
   }
 
-  ResolveException(@NotNull String message, @NotNull Throwable cause) {
-    super(message, cause);
+  boolean isPackageSupported(@NotNull String packageName);
+
+  @NotNull
+  LibrarySupport getLibraryByPackage(@NotNull String packageName);
+
+  @NotNull
+  default LibrarySupport getLibrary(@NotNull StreamCall call) {
+    return getLibraryByPackage(call.getPackageName());
   }
 }

@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.streams.trace.impl.handler;
 
-import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
+import com.intellij.debugger.streams.trace.TerminatorCallHandler;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericTypeUtil;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
@@ -27,12 +27,12 @@ import java.util.List;
 /**
  * @author Vitaliy.Bibaev
  */
-public class OptionalTerminatorHandler implements TraceExpressionBuilderImpl.TerminatorCallTraceHandler {
+public class OptionalTerminatorHandler implements TerminatorCallHandler {
   private final TerminatorHandler myTerminatorHandler;
   private final GenericType myOptionalType;
   private final String myResultExpression;
 
-  OptionalTerminatorHandler(@NotNull TerminatorStreamCall call, @NotNull String resultExpression) {
+  public OptionalTerminatorHandler(@NotNull TerminatorStreamCall call, @NotNull String resultExpression) {
     myTerminatorHandler = new TerminatorHandler(call.getTypeBefore());
     myOptionalType = GenericTypeUtil.unwrapOptional(call.getResultType());
     myResultExpression = resultExpression;

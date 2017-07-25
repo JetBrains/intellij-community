@@ -13,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.trace.impl.resolve.ex;
+package com.intellij.debugger.streams.trace.impl.interpret.ex;
 
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vitaliy.Bibaev
  */
-public class UnexpectedValueTypeException extends ResolveException {
-  public UnexpectedValueTypeException(@NotNull String message) {
-    super(message);
+public class UnexpectedValueException extends ResolveException {
+  public UnexpectedValueException(@NotNull String s) {
+    super(s);
+  }
+
+  public UnexpectedValueException(@NotNull String message, @NotNull Throwable cause) {
+    super(message, cause);
   }
 }

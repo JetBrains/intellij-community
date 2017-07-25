@@ -15,7 +15,8 @@
  */
 package com.intellij.debugger.streams.trace;
 
-import com.intellij.debugger.streams.lib.LibraryManager;
+import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
+import com.intellij.debugger.streams.wrapper.TerminatorStreamCall;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -23,18 +24,7 @@ import java.util.List;
 /**
  * @author Vitaliy.Bibaev
  */
-public interface TracingResult {
-  /**
-   * Returns null if and only if stream call has 'void' as return type (foreach termination call)
-   */
+public interface TerminatorCallHandler extends TraceHandler, CallTransformer<TerminatorStreamCall> {
   @NotNull
-  TraceElement getResult();
-
-  boolean exceptionThrown();
-
-  @NotNull
-  List<TraceInfo> getTrace();
-
-  @NotNull
-  ResolvedTracingResult resolve(@NotNull LibraryManager libraryManager);
+  List<IntermediateStreamCall> additionalCallsBefore();
 }

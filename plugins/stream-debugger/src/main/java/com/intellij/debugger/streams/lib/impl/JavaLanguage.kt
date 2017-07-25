@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.trace;
+package com.intellij.debugger.streams.lib.impl
 
-import com.intellij.debugger.streams.wrapper.StreamCall;
-import com.sun.jdi.Value;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.debugger.streams.lib.Language
+import com.intellij.debugger.streams.trace.TraceExpressionBuilder
+import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl
+import com.intellij.openapi.project.Project
 
 /**
  * @author Vitaliy.Bibaev
  */
-public interface CallTraceResolver {
-  @NotNull
-  TraceInfo resolve(@NotNull StreamCall call, @NotNull Value value);
+class JavaLanguage(project: Project) : Language {
+  override val name: String = "Java"
+  override val expressionBuilder: TraceExpressionBuilder = TraceExpressionBuilderImpl(project)
 }

@@ -13,28 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.trace;
+package com.intellij.debugger.streams.trace.impl.interpret.ex;
 
-import com.intellij.debugger.streams.lib.LibraryManager;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * @author Vitaliy.Bibaev
  */
-public interface TracingResult {
-  /**
-   * Returns null if and only if stream call has 'void' as return type (foreach termination call)
-   */
-  @NotNull
-  TraceElement getResult();
+class ResolveException extends IllegalStateException {
+  ResolveException(@NotNull String s) {
+    super(s);
+  }
 
-  boolean exceptionThrown();
-
-  @NotNull
-  List<TraceInfo> getTrace();
-
-  @NotNull
-  ResolvedTracingResult resolve(@NotNull LibraryManager libraryManager);
+  ResolveException(@NotNull String message, @NotNull Throwable cause) {
+    super(message, cause);
+  }
 }

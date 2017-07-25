@@ -13,21 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.resolve;
+package com.intellij.debugger.streams.lib
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.debugger.streams.trace.CallTraceInterpreter
 
 /**
  * @author Vitaliy.Bibaev
  */
-public interface ResolverFactory {
-  @Nullable
-  ValuesOrderResolver getResolver(@NotNull String methodName);
-
-  interface StrongFactory extends ResolverFactory {
-    @NotNull
-    @Override
-    ValuesOrderResolver getResolver(@NotNull String methodName);
-  }
+interface InterpreterFactory {
+  fun getInterpreter(callName: String): CallTraceInterpreter
 }

@@ -13,28 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.trace;
+package com.intellij.debugger.streams.lib.impl
 
-import com.intellij.debugger.streams.lib.LibraryManager;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
+import com.intellij.debugger.streams.lib.Language
+import com.intellij.debugger.streams.trace.TraceExpressionBuilder
+import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl
+import com.intellij.openapi.project.Project
 
 /**
  * @author Vitaliy.Bibaev
  */
-public interface TracingResult {
-  /**
-   * Returns null if and only if stream call has 'void' as return type (foreach termination call)
-   */
-  @NotNull
-  TraceElement getResult();
-
-  boolean exceptionThrown();
-
-  @NotNull
-  List<TraceInfo> getTrace();
-
-  @NotNull
-  ResolvedTracingResult resolve(@NotNull LibraryManager libraryManager);
+class KotlinLanguage(project: Project) : Language {
+  override val name: String = "Kotlin"
+  // TODO: implement kotlin expression builder
+  override val expressionBuilder: TraceExpressionBuilder = TraceExpressionBuilderImpl(project)
 }

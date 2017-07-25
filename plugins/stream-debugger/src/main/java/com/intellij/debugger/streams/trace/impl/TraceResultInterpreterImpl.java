@@ -15,15 +15,16 @@
  */
 package com.intellij.debugger.streams.trace.impl;
 
-import com.intellij.debugger.streams.trace.CallTraceResolver;
+import com.intellij.debugger.streams.lib.LibraryManager;
+import com.intellij.debugger.streams.trace.CallTraceInterpreter;
 import com.intellij.debugger.streams.trace.TraceInfo;
 import com.intellij.debugger.streams.trace.TraceResultInterpreter;
 import com.intellij.debugger.streams.trace.TracingResult;
-import com.intellij.debugger.streams.trace.impl.resolve.ResolverFactory;
-import com.intellij.debugger.streams.trace.impl.resolve.ValuesOrderInfo;
+import com.intellij.debugger.streams.trace.impl.interpret.ValuesOrderInfo;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,6 +37,11 @@ import java.util.concurrent.TimeUnit;
  */
 public class TraceResultInterpreterImpl implements TraceResultInterpreter {
   private static final Logger LOG = Logger.getInstance(TraceResultInterpreterImpl.class);
+  @NotNull private final Project myProject;
+
+  public TraceResultInterpreterImpl(@NotNull Project project) {
+    myProject = project;
+  }
 
   @NotNull
   @Override
@@ -56,8 +62,10 @@ public class TraceResultInterpreterImpl implements TraceResultInterpreter {
     for (int i = 0; i < callCount; i++) {
       final StreamCall call = chain.getCall(i);
       final Value trace = info.getValue(i);
-      final CallTraceResolver resolver = ResolverFactory.getInstance().getResolver(call.getName());
-      final TraceInfo traceInfo = trace == null ? ValuesOrderInfo.empty(call) : resolver.resolve(call, trace);
+      final CallTraceInterpreter interpreter =
+        LibraryManager.getInstance(myProject).getLibrary(call).getInterpreterFactory().getInterpreter(call.getName());
+
+      final TraceInfo traceInfo = trace == null ? ValuesOrderInfo.empty(call) : interpreter.resolve(call, trace);
       result.add(traceInfo);
     }
 

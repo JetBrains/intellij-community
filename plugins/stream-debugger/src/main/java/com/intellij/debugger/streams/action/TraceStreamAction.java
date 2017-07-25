@@ -18,6 +18,7 @@ package com.intellij.debugger.streams.action;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.streams.diagnostic.ex.TraceCompilationException;
 import com.intellij.debugger.streams.diagnostic.ex.TraceEvaluationException;
+import com.intellij.debugger.streams.lib.LibraryManager;
 import com.intellij.debugger.streams.psi.DebuggerPositionResolver;
 import com.intellij.debugger.streams.psi.impl.AdvancedStreamChainBuilder;
 import com.intellij.debugger.streams.psi.impl.DebuggerPositionResolverImpl;
@@ -53,7 +54,6 @@ public class TraceStreamAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(TraceStreamAction.class);
 
   private final DebuggerPositionResolver myPositionResolver = new DebuggerPositionResolverImpl();
-  private final TraceResultInterpreter myResultInterpreter = new TraceResultInterpreterImpl();
   private final StreamChainBuilder myChainBuilder = new AdvancedStreamChainBuilder(new StreamChainTransformerImpl());
 
   @Override
@@ -95,12 +95,14 @@ public class TraceStreamAction extends AnAction {
   private void runTrace(@NotNull StreamChain chain, @NotNull XDebugSession session) {
     final EvaluationAwareTraceWindow window = new EvaluationAwareTraceWindow(session, chain);
     ApplicationManager.getApplication().invokeLater(window::show);
-    final TraceExpressionBuilderImpl expressionBuilder = new TraceExpressionBuilderImpl(session.getProject());
-    final StreamTracer tracer = new EvaluateExpressionTracer(session, expressionBuilder, myResultInterpreter);
+    final Project project = session.getProject();
+    final TraceExpressionBuilderImpl expressionBuilder = new TraceExpressionBuilderImpl(project);
+    final TraceResultInterpreterImpl resultInterpreter = new TraceResultInterpreterImpl(project);
+    final StreamTracer tracer = new EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter);
     tracer.trace(chain, new TracingCallback() {
       @Override
       public void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextImpl context) {
-        final ResolvedTracingResult resolvedTrace = result.resolve();
+        final ResolvedTracingResult resolvedTrace = result.resolve(LibraryManager.getInstance(context.getProject()));
         ApplicationManager.getApplication()
           .invokeLater(() -> window.setTrace(resolvedTrace, context));
       }

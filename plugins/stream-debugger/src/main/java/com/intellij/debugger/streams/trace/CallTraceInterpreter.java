@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.trace.impl.resolve.ex;
+package com.intellij.debugger.streams.trace;
 
+import com.intellij.debugger.streams.wrapper.StreamCall;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vitaliy.Bibaev
  */
-public class UnexpectedArrayLengthException extends ResolveException {
-  public UnexpectedArrayLengthException(@NotNull String message) {
-    super(message);
-  }
+public interface CallTraceInterpreter {
+  @NotNull
+  TraceInfo resolve(@NotNull StreamCall call, @NotNull Value value);
 }

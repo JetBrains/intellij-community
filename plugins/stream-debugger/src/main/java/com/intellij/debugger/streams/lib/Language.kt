@@ -13,28 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.trace;
+package com.intellij.debugger.streams.lib
 
-import com.intellij.debugger.streams.lib.LibraryManager;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
+import com.intellij.debugger.streams.trace.TraceExpressionBuilder
 
 /**
  * @author Vitaliy.Bibaev
  */
-public interface TracingResult {
-  /**
-   * Returns null if and only if stream call has 'void' as return type (foreach termination call)
-   */
-  @NotNull
-  TraceElement getResult();
-
-  boolean exceptionThrown();
-
-  @NotNull
-  List<TraceInfo> getTrace();
-
-  @NotNull
-  ResolvedTracingResult resolve(@NotNull LibraryManager libraryManager);
+interface Language {
+  val name: String
+  val expressionBuilder: TraceExpressionBuilder
 }

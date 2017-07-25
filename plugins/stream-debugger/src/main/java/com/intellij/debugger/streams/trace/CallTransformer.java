@@ -15,26 +15,12 @@
  */
 package com.intellij.debugger.streams.trace;
 
-import com.intellij.debugger.streams.lib.LibraryManager;
+import com.intellij.debugger.streams.wrapper.StreamCall;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
-/**
- * @author Vitaliy.Bibaev
- */
-public interface TracingResult {
-  /**
-   * Returns null if and only if stream call has 'void' as return type (foreach termination call)
-   */
+public interface CallTransformer<T extends StreamCall> {
   @NotNull
-  TraceElement getResult();
-
-  boolean exceptionThrown();
-
-  @NotNull
-  List<TraceInfo> getTrace();
-
-  @NotNull
-  ResolvedTracingResult resolve(@NotNull LibraryManager libraryManager);
+  default T transformCall(@NotNull T call) {
+    return call;
+  }
 }
