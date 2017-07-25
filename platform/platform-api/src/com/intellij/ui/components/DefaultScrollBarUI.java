@@ -272,32 +272,6 @@ class DefaultScrollBarUI extends ScrollBarUI {
       }
       Rectangle bounds = new Rectangle(c.getWidth(), c.getHeight());
       JBInsets.removeFrom(bounds, c.getInsets());
-      if (parent instanceof JScrollPane) {
-        Color foreground = c.getForeground();
-        if (foreground != null && !foreground.equals(background) && isBorderNeeded(c)) {
-          g.setColor(foreground);
-          switch (alignment) {
-            case TOP:
-              bounds.height--;
-              g.drawLine(bounds.x, bounds.y + bounds.height, bounds.x + bounds.width, bounds.y + bounds.height);
-              break;
-            case LEFT:
-              bounds.width--;
-              g.drawLine(bounds.x + bounds.width, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height);
-              break;
-            case RIGHT:
-              g.drawLine(bounds.x, bounds.y, bounds.x, bounds.y + bounds.height);
-              bounds.width--;
-              bounds.x++;
-              break;
-            case BOTTOM:
-              g.drawLine(bounds.x, bounds.y, bounds.x + bounds.width, bounds.y);
-              bounds.height--;
-              bounds.y++;
-              break;
-          }
-        }
-      }
       // process an area before the track
       Component leading = UIUtil.getClientProperty(c, LEADING);
       if (leading != null) {
@@ -326,6 +300,32 @@ class DefaultScrollBarUI extends ScrollBarUI {
           int size = trailing.getPreferredSize().width;
           bounds.width -= size;
           trailing.setBounds(bounds.x + bounds.width, bounds.y, size, bounds.height);
+        }
+      }
+      if (parent instanceof JScrollPane) {
+        Color foreground = c.getForeground();
+        if (foreground != null && !foreground.equals(background) && isBorderNeeded(c)) {
+          g.setColor(foreground);
+          switch (alignment) {
+            case TOP:
+              bounds.height--;
+              g.drawLine(bounds.x, bounds.y + bounds.height, bounds.x + bounds.width, bounds.y + bounds.height);
+              break;
+            case LEFT:
+              bounds.width--;
+              g.drawLine(bounds.x + bounds.width, bounds.y, bounds.x + bounds.width, bounds.y + bounds.height);
+              break;
+            case RIGHT:
+              g.drawLine(bounds.x, bounds.y, bounds.x, bounds.y + bounds.height);
+              bounds.width--;
+              bounds.x++;
+              break;
+            case BOTTOM:
+              g.drawLine(bounds.x, bounds.y, bounds.x + bounds.width, bounds.y);
+              bounds.height--;
+              bounds.y++;
+              break;
+          }
         }
       }
       if (!isOpaque(c) && myTrackAnimator.myValue > 0) {
