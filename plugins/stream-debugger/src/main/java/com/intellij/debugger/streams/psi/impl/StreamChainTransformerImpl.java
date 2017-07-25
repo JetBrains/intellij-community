@@ -22,6 +22,7 @@ import com.intellij.debugger.streams.wrapper.*;
 import com.intellij.debugger.streams.wrapper.impl.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,7 +58,9 @@ public class StreamChainTransformerImpl implements StreamChainTransformer {
   @NotNull
   private ProducerStreamCall createProducer(@NotNull PsiMethodCallExpression expression) {
     GenericType prevCallType = resolveType(expression);
-    final String packageName = resolvePackageName(expression);
+    final PsiType type = TypeConversionUtil.erasure(expression.getType());
+    assert type != null;
+    final String packageName = StringUtil.getPackageName(type.getCanonicalText());
 
     return new ProducerStreamCallImpl(resolveProducerCallName(expression), resolveArguments(expression), prevCallType,
                                       expression.getTextRange(), packageName);
