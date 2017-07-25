@@ -50,7 +50,7 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
     String comparator;
     KeySelector keySelector = terminal.getKeySelector();
     PsiVariable currentVariable =
-      terminal.getCurrentVariable();
+      terminal.getLoopVariable();
 
     JavaCodeStyleManager javaStyle = JavaCodeStyleManager.getInstance(project);
     String name = currentVariable.getName();
@@ -151,18 +151,18 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
     if (expressionInitializer == null) return null;
 
     final boolean isMax;
-    PsiVariable current;
+    PsiVariable loopVariable;
     PsiVariable comparisionExtrmumHolder;
     PsiVariable comparisionLoopVariable;
     if (extremumHolder.equals(comparision.getFirst().getVariable())) {
       isMax = !comparision.isGreater();
-      current = comparision.getSecond().getVariable();
+      loopVariable = comparision.getSecond().getVariable();
       comparisionExtrmumHolder = comparision.getFirst().getVariable();
       comparisionLoopVariable = comparision.getSecond().getVariable();
     }
     else if (extremumHolder.equals(comparision.getSecond().getVariable())) {
       isMax = comparision.isGreater();
-      current = comparision.getFirst().getVariable();
+      loopVariable = comparision.getFirst().getVariable();
       comparisionExtrmumHolder = comparision.getSecond().getVariable();
       comparisionLoopVariable = comparision.getFirst().getVariable();
     }
@@ -176,7 +176,7 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
 
     if(!comparisionExtrmumHolder.equals(extremumHolder)) return null;
 
-    return new ExtremumTerminal(isMax, true, comparision.getFirst(), current, extremumHolder, terminalBlock, expressionInitializer);
+    return new ExtremumTerminal(isMax, true, comparision.getFirst(), loopVariable, extremumHolder, terminalBlock, expressionInitializer);
   }
 
   private static boolean hasSuitableType(@NotNull PsiType type) {
@@ -322,18 +322,18 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
 
     final boolean isMax;
     final PsiVariable comparisionExtremumHolder;
-    final PsiVariable comparisionCurrent;
+    final PsiVariable comparisionLoopVar;
     final KeySelector comparisionKeySelector;
     if (comparision.getFirst().getVariable().equals(nullCheckedHolder)) {
       isMax = !comparision.isGreater();
       comparisionExtremumHolder = comparision.getFirst().getVariable();
-      comparisionCurrent = comparision.getSecond().getVariable();
+      comparisionLoopVar = comparision.getSecond().getVariable();
       comparisionKeySelector = comparision.getFirst();
     }
     else if (comparision.getSecond().getVariable().equals(nullCheckedHolder)) {
       isMax = comparision.isGreater();
       comparisionExtremumHolder = comparision.getSecond().getVariable();
-      comparisionCurrent = comparision.getFirst().getVariable();
+      comparisionLoopVar = comparision.getFirst().getVariable();
       comparisionKeySelector = comparision.getSecond();
     }
     else {
@@ -346,18 +346,18 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
     if (assignments.length == 1) {
       Assignment assignment = assignments[0];
       if (!assignment.getVariable().equals(nullCheckedHolder)) return null;
-      if (assignment.hasSameVariables(comparisionExtremumHolder, comparisionCurrent)) return null;
-      return new ExtremumTerminal(isMax, false, comparisionKeySelector, comparisionCurrent, comparisionExtremumHolder, terminalBlock, null);
+      if (assignment.hasSameVariables(comparisionExtremumHolder, comparisionLoopVar)) return null;
+      return new ExtremumTerminal(isMax, false, comparisionKeySelector, comparisionLoopVar, comparisionExtremumHolder, terminalBlock, null);
     }
     else if (assignments.length == 2) {
       //if(max == null || maxAge < current.getAge()) {max =
       Assignment first = assignments[0];
       Assignment second = assignments[1];
-      if (first.getVariable().equals(nullCheckedHolder) && first.hasSameVariables(comparisionExtremumHolder, comparisionCurrent)) {
+      if (first.getVariable().equals(nullCheckedHolder) && first.hasSameVariables(comparisionExtremumHolder, comparisionLoopVar)) {
         KeySelector assignmentKeySelector = KeySelector.extractKeySelector(second.getExpression());
         if (assignmentKeySelector != null && comparisionKeySelector.equals(assignmentKeySelector)) {
           PsiVariable keyExtremumHolder = assignmentKeySelector.getVariable();
-          //if (keyExtremumHolder.equals(comparisionCurrent)) {
+          //if (keyExtremumHolder.equals(comparisionLoopVar)) {
           //
           //}
           //TODO
@@ -476,7 +476,6 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
       return null;
     }
   }
-  //
 
   static class MethodKeySelector implements KeySelector {
     private final @NotNull PsiMethod myMethod;
@@ -641,16 +640,9 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
       return myExpression;
     }
 
-    @Override
-    public int hashCode() {
-      int result = myVariable.hashCode();
-      result = 31 * result + myExpression.hashCode();
-      return result;
-    }
-
-    private boolean hasSameVariables(@NotNull PsiVariable extremumHolder, @NotNull PsiVariable current) {
+    private boolean hasSameVariables(@NotNull PsiVariable extremumHolder, @NotNull PsiVariable loopVar) {
       PsiVariable rVariable = tryCast(myExpression, PsiVariable.class);
-      return rVariable != null & myVariable.equals(extremumHolder) && rVariable.equals(current);
+      return rVariable != null & myVariable.equals(extremumHolder) && rVariable.equals(loopVar);
     }
 
     @Nullable
@@ -692,22 +684,22 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
   static class ExtremumTerminal {
     private final boolean myIsMax;
     private final boolean myIsPrimitive;
-    private final @NotNull KeySelector myKeySelector; // field or method
-    private final @NotNull PsiVariable myCurrentVariable;
+    private final @NotNull KeySelector myKeySelector;
+    private final @NotNull PsiVariable myLoopVariable;
     private final @NotNull PsiVariable myExtremumHolder;
     private final @NotNull TerminalBlock myTerminalBlock;
     private final @Nullable Object myStartingValue;
 
     public ExtremumTerminal(boolean isMax,
                             boolean isPrimitive, @NotNull KeySelector keySelector,
-                            @NotNull PsiVariable currentVariable,
+                            @NotNull PsiVariable loopVariable,
                             @NotNull PsiVariable extremumHolder,
                             @NotNull TerminalBlock terminalBlock,
                             @Nullable Object startingValue) {
       myIsMax = isMax;
       myIsPrimitive = isPrimitive;
       myKeySelector = keySelector;
-      myCurrentVariable = currentVariable;
+      myLoopVariable = loopVariable;
       myExtremumHolder = extremumHolder;
       myStartingValue = startingValue;
       myTerminalBlock = terminalBlock;
@@ -723,8 +715,8 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
     }
 
     @NotNull
-    public PsiVariable getCurrentVariable() {
-      return myCurrentVariable;
+    public PsiVariable getLoopVariable() {
+      return myLoopVariable;
     }
 
     @NotNull
