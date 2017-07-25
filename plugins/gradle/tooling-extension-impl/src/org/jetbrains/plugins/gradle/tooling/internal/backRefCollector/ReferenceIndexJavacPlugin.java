@@ -24,9 +24,11 @@ import org.jetbrains.jps.javac.ast.JavacReferenceIndexListener;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
 
 public class ReferenceIndexJavacPlugin implements Plugin {
+  public static final String PLUGIN_NAME = "ReferenceCollectorJavacPlugin";
+
   @Override
   public String getName() {
-    return "ReferenceCollectorJavacPlugin";
+    return PLUGIN_NAME;
   }
 
   @Override

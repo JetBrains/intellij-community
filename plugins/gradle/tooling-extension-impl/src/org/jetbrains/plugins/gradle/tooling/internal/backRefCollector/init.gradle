@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.GradleJavacReferenceIndexWriterHolder
+import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.ReferenceIndexJavacPlugin
+
 apply plugin: BackRefCollectorGradlePlugin
 
 initscript {
@@ -40,7 +42,7 @@ class BackRefCollectorGradlePlugin implements Plugin<Gradle> {
             def args = task.options.compilerArgs
             args.add("-processorpath")
             args.add("${EXTENSIONS_JARS_PATH}")
-            args.add("-Xplugin:ReferenceCollectorJavacPlugin")
+            args.add("-Xplugin:" + ReferenceIndexJavacPlugin.PLUGIN_NAME)
           }
         }
 
