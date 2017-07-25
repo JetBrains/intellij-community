@@ -298,9 +298,6 @@ class DefaultScrollBarUI extends ScrollBarUI {
           }
         }
       }
-      if (!isOpaque(c) && myTrackAnimator.myValue > 0) {
-        paintTrack((Graphics2D)g, bounds.x, bounds.y, bounds.width, bounds.height, c);
-      }
       // process an area before the track
       Component leading = UIUtil.getClientProperty(c, LEADING);
       if (leading != null) {
@@ -331,7 +328,9 @@ class DefaultScrollBarUI extends ScrollBarUI {
           trailing.setBounds(bounds.x + bounds.width, bounds.y, size, bounds.height);
         }
       }
-
+      if (!isOpaque(c) && myTrackAnimator.myValue > 0) {
+        paintTrack((Graphics2D)g, bounds.x, bounds.y, bounds.width, bounds.height, c);
+      }
       myTrackBounds.setBounds(bounds);
       updateThumbBounds();
       // process additional drawing on the track
