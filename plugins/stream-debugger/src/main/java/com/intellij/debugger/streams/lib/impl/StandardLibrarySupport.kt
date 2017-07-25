@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.streams.lib.impl
 
+import com.intellij.debugger.streams.trace.impl.handler.DistinctHandler
 import com.intellij.debugger.streams.trace.impl.resolve.AllMatchResolver
 import com.intellij.debugger.streams.trace.impl.resolve.AnyMatchResolver
 import com.intellij.debugger.streams.trace.impl.resolve.NoneMatchResolver
@@ -41,7 +42,7 @@ class StandardLibrarySupport(project: Project)
                                      FlatMappingOperation("flatMapToInt"),
                                      FlatMappingOperation("flatMapToLong"),
                                      FlatMappingOperation("flatMapToDouble"),
-                                     DistinctOperation("distinct"),
+                                     DistinctOperation("distinct", ::DistinctHandler),
                                      SortedOperation("sorted"),
                                      ParallelOperation("parallel"))
 

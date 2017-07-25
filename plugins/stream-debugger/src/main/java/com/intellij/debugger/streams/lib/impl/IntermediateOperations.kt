@@ -16,11 +16,12 @@
 package com.intellij.debugger.streams.lib.impl
 
 import com.intellij.debugger.streams.resolve.*
-import com.intellij.debugger.streams.trace.impl.handler.DistinctHandler
+import com.intellij.debugger.streams.trace.IntermediateCallHandler
 import com.intellij.debugger.streams.trace.impl.handler.ParallelHandler
 import com.intellij.debugger.streams.trace.impl.handler.PeekTracerHandler
 import com.intellij.debugger.streams.trace.impl.resolve.DistinctCallTraceResolver
 import com.intellij.debugger.streams.trace.impl.resolve.SimplePeekCallTraceResolver
+import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 
 /**
  * @author Vitaliy.Bibaev
@@ -37,9 +38,8 @@ class MappingOperation(name: String) : OrderBasedOperation(name, MapResolver())
 class FlatMappingOperation(name: String) : OrderBasedOperation(name, FlatMapResolver())
 class SortedOperation(name: String) : OrderBasedOperation(name, IdentityResolver())
 
-class DistinctOperation(name: String) : IntermediateOperationBase(name,
-                                                                  ::DistinctHandler,
-                                                                  DistinctCallTraceResolver(), DistinctResolver())
+class DistinctOperation(name: String, handlerFactory: (Int, IntermediateStreamCall) -> IntermediateCallHandler)
+  : IntermediateOperationBase(name, handlerFactory, DistinctCallTraceResolver(), DistinctResolver())
 
 class ParallelOperation(name: String) : IntermediateOperationBase(name,
                                                                   ::ParallelHandler,
