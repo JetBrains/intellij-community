@@ -501,12 +501,15 @@ public final class HttpRequests {
       }
 
       if (connection instanceof HttpURLConnection) {
+        HttpURLConnection httpURLConnection = (HttpURLConnection)connection;
+        httpURLConnection.setInstanceFollowRedirects(false);
+
         if (LOG.isDebugEnabled()) LOG.debug("connecting to " + url);
-        int responseCode = ((HttpURLConnection)connection).getResponseCode();
+        int responseCode = httpURLConnection.getResponseCode();
         if (LOG.isDebugEnabled()) LOG.debug("response: " + responseCode);
 
         if (responseCode < 200 || responseCode >= 300 && responseCode != HttpURLConnection.HTTP_NOT_MODIFIED) {
-          ((HttpURLConnection)connection).disconnect();
+          httpURLConnection.disconnect();
 
           if (responseCode == HttpURLConnection.HTTP_MOVED_PERM || responseCode == HttpURLConnection.HTTP_MOVED_TEMP) {
             request.myUrl = url = connection.getHeaderField("Location");
