@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.jps.backwardRefs.index;
+package org.jetbrains.backwardRefs.index;
 
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.util.Function;
@@ -25,9 +25,9 @@ import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.VoidDataExternalizer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.backwardRefs.LightRef;
-import org.jetbrains.jps.backwardRefs.LightRefDescriptor;
-import org.jetbrains.jps.backwardRefs.SignatureData;
+import org.jetbrains.backwardRefs.LightRef;
+import org.jetbrains.backwardRefs.LightRefDescriptor;
+import org.jetbrains.backwardRefs.SignatureData;
 
 import java.io.DataInput;
 import java.io.DataOutput;

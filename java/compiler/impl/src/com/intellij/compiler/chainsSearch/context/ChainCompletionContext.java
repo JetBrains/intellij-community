@@ -36,7 +36,7 @@ import com.intellij.util.containers.FactoryMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.backwardRefs.LightRef;
+import org.jetbrains.backwardRefs.LightRef;
 
 import java.util.List;
 import java.util.Map;

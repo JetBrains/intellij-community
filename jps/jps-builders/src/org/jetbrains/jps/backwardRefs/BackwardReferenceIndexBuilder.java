@@ -17,6 +17,7 @@ package org.jetbrains.jps.backwardRefs;
 
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.backwardRefs.JavacReferenceIndexWriter;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.BuildTargetIndex;
 import org.jetbrains.jps.builders.BuildTargetRegistry;

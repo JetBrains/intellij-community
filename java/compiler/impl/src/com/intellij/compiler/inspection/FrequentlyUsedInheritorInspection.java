@@ -33,7 +33,7 @@ import com.intellij.util.SystemProperties;
 import one.util.streamex.MoreCollectors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.backwardRefs.LightRef;
+import org.jetbrains.backwardRefs.LightRef;
 
 import java.util.*;
 import java.util.stream.Collectors;

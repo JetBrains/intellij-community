@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.jps.javac.ast;
+package org.jetbrains.backwardRefs.javac.ast;
 
 import com.intellij.util.Consumer;
-import org.jetbrains.jps.javac.ast.api.JavacFileData;
+import org.jetbrains.backwardRefs.javac.ast.api.JavacFileData;
 
 import javax.tools.*;
 

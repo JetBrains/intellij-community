@@ -19,8 +19,8 @@ import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.chainsSearch.SignatureAndOccurrences;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.backwardRefs.LightRef;
-import org.jetbrains.jps.backwardRefs.SignatureData;
+import org.jetbrains.backwardRefs.LightRef;
+import org.jetbrains.backwardRefs.SignatureData;
 
 import java.util.SortedSet;
 

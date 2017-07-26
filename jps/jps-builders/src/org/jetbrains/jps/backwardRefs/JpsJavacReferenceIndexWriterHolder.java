@@ -18,6 +18,8 @@ package org.jetbrains.jps.backwardRefs;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.backwardRefs.CompilerBackwardReferenceIndex;
+import org.jetbrains.backwardRefs.JavacReferenceIndexWriter;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.incremental.CompileContext;

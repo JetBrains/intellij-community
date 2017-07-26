@@ -22,7 +22,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.backwardRefs.SignatureData;
+import org.jetbrains.backwardRefs.SignatureData;
 
 import java.util.Set;
 

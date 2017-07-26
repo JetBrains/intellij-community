@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.jps.javac.ast;
+package org.jetbrains.backwardRefs.javac.ast;
 
 import com.intellij.util.containers.Stack;
 import com.sun.source.tree.*;
 import com.sun.source.util.TreeScanner;
-import org.jetbrains.jps.javac.ast.api.JavacDef;
-import org.jetbrains.jps.javac.ast.api.JavacNameTable;
-import org.jetbrains.jps.javac.ast.api.JavacRef;
+import org.jetbrains.backwardRefs.javac.ast.api.JavacDef;
+import org.jetbrains.backwardRefs.javac.ast.api.JavacNameTable;
+import org.jetbrains.backwardRefs.javac.ast.api.JavacRef;
 
 import javax.lang.model.element.*;
 import javax.lang.model.type.ArrayType;
@@ -208,7 +208,7 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceIndexListener.
 
   static JavacTreeRefScanner createASTScanner() {
     try {
-      Class aClass = Class.forName("org.jetbrains.jps.javac.ast.Javac8RefScanner");
+      Class aClass = Class.forName("org.jetbrains.backwardRefs.javac.ast.Javac8RefScanner");
       return (JavacTreeRefScanner) aClass.newInstance();
     }
     catch (Throwable ignored) {

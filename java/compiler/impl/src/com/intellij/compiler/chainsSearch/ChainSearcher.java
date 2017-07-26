@@ -21,8 +21,8 @@ import com.intellij.compiler.chainsSearch.context.ChainSearchTarget;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.containers.IntStack;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.backwardRefs.LightRef;
-import org.jetbrains.jps.backwardRefs.SignatureData;
+import org.jetbrains.backwardRefs.LightRef;
+import org.jetbrains.backwardRefs.SignatureData;
 
 import java.util.*;
 

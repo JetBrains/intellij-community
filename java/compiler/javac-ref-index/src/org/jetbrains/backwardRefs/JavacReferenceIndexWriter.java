@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.jps.backwardRefs;
+package org.jetbrains.backwardRefs;
 
 import com.intellij.util.Function;
 import com.intellij.util.indexing.InvertedIndex;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
-import org.jetbrains.jps.javac.ast.api.JavacRef;
+import org.jetbrains.backwardRefs.index.CompiledFileData;
+import org.jetbrains.backwardRefs.javac.ast.api.JavacRef;
 
 import javax.lang.model.element.Modifier;
 import java.io.File;
@@ -31,7 +31,7 @@ public class JavacReferenceIndexWriter {
 
   public JavacReferenceIndexWriter(CompilerBackwardReferenceIndex index) {myIndex = index;}
 
-  Exception getRebuildRequestCause() {
+  public Exception getRebuildRequestCause() {
     return myIndex.getRebuildRequestCause();
   }
 
@@ -47,7 +47,7 @@ public class JavacReferenceIndexWriter {
     return myIndex.getIndicesDir();
   }
 
-  void processDeletedFiles(Collection<String> files) throws IOException {
+  public void processDeletedFiles(Collection<String> files) throws IOException {
     for (String file : files) {
       writeData(enumeratePath(new File(file).getPath()), null);
     }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.jps.backwardRefs;
+package org.jetbrains.backwardRefs;
 
 import com.intellij.util.Function;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -25,7 +25,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-import static org.jetbrains.jps.backwardRefs.LightRef.*;
+import static org.jetbrains.backwardRefs.LightRef.*;
 
 public final class LightRefDescriptor implements KeyDescriptor<LightRef>, DifferentSerializableBytesImplyNonEqualityPolicy {
   private final Function<IOException, ? extends RuntimeException> myExceptionGenerator;

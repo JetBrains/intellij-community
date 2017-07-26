@@ -16,11 +16,14 @@
 package org.jetbrains.jps.backwardRefs;
 
 import gnu.trove.TObjectIntHashMap;
-import org.jetbrains.jps.javac.ast.api.JavacDef;
+import org.jetbrains.backwardRefs.BackwardReferenceIndexUtil;
+import org.jetbrains.backwardRefs.JavacReferenceIndexWriter;
+import org.jetbrains.backwardRefs.javac.ast.api.JavacDef;
+import org.jetbrains.backwardRefs.javac.ast.api.JavacRef;
 import org.jetbrains.jps.javac.ast.api.JavacFileReferencesRegistrar;
-import org.jetbrains.jps.javac.ast.api.JavacRef;
 
 import java.util.List;
+
 
 public class BackwardReferenceRegistrar implements JavacFileReferencesRegistrar {
   private volatile JavacReferenceIndexWriter myWriter;

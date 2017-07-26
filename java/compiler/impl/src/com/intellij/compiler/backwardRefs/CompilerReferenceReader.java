@@ -31,11 +31,11 @@ import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.backwardRefs.CompilerBackwardReferenceIndex;
-import org.jetbrains.jps.backwardRefs.LightRef;
-import org.jetbrains.jps.backwardRefs.NameEnumerator;
-import org.jetbrains.jps.backwardRefs.SignatureData;
-import org.jetbrains.jps.backwardRefs.index.CompilerIndices;
+import org.jetbrains.backwardRefs.CompilerBackwardReferenceIndex;
+import org.jetbrains.backwardRefs.LightRef;
+import org.jetbrains.backwardRefs.NameEnumerator;
+import org.jetbrains.backwardRefs.SignatureData;
+import org.jetbrains.backwardRefs.index.CompilerIndices;
 
 import java.io.File;
 import java.io.IOException;

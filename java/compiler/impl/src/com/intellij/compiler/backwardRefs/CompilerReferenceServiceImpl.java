@@ -64,8 +64,8 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.jps.backwardRefs.LightRef;
-import org.jetbrains.jps.backwardRefs.SignatureData;
+import org.jetbrains.backwardRefs.LightRef;
+import org.jetbrains.backwardRefs.SignatureData;
 
 import java.io.IOException;
 import java.util.*;

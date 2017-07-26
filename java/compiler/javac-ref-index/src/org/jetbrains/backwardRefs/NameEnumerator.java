@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.jps.backwardRefs;
+package org.jetbrains.backwardRefs;
 
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.io.PersistentStringEnumerator;

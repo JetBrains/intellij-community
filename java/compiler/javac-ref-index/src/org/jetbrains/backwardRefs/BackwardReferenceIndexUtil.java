@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.jps.backwardRefs;
+package org.jetbrains.backwardRefs;
 
 import com.intellij.openapi.util.Factory;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
-import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
-import org.jetbrains.jps.javac.ast.api.JavacDef;
-import org.jetbrains.jps.javac.ast.api.JavacRef;
+import org.jetbrains.backwardRefs.index.CompiledFileData;
+import org.jetbrains.backwardRefs.javac.ast.api.JavacDef;
+import org.jetbrains.backwardRefs.javac.ast.api.JavacRef;
 
 import java.io.IOException;
 import java.util.Collection;

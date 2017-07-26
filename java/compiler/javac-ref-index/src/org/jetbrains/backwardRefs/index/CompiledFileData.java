@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.jps.backwardRefs.index;
+package org.jetbrains.backwardRefs.index;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.backwardRefs.LightRef;
-import org.jetbrains.jps.backwardRefs.SignatureData;
+import org.jetbrains.backwardRefs.LightRef;
+import org.jetbrains.backwardRefs.SignatureData;
 
 import java.util.Collection;
 import java.util.Map;

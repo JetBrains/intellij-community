@@ -17,8 +17,8 @@ package org.jetbrains.plugins.gradle.tooling.internal.backRefCollector;
 
 import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.backwardRefs.CompilerBackwardReferenceIndex;
-import org.jetbrains.jps.backwardRefs.JavacReferenceIndexWriter;
+import org.jetbrains.backwardRefs.CompilerBackwardReferenceIndex;
+import org.jetbrains.backwardRefs.JavacReferenceIndexWriter;
 
 import java.io.File;
 import java.io.IOException;

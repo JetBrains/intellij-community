@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.jps.javac.ast;
+package org.jetbrains.backwardRefs.javac.ast;
 
 import com.intellij.util.Consumer;
 import com.sun.source.tree.*;
@@ -21,10 +21,10 @@ import com.sun.source.util.*;
 import com.sun.tools.javac.util.ClientCodeException;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.javac.ast.api.JavacDef;
-import org.jetbrains.jps.javac.ast.api.JavacFileData;
-import org.jetbrains.jps.javac.ast.api.JavacNameTable;
-import org.jetbrains.jps.javac.ast.api.JavacRef;
+import org.jetbrains.backwardRefs.javac.ast.api.JavacDef;
+import org.jetbrains.backwardRefs.javac.ast.api.JavacFileData;
+import org.jetbrains.backwardRefs.javac.ast.api.JavacNameTable;
+import org.jetbrains.backwardRefs.javac.ast.api.JavacRef;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.jps.backwardRefs;
+package org.jetbrains.backwardRefs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.LowMemoryWatcher;
@@ -28,8 +28,8 @@ import com.intellij.util.indexing.InvertedIndex;
 import com.intellij.util.indexing.impl.*;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
-import org.jetbrains.jps.backwardRefs.index.CompilerIndices;
+import org.jetbrains.backwardRefs.index.CompiledFileData;
+import org.jetbrains.backwardRefs.index.CompilerIndices;
 
 import java.io.*;
 import java.io.DataOutputStream;

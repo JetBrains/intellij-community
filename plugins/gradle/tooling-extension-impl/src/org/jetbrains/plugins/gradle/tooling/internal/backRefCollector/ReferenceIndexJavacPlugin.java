@@ -18,10 +18,10 @@ package org.jetbrains.plugins.gradle.tooling.internal.backRefCollector;
 import com.intellij.util.Consumer;
 import com.sun.source.util.JavacTask;
 import com.sun.source.util.Plugin;
-import org.jetbrains.jps.backwardRefs.BackwardReferenceIndexUtil;
-import org.jetbrains.jps.backwardRefs.JavacReferenceIndexWriter;
-import org.jetbrains.jps.javac.ast.JavacReferenceIndexListener;
-import org.jetbrains.jps.javac.ast.api.JavacFileData;
+import org.jetbrains.backwardRefs.BackwardReferenceIndexUtil;
+import org.jetbrains.backwardRefs.JavacReferenceIndexWriter;
+import org.jetbrains.backwardRefs.javac.ast.JavacReferenceIndexListener;
+import org.jetbrains.backwardRefs.javac.ast.api.JavacFileData;
 
 public class ReferenceIndexJavacPlugin implements Plugin {
   public static final String PLUGIN_NAME = "ReferenceIndexJavacPlugin";

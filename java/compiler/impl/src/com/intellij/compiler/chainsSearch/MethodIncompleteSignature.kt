@@ -21,8 +21,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiUtil
-import org.jetbrains.jps.backwardRefs.LightRef
-import org.jetbrains.jps.backwardRefs.SignatureData
+import org.jetbrains.backwardRefs.LightRef
+import org.jetbrains.backwardRefs.SignatureData
 import java.util.function.Predicate
 
 class MethodIncompleteSignature(val ref: LightRef.JavaLightMethodRef,
