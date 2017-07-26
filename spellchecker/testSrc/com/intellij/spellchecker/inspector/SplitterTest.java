@@ -291,6 +291,12 @@ public class SplitterTest {
   }
 
   @Test
+  public void testEmailNoDLT() {
+    String text = "user@localserver";
+    correctListToCheck(PlainTextSplitter.getInstance(), text);
+  }
+  
+  @Test
   public void testUrl() {
     String text = "https://www.jetbrains.com/idea";
     correctListToCheck(PlainTextSplitter.getInstance(), text);
