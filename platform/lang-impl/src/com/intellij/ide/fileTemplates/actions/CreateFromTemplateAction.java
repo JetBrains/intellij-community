@@ -31,9 +31,10 @@ import java.util.function.Supplier;
 public class CreateFromTemplateAction extends CreateFromTemplateActionBase {
   private final Supplier<FileTemplate> myTemplate;
 
-  // Avoid calling the constructor from normal IDE actions, because:
-  // - Normal actions are preloaded at startup
-  // - Accessing FileTemplate out of FileTemplateManager triggers costly initialization
+  /** Avoid calling the constructor from normal IDE actions, because:
+   *  - Normal actions are preloaded at startup
+   *  - Accessing FileTemplate out of FileTemplateManager triggers costly initialization
+   */
   public CreateFromTemplateAction(@NotNull FileTemplate template) {
     this(template.getName(), FileTemplateUtil.getIcon(template), () -> template);
   }
