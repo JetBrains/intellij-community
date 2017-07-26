@@ -110,79 +110,59 @@ public class HgCommandExecutor {
     }, myProject);
   }
 
+  @Nullable
   public HgCommandResult executeInCurrentThread(@Nullable final VirtualFile repo,
                                                 @NotNull final String operation,
                                                 @Nullable final List<String> arguments) {
     return executeInCurrentThread(repo, operation, arguments, false);
   }
 
-  public HgCommandResult executeInCurrentThread(@Nullable final VirtualFile repo,
-                                                @NotNull final String operation,
-                                                @Nullable final List<String> arguments,
+  @Nullable
+  public HgCommandResult executeInCurrentThread(@Nullable VirtualFile repo,
+                                                @NotNull String operation,
+                                                @Nullable List<String> arguments,
                                                 boolean ignoreDefaultOptions) {
-    HgCommandResult result = executeInCurrentThreadAndLog(repo, operation, arguments, ignoreDefaultOptions);
-    if (HgErrorUtil.isUnknownEncodingError(result)) {
-      setCharset(Charset.forName("utf8"));
-      result = executeInCurrentThreadAndLog(repo, operation, arguments, ignoreDefaultOptions);
-    }
-    return result;
+    ShellCommand.CommandResultCollector collector = new ShellCommand.CommandResultCollector(myIsBinary);
+    boolean success = executeInCurrentThread(repo, operation, arguments, ignoreDefaultOptions, collector);
+    return success ? collector.getResult() : null;
   }
 
-  @Nullable
-  private HgCommandResult executeInCurrentThreadAndLog(@Nullable final VirtualFile repo,
-                                                       @NotNull final String operation,
-                                                       @Nullable final List<String> arguments,
-                                                       boolean ignoreDefaultOptions) {
-    if (myProject == null || myProject.isDisposed() || myVcs == null) return null;
+  public boolean executeInCurrentThread(@Nullable VirtualFile repo,
+                                        @NotNull String operation,
+                                        @Nullable List<String> arguments,
+                                        boolean ignoreDefaultOptions,
+                                        @NotNull HgLineProcessListener listener) {
+    boolean success = executeInCurrentThreadAndLog(repo, operation, arguments, ignoreDefaultOptions, listener);
+    List<String> errors = StringUtil.split(listener.getErrorOutput().toString(), SystemProperties.getLineSeparator());
+    if (success && HgErrorUtil.isUnknownEncodingError(errors)) {
+      setCharset(Charset.forName("utf8"));
+      return executeInCurrentThreadAndLog(repo, operation, arguments, ignoreDefaultOptions, listener);
+    }
+    return success;
+  }
+
+  private boolean executeInCurrentThreadAndLog(@Nullable VirtualFile repo,
+                                               @NotNull String operation,
+                                               @Nullable List<String> arguments,
+                                               boolean ignoreDefaultOptions,
+                                               @NotNull HgLineProcessListener listener) {
+    if (myProject == null || myProject.isDisposed() || myVcs == null) return false;
 
     ShellCommand shellCommand = createShellCommandWithArgs(repo, operation, arguments, ignoreDefaultOptions);
     try {
       long startTime = System.currentTimeMillis();
       LOG.debug(String.format("hg %s started", operation));
-      HgCommandResult result = shellCommand.execute(myShowOutput, myIsBinary);
-      LOG.debug(String.format("hg %s finished. Took %s ms", operation, System.currentTimeMillis() - startTime));
-      logResult(result);
-      return result;
-    }
-    catch (ShellCommandException e) {
-      processError(e);
-      return null;
-    }
-    catch (InterruptedException e) { // this may happen during project closing, no need to notify the user.
-      LOG.info(e.getMessage(), e);
-      return null;
-    }
-  }
-
-  public void executeInCurrentThread(@Nullable VirtualFile repo,
-                                     @NotNull String operation,
-                                     @Nullable List<String> arguments,
-                                     @NotNull HgLineProcessListener listener) {
-    executeInCurrentThreadAndLog(repo, operation, arguments, listener);
-    if (HgErrorUtil.isUnknownEncodingError(StringUtil.split(listener.getErrorOutput().toString(), SystemProperties.getLineSeparator()))) {
-      setCharset(Charset.forName("utf8"));
-      executeInCurrentThreadAndLog(repo, operation, arguments, listener);
-    }
-  }
-
-  public void executeInCurrentThreadAndLog(@Nullable VirtualFile repo,
-                                           @NotNull String operation,
-                                           @Nullable List<String> arguments,
-                                           @NotNull HgLineProcessListener listener) {
-    if (myProject == null || myProject.isDisposed() || myVcs == null) return;
-
-    ShellCommand shellCommand = createShellCommandWithArgs(repo, operation, arguments, false);
-    try {
-      long startTime = System.currentTimeMillis();
-      LOG.debug(String.format("hg %s started", operation));
       shellCommand.execute(myShowOutput, myIsBinary, listener);
       LOG.debug(String.format("hg %s finished. Took %s ms", operation, System.currentTimeMillis() - startTime));
+      return true;
     }
     catch (ShellCommandException e) {
       processError(e);
+      return false;
     }
     catch (InterruptedException e) { // this may happen during project closing, no need to notify the user.
       LOG.info(e.getMessage(), e);
+      return false;
     }
   }
 
@@ -236,7 +216,8 @@ public class HgCommandExecutor {
     final int lastSlashIndex = settings.getHgExecutable().lastIndexOf(File.separator);
     exeName = settings.getHgExecutable().substring(lastSlashIndex + 1);
 
-    String str = String.format("%s %s %s", exeName, operation, arguments == null ? "" : StringUtil.escapeStringCharacters(StringUtil.join(arguments, " ")));
+    String str = String
+      .format("%s %s %s", exeName, operation, arguments == null ? "" : StringUtil.escapeStringCharacters(StringUtil.join(arguments, " ")));
     //remove password from path before log
     final String cmdString = myDestination != null ? HgUtil.removePasswordIfNeeded(str) : str;
     // log command

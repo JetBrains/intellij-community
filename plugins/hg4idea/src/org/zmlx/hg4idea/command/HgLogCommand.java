@@ -151,6 +151,6 @@ public class HgLogCommand {
     List<String> arguments = createArguments(template, limit, hgFile, argsForCmd);
     HgCommandExecutor commandExecutor = new HgCommandExecutor(myProject);
     commandExecutor.setOutputAlwaysSuppressed(true);
-    commandExecutor.executeInCurrentThread(repo, "log", arguments, listener);
+    commandExecutor.executeInCurrentThread(repo, "log", arguments, false, listener);
   }
 }
