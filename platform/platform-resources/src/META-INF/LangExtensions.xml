@@ -537,6 +537,8 @@
 
     <ideRootPaneNorth implementation="com.intellij.ide.navigationToolbar.NavBarRootPaneExtension"/>
     <navbar implementation="com.intellij.ide.navigationToolbar.DefaultNavBarExtension" id="defaultNavbar" order="last"/>
+    <applicationService serviceInterface="com.intellij.ide.navigationToolbar.NavBarModelBuilder"
+                        serviceImplementation="com.intellij.ide.navigationToolbar.NavBarModelBuilderImpl"/>
 
     <statistician key="completion" implementationClass="com.intellij.codeInsight.completion.DefaultCompletionStatistician" order="last"/>
 
