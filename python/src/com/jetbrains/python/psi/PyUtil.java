@@ -920,22 +920,37 @@ public class PyUtil {
   }
 
   /**
-   * Retrieve the document from {@link PsiDocumentManager} using the anchor PSI element and pass it to the consumer function
-   * first releasing it from pending PSI modifications it with {@link PsiDocumentManager#doPostponedOperationsAndUnblockDocument(Document)}
-   * and then committing in try/finally block, so that subsequent operations over the PSI can be performed.
+   * Retrieves the document from {@link PsiDocumentManager} using the anchor PSI element and, if it's not null,
+   * passes it to the consumer function.
+   * <p>
+   * The document is first released from pending PSI operations and then committed after the function has been applied
+   * in a {@code try/finally} block, so that subsequent operations on PSI could be performed.
+   *
+   * @see PsiDocumentManager#doPostponedOperationsAndUnblockDocument(Document)
+   * @see PsiDocumentManager#commitDocument(Document)
+   * @see #updateDocumentUnblockedAndCommitted(PsiElement, Function)
    */
   public static void updateDocumentUnblockedAndCommitted(@NotNull PsiElement anchor, @NotNull Consumer<Document> consumer) {
+    updateDocumentUnblockedAndCommitted(anchor, document -> {
+      consumer.consume(document);
+      return null;
+    });
+  }
+
+  @Nullable
+  public static <T> T updateDocumentUnblockedAndCommitted(@NotNull PsiElement anchor, @NotNull Function<Document, T> func) {
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(anchor.getProject());
     final Document document = manager.getDocument(anchor.getContainingFile());
     if (document != null) {
       manager.doPostponedOperationsAndUnblockDocument(document);
       try {
-        consumer.consume(document);
+        return func.fun(document);
       }
       finally {
         manager.commitDocument(document);
       }
     }
+    return null;
   }
 
   @Nullable

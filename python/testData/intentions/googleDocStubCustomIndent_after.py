@@ -1,11 +1,12 @@
 def f(x, y):
-  """
+    """
 
-  Args:
-    x:
-    y:
+    Args:
+      x:
+      y:
 
-  Returns:
+    Returns:
 
-  """
-  return 42
+    """
+    z = x ** y
+    return z
