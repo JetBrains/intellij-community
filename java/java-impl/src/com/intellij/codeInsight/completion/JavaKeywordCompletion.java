@@ -38,7 +38,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
@@ -310,8 +309,6 @@ public class JavaKeywordCompletion {
     addPrimitiveTypes(this::addKeyword, myPosition, mySession);
 
     addClassLiteral();
-
-    addUnfinishedMethodTypeParameters();
 
     addExtendsImplements();
   }
@@ -616,25 +613,6 @@ public class JavaKeywordCompletion {
     }
 
     return END_OF_BLOCK.getValue().isAcceptable(position, position);
-  }
-
-  private void addUnfinishedMethodTypeParameters() {
-    final ProcessingContext context = new ProcessingContext();
-    if (psiElement().inside(
-      psiElement(PsiTypeElement.class).afterLeaf(
-        psiElement().withText(">").withParent(
-          psiElement(PsiTypeParameterList.class).withParent(PsiErrorElement.class).save("typeParameterList")))).accepts(myPosition, context)) {
-      final PsiTypeParameterList list = (PsiTypeParameterList)context.get("typeParameterList");
-      PsiElement current = list.getParent().getParent();
-      if (current instanceof PsiField) {
-        current = current.getParent();
-      }
-      if (current instanceof PsiClass) {
-        for (PsiTypeParameter typeParameter : list.getTypeParameters()) {
-          addKeyword(new JavaPsiClassReferenceElement(typeParameter));
-        }
-      }
-    }
   }
 
   static boolean isAfterPrimitiveOrArrayType(PsiElement element) {

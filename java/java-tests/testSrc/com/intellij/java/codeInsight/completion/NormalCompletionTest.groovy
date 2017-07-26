@@ -688,6 +688,11 @@ public class ListUtils {
     assert myFixture.lookupElementStrings == ['char']
   }
 
+  void testShadowedTypeParameter() {
+    configure()
+    assert myFixture.lookupElementStrings == ['MyParam']
+  }
+
   void testMethodReturnType() throws Throwable {
     doTest()
   }
