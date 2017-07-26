@@ -222,6 +222,12 @@
            class="com.intellij.ide.actions.NonTrivialActionGroup">
       <action class="org.jetbrains.idea.devkit.actions.NewActionAction" text="Action" id="NewAction"/>
       <separator/>
+      <action text="Application Service" id="NewApplicationService"
+              class="org.jetbrains.idea.devkit.actions.service.NewApplicationServiceAction"/>
+      <action text="Project Service" id="NewAProjectService"
+              class="org.jetbrains.idea.devkit.actions.service.NewProjectServiceAction"/>
+      <separator/>
+      <!-- TODO remove these three actions -->
       <action text="Application Component" id="NewApplicationComponent"
               class="org.jetbrains.idea.devkit.actions.component.NewApplicationComponentAction"/>
       <action text="Project Component" id="NewProjectComponent"
