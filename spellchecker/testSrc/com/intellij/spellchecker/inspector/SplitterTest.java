@@ -283,6 +283,12 @@ public class SplitterTest {
     String text = "shkate123-\u00DC.test@gmail.com";
     correctListToCheck(PlainTextSplitter.getInstance(), text);
   }
+  
+  @Test
+  public void testEmailWithPlus() {
+    String text = "test+test@gmail.com";
+    correctListToCheck(PlainTextSplitter.getInstance(), text);
+  }
 
   @Test
   public void testUrl() {
