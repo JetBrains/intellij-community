@@ -27,7 +27,6 @@ import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -139,7 +138,7 @@ public class TestDataGuessByExistingFilesUtilTest extends TestDataPathTestCase {
   private PsiMethod getTestMethod(String classFileName, String... testDataFiles) {
     myFixture.configureByFiles(classFileName);
     for (String file : testDataFiles) {
-      myFixture.copyFileToProject(file, RESOURCES_ROOT_NAME + File.separator + file);
+      myFixture.copyFileToProject(file, RESOURCES_ROOT_NAME + "/" + file);
     }
 
     PsiMethod testMethod = PsiTreeUtil.getParentOfType(myFixture.getElementAtCaret(), PsiMethod.class, false);
