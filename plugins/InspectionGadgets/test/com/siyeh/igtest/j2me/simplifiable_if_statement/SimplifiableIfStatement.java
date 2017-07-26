@@ -105,4 +105,11 @@ public class SimplifiableIfStatement {
     }
     return i = true;
   }
+
+  boolean test( boolean b1, boolean b2, boolean b3 )
+  {
+    <warning descr="'if' statement can be replaced with 'return (!b1 || !b2) && b3;'">if</warning> (b1 && b2)
+      return false;
+    return b3;
+  }
 }
