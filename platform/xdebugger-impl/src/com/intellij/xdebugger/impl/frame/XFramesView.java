@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,7 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.CommonActionsManager;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -57,6 +54,8 @@ import java.util.List;
  * @author nik
  */
 public class XFramesView extends XDebugView {
+  public static final DataKey<XFramesView> DATA_KEY = DataKey.create("XDEBUGGER_FRAMES_VIEW");
+
   private final JPanel myMainPanel;
   private final XDebuggerFramesList myFramesList;
   private final ComboBox myThreadComboBox;
@@ -171,6 +170,14 @@ public class XFramesView extends XDebugView {
     myThreadsPanel.setBorder(new CustomLineBorder(CaptionPanel.CNT_ACTIVE_BORDER_COLOR, 0, 0, 1, 0));
     myThreadsPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
     myMainPanel.add(myThreadsPanel, BorderLayout.NORTH);
+  }
+
+  public void selectFrame(XExecutionStack stack, XStackFrame frame) {
+    myThreadComboBox.setSelectedItem(stack);
+
+    myLaterInvocator.offer(() ->
+      myFramesList.setSelectedValue(frame, true)
+    );
   }
 
   private ActionToolbarImpl createToolbar() {
