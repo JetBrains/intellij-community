@@ -183,18 +183,24 @@ public class ProjectViewFixture extends ToolWindowFixture {
   @NotNull
   public NodeFixture path(String... pathTo) {
     Ref<NodeFixture> nodeFixtureRef = new Ref<>();
-    pause(new Condition("Waiting for a node by path: " + pathTo) {
-      @Override
-      public boolean test() {
-        try {
-          nodeFixtureRef.set(getNodeFixtureByPath(pathTo));
-          return true;
+    try {
+      pause(new Condition("Waiting for a node by path: " + Arrays.toString(pathTo)) {
+        @Override
+        public boolean test() {
+          try {
+            nodeFixtureRef.set(getNodeFixtureByPath(pathTo));
+            return true;
+          }
+          catch (ComponentLookupException e) {
+            return false;
+          }
         }
-        catch (ComponentLookupException e) {
-          return false;
-        }
-      }
-    }, THIRTY_SEC_TIMEOUT);
+      }, THIRTY_SEC_TIMEOUT);
+    } catch (WaitTimedOutError timedOutError) {
+      AbstractTreeStructure treeStructure = selectProjectPane().getTreeStructure();
+      StringBuilder projectViewStructure = PlatformTestUtil.print(treeStructure, treeStructure.getRootElement(), 10, null, 100, ' ', null);
+      LOG.error("Unable to find path: " + Arrays.toString(pathTo) + " for current project structure.\nActual project structure" + projectViewStructure, timedOutError);
+    }
     return nodeFixtureRef.get();
   }
 
