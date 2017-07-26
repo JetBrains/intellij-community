@@ -564,6 +564,7 @@ public class FSRecords {
   }
 
   private static ResizeableMappedFile getRecords() {
+    assert DbConnection.ourInitialized; 
     return DbConnection.myRecords;
   }
 
