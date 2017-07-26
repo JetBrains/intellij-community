@@ -31,6 +31,7 @@ public abstract class GenerateComponentClassAndPatchPluginXmlActionBase extends 
 
   protected abstract ComponentType getComponentType();
 
+  @Override
   public void patchPluginXml(XmlFile pluginXml, PsiClass klass) throws IncorrectOperationException {
     getComponentType().patchPluginXml(pluginXml, klass);
   }

@@ -47,6 +47,7 @@ public class GenerateComponentExternalizationAction extends AnAction {
     super.beforeActionPerformedUpdate(e);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final PsiClass target = getComponentInContext(e.getDataContext());
     assert target != null;
@@ -123,6 +124,7 @@ public class GenerateComponentExternalizationAction extends AnAction {
     return contextClass;
   }
 
+  @Override
   public void update(AnActionEvent e) {
     super.update(e);
     final PsiClass target = getComponentInContext(e.getDataContext());

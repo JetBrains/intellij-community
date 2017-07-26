@@ -25,30 +25,37 @@ public class NewProjectComponentAction extends GenerateComponentClassAndPatchPlu
           DevKitBundle.message("new.menu.project.component.description"), null);
   }
 
+  @Override
   protected ComponentType getComponentType() {
     return ComponentType.PROJECT;
   }
 
+  @Override
   protected String getErrorTitle() {
     return DevKitBundle.message("new.project.component.error");
   }
 
+  @Override
   protected String getCommandName() {
     return DevKitBundle.message("new.project.component.command");
   }
 
+  @Override
   protected String getClassNamePromptTitle() {
     return DevKitBundle.message("new.project.component.prompt.title");
   }
 
+  @Override
   protected String getClassTemplateName() {
     return "ProjectComponent.java";
   }
 
+  @Override
   protected String getClassNamePrompt() {
     return DevKitBundle.message("new.project.component.prompt");
   }
 
+  @Override
   protected String getActionName(PsiDirectory directory, String newName) {
     return DevKitBundle.message("new.project.component.action.name", directory, newName);
   }

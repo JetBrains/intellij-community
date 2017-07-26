@@ -25,30 +25,37 @@ public class NewApplicationComponentAction extends GenerateComponentClassAndPatc
           DevKitBundle.message("new.menu.application.component.description"), null);
   }
 
+  @Override
   protected ComponentType getComponentType() {
     return ComponentType.APPLICATION;
   }
 
+  @Override
   protected String getErrorTitle() {
     return DevKitBundle.message("new.application.component.error");
   }
 
+  @Override
   protected String getCommandName() {
     return DevKitBundle.message("new.application.component.command");
   }
 
+  @Override
   protected String getClassNamePromptTitle() {
     return DevKitBundle.message("new.application.component.prompt.title");
   }
 
+  @Override
   protected String getClassTemplateName() {
     return "ApplicationComponent.java";
   }
 
+  @Override
   protected String getClassNamePrompt() {
     return DevKitBundle.message("new.application.component.prompt");
   }
 
+  @Override
   protected String getActionName(PsiDirectory directory, String newName) {
     return DevKitBundle.message("new.application.component.action.name", directory, newName);
   }

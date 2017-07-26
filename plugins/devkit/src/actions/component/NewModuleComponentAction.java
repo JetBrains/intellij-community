@@ -25,30 +25,37 @@ public class NewModuleComponentAction extends GenerateComponentClassAndPatchPlug
           DevKitBundle.message("new.menu.module.component.description"), null);
   }
 
+  @Override
   protected ComponentType getComponentType() {
     return ComponentType.MODULE;
   }
 
+  @Override
   protected String getErrorTitle() {
     return DevKitBundle.message("new.module.component.error");
   }
 
+  @Override
   protected String getCommandName() {
     return DevKitBundle.message("new.module.component.command");
   }
 
+  @Override
   protected String getClassNamePromptTitle() {
     return DevKitBundle.message("new.module.component.prompt.title");
   }
 
+  @Override
   protected String getClassTemplateName() {
     return "ModuleComponent.java";
   }
 
+  @Override
   protected String getClassNamePrompt() {
     return DevKitBundle.message("new.module.component.prompt");
   }
 
+  @Override
   protected String getActionName(PsiDirectory directory, String newName) {
     return DevKitBundle.message("new.module.component.action.name", directory, newName);
   }
