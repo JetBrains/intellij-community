@@ -198,7 +198,7 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
     }
   }
 
-  public static void doPersistProjectUsages(@NotNull Project project) {
+  private static void doPersistProjectUsages(@NotNull Project project) {
     if (StatisticsUploadAssistant.isSendAllowed()) {
       synchronized (StatisticsUploadAssistant.LOCK) {
         if (!project.isInitialized() || DumbService.isDumb(project)) {

@@ -119,7 +119,7 @@ public class StatisticsUploadAssistant {
   }
 
   @NotNull
-  public static Map<GroupDescriptor, Set<UsageDescriptor>> getAllUsages(@NotNull Set<String> disabledGroups) {
+  private static Map<GroupDescriptor, Set<UsageDescriptor>> getAllUsages(@NotNull Set<String> disabledGroups) {
     synchronized (LOCK) {
       Map<GroupDescriptor, Set<UsageDescriptor>> usageDescriptors = new LinkedHashMap<>();
       for (UsagesCollector usagesCollector : UsagesCollector.EP_NAME.getExtensions()) {
