@@ -16,6 +16,7 @@
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.xml.XmlTag;
 
 /**
  * @author yole
@@ -26,7 +27,7 @@ public class ExtensionPointCandidate extends PointableCandidate {
   public final String tagName;
   public final String beanClassName;
 
-  public ExtensionPointCandidate(SmartPsiElementPointer pointer,
+  public ExtensionPointCandidate(SmartPsiElementPointer<XmlTag> pointer,
                                  String epName,
                                  String attributeName,
                                  String tagName,
@@ -38,7 +39,7 @@ public class ExtensionPointCandidate extends PointableCandidate {
     this.beanClassName = beanClassName;
   }
 
-  public ExtensionPointCandidate(SmartPsiElementPointer pointer,
+  public ExtensionPointCandidate(SmartPsiElementPointer<XmlTag> pointer,
                                  String epName) {
     super(pointer);
     this.epName = epName;

@@ -48,7 +48,7 @@ public class ExtensionDeclarationRelatedItemLineMarkerProvider extends DevkitRel
     }
 
     RelatedItemLineMarkerInfo<PsiElement> info =
-      LineMarkerInfoHelper.createPluginLineMarkerInfo(targets, identifier, "Choose Extension", "Extension Declaration");
+      LineMarkerInfoHelper.createExtensionLineMarkerInfo(targets, identifier);
     result.add(info);
   }
 }

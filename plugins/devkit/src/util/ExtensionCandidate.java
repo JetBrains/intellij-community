@@ -16,9 +16,10 @@
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.xml.XmlTag;
 
 public class ExtensionCandidate extends PointableCandidate {
-  public ExtensionCandidate(SmartPsiElementPointer pointer) {
+  public ExtensionCandidate(SmartPsiElementPointer<XmlTag> pointer) {
     super(pointer);
   }
 }

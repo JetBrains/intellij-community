@@ -1,3 +1,4 @@
+<!-- Any modifications of this file will require a change of expected tag position in test -->
 <idea-plugin>
   <extensionPoints>
     <extensionPoint name="myEp"/>
@@ -10,5 +11,4 @@
   <extensions>
     <myEp implementation="MyExtension"/>
   </extensions>
-
 </idea-plugin>

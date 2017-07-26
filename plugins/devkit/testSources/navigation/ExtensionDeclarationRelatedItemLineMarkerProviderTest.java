@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
@@ -42,26 +43,20 @@ public class ExtensionDeclarationRelatedItemLineMarkerProviderTest extends JavaC
   }
 
   public void testMyActionInvalid() {
-    assertNoGutterMark("MyInvalidExtension.java");
-  }
-
-  public void testMyProjectService() {
-    assertSingleExtensionDeclaration("MyExtension.java", "myEp");
-  }
-
-  private void assertNoGutterMark(String filePath) {
-    GutterMark gutter = findGutter(filePath);
+    myFixture.configureByFile("plugin.xml");
+    GutterMark gutter = myFixture.findGutter("MyInvalidExtension.java");
     assertNull(gutter);
   }
 
-  private void assertSingleExtensionDeclaration(String filePath, String expectedTarget) {
-    GutterMark gutter = findGutter(filePath);
-    DevKitGutterTargetsChecker.checkGutterTargets(
-      gutter, "Extension Declaration", AllIcons.Nodes.Plugin, expectedTarget);
-  }
+  public void testMyProjectService() {
+    PsiFile file = myFixture.configureByFile("plugin.xml");
+    String path = file.getVirtualFile().getPath();
+    int expectedTagPosition = 271;
+    String expectedTooltip = "<html><body><a href=\"#navigation/" + path
+                             + ":" + expectedTagPosition + "\">myEp</a> extension declaration in <a href=\"#navigation/" + path
+                             + ":0\">plugin.xml</a></body></html>";
 
-  private GutterMark findGutter(String filePath) {
-    myFixture.configureByFile("plugin.xml");
-    return myFixture.findGutter(filePath);
+    GutterMark gutter = myFixture.findGutter("MyExtension.java");
+    DevKitGutterTargetsChecker.checkGutterTargets(gutter, expectedTooltip, AllIcons.Nodes.Plugin, "myEp");
   }
 }

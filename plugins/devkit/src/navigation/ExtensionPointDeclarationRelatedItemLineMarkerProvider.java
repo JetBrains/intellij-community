@@ -51,9 +51,12 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends Devk
     ExtensionPointLocator locator = new ExtensionPointLocator(epClass);
     List<ExtensionPointCandidate> targets =
       ContainerUtil.filter(locator.findDirectCandidates(), candidate -> epName.equals(candidate.epName));
+    if (targets.isEmpty()) {
+      return;
+    }
 
-    RelatedItemLineMarkerInfo<PsiElement> info = LineMarkerInfoHelper.createPluginLineMarkerInfo(
-      targets, psiField.getNameIdentifier(), "Choose Extension Point", "Extension Point Declaration");
+    RelatedItemLineMarkerInfo<PsiElement> info =
+      LineMarkerInfoHelper.createExtensionPointLineMarkerInfo(targets, psiField.getNameIdentifier());
     result.add(info);
   }
 

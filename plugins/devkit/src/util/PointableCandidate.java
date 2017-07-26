@@ -16,11 +16,12 @@
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.xml.XmlTag;
 
 public abstract class PointableCandidate {
-  public final SmartPsiElementPointer pointer;
+  public final SmartPsiElementPointer<XmlTag> pointer;
 
-  protected PointableCandidate(SmartPsiElementPointer pointer) {
+  protected PointableCandidate(SmartPsiElementPointer<XmlTag> pointer) {
     this.pointer = pointer;
   }
 }
