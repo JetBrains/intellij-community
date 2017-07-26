@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,6 +89,8 @@ public abstract class EditorActionHandler {
   private void doIfEnabled(@NotNull Caret hostCaret, @Nullable DataContext context, @NotNull CaretTask task) {
     DataContext caretContext = context == null ? null : new CaretSpecificDataContext(context, hostCaret);
     if (myWorksInInjected && caretContext != null) {
+      Project project = context.getData(CommonDataKeys.PROJECT);
+      if (project != null) PsiDocumentManager.getInstance(project).commitDocument(hostCaret.getEditor().getDocument());
       DataContext injectedCaretContext = AnActionEvent.getInjectedDataContext(caretContext);
       Caret injectedCaret = CommonDataKeys.CARET.getData(injectedCaretContext);
       if (injectedCaret != null && injectedCaret != hostCaret && isEnabledForCaret(injectedCaret.getEditor(), injectedCaret, injectedCaretContext)) {
