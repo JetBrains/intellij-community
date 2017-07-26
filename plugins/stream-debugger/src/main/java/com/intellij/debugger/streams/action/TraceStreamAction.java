@@ -20,8 +20,8 @@ import com.intellij.debugger.streams.diagnostic.ex.TraceCompilationException;
 import com.intellij.debugger.streams.diagnostic.ex.TraceEvaluationException;
 import com.intellij.debugger.streams.lib.LibraryManager;
 import com.intellij.debugger.streams.psi.DebuggerPositionResolver;
-import com.intellij.debugger.streams.psi.impl.AdvancedStreamChainBuilder;
 import com.intellij.debugger.streams.psi.impl.DebuggerPositionResolverImpl;
+import com.intellij.debugger.streams.psi.impl.JavaStreamChainBuilder;
 import com.intellij.debugger.streams.psi.impl.StreamChainOption;
 import com.intellij.debugger.streams.psi.impl.StreamChainTransformerImpl;
 import com.intellij.debugger.streams.trace.*;
@@ -54,7 +54,7 @@ public class TraceStreamAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(TraceStreamAction.class);
 
   private final DebuggerPositionResolver myPositionResolver = new DebuggerPositionResolverImpl();
-  private final StreamChainBuilder myChainBuilder = new AdvancedStreamChainBuilder(new StreamChainTransformerImpl());
+  private final StreamChainBuilder myChainBuilder = new JavaStreamChainBuilder(new StreamChainTransformerImpl());
 
   @Override
   public void update(@NotNull AnActionEvent e) {

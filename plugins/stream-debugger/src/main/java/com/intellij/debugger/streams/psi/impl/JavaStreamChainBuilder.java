@@ -31,12 +31,12 @@ import java.util.stream.Collectors;
 /**
  * @author Vitaliy.Bibaev
  */
-public class AdvancedStreamChainBuilder implements StreamChainBuilder {
+public class JavaStreamChainBuilder implements StreamChainBuilder {
   private static final MyStreamChainExistenceChecker myExistenceChecker = new MyStreamChainExistenceChecker();
 
   private final StreamChainTransformer myChainTransformer;
 
-  public AdvancedStreamChainBuilder(@NotNull StreamChainTransformer transformer) {
+  public JavaStreamChainBuilder(@NotNull StreamChainTransformer transformer) {
     myChainTransformer = transformer;
   }
 
