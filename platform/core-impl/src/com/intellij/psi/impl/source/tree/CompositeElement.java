@@ -37,6 +37,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
@@ -573,8 +574,24 @@ public class CompositeElement extends TreeElement {
       }
 
       TreeElement next = cur.getTreeNext();
-      cur = next != null ? drillDown(next) : cur.getTreeParent();
+      cur = next != null ? drillDown(next) : getNotNullParent(cur);
     }
+  }
+
+  private static TreeElement getNotNullParent(TreeElement cur) {
+    TreeElement parent = cur.getTreeParent();
+    if (parent == null) {
+      diagnoseNullParent(cur);
+    }
+    return parent;
+  }
+
+  private static void diagnoseNullParent(TreeElement cur) {
+    PsiElement psi = cur.getPsi();
+    if (psi != null) {
+      PsiUtilCore.ensureValid(psi);
+    }
+    throw new IllegalStateException("Null parent of " + cur + " " + cur.getClass());
   }
 
   void setCachedLength(int cachedLength) {
