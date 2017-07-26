@@ -15,13 +15,17 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyElementGenerator;
-import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Mikhail Golubev
@@ -45,5 +49,71 @@ public class PyMiscellaneousPsiOperationsTest extends PyTestCase {
     final PyElementGenerator generator = PyElementGenerator.getInstance(myFixture.getProject());
     final PyQualifiedExpression expr = (PyQualifiedExpression)generator.createExpressionFromText(LanguageLevel.PYTHON27, expression);
     assertEquals(expectedQualifiedName, expr.asQualifiedName());
+  }
+
+  public void testTypedVisitor() {
+    class Node {
+      private IElementType myType;
+      private List<Node> myNodes;
+
+      public Node(IElementType type, List<Node> nodes) {
+        myType = type;
+        myNodes = nodes;
+      }
+
+      @Override
+      public String toString() {
+        return String.format("%s(numChildren=%d)", myType, myNodes.size());
+      }
+
+      @NotNull
+      public String dump() {
+        final StringBuilder builder = new StringBuilder();
+        dump(builder, 0);
+        return builder.toString();
+      }
+
+      private void dump(StringBuilder builder, int level) {
+        builder.append(StringUtil.repeat(" ", level));
+        builder.append(toString());
+        builder.append("\n");
+        myNodes.forEach(node -> node.dump(builder, level + 1));
+      }
+    }
+
+    PyTypedElementVisitor<Node> visitor = new PyTypedElementVisitor<Node>() {
+      @Override
+      public Node visitElement(PsiElement element) {
+        final IElementType parentType = element.getNode().getElementType();
+        final List<Node> childrenNodes = StreamEx.of(element.getChildren())
+          .select(PyElement.class)
+          .map(x -> x.acceptTyped(this))
+          .toList();
+        return new Node(parentType, childrenNodes);
+      }
+    };
+
+    myFixture.configureByText("a.py", "class C:\n" +
+                                      "    def m(self):\n" +
+                                      "        if True:\n" +
+                                      "            print('spam')");
+
+    final Node root = ((PyFile)myFixture.getFile()).acceptTyped(visitor);
+    assertEquals("FILE(numChildren=1)\n" +
+                 " Py:CLASS_DECLARATION(numChildren=2)\n" +
+                 "  Py:ARGUMENT_LIST(numChildren=0)\n" +
+                 "  Py:STATEMENT_LIST(numChildren=1)\n" +
+                 "   Py:FUNCTION_DECLARATION(numChildren=2)\n" +
+                 "    Py:PARAMETER_LIST(numChildren=1)\n" +
+                 "     Py:NAMED_PARAMETER(numChildren=0)\n" +
+                 "    Py:STATEMENT_LIST(numChildren=1)\n" +
+                 "     Py:IF_STATEMENT(numChildren=1)\n" +
+                 "      Py:IF_IF(numChildren=2)\n" +
+                 "       Py:REFERENCE_EXPRESSION(numChildren=0)\n" +
+                 "       Py:STATEMENT_LIST(numChildren=1)\n" +
+                 "        Py:PRINT_STATEMENT(numChildren=1)\n" +
+                 "         Py:PARENTHESIZED_EXPRESSION(numChildren=1)\n" +
+                 "          Py:STRING_LITERAL_EXPRESSION(numChildren=0)\n",
+                 root.dump());
   }
 }

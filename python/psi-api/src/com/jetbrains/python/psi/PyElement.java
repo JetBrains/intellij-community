@@ -16,6 +16,8 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.NavigatablePsiElement;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface PyElement extends NavigatablePsiElement {
 
@@ -23,5 +25,12 @@ public interface PyElement extends NavigatablePsiElement {
    * An empty array to return cheaply without allocating it anew.
    */
   PyElement[] EMPTY_ARRAY = new PyElement[0];
+
+  @Nullable
+  default <R> R acceptTyped(@NotNull PyTypedElementVisitor<R> typedVisitor) {
+    final PyTypedElementVisitor.Delegate<R> visitor = typedVisitor.asPlainVisitor();
+    accept(visitor);
+    return visitor.getResult();
+  }
 
 }
