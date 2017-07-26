@@ -93,6 +93,6 @@ public class RemoveExtraClosingTagIntentionAction implements LocalQuickFix, Inte
     final PsiElement element = descriptor.getPsiElement();
     if (!(element instanceof XmlToken)) return;
 
-    doFix(element);
+    doFix(element.getParent());
   }
 }
