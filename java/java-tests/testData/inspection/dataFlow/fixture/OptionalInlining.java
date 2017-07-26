@@ -116,7 +116,8 @@ public class OptionalInlining {
     }
   }
 
-  void test174759(Optional<String> a, Optional<String> b) {
+  // IDEA-174759
+  void testTwoOptionalInteraction(Optional<String> a, Optional<String> b) {
     if (a.isPresent() || b.isPresent()) {
       // prefer a over b
       Integer result = a.map(s -> s + "0").map(s -> Integer.parseInt(s))
@@ -125,7 +126,7 @@ public class OptionalInlining {
     }
   }
 
-  void test174759MethodRef(Optional<String> a, Optional<String> b) {
+  void testTwoOptionalInteractionMethodRef(Optional<String> a, Optional<String> b) {
     if (a.isPresent() || b.isPresent()) {
       // prefer a over b
       Integer result = a.map(s -> s + "0").map(Integer::parseInt)

@@ -19,47 +19,19 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author max
  */
 public class DupInstruction extends Instruction {
-  private final int myValueCount;
-  private final int myDuplicationCount;
-
-  public DupInstruction() {
-    this(1, 1);
-  }
-
-  public DupInstruction(int valueCount, int duplicationCount) {
-    myValueCount = valueCount;
-    myDuplicationCount = duplicationCount;
-  }
-
   @Override
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState memState, InstructionVisitor visitor) {
-    if (myDuplicationCount == 1 && myValueCount == 1) {
-      memState.push(memState.peek());
-    } else {
-      List<DfaValue> values = new ArrayList<>(myValueCount);
-      for (int i = 0; i < myValueCount; i++) {
-        values.add(memState.pop());
-      }
-      for (int j = 0; j < myDuplicationCount + 1; j++) {
-        for (int i = values.size() - 1; i >= 0; i--) {
-          memState.push(values.get(i));
-        }
-      }
-    }
+    memState.push(memState.peek());
     Instruction nextInstruction = runner.getInstruction(getIndex() + 1);
     return new DfaInstructionState[]{new DfaInstructionState(nextInstruction, memState)};
   }
 
   public String toString() {
-    return "DUP(" + myValueCount + " top stack values, " + myDuplicationCount + " times)";
+    return "DUP";
   }
 }

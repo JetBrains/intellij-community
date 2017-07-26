@@ -15,8 +15,9 @@
  */
 package com.intellij.codeInspection.dataFlow.inliner;
 
-import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.CFGBuilder;
 import com.intellij.psi.PsiMethodCallExpression;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A CallInliner can recognize specific method calls and inline their implementation into current CFG
@@ -31,5 +32,5 @@ public interface CallInliner {
    * @return true if inlining is successful. In this case subsequent inliners are skipped and default processing is omitted.
    * If false is returned, inliner must not emit any instructions via builder.
    */
-  boolean tryInlineCall(ControlFlowAnalyzer.CFGBuilder builder, PsiMethodCallExpression call);
+  boolean tryInlineCall(@NotNull CFGBuilder builder, @NotNull PsiMethodCallExpression call);
 }

@@ -15,11 +15,12 @@
  */
 package com.intellij.codeInspection.dataFlow.inliner;
 
-import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.CFGBuilder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import one.util.streamex.EntryStream;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * An inliner which is capable to inline a call like ((IntSupplier)(() -> 5)).getAsInt() to the lambda body.
@@ -27,7 +28,7 @@ import one.util.streamex.EntryStream;
  */
 public class LambdaInliner implements CallInliner {
   @Override
-  public boolean tryInlineCall(ControlFlowAnalyzer.CFGBuilder builder, PsiMethodCallExpression call) {
+  public boolean tryInlineCall(@NotNull CFGBuilder builder, @NotNull PsiMethodCallExpression call) {
     PsiMethod method = call.resolveMethod();
     if (method == null || method != LambdaUtil.getFunctionalInterfaceMethod(method.getContainingClass())) return false;
     PsiTypeCastExpression typeCastExpression = ObjectUtils

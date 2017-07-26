@@ -15,16 +15,17 @@
  */
 package com.intellij.codeInspection.dataFlow.inliner;
 
-import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.CFGBuilder;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.SpecialField;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiVariable;
 import com.siyeh.ig.callMatcher.CallMapper;
+import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.dataFlow.SpecialField.COLLECTION_SIZE;
 import static com.intellij.codeInspection.dataFlow.SpecialField.MAP_SIZE;
@@ -49,14 +50,14 @@ public class CollectionFactoryInliner implements CallInliner {
     .register(staticCall(JAVA_UTIL_COLLECTIONS, "singletonMap").parameterCount(2), new FactoryInfo(1, MAP_SIZE));
 
   @Override
-  public boolean tryInlineCall(ControlFlowAnalyzer.CFGBuilder builder, PsiMethodCallExpression call) {
+  public boolean tryInlineCall(@NotNull CFGBuilder builder, @NotNull PsiMethodCallExpression call) {
     FactoryInfo factoryInfo = STATIC_FACTORIES.mapFirst(call);
     if (factoryInfo == null) return false;
     PsiExpression[] args = call.getArgumentList().getExpressions();
     for (PsiExpression arg : args) {
       builder.pushExpression(arg).pop();
     }
-    PsiParameter variable = builder.createTempVariable(call.getType());
+    PsiVariable variable = builder.createTempVariable(call.getType());
     DfaValueFactory factory = builder.getFactory();
     DfaVariableValue variableValue = factory.getVarFactory().createVariableValue(variable, false);
     builder.pushVariable(variable) // tmpVar = <Value of collection type>

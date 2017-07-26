@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow.inliner;
 
-import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.CFGBuilder;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.value.DfaOptionalValue;
 import com.intellij.psi.*;
@@ -25,6 +25,7 @@ import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiConsumer;
 
@@ -38,18 +39,18 @@ import static com.intellij.psi.CommonClassNames.JAVA_UTIL_OPTIONAL;
  * TODO support primitive Optionals
  */
 public class OptionalChainInliner implements CallInliner {
-  static final CallMatcher OPTIONAL_OR_ELSE = CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "orElse").parameterCount(1);
-  static final CallMatcher OPTIONAL_OR_ELSE_GET = CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "orElseGet").parameterCount(1);
-  static final CallMatcher OPTIONAL_OR = CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "or").parameterCount(1); // Java 9
-  static final CallMatcher OPTIONAL_IF_PRESENT = CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "ifPresent").parameterCount(1);
-  static final CallMatcher OPTIONAL_FILTER = CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "filter").parameterCount(1);
-  static final CallMatcher OPTIONAL_MAP = CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "map").parameterCount(1);
-  static final CallMatcher OPTIONAL_FLAT_MAP = CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "flatMap").parameterCount(1);
-  static final CallMatcher OPTIONAL_OF = CallMatcher.staticCall(JAVA_UTIL_OPTIONAL, "of", "ofNullable").parameterCount(1);
-  static final CallMatcher OPTIONAL_EMPTY = CallMatcher.staticCall(JAVA_UTIL_OPTIONAL, "empty").parameterCount(0);
+  private static final CallMatcher OPTIONAL_OR_ELSE = CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "orElse").parameterCount(1);
+  private static final CallMatcher OPTIONAL_OR_ELSE_GET = CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "orElseGet").parameterCount(1);
+  private static final CallMatcher OPTIONAL_OR = CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "or").parameterCount(1); // Java 9
+  private static final CallMatcher OPTIONAL_IF_PRESENT = CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "ifPresent").parameterCount(1);
+  private static final CallMatcher OPTIONAL_FILTER = CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "filter").parameterCount(1);
+  private static final CallMatcher OPTIONAL_MAP = CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "map").parameterCount(1);
+  private static final CallMatcher OPTIONAL_FLAT_MAP = CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "flatMap").parameterCount(1);
+  private static final CallMatcher OPTIONAL_OF = CallMatcher.staticCall(JAVA_UTIL_OPTIONAL, "of", "ofNullable").parameterCount(1);
+  private static final CallMatcher OPTIONAL_EMPTY = CallMatcher.staticCall(JAVA_UTIL_OPTIONAL, "empty").parameterCount(0);
 
-  static final CallMapper<BiConsumer<ControlFlowAnalyzer.CFGBuilder, PsiMethodCallExpression>> TERMINAL_MAPPER =
-    new CallMapper<BiConsumer<ControlFlowAnalyzer.CFGBuilder, PsiMethodCallExpression>>()
+  private static final CallMapper<BiConsumer<CFGBuilder, PsiMethodCallExpression>> TERMINAL_MAPPER =
+    new CallMapper<BiConsumer<CFGBuilder, PsiMethodCallExpression>>()
     .register(OPTIONAL_OR_ELSE, (builder, call) -> {
       PsiExpression argument = call.getArgumentList().getExpressions()[0];
       builder.pushExpression(argument) // stack: .. optValue, elseValue
@@ -74,8 +75,8 @@ public class OptionalChainInliner implements CallInliner {
       .endIf());
 
   @Override
-  public boolean tryInlineCall(ControlFlowAnalyzer.CFGBuilder builder, PsiMethodCallExpression call) {
-    BiConsumer<ControlFlowAnalyzer.CFGBuilder, PsiMethodCallExpression> terminalInliner = TERMINAL_MAPPER.mapFirst(call);
+  public boolean tryInlineCall(@NotNull CFGBuilder builder, @NotNull PsiMethodCallExpression call) {
+    BiConsumer<CFGBuilder, PsiMethodCallExpression> terminalInliner = TERMINAL_MAPPER.mapFirst(call);
     if (terminalInliner != null) {
       PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
       if (!pushOptionalValue(builder, PsiUtil.skipParenthesizedExprDown(qualifierExpression), call.getMethodExpression())) return false;
@@ -99,7 +100,7 @@ public class OptionalChainInliner implements CallInliner {
     return PsiUtil.substituteTypeParameter(expression.getType(), JAVA_UTIL_OPTIONAL, 0, false);
   }
 
-  private static boolean pushOptionalValue(ControlFlowAnalyzer.CFGBuilder builder, PsiExpression expression,
+  private static boolean pushOptionalValue(CFGBuilder builder, PsiExpression expression,
                                            PsiReferenceExpression dereferencer) {
     PsiType optionalElementType = getOptionalElementType(expression);
     if (optionalElementType == null) return false;
@@ -133,7 +134,7 @@ public class OptionalChainInliner implements CallInliner {
     return true;
   }
 
-  private static boolean pushIntermediateOperationValue(ControlFlowAnalyzer.CFGBuilder builder, PsiMethodCallExpression call) {
+  private static boolean pushIntermediateOperationValue(CFGBuilder builder, PsiMethodCallExpression call) {
     boolean isFilter = OPTIONAL_FILTER.test(call);
     boolean isMap = OPTIONAL_MAP.test(call);
     boolean isFlatMap = OPTIONAL_FLAT_MAP.test(call);
@@ -157,7 +158,7 @@ public class OptionalChainInliner implements CallInliner {
     return true;
   }
 
-  private static void invokeAndUnwrapOptional(ControlFlowAnalyzer.CFGBuilder builder,
+  private static void invokeAndUnwrapOptional(CFGBuilder builder,
                                               int argCount,
                                               PsiExpression function) {
     PsiLambdaExpression lambda = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(function), PsiLambdaExpression.class);
@@ -178,7 +179,7 @@ public class OptionalChainInliner implements CallInliner {
       .pushUnknown();
   }
 
-  private static void inlineFlatMap(ControlFlowAnalyzer.CFGBuilder builder,
+  private static void inlineFlatMap(CFGBuilder builder,
                                     PsiExpression function) {
     builder
       .dup()
@@ -187,7 +188,7 @@ public class OptionalChainInliner implements CallInliner {
     builder.endIf();
   }
 
-  private static void inlineOr(ControlFlowAnalyzer.CFGBuilder builder,
+  private static void inlineOr(CFGBuilder builder,
                                     PsiExpression function) {
     builder
       .dup()
@@ -197,7 +198,7 @@ public class OptionalChainInliner implements CallInliner {
     builder.endIf();
   }
 
-  private static void inlineMap(ControlFlowAnalyzer.CFGBuilder builder, PsiExpression function) {
+  private static void inlineMap(CFGBuilder builder, PsiExpression function) {
     builder
       .dup()
       .ifNotNull()
@@ -205,7 +206,7 @@ public class OptionalChainInliner implements CallInliner {
       .endIf();
   }
 
-  private static void inlineFilter(ControlFlowAnalyzer.CFGBuilder builder, PsiExpression function) {
+  private static void inlineFilter(CFGBuilder builder, PsiExpression function) {
     builder.dup()
       .ifNotNull()
       .dup()
@@ -217,7 +218,7 @@ public class OptionalChainInliner implements CallInliner {
       .endIf();
   }
 
-  private static void inlineOf(ControlFlowAnalyzer.CFGBuilder builder, PsiType optionalElementType, PsiMethodCallExpression qualifierCall) {
+  private static void inlineOf(CFGBuilder builder, PsiType optionalElementType, PsiMethodCallExpression qualifierCall) {
     PsiExpression argument = qualifierCall.getArgumentList().getExpressions()[0];
     builder.pushExpression(argument)
       .boxUnbox(argument, optionalElementType)
