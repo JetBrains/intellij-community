@@ -9,8 +9,8 @@ void PrintUsage() {
 	printf("app [args]	Specifies executable file, arguments.\n");
 	printf("/C	Creates a child process with new visible console.\n");
 	printf("\n");
-	printf("If '/C' option is specified, creates a child process with inherited input, output, and error streams.\n");
-	printf("If not, creates a child with a new visible console and attaches to this console.\n");
+	printf("If '/C' option is specified, creates a child with a new visible console and attaches to this console.\n");
+	printf("Otherwise, creates a child process with inherited input, output, and error streams.\n");
 	printf("The input stream is scanned for the presence of the 2-char control sequences:\n");
 	printf("  ENQ(5) and ETX(3) => a CTRL+BREAK signal is sent to the child process;\n");
 	printf("  ENQ(5) and ENQ(5) => a CTRL+C signal is sent to the child process.\n");
