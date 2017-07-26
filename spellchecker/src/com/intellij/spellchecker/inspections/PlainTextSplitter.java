@@ -43,7 +43,7 @@ public class PlainTextSplitter extends BaseSplitter {
 
   @NonNls
   private static final Pattern MAIL =
-    Pattern.compile("([\\p{L}0-9\\.\\-\\_]+@([\\p{L}0-9\\-\\_]+\\.)+(com|net|[a-z]{2}))");
+    Pattern.compile("([\\p{L}0-9\\.\\-\\_\\+]+@([\\p{L}0-9\\-\\_]+\\.)+(com|net|[a-z]{2}))");
   
   @Override
   public void split(@Nullable String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
