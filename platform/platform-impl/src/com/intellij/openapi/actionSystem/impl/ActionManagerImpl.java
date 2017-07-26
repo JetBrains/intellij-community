@@ -1121,16 +1121,16 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       if (isGroup != newAction instanceof ActionGroup) {
         throw new IllegalStateException("cannot replace a group with an action and vice versa: " + actionId);
       }
+      for (String groupId : myId2GroupId.get(actionId)) {
+        DefaultActionGroup group = ObjectUtils.assertNotNull((DefaultActionGroup)getActionOrStub(groupId));
+        group.replaceAction(oldAction, newAction);
+      }
       unregisterAction(actionId);
       if (isGroup) {
         myId2GroupId.values().remove(actionId);
       }
     }
     registerAction(actionId, newAction, pluginId);
-    for (String groupId : myId2GroupId.get(actionId)) {
-      DefaultActionGroup group = ObjectUtils.assertNotNull((DefaultActionGroup)getActionOrStub(groupId));
-      group.replaceAction(oldAction, newAction);
-    }
     return oldAction;
   }
 
