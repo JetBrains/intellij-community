@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.devkit.actions;
+package org.jetbrains.idea.devkit.actions.component;
 
 import com.intellij.psi.PsiDirectory;
-import org.jetbrains.idea.devkit.util.ComponentType;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.util.ComponentType;
 
-/**
- * @author max
- */
-public class NewModuleComponentAction extends GenerateClassAndPatchPluginXmlActionBase {
-  /**
-   *.
-   */
+public class NewModuleComponentAction extends GenerateComponentClassAndPatchPluginXmlActionBase {
   public NewModuleComponentAction() {
     super(DevKitBundle.message("new.menu.module.component.text"),
           DevKitBundle.message("new.menu.module.component.description"), null);

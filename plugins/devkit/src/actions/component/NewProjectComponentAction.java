@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,49 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.devkit.actions;
+package org.jetbrains.idea.devkit.actions.component;
 
 import com.intellij.psi.PsiDirectory;
-import org.jetbrains.idea.devkit.util.ComponentType;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.util.ComponentType;
 
-/**
- * @author max
- */
-public class NewApplicationComponentAction extends GenerateClassAndPatchPluginXmlActionBase {
-  /**
-   *.
-   */
-  public NewApplicationComponentAction() {
-    super(DevKitBundle.message("new.menu.application.component.text"),
-          DevKitBundle.message("new.menu.application.component.description"), null);
+public class NewProjectComponentAction extends GenerateComponentClassAndPatchPluginXmlActionBase {
+  public NewProjectComponentAction() {
+    super(DevKitBundle.message("new.menu.project.component.text"),
+          DevKitBundle.message("new.menu.project.component.description"), null);
   }
 
   protected ComponentType getComponentType() {
-    return ComponentType.APPLICATION;
+    return ComponentType.PROJECT;
   }
 
   protected String getErrorTitle() {
-    return DevKitBundle.message("new.application.component.error");
+    return DevKitBundle.message("new.project.component.error");
   }
 
   protected String getCommandName() {
-    return DevKitBundle.message("new.application.component.command");
+    return DevKitBundle.message("new.project.component.command");
   }
 
   protected String getClassNamePromptTitle() {
-    return DevKitBundle.message("new.application.component.prompt.title");
+    return DevKitBundle.message("new.project.component.prompt.title");
   }
 
   protected String getClassTemplateName() {
-    return "ApplicationComponent.java";
+    return "ProjectComponent.java";
   }
 
   protected String getClassNamePrompt() {
-    return DevKitBundle.message("new.application.component.prompt");
+    return DevKitBundle.message("new.project.component.prompt");
   }
 
   protected String getActionName(PsiDirectory directory, String newName) {
-    return DevKitBundle.message("new.application.component.action.name", directory, newName);
+    return DevKitBundle.message("new.project.component.action.name", directory, newName);
   }
 }

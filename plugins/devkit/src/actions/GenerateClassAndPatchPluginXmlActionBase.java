@@ -17,19 +17,12 @@ package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.util.ComponentType;
 
-import javax.swing.*;
+import javax.swing.Icon;
 
-/**
- * @author max
- */
 public abstract class GenerateClassAndPatchPluginXmlActionBase extends GeneratePluginClassAction {
   public GenerateClassAndPatchPluginXmlActionBase(String text, String description, @Nullable Icon icon) {
     super(text, description, icon);
@@ -42,11 +35,5 @@ public abstract class GenerateClassAndPatchPluginXmlActionBase extends GenerateP
     MyInputValidator validator = new MyInputValidator(project, directory);
     Messages.showInputDialog(project, getClassNamePrompt(), getClassNamePromptTitle(), Messages.getQuestionIcon(), "", validator);
     return validator.getCreatedElements();
-  }
-
-  protected abstract ComponentType getComponentType();
-
-  public void patchPluginXml(XmlFile pluginXml, PsiClass klass) throws IncorrectOperationException {
-    getComponentType().patchPluginXml(pluginXml, klass);
   }
 }

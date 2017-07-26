@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.devkit.actions;
+package org.jetbrains.idea.devkit.actions.component;
 
 import com.intellij.codeInsight.actions.CodeInsightEditorAction;
 import com.intellij.openapi.actionSystem.*;
@@ -33,11 +33,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
-/**
- * @author max
- */
 public class GenerateComponentExternalizationAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.actions.GenerateComponentExternalizationAction");
+  private static final Logger LOG = Logger.getInstance("#" + GenerateComponentExternalizationAction.class.getCanonicalName());
 
   @NonNls private final static String BASE_COMPONENT = "com.intellij.openapi.components.BaseComponent";
   @NonNls private final static String PERSISTENCE_STATE_COMPONENT = "com.intellij.openapi.components.PersistentStateComponent";
