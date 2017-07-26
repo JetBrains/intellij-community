@@ -16,5 +16,6 @@ public class RedundantStringFormatCall {
     void m() {
         System.out.println(String.format("string contains %%n%n")); // ok
         System.out.println(String.format(Locale.ENGLISH, "string contains %%n%n"));
+        System.out.<warning descr="Redundant call to 'printf()'">printf</warning>("empty battery");
     }
 }
