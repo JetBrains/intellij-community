@@ -45,29 +45,51 @@ import static java.beans.EventHandler.create;
 import static javax.swing.KeyStroke.getKeyStroke;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS;
 
-public final class ExpandableTextField extends JBTextField implements Expandable {
+/**
+ * @author Sergey Malenkov
+ */
+public final class ExpandableTextField extends ExtendableTextField implements Expandable {
   private static final int MINIMAL_WIDTH = 50;
   private final Function<String, String> parser;
   private final Function<String, String> joiner;
   private JBPopup popup;
   private String title;
 
+  /**
+   * Creates an expandable text field with the default line parser/joiner,
+   * that uses a whitespaces to split a string to several lines.
+   */
   public ExpandableTextField() {
-    this(false);
+    this(ParametersListUtil.DEFAULT_LINE_PARSER, ParametersListUtil.DEFAULT_LINE_JOINER);
   }
 
-  public ExpandableTextField(boolean colon) {
-    this(colon ? ParametersListUtil.COLON_LINE_PARSER : ParametersListUtil.DEFAULT_LINE_PARSER,
-         colon ? ParametersListUtil.COLON_LINE_JOINER : ParametersListUtil.DEFAULT_LINE_JOINER);
-  }
-
+  /**
+   * Creates an expandable text field with the specified line parser/joiner.
+   *
+   * @see ParametersListUtil
+   */
   public ExpandableTextField(@NotNull Function<String, List<String>> parser, @NotNull Function<List<String>, String> joiner) {
-    super(20);
-    putClientProperty("JTextField.variant", VARIANT);
     this.parser = text -> StringUtil.join(parser.fun(text), "\n");
     this.joiner = text -> joiner.fun(Arrays.asList(StringUtil.splitByLines(text)));
     addAncestorListener(create(AncestorListener.class, this, "collapse"));
     addComponentListener(create(ComponentListener.class, this, "collapse"));
+    setExtensions(new Extension() {
+      @Override
+      public Icon getIcon(boolean hovered) {
+        return hovered ? AllIcons.General.ExpandComponentHover : AllIcons.General.ExpandComponent;
+      }
+
+      @Override
+      public Runnable getActionOnClick() {
+        return ExpandableTextField.this::expand;
+      }
+
+      @Override
+      public String getTooltip() {
+        String text = getFirstKeyboardShortcutText("ExpandExpandableComponent");
+        return text.isEmpty() ? "Expand" : "Expand (" + text + ")";
+      }
+    });
   }
 
   public String getTitle() {
@@ -164,7 +186,6 @@ public final class ExpandableTextField extends JBTextField implements Expandable
         try {
           setText(joiner.fun(area.getText()));
           copyCaretPosition(area, this);
-          UIUtil.resetUndoRedoActions(this);
           popup = null;
           return true;
         }
