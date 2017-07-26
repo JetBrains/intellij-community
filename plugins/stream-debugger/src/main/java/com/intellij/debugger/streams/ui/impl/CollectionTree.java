@@ -32,6 +32,7 @@ import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -95,7 +96,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
         if (value instanceof XValueNodeImpl) {
           final XValueNodeImpl node = (XValueNodeImpl)value;
           final TreePath path = node.getPath();
-          if (myHighlighted.contains(path)) {
+          if (isPathHighlighted(path)) {
             setIcon(StreamDebuggerIcons.VALUE_HIGHLIGHTED_ICON);
           }
         }
@@ -161,6 +162,17 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
   CollectionTree(@NotNull List<TraceElement> traceElements,
                  @NotNull EvaluationContextImpl evaluationContext) {
     this(traceElements.stream().map(TraceElement::getValue).collect(Collectors.toList()), traceElements, evaluationContext);
+  }
+
+  @Override
+  public boolean isFileColorsEnabled() {
+    return true;
+  }
+
+  @Nullable
+  @Override
+  public Color getFileColorForPath(@NotNull TreePath path) {
+    return isPathHighlighted(path) ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeBackground();
   }
 
   @Override
@@ -309,7 +321,11 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
 
   public boolean isHighlighted(@NotNull TraceElement traceElement) {
     final TreePath path = myValue2Path.get(traceElement);
-    return path != null && (myHighlighted.contains(path) || isPathSelected(path));
+    return path != null && isPathHighlighted(path);
+  }
+
+  private boolean isPathHighlighted(@NotNull TreePath path) {
+    return myHighlighted.contains(path) || isPathSelected(path);
   }
 
   @NotNull
