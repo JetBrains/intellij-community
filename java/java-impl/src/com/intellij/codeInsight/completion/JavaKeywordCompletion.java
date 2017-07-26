@@ -516,12 +516,12 @@ public class JavaKeywordCompletion {
         addKeyword(new OverridableSpace(createKeyword(s), TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
 
-      boolean inExpression = PsiTreeUtil.getParentOfType(myPosition, PsiExpression.class, true, PsiMember.class) != null;
-      boolean inCodeBlock = PsiTreeUtil.getParentOfType(myPosition, PsiCodeBlock.class, true, PsiMember.class) != null;
-      if (inCodeBlock || !inExpression) {
+      PsiExpression expression = PsiTreeUtil.getParentOfType(myPosition, PsiExpression.class, true, PsiMember.class);
+      if (expression != null && expression.getParent() instanceof PsiExpressionStatement) {
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.CLASS), TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
-      if (!inExpression) {
+      if (expression == null && PsiTreeUtil.getParentOfType(myPosition, PsiCodeBlock.class, true, PsiMember.class) == null) {
+        addKeyword(new OverridableSpace(createKeyword(PsiKeyword.CLASS), TailType.HUMBLE_SPACE_BEFORE_WORD));
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.INTERFACE), TailType.HUMBLE_SPACE_BEFORE_WORD));
         if (PsiUtil.isLanguageLevel5OrHigher(myPosition)) {
           addKeyword(new OverridableSpace(createKeyword(PsiKeyword.ENUM), TailType.INSERT_SPACE));
