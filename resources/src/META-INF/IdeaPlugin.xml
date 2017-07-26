@@ -364,6 +364,7 @@
     <customPropertyScopeProvider implementation="com.intellij.psi.impl.search.SimpleAccessorScopeProvider"/>
     <editorNotificationProvider implementation="com.intellij.execution.jshell.SnippetEditorDecorator"/>
     <lang.psiAugmentProvider implementation="com.intellij.psi.impl.source.JShellPsiAugmentProvider"/>
+    <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JShellCompletionContributor" order="before javaLegacy"/>
 
     <referencesSearch implementation="com.intellij.psi.impl.search.PsiAnnotationMethodReferencesSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.ConstructorReferencesSearcher"/>
