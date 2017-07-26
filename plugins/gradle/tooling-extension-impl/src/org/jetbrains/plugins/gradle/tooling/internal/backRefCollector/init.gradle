@@ -34,7 +34,7 @@ class BackRefCollectorGradlePlugin implements Plugin<Gradle> {
   @Override
   void apply(Gradle gradle) {
     gradle.buildStarted {
-      GradleJavacReferenceIndexWriterHolder.initialize()
+      GradleJavacReferenceIndexWriterHolder.initialize(INDEX_PATH)
     }
     gradle.buildFinished {
       GradleJavacReferenceIndexWriterHolder.closeIfNeed(false)

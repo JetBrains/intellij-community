@@ -52,10 +52,10 @@ public class GradleJavacReferenceIndexWriterHolder {
     }
   }
 
-  public static void initialize(/*CompileContext*/) {
+  public static void initialize(@NotNull String indexPath) {
     //TODO project "context"
     try {
-      getInstanceField().set(null, new JavacReferenceIndexWriter(new CompilerBackwardReferenceIndex(new File("/home/user/index"), false) {
+      getInstanceField().set(null, new JavacReferenceIndexWriter(new CompilerBackwardReferenceIndex(new File(indexPath), false) {
         @NotNull
         @Override
         protected RuntimeException createBuildDataCorruptedException(IOException cause) {
