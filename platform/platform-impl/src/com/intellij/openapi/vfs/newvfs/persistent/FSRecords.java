@@ -564,7 +564,7 @@ public class FSRecords {
   }
 
   private static ResizeableMappedFile getRecords() {
-    assert DbConnection.ourInitialized; 
+    assert DbConnection.myRecords != null:"Vfs should be initialized"; 
     return DbConnection.myRecords;
   }
 
