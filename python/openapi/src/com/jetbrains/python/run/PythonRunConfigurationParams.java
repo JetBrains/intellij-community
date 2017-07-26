@@ -34,5 +34,11 @@ public interface PythonRunConfigurationParams {
 
   boolean emulateTerminal();
   void setEmulateTerminal(boolean emulateTerminal);
+
+  boolean mixedDebugMode();
+  void setMixedDebugMode(boolean mixedDebugMode);
+
+  String getDebuggableExternalLibs();
+  void setDebuggableExternalLibs(String debuggableExternalLibs);
 }
 

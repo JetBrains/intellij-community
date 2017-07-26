@@ -52,19 +52,23 @@ public class PyCidrDebugProcess extends XDebugProcess {
   private final PyDebugProcess myPyProcess;
   private final Collection<SharedLibInfo> mySharedLibInfos = new HashSet<>();
 
-  private static Set<String> myFilesToIndex = new HashSet<String>() {{
-    // this is a mock, will be replaced asap
-    add("/usr/local/lib/python2.7/site-packages/ext.so");
-  }};
+  private static Set<String> myDebuggableExternalLibs = new HashSet<>();
+    //add("/usr/local/lib/python2.7/site-packages/ext.so");
 
-  private final static String GET_FUNCTION_POINTER_COMMAND = "(((PyCFunctionObject *)func) -> m_ml -> ml_meth)";
+  private final static String GET_FUNC_ARG_COMMAND = "(*((*pp_stack) - ((oparg & 0xff) + 2 * ((oparg>>8) & 0xff)) - 1))";
+  public final static String GET_FUNCTION_POINTER_COMMAND =
+    String.format("(((PyCFunctionObject *)%s) -> m_ml -> ml_meth)", GET_FUNC_ARG_COMMAND);
+  private final static String IS_PYCFUNCTION_COMMAND =
+    String.format("((((PyObject*)(%s))->ob_type) == &PyCFunction_Type)", GET_FUNC_ARG_COMMAND);
 
   public PyCidrDebugProcess(@NotNull XDebugSession session,
                             @NotNull CidrDebugProcess cidrDebugProcess,
-                            @NotNull PyDebugProcess pyDebugProcess) {
+                            @NotNull PyDebugProcess pyDebugProcess,
+                            @NotNull String debuggableExternalLibs) {
     super(session);
     myCidrProcess = (MixedCidrDebugProcess)cidrDebugProcess;
     myPyProcess = pyDebugProcess;
+    myDebuggableExternalLibs.addAll(Arrays.asList(debuggableExternalLibs.split(":")));
   }
 
   private void handleException(Exception e) {
@@ -99,7 +103,7 @@ public class PyCidrDebugProcess extends XDebugProcess {
         String addressTo = tokens[1];
         String fileName = tokens[tokens.length - 1];
         Predicate<String> isValidAddress = address -> address.matches("(0[xX])?0*[0-9a-fA-F]{1,16}");
-        if (!myFilesToIndex.contains(fileName)
+        if (!myDebuggableExternalLibs.contains(fileName)
             || !isValidAddress.test(addressFrom) || !isValidAddress.test(addressTo)) {
           return null;
         }
@@ -131,17 +135,18 @@ public class PyCidrDebugProcess extends XDebugProcess {
   }
 
   private String getUserCodeDetectingCondition() {
-    return mySharedLibInfos.stream().map(info ->
+    return IS_PYCFUNCTION_COMMAND + " && (" + mySharedLibInfos.stream().map(info ->
                                            GET_FUNCTION_POINTER_COMMAND + " >= " + info.getRange().getStart() +
                                            " && " +
                                            GET_FUNCTION_POINTER_COMMAND + " <= " + info.getRange().getEndInclusive())
-      .collect(Collectors.joining(" || "));
+      .collect(Collectors.joining(" || ")) + ")";
   }
 
   private void addJumpDetectingBreakpointsAndThen(Runnable callback) {
     String condition = getUserCodeDetectingCondition();
+    //String condition = null;
     LOG.debug("Setting breakpoint with condition " + condition);
-    myCidrProcess.addSymbolicBreakpointWithCallbackAndThen("PyCFunction_Call",
+    myCidrProcess.addSymbolicBreakpointWithCallbackAndThen("ceval.c:call_function",
                                                            condition,
                                                            this::addUserCodeBreakpoint,
                                                            callback,

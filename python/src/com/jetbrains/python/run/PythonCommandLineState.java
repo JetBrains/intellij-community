@@ -606,6 +606,15 @@ public abstract class PythonCommandLineState extends CommandLineState {
     myRunWithPty = runWithPty;
   }
 
+  public boolean mixedDebugMode() {
+    return false;
+  }
+
+  @Nullable
+  public String getDebuggableExternalLibs() {
+    return null;
+  }
+
   @NotNull
   protected UrlFilter createUrlFilter(ProcessHandler handler) {
     return new UrlFilter();

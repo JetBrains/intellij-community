@@ -50,6 +50,8 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   private final Project myProject;
   private JBCheckBox myShowCommandLineCheckbox;
   private JBCheckBox myEmulateTerminalCheckbox;
+  private JBCheckBox myMixedDebugCheckbox;
+  private RawCommandLineEditor myDebuggableNativeLibsTextField;
 
   public PythonRunConfigurationForm(PythonRunConfiguration configuration) {
     myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(configuration.getCommonOptionsFormData());
@@ -154,6 +156,26 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   @Override
   public void setEmulateTerminal(boolean emulateTerminal) {
     myEmulateTerminalCheckbox.setSelected(emulateTerminal);
+  }
+
+  @Override
+  public boolean mixedDebugMode() {
+    return myMixedDebugCheckbox.isSelected();
+  }
+
+  @Override
+  public void setMixedDebugMode(boolean mixedDebugMode) {
+    myMixedDebugCheckbox.setSelected(mixedDebugMode);
+  }
+
+  @Override
+  public String getDebuggableExternalLibs() {
+    return myDebuggableNativeLibsTextField.getText();
+  }
+
+  @Override
+  public void setDebuggableExternalLibs(String debuggableExternalLibs) {
+    myDebuggableNativeLibsTextField.setText(debuggableExternalLibs);
   }
 
   @Override

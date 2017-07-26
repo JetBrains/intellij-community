@@ -123,6 +123,17 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
   }
 
   @Override
+  public boolean mixedDebugMode() {
+    return myConfig.mixedDebugMode();
+  }
+
+  @NotNull
+  @Override
+  public String getDebuggableExternalLibs() {
+    return myConfig.getDebuggableExternalLibs();
+  }
+
+  @Override
   protected ProcessHandler doCreateProcess(GeneralCommandLine commandLine) throws ExecutionException {
     if (myConfig.emulateTerminal()) {
       return new OSProcessHandler(commandLine) {

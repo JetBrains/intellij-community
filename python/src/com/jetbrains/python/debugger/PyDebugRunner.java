@@ -118,10 +118,6 @@ public class PyDebugRunner extends GenericProgramRunner {
     return false;
   }
 
-  protected boolean isInMixedMode() {
-    return true;
-  }
-
   protected XDebugSession createSession(@NotNull RunProfileState state, @NotNull final ExecutionEnvironment environment)
     throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
@@ -140,7 +136,7 @@ public class PyDebugRunner extends GenericProgramRunner {
     final CommandLinePatcher[] patchers =
       createCommandLinePatchers(environment.getProject(), pyState, profile, serverLocalPort);
 
-    if (isInMixedMode()) {
+    if (pyState.mixedDebugMode()) {
       final GeneralCommandLine commandLine = pyState.generateCommandLine(patchers);
       final PyCidrGDBDebugLauncher launcher = new PyCidrGDBDebugLauncher(environment.getProject(),
                                                                          null,
@@ -161,7 +157,7 @@ public class PyDebugRunner extends GenericProgramRunner {
             PyDebugProcess pyDebugProcess = createDebugProcess(session, serverSocket, result, pyState);
             createConsoleCommunicationAndSetupActions(environment.getProject(), result, pyDebugProcess, session);
 
-            return new PyCidrDebugProcess(session, cidrDebugProcess, pyDebugProcess);
+            return new PyCidrDebugProcess(session, cidrDebugProcess, pyDebugProcess, pyState.getDebuggableExternalLibs());
           }
         });
     }

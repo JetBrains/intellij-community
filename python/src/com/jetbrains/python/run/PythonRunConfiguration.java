@@ -49,11 +49,15 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   public static final String MULTIPROCESS = "MULTIPROCESS";
   public static final String SHOW_COMMAND_LINE = "SHOW_COMMAND_LINE";
   public static final String EMULATE_TERMINAL = "EMULATE_TERMINAL";
+  public static final String MIXED_DEBUG_MODE = "MIXED_DEBUG_MODE";
+  public static final String DEBUGGABLE_EXTERNAL_LIBS = "DEBUGGABLE_EXTERNAL_LIBS";
 
   private String myScriptName;
   private String myScriptParameters;
   private boolean myShowCommandLineAfterwards = false;
   private boolean myEmulateTerminal = false;
+  private boolean myMixedDebugMode = false;
+  private String myDebuggableExternalLibs;
 
   protected PythonRunConfiguration(Project project, ConfigurationFactory configurationFactory) {
     super(project, configurationFactory);
@@ -121,12 +125,34 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     myEmulateTerminal = emulateTerminal;
   }
 
+  @Override
+  public boolean mixedDebugMode() {
+    return myMixedDebugMode;
+  }
+
+  @Override
+  public void setMixedDebugMode(boolean mixedDebugMode) {
+    myMixedDebugMode = mixedDebugMode;
+  }
+
+  @Override
+  public String getDebuggableExternalLibs() {
+    return myDebuggableExternalLibs;
+  }
+
+  @Override
+  public void setDebuggableExternalLibs(String debuggableExternalLibs) {
+    myDebuggableExternalLibs = debuggableExternalLibs;
+  }
+
   public void readExternal(Element element) {
     super.readExternal(element);
     myScriptName = JDOMExternalizerUtil.readField(element, SCRIPT_NAME);
     myScriptParameters = JDOMExternalizerUtil.readField(element, PARAMETERS);
     myShowCommandLineAfterwards = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, SHOW_COMMAND_LINE, "false"));
     myEmulateTerminal = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, EMULATE_TERMINAL, "false"));
+    myMixedDebugMode = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, MIXED_DEBUG_MODE, "false"));
+    myDebuggableExternalLibs = JDOMExternalizerUtil.readField(element, DEBUGGABLE_EXTERNAL_LIBS);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -135,6 +161,8 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     JDOMExternalizerUtil.writeField(element, PARAMETERS, myScriptParameters);
     JDOMExternalizerUtil.writeField(element, SHOW_COMMAND_LINE, Boolean.toString(myShowCommandLineAfterwards));
     JDOMExternalizerUtil.writeField(element, EMULATE_TERMINAL, Boolean.toString(myEmulateTerminal));
+    JDOMExternalizerUtil.writeField(element, MIXED_DEBUG_MODE, Boolean.toString(myMixedDebugMode));
+    JDOMExternalizerUtil.writeField(element, DEBUGGABLE_EXTERNAL_LIBS, myDebuggableExternalLibs);
   }
 
   public AbstractPythonRunConfigurationParams getBaseParams() {
@@ -147,6 +175,8 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
     target.setScriptParameters(source.getScriptParameters());
     target.setShowCommandLineAfterwards(source.showCommandLineAfterwards());
     target.setEmulateTerminal(source.emulateTerminal());
+    target.setMixedDebugMode(source.mixedDebugMode());
+    target.setDebuggableExternalLibs(source.getDebuggableExternalLibs());
   }
 
   @Override
