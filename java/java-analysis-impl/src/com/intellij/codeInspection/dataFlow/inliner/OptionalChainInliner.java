@@ -61,18 +61,28 @@ public class OptionalChainInliner implements CallInliner {
         .endIf()
         .pop();
     })
-    .register(OPTIONAL_OR_ELSE_GET, (builder, call) -> builder.dup()
-      .ifNull()
-      .pop()
-      .invokeFunction(0, call.getArgumentList().getExpressions()[0])
-      .endIf())
-    .register(OPTIONAL_IF_PRESENT, (builder, call) -> builder.dup()
-      .ifNotNull()
-      .invokeFunction(0, call.getArgumentList().getExpressions()[0])
-      .elseBranch()
-      .pop()
-      .pushUnknown()
-      .endIf());
+    .register(OPTIONAL_OR_ELSE_GET, (builder, call) -> {
+      PsiExpression fn = call.getArgumentList().getExpressions()[0];
+      builder
+        .evaluateFunction(fn)
+        .dup()
+        .ifNull()
+        .pop()
+        .invokeFunction(0, fn)
+        .endIf();
+    })
+    .register(OPTIONAL_IF_PRESENT, (builder, call) -> {
+      PsiExpression fn = call.getArgumentList().getExpressions()[0];
+      builder
+        .evaluateFunction(fn)
+        .dup()
+        .ifNotNull()
+        .invokeFunction(0, fn)
+        .elseBranch()
+        .pop()
+        .pushUnknown()
+        .endIf();
+    });
 
   @Override
   public boolean tryInlineCall(@NotNull CFGBuilder builder, @NotNull PsiMethodCallExpression call) {
@@ -200,6 +210,7 @@ public class OptionalChainInliner implements CallInliner {
 
   private static void inlineMap(CFGBuilder builder, PsiExpression function) {
     builder
+      .evaluateFunction(function)
       .dup()
       .ifNotNull()
       .invokeFunction(1, function)
@@ -207,7 +218,9 @@ public class OptionalChainInliner implements CallInliner {
   }
 
   private static void inlineFilter(CFGBuilder builder, PsiExpression function) {
-    builder.dup()
+    builder
+      .evaluateFunction(function)
+      .dup()
       .ifNotNull()
       .dup()
       .invokeFunction(1, function)

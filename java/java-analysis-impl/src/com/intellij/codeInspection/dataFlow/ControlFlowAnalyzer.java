@@ -17,10 +17,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInspection.dataFlow.inliner.CallInliner;
-import com.intellij.codeInspection.dataFlow.inliner.CollectionFactoryInliner;
-import com.intellij.codeInspection.dataFlow.inliner.LambdaInliner;
-import com.intellij.codeInspection.dataFlow.inliner.OptionalChainInliner;
+import com.intellij.codeInspection.dataFlow.inliner.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
@@ -50,6 +47,7 @@ import static com.intellij.psi.CommonClassNames.*;
 public class ControlFlowAnalyzer extends JavaElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer");
   public static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = Contract.class.getName();
+  static final String METHOD_REFERENCE_QUALIFIER_SYNTHETIC_FIELD = "Method reference qualifier";
   private final PsiElement myCodeFragment;
   private boolean myIgnoreAssertions;
   private final Project myProject;
@@ -772,7 +770,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression qualifier = expression.getQualifierExpression();
     if (qualifier != null) {
       qualifier.accept(this);
-      addInstruction(new FieldReferenceInstruction(qualifier, "Method reference qualifier"));
+      addInstruction(new FieldReferenceInstruction(qualifier, METHOD_REFERENCE_QUALIFIER_SYNTHETIC_FIELD));
     }
 
     addInstruction(new PushInstruction(myFactory.createTypeValue(expression.getFunctionalInterfaceType(), Nullness.NOT_NULL), expression));
@@ -1405,7 +1403,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
     }
 
-    addBareCall(expression);
+    addBareCall(expression, expression.getMethodExpression());
 
     if (isEqualsCall) {
       // assume equals argument must be not-null if the result is true
@@ -1425,11 +1423,22 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(expression);
   }
 
-  void addBareCall(PsiMethodCallExpression expression) {
+  void addBareCall(@Nullable PsiMethodCallExpression expression, @NotNull PsiReferenceExpression reference) {
     addConditionalRuntimeThrow();
-    PsiMethod method = expression.resolveMethod();
+    PsiMethod method = ObjectUtils.tryCast(reference.resolve(), PsiMethod.class);
     List<? extends MethodContract> contracts = method == null ? Collections.emptyList() : getMethodCallContracts(method, expression);
-    addInstruction(new MethodCallInstruction(expression, myFactory.createValue(expression), contracts));
+    MethodCallInstruction instruction;
+    PsiExpression anchor;
+    if (expression == null) {
+      assert reference instanceof PsiMethodReferenceExpression;
+      instruction = new MethodCallInstruction((PsiMethodReferenceExpression)reference, contracts);
+      anchor = reference;
+    }
+    else {
+      instruction = new MethodCallInstruction(expression, myFactory.createValue(expression), contracts);
+      anchor = expression;
+    }
+    addInstruction(instruction);
     if (contracts.stream().anyMatch(c -> c.getReturnValue() == MethodContract.ValueConstraint.THROW_EXCEPTION)) {
       // if a contract resulted in 'fail', handle it
       addInstruction(new DupInstruction());
@@ -1438,13 +1447,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       ConditionalGotoInstruction ifNotFail = new ConditionalGotoInstruction(null, true, null);
       addInstruction(ifNotFail);
       addInstruction(new EmptyStackInstruction());
-      addInstruction(new ReturnInstruction(myFactory.controlTransfer(new ExceptionTransfer(DfaUnknownValue.getInstance()), myTrapStack), expression));
+      addInstruction(
+        new ReturnInstruction(myFactory.controlTransfer(new ExceptionTransfer(DfaUnknownValue.getInstance()), myTrapStack), anchor));
 
       ifNotFail.setOffset(myCurrentFlow.getInstructionCount());
     }
 
     if (!myTrapStack.isEmpty()) {
-      addMethodThrows(expression.resolveMethod(), expression);
+      addMethodThrows(method, anchor);
     }
   }
 
@@ -1691,11 +1701,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   void inlineLambda(PsiLambdaExpression lambda) {
-    PsiLambdaExpression oldLambda = this.myLambdaExpression;
-    this.myLambdaExpression = lambda;
-    startElement(lambda);
+    PsiLambdaExpression oldLambda = myLambdaExpression;
     // Transfer value is pushed to avoid emptying stack beyond this point
-    addInstruction(new PushInstruction(this.myFactory.controlTransfer(ReturnTransfer.INSTANCE, this.myTrapStack), null));
+    addInstruction(new PushInstruction(myFactory.controlTransfer(ReturnTransfer.INSTANCE, this.myTrapStack), null));
+    myLambdaExpression = lambda;
+    startElement(lambda);
     try {
       PsiElement body = lambda.getBody();
       Objects.requireNonNull(body).accept(this);
@@ -1708,13 +1718,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
     }
     finally {
+      finishElement(lambda);
+      myLambdaExpression = oldLambda;
       // Pop transfer value (which is second value in stack now)
       addInstruction(new SpliceInstruction(2, 0));
-      finishElement(lambda);
-      this.myLambdaExpression = oldLambda;
     }
   }
 
-  static final CallInliner[] INLINERS = {new OptionalChainInliner(), new LambdaInliner(), new CollectionFactoryInliner()};
+  static final CallInliner[] INLINERS = {new OptionalChainInliner(), new LambdaInliner(), new CollectionFactoryInliner(),
+    new StreamChainInliner()};
 }
 

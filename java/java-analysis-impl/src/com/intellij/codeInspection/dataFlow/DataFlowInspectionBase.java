@@ -333,7 +333,12 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     HashSet<PsiElement> reportedAnchors = new HashSet<>();
     for (PsiElement element : visitor.getProblems(NullabilityProblem.callNPE)) {
       if (reportedAnchors.add(element)) {
-        reportCallMayProduceNpe(holder, (PsiMethodCallExpression)element, holder.isOnTheFly());
+        if (element instanceof PsiMethodReferenceExpression) {
+          holder.registerProblem(element, InspectionsBundle.message("dataflow.message.npe.methodref.invocation"));
+        }
+        else {
+          reportCallMayProduceNpe(holder, (PsiMethodCallExpression)element, holder.isOnTheFly());
+        }
       }
     }
     for (PsiElement element : visitor.getProblems(NullabilityProblem.fieldAccessNPE)) {
@@ -502,20 +507,20 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   private static void reportOptionalOfNullableImprovements(ProblemsHolder holder, Set<PsiElement> reportedAnchors, Instruction[] instructions) {
     for (Instruction instruction : instructions) {
       if (instruction instanceof MethodCallInstruction) {
-        final PsiExpression[] args = ((MethodCallInstruction)instruction).getArgs();
-        if (args.length != 1) continue;
+        MethodCallInstruction methodCall = (MethodCallInstruction)instruction;
+        if (methodCall.getArgCount() != 1) continue;
 
-        final PsiExpression expr = args[0];
+        final PsiElement arg = methodCall.getArgumentAnchor(0);
 
-        if (((MethodCallInstruction)instruction).isOptionalAlwaysNullProblem()) {
-          if (!reportedAnchors.add(expr)) continue;
-          holder.registerProblem(expr, "Passing <code>null</code> argument to <code>Optional</code>",
-                                 DfaOptionalSupport.createReplaceOptionalOfNullableWithEmptyFix(expr));
+        if (methodCall.isOptionalAlwaysNullProblem()) {
+          if (!reportedAnchors.add(arg)) continue;
+          holder.registerProblem(arg, "Passing <code>null</code> argument to <code>Optional</code>",
+                                 DfaOptionalSupport.createReplaceOptionalOfNullableWithEmptyFix(arg));
         }
-        else if (((MethodCallInstruction)instruction).isOptionalAlwaysNotNullProblem()) {
-          if (!reportedAnchors.add(expr)) continue;
-          holder.registerProblem(expr, "Passing a non-null argument to <code>Optional</code>",
-                                 DfaOptionalSupport.createReplaceOptionalOfNullableWithOfFix());
+        else if (methodCall.isOptionalAlwaysNotNullProblem()) {
+          if (!reportedAnchors.add(arg)) continue;
+          holder.registerProblem(arg, "Passing a non-null argument to <code>Optional</code>",
+                                 DfaOptionalSupport.createReplaceOptionalOfNullableWithOfFix(arg));
         }
 
       }
@@ -691,11 +696,16 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     for (PsiElement expr : visitor.getProblems(NullabilityProblem.passingNullableToNotNullParameter)) {
       if (!reportedAnchors.add(expr)) continue;
 
-      final String text = isNullLiteralExpression(expr)
-                          ? InspectionsBundle.message("dataflow.message.passing.null.argument")
-                          : InspectionsBundle.message("dataflow.message.passing.nullable.argument");
-      List<LocalQuickFix> fixes = createNPEFixes((PsiExpression)expr, (PsiExpression)expr, holder.isOnTheFly());
-      holder.registerProblem(expr, text, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+      if (expr.getParent() instanceof PsiMethodReferenceExpression) {
+        holder.registerProblem(expr.getParent(), InspectionsBundle.message("dataflow.message.passing.nullable.argument.methodref"));
+      }
+      else {
+        final String text = isNullLiteralExpression(expr)
+               ? InspectionsBundle.message("dataflow.message.passing.null.argument")
+               : InspectionsBundle.message("dataflow.message.passing.nullable.argument");
+        List<LocalQuickFix> fixes = createNPEFixes((PsiExpression)expr, (PsiExpression)expr, holder.isOnTheFly());
+        holder.registerProblem(expr, text, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+      }
     }
   }
 

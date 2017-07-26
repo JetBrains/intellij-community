@@ -17,6 +17,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.inliner.CallInliner;
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.*;
@@ -29,13 +30,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * A facade for building control flow graph used by {@link CallInliner} implementations
  */
+@SuppressWarnings("UnusedReturnValue")
 public class CFGBuilder {
   private final ControlFlowAnalyzer myAnalyzer;
   private final Deque<JumpInstruction> myBranches = new ArrayDeque<>();
+  private final Map<PsiExpression, PsiVariable> myMethodRefQualifiers = new HashMap<>();
 
   CFGBuilder(ControlFlowAnalyzer analyzer) {
     myAnalyzer = analyzer;
@@ -96,7 +102,7 @@ public class CFGBuilder {
   }
 
   public CFGBuilder invoke(PsiMethodCallExpression call) {
-    myAnalyzer.addBareCall(call);
+    myAnalyzer.addBareCall(call, call.getMethodExpression());
     return this;
   }
 
@@ -137,8 +143,31 @@ public class CFGBuilder {
     return pushNull().ifCondition(JavaTokenType.EQEQ);
   }
 
+  public CFGBuilder doWhile() {
+    ConditionalGotoInstruction jump = new ConditionalGotoInstruction(null, false, null);
+    jump.setOffset(myAnalyzer.getInstructionCount());
+    myBranches.add(jump);
+    return this;
+  }
+
+  public CFGBuilder endWhileUnknown() {
+    pushUnknown();
+    myAnalyzer.addInstruction((ConditionalGotoInstruction)myBranches.removeLast());
+    return this;
+  }
+
   public CFGBuilder boxUnbox(PsiExpression expression, PsiType expectedType) {
     myAnalyzer.generateBoxingUnboxingInstructionFor(expression, expectedType);
+    return this;
+  }
+
+  public CFGBuilder boxUnbox(PsiExpression expression, PsiType expressionType, PsiType expectedType) {
+    myAnalyzer.generateBoxingUnboxingInstructionFor(expression, expressionType, expectedType);
+    return this;
+  }
+
+  public CFGBuilder flushFields() {
+    myAnalyzer.addInstruction(new FlushVariableInstruction(null));
     return this;
   }
 
@@ -161,8 +190,42 @@ public class CFGBuilder {
   }
 
   /**
+   * Generate instructions to evaluate functional expression (but not invoke the function itself
+   * -- see {@link #invokeFunction(int, PsiExpression)}). After this call stack is left intact.
+   *
+   * @param functionalExpression a functional expression to evaluate
+   * @return this builder
+   */
+  public CFGBuilder evaluateFunction(@Nullable PsiExpression functionalExpression) {
+    PsiExpression stripped = PsiUtil.deparenthesizeExpression(functionalExpression);
+    if (stripped == null || stripped instanceof PsiLambdaExpression) {
+      return this;
+    }
+    if (stripped instanceof PsiMethodReferenceExpression) {
+      PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)stripped;
+      PsiExpression qualifier = methodRef.getQualifierExpression();
+      if (qualifier != null && !PsiMethodReferenceUtil.isStaticallyReferenced(methodRef)) {
+        PsiVariable qualifierBinding = createTempVariable(qualifier.getType());
+        pushVariable(qualifierBinding)
+          .pushExpression(qualifier)
+          .dup();
+        myAnalyzer.addInstruction(new FieldReferenceInstruction(qualifier, ControlFlowAnalyzer.METHOD_REFERENCE_QUALIFIER_SYNTHETIC_FIELD));
+        assign().pop();
+        myMethodRefQualifiers.put(methodRef, qualifierBinding);
+      } else {
+        pushExpression(methodRef).pop();
+      }
+      return this;
+    }
+    return pushExpression(functionalExpression)
+      .checkNotNull(functionalExpression)
+      .pop();
+  }
+
+  /**
    * Generates instructions to invoke functional expression (inlining it if possible) which
-   * consumes given amount of stack arguments
+   * consumes given amount of stack arguments, assuming that it was previously evaluated
+   * (see {@link #evaluateFunction(PsiExpression)}).
    *
    * @param argCount             number of stack arguments to consume
    * @param functionalExpression a functional expression to invoke
@@ -182,20 +245,41 @@ public class CFGBuilder {
       PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)stripped;
       JavaResolveResult resolveResult = methodRef.advancedResolve(false);
       PsiMethod method = ObjectUtils.tryCast(resolveResult.getElement(), PsiMethod.class);
-      if (method != null) {
-        // TODO: advanced method references support, including contracts
-        splice(argCount);
-        pushExpression(methodRef);
-        pop();
-        PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-        PsiType returnType = substitutor.substitute(method.getReturnType());
-        if (returnType != null) {
-          push(getFactory().createTypeValue(returnType, DfaPsiUtil.getElementNullability(returnType, method)));
-          myAnalyzer.generateBoxingUnboxingInstructionFor(methodRef, returnType, LambdaUtil.getFunctionalInterfaceReturnType(methodRef));
+      if (method != null && !method.isVarArgs()) {
+        int expectedArgCount = method.getParameterList().getParametersCount();
+        boolean pushQualifier = true;
+        if (!method.hasModifierProperty(PsiModifier.STATIC) && !method.isConstructor()) {
+          pushQualifier = !PsiMethodReferenceUtil.isStaticallyReferenced(methodRef);
+          if (!pushQualifier) {
+            expectedArgCount++; // qualifier is already on stack for statically referenced method ref
+          }
         }
-        else {
-          pushUnknown();
+        if (argCount == expectedArgCount) {
+          if (pushQualifier) {
+            PsiVariable qualifierVar = myMethodRefQualifiers.remove(methodRef);
+            DfaValue qualifierValue = qualifierVar == null ? DfaUnknownValue.getInstance() :
+                                      getFactory().getVarFactory().createVariableValue(qualifierVar, false);
+            push(qualifierValue);
+            if (argCount > 0) {
+              // reorder stack to put qualifier before args (.. arg1 arg2 arg3 qualifier => .. qualifier arg1 arg2 arg3)
+              int[] permutation = new int[argCount + 1];
+              for (int i = 1; i < permutation.length; i++) {
+                permutation[i] = argCount + 1 - i;
+              }
+              splice(argCount + 1, permutation);
+            }
+          }
+          myAnalyzer.addBareCall(null, methodRef);
+          myAnalyzer.generateBoxingUnboxingInstructionFor(methodRef, resolveResult.getSubstitutor().substitute(method.getReturnType()),
+                                                          LambdaUtil.getFunctionalInterfaceReturnType(methodRef));
+          return this;
         }
+      }
+      PsiElement qualifier = methodRef.getQualifier();
+      if(qualifier instanceof PsiTypeElement && ((PsiTypeElement)qualifier).getType() instanceof PsiArrayType) {
+        // like String[]::new
+        splice(argCount)
+          .push(getFactory().createTypeValue(((PsiTypeElement)qualifier).getType(), Nullness.NOT_NULL));
         return this;
       }
     }
@@ -204,9 +288,8 @@ public class CFGBuilder {
       pushUnknown();
       return this;
     }
-    pushExpression(functionalExpression);
-    checkNotNull(functionalExpression);
-    pop();
+    // Unknown function
+    flushFields();
     PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalExpression.getType());
     if (returnType != null) {
       push(getFactory().createTypeValue(returnType, DfaPsiUtil.getTypeNullability(returnType)));
@@ -223,6 +306,14 @@ public class CFGBuilder {
   }
 
   public PsiVariable createTempVariable(PsiType type) {
+    if(type == null) {
+      type = PsiType.VOID;
+    }
     return new LightVariableBuilder<>("tmp$" + myAnalyzer.getInstructionCount(), type, myAnalyzer.getContext());
+  }
+
+  public CFGBuilder chain(Consumer<CFGBuilder> operation) {
+    operation.accept(this);
+    return this;
   }
 }

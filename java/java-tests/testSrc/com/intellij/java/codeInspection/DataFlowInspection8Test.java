@@ -154,6 +154,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
 
   public void testCapturedWildcardNotNull() { doTest(); }
   public void testVarargNotNull() { doTestWithCustomAnnotations(); }
+  public void testIgnoreNullabilityOnPrimitiveCast() { doTestWithCustomAnnotations();}
 
   public void testArrayComponentAndMethodAnnotationConflict() {
     setupCustomAnnotations("withTypeUse", "{ElementType.METHOD, ElementType.TYPE_USE}", myFixture);
@@ -162,6 +163,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
 
   public void testLambdaInlining() { doTest(); }
   public void testOptionalInlining() { doTest(); }
+  public void testStreamInlining() { doTest(); }
 
   public void testMethodVsExpressionTypeAnnotationConflict() {
     setupCustomAnnotations("withTypeUse", "{ElementType.METHOD, ElementType.TYPE_USE}", myFixture);
