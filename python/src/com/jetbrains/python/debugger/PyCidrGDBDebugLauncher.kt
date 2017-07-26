@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.debugger;
+package com.jetbrains.python.debugger
 
 import com.intellij.execution.configurations.CommandLineState
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -31,7 +31,6 @@ import java.io.File
 
 class PyCidrGDBDebugLauncher(val myProject: Project,
                              val myDebugger : String?,
-                             val myParams: CidrRemoteDebugParameters,
                              val generalCommandLine: GeneralCommandLine,
                              val consoleBuilder : TextConsoleBuilder,
                              val myEditorProvider: XDebuggerEditorsProvider) : CidrLauncher() {
@@ -45,7 +44,6 @@ class PyCidrGDBDebugLauncher(val myProject: Project,
     val configuration = GDBDriverConfiguration(CPPToolchains.getInstance().defaultToolchain, myDebugger?.let { File(it) })
     return MixedCidrDebugProcess(configuration,
                                  generalCommandLine,
-                                 myParams,
                                  session,
                                  consoleBuilder,
                                  myEditorProvider)

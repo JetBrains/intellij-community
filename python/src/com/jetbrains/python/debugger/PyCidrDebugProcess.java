@@ -39,7 +39,6 @@ import com.jetbrains.cidr.execution.debugger.memory.AddressRange;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
 
 import javax.swing.event.HyperlinkListener;
 import java.util.*;
@@ -149,6 +148,8 @@ public class PyCidrDebugProcess extends XDebugProcess {
                                                            this::handleException);
   }
 
+
+  // Todo: to merge cidr and py-editorProviders
   @NotNull
   @Override
   public XDebuggerEditorsProvider getEditorsProvider() {
@@ -167,7 +168,7 @@ public class PyCidrDebugProcess extends XDebugProcess {
   }
 
   public void startPausing() {
-    myPyProcess.startPausing();
+    //myPyProcess.startPausing();
     myCidrProcess.startPausing();
   }
 
@@ -206,7 +207,7 @@ public class PyCidrDebugProcess extends XDebugProcess {
 
   public void stop() {
     myCidrProcess.stop();
-    myPyProcess.stop();
+  //  myPyProcess.stop();
   }
 
   public void resume(@Nullable XSuspendContext context) {
@@ -258,7 +259,7 @@ public class PyCidrDebugProcess extends XDebugProcess {
 
   @NotNull
   public XDebugTabLayouter createTabLayouter() {
-    return myPyProcess.createTabLayouter();
+    return myCidrProcess.createTabLayouter();
   }
 
   public boolean isValuesCustomSorted() {

@@ -144,7 +144,6 @@ public class PyDebugRunner extends GenericProgramRunner {
       final GeneralCommandLine commandLine = pyState.generateCommandLine(patchers);
       final PyCidrGDBDebugLauncher launcher = new PyCidrGDBDebugLauncher(environment.getProject(),
                                                                          null,
-                                                                         new CidrRemoteDebugParameters(),
                                                                          commandLine,
                                                                          pyState.createPyDebugConsoleBuilder(environment.getProject()),
                                                                          new PyDebuggerEditorsProvider());
