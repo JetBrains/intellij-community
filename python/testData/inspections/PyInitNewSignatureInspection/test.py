@@ -41,3 +41,9 @@ class Planet(enum.Enum):
 
     def __init__(self, mass, radius): # OK
         pass
+
+
+# PY-25171
+class Meta(type):
+    def __new__(mcls, name, bases, namespace):
+        pass
