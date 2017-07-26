@@ -276,10 +276,10 @@ class LookupUi {
     }
 
     SwingUtilities.convertPointToScreen(location, editor.getContentComponent());
-    final Rectangle screenRectangle = ScreenUtil.getScreenRectangle(location);
+    final Rectangle screenRectangle = ScreenUtil.getScreenRectangle(editor.getContentComponent());
 
     if (!isPositionedAboveCaret()) {
-      int shiftLow = screenRectangle.height - (location.y + dim.height);
+      int shiftLow = screenRectangle.y + screenRectangle.height - (location.y + dim.height);
       myPositionedAbove = shiftLow < 0 && shiftLow < location.y - dim.height && location.y >= dim.height;
     }
     if (isPositionedAboveCaret()) {
