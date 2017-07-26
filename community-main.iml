@@ -111,7 +111,6 @@
     <orderEntry type="module" module-name="typeMigration" />
     <orderEntry type="module" module-name="platform-tests" />
     <orderEntry type="module" module-name="android" />
-    <orderEntry type="module" module-name="devkit-tests" scope="TEST" />
     <orderEntry type="module" module-name="diff-tests" scope="TEST" />
     <orderEntry type="module" module-name="built-in-server-tests" scope="TEST" />
     <orderEntry type="module" module-name="updater" scope="TEST" />

@@ -73,7 +73,6 @@
       <module fileurl="file://$PROJECT_DIR$/android/designer/designer.iml" filepath="$PROJECT_DIR$/android/designer/designer.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/devkit.iml" filepath="$PROJECT_DIR$/plugins/devkit/devkit.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/jps-plugin/devkit-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/devkit/jps-plugin/devkit-jps-plugin.iml" group="plugins" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/devkit/devkit-tests.iml" filepath="$PROJECT_DIR$/plugins/devkit/devkit-tests.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/platform/diff-api/diff-api.iml" filepath="$PROJECT_DIR$/platform/diff-api/diff-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/diff-impl/diff-impl.iml" filepath="$PROJECT_DIR$/platform/diff-impl/diff-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/diff-impl/diff-tests.iml" filepath="$PROJECT_DIR$/platform/diff-impl/diff-tests.iml" group="platform" />
