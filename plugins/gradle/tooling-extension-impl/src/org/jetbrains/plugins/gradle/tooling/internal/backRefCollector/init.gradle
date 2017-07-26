@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.GradleJavacReferenceIndexWriterHolder
 import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.ReferenceIndexJavacPlugin
 
@@ -24,8 +25,12 @@ initscript {
   }
 }
 
+apply plugin: BackRefCollectorGradlePlugin
+
 @SuppressWarnings("GrPackage")
 class BackRefCollectorGradlePlugin implements Plugin<Gradle> {
+  private static String INDEX_PATH = "/home/user/index"
+
   @Override
   void apply(Gradle gradle) {
     gradle.buildStarted {
@@ -34,6 +39,7 @@ class BackRefCollectorGradlePlugin implements Plugin<Gradle> {
     gradle.buildFinished {
       GradleJavacReferenceIndexWriterHolder.closeIfNeed(false)
     }
+
     gradle.allprojects { project ->
       Action<JavaCompile> javaCompilerPluginInstaller =
         new Action<JavaCompile>() {
@@ -42,13 +48,14 @@ class BackRefCollectorGradlePlugin implements Plugin<Gradle> {
             def args = task.options.compilerArgs
             args.add("-processorpath")
             args.add("${JAVAC_PLUGIN_PATH}")
-            args.add("-Xplugin:" + ReferenceIndexJavacPlugin.PLUGIN_NAME)
+            def forkArg = task.options.fork ? "fork" : ""
+            def indexPathArg = task.options.fork ? "index.path=" + INDEX_PATH : ""
+            args.add("-Xplugin:$ReferenceIndexJavacPlugin.PLUGIN_NAME $forkArg $indexPathArg")
           }
         }
 
       def javaCompileTasks = project.getTasks().withType(JavaCompile.class)
       javaCompileTasks.all(javaCompilerPluginInstaller)
-      javaCompileTasks.whenTaskAdded(javaCompilerPluginInstaller)
     }
   }
 }

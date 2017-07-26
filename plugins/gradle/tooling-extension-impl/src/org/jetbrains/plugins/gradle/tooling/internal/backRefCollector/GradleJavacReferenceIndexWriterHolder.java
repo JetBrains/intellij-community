@@ -75,7 +75,7 @@ public class GradleJavacReferenceIndexWriterHolder {
       "org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.GradleJavacReferenceIndexWriterHolder",
       true,
       getRootClassLoader());
-    Field instanceField = writerClass.getField("ourInstance");
+    Field instanceField = writerClass.getDeclaredField("ourInstance");
     instanceField.setAccessible(true);
     return instanceField;
   }
@@ -85,7 +85,7 @@ public class GradleJavacReferenceIndexWriterHolder {
     ClassLoader current = GradleJavacReferenceIndexWriterHolder.class.getClassLoader();
     while (true) {
       ClassLoader parent = current.getParent();
-      if (parent == null) return current;
+      if (parent == null || "sun.misc.Launcher$ExtClassLoader".equals(parent.getClass().getName())) return current;
       current = parent;
     }
   }

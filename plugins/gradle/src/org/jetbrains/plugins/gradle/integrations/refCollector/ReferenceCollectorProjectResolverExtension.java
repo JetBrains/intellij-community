@@ -77,15 +77,15 @@ public class ReferenceCollectorProjectResolverExtension extends AbstractProjectR
   }
 
   @NotNull
-  private static String getToolingExtensionsJarPaths(@NotNull Set<Class> toolingExtensionClasses, boolean wrapWithQuotes) {
+  private static String getToolingExtensionsJarPaths(@NotNull Set<Class> toolingExtensionClasses, boolean prepareForGradle) {
     Stream<String> paths = toolingExtensionClasses.stream().map(c -> {
       String path = PathManager.getJarPathForClass(c);
       return path == null ? null : PathUtil.getCanonicalPath(path);
     });
-    if (wrapWithQuotes) {
+    if (prepareForGradle) {
       paths = paths.map(p -> StringUtil.wrapWithDoubleQuote(p));
     }
-    return paths.collect(Collectors.joining(","));
+    return paths.collect(Collectors.joining(prepareForGradle ? "," : ":"));
   }
 
   @NotNull

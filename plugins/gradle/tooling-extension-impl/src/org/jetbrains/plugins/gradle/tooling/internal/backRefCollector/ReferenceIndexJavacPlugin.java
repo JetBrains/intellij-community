@@ -25,6 +25,8 @@ import org.jetbrains.jps.javac.ast.api.JavacFileData;
 
 public class ReferenceIndexJavacPlugin implements Plugin {
   public static final String PLUGIN_NAME = "ReferenceIndexJavacPlugin";
+  public static final String FORK_ARG = "fork";
+  public static final String INDEX_PATH_ARG = "index.path=";
 
   @Override
   public String getName() {
