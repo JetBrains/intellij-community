@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui;
+package com.intellij.ui.components;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.Expandable;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBScrollBar;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Function;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.ui.JBInsets;
@@ -45,7 +45,7 @@ import static java.beans.EventHandler.create;
 import static javax.swing.KeyStroke.getKeyStroke;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS;
 
-public final class ExpandableTextField extends JTextField implements Expandable {
+public final class ExpandableTextField extends JBTextField implements Expandable {
   private static final int MINIMAL_WIDTH = 50;
   private final Function<String, String> parser;
   private final Function<String, String> joiner;
@@ -64,7 +64,6 @@ public final class ExpandableTextField extends JTextField implements Expandable 
   public ExpandableTextField(@NotNull Function<String, List<String>> parser, @NotNull Function<List<String>, String> joiner) {
     super(20);
     putClientProperty("JTextField.variant", VARIANT);
-    UIUtil.addUndoRedoActions(this);
     this.parser = text -> StringUtil.join(parser.fun(text), "\n");
     this.joiner = text -> joiner.fun(Arrays.asList(StringUtil.splitByLines(text)));
     addAncestorListener(create(AncestorListener.class, this, "collapse"));
