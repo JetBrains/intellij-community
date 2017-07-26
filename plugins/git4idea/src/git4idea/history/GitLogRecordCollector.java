@@ -44,8 +44,8 @@ abstract class GitLogRecordCollector implements Consumer<GitLogRecord> {
   private static final int STATUS_LINES_THRESHOLD = 20_000;
   @NotNull private final Project myProject;
   @NotNull private final VirtualFile myRoot;
-  @NotNull private final MultiMap<String, GitLogRecord> myHashToRecord = MultiMap.createLinked();
-  @NotNull private final MultiMap<String, GitLogRecord> myHashToIncompleteRecords = MultiMap.createLinked();
+  @NotNull private final MultiMap<String, GitLogRecord> myHashToRecord = MultiMap.create();
+  @NotNull private final MultiMap<String, GitLogRecord> myHashToIncompleteRecords = MultiMap.create();
   private int myIncompleteStatusLinesCount = 0;
 
   protected GitLogRecordCollector(@NotNull Project project, @NotNull VirtualFile root) {
