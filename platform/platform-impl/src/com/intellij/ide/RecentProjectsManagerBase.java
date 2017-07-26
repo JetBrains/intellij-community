@@ -131,6 +131,16 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
       }
     }
 
+    public void updateOpenProjectsTimestamps(RecentProjectsManagerBase mgr) {
+      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        String path = PathUtil.toSystemIndependentName(mgr.getProjectPath(project));
+        RecentProjectMetaInfo info = additionalInfo.get(path);
+        if (info != null) {
+          info.projectOpenTimestamp = System.currentTimeMillis();
+        }
+      }
+    }
+
     private static void makeSystemIndependent(List<String> paths) {
       List<String> copy = new ArrayList<>(paths);
       paths.clear();
@@ -158,6 +168,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   public State getState() {
     synchronized (myStateLock) {
       myState.validateRecentProjects();
+      myState.updateOpenProjectsTimestamps(this);
       return myState;
     }
   }
