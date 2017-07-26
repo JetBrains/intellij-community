@@ -28,6 +28,7 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 @TestDataPath("$CONTENT_ROOT/testData/guessByExistingFiles")
@@ -116,23 +117,19 @@ public class TestDataGuessByExistingFilesUtilTest extends TestDataPathTestCase {
 
 
   private PsiMethod getTestMethodWithBeforeAndAfterTestData() {
-    return getTestMethod(
-      "SomeTest_BeforeAndAfter.java", "somethingBA_before.java", "somethingBA_after.java");
+    return getTestMethod("SomeTest_BeforeAndAfter.java", "somethingBA_before.java", "somethingBA_after.java");
   }
 
   private PsiMethod getTestMethodWithBeforeAndSameTestData() {
-    return getTestMethod(
-      "SomeTest_BeforeAndSame.java", "somethingBS_before.java", "somethingBS.java");
+    return getTestMethod("SomeTest_BeforeAndSame.java", "somethingBS_before.java", "somethingBS.java");
   }
 
   private PsiMethod getTestMethodWithAfterAndSameTestData() {
-    return getTestMethod(
-      "SomeTest_AfterAndSame.java", "somethingAS_after.java", "somethingAS.java");
+    return getTestMethod("SomeTest_AfterAndSame.java", "somethingAS_after.java", "somethingAS.java");
   }
 
   private PsiMethod getTestMethodWithOnlySameTestData() {
-    return getTestMethod(
-      "SomeTest_OnlySame.java", "somethingS.java");
+    return getTestMethod("SomeTest_OnlySame.java", "somethingS.java");
   }
 
   private PsiMethod getTestMethod(String classFileName, String... testDataFiles) {
@@ -150,7 +147,7 @@ public class TestDataGuessByExistingFilesUtilTest extends TestDataPathTestCase {
   private static void verifyResultForBeforeAndAfter(List<String> names) {
     assertNotNull(names);
     assertEquals(names.toString(), 2, names.size());
-    names.sort(String::compareTo);
+    Collections.sort(names);
     assertTrue(names.get(0), names.get(0).endsWith("somethingBA_after.java"));
     assertTrue(names.get(1), names.get(1).endsWith("somethingBA_before.java"));
   }
@@ -158,7 +155,7 @@ public class TestDataGuessByExistingFilesUtilTest extends TestDataPathTestCase {
   private static void verifyResultForBeforeAndSame(List<String> names) {
     assertNotNull(names);
     assertEquals(names.toString(), 2, names.size());
-    names.sort(String::compareTo);
+    Collections.sort(names);
     assertTrue(names.get(0), names.get(0).endsWith("somethingBS.java"));
     assertTrue(names.get(1), names.get(1).endsWith("somethingBS_before.java"));
   }
@@ -166,7 +163,7 @@ public class TestDataGuessByExistingFilesUtilTest extends TestDataPathTestCase {
   private static void verifyResultForAfterAndSame(List<String> names) {
     assertNotNull(names);
     assertEquals(names.toString(), 2, names.size());
-    names.sort(String::compareTo);
+    Collections.sort(names);
     assertTrue(names.get(0), names.get(0).endsWith("somethingAS.java"));
     assertTrue(names.get(1), names.get(1).endsWith("somethingAS_after.java"));
   }
