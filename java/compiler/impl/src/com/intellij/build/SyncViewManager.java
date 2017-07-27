@@ -15,25 +15,38 @@
  */
 package com.intellij.build;
 
-import com.intellij.build.events.BuildEvent;
-import com.intellij.build.events.StartBuildEvent;
+import com.intellij.build.events.*;
 import com.intellij.execution.console.DuplexConsoleView;
+import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.impl.ContentImpl;
+import com.intellij.util.Alarm;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EdtInvocationManager;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -46,44 +59,202 @@ public class SyncViewManager implements Disposable {
   private Content myContent;
   private final AtomicBoolean isInitializeStarted = new AtomicBoolean();
   private final List<Runnable> myPostponedRunnables = new ArrayList<>();
-  private final Map<String, BuildConsoleView> myViewProviders;
-  private volatile DuplexConsoleView<BuildConsoleView, BuildConsoleView> myConsoleView;
+  private final ProgressWatcher myProgressWatcher;
+  private final ThreeComponentsSplitter myThreeComponentsSplitter;
+  private final JBList<BuildInfo> myBuildsList;
+  private final Map<Object, BuildInfo> myBuildsMap;
+  private final Map<BuildInfo, DuplexConsoleView<BuildConsoleView, BuildConsoleView>> myViewMap;
 
   public SyncViewManager(Project project, BuildContentManager buildContentManager) {
     myProject = project;
     myBuildContentManager = buildContentManager;
-    myViewProviders = ContainerUtil.newHashMap();
+    myThreeComponentsSplitter = new ThreeComponentsSplitter();
+    Disposer.register(this, myThreeComponentsSplitter);
+    myBuildsList = new JBList<>();
+    myBuildsList.setFixedCellHeight(UIUtil.LIST_FIXED_CELL_HEIGHT * 2);
+    myBuildsList.installCellRenderer(obj -> {
+      BuildInfo buildInfo = (BuildInfo)obj;
+      JPanel panel = new JPanel(new BorderLayout());
+      SimpleColoredComponent mainComponent = new SimpleColoredComponent();
+      mainComponent.setIcon(buildInfo.getIcon());
+      mainComponent.append(buildInfo.title + ": ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      mainComponent.append(buildInfo.message, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      panel.add(mainComponent, BorderLayout.NORTH);
+      if (buildInfo.statusMessage != null) {
+        SimpleColoredComponent statusComponent = new SimpleColoredComponent();
+        statusComponent.setIcon(EmptyIcon.ICON_16);
+        statusComponent.append(buildInfo.statusMessage, SimpleTextAttributes.GRAY_ATTRIBUTES);
+        panel.add(statusComponent, BorderLayout.SOUTH);
+      }
+      return panel;
+    });
+    myViewMap = ContainerUtil.newConcurrentMap();
+    myBuildsMap = ContainerUtil.newConcurrentMap();
+    myProgressWatcher = new ProgressWatcher();
+  }
+
+  private class ProgressWatcher implements Runnable {
+
+    private final Alarm myRefreshAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+    private final Set<BuildInfo> myBuilds = ContainerUtil.newConcurrentSet();
+
+    @Override
+    public void run() {
+      myRefreshAlarm.cancelAllRequests();
+      JComponent firstComponent = myThreeComponentsSplitter.getFirstComponent();
+      if (firstComponent != null) {
+        firstComponent.revalidate();
+        firstComponent.repaint();
+      }
+      if (!myBuilds.isEmpty()) {
+        myRefreshAlarm.addRequest(this, 300);
+      }
+    }
+
+    void addBuild(BuildInfo buildInfo) {
+      myBuilds.add(buildInfo);
+      if (myBuilds.size() > 1) {
+        myRefreshAlarm.cancelAllRequests();
+        myRefreshAlarm.addRequest(this, 300);
+      }
+    }
+
+    void stopBuild(BuildInfo buildInfo) {
+      myBuilds.remove(buildInfo);
+    }
   }
 
   public void onEvent(BuildEvent event, String... viewIds) {
     List<Runnable> runnables = new SmartList<>();
+    runnables.add(() -> {
+      if (event instanceof StartBuildEvent) {
+        long currentTime = System.currentTimeMillis();
+        DefaultListModel<BuildInfo> listModel = (DefaultListModel<BuildInfo>)myBuildsList.getModel();
+        boolean shouldBeCleared = !listModel.isEmpty();
+        for (int i = 0; i < listModel.getSize(); i++) {
+          BuildInfo info = listModel.getElementAt(i);
+          if (info.endTime == -1 || currentTime - info.endTime < TimeUnit.SECONDS.toMillis(1)) {
+            shouldBeCleared = false;
+            break;
+          }
+        }
+        if (shouldBeCleared) {
+          for (DuplexConsoleView<BuildConsoleView, BuildConsoleView> view : myViewMap.values()) {
+            view.clear();
+            Disposer.dispose(view);
+          }
+          listModel.clear();
+          myBuildsMap.clear();
+          myViewMap.clear();
+          myBuildsList.setVisible(false);
+          myThreeComponentsSplitter.setFirstComponent(null);
+          myThreeComponentsSplitter.setLastComponent(null);
+        }
+      }
+      final BuildInfo buildInfo =
+        myBuildsMap.computeIfAbsent(ObjectUtils.chooseNotNull(event.getParentId(), event.getId()), o -> new BuildInfo());
+      if (event.getParentId() != null) {
+        myBuildsMap.put(event.getId(), buildInfo);
+      }
+    });
 
-    if (event instanceof StartBuildEvent) {
-      runnables.add(() -> myConsoleView.clear());
-    }
+    runnables.add(() -> {
+      final BuildInfo buildInfo = myBuildsMap.get(event.getId());
+      assert buildInfo != null;
+      if (event instanceof StartBuildEvent) {
+        buildInfo.title = ((StartBuildEvent)event).getBuildTitle();
+        buildInfo.id = event.getId();
+        buildInfo.message = event.getMessage();
+        DefaultListModel<BuildInfo> listModel = (DefaultListModel<BuildInfo>)myBuildsList.getModel();
+        listModel.addElement(buildInfo);
 
+        DuplexConsoleView<BuildConsoleView, BuildConsoleView> view = myViewMap.computeIfAbsent(buildInfo, info -> {
+          final DuplexConsoleView<BuildConsoleView, BuildConsoleView> duplexConsoleView =
+            new DuplexConsoleView<>(new BuildTextConsoleView(myProject, false, "CONSOLE"),
+                                    new BuildTreeConsoleView(myProject));
+          duplexConsoleView.setDisableSwitchConsoleActionOnProcessEnd(false);
+          Disposer.register(myThreeComponentsSplitter, duplexConsoleView);
+          return duplexConsoleView;
+        });
+
+        if (myThreeComponentsSplitter.getLastComponent() == null) {
+          myThreeComponentsSplitter.setLastComponent(view);
+        }
+        if (listModel.getSize() > 1) {
+          myThreeComponentsSplitter.setFirstComponent(myBuildsList);
+          myBuildsList.setVisible(true);
+          myBuildsList.setSelectedIndex(0);
+        }
+        myProgressWatcher.addBuild(buildInfo);
+        view.getPrimaryConsoleView().print("\r", ConsoleViewContentType.SYSTEM_OUTPUT);
+      }
+      else {
+        if (event instanceof FinishBuildEvent) {
+          buildInfo.endTime = event.getEventTime();
+          buildInfo.message = event.getMessage();
+          buildInfo.result = ((FinishBuildEvent)event).getResult();
+          myProgressWatcher.stopBuild(buildInfo);
+        }
+        else {
+          buildInfo.statusMessage = event.getMessage();
+        }
+      }
+    });
     for (String id : viewIds) {
       if ("CONSOLE".equals(id)) {
-        runnables.add(() -> myConsoleView.getPrimaryConsoleView().onEvent(event));
+        runnables.add(() -> {
+          final BuildInfo buildInfo = myBuildsMap.get(event.getId());
+          DuplexConsoleView<BuildConsoleView, BuildConsoleView> view = myViewMap.get(buildInfo);
+          view.getPrimaryConsoleView().onEvent(event);
+        });
       }
       else if ("TREE".equals(id)) {
-        runnables.add(() -> myConsoleView.getSecondaryConsoleView().onEvent(event));
+        runnables.add(() -> {
+          final BuildInfo buildInfo = myBuildsMap.get(event.getId());
+          DuplexConsoleView<BuildConsoleView, BuildConsoleView> view = myViewMap.get(buildInfo);
+          view.getSecondaryConsoleView().onEvent(event);
+        });
       }
     }
     if (myContent == null) {
       myPostponedRunnables.addAll(runnables);
       if (isInitializeStarted.compareAndSet(false, true)) {
         UIUtil.invokeLaterIfNeeded(() -> {
-          final DuplexConsoleView<BuildConsoleView, BuildConsoleView> duplexConsoleView =
-            new DuplexConsoleView<>(new BuildTextConsoleView(myProject, false, "CONSOLE"),
-                                    new BuildTreeConsoleView(myProject));
-          Disposer.register(this, duplexConsoleView);
-          duplexConsoleView.setDisableSwitchConsoleActionOnProcessEnd(false);
+          myBuildsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+          DefaultListModel<BuildInfo> listModel = new DefaultListModel<>();
+          myBuildsList.setModel(listModel);
+          myBuildsList.addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+              BuildInfo selectedBuild = myBuildsList.getSelectedValue();
+              if (selectedBuild == null) return;
 
-          final DefaultActionGroup toolbarActions = new DefaultActionGroup();
+              DuplexConsoleView<BuildConsoleView, BuildConsoleView> view = myViewMap.get(selectedBuild);
+              JComponent lastComponent = myThreeComponentsSplitter.getLastComponent();
+              if (view != null && lastComponent != view.getComponent()) {
+                myThreeComponentsSplitter.setLastComponent(view.getComponent());
+                view.getComponent().setVisible(true);
+                if (lastComponent != null) {
+                  lastComponent.setVisible(false);
+                }
+                view.getComponent().repaint();
+              }
+
+              int firstSize = myThreeComponentsSplitter.getFirstSize();
+              int lastSize = myThreeComponentsSplitter.getLastSize();
+              if (firstSize == 0 && lastSize == 0) {
+                EdtInvocationManager.getInstance().invokeLater(() -> {
+                  int width = Math.round(myThreeComponentsSplitter.getWidth() / 4f);
+                  myThreeComponentsSplitter.setFirstSize(width);
+                });
+              }
+            }
+          });
+
           final JComponent consoleComponent = new JPanel(new BorderLayout());
-          consoleComponent.add(duplexConsoleView.getComponent(), BorderLayout.CENTER);
-          toolbarActions.addAll(duplexConsoleView.createConsoleActions());
+          consoleComponent.add(myThreeComponentsSplitter, BorderLayout.CENTER);
+          final DefaultActionGroup toolbarActions = new DefaultActionGroup();
+          //toolbarActions.addAll(duplexConsoleView.createConsoleActions());
           consoleComponent.add(ActionManager.getInstance().createActionToolbar(
             "", toolbarActions, false).getComponent(), BorderLayout.WEST);
 
@@ -91,7 +262,7 @@ public class SyncViewManager implements Disposable {
           myContent.setCloseable(false);
           myBuildContentManager.addContent(myContent);
           myBuildContentManager.setSelectedContent(myContent);
-          myConsoleView = duplexConsoleView;
+          //myConsoleView = duplexConsoleView;
 
           List<Runnable> postponedRunnables = new ArrayList<>(myPostponedRunnables);
           myPostponedRunnables.clear();
@@ -112,5 +283,34 @@ public class SyncViewManager implements Disposable {
 
   @Override
   public void dispose() {
+  }
+
+  private static class BuildInfo {
+    Object id;
+    String title;
+    String message;
+    String statusMessage;
+    long endTime = -1;
+    EventResult result;
+
+    public Icon getIcon() {
+      return getIcon(result);
+    }
+
+    private static Icon getIcon(EventResult result) {
+      if (result == null) {
+        return ExecutionNodeProgressAnimator.getCurrentFrame();
+      }
+      if (result instanceof FailureResult) {
+        return AllIcons.Process.State.RedExcl;
+      }
+      if (result instanceof SkippedResult) {
+        return AllIcons.Process.State.YellowStr;
+      }
+      if (result instanceof SuccessResult) {
+        return AllIcons.Process.State.GreenOK;
+      }
+      return AllIcons.Process.State.GreenOK;
+    }
   }
 }

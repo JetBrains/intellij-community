@@ -29,6 +29,7 @@ public interface BuildEvent {
    *
    * @return The event id.
    */
+  @NotNull
   Object getId();
 
   /**

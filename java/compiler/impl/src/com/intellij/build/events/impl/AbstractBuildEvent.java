@@ -43,6 +43,7 @@ public abstract class AbstractBuildEvent implements BuildEvent {
     myMessage = message;
   }
 
+  @NotNull
   @Override
   public Object getId() {
     return myEventId;
