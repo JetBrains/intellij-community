@@ -317,7 +317,7 @@ public class StreamChainInliner implements CallInliner {
       .chain(firstStep::before)
       .doWhile()
       .pushVariable(builder.createTempVariable(inType))
-      .push(builder.getFactory().createTypeValue(inType, Nullness.UNKNOWN))
+      .push(builder.getFactory().createTypeValue(inType, DfaPsiUtil.getTypeNullability(inType)))
       .assign()
       .chain(firstStep::iteration)
       .endWhileUnknown();
