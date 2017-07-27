@@ -67,6 +67,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -76,14 +77,14 @@ public class JarRepositoryManager {
 
   private static final String MAVEN_REPOSITORY_MACRO = "$MAVEN_REPOSITORY$";
   private static final String DEFAULT_REPOSITORY_PATH = ".m2/repository";
-  private static volatile int ourTasksInProgress;
+  private static final AtomicInteger ourTasksInProgress = new AtomicInteger();
 
   private static class JobExecutor {
     static final ExecutorService INSTANCE = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("RemoteLibraryDownloader");
   }
 
   public static boolean hasRunningTasks() {
-    return ourTasksInProgress > 0;   // todo: count tasks on per-project basis?
+    return ourTasksInProgress.get() > 0;   // todo: count tasks on per-project basis?
   }
 
   @Nullable
@@ -367,11 +368,11 @@ public class JarRepositoryManager {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          ourTasksInProgress++;
+          ourTasksInProgress.incrementAndGet();
           result.set(job.apply(indicator));
         }
         finally {
-          ourTasksInProgress--;
+          ourTasksInProgress.decrementAndGet();
         }
       }
     }.queue();
@@ -382,7 +383,7 @@ public class JarRepositoryManager {
     final ModalityState startModality = ModalityState.defaultModalityState();
     return JobExecutor.INSTANCE.submit(() -> {
       try {
-        ourTasksInProgress++;
+        ourTasksInProgress.incrementAndGet();
         final ProgressIndicator indicator = new EmptyProgressIndicator(startModality);
         return ProgressManager.getInstance().runProcess(() -> job.apply(indicator), indicator);
       }
@@ -392,7 +393,7 @@ public class JarRepositoryManager {
         LOG.info(e);
       }
       finally {
-        ourTasksInProgress--;
+        ourTasksInProgress.decrementAndGet();
       }
       return null;
     });
