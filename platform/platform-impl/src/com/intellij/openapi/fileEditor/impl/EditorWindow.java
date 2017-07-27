@@ -1194,7 +1194,11 @@ public class EditorWindow {
   }
 
   public void clear() {
+    Project project = getManager().getProject();
     for (EditorWithProviderComposite composite : getEditors()) {
+      if (!project.isDefault()) { // There's no EditorHistoryManager for default project (which is used in diff command-line application)
+        EditorHistoryManager.getInstance(project).updateHistoryEntry(composite.getFile(), false);
+      }
       Disposer.dispose(composite);
     }
     if (myTabbedPane == null) {
