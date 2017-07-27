@@ -1654,16 +1654,8 @@ public class PyUtil {
     if (hasKeywordContainer(parameters)) {
       n++;
     }
-    if (callable.asMethod() != null) {
+    if (isFirstParameterSpecial(callable, parameters)) {
       n++;
-    }
-    else {
-      if (parameters.size() > 0) {
-        final PyCallableParameter first = parameters.get(0);
-        if (PyNames.CANONICAL_SELF.equals(first.getName())) {
-          n++;
-        }
-      }
     }
     return n;
   }
@@ -1684,6 +1676,16 @@ public class PyUtil {
       }
     }
     return false;
+  }
+
+  private static boolean isFirstParameterSpecial(@NotNull PyCallable callable, @NotNull List<PyCallableParameter> parameters) {
+    final PyFunction method = callable.asMethod();
+    if (method != null) {
+      return PyNames.NEW.equals(method.getName()) || method.getModifier() != STATICMETHOD;
+    } else {
+      final PyCallableParameter first = ContainerUtil.getFirstItem(parameters);
+      return first != null && PyNames.CANONICAL_SELF.equals(first.getName());
+    }
   }
 
   public static boolean isInit(@NotNull final PyFunction function) {
