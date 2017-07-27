@@ -222,6 +222,10 @@ public class MadTestingUtil {
     }
   }
 
+  /**
+   * Generates actions checking that incremental reparse produces the same PSI as full reparse. This check makes sense
+   * in languages employing {@link com.intellij.psi.tree.ILazyParseableElementTypeBase}.
+   */
   @NotNull
   public static Generator<MadTestingAction> randomEditsWithReparseChecks(PsiFile file) {
     return Generator.anyOf(DeleteRange.psiRangeDeletions(file),

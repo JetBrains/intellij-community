@@ -37,23 +37,13 @@ public class CompletionPolicy {
   /**
    * @return the lookup string of an element that should be suggested in the given position
    */
-  public String getExpectedVariant(Editor editor, PsiFile file) {
-    PsiElement leaf = file.findElementAt(editor.getCaretModel().getOffset());
-    if (leaf == null) {
-      return null;
-    }
-    PsiReference ref = file.findReferenceAt(editor.getCaretModel().getOffset());
-    return getExpectedVariant(editor, file, leaf, ref);
-
-  }
-
   @Nullable
   protected String getExpectedVariant(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement leaf, @Nullable PsiReference ref) {
     if (MadTestingUtil.isAfterError(file, leaf.getTextRange().getStartOffset())) {
       return null;
     }
     
-    String leafText = leaf.getText();
+    String leafText = ref != null ? ref.getRangeInElement().substring(ref.getElement().getText()) : leaf.getText();
     if (leafText.isEmpty() ||
         !Character.isLetter(leafText.charAt(0)) ||
         leaf instanceof PsiWhiteSpace ||
@@ -74,6 +64,10 @@ public class CompletionPolicy {
       if (!shouldSuggestNonReferenceLeafText(leaf)) return null;
     }
     return leafText;
+  }
+
+  public boolean shouldCheckDuplicates(@NotNull Editor editor, @NotNull PsiFile file, @Nullable PsiElement leaf) {
+    return true;
   }
 
   private static PsiElement getValidResolveResult(@NotNull PsiReference ref) {
