@@ -160,12 +160,13 @@ public class CourseManager implements PersistentStateComponent<CourseManager.Sta
      * @throws InvalidSdkException - if project SDK is not suitable for module
      */
     public void checkEnvironment(@NotNull Project project) throws OldJdkException, InvalidSdkException, NoSdkException, NoJavaModuleException {
-
         final Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
-        if (sdk == null) throw new NoSdkException();
-        final SdkTypeId sdkType = sdk.getSdkType();
-        //noinspection ConstantConditions
-        LangManager.Companion.getInstance().getLangSupport().checkSdkCompatibility(sdk, sdkType);
+        if (LangManager.Companion.getInstance().getLangSupport().needToCheckSDK()) {
+            if (sdk == null) throw new NoSdkException();
+            final SdkTypeId sdkType = sdk.getSdkType();
+            //noinspection ConstantConditions
+            LangManager.Companion.getInstance().getLangSupport().checkSdkCompatibility(sdk, sdkType);
+        }
     }
 
 

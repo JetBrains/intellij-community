@@ -21,7 +21,7 @@ import java.util.*
 /**
  * @author Sergey Karashevich
  */
-class JavaLangSupport : LangSupport {
+class JavaLangSupport : AbstractLangSupport() {
 
     private val acceptableLanguages = setOf("java", "kt", "html")
     override fun acceptLang(ext: String) = acceptableLanguages.contains(ext.toLowerCase())

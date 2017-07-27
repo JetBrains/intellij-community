@@ -8,7 +8,7 @@ import com.intellij.openapi.projectRoots.SdkTypeId
 /**
  * @author Sergey Karashevich
  */
-class MockLangSupport(override val FILE_EXTENSION: String) : LangSupport {
+class MockLangSupport(override val FILE_EXTENSION: String) : AbstractLangSupport() {
     override fun checkSdkCompatibility(sdk: Sdk, sdkTypeId: SdkTypeId) {
         throw UnsupportedOperationException("not implemented") //To change body of created functions use File | Settings | File Templates.
     }

@@ -152,7 +152,8 @@ class LanguageChoosePanel(opaque: Boolean = true, addButton: Boolean = true) : J
         for (langSupportExt in sortedLangSupportExtensions) {
 
             val lessonsCount = CourseManager.getInstance().calcLessonsForLanguage(langSupportExt.instance)
-            val jrb = JRadioButton("${Language.findLanguageByID(langSupportExt.language)!!.displayName} ($lessonsCount lesson${if (lessonsCount != 1) "s" else ""}) ")
+            val lang = Language.findLanguageByID(langSupportExt.language) ?: continue
+            val jrb = JRadioButton("${lang!!.displayName} ($lessonsCount lesson${if (lessonsCount != 1) "s" else ""}) ")
             jrb.isOpaque = false
             buttonGroup.add(jrb)
             //add radio buttons

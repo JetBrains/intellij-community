@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.StripeButton
@@ -22,6 +21,7 @@ import com.intellij.ui.GotItMessage
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Alarm
 import com.intellij.util.ui.UIUtil
+import training.lang.LangManager
 import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.ui.LearnIcons
@@ -64,8 +64,7 @@ class LearnProjectComponent private constructor(private val myProject: Project) 
     //register tool window
     val toolWindow = toolWindowManager.getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW)
     if (toolWindow == null) {
-      val createdToolWindow = toolWindowManager.registerToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW, true, ToolWindowAnchor.LEFT,
-                                                                   myProject, true)
+      val createdToolWindow = toolWindowManager.registerToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW, true, LangManager.getInstance().getLangSupport()!!.getToolWindowAnchor(), myProject, true)
       createdToolWindow.icon = LearnIcons.chevronToolWindowIcon
     }
   }
