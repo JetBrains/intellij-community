@@ -15,10 +15,12 @@
  */
 package com.intellij.openapi.editor.actionSystem;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -88,17 +90,23 @@ public abstract class EditorActionHandler {
 
   private void doIfEnabled(@NotNull Caret hostCaret, @Nullable DataContext context, @NotNull CaretTask task) {
     DataContext caretContext = context == null ? null : new CaretSpecificDataContext(context, hostCaret);
+    Editor editor = hostCaret.getEditor();
     if (myWorksInInjected && caretContext != null) {
-      Project project = context.getData(CommonDataKeys.PROJECT);
-      if (project != null) PsiDocumentManager.getInstance(project).commitDocument(hostCaret.getEditor().getDocument());
-      DataContext injectedCaretContext = AnActionEvent.getInjectedDataContext(caretContext);
-      Caret injectedCaret = CommonDataKeys.CARET.getData(injectedCaretContext);
-      if (injectedCaret != null && injectedCaret != hostCaret && isEnabledForCaret(injectedCaret.getEditor(), injectedCaret, injectedCaretContext)) {
-        task.perform(injectedCaret, injectedCaretContext);
-        return;
+      Project project = editor.getProject();
+      if (project != null) {
+        Document document = editor.getDocument();
+        if (InjectedLanguageManager.getInstance(project).mightHaveInjectedFragmentAtOffset(document, hostCaret.getOffset())) {
+          PsiDocumentManager.getInstance(project).commitDocument(document);
+          DataContext injectedCaretContext = AnActionEvent.getInjectedDataContext(caretContext);
+          Caret injectedCaret = CommonDataKeys.CARET.getData(injectedCaretContext);
+          if (injectedCaret != null && injectedCaret != hostCaret && isEnabledForCaret(injectedCaret.getEditor(), injectedCaret, injectedCaretContext)) {
+            task.perform(injectedCaret, injectedCaretContext);
+            return;
+          }
+        }
       }
     }
-    if (isEnabledForCaret(hostCaret.getEditor(), hostCaret, caretContext)) {
+    if (isEnabledForCaret(editor, hostCaret, caretContext)) {
       task.perform(hostCaret, caretContext);
     }
   }
