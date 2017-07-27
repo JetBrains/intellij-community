@@ -180,10 +180,21 @@ public class SyncViewManager implements Disposable {
         if (myThreeComponentsSplitter.getLastComponent() == null) {
           myThreeComponentsSplitter.setLastComponent(view);
         }
-        if (listModel.getSize() > 1) {
+        if (listModel.getSize() > 1 && myThreeComponentsSplitter.getFirstComponent() == null) {
           myThreeComponentsSplitter.setFirstComponent(myBuildsList);
           myBuildsList.setVisible(true);
           myBuildsList.setSelectedIndex(0);
+          myThreeComponentsSplitter.repaint();
+
+          for (DuplexConsoleView<BuildConsoleView, BuildConsoleView> consoleView : myViewMap.values()) {
+            BuildConsoleView buildConsoleView = consoleView.getSecondaryConsoleView();
+            if (buildConsoleView instanceof BuildTreeConsoleView) {
+              ((BuildTreeConsoleView)buildConsoleView).hideRootNode();
+            }
+          }
+        }
+        else {
+          myThreeComponentsSplitter.setFirstComponent(null);
         }
         myProgressWatcher.addBuild(buildInfo);
         view.getPrimaryConsoleView().print("\r", ConsoleViewContentType.SYSTEM_OUTPUT);
@@ -211,8 +222,7 @@ public class SyncViewManager implements Disposable {
       else if ("TREE".equals(id)) {
         runnables.add(() -> {
           final BuildInfo buildInfo = myBuildsMap.get(event.getId());
-          DuplexConsoleView<BuildConsoleView, BuildConsoleView> view = myViewMap.get(buildInfo);
-          view.getSecondaryConsoleView().onEvent(event);
+          myViewMap.get(buildInfo).getSecondaryConsoleView().onEvent(event);
         });
       }
     }

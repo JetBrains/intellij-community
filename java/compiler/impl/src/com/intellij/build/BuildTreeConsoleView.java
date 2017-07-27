@@ -89,6 +89,7 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
       }
     };
     final ExecutionNode rootNode = new ExecutionNode(myProject);
+    rootNode.setAutoExpandNode(true);
     final ListTreeTableModelOnColumns model = new ListTreeTableModelOnColumns(new DefaultMutableTreeNode(rootNode), COLUMNS);
 
     DefaultTableCellRenderer timeColumnCellRenderer = new DefaultTableCellRenderer() {
@@ -127,8 +128,6 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
     timeColumn.setResizable(false);
 
     TreeTableTree tree = treeTable.getTree();
-    tree.setRootVisible(false);
-    tree.setShowsRootHandles(true);
     myTreeStructure = new SimpleTreeStructure.Impl(rootNode);
 
     myBuilder = new SimpleTreeBuilder(tree, model, myTreeStructure, null);
@@ -248,16 +247,17 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
 
   @Override
   public void onEvent(BuildEvent event) {
-    ExecutionNode parentNode = event.getParentId() == null ? getRootElement() : nodesMap.get(event.getParentId());
-    if (parentNode == null) {
-      parentNode = getRootElement();
-    }
+    ExecutionNode parentNode = event.getParentId() == null ? null : nodesMap.get(event.getParentId());
     ExecutionNode currentNode = nodesMap.get(event.getId());
     if (event instanceof StartEvent) {
       assert currentNode == null;
-      currentNode = new ExecutionNode(myProject);
+      ExecutionNode rootElement = getRootElement();
+      currentNode = event instanceof StartBuildEvent ? rootElement : new ExecutionNode(myProject);
+      currentNode.setAutoExpandNode(currentNode == rootElement || parentNode == rootElement);
       nodesMap.put(event.getId(), currentNode);
-      parentNode.add(currentNode);
+      if (parentNode != null) {
+        parentNode.add(currentNode);
+      }
 
       if (event instanceof StartBuildEvent) {
         String buildTitle = ((StartBuildEvent)event).getBuildTitle();
@@ -270,7 +270,9 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
       if (currentNode == null && event instanceof ProgressBuildEvent) {
         currentNode = new ExecutionNode(myProject);
         nodesMap.put(event.getId(), currentNode);
-        parentNode.add(currentNode);
+        if (parentNode != null) {
+          parentNode.add(currentNode);
+        }
       }
     }
 
@@ -296,6 +298,16 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
     if (event instanceof FinishBuildEvent) {
       myProgressAnimator.stopMovie();
     }
+  }
+
+  public void hideRootNode() {
+    UIUtil.invokeLaterIfNeeded(() -> {
+      JTree tree = myBuilder.getTree();
+      if (tree != null) {
+        tree.setRootVisible(false);
+        tree.setShowsRootHandles(true);
+      }
+    });
   }
 
   private static class DetailsHandler {
