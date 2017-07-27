@@ -224,8 +224,10 @@
       <separator/>
       <action text="Application Service" id="NewApplicationService"
               class="org.jetbrains.idea.devkit.actions.service.NewApplicationServiceAction"/>
-      <action text="Project Service" id="NewAProjectService"
+      <action text="Project Service" id="NewProjectService"
               class="org.jetbrains.idea.devkit.actions.service.NewProjectServiceAction"/>
+      <action text="Module Service" id="NewModuleService"
+              class="org.jetbrains.idea.devkit.actions.service.NewModuleServiceAction"/>
       <separator/>
       <!-- TODO remove these three actions -->
       <action text="Application Component" id="NewApplicationComponent"
