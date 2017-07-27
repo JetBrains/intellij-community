@@ -49,7 +49,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   public static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = Contract.class.getName();
   static final String METHOD_REFERENCE_QUALIFIER_SYNTHETIC_FIELD = "Method reference qualifier";
   private final PsiElement myCodeFragment;
-  private boolean myIgnoreAssertions;
+  private final boolean myIgnoreAssertions;
+  private final boolean myInlining;
   private final Project myProject;
 
   private static class CannotAnalyzeException extends RuntimeException { }
@@ -62,7 +63,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private final PsiType myAssertionError;
   private PsiLambdaExpression myLambdaExpression = null;
 
-  ControlFlowAnalyzer(final DfaValueFactory valueFactory, @NotNull PsiElement codeFragment, boolean ignoreAssertions) {
+  ControlFlowAnalyzer(final DfaValueFactory valueFactory, @NotNull PsiElement codeFragment, boolean ignoreAssertions, boolean inlining) {
+    myInlining = inlining;
     myFactory = valueFactory;
     myCodeFragment = codeFragment;
     myProject = codeFragment.getProject();
@@ -1364,10 +1366,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override public void visitMethodCallExpression(PsiMethodCallExpression expression) {
     startElement(expression);
 
-    for (CallInliner inliner : INLINERS) {
-      if (inliner.tryInlineCall(new CFGBuilder(this), expression)) {
-        finishElement(expression);
-        return;
+    if (myInlining) {
+      for (CallInliner inliner : INLINERS) {
+        if (inliner.tryInlineCall(new CFGBuilder(this), expression)) {
+          finishElement(expression);
+          return;
+        }
       }
     }
 

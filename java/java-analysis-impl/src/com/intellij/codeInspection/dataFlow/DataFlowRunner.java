@@ -46,6 +46,7 @@ public class DataFlowRunner {
   private final Map<DfaMemoryState, PsiElement> myStackTopClosures = new HashMap<>();
   @NotNull
   private final DfaValueFactory myValueFactory;
+  private boolean myInlining = true;
   // Maximum allowed attempts to process instruction. Fail as too complex to process if certain instruction
   // is executed more than this limit times.
   static final int MAX_STATES_PER_BRANCH = 300;
@@ -69,7 +70,14 @@ public class DataFlowRunner {
     if (container != null && (!(container instanceof PsiClass) || PsiUtil.isLocalOrAnonymousClass((PsiClass)container))) {
       PsiElement block = DfaPsiUtil.getTopmostBlockInSameClass(container.getParent());
       if (block != null) {
-        final RunnerResult result = analyzeMethod(block, visitor);
+        final RunnerResult result;
+        try {
+          myInlining = false;
+          result = analyzeMethod(block, visitor);
+        }
+        finally {
+          myInlining = true;
+        }
         if (result == RunnerResult.OK) {
           final Collection<DfaMemoryState> closureStates = myNestedClosures.get(DfaPsiUtil.getTopmostBlockInSameClass(psiBlock));
           if (!closureStates.isEmpty()) {
@@ -103,7 +111,7 @@ public class DataFlowRunner {
                                    boolean ignoreAssertions,
                                    @NotNull Collection<DfaMemoryState> initialStates) {
     try {
-      final ControlFlow flow = new ControlFlowAnalyzer(myValueFactory, psiBlock, ignoreAssertions).buildControlFlow();
+      final ControlFlow flow = new ControlFlowAnalyzer(myValueFactory, psiBlock, ignoreAssertions, myInlining).buildControlFlow();
       if (flow == null) return RunnerResult.NOT_APPLICABLE;
       int[] loopNumber = LoopAnalyzer.calcInLoop(flow);
 
