@@ -100,7 +100,7 @@ public class JavaStreamChainBuilder implements StreamChainBuilder {
     while (current != null) {
       final PsiElement parent = current.getParent();
 
-      if (parent instanceof PsiCodeBlock || parent instanceof PsiLambdaExpression || parent instanceof PsiStatement) {
+      if (parent instanceof PsiModifiableCodeBlock || parent instanceof PsiLambdaExpression || parent instanceof PsiStatement) {
         break;
       }
 
