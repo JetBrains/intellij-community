@@ -109,8 +109,8 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
       if (element instanceof PyStringLiteralExpression) {
         return replaceSubstringInStringLiteral((PyStringLiteralExpression)element, newExpression, textRange);
       }
-      final PsiElement expression = generator.createFromText(languageLevel, element.getClass(), prefix + newExpression.getText() + suffix);
-      return element.replace(expression);
+      final PyElement newElement = generator.createFromText(languageLevel, PyElement.class, prefix + newExpression.getText() + suffix);
+      return element.replace(newElement);
     }
     else {
       return oldExpression.replace(newExpression);
