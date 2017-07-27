@@ -668,7 +668,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.getOverrideLafFonts()) {
       storeOriginalFontDefaults(uiDefaults);
-      initFontDefaults(uiDefaults, uiSettings.getFontSize(), new FontUIResource(uiSettings.getFontFace(), Font.PLAIN, uiSettings.getFontSize()));
+      initFontDefaults(uiDefaults, new FontUIResource(uiSettings.getFontFace(), Font.PLAIN, uiSettings.getFontSize()));
       JBUI.setUserScaleFactor(JBUI.getFontScale(uiSettings.getFontSize()));
     }
     else {
@@ -773,10 +773,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public static void initFontDefaults(UIDefaults defaults, int fontSize, FontUIResource uiFont) {
+  public static void initFontDefaults(@NotNull UIDefaults defaults, @NotNull FontUIResource uiFont) {
     defaults.put("Tree.ancestorInputMap", null);
-    FontUIResource textFont = new FontUIResource("Serif", Font.PLAIN, fontSize);
-    FontUIResource monoFont = new FontUIResource("Monospaced", Font.PLAIN, fontSize);
+    FontUIResource textFont = new FontUIResource(uiFont);
+    FontUIResource monoFont = new FontUIResource("Monospaced", Font.PLAIN, uiFont.getSize());
 
     for (String fontResource : ourPatchableFontResources) {
       defaults.put(fontResource, uiFont);
