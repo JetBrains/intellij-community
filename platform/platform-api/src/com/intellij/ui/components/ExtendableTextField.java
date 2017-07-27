@@ -16,6 +16,8 @@
 package com.intellij.ui.components;
 
 import javax.swing.Icon;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.util.ui.JBUI.scale;
@@ -51,8 +53,16 @@ public class ExtendableTextField extends JBTextField {
   }
 
   public void setExtensions(Extension... extensions) {
+    setExtensions(asList(extensions));
+  }
+
+  public void setExtensions(Collection<Extension> extensions) {
+    setExtensions(new ArrayList<>(extensions));
+  }
+
+  private void setExtensions(List<Extension> extensions) {
     putClientProperty("JTextField.variant", null);
-    this.extensions = unmodifiableList(asList(extensions));
+    this.extensions = unmodifiableList(extensions);
     putClientProperty("JTextField.variant", VARIANT);
   }
 

@@ -440,6 +440,12 @@ public class KeymapUtil {
   }
 
   @NotNull
+  public static String createTooltipText(@NotNull String name, @NotNull String actionId) {
+    String text = getFirstKeyboardShortcutText(actionId);
+    return text.isEmpty() ? name : name + " (" + text + ")";
+  }
+
+  @NotNull
   public static String createTooltipText(@Nullable String name, @NotNull AnAction action) {
     String toolTipText = name == null ? "" : name;
     while (StringUtil.endsWithChar(toolTipText, '.')) {

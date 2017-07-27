@@ -36,19 +36,19 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText;
+import static com.intellij.openapi.keymap.KeymapUtil.createTooltipText;
 import static java.awt.event.InputEvent.CTRL_MASK;
 import static java.beans.EventHandler.create;
+import static java.util.Collections.singletonList;
 import static javax.swing.KeyStroke.getKeyStroke;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS;
 
 /**
  * @author Sergey Malenkov
  */
-public final class ExpandableTextField extends ExtendableTextField implements Expandable {
+public class ExpandableTextField extends ExtendableTextField implements Expandable {
   private static final int MINIMAL_WIDTH = 50;
   private final Function<String, String> parser;
   private final Function<String, String> joiner;
@@ -73,7 +73,11 @@ public final class ExpandableTextField extends ExtendableTextField implements Ex
     this.joiner = text -> joiner.fun(Arrays.asList(StringUtil.splitByLines(text)));
     addAncestorListener(create(AncestorListener.class, this, "collapse"));
     addComponentListener(create(ComponentListener.class, this, "collapse"));
-    setExtensions(new Extension() {
+    setExtensions(createExtensions());
+  }
+
+  protected List<Extension> createExtensions() {
+    return singletonList(new Extension() {
       @Override
       public Icon getIcon(boolean hovered) {
         return hovered ? AllIcons.General.ExpandComponentHover : AllIcons.General.ExpandComponent;
@@ -86,8 +90,7 @@ public final class ExpandableTextField extends ExtendableTextField implements Ex
 
       @Override
       public String getTooltip() {
-        String text = getFirstKeyboardShortcutText("ExpandExpandableComponent");
-        return text.isEmpty() ? "Expand" : "Expand (" + text + ")";
+        return createTooltipText("Expand", "ExpandExpandableComponent");
       }
     });
   }
@@ -125,8 +128,7 @@ public final class ExpandableTextField extends ExtendableTextField implements Ex
     JBScrollPane pane = new JBScrollPane(area);
     pane.setVerticalScrollBarPolicy(VERTICAL_SCROLLBAR_ALWAYS);
     pane.getVerticalScrollBar().add(JBScrollBar.LEADING, new JLabel(AllIcons.General.CollapseComponent) {{
-      String text = getFirstKeyboardShortcutText("CollapseExpandableComponent");
-      setToolTipText(text.isEmpty() ? "Collapse" : "Collapse (" + text + ")");
+      setToolTipText(createTooltipText("Collapse", "CollapseExpandableComponent"));
       setBorder(JBUI.Borders.empty(5, 0, 1, 5));
       addMouseListener(new MouseAdapter() {
         @Override
@@ -175,7 +177,7 @@ public final class ExpandableTextField extends ExtendableTextField implements Ex
       .setTitle(title)
       .setLocateByContent(true)
       .setCancelOnWindowDeactivation(false)
-      .setKeyboardActions(Collections.singletonList(Pair.create(event -> {
+      .setKeyboardActions(singletonList(Pair.create(event -> {
         collapse();
         Window window = UIUtil.getWindow(this);
         if (window != null) {
