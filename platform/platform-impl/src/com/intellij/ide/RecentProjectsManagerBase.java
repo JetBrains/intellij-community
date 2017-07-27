@@ -167,12 +167,10 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   public void loadState(final State state) {
     state.makePathsSystemIndependent();
     removeDuplicates(state);
-    if (state.lastPath != null && !new File(state.lastPath).exists()) {
-      state.lastPath = null;
-    }
     if (state.lastPath != null) {
-      File lastFile = new File(state.lastPath);
-      if (lastFile.isDirectory() && !new File(lastFile, Project.DIRECTORY_STORE_FOLDER).exists()) {
+      File lastFile = new File(PathUtil.toSystemDependentName(state.lastPath));
+      if (!lastFile.exists() ||
+          lastFile.isDirectory() && !new File(lastFile, Project.DIRECTORY_STORE_FOLDER).exists()) {
         state.lastPath = null;
       }
     }
