@@ -422,7 +422,7 @@ public class ExternalSystemUtil {
           public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
             long eventTime = System.currentTimeMillis();
             ServiceManager.getService(project, SyncViewManager.class).onEvent(
-              new StartBuildEventImpl(id, projectName, eventTime, "syncing..."), "CONSOLE", "TREE");
+              new StartBuildEventImpl(id, projectName, eventTime, "syncing..."), "TREE");
           }
 
           @Override
