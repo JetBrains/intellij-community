@@ -3,6 +3,7 @@ package com.intellij.util.net.ssl;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -87,6 +88,7 @@ public class CertificateInfoPanel extends JPanel {
 
   private static JComponent getTextPane(String text) {
     JTextPane pane = new JTextPane();
+    pane.setEditorKit(UIUtil.getHTMLEditorKit());
     pane.setOpaque(false);
     pane.setEditable(false);
     pane.setContentType("text/plain");
