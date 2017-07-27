@@ -66,6 +66,7 @@ public class SyncViewManager implements Disposable {
   private final JBList<BuildInfo> myBuildsList;
   private final Map<Object, BuildInfo> myBuildsMap;
   private final Map<BuildInfo, DuplexConsoleView<BuildConsoleView, BuildConsoleView>> myViewMap;
+  private DefaultActionGroup myToolbarActions;
 
   public SyncViewManager(Project project, BuildContentManager buildContentManager) {
     myProject = project;
@@ -151,6 +152,7 @@ public class SyncViewManager implements Disposable {
           myBuildsList.setVisible(false);
           myThreeComponentsSplitter.setFirstComponent(null);
           myThreeComponentsSplitter.setLastComponent(null);
+          myToolbarActions.removeAll();
         }
       }
       final BuildInfo buildInfo =
@@ -181,6 +183,8 @@ public class SyncViewManager implements Disposable {
 
         if (myThreeComponentsSplitter.getLastComponent() == null) {
           myThreeComponentsSplitter.setLastComponent(view);
+          myToolbarActions.removeAll();
+          myToolbarActions.addAll(view.createConsoleActions());
         }
         if (listModel.getSize() > 1 && myThreeComponentsSplitter.getFirstComponent() == null) {
           JBScrollPane scrollPane = new JBScrollPane();
@@ -253,6 +257,8 @@ public class SyncViewManager implements Disposable {
                 if (lastComponent != null) {
                   lastComponent.setVisible(false);
                 }
+                myToolbarActions.removeAll();
+                myToolbarActions.addAll(view.createConsoleActions());
                 view.getComponent().repaint();
               }
 
@@ -269,10 +275,9 @@ public class SyncViewManager implements Disposable {
 
           final JComponent consoleComponent = new JPanel(new BorderLayout());
           consoleComponent.add(myThreeComponentsSplitter, BorderLayout.CENTER);
-          final DefaultActionGroup toolbarActions = new DefaultActionGroup();
-          //toolbarActions.addAll(duplexConsoleView.createConsoleActions());
+          myToolbarActions = new DefaultActionGroup();
           consoleComponent.add(ActionManager.getInstance().createActionToolbar(
-            "", toolbarActions, false).getComponent(), BorderLayout.WEST);
+            "", myToolbarActions, false).getComponent(), BorderLayout.WEST);
 
           myContent = new ContentImpl(consoleComponent, "   Sync   ", true);
           myContent.setCloseable(false);
