@@ -228,20 +228,11 @@
               class="org.jetbrains.idea.devkit.actions.service.NewProjectServiceAction"/>
       <action text="Module Service" id="NewModuleService"
               class="org.jetbrains.idea.devkit.actions.service.NewModuleServiceAction"/>
-      <separator/>
-      <!-- TODO remove these three actions -->
-      <action text="Application Component" id="NewApplicationComponent"
-              class="org.jetbrains.idea.devkit.actions.component.NewApplicationComponentAction"/>
-      <action text="Project Component" id="NewProjectComponent"
-              class="org.jetbrains.idea.devkit.actions.component.NewProjectComponentAction"/>
-      <action text="Module Component" id="NewModuleComponent"
-              class="org.jetbrains.idea.devkit.actions.component.NewModuleComponentAction"/>
-
       <add-to-group group-id="NewGroup" anchor="last"/>
     </group>
 
 
-    <action class="org.jetbrains.idea.devkit.actions.component.GenerateComponentExternalizationAction" text="Generate Externalization"
+    <action class="org.jetbrains.idea.devkit.actions.GenerateComponentExternalizationAction" text="Generate Externalization"
             id="GenerateExternalization">
       <add-to-group anchor="last" group-id="GenerateGroup"/>
     </action>
