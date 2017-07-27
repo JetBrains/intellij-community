@@ -116,6 +116,10 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
    * @throws MalformedURLException
    */
   public PydevConsoleCommunication(Project project, int port, Process process, int clientPort) throws Exception {
+    this(project, null, port, process, clientPort);
+  }
+
+  public PydevConsoleCommunication(Project project, String host, int port, Process process, int clientPort) throws Exception {
     super(project);
 
     //start the server that'll handle input requests
@@ -124,7 +128,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     myWebServer.addHandler("$default", this);
     this.myWebServer.start();
 
-    this.myClient = new PydevXmlRpcClient(process, port);
+    this.myClient = new PydevXmlRpcClient(process, host, port);
   }
 
   public boolean handshake() throws XmlRpcException {
