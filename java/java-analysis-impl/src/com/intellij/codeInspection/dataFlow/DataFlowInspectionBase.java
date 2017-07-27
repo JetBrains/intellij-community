@@ -24,10 +24,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFi
 import com.intellij.codeInsight.intention.impl.AddNotNullAnnotationFix;
 import com.intellij.codeInsight.intention.impl.AddNullableAnnotationFix;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
-import com.intellij.codeInspection.dataFlow.fix.ReplaceWithConstantValueFix;
-import com.intellij.codeInspection.dataFlow.fix.ReplaceWithObjectsEqualsFix;
-import com.intellij.codeInspection.dataFlow.fix.SimplifyToAssignmentFix;
+import com.intellij.codeInspection.dataFlow.fix.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
@@ -284,6 +281,10 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         if (ReplaceWithTernaryOperatorFix.isAvailable(qualifier, expression)) {
           fixes.add(new ReplaceWithTernaryOperatorFix(qualifier));
         }
+      }
+
+      if (PsiUtil.isLanguageLevel7OrHigher(qualifier)) {
+        fixes.add(new SurroundWithRequireNonNullFix(qualifier));
       }
 
       ContainerUtil.addIfNotNull(fixes, DfaOptionalSupport.registerReplaceOptionalOfWithOfNullableFix(qualifier));
