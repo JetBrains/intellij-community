@@ -44,6 +44,7 @@ public class ExecutionNode extends CachingSimpleNode {
   @Nullable
   private String hint;
   private EventResult myResult;
+  private boolean myAutoExpandNode;
 
   public ExecutionNode(Project aProject) {
     super(aProject, null);
@@ -172,5 +173,14 @@ public class ExecutionNode extends CachingSimpleNode {
 
   public EventResult getResult() {
     return myResult;
+  }
+
+  @Override
+  public boolean isAutoExpandNode() {
+    return myAutoExpandNode;
+  }
+
+  public void setAutoExpandNode(boolean autoExpandNode) {
+    myAutoExpandNode = autoExpandNode;
   }
 }

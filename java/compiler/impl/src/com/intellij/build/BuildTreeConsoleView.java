@@ -262,6 +262,7 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
       if (event instanceof StartBuildEvent) {
         String buildTitle = ((StartBuildEvent)event).getBuildTitle();
         currentNode.setTitle(buildTitle);
+        currentNode.setAutoExpandNode(true);
       }
     }
     else {
