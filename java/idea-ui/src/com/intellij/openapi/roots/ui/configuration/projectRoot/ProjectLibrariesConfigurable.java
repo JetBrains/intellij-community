@@ -15,14 +15,19 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.List;
 
 public class ProjectLibrariesConfigurable extends BaseLibrariesConfigurable {
   public ProjectLibrariesConfigurable(final Project project) {
@@ -65,6 +70,16 @@ public class ProjectLibrariesConfigurable extends BaseLibrariesConfigurable {
   @Override
   public LibraryTablePresentation getLibraryTablePresentation() {
     return LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getPresentation();
+  }
+
+  @NotNull
+  @Override
+  protected List<? extends AnAction> createCopyActions(boolean fromPopup) {
+    List<? extends AnAction> actions = super.createCopyActions(fromPopup);
+    if (fromPopup) {
+      return ContainerUtil.concat(actions, Collections.singletonList(new ConvertToRepositoryLibraryAction(this, myProject)));
+    }
+    return actions;
   }
 
   @Override
