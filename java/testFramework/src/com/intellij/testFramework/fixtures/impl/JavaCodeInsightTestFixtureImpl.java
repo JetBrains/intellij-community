@@ -17,6 +17,7 @@ package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
@@ -24,6 +25,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -46,7 +48,22 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
   @Override
   public PsiClass addClass(@NotNull @NonNls final String classText) {
     assertInitialized();
-    final PsiClass psiClass = addClass(getTempDirPath(), classText);
+
+    String rootPath = getTempDirPath();
+
+    // Make sure rootPath belongs to the module:
+    final ModuleRootManager rootManager = ModuleRootManager.getInstance(getModule());
+    if (rootManager != null) {
+      VirtualFile[] allSourceRoots = rootManager.getSourceRoots(true);
+      VirtualFile[] productionSourceRoots = rootManager.getSourceRoots(false);
+      VirtualFile rootVirtualFile = getTempDirFixture().getFile(""); // should be equivalent to rootPath.
+      if (!ArrayUtil.contains(rootVirtualFile, allSourceRoots) && !ArrayUtil.isEmpty(productionSourceRoots)) {
+        // The temp directory is not a source root, so there's little point adding the class there. Pick a production source root instead.
+        rootPath = productionSourceRoots[0].getPath();
+      }
+    }
+
+    final PsiClass psiClass = addClass(rootPath, classText);
     final VirtualFile file = psiClass.getContainingFile().getVirtualFile();
     allowTreeAccessForFile(file);
     return psiClass;
