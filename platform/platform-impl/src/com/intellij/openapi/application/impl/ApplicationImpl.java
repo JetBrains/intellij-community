@@ -1216,7 +1216,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         myLock.writeLock();
         if (LOG.isDebugEnabled()) {
           long elapsed = System.currentTimeMillis() - t;
-          LOG.debug("Write action wait time: " + elapsed);
+          if (elapsed != 0) {
+            LOG.debug("Write action wait time: " + elapsed);
+          }
         }
         if (reportSlowWrite != null) {
           reportSlowWrite.cancel(false);
