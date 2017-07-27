@@ -55,6 +55,10 @@ public abstract class ExecutionTarget {
    */
   public abstract boolean canRun(@NotNull RunnerAndConfigurationSettings configuration);
 
+  /**
+   * Checks if the target is ready to be selected as a default choice in the Run Configurations popup
+   * @return true if the target is ready, false otherwise
+   */
   public boolean isReady() {
     return true;
   }
