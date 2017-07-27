@@ -55,6 +55,8 @@ import static git4idea.history.GitLogParser.GitLogOption.*;
 
 public class GitLogUtil {
   private static final Logger LOG = Logger.getInstance(GitLogUtil.class);
+  public static final String GRAFTED = "grafted";
+  public static final String REPLACED = "replaced";
   /**
    * A parameter to {@code git log} which is equivalent to {@code --all}, but doesn't show the stuff from index or stash.
    */
@@ -144,7 +146,7 @@ public class GitLogUtil {
                                               @NotNull VcsLogObjectsFactory factory,
                                               @NotNull VirtualFile root) {
     return ContainerUtil.mapNotNull(refs, refName -> {
-      if (refName.equals(GitUtil.GRAFTED) || refName.equals(GitUtil.REPLACED)) return null;
+      if (refName.equals(GRAFTED) || refName.equals(REPLACED)) return null;
       VcsRefType type = GitRefManager.getRefType(refName);
       refName = GitBranchUtil.stripRefsPrefix(refName);
       return refName.equals(GitUtil.ORIGIN_HEAD) ? null : factory.createRef(hash, refName, type, root);
