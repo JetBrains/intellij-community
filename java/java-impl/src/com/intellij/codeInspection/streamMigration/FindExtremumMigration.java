@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.streamMigration;
 
+
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -27,9 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-/**
- * Created by Roman Ivanov.
- */
 public class FindExtremumMigration extends BaseStreamApiMigration {
 
   static final String MAX_REPLACEMENT = "max()";
@@ -41,231 +39,55 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
     super(shouldWarn, replacement);
   }
 
-
   @Override
   PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb) {
-    ExtremumTerminal terminal = extractExtremumTerminal(tb);
+    ExtremumTerminal terminal = extract(tb);
     if (terminal == null) return null;
     String operation = terminal.isMax() ? "max" : "min";
-    String comparator;
+
     KeySelector keySelector = terminal.getKeySelector();
     PsiVariable currentVariable =
       terminal.getLoopVariable();
-
     JavaCodeStyleManager javaStyle = JavaCodeStyleManager.getInstance(project);
     String name = currentVariable.getName();
     if (name == null) name = "x";
     javaStyle.suggestUniqueVariableName(name, body, true);
-    String lambdaText = keySelector.getLambdaText(name);
-    PsiType lambdaReturnType = keySelector.acceptingType();
+    String lambdaText = keySelector.buildLambda(name);
+    PsiType lambdaReturnType = keySelector.selectedKeyType();
     String comparingMethod = getComparingMethod(lambdaReturnType);
     if (comparingMethod == null) return null;
-    comparator = CommonClassNames.JAVA_UTIL_COMPARATOR + "." + comparingMethod + "(" + lambdaText + ")";
+    String comparator = CommonClassNames.JAVA_UTIL_COMPARATOR + "." + comparingMethod + "(" + lambdaText + ")";
 
     TerminalBlock terminalBlock = terminal.getTerminalBlock();
 
-    String stream = createStreamText(terminal, operation, comparator, name, terminalBlock);
+    String stream = buildStreamText(terminal, operation, comparator, name, terminalBlock);
     PsiLoopStatement loop = terminalBlock.getMainLoop();
-    return replaceWithFindExtremum(loop, terminal.getExtremumHolder(), stream);
+    return replaceWithFindExtremum(loop, terminal.getExtremumHolder(), stream, terminal.getKeyExtremum());
   }
 
   @NotNull
-  private static String createStreamText(ExtremumTerminal terminal,
-                                         String operation,
-                                         String comparator,
-                                         String name,
-                                         TerminalBlock terminalBlock) {
-    if (!terminal.isPrimitive()) {
-      return terminalBlock.generate() + "." + operation + "(" + comparator + ").orElse(null)";
-    }
+  String buildStreamText(@NotNull ExtremumTerminal terminal,
+                         @NotNull String operation,
+                         @NotNull String comparator,
+                         @NotNull String varName,
+                         @NotNull TerminalBlock terminalBlock) {
     String startingValue;
     String filterOp;
-    if (terminal.getStartingValue() != null) {
-      startingValue = terminal.getStartingValue().toString();
+    if (terminal.getKeySelectorInitializer() != null) {
+      PsiExpression initializer = terminal.getKeySelectorInitializer();
+      startingValue = initializer.getText();
+      String keySelectorText = terminal.getKeySelector().buildExpression(varName).getText();
       String inFilterOperation = terminal.isMax() ? ">=" : "<=";
-      filterOp = ".filter(" + name + "->" + name + inFilterOperation + terminal.getStartingValue().toString() + ")";
+      filterOp = ".filter(" + varName + "->" + keySelectorText + inFilterOperation + startingValue + ")";
     }
     else {
       startingValue = "";
       filterOp = "";
     }
-    return terminalBlock.generate() + filterOp + "." + operation + "().orElse(" + startingValue + ")";
-  }
-
-
-  @Nullable
-  static ExtremumTerminal extractExtremumTerminal(@NotNull TerminalBlock tb) {
-    PsiStatement[] statements = tb.getStatements();
-    StreamApiMigrationInspection.Operation operation = tb.getLastOperation();
-    StreamApiMigrationInspection.FilterOp filterOp = tryCast(operation, StreamApiMigrationInspection.FilterOp.class);
-    if (filterOp != null) {
-      TerminalBlock block = tb.withoutLastOperation();
-      if (block == null) return null;
-      ExtremumTerminal terminal = extractSimpleRefCase(filterOp.getExpression(), statements, block);
-      if (terminal != null) return terminal;
-      ExtremumTerminal primitiveCase = extractSimplePrimitiveCase(filterOp.getExpression(), statements, block);
-      if (primitiveCase != null) return primitiveCase;
+    if (terminal.isPrimitive()) {
+      return terminalBlock.generate() + filterOp + "." + operation + "().orElse(" + startingValue + ")";
     }
-    switch (statements.length) {
-      case 1: // if() .. else if() ..
-        PsiStatement statement = statements[0];
-        PsiIfStatement ifStatement = tryCast(statement, PsiIfStatement.class);
-        if (ifStatement == null) return null;
-        PsiExpression condition = ifStatement.getCondition();
-        if (condition == null) return null;
-        PsiStatement thenBranch = ifStatement.getThenBranch();
-        PsiStatement elseBranch = ifStatement.getElseBranch();
-        ExtremumTerminal terminal = extractIfElseCase(condition, unwrapIfBranch(thenBranch), unwrapIfBranch(elseBranch), tb);
-        if (terminal != null) return terminal;
-        break;
-      case 2: // TODO if () .. if() ..
-        break;
-    }
-    return null;
-  }
-
-  //It looks like repeating for refs, but can't understand how to generalize for now
-  @Nullable
-  private static ExtremumTerminal extractSimplePrimitiveCase(@NotNull PsiExpression filterExpression,
-                                                             @NotNull PsiStatement[] statements,
-                                                             @NotNull TerminalBlock terminalBlock) {
-    PsiBinaryExpression binaryExpression = tryCast(filterExpression, PsiBinaryExpression.class);
-    if (binaryExpression == null) return null;
-    Comparision comparision = extractComparision(binaryExpression);
-    if (comparision == null) return null;
-    KeySelector second = comparision.getSecond();
-    KeySelector first = comparision.getFirst();
-    if (!hasSuitableType(first.getVariable().getType()) || !hasSuitableType(second.getVariable().getType())) return null;
-
-    Assignment[] assignments = extractAssignments(statements);
-    if (assignments == null || assignments.length != 1) return null;
-    Assignment assignment = assignments[0];
-    PsiVariable extremumHolder = assignment.getVariable();
-
-    ControlFlowUtils.InitializerUsageStatus status =
-      ControlFlowUtils.getInitializerUsageStatus(extremumHolder, terminalBlock.getMainLoop());
-    if (!status.equals(ControlFlowUtils.InitializerUsageStatus.DECLARED_JUST_BEFORE)) return null; // TODO can't it be weaker?
-
-    PsiExpression initializer = extremumHolder.getInitializer();
-    Object expressionInitializer = ExpressionUtils.computeConstantExpression(initializer);
-    if (expressionInitializer == null) return null;
-
-    final boolean isMax;
-    PsiVariable loopVariable;
-    PsiVariable comparisionExtrmumHolder;
-    PsiVariable comparisionLoopVariable;
-    if (extremumHolder.equals(comparision.getFirst().getVariable())) {
-      isMax = !comparision.isGreater();
-      loopVariable = comparision.getSecond().getVariable();
-      comparisionExtrmumHolder = comparision.getFirst().getVariable();
-      comparisionLoopVariable = comparision.getSecond().getVariable();
-    }
-    else if (extremumHolder.equals(comparision.getSecond().getVariable())) {
-      isMax = comparision.isGreater();
-      loopVariable = comparision.getFirst().getVariable();
-      comparisionExtrmumHolder = comparision.getSecond().getVariable();
-      comparisionLoopVariable = comparision.getFirst().getVariable();
-    }
-    else {
-      return null;
-    }
-
-    PsiVariable assignmentLoopVariable = assignment.tryExtractVariable();
-    if (assignmentLoopVariable == null || !assignmentLoopVariable.equals(comparisionLoopVariable)) return null;
-    //TODO check if it is really loop variable or use knowledge of non final variables
-
-    if(!comparisionExtrmumHolder.equals(extremumHolder)) return null;
-
-    return new ExtremumTerminal(isMax, true, comparision.getFirst(), loopVariable, extremumHolder, terminalBlock, expressionInitializer);
-  }
-
-  private static boolean hasSuitableType(@NotNull PsiType type) {
-    return type.equals(PsiType.INT) || type.equals(PsiType.LONG) || type.equals(PsiType.DOUBLE);
-  }
-
-  @NotNull
-  private static PsiStatement[] unwrapIfBranch(@Nullable PsiStatement statement) {
-    PsiBlockStatement blockStatement = tryCast(statement, PsiBlockStatement.class);
-    if (blockStatement != null) {
-      return blockStatement.getCodeBlock().getStatements();
-    }
-    return new PsiStatement[]{statement};
-  }
-
-  //if(maxPerson == null) {
-  //  maxPerson = current;
-  //} else if (maxPerson.getAge() < person.getAge()) {
-  //  maxPerson = current;
-  //}
-  @Nullable
-  private static ExtremumTerminal extractIfElseCase(@NotNull PsiExpression condition,
-                                                    @NotNull PsiStatement[] thenStatements,
-                                                    @NotNull PsiStatement[] elseStatements,
-                                                    @NotNull TerminalBlock terminalBlock) {
-    PsiBinaryExpression conditionExpression = tryCast(condition, PsiBinaryExpression.class);
-    if (conditionExpression == null) return null;
-    PsiVariable extremumHolder = extractNullCheckingVar(conditionExpression);
-    if (extremumHolder == null) return null;
-
-    if (thenStatements.length != 1) return null;
-    PsiStatement firstWayStatement = thenStatements[0];
-
-    if (elseStatements.length != 1) return null;
-    PsiStatement elseStatement = elseStatements[0];
-    PsiIfStatement nestedIf = tryCast(elseStatement, PsiIfStatement.class);
-    if (nestedIf == null) return null;
-    PsiExpression nestedIfCondition = nestedIf.getCondition();
-    if (nestedIfCondition == null) return null;
-    PsiStatement nestedThenBranch = nestedIf.getThenBranch();
-    if (nestedThenBranch == null) return null;
-    PsiStatement nestedElseBranch = nestedIf.getElseBranch();
-    if (nestedElseBranch != null) return null;
-    PsiStatement[] nestedElseStatements = unwrapIfBranch(nestedThenBranch);
-    if (nestedElseStatements.length != 1) return null;
-    PsiStatement maxReplacingStatement = nestedElseStatements[0];
-
-
-    if (!ourEquivalence.statementsAreEquivalent(maxReplacingStatement, firstWayStatement)) return null;
-    return extractSimpleRefCaseOriented(conditionExpression, nestedIfCondition, nestedElseStatements, terminalBlock);
-  }
-
-  // maxPerson == null || maxPerson.getAge() < person.getAge()
-  @Nullable
-  private static ExtremumTerminal extractSimpleRefCase(@NotNull PsiExpression filterExpression,
-                                                       @NotNull PsiStatement[] statements,
-                                                       @NotNull TerminalBlock terminalBlock) {
-    PsiBinaryExpression binaryExpression = tryCast(filterExpression, PsiBinaryExpression.class);
-    if (binaryExpression == null) return null;
-
-    IElementType sign = binaryExpression.getOperationSign().getTokenType();
-    if (!sign.equals(JavaTokenType.OROR)) {
-      return null;
-    }
-    PsiExpression lOperand = binaryExpression.getLOperand();
-    PsiExpression rOperand = binaryExpression.getROperand();
-    if (rOperand == null) return null;
-    ExtremumTerminal terminal = extractSimpleRefCaseOriented(lOperand, rOperand, statements, terminalBlock);
-    if (terminal != null) return terminal;
-    return extractSimpleRefCaseOriented(rOperand, lOperand, statements, terminalBlock);
-  }
-
-  @Nullable
-  private static ExtremumTerminal extractSimpleRefCaseOriented(@NotNull PsiExpression nullCheck,
-                                                               @NotNull PsiExpression comparisionExpression,
-                                                               @NotNull PsiStatement[] statements,
-                                                               @NotNull TerminalBlock terminalBlock) {
-    if (nullCheck instanceof PsiBinaryExpression) {
-      PsiVariable extremumHolder = extractNullCheckingVar((PsiBinaryExpression)nullCheck);
-      if (comparisionExpression instanceof PsiBinaryExpression && extremumHolder != null) {
-
-        Comparision comparision = extractComparision((PsiBinaryExpression)comparisionExpression);
-        if (comparision == null) return null;
-        Assignment[] assignments = extractAssignments(statements);
-        if (assignments == null) return null;
-        return extractRefExtremumTerminal(comparision, assignments, extremumHolder, terminalBlock);
-      }
-    }
-    return null;
+    return terminalBlock.generate() + filterOp + "." + operation + "(" + comparator + ").orElse(null)";
   }
 
   @Nullable
@@ -277,125 +99,306 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
   }
 
   @Nullable
-  static private Assignment[] extractAssignments(@NotNull PsiStatement[] statements) {
-    if (statements.length == 1) {
-      Assignment assignment = getSingleAssignment(statements[0]);
-      if (assignment == null) return null;
-      return new Assignment[]{assignment};
-    }
-    else if (statements.length == 2) {
-      Assignment first = getSingleAssignment(statements[0]);
-      if (first == null) return null;
-      Assignment second = getSingleAssignment(statements[1]);
-      if (second == null) return null;
-      return new Assignment[]{first, second};
-    }
-    return null;
-  }
-
-  @Nullable
-  private static Assignment getSingleAssignment(@NotNull PsiStatement statement) {
-    if (statement instanceof PsiExpressionStatement) {
-      PsiAssignmentExpression assignment = tryCast(((PsiExpressionStatement)statement).getExpression(), PsiAssignmentExpression.class);
-      PsiReferenceExpression holderReference = tryCast(assignment.getLExpression(), PsiReferenceExpression.class);
-      if (holderReference == null) return null;
-      PsiVariable holder = tryCast(holderReference.resolve(), PsiVariable.class);
-      if (holder == null) return null;
-      PsiExpression expression = assignment.getRExpression();
-      if (expression == null) return null;
-      return new Assignment(holder, expression);
-    }
-    return null;
-  }
-
-  @Nullable
-  private static ExtremumTerminal extractRefExtremumTerminal(@NotNull Comparision comparision,
-                                                             @NotNull Assignment[] assignments,
-                                                             @NotNull PsiVariable nullCheckedHolder,
-                                                             @NotNull TerminalBlock terminalBlock) {
-    PsiExpression initializer = nullCheckedHolder.getInitializer();
-    if (initializer == null || !PsiType.NULL.equals(initializer.getType())) return null; // TODO constant expression?
-
-    ControlFlowUtils.InitializerUsageStatus status =
-      ControlFlowUtils.getInitializerUsageStatus(nullCheckedHolder, terminalBlock.getMainLoop());
-    if (!status.equals(ControlFlowUtils.InitializerUsageStatus.DECLARED_JUST_BEFORE)) return null; // TODO can't it be weaker?
-
-    final boolean isMax;
-    final PsiVariable comparisionExtremumHolder;
-    final PsiVariable comparisionLoopVar;
-    final KeySelector comparisionKeySelector;
-    if (comparision.getFirst().getVariable().equals(nullCheckedHolder)) {
-      isMax = !comparision.isGreater();
-      comparisionExtremumHolder = comparision.getFirst().getVariable();
-      comparisionLoopVar = comparision.getSecond().getVariable();
-      comparisionKeySelector = comparision.getFirst();
-    }
-    else if (comparision.getSecond().getVariable().equals(nullCheckedHolder)) {
-      isMax = comparision.isGreater();
-      comparisionExtremumHolder = comparision.getSecond().getVariable();
-      comparisionLoopVar = comparision.getFirst().getVariable();
-      comparisionKeySelector = comparision.getSecond();
-    }
-    else {
-      return null;
-    }
-
-    PsiType lambdaType = comparisionKeySelector.acceptingType();
-    if (!hasSuitableType(lambdaType)) return null;
-
-    if (assignments.length == 1) {
-      Assignment assignment = assignments[0];
-      if (!assignment.getVariable().equals(nullCheckedHolder)) return null;
-      if (assignment.hasSameVariables(comparisionExtremumHolder, comparisionLoopVar)) return null;
-      return new ExtremumTerminal(isMax, false, comparisionKeySelector, comparisionLoopVar, comparisionExtremumHolder, terminalBlock, null);
-    }
-    else if (assignments.length == 2) {
-      //if(max == null || maxAge < current.getAge()) {max =
-      Assignment first = assignments[0];
-      Assignment second = assignments[1];
-      if (first.getVariable().equals(nullCheckedHolder) && first.hasSameVariables(comparisionExtremumHolder, comparisionLoopVar)) {
-        KeySelector assignmentKeySelector = KeySelector.extractKeySelector(second.getExpression());
-        if (assignmentKeySelector != null && comparisionKeySelector.equalShape(assignmentKeySelector)) {
-          PsiVariable keyExtremumHolder = assignmentKeySelector.getVariable();
-          //if (keyExtremumHolder.equals(comparisionLoopVar)) {
-          //
-          //}
-          //TODO
-        }
+  static ExtremumTerminal extract(@NotNull TerminalBlock terminalBlock) {
+    PsiStatement[] statements = terminalBlock.getStatements();
+    StreamApiMigrationInspection.Operation operation = terminalBlock.getLastOperation();
+    StreamApiMigrationInspection.FilterOp filterOp = tryCast(operation, StreamApiMigrationInspection.FilterOp.class);
+    if (filterOp != null) {
+      TerminalBlock block = terminalBlock.withoutLastOperation();
+      if (block != null) {
+        PsiExpression condition = filterOp.getExpression();
+        ExtremumTerminal simpleRefCase = extractSimpleRefCase(condition, statements, block);
+        if (simpleRefCase != null) return simpleRefCase;
+        ExtremumTerminal primitiveCase = extractSimplePrimitiveCase(condition, statements, block);
+        if (primitiveCase != null) return primitiveCase;
+        ExtremumTerminal complexRefCase = extractComplexRefCase(condition, statements, block);
+        if (complexRefCase != null) return complexRefCase;
       }
-      //else if() // TODO second is extremum holder assignment
+    }
+    return extractIfElseCase(statements, terminalBlock);
+  }
+
+  //if(maxPerson == null) {
+  //  maxPerson = current;
+  //} else if (maxPerson.getAge() < person.getAge()) {
+  //  maxPerson = current;
+  //}
+  @Nullable
+  static private ExtremumTerminal extractIfElseCase(@NotNull PsiStatement[] statements,
+                                                    @NotNull TerminalBlock terminalBlock) {
+    if (statements.length != 1) return null;
+    PsiStatement statement = statements[0];
+    PsiIfStatement ifStatement = tryCast(statement, PsiIfStatement.class);
+    if (ifStatement == null) return null;
+    PsiExpression thenCondition = ifStatement.getCondition();
+    if (thenCondition == null) return null;
+    PsiStatement thenBranch = unwrapIfBranchToStatement(ifStatement.getThenBranch());
+    PsiStatement elseBranch = unwrapIfBranchToStatement(ifStatement.getElseBranch());
+    if (thenBranch == null || elseBranch == null) return null;
+    return extractIfElseCase(thenBranch, thenCondition, elseBranch, terminalBlock);
+  }
+
+  @Nullable
+  static private ExtremumTerminal extractIfElseCase(@NotNull PsiStatement thenBranch,
+                                                    @NotNull PsiExpression thenCondition,
+                                                    @NotNull PsiStatement elseBranch,
+                                                    @NotNull TerminalBlock terminalBlock) {
+    PsiIfStatement elseIfStatement = tryCast(elseBranch, PsiIfStatement.class);
+    if (elseIfStatement == null || elseIfStatement.getElseBranch() != null) return null;
+    PsiExpression elseIfCondition = elseIfStatement.getCondition();
+    PsiStatement elseIf = unwrapIfBranchToStatement(elseIfStatement.getThenBranch());
+    if (elseIf == null || elseIfCondition == null) return null;
+    ExtremumTerminal firstWay = extractIfElseCase(thenBranch, thenCondition, elseIf, elseIfCondition, terminalBlock);
+    if (firstWay != null) return firstWay;
+    return extractIfElseCase(elseIf, elseIfCondition, thenBranch, thenCondition, terminalBlock);
+  }
+
+  @Nullable
+  static private ExtremumTerminal extractIfElseCase(@NotNull PsiStatement nullCheckBranch,
+                                                    @NotNull PsiExpression nullCheckExpr,
+                                                    @NotNull PsiStatement comparisionBranch,
+                                                    @NotNull PsiExpression comparisionExpr,
+                                                    @NotNull TerminalBlock terminalBlock) {
+    if (!ourEquivalence.statementsAreEquivalent(nullCheckBranch, comparisionBranch)) return null;
+    return extractSimpleRefCase(nullCheckExpr, comparisionExpr, new PsiStatement[]{comparisionBranch}, terminalBlock);
+  }
+
+  @Nullable
+  static private PsiStatement unwrapIfBranchToStatement(@Nullable PsiStatement statement) {
+    PsiStatement[] statements = unwrapIfBranch(statement);
+    if (statements.length != 1) return null;
+    return statements[0];
+  }
+
+  @NotNull
+  static private PsiStatement[] unwrapIfBranch(@Nullable PsiStatement statement) {
+    PsiBlockStatement blockStatement = tryCast(statement, PsiBlockStatement.class);
+    if (blockStatement != null) {
+      return blockStatement.getCodeBlock().getStatements();
+    }
+    return new PsiStatement[]{statement};
+  }
+
+  //Person maxPerson = null;
+  //int maxAge = Integer.MIN_VALUE;
+  //for (Person person : personList) {
+  //  if (maxPerson == null || maxAge < person.getAge()) {
+  //    maxPerson = person;
+  //    maxAge = person.getAge();
+  //  }
+  //}
+  @Nullable
+  static private ExtremumTerminal extractComplexRefCase(@NotNull PsiExpression condition,
+                                                        @NotNull PsiStatement[] statements,
+                                                        @NotNull TerminalBlock terminalBlock) {
+    return extractRefCase(condition, statements, terminalBlock, FindExtremumMigration::extractComplexRefCase);
+  }
+
+  @Nullable
+  static private ExtremumTerminal extractComplexRefCase(@NotNull PsiExpression nullCheckExpr,
+                                                        @NotNull PsiExpression comparisionExpr,
+                                                        @NotNull PsiStatement[] statements,
+                                                        @NotNull TerminalBlock terminalBlock) {
+    PsiBinaryExpression nullCheckBinary = tryCast(nullCheckExpr, PsiBinaryExpression.class);
+    if (nullCheckBinary == null) return null;
+    PsiVariable nullCheckingVar = extractNullCheckingVar(nullCheckBinary);
+    if (nullCheckingVar == null) return null;
+    Comparision comparision = Comparision.extract(comparisionExpr);
+    if (comparision == null) return null;
+    ComplexAssignment complexAssignment = ComplexAssignment.extractComplex(statements);
+    if (complexAssignment == null) return null;
+    Boolean isMax = isMax(complexAssignment, comparision);
+    if (isMax == null ||
+        !useSameVariables(complexAssignment, comparision, isMax) ||
+        changedBeforeLoop(complexAssignment.getExtremumHolder(), terminalBlock) ||
+        changedBeforeLoop(complexAssignment.getExtremumKey(), terminalBlock) ||
+        !terminalBlock.getVariable().equals(complexAssignment.getLoopVariable())) {
+      return null;
+    }
+
+    PsiExpression keyInitializer = complexAssignment.getExtremumKey().getInitializer();
+    PsiExpression extremumHolderInitializer = complexAssignment.getExtremumHolder().getInitializer();
+    if (!ExpressionUtils.isNullLiteral(extremumHolderInitializer)) return null;
+    if (ExpressionUtils.computeConstantExpression(keyInitializer) == null) return null;
+
+    return new ExtremumTerminal(2, false, isMax, complexAssignment.getExtremumKeySelector(), complexAssignment.getLoopVariable(),
+                                complexAssignment.getExtremumHolder(), terminalBlock, keyInitializer, complexAssignment.getExtremumKey());
+  }
+
+  //if(max < anInt) {
+  //max = anInt;
+  //}
+  @Nullable
+  private static ExtremumTerminal extractSimplePrimitiveCase(@NotNull PsiExpression condition,
+                                                             @NotNull PsiStatement[] statements,
+                                                             @NotNull TerminalBlock terminalBlock) {
+    Comparision comparision = Comparision.extract(condition);
+    if (comparision == null) return null;
+    SimpleAssignment assignment = SimpleAssignment.extractSimple(statements);
+    if (assignment == null) return null;
+    if (!(comparision.getFirstSelector() instanceof VariableKeySelector) ||
+        !(comparision.getSecondSelector() instanceof VariableKeySelector)) {
+      return null;
+    }
+    Boolean max = isMax(assignment, comparision);
+    if (max == null ||
+        !useSameVariables(assignment, comparision, max) ||
+        changedBeforeLoop(comparision.getExtremumHolderSelector(max).getVariable(), terminalBlock) ||
+        !terminalBlock.getVariable().equals(assignment.getLoopVariable())) {
+      return null;
+    }
+
+    KeySelector extremumHolderSelector = comparision.getExtremumHolderSelector(max);
+    PsiVariable extremumHolder = extremumHolderSelector.getVariable();
+    PsiExpression initializer = extremumHolder.getInitializer();
+    if (ExpressionUtils.computeConstantExpression(initializer) == null) return null;
+    return new ExtremumTerminal(1, true, max, extremumHolderSelector, assignment.getLoopVariable(),
+                                assignment.getExtremumHolder(), terminalBlock, initializer, null);
+  }
+
+  @Nullable
+  static private ExtremumTerminal extractSimpleRefCase(@NotNull PsiExpression condition,
+                                                       @NotNull PsiStatement[] statements,
+                                                       @NotNull TerminalBlock terminalBlock) {
+    return extractRefCase(condition, statements, terminalBlock, FindExtremumMigration::extractSimpleRefCase);
+  }
+
+  @Nullable
+  static private ExtremumTerminal extractRefCase(@NotNull PsiExpression condition,
+                                                 @NotNull PsiStatement[] statements,
+                                                 @NotNull TerminalBlock terminalBlock,
+                                                 @NotNull Extractor extractor) {
+    PsiBinaryExpression binaryExpression = tryCast(condition, PsiBinaryExpression.class);
+    if (binaryExpression == null) return null;
+    IElementType sign = binaryExpression.getOperationSign().getTokenType();
+    PsiExpression lOperand = binaryExpression.getLOperand();
+    PsiExpression rOperand = binaryExpression.getROperand();
+    if (!sign.equals(JavaTokenType.OROR) || rOperand == null) return null;
+    ExtremumTerminal firstWay = extractor.extractOriented(lOperand, rOperand, statements, terminalBlock);
+    if (firstWay != null) return firstWay;
+    return extractor.extractOriented(rOperand, lOperand, statements, terminalBlock);
+  }
+
+  @Nullable
+  static private ExtremumTerminal extractSimpleRefCase(@NotNull PsiExpression nullCheckExpr,
+                                                       @NotNull PsiExpression comparisionExpr,
+                                                       @NotNull PsiStatement[] statements,
+                                                       @NotNull TerminalBlock terminalBlock) {
+    PsiBinaryExpression nullCheckBinary = tryCast(nullCheckExpr, PsiBinaryExpression.class);
+    if (nullCheckBinary == null) return null;
+    PsiVariable nullCheckingVar = extractNullCheckingVar(nullCheckBinary);
+    if (nullCheckingVar == null) return null;
+    Comparision comparision = Comparision.extract(comparisionExpr);
+    if (comparision == null) return null;
+    SimpleAssignment simpleAssignment = SimpleAssignment.extractSimple(statements);
+    if (simpleAssignment == null) return null;
+
+    Boolean isMax = isMax(simpleAssignment, comparision);
+    if (isMax == null ||
+        !useSameVariables(simpleAssignment, comparision, isMax) ||
+        changedBeforeLoop(simpleAssignment.getExtremumHolder(), terminalBlock) ||
+        !terminalBlock.getVariable().equals(simpleAssignment.getLoopVariable())) return null;
+    PsiVariable loopVariable = comparision.getLoopVariableKeySelector(isMax).getVariable();
+    PsiVariable extremumHolder = comparision.getExtremumHolderSelector(isMax).getVariable();
+    PsiExpression initializer = extremumHolder.getInitializer();
+    if (!ExpressionUtils.isNullLiteral(initializer)) return null;
+    return new ExtremumTerminal(1, false, isMax, comparision.getFirstSelector(), loopVariable, extremumHolder,
+                                terminalBlock, null, null);
+  }
+
+  static private boolean changedBeforeLoop(@NotNull PsiVariable variable,
+                                           @NotNull TerminalBlock terminalBlock) {
+    ControlFlowUtils.InitializerUsageStatus status =
+      ControlFlowUtils.getInitializerUsageStatus(variable, terminalBlock.getMainLoop());
+    return status.equals(ControlFlowUtils.InitializerUsageStatus.UNKNOWN);
+  }
+
+  //  if (maxPerson == null || maxAge < person.getAge()) {
+  //    maxPerson = person;
+  //    maxAge = person.getAge();
+  static private boolean useSameVariables(ComplexAssignment complexAssignment, Comparision comparision, boolean isMax) {
+    PsiExpression extremumKeySelectorExpression = complexAssignment.getExtremumKeySelector().getExpression();
+    PsiExpression loopVarKeySelector = comparision.getLoopVariableKeySelector(isMax).getExpression();
+    PsiVariable loopVariable = comparision.getLoopVariableKeySelector(isMax).getVariable();
+    PsiVariable extremumHolder = comparision.getExtremumHolderSelector(isMax).getVariable(); // maxAge
+    return complexAssignment.getLoopVariable().equals(loopVariable) &&
+           complexAssignment.getExtremumKey().equals(extremumHolder) &&
+           comparision.getExtremumHolderSelector(isMax) instanceof VariableKeySelector &&
+           ourEquivalence.expressionsAreEquivalent(extremumKeySelectorExpression, loopVarKeySelector);
+  }
+
+  static private boolean useSameVariables(SimpleAssignment simpleAssignment, Comparision comparision, boolean isMax) {
+    return simpleAssignment.getExtremumHolder().equals(comparision.getExtremumHolderSelector(isMax).getVariable()) &&
+           simpleAssignment.getLoopVariable().equals(comparision.getLoopVariableKeySelector(isMax).getVariable());
+  }
+
+  @Nullable
+  static private Boolean isMax(SimpleAssignment assignment, Comparision comparision) {
+    if (assignment.getExtremumHolder().equals(comparision.getFirstSelector().getVariable())) {
+      return !comparision.isGreater();
+    }
+    else if (assignment.getExtremumHolder().equals(comparision.getSecondSelector().getVariable())) {
+      return comparision.isGreater();
     }
     else {
       return null;
     }
+  }
+
+  @Nullable
+  static private Boolean isMax(ComplexAssignment assignment, Comparision comparision) {
+    if (assignment.getExtremumKey().equals(comparision.getFirstSelector().getVariable())) {
+      return !comparision.isGreater();
+    }
+    else if (assignment.getExtremumKey().equals(comparision.getSecondSelector().getVariable())) {
+      return comparision.isGreater();
+    }
+    else {
+      return null;
+    }
+  }
+
+  @Nullable
+  private static PsiVariable extractNullCheckingVar(PsiExpression expression) {
+    PsiBinaryExpression binaryExpression = tryCast(expression, PsiBinaryExpression.class);
+    if (!binaryExpression.getOperationSign().getTokenType().equals(JavaTokenType.EQEQ)) {
+      return null;
+    }
+    PsiExpression lOperand = binaryExpression.getLOperand();
+    PsiExpression rOperand = binaryExpression.getROperand();
+    if (rOperand == null) return null;
+
+    PsiVariable lVariable = extractNullCheckingVar(lOperand, rOperand);
+    if (lVariable != null) return lVariable;
+    PsiVariable rVariable = extractNullCheckingVar(rOperand, lOperand);
+    if (rVariable != null) return rVariable;
     return null;
   }
 
   @Nullable
-  private static Comparision extractComparision(@NotNull PsiBinaryExpression expression) {
-    IElementType sign = expression.getOperationSign().getTokenType();
-    PsiExpression operand = expression.getROperand();
-    if (operand == null) return null;
-    if (sign.equals(JavaTokenType.LT) || sign.equals(JavaTokenType.LE)) {
-      return extractComparision(expression.getLOperand(), operand, false);
-    }
-    else if (sign.equals(JavaTokenType.GT) || sign.equals(JavaTokenType.GE)) {
-      return extractComparision(expression.getLOperand(), operand, true);
+  private static PsiVariable extractNullCheckingVar(PsiExpression first, PsiExpression second) {
+    PsiReferenceExpression lReference = tryCast(first, PsiReferenceExpression.class);
+    if (lReference != null) {
+      PsiVariable variable = tryCast(lReference.resolve(), PsiVariable.class);
+      if (variable != null && second.getText().equals("null")) {
+        return variable;
+      }
     }
     return null;
   }
 
   @Nullable
-  private static Comparision extractComparision(@NotNull PsiExpression first, @NotNull PsiExpression second, boolean isGreater) {
-    KeySelector firstSelector = KeySelector.extractKeySelector(first);
-    KeySelector secondSelector = KeySelector.extractKeySelector(second);
-    if (firstSelector == null || secondSelector == null || !firstSelector.equalShape(secondSelector)) return null;
-    return new Comparision(firstSelector, secondSelector, isGreater);
+  static PsiVariable getVariable(@NotNull PsiExpression expression) {
+    PsiReferenceExpression referenceExpression = tryCast(expression, PsiReferenceExpression.class);
+    if (referenceExpression == null) return null;
+    return tryCast(referenceExpression.resolve(), PsiVariable.class);
   }
+
 
   @Nullable
   private static PsiVariable resolveMethodReceiver(@NotNull PsiExpression expression) {
     PsiMethodCallExpression methodCallExpression = tryCast(expression, PsiMethodCallExpression.class);
+    if (methodCallExpression == null) return null;
     PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
     PsiReferenceExpression reference = tryCast(qualifierExpression, PsiReferenceExpression.class);
     if (reference == null) return null;
@@ -411,51 +414,31 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
     return tryCast(resolvedMethod, PsiMethod.class);
   }
 
-  @Nullable
-  private static PsiVariable extractNullCheckingVar(PsiBinaryExpression expression) {
-    if (!expression.getOperationSign().getTokenType().equals(JavaTokenType.EQEQ)) {
-      return null;
-    }
-    PsiExpression lOperand = expression.getLOperand();
-    PsiExpression rOperand = expression.getROperand();
-    if (rOperand == null) return null;
-
-    PsiVariable lVariable = extractOrientedNullCheck(lOperand, rOperand);
-    if (lVariable != null) return lVariable;
-    PsiVariable rVariable = extractOrientedNullCheck(rOperand, lOperand);
-    if (rVariable != null) return rVariable;
-    return null;
+  private static boolean isCorrectType(@NotNull PsiType type) {
+    return type.equals(PsiType.INT) || type.equals(PsiType.LONG) || type.equals(PsiType.DOUBLE);
   }
 
-  @Nullable
-  private static PsiVariable extractOrientedNullCheck(PsiExpression first, PsiExpression second) {
-    PsiReferenceExpression lReference = tryCast(first, PsiReferenceExpression.class);
-    if (lReference != null) {
-      PsiVariable variable = tryCast(lReference.resolve(), PsiVariable.class);
-      if (variable != null && second.getText().equals("null")) {
-        return variable;
-      }
-    }
-    return null;
+  interface Extractor {
+    @Nullable
+    ExtremumTerminal extractOriented(@NotNull PsiExpression nullCheckExpr,
+                                     @NotNull PsiExpression comparisionExpr,
+                                     @NotNull PsiStatement[] statements,
+                                     @NotNull TerminalBlock terminalBlock);
   }
 
-  /**
-   * Used to create Comparator
-   */
   interface KeySelector {
     /**
      * @param varName that can be used in comparator lambda
      * @return lambda text to create comparator
      */
     @NotNull
-    String getLambdaText(@NotNull String varName);
-
+    String buildLambda(@NotNull String varName);
 
     /**
-     * @return type of comparator function
+     * @return type of selected key to be compared
      */
     @NotNull
-    PsiType acceptingType();
+    PsiType selectedKeyType();
 
     /**
      * @return variable used in original key selection expression
@@ -463,31 +446,43 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
     @NotNull
     PsiVariable getVariable();
 
+    /**
+     * @return original key selection expression
+     */
+    @NotNull
+    PsiExpression getExpression();
+
+    @NotNull
+    PsiExpression buildExpression(@NotNull String qualifierName);
+
     boolean equalShape(@NotNull KeySelector keySelector);
 
     @Nullable
-    static KeySelector extractKeySelector(@NotNull PsiExpression expression) {
+    static KeySelector extractSelector(@NotNull PsiExpression expression) {
       MethodKeySelector methodKeySelector = MethodKeySelector.extract(expression);
-      if (methodKeySelector != null) return methodKeySelector;
+      if (methodKeySelector != null && isCorrectType(methodKeySelector.selectedKeyType())) return methodKeySelector;
       FieldKeySelector fieldKeySelector = FieldKeySelector.extract(expression);
-      if (fieldKeySelector != null) return fieldKeySelector;
+      if (fieldKeySelector != null && isCorrectType(fieldKeySelector.selectedKeyType())) return fieldKeySelector;
       VariableKeySelector variableKeySelector = VariableKeySelector.extract(expression);
-      if (variableKeySelector != null) return variableKeySelector;
+      if (variableKeySelector != null && isCorrectType(variableKeySelector.selectedKeyType())) return variableKeySelector;
       return null;
     }
   }
 
   static class MethodKeySelector implements KeySelector {
     private final @NotNull PsiMethod myMethod;
+    private final @NotNull PsiMethodCallExpression myExpression;
     private final @NotNull PsiVariable myVariable;
     @NotNull private final PsiClass myContainingClass;
     @NotNull private final PsiType myType;
 
     MethodKeySelector(@NotNull PsiMethod method,
+                      @NotNull PsiMethodCallExpression expression,
                       @NotNull PsiVariable variable,
                       @NotNull PsiClass containingClass,
                       @NotNull PsiType type) {
       myMethod = method;
+      myExpression = expression;
       myVariable = variable;
       myContainingClass = containingClass;
       myType = type;
@@ -495,13 +490,13 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
 
     @NotNull
     @Override
-    public String getLambdaText(@NotNull String varName) {
+    public String buildLambda(@NotNull String varName) {
       return myContainingClass.getQualifiedName() + "::" + myMethod.getName();
     }
 
     @NotNull
     @Override
-    public PsiType acceptingType() {
+    public PsiType selectedKeyType() {
       return myType;
     }
 
@@ -511,9 +506,28 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
       return myVariable;
     }
 
+    @NotNull
+    @Override
+    public PsiExpression getExpression() {
+      return myExpression;
+    }
+
+    @NotNull
+    @Override
+    public PsiExpression buildExpression(@NotNull String qualifierName) {
+      PsiMethodCallExpression callExpression = (PsiMethodCallExpression)myExpression.copy();
+      PsiReferenceExpression qualifierReference =
+        tryCast(callExpression.getMethodExpression().getQualifierExpression(), PsiReferenceExpression.class);
+      PsiVariable receiver = resolveMethodReceiver(callExpression);
+      //noinspection ConstantConditions checked  at creation
+      ExpressionUtils.bindReferenceTo(qualifierReference, qualifierName);
+      return callExpression;
+    }
+
     @Override
     public boolean equalShape(@NotNull KeySelector keySelector) {
-      return keySelector instanceof MethodKeySelector && ((MethodKeySelector)keySelector).myMethod.equals(myMethod);
+      return keySelector instanceof MethodKeySelector &&
+             ((MethodKeySelector)keySelector).myMethod.equals(myMethod);
     }
 
     @Nullable
@@ -526,25 +540,34 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
       if (containingClass == null) return null;
       PsiType returnType = method.getReturnType();
       if (returnType == null) return null;
-      return new MethodKeySelector(method, receiver, containingClass, returnType);
+      PsiMethodCallExpression methodCallExpression = tryCast(expression, PsiMethodCallExpression.class);
+      if (methodCallExpression == null) return null;
+      PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
+      if (qualifierExpression == null) return null;
+      if(tryCast(qualifierExpression, PsiReferenceExpression.class) == null) return null;
+      return new MethodKeySelector(method, methodCallExpression, receiver, containingClass, returnType);
     }
   }
 
   private static class VariableKeySelector implements KeySelector {
     private final PsiVariable myVariable;
+    private final PsiReferenceExpression myReferenceExpression;
 
-    private VariableKeySelector(PsiVariable variable) {myVariable = variable;}
+    private VariableKeySelector(PsiVariable variable, PsiReferenceExpression expression) {
+      myVariable = variable;
+      myReferenceExpression = expression;
+    }
 
     @NotNull
     @Override
-    public String getLambdaText(@NotNull String varName) {
+    public String buildLambda(@NotNull String varName) {
       String variableText = myVariable.getText();
       return variableText + "->" + variableText;
     }
 
     @NotNull
     @Override
-    public PsiType acceptingType() {
+    public PsiType selectedKeyType() {
       return myVariable.getType();
     }
 
@@ -554,9 +577,23 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
       return myVariable;
     }
 
+    @NotNull
+    @Override
+    public PsiExpression getExpression() {
+      return myReferenceExpression;
+    }
+
+    @NotNull
+    @Override
+    public PsiExpression buildExpression(@NotNull String qualifierName) {
+      PsiReferenceExpression referenceExpression = (PsiReferenceExpression)myReferenceExpression.copy();
+      ExpressionUtils.bindReferenceTo(referenceExpression, qualifierName);
+      return referenceExpression;
+    }
+
     @Override
     public boolean equalShape(@NotNull KeySelector keySelector) {
-      return keySelector instanceof  VariableKeySelector;
+      return keySelector instanceof VariableKeySelector;
     }
 
     @Nullable
@@ -565,28 +602,32 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
       if (referenceExpression == null) return null;
       PsiVariable variable = tryCast(referenceExpression.resolve(), PsiVariable.class);
       if (variable == null) return null;
-      return new VariableKeySelector(variable);
+      return new VariableKeySelector(variable, referenceExpression);
     }
   }
 
   private static class FieldKeySelector implements KeySelector {
     private final @NotNull PsiField myField;
     private final @NotNull PsiVariable myVariable;
+    private final @NotNull PsiReferenceExpression myReferenceExpression;
 
-    private FieldKeySelector(@NotNull PsiField field, @NotNull PsiVariable variable) {
+    private FieldKeySelector(@NotNull PsiField field,
+                             @NotNull PsiVariable variable,
+                             @NotNull PsiReferenceExpression referenceExpression) {
       myField = field;
       myVariable = variable;
+      myReferenceExpression = referenceExpression;
     }
 
     @NotNull
     @Override
-    public String getLambdaText(@NotNull String varName) {
+    public String buildLambda(@NotNull String varName) {
       return varName + "->" + varName + "." + myField.getName();
     }
 
     @NotNull
     @Override
-    public PsiType acceptingType() {
+    public PsiType selectedKeyType() {
       return myField.getType();
     }
 
@@ -596,6 +637,21 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
       return myVariable;
     }
 
+    @NotNull
+    @Override
+    public PsiExpression getExpression() {
+      return myReferenceExpression;
+    }
+
+    @NotNull
+    @Override
+    public PsiExpression buildExpression(@NotNull String referenceName) {
+      PsiReferenceExpression copy = (PsiReferenceExpression)myReferenceExpression.copy();
+      //noinspection ConstantConditions - checked at creation
+      ExpressionUtils.bindReferenceTo(copy, referenceName);
+      return copy;
+    }
+
     @Override
     public boolean equals(Object obj) {
       return obj instanceof FieldKeySelector && ((FieldKeySelector)obj).myField.equals(myField);
@@ -603,7 +659,7 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
 
     @Override
     public boolean equalShape(@NotNull KeySelector keySelector) {
-      return keySelector instanceof  FieldKeySelector && ((FieldKeySelector)keySelector).myField.equals(myField);
+      return keySelector instanceof FieldKeySelector && ((FieldKeySelector)keySelector).myField.equals(myField);
     }
 
     @Nullable
@@ -613,100 +669,54 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
       PsiField field = tryCast(referenceExpression.resolve(), PsiField.class);
       if (field == null) return null;
       PsiElement qualifier = referenceExpression.getQualifier();
+      if (referenceExpression.getQualifierExpression() == null) return null;
       PsiReference reference = tryCast(qualifier, PsiReference.class);
       if (reference == null) return null;
       PsiVariable variable = tryCast(reference.resolve(), PsiVariable.class);
       if (variable == null) return null;
-      return new FieldKeySelector(field, variable);
-    }
-  }
-
-  private static class Assignment {
-    private final @NotNull PsiVariable myVariable;
-    private final @NotNull PsiExpression myExpression;
-
-    private Assignment(@NotNull PsiVariable variable, @NotNull PsiExpression expression) {
-      myVariable = variable;
-      myExpression = expression;
-    }
-
-    @NotNull
-    public PsiVariable getVariable() {
-      return myVariable;
-    }
-
-    @NotNull
-    public PsiExpression getExpression() {
-      return myExpression;
-    }
-
-    private boolean hasSameVariables(@NotNull PsiVariable extremumHolder, @NotNull PsiVariable loopVar) {
-      PsiVariable rVariable = tryCast(myExpression, PsiVariable.class);
-      return rVariable != null & myVariable.equals(extremumHolder) && rVariable.equals(loopVar);
-    }
-
-    @Nullable
-    public PsiVariable tryExtractVariable(){
-      PsiReferenceExpression referenceExpression = tryCast(myExpression, PsiReferenceExpression.class);
-      if(referenceExpression == null) return null;
-      PsiVariable variable = tryCast(referenceExpression.resolve(), PsiVariable.class);
-      if(variable == null) return null;
-      return variable;
-    }
-  }
-
-  static class Comparision {
-    private final @NotNull KeySelector myFirst;
-    private final @NotNull KeySelector mySecond;
-    private final boolean myIsGreater;
-
-    Comparision(@NotNull KeySelector first, @NotNull KeySelector second, boolean greater) {
-      myFirst = first;
-      mySecond = second;
-      myIsGreater = greater;
-    }
-
-    public boolean isGreater() {
-      return myIsGreater;
-    }
-
-    @NotNull
-    public KeySelector getSecond() {
-      return mySecond;
-    }
-
-    @NotNull
-    public KeySelector getFirst() {
-      return myFirst;
+      return new FieldKeySelector(field, variable, referenceExpression);
     }
   }
 
   static class ExtremumTerminal {
-    private final boolean myIsMax;
-    private final boolean myIsPrimitive;
+    private final int myNonFinalVariableCount;
+    private final boolean isPrimitive;
+    private final boolean isMax;
     private final @NotNull KeySelector myKeySelector;
     private final @NotNull PsiVariable myLoopVariable;
     private final @NotNull PsiVariable myExtremumHolder;
     private final @NotNull TerminalBlock myTerminalBlock;
-    private final @Nullable Object myStartingValue;
+    private final @Nullable PsiExpression myKeySelectorInitializer;
+    private final @Nullable PsiVariable myKeyExtremum;
 
-    public ExtremumTerminal(boolean isMax,
-                            boolean isPrimitive, @NotNull KeySelector keySelector,
+    public ExtremumTerminal(int nonFinalVariableCount,
+                            boolean isPrimitive,
+                            boolean isMax,
+                            @NotNull KeySelector keySelector,
                             @NotNull PsiVariable loopVariable,
                             @NotNull PsiVariable extremumHolder,
-                            @NotNull TerminalBlock terminalBlock,
-                            @Nullable Object startingValue) {
-      myIsMax = isMax;
-      myIsPrimitive = isPrimitive;
+                            @NotNull TerminalBlock block, @Nullable PsiExpression initializer, @Nullable PsiVariable keyExtremum) {
+      myNonFinalVariableCount = nonFinalVariableCount;
+      this.isPrimitive = isPrimitive;
+      this.isMax = isMax;
       myKeySelector = keySelector;
       myLoopVariable = loopVariable;
       myExtremumHolder = extremumHolder;
-      myStartingValue = startingValue;
-      myTerminalBlock = terminalBlock;
+      myTerminalBlock = block;
+      myKeySelectorInitializer = initializer;
+      myKeyExtremum = keyExtremum;
+    }
+
+    public int getNonFinalVariableCount() {
+      return myNonFinalVariableCount;
+    }
+
+    public boolean isPrimitive() {
+      return isPrimitive;
     }
 
     public boolean isMax() {
-      return myIsMax;
+      return isMax;
     }
 
     @NotNull
@@ -725,8 +735,8 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
     }
 
     @Nullable
-    public Object getStartingValue() {
-      return myStartingValue;
+    public PsiExpression getKeySelectorInitializer() {
+      return myKeySelectorInitializer;
     }
 
     @NotNull
@@ -734,8 +744,182 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
       return myTerminalBlock;
     }
 
-    public boolean isPrimitive() {
-      return myIsPrimitive;
+    @Nullable
+    public PsiVariable getKeyExtremum() {
+      return myKeyExtremum;
+    }
+  }
+
+  private static abstract class Assignment {
+    private final @NotNull PsiVariable myExtremumHolder;
+    private final @NotNull PsiVariable myLoopVariable;
+
+    public Assignment(@NotNull PsiVariable extremumHolder, @NotNull PsiVariable loopVariable) {
+      myExtremumHolder = extremumHolder;
+      myLoopVariable = loopVariable;
+    }
+
+    @NotNull
+    public PsiVariable getExtremumHolder() {
+      return myExtremumHolder;
+    }
+
+    @NotNull
+    public PsiVariable getLoopVariable() {
+      return myLoopVariable;
+    }
+  }
+
+  private static class SimpleAssignment extends Assignment {
+    private SimpleAssignment(@NotNull PsiVariable extremum, @NotNull PsiVariable loopVariable) {
+      super(extremum, loopVariable);
+    }
+
+    @Nullable
+    static SimpleAssignment extractSimple(@NotNull PsiStatement[] statements) {
+      if (statements.length != 1) return null;
+      PsiStatement statement = statements[0];
+      PsiExpressionStatement exprStatement = tryCast(statement, PsiExpressionStatement.class);
+      if (exprStatement == null) return null;
+      PsiAssignmentExpression assignment = tryCast(exprStatement.getExpression(), PsiAssignmentExpression.class);
+      PsiVariable extremumHolder = getVariable(assignment.getLExpression());
+      if (extremumHolder == null) return null;
+      PsiExpression rExpression = assignment.getRExpression();
+      if (rExpression == null) return null;
+      PsiVariable loopVar = getVariable(rExpression);
+      if (loopVar == null) return null;
+      return new SimpleAssignment(extremumHolder, loopVar);
+    }
+  }
+
+  private static class ComplexAssignment extends Assignment {
+    private final @NotNull PsiVariable myExtremumKey;
+    private final @NotNull KeySelector myExtremumKeySelector;
+
+    public ComplexAssignment(@NotNull PsiVariable extremum,
+                             @NotNull PsiVariable loopVariable,
+                             @NotNull PsiVariable extremumKey,
+                             @NotNull KeySelector selector) {
+      super(extremum, loopVariable);
+      myExtremumKey = extremumKey;
+      myExtremumKeySelector = selector;
+    }
+
+    @NotNull
+    public PsiVariable getExtremumKey() {
+      return myExtremumKey;
+    }
+
+    @NotNull
+    public KeySelector getExtremumKeySelector() {
+      return myExtremumKeySelector;
+    }
+
+    @Nullable
+    static ComplexAssignment extractComplex(@NotNull PsiStatement[] statements) {
+      if (statements.length != 2) return null;
+      PsiStatement first = statements[0];
+      PsiStatement second = statements[1];
+      ComplexAssignment firstWay = extractComplex(first, second);
+      if (firstWay != null) return firstWay;
+      return extractComplex(second, first);
+    }
+
+    @Nullable
+    static ComplexAssignment extractComplex(@NotNull PsiStatement first, @NotNull PsiStatement second) {
+      PsiExpressionStatement firstExpr = tryCast(first, PsiExpressionStatement.class);
+      PsiExpressionStatement secondExpr = tryCast(second, PsiExpressionStatement.class);
+      if (firstExpr == null || secondExpr == null) return null;
+      PsiAssignmentExpression firstAssignment = tryCast(firstExpr.getExpression(), PsiAssignmentExpression.class);
+      PsiAssignmentExpression secondAssignment = tryCast(secondExpr.getExpression(), PsiAssignmentExpression.class);
+      if (firstAssignment == null || secondAssignment == null) return null;
+      ComplexAssignment firstWay = extractComplex(firstAssignment, secondAssignment);
+      if (firstWay != null) return firstWay;
+      return extractComplex(secondAssignment, firstAssignment);
+    }
+
+    @Nullable
+    static ComplexAssignment extractComplex(@NotNull PsiAssignmentExpression first, @NotNull PsiAssignmentExpression second) {
+      PsiExpression firstRExpression = first.getRExpression();
+      PsiExpression secondRExpression = second.getRExpression();
+      if (firstRExpression == null || secondRExpression == null) return null;
+      PsiVariable extremum = getVariable(first.getLExpression());
+      if (extremum == null) return null;
+      PsiVariable loopVar = getVariable(firstRExpression);
+      if (loopVar == null) return null;
+      PsiVariable extremumKeyHolder = getVariable(second.getLExpression());
+      if (extremumKeyHolder == null) return null;
+      KeySelector loopVarKeySelector = KeySelector.extractSelector(secondRExpression);
+      if (loopVarKeySelector == null) return null;
+      return new ComplexAssignment(extremum, loopVar, extremumKeyHolder, loopVarKeySelector);
+    }
+  }
+
+  private static class Comparision {
+    private final @NotNull KeySelector myFirstSelector;
+    private final @NotNull KeySelector mySecondSelector;
+    private final boolean myIsGreater;
+
+    private Comparision(@NotNull KeySelector firstSelector, @NotNull KeySelector secondSelector, boolean greater) {
+      myFirstSelector = firstSelector;
+      mySecondSelector = secondSelector;
+      myIsGreater = greater;
+    }
+
+    @NotNull
+    public KeySelector getFirstSelector() {
+      return myFirstSelector;
+    }
+
+    @NotNull
+    public KeySelector getSecondSelector() {
+      return mySecondSelector;
+    }
+
+    public boolean isGreater() {
+      return myIsGreater;
+    }
+
+    public KeySelector getExtremumHolderSelector(boolean isMax) {
+      if (myIsGreater) {
+        return !isMax ? myFirstSelector : mySecondSelector;
+      }
+      else {
+        return isMax ? myFirstSelector : mySecondSelector;
+      }
+    }
+
+    public KeySelector getLoopVariableKeySelector(boolean isMax) {
+      if (myIsGreater) {
+        return isMax ? myFirstSelector : mySecondSelector;
+      }
+      else {
+        return !isMax ? myFirstSelector : mySecondSelector;
+      }
+    }
+
+    @Nullable
+    static Comparision extract(@NotNull PsiExpression expression) {
+      PsiBinaryExpression binaryExpression = tryCast(expression, PsiBinaryExpression.class);
+      IElementType sign = binaryExpression.getOperationSign().getTokenType();
+      PsiExpression rOperand = binaryExpression.getROperand();
+      if (rOperand == null) return null;
+      PsiExpression lOperand = binaryExpression.getLOperand();
+      if (sign.equals(JavaTokenType.LT) || sign.equals(JavaTokenType.LE)) {
+        return extract(lOperand, rOperand, false);
+      }
+      else if (sign.equals(JavaTokenType.GT) || sign.equals(JavaTokenType.GE)) {
+        return extract(lOperand, rOperand, true);
+      }
+      return null;
+    }
+
+    @Nullable
+    private static Comparision extract(@NotNull PsiExpression first, @NotNull PsiExpression second, boolean isGreater) {
+      KeySelector firstSelector = KeySelector.extractSelector(first);
+      KeySelector secondSelector = KeySelector.extractSelector(second);
+      if (firstSelector == null || secondSelector == null) return null;
+      return new Comparision(firstSelector, secondSelector, isGreater);
     }
   }
 }

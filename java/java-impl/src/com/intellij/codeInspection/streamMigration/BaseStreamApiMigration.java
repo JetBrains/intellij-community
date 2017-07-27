@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Tagir Valeev
@@ -88,12 +89,16 @@ abstract class BaseStreamApiMigration {
   }
 
 
-  static PsiElement replaceWithFindExtremum(PsiLoopStatement loopStatement,
-                                            PsiVariable extremumHolder,
-                                            String streamText) {
+  static PsiElement replaceWithFindExtremum(@NotNull PsiLoopStatement loopStatement,
+                                            @NotNull PsiVariable extremumHolder,
+                                            @NotNull String streamText,
+                                            @Nullable PsiVariable keyExtremum) {
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(loopStatement.getProject());
     restoreComments(loopStatement, loopStatement.getBody());
     removeLoop(loopStatement);
+    if(keyExtremum != null) {
+      keyExtremum.delete(); // TODO check this
+    }
     PsiExpression initializer = extremumHolder.getInitializer();
     if(initializer != null) {
       PsiExpression streamExpression = elementFactory.createExpressionFromText(streamText, extremumHolder); // TODO cast expression if needed
