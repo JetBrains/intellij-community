@@ -45,7 +45,7 @@ public class MethodCallInstruction extends Instruction {
   private final Nullness[] myArgRequiredNullability;
   private boolean myOnlyNullArgs = true;
   private boolean myOnlyNotNullArgs = true;
-  private Nullness myReturnNullability;
+  private final Nullness myReturnNullability;
 
   public enum MethodType {
     BOXING, UNBOXING, REGULAR_METHOD_CALL, METHOD_REFERENCE_CALL, CAST
@@ -64,6 +64,7 @@ public class MethodCallInstruction extends Instruction {
     myVarArgCall = false;
     myOfNullable = false;
     myArgRequiredNullability = EMPTY_NULLNESS_ARRAY;
+    myReturnNullability = Nullness.UNKNOWN;
   }
 
   public MethodCallInstruction(@NotNull PsiMethodReferenceExpression reference, @NotNull List<? extends MethodContract> contracts) {
@@ -76,15 +77,18 @@ public class MethodCallInstruction extends Instruction {
     myArgCount = myTargetMethod == null ? 0 : myTargetMethod.getParameterList().getParametersCount();
     if (myTargetMethod == null) {
       myType = null;
+      myReturnNullability = Nullness.UNKNOWN;
     }
     else {
       if (myTargetMethod.isConstructor()) {
         PsiClass containingClass = myTargetMethod.getContainingClass();
         myType = containingClass == null ? null : JavaPsiFacade.getElementFactory(myTargetMethod.getProject())
           .createType(containingClass, resolveResult.getSubstitutor());
+        myReturnNullability = Nullness.NOT_NULL;
       }
       else {
         myType = resolveResult.getSubstitutor().substitute(myTargetMethod.getReturnType());
+        myReturnNullability = DfaPsiUtil.getElementNullability(myType, myTargetMethod);
       }
     }
     myVarArgCall = false; // vararg method reference calls are not supported now
@@ -123,6 +127,7 @@ public class MethodCallInstruction extends Instruction {
     myShouldFlushFields = !(call instanceof PsiNewExpression && myType != null && myType.getArrayDimensions() > 0) && !isPureCall();
     myPrecalculatedReturnValue = precalculatedReturnValue;
     myOfNullable = call instanceof PsiMethodCallExpression && DfaOptionalSupport.OPTIONAL_OF_NULLABLE.test((PsiMethodCallExpression)call);
+    myReturnNullability = call instanceof PsiNewExpression ? Nullness.NOT_NULL : DfaPsiUtil.getElementNullability(myType, myTargetMethod);
   }
 
   /**
@@ -253,14 +258,6 @@ public class MethodCallInstruction extends Instruction {
 
   @NotNull
   public Nullness getReturnNullability() {
-    if (myReturnNullability == null) {
-      if (myCall instanceof PsiNewExpression || (myTargetMethod != null && myTargetMethod.isConstructor())) {
-        myReturnNullability = Nullness.NOT_NULL;
-      }
-      else {
-        myReturnNullability = DfaPsiUtil.getElementNullability(getResultType(), getTargetMethod());
-      }
-    }
     return myReturnNullability;
   }
 

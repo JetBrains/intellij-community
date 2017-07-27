@@ -515,14 +515,7 @@ public class CFGBuilder {
             DfaValue qualifierValue = qualifierVar == null ? DfaUnknownValue.getInstance() :
                                       getFactory().getVarFactory().createVariableValue(qualifierVar, false);
             push(qualifierValue);
-            if (argCount > 0) {
-              // reorder stack to put qualifier before args (.. arg1 arg2 arg3 qualifier => .. qualifier arg1 arg2 arg3)
-              int[] permutation = new int[argCount + 1];
-              for (int i = 1; i < permutation.length; i++) {
-                permutation[i] = argCount + 1 - i;
-              }
-              splice(argCount + 1, permutation);
-            }
+            moveTopValue(argCount);
           }
           myAnalyzer.addBareCall(null, methodRef);
           myAnalyzer.generateBoxingUnboxingInstructionFor(methodRef, resolveResult.getSubstitutor().substitute(method.getReturnType()),
@@ -553,6 +546,25 @@ public class CFGBuilder {
       pushUnknown();
     }
     return this;
+  }
+
+  /**
+   * Generate instructions to move top stack value to the specified depth
+   * <p>
+   * Stack before: ... val#1 val#2 ... val#depth topValue
+   * <p>
+   * Stack after: ... topValue val#1 val#2 ... val#depth
+   *
+   * @param depth a desired depth for the top stack value
+   */
+  private void moveTopValue(int depth) {
+    if (depth > 0) {
+      int[] permutation = new int[depth + 1];
+      for (int i = 1; i < permutation.length; i++) {
+        permutation[i] = depth + 1 - i;
+      }
+      splice(depth + 1, permutation);
+    }
   }
 
   public CFGBuilder inlineLambda(PsiLambdaExpression lambda) {

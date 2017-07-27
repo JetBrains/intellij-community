@@ -39,9 +39,7 @@ interface TransferTarget
 data class ExceptionTransfer(val throwable: DfaValue) : TransferTarget
 data class InstructionTransfer(val offset: ControlFlow.ControlFlowOffset, val toFlush: List<DfaVariableValue>) : TransferTarget
 object ReturnTransfer : TransferTarget {
-  override fun toString(): String {
-    return "ReturnTransfer"
-  }
+  override fun toString(): String = "ReturnTransfer"
 }
 
 open class ControlTransferInstruction(val transfer: DfaControlTransferValue?) : Instruction() {
