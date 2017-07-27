@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,7 +38,7 @@ public class ReplaceWithTernaryOperatorFix implements LocalQuickFix {
   }
 
   public ReplaceWithTernaryOperatorFix(@NotNull PsiExpression expressionToAssert) {
-    myText = expressionToAssert.getText();
+    myText = ParenthesesUtils.getText(expressionToAssert, ParenthesesUtils.BINARY_AND_PRECEDENCE);
   }
 
   @NotNull

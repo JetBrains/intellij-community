@@ -48,6 +48,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.SideEffectChecker;
 import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
@@ -267,7 +268,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       if (isVolatileFieldReference(qualifier)) {
         ContainerUtil.addIfNotNull(fixes, createIntroduceVariableFix(qualifier));
       }
-      else if (!isNullLiteral(qualifier) && !(qualifier instanceof PsiMethodCallExpression))  {
+      else if (!isNullLiteral(qualifier) && !SideEffectChecker.mayHaveSideEffects(qualifier))  {
         if (PsiUtil.getLanguageLevel(qualifier).isAtLeast(LanguageLevel.JDK_1_4)) {
           final Project project = qualifier.getProject();
           final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
