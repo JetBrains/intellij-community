@@ -987,5 +987,18 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
   }
 
 
-
+  public void testMultipleSince() {
+    doTextTest("/**\n" +
+               " * @since 1.7\n" +
+               " * @since 2.0\n" +
+               " */\n" +
+               "public class C {\n" +
+               "}",
+               "/**\n" +
+               " * @since 1.7\n" +
+               " * @since 2.0\n" +
+               " */\n" +
+               "public class C {\n" +
+               "}");
+  }
 }
