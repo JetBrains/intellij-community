@@ -53,5 +53,6 @@
     <orderEntry type="module" module-name="javac-ref-index" />
     <orderEntry type="module" module-name="util-rt" />
     <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="module" module-name="gradle-tooling-extension-boot" />
   </component>
 </module>

@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.GradleJavacReferenceIndexWriterHolder
 import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.ReferenceIndexJavacPlugin
+import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.TempUtil
 
 apply plugin: BackRefCollectorGradlePlugin
 
@@ -33,12 +32,15 @@ class BackRefCollectorGradlePlugin implements Plugin<Gradle> {
 
   @Override
   void apply(Gradle gradle) {
-    gradle.buildStarted {
-      GradleJavacReferenceIndexWriterHolder.initialize(INDEX_PATH)
-    }
-    gradle.buildFinished {
-      GradleJavacReferenceIndexWriterHolder.closeIfNeed(false)
-    }
+    Thread.sleep(10000)
+
+    TempUtil.ololo()
+
+//    GradleJavacReferenceIndexWriterHolder.initialize(INDEX_PATH)
+//
+//    gradle.buildFinished {
+//      GradleJavacReferenceIndexWriterHolder.closeIfNeed(false)
+//    }
 
     gradle.allprojects { project ->
       Action<JavaCompile> javaCompilerPluginInstaller =

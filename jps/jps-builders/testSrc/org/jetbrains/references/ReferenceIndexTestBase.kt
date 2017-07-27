@@ -26,9 +26,9 @@ import org.jetbrains.backwardRefs.CompilerBackwardReferenceIndex
 import org.jetbrains.backwardRefs.LightRef
 import org.jetbrains.backwardRefs.NameEnumerator
 import org.jetbrains.backwardRefs.SignatureData
-import org.jetbrains.jps.backwardRefs.*
 import org.jetbrains.backwardRefs.index.CompiledFileData
 import org.jetbrains.backwardRefs.index.CompilerIndices
+import org.jetbrains.jps.backwardRefs.*
 import org.jetbrains.jps.builders.JpsBuildTestCase
 import org.jetbrains.jps.builders.TestProjectBuilderLogger
 import org.jetbrains.jps.builders.logging.BuildLoggingManager

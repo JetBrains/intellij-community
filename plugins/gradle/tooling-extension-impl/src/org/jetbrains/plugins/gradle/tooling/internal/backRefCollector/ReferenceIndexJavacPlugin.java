@@ -23,6 +23,8 @@ import org.jetbrains.backwardRefs.JavacReferenceIndexWriter;
 import org.jetbrains.backwardRefs.javac.ast.JavacReferenceIndexListener;
 import org.jetbrains.backwardRefs.javac.ast.api.JavacFileData;
 
+import javax.tools.*;
+
 public class ReferenceIndexJavacPlugin implements Plugin {
   public static final String PLUGIN_NAME = "ReferenceIndexJavacPlugin";
   public static final String FORK_ARG = "fork";
@@ -36,20 +38,31 @@ public class ReferenceIndexJavacPlugin implements Plugin {
   @Override
   public void init(JavacTask task, String... args) {
     boolean inProcessJavac = true;
+
+    TempUtil.appendToLog("co " + ToolProvider.getSystemToolClassLoader());
+    TempUtil.appendToLog("co " + task.getClass().getClassLoader());
+    TempUtil.appendToLog("co " + getClass().getClassLoader());
+
     JavacReferenceIndexListener.installOn(task, false, new Consumer<JavacFileData>() {
       @Override
       public void consume(JavacFileData data) {
-        if (inProcessJavac) {
-          JavacReferenceIndexWriter writer = GradleJavacReferenceIndexWriterHolder.getInstance();
-          if (writer != null) {
-            BackwardReferenceIndexUtil.registerFile(data.getFilePath(),
-                                                    data.getRefs(),
-                                                    data.getDefs(),
-                                                    writer);
+        try {
+          if (inProcessJavac) {
+            JavacReferenceIndexWriter writer = GradleJavacReferenceIndexWriterHolder.getInstance();
+            if (writer != null) {
+              BackwardReferenceIndexUtil.registerFile(data.getFilePath(),
+                                                      data.getRefs(),
+                                                      data.getDefs(),
+                                                      writer);
+
+            }
+          }
+          else {
+            //TODO save em all via message processing
           }
         }
-        else {
-          //TODO save em all via message processing
+        catch (Exception e) {
+          //TempUtil.appendToLog(e);
         }
       }
     });

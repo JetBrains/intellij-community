@@ -150,7 +150,7 @@ public abstract class CompilerBackwardReferenceIndex {
     return myRebuildRequestCause;
   }
 
-  File getIndicesDir() {
+  public File getIndicesDir() {
     return myIndicesDir;
   }
 

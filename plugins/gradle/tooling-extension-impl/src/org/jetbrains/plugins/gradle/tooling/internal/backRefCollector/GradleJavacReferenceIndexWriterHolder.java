@@ -25,17 +25,17 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 
 public class GradleJavacReferenceIndexWriterHolder {
-  private static volatile JavacReferenceIndexWriter ourInstance;
 
   //TODO replace with common code
   @SuppressWarnings("Duplicates")
   public static void closeIfNeed(boolean clearIndex) {
+    CompilerBackwardReferenceIndex ourInstance = BootLoadedHolder.getHeldObject();
     if (ourInstance != null) {
       File dir = clearIndex ? ourInstance.getIndicesDir() : null;
       try {
         ourInstance.close();
       } finally {
-        ourInstance = null;
+        BootLoadedHolder.setHeldObject(null);
         if (dir != null) {
           FileUtilRt.delete(dir);
         }
@@ -43,19 +43,11 @@ public class GradleJavacReferenceIndexWriterHolder {
     }
   }
   public static JavacReferenceIndexWriter getInstance() {
-    try {
-      Field instanceField = getInstanceField();
-      return (JavacReferenceIndexWriter)instanceField.get(null);
-    }
-    catch (ClassNotFoundException | NoSuchFieldException | IllegalAccessException e) {
-      throw new IllegalStateException(e);
-    }
+    return BootLoadedHolder.getHeldObject();
   }
 
   public static void initialize(@NotNull String indexPath) {
-    //TODO project "context"
-    try {
-      getInstanceField().set(null, new JavacReferenceIndexWriter(new CompilerBackwardReferenceIndex(new File(indexPath), false) {
+      BootLoadedHolder.setHeldObject(new JavacReferenceIndexWriter(new CompilerBackwardReferenceIndex(new File(indexPath), false) {
         @NotNull
         @Override
         protected RuntimeException createBuildDataCorruptedException(IOException cause) {
@@ -63,14 +55,27 @@ public class GradleJavacReferenceIndexWriterHolder {
           return new RuntimeException(cause);
         }
       }));
-    }
-    catch (IllegalAccessException | ClassNotFoundException | NoSuchFieldException e) {
-      throw new IllegalStateException(e);
-    }
   }
 
   @NotNull
   private static Field getInstanceField() throws ClassNotFoundException, NoSuchFieldException {
+    TempUtil.appendToLog("classl " + getRootClassLoader());
+
+    ClassLoader cl = getRootClassLoader();
+    while (cl != null) {
+      try {
+        Class<?> writerClass = Class.forName(
+          "org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.GradleJavacReferenceIndexWriterHolder",
+          true,
+          getRootClassLoader());
+        TempUtil.appendToLog("COOL" + cl);
+      }
+      catch (Exception e) {
+        TempUtil.appendToLog("EXCEPTION");
+      }
+      cl = cl.getParent();
+    }
+
     Class<?> writerClass = Class.forName(
       "org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.GradleJavacReferenceIndexWriterHolder",
       true,
@@ -82,11 +87,10 @@ public class GradleJavacReferenceIndexWriterHolder {
 
   @NotNull
   private static ClassLoader getRootClassLoader() {
-    ClassLoader current = GradleJavacReferenceIndexWriterHolder.class.getClassLoader();
+    ClassLoader current = Thread.currentThread().getContextClassLoader();
     while (true) {
-      ClassLoader parent = current.getParent();
-      if (parent == null || "sun.misc.Launcher$ExtClassLoader".equals(parent.getClass().getName())) return current;
-      current = parent;
+      if (current.getClass().getName().equals("org.gradle.initialization.MixInLegacyTypesClassLoader")) return current;
+      current = current.getParent();
     }
   }
 }
