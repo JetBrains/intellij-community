@@ -40,6 +40,9 @@ public class CertificateWarningDialog extends DialogWrapper {
   public CertificateWarningDialog(@NotNull X509Certificate certificate, @NotNull String title, @NotNull String message) {
     super((Project)null, false);
 
+    myNoticePane.setEditorKit(UIUtil.getHTMLEditorKit());
+    myMessagePane.setEditorKit(UIUtil.getHTMLEditorKit());
+
     myCertificate = certificate;
 
     CertificateManager manager = CertificateManager.getInstance();
