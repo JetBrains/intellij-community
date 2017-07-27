@@ -33,7 +33,6 @@ import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.diff.impl.dir.DirDiffFrame;
 import com.intellij.openapi.diff.impl.dir.DirDiffPanel;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.diff.impl.dir.DirDiffWindow;
@@ -73,19 +72,15 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
     DirDiffSettings settings = ObjectUtils.notNull(context.getUserData(DirDiffSettings.KEY), new DirDiffSettings());
     DirDiffTableModel model = new DirDiffTableModel(project, element1, element2, settings);
 
-    myDirDiffPanel = new DirDiffPanel(model, new DirDiffWindow((DirDiffFrame)null) {
-      @Override
-      public Window getWindow() {
-        return null;
-      }
-
+    myDirDiffPanel = new DirDiffPanel(model, new DirDiffWindow() {
+      @NotNull
       @Override
       public Disposable getDisposable() {
         return DirDiffViewer.this;
       }
 
       @Override
-      public void setTitle(String title) {
+      public void setTitle(@NotNull String title) {
       }
     });
 
