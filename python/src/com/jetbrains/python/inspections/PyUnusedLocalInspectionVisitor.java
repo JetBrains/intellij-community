@@ -95,10 +95,10 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   }
 
   private void processScope(final ScopeOwner owner) {
-    if (owner.getContainingFile() instanceof PyExpressionCodeFragment || callsLocals(owner)) {
+    if (owner.getContainingFile() instanceof PyExpressionCodeFragment) {
       return;
     }
-    if (!(owner instanceof PyClass)) {
+    if (!(owner instanceof PyClass) && !callsLocals(owner)) {
       collectAllWrites(owner);
     }
     collectUsedReads(owner);
