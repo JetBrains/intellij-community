@@ -4,11 +4,13 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * @author peter
+ * Used for generating random int values with custom distribution, and ensuring that minimized integer values don't violate that distribution. 
  */
 public interface IntDistribution {
+  /** Returns an int value distributed in the needed fashion using the given Random */ 
   int generateInt(Random random);
 
+  /** @return true if the given value is valid for this distribution */
   boolean isValidValue(int i);
   
   /**
@@ -42,6 +44,10 @@ public interface IntDistribution {
     };
   }
 
+  /**
+   * The distribution for numbers in {@code [0, ..., weights.size()-1]} range, where the probability of {@code i}
+   * is equal to {@code weights.get(i)/sum(weights)}.
+   */
   static IntDistribution frequencyDistribution(List<Integer> weights) {
     if (weights.isEmpty()) throw new IllegalArgumentException("No alternatives to choose from");
     
