@@ -109,10 +109,14 @@ public abstract class LexerTestCase extends UsefulTestCase {
     StringBuilder result = new StringBuilder();
     IElementType tokenType;
     while ((tokenType = lexer.getTokenType()) != null) {
-      result.append(tokenType).append(" ('").append(getTokenText(lexer)).append("')\n");
+      result.append(printSingleToken(text, tokenType, lexer.getTokenStart(), lexer.getTokenEnd()));
       lexer.advance();
     }
     return result.toString();
+  }
+
+  public static String printSingleToken(CharSequence fileText, IElementType tokenType, int start, int end) {
+    return tokenType + " ('" + getTokenText(tokenType, fileText, start, end) + "')\n";
   }
 
   protected void doFileTest(@NonNls String fileExt) {
@@ -137,15 +141,13 @@ public abstract class LexerTestCase extends UsefulTestCase {
     return true;
   }
 
-  private static String getTokenText(Lexer lexer) {
-    final IElementType tokenType = lexer.getTokenType();
+  @NotNull
+  private static String getTokenText(IElementType tokenType, CharSequence sequence, int start, int end) {
     if (tokenType instanceof TokenWrapper) {
       return ((TokenWrapper)tokenType).getValue();
     }
 
-    String text = lexer.getBufferSequence().subSequence(lexer.getTokenStart(), lexer.getTokenEnd()).toString();
-    text = StringUtil.replace(text, "\n", "\\n");
-    return text;
+    return StringUtil.replace(sequence.subSequence(start, end).toString(), "\n", "\\n");
   }
 
   protected abstract Lexer createLexer();
