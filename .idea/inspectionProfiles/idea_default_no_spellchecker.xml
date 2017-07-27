@@ -89,7 +89,7 @@
     </inspection_tool>
     <inspection_tool class="ConstantConditionalExpressionJS" enabled="false" enabled_by_default="false" level="WARNING" />
     <inspection_tool class="ConstantConditions" enabled="true" level="WARNING" enabled_by_default="true">
-      <scope name="Tests" level="INFO" enabled="true">
+      <scope name="Tests" level="INFORMATION" enabled="true">
         <option name="SUGGEST_NULLABLE_ANNOTATIONS" value="false" />
         <option name="DONT_REPORT_TRUE_ASSERT_STATEMENTS" value="false" />
       </scope>
