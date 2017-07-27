@@ -44,7 +44,6 @@ import org.apache.xmlrpc.XmlRpcHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.*;
 
@@ -670,19 +669,6 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   private static final class MyWebServer extends WebServer {
     public MyWebServer(int port) {
       super(port);
-    }
-
-    @Override
-    public synchronized void shutdown() {
-      try {
-        if (serverSocket != null) {
-          serverSocket.close();
-        }
-      }
-      catch (IOException e) {
-        //pass
-      }
-      super.shutdown();
     }
 
     public boolean waitForTerminate() {
