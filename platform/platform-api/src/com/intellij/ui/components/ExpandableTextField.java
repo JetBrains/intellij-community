@@ -73,6 +73,7 @@ public class ExpandableTextField extends ExtendableTextField implements Expandab
     this.joiner = text -> joiner.fun(Arrays.asList(StringUtil.splitByLines(text)));
     addAncestorListener(create(AncestorListener.class, this, "collapse"));
     addComponentListener(create(ComponentListener.class, this, "collapse"));
+    putClientProperty("monospaced", true);
     setExtensions(createExtensions());
   }
 
