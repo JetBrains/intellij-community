@@ -2193,6 +2193,34 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-25346
+  public void testTypingNTInheritorField() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> {
+        doTest("int",
+               "from typing import NamedTuple\n" +
+               "class User(NamedTuple):\n" +
+               "    name: str\n" +
+               "    level: int = 0\n" +
+               "expr = User(\"name\").level");
+      }
+    );
+  }
+
+  // PY-25346
+  public void testTypingNTTargetField() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> {
+        doTest("int",
+               "from typing import NamedTuple\n" +
+               "User = NamedTuple(\"User\", name=str, level=int)\n" +
+               "expr = User(\"name\").level");
+      }
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

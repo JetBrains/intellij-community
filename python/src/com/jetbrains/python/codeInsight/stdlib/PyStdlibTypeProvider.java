@@ -100,6 +100,11 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       }
     }
 
+    final PyType fieldTypeForTypingNTTarget = getFieldTypeForTypingNTTarget(referenceExpression, context);
+    if (fieldTypeForTypingNTTarget != null) {
+      return fieldTypeForTypingNTTarget;
+    }
+
     final PyCallableType namedTupleTypeForCallee = getNamedTupleTypeForCallee(referenceExpression, context);
     if (namedTupleTypeForCallee != null) {
       return namedTupleTypeForCallee;
@@ -178,6 +183,23 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       }
       else if ("enum.EnumMeta.__members__".equals(name)) {
         return PyTypeParser.getTypeByName(referenceTarget, "dict[str, unknown]", context);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyType getFieldTypeForTypingNTTarget(@NotNull PyReferenceExpression referenceExpression,
+                                                      @NotNull TypeEvalContext context) {
+    final PyExpression qualifier = referenceExpression.getQualifier();
+    if (qualifier != null) {
+      final PyType qualifierType = context.getType(qualifier);
+      if (qualifierType instanceof PyNamedTupleType) {
+        final Map<String, PyNamedTupleType.FieldTypeAndDefaultValue> fields = ((PyNamedTupleType)qualifierType).getFields();
+        final PyNamedTupleType.FieldTypeAndDefaultValue typeAndDefaultValue = fields.get(referenceExpression.getName());
+        if (typeAndDefaultValue != null) {
+          return typeAndDefaultValue.getType();
+        }
       }
     }
     return null;
