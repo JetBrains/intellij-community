@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.Alarm;
@@ -39,6 +40,7 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -181,7 +183,10 @@ public class SyncViewManager implements Disposable {
           myThreeComponentsSplitter.setLastComponent(view);
         }
         if (listModel.getSize() > 1 && myThreeComponentsSplitter.getFirstComponent() == null) {
-          myThreeComponentsSplitter.setFirstComponent(myBuildsList);
+          JBScrollPane scrollPane = new JBScrollPane();
+          scrollPane.setBorder(new EmptyBorder(0, 0, 0, 0));
+          scrollPane.setViewportView(myBuildsList);
+          myThreeComponentsSplitter.setFirstComponent(scrollPane);
           myBuildsList.setVisible(true);
           myBuildsList.setSelectedIndex(0);
           myThreeComponentsSplitter.repaint();
@@ -222,7 +227,8 @@ public class SyncViewManager implements Disposable {
       else if ("TREE".equals(id)) {
         runnables.add(() -> {
           final BuildInfo buildInfo = myBuildsMap.get(event.getId());
-          myViewMap.get(buildInfo).getSecondaryConsoleView().onEvent(event);
+          DuplexConsoleView<BuildConsoleView, BuildConsoleView> view = myViewMap.get(buildInfo);
+          view.getSecondaryConsoleView().onEvent(event);
         });
       }
     }
