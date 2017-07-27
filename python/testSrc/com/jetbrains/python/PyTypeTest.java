@@ -2221,6 +2221,22 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-18791
+  public void testCallOnProperty() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("Iterator[int]",
+                   "from typing import Iterator, Callable\n" +
+                   "class Foo:\n" +
+                   "    def iterate(self) -> Iterator[int]:\n" +
+                   "        pass\n" +
+                   "    @property\n" +
+                   "    def foo(self) -> Callable[[], Iterator[int]]:\n" +
+                   "        return self.iterate\n" +
+                   "expr = Foo().foo()")
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
