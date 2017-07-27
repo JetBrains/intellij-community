@@ -53,7 +53,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Vladislav.Soroka
@@ -69,6 +68,8 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
   private final Project myProject;
   private final SimpleTreeStructure myTreeStructure;
   private final DetailsHandler myDetailsHandler;
+  private final TableColumn myTimeColumn;
+  private volatile int myTimeColumnWidth;
 
   public BuildTreeConsoleView(Project project) {
     myProject = project;
@@ -81,7 +82,9 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
           if (o instanceof DefaultMutableTreeNode) {
             final Object userObject = ((DefaultMutableTreeNode)o).getUserObject();
             if (userObject instanceof ExecutionNode) {
-              return ((ExecutionNode)userObject).getDuration() + "  ";
+              String duration = ((ExecutionNode)userObject).getDuration();
+              updateTimeColumnWidth("_" + duration, false);
+              return duration;
             }
           }
           return null;
@@ -119,13 +122,9 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
     };
     treeTable.setTableHeader(null);
 
-    final TableColumn timeColumn = treeTable.getColumnModel().getColumn(1);
-    final long duration = TimeUnit.HOURS.toMillis(10) + TimeUnit.MINUTES.toMillis(10) + 11111L;
-    int timeColumnWidth = new JLabel("Running for " + StringUtil.formatDuration(duration), SwingConstants.RIGHT).getPreferredSize().width;
-    timeColumn.setPreferredWidth(timeColumnWidth);
-    timeColumn.setMinWidth(timeColumnWidth);
-    timeColumn.setMaxWidth(timeColumnWidth);
-    timeColumn.setResizable(false);
+    myTimeColumn = treeTable.getColumnModel().getColumn(1);
+    myTimeColumn.setResizable(false);
+    updateTimeColumnWidth("Running for " + StringUtil.formatDuration(11111L), true);
 
     TreeTableTree tree = treeTable.getTree();
     myTreeStructure = new SimpleTreeStructure.Impl(rootNode);
@@ -290,6 +289,10 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
     if (event instanceof FinishEvent) {
       currentNode.setEndTime(event.getEventTime());
       currentNode.setResult(((FinishEvent)event).getResult());
+      int timeColumnWidth = new JLabel("__" + currentNode.getDuration(), SwingConstants.RIGHT).getPreferredSize().width;
+      if (myTimeColumnWidth < timeColumnWidth) {
+        myTimeColumnWidth = timeColumnWidth;
+      }
     }
 
     myProgressAnimator.setCurrentNode(currentNode);
@@ -297,6 +300,7 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
 
     if (event instanceof FinishBuildEvent) {
       myProgressAnimator.stopMovie();
+      updateTimeColumnWidth(myTimeColumnWidth);
     }
   }
 
@@ -308,6 +312,19 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
         tree.setShowsRootHandles(true);
       }
     });
+  }
+
+  private void updateTimeColumnWidth(String text, boolean force) {
+    int timeColumnWidth = new JLabel(text, SwingConstants.RIGHT).getPreferredSize().width;
+    if (force || myTimeColumn.getMaxWidth() < timeColumnWidth) {
+      updateTimeColumnWidth(timeColumnWidth);
+    }
+  }
+
+  private void updateTimeColumnWidth(int width) {
+    myTimeColumn.setPreferredWidth(width);
+    myTimeColumn.setMinWidth(width);
+    myTimeColumn.setMaxWidth(width);
   }
 
   private static class DetailsHandler {
