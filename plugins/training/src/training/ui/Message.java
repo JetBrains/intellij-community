@@ -1,5 +1,6 @@
 package training.ui;
 
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jdom.Text;
@@ -64,6 +65,10 @@ public class Message {
                         if (shortcutByActionId != null) {
                             text = KeymapUtil.INSTANCE.getKeyStrokeText(shortcutByActionId);
                         }
+                        break;
+                    case "ide":
+                        type = MessageType.TEXT_REGULAR;
+                        text = ApplicationNamesInfo.getInstance().getFullProductName();
                         break;
                 }
                 Message message = new Message(text, type);

@@ -1,6 +1,7 @@
 package training.editor.eduUI
 
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
@@ -50,8 +51,8 @@ internal class DemoModeWidget(project: Project) : EditorBasedWidget(
       PropertiesComponent.getInstance().setValue(key, true.toString())
       val alarm = Alarm()
       alarm.addRequest({
-                         GotItMessage.createMessage(LearnBundle.message("demoWidget.info.title"), LearnBundle.message(
-                           "demoWidget.info.message"))
+                         GotItMessage.createMessage(LearnBundle.message("demoWidget.info.title",ApplicationNamesInfo.getInstance().getFullProductName()), LearnBundle.message(
+                           "demoWidget.info.message",ApplicationNamesInfo.getInstance().getFullProductName()))
                            .setDisposable(this@DemoModeWidget)
                            .show(RelativePoint(myStatusBar.component, Point(10, 0)), Balloon.Position.above)
                          Disposer.dispose(alarm)
@@ -82,7 +83,7 @@ internal class DemoModeWidget(project: Project) : EditorBasedWidget(
 
   override fun getAlignment(): Float = Component.CENTER_ALIGNMENT
 
-  override fun getTooltipText(): String? = LearnBundle.message("status.demoMode.tooltipText")
+  override fun getTooltipText(): String? = LearnBundle.message("status.demoMode.tooltipText", ApplicationNamesInfo.getInstance().getFullProductName())
 
   override fun getClickConsumer(): Consumer<MouseEvent>? = null
 

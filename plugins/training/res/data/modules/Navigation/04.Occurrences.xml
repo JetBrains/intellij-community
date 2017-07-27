@@ -38,7 +38,7 @@
     }
 }]]></CopyText>
     </MouseBlock>
-    <Try trigger="Find">IntelliJ IDEA allows you to navigate between occurrences. First of all, select <code>cellphone</code> in the code, and press <action>Find</action> to call the Find action</Try>
+    <Try trigger="Find"><ide/> allows you to navigate between occurrences. First of all, select <code>cellphone</code> in the code, and press <action>Find</action> to call the Find action</Try>
     <Try trigger="com.intellij.find.editorHeaderActions.NextOccurrenceAction">To find next occurrences use <action>EditorEnter</action> or <action>FindNext</action></Try>
     <Try trigger="com.intellij.find.editorHeaderActions.PrevOccurrenceAction">For previous occurrences press <action>FindPrevious</action></Try>
     <Try check="training.check.CheckFindBar" trigger="FindNext">With the search panel closed you can still use these shortcuts to navigate between occurrences of the item being searched for earlier. Close search panel by pressing <action>EditorEscape</action> and try to find next occurrence with <action>FindNext</action></Try>

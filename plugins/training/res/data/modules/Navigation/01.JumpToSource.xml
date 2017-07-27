@@ -36,7 +36,7 @@ class JumpToSourceDemo {
 }]]></CopyText>
         <CaretBlock>
         <MoveCaret position="6:59" />
-            <Text>IntelliJ IDEA has imposing list of navigation features.</Text>
+            <Text><ide/> has imposing list of navigation features.</Text>
             <Try trigger="EditSource">Basically lets start from one very frequently used feature - Jump to Source. Try calling this action by <action>EditSource</action> to look up the source of <code>Params</code>.</Try>
     </CaretBlock>
 </MouseBlock>

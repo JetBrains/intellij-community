@@ -27,9 +27,9 @@ class FoldingDemo {
       <Try trigger="CollapseRegion">Select any part of code and run folding by pressing <action>CollapseRegion</action></Try>
     </CaretBlock>
   </MouseBlock>
-  <Text>Fine! IntelliJ IDEA collapses <code>new Runnable()</code> to a lambda function.</Text>
+  <Text>Fine! <ide/> collapses <code>new Runnable()</code> to a lambda function.</Text>
   <Try trigger="ExpandRegion">To expand this structure use <action>ExpandRegion</action></Try>
-  <Try trigger="CollapseSelection">IntelliJ IDEA allows you to fold any region. Select some part of code and use <action>CollapseSelection</action></Try>
+  <Try trigger="CollapseSelection"><ide/> allows you to fold any region. Select some part of code and use <action>CollapseSelection</action></Try>
   <Try trigger="ExpandRegion">And <action>ExpandRegion</action>in a back way</Try>
   <Win/>
 </xml>
