@@ -1194,8 +1194,16 @@ public class EditorWindow {
   }
 
   public void clear() {
+    FileEditorManagerImpl manager = getManager();
+    FileEditorManagerListener.Before beforePublisher = 
+      manager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER);
+    FileEditorManagerListener afterPublisher = 
+      manager.getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
     for (EditorWithProviderComposite composite : getEditors()) {
-      Disposer.dispose(composite);
+      VirtualFile file = composite.getFile();
+      beforePublisher.beforeFileClosed(manager, file);
+      manager.disposeComposite(composite);
+      afterPublisher.fileClosed(manager, file);
     }
     if (myTabbedPane == null) {
       myPanel.removeAll();
