@@ -40,6 +40,7 @@ import com.intellij.openapi.diff.impl.dir.DirDiffWindow;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +70,8 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
     Project project = context.getProject();
     if (project == null) project = DefaultProjectFactory.getInstance().getDefaultProject();
 
-    DirDiffTableModel model = new DirDiffTableModel(project, element1, element2, new DirDiffSettings());
+    DirDiffSettings settings = ObjectUtils.notNull(context.getUserData(DirDiffSettings.KEY), new DirDiffSettings());
+    DirDiffTableModel model = new DirDiffTableModel(project, element1, element2, settings);
 
     myDirDiffPanel = new DirDiffPanel(model, new DirDiffWindow((DirDiffFrame)null) {
       @Override
