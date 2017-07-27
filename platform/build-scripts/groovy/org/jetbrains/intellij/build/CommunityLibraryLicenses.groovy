@@ -289,7 +289,7 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "opentest4j", libraryName: "opentest4j", version: "1.0.0", license: "Apache 2.0",
                        url: "https://github.com/ota4j-team/opentest4j", licenseUrl: "http://apache.org/licenses/LICENSE-2.0"),
-    new LibraryLicense(name: "pep8.py", attachedTo: "python-helpers", version: "1.6.2", license: "MIT", url: "http://pep8.readthedocs.org/"),
+    new LibraryLicense(name: "pycodestyle.py", attachedTo: "python-helpers", version: "2.3.1", license: "MIT", url: "http://pycodestyle.readthedocs.io/"),
     new LibraryLicense(name: "PicoContainer", libraryName: "picocontainer", version: "1.2", license: "BSD",
                        url: "https://github.com/codehaus/picocontainer", licenseUrl: "https://opensource.org/licenses/bsd-license.php"),
     new LibraryLicense(name: "plexus-archiver", libraryName: "plexus-archiver-2.4.4.jar", version: "2.4.4", license: "Apache 2.0",
