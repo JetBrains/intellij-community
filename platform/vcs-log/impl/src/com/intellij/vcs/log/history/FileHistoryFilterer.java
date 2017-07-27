@@ -77,6 +77,7 @@ class FileHistoryFilterer extends VcsLogFilterer {
     }
 
     VisibleGraph<Integer> visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, filterResult.matchingCommits);
+    checkNotEmpty(dataPack, visibleGraph, false);
 
     IndexDataGetter.FileNamesData namesData = ((FilteredByFileResult)filterResult).fileNamesData;
     Map<Integer, FilePath> pathsMap = null;
@@ -89,6 +90,7 @@ class FileHistoryFilterer extends VcsLogFilterer {
             // creating a vg is the most expensive task, so trying to avoid that when unnecessary
             visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, refiner.getPathsForCommits().keySet());
             pathsMap = refiner.getPathsForCommits();
+            checkNotEmpty(dataPack, visibleGraph, true);
           }
         }
       }
@@ -99,6 +101,18 @@ class FileHistoryFilterer extends VcsLogFilterer {
     }
 
     return new FileHistoryVisiblePack(dataPack, visibleGraph, filterResult.canRequestMore, filters, pathsMap);
+  }
+
+  private void checkNotEmpty(@NotNull DataPack dataPack, @NotNull VisibleGraph visibleGraph, boolean refined) {
+    if (!dataPack.isFull()) {
+      if (!refined) {
+        LOG.debug("Data pack is not full while computing file history for " + myFilePath + "\n" +
+                  "Found " + visibleGraph.getVisibleCommitCount() + " commits");
+      }
+    }
+    else if (visibleGraph.getVisibleCommitCount() == 0) {
+      LOG.warn("Empty" + (refined ? " refined " : " ") + "file history for " + myFilePath);
+    }
   }
 
   @NotNull
