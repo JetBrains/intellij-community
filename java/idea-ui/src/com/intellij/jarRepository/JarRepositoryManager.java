@@ -89,8 +89,7 @@ public class JarRepositoryManager {
 
   @Nullable
   public static NewLibraryConfiguration chooseLibraryAndDownload(final @NotNull Project project, final @Nullable String initialFilter, JComponent parentComponent) {
-    RepositoryAttachDialog dialog = new RepositoryAttachDialog(project, initialFilter);
-    dialog.setTitle("Download Library From Maven Repository");
+    RepositoryAttachDialog dialog = new RepositoryAttachDialog(project, initialFilter, RepositoryAttachDialog.Mode.DOWNLOAD);
     dialog.show();
     if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
       return null;

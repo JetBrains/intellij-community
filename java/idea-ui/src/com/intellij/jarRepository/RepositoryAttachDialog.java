@@ -75,7 +75,9 @@ public class RepositoryAttachDialog extends DialogWrapper {
   @NonNls private static final String PROPERTY_DOWNLOAD_TO_PATH_ENABLED = "Downloaded.Files.Path.Enabled";
   @NonNls private static final String PROPERTY_ATTACH_JAVADOC = "Repository.Attach.JavaDocs";
   @NonNls private static final String PROPERTY_ATTACH_SOURCES = "Repository.Attach.Sources";
+  @NotNull private final Mode myMode;
 
+  public enum Mode { SEARCH, DOWNLOAD }
   private final Project myProject;
 
   private JBLabel myInfoLabel;
@@ -87,6 +89,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
   private TextFieldWithBrowseButton myDirectoryField;
   private JBCheckBox myDownloadToCheckBox;
   private JBLabel myCaptionLabel;
+  private JPanel myDownloadOptionsPanel;
 
   private final JComboBox myCombobox;
 
@@ -97,8 +100,10 @@ public class RepositoryAttachDialog extends DialogWrapper {
   private String myFilterString;
   private boolean myInUpdate;
 
-  public RepositoryAttachDialog(@NotNull Project project, final @Nullable String initialFilter) {
+  public RepositoryAttachDialog(@NotNull Project project, final @Nullable String initialFilter, @NotNull Mode mode) {
     super(project, true);
+    myMode = mode;
+    setTitle(mode == Mode.DOWNLOAD ? "Download Library from Maven Repository" : "Search Library in Maven Repositories");
     myProject = project;
     myProgressIcon.suspend();
     myCaptionLabel.setText(
@@ -176,6 +181,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
                                              descriptor);
     updateInfoLabel();
     setOKActionEnabled(false);
+    myDownloadOptionsPanel.setVisible(mode == Mode.DOWNLOAD);
     init();
   }
 
@@ -372,7 +378,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
 
   @Override
   protected String getDimensionServiceKey() {
-    return RepositoryAttachDialog.class.getName();
+    return RepositoryAttachDialog.class.getName() + "-" + myMode;
   }
 
   private boolean isValidCoordinateSelected() {
