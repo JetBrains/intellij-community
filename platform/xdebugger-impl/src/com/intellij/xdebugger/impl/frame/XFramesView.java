@@ -141,12 +141,14 @@ public class XFramesView extends XDebugView {
             @Override
             public void addExecutionStack(@NotNull final List<? extends XExecutionStack> executionStacks, boolean last) {
               ApplicationManager.getApplication().invokeLater(() -> {
-                myThreadComboBox.removeItem(null);
                 addExecutionStacks(executionStacks);
-                ComboPopup popup = myThreadComboBox.getPopup();
-                if (popup != null && popup.isVisible()) {
-                  popup.hide();
-                  popup.show();
+                if (last) {
+                  myThreadComboBox.removeItem(null);
+                  ComboPopup popup = myThreadComboBox.getPopup();
+                  if (popup != null && popup.isVisible()) {
+                    popup.hide();
+                    popup.show();
+                  }
                 }
               });
             }
