@@ -934,6 +934,11 @@ public abstract class DiffRequestProcessor implements Disposable {
       }
     }
 
+    @Override
+    public void setWindowTitle(@NotNull String title) {
+      setTitle(title);
+    }
+
     @Nullable
     @Override
     public Project getProject() {

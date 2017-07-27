@@ -16,6 +16,7 @@
 package com.intellij.diff.tools.dir;
 
 import com.intellij.diff.DiffContext;
+import com.intellij.diff.DiffContextEx;
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DirectoryContent;
@@ -81,6 +82,7 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
 
       @Override
       public void setTitle(@NotNull String title) {
+        if (context instanceof DiffContextEx) ((DiffContextEx)context).setWindowTitle(title);
       }
     });
 
