@@ -33,9 +33,9 @@ import java.util.Collections;
 import java.util.List;
 
 class LineMarkerInfoHelper {
-  static final String EXTENSION_TOOLTIP_PATTERN =
+  private static final String EXTENSION_TOOLTIP_PATTERN =
     "<a href=\"#navigation/{0}:{1}\">{2}</a> extension declaration in <a href=\"#navigation/{3}:0\">{4}</a>";
-  static final String EXTENSION_POINT_TOOLTIP_PATTERN =
+  private static final String EXTENSION_POINT_TOOLTIP_PATTERN =
     "<a href=\"#navigation/{0}:{1}\">{2}</a> extension point declaration in <a href=\"#navigation/{3}:0\">{4}</a>";
 
   private static final NotNullFunction<PointableCandidate, Collection<? extends PsiElement>> CONVERTER =
