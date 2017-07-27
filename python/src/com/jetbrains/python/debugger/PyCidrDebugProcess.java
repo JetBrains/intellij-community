@@ -39,6 +39,7 @@ import com.jetbrains.cidr.execution.debugger.memory.AddressRange;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.event.HyperlinkListener;
 import java.util.*;
@@ -55,11 +56,13 @@ public class PyCidrDebugProcess extends XDebugProcess {
   private static Set<String> myDebuggableExternalLibs = new HashSet<>();
     //add("/usr/local/lib/python2.7/site-packages/ext.so");
 
-  private final static String GET_FUNC_ARG_COMMAND = "(*((*pp_stack) - ((oparg & 0xff) + 2 * ((oparg>>8) & 0xff)) - 1))";
-  public final static String GET_FUNCTION_POINTER_COMMAND =
-    String.format("(((PyCFunctionObject *)%s) -> m_ml -> ml_meth)", GET_FUNC_ARG_COMMAND);
+  private final static String PY_FUNCTION_CALL_SYMBOL = "ceval.c:call_function";
+
+  private final static String GET_FUNCTION_ARG_COMMAND = "(*((*pp_stack) - ((oparg & 0xff) + 2 * ((oparg>>8) & 0xff)) - 1))";
+  private final static String GET_FUNCTION_POINTER_COMMAND =
+    String.format("(((PyCFunctionObject *)%s) -> m_ml -> ml_meth)", GET_FUNCTION_ARG_COMMAND);
   private final static String IS_PYCFUNCTION_COMMAND =
-    String.format("((((PyObject*)(%s))->ob_type) == &PyCFunction_Type)", GET_FUNC_ARG_COMMAND);
+    String.format("((((PyObject*)(%s))->ob_type) == &PyCFunction_Type)", GET_FUNCTION_ARG_COMMAND);
 
   public PyCidrDebugProcess(@NotNull XDebugSession session,
                             @NotNull CidrDebugProcess cidrDebugProcess,
@@ -71,7 +74,7 @@ public class PyCidrDebugProcess extends XDebugProcess {
     myDebuggableExternalLibs.addAll(Arrays.asList(debuggableExternalLibs.split(":")));
   }
 
-  private void handleException(Exception e) {
+  private void handleException(Throwable e) {
     LOG.error(e);
   }
 
@@ -129,30 +132,36 @@ public class PyCidrDebugProcess extends XDebugProcess {
 
   private void addUserCodeBreakpoint(Runnable resumer) {
     LOG.debug("addUserCodeBreakpoint");
-    myCidrProcess.evaluateAndThen(GET_FUNCTION_POINTER_COMMAND,
-                                  address -> myCidrProcess.addAddressBreakpointWithCallbackAndThen(address, null, null, resumer, this::handleException),
-                                  this::handleException);
+    Promise<String> evaluationPromise = myCidrProcess.evaluate(GET_FUNCTION_POINTER_COMMAND);
+    evaluationPromise.rejected(this::handleException);
+    Promise<Void> breakpointPromise = evaluationPromise
+      .thenAsync(address -> myCidrProcess.addAddressBreakpointWithCallback(address, null, null));
+    breakpointPromise.rejected(this::handleException);
+    breakpointPromise.then(v -> {
+      resumer.run();
+      return null;
+    });
   }
 
   private String getUserCodeDetectingCondition() {
-    return IS_PYCFUNCTION_COMMAND + " && (" + mySharedLibInfos.stream().map(info ->
-                                           GET_FUNCTION_POINTER_COMMAND + " >= " + info.getRange().getStart() +
-                                           " && " +
-                                           GET_FUNCTION_POINTER_COMMAND + " <= " + info.getRange().getEndInclusive())
-      .collect(Collectors.joining(" || ")) + ")";
+    String isInRangeCondition = mySharedLibInfos.stream()
+      .map(info ->
+             GET_FUNCTION_POINTER_COMMAND + " >= " + info.getRange().getStart() +
+             " && " +
+             GET_FUNCTION_POINTER_COMMAND + " <= " + info.getRange().getEndInclusive())
+      .collect(Collectors.joining(" || "));
+    return IS_PYCFUNCTION_COMMAND + " && (" + isInRangeCondition + ")";
   }
 
-  private void addJumpDetectingBreakpointsAndThen(Runnable callback) {
+  private Promise<Void> addJumpDetectingBreakpoint() {
     String condition = getUserCodeDetectingCondition();
-    //String condition = null;
     LOG.debug("Setting breakpoint with condition " + condition);
-    myCidrProcess.addSymbolicBreakpointWithCallbackAndThen("ceval.c:call_function",
-                                                           condition,
-                                                           this::addUserCodeBreakpoint,
-                                                           callback,
-                                                           this::handleException);
+    Promise<Void> promise = myCidrProcess.addSymbolicBreakpointWithCallback(PY_FUNCTION_CALL_SYMBOL,
+                                                                            condition,
+                                                                            this::addUserCodeBreakpoint);
+    promise.rejected(this::handleException);
+    return promise;
   }
-
 
   // Todo: to merge cidr and py-editorProviders
   @NotNull
@@ -187,10 +196,18 @@ public class PyCidrDebugProcess extends XDebugProcess {
 
   public void startStepInto(@Nullable XSuspendContext context) {
     if (getActiveLocation(context) == Location.PY) {
-      myCidrProcess.getLoadedLibsInfoAndThen(info -> {
+      Promise<String[]> libsPromise = myCidrProcess.getLoadedLibsInfo();
+      libsPromise.rejected(this::handleException);
+      Promise<Void> breakpointsPromise = libsPromise.thenAsync(info -> {
         updateLibInfo(info);
-        addJumpDetectingBreakpointsAndThen(() -> doStartStepInto(context));
-      }, this::handleException);
+        return addJumpDetectingBreakpoint();
+      });
+
+      breakpointsPromise.rejected(this::handleException);
+      breakpointsPromise.then(v -> {
+        doStartStepInto(context);
+        return null;
+      });
     } else {
       getActiveProcess(context).startStepInto(context);
     }
