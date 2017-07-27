@@ -21,7 +21,7 @@ public class Main {
     }
   }
 
-  public Person max() {
+  public Person work() {
     List<Person> personList = Arrays.asList(
       new Person("Roman", 21),
       new Person("James", 25),
@@ -35,7 +35,5 @@ public class Main {
         }
       }
     }
-
-    return maxPerson;
   }
 }

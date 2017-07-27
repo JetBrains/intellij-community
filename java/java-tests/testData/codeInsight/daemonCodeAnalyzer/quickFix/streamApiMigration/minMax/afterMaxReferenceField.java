@@ -27,7 +27,7 @@ public class Main {
       new Person("James", 25),
       new Person("Kelly", 12)
     );
-    Person maxPerson = personList.stream().filter(p -> p.getAge() > 13).max(Comparator.comparingInt(p -> p.age)).orElse(null);
+      Person maxPerson = personList.stream().filter(p -> p.getAge() > 13).max(Comparator.comparingInt(p -> p.age)).orElse(null);
 
       return maxPerson;
   }

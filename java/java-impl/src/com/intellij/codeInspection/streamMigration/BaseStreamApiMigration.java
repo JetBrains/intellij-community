@@ -89,23 +89,17 @@ abstract class BaseStreamApiMigration {
   }
 
 
+  @Nullable
   static PsiElement replaceWithFindExtremum(@NotNull PsiLoopStatement loopStatement,
                                             @NotNull PsiVariable extremumHolder,
                                             @NotNull String streamText,
                                             @Nullable PsiVariable keyExtremum) {
-    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(loopStatement.getProject());
     restoreComments(loopStatement, loopStatement.getBody());
-    removeLoop(loopStatement);
     if(keyExtremum != null) {
-      keyExtremum.delete(); // TODO check this
+      keyExtremum.delete();
     }
-    PsiExpression initializer = extremumHolder.getInitializer();
-    if(initializer != null) {
-      PsiExpression streamExpression = elementFactory.createExpressionFromText(streamText, extremumHolder); // TODO cast expression if needed
-      return initializer.replace(streamExpression);
-    } else {
-      return null; // TODO remove extremum holder and create on this place all
-    }
+    InitializerUsageStatus status = ControlFlowUtils.getInitializerUsageStatus(extremumHolder, loopStatement);
+    return replaceInitializer(loopStatement, extremumHolder, extremumHolder.getInitializer(), streamText, status);
   }
 
   static void restoreComments(PsiLoopStatement loopStatement, PsiStatement body) {
