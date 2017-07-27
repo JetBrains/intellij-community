@@ -1,5 +1,8 @@
 package training.commands
 
+import training.learn.LessonManager
+import training.ui.Message
+
 /**
  * Created by karashevich on 30/01/15.
  */
@@ -12,13 +15,8 @@ class TextCommand : Command(Command.CommandType.TEXT) {
     val element = executionList.elements.poll()
     val lesson = executionList.lesson
 
-    var htmlText = if (element.content.isEmpty()) "" else element.content[0].value
-    if (htmlText.isEmpty()) htmlText = element.getAttribute("description")!!.value
+    LessonManager.getInstance(lesson)?.addMessages(Message.convert(element))
 
-    if (htmlText.isEmpty())
-      updateDescription(htmlText, lesson)
-    else
-      updateHTMLDescription(htmlText, lesson)
     startNextCommand(executionList)
 
   }

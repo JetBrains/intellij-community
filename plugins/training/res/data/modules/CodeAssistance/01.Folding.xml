@@ -1,6 +1,6 @@
 <xml type="Scenario" name="Folding"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
     <MouseBlock>
-        <CopyText>import java.lang.Runnable;
+        <CopyText><![CDATA[import java.lang.Runnable;
 
 class FoldingDemo {
 
@@ -22,16 +22,16 @@ class FoldingDemo {
         else System.out.println("suspending");
     }
 
-}</CopyText>
+}]]></CopyText>
     <CaretBlock>
         <MoveCaret position="12:27" />
-        <Try description="We start learning the folding basics in &lt;link&gt;Collapse&lt;/link&gt; lesson. Let's look to other folding options. Select any part of code and run folding by pressing &lt;action=&quot;CollapseRegion&quot;&gt;" trigger="CollapseRegion"/>
+        <Try trigger="CollapseRegion">We start learning the folding basics in <link>Collapse</link> lesson. Let's look to other folding options. Select any part of code and run folding by pressing <action>CollapseRegion</action></Try>
     </CaretBlock>
 </MouseBlock>
-        <Try description="Fine! IntelliJ IDEA collapses &lt;code&gt;new Runnable()&lt;/code&gt; to a lambda function. To expand this structure use &lt;action=&quot;ExpandRegion&quot;&gt;" trigger="ExpandRegion" />
+        <Try trigger="ExpandRegion">Fine! IntelliJ IDEA collapses <code>new Runnable()</code> to a lambda function. To expand this structure use <action>ExpandRegion</action></Try>
         <SetSelection start-position="7:9" end-position="8:24" />
         <MoveCaret position="8:24" />
-        <Try description="IntelliJ IDEA allows you to fold any sequence of statements or declarations. Try to fold selected region with &lt;action=&quot;CollapseSelection&quot;&gt;" trigger="CollapseSelection"/>
-        <Try description="And &lt;action=&quot;ExpandRegion&quot;&gt; in a back way." trigger="ExpandRegion"/>
+        <Try trigger="CollapseSelection">IntelliJ IDEA allows you to fold any sequence of statements or declarations. Try to fold selected region with <action>CollapseSelection</action></Try>
+        <Try trigger="ExpandRegion">And <action>ExpandRegion</action> in a back way.</Try>
     <Win/>
 </xml>

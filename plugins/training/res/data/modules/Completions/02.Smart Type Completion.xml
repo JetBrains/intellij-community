@@ -1,6 +1,6 @@
 <xml type="Scenario" name="Smart Type Completion"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
     <MouseBlock>
-        <CopyText>import java.lang.String;
+        <CopyText><![CDATA[import java.lang.String;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -8,12 +8,12 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 class SmartCompletionDemo{
 
-    private Queue&lt;String&gt; strings;
-    private ArrayBlockingQueue&lt;String&gt; arrayBlockingQueue;
+    private Queue<String> strings;
+    private ArrayBlockingQueue<String> arrayBlockingQueue;
 
-    public SmartCompletionDemo(LinkedList&lt;String&gt; linkedList, HashSet&lt;String&gt; hashSet) {
+    public SmartCompletionDemo(LinkedList<String> linkedList, HashSet<String> hashSet) {
         strings =
-        arrayBlockingQueue = new ArrayBlockingQueue&lt;String&gt;(hashSet.size());
+        arrayBlockingQueue = new ArrayBlockingQueue<String>(hashSet.size());
         for (String s : hashSet)
             arrayBlockingQueue.add(s);
     }
@@ -22,14 +22,14 @@ class SmartCompletionDemo{
         return
     }
 
-}</CopyText>
+}]]></CopyText>
 <CaretBlock>
     <MoveCaret position="13:19"/>
     <TypeText> </TypeText>
-    <Try description="Smart Type Code Completion filters the suggestion list and includes only those types that are applicable to the current context. Press &lt;action=&quot;SmartTypeCompletion&quot;&gt; to see the list of suitable ways to complete. Choose the first one by pressing &lt;action=&quot;EditorEnter&quot;&gt;" triggers="SmartTypeCompletion;EditorChooseLookupItem"/>
+    <Try triggers="SmartTypeCompletion;EditorChooseLookupItem">Smart Type Code Completion filters the suggestion list and includes only those types that are applicable to the current context. Press <action>SmartTypeCompletion</action> to see the list of suitable ways to complete. Choose the first one by pressing <action>EditorEnter</action></Try>
     <MoveCaret position="20:16"/>
     <TypeText> </TypeText>
-    <Try description="Smart Type Code Completion can also suggest a code for return. Press &lt;action=&quot;SmartTypeCompletion&quot;&gt; twice to see Lookup menu for return. Choose the first one by pressing &lt;action=&quot;EditorEnter&quot;&gt;" triggers="SmartTypeCompletion;SmartTypeCompletion;EditorChooseLookupItem"/>
+    <Try triggers="SmartTypeCompletion;SmartTypeCompletion;EditorChooseLookupItem">Smart Type Code Completion can also suggest a code for return. Press <action>SmartTypeCompletion</action> twice to see Lookup menu for return. Choose the first one by pressing <action>EditorEnter</action></Try>
     <Win/>
 </CaretBlock>
 </MouseBlock>

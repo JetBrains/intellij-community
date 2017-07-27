@@ -1,6 +1,6 @@
 <xml type="Scenario" name="Comment Line"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
     <MouseBlock>
-        <CopyText>import java.awt.Color;
+        <CopyText><![CDATA[import java.awt.Color;
 
 class CommentDemo {
     public static void main() {
@@ -10,16 +10,16 @@ class CommentDemo {
         float brightness = 10;
 
         int rgb = Color.HSBtoRGB(hue, saturation, brightness);
-        int red = (rgb &gt;&gt; 16) &amp; 0xFF;
-        int green = (rgb &gt;&gt; 8) &amp; 0xFF;
+        int red = (rgb >> 16) &amp; 0xFF;
+        int green = (rgb >> 8) &amp; 0xFF;
         int blue = rgb &amp; 0xFF;
 
     }
-}</CopyText>
+}]]></CopyText>
     </MouseBlock>
     <MoveCaret position="3:1"/>
-    <Try description="Comment out any line with &lt;action=&quot;CommentByLineComment&quot;&gt;" action="CommentByLineComment" trigger="CommentByLineComment"/>
-    <Try description="Uncomment the commented line with the same shortcut &lt;action=&quot;CommentByLineComment&quot;&gt;" action="CommentByLineComment" trigger="CommentByLineComment" check="training.check.CheckCountCommentedLine"/>
-    <Try description="Select several lines with &lt;action=&quot;EditorDownWithSelection&quot;&gt; and comment with &lt;action=&quot;CommentByLineComment&quot;&gt;" action="CommentByLineComment" triggers="EditorDownWithSelection;CommentByLineComment" check="training.check.CheckCountCommentedLines"/>
+    <Try action="CommentByLineComment" trigger="CommentByLineComment">Comment out any line with <action>CommentByLineComment</action></Try>
+    <Try check="training.check.CheckCountCommentedLine" action="CommentByLineComment" trigger="CommentByLineComment">Uncomment the commented line with the same shortcut <action>CommentByLineComment</action></Try>
+    <Try check="training.check.CheckCountCommentedLines" action="CommentByLineComment" triggers="EditorDownWithSelection;CommentByLineComment">Select several lines with <action>EditorDownWithSelection</action> and comment with <action>CommentByLineComment</action></Try>
     <Win/>
 </xml>

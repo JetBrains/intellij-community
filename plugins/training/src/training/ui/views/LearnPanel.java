@@ -158,7 +158,7 @@ public class LearnPanel extends JPanel {
         lessonMessagePane.addMessage(text);
     }
 
-    public void addMessage(Message[] messages) {
+    public void addMessages(Message[] messages) {
 
         for (final Message message : messages) {
             if (message.getType() == Message.MessageType.LINK) {

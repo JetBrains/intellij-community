@@ -1,6 +1,6 @@
 <xml type="Scenario" name="Basic Completion"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
     <MouseBlock>
-        <CopyText>import java.lang.*;
+        <CopyText><![CDATA[import java.lang.*;
 import java.util.*;
 
 class BasicCompletionDemo implements Runnable{
@@ -20,16 +20,16 @@ class BasicCompletionDemo implements Runnable{
         byte b = MAX_VALUE
     }
 }
-        </CopyText>
+        ]]></CopyText>
     <MoveCaret position="14:29"/>
     <CaretBlock>
         <TypeText> </TypeText>
-        <Try description="By default IDEA completes your code instantly. Start typing &lt;code&gt;Ran&lt;/code&gt; right where the caret is, and you will see Lookup Menu of completions. You can choose the first item from Lookup menu by pressing &lt;action=&quot;EditorEnter&quot;&gt;" trigger="EditorChooseLookupItem"/>
-        <Try description="To activate Basic Completion action press &lt;action=&quot;CodeCompletion&quot;&gt; and you will see lookup menu again." trigger="CodeCompletion"/>
-        <Try description="Press &lt;action=&quot;EditorEnter&quot;&gt; to choose top item from lookup menu." trigger="EditorChooseLookupItem"/>
-        <Try description="Press &lt;action=&quot;EditorCompleteStatement&quot;&gt; to complete this statement." trigger="EditorCompleteStatement"/>
+        <Try trigger="EditorChooseLookupItem">By default IDEA completes your code instantly. Start typing <code>Ran</code> right where the caret is, and you will see Lookup Menu of completions. You can choose the first item from Lookup menu by pressing <action>EditorEnter</action></Try>
+        <Try trigger="CodeCompletion">To activate Basic Completion action press <action>CodeCompletion</action> and you will see lookup menu again.</Try>
+        <Try trigger="EditorChooseLookupItem">Press <action>EditorEnter</action> to choose top item from lookup menu.</Try>
+        <Try trigger="EditorCompleteStatement">Press <action>EditorCompleteStatement</action> to complete this statement.</Try>
         <MoveCaret position="18:27"/>
-        <Try description="Sometimes you need to find completions for static constants or methods. Press &lt;action=&quot;CodeCompletion&quot;&gt; twice to increase search level of Code Completion." triggers="CodeCompletion;CodeCompletion"/>
+        <Try triggers="CodeCompletion;CodeCompletion">Sometimes you need to find completions for static constants or methods. Press <action>CodeCompletion</action> twice to increase search level of Code Completion.</Try>
     </CaretBlock>
     </MouseBlock>
     <Win/>

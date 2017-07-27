@@ -1,5 +1,5 @@
 <xml type="Scenario" name="Completion with Tab"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
-    <MouseBlock><CopyText>import javax.swing.*;
+    <MouseBlock><CopyText><![CDATA[import javax.swing.*;
 
 class FrameDemo {
 
@@ -10,10 +10,10 @@ class FrameDemo {
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         frame.setVisible(true);
     }
-}</CopyText>
+}]]></CopyText>
 </MouseBlock>
         <MoveCaret position="9:56" />
-        <Try description="Press &lt;action=&quot;CodeCompletion&quot;&gt; to show completion options." trigger="CodeCompletion"/>
-        <Try description="Choose &lt;code&gt;DO_NOTHING_ON_CLOSE&lt;/code&gt; for example and press &lt;action=&quot;EditorTab&quot;&gt;. It overwrites the word at caret rather than just inserts." trigger="EditorChooseLookupItemReplace"/>
+        <Try trigger="CodeCompletion">Press <action>CodeCompletion</action> to show completion options.</Try>
+        <Try trigger="EditorChooseLookupItemReplace">Choose <code>DO_NOTHING_ON_CLOSE</code> for example and press <action>EditorTab</action>. It overwrites the word at caret rather than just inserts.</Try>
     <Win/>
 </xml>

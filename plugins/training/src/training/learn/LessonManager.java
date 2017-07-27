@@ -136,8 +136,8 @@ public class LessonManager {
         CourseManager.getInstance().updateToolWindowScrollPane();
     }
 
-    public void addMessage(Message[] messages) {
-        CourseManager.getInstance().getLearnPanel().addMessage(messages);
+    public void addMessages(Message[] messages) {
+        CourseManager.getInstance().getLearnPanel().addMessages(messages);
         CourseManager.getInstance().updateToolWindowScrollPane();
     }
 

@@ -2,7 +2,7 @@
     <ShowLineNumber/>
     <MouseBlock>
     <CaretBlock>
-        <CopyText>import java.lang.Exception;
+        <CopyText><![CDATA[import java.lang.Exception;
 import java.lang.String;
 
 class CollapseDemo{
@@ -26,7 +26,7 @@ class CollapseDemo{
     }
 
     public void rotateWheel(float angle){
-        if (angle &gt; 0) {
+        if (angle > 0) {
             myWheel.rotateClockwise(Math.abs(angle));
         } else {
             myWheel.rotateCounterClockwise(Math.abs(angle));
@@ -46,12 +46,12 @@ class CollapseDemo{
 
     }
 
-}</CopyText>
+}]]></CopyText>
     <MoveCaret position="13:9"/>
-    <Try description="Sometimes you need to collapse some code for better readability. Try to collapse code, with &lt;action=&quot;CollapseRegion&quot;&gt;" trigger="CollapseRegion"/>
-    <Try description="To expand code region, try &lt;action=&quot;ExpandRegion&quot;&gt;" trigger="ExpandRegion"/>
-    <Try description="If you want to collapse all regions in code, use &lt;action=&quot;CollapseAllRegions&quot;&gt;" trigger="CollapseAllRegions"/>
-    <Try description="And &lt;action=&quot;ExpandAllRegions&quot;&gt; in reverse order." trigger="ExpandAllRegions"/>
+        <Try trigger="CollapseRegion">Sometimes you need to collapse some code for better readability. Try to collapse code, with <action>CollapseRegion</action></Try>
+        <Try trigger="ExpandRegion">To expand code region, try <action>ExpandRegion</action></Try>
+        <Try trigger="CollapseAllRegions">If you want to collapse all regions in code, use <action>CollapseAllRegions</action></Try>
+        <Try trigger="ExpandAllRegions">And <action>ExpandAllRegions</action>in reverse order.</Try>
     <Win/>
 </CaretBlock>
 </MouseBlock>

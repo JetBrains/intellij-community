@@ -1,6 +1,6 @@
 <xml type="Scenario" name="Extract Variable/Field"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
     <MouseBlock>
-        <CopyText>class ExtractVar{
+        <CopyText><![CDATA[class ExtractVar{
 
     final static int a_const = 10000;
     final static int b_const = 500;
@@ -21,11 +21,11 @@
         }
     }
 
-}</CopyText>
+}]]></CopyText>
 <CaretBlock>
     <SetSelection start-position="9:9" end-position="9:52" />
     <MoveCaret position="9:44" />
-    <Try description="Press &lt;action=&quot;IntroduceVariable&quot;&gt; to extract variable or field." triggers="IntroduceVariable;NextTemplateVariable"/>
+    <Try triggers="IntroduceVariable;NextTemplateVariable">Press <action>IntroduceVariable</action> to extract variable or field.</Try>
     <Win/>
 </CaretBlock>
 </MouseBlock>

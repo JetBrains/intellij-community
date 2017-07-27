@@ -5,6 +5,7 @@ import training.keymap.KeymapUtil
 import training.learn.ActionsRecorder
 import training.learn.Lesson
 import training.learn.LessonManager
+import training.ui.Message
 import training.util.MyClassLoader
 import java.io.IOException
 import java.util.*
@@ -33,15 +34,7 @@ class TryCommand : Command(Command.CommandType.TRY) {
         e1.printStackTrace()
       }
 
-    var htmlText = if (element.content.isEmpty()) "" else element.content[0].value
-    if (htmlText.isEmpty()) htmlText = element.getAttribute("description")!!.value
-
-    if (htmlText == "") {
-      updateDescription(htmlText, lesson)
-    }
-    else {
-      updateHTMLDescription(htmlText, lesson)
-    }
+    LessonManager.getInstance(lesson)?.addMessages(Message.convert(element))
 
     //Show button "again"
     //        updateButton(element, elements, lesson, editor, e, document, myTarget, infoPanel, mouseListenerHolder);

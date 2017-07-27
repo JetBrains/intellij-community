@@ -1,5 +1,5 @@
 <xml type="Scenario" name="Extract Method"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
-        <CopyText>import javax.swing.*;
+        <CopyText><![CDATA[import javax.swing.*;
 import java.awt.*;
 
 class Test{
@@ -28,8 +28,8 @@ class Test{
         frame.pack();
         frame.setVisible(true);
     }
-}</CopyText>
+}]]></CopyText>
     <SetSelection start-position="12:9" end-position="21:32"/>
-    <Try description="Extract method action allows to encapsulate selected code into a new method with given parameters and returning type. Let's extract some lines of code into a new method &lt;code&gt;init(Dimension myDimension)&lt;/code&gt; by pressing &lt;action=&quot;ExtractMethod&quot;&gt;" trigger="ExtractMethod"/>
+  <Try trigger="ExtractMethod">Extract method action allows to encapsulate selected code into a new method with given parameters and returning type. Let's extract some lines of code into a new method <code>init(Dimension myDimension)</code> by pressing <action>ExtractMethod</action></Try>
     <Win/>
 </xml>

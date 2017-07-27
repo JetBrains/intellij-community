@@ -1,6 +1,6 @@
-<xml type="Scenario" name="Folding"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
-    <MouseBlock>
-        <CopyText>import java.lang.Runnable;
+<xml type="Scenario" name="Folding" version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
+  <MouseBlock>
+    <CopyText><![CDATA[import java.lang.Runnable;
 
 class FoldingDemo {
 
@@ -20,16 +20,16 @@ class FoldingDemo {
         if(flag) runnable.run();
     }
 
-}</CopyText>
+}]]></CopyText>
     <CaretBlock>
-        <MoveCaret position="12:27" />
-        <Text description="We start learning the folding basics in &lt;link&gt;Collapse&lt;/link&gt; lesson. Let's look to other folding options."/>
-        <Try description="Select any part of code and run folding by pressing &lt;action=&quot;CollapseRegion&quot;&gt;" trigger="CollapseRegion"/>
+      <MoveCaret position="12:27"/>
+      <Text>We start learning the folding basics in <link>Collapse</link> lesson. Let's look to other folding options.</Text>
+      <Try trigger="CollapseRegion">Select any part of code and run folding by pressing <action>CollapseRegion</action></Try>
     </CaretBlock>
-</MouseBlock>
-        <Text description="Fine! IntelliJ IDEA collapses &lt;code&gt;new Runnable()&lt;/code&gt; to a lambda function."/>
-        <Try description="To expand this structure use &lt;action=&quot;ExpandRegion&quot;&gt;" trigger="ExpandRegion" />
-        <Try description="IntelliJ IDEA allows you to fold any region. Select some part of code and use &lt;action=&quot;CollapseSelection&quot;&gt;" trigger="CollapseSelection"/>
-        <Try description="And &lt;action=&quot;ExpandRegion&quot;&gt; in a back way" trigger="ExpandRegion"/>
-    <Win/>
+  </MouseBlock>
+  <Text>Fine! IntelliJ IDEA collapses <code>new Runnable()</code> to a lambda function.</Text>
+  <Try trigger="ExpandRegion">To expand this structure use <action>ExpandRegion</action></Try>
+  <Try trigger="CollapseSelection">IntelliJ IDEA allows you to fold any region. Select some part of code and use <action>CollapseSelection</action></Try>
+  <Try trigger="ExpandRegion">And <action>ExpandRegion</action>in a back way</Try>
+  <Win/>
 </xml>

@@ -1,24 +1,24 @@
 <xml type="Scenario" name="Statement Completion"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
-    <MouseBlock><CopyText>class PrimeNumbers {
+    <MouseBlock><CopyText><![CDATA[class PrimeNumbers {
     public static void main(String[] args) {
-        System.out.println(&quot;Prime numbers between 1 and 100&quot;);
+        System.out.println("Prime numbers between 1 and 100");
 
-        for (int i = 2; i &lt; 100; i++) {
+        for (int i = 2; i < 100; i++) {
             boolean isPrime = true;
 
-            for (int j = 2; j &lt; i; j++)
+            for (int j = 2; j < i; j++)
 
             if (isPrime) {
-                System.out.print(i + &quot; &quot;);
+                System.out.print(i + " ");
             }
         }
     }
-}</CopyText>
+}]]></CopyText>
 </MouseBlock>
         <MoveCaret position="8:40" />
-        <Try description="Press &lt;action=&quot;EditorCompleteStatement&quot;&gt; to complete the &lt;code&gt;for&lt;/code&gt; statement." trigger="EditorCompleteStatement"/>
-        <Try description="Write &lt;code&gt;if&lt;/code&gt; and press &lt;action=&quot;EditorCompleteStatement&quot;&gt; to generate statement." check="training.check.CheckStatementCompletionIf"/>
-        <Try description="Add condition inside () &lt;code&gt;i % j == 0&lt;/code&gt; and press &lt;action=&quot;EditorCompleteStatement&quot;&gt; to jump inside &lt;code&gt;if&lt;/code&gt; statement." trigger="EditorCompleteStatement"/>
-        <Try description="Write in one line &lt;code&gt;isPrime = false; break&lt;/code&gt; and press &lt;action=&quot;EditorCompleteStatement&quot;&gt; to complete the entered statement and apply formatting." trigger="EditorCompleteStatement"/>
+        <Try trigger="EditorCompleteStatement">Press <action>EditorCompleteStatement</action> to complete the <code>for</code> statement.</Try>
+        <Try check="training.check.CheckStatementCompletionIf">Write <code>if</code> and press <action>EditorCompleteStatement</action> to generate statement.</Try>
+        <Try trigger="EditorCompleteStatement">Add condition inside () <code>i % j == 0</code> and press <action>EditorCompleteStatement</action> to jump inside <code>if</code> statement.</Try>
+        <Try trigger="EditorCompleteStatement">Write in one line <code>isPrime = false; break</code> and press <action>EditorCompleteStatement</action> to complete the entered statement and apply formatting.</Try>
     <Win/>
 </xml>

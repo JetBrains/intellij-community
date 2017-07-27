@@ -1,17 +1,17 @@
 <xml type="Scenario" name="Declaration/Implementation"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
-        <CopyText>import java.util.LinkedList;
+        <CopyText><![CDATA[import java.util.LinkedList;
 import java.util.List;
 
 class DeclarationDemo {
 
     void initPigeonPack() {
         int count = (int) Math.round(Math.abs(Math.random() * 1000));
-        List&lt;Pigeon&gt; pigeonPack = new LinkedList&lt;Pigeon&gt;();
-        for (int i = 0; i &lt; count; i++) {
+        List<Pigeon> pigeonPack = new LinkedList<Pigeon>();
+        for (int i = 0; i < count; i++) {
             pigeonPack.add(new Pigeon() {
                 @Override
                 public void consume(String trashTypeName) {
-                    System.out.println(&quot;Pigeon is consuming &quot; + trashTypeName);
+                    System.out.println("Pigeon is consuming " + trashTypeName);
                 }
             });
         }
@@ -27,10 +27,10 @@ class DeclarationDemo {
     interface Pigeon {
         void consume(String foodType);
     }
-}</CopyText>
+}]]></CopyText>
     <MoveCaret position="8:16"/>
-    <Try description="Use &lt;action=&quot;GotoDeclaration&quot;&gt; to jump to declaration of a class/interface." triggers="com.intellij.codeInsight.navigation.actions.GotoDeclarationAction"/>
+    <Try triggers="com.intellij.codeInsight.navigation.actions.GotoDeclarationAction">Use <action>GotoDeclaration</action> to jump to declaration of a class/interface.</Try>
     <MoveCaret position="26:17"/>
-    <Try description="To see implementations of a class/interface use &lt;action=&quot;GotoImplementation&quot;&gt;" triggers="GotoImplementation"/>
+    <Try triggers="GotoImplementation">To see implementations of a class/interface use <action>GotoImplementation</action>.</Try>
     <Win/>
 </xml>

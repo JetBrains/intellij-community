@@ -1,32 +1,32 @@
 <xml type="Scenario" name="Multiple Selections"  version="0.1" subtype="aimless" projectTree="hide" lang="HTML">
-    <MouseBlock><CopyText>&lt;!doctype html&gt;
-&lt;html lang=&quot;en&quot;&gt;
-    &lt;head&gt;
-        &lt;meta charset=&quot;UTF-8&quot;&gt;
-        &lt;title&gt;Multiple selections&lt;/title&gt;
-    &lt;/head&gt;
-    &lt;body&gt;
-        &lt;table&gt;
-            &lt;tr&gt;
-                &lt;th&gt;Firstname&lt;/th&gt;
-                &lt;th&gt;Lastname&lt;/th&gt;
-                &lt;th&gt;Points&lt;/th&gt;
-            &lt;/tr&gt;
-            &lt;tr&gt;
-                &lt;td&gt;Eve&lt;/td&gt;
-                &lt;td&gt;Jackson&lt;/td&gt;
-                &lt;td&gt;94&lt;/td&gt;
-            &lt;/tr&gt;
-        &lt;/table&gt;
-    &lt;/body&gt;
-&lt;/html&gt;
-</CopyText>
+    <MouseBlock><CopyText><![CDATA[<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Multiple selections</title>
+    </head>
+    <body>
+        <table>
+            <tr>
+                <th>Firstname</th>
+                <th>Lastname</th>
+                <th>Points</th>
+            </tr>
+            <tr>
+                <td>Eve</td>
+                <td>Jackson</td>
+                <td>94</td>
+            </tr>
+        </table>
+    </body>
+</html>
+]]></CopyText>
 </MouseBlock>
         <MoveCaret position="10:18" />
-        <Try description="Press &lt;action=&quot;SelectNextOccurrence&quot;&gt; to select the symbol at the caret." trigger="SelectNextOccurrence"/>
-        <Try description="Again press &lt;action=&quot;SelectNextOccurrence&quot;&gt; to select the next occurrence." trigger="SelectNextOccurrence"/>
-        <Try description="Press &lt;action=&quot;UnselectPreviousOccurrence&quot;&gt; to unselect the last occurrence." trigger="UnselectPreviousOccurrence"/>
-        <Try description="Press &lt;action=&quot;SelectAllOccurrences&quot;&gt; to select all occurrences in the file." trigger="SelectAllOccurrences"/>
-        <Try description="Replace &lt;code&gt;th&lt;/code&gt; with &lt;code&gt;td&lt;/code&gt;" check="training.check.CheckMultipleSelections"/>
+        <Try trigger="SelectNextOccurrence">Press <action>SelectNextOccurrence</action> to select the symbol at the caret.</Try>
+        <Try trigger="SelectNextOccurrence">Again press <action>SelectNextOccurrence</action> to select the next occurrence.</Try>
+        <Try trigger="UnselectPreviousOccurrence">Press <action>UnselectPreviousOccurrence</action> to unselect the last occurrence.</Try>
+        <Try trigger="SelectAllOccurrences">Press <action>SelectAllOccurrences</action> to select all occurrences in the file.</Try>
+        <Try check="training.check.CheckMultipleSelections">Replace <code>th</code> with <code>td</code></Try>
     <Win/>
 </xml>

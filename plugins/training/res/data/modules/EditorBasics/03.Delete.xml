@@ -1,6 +1,6 @@
 <xml type="Scenario" name="Delete Line"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
     <MouseBlock>
-        <CopyText>class DeleteDemo{
+        <CopyText><![CDATA[class DeleteDemo{
 
         private class Person{
         private String name;
@@ -21,9 +21,9 @@
             this.cellphone = cellphone;
         }
     }
-}</CopyText>
+}]]></CopyText>
     </MouseBlock>
-    <Try description="Delete current line with &lt;action=&quot;EditorDeleteLine&quot;&gt;" action="EditorDeleteLine" trigger="EditorDeleteLine"/>
-    <Try description="To restore deleted line just press &lt;action=&quot;$Undo&quot;&gt;" action="$Undo" trigger="$Undo"/>
+    <Try action="EditorDeleteLine" trigger="EditorDeleteLine">Delete current line with <action>EditorDeleteLine</action></Try>
+    <Try action="$Undo" trigger="$Undo">To restore deleted line just press <action>$Undo</action></Try>
     <Win/>
 </xml>

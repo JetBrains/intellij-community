@@ -1,5 +1,5 @@
 <xml type="Scenario" name="Rename"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
-        <CopyText>import java.lang.String;
+        <CopyText><![CDATA[import java.lang.String;
 
 class Rename{
 
@@ -11,7 +11,7 @@ class Rename{
     }
 
     public boolean checkIPad(){
-        if(deviceName.equals(&quot;iPad&quot;)) return true;
+        if(deviceName.equals("iPad")) return true;
         return false;
     }
 
@@ -22,10 +22,10 @@ class Rename{
     interface Device{
         void touchByStylus(int x, int y, float strength);
     }
-}</CopyText>
-        <Try description="To rename anything put the caret at some occurence and use Rename refactoring. Put the caret to the field &lt;code&gt;deviceName&lt;/code&gt; in any place of code and start renaming by pressing &lt;action=&quot;RenameElement&quot;&gt;" trigger="RenameElement"/>
-        <Try description="Write another name for this field instead selected. For example type &lt;code&gt;tabletName&lt;/code&gt; and save the result by taping &lt;action=&quot;EditorEnter&quot;&gt;" trigger="NextTemplateVariable"/>
-        <Try description="IntelliJ IDEA automatically recognizes getter for renaming fields and also recommends to refactor it. Put the caret to the field &lt;code&gt;stylus&lt;/code&gt; and activate renaming with &lt;action=&quot;RenameElement&quot;&gt;" trigger="RenameElement"/>
-        <Try description="Replace &lt;code&gt;stylus&lt;/code&gt; with &lt;code&gt;pencil&lt;/code&gt;, for example, and complete refactoring with &lt;action=&quot;EditorEnter&quot;&gt;" trigger="NextTemplateVariable"/>
+}]]></CopyText>
+        <Try trigger="RenameElement">To rename anything put the caret at some occurence and use Rename refactoring. Put the caret to the field <code>deviceName</code> in any place of code and start renaming by pressing <action>RenameElement</action></Try>
+        <Try trigger="NextTemplateVariable">Write another name for this field instead selected. For example type <code>tabletName</code> and save the result by taping <action>EditorEnter</action></Try>
+        <Try trigger="RenameElement">IntelliJ IDEA automatically recognizes getter for renaming fields and also recommends to refactor it. Put the caret to the field <code>stylus</code> and activate renaming with <action>RenameElement</action></Try>
+        <Try trigger="NextTemplateVariable">Replace <code>stylus</code> with <code>pencil</code>, for example, and complete refactoring with <action>EditorEnter</action></Try>
     <Win/>
 </xml>

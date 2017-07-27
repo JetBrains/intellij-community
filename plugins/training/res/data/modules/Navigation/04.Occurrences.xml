@@ -1,6 +1,6 @@
 <xml type="Scenario" name="Next/Previous Occurrences"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
     <MouseBlock>
-        <CopyText>class FileStructureDemo{
+        <CopyText><![CDATA[class FileStructureDemo{
 
 
     final private String DATABASE = "MyDataBase";
@@ -36,12 +36,12 @@
         }
 
     }
-}</CopyText>
+}]]></CopyText>
     </MouseBlock>
-    <Try description="IntelliJ IDEA allows you to navigate between occurrences. First of all, select &lt;code&gt;cellphone&lt;/code&gt; in the code, and press &lt;action=&quot;Find&quot;&gt; to call the Find action." trigger="Find"/>
-    <Try description="To find next occurrences use &lt;action=&quot;EditorEnter&quot;&gt; or &lt;action=&quot;FindNext&quot;&gt;" trigger="com.intellij.find.editorHeaderActions.NextOccurrenceAction"/>
-    <Try description="For previous occurrences press &lt;action=&quot;FindPrevious&quot;&gt;" trigger="com.intellij.find.editorHeaderActions.PrevOccurrenceAction"/>
-    <Try description="With the search panel closed you can still use these shortcuts to navigate between occurrences of the item being searched for earlier. Close search panel by pressing &lt;action=&quot;EditorEscape&quot;&gt; and try to find next occurrence with &lt;action=&quot;FindNext&quot;&gt;" trigger="FindNext" check="training.check.CheckFindBar"/>
-    <Try description="And &lt;action=&quot;FindPrevious&quot;&gt; in a back way." trigger="FindPrevious"/>
+    <Try trigger="Find">IntelliJ IDEA allows you to navigate between occurrences. First of all, select <code>cellphone</code> in the code, and press <action>Find</action> to call the Find action</Try>
+    <Try trigger="com.intellij.find.editorHeaderActions.NextOccurrenceAction">To find next occurrences use <action>EditorEnter</action> or <action>FindNext</action></Try>
+    <Try trigger="com.intellij.find.editorHeaderActions.PrevOccurrenceAction">For previous occurrences press <action>FindPrevious</action></Try>
+    <Try check="training.check.CheckFindBar" trigger="FindNext">With the search panel closed you can still use these shortcuts to navigate between occurrences of the item being searched for earlier. Close search panel by pressing <action>EditorEscape</action> and try to find next occurrence with <action>FindNext</action></Try>
+    <Try trigger="FindPrevious">And <action>FindPrevious</action> in a back way.</Try>
     <Win/>
 </xml>

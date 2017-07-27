@@ -1,7 +1,16 @@
 package training.ui;
 
+import com.intellij.util.containers.ContainerUtil;
+import org.jdom.Element;
+import org.jdom.Text;
+import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import training.keymap.KeymapUtil;
+
+import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by karashevich on 01/09/15.
@@ -23,6 +32,45 @@ public class Message {
 
     public void setEndOffset(int endOffset) {
         this.endOffset = endOffset;
+    }
+
+    @Nullable
+    public static Message[] convert(@Nullable Element element) {
+        if (element == null) {
+            return new Message[0];
+        }
+        List<Message> list = new ArrayList<>();
+        element.getContent().forEach(content -> {
+            if (content instanceof Text) {
+                list.add(new Message(content.getValue(), MessageType.TEXT_REGULAR));
+            }
+            else if (content instanceof Element) {
+                XMLOutputter outputter = new XMLOutputter();
+                MessageType type = MessageType.TEXT_REGULAR;
+                String text = outputter.outputString(((Element)content).getContent());
+                switch (((Element)content).getName()) {
+                    case "code":
+                        type = MessageType.CODE;
+                        break;
+                    case "strong":
+                        type = MessageType.TEXT_BOLD;
+                        break;
+                    case "link":
+                        type = MessageType.LINK;
+                        break;
+                    case "action":
+                        type = MessageType.SHORTCUT;
+                        final KeyStroke shortcutByActionId = KeymapUtil.INSTANCE.getShortcutByActionId(text);
+                        if (shortcutByActionId != null) {
+                            text = KeymapUtil.INSTANCE.getKeyStrokeText(shortcutByActionId);
+                        }
+                        break;
+                }
+                Message message = new Message(text, type);
+                list.add(message);
+            }
+        });
+        return ContainerUtil.toArray(list, new Message[0]);
     }
 
     public enum MessageType {TEXT_REGULAR, TEXT_BOLD, SHORTCUT, CODE, LINK, CHECK}

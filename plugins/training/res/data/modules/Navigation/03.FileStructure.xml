@@ -1,6 +1,6 @@
 <xml type="Scenario" name="File Structure"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
     <MouseBlock>
-        <CopyText>class FileStructureDemo{
+        <CopyText><![CDATA[class FileStructureDemo{
 
 
     final private String DATABASE = "MyDataBase";
@@ -36,8 +36,8 @@
         }
 
     }
-}</CopyText>
+}]]></CopyText>
     </MouseBlock>
-    <Try description="Navigation through large sources is complicated, and sometimes you need an overview of a file. Use &lt;action=&quot;FileStructurePopup&quot;&gt; to see the file structure." action="FileStructurePopup" trigger="FileStructurePopup"/>
+    <Try action="FileStructurePopup" trigger="FileStructurePopup">Navigation through large sources is complicated, and sometimes you need an overview of a file. Use <action>FileStructurePopup</action> to see the file structure.</Try>
     <Win/>
 </xml>

@@ -1,5 +1,5 @@
 <xml type="Scenario" name="Jump to Source"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
-    <MouseBlock><CopyText>import java.lang.String;
+    <MouseBlock><CopyText><![CDATA[import java.lang.String;
 import java.util.HashMap;
 
 class JumpToSourceDemo {
@@ -10,13 +10,13 @@ class JumpToSourceDemo {
 
     class Params {
 
-        public HashMap&lt;String, String&gt; myParameters;
+        public HashMap<String, String> myParameters;
 
         public Params() {
-            myParameters = new HashMap&lt;String, String&gt;();
+            myParameters = new HashMap<String, String>();
         }
 
-        public Params(HashMap&lt;String, String&gt; myParameters) {
+        public Params(HashMap<String, String> myParameters) {
             this.myParameters = myParameters;
         }
 
@@ -33,13 +33,13 @@ class JumpToSourceDemo {
         }
 
     }
-}</CopyText>
+}]]></CopyText>
         <CaretBlock>
         <MoveCaret position="6:59" />
-        <Text description="IntelliJ IDEA has imposing list of navigation features."/>
-        <Try description="Basically lets start from one very frequently used feature - Jump to Source. Try calling this action by &lt;action=&quot;EditSource&quot;&gt; to look up the source of &lt;code&gt;Params&lt;/code&gt;." trigger="EditSource"/>
+            <Text>IntelliJ IDEA has imposing list of navigation features.</Text>
+            <Try trigger="EditSource">Basically lets start from one very frequently used feature - Jump to Source. Try calling this action by <action>EditSource</action> to look up the source of <code>Params</code>.</Try>
     </CaretBlock>
 </MouseBlock>
-        <Try description="You may also Jump to Source of classes implemented in JDK. Press &lt;action=&quot;EditSource&quot;&gt; when the caret is on &lt;code&gt;String&lt;/code&gt;." trigger="EditSource" check="training.check.CheckJumpFromString"/>
+        <Try check="training.check.CheckJumpFromString" trigger="EditSource">You may also Jump to Source of classes implemented in JDK. Press <action>EditSource</action> when the caret is on <code>String</code>.</Try>
     <Win/>
 </xml>

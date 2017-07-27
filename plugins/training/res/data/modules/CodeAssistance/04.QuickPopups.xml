@@ -1,12 +1,12 @@
 <xml type="Scenario" name="Quick Popups"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
-    <MouseBlock><CopyText>import java.text.*;
+    <MouseBlock><CopyText><![CDATA[import java.text.*;
 
 class DecimalFormatDemo {
     static public void main(String[] args) {
-        customFormat(&quot;###,###.###&quot;, 123456.789);
-        customFormat(&quot;###.##&quot;, 123456.789);
-        customFormat(&quot;000000.000&quot;, 123.78);
-        customFormat(&quot;$###,###.###&quot;, 12345.67);
+        customFormat("###,###.###", 123456.789);
+        customFormat("###.##", 123456.789);
+        customFormat("000000.000", 123.78);
+        customFormat("$###,###.###", 12345.67);
     }
 
     /**
@@ -15,13 +15,13 @@ class DecimalFormatDemo {
     static public void customFormat(String pattern, double value) {
         DecimalFormat myFormatter = new DecimalFormat(pattern);
         String output = myFormatter.format(value);
-        System.out.println(value + &quot;  &quot; + pattern + &quot;  &quot; + output);
+        System.out.println(value + "  " + pattern + "  " + output);
     }
-}</CopyText>
+}]]></CopyText>
 </MouseBlock>
         <MoveCaret position="5:9" />
-        <Try description="Press &lt;action=&quot;QuickJavaDoc&quot;&gt; to see documentation for the symbol at at caret." trigger="QuickJavaDoc"/>
-        <Try description="Press &lt;action=&quot;EditorEscape&quot;&gt; to close the popup." check="training.check.CheckQuickPopupsQuickDoc"/>
-        <Try description="Press &lt;action=&quot;QuickImplementations&quot;&gt; to see the definition of the symbol at the caret." trigger="QuickImplementations"/>
+        <Try trigger="QuickJavaDoc">Press <action>QuickJavaDoc</action> to see documentation for the symbol at at caret.</Try>
+        <Try check="training.check.CheckQuickPopupsQuickDoc">Press <action>EditorEscape</action> to close the popup.</Try>
+        <Try trigger="QuickImplementations">Press <action>QuickImplementations</action> to see the definition of the symbol at the caret.</Try>
     <Win/>
 </xml>

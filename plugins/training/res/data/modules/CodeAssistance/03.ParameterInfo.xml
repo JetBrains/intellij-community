@@ -1,5 +1,5 @@
 <xml type="Scenario" name="Parameter Info"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
-    <MouseBlock><CopyText>import javax.swing.*;
+    <MouseBlock><CopyText><![CDATA[import javax.swing.*;
 
 class FrameDemo {
 
@@ -10,10 +10,10 @@ class FrameDemo {
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setVisible(true);
     }
-}</CopyText>
+}]]></CopyText>
 </MouseBlock>
         <MoveCaret position="7:23" />
-        <Try description="Press &lt;action=&quot;ParameterInfo&quot;&gt; to see method signature." trigger="ParameterInfo"/>
-        <Try description="Use &lt;bold&gt;175&lt;/bold&gt; as width and &lt;bold&gt;100&lt;/bold&gt; as height." check="training.check.CheckParameterInfo"/>
+        <Try trigger="ParameterInfo">Press <action>ParameterInfo</action> to see method signature.</Try>
+        <Try check="training.check.CheckParameterInfo">Use <strong>175</strong> as width and <strong>100</strong> as height.</Try>
     <Win/>
 </xml>

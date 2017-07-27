@@ -1,5 +1,5 @@
 <xml type="Scenario" name="Code Formatting"  version="0.1" subtype="aimless" projectTree="hide" lang="JAVA">
-        <CopyText>class CodeFormatDemo{
+        <CopyText><![CDATA[class CodeFormatDemo{
 
     final static int a_const = 10000;
     final static int b_const = 500;
@@ -13,9 +13,9 @@ final static int some_const = 124136; public static int process(int a, int b){ r
         }
     }
 
-}</CopyText>
+}]]></CopyText>
     <SetSelection start-position="7:1" end-position="7:65" />
-    <Try description="IntelliJ IDEA helps to correct code formatting with one action. Try to reformat selected code with &lt;action=&quot;ReformatCode&quot;&gt;" triggers="ReformatCode"/>
-    <Try description="To reformat a whole source file use &lt;action=&quot;ReformatCode&quot;&gt; when no lines are selected." triggers="ReformatCode"/>
+    <Try triggers="ReformatCode">IntelliJ IDEA helps to correct code formatting with one action. Try to reformat selected code with <action>ReformatCode</action></Try>
+    <Try triggers="ReformatCode">To reformat a whole source file use <action>ReformatCode</action> when no lines are selected.</Try>
     <Win/>
 </xml>
