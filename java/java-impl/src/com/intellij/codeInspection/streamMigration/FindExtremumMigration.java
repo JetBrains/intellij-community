@@ -359,32 +359,13 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
   }
 
   @Nullable
-  private static PsiVariable extractNullCheckingVar(PsiExpression expression) {
+  private static PsiVariable extractNullCheckingVar(@NotNull PsiExpression expression) {
     PsiBinaryExpression binaryExpression = tryCast(expression, PsiBinaryExpression.class);
-    if (!binaryExpression.getOperationSign().getTokenType().equals(JavaTokenType.EQEQ)) {
-      return null;
-    }
-    PsiExpression lOperand = binaryExpression.getLOperand();
-    PsiExpression rOperand = binaryExpression.getROperand();
-    if (rOperand == null) return null;
-
-    PsiVariable lVariable = extractNullCheckingVar(lOperand, rOperand);
-    if (lVariable != null) return lVariable;
-    PsiVariable rVariable = extractNullCheckingVar(rOperand, lOperand);
-    if (rVariable != null) return rVariable;
-    return null;
-  }
-
-  @Nullable
-  private static PsiVariable extractNullCheckingVar(PsiExpression first, PsiExpression second) {
-    PsiReferenceExpression lReference = tryCast(first, PsiReferenceExpression.class);
-    if (lReference != null) {
-      PsiVariable variable = tryCast(lReference.resolve(), PsiVariable.class);
-      if (variable != null && second.getText().equals("null")) {
-        return variable;
-      }
-    }
-    return null;
+    if(binaryExpression == null) return null;
+    PsiExpression valueComparedWithNull = ExpressionUtils.getValueComparedWithNull(binaryExpression);
+    PsiReferenceExpression referenceExpression = tryCast(valueComparedWithNull, PsiReferenceExpression.class);
+    if (referenceExpression == null) return null;
+    return tryCast(referenceExpression.resolve(), PsiVariable.class);
   }
 
   @Nullable
@@ -518,7 +499,6 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
       PsiMethodCallExpression callExpression = (PsiMethodCallExpression)myExpression.copy();
       PsiReferenceExpression qualifierReference =
         tryCast(callExpression.getMethodExpression().getQualifierExpression(), PsiReferenceExpression.class);
-      PsiVariable receiver = resolveMethodReceiver(callExpression);
       //noinspection ConstantConditions checked  at creation
       ExpressionUtils.bindReferenceTo(qualifierReference, qualifierName);
       return callExpression;
