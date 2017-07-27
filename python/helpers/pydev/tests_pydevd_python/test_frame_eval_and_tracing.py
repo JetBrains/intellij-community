@@ -8,7 +8,11 @@ try:
     from tests_pydevd_python import debugger_unittest
 except:
     sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-    from tests_pydevd_python import debugger_unittest
+
+from tests_pydevd_python import debugger_unittest
+from _pydevd_frame_eval.pydevd_frame_eval_main import frame_eval_func
+
+IS_FRAME_EVAL_AVAILABLE = frame_eval_func is not None
 
 
 class WriterThreadStepAndResume(debugger_unittest.AbstractWriterThread):
@@ -187,6 +191,8 @@ class WriterThreadAddTerminationExceptionBreak(debugger_unittest.AbstractWriterT
         self.finished_ok = True
 
 
+@unittest.skipIf(not IS_FRAME_EVAL_AVAILABLE, "Frame evaluation debugger isn't available "
+                                              "in the current environment")
 class TestFrameEval(unittest.TestCase, debugger_unittest.DebuggerRunner):
     def get_command_line(self):
         return [sys.executable, '-u']
