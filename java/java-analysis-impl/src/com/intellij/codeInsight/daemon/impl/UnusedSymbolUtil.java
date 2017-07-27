@@ -59,6 +59,10 @@ public class UnusedSymbolUtil {
     return false;
   }
 
+  public static boolean isImplicitRead(@NotNull PsiVariable variable) {
+    return isImplicitRead(variable.getProject(), variable, null);
+  }
+  
   public static boolean isImplicitRead(@NotNull Project project, @NotNull PsiVariable element, @Nullable ProgressIndicator progress) {
     for(ImplicitUsageProvider provider: Extensions.getExtensions(ImplicitUsageProvider.EP_NAME)) {
       checkCanceled(progress);
