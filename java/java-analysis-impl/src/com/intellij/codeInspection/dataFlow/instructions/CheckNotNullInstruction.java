@@ -15,21 +15,24 @@
  */
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.codeInspection.dataFlow.DataFlowRunner;
-import com.intellij.codeInspection.dataFlow.DfaInstructionState;
-import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.psi.PsiExpression;
 
 public class CheckNotNullInstruction extends Instruction {
   private final PsiExpression myExpression;
+  private final NullabilityProblem myProblem;
 
-  public CheckNotNullInstruction(PsiExpression expression) {
+  public CheckNotNullInstruction(PsiExpression expression, NullabilityProblem problem) {
     myExpression = expression;
+    myProblem = problem;
   }
 
   public PsiExpression getExpression() {
     return myExpression;
+  }
+
+  public NullabilityProblem getProblem() {
+    return myProblem;
   }
 
   @Override

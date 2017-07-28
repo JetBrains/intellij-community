@@ -28,7 +28,7 @@ public class OptionalInlining {
 
   void testDeref(Optional<String> opt) {
     if (opt == null) {
-      System.out.println(<warning descr="Dereference of 'opt' may produce 'java.lang.NullPointerException'">opt</warning>.orElse("qq"));
+      System.out.println(opt.<warning descr="Method invocation 'orElse' may produce 'java.lang.NullPointerException'">orElse</warning>("qq"));
     }
   }
 

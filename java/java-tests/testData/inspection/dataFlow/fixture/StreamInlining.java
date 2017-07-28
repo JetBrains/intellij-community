@@ -12,7 +12,7 @@ public class StreamInlining {
     list.stream().flatMap(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>).forEach(System.out::println);
     list.stream().filter(x -> x != null).forEach(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
     Stream<String> stream = null;
-    <warning descr="Dereference of 'stream' may produce 'java.lang.NullPointerException'">stream</warning>.filter(x -> x != null).forEach(System.out::println);
+    stream.<warning descr="Method invocation 'filter' may produce 'java.lang.NullPointerException'">filter</warning>(x -> x != null).forEach(System.out::println);
   }
 
   void testMethodRef(List<String> list, int[] data) {

@@ -605,7 +605,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   @Override
   public DfaInstructionState[] visitCheckNotNull(CheckNotNullInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    checkNotNullable(memState, memState.peek(), NullabilityProblem.passingNullableToNotNullParameter, instruction.getExpression());
+    if (!checkNotNullable(memState, memState.peek(), instruction.getProblem(), instruction.getExpression())) {
+      forceNotNull(runner, memState, memState.peek());
+    }
     return super.visitCheckNotNull(instruction, runner, memState);
   }
 

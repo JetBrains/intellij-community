@@ -151,21 +151,6 @@ public class CFGBuilder {
   }
 
   /**
-   * Generate instructions to dereference check for the top stack value.
-   * Stack is unchanged.
-   *
-   * @param referenceExpression a PSI anchor to report possible NPE if top stack value is nullable
-   * @return this builder
-   */
-  public CFGBuilder dereferenceCheck(PsiReferenceExpression referenceExpression) {
-    if (referenceExpression != null) {
-      myAnalyzer.addInstruction(new DupInstruction());
-      myAnalyzer.addInstruction(new FieldReferenceInstruction(referenceExpression, null));
-    }
-    return this;
-  }
-
-  /**
    * Generate instructions to pop given number of stack values, then push some or all of popped values referred by indices,
    * possibly duplicating them
    * <p>
@@ -400,10 +385,11 @@ public class CFGBuilder {
    * this is not satisfied. Stack is unchanged.
    *
    * @param expression an anchor expression to bind a warning to
+   * @param problem a type of nullability problem to report if value is nullable
    * @return this builder
    */
-  public CFGBuilder checkNotNull(PsiExpression expression) {
-    myAnalyzer.addInstruction(new CheckNotNullInstruction(expression));
+  public CFGBuilder checkNotNull(PsiExpression expression, NullabilityProblem problem) {
+    myAnalyzer.addInstruction(new CheckNotNullInstruction(expression, problem));
     return this;
   }
 
@@ -473,7 +459,7 @@ public class CFGBuilder {
       return this;
     }
     return pushExpression(functionalExpression)
-      .checkNotNull(functionalExpression)
+      .checkNotNull(functionalExpression, NullabilityProblem.passingNullableToNotNullParameter)
       .pop();
   }
 

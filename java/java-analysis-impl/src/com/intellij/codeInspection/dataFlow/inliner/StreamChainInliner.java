@@ -17,6 +17,7 @@ package com.intellij.codeInspection.dataFlow.inliner;
 
 import com.intellij.codeInspection.dataFlow.CFGBuilder;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
+import com.intellij.codeInspection.dataFlow.NullabilityProblem;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -190,7 +191,7 @@ public class StreamChainInliner implements CallInliner {
     void before(CFGBuilder builder) {
       if (myStreamSource == null) {
         PsiExpression arg = myCall.getArgumentList().getExpressions()[0];
-        builder.pushExpression(arg).checkNotNull(arg).pop();
+        builder.pushExpression(arg).checkNotNull(arg, NullabilityProblem.passingNullableToNotNullParameter).pop();
       }
       super.before(builder);
     }
@@ -308,11 +309,10 @@ public class StreamChainInliner implements CallInliner {
   }
 
   static void buildStreamCFG(CFGBuilder builder, Step firstStep, PsiExpression originalQualifier) {
-    PsiReferenceExpression firstCall = firstStep.myCall.getMethodExpression();
     PsiType inType = StreamApiUtil.getStreamElementType(originalQualifier.getType());
     builder
       .pushExpression(originalQualifier)
-      .dereferenceCheck(firstCall)
+      .checkNotNull(firstStep.myCall, NullabilityProblem.callNPE)
       .pop()
       .chain(firstStep::before)
       .doWhile()
