@@ -27,15 +27,15 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -54,13 +54,27 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   public abstract boolean canMergeWith(@NotNull MergeableLineMarkerInfo<?> info);
 
   public abstract Icon getCommonIcon(@NotNull List<MergeableLineMarkerInfo> infos);
+
   @NotNull
-  public abstract Function<? super PsiElement, String> getCommonTooltip(@NotNull List<MergeableLineMarkerInfo> infos);
+  public Function<? super PsiElement, String> getCommonTooltip(@NotNull final List<MergeableLineMarkerInfo> infos) {
+    return (Function<PsiElement, String>)element -> {
+      Set<String> tooltips = new HashSet<>(ContainerUtil.mapNotNull(infos, info -> info.getLineMarkerTooltip()));
+      StringBuilder tooltip = new StringBuilder();
+      for (String info : tooltips) {
+        if (tooltip.length() > 0) {
+          tooltip.append(UIUtil.BORDER_LINE);
+        }
+        tooltip.append(UIUtil.getHtmlBody(info));
+      }
+      return XmlStringUtil.wrapInHtml(tooltip);
+    };
+  }
+
 
   public GutterIconRenderer.Alignment getCommonIconAlignment(@NotNull List<MergeableLineMarkerInfo> infos) {
     return GutterIconRenderer.Alignment.LEFT;
   }
-  
+
   public String getElementPresentation(PsiElement element) {
     return element.getText();
   }
@@ -133,7 +147,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
           Collections.sort(infos, (o1, o2) -> o1.startOffset - o2.startOffset);
           final JBList list = new JBList(infos);
           list.setFixedCellHeight(UIUtil.LIST_FIXED_CELL_HEIGHT);
-          PopupChooserBuilder builder  = JBPopupFactory.getInstance().createListPopupBuilder(list);
+          PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(list);
           if (!markers.get(0).configurePopupAndRenderer(builder, list, infos)) {
             list.installCellRenderer(dom -> {
               if (dom instanceof LineMarkerInfo) {

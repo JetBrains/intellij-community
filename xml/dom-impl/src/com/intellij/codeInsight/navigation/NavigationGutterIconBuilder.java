@@ -57,23 +57,23 @@ import java.util.*;
  */
 public class NavigationGutterIconBuilder<T> {
   @NonNls private static final String PATTERN = "&nbsp;&nbsp;&nbsp;&nbsp;{0}";
-  private static final NotNullFunction<PsiElement,Collection<? extends PsiElement>> DEFAULT_PSI_CONVERTOR =
+  private static final NotNullFunction<PsiElement, Collection<? extends PsiElement>> DEFAULT_PSI_CONVERTOR =
     element -> ContainerUtil.createMaybeSingletonList(element);
 
   private final Icon myIcon;
-  private final NotNullFunction<T,Collection<? extends PsiElement>> myConverter;
+  private final NotNullFunction<T, Collection<? extends PsiElement>> myConverter;
 
-  private NotNullLazyValue<Collection<T>> myTargets;
-  private boolean myLazy;
+  protected NotNullLazyValue<Collection<T>> myTargets;
+  protected boolean myLazy;
   private String myTooltipText;
   private String myPopupTitle;
   private String myEmptyText;
   private String myTooltipTitle;
   private GutterIconRenderer.Alignment myAlignment = GutterIconRenderer.Alignment.CENTER;
   private Computable<PsiElementListCellRenderer> myCellRenderer;
-  private NullableFunction<T,String> myNamer = ElementPresentationManager.namer();
-  private final NotNullFunction<T, Collection<? extends GotoRelatedItem>> myGotoRelatedItemProvider;
-  public static final NotNullFunction<DomElement,Collection<? extends PsiElement>> DEFAULT_DOM_CONVERTOR =
+  private NullableFunction<T, String> myNamer = ElementPresentationManager.namer();
+  protected final NotNullFunction<T, Collection<? extends GotoRelatedItem>> myGotoRelatedItemProvider;
+  public static final NotNullFunction<DomElement, Collection<? extends PsiElement>> DEFAULT_DOM_CONVERTOR =
     o -> ContainerUtil.createMaybeSingletonList(o.getXmlElement());
   public static final NotNullFunction<DomElement, Collection<? extends GotoRelatedItem>> DOM_GOTO_RELATED_ITEM_PROVIDER = dom -> {
     if (dom.getXmlElement() != null) {
@@ -157,7 +157,7 @@ public class NavigationGutterIconBuilder<T> {
     return this;
   }
 
-  public NavigationGutterIconBuilder<T> setNamer(@NotNull NullableFunction<T,String> namer) {
+  public NavigationGutterIconBuilder<T> setNamer(@NotNull NullableFunction<T, String> namer) {
     myNamer = namer;
     return this;
   }
@@ -189,12 +189,16 @@ public class NavigationGutterIconBuilder<T> {
   public RelatedItemLineMarkerInfo<PsiElement> createLineMarkerInfo(@NotNull PsiElement element) {
     final MyNavigationGutterIconRenderer renderer = createGutterIconRenderer(element.getProject());
     final String tooltip = renderer.getTooltipText();
-    NotNullLazyValue<Collection<? extends GotoRelatedItem>> gotoTargets = createGotoTargetsThunk(myLazy, myGotoRelatedItemProvider,
-                                                                                                 evaluateAndForget(myTargets));
-    return new RelatedItemLineMarkerInfo<PsiElement>(element, element.getTextRange(), renderer.getIcon(), Pass.LINE_MARKERS,
-                                                     tooltip == null ? null : new ConstantFunction<PsiElement, String>(tooltip),
-                                                     renderer.isNavigateAction() ? renderer : null, renderer.getAlignment(),
-                                                     gotoTargets);
+    NotNullLazyValue<Collection<? extends GotoRelatedItem>> gotoTargets = getGotoTargets();
+    return new RelatedItemLineMarkerInfo<>(element, element.getTextRange(), renderer.getIcon(), Pass.LINE_MARKERS,
+                                           tooltip == null ? null : new ConstantFunction<>(tooltip),
+                                           renderer.isNavigateAction() ? renderer : null, renderer.getAlignment(),
+                                           gotoTargets);
+  }
+
+  @NotNull
+  protected NotNullLazyValue<Collection<? extends GotoRelatedItem>> getGotoTargets() {
+    return createGotoTargetsThunk(myLazy, myGotoRelatedItemProvider, evaluateAndForget(myTargets));
   }
 
   private static <T> NotNullLazyValue<Collection<? extends GotoRelatedItem>> createGotoTargetsThunk(boolean lazy,
@@ -220,8 +224,8 @@ public class NavigationGutterIconBuilder<T> {
   private void checkBuilt() {
     assert myTargets != null : "Must have called .setTargets() before calling create()";
   }
-  
-  private static <T> Factory<T> evaluateAndForget(NotNullLazyValue<T> lazyValue) {
+
+  protected static <T> Factory<T> evaluateAndForget(NotNullLazyValue<T> lazyValue) {
     final Ref<NotNullLazyValue<T>> ref = Ref.create(lazyValue);
     return new Factory<T>() {
       volatile T result;
@@ -237,7 +241,7 @@ public class NavigationGutterIconBuilder<T> {
     };
   }
 
-  private MyNavigationGutterIconRenderer createGutterIconRenderer(@NotNull final Project project) {
+  protected MyNavigationGutterIconRenderer createGutterIconRenderer(@NotNull final Project project) {
     checkBuilt();
 
     NotNullLazyValue<List<SmartPsiElementPointer>> pointers = createPointersThunk(myLazy, project, evaluateAndForget(myTargets),
@@ -380,6 +384,18 @@ public class NavigationGutterIconBuilder<T> {
       result = 31 * result + (myIcon != null ? myIcon.hashCode() : 0);
       result = 31 * result + (myTooltipText != null ? myTooltipText.hashCode() : 0);
       return result;
+    }
+  }
+
+  private static class MyPsiElementRelatedItemLineMarkerInfo extends RelatedItemLineMarkerInfo<PsiElement> {
+    public MyPsiElementRelatedItemLineMarkerInfo(PsiElement element,
+                                                 NavigationGutterIconRenderer renderer,
+                                                 String tooltip,
+                                                 NotNullLazyValue<Collection<? extends GotoRelatedItem>> gotoTargets) {
+      super(element, element.getTextRange(), renderer.getIcon(), Pass.LINE_MARKERS, tooltip == null
+                                                                                    ? null
+                                                                                    : new ConstantFunction<>(tooltip),
+            renderer.isNavigateAction() ? renderer : null, renderer.getAlignment(), gotoTargets);
     }
   }
 }
