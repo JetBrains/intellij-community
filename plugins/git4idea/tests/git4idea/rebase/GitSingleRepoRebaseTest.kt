@@ -20,7 +20,10 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.vcs.ui.CommitMessage
+import com.intellij.util.Functions
 import com.intellij.util.LineSeparator
+import git4idea.GitUtil
 import git4idea.branch.GitBranchUiHandler
 import git4idea.branch.GitBranchWorker
 import git4idea.branch.GitRebaseParams
@@ -29,6 +32,7 @@ import git4idea.test.*
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
 import kotlin.properties.Delegates
+import kotlin.reflect.jvm.javaField
 import kotlin.test.assertFailsWith
 
 class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
@@ -409,12 +413,12 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     }
 
 
-    myGit.setInteractiveRebaseEditor {
+    myGit.setInteractiveRebaseEditor (TestGitImpl.InteractiveRebaseEditor({
       it.lines().mapIndexed { i, s ->
         if (i != 0) s
         else s.replace("pick", "edit")
       }.joinToString(LineSeparator.getSystemLineSeparator().separatorString)
-    }
+    }, null))
 
     rebaseInteractively()
 
@@ -428,10 +432,68 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     assertNoRebaseInProgress(repo)
   }
 
+    // IDEA-140568
+  fun `test git help comments are ignored when parsing interactive rebase`() {
+    makeCommit("initial.txt")
+    repo.update()
+    val initialMessage = "Wrong message"
+    val commit = file("a").create("initial").addCommit(initialMessage).details()
+
+    git("config core.commentChar $")
+
+    var receivedEntries: List<GitRebaseEntry>? = null
+    val rebaseEditor = GitAutomaticRebaseEditor(project, commit.root,
+                                                entriesEditor = { list ->
+                                                  receivedEntries = list
+                                                  list
+                                                },
+                                                plainTextEditor = { it })
+    GitTestingRebaseProcess(myProject, GitRebaseParams.editCommits("HEAD^", rebaseEditor, false), repo).rebase()
+
+    assertNotNull("Didn't get any rebase entries", receivedEntries)
+    assertEquals("Rebase entries parsed incorrectly", listOf(GitRebaseEntry.Action.pick), receivedEntries!!.map { it.action })
+  }
+
+  // IDEA-176455
+  fun `test reword during interactive rebase writes commit message correctly`() {
+    makeCommit("initial.txt")
+    repo.update()
+    val initialMessage = "Wrong message"
+    file("a").create("initial").addCommit(initialMessage).details()
+
+    val newMessage = """
+      Subject
+
+      #body starting with a hash
+      """.trimIndent()
+
+    myGit.setInteractiveRebaseEditor (TestGitImpl.InteractiveRebaseEditor({
+      it.lines().mapIndexed { i, s ->
+        if (i != 0) s
+        else s.replace("pick", "reword")
+      }.joinToString(LineSeparator.getSystemLineSeparator().separatorString)
+    }, null))
+
+    var receivedMessage : String? = null
+    myDialogManager.onDialog(GitRebaseUnstructuredEditor::class.java, { it ->
+      receivedMessage = it.text
+      val field = GitRebaseUnstructuredEditor::class.java.getDeclaredField("myTextEditor")
+      field.isAccessible = true
+      val commitMessage = field.get (it) as CommitMessage
+      commitMessage.setText(newMessage)
+      0
+    })
+
+    rebaseInteractively("HEAD^")
+
+    assertEquals("Initial message is incorrect", initialMessage, receivedMessage)
+    assertEquals("Resulting message is incorrect", newMessage, git("log HEAD --no-walk --pretty=%B"))
+  }
+
   fun `test cancel in interactive rebase should show no error notification`() {
     repo.`diverge feature and master`()
 
-    myDialogManager.onDialog(GitRebaseEditor::class.java) { DialogWrapper.CANCEL_EXIT_CODE }
+  myDialogManager.onDialog(GitRebaseEditor::class.java) { DialogWrapper.CANCEL_EXIT_CODE }
     assertFailsWith(ProcessCanceledException::class) { rebaseInteractively() }
 
     assertNoNotification()
@@ -456,8 +518,8 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     repo.`assert feature not rebased on master`()
   }
 
-  private fun rebaseInteractively() {
-    GitTestingRebaseProcess(myProject, GitRebaseParams(null, null, "master", true, false), repo).rebase()
+  private fun rebaseInteractively(revision: String = "master") {
+    GitTestingRebaseProcess(myProject, GitRebaseParams(null, null, revision, true, false), repo).rebase()
   }
 
   fun `test checkout with rebase`() {

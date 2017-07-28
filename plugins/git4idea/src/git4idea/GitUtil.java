@@ -79,6 +79,11 @@ public class GitUtil {
 
   public static final String DOT_GIT = ".git";
 
+  /**
+   * This comment char overrides the standard '#' and any other potentially defined by user via {@code core.commentChar}.
+   */
+  public static final String COMMENT_CHAR = "\u0001";
+
   public static final String ORIGIN_HEAD = "origin/HEAD";
 
   public static final Function<GitRepository, VirtualFile> REPOSITORY_TO_ROOT = repository -> repository.getRoot();

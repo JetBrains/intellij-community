@@ -16,6 +16,7 @@
 package git4idea.rebase
 
 import com.intellij.openapi.util.text.StringUtil
+import git4idea.GitUtil
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.assertLatestHistory
 import git4idea.test.file
@@ -97,6 +98,22 @@ class GitRewordTest : GitSingleRepoTest() {
     val commit = file("a").create("initial").addCommit("Wrong message").details()
 
     val newMessage = "Subject with trailing spaces  \n\nBody \nwith \nspaces."
+    GitRewordOperation(myRepo, commit, newMessage).execute()
+
+    val actualMessage = git("log HEAD --no-walk --pretty=%B")
+    assertTrue("Message reworded incorrectly. Expected:\n[$newMessage] Actual:\n[$actualMessage]",
+               StringUtil.equalsIgnoreWhitespaces(newMessage, actualMessage))
+  }
+
+  // IDEA-175443
+  fun `test reword with hash symbol`() {
+    val commit = file("a").create("initial").addCommit("Wrong message").details()
+
+    val newMessage = """
+      Subject
+
+      #body starting with a hash
+      """.trimIndent()
     GitRewordOperation(myRepo, commit, newMessage).execute()
 
     val actualMessage = git("log HEAD --no-walk --pretty=%B")
