@@ -143,7 +143,21 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
     myContentPanel.add(ScrollPaneFactory.createScrollPane(treeTable), TREE);
 
     myPanel.setLayout(new BorderLayout());
-    ThreeComponentsSplitter myThreeComponentsSplitter = new ThreeComponentsSplitter();
+    ThreeComponentsSplitter myThreeComponentsSplitter = new ThreeComponentsSplitter() {
+      @Override
+      public void doLayout() {
+        super.doLayout();
+        JComponent detailsComponent = myDetailsHandler.getComponent();
+        if (detailsComponent != null && detailsComponent.isVisible()) {
+          int firstSize = getFirstSize();
+          int lastSize = getLastSize();
+          if (firstSize == 0 && lastSize == 0) {
+            int width = Math.round(getWidth() / 2f);
+            setFirstSize(width);
+          }
+        }
+      }
+    };
     Disposer.register(this, myThreeComponentsSplitter);
     myThreeComponentsSplitter.setFirstComponent(myContentPanel);
     myDetailsHandler = new DetailsHandler(myProject, tree, myThreeComponentsSplitter);
@@ -301,6 +315,9 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
     if (event instanceof FinishBuildEvent) {
       myProgressAnimator.stopMovie();
       updateTimeColumnWidth(myTimeColumnWidth);
+      if (myDetailsHandler.myExecutionNode == null) {
+        myDetailsHandler.setNode(getRootElement());
+      }
     }
   }
 
@@ -350,34 +367,41 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
       Disposer.register(threeComponentsSplitter, myConsole);
     }
 
+    public boolean setNode(@NotNull ExecutionNode node) {
+      EventResult eventResult = node.getResult();
+      if (eventResult instanceof FailureResult) {
+        List<? extends Failure> failures = ((FailureResult)eventResult).getFailures();
+        if (!failures.isEmpty()) {
+          Failure failure = failures.get(0);
+          String text = failure.getDescription();
+          if (text == null && failure.getError() != null) {
+            text = failure.getError().getMessage();
+          }
+
+          if (text != null) {
+            myConsole.clear();
+            myConsole.print(text, ConsoleViewContentType.ERROR_OUTPUT);
+            int firstSize = mySplitter.getFirstSize();
+            int lastSize = mySplitter.getLastSize();
+
+            if (firstSize == 0 && lastSize == 0) {
+              int width = Math.round(mySplitter.getWidth() / 2f);
+              mySplitter.setFirstSize(width);
+            }
+            myConsole.getComponent().setVisible(true);
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
     public void setNode(@Nullable DefaultMutableTreeNode node) {
       if (node == null || node.getUserObject() == myExecutionNode) return;
       if (node.getUserObject() instanceof ExecutionNode) {
         myExecutionNode = (ExecutionNode)node.getUserObject();
-        EventResult eventResult = ((ExecutionNode)node.getUserObject()).getResult();
-        if (eventResult instanceof FailureResult) {
-          List<? extends Failure> failures = ((FailureResult)eventResult).getFailures();
-          if (!failures.isEmpty()) {
-            Failure failure = failures.get(0);
-            String text = failure.getDescription();
-            if (text == null && failure.getError() != null) {
-              text = failure.getError().getMessage();
-            }
-
-            if (text != null) {
-              myConsole.clear();
-              myConsole.print(text, ConsoleViewContentType.ERROR_OUTPUT);
-              int firstSize = mySplitter.getFirstSize();
-              int lastSize = mySplitter.getLastSize();
-
-              if (firstSize == 0 && lastSize == 0) {
-                int width = Math.round(mySplitter.getWidth() / 2f);
-                mySplitter.setFirstSize(width);
-              }
-              myConsole.getComponent().setVisible(true);
-              return;
-            }
-          }
+        if (setNode((ExecutionNode)node.getUserObject())) {
+          return;
         }
       }
 
