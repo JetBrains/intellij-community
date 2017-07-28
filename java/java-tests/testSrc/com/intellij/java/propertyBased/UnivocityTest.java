@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 @SkipSlowTestLocally
-public class ApplyRandomIntentionsTest extends AbstractApplyAndRevertTestCase {
+public class UnivocityTest extends AbstractApplyAndRevertTestCase {
 
   @Override
   public void setUp() throws Exception {
@@ -40,7 +40,7 @@ public class ApplyRandomIntentionsTest extends AbstractApplyAndRevertTestCase {
     MadTestingUtil.enableAllInspections(myProject, myProject);
   }
 
-  public void testIntentionsInDifferentFiles() throws Throwable {
+  public void testIntentionsInDifferentFiles() {
     initCompiler();
     PsiModificationTracker tracker = PsiManager.getInstance(myProject).getModificationTracker();
 
@@ -64,13 +64,14 @@ public class ApplyRandomIntentionsTest extends AbstractApplyAndRevertTestCase {
     });
   }
 
-  public void testIntentionsAndModificationsInDifferentFiles() throws Throwable {
+  public void testRandomActivity() {
     Generator<List<MadTestingAction>> genActionGroup = psiJavaFiles().flatMap(
       file -> {
         Generator<MadTestingAction> mutation = Generator.anyOf(DeleteRange.psiRangeDeletions(file),
                                                                Generator.constant(new AddNullArgument(file)),
                                                                Generator.constant(new DeleteForeachInitializers(file)),
                                                                Generator.constant(new DeleteSecondArgument(file)),
+                                                               InvokeCompletion.completions(file, new JavaCompletionPolicy()),
                                                                Generator.constant(new MakeAllMethodsVoid(file)));
         Generator<MadTestingAction> allActions = Generator.frequency(2, InvokeIntention.randomIntentions(file, new JavaIntentionPolicy()),
                                                                      1, Generator.constant(new RehighlightAllEditors(myProject)),
