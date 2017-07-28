@@ -30,11 +30,7 @@ public class Main {
     Person maxPerson = null;
     for <caret>(Person p : personList) {
       if(p.getAge() > 13) {
-        if (maxPerson == null) {
-          maxPerson = p;
-          continue;
-        }
-        if (maxPerson.getAge() < p.getAge()) {
+        if (maxPerson == null || p.getAge() > maxPerson.getAge()) {
           maxPerson = p;
         }
       }

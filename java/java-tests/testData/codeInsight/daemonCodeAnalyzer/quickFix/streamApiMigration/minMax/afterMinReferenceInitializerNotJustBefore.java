@@ -2,7 +2,7 @@
 
 import java.util.*;
 
-public class Main {
+class Main {
   static class Person {
     String name;
     int age;

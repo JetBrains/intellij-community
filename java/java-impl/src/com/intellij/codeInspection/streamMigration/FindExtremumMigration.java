@@ -63,6 +63,21 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
     return null;
   }
 
+  static private boolean hasKnownComparableType(@NotNull PsiType type) {
+    return type.equals(PsiType.INT) || type.equals(PsiType.LONG) || type.equals(PsiType.DOUBLE);
+  }
+
+  @Nullable
+  static private Object getNonFilterableInitialValue(@NotNull PsiType type, boolean isMax) {
+    if (type.equals(PsiType.INT)) {
+      return isMax ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+    }
+    else if (type.equals(PsiType.LONG)) {
+      return isMax ? Long.MIN_VALUE : Long.MAX_VALUE;
+    }
+    return null;
+  }
+
   @Nullable
   static ExtremumTerminal extract(@NotNull TerminalBlock terminalBlock, @Nullable List<PsiVariable> nonFinalVariables) {
     PsiStatement[] statements = terminalBlock.getStatements();
@@ -323,6 +338,8 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
       if (nonFinalVariables != null) {
         if (containsAnyVariable(assignment.getLoopVarExpression(), nonFinalVariables)) return null;
       }
+      PsiType loopVarExprType = loopVarExpr.getType();
+      if (loopVarExprType == null || !hasKnownComparableType(loopVarExprType)) return null;
 
       PsiExpression extremumInitializer = extremum.getInitializer();
       PsiExpression extremumKeyInitializer = extremumKey.getInitializer();
@@ -429,15 +446,27 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
       PsiLoopStatement loop = blockWithMap.getMainLoop();
       PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(loop.getProject());
       String extremumInitializer = myExtremumInitializer.getText();
-      // TODO not creating filter when Integer.MIN...
-      String name = myTerminalBlock.getVariable().getName();
-      if (name == null) return null;
-      PsiExpression condition =
-        elementFactory.createExpressionFromText(name + inFilterOperation + extremumInitializer, loop);
 
-      TerminalBlock blockWithFilter =
-        blockWithMap.add(new StreamApiMigrationInspection.FilterOp(condition, myTerminalBlock.getVariable(), false));
-      String stream = blockWithFilter.generate() + "." + getOpertion(myMax) + "().orElse(" + extremumInitializer + ")";
+      PsiType type = myExtremumInitializer.getType();
+      if (type == null) return null;
+      Object initializerValue = ExpressionUtils.computeConstantExpression(myExtremumInitializer);
+      if (initializerValue == null) return null;
+
+      Object nonFilterableInitialValue = getNonFilterableInitialValue(type, myMax);
+      final TerminalBlock terminalBlock;
+      if (nonFilterableInitialValue != null && !nonFilterableInitialValue.equals(initializerValue)) {
+        String name = myTerminalBlock.getVariable().getName();
+        if (name == null) return null;
+        PsiExpression condition =
+          elementFactory.createExpressionFromText(name + inFilterOperation + extremumInitializer, loop);
+
+        terminalBlock = blockWithMap.add(new StreamApiMigrationInspection.FilterOp(condition, myTerminalBlock.getVariable(), false));
+      } else {
+        terminalBlock = blockWithMap;
+      }
+
+
+      String stream = terminalBlock.generate() + "." + getOpertion(myMax) + "().orElse(" + extremumInitializer + ")";
       return replaceWithFindExtremum(loop, myExtremum, stream, null);
     }
 
@@ -461,19 +490,21 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
       PsiVariable extremum = getVariable(assignment.getLExpression());
       if (extremum == null) return null;
       PsiExpression assignmentLoopVarExpr = assignment.getRExpression();
-      PsiExpression comparisonloopVarExpr = comparison.getLoopVarExpr();
-      if (!ourEquivalence.expressionsAreEquivalent(assignmentLoopVarExpr, comparisonloopVarExpr)) return null;
+      PsiExpression comparisonLoopVarExpr = comparison.getLoopVarExpr();
+      if (!ourEquivalence.expressionsAreEquivalent(assignmentLoopVarExpr, comparisonLoopVarExpr)) return null;
       PsiVariable comparisonExtremum = getVariable(comparison.getExtremumExpr());
       if (comparisonExtremum == null) return null;
       if (!extremum.equals(comparisonExtremum)) return null;
       if (mayChangeBeforeLoop(extremum, terminalBlock)) return null;
       if (nonFinalVariables != null) {
-        if (containsAnyVariable(comparisonloopVarExpr, nonFinalVariables)) return null;
+        if (containsAnyVariable(comparisonLoopVarExpr, nonFinalVariables)) return null;
       }
+      PsiType loopVarExprType = comparisonLoopVarExpr.getType();
+      if (loopVarExprType == null || !hasKnownComparableType(loopVarExprType)) return null;
 
       PsiExpression extremumInitializer = extremum.getInitializer();
       if (!ExpressionUtils.isEvaluatedAtCompileTime(extremumInitializer)) return null;
-      return new PrimitiveExtremumTerminal(comparison.isMax(), terminalBlock, comparisonloopVarExpr, extremum, extremumInitializer);
+      return new PrimitiveExtremumTerminal(comparison.isMax(), terminalBlock, comparisonLoopVarExpr, extremum, extremumInitializer);
     }
   }
 
@@ -546,6 +577,8 @@ public class FindExtremumMigration extends BaseStreamApiMigration {
         if (!nonFinalVars.get(0).equals(extremum)) return null;
         if (containsAnyVariable(loopVarExpr, nonFinalVars)) return null;
       }
+      PsiType loopVarExprType = loopVarExpr.getType();
+      if (loopVarExprType == null || !hasKnownComparableType(loopVarExprType)) return null;
 
       boolean max = comparison.isMax();
 
