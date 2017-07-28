@@ -284,7 +284,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         }
       }
 
-      if (PsiUtil.isLanguageLevel7OrHigher(qualifier)) {
+      if (!isNullLiteral(qualifier) && PsiUtil.isLanguageLevel7OrHigher(qualifier)) {
         fixes.add(new SurroundWithRequireNonNullFix(qualifier));
       }
 
