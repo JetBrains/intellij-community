@@ -18,22 +18,35 @@ package com.jetbrains.python.debugger;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.filters.TextConsoleBuilder;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.roots.ProjectRootUtil;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XExecutionStack;
+import com.intellij.xdebugger.frame.XStackFrame;
 import com.jetbrains.cidr.execution.debugger.CidrDebugProcess;
 import com.jetbrains.cidr.execution.debugger.CidrStackFrame;
 import com.jetbrains.cidr.execution.debugger.CidrSuspensionCause;
 import com.jetbrains.cidr.execution.debugger.backend.*;
-import com.jetbrains.cidr.execution.debugger.memory.Address;
+import org.intellij.lang.annotations.PrintFormat;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Optional;
 
 import static com.jetbrains.cidr.execution.debugger.remote.CidrRemoteGDBDebugProcessKt.createParams;
 
 public class MixedCidrDebugProcess extends CidrDebugProcess {
+
+  private static final Logger LOG = Logger.getInstance("#" + MixedCidrDebugProcess.class.getPackage().getName());
+
 
   public MixedCidrDebugProcess(DebuggerDriverConfiguration driverConfiguration,
                                GeneralCommandLine generalCommandLine,
@@ -76,42 +89,76 @@ public class MixedCidrDebugProcess extends CidrDebugProcess {
       super(thread, frame, current, suspensionCause);
     }
 
-    @NotNull
-    private CidrStackFrame newFrame(@NotNull LLFrame frame) {
-      return new CidrStackFrame(MixedCidrDebugProcess.this, myThread, frame, mySuspensionCause);
-    }
-
 
     @Override
     protected void handleNewFrame(@NotNull DebuggerDriver driver,
-                                  @NotNull List<CidrStackFrame> result,
-                                  @Nullable CidrStackFrame frame) throws ExecutionException, DebuggerCommandException {
-      if (frame != null && frame.getFrame().getFunction().equals("PyEval_EvalFrameEx")) {
+                                  @NotNull List<XStackFrame> result,
+                                  @NotNull CidrStackFrame frame) throws ExecutionException, DebuggerCommandException {
+      result.add(frame);
+      if (frame.getFrame().getFunction().equals("PyEval_EvalFrameEx")) {
         List<LLValue> variables = driver.getVariables(frame.getThreadId(), frame.getFrameIndex());
+        Optional<LLValue> pythonInnerFrame = variables.stream().filter(x -> x.getType().equals("PyFrameObject *")).findAny();
 
-        if (variables.stream().anyMatch(x -> x.getType().equals("PyFrameObject *"))) {
-          int currentLine = Integer.parseInt(driver.getData(driver.evaluate(frame.getThreadId(), frame.getFrameIndex(),
-                                                                            " PyFrame_GetLineNumber(f)")).getValue());
+        if (pythonInnerFrame.isPresent()) {
+          try {
+            String frameVariableName = pythonInnerFrame.get().getName();
 
-          Address frameAddress = Address.parseHexString(driver.getData(driver.evaluate(frame.getThreadId(), frame.getFrameIndex(),
-                                                                                       "((PyObject)f)._ob_next")).getValue());
+            int innerFrameLineNumber = Integer.parseInt(
+              evaluateAndGetLLValueData(driver, frame, "PyFrame_GetLineNumber(%s)", frameVariableName).getValue()) - 1;
 
-          String function = driver.getData(driver.evaluate(frame.getThreadId(), frame.getFrameIndex(),
-                                                           "PyString_AsString(f->f_code->co_name)")).getDescription();
+            final String innerFrameFilename = evaluateAndGetLLValueData(driver, frame, "PyString_AsString(%s->f_code->co_filename)", frameVariableName).getDescription();
 
-          String filename = driver.getData(driver.evaluate(frame.getThreadId(), frame.getFrameIndex(),
-                                                           "PyString_AsString(f->f_code->co_filename)")).getDescription();
-          assert filename != null && function != null;
+            if (innerFrameFilename != null && !innerFrameFilename.isEmpty()) {
+              VirtualFile innerFrameVirtualFile = ReadAction.compute(() -> {
+                VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(innerFrameFilename.substring(1, innerFrameFilename.length() - 1));
+                if (vFile == null) return null;
+                return ProjectRootUtil.findSymlinkedFileInContent(getProject(), vFile);
+              });
 
-          if (!filename.isEmpty()) {
-            filename = filename.substring(1, filename.length() - 1);
-            function = function.substring(1, function.length() - 1);
-            LLFrame llFrame = new LLFrame(frame.getFrameIndex(), function, filename, currentLine - 1, frameAddress, null, false);
-            result.add(newFrame(llFrame));
+              result.add(new MixedPythonStackFrame(innerFrameVirtualFile, innerFrameLineNumber, frame.getFrameIndex(), frame.getThreadId()));
+            } else {
+              LOG.warn("Filename is null or empty: " + frame);
+            }
+          } catch (NumberFormatException e) {
+            LOG.warn(frame.toString(), e);
           }
         }
       }
-      result.add(frame);
+    }
+
+    private class MixedPythonStackFrame extends XStackFrame {
+      public final VirtualFile myFile;
+      public final int myLine;
+      public final int myId;
+      public final long myThreadId;
+
+      public MixedPythonStackFrame(VirtualFile file, int line, int id, long threadId) {
+        this.myFile = file;
+        this.myLine = line;
+        this.myId = id;
+        this.myThreadId = threadId;
+      }
+
+      @Nullable
+      @Override
+      public Object getEqualityObject() {
+        return Pair.create(-myThreadId, myId);
+      }
+
+      @Nullable
+      @Override
+      public XSourcePosition getSourcePosition() {
+        return XDebuggerUtil.getInstance().createPosition(myFile, myLine);
+      }
+    }
+
+    private LLValueData evaluateAndGetLLValueData(@NotNull DebuggerDriver driver,
+                                                  @NotNull CidrStackFrame frame,
+                                                  @NotNull @PrintFormat String command,
+                                                  @NotNull Object... args)
+      throws ExecutionException, DebuggerCommandException {
+      return driver.getData(driver.evaluate(frame.getThreadId(), frame.getFrameIndex(),
+                                                                        String.format(command, args)));
     }
   }
 }
