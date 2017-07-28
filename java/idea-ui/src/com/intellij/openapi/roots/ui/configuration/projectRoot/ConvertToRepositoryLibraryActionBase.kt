@@ -32,10 +32,12 @@ import com.intellij.openapi.roots.AnnotationOrderRootType
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.roots.libraries.NewLibraryConfiguration
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor
+import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorBase
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
@@ -55,20 +57,23 @@ import java.util.*
 /**
  * @author nik
  */
-private val LOG = logger<ConvertToRepositoryLibraryAction>()
+private val LOG = logger<ConvertToRepositoryLibraryActionBase>()
 
-class ConvertToRepositoryLibraryAction(private val librariesConfigurable: BaseLibrariesConfigurable, private val project: Project) : DumbAwareAction(
+abstract class ConvertToRepositoryLibraryActionBase(protected val context: StructureConfigurableContext) : DumbAwareAction(
   "Convert to Repository Library...",
   "Convert a regular library to a repository library which additionally stores its Maven coordinates, so the IDE can automatically download the library JARs if they are missing",
   null) {
+  protected val project = context.project
+
+  protected abstract fun getSelectedLibrary(): LibraryEx?
 
   override fun update(e: AnActionEvent) {
-    val library = (librariesConfigurable.selectedElement as? LibraryProjectStructureElement)?.library as? LibraryEx
+    val library = getSelectedLibrary()
     e.presentation.isEnabledAndVisible = library != null && library.kind == null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val library = (librariesConfigurable.selectedElement as LibraryProjectStructureElement).library
+    val library = getSelectedLibrary() ?: return
     val mavenCoordinates = detectOrSpecifyMavenCoordinates(library) ?: return
 
     val libraryProperties = RepositoryLibraryProperties(mavenCoordinates.groupId, mavenCoordinates.artifactId, mavenCoordinates.version)
@@ -85,14 +90,14 @@ class ConvertToRepositoryLibraryAction(private val librariesConfigurable: BaseLi
     if (task.cancelled) return
 
     if (!task.filesAreTheSame) {
-      val ok = LibraryJarsDiffDialog(task.libraryFileToCompare!!, task.downloadedFileToCompare!!, mavenCoordinates, library.name!!, project).showAndGet()
+      val ok = LibraryJarsDiffDialog(task.libraryFileToCompare!!, task.downloadedFileToCompare!!, mavenCoordinates, LibraryUtil.getPresentableName(library), project).showAndGet()
       task.deleteTemporaryFiles()
       if (!ok) {
         return
       }
     }
     ApplicationManager.getApplication().invokeLater {
-      replaceByLibrary(library, object : NewLibraryConfiguration(library.name!!, RepositoryLibraryType.getInstance(), libraryProperties) {
+      replaceByLibrary(library, object : NewLibraryConfiguration(library.name ?: "", RepositoryLibraryType.getInstance(), libraryProperties) {
         override fun addRoots(editor: LibraryEditor) {
           editor.addRoots(roots)
         }
@@ -102,7 +107,7 @@ class ConvertToRepositoryLibraryAction(private val librariesConfigurable: BaseLi
 
   private fun detectOrSpecifyMavenCoordinates(library: Library): JpsMavenRepositoryLibraryDescriptor? {
     val detectedCoordinates = detectMavenCoordinates(library.getFiles(OrderRootType.CLASSES))
-    LOG.debug("Maven coordinates for ${library.name} JARs: $detectedCoordinates")
+    LOG.debug("Maven coordinates for ${LibraryUtil.getPresentableName(library)} JARs: $detectedCoordinates")
     if (detectedCoordinates.size == 1) {
       return detectedCoordinates[0]
     }
@@ -120,22 +125,15 @@ class ConvertToRepositoryLibraryAction(private val librariesConfigurable: BaseLi
 
   private fun replaceByLibrary(library: Library, configuration: NewLibraryConfiguration) {
     val annotationUrls = library.getUrls(AnnotationOrderRootType.getInstance())
-    val name = library.name
-    val modifiableModel = librariesConfigurable.modelProvider.modifiableModel
-    val context = librariesConfigurable.myContext
-
-    val usages = context.daemonAnalyzer.getUsages(LibraryProjectStructureElement(context, library))
-    modifiableModel.removeLibrary(library)
-    val newLibrary = modifiableModel.createLibrary(name, RepositoryLibraryType.getInstance().kind, null)
-    usages.forEach { it.replaceElement(LibraryProjectStructureElement(context, newLibrary)) }
-
-    val editor = modifiableModel.getLibraryEditor(newLibrary)
-    editor.properties = configuration.properties
-    editor.removeAllRoots()
-    configuration.addRoots(editor)
-    annotationUrls.forEach { editor.addRoot(it, AnnotationOrderRootType.getInstance()) }
-    ProjectStructureConfigurable.getInstance(project).selectProjectOrGlobalLibrary(newLibrary, true)
+    replaceLibrary(library) { editor ->
+      editor.properties = configuration.properties
+      editor.removeAllRoots()
+      configuration.addRoots(editor)
+      annotationUrls.forEach { editor.addRoot(it, AnnotationOrderRootType.getInstance()) }
+    }
   }
+
+  protected abstract fun replaceLibrary(library: Library, configureNewLibrary: (LibraryEditorBase) -> Unit)
 
   companion object {
     fun detectMavenCoordinates(libraryRoots: Array<out VirtualFile>): List<JpsMavenRepositoryLibraryDescriptor> =

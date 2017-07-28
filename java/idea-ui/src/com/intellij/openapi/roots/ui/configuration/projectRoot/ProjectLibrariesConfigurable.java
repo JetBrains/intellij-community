@@ -77,7 +77,7 @@ public class ProjectLibrariesConfigurable extends BaseLibrariesConfigurable {
   protected List<? extends AnAction> createCopyActions(boolean fromPopup) {
     List<? extends AnAction> actions = super.createCopyActions(fromPopup);
     if (fromPopup) {
-      return ContainerUtil.concat(actions, Collections.singletonList(new ConvertToRepositoryLibraryAction(this, myProject)));
+      return ContainerUtil.concat(actions, Collections.singletonList(new ConvertProjectLibraryToRepositoryLibraryAction(this, myContext)));
     }
     return actions;
   }
