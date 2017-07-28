@@ -26,7 +26,5 @@
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="xml-openapi" />
     <orderEntry type="module" module-name="vcs-api" />
-    <orderEntry type="module" module-name="cidr-common" />
-    <orderEntry type="module" module-name="clion" />
   </component>
 </module>
