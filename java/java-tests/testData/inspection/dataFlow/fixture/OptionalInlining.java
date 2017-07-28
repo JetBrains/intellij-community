@@ -20,6 +20,34 @@ public class OptionalInlining {
     }
   }
 
+  void testGuavaOr() {
+    String res = com.google.common.base.Optional.of("xyz").or("foo");
+    if(<warning descr="Condition 'res.equals(\"xyz\")' is always 'true'">res.equals("xyz")</warning>) {
+      System.out.println("Always");
+    }
+    if(<warning descr="Condition 'res.equals(\"foo\")' is always 'false'">res.equals("foo")</warning>) {
+      System.out.println("Never");
+    }
+    String res2 = com.google.common.base.Optional.<String>absent().or(() -> "foo");
+    if(<warning descr="Condition 'res2.equals(\"xyz\")' is always 'false'">res2.equals("xyz")</warning>) {
+      System.out.println("Never");
+    }
+    if(<warning descr="Condition 'res2.equals(\"foo\")' is always 'true'">res2.equals("foo")</warning>) {
+      System.out.println("Always");
+    }
+  }
+
+  void testGuavaOrNull() {
+    String s = com.google.common.base.Optional.fromNullable(<warning descr="Passing a non-null argument to 'Optional'">"foo"</warning>).orNull();
+    if (<warning descr="Condition 's == null' is always 'false'">s == null</warning>) {
+      System.out.println("Never");
+    }
+    if (<warning descr="Condition 's.equals(\"foo\")' is always 'true'">s.equals("foo")</warning>) {
+      System.out.println("Always");
+    }
+  }
+
+
   void testIsPresent(Optional<String> opt) {
     if (<warning descr="Condition '!opt.isPresent() && opt.orElse(\"foo\").equals(\"bar\")' is always 'false'">!opt.isPresent() && <warning descr="Condition 'opt.orElse(\"foo\").equals(\"bar\")' is always 'false' when reached">opt.orElse("foo").equals("bar")</warning></warning>) {
 
@@ -59,6 +87,7 @@ public class OptionalInlining {
     if (abc.equals("xyz") && <warning descr="Condition 'opt.isPresent()' is always 'true' when reached">opt.isPresent()</warning>) {
       System.out.println("always");
     }
+    opt.filter(x -> x.length() > 5).filter(x -> <warning descr="Condition 'x.isEmpty()' is always 'false'">x.isEmpty()</warning>).ifPresent(x -> System.out.println(x));
   }
 
   @Nullable
@@ -67,6 +96,11 @@ public class OptionalInlining {
       return null;
     }
     return "";
+  }
+
+  @Nullable
+  Optional<String> nullableOptionalMethod(String x) {
+    return x.isEmpty() ? null : Optional.of(x);
   }
 
   @Nullable
@@ -91,10 +125,39 @@ public class OptionalInlining {
       System.out.println(xyz.trim());
     }
     xyz.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>();
+    //opt.map(x -> x.isEmpty() ? "foo" : "bar").filter(x -> x.isEmpty()).ifPresent(x -> System.out.println(x));
+  }
+
+  void testGuavaTransform(com.google.common.base.Optional<String> opt) {
+    String trimmed = com.google.common.base.Optional.fromNullable(nullableMethod()).transform(xx -> xx.trim()).or("");
+    if(<warning descr="Condition 'trimmed == null' is always 'false'">trimmed == null</warning>) {
+      System.out.println("impossible");
+    }
+    if(opt.isPresent()) {
+      if(<warning descr="Condition 'opt.transform(x -> x.isEmpty() ? null : x).toJavaUtil().isPresent()' is always 'true'">opt.transform(x -> <warning descr="Function may return null, but it's not allowed here">x.isEmpty() ? null : x</warning>).toJavaUtil().isPresent()</warning>) {
+        System.out.println("Always");
+      }
+      if(opt.toJavaUtil().map(x -> x.isEmpty() ? null : x).isPresent()) {
+        System.out.println("Sometimes");
+      }
+    }
+  }
+
+  void testToJavaUtil() {
+    String xyz = nullableMethod();
+    Object n = com.google.common.base.Optional.fromNullable(xyz).transform(String::trim).toJavaUtil().map(this::getObj).orElse(null);
+    if(n instanceof Integer) {
+      // n instanceof Integer -> n is not null -> xyz was not null -> safe to dereference
+      System.out.println(xyz.trim());
+    }
+    xyz.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>();
   }
 
   void testFlatMap(Optional<String> opt) {
     opt.flatMap(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>);
+    opt.flatMap(x -> <warning descr="Function may return null, but it's not allowed here">null</warning>);
+    opt.flatMap(<warning descr="Function may return null, but it's not allowed here">this::nullableOptionalMethod</warning>);
+    opt.flatMap(x -> <warning descr="Function may return null, but it's not allowed here">x.isEmpty() ? null : Optional.of(x)</warning>);
     String s = opt.flatMap(str -> Optional.of(str.length() > 10 ? "foo" : "bar")).orElse("baz");
     if (<warning descr="Condition 's.equals(\"qux\")' is always 'false'">s.equals("qux")</warning>) {
       System.out.println("Never");

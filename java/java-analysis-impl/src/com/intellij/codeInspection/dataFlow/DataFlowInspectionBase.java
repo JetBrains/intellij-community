@@ -365,6 +365,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
     reportConstantPushes(runner, holder, visitor, reportedAnchors);
 
+    reportNullableFunctions(visitor, holder, reportedAnchors);
     reportNullableArguments(visitor, holder, reportedAnchors);
     reportNullableAssignments(visitor, holder, reportedAnchors);
     reportUnboxedNullables(visitor, holder, reportedAnchors);
@@ -697,6 +698,13 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   private boolean skipReportingConstantCondition(StandardInstructionVisitor visitor, PsiElement psiAnchor, boolean evaluatesToTrue) {
     return DONT_REPORT_TRUE_ASSERT_STATEMENTS && isAssertionEffectively(psiAnchor, evaluatesToTrue) ||
            visitor.silenceConstantCondition(psiAnchor);
+  }
+
+  private static void reportNullableFunctions(DataFlowInstructionVisitor visitor, ProblemsHolder holder, Set<PsiElement> reportedAnchors) {
+    for (PsiElement expr : visitor.getProblems(NullabilityProblem.nullableFunctionReturn)) {
+      if (!reportedAnchors.add(expr)) continue;
+      holder.registerProblem(expr, InspectionsBundle.message("dataflow.message.return.nullable.from.notnull.function"));
+    }
   }
 
   private void reportNullableArguments(DataFlowInstructionVisitor visitor, ProblemsHolder holder, Set<PsiElement> reportedAnchors) {

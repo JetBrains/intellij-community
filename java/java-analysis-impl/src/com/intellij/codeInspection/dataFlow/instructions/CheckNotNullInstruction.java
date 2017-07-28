@@ -39,4 +39,9 @@ public class CheckNotNullInstruction extends Instruction {
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
     return visitor.visitCheckNotNull(this, runner, stateBefore);
   }
+
+  @Override
+  public String toString() {
+    return "CHECK_NOT_NULL ["+myProblem+"] "+myExpression.getText();
+  }
 }

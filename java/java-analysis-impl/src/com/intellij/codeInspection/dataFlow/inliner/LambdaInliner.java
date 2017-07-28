@@ -47,7 +47,7 @@ public class LambdaInliner implements CallInliner {
                                                       .boxUnbox(arg, parameter.getType())
                                                       .assign()
                                                       .pop());
-    builder.inlineLambda(lambda);
+    builder.inlineLambda(lambda, false);
     return true;
   }
 }

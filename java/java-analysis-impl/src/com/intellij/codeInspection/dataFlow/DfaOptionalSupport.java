@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class DfaOptionalSupport {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DfaOptionalSupport");
-  private static final String GUAVA_OPTIONAL = "com.google.common.base.Optional";
+  public static final String GUAVA_OPTIONAL = "com.google.common.base.Optional";
 
   public static final CallMatcher JDK_OPTIONAL_OF_NULLABLE = CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "ofNullable").parameterCount(1);
   public static final CallMatcher GUAVA_OPTIONAL_FROM_NULLABLE = CallMatcher.staticCall(GUAVA_OPTIONAL, "fromNullable").parameterCount(1);

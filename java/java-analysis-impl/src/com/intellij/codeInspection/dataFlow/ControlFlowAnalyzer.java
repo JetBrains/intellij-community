@@ -62,6 +62,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private final ExceptionTransfer myError;
   private final PsiType myAssertionError;
   private PsiLambdaExpression myLambdaExpression = null;
+  private boolean myForceNotNullLambdaResult = false;
 
   ControlFlowAnalyzer(final DfaValueFactory valueFactory, @NotNull PsiElement codeFragment, boolean ignoreAssertions, boolean inlining) {
     myInlining = inlining;
@@ -671,6 +672,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     else {
       if (returnValue == null) {
         pushUnknown();
+      } else if (myForceNotNullLambdaResult) {
+        addInstruction(new CheckNotNullInstruction(returnValue, NullabilityProblem.nullableFunctionReturn));
       }
       controlTransfer(new InstructionTransfer(getEndOffset(myLambdaExpression), getVariablesInside(myLambdaExpression)), myTrapStack);
     }
@@ -1704,11 +1707,13 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override public void visitClass(PsiClass aClass) {
   }
 
-  void inlineLambda(PsiLambdaExpression lambda) {
+  void inlineLambda(PsiLambdaExpression lambda, boolean forceNotNullResult) {
     PsiLambdaExpression oldLambda = myLambdaExpression;
+    boolean oldForceNotNullLambdaResult = myForceNotNullLambdaResult;
     // Transfer value is pushed to avoid emptying stack beyond this point
     addInstruction(new PushInstruction(myFactory.controlTransfer(ReturnTransfer.INSTANCE, this.myTrapStack), null));
     myLambdaExpression = lambda;
+    myForceNotNullLambdaResult = forceNotNullResult;
     startElement(lambda);
     try {
       PsiElement body = lambda.getBody();
@@ -1719,11 +1724,15 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
       else if (body instanceof PsiExpression) {
         generateBoxingUnboxingInstructionFor((PsiExpression)body, LambdaUtil.getFunctionalInterfaceReturnType(lambda));
+        if (myForceNotNullLambdaResult) {
+          addInstruction(new CheckNotNullInstruction((PsiExpression)body, NullabilityProblem.nullableFunctionReturn));
+        }
       }
     }
     finally {
       finishElement(lambda);
       myLambdaExpression = oldLambda;
+      myForceNotNullLambdaResult = oldForceNotNullLambdaResult;
       // Pop transfer value (which is second value in stack now)
       addInstruction(new SpliceInstruction(2, 0));
     }

@@ -32,7 +32,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -48,9 +47,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.StandardInstructionVisitor");
   private static final Object ANY_VALUE = new Object();
 
-  private static final Set<String> OPTIONAL_METHOD_NAMES = ContainerUtil
-    .set("of", "ofNullable", "fromNullable", "empty", "absent", "or", "orElse", "orElseGet", "ifPresent", "map", "flatMap", "filter",
-         "transform");
   private static final CallMapper<LongRangeSet> KNOWN_METHOD_RANGES = new CallMapper<LongRangeSet>()
     .register(CallMatcher.instanceCall("java.time.LocalDateTime", "getHour"), LongRangeSet.range(0, 23))
     .register(CallMatcher.instanceCall("java.time.LocalDateTime", "getMinute", "getSecond"), LongRangeSet.range(0, 59))
@@ -297,7 +293,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   @Override
   public DfaInstructionState[] visitMethodCall(final MethodCallInstruction instruction, final DataFlowRunner runner, final DfaMemoryState memState) {
     Set<DfaMemoryState> finalStates = ContainerUtil.newLinkedHashSet();
-    finalStates.addAll(handleOptionalMethods(instruction, runner, memState));
+    //finalStates.addAll(handleOptionalMethods(instruction, runner, memState));
     finalStates.addAll(handleKnownMethods(instruction, runner, memState));
 
     if (finalStates.isEmpty()) {
@@ -350,65 +346,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       return Collections.singletonList(memState);
     }
     return states;
-  }
-
-  @NotNull
-  private List<DfaMemoryState> handleOptionalMethods(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    PsiMethodCallExpression call = ObjectUtils.tryCast(instruction.getCallExpression(), PsiMethodCallExpression.class);
-    if (call == null) return Collections.emptyList();
-    String methodName = call.getMethodExpression().getReferenceName();
-    if (methodName == null || !OPTIONAL_METHOD_NAMES.contains(methodName)) return Collections.emptyList();
-    PsiMethod method = call.resolveMethod();
-    if (method == null || !TypeUtils.isOptional(method.getContainingClass())) return Collections.emptyList();
-    DfaCallArguments arguments = popCall(instruction, runner, memState, false);
-    DfaValue[] argValues = arguments.myArguments;
-    DfaValue result = null;
-    DfaValueFactory factory = runner.getFactory();
-    switch (methodName) {
-      case "of":
-      case "ofNullable":
-      case "fromNullable":
-        if ("of".equals(methodName) || (argValues != null && argValues.length == 1 && memState.isNotNull(argValues[0]))) {
-          result = factory.getOptionalFactory().getOptional(true);
-        }
-        break;
-      case "empty":
-      case "absent":
-        result = factory.getOptionalFactory().getOptional(false);
-        break;
-      case "orElse":
-        if (argValues != null && argValues.length == 1) {
-          DfaMemoryState falseState = memState.createCopy();
-          DfaOptionalValue optional = factory.getOptionalFactory().getOptional(true);
-          DfaValue relation = factory.createCondition(arguments.myQualifier, RelationType.IS, optional);
-          List<DfaMemoryState> states = new ArrayList<>(2);
-          if (memState.applyCondition(relation)) {
-            memState.push(factory.createTypeValue(instruction.getResultType(), Nullness.NOT_NULL));
-            states.add(memState);
-          }
-          if (falseState.applyCondition(relation.createNegated())) {
-            falseState.push(argValues[0]);
-            states.add(falseState);
-          }
-          return states;
-        }
-        break;
-      case "filter":
-      case "flatMap":
-      case "ifPresent":
-      case "map":
-      case "or":
-      case "orElseGet":
-      case "transform": {
-        DfaOptionalValue optional = factory.getOptionalFactory().getOptional(!methodName.startsWith("or"));
-        DfaValue relation = factory.createCondition(arguments.myQualifier, RelationType.IS, optional);
-        runner.updateStackTopClosures(state -> state.applyCondition(relation));
-        break;
-      }
-      default:
-    }
-    memState.push(result == null ? getMethodResultValue(instruction, arguments.myQualifier, factory) : result);
-    return Collections.singletonList(memState);
   }
 
   @NotNull
@@ -606,7 +543,17 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   @Override
   public DfaInstructionState[] visitCheckNotNull(CheckNotNullInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     if (!checkNotNullable(memState, memState.peek(), instruction.getProblem(), instruction.getExpression())) {
-      forceNotNull(runner, memState, memState.peek());
+      DfaValue arg = memState.peek();
+      if (arg instanceof DfaVariableValue) {
+        DfaVariableValue var = (DfaVariableValue)arg;
+        memState.setVarValue(var, runner.getFactory().createTypeValue(var.getVariableType(), Nullness.NOT_NULL));
+      } else if (arg instanceof DfaTypeValue) {
+        memState.pop();
+        memState.push(((DfaTypeValue)arg).withNullness(Nullness.NOT_NULL));
+      } else if (memState.isNull(arg) && instruction.getProblem() == NullabilityProblem.nullableFunctionReturn) {
+        memState.pop();
+        memState.push(runner.getFactory().createTypeValue(PsiType.VOID, Nullness.NOT_NULL));
+      }
     }
     return super.visitCheckNotNull(instruction, runner, memState);
   }

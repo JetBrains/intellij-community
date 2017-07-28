@@ -473,13 +473,27 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder invokeFunction(int argCount, @Nullable PsiExpression functionalExpression) {
+    return invokeFunction(argCount, functionalExpression, false);
+  }
+
+  /**
+   * Generates instructions to invoke functional expression (inlining it if possible) which
+   * consumes given amount of stack arguments, assuming that it was previously evaluated
+   * (see {@link #evaluateFunction(PsiExpression)}).
+   *
+   * @param argCount             number of stack arguments to consume
+   * @param functionalExpression a functional expression to invoke
+   * @param forceNotNullResult   if true, function result will be forced to not-null (possibly issuing a warning)
+   * @return this builder
+   */
+  public CFGBuilder invokeFunction(int argCount, @Nullable PsiExpression functionalExpression, boolean forceNotNullResult) {
     PsiExpression stripped = PsiUtil.deparenthesizeExpression(functionalExpression);
     if (stripped instanceof PsiLambdaExpression) {
       PsiLambdaExpression lambda = (PsiLambdaExpression)stripped;
       PsiParameter[] parameters = lambda.getParameterList().getParameters();
       if (parameters.length == argCount && lambda.getBody() != null) {
         StreamEx.ofReversed(parameters).forEach(p -> assignTo(p).pop());
-        return inlineLambda(lambda);
+        return inlineLambda(lambda, forceNotNullResult);
       }
     }
     if (stripped instanceof PsiMethodReferenceExpression) {
@@ -506,6 +520,9 @@ public class CFGBuilder {
           myAnalyzer.addBareCall(null, methodRef);
           myAnalyzer.generateBoxingUnboxingInstructionFor(methodRef, resolveResult.getSubstitutor().substitute(method.getReturnType()),
                                                           LambdaUtil.getFunctionalInterfaceReturnType(methodRef));
+          if (forceNotNullResult) {
+            checkNotNull(methodRef, NullabilityProblem.nullableFunctionReturn);
+          }
           return this;
         }
       }
@@ -553,8 +570,8 @@ public class CFGBuilder {
     }
   }
 
-  public CFGBuilder inlineLambda(PsiLambdaExpression lambda) {
-    myAnalyzer.inlineLambda(lambda);
+  public CFGBuilder inlineLambda(PsiLambdaExpression lambda, boolean forceNotNullResult) {
+    myAnalyzer.inlineLambda(lambda, forceNotNullResult);
     return this;
   }
 
