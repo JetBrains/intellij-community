@@ -40,6 +40,13 @@ final class WideSelectionListUI extends BasicListUI {
                            ListModel model,
                            ListSelectionModel selectionModel,
                            int leadSelectionIndex) {
+    if (list.getLayoutOrientation() != JList.VERTICAL) {
+      // If the list layout orientation is VERTICAL_WRAP or HORIZONTAL_WRAP
+      // we don't want to paint anything outside the cell to avoid covering other cells on the same row
+      super.paintCell(g, row, rowBounds, renderer, model, selectionModel, leadSelectionIndex);
+      return;
+    }
+
     Rectangle paintBounds = myPaintBounds;
     if (paintBounds != null) {
       boolean selected = selectionModel.isSelectedIndex(row);
