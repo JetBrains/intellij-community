@@ -398,7 +398,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
         final String UPDATE_LINK = "update";
         String message = String.format("The <a href='" + SETTINGS_LINK + "'>configured</a> version of Git is not supported: %s.<br/> " +
                                        "The minimal supported version is %s. Please <a href='" + UPDATE_LINK + "'>update</a>.",
-                                       myVersion, GitVersion.MIN);
+                                       myVersion.getPresentation(), GitVersion.MIN.getPresentation());
         VcsNotifier.getInstance(myProject).notifyError("Unsupported Git version", message,
                                                        new NotificationListener.Adapter() {
                                                          @Override

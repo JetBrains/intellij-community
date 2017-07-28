@@ -235,10 +235,16 @@ public final class GitVersion implements Comparable<GitVersion> {
     return myPatchLevel - o.myPatchLevel;
   }
 
+  @NotNull
+  public String getPresentation() {
+    String presentation = myMajor + "." + myMinor + "." + myRevision;
+    if (myPatchLevel > 0) presentation += "." + myPatchLevel;
+    return presentation;
+  }
+
   @Override
   public String toString() {
-    final String msysIndicator = (myType == Type.MSYS ? ".msysgit" : "");
-    return myMajor + "." + myMinor + "." + myRevision + "." + myPatchLevel + msysIndicator;
+    return myMajor + "." + myMinor + "." + myRevision + "." + myPatchLevel + " (" + myType + ")";
   }
 
   /**
