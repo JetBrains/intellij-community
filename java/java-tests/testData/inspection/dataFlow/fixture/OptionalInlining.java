@@ -158,10 +158,20 @@ public class OptionalInlining {
     opt.flatMap(x -> <warning descr="Function may return null, but it's not allowed here">null</warning>);
     opt.flatMap(<warning descr="Function may return null, but it's not allowed here">this::nullableOptionalMethod</warning>);
     opt.flatMap(x -> <warning descr="Function may return null, but it's not allowed here">x.isEmpty() ? null : Optional.of(x)</warning>);
+    opt.flatMap(x -> {
+      if (x.isEmpty()) {
+        return <warning descr="Function may return null, but it's not allowed here">null</warning>;
+      }
+      else {
+        return Optional.of(x);
+      }
+    });
     String s = opt.flatMap(str -> Optional.of(str.length() > 10 ? "foo" : "bar")).orElse("baz");
     if (<warning descr="Condition 's.equals(\"qux\")' is always 'false'">s.equals("qux")</warning>) {
       System.out.println("Never");
     }
+    boolean res = <warning descr="Condition 'opt.filter(x -> x.isEmpty()).flatMap(x -> x.length() <= 2 ? Optional.empty() : Optional.of(\"foo\")) ...' is always 'false'">opt.filter(x -> x.isEmpty()).flatMap(x -> <warning descr="Condition 'x.length() <= 2' is always 'true'">x.length() <= 2</warning> ? Optional.empty() : Optional.of("foo"))
+      .isPresent()</warning>;
   }
 
   void testIfPresent(Optional<String> opt) {
