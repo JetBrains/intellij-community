@@ -1,4 +1,4 @@
-// "Replace with max()" "true"
+// "Replace with max()" "false"
 
 import java.util.*;
 
