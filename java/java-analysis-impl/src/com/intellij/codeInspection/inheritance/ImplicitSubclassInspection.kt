@@ -18,8 +18,12 @@ package com.intellij.codeInspection.inheritance
 import com.intellij.CommonBundle
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory
 import com.intellij.codeInspection.*
+import com.intellij.lang.jvm.JvmClass
+import com.intellij.lang.jvm.JvmModifier
+import com.intellij.lang.jvm.JvmModifiersOwner
+import com.intellij.lang.jvm.actions.JvmElementActionsFactory
+import com.intellij.lang.jvm.actions.MemberRequest
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -43,8 +47,7 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
 
     val subclassInfos = subclassProviders.mapNotNull { it.getSubclassingInfo(aClass) }
 
-    val methodsToOverride = aClass.methods.mapNotNull {
-      method ->
+    val methodsToOverride = aClass.methods.mapNotNull { method ->
       subclassInfos
         .mapNotNull { it.methodsInfo?.get(method)?.description }
         .firstOrNull()?.let { description ->
@@ -58,7 +61,7 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
 
     val smartPointerManager = SmartPointerManager.getInstance(aClass.project)
 
-    val actionsFactory = JvmCommonIntentionActionsFactory.forLanguage(aClass.language)
+    val actionsFactory = JvmElementActionsFactory.forLanguage(aClass.language)
 
     for ((method, description) in methodsToOverride) {
       if (method.isFinal || method.isStatic || method.hasModifierProperty(PsiModifier.PRIVATE)) {
@@ -91,7 +94,7 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
     return problems.toTypedArray()
   }
 
-  private fun createFixesIfApplicable(actionsFactory: JvmCommonIntentionActionsFactory?,
+  private fun createFixesIfApplicable(actionsFactory: JvmElementActionsFactory?,
                                       aClass: UDeclaration,
                                       hintTargetName: String,
                                       methodsToAttachToClassFix: List<SmartPsiElementPointer<UDeclaration>> = emptyList()): Array<LocalQuickFix> {
@@ -120,7 +123,7 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
 
   private class MakeExtendableFix(uDeclaration: UDeclaration,
                                   hintTargetName: String,
-                                  val actionsFactory: JvmCommonIntentionActionsFactory,
+                                  val actionsFactory: JvmElementActionsFactory,
                                   val siblings: List<SmartPsiElementPointer<UDeclaration>> = emptyList())
     : LocalQuickFixOnPsiElement(uDeclaration) {
 
@@ -164,30 +167,30 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
     private fun collectMakeExtendable(declaration: UDeclaration,
                                       actionsList: SmartList<IntentionAction>,
                                       checkParent: Boolean = true) {
-      val isClassMember = !(declaration is UClass)
+      val isClassMember = !(declaration is JvmClass)
       declaration.modifierList?.apply {
-        addIfApplicable(declaration, PsiModifier.FINAL, false, actionsList)
-        addIfApplicable(declaration, PsiModifier.PRIVATE, false, actionsList)
+        addIfApplicable(declaration, JvmModifier.FINAL, false, actionsList)
+        addIfApplicable(declaration, JvmModifier.PRIVATE, false, actionsList)
         if (isClassMember) {
-          addIfApplicable(declaration, PsiModifier.STATIC, false, actionsList)
+          addIfApplicable(declaration, JvmModifier.STATIC, false, actionsList)
         }
       }
       if (checkParent && isClassMember) {
         (declaration.uastParent as? UClass)?.apply {
-          addIfApplicable(this, PsiModifier.FINAL, false, actionsList)
-          addIfApplicable(this, PsiModifier.PRIVATE, false, actionsList)
+          addIfApplicable(this, JvmModifier.FINAL, false, actionsList)
+          addIfApplicable(this, JvmModifier.PRIVATE, false, actionsList)
         }
       }
     }
 
-    private fun addIfApplicable(declaration: UDeclaration,
-                                name: String,
+    private fun addIfApplicable(declaration: JvmModifiersOwner,
+                                modifier: JvmModifier,
                                 shouldPresent: Boolean,
                                 actionsList: SmartList<IntentionAction>) {
-      if (declaration.modifierList?.hasModifierProperty(name) != shouldPresent) {
-        (actionsFactory.createChangeModifierAction(declaration as @com.intellij.psi.JvmCommon PsiModifierListOwner, name,
-                                                   shouldPresent))?.let {
-          actionsList.add(it)
+      if (declaration.hasModifier(modifier) != shouldPresent) {
+        actionsFactory.createChangeModifierActions(declaration, MemberRequest.Modifier(modifier,
+                                                                                       shouldPresent)).let {
+          actionsList.addAll(it)
         }
       }
     }

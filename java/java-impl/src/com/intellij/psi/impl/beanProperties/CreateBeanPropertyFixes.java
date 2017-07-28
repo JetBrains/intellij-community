@@ -16,9 +16,11 @@
 package com.intellij.psi.impl.beanProperties;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory;
 import com.intellij.codeInspection.IntentionWrapper;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.lang.jvm.actions.JvmElementActionsFactory;
+import com.intellij.lang.jvm.actions.MemberRequest;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -51,10 +53,11 @@ public class CreateBeanPropertyFixes {
       if (aClass == null) return IntentionAction.EMPTY_ARRAY;
       type = facade.getElementFactory().createType(aClass);
     }
-    JvmCommonIntentionActionsFactory factory = JvmCommonIntentionActionsFactory.forLanguage(psiClass.getLanguage());
+    JvmElementActionsFactory factory = JvmElementActionsFactory.forLanguage(psiClass.getLanguage());
     if (factory == null) return IntentionAction.EMPTY_ARRAY;
     return toObjectArray(
-      factory.createAddBeanPropertyActions(psiClass, propertyName, PsiModifier.PUBLIC, type, createSetter, !createSetter),
+      factory.createAddPropertyActions(psiClass,
+                                       new MemberRequest.Property(propertyName, JvmModifier.PUBLIC, type, createSetter, !createSetter)),
       IntentionAction.class);
   }
 }
