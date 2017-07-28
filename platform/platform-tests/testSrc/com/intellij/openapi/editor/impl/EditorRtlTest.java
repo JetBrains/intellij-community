@@ -590,4 +590,8 @@ public class EditorRtlTest extends AbstractRtlTest {
     right();
     checkResult("/<caret>/ R");
   }
+
+  public void testIndentIsTreatedSeparately() throws Exception {
+    checkBidiRunBoundaries(" |R", "txt");
+  }
 }
