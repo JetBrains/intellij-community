@@ -21,21 +21,27 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ui.UIUtil;
 
+import javax.swing.*;
+import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
  */
 public class BuildContentManagerImpl implements BuildContentManager {
 
-  public static final String BUILD_VIEW_NAME = "   Build   ";
-
+  public static final String Build = "Build";
+  public static final String Sync = "Sync";
+  private static final String[] ourPresetOrder = {Build, Sync};
   private ToolWindow myToolWindow;
   private final List<Runnable> myPostponedRunnables = new ArrayList<>();
 
@@ -45,12 +51,10 @@ public class BuildContentManagerImpl implements BuildContentManager {
 
   private void init(Project project) {
     final Runnable runnable = () -> {
-      ToolWindow toolWindow = ToolWindowManager.getInstance(project).registerToolWindow("Build", true, ToolWindowAnchor.BOTTOM, project, true);
+      ToolWindow toolWindow = ToolWindowManager.getInstance(project)
+        .registerToolWindow("Build", true, ToolWindowAnchor.BOTTOM, project, true);
       toolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
       toolWindow.setIcon(AllIcons.Actions.Compile);
-      //toolWindow.setTitle("title");
-      //toolWindow.setStripeTitle("stripeTitle");
-      //toolWindow.getContentManager().
       myToolWindow = toolWindow;
       for (Runnable postponedRunnable : myPostponedRunnables) {
         postponedRunnable.run();
@@ -79,8 +83,54 @@ public class BuildContentManagerImpl implements BuildContentManager {
   public void addContent(Content content) {
     runWhenInitialized(() -> {
       ContentManager contentManager = myToolWindow.getContentManager();
-      // todo add to preserved place 'Build' 'Pinned Build*' 'Sync' 'Pinned Sync*' 'Tasks history tab'
-      contentManager.addContent(content);
+      final String name = content.getTabName();
+      int idx = -1;
+      for (int i = 0; i < ourPresetOrder.length; i++) {
+        final String s = ourPresetOrder[i];
+        if (s.equals(name)) {
+          idx = i;
+        }
+      }
+      final Content[] existingContents = contentManager.getContents();
+      if (idx != -1) {
+        final Set<String> existingTabNames = new HashSet<>();
+        for (Content existingContent : existingContents) {
+          existingTabNames.add(existingContent.getTabName());
+        }
+        int place = idx;
+        for (int i = 0; i < idx; i++) {
+          if (!existingTabNames.contains(ourPresetOrder[i])) {
+            --place;
+          }
+        }
+        contentManager.addContent(content, place);
+      }
+      else {
+        contentManager.addContent(content);
+      }
+
+      Content firstContent = contentManager.getContent(0);
+      if (firstContent == null || Build.equals(firstContent.getTabName())) {
+        if (contentManager.getContentCount() > 1) {
+          for (Content existingContent : existingContents) {
+            existingContent.setDisplayName(existingContent.getTabName());
+          }
+        }
+        setIdLabelHidden(true);
+        return;
+      }
+
+      if (contentManager.getContentCount() == 1) {
+        // we are going to adjust display name, so we need to ensure tab name is not retrieved based on display name
+        content.setTabName(content.getTabName());
+        content.setDisplayName(Build + ": " + content.getTabName());
+      }
+      else {
+        for (Content existingContent : existingContents) {
+          existingContent.setDisplayName(existingContent.getTabName());
+        }
+        setIdLabelHidden(false);
+      }
     });
   }
 
@@ -100,11 +150,22 @@ public class BuildContentManagerImpl implements BuildContentManager {
   @Override
   public void selectContent(String tabName) {
     ContentManager contentManager = myToolWindow.getContentManager();
-    for(Content content: contentManager.getContents()) {
+    for (Content content : contentManager.getContents()) {
       if (content.getDisplayName().equals(tabName)) {
         contentManager.setSelectedContent(content, false);
         break;
       }
+    }
+  }
+
+  private void setIdLabelHidden(boolean hide) {
+    JComponent component = myToolWindow.getComponent();
+    Object oldValue = component.getClientProperty(ToolWindowContentUi.HIDE_ID_LABEL);
+    Object newValue = hide ? "true" : null;
+    component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, newValue);
+    if (myToolWindow instanceof ToolWindowImpl) {
+      ((ToolWindowImpl)myToolWindow).getContentUI()
+        .propertyChange(new PropertyChangeEvent(this, ToolWindowContentUi.HIDE_ID_LABEL, oldValue, newValue));
     }
   }
 }

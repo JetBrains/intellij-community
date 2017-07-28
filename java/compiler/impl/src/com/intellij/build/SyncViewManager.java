@@ -281,7 +281,7 @@ public class SyncViewManager implements Disposable {
           consoleComponent.add(ActionManager.getInstance().createActionToolbar(
             "", myToolbarActions, false).getComponent(), BorderLayout.WEST);
 
-          myContent = new ContentImpl(consoleComponent, "   Sync   ", true);
+          myContent = new ContentImpl(consoleComponent, "Sync", true);
           myContent.setCloseable(false);
           myBuildContentManager.addContent(myContent);
           myBuildContentManager.setSelectedContent(myContent);
