@@ -59,8 +59,8 @@ public class SyncViewManager implements Disposable {
   private final Project myProject;
   private final BuildContentManager myBuildContentManager;
   private Content myContent;
-  private final AtomicBoolean isInitializeStarted = new AtomicBoolean();
-  private final List<Runnable> myPostponedRunnables = new ArrayList<>();
+  private final AtomicBoolean isInitializeStarted;
+  private final List<Runnable> myPostponedRunnables;
   private final ProgressWatcher myProgressWatcher;
   private final ThreeComponentsSplitter myThreeComponentsSplitter;
   private final JBList<BuildInfo> myBuildsList;
@@ -71,6 +71,8 @@ public class SyncViewManager implements Disposable {
   public SyncViewManager(Project project, BuildContentManager buildContentManager) {
     myProject = project;
     myBuildContentManager = buildContentManager;
+    isInitializeStarted = new AtomicBoolean();
+    myPostponedRunnables = ContainerUtil.createConcurrentList();
     myThreeComponentsSplitter = new ThreeComponentsSplitter();
     Disposer.register(this, myThreeComponentsSplitter);
     myBuildsList = new JBList<>();
@@ -283,7 +285,6 @@ public class SyncViewManager implements Disposable {
           myContent.setCloseable(false);
           myBuildContentManager.addContent(myContent);
           myBuildContentManager.setSelectedContent(myContent);
-          //myConsoleView = duplexConsoleView;
 
           List<Runnable> postponedRunnables = new ArrayList<>(myPostponedRunnables);
           myPostponedRunnables.clear();
