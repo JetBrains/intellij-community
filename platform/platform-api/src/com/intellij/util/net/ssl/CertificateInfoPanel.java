@@ -88,7 +88,6 @@ public class CertificateInfoPanel extends JPanel {
 
   private static JComponent getTextPane(String text) {
     JTextPane pane = new JTextPane();
-    pane.setEditorKit(UIUtil.getHTMLEditorKit());
     pane.setOpaque(false);
     pane.setEditable(false);
     pane.setContentType("text/plain");
