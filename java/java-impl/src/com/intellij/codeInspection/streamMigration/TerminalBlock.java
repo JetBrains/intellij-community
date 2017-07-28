@@ -377,10 +377,10 @@ class TerminalBlock {
 
   @Nullable
   TerminalBlock withoutLastOperation() {
-    if(myOperations.length == 0) return null;
+    if(myOperations.length == 1) return null;
     Operation[] operations = new Operation[myOperations.length - 1];
     System.arraycopy(myOperations, 0, operations, 0, operations.length);
-    return new TerminalBlock(operations, myVariable, myStatements);
+    return new TerminalBlock(operations, operations[operations.length - 1].getVariable(), myStatements);
   }
 
   @Nullable

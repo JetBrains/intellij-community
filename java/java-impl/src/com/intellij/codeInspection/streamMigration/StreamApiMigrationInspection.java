@@ -52,8 +52,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
-import static com.intellij.codeInspection.streamMigration.FindExtremumMigration.MAX_REPLACEMENT;
-import static com.intellij.codeInspection.streamMigration.FindExtremumMigration.MIN_REPLACEMENT;
 import static com.intellij.codeInspection.streamMigration.OperationReductionMigration.SUM_OPERATION;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus.UNKNOWN;
@@ -495,9 +493,9 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       if (getAccumulatedVariable(tb, nonFinalVariables, SUM_OPERATION) != null) {
         return new SumMigration(true);
       }
-      FindExtremumMigration.ExtremumTerminal extremumTerminal = FindExtremumMigration.extract(tb);
-      if(extremumTerminal != null && extremumTerminal.getNonFinalVariableCount() == nonFinalVariables.size()) {
-        return new FindExtremumMigration(true, extremumTerminal.isMax()? MAX_REPLACEMENT : MIN_REPLACEMENT);
+      FindExtremumMigration.ExtremumTerminal extremumTerminal = FindExtremumMigration.extract(tb, nonFinalVariables);
+      if(extremumTerminal != null) {
+        return new FindExtremumMigration(true, FindExtremumMigration.getOpertion(extremumTerminal.isMax()) + "()");
       }
       for (OperationReductionMigration.ReductionOperation reductionOperation : OperationReductionMigration.OPERATIONS) {
         if (getAccumulatedVariable(tb, nonFinalVariables, reductionOperation) != null) {
