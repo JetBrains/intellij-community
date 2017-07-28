@@ -35,7 +35,7 @@ public class FileWithActions {
     myActions = actions;
   }
 
-  PsiFile getPsiFile() {
+  public PsiFile getPsiFile() {
     return myFile;
   }
 
