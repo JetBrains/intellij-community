@@ -22,6 +22,7 @@ package com.intellij.util.io.storage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
@@ -111,7 +112,7 @@ public abstract class AbstractStorage implements Disposable, Forceable {
     catch (IOException e) {
       LOG.info(e.getMessage());
       if (recordsTable != null) {
-        recordsTable.dispose();
+        Disposer.dispose(recordsTable);
       }
 
       boolean deleted = deleteFiles(storageFilePath);
@@ -169,8 +170,8 @@ public abstract class AbstractStorage implements Disposable, Forceable {
           }
         }
 
-        myDataTable.dispose();
-        newDataTable.dispose();
+        Disposer.dispose(myDataTable);
+        Disposer.dispose(newDataTable);
 
         if (!FileUtil.delete(oldDataFile)) {
           throw new IOException("Can't delete file: " + oldDataFile);
@@ -330,8 +331,9 @@ public abstract class AbstractStorage implements Disposable, Forceable {
   @Override
   public void dispose() {
     synchronized (myLock) {
-      myRecordsTable.dispose();
-      myDataTable.dispose();
+      Disposer.dispose(myRecordsTable);
+      Disposer.dispose(myDataTable);
+
     }
   }
 
