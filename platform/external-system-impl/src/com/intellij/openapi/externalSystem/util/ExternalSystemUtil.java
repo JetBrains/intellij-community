@@ -503,18 +503,6 @@ public class ExternalSystemUtil {
         if (callback != null) {
           callback.onFailure(message, extractDetails(error));
         }
-
-        ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
-        if (manager == null) {
-          return;
-        }
-        AbstractExternalSystemSettings<?, ?, ?> settings = manager.getSettingsProvider().fun(project);
-        ExternalProjectSettings projectSettings = settings.getLinkedProjectSettings(externalProjectPath);
-        if (projectSettings == null || !reportRefreshError) {
-          return;
-        }
-
-        ExternalSystemNotificationManager.getInstance(project).processExternalProjectRefreshError(error, projectName, externalSystemId);
       }
     };
 

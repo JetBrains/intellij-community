@@ -100,6 +100,9 @@ public class ExternalSystemNotificationManager implements Disposable {
     return ServiceManager.getService(project, ExternalSystemNotificationManager.class);
   }
 
+  /**
+   * @deprecated build tool window should be used to display 'sync' errors
+   */
   public void processExternalProjectRefreshError(@NotNull Throwable error,
                                                  @NotNull String externalProjectName,
                                                  @NotNull ProjectSystemId externalSystemId) {
