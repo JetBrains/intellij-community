@@ -110,6 +110,13 @@ public class PluginManager extends PluginManagerCore {
 
   public static void processException(Throwable t) {
     if (!IdeaApplication.isLoaded()) {
+      InstallationCorruptedException corrupted = findCause(t, InstallationCorruptedException.class);
+      String productName = ApplicationNamesInfo.getInstance().getFullProductName();
+      if (corrupted != null) {
+        Main.showMessage("Corrupted Installation", corrupted.getMessage() + ". Try reinstalling " + productName + " from scratch.", true);
+        System.exit(Main.INSTALLATION_CORRUPTED);
+      }
+
       @SuppressWarnings("ThrowableResultOfMethodCallIgnored") StartupAbortedException se = findCause(t, StartupAbortedException.class);
       if (se == null) se = new StartupAbortedException(t);
       @SuppressWarnings("ThrowableResultOfMethodCallIgnored") PluginException pe = findCause(t, PluginException.class);
@@ -137,7 +144,7 @@ public class PluginManager extends PluginManagerCore {
 
         StringWriter message = new StringWriter();
         message.append("Plugin '").append(pluginId.getIdString()).append("' failed to initialize and will be disabled. ");
-        message.append(" Please restart ").append(ApplicationNamesInfo.getInstance().getFullProductName()).append('.');
+        message.append(" Please restart ").append(productName).append('.');
         message.append("\n\n");
         pe.getCause().printStackTrace(new PrintWriter(message));
 
