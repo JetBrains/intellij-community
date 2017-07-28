@@ -153,7 +153,13 @@ public class InvokeCompletion extends ActionOnRange {
   private static void checkNoDuplicates(List<LookupElement> items) {
     Set<List<?>> presentations = new HashSet<>();
     for (LookupElement item : items) {
-      LookupElementPresentation p = LookupElementPresentation.renderElement(item);
+      LookupElementPresentation p = new LookupElementPresentation() {
+        @Override
+        public boolean isReal() {
+          return true;
+        }
+      };
+      item.renderElement(p);
       if (seemsTruncated(p.getItemText()) || seemsTruncated(p.getTailText()) || seemsTruncated(p.getTypeText())) {
         continue;
       }
