@@ -21,6 +21,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -55,7 +56,12 @@ public class JarFileSystemImpl extends JarFileSystem {
   @Nullable
   public File getMirroredFile(@NotNull VirtualFile vFile) {
     VirtualFile root = getRootByLocal(vFile);
-    return root == null ? null : getHandler(root).getFileToUse();
+    if (root != null) {
+      ArchiveHandler handler = getHandler(root);
+      if (handler instanceof JarHandler) return ((JarHandler)handler).getFileToUse();
+      return handler.getFile();
+    }
+    return null;
   }
 
   public boolean isMakeCopyOfJar(@NotNull File originalJar) {
@@ -109,7 +115,7 @@ public class JarFileSystemImpl extends JarFileSystem {
 
   @NotNull
   @Override
-  protected JarHandler getHandler(@NotNull VirtualFile entryFile) {
+  protected ArchiveHandler getHandler(@NotNull VirtualFile entryFile) {
     return VfsImplUtil.getHandler(this, entryFile, JarHandler::new);
   }
 
