@@ -28,7 +28,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -991,6 +990,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public boolean isEssentialPlugin(@NotNull String pluginId) {
     return PluginManagerCore.CORE_PLUGIN_ID.equals(pluginId) || ArrayUtil.contains(pluginId, myEssentialPluginsIds);
+  }
+
+  public List<String> getEssentialPluginsIds() {
+    return Collections.unmodifiableList(Arrays.asList(myEssentialPluginsIds));
   }
 
   private static class UpdateUrlsImpl implements UpdateUrls {
