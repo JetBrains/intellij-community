@@ -125,7 +125,8 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
   public void repaint(long tm, int x, int y, int width, int height) {
     if (width > 0 && height > 0) {
       ListUI ui = getUI();
-      if (ui instanceof WideSelectionListUI) {
+      // do not paint a line background if layout orientation is not vertical
+      if (ui instanceof WideSelectionListUI && JList.VERTICAL == getLayoutOrientation()) {
         x = 0;
         width = getWidth();
       }
