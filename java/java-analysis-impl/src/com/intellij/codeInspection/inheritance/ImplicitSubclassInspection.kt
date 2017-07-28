@@ -18,10 +18,10 @@ package com.intellij.codeInspection.inheritance
 import com.intellij.CommonBundle
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory
 import com.intellij.codeInspection.*
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmModifiersOwner
+import com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactory
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project

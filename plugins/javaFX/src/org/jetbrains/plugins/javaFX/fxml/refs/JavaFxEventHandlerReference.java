@@ -16,9 +16,9 @@
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
-import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory;
-import com.intellij.codeInsight.intention.MethodInsertionInfo;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
+import com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactory;
+import com.intellij.lang.jvm.actions.MethodInsertionInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;

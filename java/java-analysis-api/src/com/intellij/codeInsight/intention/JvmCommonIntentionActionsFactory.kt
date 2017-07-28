@@ -17,18 +17,13 @@ package com.intellij.codeInsight.intention
 
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
-import com.intellij.lang.jvm.*
-import com.intellij.lang.jvm.types.JvmType
-import com.intellij.openapi.components.ServiceManager
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifier
-import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiTypeParameter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UDeclaration
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UastContext
+import org.jetbrains.uast.UParameter
 
 /**
  * Extension Point provides language-abstracted code modifications for JVM-based languages.
@@ -41,26 +36,21 @@ import org.jetbrains.uast.UastContext
  * @since 2017.2
  */
 @ApiStatus.Experimental
+@Deprecated("to be removed in 2017.3", ReplaceWith("com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactory"))
 abstract class JvmCommonIntentionActionsFactory {
 
-  open fun createChangeJvmModifierAction(declaration: JvmModifiersOwner,
-                                         modifier: JvmModifier,
-                                         shouldPresent: Boolean): IntentionAction? =
-    //Fallback if Uast-version of method is overridden
-    createChangeModifierAction(declaration.asUast<UDeclaration>(), JavaJvmElementRenderer.render(modifier), shouldPresent)
+  open fun createChangeModifierAction(declaration: UDeclaration,
+                                      @PsiModifier.ModifierConstant modifier: String,
+                                      shouldPresent: Boolean): IntentionAction? = null
 
   open fun createAddCallableMemberActions(info: MethodInsertionInfo): List<IntentionAction> = emptyList()
 
-  open fun createAddJvmPropertyActions(psiClass: JvmClass,
-                                       propertyName: String,
-                                       visibilityModifier: JvmModifier,
-                                       propertyType: JvmType,
-                                       setterRequired: Boolean,
-                                       getterRequired: Boolean): List<IntentionAction> =
-    //Fallback if Uast-version of method is overridden
-    createAddBeanPropertyActions(psiClass.asUast<UClass>(), propertyName,
-                                 JavaJvmElementRenderer.render(visibilityModifier),
-                                 JavaJvmElementMaterializer.materialize(propertyType), setterRequired, getterRequired)
+  open fun createAddBeanPropertyActions(uClass: UClass,
+                                        propertyName: String,
+                                        @PsiModifier.ModifierConstant visibilityModifier: String,
+                                        propertyType: PsiType,
+                                        setterRequired: Boolean,
+                                        getterRequired: Boolean): List<IntentionAction> = emptyList()
 
   companion object : LanguageExtension<JvmCommonIntentionActionsFactory>(
     "com.intellij.codeInsight.intention.jvmCommonIntentionActionsFactory") {
@@ -69,137 +59,52 @@ abstract class JvmCommonIntentionActionsFactory {
     override fun forLanguage(l: Language): JvmCommonIntentionActionsFactory? = super.forLanguage(l)
   }
 
-  //A fallback to old api
-  @Deprecated("use or/and override @JvmCommon-version of this method instead")
-  open fun createChangeModifierAction(declaration: UDeclaration,
-                                      @PsiModifier.ModifierConstant modifier: String,
-                                      shouldPresent: Boolean): IntentionAction? = null
-
-  @Deprecated("use or/and override @JvmCommon-version of this method instead")
-  open fun createAddBeanPropertyActions(uClass: UClass,
-                                        propertyName: String,
-                                        @PsiModifier.ModifierConstant visibilityModifier: String,
-                                        propertyType: PsiType,
-                                        setterRequired: Boolean,
-                                        getterRequired: Boolean): List<IntentionAction> = emptyList()
-
-
 }
 
-@ApiStatus.Experimental
+@Deprecated("to be removed in 2017.3", ReplaceWith("com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactory"))
 sealed class MethodInsertionInfo(
-  val targetClass: JvmClass,
-  val modifiers: List<JvmModifier> = emptyList(),
-  val typeParams: List<JvmTypeParameter> = emptyList(),
-  val callParameters: List<JvmParameter> = emptyList()
+  val containingClass: UClass,
+  @PsiModifier.ModifierConstant
+  val modifiers: List<String> = emptyList(),
+  val typeParams: List<PsiTypeParameter> = emptyList(),
+  val parameters: List<UParameter> = emptyList()
 ) {
-
-  @Deprecated("use `targetClass`", ReplaceWith("targetClass"))
-  val containingClass: UClass
-    get() = targetClass.asUast<UClass>()
-
-  @Deprecated("use `targetClass`", ReplaceWith("targetClass"))
-  val parameters: List<PsiParameter>
-    get() = callParameters.map { JavaJvmElementMaterializer.materialize(it) }
-
   companion object {
 
     @JvmStatic
-    fun constructorInfo(targetClass: JvmClass, parameters: List<JvmParameter>) =
-      Constructor(targetClass = targetClass, parameters = parameters)
+    fun constructorInfo(containingClass: UClass, parameters: List<UParameter>) =
+      Constructor(containingClass = containingClass, parameters = parameters)
 
     @JvmStatic
-    fun simpleMethodInfo(containingClass: JvmClass,
+    fun simpleMethodInfo(containingClass: UClass,
                          methodName: String,
-                         modifier: List<JvmModifier>,
-                         returnType: JvmType,
-                         parameters: List<JvmParameter>) =
+                         @PsiModifier.ModifierConstant modifier: String,
+                         returnType: PsiType,
+                         parameters: List<UParameter>) =
       Method(name = methodName,
-             modifiers = modifier,
-             targetClass = containingClass,
-             resultType = returnType,
+             modifiers = listOf(modifier),
+             containingClass = containingClass,
+             returnType = returnType,
              parameters = parameters)
-
-    @JvmStatic
-    fun simpleMethodInfo(containingClass: JvmClass,
-                         methodName: String,
-                         modifier: JvmModifier,
-                         returnType: JvmType,
-                         parameters: List<JvmParameter>) =
-      simpleMethodInfo(containingClass, methodName, listOf(modifier), returnType, parameters)
-
-
   }
 
+  @Deprecated("to be removed in 2017.3", ReplaceWith("com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactory"))
   class Method(
-    targetClass: JvmClass,
+    containingClass: UClass,
     val name: String,
-    modifiers: List<JvmModifier> = emptyList(),
-    typeParams: List<JvmTypeParameter> = emptyList(),
-    val resultType: JvmType,
-    parameters: List<JvmParameter> = emptyList(),
+    modifiers: List<String> = emptyList(),
+    typeParams: List<PsiTypeParameter> = emptyList(),
+    val returnType: PsiType,
+    parameters: List<UParameter> = emptyList(),
     val isAbstract: Boolean = false
-  ) : MethodInsertionInfo(targetClass, modifiers, typeParams, parameters) {
-    @Deprecated("use `targetClass`", ReplaceWith("targetClass"))
-    val returnType: PsiType
-      get() = JavaJvmElementMaterializer.materialize(resultType)
-  }
+  ) : MethodInsertionInfo(containingClass, modifiers, typeParams, parameters)
 
+  @Deprecated("to be removed in 2017.3", ReplaceWith("com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactory"))
   class Constructor(
-    targetClass: JvmClass,
-    modifiers: List<JvmModifier> = emptyList(),
-    typeParams: List<JvmTypeParameter> = emptyList(),
-    parameters: List<JvmParameter> = emptyList()
-  ) : MethodInsertionInfo(targetClass, modifiers, typeParams, parameters)
-
-}
-
-@Deprecated("remove after kotlin plugin will be ported")
-private inline fun <reified T : UElement> JvmModifiersOwner.asUast(): T = when (this) {
-  is T -> this
-  is PsiElement -> this.let {
-    ServiceManager.getService(project, UastContext::class.java)
-      .convertElement(this, null, T::class.java) as T?
-  }
-                   ?: throw UnsupportedOperationException("cant convert $this to ${T::class}")
-  else -> throw UnsupportedOperationException("cant convert $this to ${T::class}")
-}
-
-object JavaJvmElementRenderer {
-  fun render(visibilityModifiers: List<JvmModifier>): String =
-    visibilityModifiers.joinToString(" ") { render(it) }
-
-  fun render(jvmType: JvmType): String =
-    (jvmType as PsiType).canonicalText
-
-  @PsiModifier.ModifierConstant
-  fun render(modifier: JvmModifier): String = when (modifier) {
-    JvmModifier.PUBLIC -> PsiModifier.PUBLIC
-    JvmModifier.PROTECTED -> PsiModifier.PROTECTED
-    JvmModifier.PRIVATE -> PsiModifier.PRIVATE
-    JvmModifier.PACKAGE_LOCAL -> ""
-    JvmModifier.STATIC -> PsiModifier.STATIC
-    JvmModifier.ABSTRACT -> PsiModifier.ABSTRACT
-    JvmModifier.FINAL -> PsiModifier.FINAL
-    JvmModifier.DEFAULT -> PsiModifier.DEFAULT
-    JvmModifier.NATIVE -> PsiModifier.NATIVE
-    JvmModifier.SYNCHRONIZED -> PsiModifier.NATIVE
-    JvmModifier.STRICTFP -> PsiModifier.STRICTFP
-    JvmModifier.TRANSIENT -> PsiModifier.TRANSIENT
-    JvmModifier.VOLATILE -> PsiModifier.VOLATILE
-    JvmModifier.TRANSITIVE -> PsiModifier.TRANSITIVE
-  }
-
-}
-
-object JavaJvmElementMaterializer {
-
-  fun materialize(jvmType: JvmType): PsiType {
-    return jvmType as PsiType //TODO:probably it could be not so easy sometimes
-  }
-
-  fun materialize(jvmParameter: JvmParameter): PsiParameter {
-    return jvmParameter as PsiParameter //TODO:probably it could be not so easy sometimes
-  }
+    containingClass: UClass,
+    modifiers: List<String> = emptyList(),
+    typeParams: List<PsiTypeParameter> = emptyList(),
+    parameters: List<UParameter> = emptyList()
+  ) : MethodInsertionInfo(containingClass, modifiers, typeParams, parameters)
 
 }

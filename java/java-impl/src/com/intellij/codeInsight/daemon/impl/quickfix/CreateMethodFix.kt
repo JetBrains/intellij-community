@@ -16,11 +16,11 @@
 package com.intellij.codeInsight.daemon.impl.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory
-import com.intellij.codeInsight.intention.MethodInsertionInfo
 import com.intellij.codeInspection.LocalQuickFixBase
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactory
+import com.intellij.lang.jvm.actions.MethodInsertionInfo
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*

@@ -18,8 +18,11 @@ package com.intellij.codeInsight.intention.impl
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.impl.quickfix.AddConstructorFix
 import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix
-import com.intellij.codeInsight.intention.*
+import com.intellij.codeInsight.intention.AbstractIntentionAction
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.jvm.*
+import com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactory
+import com.intellij.lang.jvm.actions.MethodInsertionInfo
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
@@ -43,14 +46,14 @@ class JavaCommonIntentionActionsFactory : JvmCommonIntentionActionsFactory() {
     return when (info) {
       is MethodInsertionInfo.Method -> with(info) {
         createAddMethodAction(targetClass, name, modifiers,
-                              resultType, callParameters)
+                              returnType, parameters)
           ?.let { listOf(it) } ?: emptyList()
       }
 
       is MethodInsertionInfo.Constructor -> {
         val targetClass = info.targetClass.jvmJavaPsi<PsiClass>()
         val factory = JVMElementFactories.getFactory(targetClass.language, targetClass.project)!!
-        listOf(AddConstructorFix(targetClass, info.callParameters.mapIndexed { i, it ->
+        listOf(AddConstructorFix(targetClass, info.parameters.mapIndexed { i, it ->
           factory.createParameter(it.name ?: "arg$i", JavaJvmElementMaterializer.materialize(it.type), targetClass)
         }))
       }
@@ -135,6 +138,49 @@ class JavaCommonIntentionActionsFactory : JvmCommonIntentionActionsFactory() {
 
     return listOf<IntentionAction>(
       CreateJavaBeanPropertyFix(psiClass, propertyName, propertyType, getterRequired, setterRequired, true))
+  }
+
+}
+
+object JavaJvmElementRenderer {
+  fun render(visibilityModifiers: List<JvmModifier>): String =
+    visibilityModifiers.joinToString(" ") { render(it) }
+
+  fun render(jvmType: JvmType): String =
+    (jvmType as PsiType).canonicalText
+
+  @PsiModifier.ModifierConstant
+  fun render(modifier: JvmModifier): String = when (modifier) {
+    JvmModifier.PUBLIC -> PsiModifier.PUBLIC
+    JvmModifier.PROTECTED -> PsiModifier.PROTECTED
+    JvmModifier.PRIVATE -> PsiModifier.PRIVATE
+    JvmModifier.PACKAGE_LOCAL -> ""
+    JvmModifier.STATIC -> PsiModifier.STATIC
+    JvmModifier.ABSTRACT -> PsiModifier.ABSTRACT
+    JvmModifier.FINAL -> PsiModifier.FINAL
+    JvmModifier.DEFAULT -> PsiModifier.DEFAULT
+    JvmModifier.NATIVE -> PsiModifier.NATIVE
+    JvmModifier.SYNCHRONIZED -> PsiModifier.NATIVE
+    JvmModifier.STRICTFP -> PsiModifier.STRICTFP
+    JvmModifier.TRANSIENT -> PsiModifier.TRANSIENT
+    JvmModifier.VOLATILE -> PsiModifier.VOLATILE
+    JvmModifier.TRANSITIVE -> PsiModifier.TRANSITIVE
+  }
+
+}
+
+object JavaJvmElementMaterializer {
+
+  fun materialize(jvmType: JvmType): PsiType {
+    return jvmType as PsiType //TODO:probably it could be not so easy sometimes
+  }
+
+  fun materialize(jvmParameter: JvmParameter): PsiParameter {
+    return jvmParameter as PsiParameter //TODO:probably it could be not so easy sometimes
+  }
+
+  fun materialize(jvmTypeParameter: JvmTypeParameter): PsiTypeParameter {
+    return jvmTypeParameter as PsiTypeParameter //TODO:probably it could be not so easy sometimes
   }
 
 }

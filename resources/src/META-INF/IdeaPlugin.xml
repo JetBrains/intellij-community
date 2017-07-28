@@ -329,6 +329,10 @@
     <extensionPoint qualifiedName="com.intellij.codeInsight.intention.jvmCommonIntentionActionsFactory" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.lang.jvm.actions.jvmCommonIntentionActionsFactory"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactory"/>
+    </extensionPoint>
 
     <extensionPoint name="javaModuleSystem" interface="com.intellij.psi.JavaModuleSystem"/>
   </extensionPoints>
@@ -507,6 +511,9 @@
 
     <projectService serviceInterface="com.intellij.codeInsight.javadoc.JavaDocCodeStyle"
                     serviceImplementation="com.intellij.codeInsight.javadoc.JavaDocCodeStyleImpl"/>
+
+    <applicationService serviceInterface="com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactoryFallback"
+                        serviceImplementation="com.intellij.codeInsight.intention.impl.CommonIntentionActionsFactoryUastFallback"/>
 
     <applicationService serviceInterface="com.intellij.psi.JavaDirectoryService"
                         serviceImplementation="com.intellij.psi.impl.file.JavaDirectoryServiceImpl"/>
@@ -2002,7 +2009,8 @@
     <projectService serviceInterface="org.jetbrains.uast.UastContext" serviceImplementation="org.jetbrains.uast.UastContext"/>
     <metaLanguage implementation="com.intellij.uast.UastMetaLanguage"/>
     <smartPointer.anchorProvider implementation="com.intellij.uast.UastElementAnchorProvider"/>
-    <codeInsight.intention.jvmCommonIntentionActionsFactory language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.JavaCommonIntentionActionsFactory"/>
+    <lang.jvm.actions.jvmCommonIntentionActionsFactory language="JAVA"
+                                                       implementationClass="com.intellij.codeInsight.intention.impl.JavaCommonIntentionActionsFactory"/>
 
     <deadCode implementation="com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint"/>
 

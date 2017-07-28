@@ -16,10 +16,10 @@
 package com.intellij.psi.impl.beanProperties;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory;
 import com.intellij.codeInspection.IntentionWrapper;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
