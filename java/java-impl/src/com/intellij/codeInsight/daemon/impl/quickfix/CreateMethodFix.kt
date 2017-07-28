@@ -20,6 +20,7 @@ import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory
 import com.intellij.codeInsight.intention.MethodInsertionInfo
 import com.intellij.codeInspection.LocalQuickFixBase
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
@@ -56,7 +57,7 @@ class CreateMethodFix(containingClass: @JvmCommon PsiClass, private val createMe
     @JvmStatic
     fun createVoidMethodIfFixPossible(psiClass: @JvmCommon PsiClass,
                                       methodName: String,
-                                      @PsiModifier.ModifierConstant modifier: String): CreateMethodFix? {
+                                      modifier: JvmModifier): CreateMethodFix? {
       if (!ModuleUtilCore.projectContainsFile(psiClass.project, psiClass.containingFile.virtualFile, false)) return null
       val actionsFactory = JvmCommonIntentionActionsFactory.forLanguage(psiClass.language) ?: return null
       val action = actionsFactory.createAddCallableMemberActions(

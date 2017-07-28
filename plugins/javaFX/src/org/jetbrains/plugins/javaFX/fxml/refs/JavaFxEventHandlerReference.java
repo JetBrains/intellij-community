@@ -114,7 +114,7 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
         MethodInsertionInfo.Method method =
           MethodInsertionInfo.simpleMethodInfo(ref.myController,
                                                javaMethod.getName(),
-                                               javaMethod.getModifierList().getText(),
+                                               Arrays.asList(javaMethod.getModifiers()),
                                                javaMethod.getReturnType(),
                                                Arrays.asList(javaMethod.getParameterList().getParameters()));
         intentionActionsFactory.createAddCallableMemberActions(method).forEach(registrar::register);

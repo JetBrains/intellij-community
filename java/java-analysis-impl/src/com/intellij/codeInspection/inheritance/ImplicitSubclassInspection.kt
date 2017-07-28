@@ -20,6 +20,8 @@ import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory
 import com.intellij.codeInspection.*
+import com.intellij.lang.jvm.JvmModifier
+import com.intellij.lang.jvm.JvmModifiersOwner
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -166,27 +168,27 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
                                       checkParent: Boolean = true) {
       val isClassMember = !(declaration is UClass)
       declaration.modifierList?.apply {
-        addIfApplicable(declaration, PsiModifier.FINAL, false, actionsList)
-        addIfApplicable(declaration, PsiModifier.PRIVATE, false, actionsList)
+        addIfApplicable(declaration, JvmModifier.FINAL, false, actionsList)
+        addIfApplicable(declaration, JvmModifier.PRIVATE, false, actionsList)
         if (isClassMember) {
-          addIfApplicable(declaration, PsiModifier.STATIC, false, actionsList)
+          addIfApplicable(declaration, JvmModifier.STATIC, false, actionsList)
         }
       }
       if (checkParent && isClassMember) {
         (declaration.uastParent as? UClass)?.apply {
-          addIfApplicable(this, PsiModifier.FINAL, false, actionsList)
-          addIfApplicable(this, PsiModifier.PRIVATE, false, actionsList)
+          addIfApplicable(this, JvmModifier.FINAL, false, actionsList)
+          addIfApplicable(this, JvmModifier.PRIVATE, false, actionsList)
         }
       }
     }
 
-    private fun addIfApplicable(declaration: UDeclaration,
-                                name: String,
+    private fun addIfApplicable(declaration: JvmModifiersOwner,
+                                modifier: JvmModifier,
                                 shouldPresent: Boolean,
                                 actionsList: SmartList<IntentionAction>) {
-      if (declaration.modifierList?.hasModifierProperty(name) != shouldPresent) {
-        (actionsFactory.createChangeModifierAction(declaration as @com.intellij.psi.JvmCommon PsiModifierListOwner, name,
-                                                   shouldPresent))?.let {
+      if (declaration.hasModifier(modifier) != shouldPresent) {
+        (actionsFactory.createChangeJvmModifierAction(declaration, modifier,
+                                                      shouldPresent))?.let {
           actionsList.add(it)
         }
       }
