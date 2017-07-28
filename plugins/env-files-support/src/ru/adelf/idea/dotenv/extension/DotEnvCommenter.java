@@ -56,7 +56,11 @@ public class DotEnvCommenter implements Commenter, SelfManagingCommenter<Comment
 
     @Override
     public void uncommentLine(int line, int offset, @NotNull Document document, @NotNull CommenterDataHolder data) {
-        document.deleteString(offset, offset + HASH_COMMENT_PREFIX.length());
+        if(document.getText().charAt(offset) == '#') {
+            document.deleteString(offset, offset + HASH_COMMENT_PREFIX.length());
+        } else {
+            document.deleteString(offset, offset + SLASH_COMMENT_PREFIX.length());
+        }
     }
 
     @Override
