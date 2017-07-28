@@ -30,6 +30,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.PicoPluginExtensionInitializationException;
@@ -139,7 +140,7 @@ public class PluginManager extends PluginManagerCore {
         PluginConflictReporter.INSTANCE.reportConflictByClasses(conflictException.getConflictingClasses());
       }
 
-      if (pluginId != null && !CORE_PLUGIN_ID.equals(pluginId.getIdString())) {
+      if (pluginId != null && !ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(pluginId.getIdString())) {
         disablePlugin(pluginId.getIdString());
 
         StringWriter message = new StringWriter();
