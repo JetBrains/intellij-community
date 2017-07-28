@@ -122,7 +122,8 @@ public class UsageContextCallHierarchyPanel extends UsageContextPanelBase {
     HierarchyBrowser browser = provider.createHierarchyBrowser(providerTarget);
     if (browser instanceof HierarchyBrowserBaseEx) {
       HierarchyBrowserBaseEx browserEx = (HierarchyBrowserBaseEx)browser;
-      browserEx.changeView(CallHierarchyBrowserBase.CALLER_TYPE);
+      // do not steal focus when scrolling through nodes
+      browserEx.changeView(CallHierarchyBrowserBase.CALLER_TYPE, false);
     }
     return browser;
   }
