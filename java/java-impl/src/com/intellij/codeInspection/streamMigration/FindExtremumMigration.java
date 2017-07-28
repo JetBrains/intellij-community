@@ -258,6 +258,11 @@ class FindExtremumMigration extends BaseStreamApiMigration {
     @Nullable
     @Override
     public PsiElement replace() {
+      PsiType loopVarExpressionType = myExtremumKeyExpr.getType();
+      if (loopVarExpressionType == null) return null;
+      String method = getComparingMethod(loopVarExpressionType);
+      if (method == null) return null;
+
       String inFilterOperation = myMax ? ">=" : "<=";
       PsiLoopStatement loop = myTerminalBlock.getMainLoop();
       PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(loop.getProject());
@@ -269,10 +274,6 @@ class FindExtremumMigration extends BaseStreamApiMigration {
       TerminalBlock blockWithFilter =
         myTerminalBlock.add(new StreamApiMigrationInspection.FilterOp(condition, myTerminalBlock.getVariable(), false));
 
-      PsiType loopVarExpressionType = myExtremumKeyExpr.getType();
-      if (loopVarExpressionType == null) return null;
-      String method = getComparingMethod(loopVarExpressionType);
-      if (method == null) return null;
       String lambdaText = LambdaUtil.createLambda(myTerminalBlock.getVariable(), myExtremumKeyExpr);
       String comparator = CommonClassNames.JAVA_UTIL_COMPARATOR + "." + method + "(" + lambdaText + ")";
       String stream = blockWithFilter.generate() + "." + getOperation(myMax) + "(" + comparator + ").orElse(null)";
@@ -425,7 +426,13 @@ class FindExtremumMigration extends BaseStreamApiMigration {
     @Nullable
     @Override
     public PsiElement replace() {
-      //myTerminalBlock.generate()
+      String name = myTerminalBlock.getVariable().getName();
+      if (name == null) return null;
+      PsiType type = myExtremumInitializer.getType();
+      if (type == null) return null;
+      Object initializerValue = ExpressionUtils.computeConstantExpression(myExtremumInitializer);
+      if (initializerValue == null) return null;
+
       TerminalBlock blockWithMap = myTerminalBlock
         .add(new StreamApiMigrationInspection.MapOp(myLoopVarExpression, myTerminalBlock.getVariable(), myLoopVarExpression.getType()));
 
@@ -433,17 +440,9 @@ class FindExtremumMigration extends BaseStreamApiMigration {
       PsiLoopStatement loop = blockWithMap.getMainLoop();
       PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(loop.getProject());
       String extremumInitializer = myExtremumInitializer.getText();
-
-      PsiType type = myExtremumInitializer.getType();
-      if (type == null) return null;
-      Object initializerValue = ExpressionUtils.computeConstantExpression(myExtremumInitializer);
-      if (initializerValue == null) return null;
-
       Object nonFilterableInitialValue = getNonFilterableInitialValue(type, myMax);
       final TerminalBlock terminalBlock;
       if (nonFilterableInitialValue != null && !nonFilterableInitialValue.equals(initializerValue)) {
-        String name = myTerminalBlock.getVariable().getName();
-        if (name == null) return null;
         PsiExpression condition =
           elementFactory.createExpressionFromText(name + inFilterOperation + extremumInitializer, loop);
 
