@@ -36,7 +36,7 @@ class GuiTestSuite(suiteClass: Class<*>, val builder: RunnerBuilder): Suite(suit
 
       val testClass = runner.description.testClass
       //check that ide types are equal
-      check(GuiTestLocalRunner.getIdeFromAnnotation(testClass).ideType == myIde.ideType)
+      check(GuiTestLocalRunner.getIdeFromAnnotation(testClass).ideType.javaClass == myIde.ideType.javaClass)
       val guiTestLocalRunner = GuiTestLocalRunner(testClass)
       super.runChild(guiTestLocalRunner, notifier)
     } catch (e: Exception) {

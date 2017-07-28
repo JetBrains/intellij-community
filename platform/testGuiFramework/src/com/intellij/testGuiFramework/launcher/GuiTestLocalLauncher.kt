@@ -23,8 +23,8 @@ import com.intellij.testGuiFramework.impl.GuiTestStarter
 import com.intellij.testGuiFramework.launcher.classpath.ClassPathBuilder
 import com.intellij.testGuiFramework.launcher.classpath.ClassPathBuilder.Companion.isWin
 import com.intellij.testGuiFramework.launcher.classpath.PathUtils
+import com.intellij.testGuiFramework.launcher.ide.CommunityIde
 import com.intellij.testGuiFramework.launcher.ide.Ide
-import com.intellij.testGuiFramework.launcher.ide.IdeType
 import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsProject
@@ -81,24 +81,24 @@ object GuiTestLocalLauncher {
     }
   }
 
-  fun runIdeLocally(ide: Ide = Ide(IdeType.IDEA_ULTIMATE, 0, 0), port: Int = 0) {
+  fun runIdeLocally(ide: Ide = Ide(CommunityIde(), 0, 0), port: Int = 0) {
     //todo: check that we are going to run test locally
     val args = createArgs(ide = ide, port = port)
     return startIde(ide = ide, args = args)
   }
 
-  fun runIdeByPath(path: String, ide: Ide = Ide(IdeType.IDEA_ULTIMATE, 0, 0), port: Int = 0) {
+  fun runIdeByPath(path: String, ide: Ide = Ide(CommunityIde(), 0, 0), port: Int = 0) {
     //todo: check that we are going to run test locally
     val args = createArgsByPath(path, port)
     return startIde(ide = ide, args = args)
   }
 
-  fun firstStartIdeLocally(ide: Ide = Ide(IdeType.IDEA_ULTIMATE, 0, 0)) {
+  fun firstStartIdeLocally(ide: Ide = Ide(CommunityIde(), 0, 0)) {
     val args = createArgsForFirstStart(ide)
     return startIdeAndWait(ide = ide, args = args)
   }
 
-  fun firstStartIdeByPath(path: String, ide: Ide = Ide(IdeType.IDEA_ULTIMATE, 0, 0)) {
+  fun firstStartIdeByPath(path: String, ide: Ide = Ide(CommunityIde(), 0, 0)) {
     val args = createArgsForFirstStartByPath(ide, path)
     return startIdeAndWait(ide = ide, args = args)
   }
@@ -151,6 +151,7 @@ object GuiTestLocalLauncher {
     var resultingArgs = listOf<String>()
       .plus(getCurrentJavaExec())
       .plus(getDefaultVmOptions(ide))
+      .plus("-Didea.gui.test.first.start.class=${ide.ideType.getFirstStartClass().canonicalName}")
       .plus("-classpath")
       .plus(getOsSpecificClasspath(ide.ideType.mainModule))
       .plus(mainClass)
@@ -169,6 +170,7 @@ object GuiTestLocalLauncher {
     val resultingArgs = listOf<String>()
       .plus(getCurrentJavaExec())
       .plus(getDefaultVmOptions(ide))
+      .plus("-Didea.gui.test.first.start.class=${ide.ideType.getFirstStartClass().canonicalName}")
       .plus("-classpath")
       .plus(classpath)
       .plus(com.intellij.testGuiFramework.impl.FirstStarter::class.qualifiedName!! + "Kt")
@@ -292,8 +294,4 @@ object GuiTestLocalLauncher {
     }
   }
 
-}
-
-fun main(args: Array<String>) {
-  GuiTestLocalLauncher.firstStartIdeLocally(Ide(ideType = IdeType.WEBSTORM, version = 0, build = 0))
 }

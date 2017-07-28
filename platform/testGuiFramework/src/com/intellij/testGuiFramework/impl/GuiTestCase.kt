@@ -498,7 +498,10 @@ open class GuiTestCase : GuiTestBase() {
   private fun combobox(container: Container, text: String, timeout: Long): JComboBoxFixture {
     //wait until label has appeared
     waitUntilFound(container, Component::class.java,
-                   timeout) { component -> component.isTextComponent() && component.getComponentText() == text }
+                   timeout) { component -> component.isEnabled
+                                           && component.isVisible
+                                           && component.isTextComponent()
+                                           && component.getComponentText() == text }
     val comboBox = findBoundedComponentByText(myRobot, container, text, JComboBox::class.java)
     return JComboBoxFixture(myRobot, comboBox)
   }

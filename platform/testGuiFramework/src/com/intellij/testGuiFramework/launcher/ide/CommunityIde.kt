@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testGuiFramework.tests.control
+package com.intellij.testGuiFramework.launcher.ide
 
-import com.intellij.testGuiFramework.remote.RemoteTestCase
-import org.junit.Test
+import com.intellij.testGuiFramework.impl.FirstStart
 
-class KotlinControlTest: RemoteTestCase() {
+class CommunityIde: IdeType(platformPrefix = "Idea", ideJarName = "idea.jar", mainModule = "community-main") {
 
-  @Test
-  fun testAcceptance() {
-//    val ide = Ide(IdeType.IDEA_ULTIMATE, , 0)
+  override fun getFirstStartClass(): Class<out FirstStart> {
+    return CommunityIdeFirstStart::class.java
   }
 
 }

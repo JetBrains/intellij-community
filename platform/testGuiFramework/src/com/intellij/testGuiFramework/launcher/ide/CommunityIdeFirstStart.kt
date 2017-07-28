@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testGuiFramework.launcher.dpi;
+package com.intellij.testGuiFramework.launcher.ide
 
-import java.io.File;
+import com.intellij.testGuiFramework.impl.FirstStart
 
-/**
- * @author Sergey Karashevich
- */
-public interface PngComparator {
+class CommunityIdeFirstStart : FirstStart(ideType = CommunityIde()) {
 
-    void compare(File pngFile1, File pngFile2);
-
+  override fun completeFirstStart() {
+    completeInstallation()
+    acceptAgreement()
+    customizeIntellijIdea()
+    waitWelcomeFrameAndClose()
+  }
 }
