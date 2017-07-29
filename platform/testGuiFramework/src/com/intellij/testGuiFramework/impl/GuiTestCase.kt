@@ -18,6 +18,7 @@ package com.intellij.testGuiFramework.impl
 import com.intellij.ide.GeneralSettings
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.testGuiFramework.cellReader.ExtendedJComboboxCellReader
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
 import com.intellij.testGuiFramework.fixtures.*
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
@@ -499,11 +500,13 @@ open class GuiTestCase : GuiTestBase() {
     //wait until label has appeared
     waitUntilFound(container, Component::class.java,
                    timeout) { component -> component.isEnabled
-                                           && component.isVisible
+                                           && component.isShowing
                                            && component.isTextComponent()
                                            && component.getComponentText() == text }
     val comboBox = findBoundedComponentByText(myRobot, container, text, JComboBox::class.java)
-    return JComboBoxFixture(myRobot, comboBox)
+    val comboboxFixture = JComboBoxFixture(myRobot, comboBox)
+    comboboxFixture.replaceCellReader(ExtendedJComboboxCellReader())
+    return comboboxFixture
   }
 
   private fun checkbox(container: Container, labelText: String, timeout: Long): CheckBoxFixture {
