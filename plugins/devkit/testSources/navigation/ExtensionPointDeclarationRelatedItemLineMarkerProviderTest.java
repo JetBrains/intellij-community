@@ -57,7 +57,7 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest extends 
   private void assertSingleEPDeclaration(String filePath) {
     PsiFile file = myFixture.configureByFile("plugin.xml");
     String path = file.getVirtualFile().getPath();
-    int expectedTagPosition = 133;
+    int expectedTagPosition = file.getText().indexOf("<extensionPoint name=\"myStringEP\" interface=\"java.lang.String\"/>");
     String expectedTooltip = "<html><body><a href=\"#navigation/" + path
                              + ":" + expectedTagPosition + "\">myStringEP</a> extension point declaration in <a href=\"#navigation/" + path
                              + ":0\">plugin.xml</a></body></html>";

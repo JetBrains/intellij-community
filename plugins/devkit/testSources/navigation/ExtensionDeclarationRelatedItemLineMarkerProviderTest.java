@@ -51,7 +51,7 @@ public class ExtensionDeclarationRelatedItemLineMarkerProviderTest extends JavaC
   public void testMyProjectService() {
     PsiFile file = myFixture.configureByFile("plugin.xml");
     String path = file.getVirtualFile().getPath();
-    int expectedTagPosition = 271;
+    int expectedTagPosition = file.getText().indexOf("<myEp implementation=\"MyExtension\"/>");
     String expectedTooltip = "<html><body><a href=\"#navigation/" + path
                              + ":" + expectedTagPosition + "\">myEp</a> extension declaration in <a href=\"#navigation/" + path
                              + ":0\">plugin.xml</a></body></html>";
