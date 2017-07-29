@@ -71,15 +71,18 @@ class GitRewordOperation(private val repository: GitRepository,
       reworded = rewordViaAmend()
     }
     if (!reworded) {
-      rewordViaRebase()
+      reworded = rewordViaRebase()
     }
-    headAfterReword = repository.currentRevision
-    rewordedCommit = findNewHashOfRewordedCommit(headAfterReword!!)
+
+    if (reworded) {
+      headAfterReword = repository.currentRevision
+      rewordedCommit = findNewHashOfRewordedCommit(headAfterReword!!)
+    }
   }
 
   private fun isLatestCommit() = commit.id.asString() == initialHeadPosition
 
-  private fun rewordViaRebase() {
+  private fun rewordViaRebase(): Boolean {
     val rebaseEditor = GitAutomaticRebaseEditor(project, commit.root,
                                                 entriesEditor = { list -> injectRewordAction(list) },
                                                 plainTextEditor = { editorText -> supplyNewMessage(editorText) })
@@ -87,7 +90,9 @@ class GitRewordOperation(private val repository: GitRepository,
     val params = GitRebaseParams.editCommits(commit.parents.first().asString(), rebaseEditor, true)
     val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
     val spec = GitRebaseSpec.forNewRebase(project, params, listOf(repository), indicator)
-    RewordProcess(spec).rebase()
+    val rewordProcess = RewordProcess(spec)
+    rewordProcess.rebase()
+    return rewordProcess.succeeded
   }
 
   private fun rewordViaAmend(): Boolean {
@@ -222,8 +227,13 @@ class GitRewordOperation(private val repository: GitRepository,
   }
 
   private inner class RewordProcess(spec: GitRebaseSpec) : GitRebaseProcess(project, spec, null) {
+    var succeeded = false
+
     override fun notifySuccess(successful: MutableMap<GitRepository, GitSuccessfulRebase>,
-                               skippedCommits: MultiMap<GitRepository, GitRebaseUtils.CommitInfo>) = notifySuccess()
+                               skippedCommits: MultiMap<GitRepository, GitRebaseUtils.CommitInfo>) {
+      notifySuccess()
+      succeeded = true
+    }
 
     override fun shouldRefreshOnSuccess(successType: GitSuccessfulRebase.SuccessType) = false
   }
