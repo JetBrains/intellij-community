@@ -142,7 +142,8 @@ constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
 
     fun getIdeFromAnnotation(clazz: Class<*>): Ide {
       val annotation = clazz.getAnnotation(RunWithIde::class.java)
-      val ideType = (annotation?.value as KClass<out IdeType>).java.newInstance() ?: CommunityIde() //ide community by default
+      val value = annotation?.value
+      val ideType = if(value != null) (value as KClass<out IdeType>).java.newInstance() else CommunityIde()
       return Ide(ideType, 0, 0)
     }
   }
