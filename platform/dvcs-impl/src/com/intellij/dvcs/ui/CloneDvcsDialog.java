@@ -118,7 +118,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   }
 
   public String getParentDirectory() {
-    return myParentDirectory.getText();
+    return FileUtil.expandUserHome(myParentDirectory.getText().trim());
   }
 
   public String getDirectoryName() {
