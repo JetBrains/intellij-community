@@ -52,7 +52,7 @@ public class ReferenceCollectorProjectResolverExtension extends AbstractProjectR
   public void enhanceTaskProcessing(@NotNull List<String> taskNames,
                                     @Nullable String jvmAgentSetup,
                                     @NotNull Consumer<String> initScriptConsumer) {
-    if (CompilerReferenceService.isEnabled() && CompilerReferenceService.isEnabled() && (taskNames.contains(":classes") || taskNames.contains(":testClasses"))) {
+    if (CompilerReferenceService.isEnabled() && (taskNames.contains(":classes") || taskNames.contains(":testClasses"))) {
       InputStream stream =
         ReferenceIndexJavacPlugin.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/backRefCollector/init.gradle");
       try {
