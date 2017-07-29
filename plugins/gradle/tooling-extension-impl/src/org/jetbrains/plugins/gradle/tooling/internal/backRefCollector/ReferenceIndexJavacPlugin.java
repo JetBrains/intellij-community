@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.nio.channels.FileLock;
 import java.util.ArrayDeque;
 import java.util.Queue;
+import java.util.function.Supplier;
 
 public class ReferenceIndexJavacPlugin implements Plugin {
   public static final String PLUGIN_NAME = "ReferenceIndexJavacPlugin";
@@ -50,17 +51,17 @@ public class ReferenceIndexJavacPlugin implements Plugin {
     File dir = getIndexDir(args);
     if (dir == null) return;
 
-    JavacReferenceIndexWriter writer = new JavacReferenceIndexWriter(new CompilerBackwardReferenceIndex(dir, false) {
-      @NotNull
-      @Override
-      protected RuntimeException createBuildDataCorruptedException(IOException cause) {
-        return new RuntimeException(cause);
-      }
-    });
-
     JavacFileDataStream stream;
     try {
-      stream = new JavacFileDataStream(writer, dir);
+      stream = new JavacFileDataStream(() -> {
+        return new JavacReferenceIndexWriter(new CompilerBackwardReferenceIndex(dir, false) {
+          @NotNull
+          @Override
+          protected RuntimeException createBuildDataCorruptedException(IOException cause) {
+            return new RuntimeException(cause);
+          }
+        });
+      }, dir);
     }
     catch (FileNotFoundException e) {
       throw new RuntimeException(e);
@@ -73,20 +74,24 @@ public class ReferenceIndexJavacPlugin implements Plugin {
       }
     }, task, true));
 
-    boolean[] closed = {false};
     task.addTaskListener(new TaskListener() {
+      int count;
       @Override
       public void started(TaskEvent e) {
       }
 
       @Override
       public void finished(TaskEvent e) {
-        if (e.getKind() == TaskEvent.Kind.GENERATE) {
-          if (!closed[0]) {
+        if (e.getKind() == TaskEvent.Kind.PARSE) {
+          count++;
+        } else if (e.getKind() == TaskEvent.Kind.GENERATE) {
+          count--;
+          if (count == 0) {
             try {
-              stream.close();
-            } finally {
-              closed[0] = true;
+              stream.flush();
+            }
+            catch (IOException e1) {
+              throw new RuntimeException(e1);
             }
           }
         }
@@ -106,10 +111,10 @@ public class ReferenceIndexJavacPlugin implements Plugin {
 
   private static class JavacFileDataStream {
     private final Queue<JavacFileData> myQueue = new ArrayDeque<>();
-    private final JavacReferenceIndexWriter myWriter;
+    private final Supplier<JavacReferenceIndexWriter> myWriter;
     private final ReferenceIndexFileLock myFileLock;
 
-    private JavacFileDataStream(JavacReferenceIndexWriter writer,
+    private JavacFileDataStream(Supplier<JavacReferenceIndexWriter> writer,
                                 File indexDir) throws FileNotFoundException {
       myWriter = writer;
       myFileLock = new ReferenceIndexFileLock(indexDir);
@@ -127,29 +132,20 @@ public class ReferenceIndexJavacPlugin implements Plugin {
       }
     }
 
-    public void close() {
-      try {
-        flush();
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-      myWriter.close();
-    }
-
     private void flush() throws IOException {
       FileLock lock = myFileLock.lock();
       try {
+        JavacReferenceIndexWriter w = myWriter.get();
         //TODO
         while (!myQueue.isEmpty()) {
           JavacFileData data = myQueue.poll();
           BackwardReferenceIndexUtil.registerFile(data.getFilePath(),
                                                   data.getRefs(),
                                                   data.getDefs(),
-                                                  myWriter);
+                                                  w);
         }
 
-        myWriter.flush();
+        w.close();
       } finally {
         lock.release();
       }
