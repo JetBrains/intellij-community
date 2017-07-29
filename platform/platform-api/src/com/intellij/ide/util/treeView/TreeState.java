@@ -24,6 +24,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,6 +36,7 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -44,6 +46,11 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
+import static java.util.stream.Collectors.toList;
+import static org.jetbrains.concurrency.Promises.collectResults;
 
 /**
  * @see #createOn(JTree)
@@ -56,6 +63,7 @@ public class TreeState implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance(TreeState.class);
 
   public static final Key<WeakReference<ActionCallback>> CALLBACK = Key.create("Callback");
+  public static final Key<Function<TreeVisitor, Promise<TreePath>>> VISIT = Key.create("TreeVisit");
 
   private static final String EXPAND_TAG = "expand";
   private static final String SELECT_TAG = "select";
@@ -232,6 +240,7 @@ public class TreeState implements JDOMExternalizable {
   }
 
   public void applyTo(@NotNull JTree tree, @Nullable Object root) {
+    if (visit(tree)) return; // AsyncTreeModel#visit
     if (root == null) return;
     TreeFacade facade = TreeFacade.getFacade(tree);
     ActionCallback callback = facade.getInitialized().doWhenDone(new TreeRunnable("TreeState.applyTo: on done facade init") {
@@ -432,6 +441,53 @@ public class TreeState implements JDOMExternalizable {
       content = ExceptionUtil.getThrowableText(e);
     }
     return "TreeState(" + myScrollToSelection + ")\n" + content;
+  }
+
+  private Promise<List<TreePath>> expand(@NotNull Function<TreeVisitor, Promise<TreePath>> visit, @NotNull JTree tree) {
+    return collectResults(myExpandedPaths.stream().map(elements -> new Visitor(elements, tree::expandPath)).map(visit).collect(toList()));
+  }
+
+  private Promise<List<TreePath>> select(@NotNull Function<TreeVisitor, Promise<TreePath>> visit) {
+    return collectResults(mySelectedPaths.stream().map(elements -> new Visitor(elements, null)).map(visit).collect(toList()));
+  }
+
+  private boolean visit(@NotNull JTree tree) {
+    Function<TreeVisitor, Promise<TreePath>> visit = UIUtil.getClientProperty(tree, VISIT);
+    if (visit == null) return false;
+
+    expand(visit, tree).done(expanded -> {
+      if (tree.getSelectionCount() == 0) {
+        select(visit).done(selected -> {
+          if (tree.getSelectionCount() == 0) {
+            for (TreePath path : selected) {
+              tree.addSelectionPath(path);
+            }
+          }
+        });
+      }
+    });
+    return true;
+  }
+
+  private static final class Visitor implements TreeVisitor {
+    private final List<PathElement> elements;
+    private final Consumer<TreePath> consumer;
+
+    private Visitor(List<PathElement> elements, Consumer<TreePath> consumer) {
+      this.elements = elements;
+      this.consumer = consumer;
+    }
+
+    @NotNull
+    @Override
+    public Action accept(@NotNull TreePath path) {
+      int count = path.getPathCount();
+      if (count > elements.size()) return Action.SKIP_CHILDREN;
+      boolean matches = elements.get(count - 1).isMatchTo(path.getLastPathComponent());
+      if (!matches) return Action.SKIP_CHILDREN;
+      if (consumer != null) consumer.accept(path);
+      return count < elements.size() ? Action.CONTINUE : Action.INTERRUPT;
+    }
   }
 }
 
