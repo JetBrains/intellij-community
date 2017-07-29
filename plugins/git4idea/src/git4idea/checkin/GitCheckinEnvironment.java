@@ -190,7 +190,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       VirtualFile root = repository.getRoot();
       File messageFile;
       try {
-        messageFile = createMessageFile(root, message);
+        messageFile = createCommitMessageFile(myProject, root, message);
       }
       catch (IOException ex) {
         //noinspection ThrowableInstanceNeverThrown
@@ -552,11 +552,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    * @return a file reference
    * @throws IOException if file cannot be created
    */
-  private File createMessageFile(VirtualFile root, final String message) throws IOException {
+  @NotNull
+  public static File createCommitMessageFile(@NotNull Project project, @NotNull VirtualFile root, final String message) throws IOException {
     // filter comment lines
     File file = FileUtil.createTempFile(GIT_COMMIT_MSG_FILE_PREFIX, GIT_COMMIT_MSG_FILE_EXT);
     file.deleteOnExit();
-    @NonNls String encoding = GitConfigUtil.getCommitEncoding(myProject, root);
+    @NonNls String encoding = GitConfigUtil.getCommitEncoding(project, root);
     Writer out = new OutputStreamWriter(new FileOutputStream(file), encoding);
     try {
       out.write(message);
