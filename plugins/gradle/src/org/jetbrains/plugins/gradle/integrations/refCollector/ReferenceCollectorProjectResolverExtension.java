@@ -27,12 +27,13 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
+import com.intellij.util.io.PersistentHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.backwardRefs.LightRef;
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension;
-import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.GradleJavacReferenceIndexWriterHolder;
+import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.GradleJavacReferenceIndexWriter;
 import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.ReferenceIndexJavacPlugin;
 
 import java.io.InputStream;
@@ -51,7 +52,7 @@ public class ReferenceCollectorProjectResolverExtension extends AbstractProjectR
   public void enhanceTaskProcessing(@NotNull List<String> taskNames,
                                     @Nullable String jvmAgentSetup,
                                     @NotNull Consumer<String> initScriptConsumer) {
-    if (CompilerReferenceService.isEnabled() && (taskNames.contains(":classes") || taskNames.contains(":testClasses"))) {
+    if (false && CompilerReferenceService.isEnabled() && (taskNames.contains(":classes") || taskNames.contains(":testClasses"))) {
       InputStream stream =
         ReferenceIndexJavacPlugin.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/backRefCollector/init.gradle");
       try {
@@ -61,6 +62,7 @@ public class ReferenceCollectorProjectResolverExtension extends AbstractProjectR
         ImmutableSet<Class> requiredClasses = ImmutableSet.of(ReferenceIndexJavacPlugin.class,
                                                  LightRef.class,
                                                  TObjectIntHashMap.class,
+                                                 PersistentHashMap.class,
                                                  Consumer.class);
         String initScript = FileUtil.loadTextAndClose(stream)
           .replaceAll(Pattern.quote("${EXTENSIONS_JARS_PATH}"), getToolingExtensionsJarPaths(requiredClasses, true))
@@ -97,6 +99,6 @@ public class ReferenceCollectorProjectResolverExtension extends AbstractProjectR
   @NotNull
   @Override
   public Set<Class> getToolingExtensionsClasses() {
-    return ImmutableSet.of(ReferenceIndexJavacPlugin.class, GradleJavacReferenceIndexWriterHolder.class, TObjectIntHashMap.class);
+    return ImmutableSet.of(ReferenceIndexJavacPlugin.class, GradleJavacReferenceIndexWriter.class, TObjectIntHashMap.class);
   }
 }

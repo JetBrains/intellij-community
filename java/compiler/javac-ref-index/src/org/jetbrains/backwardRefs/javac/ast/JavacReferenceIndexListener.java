@@ -92,10 +92,10 @@ public final class JavacReferenceIndexListener implements TaskListener {
     }
   }
 
-  private JavacReferenceIndexListener(boolean divideImportRefs,
-                                      Consumer<JavacFileData> dataConsumer,
-                                      JavacTask javacTask,
-                                      boolean atLeastJdk8) {
+  public JavacReferenceIndexListener(boolean divideImportRefs,
+                                     Consumer<JavacFileData> dataConsumer,
+                                     JavacTask javacTask,
+                                     boolean atLeastJdk8) {
     myDivideImportRefs = divideImportRefs;
     myDataConsumer = dataConsumer;
     myJavacTask = javacTask;

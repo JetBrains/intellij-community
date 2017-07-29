@@ -13,8 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
+
+import com.intellij.openapi.util.SystemInfoRt
+import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.ReferenceIndexFileLock
 import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.ReferenceIndexJavacPlugin
-import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.TempUtil
 
 apply plugin: BackRefCollectorGradlePlugin
 
@@ -28,19 +32,15 @@ apply plugin: BackRefCollectorGradlePlugin
 
 @SuppressWarnings("GrPackage")
 class BackRefCollectorGradlePlugin implements Plugin<Gradle> {
-  private static String INDEX_PATH = "/home/user/index"
+  private static String INDEX_PATH = SystemInfoRt.isMac ? "/Users/dima/index" : "/home/user/index"
 
   @Override
   void apply(Gradle gradle) {
-    Thread.sleep(10000)
+    ReferenceIndexFileLock.createLockFile(INDEX_PATH)
 
-    TempUtil.ololo()
-
-//    GradleJavacReferenceIndexWriterHolder.initialize(INDEX_PATH)
-//
-//    gradle.buildFinished {
-//      GradleJavacReferenceIndexWriterHolder.closeIfNeed(false)
-//    }
+    gradle.buildFinished {
+      ReferenceIndexFileLock.deleteLockFile(INDEX_PATH)
+    }
 
     gradle.allprojects { project ->
       Action<JavaCompile> javaCompilerPluginInstaller =
@@ -50,9 +50,7 @@ class BackRefCollectorGradlePlugin implements Plugin<Gradle> {
             def args = task.options.compilerArgs
             args.add("-processorpath")
             args.add("${JAVAC_PLUGIN_PATH}")
-            def forkArg = task.options.fork ? "fork" : ""
-            def indexPathArg = task.options.fork ? "index.path=" + INDEX_PATH : ""
-            args.add("-Xplugin:$ReferenceIndexJavacPlugin.PLUGIN_NAME $forkArg $indexPathArg")
+            args.add("-Xplugin:$ReferenceIndexJavacPlugin.PLUGIN_NAME index.path=$INDEX_PATH")
           }
         }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
@@ -37,7 +36,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.task.*;
 import com.intellij.task.impl.InternalProjectTaskRunner;
-import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -46,7 +44,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings;
-import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.BootLoadedHolder;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.*;
@@ -126,10 +123,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       settings.setExternalProjectPath(rootProjectPath);
       settings.setTaskNames(ContainerUtil.collect(ContainerUtil.concat(cleanTasks, buildTasks).iterator()));
       //settings.setScriptParameters(scriptParameters);
-
-      String path = PathUtil.getCanonicalPath(PathManager.getJarPathForClass(BootLoadedHolder.class));
-
-      settings.setVmOptions(gradleVmOptions + " -Xbootclasspath/a:" + path);
+      settings.setVmOptions(gradleVmOptions);
       settings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.getId());
       ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID, project, GradleConstants.SYSTEM_ID,
                                  taskCallback, ProgressExecutionMode.IN_BACKGROUND_ASYNC, false);

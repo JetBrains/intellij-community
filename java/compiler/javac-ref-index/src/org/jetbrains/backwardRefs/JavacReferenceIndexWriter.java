@@ -95,6 +95,10 @@ public class JavacReferenceIndexWriter {
     return null;
   }
 
+  public void flush() {
+    myIndex.flush();
+  }
+
   private static boolean isPrivate(JavacRef ref) {
     return ref.getModifiers().contains(Modifier.PRIVATE);
   }

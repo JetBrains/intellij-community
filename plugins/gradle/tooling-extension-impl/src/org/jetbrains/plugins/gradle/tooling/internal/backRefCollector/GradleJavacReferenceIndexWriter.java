@@ -24,30 +24,39 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 
-public class GradleJavacReferenceIndexWriterHolder {
+public class GradleJavacReferenceIndexWriter {
+  private static volatile JavacReferenceIndexWriter ourInstance;
 
   //TODO replace with common code
   @SuppressWarnings("Duplicates")
   public static void closeIfNeed(boolean clearIndex) {
-    CompilerBackwardReferenceIndex ourInstance = BootLoadedHolder.getHeldObject();
     if (ourInstance != null) {
       File dir = clearIndex ? ourInstance.getIndicesDir() : null;
       try {
         ourInstance.close();
       } finally {
-        BootLoadedHolder.setHeldObject(null);
+        ourInstance = null;
         if (dir != null) {
           FileUtilRt.delete(dir);
         }
       }
     }
   }
+
   public static JavacReferenceIndexWriter getInstance() {
-    return BootLoadedHolder.getHeldObject();
+    try {
+      Field instanceField = getInstanceField();
+      return (JavacReferenceIndexWriter)instanceField.get(null);
+    }
+    catch (ClassNotFoundException | NoSuchFieldException | IllegalAccessException e) {
+      throw new IllegalStateException(e);
+    }
   }
 
-  public static void initialize(@NotNull String indexPath) {
-      BootLoadedHolder.setHeldObject(new JavacReferenceIndexWriter(new CompilerBackwardReferenceIndex(new File(indexPath), false) {
+  public static void GradleJavacReferenceIndexWriter(@NotNull String indexPath) {
+    //TODO project "context"
+    try {
+      getInstanceField().set(null, new JavacReferenceIndexWriter(new CompilerBackwardReferenceIndex(new File(indexPath), false) {
         @NotNull
         @Override
         protected RuntimeException createBuildDataCorruptedException(IOException cause) {
@@ -55,29 +64,16 @@ public class GradleJavacReferenceIndexWriterHolder {
           return new RuntimeException(cause);
         }
       }));
+    }
+    catch (IllegalAccessException | ClassNotFoundException | NoSuchFieldException e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   @NotNull
   private static Field getInstanceField() throws ClassNotFoundException, NoSuchFieldException {
-    TempUtil.appendToLog("classl " + getRootClassLoader());
-
-    ClassLoader cl = getRootClassLoader();
-    while (cl != null) {
-      try {
-        Class<?> writerClass = Class.forName(
-          "org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.GradleJavacReferenceIndexWriterHolder",
-          true,
-          getRootClassLoader());
-        TempUtil.appendToLog("COOL" + cl);
-      }
-      catch (Exception e) {
-        TempUtil.appendToLog("EXCEPTION");
-      }
-      cl = cl.getParent();
-    }
-
     Class<?> writerClass = Class.forName(
-      "org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.GradleJavacReferenceIndexWriterHolder",
+      "org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.GradleJavacReferenceIndexWriter",
       true,
       getRootClassLoader());
     Field instanceField = writerClass.getDeclaredField("ourInstance");
@@ -87,10 +83,11 @@ public class GradleJavacReferenceIndexWriterHolder {
 
   @NotNull
   private static ClassLoader getRootClassLoader() {
-    ClassLoader current = Thread.currentThread().getContextClassLoader();
+    ClassLoader current = GradleJavacReferenceIndexWriter.class.getClassLoader();
     while (true) {
-      if (current.getClass().getName().equals("org.gradle.initialization.MixInLegacyTypesClassLoader")) return current;
-      current = current.getParent();
+      ClassLoader parent = current.getParent();
+      if (parent == null || "sun.misc.Launcher$ExtClassLoader".equals(parent.getClass().getName())) return current;
+      current = parent;
     }
   }
 }
