@@ -20,6 +20,7 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -35,7 +36,10 @@ import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitRebaseParams
+import git4idea.checkin.GitCheckinEnvironment
 import git4idea.commands.Git
+import git4idea.commands.GitCommand
+import git4idea.commands.GitLineHandler
 import git4idea.config.GitConfigUtil
 import git4idea.history.GitLogUtil
 import git4idea.rebase.GitRebaseEntry.Action.pick
@@ -43,6 +47,8 @@ import git4idea.rebase.GitRebaseEntry.Action.reword
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.reset.GitResetMode
+import java.io.File
+import java.io.IOException
 
 class GitRewordOperation(private val repository: GitRepository,
                          private val commit: VcsCommitMetadata,
@@ -60,6 +66,20 @@ class GitRewordOperation(private val repository: GitRepository,
   private var rewordedCommit: Hash? = null
 
   fun execute() {
+    var reworded = false
+    if (isLatestCommit()) {
+      reworded = rewordViaAmend()
+    }
+    if (!reworded) {
+      rewordViaRebase()
+    }
+    headAfterReword = repository.currentRevision
+    rewordedCommit = findNewHashOfRewordedCommit(headAfterReword!!)
+  }
+
+  private fun isLatestCommit() = commit.id.asString() == initialHeadPosition
+
+  private fun rewordViaRebase() {
     val rebaseEditor = GitAutomaticRebaseEditor(project, commit.root,
                                                 entriesEditor = { list -> injectRewordAction(list) },
                                                 plainTextEditor = { editorText -> supplyNewMessage(editorText) })
@@ -68,8 +88,32 @@ class GitRewordOperation(private val repository: GitRepository,
     val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
     val spec = GitRebaseSpec.forNewRebase(project, params, listOf(repository), indicator)
     RewordProcess(spec).rebase()
-    headAfterReword = repository.currentRevision
-    rewordedCommit = findNewHashOfRewordedCommit(headAfterReword!!)
+  }
+
+  private fun rewordViaAmend(): Boolean {
+    val handler = GitLineHandler(project, repository.root, GitCommand.COMMIT)
+    val messageFile: File
+    try {
+      messageFile = GitCheckinEnvironment.createCommitMessageFile(project, repository.root, newMessage)
+    }
+    catch(e: IOException) {
+      LOG.warn("Couldn't create message file", e)
+      return false
+    }
+    handler.addParameters("--amend")
+    handler.addParameters("-F", messageFile.absolutePath)
+    handler.addParameters("--only") // without any files: to amend only the message
+
+    val result = Git.getInstance().runCommand(handler)
+    repository.update()
+    if (result.success()) {
+      notifySuccess()
+      return true
+    }
+    else {
+      LOG.warn("Couldn't reword via amend: " + result.errorOutputAsJoinedString)
+      return false
+    }
   }
 
   internal fun undo() {
@@ -142,6 +186,34 @@ class GitRewordOperation(private val repository: GitRepository,
     return UndoPossibility.Possible
   }
 
+  private fun notifySuccess() {
+    val notification = STANDARD_NOTIFICATION.createNotification("Reworded Successfully", "", NotificationType.INFORMATION, null)
+    notification.addAction(object : NotificationAction("Undo") {
+      override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+        notification.expire()
+        undoInBackground()
+      }
+    })
+
+    val connection = project.messageBus.connect()
+    notification.whenExpired { connection.disconnect() }
+    connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
+      ApplicationManager.getApplication().executeOnPooledThread {
+        if (checkUndoPossibility(project) !is UndoPossibility.Possible) notification.expire()
+      }
+    })
+
+    notifier.notify(notification)
+  }
+
+  private fun undoInBackground() {
+    ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Undoing Reword") {
+      override fun run(indicator: ProgressIndicator) {
+        undo()
+      }
+    })
+  }
+
   private sealed class UndoPossibility {
     object Possible : UndoPossibility()
     object HeadMoved : UndoPossibility()
@@ -151,34 +223,8 @@ class GitRewordOperation(private val repository: GitRepository,
 
   private inner class RewordProcess(spec: GitRebaseSpec) : GitRebaseProcess(project, spec, null) {
     override fun notifySuccess(successful: MutableMap<GitRepository, GitSuccessfulRebase>,
-                               skippedCommits: MultiMap<GitRepository, GitRebaseUtils.CommitInfo>) {
-      val notification = STANDARD_NOTIFICATION.createNotification("Reworded Successfully", "", NotificationType.INFORMATION, null)
-      notification.addAction(object : NotificationAction("Undo") {
-        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          notification.expire()
-          undoInBackground()
-        }
-      })
-
-      val connection = project.messageBus.connect()
-      notification.whenExpired { connection.disconnect() }
-      connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
-        ApplicationManager.getApplication().executeOnPooledThread {
-          if (checkUndoPossibility(project) !is UndoPossibility.Possible) notification.expire()
-        }
-      })
-
-      notifier.notify(notification)
-    }
+                               skippedCommits: MultiMap<GitRepository, GitRebaseUtils.CommitInfo>) = notifySuccess()
 
     override fun shouldRefreshOnSuccess(successType: GitSuccessfulRebase.SuccessType) = false
-
-    private fun undoInBackground() {
-      ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Undoing Reword") {
-        override fun run(indicator: ProgressIndicator) {
-          undo()
-        }
-      })
-    }
   }
 }
