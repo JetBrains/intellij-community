@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2014 Bas Leijdekkers
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -32,42 +31,37 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CollectionsFieldAccessReplaceableByMethodCallInspection
-  extends BaseInspection {
+/**
+ * @author Bas Leijdekkers
+ */
+public class CollectionsFieldAccessReplaceableByMethodCallInspection extends BaseInspection {
 
   @Override
   @Nls
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "collections.field.access.replaceable.by.method.call.display.name");
+    return InspectionGadgetsBundle.message("collections.field.access.replaceable.by.method.call.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "collections.field.access.replaceable.by.method.call.problem.descriptor",
-      infos[1]);
+    return InspectionGadgetsBundle.message("collections.field.access.replaceable.by.method.call.problem.descriptor", infos[1]);
   }
 
   @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    final PsiReferenceExpression expression =
-      (PsiReferenceExpression)infos[0];
-    return new CollectionsFieldAccessReplaceableByMethodCallFix(
-      expression.getReferenceName());
+    final PsiReferenceExpression expression = (PsiReferenceExpression)infos[0];
+    return new CollectionsFieldAccessReplaceableByMethodCallFix(expression.getReferenceName());
   }
 
-  private static class CollectionsFieldAccessReplaceableByMethodCallFix
-    extends InspectionGadgetsFix {
+  private static class CollectionsFieldAccessReplaceableByMethodCallFix extends InspectionGadgetsFix {
 
     private final String replacementText;
 
-    private CollectionsFieldAccessReplaceableByMethodCallFix(
-      String referenceName) {
-      replacementText = getCollectionsMethodCallText(referenceName);
+    CollectionsFieldAccessReplaceableByMethodCallFix(String referenceName) {
+      replacementText = getCollectionsMethodCallName(referenceName);
     }
 
     @NotNull
@@ -79,21 +73,17 @@ public class CollectionsFieldAccessReplaceableByMethodCallInspection
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "collections.field.access.replaceable.by.method.call.quickfix",
-        replacementText);
+      return InspectionGadgetsBundle.message("collections.field.access.replaceable.by.method.call.quickfix", replacementText);
     }
 
     @NonNls
-    private static String getCollectionsMethodCallText(
-      PsiReferenceExpression referenceExpression) {
+    private static String getCollectionsMethodCallText(PsiReferenceExpression referenceExpression) {
       final String referenceName = referenceExpression.getReferenceName();
       final PsiElement parent = referenceExpression.getParent();
       if (!(parent instanceof PsiExpressionList)) {
         return getUntypedCollectionsMethodCallText(referenceName);
       }
-      final PsiType type = ExpectedTypeUtils.findExpectedType(
-        referenceExpression, false);
+      final PsiType type = ExpectedTypeUtils.findExpectedType(referenceExpression, false);
       if (!(type instanceof PsiClassType)) {
         return getUntypedCollectionsMethodCallText(referenceName);
       }
@@ -101,16 +91,13 @@ public class CollectionsFieldAccessReplaceableByMethodCallInspection
       final PsiType[] parameterTypes = classType.getParameters();
       boolean useTypeParameter = false;
       final String[] canonicalTexts = new String[parameterTypes.length];
-      for (int i = 0, parameterTypesLength = parameterTypes.length;
-           i < parameterTypesLength; i++) {
+      for (int i = 0, parameterTypesLength = parameterTypes.length; i < parameterTypesLength; i++) {
         final PsiType parameterType = parameterTypes[i];
         if (parameterType instanceof PsiWildcardType) {
-          final PsiWildcardType wildcardType =
-            (PsiWildcardType)parameterType;
+          final PsiWildcardType wildcardType = (PsiWildcardType)parameterType;
           final PsiType bound = wildcardType.getBound();
           if (bound != null) {
-            if (!bound.equalsToText(
-              CommonClassNames.JAVA_LANG_OBJECT)) {
+            if (!bound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
               useTypeParameter = true;
             }
             canonicalTexts[i] = bound.getCanonicalText();
@@ -120,31 +107,24 @@ public class CollectionsFieldAccessReplaceableByMethodCallInspection
           }
         }
         else {
-          if (!parameterType.equalsToText(
-            CommonClassNames.JAVA_LANG_OBJECT)) {
+          if (!parameterType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
             useTypeParameter = true;
           }
           canonicalTexts[i] = parameterType.getCanonicalText();
         }
       }
-      if (useTypeParameter) {
-        return "Collections.<" + StringUtil.join(canonicalTexts, ",") +
-               '>' + getCollectionsMethodCallText(referenceName);
-      }
-      else {
-        return getUntypedCollectionsMethodCallText(referenceName);
-      }
+      return useTypeParameter
+             ? "Collections.<" + StringUtil.join(canonicalTexts, ",") + '>' + getCollectionsMethodCallName(referenceName)
+             : getUntypedCollectionsMethodCallText(referenceName);
     }
 
     @NonNls
-    private static String getUntypedCollectionsMethodCallText(
-      String referenceName) {
-      return "Collections." + getCollectionsMethodCallText(referenceName);
+    private static String getUntypedCollectionsMethodCallText(String referenceName) {
+      return "Collections." + getCollectionsMethodCallName(referenceName);
     }
 
     @NonNls
-    private static String getCollectionsMethodCallText(
-      @NonNls String referenceName) {
+    private static String getCollectionsMethodCallName(@NonNls String referenceName) {
       if ("EMPTY_LIST".equals(referenceName)) {
         return "emptyList()";
       }
@@ -155,24 +135,19 @@ public class CollectionsFieldAccessReplaceableByMethodCallInspection
         return "emptySet()";
       }
       else {
-        throw new AssertionError("unknown collections field name: " +
-                                 referenceName);
+        throw new AssertionError("unknown collections field name: " + referenceName);
       }
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof PsiReferenceExpression)) {
         return;
       }
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)element;
-      final String newMethodCallText =
-        getCollectionsMethodCallText(referenceExpression);
-      PsiReplacementUtil.replaceExpression(referenceExpression,
-                                           "java.util." + newMethodCallText);
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
+      final String newMethodCallText = getCollectionsMethodCallText(referenceExpression);
+      PsiReplacementUtil.replaceExpression(referenceExpression, "java.util." + newMethodCallText);
     }
   }
 
@@ -186,12 +161,10 @@ public class CollectionsFieldAccessReplaceableByMethodCallInspection
     return PsiUtil.isLanguageLevel5OrHigher(file);
   }
 
-  private static class CollectionsFieldAccessReplaceableByMethodCallVisitor
-    extends BaseInspectionVisitor {
+  private static class CollectionsFieldAccessReplaceableByMethodCallVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitReferenceExpression(
-      PsiReferenceExpression expression) {
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       @NonNls final String name = expression.getReferenceName();
       @NonNls final String replacement;
