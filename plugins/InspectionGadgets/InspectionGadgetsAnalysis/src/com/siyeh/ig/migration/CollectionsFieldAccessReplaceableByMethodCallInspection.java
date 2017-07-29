@@ -25,7 +25,9 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -191,6 +193,10 @@ public class CollectionsFieldAccessReplaceableByMethodCallInspection extends Bas
       }
       final String qualifiedName = containingClass.getQualifiedName();
       if (!CommonClassNames.JAVA_UTIL_COLLECTIONS.equals(qualifiedName)) {
+        return;
+      }
+      final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
+      if (parent instanceof PsiExpression && ComparisonUtils.isEqualityComparison((PsiExpression)parent)) {
         return;
       }
       registerError(expression, expression, replacement);
