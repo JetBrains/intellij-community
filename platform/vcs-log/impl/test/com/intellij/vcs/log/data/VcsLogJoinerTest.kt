@@ -27,7 +27,7 @@ import java.util.*
 
 class VcsLogJoinerTest {
 
-  class StringArrayBuilder() {
+  class StringArrayBuilder {
     val result = ArrayList<String>()
 
     operator fun String.unaryPlus() = result.add(this)
@@ -35,7 +35,7 @@ class VcsLogJoinerTest {
     operator fun Collection<String>.unaryPlus() = result.addAll(this)
   }
 
-  class TestRunner() {
+  class TestRunner {
     private var fullLog: List<String>? = null
     private var recentCommits: List<String>? = null
     private var oldRefs: List<String>? = null
