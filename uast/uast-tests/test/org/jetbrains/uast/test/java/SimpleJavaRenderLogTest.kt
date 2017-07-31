@@ -37,4 +37,6 @@ class SimpleJavaRenderLogTest : AbstractJavaRenderLogTest() {
     @Test fun testQualifiedConstructorCall() = doTest("Simple/QualifiedConstructorCall.java")
 
     @Test fun testAnonymousClassWithParameters() = doTest("Simple/AnonymousClassWithParameters.java")
+
+    @Test fun testVariableAnnotation() = doTest("Simple/VariableAnnotation.java")
 }
