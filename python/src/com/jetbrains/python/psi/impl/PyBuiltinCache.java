@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -386,7 +386,23 @@ public class PyBuiltinCache {
 
   @Nullable
   public PyType getStrOrUnicodeType() {
-    return PyUnionType.union(getObjectType("str"), getObjectType("unicode"));
+    return getStrOrUnicodeType(false);
+  }
+
+  @Nullable
+  public PyType getStrOrUnicodeType(boolean definition) {
+    PyClassLikeType str = getObjectType("str");
+    PyClassLikeType unicode = getObjectType("unicode");
+
+    if (str != null && str.isDefinition() ^ definition) {
+      str = definition ? str.toClass() : str.toInstance();
+    }
+
+    if (unicode != null && unicode.isDefinition() ^ definition) {
+      unicode = definition ? unicode.toClass() : unicode.toInstance();
+    }
+
+    return PyUnionType.union(str, unicode);
   }
 
   @Nullable
