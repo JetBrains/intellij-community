@@ -515,6 +515,10 @@
     <applicationService serviceInterface="com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactoryFallback"
                         serviceImplementation="com.intellij.codeInsight.intention.impl.CommonIntentionActionsFactoryUastFallback"/>
 
+    <applicationService serviceImplementation="com.intellij.codeInsight.intention.impl.JavaJvmElementRenderer"/>
+
+    <applicationService serviceImplementation="com.intellij.codeInsight.intention.impl.JavaJvmElementMaterializer"/>
+
     <applicationService serviceInterface="com.intellij.psi.JavaDirectoryService"
                         serviceImplementation="com.intellij.psi.impl.file.JavaDirectoryServiceImpl"/>
 

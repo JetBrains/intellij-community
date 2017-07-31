@@ -25,6 +25,7 @@ import com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactory
 import com.intellij.lang.jvm.actions.MethodInsertionInfo
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
@@ -33,13 +34,16 @@ import com.intellij.psi.impl.beanProperties.CreateJavaBeanPropertyFix
 import com.intellij.psi.util.PsiFormatUtil
 import com.intellij.psi.util.PsiFormatUtilBase
 
-class JavaCommonIntentionActionsFactory : JvmCommonIntentionActionsFactory() {
+class JavaCommonIntentionActionsFactory(
+  private val materializer: JavaJvmElementMaterializer,
+  private val renderer: JavaJvmElementRenderer
+) : JvmCommonIntentionActionsFactory() {
 
   override fun createChangeJvmModifierAction(declaration: JvmModifiersOwner,
                                              modifier: JvmModifier,
                                              shouldPresent: Boolean): IntentionAction {
     declaration as PsiModifierListOwner
-    return ModifierFix(declaration.modifierList, JavaJvmElementRenderer.render(modifier), shouldPresent, false)
+    return ModifierFix(declaration.modifierList, renderer.render(modifier), shouldPresent, false)
   }
 
   override fun createAddCallableMemberActions(info: MethodInsertionInfo): List<IntentionAction> {
@@ -51,10 +55,10 @@ class JavaCommonIntentionActionsFactory : JvmCommonIntentionActionsFactory() {
       }
 
       is MethodInsertionInfo.Constructor -> {
-        val targetClass = info.targetClass.jvmJavaPsi<PsiClass>()
+        val targetClass = materializer.materialize(info.targetClass)
         val factory = JVMElementFactories.getFactory(targetClass.language, targetClass.project)!!
         listOf(AddConstructorFix(targetClass, info.parameters.mapIndexed { i, it ->
-          factory.createParameter(it.name ?: "arg$i", JavaJvmElementMaterializer.materialize(it.type), targetClass)
+          factory.createParameter(it.name ?: "arg$i", materializer.materialize(it.type), targetClass)
         }))
       }
     }
@@ -65,8 +69,8 @@ class JavaCommonIntentionActionsFactory : JvmCommonIntentionActionsFactory() {
                                     visibilityModifier: List<JvmModifier>,
                                     returnType: JvmType,
                                     parameters: List<JvmParameter>): IntentionAction? {
-    val psiClass = psiClass.jvmJavaPsi<PsiClass>()
-    val signatureString = with(JavaJvmElementRenderer) {
+    val psiClass = materializer.materialize(psiClass)
+    val signatureString = with(renderer) {
       val paramsString = parameters.mapIndexed { i, t -> "${render(t.type)} ${t.name ?: "arg$i"}" }.joinToString()
       "${render(visibilityModifier)} ${render(returnType)} $methodName($paramsString){}"
     }
@@ -101,27 +105,14 @@ class JavaCommonIntentionActionsFactory : JvmCommonIntentionActionsFactory() {
     }
   }
 
-  private inline fun <reified T : PsiElement> T.javaPsi(): T =
-    when (this) {
-      is org.jetbrains.uast.UElement -> this.psi as T
-      else -> this
-    }
-
-  private inline fun <reified T : PsiElement> JvmElement.jvmJavaPsi(): T {
-    return when (this) {
-      is PsiElement -> this.javaPsi() as T
-      else -> throw UnsupportedOperationException("cant convert $this to ${T::class.java}")
-    }
-  }
-
   override fun createAddJvmPropertyActions(psiClass: JvmClass,
                                            propertyName: String,
                                            visibilityModifier: JvmModifier,
                                            propertyType: JvmType,
                                            setterRequired: Boolean,
                                            getterRequired: Boolean): List<IntentionAction> {
-    val psiClass = psiClass.jvmJavaPsi<PsiClass>()
-    val propertyType = JavaJvmElementMaterializer.materialize(propertyType)
+    val psiClass = materializer.materialize(psiClass)
+    val propertyType = materializer.materialize(propertyType)
     if (getterRequired && setterRequired)
       return listOf<IntentionAction>(
         CreateJavaBeanPropertyFix(psiClass, propertyName, propertyType, getterRequired, setterRequired,
@@ -142,7 +133,15 @@ class JavaCommonIntentionActionsFactory : JvmCommonIntentionActionsFactory() {
 
 }
 
-object JavaJvmElementRenderer {
+class JavaJvmElementRenderer {
+  companion object {
+    @JvmStatic
+    fun getInstance(): JavaJvmElementRenderer {
+      return ServiceManager.getService(JavaJvmElementRenderer::class.java)
+    }
+  }
+
+
   fun render(visibilityModifiers: List<JvmModifier>): String =
     visibilityModifiers.joinToString(" ") { render(it) }
 
@@ -169,10 +168,22 @@ object JavaJvmElementRenderer {
 
 }
 
-object JavaJvmElementMaterializer {
+class JavaJvmElementMaterializer {
+
+  companion object {
+    @JvmStatic
+    fun getInstance(): JavaJvmElementMaterializer {
+      return ServiceManager.getService(JavaJvmElementMaterializer::class.java)
+    }
+  }
+
 
   fun materialize(jvmType: JvmType): PsiType {
     return jvmType as PsiType //TODO:probably it could be not so easy sometimes
+  }
+
+  fun materialize(jvmClass: JvmClass): PsiClass {
+    return jvmClass as PsiClass //TODO:probably it could be not so easy sometimes
   }
 
   fun materialize(jvmParameter: JvmParameter): PsiParameter {

@@ -31,7 +31,10 @@ import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory as Ua
 import com.intellij.codeInsight.intention.MethodInsertionInfo as UastMethodInsertionInfo
 
 @Deprecated("to be removed in 2017.3", ReplaceWith("use com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactory"))
-class CommonIntentionActionsFactoryUastFallback : JvmCommonIntentionActionsFactoryFallback {
+class CommonIntentionActionsFactoryUastFallback(
+  val renderer: JavaJvmElementRenderer,
+  val materializer: JavaJvmElementMaterializer
+) : JvmCommonIntentionActionsFactoryFallback {
   override fun forLanguage(lang: Language): JvmCommonIntentionActionsFactory? {
     val factory = UastJvmCommonIntentionActionsFactory.forLanguage(lang) ?: return null
     return object : JvmCommonIntentionActionsFactory() {
@@ -39,7 +42,7 @@ class CommonIntentionActionsFactoryUastFallback : JvmCommonIntentionActionsFacto
       override fun createChangeJvmModifierAction(declaration: JvmModifiersOwner,
                                                  modifier: JvmModifier,
                                                  shouldPresent: Boolean): IntentionAction? =
-        factory.createChangeModifierAction(declaration.asUast<UDeclaration>(), JavaJvmElementRenderer.render(modifier), shouldPresent)
+        factory.createChangeModifierAction(declaration.asUast<UDeclaration>(), renderer.render(modifier), shouldPresent)
 
 
       override fun createAddCallableMemberActions(info: MethodInsertionInfo): List<IntentionAction> {
@@ -48,16 +51,16 @@ class CommonIntentionActionsFactoryUastFallback : JvmCommonIntentionActionsFacto
             UastMethodInsertionInfo.Method(
               info.targetClass.asUast(),
               info.name,
-              info.modifiers.map { JavaJvmElementRenderer.render(it) },
-              info.typeParameters.map { JavaJvmElementMaterializer.materialize(it) },
-              JavaJvmElementMaterializer.materialize(info.returnType),
+              info.modifiers.map { renderer.render(it) },
+              info.typeParameters.map { materializer.materialize(it) },
+              materializer.materialize(info.returnType),
               info.parameters.map { it.asUast<UParameter>() },
               info.isAbstract
             )
           is MethodInsertionInfo.Constructor -> UastMethodInsertionInfo.Constructor(
             info.targetClass.asUast(),
-            info.modifiers.map { JavaJvmElementRenderer.render(it) },
-            info.typeParameters.map { JavaJvmElementMaterializer.materialize(it) },
+            info.modifiers.map { renderer.render(it) },
+            info.typeParameters.map { materializer.materialize(it) },
             info.parameters.map { it.asUast<UParameter>() }
           )
         }
@@ -71,8 +74,8 @@ class CommonIntentionActionsFactoryUastFallback : JvmCommonIntentionActionsFacto
                                                setterRequired: Boolean,
                                                getterRequired: Boolean): List<IntentionAction> =
         factory.createAddBeanPropertyActions(psiClass.asUast<UClass>(), propertyName,
-                                             JavaJvmElementRenderer.render(visibilityModifier),
-                                             JavaJvmElementMaterializer.materialize(propertyType), setterRequired, getterRequired)
+                                             renderer.render(visibilityModifier),
+                                             materializer.materialize(propertyType), setterRequired, getterRequired)
 
     }
   }
