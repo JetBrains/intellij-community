@@ -305,7 +305,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     if (myMethod.canChangeParameters()) {
       final JPanel parametersPanel = createParametersPanel(!panels.isEmpty());
       if (!panels.isEmpty()) {
-        parametersPanel.setBorder(IdeBorderFactory.createEmptyBorder());
+        parametersPanel.setBorder(JBUI.Borders.empty());
       }
       subPanel.add(parametersPanel, BorderLayout.CENTER);
     }

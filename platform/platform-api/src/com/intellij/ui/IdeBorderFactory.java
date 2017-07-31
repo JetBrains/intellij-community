@@ -64,6 +64,10 @@ public class IdeBorderFactory {
     return new EmptyBorder(JBInsets.create(insets));
   }
 
+  /**
+   * @deprecated
+   * @see JBUI.Borders#empty()
+   */
   public static Border createEmptyBorder() {
     return JBUI.Borders.empty();
   }

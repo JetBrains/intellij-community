@@ -16,7 +16,6 @@
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.textCompletion.TextCompletionProvider;
 import com.intellij.util.textCompletion.TextFieldWithCompletion;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -53,7 +52,7 @@ public abstract class TextFieldWithProgress extends JPanel {
         return false;
       }
     };
-    myTextField.setBorder(IdeBorderFactory.createEmptyBorder());
+    myTextField.setBorder(JBUI.Borders.empty());
 
     myProgressIcon.setOpaque(true);
     myProgressIcon.setBackground(myTextField.getBackground());

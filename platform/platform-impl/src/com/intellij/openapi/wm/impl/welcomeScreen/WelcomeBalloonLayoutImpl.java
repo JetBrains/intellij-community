@@ -100,7 +100,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
 
         @Override
         public void componentHidden(ComponentEvent e) {
-          pane.setBorder(IdeBorderFactory.createEmptyBorder());
+          pane.setBorder(JBUI.Borders.empty());
         }
       });
 
