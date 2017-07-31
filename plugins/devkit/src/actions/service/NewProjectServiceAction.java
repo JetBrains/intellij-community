@@ -15,47 +15,31 @@
  */
 package org.jetbrains.idea.devkit.actions.service;
 
-import com.intellij.psi.PsiDirectory;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
 public class NewProjectServiceAction extends GenerateServiceClassAndPatchPluginXmlActionBase {
   public NewProjectServiceAction() {
     super(DevKitBundle.message("new.menu.project.service.text"),
-          DevKitBundle.message("new.menu.project.service.description"), null);
-  }
-
-  @Override
-  protected String getClassNamePrompt() {
-    return DevKitBundle.message("new.project.service.prompt");
-  }
-
-  @Override
-  protected String getClassNamePromptTitle() {
-    return DevKitBundle.message("new.project.service.prompt.title");
-  }
-
-  @Override
-  protected String getClassTemplateName() {
-    return "ProjectService.java";
-  }
-
-  @Override
-  protected String getErrorTitle() {
-    return DevKitBundle.message("new.project.service.error");
-  }
-
-  @Override
-  protected String getCommandName() {
-    return DevKitBundle.message("new.project.service.command");
-  }
-
-  @Override
-  protected String getActionName(PsiDirectory directory, String newName) {
-    return DevKitBundle.message("new.project.service.action.name", directory, newName);
+          DevKitBundle.message("new.menu.project.service.description"));
   }
 
   @Override
   protected String getTagName() {
     return "projectService";
+  }
+
+  @Override
+  protected String getOnlyImplementationTemplateName() {
+    return "ProjectServiceClass.java";
+  }
+
+  @Override
+  protected String getInterfaceTemplateName() {
+    return "ProjectServiceInterface.java";
+  }
+
+  @Override
+  protected String getDialogTitle() {
+    return DevKitBundle.message("new.project.service.dialog.title");
   }
 }
