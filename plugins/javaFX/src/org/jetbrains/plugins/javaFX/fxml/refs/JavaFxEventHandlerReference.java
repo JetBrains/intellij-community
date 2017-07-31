@@ -117,7 +117,7 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
                                             Arrays.asList(javaMethod.getModifiers()),
                                             javaMethod.getReturnType(),
                                             Arrays.asList(javaMethod.getParameterList().getParameters()));
-        intentionActionsFactory.createAddCallableMemberActions(method).forEach(registrar::register);
+        intentionActionsFactory.createActions(method).forEach(registrar::register);
       }
     }
 

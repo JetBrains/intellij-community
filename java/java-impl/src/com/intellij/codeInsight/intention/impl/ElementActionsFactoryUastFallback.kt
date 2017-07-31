@@ -17,13 +17,10 @@ package com.intellij.codeInsight.intention.impl
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.Language
-import com.intellij.lang.jvm.JvmClass
-import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmModifiersOwner
 import com.intellij.lang.jvm.actions.JvmElementActionsFactory
 import com.intellij.lang.jvm.actions.JvmElementActionsFactoryFallback
 import com.intellij.lang.jvm.actions.MemberRequest
-import com.intellij.lang.jvm.types.JvmType
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiElement
 import org.jetbrains.uast.*
@@ -39,43 +36,47 @@ class ElementActionsFactoryUastFallback(
     val factory = UastJvmCommonIntentionActionsFactory.forLanguage(lang) ?: return null
     return object : JvmElementActionsFactory() {
 
-      override fun createChangeJvmModifierAction(declaration: JvmModifiersOwner,
-                                                 modifier: JvmModifier,
-                                                 shouldPresent: Boolean): IntentionAction? =
-        factory.createChangeModifierAction(declaration.asUast<UDeclaration>(), renderer.render(modifier), shouldPresent)
+      override fun createActions(request: MemberRequest.Modifier): List<IntentionAction> =
+        with(request) {
+          listOfNotNull(
+            factory.createChangeModifierAction(targetDeclaration.asUast<UDeclaration>(), renderer.render(modifier), shouldPresent))
+        }
 
-
-      override fun createAddCallableMemberActions(info: MemberRequest): List<IntentionAction> {
-        val uInfo = when (info) {
-          is MemberRequest.Method ->
-            UastMethodInsertionInfo.Method(
-              info.targetClass.asUast(),
-              info.name,
-              info.modifiers.map { renderer.render(it) },
-              info.typeParameters.map { materializer.materialize(it) },
-              materializer.materialize(info.returnType),
-              info.parameters.map { it.asUast<UParameter>() },
-              info.isAbstract
+      override fun createActions(request: MemberRequest.Constructor): List<IntentionAction> =
+        with(request) {
+          factory.createAddCallableMemberActions(
+            UastMethodInsertionInfo.Constructor(
+              request.targetClass.asUast(),
+              request.modifiers.map { renderer.render(it) },
+              request.typeParameters.map { materializer.materialize(it) },
+              request.parameters.map { it.asUast<UParameter>() }
             )
-          is MemberRequest.Constructor -> UastMethodInsertionInfo.Constructor(
-            info.targetClass.asUast(),
-            info.modifiers.map { renderer.render(it) },
-            info.typeParameters.map { materializer.materialize(it) },
-            info.parameters.map { it.asUast<UParameter>() }
           )
         }
-        return factory.createAddCallableMemberActions(uInfo)
-      }
 
-      override fun createAddJvmPropertyActions(psiClass: JvmClass,
-                                               propertyName: String,
-                                               visibilityModifier: JvmModifier,
-                                               propertyType: JvmType,
-                                               setterRequired: Boolean,
-                                               getterRequired: Boolean): List<IntentionAction> =
-        factory.createAddBeanPropertyActions(psiClass.asUast<UClass>(), propertyName,
-                                             renderer.render(visibilityModifier),
-                                             materializer.materialize(propertyType), setterRequired, getterRequired)
+      override fun createActions(request: MemberRequest.Method): List<IntentionAction> =
+        with(request) {
+          factory.createAddCallableMemberActions(
+            UastMethodInsertionInfo.Method(
+              request.targetClass.asUast(),
+              request.name,
+              request.modifiers.map { renderer.render(it) },
+              request.typeParameters.map { materializer.materialize(it) },
+              materializer.materialize(request.returnType),
+              request.parameters.map { it.asUast<UParameter>() },
+              request.isAbstract
+            )
+          )
+        }
+
+      override fun createActions(request: MemberRequest.Property): List<IntentionAction> =
+        with(request) {
+          factory.createAddBeanPropertyActions(targetClass.asUast<UClass>(), propertyName,
+                                               renderer.render(visibilityModifier),
+                                               materializer.materialize(propertyType), setterRequired, getterRequired)
+
+        }
+
 
     }
   }

@@ -20,6 +20,7 @@ import com.intellij.codeInspection.IntentionWrapper;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.actions.JvmElementActionsFactory;
+import com.intellij.lang.jvm.actions.MemberRequest;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -55,7 +56,7 @@ public class CreateBeanPropertyFixes {
     JvmElementActionsFactory factory = JvmElementActionsFactory.forLanguage(psiClass.getLanguage());
     if (factory == null) return IntentionAction.EMPTY_ARRAY;
     return toObjectArray(
-      factory.createAddJvmPropertyActions(psiClass, propertyName, JvmModifier.PUBLIC, type, createSetter, !createSetter),
+      factory.createActions(new MemberRequest.Property(psiClass, propertyName, JvmModifier.PUBLIC, type, createSetter, !createSetter)),
       IntentionAction.class);
   }
 }

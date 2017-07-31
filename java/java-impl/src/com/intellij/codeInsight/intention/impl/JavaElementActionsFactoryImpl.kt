@@ -20,7 +20,10 @@ import com.intellij.codeInsight.daemon.impl.quickfix.AddConstructorFix
 import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix
 import com.intellij.codeInsight.intention.AbstractIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.lang.jvm.*
+import com.intellij.lang.jvm.JvmClass
+import com.intellij.lang.jvm.JvmModifier
+import com.intellij.lang.jvm.JvmParameter
+import com.intellij.lang.jvm.JvmTypeParameter
 import com.intellij.lang.jvm.actions.JvmElementActionsFactory
 import com.intellij.lang.jvm.actions.MemberRequest
 import com.intellij.lang.jvm.types.JvmType
@@ -39,31 +42,50 @@ class JavaElementActionsFactoryImpl(
   private val renderer: JavaJvmElementRenderer
 ) : JvmElementActionsFactory() {
 
-  override fun createChangeJvmModifierAction(declaration: JvmModifiersOwner,
-                                             modifier: JvmModifier,
-                                             shouldPresent: Boolean): IntentionAction {
-    declaration as PsiModifierListOwner
-    return ModifierFix(declaration.modifierList, renderer.render(modifier), shouldPresent, false)
+  override fun createActions(request: MemberRequest.Modifier): List<IntentionAction> = with(request) {
+    val declaration = targetDeclaration as PsiModifierListOwner
+    listOf(ModifierFix(declaration.modifierList, renderer.render(modifier), shouldPresent, false))
   }
 
-  override fun createAddCallableMemberActions(info: MemberRequest): List<IntentionAction> {
-    return when (info) {
-      is MemberRequest.Method -> with(info) {
-        createAddMethodAction(targetClass, name, modifiers,
-                              returnType, parameters)
-          ?.let { listOf(it) } ?: emptyList()
-      }
+  override fun createActions(request: MemberRequest.Constructor): List<IntentionAction> =
+    with(request) {
+      val targetClass = materializer.materialize(request.targetClass)
+      val factory = JVMElementFactories.getFactory(targetClass.language, targetClass.project)!!
+      listOf(AddConstructorFix(targetClass, request.parameters.mapIndexed { i, it ->
+        factory.createParameter(it.name ?: "arg$i", materializer.materialize(it.type), targetClass)
+      }))
+    }
 
-      is MemberRequest.Constructor -> {
-        val targetClass = materializer.materialize(info.targetClass)
-        val factory = JVMElementFactories.getFactory(targetClass.language, targetClass.project)!!
-        listOf(AddConstructorFix(targetClass, info.parameters.mapIndexed { i, it ->
-          factory.createParameter(it.name ?: "arg$i", materializer.materialize(it.type), targetClass)
-        }))
-      }
-      else -> emptyList()
+  override fun createActions(request: MemberRequest.Method): List<IntentionAction> =
+    with(request) {
+      createAddMethodAction(targetClass, name, modifiers,
+                            returnType, parameters)
+        ?.let { listOf(it) } ?: emptyList()
+    }
+
+  override fun createActions(request: MemberRequest.Property): List<IntentionAction> {
+    with(request) {
+      val psiClass = materializer.materialize(request.targetClass)
+      val propertyType = materializer.materialize(propertyType)
+      if (getterRequired && setterRequired)
+        return listOf<IntentionAction>(
+          CreateJavaBeanPropertyFix(psiClass, propertyName, propertyType, getterRequired, setterRequired,
+                                    true),
+          CreateJavaBeanPropertyFix(psiClass, propertyName, propertyType, getterRequired, setterRequired,
+                                    false))
+      if (getterRequired || setterRequired)
+        return listOf<IntentionAction>(
+          CreateJavaBeanPropertyFix(psiClass, propertyName, propertyType, getterRequired, setterRequired,
+                                    true),
+          CreateJavaBeanPropertyFix(psiClass, propertyName, propertyType, getterRequired, setterRequired,
+                                    false),
+          CreateJavaBeanPropertyFix(psiClass, propertyName, propertyType, true, true, true))
+
+      return listOf<IntentionAction>(
+        CreateJavaBeanPropertyFix(psiClass, propertyName, propertyType, getterRequired, setterRequired, true))
     }
   }
+
 
   private fun createAddMethodAction(psiClass: JvmClass,
                                     methodName: String,
@@ -104,32 +126,6 @@ class JavaElementActionsFactoryImpl(
         return elementFactory.createMethodFromText(signatureString, targetClass)
       }
     }
-  }
-
-  override fun createAddJvmPropertyActions(psiClass: JvmClass,
-                                           propertyName: String,
-                                           visibilityModifier: JvmModifier,
-                                           propertyType: JvmType,
-                                           setterRequired: Boolean,
-                                           getterRequired: Boolean): List<IntentionAction> {
-    val psiClass = materializer.materialize(psiClass)
-    val propertyType = materializer.materialize(propertyType)
-    if (getterRequired && setterRequired)
-      return listOf<IntentionAction>(
-        CreateJavaBeanPropertyFix(psiClass, propertyName, propertyType, getterRequired, setterRequired,
-                                  true),
-        CreateJavaBeanPropertyFix(psiClass, propertyName, propertyType, getterRequired, setterRequired,
-                                  false))
-    if (getterRequired || setterRequired)
-      return listOf<IntentionAction>(
-        CreateJavaBeanPropertyFix(psiClass, propertyName, propertyType, getterRequired, setterRequired,
-                                  true),
-        CreateJavaBeanPropertyFix(psiClass, propertyName, propertyType, getterRequired, setterRequired,
-                                  false),
-        CreateJavaBeanPropertyFix(psiClass, propertyName, propertyType, true, true, true))
-
-    return listOf<IntentionAction>(
-      CreateJavaBeanPropertyFix(psiClass, propertyName, propertyType, getterRequired, setterRequired, true))
   }
 
 }

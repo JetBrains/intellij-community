@@ -22,6 +22,7 @@ import com.intellij.codeInspection.*
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmModifiersOwner
 import com.intellij.lang.jvm.actions.JvmElementActionsFactory
+import com.intellij.lang.jvm.actions.MemberRequest
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -187,9 +188,9 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
                                 shouldPresent: Boolean,
                                 actionsList: SmartList<IntentionAction>) {
       if (declaration.hasModifier(modifier) != shouldPresent) {
-        (actionsFactory.createChangeJvmModifierAction(declaration, modifier,
-                                                      shouldPresent))?.let {
-          actionsList.add(it)
+        actionsFactory.createActions(MemberRequest.Modifier(declaration, modifier,
+                                                            shouldPresent)).let {
+          actionsList.addAll(it)
         }
       }
     }

@@ -60,7 +60,7 @@ class CreateMethodFix(containingClass: @JvmCommon PsiClass, private val createMe
                                       modifier: JvmModifier): CreateMethodFix? {
       if (!ModuleUtilCore.projectContainsFile(psiClass.project, psiClass.containingFile.virtualFile, false)) return null
       val actionsFactory = JvmElementActionsFactory.forLanguage(psiClass.language) ?: return null
-      val action = actionsFactory.createAddCallableMemberActions(
+      val action = actionsFactory.createActions(
         MemberRequest.simpleMethodRequest(psiClass, methodName, modifier, PsiType.VOID, emptyList())
       ).firstOrNull() ?: return null
       return CreateMethodFix(psiClass, action)
