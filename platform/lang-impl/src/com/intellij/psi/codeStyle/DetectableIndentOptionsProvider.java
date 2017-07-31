@@ -77,12 +77,19 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     TimeStampedIndentOptions indentOptions = getDefaultIndentOptions(file, document);
     indentOptions.associateWithDocument(document);
 
-    DetectAndAdjustIndentOptionsTask task = new DetectAndAdjustIndentOptionsTask(project, document, indentOptions, BOUNDED_EXECUTOR);
-    task.scheduleInBackgroundForCommittedDocument();
+    scheduleDetectionInBackground(project, document, indentOptions);
 
     return indentOptions;
   }
-  
+
+  protected void scheduleDetectionInBackground(@NotNull Project project,
+                                               @NotNull Document document,
+                                               @NotNull TimeStampedIndentOptions indentOptions)
+  {
+    DetectAndAdjustIndentOptionsTask task = new DetectAndAdjustIndentOptionsTask(project, document, indentOptions, BOUNDED_EXECUTOR);
+    task.scheduleInBackgroundForCommittedDocument();
+  }
+
   @Override
   public boolean useOnFullReformat() {
     return false;
