@@ -21,8 +21,8 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix
 import com.intellij.codeInsight.intention.AbstractIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.jvm.*
-import com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactory
-import com.intellij.lang.jvm.actions.MethodInsertionInfo
+import com.intellij.lang.jvm.actions.JvmElementActionsFactory
+import com.intellij.lang.jvm.actions.MemberRequest
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.ServiceManager
@@ -34,10 +34,10 @@ import com.intellij.psi.impl.beanProperties.CreateJavaBeanPropertyFix
 import com.intellij.psi.util.PsiFormatUtil
 import com.intellij.psi.util.PsiFormatUtilBase
 
-class JavaCommonIntentionActionsFactory(
+class JavaElementActionsFactoryImpl(
   private val materializer: JavaJvmElementMaterializer,
   private val renderer: JavaJvmElementRenderer
-) : JvmCommonIntentionActionsFactory() {
+) : JvmElementActionsFactory() {
 
   override fun createChangeJvmModifierAction(declaration: JvmModifiersOwner,
                                              modifier: JvmModifier,
@@ -46,21 +46,22 @@ class JavaCommonIntentionActionsFactory(
     return ModifierFix(declaration.modifierList, renderer.render(modifier), shouldPresent, false)
   }
 
-  override fun createAddCallableMemberActions(info: MethodInsertionInfo): List<IntentionAction> {
+  override fun createAddCallableMemberActions(info: MemberRequest): List<IntentionAction> {
     return when (info) {
-      is MethodInsertionInfo.Method -> with(info) {
+      is MemberRequest.Method -> with(info) {
         createAddMethodAction(targetClass, name, modifiers,
                               returnType, parameters)
           ?.let { listOf(it) } ?: emptyList()
       }
 
-      is MethodInsertionInfo.Constructor -> {
+      is MemberRequest.Constructor -> {
         val targetClass = materializer.materialize(info.targetClass)
         val factory = JVMElementFactories.getFactory(targetClass.language, targetClass.project)!!
         listOf(AddConstructorFix(targetClass, info.parameters.mapIndexed { i, it ->
           factory.createParameter(it.name ?: "arg$i", materializer.materialize(it.type), targetClass)
         }))
       }
+      else -> emptyList()
     }
   }
 

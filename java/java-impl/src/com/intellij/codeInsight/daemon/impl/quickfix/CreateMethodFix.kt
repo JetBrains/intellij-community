@@ -19,8 +19,8 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.LocalQuickFixBase
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactory
-import com.intellij.lang.jvm.actions.MethodInsertionInfo
+import com.intellij.lang.jvm.actions.JvmElementActionsFactory
+import com.intellij.lang.jvm.actions.MemberRequest
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
@@ -59,9 +59,9 @@ class CreateMethodFix(containingClass: @JvmCommon PsiClass, private val createMe
                                       methodName: String,
                                       modifier: JvmModifier): CreateMethodFix? {
       if (!ModuleUtilCore.projectContainsFile(psiClass.project, psiClass.containingFile.virtualFile, false)) return null
-      val actionsFactory = JvmCommonIntentionActionsFactory.forLanguage(psiClass.language) ?: return null
+      val actionsFactory = JvmElementActionsFactory.forLanguage(psiClass.language) ?: return null
       val action = actionsFactory.createAddCallableMemberActions(
-        MethodInsertionInfo.simpleMethodInfo(psiClass, methodName, modifier, PsiType.VOID, emptyList())
+        MemberRequest.simpleMethodRequest(psiClass, methodName, modifier, PsiType.VOID, emptyList())
       ).firstOrNull() ?: return null
       return CreateMethodFix(psiClass, action)
     }

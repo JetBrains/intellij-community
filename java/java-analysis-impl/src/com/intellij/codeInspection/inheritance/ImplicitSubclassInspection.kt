@@ -21,7 +21,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.*
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmModifiersOwner
-import com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactory
+import com.intellij.lang.jvm.actions.JvmElementActionsFactory
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -60,7 +60,7 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
 
     val smartPointerManager = SmartPointerManager.getInstance(aClass.project)
 
-    val actionsFactory = JvmCommonIntentionActionsFactory.forLanguage(aClass.language)
+    val actionsFactory = JvmElementActionsFactory.forLanguage(aClass.language)
 
     for ((method, description) in methodsToOverride) {
       if (method.isFinal || method.isStatic || method.hasModifierProperty(PsiModifier.PRIVATE)) {
@@ -93,7 +93,7 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
     return problems.toTypedArray()
   }
 
-  private fun createFixesIfApplicable(actionsFactory: JvmCommonIntentionActionsFactory?,
+  private fun createFixesIfApplicable(actionsFactory: JvmElementActionsFactory?,
                                       aClass: UDeclaration,
                                       hintTargetName: String,
                                       methodsToAttachToClassFix: List<SmartPsiElementPointer<UDeclaration>> = emptyList()): Array<LocalQuickFix> {
@@ -122,7 +122,7 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
 
   private class MakeExtendableFix(uDeclaration: UDeclaration,
                                   hintTargetName: String,
-                                  val actionsFactory: JvmCommonIntentionActionsFactory,
+                                  val actionsFactory: JvmElementActionsFactory,
                                   val siblings: List<SmartPsiElementPointer<UDeclaration>> = emptyList())
     : LocalQuickFixOnPsiElement(uDeclaration) {
 

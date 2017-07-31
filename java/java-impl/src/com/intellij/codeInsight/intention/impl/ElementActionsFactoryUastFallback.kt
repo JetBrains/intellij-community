@@ -20,9 +20,9 @@ import com.intellij.lang.Language
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmModifiersOwner
-import com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactory
-import com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactoryFallback
-import com.intellij.lang.jvm.actions.MethodInsertionInfo
+import com.intellij.lang.jvm.actions.JvmElementActionsFactory
+import com.intellij.lang.jvm.actions.JvmElementActionsFactoryFallback
+import com.intellij.lang.jvm.actions.MemberRequest
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiElement
@@ -30,14 +30,14 @@ import org.jetbrains.uast.*
 import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory as UastJvmCommonIntentionActionsFactory
 import com.intellij.codeInsight.intention.MethodInsertionInfo as UastMethodInsertionInfo
 
-@Deprecated("to be removed in 2017.3", ReplaceWith("use com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactory"))
-class CommonIntentionActionsFactoryUastFallback(
+@Deprecated("to be removed in 2017.3", ReplaceWith("use com.intellij.lang.jvm.actions.JvmElementActionsFactory"))
+class ElementActionsFactoryUastFallback(
   val renderer: JavaJvmElementRenderer,
   val materializer: JavaJvmElementMaterializer
-) : JvmCommonIntentionActionsFactoryFallback {
-  override fun forLanguage(lang: Language): JvmCommonIntentionActionsFactory? {
+) : JvmElementActionsFactoryFallback {
+  override fun forLanguage(lang: Language): JvmElementActionsFactory? {
     val factory = UastJvmCommonIntentionActionsFactory.forLanguage(lang) ?: return null
-    return object : JvmCommonIntentionActionsFactory() {
+    return object : JvmElementActionsFactory() {
 
       override fun createChangeJvmModifierAction(declaration: JvmModifiersOwner,
                                                  modifier: JvmModifier,
@@ -45,9 +45,9 @@ class CommonIntentionActionsFactoryUastFallback(
         factory.createChangeModifierAction(declaration.asUast<UDeclaration>(), renderer.render(modifier), shouldPresent)
 
 
-      override fun createAddCallableMemberActions(info: MethodInsertionInfo): List<IntentionAction> {
+      override fun createAddCallableMemberActions(info: MemberRequest): List<IntentionAction> {
         val uInfo = when (info) {
-          is MethodInsertionInfo.Method ->
+          is MemberRequest.Method ->
             UastMethodInsertionInfo.Method(
               info.targetClass.asUast(),
               info.name,
@@ -57,7 +57,7 @@ class CommonIntentionActionsFactoryUastFallback(
               info.parameters.map { it.asUast<UParameter>() },
               info.isAbstract
             )
-          is MethodInsertionInfo.Constructor -> UastMethodInsertionInfo.Constructor(
+          is MemberRequest.Constructor -> UastMethodInsertionInfo.Constructor(
             info.targetClass.asUast(),
             info.modifiers.map { renderer.render(it) },
             info.typeParameters.map { materializer.materialize(it) },

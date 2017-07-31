@@ -17,9 +17,9 @@ package com.intellij.lang.jvm.actions
 
 import com.intellij.lang.Language
 
-@Deprecated("to be removed in 2017.3", ReplaceWith("use com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactory"))
-interface JvmCommonIntentionActionsFactoryFallback {
+@Deprecated("to be removed in 2017.3", ReplaceWith("use com.intellij.lang.jvm.actions.JvmElementActionsFactory"))
+interface JvmElementActionsFactoryFallback {
 
-  fun forLanguage(lang: Language): JvmCommonIntentionActionsFactory?
+  fun forLanguage(lang: Language): JvmElementActionsFactory?
 
 }

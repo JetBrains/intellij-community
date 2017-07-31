@@ -17,8 +17,8 @@ package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
-import com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactory;
-import com.intellij.lang.jvm.actions.MethodInsertionInfo;
+import com.intellij.lang.jvm.actions.JvmElementActionsFactory;
+import com.intellij.lang.jvm.actions.MemberRequest;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -103,20 +103,20 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
     @Override
     public void registerFixes(@NotNull final JavaFxEventHandlerReference ref, @NotNull final QuickFixActionRegistrar registrar) {
       if (ref.myController != null && ref.myEventHandler == null) {
-        JvmCommonIntentionActionsFactory intentionActionsFactory =
-          JvmCommonIntentionActionsFactory.forLanguage(ref.myController.getLanguage());
+        JvmElementActionsFactory intentionActionsFactory =
+          JvmElementActionsFactory.forLanguage(ref.myController.getLanguage());
         if (intentionActionsFactory == null) return;
 
         String javaSignature = getHandlerSignature(ref);
         PsiMethod javaMethod = JavaPsiFacade.getElementFactory(ref.myController.getProject())
           .createMethodFromText(javaSignature, ref.myController);
 
-        MethodInsertionInfo.Method method =
-          MethodInsertionInfo.simpleMethodInfo(ref.myController,
-                                               javaMethod.getName(),
-                                               Arrays.asList(javaMethod.getModifiers()),
-                                               javaMethod.getReturnType(),
-                                               Arrays.asList(javaMethod.getParameterList().getParameters()));
+        MemberRequest.Method method =
+          MemberRequest.simpleMethodRequest(ref.myController,
+                                            javaMethod.getName(),
+                                            Arrays.asList(javaMethod.getModifiers()),
+                                            javaMethod.getReturnType(),
+                                            Arrays.asList(javaMethod.getParameterList().getParameters()));
         intentionActionsFactory.createAddCallableMemberActions(method).forEach(registrar::register);
       }
     }
