@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,6 +91,7 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(org.slf4j.Marker.class));  // slf4j
 
     cp.addAll(getJavac8RefScannerClasspath());
+    cp.addAll(getJavacRefIndexClasspath());
     //don't forget to update CommunityStandaloneJpsBuilder.layoutJps accordingly
 
     try {
@@ -217,6 +218,18 @@ public class ClasspathBootstrap {
     if (instrumentationUtil.isDirectory()) {
       //running from sources: load classes from .../out/production/javac-ref-scanner-8
       return Collections.singletonList(new File(instrumentationUtil.getParentFile(), "javac-ref-scanner-8").getAbsolutePath());
+    }
+    else {
+      return Collections.singletonList(instrumentationPath);
+    }
+  }
+
+  private static List<String> getJavacRefIndexClasspath() {
+    String instrumentationPath = getResourcePath(NotNullVerifyingInstrumenter.class);
+    File instrumentationUtil = new File(instrumentationPath);
+    if (instrumentationUtil.isDirectory()) {
+      //running from sources: load classes from .../out/production/index
+      return Collections.singletonList(new File(instrumentationUtil.getParentFile(), "javac-ref-index").getAbsolutePath());
     }
     else {
       return Collections.singletonList(instrumentationPath);
