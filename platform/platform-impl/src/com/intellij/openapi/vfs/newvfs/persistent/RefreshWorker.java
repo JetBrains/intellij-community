@@ -404,7 +404,7 @@ public class RefreshWorker {
     return false;
   }
 
-  private void scheduleAttributeChange(@NotNull VirtualFile file, @NotNull String property, Object current, Object upToDate) {
+  private void scheduleAttributeChange(@NotNull VirtualFile file, @VirtualFile.PropName @NotNull String property, Object current, Object upToDate) {
     if (LOG.isTraceEnabled()) LOG.trace("update '" + property + "' file=" + file);
     myEvents.add(new VFilePropertyChangeEvent(null, file, property, current, upToDate, true));
   }

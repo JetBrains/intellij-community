@@ -254,7 +254,7 @@ public class LocalFileSystemRefreshWorker {
     ourCancellingCondition = condition;
   }
 
-  static VFileEvent createAttributeChangeEvent(@NotNull VirtualFile file, @NotNull String property, Object current, Object upToDate) {
+  static VFileEvent createAttributeChangeEvent(@NotNull VirtualFile file, @NotNull @VirtualFile.PropName String property, Object current, Object upToDate) {
     if (LOG.isTraceEnabled()) LOG.trace("update '" + property + "' file=" + file);
     return new VFilePropertyChangeEvent(null, file, property, current, upToDate, true);
   }

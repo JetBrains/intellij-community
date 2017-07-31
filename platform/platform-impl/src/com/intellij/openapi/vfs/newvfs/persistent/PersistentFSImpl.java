@@ -33,7 +33,10 @@ import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.*;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.BitUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -50,14 +53,12 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-
+                                          
 /**
  * @author max
  */
 public class PersistentFSImpl extends PersistentFS implements ApplicationComponent, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.PersistentFS");
-
-  private final MessageBus myEventBus;
 
   private final Map<String, VirtualFileSystemEntry> myRoots = ContainerUtil.newConcurrentMap(10, 0.4f, JobSchedulerImpl.CORES_COUNT, FileUtil.PATH_HASHING_STRATEGY);
   private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myRootsById = ContainerUtil.createConcurrentIntObjectMap(10, 0.4f, JobSchedulerImpl.CORES_COUNT);
@@ -68,11 +69,12 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   private final AtomicBoolean myShutDown = new AtomicBoolean(false);
   private volatile int myStructureModificationCount;
+  private final BulkFileListener myPublisher;
 
   public PersistentFSImpl(@NotNull MessageBus bus) {
-    myEventBus = bus;
     ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown);
     LowMemoryWatcher.register(this::clearIdCache, this);
+    myPublisher = bus.syncPublisher(VirtualFileManager.VFS_CHANGES);
   }
 
   @Override
@@ -615,8 +617,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
         VFileContentChangeEvent event = new VFileContentChangeEvent(requestor, file, file.getModificationStamp(), modStamp, false);
         List<VFileContentChangeEvent> events = Collections.singletonList(event);
-        BulkFileListener publisher = myEventBus.syncPublisher(VirtualFileManager.VFS_CHANGES);
-        publisher.before(events);
+        myPublisher.before(events);
 
         NewVirtualFileSystem delegate = getDelegate(file);
         OutputStream ioFileStream = delegate.getOutputStream(file, requestor, modStamp, timeStamp);
@@ -636,7 +637,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
             ioFileStream.close();
 
             executeTouch(file, false, event.getModificationStamp());
-            publisher.after(events);
+            myPublisher.after(events);
           }
         }
       }
@@ -668,13 +669,12 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     // optimisation: skip all groupings
     if (event.isValid()) {
-      BulkFileListener publisher = myEventBus.syncPublisher(VirtualFileManager.VFS_CHANGES);
       List<VFileEvent> events = Collections.singletonList(event);
-      publisher.before(events);
+      myPublisher.before(events);
 
       applyEvent(event);
 
-      publisher.after(events);
+      myPublisher.after(events);
     }
   }
 
@@ -740,7 +740,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       });
     }
   }
-  
+
   // events[start..end) are all VFileDeleteEvent
   // group them by parent directory (can be null), filter out files which parent dir is to be deleted too, and return "applyDeletions()" runnable
   private void groupDeletions(@NotNull List<VFileEvent> events,
@@ -748,7 +748,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
                               int end,
                               @NotNull List<VFileEvent> outValidated,
                               @NotNull List<Runnable> outApplyEvents) {
-    List<Pair<VFileDeleteEvent, String>> deletionsWithPath = new ArrayList<>(end-start);
+    List<Pair<VFileDeleteEvent, String>> deletionsWithPath = new ArrayList<>(end - start);
 
     for (int i = start; i < end; i++) {
       VFileEvent event = events.get(i);
@@ -823,12 +823,11 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     List<VFileEvent> validated = groupAndValidate(events, applyEvents);
 
     if (!validated.isEmpty()) {
-      BulkFileListener publisher = myEventBus.syncPublisher(VirtualFileManager.VFS_CHANGES);
-      publisher.before(validated);
+      myPublisher.before(validated);
 
       applyEvents.forEach(Runnable::run);
 
-      publisher.after(validated);
+      myPublisher.after(validated);
     }
   }
 
@@ -1157,7 +1156,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   private void executeDelete(@NotNull VirtualFile file) {
     if (!file.exists()) {
-      LOG.error("Deleting a file, which does not exist: " + file.getPath());
+      LOG.error("Deleting a file which does not exist: " +((VirtualFileWithId)file).getId()+ " "+file.getPath());
       return;
     }
     clearIdCache();
