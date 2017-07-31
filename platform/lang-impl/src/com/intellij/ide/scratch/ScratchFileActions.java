@@ -80,7 +80,7 @@ public class ScratchFileActions {
       String place = e.getPlace();
       boolean enabled = e.getProject() != null
                         && Registry.is("ide.scratch.enabled")
-                        && (ActionPlaces.isMainMenuOrActionSearch(place) || ActionPlaces.isPopupPlace(place));
+                        && (ActionPlaces.isToolbarPlace(e.getPlace()) || ActionPlaces.isMainMenuOrActionSearch(place));
       Presentation presentation = e.getPresentation();
       presentation.setEnabledAndVisible(enabled);
 
