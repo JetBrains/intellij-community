@@ -552,7 +552,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
                                                   int index, boolean isSelected, boolean cellHasFocus) {
       boolean showIcon = UISettings.getInstance().getShowIconsInMenus();
       JPanel panel = new JPanel(new BorderLayout());
-      panel.setBorder(IdeBorderFactory.createEmptyBorder(2));
+      panel.setBorder(JBUI.Borders.empty(2));
       panel.setOpaque(true);
       Color bg = UIUtil.getListBackground(isSelected);
       panel.setBackground(bg);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.textCompletion.TextCompletionProvider;
 import com.intellij.util.textCompletion.TextFieldWithCompletion;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,7 +34,7 @@ public abstract class TextFieldWithProgress extends JPanel {
   public TextFieldWithProgress(@NotNull Project project,
                                @NotNull TextCompletionProvider completionProvider) {
     super(new BorderLayout());
-    setBorder(IdeBorderFactory.createEmptyBorder(3));
+    setBorder(JBUI.Borders.empty(3));
 
     myProgressIcon = new AsyncProcessIcon("Loading commits");
     myTextField = new TextFieldWithCompletion(project, completionProvider, "", true, true, false) {
