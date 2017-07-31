@@ -17,7 +17,12 @@ package com.intellij.jarRepository;
 
 import com.google.common.base.Predicate;
 import com.intellij.ProjectTopics;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAware;
@@ -30,10 +35,11 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
@@ -42,6 +48,7 @@ import org.jetbrains.idea.maven.utils.library.RepositoryUtils;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -59,17 +66,8 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
       return true;
     }
     for (OrderRootType orderRootType : OrderRootType.getAllTypes()) {
-      final VirtualFile[] files = library.getFiles(orderRootType);
-      final String[] urls = library.getUrls(orderRootType);
-      if (files.length != urls.length) {
+      if (library.getFiles(orderRootType).length != library.getUrls(orderRootType).length) {
         return true;
-      }
-      if (files.length > 1) {
-        // check for possible duplicate roots
-        final Set<VirtualFile> uniqueFiles = new HashSet<>(Arrays.asList(files));
-        if (uniqueFiles.size() != urls.length) {
-          return true;
-        }
       }
     }
     return false;
@@ -93,6 +91,52 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
       }
     });
     return result;
+  }
+
+  private static void removeDuplicatedUrls(@NotNull Project project) {
+    Collection<Library> libraries = collectLibraries(project, library ->
+      library instanceof LibraryEx && ((LibraryEx)library).getProperties() instanceof RepositoryLibraryProperties && hasDuplicatedRoots(library)
+    );
+
+    if (!libraries.isEmpty()) {
+      WriteAction.run(() -> {
+        for (Library library : libraries) {
+          Library.ModifiableModel model = library.getModifiableModel();
+          for (OrderRootType type : OrderRootType.getAllTypes()) {
+            String[] urls = model.getUrls(type);
+            Set<String> uniqueUrls = new LinkedHashSet<>(Arrays.asList(urls));
+            if (uniqueUrls.size() != urls.length) {
+              for (String url : urls) {
+                model.removeRoot(url, type);
+              }
+              for (String url : uniqueUrls) {
+                model.addRoot(url, type);
+              }
+            }
+          }
+          model.commit();
+        }
+      });
+      String libraryText = libraries.size() == 1
+                           ? "'" + LibraryUtil.getPresentableName(libraries.iterator().next()) + "' library"
+                           : libraries.size() + " libraries";
+      Notifications.Bus.notify(new Notification(
+        "Repository", "Repository libraries cleanup", "Duplicated URLs were removed from " + libraryText + ". " +
+                                                      "These duplicated URLs were produced due to a bug in a previous " +
+                                                      ApplicationNamesInfo.getInstance().getFullProductName() + " version and might cause performance issues.",
+        NotificationType.INFORMATION
+      ), project);
+    }
+  }
+
+  private static boolean hasDuplicatedRoots(Library library) {
+    for (OrderRootType type : OrderRootType.getAllTypes()) {
+      String[] urls = library.getUrls(type);
+      if (urls.length != ContainerUtil.set(urls).size()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
@@ -122,6 +166,7 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
       }
     });
 
+    StartupManager.getInstance(project).registerPostStartupActivity((DumbAwareRunnable)() -> removeDuplicatedUrls(project));
     StartupManager.getInstance(project).registerPostStartupActivity(syncTask);
   }
 }
