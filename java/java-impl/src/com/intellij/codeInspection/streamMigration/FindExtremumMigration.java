@@ -254,19 +254,22 @@ class FindExtremumMigration extends BaseStreamApiMigration {
     private final @NotNull PsiExpression myExtremumKeyInitializer;
     private final @NotNull PsiExpression myExtremumKeyExpr;
     private final @NotNull TerminalBlock myTerminalBlock;
+    private final @Nullable PsiVariable myComparator;
 
     private ComplexExtremumTerminal(boolean max,
                                     @NotNull PsiVariable extremum,
                                     @NotNull PsiVariable extremumKey,
                                     @NotNull PsiExpression extremumKeyInitializer,
                                     @NotNull PsiExpression extremumKeyExpr,
-                                    @NotNull TerminalBlock block) {
+                                    @NotNull TerminalBlock block,
+                                    @Nullable PsiVariable comparator) {
       myMax = max;
       myExtremum = extremum;
       myExtremumKey = extremumKey;
       myExtremumKeyInitializer = extremumKeyInitializer;
       myExtremumKeyExpr = extremumKeyExpr;
       myTerminalBlock = block;
+      myComparator = comparator;
     }
 
 
@@ -290,7 +293,14 @@ class FindExtremumMigration extends BaseStreamApiMigration {
         myTerminalBlock.add(new StreamApiMigrationInspection.FilterOp(condition, myTerminalBlock.getVariable(), false));
 
       String lambdaText = LambdaUtil.createLambda(myTerminalBlock.getVariable(), myExtremumKeyExpr);
-      String comparator = CommonClassNames.JAVA_UTIL_COMPARATOR + "." + method + "(" + lambdaText + ")";
+      String comparator;
+      if(myComparator == null) {
+        comparator = CommonClassNames.JAVA_UTIL_COMPARATOR + "." + method + "(" + lambdaText + ")";
+      } else {
+        String comparatorName = myComparator.getName();
+        if(comparatorName == null) return null;
+        comparator = comparatorName;
+      }
       String stream = blockWithFilter.generate() + "." + getOperation(myMax) + "(" + comparator + ").orElse(null)";
       return replaceWithFindExtremum(myTerminalBlock.getMainLoop(), myExtremum, stream, myExtremumKey);
     }
@@ -340,8 +350,8 @@ class FindExtremumMigration extends BaseStreamApiMigration {
       if (extremumInitializer == null || extremumKeyInitializer == null) return null;
       if (!ExpressionUtils.isNullLiteral(extremumInitializer)) return null;
       if (!ExpressionUtils.isEvaluatedAtCompileTime(extremumKeyInitializer)) return null;
-      return new ComplexExtremumTerminal(comparison.isMax(), extremum, extremumKey, extremumKeyInitializer, loopVarExpr, terminalBlock
-      );
+      return new ComplexExtremumTerminal(comparison.isMax(), extremum, extremumKey, extremumKeyInitializer, loopVarExpr, terminalBlock,
+                                         comparison.getComparator());
     }
 
     private static class ComplexAssignment {
