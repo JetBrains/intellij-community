@@ -18,6 +18,7 @@ package com.intellij.testFramework;
 import com.intellij.lang.TokenWrapper;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
@@ -111,6 +112,19 @@ public abstract class LexerTestCase extends UsefulTestCase {
     while ((tokenType = lexer.getTokenType()) != null) {
       result.append(printSingleToken(text, tokenType, lexer.getTokenStart(), lexer.getTokenEnd()));
       lexer.advance();
+    }
+    return result.toString();
+  }
+
+  @NotNull
+  public static String printTokens(@NotNull HighlighterIterator iterator) {
+    CharSequence text = iterator.getDocument().getCharsSequence();
+    StringBuilder result = new StringBuilder();
+    IElementType tokenType;
+    while (!iterator.atEnd()) {
+      tokenType = iterator.getTokenType();
+      result.append(printSingleToken(text, tokenType, iterator.getStart(), iterator.getEnd()));
+      iterator.advance();
     }
     return result.toString();
   }
