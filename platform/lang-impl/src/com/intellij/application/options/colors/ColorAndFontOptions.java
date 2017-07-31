@@ -1254,7 +1254,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   @Nullable
   public SearchableConfigurable findSubConfigurable(@NotNull Class pageClass) {
     if (mySubPanelFactories == null) {
-      buildConfigurables();
+      getConfigurables();
     }
     for (Map.Entry<ColorAndFontPanelFactory, InnerSearchableConfigurable> entry : mySubPanelFactories.entrySet()) {
       if (pageClass.isInstance(entry.getValue().createPanel().getSettingsPage())) {
