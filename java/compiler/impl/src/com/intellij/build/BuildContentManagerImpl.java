@@ -127,6 +127,10 @@ public class BuildContentManagerImpl implements BuildContentManager {
       else {
         setIdLabelHidden(true);
       }
+
+      if (contentManager.getContentCount() == 1) {
+        myToolWindow.show(null);
+      }
     });
   }
 
