@@ -109,27 +109,23 @@ public class BuildContentManagerImpl implements BuildContentManager {
         contentManager.addContent(content);
       }
 
-      Content firstContent = contentManager.getContent(0);
-      if (firstContent == null || Build.equals(firstContent.getTabName())) {
-        if (contentManager.getContentCount() > 1) {
-          for (Content existingContent : existingContents) {
-            existingContent.setDisplayName(existingContent.getTabName());
-          }
-        }
-        setIdLabelHidden(true);
-        return;
+      for (Content existingContent : existingContents) {
+        existingContent.setDisplayName(existingContent.getTabName());
       }
-
-      if (contentManager.getContentCount() == 1) {
-        // we are going to adjust display name, so we need to ensure tab name is not retrieved based on display name
-        content.setTabName(content.getTabName());
-        content.setDisplayName(Build + ": " + content.getTabName());
+      Content firstContent = contentManager.getContent(0);
+      assert firstContent != null;
+      if (!Build.equals(firstContent.getTabName())) {
+        if (contentManager.getContentCount() > 1) {
+          setIdLabelHidden(false);
+        }
+        else {
+          // we are going to adjust display name, so we need to ensure tab name is not retrieved based on display name
+          content.setTabName(content.getTabName());
+          content.setDisplayName(Build + ": " + content.getTabName());
+        }
       }
       else {
-        for (Content existingContent : existingContents) {
-          existingContent.setDisplayName(existingContent.getTabName());
-        }
-        setIdLabelHidden(false);
+        setIdLabelHidden(true);
       }
     });
   }
