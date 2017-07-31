@@ -15,7 +15,6 @@
  */
 package git4idea.repo;
 
-import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -35,6 +34,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.dvcs.DvcsUtil.ensureAllChildrenInVfs;
+
 /**
  * Listens to .git service files changes and updates {@link GitRepository} when needed.
  */
@@ -43,8 +44,7 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
   @NotNull private final GitRepository myRepository;
   @NotNull private final GitRepositoryFiles myRepositoryFiles;
   @Nullable private final MessageBusConnection myMessageBusConnection;
-  @NotNull private final QueueProcessor<Object> myUpdateQueue;
-  @NotNull private final Object DUMMY_UPDATE_OBJECT = new Object();
+  @NotNull private final QueueProcessor<List<? extends VFileEvent> > myUpdateQueue;
   @Nullable private final VirtualFile myRemotesDir;
   @Nullable private final VirtualFile myHeadsDir;
   @Nullable private final VirtualFile myTagsDir;
@@ -62,7 +62,8 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
     myTagsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsTagsFile());
 
     Project project = repository.getProject();
-    myUpdateQueue = new QueueProcessor<>(new DvcsUtil.Updater(repository), project.getDisposed());
+    myUpdateQueue = new QueueProcessor<>(events -> processEvents(events), project.getDisposed());
+
     if (!project.isDisposed()) {
       myMessageBusConnection = project.getMessageBus().connect();
       myMessageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, this);
@@ -82,6 +83,10 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
 
   @Override
   public void after(@NotNull List<? extends VFileEvent> events) {
+    myUpdateQueue.add(events);
+  }
+
+  private void processEvents(@NotNull List<? extends VFileEvent> events) {
     // which files in .git were changed
     boolean configChanged = false;
     boolean headChanged = false;
@@ -99,11 +104,11 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
       } else if (myRepositoryFiles.isBranchFile(filePath)) {
         // it is also possible, that a local branch with complex name ("folder/branch") was created => the folder also to be watched.
           branchFileChanged = true;
-        DvcsUtil.ensureAllChildrenInVfs(myHeadsDir);
+        ensureAllChildrenInVfs(myHeadsDir);
       } else if (myRepositoryFiles.isRemoteBranchFile(filePath)) {
         // it is possible, that a branch from a new remote was fetch => we need to add new remote folder to the VFS
         branchFileChanged = true;
-        DvcsUtil.ensureAllChildrenInVfs(myRemotesDir);
+        ensureAllChildrenInVfs(myRemotesDir);
       } else if (myRepositoryFiles.isPackedRefs(filePath)) {
         packedRefsChanged = true;
       } else if (myRepositoryFiles.isRebaseFile(filePath)) {
@@ -111,13 +116,13 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
       } else if (myRepositoryFiles.isMergeFile(filePath)) {
         mergeFileChanged = true;
       } else if (myRepositoryFiles.isTagFile(filePath)) {
-        DvcsUtil.ensureAllChildrenInVfs(myTagsDir);
+        ensureAllChildrenInVfs(myTagsDir);
         tagChanged = true;
       }
     }
 
     if (headChanged || configChanged || branchFileChanged || packedRefsChanged || rebaseFileChanged || mergeFileChanged) {
-      myUpdateQueue.add(DUMMY_UPDATE_OBJECT);
+      myRepository.update();
     }
     else if (tagChanged) {
       myRepository.getProject().getMessageBus().syncPublisher(GitRepository.GIT_REPO_CHANGE).repositoryChanged(myRepository);
@@ -129,7 +134,7 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
       rootDir.getChildren();
     }
     for (String path : myRepositoryFiles.getDirsToWatch()) {
-      DvcsUtil.ensureAllChildrenInVfs(LocalFileSystem.getInstance().refreshAndFindFileByPath(path));
+      ensureAllChildrenInVfs(LocalFileSystem.getInstance().refreshAndFindFileByPath(path));
     }
   }
 }
