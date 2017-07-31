@@ -48,7 +48,7 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
   @Nullable private final VirtualFile myRemotesDir;
   @Nullable private final VirtualFile myHeadsDir;
   @Nullable private final VirtualFile myTagsDir;
-  @Nullable private final Set<LocalFileSystem.WatchRequest> myWatchRequests;
+  @NotNull private final Set<LocalFileSystem.WatchRequest> myWatchRequests;
 
   GitRepositoryUpdater(@NotNull GitRepository repository, @NotNull GitRepositoryFiles gitFiles) {
     myRepository = repository;
