@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,12 @@
  */
 package com.intellij.usages.impl;
 
-import com.intellij.find.FindBundle;
 import com.intellij.find.SearchInBackgroundOption;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -167,7 +165,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
       });
       return scope[0];
     }
-    return GlobalSearchScope.allScope(myProject); // by default do not warn of falling out of scope
+    return GlobalSearchScope.everythingScope(myProject); // by default do not warn of falling out of scope
   }
 
   @Override
