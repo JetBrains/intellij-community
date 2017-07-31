@@ -24,6 +24,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
@@ -54,4 +55,7 @@ public interface RunDashboardManager {
   boolean isShowConfigurations();
 
   void setShowConfigurations(boolean value);
+
+  @Nullable
+  RunDashboardAnimator getAnimator();
 }

@@ -240,6 +240,13 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     updateToolWindowContent();
   }
 
+  @Override
+  public RunDashboardAnimator getAnimator() {
+    if (myDashboardContent == null) return null;
+
+    return myDashboardContent.getAnimator();
+  }
+
   private void updateDashboardIfNeeded(@Nullable RunnerAndConfigurationSettings settings) {
     if (settings != null && RunDashboardContributor.getContributor(settings.getType()) != null) {
       updateDashboard(true);
