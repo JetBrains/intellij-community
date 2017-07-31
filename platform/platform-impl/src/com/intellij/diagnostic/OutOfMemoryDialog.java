@@ -21,12 +21,12 @@ import com.intellij.idea.Main;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.MemoryDumpHelper;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -64,12 +64,12 @@ public class OutOfMemoryDialog extends DialogWrapper {
 
     myIconLabel.setIcon(Messages.getErrorIcon());
     myMessageLabel.setText(DiagnosticBundle.message("diagnostic.out.of.memory.error", memoryKind.optionName));
-    myMessageLabel.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 10, 0));
+    myMessageLabel.setBorder(JBUI.Borders.empty(0, 0, 10, 0));
 
     File file = VMOptions.getWriteFile();
     if (file != null) {
       mySettingsFileHintLabel.setText(DiagnosticBundle.message("diagnostic.out.of.memory.willBeSavedTo", file.getPath()));
-      mySettingsFileHintLabel.setBorder(IdeBorderFactory.createEmptyBorder(10, 0, 0, 0));
+      mySettingsFileHintLabel.setBorder(JBUI.Borders.empty(10, 0, 0, 0));
     }
     else {
       mySettingsFileHintLabel.setVisible(false);

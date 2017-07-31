@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,11 @@ package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.framework.FrameworkOrGroup;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
-import com.intellij.ui.*;
+import com.intellij.ui.CheckboxTree;
+import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.TestOnly;
 
@@ -100,7 +104,7 @@ public class FrameworksTree extends CheckboxTree {
     private FrameworksTreeRenderer(FrameworkSupportModelBase model) {
       super(true, false);
       myModel = model;
-      Border border = IdeBorderFactory.createEmptyBorder(2, 2, 2, 2);
+      Border border = JBUI.Borders.empty(2);
       setBorder(border);
     }
 

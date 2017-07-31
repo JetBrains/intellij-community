@@ -48,11 +48,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.TextTransferable;
 import org.jetbrains.annotations.NotNull;
@@ -473,7 +473,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       comp.setVerticalTextPosition(SwingConstants.CENTER);
       comp.setAlignmentX(Component.RIGHT_ALIGNMENT);
       panel.add(comp, BorderLayout.WEST);
-      panel.setBorder(IdeBorderFactory.createEmptyBorder(0, 2, 0, 0));
+      panel.setBorder(JBUI.Borders.emptyLeft(2));
       return panel;
     }
   }

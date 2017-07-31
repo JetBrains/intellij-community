@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,11 @@ import com.intellij.openapi.options.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
@@ -149,7 +149,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
       JPanel panel = new JPanel(new BorderLayout());
       panel.add(wrappedConfigEditor.getComponent(), BorderLayout.CENTER);
       JComponent wrappedRunEditorComponent = wrappedRunEditor.getComponent();
-      wrappedRunEditorComponent.setBorder(IdeBorderFactory.createEmptyBorder(3, 0, 0, 0));
+      wrappedRunEditorComponent.setBorder(JBUI.Borders.emptyTop(3));
       panel.add(wrappedRunEditorComponent, BorderLayout.SOUTH);
       return panel;
     }

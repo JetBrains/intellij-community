@@ -47,6 +47,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.JBListTable;
 import com.intellij.util.ui.table.JBTableRowEditor;
@@ -337,7 +338,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     bottom.add(optionsPanel, BorderLayout.NORTH);
     bottom.add(createSignaturePanel(), BorderLayout.SOUTH);
     main.add(bottom, BorderLayout.SOUTH);
-    main.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 0, 0));
+    main.setBorder(JBUI.Borders.emptyTop(5));
     return main;
   }
 

@@ -51,6 +51,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -258,7 +259,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
         }
         orphanModulesList.setBorder(IdeBorderFactory.createEmptyBorder(8));
         content.add(orphanModulesList, ExternalSystemUiUtil.getFillLineConstraints(0));
-        content.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 8, 0));
+        content.setBorder(JBUI.Borders.empty(0, 0, 8, 0));
 
         DialogWrapper dialog = new DialogWrapper(project) {
           {

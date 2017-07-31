@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -175,7 +175,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
     GridBagConstraints constraints = new GridBag().anchor(GridBagConstraints.WEST).weightx(1)
       .insets(0, 0, 0, myCloseButton == null ? ArrangementConstants.BORDER_ARC_SIZE : 0);
     insetsPanel.add(myTextControl, constraints);
-    insetsPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, ArrangementConstants.HORIZONTAL_PADDING, 0, 0));
+    insetsPanel.setBorder(JBUI.Borders.emptyLeft(ArrangementConstants.HORIZONTAL_PADDING));
     insetsPanel.setOpaque(false);
 
     JPanel roundBorderPanel = new JPanel(new GridBagLayout()) {

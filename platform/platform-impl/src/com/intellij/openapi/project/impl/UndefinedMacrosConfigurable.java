@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.MultiLineLabelUI;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -59,7 +59,7 @@ public class UndefinedMacrosConfigurable implements Configurable{
 
     final JLabel textLabel = new JLabel(myText);
     textLabel.setUI(new MultiLineLabelUI());
-    textLabel.setBorder(IdeBorderFactory.createEmptyBorder(6, 6, 6, 6));
+    textLabel.setBorder(JBUI.Borders.empty(6, 6, 6, 6));
     mainPanel.add(textLabel, BorderLayout.NORTH);
 
     return mainPanel;

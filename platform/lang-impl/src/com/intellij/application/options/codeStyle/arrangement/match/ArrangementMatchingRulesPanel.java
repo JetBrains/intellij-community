@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementRuleAliasToken;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +77,7 @@ public class ArrangementMatchingRulesPanel extends JPanel implements DataProvide
     };
     myControl = createRulesControl(language, settingsManager, colorsProvider, callback);
     scrollPane.setViewportView(myControl);
-    scrollPane.setViewportBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, scrollPane.getVerticalScrollBar().getPreferredSize().width));
+    scrollPane.setViewportBorder(JBUI.Borders.emptyRight(scrollPane.getVerticalScrollBar().getPreferredSize().width));
     CustomizationUtil.installPopupHandler(
       myControl, ArrangementConstants.ACTION_GROUP_MATCHING_RULES_CONTEXT_MENU, ArrangementConstants.MATCHING_RULES_CONTROL_PLACE
     );

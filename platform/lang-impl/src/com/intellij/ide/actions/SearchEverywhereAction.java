@@ -701,7 +701,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     topPanel.add(controls, BorderLayout.EAST);
     panel.add(myPopupField, BorderLayout.CENTER);
     panel.add(topPanel, BorderLayout.NORTH);
-    panel.setBorder(IdeBorderFactory.createEmptyBorder(3, 5, 4, 5));
+    panel.setBorder(JBUI.Borders.empty(3, 5, 4, 5));
     DataManager.registerDataProvider(panel, this);
     final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, editor);
     myBalloon = builder

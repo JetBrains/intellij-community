@@ -29,17 +29,17 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.Magnificator;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.editor.ImageDocument;
+import org.intellij.images.editor.ImageDocument.ScaledImageProvider;
 import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageZoomModel;
-import org.intellij.images.editor.ImageDocument.ScaledImageProvider;
 import org.intellij.images.editor.actionSystem.ImageEditorActions;
 import org.intellij.images.options.*;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions;
@@ -176,7 +176,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     JPanel topPanel = new JPanel(new BorderLayout());
     topPanel.add(toolbarPanel, BorderLayout.WEST);
     infoLabel = new JLabel((String)null, SwingConstants.RIGHT);
-    infoLabel.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 2));
+    infoLabel.setBorder(JBUI.Borders.emptyRight(2));
     topPanel.add(infoLabel, BorderLayout.EAST);
 
     add(topPanel, BorderLayout.NORTH);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.vcs.changes.RefreshablePanel;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,7 +51,7 @@ public abstract class AbstractTitledSeparatorWithIcon extends JPanel {
             new GridBagConstraints(1, 0, GridBagConstraints.REMAINDER, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
                                    new Insets(3, 0, 0, 0), 0, 0);
     add(mySeparator, gb);
-    setBorder(IdeBorderFactory.createEmptyBorder(3, 0, 5, 5));
+    setBorder(JBUI.Borders.empty(3, 0, 5, 5));
     myLabel.setFont(UIUtil.getTitledBorderFont());
     myLabel.setForeground(UIUtil.getLabelForeground());
     originalText = text;
