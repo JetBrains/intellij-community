@@ -20,6 +20,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.ExporterToTextFile;
 import com.intellij.ide.IdeView;
+import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.favoritesTreeView.actions.*;
 import com.intellij.ide.projectView.PresentationData;
@@ -366,6 +367,9 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     }
     ArrayList<PsiElement> result = new ArrayList<>();
     for (Object element : elements) {
+      if (element instanceof Bookmark) {
+        element = ((Bookmark)element).getFile();
+      }
       if (element instanceof PsiElement) {
         result.add((PsiElement)element);
       }
