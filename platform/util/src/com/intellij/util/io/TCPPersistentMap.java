@@ -162,11 +162,15 @@ public class TCPPersistentMap<K, V> implements PersistentMap<K, V> {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       DataOutputStream dos = new DataOutputStream(baos);
       int len = in.readInt();
+      if (len == 0)
+        return null;
       dos.writeInt(len);
       dos.writeInt(in.readInt()); //hashcode
-      byte[] buf = new byte[len - 4];
-      in.readFully(buf);
-      dos.write(buf);
+      if (len > 4) {
+        byte[] buf = new byte[len - 4];
+        in.readFully(buf);
+        dos.write(buf);
+      }
       return baos.toByteArray();
     }
   }
@@ -225,6 +229,7 @@ public class TCPPersistentMap<K, V> implements PersistentMap<K, V> {
           } else {
             map.getKey(id, in, out);
           }
+          out.flush();
         }
         break;
         case PROCESS_KEYS: {
@@ -236,6 +241,7 @@ public class TCPPersistentMap<K, V> implements PersistentMap<K, V> {
           } else {
             map.enumerateAllKeys(id, out);
           }
+          out.flush();
         }
         break;
       }
@@ -253,7 +259,7 @@ public class TCPPersistentMap<K, V> implements PersistentMap<K, V> {
           @Override
           public void run() {
             try {
-              handleClient(new DataInputStream(s.getInputStream()), new DataOutputStream(s.getOutputStream()));
+              handleClient(new DataInputStream(s.getInputStream()), new DataOutputStream(new BufferedOutputStream(s.getOutputStream())));
             }
             catch (IOException e) {
               e.printStackTrace();
@@ -295,7 +301,7 @@ public class TCPPersistentMap<K, V> implements PersistentMap<K, V> {
         Socket localhost = new Socket("localhost", 9999);
         localhost.setTcpNoDelay(true);
         final DataInputStream in = new DataInputStream(localhost.getInputStream());
-        DataOutputStream out = new DataOutputStream(localhost.getOutputStream());
+        DataOutputStream out = new DataOutputStream(new BufferedOutputStream(localhost.getOutputStream()));
         final Connection c = new Connection(in, out);
         new Thread(new Runnable() {
           @Override
@@ -328,6 +334,7 @@ public class TCPPersistentMap<K, V> implements PersistentMap<K, V> {
       synchronized (writeLock) {
         out.writeInt(++writeCounter);
         writer.consume(out);
+        out.flush();
         return writeCounter;
       }
     }

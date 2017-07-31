@@ -25,6 +25,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 public class CheckSanityAction extends AnAction {
   @Override
   public void actionPerformed(final AnActionEvent e) {
-    FSRecords.checkSanity();
+    //FSRecords.checkSanity();
   }
 }

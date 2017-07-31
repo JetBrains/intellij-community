@@ -22,7 +22,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
@@ -88,7 +88,7 @@ public class TempFileSystem extends LocalFileSystemBase {
   public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException {
     final FSItem fsItem = convert(parent);
     if (fsItem == null) {
-      FSRecords.invalidateCaches();
+      PersistentFS.getInstance().invalidateCaches();
       throw new IllegalStateException("cannot find parent directory: " + parent.getPath());
     }
     assert fsItem.isDirectory() : "parent is not a directory: " + parent.getPath();
@@ -114,7 +114,7 @@ public class TempFileSystem extends LocalFileSystemBase {
   public void deleteFile(final Object requestor, @NotNull final VirtualFile file) throws IOException {
     final FSItem fsItem = convert(file);
     if (fsItem == null) {
-      FSRecords.invalidateCaches();
+      PersistentFS.getInstance().invalidateCaches();
       throw new IllegalStateException("failed to delete file " + file.getPath());
     }
     fsItem.getParent().removeChild(fsItem);

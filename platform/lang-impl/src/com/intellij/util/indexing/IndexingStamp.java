@@ -20,7 +20,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
@@ -130,7 +130,7 @@ public class IndexingStamp {
     try {
       DataInputOutputUtil.writeINT(os, version);
       DataInputOutputUtil.writeINT(os, VERSION);
-      DataInputOutputUtil.writeTIME(os, FSRecords.getCreationTimestamp());
+      DataInputOutputUtil.writeTIME(os, PersistentFS.getInstance().getCreationTimestamp());
       newIndexVersion.write(os);
       ourIndexIdToCreationStamp.put(indexId, newIndexVersion);
     }
@@ -172,7 +172,7 @@ public class IndexingStamp {
 
           if ((DataInputOutputUtil.readINT(in) == currentIndexVersion || currentIndexVersion == ANY_VERSION) &&
               DataInputOutputUtil.readINT(in) == VERSION &&
-              DataInputOutputUtil.readTIME(in) == FSRecords.getCreationTimestamp()) {
+              DataInputOutputUtil.readTIME(in) == PersistentFS.getInstance().getCreationTimestamp()) {
             version = new IndexVersion(in);
             ourIndexIdToCreationStamp.put(indexName, version);
             return version;
@@ -363,7 +363,7 @@ public class IndexingStamp {
     }
     Timestamps timestamps = myTimestampsCache.get(id);
     if (timestamps == null) {
-      final DataInputStream stream = FSRecords.readAttributeWithLock(id, Timestamps.PERSISTENCE);
+      final DataInputStream stream = PersistentFS.getInstance().readAttributeById(id, Timestamps.PERSISTENCE);
       try {
         timestamps = new Timestamps(stream);
       }
@@ -435,7 +435,7 @@ public class IndexingStamp {
             if (timestamp == null) continue;
 
             if (timestamp.isDirty() /*&& file.isValid()*/) {
-              final DataOutputStream sink = FSRecords.writeAttribute(file, Timestamps.PERSISTENCE);
+              final DataOutputStream sink = PersistentFS.getInstance().writeAttributeById(file, Timestamps.PERSISTENCE);
               timestamp.writeToStream(sink);
               sink.close();
             }

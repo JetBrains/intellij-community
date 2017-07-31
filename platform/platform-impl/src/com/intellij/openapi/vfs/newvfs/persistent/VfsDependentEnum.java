@@ -51,13 +51,18 @@ public class VfsDependentEnum<T> {
   private boolean myTriedToLoadFile;
 
   public VfsDependentEnum(String fileName, KeyDescriptor<T> descriptor, int version) {
-    myFile = new File(FSRecords.basePath(), DEPENDENT_PERSISTENT_LIST_START_PREFIX + fileName  + FSRecords.VFS_FILES_EXTENSION);
+    this(FSRecords.defaultBasePath(), fileName, descriptor, version);
+  }
+
+  public VfsDependentEnum(File base, String fileName, KeyDescriptor<T> descriptor, int version) {
+    myFile = new File(base, DEPENDENT_PERSISTENT_LIST_START_PREFIX + fileName + FSRecords.VFS_FILES_EXTENSION);
     myKeyDescriptor = descriptor;
     myVersion = version;
+
   }
 
   static File getBaseFile() {
-    return new File(FSRecords.basePath(), DEPENDENT_PERSISTENT_LIST_START_PREFIX);
+    return new File(FSRecords.defaultBasePath(), DEPENDENT_PERSISTENT_LIST_START_PREFIX);
   }
 
   public int getId(@NotNull T s) throws IOException {
@@ -92,7 +97,7 @@ public class VfsDependentEnum<T> {
 
     try {
       if (myFile.length() == 0) {
-        DataInputOutputUtil.writeTIME(output, FSRecords.getCreationTimestamp());
+        DataInputOutputUtil.writeTIME(output, PersistentFS.getInstance().getCreationTimestamp());
         DataInputOutputUtil.writeINT(output, myVersion);
       }
       myKeyDescriptor.save(output, instance);
@@ -110,7 +115,7 @@ public class VfsDependentEnum<T> {
       DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(myFile)));
       long vfsVersion = DataInputOutputUtil.readTIME(input);
 
-      if (vfsVersion != FSRecords.getCreationTimestamp()) {
+      if (vfsVersion != PersistentFS.getInstance().getCreationTimestamp()) {
         // vfs was rebuilt, so the list will be rebuit
         try { input.close(); } catch (IOException ignore) {}
         FileUtil.deleteWithRenaming(myFile);
@@ -155,7 +160,7 @@ public class VfsDependentEnum<T> {
 
   protected void doInvalidation(Throwable e) {
     FileUtil.deleteWithRenaming(myFile); // better alternatives ?
-    FSRecords.requestVfsRebuild(e);
+    ((PersistentFSImpl)(PersistentFS.getInstance())).requestVfsRebuild(e);
   }
 
   private void register(@NotNull T instance, int id) {

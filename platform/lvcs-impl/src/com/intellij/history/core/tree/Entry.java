@@ -52,13 +52,13 @@ public abstract class Entry {
   protected static int toNameId(String name) {
     if (name == null) return NULL_NAME_ID;
     if (name.isEmpty()) return EMPTY_NAME_ID;
-    return FileNameCache.storeName(name);
+    return FileNameCache.getInstance().storeName(name);
   }
 
   private static CharSequence fromNameId(int nameId) {
     if (nameId == NULL_NAME_ID) return null;
     if (nameId == EMPTY_NAME_ID) return "";
-    return FileNameCache.getVFileName(nameId);
+    return FileNameCache.getInstance().getVFileName(nameId);
   }
 
   public Entry(DataInput in) throws IOException {

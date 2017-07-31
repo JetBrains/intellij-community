@@ -25,7 +25,6 @@ import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 
 import java.util.*;
@@ -88,7 +87,7 @@ public class DumpVfsInfoForExcludedFilesAction extends DumbAwareAction {
         if (child.isDirectory()) {
           dirs.add(child);
         }
-        else if (FSRecords.getContentId(child.getId()) != 0) {
+        else if (persistentFS.getCurrentContentId(child) != 0) {
           contentInDb++;
         }
       }

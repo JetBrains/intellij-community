@@ -19,6 +19,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
+import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
@@ -27,6 +28,8 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -40,6 +43,8 @@ public abstract class PersistentFS extends ManagingFS {
   static final int IS_SYMLINK = 0x10;
   static final int IS_SPECIAL = 0x20;
   static final int IS_HIDDEN = 0x40;
+
+  public abstract void invalidateCaches();
 
   @MagicConstant(flags = {CHILDREN_CACHED_FLAG, IS_DIRECTORY_FLAG, IS_READ_ONLY, MUST_RELOAD_CONTENT, IS_SYMLINK, IS_SPECIAL, IS_HIDDEN})
   public @interface Attributes { }
@@ -95,6 +100,9 @@ public abstract class PersistentFS extends ManagingFS {
   public abstract int getCurrentContentId(@NotNull VirtualFile file);
 
   public abstract void processEvents(@NotNull List<VFileEvent> events);
+
+  public abstract DataInputStream readAttributeById(int fileId, FileAttribute attr);
+  public abstract DataOutputStream writeAttributeById(int fileId, FileAttribute attr);
 
   @NotNull
   public static NewVirtualFileSystem replaceWithNativeFS(@NotNull final NewVirtualFileSystem fs) {

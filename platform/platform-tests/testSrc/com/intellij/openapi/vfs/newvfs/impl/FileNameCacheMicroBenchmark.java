@@ -65,7 +65,7 @@ public class FileNameCacheMicroBenchmark {
       final int blackHole = threadRandom.nextInt();
 
       for (int j = 0; j < queryCount; j++) {
-        final CharSequence name = FileNameCache.getVFileName(ids[threadRandom.nextInt(ids.length)]);
+        final CharSequence name = FileNameCache.getInstance().getVFileName(ids[threadRandom.nextInt(ids.length)]);
 
         if (blackHole == name.hashCode() && blackHole+1 == name.hashCode()) {
           failure();
@@ -161,7 +161,7 @@ public class FileNameCacheMicroBenchmark {
     int result = 0;
 
     while (id > 0) {
-      result += FileNameCache.getVFileName(ids[id]).hashCode();
+      result += FileNameCache.getInstance().getVFileName(ids[id]).hashCode();
       id /= 10;
     }
     return result;
@@ -208,7 +208,7 @@ public class FileNameCacheMicroBenchmark {
 
   private static void checkNames(TIntObjectHashMap<CharSequence> map, int[] ids) {
     for (int id : ids) {
-      Assert.assertEquals(map.get(id), FileNameCache.getVFileName(id).toString());
+      Assert.assertEquals(map.get(id), FileNameCache.getInstance().getVFileName(id).toString());
     }
   }
 
@@ -218,7 +218,7 @@ public class FileNameCacheMicroBenchmark {
     TIntObjectHashMap<CharSequence> map = new TIntObjectHashMap<>();
     for (int i = 0; i < nameCount; i++) {
       String name = "some_name_" + random.nextInt() + StringUtil.repeat("a", random.nextInt(10));
-      int id = FileNameCache.storeName(name);
+      int id = FileNameCache.getInstance().storeName(name);
       map.put(id, name);
     }
     return map;

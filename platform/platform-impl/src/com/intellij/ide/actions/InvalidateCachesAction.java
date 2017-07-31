@@ -26,8 +26,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
-import com.intellij.util.Function;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -91,7 +90,7 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
     }
 
     UsageTrigger.trigger(ApplicationManagerEx.getApplicationEx().getName() + ".caches.invalidated");
-    FSRecords.invalidateCaches();
+    PersistentFS.getInstance().invalidateCaches();
 
     for (CachesInvalidator invalidater : CachesInvalidator.EP_NAME.getExtensions()) {
       invalidater.invalidateCaches();

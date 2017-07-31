@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ConcurrentBitSet;
@@ -42,6 +41,7 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import static com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry.ALL_FLAGS_MASK;
+import static com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry.ourPersistence;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
@@ -124,8 +124,8 @@ public class VfsData {
     }
     final int nameId = segment.getNameId(id);
     if (nameId <= 0) {
-      FSRecords.invalidateCaches();
-      throw new AssertionError("nameId=" + nameId + "; data=" + o + "; parent=" + parent + "; parent.id=" + parent.getId() + "; db.parent=" + FSRecords.getParent(id));
+      ourPersistence.invalidateCaches();
+      throw new AssertionError("nameId=" + nameId + "; data=" + o + "; parent=" + parent + "; parent.id=" + parent.getId() + ";");
     }
 
     return o instanceof DirectoryData ? new VirtualDirectoryImpl(id, segment, (DirectoryData)o, parent, parent.getFileSystem())
@@ -162,20 +162,20 @@ public class VfsData {
 
     Object existingData = segment.myObjectArray.get(offset);
     if (existingData != null) {
-      FSRecords.invalidateCaches();
-      int parent = FSRecords.getParent(id);
-      String msg = "File already created: " + nameId + ", data=" + existingData + "; parentId=" + parent;
-      if (parent > 0) {
-        msg += "; parent.name=" + FSRecords.getName(parent);
-        msg += "; parent.children=" + Arrays.toString(FSRecords.listAll(id));
-      }
+      ourPersistence.invalidateCaches();
+      //int parent = FSRecords.getParent(id);
+      String msg = "File already created: " + nameId + ", data=" + existingData;// + "; parentId=" + parent;
+//      if (parent > 0) {
+//        msg += "; parent.name=" + FSRecords.getName(parent);
+//        msg += "; parent.children=" + Arrays.toString(FSRecords.listAll(id));
+//      }
       throw new FileAlreadyCreatedException(msg);
     }
     segment.myObjectArray.set(offset, data);
   }
 
   static CharSequence getNameByFileId(int id) {
-    return FileNameCache.getVFileName(assertNotNull(getSegment(id, false)).getNameId(id));
+    return FileNameCache.getInstance().getVFileName(assertNotNull(getSegment(id, false)).getNameId(id));
   }
 
   static boolean isFileValid(int id) {

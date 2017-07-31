@@ -192,7 +192,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         myData.addAdoptedName(name, !ignoreCase);
         return null;
       }
-      child = createChild(FileNameCache.storeName(name), id, delegate);
+      child = createChild(FileNameCache.getInstance().storeName(name), id, delegate);
 
       int[] after = myData.myChildrenIds;
       if (after != array)  {
@@ -225,7 +225,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @NotNull
   public VirtualFileSystemEntry createChild(String name, int id, @NotNull NewVirtualFileSystem delegate) {
     synchronized (myData) {
-      return createChild(FileNameCache.storeName(name), id, delegate);
+      return createChild(FileNameCache.getInstance().storeName(name), id, delegate);
     }
   }
 
@@ -238,7 +238,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                        PersistentFS.isDirectory(attributes) ? new VfsData.DirectoryData() : KeyFMap.EMPTY_MAP);
     }
     catch (VfsData.FileAlreadyCreatedException e) {
-      throw new RuntimeException("dir=" + myId + "; dir.children=" + Arrays.toString(FSRecords.listAll(myId)), e);
+      throw new RuntimeException("dir=" + myId, e);
     }
     LOG.assertTrue(!(getFileSystem() instanceof Win32LocalFileSystem));
 

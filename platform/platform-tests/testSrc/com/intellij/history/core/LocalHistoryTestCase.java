@@ -25,6 +25,8 @@ import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.integration.TestVirtualFile;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.util.io.PagedFileStorage;
+import com.intellij.util.io.PersistentStringEnumerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -35,7 +37,7 @@ import java.util.List;
 
 public abstract class LocalHistoryTestCase extends Assert {
   {
-    FSRecords.connect();
+    //FSRecords.connect(new PagedFileStorage.StorageLockContext(false), new PersistentStringEnumerator(namesFile, storageLockContext));
   }
   private static long myCurrentId = 0;
 

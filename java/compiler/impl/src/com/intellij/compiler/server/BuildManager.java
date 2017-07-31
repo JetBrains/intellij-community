@@ -1786,7 +1786,7 @@ public class BuildManager implements Disposable {
       final StringTokenizer tokenizer = new StringTokenizer(path, "/", false);
       while(tokenizer.hasMoreTokens()) {
         final String element = tokenizer.nextToken();
-        list.add(FileNameCache.storeName(element));
+        list.add(FileNameCache.getInstance().storeName(element));
       }
       myPath = list.toArray();
     }
@@ -1823,7 +1823,7 @@ public class BuildManager implements Disposable {
     @Override
     public String getValue() {
       if (myPath.length == 1) {
-        final String name = FileNameCache.getVFileName(myPath[0]).toString();
+        final String name = FileNameCache.getInstance().getVFileName(myPath[0]).toString();
         // handle case of windows drive letter
         return name.length() == 2 && name.endsWith(":")? name + "/" : name;
       }
@@ -1833,7 +1833,7 @@ public class BuildManager implements Disposable {
         if (buf.length() > 0) {
           buf.append("/");
         }
-        buf.append(FileNameCache.getVFileName(element));
+        buf.append(FileNameCache.getInstance().getVFileName(element));
       }
       return buf.toString();
     }
@@ -1849,7 +1849,7 @@ public class BuildManager implements Disposable {
       if (myPath.length > 0) {
         final StringBuilder buf = new StringBuilder();
         for (int element : myPath) {
-          buf.append("/").append(FileNameCache.getVFileName(element));
+          buf.append("/").append(FileNameCache.getInstance().getVFileName(element));
         }
         return buf.toString();
       }

@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -44,11 +45,13 @@ import java.util.jar.JarFile;
 public class PersistentFsTest extends PlatformTestCase {
   private PersistentFS myFs;
   private LocalFileSystem myLocalFs;
+  private FSRecords myRecords;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
     myFs = PersistentFS.getInstance();
+    myRecords = ((PersistentFSImpl)myFs).getRecords();
     myLocalFs = LocalFileSystem.getInstance();
   }
 
@@ -207,8 +210,8 @@ public class PersistentFsTest extends PlatformTestCase {
     assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
     assertEquals(inSessionModCount + 1, managingFS.getModificationCount());
 
-    FSRecords.force();
-    assertFalse(FSRecords.isDirty());
+    myRecords.force();
+    assertFalse(myRecords.isDirty());
     ++globalModCount;
 
     int finalGlobalModCount = globalModCount;
@@ -245,8 +248,8 @@ public class PersistentFsTest extends PlatformTestCase {
     final int parentModCount = managingFS.getModificationCount(vFile.getParent());
     int inSessionModCount = managingFS.getModificationCount();
 
-    FSRecords.force();
-    assertFalse(FSRecords.isDirty());
+    myRecords.force();
+    assertFalse(myRecords.isDirty());
 
     FileAttribute attribute = new FileAttribute("test.attribute", 1, true);
     WriteAction.run(() -> {
@@ -260,19 +263,19 @@ public class PersistentFsTest extends PlatformTestCase {
     assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
     assertEquals(inSessionModCount + 1, managingFS.getModificationCount());
 
-    assertTrue(FSRecords.isDirty());
-    FSRecords.force();
-    assertFalse(FSRecords.isDirty());
+    assertTrue(myRecords.isDirty());
+    myRecords.force();
+    assertFalse(myRecords.isDirty());
 
     //
     int fileId = ((VirtualFileWithId)vFile).getId();
-    FSRecords.setTimestamp(fileId, FSRecords.getTimestamp(fileId));
-    FSRecords.setLength(fileId, FSRecords.getLength(fileId));
+    myRecords.setTimestamp(fileId, myRecords.getTimestamp(fileId));
+    myRecords.setLength(fileId, myRecords.getLength(fileId));
 
     assertEquals(globalModCount, managingFS.getModificationCount(vFile));
     assertEquals(globalModCount, managingFS.getFilesystemModificationCount());
     assertEquals(parentModCount, managingFS.getModificationCount(vFile.getParent()));
     assertEquals(inSessionModCount + 1, managingFS.getModificationCount());
-    assertFalse(FSRecords.isDirty());
+    assertFalse(myRecords.isDirty());
   }
 }

@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -280,7 +281,7 @@ public class JarHandler extends ZipHandler {
         catch (IOException ignore) { }
       }
 
-      if (currentVfsVersion != FSRecords.getCreationTimestamp()) {
+      if (currentVfsVersion != PersistentFS.getInstance().getCreationTimestamp()) {
         FileUtil.deleteWithRenaming(jarsDir);
         FileUtil.createDirectory(jarsDir);
         saveVersion(versionFile);
@@ -416,7 +417,7 @@ public class JarHandler extends ZipHandler {
     private static void saveVersion(File versionFile) {
       try (DataOutputStream versionOutputStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(versionFile)))) {
         DataInputOutputUtil.writeINT(versionOutputStream, VERSION);
-        DataInputOutputUtil.writeTIME(versionOutputStream, FSRecords.getCreationTimestamp());
+        DataInputOutputUtil.writeTIME(versionOutputStream, PersistentFS.getInstance().getCreationTimestamp());
       }
       catch (IOException ignore) { }
     }

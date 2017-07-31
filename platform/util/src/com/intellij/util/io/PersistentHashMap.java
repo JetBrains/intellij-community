@@ -569,7 +569,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
         return doGet(key);
       } finally {
         long elapsed = System.nanoTime() - start;
-        System.out.println("file: " + myStorageFile.getPath() + " key: " + key + " elapsed:" + elapsed);
+//        System.out.println("file: " + myStorageFile.getPath() + " key: " + key + " elapsed:" + elapsed);
         num.incrementAndGet();
         sumTime.addAndGet(elapsed);
         myBusyReading = false;

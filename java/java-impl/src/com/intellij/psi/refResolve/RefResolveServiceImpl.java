@@ -107,7 +107,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
       fileIsResolved = ConcurrentBitSet.readFrom(new File(getStorageDirectory(), "bitSet"));
       log("Read resolved file bitset: " + fileIsResolved);
 
-      int maxId = FSRecords.getMaxId();
+      int maxId = 0;//FSRecords.getMaxId();
       PersistentIntList list = new PersistentIntList(dataFile, dataFile.exists() ? 0 : maxId);
       if (list.getSize() == maxId) {
         storage = list;
@@ -367,7 +367,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
 
   private void queueUnresolvedFilesSinceLastRestart() {
     PersistentFS fs = PersistentFS.getInstance();
-    int maxId = FSRecords.getMaxId();
+    int maxId = 0;//FSRecords.getMaxId();
     TIntArrayList list = new TIntArrayList();
     for (int id= fileIsResolved.nextClearBit(1); id >= 0 && id < maxId; id = fileIsResolved.nextClearBit(id + 1)) {
       int nextSetBit = fileIsResolved.nextSetBit(id);

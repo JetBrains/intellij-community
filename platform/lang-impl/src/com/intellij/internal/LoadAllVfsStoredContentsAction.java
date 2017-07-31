@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -94,7 +95,7 @@ public class LoadAllVfsStoredContentsAction extends AnAction implements DumbAwar
       return true;
     }
     try {
-      DataInputStream stream = FSRecords.readContent(file.getId());
+      DataInputStream stream = ((PersistentFSImpl)PersistentFS.getInstance()).readContent(file);
       if (stream == null) return true;
       byte[] bytes = FileUtil.loadBytes(stream);
       totalSize.addAndGet(bytes.length);

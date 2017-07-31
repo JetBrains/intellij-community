@@ -28,7 +28,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.ThrowableRunnable;
@@ -555,7 +555,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       super.setIndexedStateForFile(fileId, file);
 
       try {
-        DataOutputStream stream = FSRecords.writeAttribute(fileId, VERSION_STAMP);
+        DataOutputStream stream = PersistentFS.getInstance().writeAttributeById(fileId, VERSION_STAMP);
         DataInputOutputUtil.writeINT(stream, myStubVersionMap.getIndexingTimestampDiffForFileType(file.getFileType()));
         stream.close();
       }
@@ -570,7 +570,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       if (!indexedStateForFile) return false;
 
       try {
-        DataInputStream stream = FSRecords.readAttributeWithLock(fileId, VERSION_STAMP);
+        DataInputStream stream = PersistentFS.getInstance().readAttributeById(fileId, VERSION_STAMP);
         int diff = stream != null ? DataInputOutputUtil.readINT(stream) : 0;
         if (diff == 0) return false;
         FileType fileType = myStubVersionMap.getFileTypeByIndexingTimestampDiff(diff);
