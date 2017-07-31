@@ -25,56 +25,26 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.NullableFunction;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.util.PointableCandidate;
 
-import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 class LineMarkerInfoHelper {
-  private static final String EXTENSION_TOOLTIP_PATTERN =
-    "<a href=\"#navigation/{0}:{1}\">{2}</a> extension declaration in <a href=\"#navigation/{3}:0\">{4}</a>";
-  private static final String EXTENSION_POINT_TOOLTIP_PATTERN =
-    "<a href=\"#navigation/{0}:{1}\">{2}</a> extension point declaration in <a href=\"#navigation/{3}:0\">{4}</a>";
-
   private static final NotNullFunction<PointableCandidate, Collection<? extends PsiElement>> CONVERTER =
     candidate -> Collections.singleton(candidate.pointer.getElement());
-
   private static final NotNullFunction<PointableCandidate, Collection<? extends GotoRelatedItem>> RELATED_ITEM_PROVIDER =
     candidate -> GotoRelatedItem.createItems(Collections.singleton(candidate.pointer.getElement()), "DevKit");
 
 
-  private LineMarkerInfoHelper() {
-  }
+  private static final NullableFunction<PointableCandidate, String> EXTENSION_NAMER =
+    createNamer("line.marker.tooltip.extension.declaration", XmlTag::getName);
 
-  public static RelatedItemLineMarkerInfo<PsiElement> createExtensionLineMarkerInfo(List<? extends PointableCandidate> targets,
-                                                                                 PsiElement element) {
-    return createPluginLineMarkerInfo(targets, element, "Choose Extension", createExtensionTooltip(targets));
-  }
-
-  public static RelatedItemLineMarkerInfo<PsiElement> createExtensionPointLineMarkerInfo(List<? extends PointableCandidate> targets,
-                                                                                    PsiElement element) {
-    return createPluginLineMarkerInfo(targets, element, "Choose Extension Point", createExtensionPointTooltip(targets));
-  }
-
-  private static RelatedItemLineMarkerInfo<PsiElement> createPluginLineMarkerInfo(List<? extends PointableCandidate> targets,
-                                                                                  PsiElement element, String popup, String tooltip) {
-    return NavigationGutterIconBuilder
-      .create(AllIcons.Nodes.Plugin, CONVERTER, RELATED_ITEM_PROVIDER)
-      .setTargets(targets)
-      .setPopupTitle(popup)
-      .setTooltipText(tooltip)
-      .setAlignment(GutterIconRenderer.Alignment.RIGHT)
-      .createLineMarkerInfo(element);
-  }
-
-  private static String createExtensionTooltip(List<? extends PointableCandidate> targets) {
-    return createPluginTooltip(targets, EXTENSION_TOOLTIP_PATTERN, XmlTag::getName);
-  }
-
-  private static String createExtensionPointTooltip(List<? extends PointableCandidate> targets) {
-    return createPluginTooltip(targets, EXTENSION_POINT_TOOLTIP_PATTERN, tag -> {
+  private static final NullableFunction<PointableCandidate, String> EXTENSION_POINT_NAMER =
+    createNamer("line.marker.tooltip.extension.point.declaration", tag -> {
       String name = tag.getAttributeValue("name");
       if (StringUtil.isEmpty(name)) {
         // shouldn't happen, just for additional safety
@@ -82,33 +52,48 @@ class LineMarkerInfoHelper {
       }
       return name;
     });
+
+
+  private LineMarkerInfoHelper() {
   }
 
-  private static String createPluginTooltip(List<? extends PointableCandidate> targets, String tooltipPattern,
-                                            NotNullFunction<XmlTag, String> nameProvider) {
-    StringBuilder result = new StringBuilder("<html><body>");
 
-    for (int i = 0; i < targets.size(); i++) {
-      PointableCandidate target = targets.get(i);
-      PsiElement element = target.pointer.getElement();
-      if (element == null) {
+  public static RelatedItemLineMarkerInfo<PsiElement> createExtensionLineMarkerInfo(List<? extends PointableCandidate> targets,
+                                                                                 PsiElement element) {
+    return createPluginLineMarkerInfo(targets, element, "Choose Extension", EXTENSION_NAMER);
+  }
+
+  public static RelatedItemLineMarkerInfo<PsiElement> createExtensionPointLineMarkerInfo(List<? extends PointableCandidate> targets,
+                                                                                    PsiElement element) {
+    return createPluginLineMarkerInfo(targets, element, "Choose Extension Point", EXTENSION_POINT_NAMER);
+  }
+
+  private static RelatedItemLineMarkerInfo<PsiElement> createPluginLineMarkerInfo(List<? extends PointableCandidate> targets,
+                                                                                  PsiElement element, String popup,
+                                                                                  NullableFunction<PointableCandidate, String> namer) {
+    return NavigationGutterIconBuilder
+      .create(AllIcons.Nodes.Plugin, CONVERTER, RELATED_ITEM_PROVIDER)
+      .setTargets(targets)
+      .setPopupTitle(popup)
+      .setNamer(namer)
+      .setAlignment(GutterIconRenderer.Alignment.RIGHT)
+      .createLineMarkerInfo(element);
+  }
+
+  private static NullableFunction<PointableCandidate, String> createNamer(String tooltipPatternPropertyName,
+                                                                          NotNullFunction<XmlTag, String> nameProvider) {
+    return target -> {
+      XmlTag tag = target.pointer.getElement();
+      if (tag == null) {
         // shouldn't happen
         throw new NullPointerException("Null element for pointable candidate: " + target);
       }
 
-      XmlTag tag = (XmlTag)element;
       PsiFile file = tag.getContainingFile();
       String path = file.getVirtualFile().getPath();
-      result.append(MessageFormat.format(tooltipPattern,
+      return DevKitBundle.message(tooltipPatternPropertyName,
                                          path, String.valueOf(tag.getTextRange().getStartOffset()), nameProvider.fun(tag),
-                                         path, file.getName()));
-
-      if (i < targets.size() - 1) {
-        result.append("<br/>");
-      }
-    }
-
-    result.append("</body></html>");
-    return result.toString();
+                                         path, file.getName());
+    };
   }
 }
