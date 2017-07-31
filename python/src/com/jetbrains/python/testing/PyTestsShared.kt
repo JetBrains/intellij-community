@@ -147,6 +147,14 @@ object PyTestsLocator : SMTestLocator {
       return listOf()
     }
     val matcher = PATH_URL.matcher(protocol)
+    if (! matcher.matches()) {
+      // special case: setup.py runner uses unittest configuration but different (old) protocol
+      // delegate to old protocol locator until setup.py moved to separate configuration
+      val oldLocation = PythonUnitTestTestIdUrlProvider.INSTANCE.getLocation(protocol, path, project, scope)
+      if (oldLocation.isNotEmpty()) {
+        return oldLocation
+      }
+    }
 
     val folder = if (matcher.matches()) {
       LocalFileSystem.getInstance().findFileByPath(matcher.group(1))
@@ -472,7 +480,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
   abstract fun isFrameworkInstalled(): Boolean
 
 
-  override fun isTestBased() = true
+  override fun isIdTestBased() = true
 
   private fun getPythonTestSpecByLocation(location: Location<*>): List<String> {
 
