@@ -19,6 +19,8 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
@@ -32,6 +34,8 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+
+import java.util.Arrays;
 
 /**
  * @author yole
@@ -52,16 +56,18 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
   public PsiClass addClass(@NotNull @NonNls final String classText) {
     assertInitialized();
 
-    String rootPath = null;
-    // Try to find a production source root of the module, to put the class in:
-    ModuleRootManager rootManager = ModuleRootManager.getInstance(getModule());
+    String rootPath = getTempDirPath();
+
+    // Make sure rootPath belongs to the module:
+    final ModuleRootManager rootManager = ModuleRootManager.getInstance(getModule());
     if (rootManager != null) {
-      VirtualFile sourceRoot = ArrayUtil.getFirstElement(rootManager.getSourceRoots(false));
-      rootPath = sourceRoot != null ? sourceRoot.getPath() : null;
-    }
-    if (rootPath == null) {
-      // Fall back to the temp dir, some tests rely on this directory being e.g. a test source root.
-      rootPath = getTempDirPath();
+      VirtualFile[] allSourceRoots = rootManager.getSourceRoots(true);
+      VirtualFile[] productionSourceRoots = rootManager.getSourceRoots(false);
+      VirtualFile rootVirtualFile = getTempDirFixture().getFile(""); // should be equivalent to rootPath.
+      if (!ArrayUtil.contains(rootVirtualFile, allSourceRoots) && !ArrayUtil.isEmpty(productionSourceRoots)) {
+        // The temp directory is not a source root, so there's little point adding the class there. Pick a production source root instead.
+        rootPath = productionSourceRoots[0].getPath();
+      }
     }
 
     final PsiClass psiClass = addClass(rootPath, classText);
