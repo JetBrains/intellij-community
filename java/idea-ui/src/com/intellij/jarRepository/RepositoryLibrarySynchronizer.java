@@ -32,6 +32,7 @@ import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +40,9 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * @author gregsh
@@ -56,8 +59,17 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
       return true;
     }
     for (OrderRootType orderRootType : OrderRootType.getAllTypes()) {
-      if (library.getFiles(orderRootType).length != library.getUrls(orderRootType).length) {
+      final VirtualFile[] files = library.getFiles(orderRootType);
+      final String[] urls = library.getUrls(orderRootType);
+      if (files.length != urls.length) {
         return true;
+      }
+      if (files.length > 1) {
+        // check for possible duplicate roots
+        final Set<VirtualFile> uniqueFiles = new HashSet<>(Arrays.asList(files));
+        if (uniqueFiles.size() != urls.length) {
+          return true;
+        }
       }
     }
     return false;
