@@ -502,7 +502,6 @@ public final class HttpRequests {
 
       if (connection instanceof HttpURLConnection) {
         HttpURLConnection httpURLConnection = (HttpURLConnection)connection;
-        httpURLConnection.setInstanceFollowRedirects(false);
 
         if (LOG.isDebugEnabled()) LOG.debug("connecting to " + url);
         int responseCode = httpURLConnection.getResponseCode();
