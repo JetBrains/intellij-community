@@ -502,4 +502,16 @@ public class EditorImplTest extends AbstractEditorTest {
     paste();
     checkResultByText("bar<caret>");
   }
+
+  public void testMoveTextNearInlayAtBrokenSurrogates() throws Exception {
+    initText(""); // Cannot set up text with singular surrogate characters directly
+    runWriteCommand(() -> myEditor.getDocument().setText(LOW_SURROGATE + HIGH_SURROGATE));
+    Inlay inlay = addInlay(2);
+    FoldRegion region = addCollapsedFoldRegion(1, 2, "...");
+    
+    runWriteCommand(() -> ((DocumentEx)myEditor.getDocument()).moveText(1, 2, 0));
+    
+    assertFalse(inlay.isValid() && inlay.getOffset() == 1);
+    assertFalse(region.isValid() && (region.getStartOffset() == 1 || region.getEndOffset() == 1));
+  }
 }

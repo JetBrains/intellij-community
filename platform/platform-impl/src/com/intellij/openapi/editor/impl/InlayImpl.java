@@ -78,7 +78,13 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
   @Override
   protected void onReTarget(int startOffset, int endOffset, int destOffset) {
     if (DocumentUtil.isInsideSurrogatePair(getDocument(), getOffset())) {
-      invalidate("moved inside surrogate pair on retarget");
+      myEditor.getInlayModel().myMoveInProgress = true;
+      try {
+        invalidate("moved inside surrogate pair on retarget");
+      }
+      finally {
+        myEditor.getInlayModel().myMoveInProgress = false;
+      }
     }
   }
 
