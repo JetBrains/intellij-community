@@ -28,6 +28,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -54,6 +55,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -78,6 +80,9 @@ public final class ToolWindowImpl implements ToolWindowEx {
   private boolean myHideOnEmptyContent;
   private boolean myPlaceholderMode;
   private ToolWindowFactory myContentFactory;
+
+  @Nullable
+  private VirtualFile mySelectedFile;
 
   private static final Set<KeyStroke> FORWARD_TRAVERSAL_KEYSTROKES = new HashSet<>(Arrays.asList(
     new KeyStroke[]{
@@ -208,6 +213,17 @@ public final class ToolWindowImpl implements ToolWindowEx {
       }
       UiActivityMonitor.getInstance().removeActivity(myToolWindowManager.getProject(), activity);
     }));
+  }
+
+  @Override
+  public void activate(@Nullable Runnable runnable, @Nullable VirtualFile selectedFile) {
+    this.mySelectedFile = selectedFile;
+    activate(runnable);
+  }
+
+  @Override
+  public Optional<VirtualFile> getSelectedFile() {
+    return Optional.ofNullable(mySelectedFile);
   }
 
   @Override

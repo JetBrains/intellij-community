@@ -7,7 +7,10 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,6 +19,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -28,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -81,8 +86,13 @@ public abstract class AbstractTerminalRunner<T extends Process> {
       openSessionInDirectory(widget.getFirst(), widget.getSecond());
       return true;
     }, parent);
-    openSessionInDirectory(terminalWidget, null);
+    final ToolWindow window = getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
+    openSessionForFile(terminalWidget, window.getSelectedFile().orElse(null));
     return terminalWidget;
+  }
+
+  private ToolWindow getToolWindow(String windowId) {
+    return ToolWindowManager.getInstance(myProject).getToolWindow(windowId);
   }
 
   private void initConsoleUI(final T process) {
@@ -127,9 +137,9 @@ public abstract class AbstractTerminalRunner<T extends Process> {
 
   public static void createAndStartSession(@NotNull TerminalWidget terminal, @NotNull TtyConnector ttyConnector) {
     TerminalSession session = terminal.createTerminalSession(ttyConnector);
-    
+
     TerminalView.recordUsage(ttyConnector);
-    
+
     session.start();
   }
 
@@ -146,8 +156,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     ExecutionManager.getInstance(myProject).getContentManager().showRunContent(defaultExecutor, myDescriptor);
 
     // Request focus
-    final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(defaultExecutor.getId());
-    window.activate(() -> IdeFocusManager.getInstance(myProject).requestFocus(toFocus, true));
+    getToolWindow(defaultExecutor.getId()).activate(() -> IdeFocusManager.getInstance(myProject).requestFocus(toFocus, true));
   }
 
   @NotNull
@@ -157,8 +166,25 @@ public abstract class AbstractTerminalRunner<T extends Process> {
 
   public abstract String runningTargetName();
 
+  public void openSessionForFile(@NotNull TerminalWidget terminalWidget, @Nullable VirtualFile file) {
+    openSessionInDirectory(terminalWidget, Optional.ofNullable(file).map(this::getClosestParentFolderPath).orElse(null));
+  }
 
-  public void openSessionInDirectory(@NotNull TerminalWidget terminalWidget, @Nullable String directory) {
+  @Nullable
+  private String getClosestParentFolderPath(@Nullable VirtualFile selectedFile) {
+    if (selectedFile != null) {
+      if (selectedFile.isDirectory()) {
+        return selectedFile.getPath();
+      }
+      VirtualFile parent = selectedFile.getParent();
+      if (parent != null) {
+        return parent.getPath();
+      }
+    }
+    return null;
+  }
+
+  private void openSessionInDirectory(@NotNull TerminalWidget terminalWidget, @Nullable String directory) {
     ModalityState modalityState = ModalityState.stateForComponent(terminalWidget.getComponent());
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {

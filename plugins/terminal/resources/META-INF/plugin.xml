@@ -9,4 +9,18 @@
   <resource-bundle>messages.TerminalBundle</resource-bundle>
   <xi:include href="/META-INF/terminal.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
+  <actions>
+    <action id="Terminal.OpenInTerminal" class="org.jetbrains.plugins.terminal.action.RevealFileInTerminalAction"
+            text="Open in terminal"
+            description="Open current file location in terminal"
+            icon="TerminalIcons.OpenTerminal_13x13">
+      <add-to-group group-id="EditorPopupMenu"/>
+      <add-to-group group-id="ProjectViewPopupMenu"/>
+      <add-to-group group-id="EditorTabPopupMenu"/>
+      <add-to-group group-id="ConsoleEditorPopupMenu"/>
+      <add-to-group group-id="FavoritesViewPopupMenu"/>
+      <add-to-group group-id="NavbarPopupMenu"/>
+    </action>
+  </actions>
+
 </idea-plugin>
