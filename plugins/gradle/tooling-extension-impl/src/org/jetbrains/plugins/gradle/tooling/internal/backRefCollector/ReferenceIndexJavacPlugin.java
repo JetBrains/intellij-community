@@ -34,7 +34,6 @@ import java.io.IOException;
 import java.nio.channels.FileLock;
 import java.util.ArrayDeque;
 import java.util.Queue;
-import java.util.function.Supplier;
 
 public class ReferenceIndexJavacPlugin implements Plugin {
   public static final String PLUGIN_NAME = "ReferenceIndexJavacPlugin";
@@ -53,15 +52,7 @@ public class ReferenceIndexJavacPlugin implements Plugin {
 
     JavacFileDataStream stream;
     try {
-      stream = new JavacFileDataStream(() -> {
-        return new JavacReferenceIndexWriter(new CompilerBackwardReferenceIndex(dir, false) {
-          @NotNull
-          @Override
-          protected RuntimeException createBuildDataCorruptedException(IOException cause) {
-            return new RuntimeException(cause);
-          }
-        });
-      }, dir);
+      stream = new JavacFileDataStream(dir);
     }
     catch (FileNotFoundException e) {
       throw new RuntimeException(e);
@@ -111,18 +102,17 @@ public class ReferenceIndexJavacPlugin implements Plugin {
 
   private static class JavacFileDataStream {
     private final Queue<JavacFileData> myQueue = new ArrayDeque<>();
-    private final Supplier<JavacReferenceIndexWriter> myWriter;
     private final ReferenceIndexFileLock myFileLock;
+    private final File myDir;
 
-    private JavacFileDataStream(Supplier<JavacReferenceIndexWriter> writer,
-                                File indexDir) throws FileNotFoundException {
-      myWriter = writer;
-      myFileLock = new ReferenceIndexFileLock(indexDir);
+    private JavacFileDataStream(File indexDir) throws FileNotFoundException {
+      myDir = indexDir;
+      myFileLock = new ReferenceIndexFileLock(myDir);
     }
 
     public void add(JavacFileData data) {
       myQueue.add(data);
-      if (myQueue.size() > 100) {
+      if (myQueue.size() > 1000) {
         try {
           flush();
         }
@@ -135,7 +125,13 @@ public class ReferenceIndexJavacPlugin implements Plugin {
     private void flush() throws IOException {
       FileLock lock = myFileLock.lock();
       try {
-        JavacReferenceIndexWriter w = myWriter.get();
+        JavacReferenceIndexWriter w = new JavacReferenceIndexWriter(new CompilerBackwardReferenceIndex(myDir, false) {
+          @NotNull
+          @Override
+          protected RuntimeException createBuildDataCorruptedException(IOException cause) {
+            return new RuntimeException(cause);
+          }
+        });
         //TODO
         while (!myQueue.isEmpty()) {
           JavacFileData data = myQueue.poll();

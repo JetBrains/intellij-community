@@ -29,6 +29,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.PersistentHashMap;
 import gnu.trove.TObjectIntHashMap;
+import org.iq80.snappy.Snappy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.backwardRefs.LightRef;
@@ -63,6 +64,7 @@ public class ReferenceCollectorProjectResolverExtension extends AbstractProjectR
                                                  LightRef.class,
                                                  TObjectIntHashMap.class,
                                                  PersistentHashMap.class,
+                                                 Snappy.class,
                                                  Consumer.class);
         String initScript = FileUtil.loadTextAndClose(stream)
           .replaceAll(Pattern.quote("${EXTENSIONS_JARS_PATH}"), getToolingExtensionsJarPaths(requiredClasses, true))

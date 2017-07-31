@@ -37,7 +37,8 @@ public class ReferenceIndexFileLock {
   }
 
   public FileLock lock() throws IOException {
-    return myChannel.lock();
+    FileLock lock = myChannel.lock(0, Long.MAX_VALUE, true);
+    return lock;
   }
 
   public static void createLockFile(String dir) throws IOException {

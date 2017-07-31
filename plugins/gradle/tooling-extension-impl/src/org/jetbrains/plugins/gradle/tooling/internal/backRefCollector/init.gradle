@@ -42,20 +42,26 @@ class BackRefCollectorGradlePlugin implements Plugin<Gradle> {
       ReferenceIndexFileLock.deleteLockFile(INDEX_PATH)
     }
 
-    gradle.allprojects { project ->
-      Action<JavaCompile> javaCompilerPluginInstaller =
-        new Action<JavaCompile>() {
-          @Override
-          void execute(JavaCompile task) {
-            def args = task.options.compilerArgs
-            args.add("-processorpath")
-            args.add("${JAVAC_PLUGIN_PATH}")
-            args.add("-Xplugin:$ReferenceIndexJavacPlugin.PLUGIN_NAME index.path=$INDEX_PATH")
-          }
-        }
+    gradle.projectsLoaded{ g ->
+      g.allprojects { project ->
+        project.afterEvaluate { p ->
+          Action<JavaCompile> javaCompilerPluginInstaller =
+            new Action<JavaCompile>() {
+              @Override
+              void execute(JavaCompile task) {
+                def args = task.options.compilerArgs
+                args.add("-processorpath")
+                args.add("${JAVAC_PLUGIN_PATH}")
+                args.add("-Xplugin:$ReferenceIndexJavacPlugin.PLUGIN_NAME index.path=$INDEX_PATH")
+              }
+            }
 
-      def javaCompileTasks = project.getTasks().withType(JavaCompile.class)
-      javaCompileTasks.all(javaCompilerPluginInstaller)
+          def javaCompileTasks = project.getTasks().withType(JavaCompile.class)
+          javaCompileTasks.all(javaCompilerPluginInstaller)
+          javaCompileTasks.whenTaskAdded(javaCompilerPluginInstaller)
+        }
+      }
     }
+
   }
 }
