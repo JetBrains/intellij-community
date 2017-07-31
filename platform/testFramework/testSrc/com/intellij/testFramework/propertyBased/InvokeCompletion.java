@@ -37,6 +37,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.TestLookupElementPresentation;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import jetCheck.Generator;
@@ -153,20 +154,15 @@ public class InvokeCompletion extends ActionOnRange {
   private static void checkNoDuplicates(List<LookupElement> items) {
     Set<List<?>> presentations = new HashSet<>();
     for (LookupElement item : items) {
-      LookupElementPresentation p = new LookupElementPresentation() {
-        @Override
-        public boolean isReal() {
-          return true;
-        }
-      };
-      item.renderElement(p);
+      LookupElementPresentation p = TestLookupElementPresentation.renderReal(item);
       if (seemsTruncated(p.getItemText()) || seemsTruncated(p.getTailText()) || seemsTruncated(p.getTypeText())) {
         continue;
       }
 
-      List<Object> info = Arrays.asList(p.getItemText(), p.getItemTextForeground(), p.isItemTextBold(), p.isItemTextUnderlined(),
+      List<Object> info = Arrays.asList(TestLookupElementPresentation.unwrapIcon(p.getIcon()),
+                                        p.getItemText(), p.getItemTextForeground(), p.isItemTextBold(), p.isItemTextUnderlined(),
                                         p.getTailFragments(),
-                                        p.getTypeText(), p.getTypeIcon(), p.isTypeGrayed(),
+                                        p.getTypeText(), TestLookupElementPresentation.unwrapIcon(p.getTypeIcon()), p.isTypeGrayed(),
                                         p.isStrikeout());
       if (!presentations.add(info)) {
         TestCase.fail("Duplicate suggestions: " + p);
