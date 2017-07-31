@@ -317,7 +317,8 @@ public class ExpectedHighlightingData {
       final Matcher closingTagMatcher = Pattern.compile("</" + marker + ">").matcher(text);
       while (true) {
         if (!closingTagMatcher.find(pos)) {
-          LOG.error("Cannot find closing </" + marker + "> in position " + pos);
+          toContinueFrom = pos;
+          break;
         }
 
         final int nextTagStart = matcher.find(pos) ? matcher.start() : text.length();
