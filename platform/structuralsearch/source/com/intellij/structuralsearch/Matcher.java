@@ -201,15 +201,13 @@ public class Matcher {
           matchContext.setPattern(compiledPattern);
           out.put(configuration, matchContext);
         }
-        catch (UnsupportedPatternException | MalformedPatternException ignored) {}
+        catch (StructuralSearchException ignored) {}
       });
     }
   }
 
   /**
    * Finds the matches of given pattern starting from given tree element.
-   * @throws MalformedPatternException
-   * @throws UnsupportedPatternException
    */
   public void findMatches(MatchResultSink sink, MatchOptions options) throws MalformedPatternException, UnsupportedPatternException {
     CompiledPattern compiledPattern = prepareMatching(sink, options);

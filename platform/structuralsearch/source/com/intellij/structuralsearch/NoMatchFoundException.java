@@ -15,9 +15,12 @@
  */
 package com.intellij.structuralsearch;
 
-public class MalformedPatternException extends StructuralSearchException {
-  public MalformedPatternException() {}
-  public MalformedPatternException(String msg) {
-    super(msg);
+/**
+ * @author Bas Leijdekkers
+ */
+public class NoMatchFoundException extends StructuralSearchException {
+
+  public NoMatchFoundException(String message) {
+    super(message);
   }
 }
