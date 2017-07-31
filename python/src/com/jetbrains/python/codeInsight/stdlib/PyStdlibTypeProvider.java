@@ -117,7 +117,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(referenceTarget);
     if (referenceTarget instanceof PyElement && builtinCache.isBuiltin(referenceTarget) &&
         PyNames.BASESTRING.equals(((PyElement)referenceTarget).getName())) {
-      return builtinCache.getStrOrUnicodeType();
+      return builtinCache.getStrOrUnicodeType(true);
     }
     return null;
   }

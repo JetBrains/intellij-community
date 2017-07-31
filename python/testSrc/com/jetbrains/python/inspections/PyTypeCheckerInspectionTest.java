@@ -442,6 +442,11 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
 
+  // PY-16066
+  public void testBasestringMatchesType() {
+    doTest();
+  }
+
   // PY-23864
   public void testClassObjectAndMetaclassCompatibility() {
     doTest();
