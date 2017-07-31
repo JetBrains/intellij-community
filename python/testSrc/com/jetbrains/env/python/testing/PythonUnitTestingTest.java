@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
+import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.sdk.InvalidSdkException;
@@ -49,6 +50,21 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   @Override
   PyUnitTestProcessRunner createTestRunner(@NotNull final TestRunnerConfig config) {
     return new PyUnitTestProcessRunner(config.getScriptName(), config.getRerunFailedTests());
+  }
+
+  @Test
+  public void testSetupPyRunner() throws Exception {
+    // We need to make sure setup.py is called using different runner
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/failFast", "setup.py") {
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        Assert.assertThat("Wrong runner used", all, containsString(PythonHelper.SETUPPY.asParamString()));
+      }
+    });
   }
 
   @Test
