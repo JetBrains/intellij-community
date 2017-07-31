@@ -66,7 +66,7 @@ public class OperationReductionMigration extends BaseStreamApiMigration {
     PsiExpression initializer = var.getInitializer();
     String identity = initializer != null && myReductionOperation.getInitializerExpressionRestriction().test(initializer)
                ? initializer.getText()
-               : myReductionOperation.myIdentity;
+               : myReductionOperation.getIdentity();
     String stream = tb.add(new StreamApiMigrationInspection.MapOp(operand, tb.getVariable(), type)).generate()
                     + String.format(Locale.ENGLISH, ".reduce(%s, (%s, %s) -> %s %s %s)",
                                     identity, leftOperand, rightOperand, leftOperand,

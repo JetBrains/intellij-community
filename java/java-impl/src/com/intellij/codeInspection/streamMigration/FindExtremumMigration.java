@@ -91,7 +91,10 @@ class FindExtremumMigration extends BaseStreamApiMigration {
       if (block != null) {
         boolean negated = filterOp.isNegated();
         PsiExpression condition = filterOp.getExpression();
-        ExtremumTerminal simpleRefCase = extractRefCase(condition, statements, block, SimpleRefExtremumTerminal::extract,
+        ExtremumTerminal simpleRefCase = extractRefCase(condition, statements, block,
+                                                        (nullCheckExpr, comparisonExpr, statements1, terminalBlock1, nonFinalVars, isNegated) -> SimpleRefExtremumTerminal
+                                                          .extract(nullCheckExpr, comparisonExpr, statements1, terminalBlock1,
+                                                                   nonFinalVars),
                                                         nonFinalVariables, negated);
         if (simpleRefCase != null) return simpleRefCase;
         ExtremumTerminal primitiveCase = PrimitiveExtremumTerminal.extract(condition, statements, block, nonFinalVariables, negated);
@@ -151,7 +154,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
                                                     @Nullable List<PsiVariable> nonFinalVariables) {
     if (!ourEquivalence.statementsAreEquivalent(nullCheckBranch, comparisonBranch)) return null;
     return SimpleRefExtremumTerminal
-      .extract(nullCheckExpr, comparisonExpr, new PsiStatement[]{comparisonBranch}, terminalBlock, nonFinalVariables, false);
+      .extract(nullCheckExpr, comparisonExpr, new PsiStatement[]{comparisonBranch}, terminalBlock, nonFinalVariables);
   }
 
   @Nullable
@@ -342,10 +345,10 @@ class FindExtremumMigration extends BaseStreamApiMigration {
     }
 
     private static class ComplexAssignment {
-      private @NotNull PsiVariable myExtremum;
-      private @NotNull PsiVariable myExtremumKey;
-      private @NotNull PsiVariable myLoopVar; // extremum = loopVar;
-      private @NotNull PsiExpression myLoopVarExpression;
+      private @NotNull final PsiVariable myExtremum;
+      private @NotNull final PsiVariable myExtremumKey;
+      private @NotNull final PsiVariable myLoopVar; // extremum = loopVar;
+      private @NotNull final PsiExpression myLoopVarExpression;
 
       private ComplexAssignment(@NotNull PsiVariable extremum,
                                 @NotNull PsiVariable extremumKey,
@@ -557,13 +560,12 @@ class FindExtremumMigration extends BaseStreamApiMigration {
                                                      @NotNull PsiExpression comparisonExpr,
                                                      @NotNull PsiStatement[] statements,
                                                      @NotNull TerminalBlock terminalBlock,
-                                                     @Nullable List<PsiVariable> nonFinalVars,
-                                                     boolean isNegated) {
+                                                     @Nullable List<PsiVariable> nonFinalVars) {
       PsiBinaryExpression nullCheckBinary = tryCast(nullCheckExpr, PsiBinaryExpression.class);
       if (nullCheckBinary == null) return null;
       PsiVariable nullCheckingVar = ExpressionUtils.getVariableFromNullComparison(nullCheckBinary, true);
       if (nullCheckingVar == null) return null;
-      Comparison comparison = Comparison.extract(comparisonExpr, terminalBlock.getVariable(), isNegated);
+      Comparison comparison = Comparison.extract(comparisonExpr, terminalBlock.getVariable(), false);
       if (comparison == null) return null;
       if (statements.length != 1) return null;
       PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(statements[0]);
