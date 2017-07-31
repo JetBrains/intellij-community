@@ -18,6 +18,7 @@ package org.jetbrains.uast.java
 import com.intellij.psi.PsiCodeBlock
 import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiLambdaExpression
+import com.intellij.psi.PsiType
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.ULambdaExpression
 import org.jetbrains.uast.UastEmptyExpression
@@ -26,6 +27,9 @@ class JavaULambdaExpression(
         override val psi: PsiLambdaExpression,
         override val uastParent: UElement?
 ) : JavaAbstractUExpression(), ULambdaExpression {
+    override val functionalInterfaceType: PsiType?
+        get() = psi.functionalInterfaceType
+
     override val valueParameters by lz {
         psi.parameterList.parameters.map { JavaUParameter(it, this) }
     }
