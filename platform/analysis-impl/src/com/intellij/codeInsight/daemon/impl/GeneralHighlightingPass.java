@@ -444,14 +444,13 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private static void cancelAndRestartDaemonLater(@NotNull ProgressIndicator progress,
                                                   @NotNull final Project project) throws ProcessCanceledException {
     progress.cancel();
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
-        Application application = ApplicationManager.getApplication();
-        if (!project.isDisposed() && !application.isDisposed() && !application.isUnitTestMode()) {
-          DaemonCodeAnalyzer.getInstance(project).restart();
-        }
-      }, RESTART_DAEMON_RANDOM.nextInt(100), TimeUnit.MILLISECONDS);
-    }
+    Application application = ApplicationManager.getApplication();
+    int delay = application.isUnitTestMode() ? 0 : RESTART_DAEMON_RANDOM.nextInt(100);
+    EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
+      if (!project.isDisposed()) {
+        DaemonCodeAnalyzer.getInstance(project).restart();
+      }
+    }, delay, TimeUnit.MILLISECONDS);
     throw new ProcessCanceledException();
   }
 
