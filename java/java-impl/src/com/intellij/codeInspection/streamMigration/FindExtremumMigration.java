@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -62,11 +63,8 @@ class FindExtremumMigration extends BaseStreamApiMigration {
     if (type.equals(PsiType.INT)) return "comparingInt";
     if (type.equals(PsiType.DOUBLE)) return "comparingDouble";
     if (type.equals(PsiType.LONG)) return "comparingLong";
+    if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_COMPARABLE)) return "comparing";
     return null;
-  }
-
-  static private boolean hasKnownComparableType(@NotNull PsiType type) {
-    return type.equals(PsiType.INT) || type.equals(PsiType.LONG) || type.equals(PsiType.DOUBLE);
   }
 
   @Nullable
@@ -192,7 +190,9 @@ class FindExtremumMigration extends BaseStreamApiMigration {
     PsiExpression nakedExpression = skipParenthesizedExprDown(expression);
     PsiReferenceExpression referenceExpression = tryCast(nakedExpression, PsiReferenceExpression.class);
     if (referenceExpression == null) return null;
-    return tryCast(referenceExpression.resolve(), PsiVariable.class);
+    PsiLocalVariable localVariable = tryCast(referenceExpression.resolve(), PsiLocalVariable.class);
+    if (localVariable != null) return localVariable;
+    return tryCast(referenceExpression.resolve(), PsiParameter.class);
   }
 
   private static boolean equalShape(@NotNull PsiExpression first,
@@ -204,6 +204,18 @@ class FindExtremumMigration extends BaseStreamApiMigration {
       if (ref instanceof PsiReferenceExpression) ExpressionUtils.bindReferenceTo((PsiReferenceExpression)ref, firstExprVarName);
     }
     return ourEquivalence.expressionsAreEquivalent(first, secondCopy);
+  }
+
+  private static boolean hasKnownComparableType(@NotNull Comparison comparison, @Nullable PsiType type) {
+    if (!comparison.isExternalComparison()) {
+      if (type == null || !(type.equals(PsiType.INT) ||
+                            type.equals(PsiType.LONG) ||
+                            type.equals(PsiType.DOUBLE) ||
+                            InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_COMPARABLE))) {
+        return false;
+      }
+    }
+    return true;
   }
 
   interface ExtremumTerminal {
@@ -318,14 +330,15 @@ class FindExtremumMigration extends BaseStreamApiMigration {
         if (containsAnyVariable(assignment.getLoopVarExpression(), nonFinalVariables)) return null;
       }
       PsiType loopVarExprType = loopVarExpr.getType();
-      if (loopVarExprType == null || !hasKnownComparableType(loopVarExprType)) return null;
+      if (!hasKnownComparableType(comparison, loopVarExprType)) return null;
 
       PsiExpression extremumInitializer = extremum.getInitializer();
       PsiExpression extremumKeyInitializer = extremumKey.getInitializer();
       if (extremumInitializer == null || extremumKeyInitializer == null) return null;
       if (!ExpressionUtils.isNullLiteral(extremumInitializer)) return null;
       if (!ExpressionUtils.isEvaluatedAtCompileTime(extremumKeyInitializer)) return null;
-      return new ComplexExtremumTerminal(comparison.isMax(), extremum, extremumKey, extremumKeyInitializer, loopVarExpr, terminalBlock);
+      return new ComplexExtremumTerminal(comparison.isMax(), extremum, extremumKey, extremumKeyInitializer, loopVarExpr, terminalBlock
+      );
     }
 
     private static class ComplexAssignment {
@@ -369,7 +382,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
        * extremum = loopVar; // max = current;
        * extremumKey = loopVarExpr;  // maxAge = current.getAge();
        *
-       * @param statements statements that contains only complex assignment
+       * @param statements          statements that contains only complex assignment
        * @param nullCheckedExtremum extremum that will be used to recognize extremum assignment
        */
       @Nullable
@@ -386,16 +399,13 @@ class FindExtremumMigration extends BaseStreamApiMigration {
       private static ComplexAssignment extract(@NotNull PsiStatement first,
                                                @NotNull PsiStatement second,
                                                @NotNull PsiVariable nullCheckedExtremum) {
-        PsiAssignmentExpression firstAssignment = ExpressionUtils.getAssignment(first);
         PsiAssignmentExpression secondAssignment = ExpressionUtils.getAssignment(second);
-        if(firstAssignment == null || secondAssignment == null) return null;
-        PsiVariable extremum = resolveVariableReference(firstAssignment.getLExpression());
-        PsiVariable loopVar = resolveVariableReference(firstAssignment.getRExpression());
+        if (secondAssignment == null) return null;
+        PsiVariable loopVar = resolveVariableReference(ExpressionUtils.getAssignmentTo(first, nullCheckedExtremum));
         PsiVariable extremumKey = resolveVariableReference(secondAssignment.getLExpression());
         PsiExpression loopVarExpr = secondAssignment.getRExpression();
-        if (extremum == null || extremumKey == null || loopVar == null || loopVarExpr == null) return null;
-        if (!extremum.equals(nullCheckedExtremum)) return null;
-        return new ComplexAssignment(extremum, extremumKey, loopVar, loopVarExpr);
+        if (extremumKey == null || loopVar == null || loopVarExpr == null) return null;
+        return new ComplexAssignment(nullCheckedExtremum, extremumKey, loopVar, loopVarExpr);
       }
     }
   }
@@ -488,11 +498,12 @@ class FindExtremumMigration extends BaseStreamApiMigration {
         if (containsAnyVariable(comparisonLoopVarExpr, nonFinalVariables)) return null;
       }
       PsiType loopVarExprType = comparisonLoopVarExpr.getType();
-      if (loopVarExprType == null || !hasKnownComparableType(loopVarExprType)) return null;
+      if (!hasKnownComparableType(comparison, loopVarExprType)) return null;
 
       PsiExpression extremumInitializer = extremum.getInitializer();
       if (!ExpressionUtils.isEvaluatedAtCompileTime(extremumInitializer)) return null;
-      return new PrimitiveExtremumTerminal(comparison.isMax(), terminalBlock, comparisonLoopVarExpr, extremum, extremumInitializer);
+      return new PrimitiveExtremumTerminal(comparison.isMax(), terminalBlock, comparisonLoopVarExpr, extremum, extremumInitializer
+      );
     }
   }
 
@@ -501,15 +512,18 @@ class FindExtremumMigration extends BaseStreamApiMigration {
     private final @NotNull TerminalBlock myTerminalBlock;
     private final @NotNull PsiExpression myLoopVarExpression;
     private final @NotNull PsiVariable myExtremum;
+    private final @Nullable PsiVariable myComparator;
 
     private SimpleRefExtremumTerminal(boolean max,
                                       @NotNull TerminalBlock block,
                                       @NotNull PsiExpression loopVarExpression,
-                                      @NotNull PsiVariable extremum) {
+                                      @NotNull PsiVariable extremum,
+                                      @Nullable PsiVariable comparator) {
       myMax = max;
       myTerminalBlock = block;
       myLoopVarExpression = loopVarExpression;
       myExtremum = extremum;
+      myComparator = comparator;
     }
 
     @Nullable
@@ -517,12 +531,17 @@ class FindExtremumMigration extends BaseStreamApiMigration {
     public PsiElement replace() {
       PsiType loopVarExpressionType = myLoopVarExpression.getType();
       if (loopVarExpressionType == null) return null;
-      String method = getComparingMethod(loopVarExpressionType);
-      if (method == null) return null;
-      String name = myTerminalBlock.getVariable().getName();
-      if (name == null) return null;
-      String lambdaText = name + "->" + myLoopVarExpression.getText();
-      String comparator = CommonClassNames.JAVA_UTIL_COMPARATOR + "." + method + "(" + lambdaText + ")";
+      final String comparator;
+      if(myComparator == null) {
+        String method = getComparingMethod(loopVarExpressionType);
+        if (method == null) return null;
+        String lambdaText = LambdaUtil.createLambda(myTerminalBlock.getVariable(), myLoopVarExpression);
+        comparator = CommonClassNames.JAVA_UTIL_COMPARATOR + "." + method + "(" + lambdaText + ")";
+      } else {
+        String comparatorName = myComparator.getName();
+        if(comparatorName == null) return null;
+        comparator = comparatorName;
+      }
       String stream = myTerminalBlock.generate() + "." + getOperation(myMax) + "(" + comparator + ").orElse(null)";
       return replaceWithFindExtremum(myTerminalBlock.getMainLoop(), myExtremum, stream, null);
     }
@@ -567,13 +586,13 @@ class FindExtremumMigration extends BaseStreamApiMigration {
         if (containsAnyVariable(loopVarExpr, nonFinalVars)) return null;
       }
       PsiType loopVarExprType = loopVarExpr.getType();
-      if (loopVarExprType == null || !hasKnownComparableType(loopVarExprType)) return null;
+      if (!hasKnownComparableType(comparison, loopVarExprType)) return null;
 
       boolean max = comparison.isMax();
 
       PsiExpression initializer = extremum.getInitializer();
       if (!ExpressionUtils.isNullLiteral(initializer)) return null;
-      return new SimpleRefExtremumTerminal(max, terminalBlock, loopVarExpr, extremum);
+      return new SimpleRefExtremumTerminal(max, terminalBlock, loopVarExpr, extremum, comparison.getComparator());
     }
   }
 
@@ -581,11 +600,19 @@ class FindExtremumMigration extends BaseStreamApiMigration {
     private final @NotNull PsiExpression myExtremumExpr;
     private final @NotNull PsiExpression myLoopVarExpr;
     private final boolean myIsMax;
+    private final @Nullable PsiVariable myComparator;
+    private final boolean myExternalComparison;
 
-    private Comparison(@NotNull PsiExpression extremumExpr, @NotNull PsiExpression loopVarExpr, boolean max) {
+    private Comparison(@NotNull PsiExpression extremumExpr,
+                       @NotNull PsiExpression loopVarExpr,
+                       boolean max,
+                       @Nullable PsiVariable comparator,
+                       boolean externalComparison) {
       myExtremumExpr = extremumExpr;
       myLoopVarExpr = loopVarExpr;
       myIsMax = max;
+      myComparator = comparator;
+      myExternalComparison = externalComparison;
     }
 
     @NotNull
@@ -602,6 +629,15 @@ class FindExtremumMigration extends BaseStreamApiMigration {
       return myIsMax;
     }
 
+    @Nullable
+    public PsiVariable getComparator() {
+      return myComparator;
+    }
+
+    public boolean isExternalComparison() {
+      return myExternalComparison;
+    }
+
 
     @Nullable
     static Comparison extract(@NotNull PsiExpression expression, @NotNull PsiVariable loopVariable, boolean isNegated) {
@@ -612,19 +648,75 @@ class FindExtremumMigration extends BaseStreamApiMigration {
       if (rOperand == null) return null;
       PsiExpression lOperand = binaryExpression.getLOperand();
       if (sign.equals(JavaTokenType.LT) || sign.equals(JavaTokenType.LE)) {
-        return extract(lOperand, rOperand, loopVariable, isNegated);
+        Comparison extract = extractComparatorLikeComparison(lOperand, rOperand, loopVariable, isNegated);
+        if (extract != null) return extract;
+        return extract(lOperand, rOperand, loopVariable, isNegated, null, false);
       }
       else if (sign.equals(JavaTokenType.GT) || sign.equals(JavaTokenType.GE)) {
-        return extract(lOperand, rOperand, loopVariable, !isNegated);
+        Comparison extract = extractComparatorLikeComparison(lOperand, rOperand, loopVariable, !isNegated);
+        if (extract != null) return extract;
+        return extract(lOperand, rOperand, loopVariable, !isNegated, null, false);
       }
       return null;
     }
 
     @Nullable
+    private static Comparison extractComparatorLikeComparison(@NotNull PsiExpression expression,
+                                                              @NotNull PsiVariable loopVariable,
+                                                              boolean isGreater) {
+
+      PsiMethodCallExpression methodExpression = tryCast(expression, PsiMethodCallExpression.class);
+      if (methodExpression == null) return null;
+      PsiExpression qualifierExpression = methodExpression.getMethodExpression().getQualifierExpression();
+      if (qualifierExpression == null) return null;
+      PsiMethod method = methodExpression.resolveMethod();
+      if (method == null) return null;
+      String methodName = method.getName();
+      PsiType qualifierType = qualifierExpression.getType();
+      PsiExpressionList argumentList = methodExpression.getArgumentList();
+      PsiExpression[] arguments = argumentList.getExpressions();
+      if (arguments.length == 1) {
+        PsiExpression argument = arguments[0];
+
+        if (!methodName.equals("compareTo") || !InheritanceUtil.isInheritor(qualifierType, CommonClassNames.JAVA_LANG_COMPARABLE)) {
+          return null;
+        }
+        return extract(argument, qualifierExpression, loopVariable, isGreater, null, false);
+      }
+      else if (arguments.length == 2) {
+        PsiExpression firstArgument = arguments[0];
+        PsiExpression secondArgument = arguments[1];
+        if (!methodName.equals("compare") || !InheritanceUtil.isInheritor(qualifierType, CommonClassNames.JAVA_UTIL_COMPARATOR)) {
+          return null;
+        }
+        PsiVariable comparator = resolveVariableReference(qualifierExpression);
+        return extract(secondArgument, firstArgument, loopVariable, isGreater, comparator, true);
+      }
+      return null;
+    }
+
+    @Nullable
+    private static Comparison extractComparatorLikeComparison(@NotNull PsiExpression lOperand,
+                                                              @NotNull PsiExpression rOperand,
+                                                              @NotNull PsiVariable loopVariable,
+                                                              boolean isGreater) {
+      if (ExpressionUtils.isZero(lOperand)) {
+        return extractComparatorLikeComparison(rOperand, loopVariable, isGreater);
+      }
+      else if (ExpressionUtils.isZero(rOperand)) {
+        return extractComparatorLikeComparison(lOperand, loopVariable, !isGreater);
+      }
+      return null;
+    }
+
+
+    @Nullable
     private static Comparison extract(@NotNull PsiExpression lOperand,
                                       @NotNull PsiExpression rOperand,
                                       @NotNull PsiVariable loopVariable,
-                                      boolean isGreater) {
+                                      boolean isGreater,
+                                      @Nullable PsiVariable comparator,
+                                      boolean externalComparison) {
       final boolean max;
       final PsiExpression extremumExpr;
       final PsiExpression loopVarExpr;
@@ -641,7 +733,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
       else {
         return null;
       }
-      return new Comparison(extremumExpr, loopVarExpr, max);
+      return new Comparison(extremumExpr, loopVarExpr, max, comparator, externalComparison);
     }
   }
 }
