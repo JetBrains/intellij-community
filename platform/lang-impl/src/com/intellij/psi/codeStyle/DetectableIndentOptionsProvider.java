@@ -69,24 +69,29 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
       return null;
     }
 
-    IndentOptions options = getValidCachedIndentOptions(file, document);
-    if (options != null) {
-      return options;
+    TimeStampedIndentOptions options;
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (document) {
+      options = getValidCachedIndentOptions(file, document);
+
+      if (options != null) {
+        return options;
+      }
+
+      options = getDefaultIndentOptions(file, document);
+      options.associateWithDocument(document);
     }
 
-    TimeStampedIndentOptions indentOptions = getDefaultIndentOptions(file, document);
-    indentOptions.associateWithDocument(document);
+    scheduleDetectionInBackground(project, document, options);
 
-    scheduleDetectionInBackground(project, document, indentOptions);
-
-    return indentOptions;
+    return options;
   }
 
   protected void scheduleDetectionInBackground(@NotNull Project project,
                                                @NotNull Document document,
-                                               @NotNull TimeStampedIndentOptions indentOptions)
+                                               @NotNull TimeStampedIndentOptions options)
   {
-    DetectAndAdjustIndentOptionsTask task = new DetectAndAdjustIndentOptionsTask(project, document, indentOptions, BOUNDED_EXECUTOR);
+    DetectAndAdjustIndentOptionsTask task = new DetectAndAdjustIndentOptionsTask(project, document, options, BOUNDED_EXECUTOR);
     task.scheduleInBackgroundForCommittedDocument();
   }
 
@@ -201,7 +206,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     return !FileIndentOptionsProvider.isShowNotification() || myAcceptedFiles.contains(file);
   }
 
-  public IndentOptions getValidCachedIndentOptions(PsiFile file, Document document) {
+  public TimeStampedIndentOptions getValidCachedIndentOptions(PsiFile file, Document document) {
     IndentOptions options = IndentOptions.retrieveFromAssociatedDocument(file);
     if (options instanceof TimeStampedIndentOptions) {
       final IndentOptions defaultIndentOptions = getDefaultIndentOptions(file, document);
