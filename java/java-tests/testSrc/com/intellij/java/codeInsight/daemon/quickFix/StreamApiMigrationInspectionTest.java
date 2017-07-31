@@ -26,22 +26,25 @@ import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-  StreamApiMigrationInspectionTest.AllMatchStreamApiMigrationTest.class,
-  StreamApiMigrationInspectionTest.AnyMatchStreamApiMigrationTest.class,
-  StreamApiMigrationInspectionTest.BufferedReaderStreamApiMigrationTest.class,
-  StreamApiMigrationInspectionTest.CollectStreamApiMigrationTest.class,
-  StreamApiMigrationInspectionTest.ContinueStreamApiMigrationTest.class,
-  StreamApiMigrationInspectionTest.FilterStreamApiMigrationTest.class,
-  StreamApiMigrationInspectionTest.FindFirstStreamApiMigrationTest.class,
-  StreamApiMigrationInspectionTest.FlatMapFirstStreamApiMigrationTest.class,
-  StreamApiMigrationInspectionTest.ForeachFirstStreamApiMigrationTest.class,
-  StreamApiMigrationInspectionTest.LimitStreamApiMigrationTest.class,
-  StreamApiMigrationInspectionTest.MinMaxStreamApiMigrationTest.class,
-  StreamApiMigrationInspectionTest.NoneMatchStreamApiMigrationTest.class,
-  StreamApiMigrationInspectionTest.OtherStreamApiMigrationTest.class,
-  StreamApiMigrationInspectionTest.ReductionOperationStreamApiMigrationTest.class,
-  StreamApiMigrationInspectionTest.SumOperationStreamApiMigrationTest.class,
-  StreamApiMigrationInspectionTest.TakeWhileOperationStreamApiMigrationTest.class,
+  StreamApiMigrationInspectionTest.AddAllTest.class,
+  StreamApiMigrationInspectionTest.AfterAllActionsTest.class,
+  StreamApiMigrationInspectionTest.AllMatchTest.class,
+  StreamApiMigrationInspectionTest.AnyMatchTest.class,
+  StreamApiMigrationInspectionTest.BufferedReaderTest.class,
+  StreamApiMigrationInspectionTest.CollectTest.class,
+  StreamApiMigrationInspectionTest.ContinueTest.class,
+  StreamApiMigrationInspectionTest.CountTest.class,
+  StreamApiMigrationInspectionTest.FilterTest.class,
+  StreamApiMigrationInspectionTest.FindFirstTest.class,
+  StreamApiMigrationInspectionTest.FlatMapFirstTest.class,
+  StreamApiMigrationInspectionTest.ForeachFirstTest.class,
+  StreamApiMigrationInspectionTest.LimitTest.class,
+  StreamApiMigrationInspectionTest.MinMaxTest.class,
+  StreamApiMigrationInspectionTest.NoneMatchTest.class,
+  StreamApiMigrationInspectionTest.OtherTest.class,
+  StreamApiMigrationInspectionTest.ReductionTest.class,
+  StreamApiMigrationInspectionTest.SumTest.class,
+  StreamApiMigrationInspectionTest.TakeWhileTest.class,
 })
 public class StreamApiMigrationInspectionTest {
   public static abstract class StreamApiMigrationInspectionBaseTest extends LightQuickFixParameterizedTestCase {
@@ -70,119 +73,133 @@ public class StreamApiMigrationInspectionTest {
     }
   }
 
-  public static class AddAllStreamApiMigrationTest extends StreamApiMigrationInspectionBaseTest {
+  public static class AddAllTest extends StreamApiMigrationInspectionBaseTest {
     @Override
     String getFolder() {
       return "addAll";
     }
   }
 
-  public static class AllMatchStreamApiMigrationTest extends StreamApiMigrationInspectionBaseTest {
+  public static class AfterAllActionsTest extends StreamApiMigrationInspectionBaseTest {
+    @Override
+    String getFolder() {
+      return "afterAllActions";
+    }
+  }
+
+  public static class AllMatchTest extends StreamApiMigrationInspectionBaseTest {
     @Override
     String getFolder() {
       return "allMatch";
     }
   }
 
-  public static class AnyMatchStreamApiMigrationTest extends StreamApiMigrationInspectionBaseTest {
+  public static class AnyMatchTest extends StreamApiMigrationInspectionBaseTest {
     @Override
     String getFolder() {
       return "anyMatch";
     }
   }
 
-  public static class BufferedReaderStreamApiMigrationTest extends StreamApiMigrationInspectionBaseTest {
+  public static class BufferedReaderTest extends StreamApiMigrationInspectionBaseTest {
     @Override
     String getFolder() {
       return "bufferedReader";
     }
   }
 
-  public static class CollectStreamApiMigrationTest extends StreamApiMigrationInspectionBaseTest {
+  public static class CollectTest extends StreamApiMigrationInspectionBaseTest {
     @Override
     String getFolder() {
       return "collect";
     }
   }
 
-  public static class ContinueStreamApiMigrationTest extends StreamApiMigrationInspectionBaseTest {
+  public static class ContinueTest extends StreamApiMigrationInspectionBaseTest {
     @Override
     String getFolder() {
       return "continue";
     }
   }
 
-  public static class FilterStreamApiMigrationTest extends StreamApiMigrationInspectionBaseTest {
+  public static class CountTest extends StreamApiMigrationInspectionBaseTest {
+    @Override
+    String getFolder() {
+      return "count";
+    }
+  }
+
+  public static class FilterTest extends StreamApiMigrationInspectionBaseTest {
     @Override
     String getFolder() {
       return "filter";
     }
   }
 
-  public static class FindFirstStreamApiMigrationTest extends StreamApiMigrationInspectionBaseTest {
+  public static class FindFirstTest extends StreamApiMigrationInspectionBaseTest {
     @Override
     String getFolder() {
       return "findFirst";
     }
   }
 
-  public static class FlatMapFirstStreamApiMigrationTest extends StreamApiMigrationInspectionBaseTest {
+  public static class FlatMapFirstTest extends StreamApiMigrationInspectionBaseTest {
     @Override
     String getFolder() {
       return "flatMap";
     }
   }
 
-  public static class ForeachFirstStreamApiMigrationTest extends StreamApiMigrationInspectionBaseTest {
+  public static class ForeachFirstTest extends StreamApiMigrationInspectionBaseTest {
     @Override
     String getFolder() {
       return "foreach";
     }
   }
 
-  public static class LimitStreamApiMigrationTest extends StreamApiMigrationInspectionBaseTest {
+  public static class LimitTest extends StreamApiMigrationInspectionBaseTest {
     @Override
     String getFolder() {
       return "limit";
     }
   }
 
-  public static class MinMaxStreamApiMigrationTest extends StreamApiMigrationInspectionBaseTest {
+  public static class MinMaxTest extends StreamApiMigrationInspectionBaseTest {
     @Override
     String getFolder() {
       return "minMax";
     }
   }
 
-  public static class NoneMatchStreamApiMigrationTest extends StreamApiMigrationInspectionBaseTest {
+  public static class NoneMatchTest extends StreamApiMigrationInspectionBaseTest {
     @Override
     String getFolder() {
       return "noneMatch";
     }
   }
 
-  public static class OtherStreamApiMigrationTest extends StreamApiMigrationInspectionBaseTest {
+  public static class OtherTest extends StreamApiMigrationInspectionBaseTest {
     @Override
     String getFolder() {
       return "other";
     }
   }
 
-  public static class ReductionOperationStreamApiMigrationTest extends StreamApiMigrationInspectionBaseTest {
+  public static class ReductionTest extends StreamApiMigrationInspectionBaseTest {
     @Override
     String getFolder() {
       return "reduce";
     }
   }
 
-  public static class SumOperationStreamApiMigrationTest extends StreamApiMigrationInspectionBaseTest {
+  public static class SumTest extends StreamApiMigrationInspectionBaseTest {
     @Override
     String getFolder() {
       return "sum";
     }
   }
 
-  public static class TakeWhileOperationStreamApiMigrationTest extends StreamApiMigrationInspectionBaseTest {
+  public static class TakeWhileTest extends StreamApiMigrationInspectionBaseTest {
     @Override
     String getFolder() {
       return "takeWhile";
