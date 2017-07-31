@@ -29,8 +29,8 @@ import com.intellij.codeInsight.intention.MethodInsertionInfo as UastMethodInser
 
 @Deprecated("to be removed in 2017.3", ReplaceWith("use com.intellij.lang.jvm.actions.JvmElementActionsFactory"))
 class ElementActionsFactoryUastFallback(
-  val renderer: JavaJvmElementRenderer,
-  val materializer: JavaJvmElementMaterializer
+  val renderer: JavaElementRenderer,
+  val materializer: JavaElementMaterializer
 ) : JvmElementActionsFactoryFallback {
   override fun forLanguage(lang: Language): JvmElementActionsFactory? {
     val factory = UastJvmCommonIntentionActionsFactory.forLanguage(lang) ?: return null

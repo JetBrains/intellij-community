@@ -38,8 +38,8 @@ import com.intellij.psi.util.PsiFormatUtil
 import com.intellij.psi.util.PsiFormatUtilBase
 
 class JavaElementActionsFactoryImpl(
-  private val materializer: JavaJvmElementMaterializer,
-  private val renderer: JavaJvmElementRenderer
+  private val materializer: JavaElementMaterializer,
+  private val renderer: JavaElementRenderer
 ) : JvmElementActionsFactory() {
 
   override fun createActions(request: MemberRequest.Modifier): List<IntentionAction> = with(request) {
@@ -130,11 +130,11 @@ class JavaElementActionsFactoryImpl(
 
 }
 
-class JavaJvmElementRenderer {
+class JavaElementRenderer {
   companion object {
     @JvmStatic
-    fun getInstance(): JavaJvmElementRenderer {
-      return ServiceManager.getService(JavaJvmElementRenderer::class.java)
+    fun getInstance(): JavaElementRenderer {
+      return ServiceManager.getService(JavaElementRenderer::class.java)
     }
   }
 
@@ -165,12 +165,12 @@ class JavaJvmElementRenderer {
 
 }
 
-class JavaJvmElementMaterializer {
+class JavaElementMaterializer {
 
   companion object {
     @JvmStatic
-    fun getInstance(): JavaJvmElementMaterializer {
-      return ServiceManager.getService(JavaJvmElementMaterializer::class.java)
+    fun getInstance(): JavaElementMaterializer {
+      return ServiceManager.getService(JavaElementMaterializer::class.java)
     }
   }
 
