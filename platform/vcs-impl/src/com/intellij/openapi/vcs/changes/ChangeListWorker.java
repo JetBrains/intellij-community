@@ -317,6 +317,10 @@ public class ChangeListWorker {
     myMap.remove(fromName);
     myMap.put(toName, list);
 
+    OpenTHashSet<Change> changesBeforeUpdateFrom = myChangesBeforeUpdateMap.remove(fromName);
+    OpenTHashSet<Change> changesBeforeUpdateTo = myChangesBeforeUpdateMap.put(toName, changesBeforeUpdateFrom);
+    LOG.assertTrue(changesBeforeUpdateTo == null, "old changes for new changelist name found during rename");
+
     return true;
   }
 
