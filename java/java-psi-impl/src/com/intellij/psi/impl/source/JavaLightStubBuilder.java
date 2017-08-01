@@ -117,6 +117,7 @@ public class JavaLightStubBuilder extends LightStubBuilder {
       super.visitNode(element);
     }
 
+    private IElementType preLast;
     private IElementType last;
     private boolean seenNew;
 
@@ -142,12 +143,13 @@ public class JavaLightStubBuilder extends LightStubBuilder {
         return (result = false);
       }
       // local classes
-      else if (type == JavaTokenType.CLASS_KEYWORD && last != JavaTokenType.DOT  
+      else if (type == JavaTokenType.CLASS_KEYWORD && (last != JavaTokenType.DOT || preLast != JavaTokenType.IDENTIFIER)  
                || type == JavaTokenType.ENUM_KEYWORD 
                || type == JavaTokenType.INTERFACE_KEYWORD) {
         return (result = false);
       }
 
+      preLast = last;
       last = type;
       return true;
     }
