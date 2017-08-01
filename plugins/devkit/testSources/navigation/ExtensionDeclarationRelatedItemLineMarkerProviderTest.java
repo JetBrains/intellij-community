@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,12 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
 
-@TestDataPath("$CONTENT_ROOT/testData/navigation/extensionPointDeclaration")
-public class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest extends JavaCodeInsightFixtureTestCase {
+@TestDataPath("$CONTENT_ROOT/testData/navigation/extensionDeclaration")
+public class ExtensionDeclarationRelatedItemLineMarkerProviderTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/navigation/extensionPointDeclaration";
+    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/navigation/extensionDeclaration";
   }
 
   @Override
@@ -42,27 +42,21 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest extends 
     moduleBuilder.addLibrary("platform-api", platformApiJar);
   }
 
-  public void testMyStringEP() {
-    assertSingleEPDeclaration("MyStringEP.java");
+  public void testMyActionInvalid() {
+    myFixture.configureByFile("plugin.xml");
+    GutterMark gutter = myFixture.findGutter("MyInvalidExtension.java");
+    assertNull(gutter);
   }
 
-  public void testMyStringEPViaConstant() {
-    assertSingleEPDeclaration("MyStringEPViaConstant.java");
-  }
-
-  public void testMyStringEPConstructor() {
-    assertSingleEPDeclaration("MyStringEPConstructor.java");
-  }
-
-  private void assertSingleEPDeclaration(String filePath) {
+  public void testMyProjectService() {
     PsiFile file = myFixture.configureByFile("plugin.xml");
     String path = file.getVirtualFile().getPath();
-    int expectedTagPosition = file.getText().indexOf("<extensionPoint name=\"myStringEP\" interface=\"java.lang.String\"/>");
+    int expectedTagPosition = file.getText().indexOf("<myEp implementation=\"MyExtension\"/>");
     String expectedTooltip = "<html><body><a href=\"#navigation/" + path
-                             + ":" + expectedTagPosition + "\">myStringEP</a> extension point declaration in <a href=\"#navigation/" + path
+                             + ":" + expectedTagPosition + "\">myEp</a> extension declaration in <a href=\"#navigation/" + path
                              + ":0\">plugin.xml</a></body></html>";
 
-    final GutterMark gutter = myFixture.findGutter(filePath);
-    DevKitGutterTargetsChecker.checkGutterTargets(gutter, expectedTooltip, AllIcons.Nodes.Plugin, "extensionPoint");
+    GutterMark gutter = myFixture.findGutter("MyExtension.java");
+    DevKitGutterTargetsChecker.checkGutterTargets(gutter, expectedTooltip, AllIcons.Nodes.Plugin, "myEp");
   }
 }
