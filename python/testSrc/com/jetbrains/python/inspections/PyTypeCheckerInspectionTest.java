@@ -442,6 +442,11 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-9662
+  public void testBinaryExpressionWithUnknownOperand() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
   // PY-16066
   public void testBasestringMatchesType() {
     doTest();

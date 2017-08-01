@@ -2237,6 +2237,32 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-9662
+  public void testBinaryExpressionWithUnknownOperand() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> {
+        doTest("Union[int, Any]",
+               "from typing import Any\n" +
+               "x: Any\n" +
+               "expr = x * 2");
+
+        doTest("Union[int, Any]",
+               "from typing import Any\n" +
+               "x: Any\n" +
+               "expr = 2 * x");
+
+        doTest("Union[int, Any]",
+               "def f(x):\n" +
+               "    expr = x * 2");
+
+        doTest("Union[int, Any]",
+               "def f(x):\n" +
+               "    expr = 2 * x");
+      }
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
