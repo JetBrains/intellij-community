@@ -451,7 +451,8 @@ class FindExtremumMigration extends BaseStreamApiMigration {
     @Nullable
     @Override
     public PsiElement replace() {
-      String name = myTerminalBlock.getVariable().getName();
+      PsiVariable variable = myTerminalBlock.getVariable();
+      String name = variable.getName();
       if (name == null) return null;
       PsiType type = myExtremumInitializer.getType();
       if (type == null) return null;
@@ -459,26 +460,36 @@ class FindExtremumMigration extends BaseStreamApiMigration {
       if (initializerValue == null) return null;
 
       TerminalBlock blockWithMap = myTerminalBlock
-        .add(new StreamApiMigrationInspection.MapOp(myLoopVarExpression, myTerminalBlock.getVariable(), myLoopVarExpression.getType()));
+        .add(new StreamApiMigrationInspection.MapOp(myLoopVarExpression, variable, myLoopVarExpression.getType()));
 
+
+      final TerminalBlock terminalBlock;
+      PsiType variableType = variable.getType();
+      if(!variableType.equals(myExtremum.getType())) {
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(variable.getProject());
+        PsiExpression variableExpr = factory.createExpressionFromText(name, variable);
+        terminalBlock = blockWithMap.add(new StreamApiMigrationInspection.MapOp(variableExpr, variable, type));
+      } else {
+        terminalBlock = blockWithMap;
+      }
       String inFilterOperation = myMax ? ">=" : "<=";
-      PsiLoopStatement loop = blockWithMap.getMainLoop();
+      PsiLoopStatement loop = terminalBlock.getMainLoop();
       PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(loop.getProject());
       String extremumInitializer = myExtremumInitializer.getText();
       Object nonFilterableInitialValue = getNonFilterableInitialValue(type, myMax);
-      final TerminalBlock terminalBlock;
+      final TerminalBlock filteredTerminalBlock;
       if (nonFilterableInitialValue != null && !nonFilterableInitialValue.equals(initializerValue)) {
         PsiExpression condition =
           elementFactory.createExpressionFromText(name + inFilterOperation + extremumInitializer, loop);
 
-        terminalBlock = blockWithMap.add(new StreamApiMigrationInspection.FilterOp(condition, myTerminalBlock.getVariable(), false));
+        filteredTerminalBlock = terminalBlock.add(new StreamApiMigrationInspection.FilterOp(condition, myTerminalBlock.getVariable(), false));
       }
       else {
-        terminalBlock = blockWithMap;
+        filteredTerminalBlock = terminalBlock;
       }
 
 
-      String stream = terminalBlock.generate() + "." + getOperation(myMax) + "().orElse(" + extremumInitializer + ")";
+      String stream = filteredTerminalBlock.generate() + "." + getOperation(myMax) + "().orElse(" + extremumInitializer + ")";
       return replaceWithFindExtremum(loop, myExtremum, stream, null);
     }
 
