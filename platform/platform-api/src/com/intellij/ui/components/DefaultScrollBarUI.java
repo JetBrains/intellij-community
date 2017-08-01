@@ -84,7 +84,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   }
 
   int getMinimalThickness() {
-    return scale(myThicknessMin);
+    return scale(myScrollBar == null || isOpaque(myScrollBar) ? myThickness : myThicknessMin);
   }
 
   static boolean isOpaque(JComponent c) {
@@ -133,31 +133,29 @@ class DefaultScrollBarUI extends ScrollBarUI {
 
   void paintThumb(Graphics2D g, int x, int y, int width, int height, JComponent c) {
     RegionPainter<Float> p = ScrollColorProducer.isDark(c) ? ScrollPainter.Thumb.DARCULA : ScrollPainter.Thumb.DEFAULT;
-    paint(p, g, x, y, width, height, c, myThumbAnimator.myValue, ScrollSettings.isThumbSmallIfOpaque());
+    paint(p, g, x, y, width, height, c, myThumbAnimator.myValue, ScrollSettings.isThumbSmallIfOpaque() && isOpaque(c));
   }
 
   void onThumbMove() {
   }
 
   void paint(RegionPainter<Float> p, Graphics2D g, int x, int y, int width, int height, JComponent c, float value, boolean small) {
-    if (!isOpaque(c)) {
-      Alignment alignment = Alignment.get(c);
-      if (alignment == Alignment.LEFT || alignment == Alignment.RIGHT) {
-        int offset = getTrackOffset(width - getMinimalThickness());
-        if (offset > 0) {
-          width -= offset;
-          if (alignment == Alignment.RIGHT) x += offset;
-        }
-      }
-      else {
-        int offset = getTrackOffset(height - getMinimalThickness());
-        if (offset > 0) {
-          height -= offset;
-          if (alignment == Alignment.BOTTOM) y += offset;
-        }
+    Alignment alignment = Alignment.get(c);
+    if (alignment == Alignment.LEFT || alignment == Alignment.RIGHT) {
+      int offset = getTrackOffset(width - getMinimalThickness());
+      if (offset > 0) {
+        width -= offset;
+        if (alignment == Alignment.RIGHT) x += offset;
       }
     }
-    else if (small) {
+    else {
+      int offset = getTrackOffset(height - getMinimalThickness());
+      if (offset > 0) {
+        height -= offset;
+        if (alignment == Alignment.BOTTOM) y += offset;
+      }
+    }
+    if (small) {
       x += 1;
       y += 1;
       width -= 2;

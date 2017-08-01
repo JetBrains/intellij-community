@@ -71,7 +71,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
 
   @Override
   boolean isTrackExpandable() {
-    return true;
+    return !isOpaque(myScrollBar);
   }
 
   @Override
