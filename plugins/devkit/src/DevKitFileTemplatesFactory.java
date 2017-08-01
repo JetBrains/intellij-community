@@ -27,9 +27,12 @@ public class DevKitFileTemplatesFactory implements FileTemplateGroupDescriptorFa
     FileTemplateGroupDescriptor descriptor = new FileTemplateGroupDescriptor(DevKitBundle.message("plugin.descriptor"),
                                                                              AllIcons.Nodes.Plugin);
     descriptor.addTemplate(new FileTemplateDescriptor("plugin.xml", StdFileTypes.XML.getIcon()));
-    descriptor.addTemplate(new FileTemplateDescriptor("ProjectComponent.java", StdFileTypes.JAVA.getIcon()));
-    descriptor.addTemplate(new FileTemplateDescriptor("ApplicationComponent.java", StdFileTypes.JAVA.getIcon()));
-    descriptor.addTemplate(new FileTemplateDescriptor("ModuleComponent.java", StdFileTypes.JAVA.getIcon()));
+    descriptor.addTemplate(new FileTemplateDescriptor("ProjectServiceClass.java", StdFileTypes.JAVA.getIcon()));
+    descriptor.addTemplate(new FileTemplateDescriptor("ProjectServiceInterface.java", StdFileTypes.JAVA.getIcon()));
+    descriptor.addTemplate(new FileTemplateDescriptor("ApplicationServiceClass.java", StdFileTypes.JAVA.getIcon()));
+    descriptor.addTemplate(new FileTemplateDescriptor("ApplicationServiceInterface.java", StdFileTypes.JAVA.getIcon()));
+    descriptor.addTemplate(new FileTemplateDescriptor("ModuleServiceClass.java", StdFileTypes.JAVA.getIcon()));
+    descriptor.addTemplate(new FileTemplateDescriptor("ModuleServiceInterface.java", StdFileTypes.JAVA.getIcon()));
     descriptor.addTemplate(new FileTemplateDescriptor("Action.java", StdFileTypes.JAVA.getIcon()));
     descriptor.addTemplate(new FileTemplateDescriptor("InspectionDescription.html", StdFileTypes.HTML.getIcon()));
     return descriptor;
