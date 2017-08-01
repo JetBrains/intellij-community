@@ -1,15 +1,14 @@
-import sys
-from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface
-
-import os
 import traceback
 
-# Uncomment to force PyDev standard shell.
-# raise ImportError()
-
+import sys
+from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface
 from _pydev_bundle.pydev_ipython_console_011 import get_pydev_frontend
 from _pydevd_bundle.pydevd_constants import dict_iter_items
 from _pydevd_bundle.pydevd_io import IOBuf
+
+
+# Uncomment to force PyDev standard shell.
+# raise ImportError()
 
 #=======================================================================================================================
 # InterpreterInterface
@@ -36,26 +35,22 @@ class InterpreterInterface(BaseInterpreterInterface):
         self.notification_tries = 0
         self.notification_max_tries = 3
 
-
     def get_greeting_msg(self):
         return self.interpreter.get_greeting_msg() + "\n" + self.default_banner
 
-    def do_add_exec(self, codeFragment):
+    def do_add_exec(self, code_fragment):
         self.notify_about_magic()
-        if (codeFragment.text.rstrip().endswith('??')):
+        if code_fragment.text.rstrip().endswith('??'):
             print('IPython-->')
         try:
-            res = bool(self.interpreter.add_exec(codeFragment.text))
+            res = bool(self.interpreter.add_exec(code_fragment.text))
         finally:
-            if (codeFragment.text.rstrip().endswith('??')):
+            if code_fragment.text.rstrip().endswith('??'):
                 print('<--IPython')
-
         return res
-
 
     def get_namespace(self):
         return self.interpreter.get_namespace()
-
 
     def getCompletions(self, text, act_tok):
         return self.interpreter.getCompletions(text, act_tok)
@@ -96,4 +91,3 @@ class InterpreterInterface(BaseInterpreterInterface):
         except:
             # Getting IPython variables shouldn't break loading frame variables
             traceback.print_exc()
-
