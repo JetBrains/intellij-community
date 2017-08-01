@@ -54,7 +54,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
     myListener = listener;
     myTaskId = taskId;
     myBuildRootDir = buildRootDir;
-    myOperationId = FileUtil.pathHashCode(buildRootDir == null ? UUID.randomUUID().toString() : buildRootDir);
+    myOperationId = taskId.hashCode() + FileUtil.pathHashCode(buildRootDir == null ? UUID.randomUUID().toString() : buildRootDir);
   }
 
   @Override
