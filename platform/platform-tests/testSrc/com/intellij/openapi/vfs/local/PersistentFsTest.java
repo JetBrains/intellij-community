@@ -15,21 +15,28 @@
  */
 package com.intellij.openapi.vfs.local;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.PathUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.apache.log4j.Logger;
@@ -39,7 +46,10 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.List;
 import java.util.jar.JarFile;
+import java.util.stream.Collectors;
 
 public class PersistentFsTest extends PlatformTestCase {
   private PersistentFS myFs;
@@ -99,7 +109,7 @@ public class PersistentFsTest extends PlatformTestCase {
 
     JarFileSystem jfs = JarFileSystem.getInstance();
     String path = x.getPath() + "/../" + x.getName() + JarFileSystem.JAR_SEPARATOR;
-    NewVirtualFile root = myFs.findRoot(path, jfs);
+    NewVirtualFile root = ObjectUtils.notNull(myFs.findRoot(path, jfs));
     assertFalse(root.getPath(), root.getPath().contains("../"));
     assertFalse(root.getPath(), root.getPath().contains("/.."));
   }
@@ -170,12 +180,12 @@ public class PersistentFsTest extends PlatformTestCase {
 
     try {
       String rootUrl = "jar://" + FileUtil.toSystemIndependentName(jarFile.getPath()) + "!/";
-      String entryUrl = rootUrl + JarFile.MANIFEST_NAME;
       assertNotNull(getVirtualFile(jarFile));
       VirtualFile jarRoot = VirtualFileManager.getInstance().findFileByUrl(rootUrl);
       assertNotNull(jarRoot);
       assertTrue(jarRoot.isValid());
       assertEquals(0, jarRoot.getChildren().length);
+      String entryUrl = rootUrl + JarFile.MANIFEST_NAME;
       assertNull(VirtualFileManager.getInstance().findFileByUrl(entryUrl));
 
       VirtualFile local = JarFileSystem.getInstance().getVirtualFileForJar(jarRoot);
@@ -231,7 +241,7 @@ public class PersistentFsTest extends PlatformTestCase {
   }
 
   @NotNull
-  private static VirtualFile setupFile() throws IOException {
+  private static VirtualFile setupFile() {
     File file = IoTestUtil.createTestFile("file.txt");
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     assertNotNull(vFile);
@@ -275,4 +285,165 @@ public class PersistentFsTest extends PlatformTestCase {
     assertEquals(inSessionModCount + 1, managingFS.getModificationCount());
     assertFalse(FSRecords.isDirty());
   }
+
+  public void testProcessEventsMustIgnoreDeleteDuplicates() throws IOException {
+    VirtualFile vFile = setupFile();
+    checkEvents("Before:[VFileDeleteEvent->file.txt]\nAfter:[VFileDeleteEvent->file.txt]\n",
+                new VFileDeleteEvent(this, vFile, false),
+                new VFileDeleteEvent(this, vFile, false));
+  }
+
+  private void checkEvents(String expectedEvents, VFileEvent... eventsToApply) {
+    final StringBuilder log = new StringBuilder();
+    Disposable disposable = Disposer.newDisposable();
+    getProject().getMessageBus().connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override
+      public void before(@NotNull List<? extends VFileEvent> events) {
+        log("Before:", events);
+      }
+
+      private void log(String msg, @NotNull List<? extends VFileEvent> events) {
+        List<String> names = events.stream().map(e -> e.getClass().getSimpleName() + "->" + PathUtil.getFileName(e.getPath())).collect(Collectors.toList());
+        log.append(msg).append(names).append("\n");
+      }
+
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        log("After:", events);
+      }
+    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> PersistentFS.getInstance().processEvents(Arrays.asList(eventsToApply)));
+    Disposer.dispose(disposable);
+    assertEquals(expectedEvents, log.toString());
+  }
+
+  public void testProcessEventsMustGroupDependentEventsCorrectly() throws IOException {
+    VirtualFile vFile = setupFile();
+    checkEvents("Before:[VFileCreateEvent->xx.created, VFileDeleteEvent->file.txt]\n" +
+                "After:[VFileCreateEvent->xx.created, VFileDeleteEvent->file.txt]\n",
+                new VFileDeleteEvent(this, vFile, false),
+                new VFileCreateEvent(this, vFile.getParent(), "xx.created", false, false),
+                new VFileDeleteEvent(this, vFile, false));
+  }
+  
+  public void testProcessEventsMustGroupDependentEventsCorrectly2() throws IOException {
+    File file = new File(createTempDirectory(), "a/b/c/test.txt");
+    assertTrue(file.getParentFile().mkdirs());
+    assertTrue(file.createNewFile());
+
+    VirtualFile vFile = myLocalFs.refreshAndFindFileByIoFile(file);
+    assertNotNull(vFile);
+
+    checkEvents("Before:[VFileCreateEvent->xx.created, VFileCreateEvent->xx.created2, VFileDeleteEvent->test.txt]\n" +
+                "After:[VFileCreateEvent->xx.created, VFileCreateEvent->xx.created2, VFileDeleteEvent->test.txt]\n" +
+                "Before:[VFileDeleteEvent->c]\n" +
+                "After:[VFileDeleteEvent->c]\n",
+                new VFileDeleteEvent(this, vFile, false),
+                new VFileCreateEvent(this, vFile.getParent(), "xx.created", false, false),
+                new VFileCreateEvent(this, vFile.getParent(), "xx.created2", false, false),
+                new VFileDeleteEvent(this, vFile.getParent(), false));
+  }
+
+  public void testProcessEventsMustGroupDependentEventsCorrectly3() throws IOException {
+    File file = new File(createTempDirectory(), "a/b/c/test.txt");
+    assertTrue(file.getParentFile().mkdirs());
+    assertTrue(file.createNewFile());
+
+    VirtualFile vFile = myLocalFs.refreshAndFindFileByIoFile(file);
+    assertNotNull(vFile);
+
+    checkEvents("Before:[VFileContentChangeEvent->c]\n" +
+                "After:[VFileContentChangeEvent->c]\n" +
+                "Before:[VFileDeleteEvent->test.txt]\n" +
+                "After:[VFileDeleteEvent->test.txt]\n",
+
+                new VFileContentChangeEvent(this, vFile.getParent(), 0, 0, false),
+                new VFileDeleteEvent(this, vFile, false)
+    );
+  }
+
+  public void testProcessNestedDeletions() throws IOException {
+    File temp = createTempDirectory();
+    File file = new File(temp, "a/b/c/test.txt");
+    assertTrue(file.getParentFile().mkdirs());
+    assertTrue(file.createNewFile());
+    VirtualFile testTxt = ObjectUtils.assertNotNull(myLocalFs.refreshAndFindFileByIoFile(file));
+    File file2 = new File(temp, "a/b/c/test2.txt");
+    assertTrue(file2.createNewFile());
+    VirtualFile test2Txt = ObjectUtils.assertNotNull(myLocalFs.refreshAndFindFileByIoFile(file2));
+
+    checkEvents("Before:[VFileDeleteEvent->test.txt]\n" +
+                "After:[VFileDeleteEvent->test.txt]\n" +
+                "Before:[VFileDeleteEvent->c]\n" +
+                "After:[VFileDeleteEvent->c]\n",
+
+                new VFileDeleteEvent(this, testTxt, false),
+                new VFileDeleteEvent(this, testTxt.getParent(), false),
+                new VFileDeleteEvent(this, test2Txt, false)
+    );
+  }
+
+  public void testProcessCompositeMoveEvents() throws IOException {
+    File temp = createTempDirectory();
+    File file = new File(temp, "a/b/c/test.txt");
+    assertTrue(file.getParentFile().mkdirs());
+    assertTrue(file.createNewFile());
+    VirtualFile testTxt = ObjectUtils.assertNotNull(myLocalFs.refreshAndFindFileByIoFile(file));
+
+    File newParentF = new File(temp, "a/b/d");
+    assertTrue(newParentF.mkdirs());
+    VirtualFile newParent = ObjectUtils.assertNotNull(myLocalFs.refreshAndFindFileByIoFile(newParentF));
+
+    checkEvents("Before:[VFileMoveEvent->test.txt]\n" +
+                "After:[VFileMoveEvent->test.txt]\n" +
+                "Before:[VFileDeleteEvent->d]\n" +
+                "After:[VFileDeleteEvent->d]\n",
+
+                new VFileMoveEvent(this, testTxt, newParent),
+                new VFileDeleteEvent(this, newParent, false)
+    );
+  }
+
+  public void testProcessCompositeCopyEvents() throws IOException {
+    File temp = createTempDirectory();
+    File file = new File(temp, "a/b/c/test.txt");
+    assertTrue(file.getParentFile().mkdirs());
+    assertTrue(file.createNewFile());
+    VirtualFile testTxt = ObjectUtils.assertNotNull(myLocalFs.refreshAndFindFileByIoFile(file));
+
+    File newParentF = new File(temp, "a/b/d");
+    assertTrue(newParentF.mkdirs());
+    VirtualFile newParent = ObjectUtils.assertNotNull(myLocalFs.refreshAndFindFileByIoFile(newParentF));
+
+    checkEvents("Before:[VFileCopyEvent->new.txt]\n" +
+                "After:[VFileCopyEvent->new.txt]\n" +
+                "Before:[VFileDeleteEvent->test.txt]\n" +
+                "After:[VFileDeleteEvent->test.txt]\n",
+
+                new VFileCopyEvent(this, testTxt, newParent,"new.txt"),
+                new VFileDeleteEvent(this, testTxt, false)
+    );
+  }
+
+  public void testProcessCompositeRenameEvents() throws IOException {
+    File temp = createTempDirectory();
+    File file = new File(temp, "a/b/c/test.txt");
+    assertTrue(file.getParentFile().mkdirs());
+    assertTrue(file.createNewFile());
+    VirtualFile testTxt = ObjectUtils.assertNotNull(myLocalFs.refreshAndFindFileByIoFile(file));
+
+    File file2 = new File(temp, "a/b/c/test2.txt");
+    assertTrue(file2.createNewFile());
+    VirtualFile test2Txt = ObjectUtils.assertNotNull(myLocalFs.refreshAndFindFileByIoFile(file2));
+
+    checkEvents("Before:[VFileDeleteEvent->test2.txt]\n" +
+                "After:[VFileDeleteEvent->test2.txt]\n" +
+                "Before:[VFilePropertyChangeEvent->test.txt]\n" +
+                "After:[VFilePropertyChangeEvent->test2.txt]\n",
+
+                new VFileDeleteEvent(this, test2Txt, false),
+                new VFilePropertyChangeEvent(this, testTxt, VirtualFile.PROP_NAME, file.getName(), file2.getName(), false)
+    );
+  }
+
 }
