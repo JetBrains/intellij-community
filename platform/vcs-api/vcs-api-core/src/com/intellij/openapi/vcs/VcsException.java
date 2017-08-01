@@ -15,15 +15,18 @@
  */
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
+
+import static com.intellij.openapi.util.text.StringUtil.join;
+import static com.intellij.openapi.vcs.VcsBundle.message;
+import static com.intellij.util.ArrayUtil.toStringArray;
+import static com.intellij.util.ObjectUtils.chooseNotNull;
+import static com.intellij.util.ObjectUtils.notNull;
+import static java.util.Collections.singleton;
 
 public class VcsException extends Exception {
   public static final VcsException[] EMPTY_ARRAY = new VcsException[0];
@@ -37,12 +40,11 @@ public class VcsException extends Exception {
     initMessage(message);
   }
 
-  private void initMessage(final String message) {
-    String shownMessage = message == null ? VcsBundle.message("exception.text.unknown.error") : message;
-    myMessages = Collections.singleton(shownMessage);
+  private void initMessage(@Nullable String message) {
+    myMessages = singleton(notNull(message, message("exception.text.unknown.error")));
   }
 
-  public VcsException(Throwable throwable, final boolean isWarning) {
+  public VcsException(Throwable throwable, boolean isWarning) {
     this(getMessage(throwable), throwable);
     this.isWarning = isWarning;
   }
@@ -51,17 +53,17 @@ public class VcsException extends Exception {
     this(throwable, false);
   }
 
-  public VcsException(final String message, final Throwable cause) {
+  public VcsException(String message, Throwable cause) {
     super(message, cause);
     initMessage(message);
   }
 
-  public VcsException(final String message, final boolean isWarning) {
+  public VcsException(String message, boolean isWarning) {
     this(message);
     this.isWarning = isWarning;
   }
 
-  public VcsException(Collection<String> messages) {
+  public VcsException(@NotNull Collection<String> messages) {
     myMessages = messages;
   }
 
@@ -74,8 +76,9 @@ public class VcsException extends Exception {
     return myVirtualFile;
   }
 
+  @NotNull
   public String[] getMessages() {
-    return ArrayUtil.toStringArray(myMessages);
+    return toStringArray(myMessages);
   }
 
   public VcsException setIsWarning(boolean warning) {
@@ -90,11 +93,11 @@ public class VcsException extends Exception {
   @Override
   @NotNull
   public String getMessage() {
-    return StringUtil.join(myMessages, ", ");
+    return join(myMessages, ", ");
   }
 
   @Nullable
   public static String getMessage(@Nullable Throwable throwable) {
-    return throwable != null ? ObjectUtils.chooseNotNull(throwable.getMessage(), throwable.getLocalizedMessage()) : null;
+    return throwable != null ? chooseNotNull(throwable.getMessage(), throwable.getLocalizedMessage()) : null;
   }
 }
