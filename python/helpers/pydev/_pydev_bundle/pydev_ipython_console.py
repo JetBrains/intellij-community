@@ -9,6 +9,7 @@ import traceback
 
 from _pydev_bundle.pydev_ipython_console_011 import get_pydev_frontend
 from _pydevd_bundle.pydevd_constants import dict_iter_items
+from _pydevd_bundle.pydevd_io import IOBuf
 
 #=======================================================================================================================
 # InterpreterInterface
@@ -22,16 +23,22 @@ class InterpreterInterface(BaseInterpreterInterface):
         BaseInterpreterInterface.__init__(self, mainThread)
         self.client_port = client_port
         self.host = host
+
+        # Wrap output to handle IPython's banner and show it in appropriate time
+        original_stdout = sys.stdout
+        sys.stdout = IOBuf()
         self.interpreter = get_pydev_frontend(host, client_port, show_banner=show_banner)
+        self.default_banner = sys.stdout.getvalue()
+        sys.stdout = original_stdout
+
         self._input_error_printed = False
         self.notification_succeeded = False
         self.notification_tries = 0
         self.notification_max_tries = 3
 
-        self.notify_about_magic()
 
     def get_greeting_msg(self):
-        return self.interpreter.get_greeting_msg()
+        return self.interpreter.get_greeting_msg() + "\n" + self.default_banner
 
     def do_add_exec(self, codeFragment):
         self.notify_about_magic()
