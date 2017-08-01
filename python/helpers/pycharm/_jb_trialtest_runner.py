@@ -16,6 +16,8 @@ if __name__ == '__main__':
     sys.path.append(os.getcwd()) # Current dir must be in sys.path according to trial docs
 
     sys.argv.append("--reporter=teamcity")
+    sys.argv += additional_args
+
     if path:
         assert os.path.exists(path), path + " does not exist"
         # assert os.path.isfile(path), path + " is folder. Provide its name as python target (dot separated)"
@@ -23,6 +25,5 @@ if __name__ == '__main__':
     elif targets:
         sys.argv += targets
 
-    sys.argv += additional_args
     jb_doc_args("trial", sys.argv[1:])
     trial.run()
