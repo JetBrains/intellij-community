@@ -110,10 +110,9 @@ public class InvokeCompletion extends ActionOnRange {
     PsiReference ref = getFile().findReferenceAt(adjustedOffset);
 
     String expectedVariant = leaf == null ? null : myPolicy.getExpectedVariant(editor, getFile(), leaf, ref);
-
     boolean prefixEqualsExpected = isPrefixEqualToExpectedVariant(caretOffset, leaf, ref, expectedVariant);
-
     boolean shouldCheckDuplicates = myPolicy.shouldCheckDuplicates(editor, getFile(), leaf);
+    long stampBefore = getDocument().getModificationStamp();
 
     new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), editor);
     
@@ -122,6 +121,10 @@ public class InvokeCompletion extends ActionOnRange {
 
     LookupEx lookup = LookupManager.getActiveLookup(editor);
     if (lookup == null) {
+      if (editor.getCaretModel().getOffset() != caretOffset || getDocument().getModificationStamp() != stampBefore) {
+        myLog += ", auto-inserted";
+        return;
+      }
       myLog += ", no lookup";
       if (expectedVariant == null || prefixEqualsExpected) return;
       TestCase.fail("No lookup, but expected '" + expectedVariant + "' among completion variants" + notFound);
