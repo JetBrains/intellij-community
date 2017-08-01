@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.execution.build;
 
+import com.intellij.build.BuildViewManager;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
@@ -33,6 +34,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.task.*;
 import com.intellij.task.impl.InternalProjectTaskRunner;
@@ -46,8 +48,11 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration.PROGRESS_LISTENER_KEY;
 
 /**
  * TODO automatically create exploded-war task
@@ -65,8 +70,6 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
                   @NotNull ProjectTaskContext context,
                   @Nullable ProjectTaskNotification callback,
                   @NotNull Collection<? extends ProjectTask> tasks) {
-    String executionName = "Gradle build";
-
     MultiMap<String, String> buildTasksMap = MultiMap.createLinkedSet();
     MultiMap<String, String> cleanTasksMap = MultiMap.createLinkedSet();
 
@@ -119,14 +122,27 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       Collection<String> cleanTasks = cleanTasksMap.get(rootProjectPath);
 
       ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
+
+      File projectFile = new File(rootProjectPath);
+      final String projectName;
+      if (projectFile.isFile()) {
+        projectName = projectFile.getParentFile().getName();
+      }
+      else {
+        projectName = projectFile.getName();
+      }
+      String executionName = projectName + " build";
       settings.setExecutionName(executionName);
       settings.setExternalProjectPath(rootProjectPath);
       settings.setTaskNames(ContainerUtil.collect(ContainerUtil.concat(cleanTasks, buildTasks).iterator()));
       //settings.setScriptParameters(scriptParameters);
       settings.setVmOptions(gradleVmOptions);
       settings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.getId());
+
+      UserDataHolderBase userData = new UserDataHolderBase();
+      userData.putUserData(PROGRESS_LISTENER_KEY, BuildViewManager.class);
       ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID, project, GradleConstants.SYSTEM_ID,
-                                 taskCallback, ProgressExecutionMode.IN_BACKGROUND_ASYNC, false);
+                                 taskCallback, ProgressExecutionMode.IN_BACKGROUND_ASYNC, false, userData);
     }
   }
 

@@ -15,20 +15,18 @@
  */
 package com.intellij.build;
 
-import com.intellij.openapi.ui.SimpleToolWindowPanel;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.impl.ContentImpl;
-import com.intellij.util.ui.UIUtil;
-
-import javax.swing.*;
+import com.intellij.openapi.project.Project;
 
 /**
  * @author Vladislav.Soroka
  */
-public class BuildViewManager {
+public class BuildViewManager extends AbstractViewManager {
+  public BuildViewManager(Project project, BuildContentManager buildContentManager) {
+    super(project, buildContentManager);
+  }
 
-  private final BuildContentManager myBuildContentManager;
-  public BuildViewManager(BuildContentManager buildContentManager) {
-    myBuildContentManager = buildContentManager;
+  @Override
+  public String getViewName() {
+    return "Build";
   }
 }

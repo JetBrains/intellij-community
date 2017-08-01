@@ -422,53 +422,31 @@ public class ExternalSystemUtil {
           public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
             long eventTime = System.currentTimeMillis();
             ServiceManager.getService(project, SyncViewManager.class).onEvent(
-              new StartBuildEventImpl(id, projectName, eventTime, "syncing..."), "TREE");
+              new StartBuildEventImpl(id, projectName, eventTime, "syncing..."));
           }
 
           @Override
           public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
-            ServiceManager.getService(project, SyncViewManager.class).onEvent(
-              new OutputBuildEventImpl(id, text, stdOut), "CONSOLE");
+            ServiceManager.getService(project, SyncViewManager.class).onEvent(new OutputBuildEventImpl(id, text, stdOut));
           }
 
           @Override
           public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
-            String exceptionMessage = ExceptionUtil.getMessage(e);
-            String text = exceptionMessage == null ? e.toString() : exceptionMessage;
-
-            //executionConsole.print(text + '\n', ConsoleViewContentType.ERROR_OUTPUT);
-            //processHandler.notifyTextAvailable(text + '\n', ProcessOutputTypes.STDERR);
-            //processHandler.notifyProcessTerminated(1);
             ServiceManager.getService(project, SyncViewManager.class).onEvent(new FinishBuildEventImpl(
-              id, null, System.currentTimeMillis(), "sync failed", new FailureResultImpl(e)), "TREE");
+              id, null, System.currentTimeMillis(), "sync failed", new FailureResultImpl(e)));
           }
 
           @Override
           public void onSuccess(@NotNull ExternalSystemTaskId id) {
             ServiceManager.getService(project, SyncViewManager.class).onEvent(new FinishBuildEventImpl(
-              id, null, System.currentTimeMillis(), "synced successfully", new SuccessResultImpl()), "TREE");
-          }
-
-          @Override
-          public void onEnd(@NotNull ExternalSystemTaskId id) {
-            //final String endDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
-            //final String farewell;
-            //farewell =
-            //  ExternalSystemBundle.message("run.text.ended.single.task", endDateTime, "");
-            //executionConsole.print(farewell, ConsoleViewContentType.SYSTEM_OUTPUT);
-            //foldGreetingOrFarewell(consoleView, farewell, false);
-            //processHandler.notifyProcessTerminated(0);
+              id, null, System.currentTimeMillis(), "synced successfully", new SuccessResultImpl()));
           }
 
           @Override
           public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
             if (event instanceof ExternalSystemTaskExecutionEvent) {
               BuildEvent buildEvent = convert(((ExternalSystemTaskExecutionEvent)event));
-              ServiceManager.getService(project, SyncViewManager.class).onEvent(buildEvent, "TREE");
-            }
-            else {
-              //ServiceManager.getService(project, SyncViewManager.class)
-              //  .onEvent(new OutputBuildEventImpl(event.getId(), event.getId(), event.getDescription() + '\n', true), "CONSOLE");
+              ServiceManager.getService(project, SyncViewManager.class).onEvent(buildEvent);
             }
           }
         };
@@ -542,7 +520,7 @@ public class ExternalSystemUtil {
     }
   }
 
-  private static BuildEvent convert(ExternalSystemTaskExecutionEvent taskExecutionEvent) {
+  public static BuildEvent convert(ExternalSystemTaskExecutionEvent taskExecutionEvent) {
     ExternalSystemProgressEvent progressEvent = taskExecutionEvent.getProgressEvent();
     String displayName = progressEvent.getDescriptor().getDisplayName();
     long eventTime = progressEvent.getDescriptor().getEventTime();

@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.externalSystem.service.execution;
 
+import com.intellij.build.BuildProgressListener;
+import com.intellij.build.events.BuildEvent;
+import com.intellij.build.events.impl.*;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
@@ -28,6 +31,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
@@ -36,10 +40,8 @@ import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
+import com.intellij.openapi.externalSystem.model.task.*;
+import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
@@ -70,12 +72,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 
+import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.convert;
+
 /**
  * @author Denis Zhdanov
  * @since 23.05.13 18:30
  */
 public class ExternalSystemRunConfiguration extends LocatableConfigurationBase implements SearchScopeProvidingRunProfile {
   public static final Key<InputStream> RUN_INPUT_KEY = Key.create("RUN_INPUT_KEY");
+  public static final Key<Class<? extends BuildProgressListener>> PROGRESS_LISTENER_KEY = Key.create("PROGRESS_LISTENER_KEY");
 
   private static final Logger LOG = Logger.getInstance(ExternalSystemRunConfiguration.class);
   private ExternalSystemTaskExecutionSettings mySettings = new ExternalSystemTaskExecutionSettings();
@@ -238,12 +243,21 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       copyUserDataTo(task);
 
       final MyProcessHandler processHandler = new MyProcessHandler(task);
-      final ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration, ExecutionConsole, ProcessHandler>
+      final ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration, ExecutionConsole, ProcessHandler> consoleManager;
+      final ExecutionConsole consoleView;
+      final BuildProgressListener progressListener;
+      Class<? extends BuildProgressListener> progressListenerClazz = task.getUserData(PROGRESS_LISTENER_KEY);
+      if (progressListenerClazz != null) {
+        progressListener = ServiceManager.getService(myProject, progressListenerClazz);
+        consoleManager = null;
+        consoleView = null;
+      }
+      else {
+        progressListener = null;
         consoleManager = getConsoleManagerFor(task);
-
-      final ExecutionConsole consoleView =
-        consoleManager.attachExecutionConsole(task, myProject, myConfiguration, executor, myEnv, processHandler);
-      Disposer.register(myProject, consoleView);
+        consoleView = consoleManager.attachExecutionConsole(task, myProject, myConfiguration, executor, myEnv, processHandler);
+        Disposer.register(myProject, consoleView);
+      }
 
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         final String startDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
@@ -263,21 +277,57 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
           private boolean myResetGreeting = true;
 
           @Override
+          public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
+            if (progressListener != null) {
+              long eventTime = System.currentTimeMillis();
+              progressListener.onEvent(
+                new StartBuildEventImpl(id, StringUtil.notNullize(mySettings.getExecutionName()), eventTime, "running..."));
+              //progressListener.onEvent(new AttachProcessHandlerEventImpl(id, processHandler));
+            }
+          }
+
+          @Override
           public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+            if (progressListener != null) {
+              progressListener.onEvent(new OutputBuildEventImpl(id, text, stdOut));
+              return;
+            }
             if (myResetGreeting) {
               processHandler.notifyTextAvailable("\r", ProcessOutputTypes.SYSTEM);
               myResetGreeting = false;
             }
 
-            consoleManager.onOutput(consoleView, processHandler, text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
+            if (consoleManager != null) {
+              consoleManager.onOutput(consoleView, processHandler, text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
+            }
           }
 
           @Override
           public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
+            if (progressListener != null) {
+              progressListener.onEvent(new FinishBuildEventImpl(
+                id, null, System.currentTimeMillis(), "failed", new FailureResultImpl(e)));
+            }
             String exceptionMessage = ExceptionUtil.getMessage(e);
             String text = exceptionMessage == null ? e.toString() : exceptionMessage;
             processHandler.notifyTextAvailable(text + '\n', ProcessOutputTypes.STDERR);
             processHandler.notifyProcessTerminated(1);
+          }
+
+          @Override
+          public void onSuccess(@NotNull ExternalSystemTaskId id) {
+            if (progressListener != null) {
+              progressListener.onEvent(new FinishBuildEventImpl(
+                id, null, System.currentTimeMillis(), "completed successfully", new SuccessResultImpl()));
+            }
+          }
+
+          @Override
+          public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
+            if (progressListener != null && event instanceof ExternalSystemTaskExecutionEvent) {
+              BuildEvent buildEvent = convert(((ExternalSystemTaskExecutionEvent)event));
+              progressListener.onEvent(buildEvent);
+            }
           }
 
           @Override
@@ -299,8 +349,14 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
         };
         task.execute(ArrayUtil.prepend(taskListener, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
       });
+
+      if (progressListener != null) {
+        return null;
+      }
       DefaultExecutionResult result = new DefaultExecutionResult(consoleView, processHandler);
-      result.setRestartActions(consoleManager.getRestartActions(consoleView));
+      if (consoleManager != null) {
+        result.setRestartActions(consoleManager.getRestartActions(consoleView));
+      }
       return result;
     }
 
