@@ -17,7 +17,6 @@
 
 package com.intellij.testGuiFramework.generators
 
-import com.intellij.framework.PresentableVersion
 import com.intellij.ide.plugins.PluginTable
 import com.intellij.ide.projectView.impl.ProjectViewTree
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -32,7 +31,7 @@ import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
-import com.intellij.platform.ProjectTemplate
+import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
 import com.intellij.testGuiFramework.fixtures.MessageDialogFixture
 import com.intellij.testGuiFramework.fixtures.MessagesFixture
 import com.intellij.testGuiFramework.fixtures.SettingsTreeFixture
@@ -54,7 +53,6 @@ import com.intellij.ui.components.JBList
 import com.intellij.ui.components.labels.ActionLink
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.messages.SheetController
-import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.treeStructure.SimpleTree
 import com.intellij.util.ui.tree.TreeUtil
 import org.fest.reflect.core.Reflection.field
@@ -553,55 +551,12 @@ object Utils {
     return ""
   }
 
-  fun getCellText(jbList: JBList<*>, pointOnList: Point): String? {
-    val index = jbList.locationToIndex(pointOnList)
-    val cellBounds = jbList.getCellBounds(index, index)
-    if (cellBounds.contains(pointOnList)) {
-      val elementAt = jbList.model.getElementAt(index)
-      when (elementAt) {
-        is PopupFactoryImpl.ActionItem -> return elementAt.text
-        is ProjectTemplate -> return elementAt.name
-        else -> {
-          val listCellRendererComponent = GuiTestUtil.getListCellRendererComponent(jbList, elementAt, index) as JComponent
-          if (listCellRendererComponent is JPanel) {
-            val labels = withRobot { robot -> robot.finder().findAll(listCellRendererComponent, ComponentMatcher { it is JLabel }) }
-            return labels.filterIsInstance(JLabel::class.java).filter { it.text.isNotEmpty() }.firstOrNull()?.text
-          }
-          return elementAt.toString()
-        }
-      }
-    }
-    return null
-  }
-
   fun getCellText(jList: JList<*>, pointOnList: Point): String? {
-    val index = jList.locationToIndex(pointOnList)
-    val cellBounds = jList.getCellBounds(index, index)
-    if (cellBounds.contains(pointOnList)) {
-      val elementAt = jList.model.getElementAt(index)
-      val listCellRendererComponent = GuiTestUtil.getListCellRendererComponent(jList, elementAt, index)
-      when (elementAt) {
-        is PopupFactoryImpl.ActionItem -> return elementAt.text
-        is ProjectTemplate -> return elementAt.name
-        is PresentableVersion -> return elementAt.presentableName
-        javaClass.canonicalName == "com.intellij.ide.util.frameworkSupport.FrameworkVersion" -> {
-          val getNameMethod = elementAt.javaClass.getMethod("getVersionName")
-          val name = getNameMethod.invoke(elementAt)
-          return name as String
-        }
-        else -> {
-          if (listCellRendererComponent is JPanel) {
-            if (!listCellRendererComponent.components.isEmpty() && listCellRendererComponent.components[0] is JLabel)
-              return (listCellRendererComponent.components[0] as JLabel).text
-          }
-          else
-            if (listCellRendererComponent is JLabel)
-              return listCellRendererComponent.text
-          return elementAt.toString()
-        }
-      }
+    return withRobot { robot ->
+      val extCellReader = ExtendedJListCellReader()
+      val index = jList.locationToIndex(pointOnList)
+      extCellReader.valueAt(jList, index)
     }
-    return null
   }
 
   fun convertSimpleTreeItemToPath(tree: SimpleTree, itemName: String): String {

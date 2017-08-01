@@ -40,6 +40,7 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.dependencyAnalysis.AnalyzeDependenciesDialog;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryEditingUtil;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.EditExistingLibraryDialog;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ConvertModuleLibraryToRepositoryLibraryAction;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.FindUsagesInProjectStructureActionBase;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
@@ -288,6 +289,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     addChangeLibraryLevelAction(actionGroup, LibraryTablesRegistrar.PROJECT_LEVEL);
     addChangeLibraryLevelAction(actionGroup, LibraryTablesRegistrar.APPLICATION_LEVEL);
     addChangeLibraryLevelAction(actionGroup, LibraryTableImplUtil.MODULE_LEVEL);
+    actionGroup.add(new ConvertModuleLibraryToRepositoryLibraryAction(this, getStructureConfigurableContext()));
     PopupHandler.installPopupHandler(myEntryTable, actionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
   }
 

@@ -80,7 +80,11 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
 
     @NotNull DocStringFormat docFormat = DocStringFormat.PLAIN;
     //check setup.py
-    @NotNull String testRunner = detectTestRunnerFromSetupPy(module);
+    final Ref<String> testRunnerRef = new Ref<>();
+    ApplicationManager.getApplication().runReadAction(() -> testRunnerRef.set(detectTestRunnerFromSetupPy(module)));
+
+    String testRunner = testRunnerRef.get();
+    assert testRunner != null: "detectTestRunnerFromSetupPy can't return null";
     if (!testRunner.isEmpty()) {
       LOG.debug("Test runner '" + testRunner + "' was discovered from setup.py in the module '" + module.getModuleFilePath() + "'");
     }

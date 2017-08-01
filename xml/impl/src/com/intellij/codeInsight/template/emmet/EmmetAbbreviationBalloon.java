@@ -91,7 +91,7 @@ public class EmmetAbbreviationBalloon {
     field.setHistorySize(10);
 
     JBLabel label = new JBLabel(AllIcons.General.ContextHelp);
-    label.setBorder(IdeBorderFactory.createEmptyBorder(0, 3, 0, 1));
+    label.setBorder(JBUI.Borders.empty(0, 3, 0, 1));
     IdeTooltipManager.getInstance().setCustomTooltip(label, new ContextHelpTooltip(label, myDocumentation));
 
     panel.add(field, BorderLayout.CENTER);

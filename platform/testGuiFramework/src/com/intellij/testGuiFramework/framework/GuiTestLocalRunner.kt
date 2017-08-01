@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Ref
 import com.intellij.testGuiFramework.impl.GuiTestStarter
 import com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher.runIdeLocally
+import com.intellij.testGuiFramework.launcher.ide.CommunityIde
 import com.intellij.testGuiFramework.launcher.ide.Ide
 import com.intellij.testGuiFramework.launcher.ide.IdeType
 import com.intellij.testGuiFramework.remote.server.JUnitServerHolder
@@ -33,6 +34,7 @@ import org.junit.runner.notification.RunNotifier
 import org.junit.runners.BlockJUnit4ClassRunner
 import org.junit.runners.model.FrameworkMethod
 import org.junit.runners.model.InitializationError
+import kotlin.reflect.KClass
 
 
 class GuiTestLocalRunner @Throws(InitializationError::class)
@@ -140,7 +142,8 @@ constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
 
     fun getIdeFromAnnotation(clazz: Class<*>): Ide {
       val annotation = clazz.getAnnotation(RunWithIde::class.java)
-      val ideType = annotation?.value ?: IdeType.IDEA_COMMUNITY //ide community by default
+      val value = annotation?.value
+      val ideType = if(value != null) (value as KClass<out IdeType>).java.newInstance() else CommunityIde()
       return Ide(ideType, 0, 0)
     }
   }

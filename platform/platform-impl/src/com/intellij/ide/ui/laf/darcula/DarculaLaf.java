@@ -76,7 +76,7 @@ public class DarculaLaf extends BasicLookAndFeel {
   private static void installMacOSXFonts(UIDefaults defaults) {
     final String face = "HelveticaNeue-Regular";
     final FontUIResource uiFont = getFont(face, 13, Font.PLAIN);
-    LafManagerImpl.initFontDefaults(defaults, 13, uiFont);
+    LafManagerImpl.initFontDefaults(defaults, uiFont);
     for (Object key : new HashSet<>(defaults.keySet())) {
       Object value = defaults.get(key);
       if (value instanceof FontUIResource) {

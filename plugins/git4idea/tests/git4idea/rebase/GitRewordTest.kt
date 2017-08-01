@@ -16,10 +16,7 @@
 package git4idea.rebase
 
 import com.intellij.openapi.util.text.StringUtil
-import git4idea.test.GitSingleRepoTest
-import git4idea.test.assertLatestHistory
-import git4idea.test.file
-import git4idea.test.git
+import git4idea.test.*
 
 class GitRewordTest : GitSingleRepoTest() {
 
@@ -30,6 +27,22 @@ class GitRewordTest : GitSingleRepoTest() {
     GitRewordOperation(myRepo, commit, newMessage).execute()
 
     assertEquals("Message reworded incorrectly", newMessage, git("log HEAD --no-walk --pretty=%B"))
+  }
+
+  fun `test reword via amend doesn't touch the local changes`() {
+    val commit = file("a").create("initial").addCommit("Wrong message").details()
+    file("b").create("b").add()
+
+    val newMessage = "Correct message"
+    GitRewordOperation(myRepo, commit, newMessage).execute()
+
+    assertEquals("Message reworded incorrectly", newMessage, git("log HEAD --no-walk --pretty=%B"))
+    myRepo.assertStagedChanges {
+      added("b")
+    }
+    myRepo.assertCommitted {
+      added("a")
+    }
   }
 
   fun `test reword previous commit`() {
@@ -97,6 +110,22 @@ class GitRewordTest : GitSingleRepoTest() {
     val commit = file("a").create("initial").addCommit("Wrong message").details()
 
     val newMessage = "Subject with trailing spaces  \n\nBody \nwith \nspaces."
+    GitRewordOperation(myRepo, commit, newMessage).execute()
+
+    val actualMessage = git("log HEAD --no-walk --pretty=%B")
+    assertTrue("Message reworded incorrectly. Expected:\n[$newMessage] Actual:\n[$actualMessage]",
+               StringUtil.equalsIgnoreWhitespaces(newMessage, actualMessage))
+  }
+
+  // IDEA-175443
+  fun `test reword with hash symbol`() {
+    val commit = file("a").create("initial").addCommit("Wrong message").details()
+
+    val newMessage = """
+      Subject
+
+      #body starting with a hash
+      """.trimIndent()
     GitRewordOperation(myRepo, commit, newMessage).execute()
 
     val actualMessage = git("log HEAD --no-walk --pretty=%B")

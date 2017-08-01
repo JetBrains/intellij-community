@@ -2624,7 +2624,7 @@
                      implementationClass="com.siyeh.ig.threading.NestedSynchronizedStatementInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="NonAtomicOperationOnVolatileField" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="non.atomic.operation.on.volatile.field.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.threading.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.threading.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.threading.NonAtomicOperationOnVolatileFieldInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="NonSynchronizedMethodOverridesSynchronizedMethod" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="non.synchronized.method.overrides.synchronized.method.display.name" groupBundle="messages.InspectionsBundle"

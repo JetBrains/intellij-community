@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Chunk;
 import com.intellij.util.ListWithSelection;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.table.ComboBoxTableCellEditor;
 import org.jetbrains.annotations.NonNls;
@@ -175,7 +176,7 @@ public class GenerateAntBuildDialog extends DialogWrapper {
                                           true));
     JLabel textLabel = new JLabel(CompilerBundle.message("generate.ant.build.dialog.cyclic.modules.table.description"));
     textLabel.setUI(new MultiLineLabelUI());
-    textLabel.setBorder(IdeBorderFactory.createEmptyBorder(4, 4, 6, 4));
+    textLabel.setBorder(JBUI.Borders.empty(4, 4, 6, 4));
     myChunksPanel.add(textLabel, BorderLayout.NORTH);
 
     myTableModel = new MyTableModel(chunks);

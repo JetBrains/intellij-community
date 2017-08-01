@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -168,6 +168,21 @@ public class InjectedLanguageUtil {
 
     int offset = editor.getCaretModel().getOffset();
     return getEditorForInjectedLanguageNoCommit(editor, file, offset);
+  }
+
+  /**
+   * This is a quick check, that can be performed before committing document and invoking 
+   * {@link #getEditorForInjectedLanguageNoCommit(Editor, Caret, PsiFile)} or other methods here, which don't work 
+   * for uncommitted documents.
+   */
+  public static boolean mightHaveInjectedFragmentAtCaret(@NotNull Project project, @NotNull Document hostDocument, int hostOffset) {
+    PsiFile hostPsiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(hostDocument);
+    if (hostPsiFile == null || !hostPsiFile.isValid()) return false;
+    ConcurrentList<DocumentWindow> documents = getCachedInjectedDocuments(hostPsiFile);
+    for (DocumentWindow document : documents) {
+      if (document.isValid() && document.getHostRange(hostOffset) != null) return true;
+    }
+    return false;
   }
 
   /**

@@ -324,6 +324,81 @@ public class MavenModuleCompletionAndResolutionTest extends MavenDomWithIndicesT
       "</project>");
   }
 
+  public void testCreatePomQuickFixCustomPomFileName() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>");
+    importProject();
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<modules>" +
+                     "  <module>subDir/new<caret>Module.xml</module>" +
+                     "</modules>");
+
+    IntentionAction i = getIntentionAtCaret(CREATE_MODULE_INTENTION);
+    assertNotNull(i);
+
+    myFixture.launchAction(i);
+
+    assertCreateModuleFixResult(
+      "subDir/newModule.xml",
+      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+      "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
+      "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+      "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
+      "    <modelVersion>4.0.0</modelVersion>\n" +
+      "\n" +
+      "    <groupId>test</groupId>\n" +
+      "    <artifactId>subDir</artifactId>\n" +
+      "    <version>1</version>\n" +
+      "\n" +
+      "    \n" +
+      "</project>");
+  }
+
+  public void testCreatePomQuickFixInDotXmlFolder() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>");
+    importProject();
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<modules>" +
+                     "  <module>subDir/new<caret>Module.xml</module>" +
+                     "</modules>");
+    createProjectSubFile("subDir/newModule.xml/empty"); // ensure that "subDir/newModule.xml" exists as a directory
+
+    IntentionAction i = getIntentionAtCaret(CREATE_MODULE_INTENTION);
+    assertNotNull(i);
+
+    myFixture.launchAction(i);
+
+    assertCreateModuleFixResult(
+      "subDir/newModule.xml/pom.xml",
+      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+      "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
+      "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+      "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
+      "    <modelVersion>4.0.0</modelVersion>\n" +
+      "\n" +
+      "    <groupId>test</groupId>\n" +
+      "    <artifactId>newModule.xml</artifactId>\n" +
+      "    <version>1</version>\n" +
+      "\n" +
+      "    \n" +
+      "</project>");
+  }
+
   public void testCreatePomQuickFixTakesGroupAndVersionFromSuperParent() throws Throwable {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

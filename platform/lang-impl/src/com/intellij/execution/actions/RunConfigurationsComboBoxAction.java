@@ -30,7 +30,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.IconUtil;
@@ -127,7 +126,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     ComboBoxButton button = createComboBoxButton(presentation);
     button.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 2));
+    panel.setBorder(JBUI.Borders.empty(0, 0, 0, 2));
     panel.add(button);
     return panel;
   }

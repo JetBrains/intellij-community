@@ -18,9 +18,7 @@ package com.intellij.execution.dashboard;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.StopAction;
-import com.intellij.execution.dashboard.tree.DashboardGrouper;
-import com.intellij.execution.dashboard.tree.RunDashboardTreeModel;
-import com.intellij.execution.dashboard.tree.RunDashboardTreeStructure;
+import com.intellij.execution.dashboard.tree.*;
 import com.intellij.execution.runners.FakeRerunAction;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
@@ -86,6 +84,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
 
   private final DefaultTreeModel myTreeModel;
   private AbstractTreeBuilder myBuilder;
+  private RunDashboardAnimator myAnimator;
   private AbstractTreeNode<?> myLastSelection;
   private final Set<Object> myCollapsedTreeNodeValues = new HashSet<>();
   private final List<DashboardGrouper> myGroupers;
@@ -343,6 +342,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     };
     myBuilder.initRootNode();
     Disposer.register(this, myBuilder);
+    myAnimator = new RunDashboardAnimatorImpl(myBuilder);
   }
 
   private JComponent createToolbar() {
@@ -420,6 +420,11 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   @NotNull
   public AbstractTreeBuilder getBuilder() {
     return myBuilder;
+  }
+
+  @NotNull
+  public RunDashboardAnimator getAnimator() {
+    return myAnimator;
   }
 
   private class GroupAction extends ToggleAction implements DumbAware {

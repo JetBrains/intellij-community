@@ -37,6 +37,7 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
     Function<PsiFile, Generator<? extends MadTestingAction>> fileActions = file ->
       Generator.anyOf(InvokeIntention.randomIntentions(file, new JavaIntentionPolicy()),
                       InvokeCompletion.completions(file, new JavaCompletionPolicy()),
+                      Generator.constant(new StripTestDataMarkup(file)),
                       DeleteRange.psiRangeDeletions(file));
     PropertyChecker.forAll(actionsOnJavaFiles(fileActions)).shouldHold(FileWithActions::runActions);
   }

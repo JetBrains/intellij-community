@@ -307,8 +307,10 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
 
       int yShift = -(NORMAL_BORDER_SIZE + AllIcons.Actions.RealIntentionBulb.getIconHeight());
       if (canPlaceBulbOnTheSameLine(editor)) {
-        final int borderHeight = NORMAL_BORDER_SIZE;
-        yShift = -(borderHeight + (AllIcons.Actions.RealIntentionBulb.getIconHeight() - editor.getLineHeight()) /2 + 3);
+        yShift = -(NORMAL_BORDER_SIZE + (AllIcons.Actions.RealIntentionBulb.getIconHeight() - editor.getLineHeight()) / 2 + 3);
+      }
+      else if (position.y < editor.getScrollingModel().getVisibleArea().y + editor.getLineHeight()) {
+        yShift = editor.getLineHeight() - NORMAL_BORDER_SIZE;
       }
 
       final int xShift = AllIcons.Actions.RealIntentionBulb.getIconWidth();

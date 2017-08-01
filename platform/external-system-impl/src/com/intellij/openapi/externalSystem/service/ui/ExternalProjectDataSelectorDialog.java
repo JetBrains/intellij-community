@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.CachedValueImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -164,7 +165,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
       addExtraAction(new ShowSelectedOnlyButton()).
       addExtraAction(new SelectRequiredButton()).
       setToolbarPosition(ActionToolbarPosition.BOTTOM).
-      setToolbarBorder(IdeBorderFactory.createEmptyBorder());
+      setToolbarBorder(JBUI.Borders.empty());
 
     contentPanel.add(decorator.createPanel());
     loadingPanel = new JBLoadingPanel(new BorderLayout(), getDisposable());

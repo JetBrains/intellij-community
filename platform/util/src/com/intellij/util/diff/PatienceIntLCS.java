@@ -165,6 +165,6 @@ class PatienceIntLCS {
   private void checkReduction(int count1, int count2) throws FilesTooBigForDiffException {
     if (count1 * 2 < myCount1) return;
     if (count2 * 2 < myCount2) return;
-    throw new FilesTooBigForDiffException(0);
+    throw new FilesTooBigForDiffException();
   }
 }

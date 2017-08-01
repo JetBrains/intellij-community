@@ -74,6 +74,17 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
                        "public class Assert {" +
                        "  public static void assertTrue(boolean b) {}" +
                        "}");
+    addGuava();
+    doTest();
+  }
+
+  private void addGuava() {
+    myFixture.addClass("package com.google.common.base;\n" +
+                       "\n" +
+                       "public interface Supplier<T> { T get();}\n");
+    myFixture.addClass("package com.google.common.base;\n" +
+                       "\n" +
+                       "public interface Function<F, T> { T apply(F input);}\n");
     myFixture.addClass("package com.google.common.base;\n" +
                        "\n" +
                        "public abstract class Optional<T> {\n" +
@@ -82,8 +93,12 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
                        "  public static <T> Optional<T> fromNullable(T ref) {}\n" +
                        "  public abstract T get();\n" +
                        "  public abstract boolean isPresent();\n" +
+                       "  public abstract T orNull();\n" +
+                       "  public abstract T or(Supplier<? extends T> supplier);\n" +
+                       "  public abstract <V> Optional<V> transform(Function<? super T, V> fn);\n" +
+                       "  public abstract T or(T val);\n" +
+                       "  public abstract java.util.Optional<T> toJavaUtil();\n" +
                        "}");
-    doTest();
   }
 
   public void testPrimitiveInVoidLambda() { doTest(); }
@@ -154,11 +169,20 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
 
   public void testCapturedWildcardNotNull() { doTest(); }
   public void testVarargNotNull() { doTestWithCustomAnnotations(); }
+  public void testIgnoreNullabilityOnPrimitiveCast() { doTestWithCustomAnnotations();}
 
   public void testArrayComponentAndMethodAnnotationConflict() {
     setupCustomAnnotations("withTypeUse", "{ElementType.METHOD, ElementType.TYPE_USE}", myFixture);
     doTest();
   }
+
+  public void testLambdaInlining() { doTest(); }
+
+  public void testOptionalInlining() {
+    addGuava();
+    doTest();
+  }
+  public void testStreamInlining() { doTest(); }
 
   public void testMethodVsExpressionTypeAnnotationConflict() {
     setupCustomAnnotations("withTypeUse", "{ElementType.METHOD, ElementType.TYPE_USE}", myFixture);

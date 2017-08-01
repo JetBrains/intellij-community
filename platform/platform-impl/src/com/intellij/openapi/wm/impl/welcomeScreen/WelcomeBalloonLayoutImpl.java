@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,12 +94,13 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
       pane.getVerticalScrollBar().addComponentListener(new ComponentAdapter() {
         @Override
         public void componentShown(ComponentEvent e) {
-          pane.setBorder(IdeBorderFactory.createEmptyBorder(SystemInfo.isMac ? 2 : 1, 0, 1, 1));
+          int top = SystemInfo.isMac ? 2 : 1;
+          pane.setBorder(JBUI.Borders.empty(top, 0, 1, 1));
         }
 
         @Override
         public void componentHidden(ComponentEvent e) {
-          pane.setBorder(IdeBorderFactory.createEmptyBorder());
+          pane.setBorder(JBUI.Borders.empty());
         }
       });
 

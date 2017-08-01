@@ -97,10 +97,14 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   @Test
   @Staging
   public void testFrameEvalAndTracing() {
-    unittests("tests_pydevd_python/test_frame_eval_and_tracing.py", Sets.newHashSet("python36"));
+    unittests("tests_pydevd_python/test_frame_eval_and_tracing.py", Sets.newHashSet("python36"), true);
   }
 
   private void unittests(final String script, @Nullable Set<String> tags) {
+    unittests(script, tags, false);
+  }
+
+  private void unittests(final String script, @Nullable Set<String> tags, boolean isSkipAllowed) {
     runPythonTest(new PyProcessWithConsoleTestTask<PyUnitTestProcessRunner>("/helpers/pydev", SdkCreationType.SDK_PACKAGES_ONLY) {
 
       @NotNull
@@ -120,7 +124,12 @@ public class PythonDebuggerTest extends PyEnvTestCase {
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
-        runner.assertAllTestsPassed();
+        if (isSkipAllowed) {
+          runner.assertNoFailures();
+        }
+        else {
+          runner.assertAllTestsPassed();
+        }
       }
 
       @NotNull

@@ -19,6 +19,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -772,7 +773,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
     @Override
     public String createReplacement() {
-      return StreamApiUtil.generateMapOperation(myVariable, myType, myExpression);
+      return StreamRefactoringUtil.generateMapOperation(myVariable, myType, myExpression);
     }
 
     @Override

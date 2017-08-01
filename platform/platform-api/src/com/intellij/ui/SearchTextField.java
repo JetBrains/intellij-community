@@ -31,6 +31,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -201,13 +202,13 @@ public class SearchTextField extends JPanel {
         myToggleHistoryLabel.setBackground(myTextField.getBackground());
         myClearFieldLabel.setBackground(myTextField.getBackground());
 
-        setBorder(new CompoundBorder(IdeBorderFactory.createEmptyBorder(2, 0, 2, 0), originalBorder));
+        setBorder(new CompoundBorder(JBUI.Borders.empty(2, 0, 2, 0), originalBorder));
 
         myTextField.setOpaque(true);
-        myTextField.setBorder(IdeBorderFactory.createEmptyBorder(0, 5, 0, 5));
+        myTextField.setBorder(JBUI.Borders.empty(0, 5, 0, 5));
       }
       else {
-        setBorder(IdeBorderFactory.createEmptyBorder(2, 0, 2, 0));
+        setBorder(JBUI.Borders.empty(2, 0, 2, 0));
       }
     }
 

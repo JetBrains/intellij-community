@@ -44,10 +44,10 @@ public class ReplaceBuiltinsQuickFix implements LocalQuickFix {
         PyReferenceExpression importReference = importElement.getImportReferenceExpression();
         if (importReference != null) {
           if ("__builtin__".equals(importReference.getName())) {
-            importReference.replace(elementGenerator.createFromText(LanguageLevel.getDefault(), PyReferenceExpression.class, "builtins"));
+            importReference.replace(elementGenerator.createExpressionFromText(LanguageLevel.getDefault(), "builtins"));
           }
           if ("builtins".equals(importReference.getName())) {
-            importReference.replace(elementGenerator.createFromText(LanguageLevel.getDefault(), PyReferenceExpression.class, "__builtin__"));
+            importReference.replace(elementGenerator.createExpressionFromText(LanguageLevel.getDefault(), "__builtin__"));
           }
         }
       }

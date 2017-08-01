@@ -342,6 +342,18 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
     public State withSortType(@NotNull PermanentGraph.SortType type) {
       return new State(myFilters, type, myCommitCount, myRequestsToRun, myVisiblePack, myIsValid);
     }
+
+    @Override
+    public String toString() {
+      return "State{" +
+             "myFilters=" + myFilters +
+             ", mySortType=" + mySortType +
+             ", myCommitCount=" + myCommitCount +
+             ", myRequestsToRun=" + myRequestsToRun +
+             ", myVisiblePack=" + myVisiblePack +
+             ", myIsValid=" + myIsValid +
+             '}';
+    }
   }
 
   private interface Request {

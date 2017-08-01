@@ -16,6 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.openapi.diagnostic.Logger;
@@ -1041,7 +1042,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       PsiLambdaExpression newLambda = (PsiLambdaExpression)factory
         .createExpressionFromText("(" + elementType.getCanonicalText() + " " + name + ")->" + ct.text(body), mapToObjCall);
       PsiParameter newParameter = ArrayUtil.getFirstElement(newLambda.getParameterList().getParameters());
-      replacement += StreamApiUtil.generateMapOperation(newParameter, outElementType, newLambda.getBody());
+      replacement += StreamRefactoringUtil.generateMapOperation(newParameter, outElementType, newLambda.getBody());
       PsiElement result = ct.replaceAndRestoreComments(mapToObjCall, replacement);
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
       result = JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);

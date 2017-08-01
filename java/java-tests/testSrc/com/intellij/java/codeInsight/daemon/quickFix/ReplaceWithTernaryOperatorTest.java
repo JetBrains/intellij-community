@@ -26,7 +26,9 @@ public class ReplaceWithTernaryOperatorTest extends LightQuickFixParameterizedTe
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new DataFlowInspection(), new NullableStuffInspection()};
+    DataFlowInspection dataFlowInspection = new DataFlowInspection();
+    dataFlowInspection.SUGGEST_NULLABLE_ANNOTATIONS = true;
+    return new LocalInspectionTool[]{dataFlowInspection, new NullableStuffInspection()};
   }
 
   public void test() throws Exception {

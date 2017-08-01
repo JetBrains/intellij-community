@@ -84,11 +84,11 @@ public class EduCoursesPanel extends JPanel {
     GuiUtils.replaceJSplitPaneWithIDEASplitter(mySplitPaneRoot, true);
     mySplitPane.setDividerLocation(0.5);
     mySplitPane.setResizeWeight(0.5);
-    myCourseNameLabel.setBorder(IdeBorderFactory.createEmptyBorder(20, 10, 5, 10));
+    myCourseNameLabel.setBorder(JBUI.Borders.empty(20, 10, 5, 10));
     Font labelFont = UIUtil.getLabelFont();
     myCourseNameLabel.setFont(new Font(labelFont.getName(), Font.BOLD, JBUI.scaleFontSize(18.0f)));
-    myTagsPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, 10, 0, 10));
-    myDescriptionTextArea.setBorder(IdeBorderFactory.createEmptyBorder(20, 10, 10, 10));
+    myTagsPanel.setBorder(JBUI.Borders.empty(0, 10));
+    myDescriptionTextArea.setBorder(JBUI.Borders.empty(20, 10, 10, 10));
     myDescriptionTextArea.setEditorKit(UIUtil.getHTMLEditorKit());
     myDescriptionTextArea.setEditable(false);
     myDescriptionTextArea.setPreferredSize(JBUI.size(myCoursePanel.getPreferredSize()));
@@ -97,7 +97,7 @@ public class EduCoursesPanel extends JPanel {
     myCourses = getCourses();
     updateModel(myCourses, null);
     myErrorLabel.setVisible(false);
-    myErrorLabel.setBorder(IdeBorderFactory.createEmptyBorder(20, 10, 0, 0));
+    myErrorLabel.setBorder(JBUI.Borders.empty(20, 10, 0, 0));
 
     ListCellRendererWrapper<Course> renderer = new ListCellRendererWrapper<Course>() {
       @Override
@@ -124,7 +124,7 @@ public class EduCoursesPanel extends JPanel {
       public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         Component component = renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         if (component instanceof JLabel) {
-          ((JLabel)component).setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 5, 0));
+          ((JLabel)component).setBorder(JBUI.Borders.empty(5, 0));
         }
         return component;
       }
@@ -176,7 +176,7 @@ public class EduCoursesPanel extends JPanel {
     myCourseListPanel.setBorder(JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 1, 1, 1, 1));
     HideableDecorator decorator = new HideableDecorator(myAdvancedSettingsPlaceholder, "Advanced Settings", false);
     decorator.setContentComponent(myAdvancedSettings);
-    myAdvancedSettings.setBorder(IdeBorderFactory.createEmptyBorder(0, IdeBorderFactory.TITLED_BORDER_INDENT, 5, 0));
+    myAdvancedSettings.setBorder(JBUI.Borders.empty(0, IdeBorderFactory.TITLED_BORDER_INDENT, 5, 0));
     myCoursesList.setBackground(LIST_COLOR);
     myDescriptionTextArea.setBackground(UIUtil.getPanelBackground());
     myAdvancedSettingsPlaceholder.setVisible(false);
@@ -311,7 +311,7 @@ public class EduCoursesPanel extends JPanel {
   }
 
   private static JLabel createTagLabel(String tagText) {
-    Border emptyBorder = IdeBorderFactory.createEmptyBorder(3, 5, 3, 5);
+    Border emptyBorder = JBUI.Borders.empty(3, 5);
     JBLabel label = new JBLabel(tagText);
     label.setOpaque(true);
     label.setBorder(emptyBorder);

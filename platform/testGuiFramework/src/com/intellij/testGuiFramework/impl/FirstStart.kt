@@ -22,7 +22,6 @@ import com.intellij.testGuiFramework.impl.FirstStart.Utils.button
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.dialog
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.radioButton
 import com.intellij.testGuiFramework.launcher.ide.IdeType
-import com.intellij.util.PlatformUtils
 import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.Robot
 import org.fest.swing.core.SmartWaitRobot
@@ -51,31 +50,6 @@ abstract class FirstStart(val ideType: IdeType) {
 
   protected val LOG = Logger.getInstance(this.javaClass.name)
 
-  companion object {
-
-    @Suppress("unused") //Called via reflection from FirstStarter
-    @JvmStatic
-    fun guessIdeAndStartRobot(): FirstStart {
-      when (System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY, PlatformUtils.IDEA_PREFIX)) {
-        PlatformUtils.IDEA_PREFIX -> return IdeaUltimateFirstStart()
-        PlatformUtils.IDEA_CE_PREFIX -> return IdeaCommunityFirstStart()
-        PlatformUtils.APPCODE_PREFIX -> TODO("Create complete installation case for AppCode")
-        PlatformUtils.CLION_PREFIX -> TODO("Create complete installation case for CLion")
-        PlatformUtils.PYCHARM_PREFIX -> TODO("Create complete installation case for PyCharm")
-        PlatformUtils.PYCHARM_CE_PREFIX -> TODO("Create complete installation case for PyCharm")
-        PlatformUtils.PYCHARM_EDU_PREFIX -> TODO("Create complete installation case for PyCharm")
-        PlatformUtils.RUBY_PREFIX -> TODO("Create complete installation case for RubyMine")
-        PlatformUtils.PHP_PREFIX -> TODO("Create complete installation case for PhpStorm")
-        PlatformUtils.WEB_PREFIX -> return WebStormFirstStart()
-        PlatformUtils.DBE_PREFIX -> TODO("Create complete installation case for DataGrip")
-        PlatformUtils.RIDER_PREFIX -> TODO("Create complete installation case for Rider")
-        PlatformUtils.GOIDE_PREFIX -> TODO("Create complete installation case for Gogland")
-        else -> return IdeaCommunityFirstStart()
-      }
-
-    }
-  }
-
   val myRobot: Robot
 
   val robotThread: Thread = thread(start = false, name = FIRST_START_ROBOT_THREAD) {
@@ -86,6 +60,14 @@ abstract class FirstStart(val ideType: IdeType) {
     myRobot = SmartWaitRobot()
     LOG.info("Starting separated thread: '$FIRST_START_ROBOT_THREAD' to complete initial installation")
     robotThread.start()
+  }
+
+  companion object {
+    fun guessIdeAndStartRobot() {
+      val firstStartClass = System.getProperty("idea.gui.test.first.start.class")
+      val firstStart = Class.forName(firstStartClass).newInstance() as FirstStart
+      firstStart.completeInstallation()
+    }
   }
 
   protected abstract fun completeFirstStart()
@@ -139,16 +121,6 @@ abstract class FirstStart(val ideType: IdeType) {
       dialog(title, 120)
       LOG.info("Click OK on 'Do not import settings'")
       radioButton("Do not import settings", 120)
-      button("OK", 120)
-    }
-  }
-
-  protected fun webStormInitialConfiguration() {
-    with(myRobot) {
-      val title = "WebStorm Initial Configuration"
-      LOG.info("Waiting for '$title' dialog")
-      dialog(title, 120)
-      LOG.info("Click OK on '$title'")
       button("OK", 120)
     }
   }
@@ -221,38 +193,3 @@ abstract class FirstStart(val ideType: IdeType) {
   }
 
 }
-
-class IdeaCommunityFirstStart : FirstStart(ideType = IdeType.IDEA_COMMUNITY) {
-
-  override fun completeFirstStart() {
-    completeInstallation()
-    acceptAgreement()
-    customizeIntellijIdea()
-    waitWelcomeFrameAndClose()
-  }
-}
-
-class IdeaUltimateFirstStart : FirstStart(ideType = IdeType.IDEA_ULTIMATE) {
-
-  override fun completeFirstStart() {
-    completeInstallation()
-    acceptAgreement()
-    customizeIntellijIdea()
-    waitWelcomeFrameAndClose()
-  }
-
-
-}
-
-class WebStormFirstStart : FirstStart(ideType = IdeType.WEBSTORM) {
-
-  override fun completeFirstStart() {
-    completeInstallation()
-    acceptAgreement()
-    waitWelcomeFrame()
-    webStormInitialConfiguration()
-    waitWelcomeFrameAndClose()
-  }
-
-}
-

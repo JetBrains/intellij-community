@@ -589,7 +589,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         return size;
       }
     };
-    scrollPane.setBorder(IdeBorderFactory.createEmptyBorder());
+    scrollPane.setBorder(JBUI.Borders.empty());
     splitter.setFirstComponent(scrollPane);
     JPanel bottomPanel = new JPanel(new MigLayout("flowx, ins 4 4 0 4, fillx, hidemode 2, gap 0"));
     bottomPanel.add(myTabResultsButton);

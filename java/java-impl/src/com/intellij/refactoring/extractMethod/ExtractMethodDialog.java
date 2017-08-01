@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.refactoring.util.VariableData;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.util.ArrayUtil;
@@ -326,7 +325,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
       updateSignature();
     });
     optionsPanel.add(myFoldParameters);
-    final Border emptyBorder = IdeBorderFactory.createEmptyBorder(5, 0, 5, 4);
+    final Border emptyBorder = JBUI.Borders.empty(5, 0, 5, 4);
     myFoldParameters.setBorder(emptyBorder);
 
     boolean canBeVarargs = false;
@@ -398,7 +397,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
       myMakeStatic.setSelected(false);
       myMakeStatic.setEnabled(false);
     }
-    myMakeStatic.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 5, 4));
+    myMakeStatic.setBorder(JBUI.Borders.empty(5, 0, 5, 4));
   }
 
   private ComboBoxVisibilityPanel<String> createVisibilityPanel() {

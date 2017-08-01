@@ -96,6 +96,7 @@ class FileHistoryFilterer extends VcsLogFilterer {
     if (myIndex.isIndexed(myRoot)) {
       VisiblePack visiblePack = filterWithIndex(dataPack, sortType, filters);
       LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for computing history for " + myFilePath + " with index");
+      checkNotEmpty(dataPack, visiblePack, true);
       return Pair.create(visiblePack, commitCount);
     }
 
@@ -109,15 +110,28 @@ class FileHistoryFilterer extends VcsLogFilterer {
                     " for computing history for " +
                     myFilePath +
                     " with history provider");
+          checkNotEmpty(dataPack, visiblePack, false);
           return Pair.create(visiblePack, commitCount);
         }
         catch (VcsException e) {
           LOG.error(e);
+          return super.filter(dataPack, sortType, filters, commitCount);
         }
       }
     }
 
+    LOG.warn("Could not find vcs or history provider for file " + myFilePath);
     return super.filter(dataPack, sortType, filters, commitCount);
+  }
+
+  private void checkNotEmpty(@NotNull DataPack dataPack, @NotNull VisiblePack visiblePack, boolean withIndex) {
+    if (!dataPack.isFull()) {
+      LOG.debug("Data pack is not full while computing file history for " + myFilePath + "\n" +
+                "Found " + visiblePack.getVisibleGraph().getVisibleCommitCount() + " commits");
+    }
+    else if (visiblePack.getVisibleGraph().getVisibleCommitCount() == 0) {
+      LOG.warn("Empty file history from " + (withIndex ? "index" : "provider") + " for " + myFilePath);
+    }
   }
 
   @NotNull

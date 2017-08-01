@@ -15,6 +15,7 @@
  */
 package com.intellij.testGuiFramework.framework;
 
+import com.intellij.testGuiFramework.launcher.ide.CommunityIde;
 import com.intellij.testGuiFramework.launcher.ide.IdeType;
 
 import java.lang.annotation.ElementType;
@@ -25,5 +26,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface RunWithIde {
-  IdeType value() default IdeType.IDEA_ULTIMATE;
+  Class<? extends IdeType> value() default CommunityIde.class;
 }

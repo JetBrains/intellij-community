@@ -1050,12 +1050,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       AnAction oldValue = myId2Action.remove(actionId);
       myAction2Id.remove(oldValue);
       myId2Index.remove(actionId);
-      for (String actionGroupId: myId2GroupId.get(actionId)) {
-        AnAction actionGroup = getAction(actionGroupId);
-        if (actionGroup instanceof DefaultActionGroup) {
-          ((DefaultActionGroup)actionGroup).remove(oldValue);
-        }
-      }
       for (PluginId pluginName : myPlugin2Id.keySet()) {
         final THashSet<String> pluginActions = myPlugin2Id.get(pluginName);
         if (pluginActions != null) {
@@ -1121,16 +1115,16 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       if (isGroup != newAction instanceof ActionGroup) {
         throw new IllegalStateException("cannot replace a group with an action and vice versa: " + actionId);
       }
+      for (String groupId : myId2GroupId.get(actionId)) {
+        DefaultActionGroup group = ObjectUtils.assertNotNull((DefaultActionGroup)getActionOrStub(groupId));
+        group.replaceAction(oldAction, newAction);
+      }
       unregisterAction(actionId);
       if (isGroup) {
         myId2GroupId.values().remove(actionId);
       }
     }
     registerAction(actionId, newAction, pluginId);
-    for (String groupId : myId2GroupId.get(actionId)) {
-      DefaultActionGroup group = ObjectUtils.assertNotNull((DefaultActionGroup)getActionOrStub(groupId));
-      group.replaceAction(oldAction, newAction);
-    }
     return oldAction;
   }
 

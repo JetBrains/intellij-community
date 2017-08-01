@@ -2273,6 +2273,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       findMatchesCount(source, "import java.util.ArrayList;");
       fail("malformed pattern warning expected");
     } catch (MalformedPatternException ignored) {}
+
+    findMatchesCount(source, "'_ReturnType '_Method*('_ParameterType '_Parameter);");
   }
 
   public void testFindInnerClass() {

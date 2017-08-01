@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,6 +69,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
@@ -615,12 +616,12 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
         settings.setAdditionalLinesCount(0);
         settings.setLeadingWhitespaceShown(true);
         myPreviewEditor.getColorsScheme().setColor(EditorColors.GUTTER_BACKGROUND, myPreviewEditor.getColorsScheme().getDefaultBackground());
-        myPreviewEditor.getScrollPane().setBorder(IdeBorderFactory.createEmptyBorder());
+        myPreviewEditor.getScrollPane().setBorder(JBUI.Borders.empty());
       }
       if (problemCount == 0) {
         myPreviewEditor.getScrollingModel().scrollTo(myPreviewEditor.offsetToLogicalPosition(selectedElement.getTextOffset()), ScrollType.CENTER_UP);
       }
-      myPreviewEditor.getComponent().setBorder(IdeBorderFactory.createEmptyBorder());
+      myPreviewEditor.getComponent().setBorder(JBUI.Borders.empty());
       return Pair.create(myPreviewEditor.getComponent(), myPreviewEditor);
     }
     if (selectedEntity == null) {

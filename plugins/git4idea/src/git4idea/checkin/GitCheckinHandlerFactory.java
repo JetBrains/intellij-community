@@ -189,11 +189,11 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       GitVersion version = vcs.getVersion();
       if (System.getenv("HOME") == null && GitVersionSpecialty.DOESNT_DEFINE_HOME_ENV_VAR.existsIn(version)) {
         Messages.showErrorDialog(project,
-                                 "You are using Git " + version + " which doesn't define %HOME% environment variable properly.\n" +
-                                 "Consider updating Git to a newer version " +
-                                 "or define %HOME% to point to the place where the global .gitconfig is stored \n" +
-                                 "(it is usually %USERPROFILE% or %HOMEDRIVE%%HOMEPATH%).",
-                                 "HOME Variable Is Not Defined");
+          "You are using Git " + version.getPresentation() + " which doesn't define %HOME% environment variable properly.\n" +
+          "Consider updating Git to a newer version " +
+          "or define %HOME% to point to the place where the global .gitconfig is stored \n" +
+          "(it is usually %USERPROFILE% or %HOMEDRIVE%%HOMEPATH%).",
+          "HOME Variable Is Not Defined");
         return ReturnResult.CANCEL;
       }
 

@@ -39,9 +39,11 @@ class JavaCompletionPolicy extends CompletionPolicy {
     if (PsiTreeUtil.getParentOfType(ref, PsiPackageStatement.class) != null) return false;
 
     if (!ref.isQualified() && target instanceof PsiPackage) return false;
-    if (target instanceof PsiClass && PsiTreeUtil.isAncestor(target, ref, true) &&
-        ref.getTextRange().getStartOffset() < ((PsiClass)target).getLBrace().getTextRange().getStartOffset()) {
-      return false;
+    if (target instanceof PsiClass && PsiTreeUtil.isAncestor(target, ref, true)) {
+      PsiElement lBrace = ((PsiClass)target).getLBrace();
+      if (lBrace == null || ref.getTextRange().getStartOffset() < lBrace.getTextRange().getStartOffset()) {
+        return false;
+      }
     }
     if (target instanceof PsiField &&
         SyntaxTraverser.psiApi().parents(ref).find(e -> e instanceof PsiMethod && ((PsiMethod)e).isConstructor()) != null) {

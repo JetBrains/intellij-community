@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,4 +100,10 @@ public abstract class InjectedLanguageManager {
    */
   @NotNull
   public abstract List<TextRange> getNonEditableFragments(@NotNull DocumentWindow window);
+
+  /**
+   * This method can be invoked on an uncommitted document, before performing commit and using other methods here 
+   * (which don't work for uncommitted document).
+   */
+  public abstract boolean mightHaveInjectedFragmentAtOffset(@NotNull Document hostDocument, int hostOffset);
 }

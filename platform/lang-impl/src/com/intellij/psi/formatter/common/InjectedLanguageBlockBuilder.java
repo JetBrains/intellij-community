@@ -74,7 +74,7 @@ public abstract class InjectedLanguageBlockBuilder {
         return;
       }
       ASTNode node = shredHost.getNode();
-      if (node == null) {
+      if (node == null || !injectionHost.getTextRange().contains(textRange.shiftRight(node.getStartOffset()))) {
         return;
       }
       if (node != injectionHost) {

@@ -155,7 +155,7 @@ public class MadTestingUtil {
   }
 
   /**
-   * Finds files under {@code rootPath} (e.g. test data root) satisfying {@code fileFilter condition} (e.g. correct extension) and uses {@code actions} to generate actions those files (e.g. invoke compleiton/intentions or random editing).
+   * Finds files under {@code rootPath} (e.g. test data root) satisfying {@code fileFilter condition} (e.g. correct extension) and uses {@code actions} to generate actions those files (e.g. invoke completion/intentions or random editing).
    * Almost: the files with same paths and contents are created inside the test project, then the actions are executed on them.
    * Note that the test project contains only one file at each moment, so it's best to test actions that don't require much environment. 
    * @return
@@ -182,10 +182,12 @@ public class MadTestingUtil {
       PsiDocumentManager.getInstance(fixture.getProject()).commitAllDocuments();
       PsiFile file = PsiManager.getInstance(fixture.getProject()).findFile(vFile);
       if (file instanceof PsiBinaryFile || file instanceof PsiPlainTextFile) {
-        return Generator.constant(null);
+        // no operations, but the just created file needs to be deleted (in FileWithActions#runActions)
+        // todo a side-effect-free generator
+        return Generator.constant(new FileWithActions(file, Collections.emptyList()));
       }
       return Generator.nonEmptyLists(actions.apply(file)).map(a -> new FileWithActions(file, a));
-    }).suchThat(Objects::nonNull);
+    });
   }
 
   private static boolean shouldGoInsiderDir(@NotNull String name) {
@@ -206,9 +208,8 @@ public class MadTestingUtil {
 
   @NotNull
   private static VirtualFile copyFileToProject(File ioFile, CodeInsightTestFixture fixture, String rootPath) {
-    //todo strip test data markup
     try {
-      String path = FileUtil.getRelativePath(rootPath, ioFile.getPath(), '/');
+      String path = FileUtil.getRelativePath(FileUtil.toCanonicalPath(rootPath), ioFile.getPath(), '/');
       assert path != null;
       VirtualFile existing = fixture.findFileInTempDir(path);
       if (existing != null) {
@@ -222,6 +223,10 @@ public class MadTestingUtil {
     }
   }
 
+  /**
+   * Generates actions checking that incremental reparse produces the same PSI as full reparse. This check makes sense
+   * in languages employing {@link com.intellij.psi.tree.ILazyParseableElementTypeBase}.
+   */
   @NotNull
   public static Generator<MadTestingAction> randomEditsWithReparseChecks(PsiFile file) {
     return Generator.anyOf(DeleteRange.psiRangeDeletions(file),

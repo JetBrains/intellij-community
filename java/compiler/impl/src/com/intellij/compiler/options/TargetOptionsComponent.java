@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
@@ -46,8 +47,8 @@ public class TargetOptionsComponent extends JPanel {
   private static final String[] KNOWN_TARGETS;
   private static final String COMPILER_DEFAULT = "Same as language level";
 
-  private ComboBox myCbProjectTargetLevel;
-  private JBTable myTable;
+  private final ComboBox myCbProjectTargetLevel;
+  private final JBTable myTable;
   private final Project myProject;
   
   static {
@@ -60,7 +61,7 @@ public class TargetOptionsComponent extends JPanel {
         targets.add(target);
       }
     }
-    KNOWN_TARGETS = targets.toArray(new String[targets.size()]);
+    KNOWN_TARGETS = ArrayUtil.toStringArray(targets);
   }
   public TargetOptionsComponent(Project project) {
     super(new GridBagLayout());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.templates.ArchivedProjectTemplate;
 import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
@@ -77,7 +77,7 @@ public class ProjectTemplateList extends JPanel {
           myTextLabel.setDisabledIcon(IconLoader.getDisabledIcon(icon));
         }
         myTextLabel.setEnabled(myList.isEnabled());
-        myTextLabel.setBorder(IdeBorderFactory.createEmptyBorder(3, 3, 3, 3));
+        myTextLabel.setBorder(JBUI.Borders.empty(3, 3, 3, 3));
       }
     };
     myList.setCellRenderer(renderer);

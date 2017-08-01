@@ -15,8 +15,10 @@
  */
 package com.intellij.ui;
 
+/**
+ * @author Sergey Malenkov
+ */
 public interface Expandable {
-  String VARIANT = "expandable";
 
   void expand();
 

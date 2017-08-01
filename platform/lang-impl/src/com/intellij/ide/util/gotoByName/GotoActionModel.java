@@ -50,6 +50,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -551,7 +552,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
                                                   int index, boolean isSelected, boolean cellHasFocus) {
       boolean showIcon = UISettings.getInstance().getShowIconsInMenus();
       JPanel panel = new JPanel(new BorderLayout());
-      panel.setBorder(IdeBorderFactory.createEmptyBorder(2));
+      panel.setBorder(JBUI.Borders.empty(2));
       panel.setOpaque(true);
       Color bg = UIUtil.getListBackground(isSelected);
       panel.setBackground(bg);
@@ -573,7 +574,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       Object value = ((MatchedValue) matchedValue).value;
       String pattern = ((MatchedValue)matchedValue).pattern;
 
-      Border eastBorder = IdeBorderFactory.createEmptyBorder(0, 0, 0, 2);
+      Border eastBorder = JBUI.Borders.emptyRight(2);
       if (value instanceof ActionWrapper) {
         ActionWrapper actionWithParentGroup = (ActionWrapper)value;
         AnAction anAction = actionWithParentGroup.getAction();
@@ -662,7 +663,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       OnOffButton button = new OnOffButton();
       button.setSelected(selected);
       panel.add(button, BorderLayout.EAST);
-      panel.setBorder(IdeBorderFactory.createEmptyBorder(0, 2, 0, 2));
+      panel.setBorder(JBUI.Borders.empty(0, 2));
     }
 
     @NotNull

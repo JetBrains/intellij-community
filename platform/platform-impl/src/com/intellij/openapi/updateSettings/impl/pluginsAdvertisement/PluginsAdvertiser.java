@@ -170,7 +170,7 @@ public class PluginsAdvertiser implements StartupActivity {
     params.forEach((key, value) -> uriBuilder.addParameter(key, value));
 
     boolean forceHttps = IdeaApplication.isLoaded() && UpdateSettings.getInstance().canUseSecureConnection();
-    return HttpRequests.request(uriBuilder.toString()).forceHttps(forceHttps).connect(requestProcessor, errorValue, LOG);
+    return HttpRequests.request(uriBuilder.toString()).forceHttps(forceHttps).productNameAsUserAgent().connect(requestProcessor, errorValue, LOG);
   }
 
   public static void ensureDeleted() {

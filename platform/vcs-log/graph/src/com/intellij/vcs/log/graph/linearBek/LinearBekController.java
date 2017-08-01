@@ -169,7 +169,7 @@ public class LinearBekController extends CascadeController {
   }
 
   private SortedSet<Integer> collectNodesToCollapse(GraphNode node) {
-    SortedSet<Integer> toCollapse = new TreeSet<>((o1, o2) -> o2.compareTo(o1));
+    SortedSet<Integer> toCollapse = new TreeSet<>(Comparator.reverseOrder());
     for (LinearBekGraphBuilder.MergeFragment f : collectFragmentsToCollapse(node)) {
       toCollapse.add(f.getParent());
       toCollapse.addAll(f.getTailsAndBody());

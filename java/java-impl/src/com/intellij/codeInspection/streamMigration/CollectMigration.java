@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.streamMigration;
 
+import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.CountingLoopSource;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -280,7 +281,7 @@ class CollectMigration extends BaseStreamApiMigration {
       PsiType addedType = getAddedElementType(myAddCall);
       PsiExpression mapping = getMapping();
       if (addedType == null) addedType = mapping.getType();
-      return StreamApiUtil.generateMapOperation(myElement, addedType, mapping);
+      return StreamRefactoringUtil.generateMapOperation(myElement, addedType, mapping);
     }
 
     public String generateCollector() {
@@ -562,7 +563,7 @@ class CollectMigration extends BaseStreamApiMigration {
     public String generateIntermediate() {
       PsiExpression mapping = myAppendCall.getArgumentList().getExpressions()[0];
       mapping = JavaPsiFacade.getElementFactory(mapping.getProject()).createExpressionFromText(expressionToCharSequence(mapping), mapping);
-      return StreamApiUtil.generateMapOperation(myElement, null, mapping);
+      return StreamRefactoringUtil.generateMapOperation(myElement, null, mapping);
     }
 
     @NotNull

@@ -17,6 +17,8 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.xhtml.XHTMLLanguage;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.patterns.XmlPatterns;
@@ -43,7 +45,7 @@ import java.util.List;
 import static com.intellij.html.impl.util.MicrodataUtil.*;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-public class HtmlCompletionContributor extends CompletionContributor {
+public class HtmlCompletionContributor extends CompletionContributor implements DumbAware {
   public HtmlCompletionContributor() {
     extend(CompletionType.BASIC, psiElement().inside(XmlPatterns.xmlAttributeValue()), new CompletionProvider<CompletionParameters>() {
       @Override
@@ -96,7 +98,7 @@ public class HtmlCompletionContributor extends CompletionContributor {
       }
       else if ("rel".equals(name) || "rev".equals(name)) {
         return new String[]{"alternate", "author", "bookmark", "help", "icon", "license", "next", "nofollow",
-          "noreferrer", "prefetch", "prev", "search", "stylesheet", "tag", "start", "contents", "index",
+          "noreferrer", "noopener", "prefetch", "prev", "search", "stylesheet", "tag", "start", "contents", "index",
           "glossary", "copyright", "chapter", "section", "subsection", "appendix", "script", "import",
           "apple-touch-icon", "apple-touch-icon-precomposed", "apple-touch-startup-image"};
       }
@@ -125,7 +127,7 @@ public class HtmlCompletionContributor extends CompletionContributor {
           names[i] = charSets[i].toString();
         }
         return names;
-      } else if ("itemprop".equals(name)) {
+      } else if ("itemprop".equals(name) && !DumbService.isDumb(attribute.getProject())) {
         XmlTag scopeTag = findScopeTag(tag);
         return scopeTag != null ? findItemProperties(scopeTag) : ArrayUtil.EMPTY_STRING_ARRAY;
       }

@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework.propertyBased;
 
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -32,14 +33,17 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.TestLookupElementPresentation;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import junit.framework.TestCase;
-import org.jetbrains.annotations.NotNull;
 import jetCheck.Generator;
 import jetCheck.IntDistribution;
+import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -99,7 +103,17 @@ public class InvokeCompletion extends ActionOnRange {
   }
 
   private void performCompletion(Editor editor) {
-    String expectedVariant = myPolicy.getExpectedVariant(editor, getFile());
+    int caretOffset = editor.getCaretModel().getOffset();
+    int adjustedOffset = TargetElementUtil.adjustOffset(getFile(), getDocument(), caretOffset);
+
+    PsiElement leaf = getFile().findElementAt(adjustedOffset);
+    PsiReference ref = getFile().findReferenceAt(adjustedOffset);
+
+    String expectedVariant = leaf == null ? null : myPolicy.getExpectedVariant(editor, getFile(), leaf, ref);
+
+    boolean prefixEqualsExpected = isPrefixEqualToExpectedVariant(caretOffset, leaf, ref, expectedVariant);
+
+    boolean shouldCheckDuplicates = myPolicy.shouldCheckDuplicates(editor, getFile(), leaf);
 
     new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), editor);
     
@@ -109,7 +123,7 @@ public class InvokeCompletion extends ActionOnRange {
     LookupEx lookup = LookupManager.getActiveLookup(editor);
     if (lookup == null) {
       myLog += ", no lookup";
-      if (expectedVariant == null) return;
+      if (expectedVariant == null || prefixEqualsExpected) return;
       TestCase.fail("No lookup, but expected '" + expectedVariant + "' among completion variants" + notFound);
     }
 
@@ -119,24 +133,36 @@ public class InvokeCompletion extends ActionOnRange {
       TestCase.assertNotNull("No variant '" + expectedVariant + "' among " + items + notFound, sameItem);
     }
 
-    checkNoDuplicates(items);
+    if (shouldCheckDuplicates) {
+      checkNoDuplicates(items);
+    }
 
     LookupElement item = items.get(myItemIndexRaw % items.size());
     myLog += ", selected '" + item + "' with '" + StringUtil.escapeStringCharacters(String.valueOf(myCompletionChar)) + "'";
     ((LookupImpl)lookup).finishLookup(myCompletionChar, item);
   }
 
+  private boolean isPrefixEqualToExpectedVariant(int caretOffset, PsiElement leaf, PsiReference ref, String expectedVariant) {
+    if (expectedVariant == null) return false;
+
+    int expectedEnd = ref != null ? ref.getRangeInElement().getEndOffset() + ref.getElement().getTextRange().getStartOffset() :
+                      leaf != null ? leaf.getTextRange().getEndOffset() :
+                      0;
+    return expectedEnd == caretOffset && getFile().getText().substring(0, caretOffset).endsWith(expectedVariant);
+  }
+
   private static void checkNoDuplicates(List<LookupElement> items) {
     Set<List<?>> presentations = new HashSet<>();
     for (LookupElement item : items) {
-      LookupElementPresentation p = LookupElementPresentation.renderElement(item);
+      LookupElementPresentation p = TestLookupElementPresentation.renderReal(item);
       if (seemsTruncated(p.getItemText()) || seemsTruncated(p.getTailText()) || seemsTruncated(p.getTypeText())) {
         continue;
       }
 
-      List<Object> info = Arrays.asList(p.getItemText(), p.getItemTextForeground(), p.isItemTextBold(), p.isItemTextUnderlined(),
+      List<Object> info = Arrays.asList(TestLookupElementPresentation.unwrapIcon(p.getIcon()),
+                                        p.getItemText(), p.getItemTextForeground(), p.isItemTextBold(), p.isItemTextUnderlined(),
                                         p.getTailFragments(),
-                                        p.getTypeText(), p.getTypeIcon(), p.isTypeGrayed(),
+                                        p.getTypeText(), TestLookupElementPresentation.unwrapIcon(p.getTypeIcon()), p.isTypeGrayed(),
                                         p.isStrikeout());
       if (!presentations.add(info)) {
         TestCase.fail("Duplicate suggestions: " + p);

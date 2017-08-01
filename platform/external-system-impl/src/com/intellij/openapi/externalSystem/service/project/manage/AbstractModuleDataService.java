@@ -44,13 +44,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.CheckBoxList;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -256,9 +256,9 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
         for (Module module : orphanModules) {
           orphanModulesList.setItemSelected(module, true);
         }
-        orphanModulesList.setBorder(IdeBorderFactory.createEmptyBorder(8));
+        orphanModulesList.setBorder(JBUI.Borders.empty(8));
         content.add(orphanModulesList, ExternalSystemUiUtil.getFillLineConstraints(0));
-        content.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 8, 0));
+        content.setBorder(JBUI.Borders.empty(0, 0, 8, 0));
 
         DialogWrapper dialog = new DialogWrapper(project) {
           {

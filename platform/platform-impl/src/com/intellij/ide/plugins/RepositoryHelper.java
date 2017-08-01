@@ -145,7 +145,7 @@ public class RepositoryHelper {
       indicator.setText2(IdeBundle.message("progress.connecting.to.plugin.manager", host));
     }
 
-    RequestBuilder request = HttpRequests.request(url).forceHttps(forceHttps).tuner(connection -> connection.setRequestProperty("If-None-Match", eTag));
+    RequestBuilder request = HttpRequests.request(url).forceHttps(forceHttps).tuner(connection -> connection.setRequestProperty("If-None-Match", eTag)).productNameAsUserAgent();
     return process(repositoryUrl, request.connect(new HttpRequests.RequestProcessor<List<IdeaPluginDescriptor>>() {
       @Override
       public List<IdeaPluginDescriptor> process(@NotNull HttpRequests.Request request) throws IOException {

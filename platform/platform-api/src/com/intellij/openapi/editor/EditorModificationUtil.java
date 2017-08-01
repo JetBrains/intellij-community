@@ -105,7 +105,7 @@ public class EditorModificationUtil {
     editor.getSoftWrapModel().beforeDocumentChangeAtCaret();
     int oldOffset = editor.getCaretModel().getOffset();
 
-    String filler = calcStringToFillVirtualSpace(editor);
+    String filler = editor.getSelectionModel().hasSelection() ? "" : calcStringToFillVirtualSpace(editor);
     if (filler.length() > 0) {
       s = filler + s;
     }

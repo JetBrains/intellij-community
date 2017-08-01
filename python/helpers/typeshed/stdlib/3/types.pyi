@@ -107,6 +107,7 @@ class CoroutineType:
 class MethodType:
     __func__ = ...  # type: FunctionType
     __self__ = ...  # type: object
+    def __init__(self, func: Callable, obj: object) -> None: ...
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
 class BuiltinFunctionType:
     __self__ = ...  # type: Union[object, ModuleType]

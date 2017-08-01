@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,10 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.HyperlinkAdapter;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
@@ -513,13 +516,13 @@ public class DiffUtil {
     if (readOnly) title += " " + DiffBundle.message("diff.content.read.only.content.title.suffix");
 
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createEmptyBorder(0, 4, 0, 4));
+    panel.setBorder(JBUI.Borders.empty(0, 4));
     panel.add(new JBLabel(title).setCopyable(true), BorderLayout.CENTER);
     if (charset != null && separator != null) {
       JPanel panel2 = new JPanel();
       panel2.setLayout(new BoxLayout(panel2, BoxLayout.X_AXIS));
       panel2.add(createCharsetPanel(charset, bom));
-      panel2.add(Box.createRigidArea(new Dimension(4, 0)));
+      panel2.add(Box.createRigidArea(JBUI.size(4, 0)));
       panel2.add(createSeparatorPanel(separator));
       panel.add(panel2, BorderLayout.EAST);
     }
