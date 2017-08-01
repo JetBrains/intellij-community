@@ -17,6 +17,7 @@ package com.intellij.codeInsight.intention.impl
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.Language
+import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmModifiersOwner
 import com.intellij.lang.jvm.actions.JvmElementActionsFactory
@@ -37,40 +38,40 @@ class ElementActionsFactoryUastFallback(
     val factory = UastJvmCommonIntentionActionsFactory.forLanguage(lang) ?: return null
     return object : JvmElementActionsFactory() {
 
-      override fun createActions(request: MemberRequest.Modifier): List<IntentionAction> =
+      override fun createActions(target: JvmModifiersOwner, request: MemberRequest.Modifier): List<IntentionAction> =
         with(request) {
           listOfNotNull(
-            factory.createChangeModifierAction(targetDeclaration.asUast<UDeclaration>(), renderer.render(modifier), shouldPresent))
+            factory.createChangeModifierAction(target.asUast<UDeclaration>(), renderer.render(modifier), shouldPresent))
         }
 
-      override fun createActions(request: MemberRequest.Constructor): List<IntentionAction> =
+      override fun createActions(targetClass: JvmClass, request: MemberRequest.Constructor): List<IntentionAction> =
         with(request) {
           factory.createAddCallableMemberActions(
             UastMethodInsertionInfo.Constructor(
-              request.targetClass.asUast(),
-              request.modifiers.map { renderer.render(it) },
-              request.typeParameters.map { materializer.materialize(it) },
-              request.parameters.map { it.asUast<UParameter>() }
+              targetClass.asUast(),
+              modifiers.map { renderer.render(it) },
+              typeParameters.map { materializer.materialize(it) },
+              parameters.map { it.asUast<UParameter>() }
             )
           )
         }
 
-      override fun createActions(request: MemberRequest.Method): List<IntentionAction> =
+      override fun createActions(targetClass: JvmClass, request: MemberRequest.Method): List<IntentionAction> =
         with(request) {
           factory.createAddCallableMemberActions(
             UastMethodInsertionInfo.Method(
-              request.targetClass.asUast(),
-              request.name,
-              request.modifiers.map { renderer.render(it) },
-              request.typeParameters.map { materializer.materialize(it) },
-              materializer.materialize(request.returnType),
-              request.parameters.map { it.asUast<UParameter>() },
-              request.modifiers.contains(JvmModifier.ABSTRACT)
+              targetClass.asUast(),
+              name,
+              modifiers.map { renderer.render(it) },
+              typeParameters.map { materializer.materialize(it) },
+              materializer.materialize(returnType),
+              parameters.map { it.asUast<UParameter>() },
+              modifiers.contains(JvmModifier.ABSTRACT)
             )
           )
         }
 
-      override fun createActions(request: MemberRequest.Property): List<IntentionAction> =
+      override fun createActions(targetClass: JvmClass, request: MemberRequest.Property): List<IntentionAction> =
         with(request) {
           factory.createAddBeanPropertyActions(targetClass.asUast<UClass>(), propertyName,
                                                renderer.render(visibilityModifier),

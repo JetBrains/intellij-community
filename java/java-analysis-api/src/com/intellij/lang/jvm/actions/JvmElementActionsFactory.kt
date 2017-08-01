@@ -18,6 +18,8 @@ package com.intellij.lang.jvm.actions
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
+import com.intellij.lang.jvm.JvmClass
+import com.intellij.lang.jvm.JvmModifiersOwner
 import com.intellij.openapi.components.ServiceManager
 import org.jetbrains.annotations.ApiStatus
 
@@ -34,13 +36,13 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 abstract class JvmElementActionsFactory {
 
-  open fun createActions(request: MemberRequest.Modifier): List<IntentionAction> = emptyList()
+  open fun createActions(target: JvmModifiersOwner, request: MemberRequest.Modifier): List<IntentionAction> = emptyList()
 
-  open fun createActions(request: MemberRequest.Constructor): List<IntentionAction> = emptyList()
+  open fun createActions(targetClass: JvmClass, request: MemberRequest.Constructor): List<IntentionAction> = emptyList()
 
-  open fun createActions(request: MemberRequest.Method): List<IntentionAction> = emptyList()
+  open fun createActions(targetClass: JvmClass, request: MemberRequest.Method): List<IntentionAction> = emptyList()
 
-  open fun createActions(request: MemberRequest.Property): List<IntentionAction> = emptyList()
+  open fun createActions(targetClass: JvmClass, request: MemberRequest.Property): List<IntentionAction> = emptyList()
 
   companion object : LanguageExtension<JvmElementActionsFactory>(
     "com.intellij.lang.jvm.actions.jvmElementActionsFactory") {

@@ -20,10 +20,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.AddConstructorFix
 import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix
 import com.intellij.codeInsight.intention.AbstractIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.lang.jvm.JvmClass
-import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.JvmParameter
-import com.intellij.lang.jvm.JvmTypeParameter
+import com.intellij.lang.jvm.*
 import com.intellij.lang.jvm.actions.JvmElementActionsFactory
 import com.intellij.lang.jvm.actions.MemberRequest
 import com.intellij.lang.jvm.types.JvmType
@@ -42,30 +39,30 @@ class JavaElementActionsFactoryImpl(
   private val renderer: JavaElementRenderer
 ) : JvmElementActionsFactory() {
 
-  override fun createActions(request: MemberRequest.Modifier): List<IntentionAction> = with(request) {
-    val declaration = targetDeclaration as PsiModifierListOwner
+  override fun createActions(target: JvmModifiersOwner, request: MemberRequest.Modifier): List<IntentionAction> = with(request) {
+    val declaration = target as PsiModifierListOwner
     listOf(ModifierFix(declaration.modifierList, renderer.render(modifier), shouldPresent, false))
   }
 
-  override fun createActions(request: MemberRequest.Constructor): List<IntentionAction> =
+  override fun createActions(targetClass: JvmClass, request: MemberRequest.Constructor): List<IntentionAction> =
     with(request) {
-      val targetClass = materializer.materialize(request.targetClass)
+      val targetClass = materializer.materialize(targetClass)
       val factory = JVMElementFactories.getFactory(targetClass.language, targetClass.project)!!
       listOf(AddConstructorFix(targetClass, request.parameters.mapIndexed { i, it ->
         factory.createParameter(it.name ?: "arg$i", materializer.materialize(it.type), targetClass)
       }))
     }
 
-  override fun createActions(request: MemberRequest.Method): List<IntentionAction> =
+  override fun createActions(targetClass: JvmClass, request: MemberRequest.Method): List<IntentionAction> =
     with(request) {
       createAddMethodAction(targetClass, name, modifiers,
                             returnType, parameters)
         ?.let { listOf(it) } ?: emptyList()
     }
 
-  override fun createActions(request: MemberRequest.Property): List<IntentionAction> {
+  override fun createActions(targetClass: JvmClass, request: MemberRequest.Property): List<IntentionAction> {
     with(request) {
-      val psiClass = materializer.materialize(request.targetClass)
+      val psiClass = materializer.materialize(targetClass)
       val propertyType = materializer.materialize(propertyType)
       if (getterRequired && setterRequired)
         return listOf<IntentionAction>(

@@ -19,6 +19,7 @@ import com.intellij.CommonBundle
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.*
+import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmModifiersOwner
 import com.intellij.lang.jvm.actions.JvmElementActionsFactory
@@ -46,8 +47,7 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
 
     val subclassInfos = subclassProviders.mapNotNull { it.getSubclassingInfo(aClass) }
 
-    val methodsToOverride = aClass.methods.mapNotNull {
-      method ->
+    val methodsToOverride = aClass.methods.mapNotNull { method ->
       subclassInfos
         .mapNotNull { it.methodsInfo?.get(method)?.description }
         .firstOrNull()?.let { description ->
@@ -167,7 +167,7 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
     private fun collectMakeExtendable(declaration: UDeclaration,
                                       actionsList: SmartList<IntentionAction>,
                                       checkParent: Boolean = true) {
-      val isClassMember = !(declaration is UClass)
+      val isClassMember = !(declaration is JvmClass)
       declaration.modifierList?.apply {
         addIfApplicable(declaration, JvmModifier.FINAL, false, actionsList)
         addIfApplicable(declaration, JvmModifier.PRIVATE, false, actionsList)
@@ -188,8 +188,8 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
                                 shouldPresent: Boolean,
                                 actionsList: SmartList<IntentionAction>) {
       if (declaration.hasModifier(modifier) != shouldPresent) {
-        actionsFactory.createActions(MemberRequest.Modifier(declaration, modifier,
-                                                            shouldPresent)).let {
+        actionsFactory.createActions(declaration, MemberRequest.Modifier(modifier,
+                                                                         shouldPresent)).let {
           actionsList.addAll(it)
         }
       }

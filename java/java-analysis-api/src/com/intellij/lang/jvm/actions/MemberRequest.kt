@@ -15,7 +15,9 @@
  */
 package com.intellij.lang.jvm.actions
 
-import com.intellij.lang.jvm.*
+import com.intellij.lang.jvm.JvmModifier
+import com.intellij.lang.jvm.JvmParameter
+import com.intellij.lang.jvm.JvmTypeParameter
 import com.intellij.lang.jvm.types.JvmType
 import org.jetbrains.annotations.ApiStatus
 
@@ -25,35 +27,30 @@ sealed class MemberRequest {
   companion object {
 
     @JvmStatic
-    fun constructorRequest(targetClass: JvmClass, parameters: List<JvmParameter>) =
-      Constructor(targetClass = targetClass, parameters = parameters)
+    fun constructorRequest(parameters: List<JvmParameter>) =
+      Constructor(parameters = parameters)
 
     @JvmStatic
-    fun simpleMethodRequest(containingClass: JvmClass,
-                            methodName: String,
+    fun simpleMethodRequest(methodName: String,
                             modifier: List<JvmModifier>,
                             returnType: JvmType,
                             parameters: List<JvmParameter>) =
       Method(name = methodName,
              modifiers = modifier,
-             targetClass = containingClass,
              returnType = returnType,
              parameters = parameters)
 
     @JvmStatic
-    fun simpleMethodRequest(containingClass: JvmClass,
-                            methodName: String,
+    fun simpleMethodRequest(methodName: String,
                             modifier: JvmModifier,
                             returnType: JvmType,
                             parameters: List<JvmParameter>) =
-      simpleMethodRequest(containingClass, methodName, listOf(modifier), returnType, parameters)
-
+      simpleMethodRequest(methodName, listOf(modifier), returnType, parameters)
 
   }
 
 
   class Method(
-    val targetClass: JvmClass,
     val name: String,
     val modifiers: List<JvmModifier> = emptyList(),
     val typeParameters: List<JvmTypeParameter> = emptyList(),
@@ -62,14 +59,12 @@ sealed class MemberRequest {
   ) : MemberRequest()
 
   class Constructor(
-    val targetClass: JvmClass,
     val modifiers: List<JvmModifier> = emptyList(),
     val typeParameters: List<JvmTypeParameter> = emptyList(),
     val parameters: List<JvmParameter> = emptyList()
   ) : MemberRequest()
 
   class Property(
-    val targetClass: JvmClass,
     val propertyName: String,
     val visibilityModifier: JvmModifier,
     val propertyType: JvmType,
@@ -78,7 +73,6 @@ sealed class MemberRequest {
   ) : MemberRequest()
 
   class Modifier(
-    val targetDeclaration: JvmModifiersOwner,
     val modifier: JvmModifier,
     val shouldPresent: Boolean
   ) : MemberRequest()
