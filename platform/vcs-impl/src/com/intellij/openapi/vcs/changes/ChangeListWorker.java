@@ -313,9 +313,9 @@ public class ChangeListWorker {
     final LocalChangeListImpl list = myMap.get(fromName);
     if (list == null || list.isReadOnly()) return false;
 
-    list.setNameImpl(toName);
+    LocalChangeListImpl newList = list.copy(toName);
     myMap.remove(fromName);
-    myMap.put(toName, list);
+    myMap.put(toName, newList);
 
     OpenTHashSet<Change> changesBeforeUpdateFrom = myChangesBeforeUpdateMap.remove(fromName);
     OpenTHashSet<Change> changesBeforeUpdateTo = myChangesBeforeUpdateMap.put(toName, changesBeforeUpdateFrom);
