@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.BuildProgressListener;
+import com.intellij.build.TasksViewManager;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.impl.*;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -51,7 +52,10 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -253,10 +257,13 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
         consoleView = null;
       }
       else {
-        progressListener = null;
-        consoleManager = getConsoleManagerFor(task);
-        consoleView = consoleManager.attachExecutionConsole(task, myProject, myConfiguration, executor, myEnv, processHandler);
-        Disposer.register(myProject, consoleView);
+        progressListener = ServiceManager.getService(myProject, TasksViewManager.class);
+        consoleManager = null;
+        consoleView = null;
+        //progressListener = null;
+        //consoleManager = getConsoleManagerFor(task);
+        //consoleView = consoleManager.attachExecutionConsole(task, myProject, myConfiguration, executor, myEnv, processHandler);
+        //Disposer.register(myProject, consoleView);
       }
 
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -280,8 +287,13 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
           public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
             if (progressListener != null) {
               long eventTime = System.currentTimeMillis();
-              progressListener.onEvent(
-                new StartBuildEventImpl(id, StringUtil.notNullize(mySettings.getExecutionName()), eventTime, "running..."));
+
+              final String title = StringUtil.isNotEmpty(mySettings.getExecutionName())
+                                   ? mySettings.getExecutionName()
+                                   : AbstractExternalSystemTaskConfigurationType.generateName(
+                                     myProject, mySettings.getExternalSystemId(), mySettings.getExternalProjectPath(),
+                                     mySettings.getTaskNames(), mySettings.getExecutionName(), ": ", "");
+              progressListener.onEvent(new StartBuildEventImpl(id, title, eventTime, "running..."));
               //progressListener.onEvent(new AttachProcessHandlerEventImpl(id, processHandler));
             }
           }

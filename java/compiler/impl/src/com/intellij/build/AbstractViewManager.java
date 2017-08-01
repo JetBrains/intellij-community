@@ -35,9 +35,11 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -61,6 +63,7 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
   private final List<Runnable> myPostponedRunnables;
   private final ProgressWatcher myProgressWatcher;
   private final ThreeComponentsSplitter myThreeComponentsSplitter;
+  @Nullable
   private final JBList<BuildInfo> myBuildsList;
   private final Map<Object, BuildInfo> myBuildsMap;
   private final Map<BuildInfo, DuplexConsoleView<BuildConsoleView, BuildConsoleView>> myViewMap;
@@ -74,58 +77,69 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
     myPostponedRunnables = ContainerUtil.createConcurrentList();
     myThreeComponentsSplitter = new ThreeComponentsSplitter();
     Disposer.register(this, myThreeComponentsSplitter);
-    myBuildsList = new JBList<>();
-    myBuildsList.setFixedCellHeight(UIUtil.LIST_FIXED_CELL_HEIGHT * 2);
-    myBuildsList.installCellRenderer(obj -> {
-      BuildInfo buildInfo = (BuildInfo)obj;
-      JPanel panel = new JPanel(new BorderLayout());
-      SimpleColoredComponent mainComponent = new SimpleColoredComponent();
-      mainComponent.setIcon(buildInfo.getIcon());
-      mainComponent.append(buildInfo.title + ": ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-      mainComponent.append(buildInfo.message, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      panel.add(mainComponent, BorderLayout.NORTH);
-      if (buildInfo.statusMessage != null) {
-        SimpleColoredComponent statusComponent = new SimpleColoredComponent();
-        statusComponent.setIcon(EmptyIcon.ICON_16);
-        statusComponent.append(buildInfo.statusMessage, SimpleTextAttributes.GRAY_ATTRIBUTES);
-        panel.add(statusComponent, BorderLayout.SOUTH);
-      }
-      return panel;
-    });
+    if (!isTabbedView()) {
+      myBuildsList = new JBList<>();
+      myBuildsList.setFixedCellHeight(UIUtil.LIST_FIXED_CELL_HEIGHT * 2);
+      myBuildsList.installCellRenderer(obj -> {
+        BuildInfo buildInfo = (BuildInfo)obj;
+        JPanel panel = new JPanel(new BorderLayout());
+        SimpleColoredComponent mainComponent = new SimpleColoredComponent();
+        mainComponent.setIcon(buildInfo.getIcon());
+        mainComponent.append(buildInfo.title + ": ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        mainComponent.append(buildInfo.message, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        panel.add(mainComponent, BorderLayout.NORTH);
+        if (buildInfo.statusMessage != null) {
+          SimpleColoredComponent statusComponent = new SimpleColoredComponent();
+          statusComponent.setIcon(EmptyIcon.ICON_16);
+          statusComponent.append(buildInfo.statusMessage, SimpleTextAttributes.GRAY_ATTRIBUTES);
+          panel.add(statusComponent, BorderLayout.SOUTH);
+        }
+        return panel;
+      });
+    }
+    else {
+      myBuildsList = null;
+    }
     myViewMap = ContainerUtil.newConcurrentMap();
     myBuildsMap = ContainerUtil.newConcurrentMap();
     myProgressWatcher = new ProgressWatcher();
   }
 
-  public abstract String getViewName();
+  protected abstract String getViewName();
+
+  protected boolean isTabbedView() {
+    return false;
+  }
 
   @Override
   public void onEvent(BuildEvent event) {
     List<Runnable> runnables = new SmartList<>();
     runnables.add(() -> {
       if (event instanceof StartBuildEvent) {
-        long currentTime = System.currentTimeMillis();
-        DefaultListModel<BuildInfo> listModel = (DefaultListModel<BuildInfo>)myBuildsList.getModel();
-        boolean shouldBeCleared = !listModel.isEmpty();
-        for (int i = 0; i < listModel.getSize(); i++) {
-          BuildInfo info = listModel.getElementAt(i);
-          if (info.endTime == -1 || currentTime - info.endTime < TimeUnit.SECONDS.toMillis(1)) {
-            shouldBeCleared = false;
-            break;
+        if (!isTabbedView() && myBuildsList != null) {
+          long currentTime = System.currentTimeMillis();
+          DefaultListModel<BuildInfo> listModel = (DefaultListModel<BuildInfo>)myBuildsList.getModel();
+          boolean shouldBeCleared = !listModel.isEmpty();
+          for (int i = 0; i < listModel.getSize(); i++) {
+            BuildInfo info = listModel.getElementAt(i);
+            if (info.endTime == -1 || currentTime - info.endTime < TimeUnit.SECONDS.toMillis(1)) {
+              shouldBeCleared = false;
+              break;
+            }
           }
-        }
-        if (shouldBeCleared) {
-          for (DuplexConsoleView<BuildConsoleView, BuildConsoleView> view : myViewMap.values()) {
-            view.clear();
-            Disposer.dispose(view);
+          if (shouldBeCleared) {
+            for (DuplexConsoleView<BuildConsoleView, BuildConsoleView> view : myViewMap.values()) {
+              view.clear();
+              Disposer.dispose(view);
+            }
+            listModel.clear();
+            myBuildsMap.clear();
+            myViewMap.clear();
+            myBuildsList.setVisible(false);
+            myThreeComponentsSplitter.setFirstComponent(null);
+            myThreeComponentsSplitter.setLastComponent(null);
+            myToolbarActions.removeAll();
           }
-          listModel.clear();
-          myBuildsMap.clear();
-          myViewMap.clear();
-          myBuildsList.setVisible(false);
-          myThreeComponentsSplitter.setFirstComponent(null);
-          myThreeComponentsSplitter.setLastComponent(null);
-          myToolbarActions.removeAll();
         }
       }
       final BuildInfo buildInfo =
@@ -142,8 +156,11 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
         buildInfo.title = ((StartBuildEvent)event).getBuildTitle();
         buildInfo.id = event.getId();
         buildInfo.message = event.getMessage();
-        DefaultListModel<BuildInfo> listModel = (DefaultListModel<BuildInfo>)myBuildsList.getModel();
-        listModel.addElement(buildInfo);
+
+        if (!isTabbedView() && myBuildsList != null) {
+          DefaultListModel<BuildInfo> listModel = (DefaultListModel<BuildInfo>)myBuildsList.getModel();
+          listModel.addElement(buildInfo);
+        }
 
         DuplexConsoleView<BuildConsoleView, BuildConsoleView> view = myViewMap.computeIfAbsent(buildInfo, info -> {
           final DuplexConsoleView<BuildConsoleView, BuildConsoleView> duplexConsoleView =
@@ -151,15 +168,30 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
                                     new BuildTreeConsoleView(myProject));
           duplexConsoleView.setDisableSwitchConsoleActionOnProcessEnd(false);
           Disposer.register(myThreeComponentsSplitter, duplexConsoleView);
+          if (isTabbedView()) {
+
+            final JComponent consoleComponent = new JPanel(new BorderLayout());
+            consoleComponent.add(duplexConsoleView, BorderLayout.CENTER);
+            DefaultActionGroup toolbarActions = new DefaultActionGroup();
+            consoleComponent.add(ActionManager.getInstance().createActionToolbar(
+              "", toolbarActions, false).getComponent(), BorderLayout.WEST);
+            toolbarActions.addAll(duplexConsoleView.createConsoleActions());
+            myBuildContentManager.addTabbedContent(
+              consoleComponent, getViewName(), buildInfo.title + ", " + DateFormatUtil.formatDateTime(System.currentTimeMillis()) + " ",
+              true, AllIcons.CodeStyle.Gear, duplexConsoleView);
+          }
           return duplexConsoleView;
         });
 
-        if (myThreeComponentsSplitter.getLastComponent() == null) {
+        if (!isTabbedView() && myThreeComponentsSplitter.getLastComponent() == null) {
           myThreeComponentsSplitter.setLastComponent(view);
           myToolbarActions.removeAll();
           myToolbarActions.addAll(view.createConsoleActions());
         }
-        if (listModel.getSize() > 1 && myThreeComponentsSplitter.getFirstComponent() == null) {
+        if (!isTabbedView() &&
+            myBuildsList != null &&
+            myBuildsList.getModel().getSize() > 1 &&
+            myThreeComponentsSplitter.getFirstComponent() == null) {
           JBScrollPane scrollPane = new JBScrollPane();
           scrollPane.setBorder(new EmptyBorder(0, 0, 0, 0));
           scrollPane.setViewportView(myBuildsList);
@@ -205,7 +237,7 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
       }
     });
 
-    if (myContent == null) {
+    if (!isTabbedView() && myContent == null && myBuildsList != null) {
       myPostponedRunnables.addAll(runnables);
       if (isInitializeStarted.compareAndSet(false, true)) {
         UIUtil.invokeLaterIfNeeded(() -> {
@@ -326,9 +358,6 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
       }
       if (result instanceof SkippedResult) {
         return AllIcons.Process.State.YellowStr;
-      }
-      if (result instanceof SuccessResult) {
-        return AllIcons.Process.State.GreenOK;
       }
       return AllIcons.Process.State.GreenOK;
     }

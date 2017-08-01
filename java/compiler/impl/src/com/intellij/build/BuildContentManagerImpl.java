@@ -16,6 +16,7 @@
 package com.intellij.build;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -25,7 +26,11 @@ import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.TabbedContent;
+import com.intellij.util.ContentUtilEx;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.beans.PropertyChangeEvent;
@@ -156,6 +161,26 @@ public class BuildContentManagerImpl implements BuildContentManager {
         break;
       }
     }
+  }
+
+  @Override
+  public void addTabbedContent(@NotNull JComponent contentComponent,
+                               @NotNull String groupPrefix,
+                               @NotNull String tabName,
+                               boolean select,
+                               @Nullable Icon icon,
+                               @Nullable Disposable childDisposable) {
+    runWhenInitialized(() -> {
+      ContentManager contentManager = myToolWindow.getContentManager();
+      ContentUtilEx.addTabbedContent(contentManager, contentComponent, groupPrefix, tabName, select, childDisposable);
+      if (icon != null) {
+        TabbedContent tabbedContent = ContentUtilEx.findTabbedContent(contentManager, groupPrefix);
+        if (tabbedContent != null) {
+          tabbedContent.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
+          tabbedContent.setIcon(icon);
+        }
+      }
+    });
   }
 
   private void setIdLabelHidden(boolean hide) {
