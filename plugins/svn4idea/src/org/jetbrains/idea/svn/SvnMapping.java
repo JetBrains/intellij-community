@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ public class SvnMapping {
   private final List<VirtualFile> myLonelyRoots;
   private final TreeMap<String, RootUrlInfo> myFile2UrlMap;
   private final Map<String, RootUrlInfo> myUrl2FileMap;
-  private boolean myRootsDifferFromSettings;
   // no additional info. for caching only (convert roots)
   private List<VirtualFile> myPreCalculatedUnderVcsRoots;
 
@@ -41,8 +40,6 @@ public class SvnMapping {
     myLonelyRoots = new ArrayList<>();
 
     myPreCalculatedUnderVcsRoots = null;
-
-    myRootsDifferFromSettings = false;
   }
 
   public void copyFrom(final SvnMapping other) {
@@ -53,7 +50,6 @@ public class SvnMapping {
     myFile2UrlMap.putAll(other.myFile2UrlMap);
     myUrl2FileMap.putAll(other.myUrl2FileMap);
     myLonelyRoots.addAll(other.myLonelyRoots);
-    myRootsDifferFromSettings = other.myRootsDifferFromSettings;
     myPreCalculatedUnderVcsRoots = null;
   }
 
@@ -62,8 +58,6 @@ public class SvnMapping {
       final VirtualFile file = rootInfo.getVirtualFile();
       final File ioFile = virtualToIoFile(file);
       
-      myRootsDifferFromSettings |= ! rootInfo.getRoot().getPath().equals(file.getPath());
-
       myFile2UrlMap.put(ioFile.getAbsolutePath(), rootInfo);
       myUrl2FileMap.put(rootInfo.getAbsoluteUrl(), rootInfo);
     }
@@ -72,8 +66,6 @@ public class SvnMapping {
   public void add(final RootUrlInfo rootInfo) {
     final VirtualFile file = rootInfo.getVirtualFile();
     final File ioFile = virtualToIoFile(file);
-
-    myRootsDifferFromSettings |= ! rootInfo.getRoot().getPath().equals(file.getPath());
 
     myFile2UrlMap.put(ioFile.getAbsolutePath(), rootInfo);
     myUrl2FileMap.put(rootInfo.getAbsoluteUrl(), rootInfo);
@@ -120,10 +112,6 @@ public class SvnMapping {
     return myUrl2FileMap.isEmpty();
   }
 
-  public boolean isRootsDifferFromSettings() {
-    return myRootsDifferFromSettings;
-  }
-
   public void reportLonelyRoots(final Collection<VirtualFile> roots) {
     myLonelyRoots.addAll(roots);
   }
@@ -156,7 +144,6 @@ public class SvnMapping {
 
     SvnMapping mapping = (SvnMapping)o;
 
-    if (myRootsDifferFromSettings != mapping.myRootsDifferFromSettings) return false;
     if (!myFile2UrlMap.equals(mapping.myFile2UrlMap)) return false;
     if (!myLonelyRoots.equals(mapping.myLonelyRoots)) return false;
     if (!myUrl2FileMap.equals(mapping.myUrl2FileMap)) return false;
@@ -169,7 +156,6 @@ public class SvnMapping {
     int result = myLonelyRoots.hashCode();
     result = 31 * result + myFile2UrlMap.hashCode();
     result = 31 * result + myUrl2FileMap.hashCode();
-    result = 31 * result + (myRootsDifferFromSettings ? 1 : 0);
     return result;
   }
 }
