@@ -18,6 +18,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.intellij.MacIntelliJTextFieldUI;
+import com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.ExtendableTextField;
@@ -364,7 +365,12 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   }
 
   protected void updatePreferredSize(Dimension size) {
+    size.height = Math.max(size.height, getMinimumHeight());
     JBInsets.addTo(size, insets);
+  }
+
+  protected int getMinimumHeight() {
+    return 0;
   }
 
   @Override
@@ -472,7 +478,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
           }
         }
       }
-      else if ("search".equals(variant) && this instanceof MacIntelliJTextFieldUI) {
+      else if ("search".equals(variant) && (this instanceof MacIntelliJTextFieldUI || this instanceof WinIntelliJTextFieldUI)) {
         addExtension(new SearchExtension());
         addExtension(new ClearExtension());
       }

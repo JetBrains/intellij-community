@@ -37,17 +37,12 @@ import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.adjustInWr
 public class WinIntelliJTextBorder extends DarculaTextBorder {
   @Override
   public Insets getBorderInsets(Component c) {
-    if (isSearchFieldWithHistoryPopup(c)) {
-      return JBUI.insets(4, 27, 4, 24).asUIResource();
-    } else if (TextFieldWithPopupHandlerUI.isSearchField(c)) {
-      return JBUI.insets(4, 21, 4, 24).asUIResource();
-    } else if (c instanceof JTextField && c.getParent() instanceof ColorPanel) {
+    if (c instanceof JTextField && c.getParent() instanceof ColorPanel) {
       return JBUI.insets(3, 3, 2, 2).asUIResource();
-    } else {
-      Insets insets = JBUI.insets(4, 5).asUIResource();
-      TextFieldWithPopupHandlerUI.updateBorderInsets(c, insets);
-      return insets;
     }
+    Insets insets = JBUI.insets(4, 5).asUIResource();
+    TextFieldWithPopupHandlerUI.updateBorderInsets(c, insets);
+    return insets;
   }
 
   @Override

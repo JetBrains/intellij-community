@@ -55,10 +55,8 @@ public class MacIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   }
 
   @Override
-  protected void updatePreferredSize(Dimension size) {
-    super.updatePreferredSize(size);
-    int height = JBUI.scale(28);
-    if (size.height < height) size.height = height;
+  protected int getMinimumHeight() {
+    return JBUI.scale(28);
   }
 
   @Override
