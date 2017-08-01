@@ -21,20 +21,24 @@ import com.intellij.ide.actions.ElementCreator;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.WriteActionAware;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomManager;
+import com.intellij.xml.util.IncludedXmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.actions.DevkitActionsUtil;
+import org.jetbrains.idea.devkit.dom.Extensions;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
 import javax.swing.*;
@@ -55,37 +59,35 @@ public abstract class GenerateServiceClassAndPatchPluginXmlActionBase extends Cr
   }
 
 
-  private void patchPluginXmls(@NotNull XmlFile[] pluginXmls, @Nullable PsiClass serviceInterface, @NotNull PsiClass serviceImplementation) {
+  private void patchPluginXmls(@NotNull XmlFile[] pluginXmls, @Nullable PsiClass serviceInterface,
+                               @NotNull PsiClass serviceImplementation) {
     DescriptorUtil.checkPluginXmlsWritable(serviceImplementation.getProject(), pluginXmls);
-    WriteAction.run(() -> CommandProcessor.getInstance().runUndoTransparentAction(() -> {
+    WriteCommandAction.runWriteCommandAction(serviceImplementation.getProject(),
+                                             DevKitBundle.message("new.service.patch.plugin.xml.action.name"), null, () -> {
         for (XmlFile pluginXml : pluginXmls) {
           patchPluginXml(pluginXml, serviceInterface, serviceImplementation);
         }
-    }));
+      });
   }
 
   private void patchPluginXml(XmlFile pluginXml, @Nullable PsiClass serviceInterface, @NotNull PsiClass serviceImplementation) {
-    XmlDocument document = pluginXml.getDocument();
-    if (document == null) {
-      // shouldn't happen (actions won't be visible when there's no plugin.xml)
-      return;
+    DomFileElement<IdeaPlugin> fileElement = DomManager.getDomManager(pluginXml.getProject()).getFileElement(pluginXml, IdeaPlugin.class);
+    if (fileElement == null) {
+      throw new IncorrectOperationException(DevKitBundle.message("error.cannot.process.plugin.xml", pluginXml));
     }
 
-    XmlTag rootTag = document.getRootTag();
-    if (rootTag != null && "idea-plugin".equals(rootTag.getName())) {
-      XmlTag extensions = rootTag.findFirstSubTag("extensions");
-      if (extensions == null || !extensions.isPhysical()) {
-        extensions = rootTag.addSubTag(rootTag.createChildTag("extensions", rootTag.getNamespace(), null, false), false);
-        extensions.setAttribute("defaultExtensionNs", "com.intellij");
-      }
+    IdeaPlugin ideaPlugin = fileElement.getRootElement();
+    Extensions targetExtensions = ideaPlugin.getExtensions().stream()
+      .filter(extensions -> !(extensions instanceof IncludedXmlTag))
+      .filter(extensions -> Extensions.DEFAULT_PREFIX.equals(extensions.getDefaultExtensionNs().getStringValue()))
+      .findAny()
+      .orElseGet(() -> ideaPlugin.addExtensions());
 
-      XmlTag serviceTag = extensions.createChildTag(getTagName(), rootTag.getNamespace(), null, false);
-      if (serviceInterface != null) {
-        serviceTag.setAttribute("serviceInterface", serviceInterface.getQualifiedName());
-      }
-      serviceTag.setAttribute("serviceImplementation", serviceImplementation.getQualifiedName());
-      extensions.addSubTag(serviceTag, false);
+    XmlTag serviceTag = targetExtensions.addExtension(Extensions.DEFAULT_PREFIX + "." + getTagName()).getXmlTag();
+    if (serviceInterface != null) {
+      serviceTag.setAttribute("serviceInterface", serviceInterface.getQualifiedName());
     }
+    serviceTag.setAttribute("serviceImplementation", serviceImplementation.getQualifiedName());
   }
 
   @Override
@@ -133,14 +135,14 @@ public abstract class GenerateServiceClassAndPatchPluginXmlActionBase extends Cr
     PsiClass createdInterface = interfaceElementCreator.getCreatedClass();
     boolean separatedInterface = createdImplementation != null && createdInterface != null;
     if (separatedInterface) {
-      WriteAction.run(() -> CommandProcessor.getInstance().runUndoTransparentAction(() -> {
-        JavaPsiFacade facade = JavaPsiFacade.getInstance(createdImplementation.getProject());
+      Project project = createdImplementation.getProject();
+      WriteCommandAction.runWriteCommandAction(project, DevKitBundle.message("new.service.adding.interface.to.class"), null, () -> {
+        JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
         PsiElementFactory factory = facade.getElementFactory();
         PsiJavaCodeReferenceElement interfaceReference =
           factory.createReferenceElementByFQClassName(createdInterface.getQualifiedName(), createdImplementation.getResolveScope());
         createdImplementation.getImplementsList().add(interfaceReference);
-      }));
-
+      });
       patchPluginXmls(pluginXmls, createdInterface, createdImplementation);
       return new PsiElement[]{createdInterface, createdImplementation};
     }
@@ -230,6 +232,12 @@ public abstract class GenerateServiceClassAndPatchPluginXmlActionBase extends Cr
         myServiceImplementationTextField.setText("impl." + myServiceNameTextField.getText() + "Impl");
         myAdjusting = false;
       }
+    }
+
+    @Nullable
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return myServiceNameTextField;
     }
 
     @Override
