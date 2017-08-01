@@ -65,7 +65,7 @@ public class JarFileSystemImpl extends JarFileSystem {
   }
 
   public boolean isMakeCopyOfJar(@NotNull File originalJar) {
-    if (myNoCopyJarPaths == null || myNoCopyJarPaths.contains(originalJar.getPath())) return false;
+    if (myNoCopyJarPaths == null || myNoCopyJarPaths.contains(FileUtil.toSystemIndependentName(originalJar.getPath()))) return false;
     if (myNoCopyJarDir != null && FileUtil.isAncestor(myNoCopyJarDir, originalJar, false)) return false;
     return true;
   }
