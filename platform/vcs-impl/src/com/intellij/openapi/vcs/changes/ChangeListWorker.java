@@ -52,7 +52,7 @@ public class ChangeListWorker {
   private final ChangesDelta myDelta;
   private final Set<String> myListsToDisappear;
 
-  private final Map<LocalChangeListImpl, OpenTHashSet<Change>> myChangesBeforeUpdateMap = new HashMap<>();
+  private final Map<String, OpenTHashSet<Change>> myChangesBeforeUpdateMap = new HashMap<>();
 
   public ChangeListWorker(@NotNull Project project, @NotNull PlusMinusModify<BaseRevision> deltaListener) {
     myProject = project;
@@ -255,7 +255,7 @@ public class ChangeListWorker {
     final String path = ChangesUtil.getFilePath(change).getPath();
     LOG.debug("[addChangeToCorrespondingList] for change " + path  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
     for (LocalChangeListImpl list : myMap.values()) {
-      OpenTHashSet<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list);
+      OpenTHashSet<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list.getName());
       if (changesBeforeUpdate.contains(change)) {
         LOG.debug("[addChangeToCorrespondingList] matched: " + list.getName());
         addChangeToList(list, change, vcsKey);
@@ -411,7 +411,7 @@ public class ChangeListWorker {
 
   private void startProcessingChanges(@NotNull LocalChangeListImpl list) {
     OpenTHashSet<Change> changesBeforeUpdate = new OpenTHashSet<>(list.getChanges());
-    myChangesBeforeUpdateMap.put(list, changesBeforeUpdate);
+    myChangesBeforeUpdateMap.put(list.getName(), changesBeforeUpdate);
   }
 
   @NotNull
@@ -450,7 +450,7 @@ public class ChangeListWorker {
   private boolean doneProcessingChanges(@NotNull LocalChangeListImpl list,
                                         @NotNull List<Change> removedChanges,
                                         @NotNull List<Change> addedChanges) {
-    OpenTHashSet<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list);
+    OpenTHashSet<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list.getName());
     Set<Change> changes = list.getChanges();
 
     for (Change newChange : changes) {
