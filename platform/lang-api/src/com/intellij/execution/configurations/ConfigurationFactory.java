@@ -82,10 +82,7 @@ public abstract class ConfigurationFactory {
    * Returns the id of the run configuration that is used for serialization.
    * For compatibility reason the default implementation calls
    * the method <code>getName</code> instead of <code>myType.getId()</code>.
-   *
    * New implementations need to call <code>myType.getId()</code> by default.
-   *
-   * @return the id of the run configuration that is used for serialization
    */
   @NonNls
   public String getId() {
