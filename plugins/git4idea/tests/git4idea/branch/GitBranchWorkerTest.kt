@@ -996,12 +996,12 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     val curBranch = getCurrentBranch(repository)
     val isDetached = curBranch.contains("detached")
-    assertTrue("Current branch is not detached in \${repository} - $curBranch", isDetached)
+    assertTrue("Current branch is not detached in ${repository} - $curBranch", isDetached)
   }
 
   private fun assertCurrentBranch(repository: GitRepository, name: String) {
     val curBranch = getCurrentBranch(repository)
-    assertEquals("Current branch is incorrect in \${repository}", name, curBranch)
+    assertEquals("Current branch is incorrect in ${repository}", name, curBranch)
   }
 
   private fun getCurrentBranch(repository: GitRepository): String {
@@ -1012,15 +1012,15 @@ class GitBranchWorkerTest : GitPlatformTest() {
     val expectedRef = git(repository, "rev-parse " + "HEAD")
     val currentRef = git(repository, "rev-parse " + reference)
 
-    assertEquals("Current revision is incorrect in \${repository}", expectedRef, currentRef)
+    assertEquals("Current revision is incorrect in ${repository}", expectedRef, currentRef)
   }
 
   private fun assertBranchDeleted(repo: GitRepository, branch: String) {
-    assertFalse("Branch \$branch should have been deleted from \$repo", git(repo, "branch").contains(branch))
+    assertFalse("Branch $branch should have been deleted from $repo", git(repo, "branch").contains(branch))
   }
 
   private fun assertBranchExists(repo: GitRepository, branch: String) {
-    assertTrue("Branch \$branch should exist in \$repo", branchExists(repo, branch))
+    assertTrue("Branch $branch should exist in $repo", branchExists(repo, branch))
   }
 
   private fun assertFile(repository: GitRepository, path: String, content: String) {
@@ -1029,12 +1029,12 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   private fun assertContent(expectedContent: String, actual: String) {
-    var expectedContent = expectedContent
+    var expected = expectedContent
     var actual = actual
-    expectedContent = StringUtil.convertLineSeparators(expectedContent, detectLineSeparators(actual).separatorString).trim()
+    expected = StringUtil.convertLineSeparators(expected, detectLineSeparators(actual).separatorString).trim()
     actual = actual.trim()
     assertEquals(String.format("Content doesn't match.%nExpected:%n%s%nActual:%n%s%n",
-                               substWhitespaces(expectedContent), substWhitespaces(actual)), expectedContent, actual)
+                               substWhitespaces(expected), substWhitespaces(actual)), expected, actual)
   }
 
   private fun detectLineSeparators(actual: String): LineSeparator {
