@@ -17,10 +17,12 @@ package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PsiTestUtil;
@@ -55,9 +57,13 @@ public class RehighlightAllEditors implements MadTestingAction {
 
   @NotNull
   static List<HighlightInfo> highlightEditor(Editor editor, Project project) {
+    FileDocumentManager.getInstance().saveAllDocuments(); // to avoid async document changes on automatic save during highlighting
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     PsiTestUtil.checkStubsMatchText(file);
-    return CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, new int[0], false);
+    Ref<List<HighlightInfo>> infos = Ref.create();
+    MadTestingUtil.prohibitDocumentChanges(
+      () -> infos.set(CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, new int[0], false)));
+    return infos.get();
   }
 }

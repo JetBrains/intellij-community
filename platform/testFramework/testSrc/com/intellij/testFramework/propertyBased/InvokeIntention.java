@@ -57,7 +57,7 @@ public class InvokeIntention extends ActionOnRange {
 
   @Override
   public String toString() {
-    return "InvokeIntention{" + getVirtualFile().getPath() + ", " + myInvocationLog + ", initials=" + myInitialStart + "," + myIntentionIndex + "}";
+    return "InvokeIntention{" + getVirtualFile().getPath() + ", " + myInvocationLog + ", raw=(" + myInitialStart + "," + myIntentionIndex + ")}";
   }
 
   public void performAction() {
@@ -73,8 +73,11 @@ public class InvokeIntention extends ActionOnRange {
 
     PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, getProject());
     IntentionAction intention = getRandomIntention(editor, file);
-    if (intention == null) return;
-    myInvocationLog += ", invoke '" + intention.getText() + "'";
+    if (intention == null) {
+      myInvocationLog += ", no intentions found after highlighting";
+      return;
+    }
+    myInvocationLog += ", invoked '" + intention.getText() + "'";
     String intentionString = intention.toString();
 
     Document changedDocument = getDocumentToBeChanged(intention);

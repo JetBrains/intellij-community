@@ -74,7 +74,17 @@ public class MadTestingUtil {
     });
   }
 
-  private static <E extends Throwable> void watchDocumentChanges(ThrowableRunnable<E> r, final Consumer<DocumentEvent> eventHandler) throws E {
+  public static void prohibitDocumentChanges(Runnable r) {
+    watchDocumentChanges(r::run, event -> {
+      Document changed = event.getDocument();
+      VirtualFile file = FileDocumentManager.getInstance().getFile(changed);
+      if (file != null && file.isInLocalFileSystem()) {
+        throw new AssertionError("Unexpected document change: " + changed);
+      }
+    });
+  }
+
+  private static <E extends Throwable> void watchDocumentChanges(ThrowableRunnable<E> r, Consumer<DocumentEvent> eventHandler) throws E {
     Disposable disposable = Disposer.newDisposable();
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override

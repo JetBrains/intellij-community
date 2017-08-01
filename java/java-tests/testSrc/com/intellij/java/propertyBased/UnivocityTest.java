@@ -40,7 +40,7 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
     MadTestingUtil.enableAllInspections(myProject, myProject);
   }
 
-  public void testIntentionsInDifferentFiles() {
+  public void testCompilabilityAfterIntentions() {
     initCompiler();
     PsiModificationTracker tracker = PsiManager.getInstance(myProject).getModificationTracker();
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.java.propertyBased;
 
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -50,7 +51,18 @@ class JavaCompletionPolicy extends CompletionPolicy {
       // https://youtrack.jetbrains.com/issue/IDEA-174744 on red code
       return false;
     }
+    if (isStaticWithInstanceQualifier(ref, target)) {
+      return false;
+    }
     return target != null;
+  }
+
+  private static boolean isStaticWithInstanceQualifier(PsiJavaCodeReferenceElement ref, @NotNull PsiElement target) {
+    PsiElement qualifier = ref.getQualifier();
+    return target instanceof PsiModifierListOwner &&
+           ((PsiModifierListOwner)target).hasModifier(JvmModifier.STATIC) &&
+           qualifier instanceof PsiJavaCodeReferenceElement &&
+           !(((PsiJavaCodeReferenceElement)qualifier).resolve() instanceof PsiClass);
   }
 
   @Override
