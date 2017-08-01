@@ -17,7 +17,7 @@ package org.jetbrains.idea.devkit.actions.service;
 
 import org.jetbrains.idea.devkit.DevKitBundle;
 
-public class NewProjectServiceAction extends GenerateServiceClassAndPatchPluginXmlActionBase {
+public class NewProjectServiceAction extends NewServiceActionBase {
   public NewProjectServiceAction() {
     super(DevKitBundle.message("new.menu.project.service.text"),
           DevKitBundle.message("new.menu.project.service.description"));

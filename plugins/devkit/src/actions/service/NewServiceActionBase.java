@@ -55,10 +55,13 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-public abstract class GenerateServiceClassAndPatchPluginXmlActionBase extends CreateInDirectoryActionBase implements WriteActionAware {
+/**
+ * An base class for actions generating service classes (implementation and optionally interface) and registering new service in plugin.xml.
+ */
+public abstract class NewServiceActionBase extends CreateInDirectoryActionBase implements WriteActionAware {
   private final Set<XmlFile> myFilesToPatch = new HashSet<>();
 
-  public GenerateServiceClassAndPatchPluginXmlActionBase(String text, String description) {
+  public NewServiceActionBase(String text, String description) {
     super(text, description, null);
   }
 
