@@ -40,6 +40,9 @@
       <element id="archive" name="jps-builders-6.jar">
         <element id="module-output" name="jps-builders-6" />
       </element>
+      <element id="archive" name="aether-dependency-resolver.jar">
+        <element id="module-output" name="aether-dependency-resolver" />
+      </element>
     </root>
   </artifact>
 </component>
