@@ -58,10 +58,10 @@ class GitBranchWorkerTest : GitPlatformTest() {
     val community = mkdir("community")
     val contrib = mkdir("contrib")
 
-    myUltimate = createRepository(myProjectPath)
     myCommunity = createRepository(community.path)
     myContrib = createRepository(contrib.path)
-    myRepositories = listOf(myUltimate, myCommunity, myContrib)
+    myUltimate = createRepository(myProjectPath)
+    myRepositories = listOf(myCommunity, myContrib, myUltimate)
 
     cd(myProjectRoot)
     touch(".gitignore", "community\ncontrib")
@@ -93,7 +93,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   fun test_create_new_branch_with_unmerged_files_in_first_repo_should_show_notification() {
-    unmergedFiles(myUltimate)
+    unmergedFiles(myCommunity)
 
     var notificationShown = false
     checkoutNewBranch("feature", object : TestUiHandler() {
@@ -106,7 +106,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   fun test_create_new_branch_with_unmerged_files_in_second_repo_should_propose_to_rollback() {
-    unmergedFiles(myCommunity)
+    unmergedFiles(myContrib)
 
     var rollbackProposed = false
     checkoutNewBranch("feature", object : TestUiHandler() {
@@ -120,7 +120,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   fun test_rollback_create_new_branch_should_delete_branch() {
-    unmergedFiles(myCommunity)
+    unmergedFiles(myContrib)
 
     checkoutNewBranch("feature", object : TestUiHandler() {
       override fun showUnmergedFilesMessageWithRollback(operationName: String, rollbackProposal: String): Boolean {
@@ -133,7 +133,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   fun test_deny_rollback_create_new_branch_should_leave_new_branch() {
-    unmergedFiles(myCommunity)
+    unmergedFiles(myContrib)
 
     checkoutNewBranch("feature", object : TestUiHandler() {
       override fun showUnmergedFilesMessageWithRollback(operationName: String, rollbackProposal: String): Boolean {
@@ -141,9 +141,9 @@ class GitBranchWorkerTest : GitPlatformTest() {
       }
     })
 
-    assertCurrentBranch(myUltimate, "feature")
-    assertCurrentBranch(myCommunity, "master")
+    assertCurrentBranch(myCommunity, "feature")
     assertCurrentBranch(myContrib, "master")
+    assertCurrentBranch(myUltimate, "master")
   }
 
   fun test_checkout_without_problems() {
@@ -158,7 +158,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   fun test_checkout_with_unmerged_files_in_first_repo_should_show_notification() {
     branchWithCommit(myRepositories, "feature")
-    unmergedFiles(myUltimate)
+    unmergedFiles(myCommunity)
 
     var notificationShown = false
     checkoutBranch("feature", object : TestUiHandler() {
@@ -172,7 +172,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   fun test_checkout_with_unmerged_file_in_second_repo_should_propose_to_rollback() {
     branchWithCommit(myRepositories, "feature")
-    unmergedFiles(myCommunity)
+    unmergedFiles(myContrib)
 
     var rollbackProposed = false
     checkoutBranch("feature", object : TestUiHandler() {
@@ -187,7 +187,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   fun test_rollback_checkout_should_return_to_previous_branch() {
     branchWithCommit(myRepositories, "feature")
-    unmergedFiles(myCommunity)
+    unmergedFiles(myContrib)
 
     checkoutBranch("feature", object : TestUiHandler() {
       override fun showUnmergedFilesMessageWithRollback(operationName: String, rollbackProposal: String) = true
@@ -198,15 +198,15 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   fun test_deny_rollback_checkout_should_do_nothing() {
     branchWithCommit(myRepositories, "feature")
-    unmergedFiles(myCommunity)
+    unmergedFiles(myContrib)
 
     checkoutBranch("feature", object : TestUiHandler() {
       override fun showUnmergedFilesMessageWithRollback(operationName: String, rollbackProposal: String) = false
     })
 
-    assertCurrentBranch(myUltimate, "feature")
-    assertCurrentBranch(myCommunity, "master")
+    assertCurrentBranch(myCommunity, "feature")
     assertCurrentBranch(myContrib, "master")
+    assertCurrentBranch(myUltimate, "master")
   }
 
   fun test_checkout_revision_checkout_branch_with_complete_success() {
@@ -234,7 +234,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     assertCurrentBranch("master")
     assertCurrentRevision("master")
-    assertErrorNotification("Couldn't checkout unknown_ref", "Revision not found in project, community and contrib")
+    assertErrorNotification("Couldn't checkout unknown_ref", "Revision not found in community, contrib and project")
   }
 
   fun test_checkout_revision_checkout_ref_with_partial_success() {
@@ -268,7 +268,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     val files = ContainerUtil.newArrayList<String>()
     (0..untrackedFiles - 1).mapTo(files) { "untracked$it.txt" }
-    untrackedFileOverwrittenBy(myUltimate, "feature", files)
+    untrackedFileOverwrittenBy(myCommunity, "feature", files)
 
     var notificationShown = false
     checkoutOrMerge(operation, "feature", object : TestUiHandler() {
@@ -295,7 +295,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
 
     val untracked = Arrays.asList<String>("untracked.txt")
-    untrackedFileOverwrittenBy(myCommunity, "feature", untracked)
+    untrackedFileOverwrittenBy(myContrib, "feature", untracked)
 
     val untrackedPaths = ContainerUtil.newArrayList<String>()
     checkoutOrMerge(operation, "feature", object : TestUiHandler() {
@@ -325,7 +325,8 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   private fun check_operation_with_local_changes_overwritten_by_should_show_smart_checkout_dialog(operation: String, numFiles: Int) {
-    val expectedChanges = prepareLocalChangesOverwrittenBy(myUltimate, numFiles)
+    val repoWithLocalChangesProblem = myCommunity
+    val expectedChanges = prepareLocalChangesOverwrittenBy(repoWithLocalChangesProblem, numFiles)
 
     val actualChanges = ContainerUtil.newArrayList<Change>()
     checkoutOrMerge(operation, "feature", object : TestUiHandler() {
@@ -341,7 +342,9 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
     assertFalse("Local changes were not shown in the dialog", actualChanges.isEmpty())
     if (newGitVersion()) {
-      val actualPaths = actualChanges.map { FileUtil.getRelativePath(myUltimate.root.path, it.afterRevision!!.file.path, '/')!! }
+      val actualPaths = actualChanges.map {
+        FileUtil.getRelativePath(repoWithLocalChangesProblem.root.path, it.afterRevision!!.file.path, '/')!!
+      }
       assertSameElements("Incorrect set of local changes was shown in the dialog", actualPaths, expectedChanges)
     }
   }
@@ -398,7 +401,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   fun check_deny_to_smart_operation_in_first_repo_should_show_nothing(operation: String) {
-    prepareLocalChangesOverwrittenBy(myUltimate)
+    prepareLocalChangesOverwrittenBy(myCommunity)
 
     checkoutOrMerge(operation, "feature", object : TestUiHandler() {
       override fun showSmartOperationDialog(project: Project,
@@ -414,9 +417,9 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   fun test_deny_to_smart_checkout_in_second_repo_should_show_rollback_proposal() {
     check_deny_to_smart_operation_in_second_repo_should_show_rollback_proposal("checkout")
-    assertCurrentBranch(myUltimate, "feature")
-    assertCurrentBranch(myCommunity, "master")
+    assertCurrentBranch(myCommunity, "feature")
     assertCurrentBranch(myContrib, "master")
+    assertCurrentBranch(myUltimate, "master")
   }
 
   fun test_deny_to_smart_merge_in_second_repo_should_show_rollback_proposal() {
@@ -424,7 +427,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
   }
 
   fun check_deny_to_smart_operation_in_second_repo_should_show_rollback_proposal(operation: String) {
-    prepareLocalChangesOverwrittenBy(myCommunity)
+    prepareLocalChangesOverwrittenBy(myContrib)
 
     val rollbackMsg = Ref.create<String>()
     checkoutOrMerge(operation, "feature", object : TestUiHandler() {
@@ -469,7 +472,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     git("commit -m feature_changes")
     git("checkout master")
 
-    unmergedFiles(myCommunity)
+    unmergedFiles(myContrib)
 
     var rollbackProposed = false
     val brancher = GitBranchWorker(myProject, myGit, object : TestUiHandler() {
@@ -571,9 +574,9 @@ class GitBranchWorkerTest : GitPlatformTest() {
     })
 
     assertNotNull("Rollback messages was not shown", rollbackMsg)
-    assertBranchDeleted(myUltimate, "todelete")
-    assertBranchExists(myCommunity, "todelete")
+    assertBranchDeleted(myCommunity, "todelete")
     assertBranchExists(myContrib, "todelete")
+    assertBranchExists(myUltimate, "todelete")
   }
 
   fun test_delete_branch_merged_to_head_but_unmerged_to_upstream_should_mention_this_in_notification() {
@@ -617,7 +620,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
       git(repository, "branch todelete")
     }
     myGit.onBranchDelete {
-      if (myCommunity == it) GitCommandResult(false, 1, listOf("Couldn't remove branch"), listOf(), null)
+      if (myContrib == it) GitCommandResult(false, 1, listOf("Couldn't remove branch"), listOf(), null)
       else null
     }
   }
@@ -689,7 +692,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   fun test_merge_with_unmerged_files_in_first_repo_should_show_notification() {
     branchWithCommit(myRepositories, "feature")
-    unmergedFiles(myUltimate)
+    unmergedFiles(myCommunity)
 
     var notificationShown = false
     mergeBranch("feature", object : TestUiHandler() {
@@ -703,7 +706,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   fun test_merge_with_unmerged_files_in_second_repo_should_propose_to_rollback() {
     branchWithCommit(myRepositories, "feature")
-    unmergedFiles(myCommunity)
+    unmergedFiles(myContrib)
 
     var rollbackProposed = false
     mergeBranch("feature", object : TestUiHandler() {
@@ -718,7 +721,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
   fun test_rollback_merge_should_reset_merge() {
     branchWithCommit(myRepositories, "feature")
     val ultimateTip = tip(myUltimate)
-    unmergedFiles(myCommunity)
+    unmergedFiles(myContrib)
 
     mergeBranch("feature", object : TestUiHandler() {
       override fun showUnmergedFilesMessageWithRollback(operationName: String, rollbackProposal: String): Boolean {
@@ -731,9 +734,9 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   fun test_deny_rollback_merge_should_leave_as_is() {
     branchWithCommit(myRepositories, "feature")
-    cd(myUltimate)
-    val ultimateTipAfterMerge = git("rev-list -1 feature")
-    unmergedFiles(myCommunity)
+    cd(myCommunity)
+    val firstTipAfterMerge = git("rev-list -1 feature")
+    unmergedFiles(myContrib)
 
     mergeBranch("feature", object : TestUiHandler() {
       override fun showUnmergedFilesMessageWithRollback(operationName: String, rollbackProposal: String): Boolean {
@@ -741,7 +744,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
       }
     })
 
-    assertEquals("Merge in ultimate should have been reset", ultimateTipAfterMerge, tip(myUltimate))
+    assertEquals("Merge in community should have been reset", firstTipAfterMerge, tip(myCommunity))
   }
 
   fun test_checkout_in_detached_head() {
