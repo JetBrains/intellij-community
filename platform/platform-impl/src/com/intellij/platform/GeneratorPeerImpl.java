@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class GeneratorPeerImpl<T> implements ProjectGeneratorPeer<T> {
-  private static final JPanel DEFAULT_COMPONENT = new JPanel();
   private static final Object DEFAULT_SETTINGS = new Object();
   @NotNull private final T mySettings;
   @NotNull private final JComponent myComponent;
@@ -35,7 +34,7 @@ public class GeneratorPeerImpl<T> implements ProjectGeneratorPeer<T> {
 
   public GeneratorPeerImpl() {
     //noinspection unchecked
-    this((T)DEFAULT_SETTINGS, DEFAULT_COMPONENT);
+    this((T)DEFAULT_SETTINGS, new JPanel());
   }
 
   @NotNull
