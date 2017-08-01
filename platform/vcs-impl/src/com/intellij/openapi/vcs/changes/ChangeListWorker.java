@@ -76,8 +76,13 @@ public class ChangeListWorker {
       LocalChangeListImpl copy = list.copy();
       myMap.put(copy.getName(), copy);
       if (copy.isDefault()) {
-        if (myDefault != null) LOG.error("multiple default lists found when copy");
-        myDefault = copy;
+        if (myDefault != null) {
+          LOG.error("multiple default lists found when copy");
+          copy.setDefault(false);
+        }
+        else {
+          myDefault = copy;
+        }
       }
     }
 
@@ -225,8 +230,13 @@ public class ChangeListWorker {
     for (LocalChangeListImpl list : lists) {
       myMap.put(list.getName(), list);
       if (list.isDefault()) {
-        if (myDefault != null) LOG.error("multiple default lists found when copy");
-        myDefault = list;
+        if (myDefault != null) {
+          LOG.error("multiple default lists found");
+          list.setDefault(false);
+        }
+        else {
+          myDefault = list;
+        }
       }
 
       for (Change change : list.getChanges()) {
