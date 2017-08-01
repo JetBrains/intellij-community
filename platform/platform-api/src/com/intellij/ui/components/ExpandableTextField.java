@@ -128,6 +128,7 @@ public class ExpandableTextField extends ExtendableTextField implements Expandab
 
     JBScrollPane pane = new JBScrollPane(area);
     pane.setVerticalScrollBarPolicy(VERTICAL_SCROLLBAR_ALWAYS);
+    pane.getVerticalScrollBar().setBackground(area.getBackground());
     pane.getVerticalScrollBar().add(JBScrollBar.LEADING, new JLabel(AllIcons.General.CollapseComponent) {{
       setToolTipText(createTooltipText("Collapse", "CollapseExpandableComponent"));
       setBorder(JBUI.Borders.empty(5, 0, 1, 5));
