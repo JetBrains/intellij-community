@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.psi.util.PsiUtil.skipParenthesizedExprDown;
@@ -47,7 +48,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
 
   @Override
   PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb) {
-    ExtremumTerminal terminal = extract(tb, null);
+    ExtremumTerminal terminal = extract(tb, Collections.emptyList());
     if (terminal == null) return null;
     return terminal.replace();
   }
@@ -75,15 +76,14 @@ class FindExtremumMigration extends BaseStreamApiMigration {
     else if (type.equals(PsiType.LONG)) {
       return isMax ? Long.MIN_VALUE : Long.MAX_VALUE;
     }
+    else if (type.equals(PsiType.DOUBLE)) {
+      return isMax ? Double.MIN_VALUE : Double.MAX_VALUE;
+    }
     return null;
   }
 
-  /**
-   * @param nonFinalVariables list of non final variables used in terminal block. If null checks are omitted (intended to be null when
-   *                          quick fix applied), empty array means that no non final variables are present in block and have different semantics
-   */
   @Nullable
-  static ExtremumTerminal extract(@NotNull TerminalBlock terminalBlock, @Nullable List<PsiVariable> nonFinalVariables) {
+  static ExtremumTerminal extract(@NotNull TerminalBlock terminalBlock, @NotNull List<PsiVariable> nonFinalVariables) {
     PsiStatement[] statements = terminalBlock.getStatements();
     StreamApiMigrationInspection.FilterOp filterOp = terminalBlock.getLastOperation(StreamApiMigrationInspection.FilterOp.class);
     if (filterOp != null) {
@@ -210,15 +210,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
   }
 
   private static boolean hasKnownComparableType(@NotNull Comparison comparison, @Nullable PsiType type) {
-    if (!comparison.isExternalComparison()) {
-      if (type == null || !(type.equals(PsiType.INT) ||
-                            type.equals(PsiType.LONG) ||
-                            type.equals(PsiType.DOUBLE) ||
-                            InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_COMPARABLE))) {
-        return false;
-      }
-    }
-    return true;
+    return comparison.isExternalComparison() && type != null && getComparingMethod(type) != null;
   }
 
   interface ExtremumTerminal {
@@ -230,6 +222,14 @@ class FindExtremumMigration extends BaseStreamApiMigration {
 
   @FunctionalInterface
   interface Extractor {
+    /**
+     * @param nullCheckExpr expression where supposed to be null check
+     * @param comparisonExpr expression where supposed to be comparison
+     * @param statements statements inside loop that should contain assignment
+     * @param terminalBlock terminal block for this loop
+     * @param nonFinalVars list of non final variables used in this loop (without terminal block variable)
+     * @param isNegated whether the comparison is negated
+     */
     @Nullable
     ExtremumTerminal extractOriented(@NotNull PsiExpression nullCheckExpr,
                                      @NotNull PsiExpression comparisonExpr,
@@ -285,8 +285,6 @@ class FindExtremumMigration extends BaseStreamApiMigration {
       PsiLoopStatement loop = myTerminalBlock.getMainLoop();
       PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(loop.getProject());
       String extremumInitializer = myExtremumKeyInitializer.getText();
-      String name = myTerminalBlock.getVariable().getName();
-      if (name == null) return null;
       PsiExpression condition =
         elementFactory.createExpressionFromText(myExtremumKeyExpr.getText() + inFilterOperation + extremumInitializer, loop);
       TerminalBlock blockWithFilter =
@@ -494,7 +492,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
                                                      @Nullable List<PsiVariable> nonFinalVariables,
                                                      boolean isNegated) {
       Comparison comparison = Comparison.extract(condition, terminalBlock.getVariable(), isNegated);
-      if (comparison == null) return null;
+      if (comparison == null || comparison.isExternalComparison()) return null;
       if (statements.length != 1) return null;
       PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(statements[0]);
       if (assignment == null) return null;
