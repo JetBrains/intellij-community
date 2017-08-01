@@ -189,7 +189,7 @@ import com.intellij.testGuiFramework.launcher.ide.IdeType
  * the code directly or remotely. All tests are running with IntelliJ IDEA Community Edition by default. To change IDE test class should be
  * annotated with @com.intellij.testGuiFramework.framework.RunWithIde annotation. Check com.intellij.testGuiFramework.launcher.ide.IdeType
  */
-@RunWithIde(IdeType.WEBSTORM)
+@RunWithIde(WebStormIde::class)
 class SomeGuiTest: GuiTestCase() {
 
   @org.junit.Test           // test function should be annotated with @Test annotation

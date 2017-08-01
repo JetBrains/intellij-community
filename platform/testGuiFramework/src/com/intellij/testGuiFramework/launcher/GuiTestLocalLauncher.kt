@@ -93,8 +93,8 @@ object GuiTestLocalLauncher {
     return startIde(ide = ide, args = args)
   }
 
-  fun firstStartIdeLocally(ide: Ide = Ide(CommunityIde(), 0, 0)) {
-    val args = createArgsForFirstStart(ide)
+  fun firstStartIdeLocally(ide: Ide = Ide(CommunityIde(), 0, 0), firstStartClassName: String = "undefined") {
+    val args = createArgsForFirstStart(ide = ide, firstStartClassName = firstStartClassName)
     return startIdeAndWait(ide = ide, args = args)
   }
 
@@ -142,16 +142,23 @@ object GuiTestLocalLauncher {
 
 
   private fun createArgs(ide: Ide, mainClass: String = "com.intellij.idea.Main", port: Int = 0): List<String>
-    = createArgsBase(ide, mainClass, GuiTestStarter.COMMAND_NAME, port)
+    = createArgsBase(ide = ide,
+                     mainClass = mainClass,
+                     commandName = GuiTestStarter.COMMAND_NAME,
+                     port = port)
 
-  private fun createArgsForFirstStart(ide: Ide, port: Int = 0): List<String>
-    = createArgsBase(ide, "com.intellij.testGuiFramework.impl.FirstStarterKt", null, port)
+  private fun createArgsForFirstStart(ide: Ide, firstStartClassName: String = "undefined", port: Int = 0): List<String>
+    = createArgsBase(ide = ide,
+                     mainClass = "com.intellij.testGuiFramework.impl.FirstStarterKt",
+                     firstStartClassName = firstStartClassName,
+                     commandName = null,
+                     port = port)
 
-  private fun createArgsBase(ide: Ide, mainClass: String, commandName: String?, port: Int): List<String> {
+  private fun createArgsBase(ide: Ide, mainClass: String, commandName: String?, firstStartClassName: String = "undefined", port: Int): List<String> {
     var resultingArgs = listOf<String>()
       .plus(getCurrentJavaExec())
       .plus(getDefaultVmOptions(ide))
-      .plus("-Didea.gui.test.first.start.class=${ide.ideType.getFirstStartClass().canonicalName}")
+      .plus("-Didea.gui.test.first.start.class=$firstStartClassName")
       .plus("-classpath")
       .plus(getOsSpecificClasspath(ide.ideType.mainModule))
       .plus(mainClass)
@@ -164,13 +171,13 @@ object GuiTestLocalLauncher {
   }
 
 
-  private fun createArgsForFirstStartByPath(ide: Ide, path: String): List<String> {
+  private fun createArgsForFirstStartByPath(ide: Ide, path: String, firstStartClassName: String = "undefined"): List<String> {
 
     val classpath = PathUtils(path).makeClassPathBuilder().build(emptyList())
     val resultingArgs = listOf<String>()
       .plus(getCurrentJavaExec())
       .plus(getDefaultVmOptions(ide))
-      .plus("-Didea.gui.test.first.start.class=${ide.ideType.getFirstStartClass().canonicalName}")
+      .plus("-Didea.gui.test.first.start.class=$firstStartClassName")
       .plus("-classpath")
       .plus(classpath)
       .plus(com.intellij.testGuiFramework.impl.FirstStarter::class.qualifiedName!! + "Kt")

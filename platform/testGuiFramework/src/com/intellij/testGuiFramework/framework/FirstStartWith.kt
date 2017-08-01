@@ -13,6 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testGuiFramework.launcher.ide
+package com.intellij.testGuiFramework.framework
 
-class CommunityIde: IdeType(platformPrefix = "Idea", ideJarName = "idea.jar", mainModule = "community-main")
+import com.intellij.testGuiFramework.impl.FirstStart
+import kotlin.reflect.KClass
+
+@kotlin.annotation.Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FILE)
+annotation class FirstStartWith(val value: KClass<out FirstStart>)
