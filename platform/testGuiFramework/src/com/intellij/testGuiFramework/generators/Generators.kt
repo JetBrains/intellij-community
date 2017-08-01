@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
+import com.intellij.testGuiFramework.cellReader.ExtendedJTableCellReader
 import com.intellij.testGuiFramework.fixtures.MessageDialogFixture
 import com.intellij.testGuiFramework.fixtures.MessagesFixture
 import com.intellij.testGuiFramework.fixtures.SettingsTreeFixture
@@ -48,6 +49,7 @@ import com.intellij.testGuiFramework.impl.GuiTestUtilKt.getComponentText
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.isTextComponent
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.onHeightCenter
 import com.intellij.ui.CheckboxTree
+import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.labels.ActionLink
@@ -166,6 +168,17 @@ class SimpleTreeGenerator : ComponentCodeGenerator<SimpleTree> {
   }
 }
 
+class JTableGenerator: ComponentCodeGenerator<JTable> {
+  override fun accept(cmp: Component) = cmp is JTable
+
+  override fun generate(cmp: JTable, me: MouseEvent, cp: Point): String {
+    val row = cmp.rowAtPoint(cp)
+    val col = cmp.columnAtPoint(cp)
+    val cellText =  ExtendedJTableCellReader().valueAt(cmp, row, col)
+    return "table(\"$cellText\").cell(\"$cellText\")".addClick(me)
+  }
+}
+
 class JBCheckBoxGenerator : ComponentCodeGenerator<JBCheckBox> {
   override fun priority() = 1
   override fun accept(cmp: Component) = cmp is JBCheckBox
@@ -197,6 +210,16 @@ class JRadioButtonGenerator : ComponentCodeGenerator<JRadioButton> {
 class LinkLabelGenerator : ComponentCodeGenerator<LinkLabel<*>> {
   override fun accept(cmp: Component) = cmp is LinkLabel<*>
   override fun generate(cmp: LinkLabel<*>, me: MouseEvent, cp: Point) = "linkLabel(\"${cmp.text}\").click()"
+}
+
+
+class HyperlinkLabelGenerator : ComponentCodeGenerator<HyperlinkLabel> {
+  override fun accept(cmp: Component) = cmp is HyperlinkLabel
+  override fun generate(cmp: HyperlinkLabel, me: MouseEvent, cp: Point): String {
+    //we assume, that hyperlink label has only one highlighted region
+    val linkText = cmp.hightlightedRegionsBoundsMap.keys.toList().firstOrNull() ?: "null"
+    return "hyperlinkLabel(\"${cmp.text}\").clickLink(\"$linkText\")"
+  }
 }
 
 class JTreeGenerator : ComponentCodeGenerator<JTree> {
@@ -326,6 +349,7 @@ class JDialogGenerator : GlobalContextCodeGenerator<JDialog>() {
 
 class IdeFrameGenerator : GlobalContextCodeGenerator<JFrame>() {
   override fun accept(cmp: Component): Boolean {
+    if (cmp !is JComponent) return false
     val parent = (cmp as JComponent).rootPane.parent
     return (parent is JFrame) && parent.title != "GUI Script Editor"
   }
@@ -665,6 +689,15 @@ object Utils {
     val robot = BasicRobot.robotWithCurrentAwtHierarchyWithoutScreenLock()
     val result = robotFunction(robot)
     return result
+  }
+
+}
+
+private fun String.addClick(me: MouseEvent): String {
+  return when {
+    me.isLeftButton() && me.clickCount == 2 -> "$this.doubleClick()"
+    me.isRightButton() -> "$this.rightClick()"
+    else -> "$this.click()"
   }
 }
 

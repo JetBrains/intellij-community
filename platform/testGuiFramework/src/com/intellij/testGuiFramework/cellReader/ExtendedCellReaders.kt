@@ -20,11 +20,13 @@ import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.JBList
 import org.fest.swing.cell.JComboBoxCellReader
 import org.fest.swing.cell.JListCellReader
+import org.fest.swing.cell.JTableCellReader
 import org.fest.swing.cell.JTreeCellReader
 import org.fest.swing.core.BasicRobot
 import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.driver.BasicJComboBoxCellReader
 import org.fest.swing.driver.BasicJListCellReader
+import org.fest.swing.driver.BasicJTableCellReader
 import org.fest.swing.driver.BasicJTreeCellReader
 import org.fest.swing.edt.GuiActionRunner
 import org.fest.swing.edt.GuiQuery
@@ -59,6 +61,14 @@ class ExtendedJListCellReader : BasicJListCellReader(), JListCellReader {
     val element = list.model.getElementAt(index)
     val cellRendererComponent = GuiTestUtil.getListCellRendererComponent(list, element, index)
     return getValueWithCellRenderer(cellRendererComponent)
+  }
+}
+
+class ExtendedJTableCellReader: BasicJTableCellReader(), JTableCellReader {
+
+  override fun valueAt(table: JTable, row: Int, column: Int): String? {
+    val cellRendererComponent = table.prepareRenderer(table.getCellRenderer(row, column), row, column)
+    return super.valueAt(table, row, column) ?: getValueWithCellRenderer(cellRendererComponent)
   }
 }
 

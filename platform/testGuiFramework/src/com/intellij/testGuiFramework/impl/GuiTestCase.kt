@@ -17,9 +17,11 @@ package com.intellij.testGuiFramework.impl
 
 import com.intellij.ide.GeneralSettings
 import com.intellij.openapi.ui.ComponentWithBrowseButton
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testGuiFramework.cellReader.ExtendedJComboboxCellReader
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
+import com.intellij.testGuiFramework.cellReader.ExtendedJTableCellReader
 import com.intellij.testGuiFramework.fixtures.*
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
 import com.intellij.testGuiFramework.fixtures.newProjectWizard.NewProjectWizardFixture
@@ -31,10 +33,12 @@ import com.intellij.testGuiFramework.impl.GuiTestUtilKt.findBoundedComponentByTe
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.getComponentText
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.isTextComponent
 import com.intellij.testGuiFramework.launcher.system.SystemInfo.isMac
+import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.net.HttpConfigurable
 import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.SmartWaitRobot
+import org.fest.swing.exception.ActionFailedException
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.fixture.*
@@ -346,6 +350,18 @@ open class GuiTestCase : GuiTestBase() {
     "Sorry, unable to find JTree component \"${if (pathStrings.isNotEmpty()) "by path ${pathStrings}" else ""}\" with ${target().toString()} as a Container")
 
   /**
+   * Finds a JTable component in hierarchy of context component by a cellText and returns JTableFixture.
+   *
+   * @timeout in seconds to find JTable component
+   * @throws ComponentLookupException if component has not been found or timeout exceeded
+   */
+  fun <S, C : Component> ComponentFixture<S, C>.table(cellText: String,
+                                                      timeout: Long = defaultTimeout): JTableFixture = if (target() is Container) table(
+    target() as Container, cellText, timeout)
+  else throw UnsupportedOperationException(
+    "Sorry, unable to find JTable component with cell text \"$cellText\" with ${target().toString()} as a Container")
+
+  /**
    * Finds popup on screen with item (itemName) and clicks on it item
    *
    * @timeout timeout in seconds to find JTextComponent component
@@ -368,6 +384,13 @@ open class GuiTestCase : GuiTestBase() {
     target() as Container, linkName, timeout)
   else throw UnsupportedOperationException(
     "Sorry, unable to find LinkLabel component with ${target().toString()} as a Container")
+
+
+  fun <S, C : Component> ComponentFixture<S, C>.hyperlinkLabel(labelText: String, /*timeout in seconds*/
+                                                          timeout: Long = defaultTimeout): HyperlinkLabelFixture
+    = if (target() is Container) hyperlinkLabel(target() as Container, labelText, timeout)
+  else throw UnsupportedOperationException(
+    "Sorry, unable to find HyperlinkLabel component by label text: \"$labelText\" with ${target().toString()} as a Container")
 
   /**
    * Finds a table of plugins component in hierarchy of context component by a link name and returns fixture for it.
@@ -478,7 +501,7 @@ open class GuiTestCase : GuiTestBase() {
       if (containingItem == null) true //if were searching for any jList()
       else {
         val elements = (0..jList.model.size - 1).map { it -> extCellReader.valueAt(jList, it) }
-        elements.any { it.toString() == containingItem }  && jList.isShowing
+        elements.any { it.toString() == containingItem } && jList.isShowing
       }
     }
     val jListFixture = JListFixture(myRobot, myJList)
@@ -504,10 +527,12 @@ open class GuiTestCase : GuiTestBase() {
   private fun combobox(container: Container, text: String, timeout: Long): JComboBoxFixture {
     //wait until label has appeared
     waitUntilFound(container, Component::class.java,
-                   timeout) { component -> component.isEnabled
-                                           && component.isShowing
-                                           && component.isTextComponent()
-                                           && component.getComponentText() == text }
+                   timeout) { component ->
+      component.isEnabled
+      && component.isShowing
+      && component.isTextComponent()
+      && component.getComponentText() == text
+    }
     val comboBox = findBoundedComponentByText(myRobot, container, text, JComboBox::class.java)
     val comboboxFixture = JComboBoxFixture(myRobot, comboBox)
     comboboxFixture.replaceCellReader(ExtendedJComboboxCellReader())
@@ -563,6 +588,27 @@ open class GuiTestCase : GuiTestBase() {
       override fun isMatching(someLinkLabel: LinkLabel<*>) = (someLinkLabel.isShowing && (someLinkLabel.text == labelText))
     }, timeout.toFestTimeout())
     return ComponentFixture<ComponentFixture<*, *>, LinkLabel<*>>(ComponentFixture::class.java, myRobot, myLinkLabel)
+  }
+
+  private fun hyperlinkLabel(container: Container, labelText: String, timeout: Long): HyperlinkLabelFixture {
+    val hyperlinkLabel = waitUntilFound(myRobot, container, object : GenericTypeMatcher<HyperlinkLabel>(HyperlinkLabel::class.java) {
+      override fun isMatching(someHyperLinkLabel: HyperlinkLabel) = (someHyperLinkLabel.isShowing && (someHyperLinkLabel.text == labelText))
+    }, timeout.toFestTimeout())
+    return HyperlinkLabelFixture(myRobot, hyperlinkLabel)
+  }
+
+  private fun table(container: Container, cellText: String, timeout: Long): JTableFixture {
+    return waitUntilFoundFixture(container, JTable::class.java, timeout) {
+      val jTableFixture = JTableFixture(myRobot, it)
+      jTableFixture.replaceCellReader(ExtendedJTableCellReader())
+      val hasCellWithText = try {
+        jTableFixture.cell(cellText); true
+      }
+      catch (e: ActionFailedException) {
+        false
+      }
+      Pair(hasCellWithText, jTableFixture)
+    }
   }
 
   private fun pluginTable(container: Container, timeout: Long) = PluginTableFixture.find(myRobot, container, timeout.toFestTimeout())
@@ -635,6 +681,21 @@ open class GuiTestCase : GuiTestBase() {
     return GuiTestUtil.waitUntilFound(myRobot, container, object : GenericTypeMatcher<ComponentType>(componentClass) {
       override fun isMatching(cmp: ComponentType): Boolean = matcher(cmp)
     }, timeout.toFestTimeout())
+  }
+
+  protected fun <Fixture, ComponentType : Component> waitUntilFoundFixture(container: Container?,
+                                                                           componentClass: Class<ComponentType>,
+                                                                           timeout: Long,
+                                                                           matcher: (ComponentType) -> Pair<Boolean, Fixture>): Fixture {
+    val ref = Ref<Fixture>()
+    GuiTestUtil.waitUntilFound(myRobot, container, object : GenericTypeMatcher<ComponentType>(componentClass) {
+      override fun isMatching(cmp: ComponentType): Boolean {
+        val (matched, fixture) = matcher(cmp)
+        if (matched) ref.set(fixture)
+        return matched
+      }
+    }, timeout.toFestTimeout())
+    return ref.get()
   }
 
   fun pause(condition: String = "Unspecified condition", timeoutSeconds: Long = 120, testFunction: () -> Boolean) {
