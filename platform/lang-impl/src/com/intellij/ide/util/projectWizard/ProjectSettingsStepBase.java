@@ -32,7 +32,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.AbstractActionWithPanel;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.ProjectGeneratorPeer;
-import com.intellij.platform.WebProjectGenerator;
 import com.intellij.platform.templates.TemplateProjectDirectoryGenerator;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
@@ -162,7 +161,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
 
   protected void initGeneratorListeners() {
     if (myProjectGenerator instanceof WebProjectTemplate) {
-      getPeer().addSettingsStateListener(new WebProjectGenerator.SettingsStateListener() {
+      getPeer().addSettingsListener(new ProjectGeneratorPeer.SettingsListener() {
         @Override
         public void stateChanged(boolean validSettings) {
           checkValid();
