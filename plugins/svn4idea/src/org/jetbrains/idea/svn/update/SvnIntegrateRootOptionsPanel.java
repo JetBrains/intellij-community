@@ -66,6 +66,7 @@ public class SvnIntegrateRootOptionsPanel implements SvnPanel{
     revisionField.setUrlProvider(() -> textField.getText());
   }
 
+  @Override
   public void apply(@NotNull SvnConfiguration conf) throws ConfigurationException {
     if (isEmptyOrSpaces(myMergeText1.getText())) {
       myMergeText1.requestFocus();
@@ -88,15 +89,18 @@ public class SvnIntegrateRootOptionsPanel implements SvnPanel{
     rootInfo.setRevision2(myRevision2.getRevision());
   }
 
+  @Override
   public boolean canApply() {
     return !myMergeText1.getText().equals(myMergeText2.getText()) || !myRevision1.getRevisionText().equals(myRevision2.getRevisionText());
   }
 
+  @Override
   @NotNull
   public JPanel getPanel() {
     return myPanel;
   }
 
+  @Override
   public void reset(@NotNull SvnConfiguration config) {
     MergeRootInfo rootInfo = config.getMergeRootInfo(myRoot.getIOFile(), myVcs);
     myRevision1.setRevision(rootInfo.getRevision1());
