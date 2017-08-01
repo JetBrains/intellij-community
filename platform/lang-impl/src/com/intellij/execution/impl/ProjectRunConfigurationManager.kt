@@ -22,7 +22,6 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.registry.Registry
 import gnu.trove.THashSet
 import org.jdom.Element
 
@@ -39,39 +38,36 @@ internal class ProjectRunConfigurationInitializer(project: Project) {
   }
 
   private fun requestLoadWorkspaceAndProjectRunConfiguration(project: Project) {
-    if (IS_RUN_MANAGER_INITIALIZED.get(project) ?: false) {
+    if (IS_RUN_MANAGER_INITIALIZED.get(project) == true) {
       return
     }
 
     IS_RUN_MANAGER_INITIALIZED.set(project, true)
     // we must not fire beginUpdate here, because message bus will fire queued parent message bus messages (and, so, SOE may occur because all other projectOpened will be processed before us)
     // simply, you should not listen changes until project opened
-    project.service<ProjectRunConfigurationManager>()
+    if (isUseProjectSchemeManager()) {
+      project.service<RunManager>()
+    }
+    else {
+      project.service<ProjectRunConfigurationManager>()
+    }
   }
 }
 
-@State(name = "ProjectRunConfigurationManager", storages = arrayOf(Storage(value = "runConfigurations", stateSplitter = ProjectRunConfigurationManager.RunConfigurationStateSplitter::class)))
-internal class ProjectRunConfigurationManager(manager: RunManager) : PersistentStateComponent<Element> {
+@State(name = "ProjectRunConfigurationManager", storages = arrayOf(Storage(value = "runConfigurations", stateSplitter = OldProjectRunConfigurationStateSplitter::class)))
+private class ProjectRunConfigurationManager(manager: RunManager) : PersistentStateComponent<Element> {
   private val manager = manager as RunManagerImpl
 
   override fun getState(): Element? {
-    if (Registry.`is`("runManager.use.schemeManager", false)) {
-      return null
-    }
-
     val state = Element("state")
     manager.writeConfigurations(state, manager.getSharedConfigurations())
     return state
   }
 
   override fun loadState(state: Element) {
-    if (Registry.`is`("runManager.use.schemeManager", false)) {
-      return
-    }
-
     val existing = THashSet<String>()
-    for (child in state.getChildren(RunManagerImpl.CONFIGURATION)) {
-      existing.add(manager.loadConfiguration(child, true).uniqueID)
+    state.getChildren(RunManagerImpl.CONFIGURATION).mapTo(existing) {
+      manager.loadConfiguration(it, true).uniqueID
     }
 
     manager.removeNotExistingSharedConfigurations(existing)
@@ -86,10 +82,8 @@ internal class ProjectRunConfigurationManager(manager: RunManager) : PersistentS
       }
     }
   }
+}
 
-  internal class RunConfigurationStateSplitter : StateSplitterEx() {
-    override fun splitState(state: Element): List<Pair<Element, String>> {
-      return StateSplitterEx.splitState(state, RunManagerImpl.NAME_ATTR)
-    }
-  }
+internal class OldProjectRunConfigurationStateSplitter : StateSplitterEx() {
+  override fun splitState(state: Element): List<Pair<Element, String>> = StateSplitterEx.splitState(state, RunManagerImpl.NAME_ATTR)
 }
