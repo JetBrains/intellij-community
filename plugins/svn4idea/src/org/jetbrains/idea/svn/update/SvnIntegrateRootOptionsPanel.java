@@ -55,7 +55,7 @@ public class SvnIntegrateRootOptionsPanel implements SvnPanel{
       SVNURL selectedUrl = selectLocation(myVcs.getProject(), textField.getText());
 
       if (selectedUrl != null) {
-        textField.setText(selectedUrl.toString());
+        textField.setText(selectedUrl.toDecodedString());
       }
     });
   }
