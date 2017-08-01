@@ -540,58 +540,6 @@ filegroup(
 )
 
 iml_module(
-    name = "devkit",
-    # do not sort: must match IML order
-    srcs = [
-        "plugins/devkit/src",
-        "plugins/devkit/gen",
-    ],
-    package_prefixes = {"plugins/devkit/src": "org.jetbrains.idea.devkit"},
-    resources = ["plugins/devkit/resources"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-    # do not sort: must match IML order
-    deps = [
-        "//tools/idea/java/openapi[module]",
-        "//tools/idea/platform/util[module]",
-        "//tools/idea/.idea/libraries:JDOM",
-        "//tools/idea/java/compiler/openapi:compiler-openapi[module]",
-        "//tools/idea/java/execution/openapi:execution-openapi[module]",
-        "//tools/idea:platform-impl_and_others[module]",
-        "//tools/idea:compiler-impl_and_others[module]",
-        "//tools/idea:java-impl[module]",
-        "//tools/idea/plugins/properties[module]",
-        "//tools/idea/jps/jps-builders[module]",
-        "//tools/idea/.idea/libraries:Guava",
-        "//tools/idea/.idea/libraries:Xerces",
-        "//tools/idea/plugins/devkit/lib:dtdparser113",
-        "//tools/idea/plugins/properties/properties-psi-api[module]",
-        "//tools/idea/plugins/devkit/jps-plugin:devkit-jps-plugin[module]",
-    ],
-)
-
-iml_module(
-    name = "devkit-tests",
-    package_prefixes = {"plugins/devkit/testSources": "org.jetbrains.idea.devkit"},
-    tags = ["managed"],
-    test_srcs = ["plugins/devkit/testSources"],
-    test_tags = ["manual"],
-    visibility = ["//visibility:public"],
-    # do not sort: must match IML order
-    deps = [
-        "//tools/idea/.idea/libraries:JUnit4[test]",
-        "//tools/idea:compiler-impl_and_others[module]",
-        "//tools/idea/.idea/libraries:TestNG[test]",
-        "//tools/idea/.idea/libraries:Groovy[test]",
-        "//tools/idea/xml/dom-tests[module, test]",
-        "//tools/idea/.idea/libraries:KotlinJavaRuntime[test]",
-        "//tools/idea/.idea/libraries:assertJ[test]",
-        "//tools/idea:devkit[module]",
-        "//tools/idea:platform-impl_and_others[module]",
-    ],
-)
-
-iml_module(
     name = "community-main",
     tags = ["managed"],
     visibility = ["//visibility:public"],
@@ -637,7 +585,7 @@ iml_module(
         "//tools/idea/plugins/cvs/cvs-plugin[module]",
         "//tools/idea/plugins/java-i18n[module]",
         "//tools/idea/plugins/ui-designer[module]",
-        "//tools/idea:devkit[module]",
+        "//tools/idea/plugins/devkit[module]",
         "//tools/idea/plugins/eclipse[module]",
         "//tools/idea/plugins/git4idea[module]",
         "//tools/idea/plugins/groovy:jetgroovy[module]",
@@ -694,7 +642,7 @@ iml_module(
         "//tools/vendor/google/firebase[module]",
         "//tools/adt/idea/android-plugin[module]",
         "//tools/adt/idea/android[module]",
-        "//tools/idea:devkit-tests[module, test]",
+        "//tools/idea/plugins/devkit:devkit-tests[module, test]",
         "//tools/idea:diff-tests[module, test]",
         "//tools/idea:built-in-server-tests[module, test]",
         "//tools/idea/updater[module, test]",
