@@ -126,6 +126,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withModule("perfd-host", "android-profilers.jar")
       withModule("profilers", "android-profilers.jar")
       withModule("profilers-ui", "android-profilers.jar")
+      withModule("apkanalyzer", "android.jar")
       withModule("project-system", "android.jar")
       withModule("project-system-gradle", "android.jar")
       withModule("adt-ui", "adt-ui.jar")

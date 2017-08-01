@@ -40,6 +40,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/ant/jps-plugin/ant-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/ant/jps-plugin/ant-jps-plugin.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/jps/antUiTest/antUiTest.iml" filepath="$PROJECT_DIR$/jps/antUiTest/antUiTest.iml" group="jps" />
       <module fileurl="file://$PROJECT_DIR$/jps/antLayout/antlayout.iml" filepath="$PROJECT_DIR$/jps/antLayout/antlayout.iml" group="jps" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/apkanalyzer/apkanalyzer.iml" filepath="$PROJECT_DIR$/../adt/idea/apkanalyzer/apkanalyzer.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/plugins/google-app-engine/runtime/appEngine-runtime.iml" filepath="$PROJECT_DIR$/plugins/google-app-engine/runtime/appEngine-runtime.iml" group="plugins/GAE" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/artwork/artwork.iml" filepath="$PROJECT_DIR$/../adt/idea/artwork/artwork.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../base/asset-studio/assetstudio.iml" filepath="$PROJECT_DIR$/../base/asset-studio/assetstudio.iml" group="android/sdktools" />
