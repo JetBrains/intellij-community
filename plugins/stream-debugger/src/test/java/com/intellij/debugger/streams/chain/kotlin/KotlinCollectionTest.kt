@@ -15,9 +15,15 @@
  */
 package com.intellij.debugger.streams.chain.kotlin
 
+import com.intellij.debugger.streams.psi.impl.KotlinSequenceChainBuilder
+import com.intellij.debugger.streams.wrapper.StreamChainBuilder
+
 /**
  * @author Vitaliy.Bibaev
  */
 class KotlinCollectionTest : KotlinTestCase() {
   override val directory: String = "collections"
+  override fun getChainBuilder(): StreamChainBuilder = KotlinSequenceChainBuilder()
+
+  fun testSimple() = doTest()
 }

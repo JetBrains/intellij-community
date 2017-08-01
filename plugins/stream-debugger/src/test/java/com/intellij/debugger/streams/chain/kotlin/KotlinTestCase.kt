@@ -16,6 +16,8 @@
 package com.intellij.debugger.streams.chain.kotlin
 
 import com.intellij.debugger.streams.chain.StreamChainBuilderTestCase
+import junit.framework.TestCase
+import org.junit.Assert
 
 /**
  * @author Vitaliy.Bibaev
@@ -25,4 +27,11 @@ abstract class KotlinTestCase : StreamChainBuilderTestCase() {
   override fun getFileExtension(): String = ".kt"
 
   protected abstract val directory: String
+
+  protected fun doTest() {
+    val elementAtCaret = configureAndGetElementAtCaret()
+    TestCase.assertTrue(chainBuilder.isChainExists(elementAtCaret))
+    val chains = chainBuilder.build(elementAtCaret)
+    Assert.assertFalse(chains.isEmpty())
+  }
 }
