@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.psi.util.PsiUtil.skipParenthesizedExprDown;
@@ -48,7 +47,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
 
   @Override
   PsiElement migrate(@NotNull Project project, @NotNull PsiStatement body, @NotNull TerminalBlock tb) {
-    ExtremumTerminal terminal = extract(tb, Collections.emptyList());
+    ExtremumTerminal terminal = extract(tb, null);
     if (terminal == null) return null;
     return terminal.replace();
   }
@@ -82,8 +81,12 @@ class FindExtremumMigration extends BaseStreamApiMigration {
     return null;
   }
 
+  /**
+   * @param nonFinalVariables list of non final variables used in terminal block. If null checks are omitted (intended to be null when
+   *                          quick fix applied), empty array means that no non final variables are present in block and have different semantics
+   */
   @Nullable
-  static ExtremumTerminal extract(@NotNull TerminalBlock terminalBlock, @NotNull List<PsiVariable> nonFinalVariables) {
+  static ExtremumTerminal extract(@NotNull TerminalBlock terminalBlock, @Nullable List<PsiVariable> nonFinalVariables) {
     PsiStatement[] statements = terminalBlock.getStatements();
     StreamApiMigrationInspection.FilterOp filterOp = terminalBlock.getLastOperation(StreamApiMigrationInspection.FilterOp.class);
     if (filterOp != null) {
@@ -210,7 +213,7 @@ class FindExtremumMigration extends BaseStreamApiMigration {
   }
 
   private static boolean hasKnownComparableType(@NotNull Comparison comparison, @Nullable PsiType type) {
-    return comparison.isExternalComparison() && type != null && getComparingMethod(type) != null;
+    return comparison.isExternalComparison() || (type != null && getComparingMethod(type) != null);
   }
 
   interface ExtremumTerminal {
