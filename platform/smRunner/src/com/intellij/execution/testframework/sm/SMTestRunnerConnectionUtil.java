@@ -232,7 +232,7 @@ public class SMTestRunnerConnectionUtil {
     });
   }
 
-  private static class CombinedTestLocator implements SMTestLocator, DumbAware {
+  private static class CombinedTestLocator implements SMTestLocator, SMTestLocatorWithMetainfo, DumbAware {
     private final SMTestLocator myLocator;
 
     public CombinedTestLocator(SMTestLocator locator) {
@@ -242,11 +242,23 @@ public class SMTestRunnerConnectionUtil {
     @NotNull
     @Override
     public List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+      return getLocation(protocol, path, null, project, scope);
+    }
+
+    @NotNull
+    @Override
+    public List<Location> getLocation(@NotNull String protocol,
+                                      @NotNull String path,
+                                      @Nullable String metainfo,
+                                      @NotNull Project project,
+                                      @NotNull GlobalSearchScope scope) {
       if (URLUtil.FILE_PROTOCOL.equals(protocol)) {
         return FileUrlProvider.INSTANCE.getLocation(protocol, path, project, scope);
       }
       else if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator) || Registry.is("dumb.aware.run.configurations")) {
-        return myLocator.getLocation(protocol, path, project, scope);
+        return myLocator instanceof SMTestLocatorWithMetainfo
+               ? ((SMTestLocatorWithMetainfo)myLocator).getLocation(protocol, path, metainfo, project, scope)
+               : myLocator.getLocation(protocol, path, project, scope);
       }
       else {
         return Collections.emptyList();

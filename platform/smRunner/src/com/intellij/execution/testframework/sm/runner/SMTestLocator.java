@@ -31,6 +31,8 @@ import java.util.Map;
 /**
  * A parser for location URLs reported by test runners.
  * See {@link SMTestProxy#getLocation(Project, GlobalSearchScope)} for details.
+ *
+ * Please, implement {@link SMTestLocatorWithMetainfo} instead
  */
 public interface SMTestLocator {
   @NotNull

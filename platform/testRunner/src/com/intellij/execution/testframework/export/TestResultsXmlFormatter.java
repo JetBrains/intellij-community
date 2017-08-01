@@ -46,6 +46,7 @@ public class TestResultsXmlFormatter {
   public static final String ATTR_NAME = "name";
   public static final String ATTR_DURATION = "duration";
   public static final String ATTR_LOCATION = "locationUrl";
+  public static final String ATTR_METAINFO = "metainfo";
   public static final String ELEM_COUNT = "count";
   public static final String ATTR_VALUE = "value";
   public static final String ELEM_OUTPUT = "output";
@@ -192,6 +193,10 @@ public class TestResultsXmlFormatter {
     String locationUrl = node.getLocationUrl();
     if (locationUrl != null) {
       attrs.put(ATTR_LOCATION, locationUrl);
+    }
+    String metainfo = node.getMetainfo();
+    if (metainfo != null) {
+      attrs.put(ATTR_METAINFO, metainfo);
     }
     if (node.isConfig()) {
       attrs.put(ATTR_CONFIG, "true");
