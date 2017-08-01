@@ -43,6 +43,7 @@ import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.fest.swing.timing.Timeout
 import org.fest.swing.timing.Timeout.timeout
+import org.junit.After
 import java.awt.Component
 import java.awt.Container
 import java.io.File
@@ -78,6 +79,10 @@ import javax.swing.text.JTextComponent
  */
 open class GuiTestCase : GuiTestBase() {
 
+  @After
+  fun closeProjects(){
+    closeAllProjects()
+  }
 
   class GuiSettings internal constructor() {
 
