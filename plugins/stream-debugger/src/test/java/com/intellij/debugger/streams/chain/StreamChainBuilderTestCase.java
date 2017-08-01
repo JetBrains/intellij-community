@@ -59,7 +59,7 @@ public abstract class StreamChainBuilderTestCase extends LightCodeInsightTestCas
 
   @NotNull
   protected PsiElement configureAndGetElementAtCaret() {
-    final String name = File.separator + getTestName(false) + ".java";
+    final String name = File.separator + getTestName(false) + getFileExtension();
     configureByFile(name);
     final PsiFile file = getFile();
     final int offset = getEditor().getCaretModel().getCurrentCaret().getOffset();
@@ -81,6 +81,10 @@ public abstract class StreamChainBuilderTestCase extends LightCodeInsightTestCas
       assertTrue(builder.isChainExists(elementAtCaret));
       return builder.build(elementAtCaret);
     });
+  }
+
+  protected String getFileExtension() {
+    return ".java";
   }
 
   @NotNull
