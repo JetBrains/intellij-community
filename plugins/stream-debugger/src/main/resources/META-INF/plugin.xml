@@ -63,6 +63,7 @@
     </component>
   </project-components>
 
+  <depends optional="true">org.jetbrains.kotlin</depends>
 
   <actions>
     <action id="StreamTracerAction"
