@@ -20,10 +20,7 @@ import com.intellij.debugger.streams.diagnostic.ex.TraceCompilationException;
 import com.intellij.debugger.streams.diagnostic.ex.TraceEvaluationException;
 import com.intellij.debugger.streams.lib.LibraryManager;
 import com.intellij.debugger.streams.psi.DebuggerPositionResolver;
-import com.intellij.debugger.streams.psi.impl.DebuggerPositionResolverImpl;
-import com.intellij.debugger.streams.psi.impl.JavaStreamChainBuilder;
-import com.intellij.debugger.streams.psi.impl.StreamChainOption;
-import com.intellij.debugger.streams.psi.impl.StreamChainTransformerImpl;
+import com.intellij.debugger.streams.psi.impl.*;
 import com.intellij.debugger.streams.trace.*;
 import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import com.intellij.debugger.streams.trace.impl.TraceResultInterpreterImpl;
@@ -44,6 +41,8 @@ import com.intellij.xdebugger.XDebuggerManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -54,13 +53,14 @@ public class TraceStreamAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(TraceStreamAction.class);
 
   private final DebuggerPositionResolver myPositionResolver = new DebuggerPositionResolverImpl();
-  private final StreamChainBuilder myChainBuilder = new JavaStreamChainBuilder(new StreamChainTransformerImpl());
+  private final List<StreamChainBuilder> myBuilders = Arrays.asList(new JavaStreamChainBuilder(new StreamChainTransformerImpl()),
+                                                                    new KotlinJavaStreamChainBuilder());
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     final XDebugSession session = getCurrentSession(e);
     final PsiElement element = session == null ? null : myPositionResolver.getNearestElementToBreakpoint(session);
-    e.getPresentation().setEnabled(element != null && myChainBuilder.isChainExists(element));
+    e.getPresentation().setEnabled(element != null && isChainExists(element));
   }
 
   @Override
@@ -68,7 +68,10 @@ public class TraceStreamAction extends AnAction {
     final XDebugSession session = getCurrentSession(e);
     final PsiElement element = session == null ? null : myPositionResolver.getNearestElementToBreakpoint(session);
     if (element != null) {
-      final List<StreamChain> chains = myChainBuilder.build(element);
+      final List<StreamChain> chains = new ArrayList<>();
+      myBuilders.stream()
+        .filter(builder -> builder.isChainExists(element))
+        .forEach(builder -> chains.addAll(builder.build(element)));
       if (chains.isEmpty()) {
         LOG.warn("stream chain is not built");
         return;
@@ -90,6 +93,16 @@ public class TraceStreamAction extends AnAction {
     else {
       LOG.info("element at cursor not found");
     }
+  }
+
+  private boolean isChainExists(@NotNull PsiElement element) {
+    for (final StreamChainBuilder b : myBuilders) {
+      if (b.isChainExists(element)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private void runTrace(@NotNull StreamChain chain, @NotNull XDebugSession session) {
