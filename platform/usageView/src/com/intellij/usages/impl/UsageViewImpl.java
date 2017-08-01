@@ -475,6 +475,10 @@ public class UsageViewImpl implements UsageView {
         if (eachPath == null) continue;
 
         treeState.invalidatePathBounds(eachPath);
+        Object node = eachPath.getLastPathComponent();
+        if (node instanceof UsageNode) {
+          ((UsageNode)node).update(this, edtNodeChangedQueue);
+        }
       }
       myTree.repaint(visibleRect);
     }
