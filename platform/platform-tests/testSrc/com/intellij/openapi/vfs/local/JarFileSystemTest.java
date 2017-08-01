@@ -138,12 +138,16 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     assertEquals(0, attributes.length);
     assertTimestampsEqual(jar.lastModified(), attributes.lastModified);
 
-    if (((JarFileSystemImpl)JarFileSystem.getInstance()).isMakeCopyOfJar(jar)) {
+    JarFileSystemImpl jarFileSystem = (JarFileSystemImpl)JarFileSystem.getInstance();
+    if (jarFileSystem.isMakeCopyOfJar(jar)) {
       // for performance reasons we create file copy on windows when we read contents and have the handle open to the copy
       Field resolved = handler.getClass().getDeclaredField("myFileWithMirrorResolved");
       resolved.setAccessible(true);
       assertTrue(resolved.get(handler) == null);
     }
+    
+    jarFileSystem.setNoCopyJarForPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR);
+    assertTrue(!jarFileSystem.isMakeCopyOfJar(jar));
   }
 
   @Test
