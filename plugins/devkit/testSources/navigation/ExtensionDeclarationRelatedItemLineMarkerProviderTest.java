@@ -52,9 +52,9 @@ public class ExtensionDeclarationRelatedItemLineMarkerProviderTest extends JavaC
     PsiFile file = myFixture.configureByFile("plugin.xml");
     String path = file.getVirtualFile().getPath();
     int expectedTagPosition = file.getText().indexOf("<myEp implementation=\"MyExtension\"/>");
-    String expectedTooltip = "<html><body><a href=\"#navigation/" + path
+    String expectedTooltip = "<html><body>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#navigation/" + path
                              + ":" + expectedTagPosition + "\">myEp</a> extension declaration in <a href=\"#navigation/" + path
-                             + ":0\">plugin.xml</a></body></html>";
+                             + ":0\">plugin.xml</a><br></body></html>";
 
     GutterMark gutter = myFixture.findGutter("MyExtension.java");
     DevKitGutterTargetsChecker.checkGutterTargets(gutter, expectedTooltip, AllIcons.Nodes.Plugin, "myEp");
