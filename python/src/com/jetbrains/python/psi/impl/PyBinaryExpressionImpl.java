@@ -159,15 +159,9 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
 
         boolean matched = true;
         for (Map.Entry<PyExpression, PyCallableParameter> entry : result.getMappedParameters().entrySet()) {
-          final PyExpression argument = entry.getKey();
-          final PyCallableParameter parameter = entry.getValue();
-          if (parameter.isPositionalContainer() || parameter.isKeywordContainer()) {
-            continue;
-          }
-          final Map<PyGenericType, PyType> substitutions = new HashMap<>();
-          final PyType parameterType = parameter.getType(context);
-          final PyType argumentType = context.getType(argument);
-          if (!PyTypeChecker.match(parameterType, argumentType, context, substitutions)) {
+          final PyType parameterType = entry.getValue().getArgumentType(context);
+          final PyType argumentType = context.getType(entry.getKey());
+          if (!PyTypeChecker.match(parameterType, argumentType, context, new HashMap<>())) {
             matched = false;
           }
         }
@@ -179,11 +173,11 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
           }
         }
       }
-      if (!matchedTypes.isEmpty()) {
-        return PyUnionType.union(matchedTypes);
-      }
-      if (!types.isEmpty()) {
-        return PyUnionType.union(types);
+      final boolean bothOperandsAreKnown = operandIsKnown(getLeftExpression(), context) && operandIsKnown(getRightExpression(), context);
+      final List<PyType> resultTypes = !matchedTypes.isEmpty() ? matchedTypes : types;
+      if (!resultTypes.isEmpty()) {
+        final PyType result = PyUnionType.union(resultTypes);
+        return bothOperandsAreKnown ? result : PyUnionType.createWeakType(result);
       }
     }
     if (PyNames.COMPARISON_OPERATORS.contains(getReferencedName())) {
@@ -221,6 +215,15 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
   public ASTNode getNameElement() {
     final PsiElement op = getPsiOperator();
     return op != null ? op.getNode() : null;
+  }
+
+  private static boolean operandIsKnown(@Nullable PyExpression operand, @NotNull TypeEvalContext context) {
+    if (operand == null) return false;
+
+    final PyType operandType = context.getType(operand);
+    if (operandType instanceof PyStructuralType || PyTypeChecker.isUnknown(operandType, context)) return false;
+
+    return true;
   }
 
   private static boolean isTrueDivEnabled(@NotNull PyElement anchor) {
