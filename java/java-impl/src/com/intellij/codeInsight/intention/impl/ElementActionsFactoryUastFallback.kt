@@ -17,6 +17,7 @@ package com.intellij.codeInsight.intention.impl
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.Language
+import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmModifiersOwner
 import com.intellij.lang.jvm.actions.JvmElementActionsFactory
 import com.intellij.lang.jvm.actions.JvmElementActionsFactoryFallback
@@ -64,7 +65,7 @@ class ElementActionsFactoryUastFallback(
               request.typeParameters.map { materializer.materialize(it) },
               materializer.materialize(request.returnType),
               request.parameters.map { it.asUast<UParameter>() },
-              request.isAbstract
+              request.modifiers.contains(JvmModifier.ABSTRACT)
             )
           )
         }

@@ -58,8 +58,7 @@ sealed class MemberRequest {
     val modifiers: List<JvmModifier> = emptyList(),
     val typeParameters: List<JvmTypeParameter> = emptyList(),
     val returnType: JvmType,
-    val parameters: List<JvmParameter> = emptyList(),
-    val isAbstract: Boolean = false
+    val parameters: List<JvmParameter> = emptyList()
   ) : MemberRequest()
 
   class Constructor(
