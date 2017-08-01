@@ -196,9 +196,10 @@ class FindExtremumMigration extends BaseStreamApiMigration {
     PsiExpression nakedExpression = skipParenthesizedExprDown(expression);
     PsiReferenceExpression referenceExpression = tryCast(nakedExpression, PsiReferenceExpression.class);
     if (referenceExpression == null) return null;
-    PsiLocalVariable localVariable = tryCast(referenceExpression.resolve(), PsiLocalVariable.class);
+    PsiElement resolvedExpr = referenceExpression.resolve();
+    PsiLocalVariable localVariable = tryCast(resolvedExpr, PsiLocalVariable.class);
     if (localVariable != null) return localVariable;
-    return tryCast(referenceExpression.resolve(), PsiParameter.class);
+    return tryCast(resolvedExpr, PsiParameter.class);
   }
 
   private static boolean equalShape(@NotNull PsiExpression first,
