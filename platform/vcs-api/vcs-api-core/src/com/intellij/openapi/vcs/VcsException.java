@@ -26,6 +26,7 @@ import static com.intellij.openapi.vcs.VcsBundle.message;
 import static com.intellij.util.ArrayUtil.toStringArray;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.Collections.singleton;
 
 public class VcsException extends Exception {
@@ -41,7 +42,12 @@ public class VcsException extends Exception {
   }
 
   private void initMessage(@Nullable String message) {
-    myMessages = singleton(notNull(message, message("exception.text.unknown.error")));
+    myMessages = singleton(prepareMessage(message));
+  }
+
+  @NotNull
+  private static String prepareMessage(@Nullable String message) {
+    return notNull(message, message("exception.text.unknown.error"));
   }
 
   public VcsException(Throwable throwable, boolean isWarning) {
@@ -64,7 +70,7 @@ public class VcsException extends Exception {
   }
 
   public VcsException(@NotNull Collection<String> messages) {
-    myMessages = messages;
+    myMessages = map(messages, VcsException::prepareMessage);
   }
 
   //todo: should be in constructor?

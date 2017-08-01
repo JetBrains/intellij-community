@@ -247,7 +247,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
   }
 
-  private static String[] getExceptionMessages(VcsException exception) {
+  private static String[] getExceptionMessages(@NotNull VcsException exception) {
     String[] messages = exception.getMessages();
     if (messages.length == 0) messages = new String[]{VcsBundle.message("exception.text.unknown.error")};
     final List<String> list = new ArrayList<>();
