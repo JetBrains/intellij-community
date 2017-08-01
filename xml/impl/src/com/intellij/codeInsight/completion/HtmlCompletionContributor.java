@@ -96,7 +96,7 @@ public class HtmlCompletionContributor extends CompletionContributor {
       }
       else if ("rel".equals(name) || "rev".equals(name)) {
         return new String[]{"alternate", "author", "bookmark", "help", "icon", "license", "next", "nofollow",
-          "noreferrer", "prefetch", "prev", "search", "stylesheet", "tag", "start", "contents", "index",
+          "noreferrer", "noopener", "prefetch", "prev", "search", "stylesheet", "tag", "start", "contents", "index",
           "glossary", "copyright", "chapter", "section", "subsection", "appendix", "script", "import",
           "apple-touch-icon", "apple-touch-icon-precomposed", "apple-touch-startup-image"};
       }
