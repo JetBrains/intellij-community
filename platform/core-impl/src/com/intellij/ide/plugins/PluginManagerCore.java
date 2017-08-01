@@ -59,6 +59,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -479,6 +480,14 @@ public class PluginManagerCore {
         final File file = aClassPath.getCanonicalFile(); // it is critical not to have "." and ".." in classpath elements
         urls.add(file.toURI().toURL());
       }
+
+      // Android Studio: we know the plugin update code does not remove stale jars in all cases. UAST has moved into the platform, so we
+      // need to avoid loading it again in the plugin classloader because we will run into linking errors.
+      if ("org.jetbrains.kotlin".equals(pluginId.getIdString()) && !pluginDescriptor.isBundled()) {
+        return new PluginClassLoader(urls.stream().filter(it -> !it.getFile().contains("uast")).collect(Collectors.toList()),
+                                     parentLoaders, pluginId, pluginDescriptor.getVersion(), pluginRoot);
+      }
+
       return new PluginClassLoader(urls, parentLoaders, pluginId, pluginDescriptor.getVersion(), pluginRoot);
     }
     catch (MalformedURLException e) {
