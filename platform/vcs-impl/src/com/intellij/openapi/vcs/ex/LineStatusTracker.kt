@@ -127,7 +127,7 @@ abstract class LineStatusTracker<R : Range> constructor(override val project: Pr
       override fun isEnabled(range: Range): Boolean = true
 
       override fun actionPerformed(range: Range) {
-        RollbackLineStatusAction.rollback(tracker, editor, range)
+        RollbackLineStatusAction.rollback(tracker, range, editor)
       }
     }
   }

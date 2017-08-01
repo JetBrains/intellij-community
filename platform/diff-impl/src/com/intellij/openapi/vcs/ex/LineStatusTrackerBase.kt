@@ -315,6 +315,19 @@ abstract class LineStatusTrackerBase<R : Range> {
     }
   }
 
+  fun getRangesForLines(lines: BitSet): List<R>? {
+    LOCK.read {
+      if (!isValid()) return null
+      val result = ArrayList<R>()
+      for (block in blocks) {
+        if (block.isSelectedByLine(lines)) {
+          result.add(block.toRange())
+        }
+      }
+      return result
+    }
+  }
+
   fun getRangeForLine(line: Int): R? {
     LOCK.read {
       if (!isValid()) return null

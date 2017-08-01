@@ -16,20 +16,16 @@
 package com.intellij.openapi.vcs.ex
 
 import com.intellij.diff.util.Side
-import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.actions.AnnotationsSettings
-import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.ChangeListWorker
 import com.intellij.openapi.vcs.changes.LocalChangeList
-import com.intellij.openapi.vcs.changes.ui.ChangeListChooser
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.LocalRange
 import com.intellij.openapi.vfs.VirtualFile
@@ -38,6 +34,7 @@ import org.jetbrains.annotations.CalledInAwt
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Point
+import java.util.*
 
 class PartialLocalLineStatusTracker(project: Project,
                                     document: Document,
@@ -255,7 +252,7 @@ class PartialLocalLineStatusTracker(project: Project,
       override fun isEnabled(range: Range): Boolean = range is LocalRange
 
       override fun actionPerformed(range: Range) {
-        tracker.moveToAnotherChangelist(range as LocalRange)
+        MoveChangesLineStatusAction.moveToAnotherChangelist(tracker, range as LocalRange)
 
         val newRange = tracker.findRange(range)
         if (newRange != null) tracker.renderer.showHintAt(editor, newRange, mousePosition)
@@ -264,29 +261,32 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
 
-  private fun moveToAnotherChangelist(range: LocalRange) {
-    val block = findBlock(range) ?: return
-    val oldListId = block.ourData.marker?.changelistId
+  @CalledInAwt
+  fun moveToChangelist(range: Range, changelist: LocalChangeList) {
+    documentTracker.writeLock {
+      val block = findBlock(range)
+      if (block != null) moveToChangelist(listOf(block), changelist)
+    }
+  }
 
-    val oldChangeList = if (oldListId != null) ChangeListManager.getInstance(project).getChangeList(oldListId) else null
-    val chooser = ChangeListChooser(project,
-                                    ChangeListManager.getInstance(project).changeListsCopy,
-                                    oldChangeList,
-                                    ActionsBundle.message("action.ChangesView.Move.text"),
-                                    null)
-    chooser.show()
+  @CalledInAwt
+  fun moveToChangelist(lines: BitSet, changelist: LocalChangeList) {
+    documentTracker.writeLock {
+      moveToChangelist(blocks.filter { it.isSelectedByLine(lines) }, changelist)
+    }
+  }
 
-    val newChangelistId = chooser.selectedList?.id
-    if (newChangelistId != null && newChangelistId != oldListId) {
-      documentTracker.writeLock {
-        block.marker = ChangeListMarker(newChangelistId)
-        updateAffectedChangeLists()
-      }
-
-      ApplicationManager.getApplication().invokeLater {
+  @CalledInAwt
+  private fun moveToChangelist(blocks: List<Block>, changelist: LocalChangeList) {
+    val newMarker = ChangeListMarker(changelist)
+    for (block in blocks) {
+      if (block.marker != newMarker) {
+        block.marker = newMarker
         updateHighlighter(block)
       }
     }
+
+    updateAffectedChangeLists()
   }
 
 
