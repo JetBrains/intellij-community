@@ -706,4 +706,21 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   public boolean isInLibraryContent() {
     return myDescriptor.isInLibraryContent();
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    JavaStackFrame frame = (JavaStackFrame)o;
+
+    if (!myDescriptor.getFrameProxy().equals(frame.myDescriptor.getFrameProxy())) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myDescriptor.getFrameProxy().hashCode();
+  }
 }
