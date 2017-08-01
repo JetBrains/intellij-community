@@ -22,6 +22,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.spellchecker.dictionary.EditableDictionary;
@@ -31,7 +34,6 @@ import com.intellij.spellchecker.engine.SpellCheckerFactory;
 import com.intellij.spellchecker.engine.SuggestionProvider;
 import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import com.intellij.spellchecker.state.AggregatedDictionaryState;
-import com.intellij.spellchecker.util.SPFileUtil;
 import com.intellij.spellchecker.util.Strings;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,6 +42,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
 import java.util.*;
+
+import static com.intellij.openapi.util.io.FileUtil.isAncestor;
+import static com.intellij.spellchecker.util.SPFileUtil.processFilesRecursively;
 
 public class SpellCheckerManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.SpellCheckerManager");
@@ -61,6 +66,38 @@ public class SpellCheckerManager {
     this.project = project;
     this.settings = settings;
     fullConfigurationReload();
+    LocalFileSystem.getInstance().addVirtualFileListener(new VirtualFileListener() {
+      @Override
+      public void fileDeleted(@NotNull VirtualFileEvent event) {
+        final String path = event.getFile().getPath();
+        if (spellChecker.isDictionaryLoad(path)) {
+          spellChecker.removeDictionary(path);
+          restartInspections();
+        }
+      }
+
+      @Override
+      public void fileCreated(@NotNull VirtualFileEvent event) {
+        final String path = event.getFile().getPath();
+        boolean customDic = path.endsWith(".dic") && settings.getDictionaryFoldersPaths().stream().anyMatch(i -> isAncestor(i, path, true));
+        if (customDic) {
+          spellChecker.loadDictionary(new FileLoader(path, path));
+          restartInspections();
+        }
+      }
+
+      @Override
+      public void contentsChanged(@NotNull VirtualFileEvent event) {
+        final String path = event.getFile().getPath();
+        if (settings.getDisabledDictionariesPaths().contains(path)) return;
+
+        if (spellChecker.isDictionaryLoad(path)) {
+          spellChecker.removeDictionary(path);
+          spellChecker.loadDictionary(new FileLoader(path, path));
+          restartInspections();
+        }
+      }
+    });
   }
 
   public void fullConfigurationReload() {
@@ -91,8 +128,8 @@ public class SpellCheckerManager {
     if (settings != null && settings.getDictionaryFoldersPaths() != null) {
       final Set<String> disabledDictionaries = settings.getDisabledDictionariesPaths();
       for (String folder : settings.getDictionaryFoldersPaths()) {
-        SPFileUtil.processFilesRecursively(folder, s -> {
-          boolean dictionaryShouldBeLoad =!disabledDictionaries.contains(s);
+        processFilesRecursively(folder, s -> {
+          boolean dictionaryShouldBeLoad = !disabledDictionaries.contains(s);
           boolean dictionaryIsLoad = spellChecker.isDictionaryLoad(s);
           if (dictionaryIsLoad && !dictionaryShouldBeLoad) {
             spellChecker.removeDictionary(s);
@@ -142,7 +179,7 @@ public class SpellCheckerManager {
     if (settings != null && settings.getDictionaryFoldersPaths() != null) {
       final Set<String> disabledDictionaries = settings.getDisabledDictionariesPaths();
       for (String folder : settings.getDictionaryFoldersPaths()) {
-        SPFileUtil.processFilesRecursively(folder, s -> {
+        processFilesRecursively(folder, s -> {
           if (!disabledDictionaries.contains(s)) {
             loaders.add(new FileLoader(s, s));
           }
