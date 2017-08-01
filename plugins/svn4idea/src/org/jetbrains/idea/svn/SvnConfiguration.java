@@ -499,6 +499,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     }
   }
 
+  @NotNull
   public MergeRootInfo getMergeRootInfo(final File file, final SvnVcs svnVcs) {
     if (!myMergeRootInfos.containsKey(file)) {
       myMergeRootInfos.put(file, new MergeRootInfo(file, svnVcs));
