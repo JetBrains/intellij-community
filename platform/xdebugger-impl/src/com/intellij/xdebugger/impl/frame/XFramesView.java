@@ -19,6 +19,7 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,6 +32,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -54,6 +56,7 @@ import java.util.List;
  * @author nik
  */
 public class XFramesView extends XDebugView {
+  private static final Logger LOG = Logger.getInstance(XFramesView.class);
   public static final DataKey<XFramesView> DATA_KEY = DataKey.create("XDEBUGGER_FRAMES_VIEW");
 
   private final JPanel myMainPanel;
@@ -122,7 +125,7 @@ public class XFramesView extends XDebugView {
             XDebugSession session = getSession(e);
             if (session != null) {
               myRefresh = false;
-              updateFrames((XExecutionStack)item, session);
+              updateFrames((XExecutionStack)item, session, null);
             }
           }
         }
@@ -211,10 +214,11 @@ public class XFramesView extends XDebugView {
       return;
     }
 
+    XExecutionStack currentExecutionStack = ((XDebugSessionImpl)session).getCurrentExecutionStack();
     XStackFrame currentStackFrame = session.getCurrentStackFrame();
     XSuspendContext suspendContext = session.getSuspendContext();
 
-    if (event == SessionEvent.FRAME_CHANGED) {
+    if (event == SessionEvent.FRAME_CHANGED && Objects.equals(mySelectedStack, currentExecutionStack)) {
       ApplicationManager.getApplication().assertIsDispatchThread();
       if (currentStackFrame != null) {
         myFramesList.setSelectedValue(currentStackFrame, true);
@@ -249,10 +253,12 @@ public class XFramesView extends XDebugView {
         clear();
       }
 
+      XExecutionStack activeExecutionStack = mySelectedStack != null ? mySelectedStack : currentExecutionStack;
+      addExecutionStacks(Collections.singletonList(activeExecutionStack));
+
       XExecutionStack[] executionStacks = suspendContext.getExecutionStacks();
       addExecutionStacks(Arrays.asList(executionStacks));
 
-      XExecutionStack activeExecutionStack = mySelectedStack != null ? mySelectedStack : suspendContext.getActiveExecutionStack();
       myThreadComboBox.setSelectedItem(activeExecutionStack);
       myThreadsPanel.removeAll();
       myThreadsPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
@@ -261,7 +267,7 @@ public class XFramesView extends XDebugView {
         myThreadsPanel.add(myThreadComboBox, BorderLayout.CENTER);
       }
       myToolbar.setAddSeparatorFirst(!invisible);
-      updateFrames(activeExecutionStack, session);
+      updateFrames(activeExecutionStack, session, event == SessionEvent.FRAME_CHANGED ? currentStackFrame : null);
     });
   }
 
@@ -283,7 +289,7 @@ public class XFramesView extends XDebugView {
     }
   }
 
-  private void updateFrames(final XExecutionStack executionStack, @NotNull XDebugSession session) {
+  private void updateFrames(XExecutionStack executionStack, @NotNull XDebugSession session, @Nullable XStackFrame frameToSelect) {
     if (mySelectedStack != null) {
       getOrCreateBuilder(mySelectedStack, session).stop();
     }
@@ -292,6 +298,7 @@ public class XFramesView extends XDebugView {
     if (executionStack != null) {
       mySelectedFrameIndex = myExecutionStacksWithSelection.get(executionStack);
       StackFramesListBuilder builder = getOrCreateBuilder(executionStack, session);
+      builder.setToSelect(frameToSelect != null ? frameToSelect : mySelectedFrameIndex);
       myListenersEnabled = false;
       builder.initModel(myFramesList.getModel());
       myListenersEnabled = !builder.start();
@@ -328,11 +335,16 @@ public class XFramesView extends XDebugView {
     private volatile boolean myRunning;
     private boolean myAllFramesLoaded;
     private final XDebugSession mySession;
+    private Object myToSelect;
 
     private StackFramesListBuilder(final XExecutionStack executionStack, XDebugSession session) {
       myExecutionStack = executionStack;
       mySession = session;
       myStackFrames = new ArrayList<>();
+    }
+
+    void setToSelect(Object toSelect) {
+      myToSelect = toSelect;
     }
 
     @Override
@@ -349,13 +361,14 @@ public class XFramesView extends XDebugView {
         addFrameListElements(stackFrames, last);
 
         if (toSelect != null) {
-          int index = myStackFrames.indexOf(toSelect);
-          if (index != -1) mySelectedFrameIndex = index;
+          setToSelect(toSelect);
         }
-        selectCurrentFrame();
-        
+
         myNextFrameIndex += stackFrames.size();
         myAllFramesLoaded = last;
+
+        selectCurrentFrame();
+
         if (last) {
           if (myVisibleRect != null) {
             myFramesList.scrollRectToVisible(myVisibleRect);
@@ -429,13 +442,25 @@ public class XFramesView extends XDebugView {
     }
 
     private void selectCurrentFrame() {
-      if (mySelectedStack != null &&
-          myFramesList.getSelectedIndex() != mySelectedFrameIndex &&
-          myFramesList.getElementCount() > mySelectedFrameIndex &&
-          myFramesList.getModel().get(mySelectedFrameIndex) != null) {
-        myFramesList.setSelectedIndex(mySelectedFrameIndex);
-        processFrameSelection(mySession, false);
-        myListenersEnabled = true;
+      if (myToSelect instanceof XStackFrame) {
+        if (!Objects.equals(myFramesList.getSelectedValue(), myToSelect) && myFramesList.getModel().contains(myToSelect)) {
+          myFramesList.setSelectedValue(myToSelect, true);
+          processFrameSelection(mySession, false);
+          myListenersEnabled = true;
+        }
+        if (myAllFramesLoaded && myFramesList.getSelectedValue() == null) {
+          LOG.error("Frame was not found, " + myToSelect.getClass() + " must correctly override equals");
+        }
+      }
+      else if (myToSelect instanceof Integer) {
+        int selectedFrameIndex = (int)myToSelect;
+        if (myFramesList.getSelectedIndex() != selectedFrameIndex &&
+            myFramesList.getElementCount() > selectedFrameIndex &&
+            myFramesList.getModel().get(selectedFrameIndex) != null) {
+          myFramesList.setSelectedIndex(selectedFrameIndex);
+          processFrameSelection(mySession, false);
+          myListenersEnabled = true;
+        }
       }
     }
 
