@@ -2,6 +2,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
     name = "tasks-tests",
+    iml_files = ["tasks-tests.iml"],
     tags = ["managed"],
     test_srcs = ["test"],
     test_tags = ["manual"],

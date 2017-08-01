@@ -3,6 +3,8 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "terminal",
     srcs = ["src"],
+    bundle_data = glob(["resources/**"]),
+    iml_files = ["terminal.iml"],
     resources = ["resources"],
     tags = ["managed"],
     test_srcs = ["tests"],

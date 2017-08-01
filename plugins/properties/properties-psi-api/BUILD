@@ -7,6 +7,7 @@ iml_module(
         "src",
         "gen",
     ],
+    iml_files = ["properties-psi-api.iml"],
     resources = ["resources"],
     tags = ["managed"],
     visibility = ["//visibility:public"],

@@ -8,6 +8,7 @@ iml_module(
         "xpath-view/src",
         "xpath-lang/gen",
     ],
+    iml_files = ["xpath.iml"],
     tags = ["managed"],
     test_srcs = ["xpath-lang/test"],
     test_tags = ["manual"],

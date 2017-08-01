@@ -7,6 +7,11 @@ iml_module(
         "src",
         "gen",
     ],
+    bundle_data = glob([
+        "resources/standardDsls/**",
+        "resources/conf/**",
+    ]),
+    iml_files = ["groovy-psi.iml"],
     resources = ["resources"],
     tags = ["managed"],
     visibility = ["//visibility:public"],

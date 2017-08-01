@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "vcs-tests",
     srcs = ["src"],
+    iml_files = ["vcs-tests.iml"],
     tags = ["managed"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],

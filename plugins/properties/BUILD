@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "properties",
     srcs = ["src"],
+    iml_files = ["properties.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
     tags = ["managed"],
     test_srcs = ["testSrc"],

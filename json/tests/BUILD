@@ -2,6 +2,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
     name = "json-tests",
+    iml_files = ["json-tests.iml"],
     tags = ["managed"],
     test_resources = ["testData"],
     test_srcs = ["test"],

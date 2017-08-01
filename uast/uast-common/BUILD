@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "uast-common",
     srcs = ["src"],
+    iml_files = ["uast-common.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/java/java-psi-api"],

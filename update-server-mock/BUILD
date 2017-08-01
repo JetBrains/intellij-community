@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "update-server-mock",
     srcs = ["src/main/java"],
+    iml_files = ["update-server-mock.iml"],
     resources = ["src/main/resources"],
     tags = ["managed"],
     test_srcs = ["src/test/java"],

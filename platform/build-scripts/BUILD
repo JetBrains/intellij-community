@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "platform-build-scripts",
     srcs = ["icons/src"],
+    iml_files = ["platform-build-scripts.iml"],
     resources = ["groovy"],
     tags = ["managed"],
     test_srcs = ["icons/tests"],
@@ -15,7 +16,7 @@ iml_module(
         "//tools/idea/jps/model-api:jps-model-api",
         "//tools/idea/jps/standalone-builder:jps-standalone-builder",
         "//tools/idea/platform/util",
-        "//tools/idea/build/lib/gant/lib:gant-1.9.11_groovy-2.3.0",
+        "//tools/idea/build/lib:gant/lib/gant-1.9.11_groovy-2.3.0",
     ],
     # do not sort: must match IML order
     deps = [
@@ -35,9 +36,15 @@ iml_module(
         "//tools/idea/plugins/ui-designer/jps-plugin:ui-designer-jps-plugin[module]",
         "//tools/idea/plugins/groovy/jps-plugin:groovy-jps-plugin[module]",
         "//tools/idea/plugins/groovy/rt:groovy_rt[module]",
-        "//tools/idea/build/lib/gant/lib:gant-1.9.11_groovy-2.3.0",
+        "//tools/idea/build/lib:gant/lib/gant-1.9.11_groovy-2.3.0",
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/.idea/libraries:commons-compress",
     ],
+)
+
+filegroup(
+    name = "ant-build",
+    srcs = glob(["groovy/**/*"]),
+    visibility = ["//visibility:public"],
 )

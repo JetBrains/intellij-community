@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "xml-structure-view-api",
     srcs = ["src"],
+    iml_files = ["xml-structure-view-api.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/xml/xml-psi-api"],

@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "junit",
     srcs = ["src"],
+    iml_files = ["junit.iml"],
     tags = ["managed"],
     test_srcs = ["test"],
     test_tags = ["manual"],

@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "maven-artifact-resolver-m31",
     srcs = ["src"],
+    iml_files = ["maven-artifact-resolver-m31.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/plugins/maven/artifact-resolver/common:maven-artifact-resolver-common"],

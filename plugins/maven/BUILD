@@ -7,6 +7,10 @@ iml_module(
         "src/main/java",
         "maven2-server-impl/src",
     ],
+    iml_files = [
+        "maven.iml",
+        "maven2-server-impl/maven2-server-impl.iml",
+    ],
     javacopts = ["-XepAllErrorsAsWarnings"],
     resources = ["src/main/resources"],
     tags = ["managed"],

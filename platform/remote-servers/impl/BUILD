@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "remote-servers-impl",
     srcs = ["src"],
+    iml_files = ["remote-servers-impl.iml"],
     resources = ["resources"],
     tags = ["managed"],
     visibility = ["//visibility:public"],

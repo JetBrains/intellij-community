@@ -7,6 +7,7 @@ iml_module(
         "src/org/jetbrains/jps/javac/OptimizedFileManager.java",
         "src/org/jetbrains/jps/javac/OptimizedFileManager17.java",
     ],
+    iml_files = ["jps-builders-6.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order

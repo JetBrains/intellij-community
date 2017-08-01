@@ -7,6 +7,7 @@ iml_module(
         "src",
         "gen",
     ],
+    iml_files = ["jira.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order

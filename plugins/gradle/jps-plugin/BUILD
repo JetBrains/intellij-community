@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "gradle-jps-plugin",
     srcs = ["src"],
+    iml_files = ["gradle-jps-plugin.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/.idea/libraries:Ant"],

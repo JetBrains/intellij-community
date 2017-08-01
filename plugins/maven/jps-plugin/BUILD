@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "maven-jps-plugin",
     srcs = ["src"],
+    iml_files = ["maven-jps-plugin.iml"],
     tags = ["managed"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],

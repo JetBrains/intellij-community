@@ -32,6 +32,32 @@ iml_module(
         "xml/xml-psi-impl/gen",
         "xml/xml-structure-view-impl/src",
     ],
+    iml_files = [
+        "RegExpSupport/RegExpSupport.iml",
+        "platform/built-in-server/built-in-server.iml",
+        "platform/configuration-store-impl/configuration-store-impl.iml",
+        "platform/credential-store/credential-store.iml",
+        "platform/diff-impl/diff-impl.iml",
+        "xml/dom-impl/dom-impl.iml",
+        "xml/dom-openapi/dom-openapi.iml",
+        "images/images.iml",
+        "json/json.iml",
+        "platform/lang-impl/lang-impl.iml",
+        "platform/lvcs-impl/lvcs-impl.iml",
+        "platform/platform-impl/platform-impl.iml",
+        "platform/platform-resources/platform-resources.iml",
+        "xml/relaxng/relaxng.iml",
+        "spellchecker/spellchecker.iml",
+        "platform/testFramework/extensions/testExtensions.iml",
+        "platform/testFramework/testFramework.iml",
+        "platform/usageView/usageView.iml",
+        "platform/vcs-impl/vcs-impl.iml",
+        "platform/xdebugger-impl/xdebugger-impl.iml",
+        "xml/impl/xml.iml",
+        "xml/xml-analysis-impl/xml-analysis-impl.iml",
+        "xml/xml-psi-impl/xml-psi-impl.iml",
+        "xml/xml-structure-view-impl/xml-structure-view-impl.iml",
+    ],
     javacopts = ["-XepAllErrorsAsWarnings"],
     package_prefixes = {
         "platform/configuration-store-impl/src": "com.intellij.configurationStore",
@@ -182,6 +208,7 @@ iml_module(
 
 iml_module(
     name = "lang-tests",
+    iml_files = ["platform/lang-impl/lang-tests.iml"],
     tags = ["managed"],
     test_srcs = ["platform/lang-impl/testSources"],
     test_tags = ["manual"],
@@ -225,6 +252,7 @@ iml_module(
 
 iml_module(
     name = "diff-tests",
+    iml_files = ["platform/diff-impl/diff-tests.iml"],
     tags = ["managed"],
     test_srcs = ["platform/diff-impl/tests"],
     test_tags = ["manual"],
@@ -244,6 +272,7 @@ iml_module(
 
 iml_module(
     name = "configuration-store-tests",
+    iml_files = ["platform/configuration-store-impl/testSrc/configuration-store-tests.iml"],
     package_prefixes = {"platform/configuration-store-impl/testSrc": "com.intellij.configurationStore"},
     tags = ["managed"],
     test_srcs = ["platform/configuration-store-impl/testSrc"],
@@ -265,6 +294,7 @@ iml_module(
 
 iml_module(
     name = "built-in-server-tests",
+    iml_files = ["platform/built-in-server/built-in-server-tests.iml"],
     tags = ["managed"],
     test_srcs = ["platform/built-in-server/testSrc"],
     test_tags = ["manual"],
@@ -295,6 +325,7 @@ iml_module(
         "java/java-analysis-impl/src",
         "plugins/InspectionGadgets/InspectionGadgetsAnalysis/src",
     ],
+    iml_files = ["java/java-analysis-impl/java-analysis-impl.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
@@ -333,6 +364,7 @@ iml_module(
         "plugins/IntentionPowerPak/src",
         "plugins/generate-tostring/src",
     ],
+    iml_files = ["java/java-impl/java-impl.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
@@ -377,6 +409,7 @@ iml_module(
 iml_module(
     name = "java-tests",
     exclude = ["java/java-tests/testSrc/com/intellij/index/IndexTestGenerator.scala"],
+    iml_files = ["java/java-tests/java-tests.iml"],
     tags = ["managed"],
     test_srcs = [
         "java/java-tests/testSrc",
@@ -434,6 +467,14 @@ iml_module(
         "java/idea-ui/src",
         "java/testFramework/src",
     ],
+    iml_files = [
+        "java/compiler/impl/compiler-impl.iml",
+        "java/debugger/impl/debugger-impl.iml",
+        "java/execution/impl/execution-impl.iml",
+        "platform/external-system-impl/external-system-impl.iml",
+        "java/idea-ui/idea-ui.iml",
+        "java/testFramework/testFramework-java.iml",
+    ],
     javacopts = ["-Xep:MissingCasesInEnumSwitch:WARN"],
     resources = ["platform/external-system-impl/resources"],
     tags = ["managed"],
@@ -454,6 +495,9 @@ iml_module(
         "//tools/idea/platform/lang-api",
         "//tools/idea:java-impl",
         "//tools/idea:platform-impl_and_others",
+    ],
+    runtime_deps = [
+        "//tools/base/bazel:langtools",
     ],
     # do not sort: must match IML order
     deps = [
@@ -505,6 +549,7 @@ py_test(
 
 iml_module(
     name = "python-community-plugin-build-patches",
+    iml_files = ["python/build/patches/python-community-plugin-build-patches.iml"],
     resources = ["python/build/patches"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
@@ -513,6 +558,7 @@ iml_module(
 iml_module(
     name = "testGuiFramework",
     srcs = ["platform/testGuiFramework/src"],
+    iml_files = ["platform/testGuiFramework/testGuiFramework.iml"],
     tags = ["managed"],
     test_srcs = ["platform/testGuiFramework/testSrc"],
     visibility = ["//visibility:public"],
@@ -541,6 +587,7 @@ filegroup(
 
 iml_module(
     name = "community-main",
+    iml_files = ["community-main.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
@@ -661,6 +708,7 @@ iml_module(
 
 iml_module(
     name = "community-main-tests",
+    iml_files = ["community-main-tests/community-main-tests.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order

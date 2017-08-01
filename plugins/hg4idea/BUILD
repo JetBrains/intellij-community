@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "hg4idea",
     srcs = ["src"],
+    iml_files = ["hg4idea.iml"],
     resources = ["resources"],
     tags = ["managed"],
     test_srcs = ["testSrc"],

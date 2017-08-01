@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "common-eclipse-util",
     srcs = ["src"],
+    iml_files = ["common-eclipse-util.iml"],
     package_prefixes = {"src": "org.jetbrains.idea.eclipse"},
     tags = ["managed"],
     visibility = ["//visibility:public"],

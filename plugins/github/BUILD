@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "github",
     srcs = ["src"],
+    iml_files = ["github.iml"],
     resources = ["resources"],
     tags = ["managed"],
     test_srcs = ["test"],

@@ -2,6 +2,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
     name = "IntelliLang-tests",
+    iml_files = ["IntelliLang-tests.iml"],
     tags = ["managed"],
     test_srcs = ["test"],
     test_tags = ["manual"],

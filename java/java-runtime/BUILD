@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "java-runtime",
     srcs = ["src"],
+    iml_files = ["java-runtime.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
     tags = ["managed"],
     visibility = ["//visibility:public"],

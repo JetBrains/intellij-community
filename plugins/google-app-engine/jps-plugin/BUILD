@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "google-app-engine-jps-plugin",
     srcs = ["src"],
+    iml_files = ["google-app-engine-jps-plugin.iml"],
     tags = ["managed"],
     test_srcs = ["testSource"],
     test_tags = ["manual"],

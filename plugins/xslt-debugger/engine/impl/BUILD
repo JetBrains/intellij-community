@@ -7,6 +7,7 @@ iml_module(
         "src",
         "lib",
     ],
+    iml_files = ["xslt-debugger-engine-impl.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order

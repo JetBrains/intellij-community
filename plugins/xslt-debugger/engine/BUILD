@@ -7,6 +7,7 @@ iml_module(
         "src",
         "lib",
     ],
+    iml_files = ["xslt-debugger-engine.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/.idea/libraries:Trove4j"],

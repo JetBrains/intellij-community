@@ -7,6 +7,7 @@ iml_module(
         "resources",
         "src",
     ],
+    iml_files = ["settings-repository.iml"],
     package_prefixes = {"src": "org.jetbrains.settingsRepository"},
     tags = ["managed"],
     visibility = ["//visibility:public"],

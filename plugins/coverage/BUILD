@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "coverage",
     srcs = ["src"],
+    iml_files = ["coverage.iml"],
     tags = ["managed"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],

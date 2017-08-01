@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "ShortcutPromoter",
     srcs = ["src"],
+    iml_files = ["ShortcutPromoter.iml"],
     resources = ["resources"],
     tags = ["managed"],
     visibility = ["//visibility:public"],

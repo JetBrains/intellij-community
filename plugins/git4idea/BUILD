@@ -7,6 +7,7 @@ iml_module(
         "src",
         "gen",
     ],
+    iml_files = ["git4idea.iml"],
     javacopts = ["-Xep:MissingCasesInEnumSwitch:WARN"],
     resources = ["resources"],
     tags = ["managed"],

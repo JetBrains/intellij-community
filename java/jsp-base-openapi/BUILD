@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "jsp-base-openapi",
     srcs = ["src"],
+    iml_files = ["jsp-base-openapi.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/xml/openapi:xml-openapi"],

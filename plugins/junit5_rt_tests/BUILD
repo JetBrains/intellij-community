@@ -2,6 +2,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 
 iml_module(
     name = "junit5_rt_tests",
+    iml_files = ["junit5_rt_tests.iml"],
     tags = ["managed"],
     test_srcs = ["test"],
     test_tags = ["manual"],

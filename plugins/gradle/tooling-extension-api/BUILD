@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "gradle-tooling-extension-api",
     srcs = ["src"],
+    iml_files = ["gradle-tooling-extension-api.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
     tags = ["managed"],
     visibility = ["//visibility:public"],

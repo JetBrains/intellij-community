@@ -1143,3 +1143,9 @@ java_library(
     exports = ["//prebuilts/tools/common/m2/repository/com/google/auto/value/auto-value/1.4.1:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/auto/value/auto-value/1.4.1:jar"],
 )
+
+filegroup(
+    name = "xmls",
+    srcs = glob(["**/*.xml"]),
+    visibility = ["//visibility:public"],
+)

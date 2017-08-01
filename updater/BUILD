@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "updater",
     srcs = ["src"],
+    iml_files = ["updater.iml"],
     tags = ["managed"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],

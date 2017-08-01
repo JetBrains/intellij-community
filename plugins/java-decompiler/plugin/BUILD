@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "java-decompiler-plugin",
     srcs = ["src"],
+    iml_files = ["java-decompiler-plugin.iml"],
     tags = ["managed"],
     test_srcs = ["test"],
     test_tags = ["manual"],

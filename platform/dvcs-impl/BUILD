@@ -4,6 +4,7 @@ iml_module(
     name = "dvcs-impl",
     # do not sort: must match IML order
     srcs = ["src"],
+    iml_files = ["dvcs-impl.iml"],
     resources = ["resources"],
     tags = ["managed"],
     test_srcs = ["testSrc"],

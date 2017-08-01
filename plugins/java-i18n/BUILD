@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "java-i18n",
     srcs = ["src"],
+    iml_files = ["java-i18n.iml"],
     resources = ["resources"],
     tags = ["managed"],
     test_srcs = ["testSrc"],

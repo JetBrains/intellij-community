@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "gradle-tooling-extension-impl",
     srcs = ["src"],
+    iml_files = ["gradle-tooling-extension-impl.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
@@ -35,6 +36,7 @@ iml_module(
 
 iml_module(
     name = "gradle-tooling-extension-tests",
+    iml_files = ["gradle-tooling-extension-tests.iml"],
     tags = ["managed"],
     test_resources = ["testData"],
     test_srcs = ["testSources"],

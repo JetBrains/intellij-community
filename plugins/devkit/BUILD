@@ -7,6 +7,7 @@ iml_module(
         "src",
         "gen",
     ],
+    iml_files = ["devkit.iml"],
     package_prefixes = {"src": "org.jetbrains.idea.devkit"},
     resources = ["resources"],
     tags = ["managed"],
@@ -33,6 +34,7 @@ iml_module(
 
 iml_module(
     name = "devkit-tests",
+    iml_files = ["devkit-tests.iml"],
     package_prefixes = {"testSources": "org.jetbrains.idea.devkit"},
     tags = ["managed"],
     test_srcs = ["testSources"],

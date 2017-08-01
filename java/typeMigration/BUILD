@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "typeMigration",
     srcs = ["src"],
+    iml_files = ["typeMigration.iml"],
     tags = ["managed"],
     test_srcs = ["test"],
     test_tags = ["manual"],

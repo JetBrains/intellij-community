@@ -7,6 +7,7 @@ iml_module(
         "src",
         "gen",
     ],
+    iml_files = ["yaml.iml"],
     resources = ["resources"],
     tags = ["managed"],
     test_srcs = ["testSrc"],

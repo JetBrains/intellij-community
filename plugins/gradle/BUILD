@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "gradle",
     srcs = ["src"],
+    iml_files = ["gradle.iml"],
     javacopts = ["-Xep:MissingCasesInEnumSwitch:WARN"],
     resources = ["resources"],
     tags = ["managed"],
@@ -65,6 +66,7 @@ iml_module(
 
 iml_module(
     name = "gradle-tests",
+    iml_files = ["gradle-tests.iml"],
     tags = ["managed"],
     test_srcs = [
         "testData",

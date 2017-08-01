@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "ui-designer-core",
     srcs = ["src"],
+    iml_files = ["ui-designer-core.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea:platform-impl_and_others"],

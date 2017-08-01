@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "forms-compiler",
     srcs = ["src"],
+    iml_files = ["forms-compiler.iml"],
     tags = ["managed"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],  # This is flaky on macOS and we don't use it anyway.

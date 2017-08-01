@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "util",
     srcs = ["src"],
+    iml_files = ["util.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
     resources = ["resources"],
     tags = ["managed"],
@@ -36,6 +37,7 @@ iml_module(
 
 iml_module(
     name = "util-tests",
+    iml_files = ["testSrc/util-tests.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
     tags = ["managed"],
     test_srcs = ["testSrc"],

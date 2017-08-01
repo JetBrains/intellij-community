@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "coverage_rt",
     srcs = ["src"],
+    iml_files = ["coverage_rt.iml"],
     package_prefixes = {"src": "com.intellij.coverage"},
     tags = ["managed"],
     visibility = ["//visibility:public"],

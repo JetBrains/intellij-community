@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "external-system-api",
     srcs = ["src"],
+    iml_files = ["external-system-api.iml"],
     resources = ["resources"],
     tags = ["managed"],
     visibility = ["//visibility:public"],

@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "remote-servers-java-api",
     srcs = ["src"],
+    iml_files = ["remote-servers-java-api.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/platform/remote-servers/api:remote-servers-api"],

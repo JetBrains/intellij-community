@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "testng",
     srcs = ["src"],
+    iml_files = ["testng.iml"],
     tags = ["managed"],
     test_srcs = ["testSources"],
     test_tags = ["manual"],

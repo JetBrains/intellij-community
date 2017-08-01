@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "jps-model-serialization",
     srcs = ["src"],
+    iml_files = ["jps-model-serialization.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/.idea/libraries:JDOM"],
@@ -16,6 +17,7 @@ iml_module(
 
 iml_module(
     name = "jps-serialization-tests",
+    iml_files = ["jps-serialization-tests.iml"],
     tags = ["managed"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],

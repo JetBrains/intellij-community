@@ -7,6 +7,7 @@ iml_module(
         "source",
         "gen",
     ],
+    iml_files = ["google-app-engine.iml"],
     resources = ["resources"],
     tags = ["managed"],
     test_srcs = ["testSource"],

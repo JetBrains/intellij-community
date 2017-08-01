@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "IntelliLang",
     srcs = ["src"],
+    iml_files = ["IntelliLang.iml"],
     javacopts = ["-Xep:MissingCasesInEnumSwitch:WARN"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
@@ -17,6 +18,7 @@ iml_module(
 iml_module(
     name = "IntelliLang-java",
     srcs = ["java-support"],
+    iml_files = ["IntelliLang-java.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
@@ -34,6 +36,7 @@ iml_module(
 iml_module(
     name = "IntelliLang-xml",
     srcs = ["xml-support"],
+    iml_files = ["IntelliLang-xml.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order

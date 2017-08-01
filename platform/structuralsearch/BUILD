@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "structuralsearch",
     srcs = ["source"],
+    iml_files = ["structuralsearch.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
@@ -22,6 +23,7 @@ iml_module(
 
 iml_module(
     name = "structuralsearch-tests",
+    iml_files = ["structuralsearch-tests.iml"],
     tags = ["managed"],
     test_srcs = ["testSource"],
     test_tags = ["manual"],

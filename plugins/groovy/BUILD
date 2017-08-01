@@ -3,6 +3,8 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "jetgroovy",
     srcs = ["src"],
+    bundle_data = ["hotswap/gragent.jar"],
+    iml_files = ["jetgroovy.iml"],
     javacopts = ["-XepAllErrorsAsWarnings"],
     resources = ["resources"],
     tags = ["managed"],

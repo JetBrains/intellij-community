@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "dvcs-api",
     srcs = ["src"],
+    iml_files = ["dvcs-api.iml"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/platform/vcs-log/graph-api:vcs-log-graph-api"],
