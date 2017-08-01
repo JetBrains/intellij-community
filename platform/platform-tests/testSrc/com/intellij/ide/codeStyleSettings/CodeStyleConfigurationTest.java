@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.codeStyleSettings;
 
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -35,7 +36,7 @@ public class CodeStyleConfigurationTest extends CodeStyleTestCase {
     org.jdom.Element rootElement = new Element("option");
 
     Element langCodeStyle = new Element("codeStyleSettings");
-    langCodeStyle.setAttribute("language", "JavaScript");
+    langCodeStyle.setAttribute("language", "XML");
     langCodeStyle.addContent(createOption("IF_BRACE_FORCE", "3"));
     Element indentOptionsElement = new Element("indentOptions");
     indentOptionsElement.addContent(createOption("INDENT_SIZE", "2"));
@@ -47,7 +48,7 @@ public class CodeStyleConfigurationTest extends CodeStyleTestCase {
 
     CodeStyleSettings settings = new CodeStyleSettings();
     settings.readExternal(rootElement);
-    CommonCodeStyleSettings langSettings = settings.getCommonSettings("JavaScript");
+    CommonCodeStyleSettings langSettings = settings.getCommonSettings(XMLLanguage.INSTANCE);
     assert langSettings != null;
     CommonCodeStyleSettings.IndentOptions indentOptions = langSettings.getIndentOptions();
     assert indentOptions != null;
