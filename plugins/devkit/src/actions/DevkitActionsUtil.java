@@ -29,6 +29,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
@@ -45,6 +46,7 @@ public final class DevkitActionsUtil {
   public static final PsiClass[] CANCELED = new PsiClass[1];
 
 
+  @NotNull
   public static PsiClass[] createSinglePluginClass(String name, String classTemplateName, PsiDirectory directory,
                                               Set<XmlFile> pluginXmlsToPatch, Presentation templatePresentation) {
     Project project = directory.getProject();

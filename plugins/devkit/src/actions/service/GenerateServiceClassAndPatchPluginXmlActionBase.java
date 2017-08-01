@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.devkit.actions.service;
 
+import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.actions.CreateInDirectoryActionBase;
 import com.intellij.ide.actions.ElementCreator;
@@ -24,9 +26,13 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.RunResult;
 import com.intellij.openapi.application.WriteActionAware;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -47,6 +53,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 public abstract class GenerateServiceClassAndPatchPluginXmlActionBase extends CreateInDirectoryActionBase implements WriteActionAware {
   private final Set<XmlFile> myFilesToPatch = new HashSet<>();
@@ -64,12 +71,9 @@ public abstract class GenerateServiceClassAndPatchPluginXmlActionBase extends Cr
   private void patchPluginXmls(@NotNull XmlFile[] pluginXmls, @Nullable PsiClass serviceInterface,
                                @NotNull PsiClass serviceImplementation) {
     DescriptorUtil.checkPluginXmlsWritable(serviceImplementation.getProject(), pluginXmls);
-    executeGlobalUndoWriteCommandAction(serviceImplementation.getProject(),
-                                        DevKitBundle.message("new.service.patch.plugin.xml.action.name"), () -> {
-        for (XmlFile pluginXml : pluginXmls) {
-          patchPluginXml(pluginXml, serviceInterface, serviceImplementation);
-        }
-      });
+    for (XmlFile pluginXml : pluginXmls) {
+      patchPluginXml(pluginXml, serviceInterface, serviceImplementation);
+    }
   }
 
   private void patchPluginXml(XmlFile pluginXml, @Nullable PsiClass serviceInterface, @NotNull PsiClass serviceImplementation) {
@@ -104,82 +108,22 @@ public abstract class GenerateServiceClassAndPatchPluginXmlActionBase extends Cr
     PsiDirectory dir = view.getOrChooseDirectory();
     if (dir == null) return;
 
-    String errorTitle = DevKitBundle.message("error.cannot.create.service.class");
-    MyServiceClassCreator onlyImplementationElementCreator = new MyServiceClassCreator(
-      project, errorTitle, dir, getOnlyImplementationTemplateName());
-    MyServiceClassCreator implementationElementCreator = new MyServiceClassCreator(
-      project, errorTitle, dir, JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME);
-    MyServiceClassCreator interfaceElementCreator = new MyServiceClassCreator(project, errorTitle, dir, getInterfaceTemplateName());
+    ServiceCreator serviceCreator = new ServiceCreator(dir, getInterfaceTemplateName(), getOnlyImplementationTemplateName());
+    PsiClass[] createdClasses = invokeDialog(project, serviceCreator);
+    if (createdClasses == null) {
+      return;
+    }
 
-    invokeDialog(project, onlyImplementationElementCreator, implementationElementCreator, interfaceElementCreator);
-    PsiElement[] createdElements = handleCreatedElements(onlyImplementationElementCreator,
-                                                         implementationElementCreator, interfaceElementCreator);
-    for (PsiElement createdElement : createdElements) {
-      view.selectElement(createdElement);
+    for (PsiClass createdClass : createdClasses) {
+      view.selectElement(createdClass);
     }
   }
 
-  private void invokeDialog(Project project, MyServiceClassCreator onlyImplementationElementCreator,
-                            MyServiceClassCreator implementationElementCreator,
-                            MyServiceClassCreator interfaceElementCreator) {
-    DialogWrapper dialog = new NewServiceDialog(project, onlyImplementationElementCreator,
-                                                interfaceElementCreator, implementationElementCreator);
+  @Nullable
+  private PsiClass[] invokeDialog(Project project, ServiceCreator serviceCreator) {
+    DialogWrapper dialog = new NewServiceDialog(project, serviceCreator);
     dialog.show();
-  }
-
-  @SuppressWarnings("ConstantConditions") //noinspection ConstantConditions - anonymous classes are not possible here, so no NPE
-  @NotNull
-  private PsiElement[] handleCreatedElements(MyServiceClassCreator onlyImplementationElementCreator,
-                                             MyServiceClassCreator implementationElementCreator,
-                                             MyServiceClassCreator interfaceElementCreator) {
-    XmlFile[] pluginXmls = myFilesToPatch.toArray(new XmlFile[myFilesToPatch.size()]);
-    PsiClass createdImplementation = implementationElementCreator.getCreatedClass();
-    PsiClass createdInterface = interfaceElementCreator.getCreatedClass();
-    boolean separatedInterface = createdImplementation != null && createdInterface != null;
-    if (separatedInterface) {
-      Project project = createdImplementation.getProject();
-      executeGlobalUndoWriteCommandAction(project, DevKitBundle.message("new.service.adding.interface.to.class"), () -> {
-        JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-        PsiElementFactory factory = facade.getElementFactory();
-        PsiJavaCodeReferenceElement interfaceReference =
-          factory.createReferenceElementByFQClassName(createdInterface.getQualifiedName(), createdImplementation.getResolveScope());
-        createdImplementation.getImplementsList().add(interfaceReference);
-      });
-
-      patchPluginXmls(pluginXmls, createdInterface, createdImplementation);
-      return new PsiElement[]{createdInterface, createdImplementation};
-    }
-    else {
-      PsiClass createdOnlyImplementation = onlyImplementationElementCreator.getCreatedClass();
-      if (createdOnlyImplementation != null) {
-        patchPluginXmls(pluginXmls, null, createdOnlyImplementation);
-        return new PsiElement[]{createdOnlyImplementation};
-      }
-      return PsiElement.EMPTY_ARRAY;
-    }
-  }
-
-  private static void executeGlobalUndoWriteCommandAction(Project project, String commandName, Runnable runnable) {
-    RunResult<Void> result = new WriteCommandAction<Void>(project, commandName) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        runnable.run();
-      }
-
-      @Override
-      protected boolean isGlobalUndoAction() {
-        return true;
-      }
-    }.execute();
-
-    if (result.hasException()) {
-      Throwable e = result.getThrowable();
-      if (e instanceof RuntimeException) {
-        throw (RuntimeException)e;
-      } else {
-        throw new RuntimeException(e);
-      }
-    }
+    return serviceCreator.getCreatedClasses();
   }
 
   protected abstract String getTagName();
@@ -191,9 +135,7 @@ public abstract class GenerateServiceClassAndPatchPluginXmlActionBase extends Cr
 
 
   private class NewServiceDialog extends DialogWrapper {
-    private final MyServiceClassCreator myOnlyImplementationElementCreator;
-    private final MyServiceClassCreator myInterfaceElementCreator;
-    private final MyServiceClassCreator myImplementationElementCreator;
+    private final ServiceCreator myServiceCreator;
 
     private JPanel myTopPanel;
 
@@ -205,18 +147,13 @@ public abstract class GenerateServiceClassAndPatchPluginXmlActionBase extends Cr
     private boolean myAdjusting = false;
     private boolean myNeedAdjust = true;
 
-    NewServiceDialog(@Nullable Project project,
-                               MyServiceClassCreator onlyImplementationElementCreator,
-                               MyServiceClassCreator interfaceElementCreator,
-                               MyServiceClassCreator implementationElementCreator) {
+    NewServiceDialog(@Nullable Project project, ServiceCreator serviceCreator) {
       super(project);
 
       setOKActionEnabled(false);
       setTitle(getDialogTitle());
 
-      myOnlyImplementationElementCreator = onlyImplementationElementCreator;
-      myInterfaceElementCreator = interfaceElementCreator;
-      myImplementationElementCreator = implementationElementCreator;
+      myServiceCreator = serviceCreator;
 
       mySeparateServiceInterfaceCheckbox.addActionListener(e -> {
         if (mySeparateServiceInterfaceCheckbox.isSelected()) {
@@ -272,16 +209,28 @@ public abstract class GenerateServiceClassAndPatchPluginXmlActionBase extends Cr
         // separated interface and implementation
         String serviceInterface = myServiceNameTextField.getText().trim();
         String serviceImplementation = myServiceImplementationTextField.getText().trim();
-        if (myImplementationElementCreator.canClose(serviceImplementation) && myInterfaceElementCreator.canClose(serviceInterface)) {
+
+        if (checkInput(serviceInterface) && checkInput(serviceImplementation) &&
+            myServiceCreator.createInterfaceAndImplementation(serviceInterface, serviceImplementation)) {
           close(OK_EXIT_CODE);
         }
       } else {
         // only implementation
-        String serviceImplementation = myServiceNameTextField.getText().trim();
-        if (myOnlyImplementationElementCreator.canClose(serviceImplementation)) {
+        String serviceOnlyImplementation = myServiceNameTextField.getText().trim();
+
+        if (checkInput(serviceOnlyImplementation) && myServiceCreator.createOnlyImplementation(serviceOnlyImplementation)) {
           close(OK_EXIT_CODE);
         }
       }
+    }
+
+    private boolean checkInput(String input) {
+      if (StringUtil.isEmpty(input)) {
+        Messages.showMessageDialog(getContentPane(), IdeBundle.message("error.name.should.be.specified"),
+                                   CommonBundle.getErrorTitle(), Messages.getErrorIcon());
+        return false;
+      }
+      return true;
     }
 
     @Nullable
@@ -291,42 +240,111 @@ public abstract class GenerateServiceClassAndPatchPluginXmlActionBase extends Cr
     }
   }
 
-  private class MyServiceClassCreator extends ElementCreator {
+
+  private class ServiceCreator {
+    private final Logger LOG = Logger.getInstance("#" + ServiceCreator.class.getCanonicalName());
+
     private final PsiDirectory myDirectory;
-    private final String myClassTemplateName;
+    private final String myServiceInterfaceTemplateName;
+    private final String myServiceOnlyImplementationTemplateName;
 
-    private PsiClass myCreatedClass = null;
+    private PsiClass[] createdClasses = null;
 
-    MyServiceClassCreator(Project project, String errorTitle, PsiDirectory directory, String classTemplateName) {
-      super(project, errorTitle);
+    ServiceCreator(PsiDirectory directory,
+                           String serviceInterfaceTemplateName,
+                           String serviceOnlyImplementationTemplateName) {
       myDirectory = directory;
-      myClassTemplateName = classTemplateName;
+      this.myServiceInterfaceTemplateName = serviceInterfaceTemplateName;
+      this.myServiceOnlyImplementationTemplateName = serviceOnlyImplementationTemplateName;
     }
 
-    @NotNull
-    protected PsiElement[] create(String newName) throws Exception {
-      return DevkitActionsUtil.createSinglePluginClass(
-        newName, myClassTemplateName, myDirectory, myFilesToPatch, getTemplatePresentation());
+    PsiClass[] getCreatedClasses() {
+      return createdClasses;
     }
 
-    @Override
-    protected String getActionName(String newName) {
-      return DevKitBundle.message("new.service.class.action.name", newName);
-    }
+    /**
+     * @return whether the service was created (which indicates whether the create service dialog can be closed).
+     */
+    @SuppressWarnings("ConstantConditions") // no NPE here since created classes are not anonymous
+    boolean createInterfaceAndImplementation(String interfaceName, String implementationName) {
+      return doCreateService(() -> {
+        PsiClass createdInterface = DevkitActionsUtil.createSinglePluginClass(
+          interfaceName, myServiceInterfaceTemplateName, myDirectory, myFilesToPatch, getTemplatePresentation())[0];
+        if (createdInterface == null) {
+          return false; // canceled
+        }
 
-    public boolean canClose(String inputString) {
-      PsiElement[] createdElements = tryCreate(inputString);
-      if (createdElements.length > 0) {
-        myCreatedClass = (PsiClass)createdElements[0]; // cast is safe since create() returns array of single PsiClass
+        PsiClass createdImplementation = DevkitActionsUtil.createSinglePluginClass(
+          implementationName, JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME, myDirectory, myFilesToPatch, getTemplatePresentation())[0];
+        if (createdImplementation == null) {
+          // unlikely to happen since plugin.xml to patch is already defined after service interface is created
+          return false;
+        }
+
+        JavaPsiFacade facade = JavaPsiFacade.getInstance(myDirectory.getProject());
+        PsiElementFactory factory = facade.getElementFactory();
+        PsiJavaCodeReferenceElement interfaceReference =
+          factory.createReferenceElementByFQClassName(createdInterface.getQualifiedName(), createdImplementation.getResolveScope());
+        createdImplementation.getImplementsList().add(interfaceReference);
+
+        handleCreatedElements(createdInterface, createdImplementation);
+        createdClasses = new PsiClass[]{createdInterface, createdImplementation};
         return true;
-      } else {
+      });
+    }
+
+    /**
+     * @return whether the service was created (which indicates whether the create service dialog can be closed).
+     */
+    boolean createOnlyImplementation(String onlyImplementationName) {
+      return doCreateService(() -> {
+        PsiClass createOnlyImplementation = DevkitActionsUtil.createSinglePluginClass(
+          onlyImplementationName, myServiceOnlyImplementationTemplateName, myDirectory, myFilesToPatch, getTemplatePresentation())[0];
+        if (createOnlyImplementation == null) {
+          return false; // canceled
+        }
+
+        handleCreatedElements(null, createOnlyImplementation);
+        createdClasses = new PsiClass[]{createOnlyImplementation};
+        return true;
+      });
+    }
+
+    private boolean doCreateService(Callable<Boolean> action) {
+      RunResult<Boolean> result = new WriteCommandAction<Boolean>(getProject(), DevKitBundle.message("new.service.class.action.name")) {
+        @Override
+        protected void run(@NotNull Result<Boolean> result) throws Throwable {
+          result.setResult(action.call());
+        }
+
+        @Override
+        protected UndoConfirmationPolicy getUndoConfirmationPolicy() {
+          return UndoConfirmationPolicy.REQUEST_CONFIRMATION;
+        }
+      }.execute();
+
+      if (result.hasException()) {
+        handleException(result.getThrowable());
         return false;
       }
+
+      return result.getResultObject();
     }
 
-    @Nullable
-    public PsiClass getCreatedClass() {
-      return myCreatedClass;
+    private void handleCreatedElements(@Nullable PsiClass createdInterface, @NotNull PsiClass createdImplementation) {
+      XmlFile[] pluginXmls = myFilesToPatch.toArray(new XmlFile[myFilesToPatch.size()]);
+      patchPluginXmls(pluginXmls, createdInterface, createdImplementation);
+    }
+
+    private void handleException(Throwable t) {
+      LOG.info(t);
+      String errorMessage = ElementCreator.getErrorMessage(t);
+      Messages.showMessageDialog(
+        getProject(), errorMessage, DevKitBundle.message("error.cannot.create.service.class"), Messages.getErrorIcon());
+    }
+
+    private Project getProject() {
+      return myDirectory.getProject();
     }
   }
 }
