@@ -33,11 +33,11 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
+import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -46,10 +46,7 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author gregsh
@@ -76,6 +73,8 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
   private static Collection<Library> collectLibraries(final @NotNull Project project, final @NotNull Predicate<Library> predicate) {
     final HashSet<Library> result = new HashSet<>();
     ApplicationManager.getApplication().runReadAction(() -> {
+      if (project.isDisposed()) return;
+      
       for (final Module module : ModuleManager.getInstance(project).getModules()) {
         OrderEnumerator.orderEntries(module).withoutSdk().forEachLibrary(library -> {
           if (predicate.apply(library)) {
@@ -93,39 +92,45 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
     return result;
   }
 
-  private static void removeDuplicatedUrls(@NotNull Project project) {
+  private static void removeDuplicatedUrlsFromRepositoryLibraries(@NotNull Project project) {
     Collection<Library> libraries = collectLibraries(project, library ->
       library instanceof LibraryEx && ((LibraryEx)library).getProperties() instanceof RepositoryLibraryProperties && hasDuplicatedRoots(library)
     );
 
     if (!libraries.isEmpty()) {
-      WriteAction.run(() -> {
-        for (Library library : libraries) {
-          Library.ModifiableModel model = library.getModifiableModel();
-          for (OrderRootType type : OrderRootType.getAllTypes()) {
-            String[] urls = model.getUrls(type);
-            Set<String> uniqueUrls = new LinkedHashSet<>(Arrays.asList(urls));
-            if (uniqueUrls.size() != urls.length) {
-              for (String url : urls) {
-                model.removeRoot(url, type);
-              }
-              for (String url : uniqueUrls) {
-                model.addRoot(url, type);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        List<Library> validLibraries = ContainerUtil.filter(libraries, LibraryTableImplUtil::isValidLibrary);
+        if (validLibraries.isEmpty()) return;
+
+        WriteAction.run(() -> {
+          for (Library library : validLibraries) {
+            Library.ModifiableModel model = library.getModifiableModel();
+            for (OrderRootType type : OrderRootType.getAllTypes()) {
+              String[] urls = model.getUrls(type);
+              Set<String> uniqueUrls = new LinkedHashSet<>(Arrays.asList(urls));
+              if (uniqueUrls.size() != urls.length) {
+                for (String url : urls) {
+                  model.removeRoot(url, type);
+                }
+                for (String url : uniqueUrls) {
+                  model.addRoot(url, type);
+                }
               }
             }
+            model.commit();
           }
-          model.commit();
-        }
-      });
-      String libraryText = libraries.size() == 1
-                           ? "'" + LibraryUtil.getPresentableName(libraries.iterator().next()) + "' library"
-                           : libraries.size() + " libraries";
-      Notifications.Bus.notify(new Notification(
-        "Repository", "Repository libraries cleanup", "Duplicated URLs were removed from " + libraryText + ". " +
-                                                      "These duplicated URLs were produced due to a bug in a previous " +
-                                                      ApplicationNamesInfo.getInstance().getFullProductName() + " version and might cause performance issues.",
-        NotificationType.INFORMATION
-      ), project);
+        });
+        String libraryText = validLibraries.size() == 1
+                             ? "'" + LibraryUtil.getPresentableName(validLibraries.iterator().next()) + "' library"
+                             : validLibraries.size() + " libraries";
+        Notifications.Bus.notify(new Notification(
+          "Repository", "Repository libraries cleanup", "Duplicated URLs were removed from " + libraryText + ". " +
+                                                        "These duplicated URLs were produced due to a bug in a previous " +
+                                                        ApplicationNamesInfo.getInstance().getFullProductName() +
+                                                        " version and might cause performance issues.",
+          NotificationType.INFORMATION
+        ), project);
+      }, project.getDisposed());
     }
   }
 
@@ -141,7 +146,7 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
 
   @Override
   public void runActivity(@NotNull final Project project) {
-    final DumbAwareRunnable syncTask = () -> ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> {
+    final Runnable syncTask = () -> {
       final Collection<Library> toSync = collectLibraries(project, library -> {
         if (library instanceof LibraryEx) {
           final LibraryEx libraryEx = (LibraryEx)library;
@@ -150,10 +155,15 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
         }
         return false;
       });
-      for (Library library : toSync) {
-        RepositoryUtils.reloadDependencies(project, (LibraryEx)library);
-      }
-    }, project.getDisposed());
+
+      ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> {
+        for (Library library : toSync) {
+          if (LibraryTableImplUtil.isValidLibrary(library)) {
+            RepositoryUtils.reloadDependencies(project, (LibraryEx)library);
+          }
+        }
+      }, project.getDisposed());
+    };
 
     project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
@@ -166,7 +176,9 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
       }
     });
 
-    StartupManager.getInstance(project).registerPostStartupActivity((DumbAwareRunnable)() -> removeDuplicatedUrls(project));
-    StartupManager.getInstance(project).registerPostStartupActivity(syncTask);
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      removeDuplicatedUrlsFromRepositoryLibraries(project);
+      syncTask.run();
+    });
   }
 }
