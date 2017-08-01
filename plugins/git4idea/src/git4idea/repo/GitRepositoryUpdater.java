@@ -16,16 +16,13 @@
 package git4idea.repo;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.vfs.AsyncVfsEventsListener;
+import com.intellij.vfs.AsyncVfsEventsPostProcessor;
 import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,17 +32,14 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.dvcs.DvcsUtil.ensureAllChildrenInVfs;
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 /**
  * Listens to .git service files changes and updates {@link GitRepository} when needed.
  */
-final class GitRepositoryUpdater implements Disposable, BulkFileListener {
+final class GitRepositoryUpdater implements Disposable, AsyncVfsEventsListener {
 
   @NotNull private final GitRepository myRepository;
   @NotNull private final GitRepositoryFiles myRepositoryFiles;
-  @Nullable private final MessageBusConnection myMessageBusConnection;
-  @NotNull private final QueueProcessor<List<? extends VFileEvent> > myUpdateQueue;
   @Nullable private final VirtualFile myRemotesDir;
   @Nullable private final VirtualFile myHeadsDir;
   @Nullable private final VirtualFile myTagsDir;
@@ -62,32 +56,16 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
     myRemotesDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsRemotesFile());
     myTagsDir = VcsUtil.getVirtualFile(myRepositoryFiles.getRefsTagsFile());
 
-    Project project = repository.getProject();
-    myUpdateQueue = new QueueProcessor<>(events -> processEvents(events), project.getDisposed());
-
-    if (!project.isDisposed()) {
-      myMessageBusConnection = project.getMessageBus().connect();
-      myMessageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, this);
-    }
-    else {
-      myMessageBusConnection = null;
-    }
+    AsyncVfsEventsPostProcessor.getInstance().addListener(this, this);
   }
 
   @Override
   public void dispose() {
     LocalFileSystem.getInstance().removeWatchedRoots(myWatchRequests);
-    if (myMessageBusConnection != null) {
-      myMessageBusConnection.disconnect();
-    }
   }
 
   @Override
-  public void after(@NotNull List<? extends VFileEvent> events) {
-    myUpdateQueue.add(newArrayList(events));
-  }
-
-  private void processEvents(@NotNull List<? extends VFileEvent> events) {
+  public void filesChanged(@NotNull List<VFileEvent> events) {
     // which files in .git were changed
     boolean configChanged = false;
     boolean headChanged = false;

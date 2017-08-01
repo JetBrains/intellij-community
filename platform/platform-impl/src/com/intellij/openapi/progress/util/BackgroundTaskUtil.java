@@ -220,6 +220,14 @@ public class BackgroundTaskUtil {
   public static ProgressIndicator executeOnPooledThread(@NotNull Consumer<ProgressIndicator> task,
                                                         @NotNull Disposable parent,
                                                         @NotNull ModalityState modalityState) {
+    return runUnderDisposeAwareIndicator(task, parent, modalityState, true);
+  }
+
+  @CalledInAny
+  private static ProgressIndicator runUnderDisposeAwareIndicator(@NotNull Consumer<ProgressIndicator> task,
+                                                                 @NotNull Disposable parent,
+                                                                 @NotNull ModalityState modalityState,
+                                                                 boolean onPooledThread) {
     ProgressIndicator indicator = new EmptyProgressIndicator(modalityState);
 
     Disposable disposable = new Disposable() {
@@ -231,21 +239,27 @@ public class BackgroundTaskUtil {
     Disposer.register(parent, disposable);
 
     indicator.start();
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-        try {
-          task.consume(indicator);
-        }
-        finally {
-          indicator.stop();
-          Disposer.dispose(disposable);
-        }
-      }, indicator);
-    });
+
+    Runnable underProgress = () -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+      try {
+        task.consume(indicator);
+      }
+      finally {
+        indicator.stop();
+        Disposer.dispose(disposable);
+      }
+    }, indicator);
+
+    if (onPooledThread) ApplicationManager.getApplication().executeOnPooledThread(underProgress);
+    else underProgress.run();
 
     return indicator;
   }
 
+  @CalledInAny
+  public static void runUnderDisposeAwareIndicator(@NotNull Disposable parent, @NotNull Runnable task) {
+    runUnderDisposeAwareIndicator(indicator -> task.run(), parent, ModalityState.defaultModalityState(), false);
+  }
 
   private static class Helper<T> {
     private static final Object INITIAL_STATE = new Object();
