@@ -23,6 +23,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.Disposer;
@@ -58,6 +59,7 @@ import java.util.Map;
  * @author Vladislav.Soroka
  */
 public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
+  private static final Logger LOG = Logger.getInstance(BuildTreeConsoleView.class);
 
   @NonNls private static final String TREE = "tree";
   private final JPanel myPanel = new JPanel();
@@ -263,11 +265,16 @@ public class BuildTreeConsoleView implements ConsoleView, BuildConsoleView {
     ExecutionNode parentNode = event.getParentId() == null ? null : nodesMap.get(event.getParentId());
     ExecutionNode currentNode = nodesMap.get(event.getId());
     if (event instanceof StartEvent) {
-      assert currentNode == null;
       ExecutionNode rootElement = getRootElement();
-      currentNode = event instanceof StartBuildEvent ? rootElement : new ExecutionNode(myProject);
-      currentNode.setAutoExpandNode(currentNode == rootElement || parentNode == rootElement);
-      nodesMap.put(event.getId(), currentNode);
+      if (currentNode == null) {
+        currentNode = event instanceof StartBuildEvent ? rootElement : new ExecutionNode(myProject);
+        currentNode.setAutoExpandNode(currentNode == rootElement || parentNode == rootElement);
+        nodesMap.put(event.getId(), currentNode);
+      }
+      else {
+        LOG.warn("start event id collision found");
+        return;
+      }
       if (parentNode != null) {
         parentNode.add(currentNode);
       }
