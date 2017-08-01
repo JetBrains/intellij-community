@@ -340,7 +340,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
   @Override
   public String getToolTipText(JTextComponent component, Point point) {
-    if (!icons.isEmpty()) {
+    if (!icons.isEmpty() && component != null && component.isEnabled()) {
       for (IconHolder holder : icons.values()) {
         if (holder.bounds.contains(point)) {
           return holder.extension.getTooltip();
@@ -432,7 +432,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       boolean repaint = false;
       IconHolder result = null;
       for (IconHolder holder : icons.values()) {
-        holder.hovered = holder.bounds.contains(event.getX(), event.getY());
+        holder.hovered = component.isEnabled() && holder.bounds.contains(event.getX(), event.getY());
         if (holder.hovered) result = holder;
         Icon icon = holder.extension.getIcon(holder.hovered);
         if (holder.icon != icon) {

@@ -105,13 +105,19 @@ public class ExpandableTextField extends ExtendableTextField implements Expandab
   }
 
   @Override
+  public void setEnabled(boolean enabled) {
+    if (!enabled) collapse();
+    super.setEnabled(enabled);
+  }
+
+  @Override
   public void collapse() {
     if (popup != null) popup.cancel();
   }
 
   @Override
   public void expand() {
-    if (popup != null) return;
+    if (popup != null || !isEnabled()) return;
 
     Font font = getFont();
     FontMetrics metrics = font == null ? null : getFontMetrics(font);
