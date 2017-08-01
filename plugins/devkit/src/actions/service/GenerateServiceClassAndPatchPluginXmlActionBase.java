@@ -21,6 +21,8 @@ import com.intellij.ide.actions.ElementCreator;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.RunResult;
 import com.intellij.openapi.application.WriteActionAware;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
@@ -62,8 +64,8 @@ public abstract class GenerateServiceClassAndPatchPluginXmlActionBase extends Cr
   private void patchPluginXmls(@NotNull XmlFile[] pluginXmls, @Nullable PsiClass serviceInterface,
                                @NotNull PsiClass serviceImplementation) {
     DescriptorUtil.checkPluginXmlsWritable(serviceImplementation.getProject(), pluginXmls);
-    WriteCommandAction.runWriteCommandAction(serviceImplementation.getProject(),
-                                             DevKitBundle.message("new.service.patch.plugin.xml.action.name"), null, () -> {
+    executeGlobalUndoWriteCommandAction(serviceImplementation.getProject(),
+                                        DevKitBundle.message("new.service.patch.plugin.xml.action.name"), () -> {
         for (XmlFile pluginXml : pluginXmls) {
           patchPluginXml(pluginXml, serviceInterface, serviceImplementation);
         }
@@ -136,13 +138,14 @@ public abstract class GenerateServiceClassAndPatchPluginXmlActionBase extends Cr
     boolean separatedInterface = createdImplementation != null && createdInterface != null;
     if (separatedInterface) {
       Project project = createdImplementation.getProject();
-      WriteCommandAction.runWriteCommandAction(project, DevKitBundle.message("new.service.adding.interface.to.class"), null, () -> {
+      executeGlobalUndoWriteCommandAction(project, DevKitBundle.message("new.service.adding.interface.to.class"), () -> {
         JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
         PsiElementFactory factory = facade.getElementFactory();
         PsiJavaCodeReferenceElement interfaceReference =
           factory.createReferenceElementByFQClassName(createdInterface.getQualifiedName(), createdImplementation.getResolveScope());
         createdImplementation.getImplementsList().add(interfaceReference);
       });
+
       patchPluginXmls(pluginXmls, createdInterface, createdImplementation);
       return new PsiElement[]{createdInterface, createdImplementation};
     }
@@ -153,6 +156,29 @@ public abstract class GenerateServiceClassAndPatchPluginXmlActionBase extends Cr
         return new PsiElement[]{createdOnlyImplementation};
       }
       return PsiElement.EMPTY_ARRAY;
+    }
+  }
+
+  private static void executeGlobalUndoWriteCommandAction(Project project, String commandName, Runnable runnable) {
+    RunResult<Void> result = new WriteCommandAction<Void>(project, commandName) {
+      @Override
+      protected void run(@NotNull Result result) throws Throwable {
+        runnable.run();
+      }
+
+      @Override
+      protected boolean isGlobalUndoAction() {
+        return true;
+      }
+    }.execute();
+
+    if (result.hasException()) {
+      Throwable e = result.getThrowable();
+      if (e instanceof RuntimeException) {
+        throw (RuntimeException)e;
+      } else {
+        throw new RuntimeException(e);
+      }
     }
   }
 
