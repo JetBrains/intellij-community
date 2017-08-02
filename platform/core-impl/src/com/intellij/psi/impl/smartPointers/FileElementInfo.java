@@ -73,7 +73,10 @@ class FileElementInfo extends SmartPointerElementInfo {
 
   @Override
   public Segment getRange() {
-    return myVirtualFile.isValid() ? new TextRange(0, (int)myVirtualFile.getLength()) : null;
+    if (!myVirtualFile.isValid()) return null;
+
+    Document document = FileDocumentManager.getInstance().getDocument(myVirtualFile);
+    return document == null ? null : TextRange.from(0, document.getTextLength());
   }
 
   @NotNull

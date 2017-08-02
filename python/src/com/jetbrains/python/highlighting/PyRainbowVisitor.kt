@@ -25,7 +25,6 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.resolve.PyResolveContext
-import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyRainbowVisitor : RainbowVisitor() {
 
@@ -90,9 +89,7 @@ class PyRainbowVisitor : RainbowVisitor() {
     val parent = targetExpression.parent
     if (parent is PyGlobalStatement) return targetExpression.containingFile
     if (parent is PyNonlocalStatement) {
-      val typeEvalContext = TypeEvalContext.codeAnalysis(targetExpression.project, targetExpression.containingFile)
-      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext)
-      val outerResolved = targetExpression.getReference(resolveContext).resolve()
+      val outerResolved = targetExpression.reference.resolve()
       return if (outerResolved is PyTargetExpression) getTargetContext(outerResolved) else null
     }
 

@@ -23,7 +23,6 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.text.nullize
 import java.util.regex.Pattern
@@ -37,7 +36,7 @@ abstract class RunManager {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): RunManager {
-      if (!(IS_RUN_MANAGER_INITIALIZED.get(project) ?: false)) {
+      if (IS_RUN_MANAGER_INITIALIZED.get(project) != true) {
         // https://gist.github.com/develar/5bcf39b3f0ec08f507ec112d73375f2b
         LOG.debug("Must be not called before project components initialized")
       }
@@ -56,14 +55,6 @@ abstract class RunManager {
         if (!currentNames.contains(newName)) return newName
         i++
       }
-    }
-
-    /**
-     * Too long names don't fit into UI controls and has to be trimmed
-     */
-    @JvmStatic
-    fun getShortenName(name: String): String {
-      return StringUtil.first(name, Registry.intValue("run.configuration.max.name.length", 40), true)
     }
   }
 

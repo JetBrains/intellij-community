@@ -17,6 +17,6 @@
     <orderEntry type="library" scope="TEST" name="jna" level="project" />
     <orderEntry type="module" module-name="core-api" scope="TEST" />
     <orderEntry type="module" module-name="projectModel-impl" scope="TEST" />
-    <orderEntry type="module" module-name="slowCheck" scope="TEST" />
+    <orderEntry type="module" module-name="jetCheck" scope="TEST" />
   </component>
 </module>

@@ -44,10 +44,10 @@ public final class IdeaLaf extends MetalLookAndFeel {
 
     Pair<String, Integer> systemFont = UIUtil.getSystemFontData();
     if (systemFont != null) {
-      LafManagerImpl.initFontDefaults(defaults, systemFont.second, new FontUIResource(systemFont.first, Font.PLAIN, systemFont.second));
+      LafManagerImpl.initFontDefaults(defaults, new FontUIResource(systemFont.first, Font.PLAIN, systemFont.second));
     }
     else {
-      LafManagerImpl.initFontDefaults(defaults, 11, new FontUIResource("Tahoma", Font.PLAIN, 11));
+      LafManagerImpl.initFontDefaults(defaults, new FontUIResource("Tahoma", Font.PLAIN, 11));
     }
   }
 

@@ -134,7 +134,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
             if (PyTestFrameworkService.getSdkReadableNameByFramework(framework).equals(selectedItem)) {
               if (!VFSTestFrameworkListener.getInstance().isTestFrameworkInstalled(sdk, framework)) {
                 return new ValidationResult(PyBundle.message("runcfg.testing.no.test.framework", framework),
-                                            createQuickFix(sdk, facetErrorPanel, PyNames.PY_TEST));
+                                            createQuickFix(sdk, facetErrorPanel, PyTestFrameworkService.getPackageByFramework(framework)));
               }
             }
           }

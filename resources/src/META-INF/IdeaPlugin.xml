@@ -241,6 +241,7 @@
     <!--<extensionPoint name="expectedTypesProvider" interface="com.intellij.codeInsight.ExpectedTypesProviderExtension"/>-->
 
     <extensionPoint name="java.elementFinder" area="IDEA_PROJECT" interface="com.intellij.psi.PsiElementFinder"/>
+    <extensionPoint name="jvm.elementProvider" area="IDEA_PROJECT" interface="com.intellij.lang.jvm.facade.JvmElementProvider"/>
     <extensionPoint name="java.shortNamesCache" area="IDEA_PROJECT" interface="com.intellij.psi.search.PsiShortNamesCache"/>
 
     <extensionPoint name="allowedApiFilter" interface="com.intellij.psi.impl.AllowedApiFilterExtension"/>
@@ -363,6 +364,7 @@
     <customPropertyScopeProvider implementation="com.intellij.psi.impl.search.SimpleAccessorScopeProvider"/>
     <editorNotificationProvider implementation="com.intellij.execution.jshell.SnippetEditorDecorator"/>
     <lang.psiAugmentProvider implementation="com.intellij.psi.impl.source.JShellPsiAugmentProvider"/>
+    <completion.contributor language="JAVA" implementationClass="com.intellij.codeInsight.completion.JShellCompletionContributor" order="before javaLegacy"/>
 
     <referencesSearch implementation="com.intellij.psi.impl.search.PsiAnnotationMethodReferencesSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.ConstructorReferencesSearcher"/>
@@ -475,6 +477,8 @@
                     serviceImplementation="com.intellij.ide.util.TreeClassChooserFactoryImpl"/>
     <projectService serviceInterface="com.intellij.psi.JavaPsiFacade"
                     serviceImplementation="com.intellij.psi.impl.JavaPsiFacadeImpl"/>
+    <projectService serviceInterface="com.intellij.lang.jvm.facade.JvmFacade"
+                    serviceImplementation="com.intellij.lang.jvm.facade.JvmFacadeImpl"/>
     <projectService serviceInterface="com.intellij.psi.PsiNameHelper"
                     serviceImplementation="com.intellij.psi.impl.PsiNameHelperImpl"/>
     <projectService serviceInterface="com.intellij.psi.impl.file.impl.JavaFileManager"

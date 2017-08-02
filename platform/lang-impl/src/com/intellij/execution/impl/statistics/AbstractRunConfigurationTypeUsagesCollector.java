@@ -20,7 +20,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
+import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,7 +33,7 @@ import java.util.Set;
 /**
  * @author Nikolay Matveev
  */
-public abstract class AbstractRunConfigurationTypeUsagesCollector extends AbstractApplicationUsagesCollector {
+public abstract class AbstractRunConfigurationTypeUsagesCollector extends AbstractProjectsUsagesCollector {
 
   protected abstract boolean isApplicable(@NotNull RunManager runManager, @NotNull RunnerAndConfigurationSettings settings);
 

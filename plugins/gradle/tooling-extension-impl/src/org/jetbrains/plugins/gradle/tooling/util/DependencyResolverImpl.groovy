@@ -251,7 +251,8 @@ class DependencyResolverImpl implements DependencyResolver {
         }
       }
       else {
-        if (checkCompileOnlyDeps && !originCompileConfiguration.containsAll(resolvedObjArray)) {
+        if (checkCompileOnlyDeps && !originCompileConfiguration.containsAll(resolvedObjArray) &&
+            !runtimeConfiguration.containsAll(resolvedObjArray)) {
           ((AbstractExternalDependency)it).scope = providedScope
         }
       }

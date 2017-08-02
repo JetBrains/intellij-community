@@ -282,27 +282,26 @@ public class PyQualifiedReference extends PyReferenceImpl {
       if (qualifier instanceof PyQualifiedExpression) {
         final PyQualifiedExpression qualifierExpression = (PyQualifiedExpression)qualifier;
         final QualifiedName qualifiedName = qualifierExpression.asQualifiedName();
-        if (qualifiedName == null) {
-          return variants.toArray();
-        }
-        final Collection<PyExpression> attrs = collectAssignedAttributes(qualifiedName, qualifier);
-        for (PyExpression ex : attrs) {
-          final String name = ex.getName();
-          if (name != null && name.endsWith(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)) {
-            continue;
-          }
-          if (ex instanceof PsiNamedElement && qualifierType instanceof PyClassType && name != null) {
-            variants.add(LookupElementBuilder.createWithSmartPointer(name, ex)
-                           .withTypeText(qualifierType.getName())
-                           .withIcon(PlatformIcons.FIELD_ICON));
-          }
-          if (ex instanceof PyReferenceExpression) {
-            PyReferenceExpression refExpr = (PyReferenceExpression)ex;
-            namesAlready.add(refExpr.getReferencedName());
-          }
-          else if (ex instanceof PyTargetExpression) {
-            PyTargetExpression targetExpr = (PyTargetExpression)ex;
-            namesAlready.add(targetExpr.getName());
+        if (qualifiedName != null) {
+          final Collection<PyExpression> attrs = collectAssignedAttributes(qualifiedName, qualifier);
+          for (PyExpression ex : attrs) {
+            final String name = ex.getName();
+            if (name != null && name.endsWith(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)) {
+              continue;
+            }
+            if (ex instanceof PsiNamedElement && qualifierType instanceof PyClassType && name != null) {
+              variants.add(LookupElementBuilder.createWithSmartPointer(name, ex)
+                             .withTypeText(qualifierType.getName())
+                             .withIcon(PlatformIcons.FIELD_ICON));
+            }
+            if (ex instanceof PyReferenceExpression) {
+              PyReferenceExpression refExpr = (PyReferenceExpression)ex;
+              namesAlready.add(refExpr.getReferencedName());
+            }
+            else if (ex instanceof PyTargetExpression) {
+              PyTargetExpression targetExpr = (PyTargetExpression)ex;
+              namesAlready.add(targetExpr.getName());
+            }
           }
         }
         Collections.addAll(variants, qualifierType.getCompletionVariants(element.getName(), element, ctx));

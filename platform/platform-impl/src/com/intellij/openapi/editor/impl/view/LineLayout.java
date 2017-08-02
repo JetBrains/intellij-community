@@ -150,15 +150,18 @@ abstract class LineLayout {
     List<BidiRun> runs = new ArrayList<>();
     int flags = view.getBidiFlags();
     if (startOffsetInEditor >= 0) {
-      // running bidi algorithm separately for text fragments corresponding to different lexer tokens
+      // skipping indent
       int relLastOffset = 0;
+      while (relLastOffset < text.length && text[relLastOffset] == ' ' || text[relLastOffset] == '\t') relLastOffset++;
+      addRuns(runs, text, 0, relLastOffset, flags);
+      // running bidi algorithm separately for text fragments corresponding to different lexer tokens
       IElementType lastToken = null;
-      HighlighterIterator iterator = view.getEditor().getHighlighter().createIterator(startOffsetInEditor);
+      HighlighterIterator iterator = view.getEditor().getHighlighter().createIterator(startOffsetInEditor + relLastOffset);
       while (!iterator.atEnd() && iterator.getStart() - startOffsetInEditor < textLength) {
         int iteratorRelStart = alignToCodePointBoundary(text, iterator.getStart() - startOffsetInEditor);
         int iteratorRelEnd = alignToCodePointBoundary(text, iterator.getEnd() - startOffsetInEditor);
         IElementType currentToken = iterator.getTokenType();
-        int relStartOffset = Math.max(0, iteratorRelStart);
+        int relStartOffset = Math.max(relLastOffset, iteratorRelStart);
         String lcPrefix = getLineCommentPrefix(currentToken);
         // for line comments we process prefix and following text separately
         if (!StringUtil.isEmpty(lcPrefix) && lcPrefix.length() <= iteratorRelEnd - iteratorRelStart &&

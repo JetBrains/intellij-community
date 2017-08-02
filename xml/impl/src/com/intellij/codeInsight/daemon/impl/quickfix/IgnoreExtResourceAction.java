@@ -16,11 +16,12 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.javaee.ExternalResourceManagerEx;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author mike
@@ -31,8 +32,14 @@ public class IgnoreExtResourceAction extends BaseExtResourceAction {
     return "ignore.external.resource.text";
   }
 
+  @Nullable
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    return null;
+  }
+
   @Override
   protected void doInvoke(@NotNull final PsiFile file, final int offset, @NotNull final String uri, final Editor editor) throws IncorrectOperationException {
-    ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManagerEx.getInstanceEx().addIgnoredResource(uri));
+    ExternalResourceManagerEx.getInstanceEx().addIgnoredResource(uri);
   }
 }

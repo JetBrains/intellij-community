@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,14 +92,19 @@ public class RefreshSessionImpl extends RefreshSession {
         LOG.error("null passed among " + files);
       }
       else {
-        myWorkQueue.add(file);
+        addFile(file);
       }
     }
   }
 
   @Override
   public void addFile(@NotNull VirtualFile file) {
-    myWorkQueue.add(file);
+    if (file instanceof NewVirtualFile) {
+      myWorkQueue.add(file);
+    }
+    else {
+      LOG.warn("skipped: " + file + " / " + file.getClass());
+    }
   }
 
   @Override

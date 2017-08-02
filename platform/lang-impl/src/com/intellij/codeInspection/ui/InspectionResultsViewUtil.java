@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,7 +94,7 @@ public class InspectionResultsViewUtil {
   static JLabel createLabelForText(String text) {
     final JLabel multipleSelectionLabel = new JBLabel(text);
     multipleSelectionLabel.setVerticalAlignment(SwingConstants.TOP);
-    multipleSelectionLabel.setBorder(IdeBorderFactory.createEmptyBorder(16, 12, 0, 0));
+    multipleSelectionLabel.setBorder(JBUI.Borders.empty(16, 12, 0, 0));
     return multipleSelectionLabel;
   }
 }

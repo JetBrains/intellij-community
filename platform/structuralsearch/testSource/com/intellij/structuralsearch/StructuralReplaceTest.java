@@ -2033,6 +2033,16 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     final String by2 = "@SuppressWarnings(\"NONE\") @Deprecated";
     assertEquals("@SuppressWarnings(\"NONE\") @Deprecated\n" +
                  "public class A {}", replacer.testReplace(in, what, by2, options, false));
+
+    final String in2 = "class X {" +
+                 "  @SuppressWarnings(\"unused\") String s;" +
+                 "}";
+    final String what2 = "@SuppressWarnings(\"unused\") String '_s;";
+    final String by3 = "@SuppressWarnings({\"unused\", \"other\"}) String $s$;";
+    assertEquals("class X {" +
+                 "  @SuppressWarnings({\"unused\", \"other\"}) String s;" +
+                 "}", replacer.testReplace(in2, what2, by3, options, false));
+
   }
 
   public void testReplacePolyadicExpression() {

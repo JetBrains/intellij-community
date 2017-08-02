@@ -70,7 +70,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
     myBunch = new NewRootBunch(project, myBranchesLoader);
   }
 
-  public static SvnBranchConfigurationManager getInstance(final Project project) {
+  public static SvnBranchConfigurationManager getInstance(@NotNull Project project) {
     SvnBranchConfigurationManager result = PeriodicalTasksCloser.getInstance().safeGetService(project, SvnBranchConfigurationManager.class);
 
     if (result != null) {

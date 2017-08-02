@@ -6,6 +6,7 @@ import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufUtil
 import io.netty.channel.Channel
 import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.HttpHeaderNames
 import org.jetbrains.builtInWebServer.PathInfo
 import org.jetbrains.io.serverHeaderValue
 import java.net.InetSocketAddress
@@ -18,6 +19,8 @@ private val RESPONDER = 1
 private val FCGI_KEEP_CONNECTION = 1
 private val STDIN = 5
 private val VERSION = 1
+
+private val MAX_CONTENT_LENGTH = 0xFFFF
 
 class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
   private val params = allocator.ioBuffer(4096)
@@ -52,15 +55,12 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
     }
   }
 
-  private fun writeParamLength(l: Int) {
-    if (l < 128) {
-      params.writeByte(l)
+  private fun writeParamLength(length: Int) {
+    if (length > 127) {
+      params.writeInt(length or 0x80000000.toInt())
     }
     else {
-      params.writeByte(128 or (l shr 24))
-      params.writeByte(l shr 16)
-      params.writeByte(l shr 8)
-      params.writeByte(l)
+      params.writeByte(length)
     }
   }
 
@@ -89,10 +89,15 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
     val queryIndex = request.uri().indexOf('?')
     if (queryIndex != -1) {
       queryString = request.uri().substring(queryIndex + 1)
+      addHeader("DOCUMENT_URI", request.uri().substring(0, queryIndex))
+    }
+    else {
+      addHeader("DOCUMENT_URI", request.uri())
     }
     addHeader("QUERY_STRING", queryString)
 
     addHeader("CONTENT_LENGTH", request.content().readableBytes().toString())
+    addHeader("CONTENT_TYPE", request.headers().get(HttpHeaderNames.CONTENT_TYPE) ?: "")
 
     for ((key, value) in request.headers().iteratorAsString()) {
       if (!key.equals("keep-alive", ignoreCase = true) && !key.equals("connection", ignoreCase = true)) {
@@ -121,16 +126,25 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
 
       writeHeader(buffer, PARAMS, 0)
 
-      if (content != null) {
-        writeHeader(buffer, STDIN, content.readableBytes())
-      }
-
       fastCgiChannel.write(buffer)
 
       if (content != null) {
-        fastCgiChannel.write(content)
-        // channel.write releases
-        releaseContent = false
+        var position = content.readerIndex()
+        var toWrite = content.readableBytes()
+        while (toWrite > 0) {
+          val length = Math.min(MAX_CONTENT_LENGTH, toWrite)
+
+          val headerBuffer = fastCgiChannel.alloc().ioBuffer(HEADER_LENGTH, HEADER_LENGTH)
+          writeHeader(headerBuffer, STDIN, length)
+          fastCgiChannel.write(headerBuffer)
+
+          val chunk = content.slice(position, length)
+          // channel.write releases
+          chunk.retain()
+          fastCgiChannel.write(chunk)
+          toWrite -= length
+          position += length
+        }
 
         val headerBuffer = fastCgiChannel.alloc().ioBuffer(HEADER_LENGTH, HEADER_LENGTH)
         writeHeader(headerBuffer, STDIN, 0)
@@ -139,7 +153,6 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
     }
     finally {
       if (releaseContent) {
-        assert(content != null)
         content!!.release()
       }
     }

@@ -95,10 +95,10 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   }
 
   private void processScope(final ScopeOwner owner) {
-    if (owner.getContainingFile() instanceof PyExpressionCodeFragment || callsLocals(owner)) {
+    if (owner.getContainingFile() instanceof PyExpressionCodeFragment) {
       return;
     }
-    if (!(owner instanceof PyClass)) {
+    if (!(owner instanceof PyClass) && !callsLocals(owner)) {
       collectAllWrites(owner);
     }
     collectUsedReads(owner);
@@ -158,6 +158,9 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         // Ignore empty, wildcards, global and nonlocal names
         final Scope scope = ControlFlowCache.getScope(owner);
         if (name == null || PyNames.UNDERSCORE.equals(name) || scope.isGlobal(name) || scope.isNonlocal(name)) {
+          continue;
+        }
+        if (element instanceof PyTargetExpression && ((PyTargetExpression)element).isQualified()) {
           continue;
         }
         // Ignore underscore-prefixed parameters

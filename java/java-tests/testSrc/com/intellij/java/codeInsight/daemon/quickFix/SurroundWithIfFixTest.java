@@ -25,7 +25,9 @@ public class SurroundWithIfFixTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new DataFlowInspection()};
+    DataFlowInspection inspection = new DataFlowInspection();
+    inspection.SUGGEST_NULLABLE_ANNOTATIONS = true;
+    return new LocalInspectionTool[]{inspection};
   }
 
   public void test() throws Exception {

@@ -29,11 +29,9 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -49,9 +47,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.StandardInstructionVisitor");
   private static final Object ANY_VALUE = new Object();
 
-  private static final Set<String> OPTIONAL_METHOD_NAMES = ContainerUtil
-    .set("of", "ofNullable", "fromNullable", "empty", "absent", "or", "orElse", "orElseGet", "ifPresent", "map", "flatMap", "filter",
-         "transform");
   private static final CallMapper<LongRangeSet> KNOWN_METHOD_RANGES = new CallMapper<LongRangeSet>()
     .register(CallMatcher.instanceCall("java.time.LocalDateTime", "getHour"), LongRangeSet.range(0, 23))
     .register(CallMatcher.instanceCall("java.time.LocalDateTime", "getMinute", "getSecond"), LongRangeSet.range(0, 59))
@@ -65,16 +60,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   private final MultiMap<PushInstruction, Object> myPossibleVariableValues = MultiMap.createSet();
   private final Set<PsiElement> myNotToReportReachability = new THashSet<>();
   private final Set<InstanceofInstruction> myUsefulInstanceofs = new THashSet<>();
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private final Map<MethodCallInstruction, Nullness> myReturnTypeNullability = FactoryMap.createMap(key-> {
-      final PsiCall callExpression = key.getCallExpression();
-      if (callExpression instanceof PsiNewExpression) {
-        return Nullness.NOT_NULL;
-      }
-
-      return callExpression != null ? DfaPsiUtil.getElementNullability(key.getResultType(), callExpression.resolveMethod()) : null;
-    }
-  );
 
   @Override
   public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
@@ -308,7 +293,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   @Override
   public DfaInstructionState[] visitMethodCall(final MethodCallInstruction instruction, final DataFlowRunner runner, final DfaMemoryState memState) {
     Set<DfaMemoryState> finalStates = ContainerUtil.newLinkedHashSet();
-    finalStates.addAll(handleOptionalMethods(instruction, runner, memState));
     finalStates.addAll(handleKnownMethods(instruction, runner, memState));
 
     if (finalStates.isEmpty()) {
@@ -364,65 +348,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   }
 
   @NotNull
-  private List<DfaMemoryState> handleOptionalMethods(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    PsiMethodCallExpression call = ObjectUtils.tryCast(instruction.getCallExpression(), PsiMethodCallExpression.class);
-    if (call == null) return Collections.emptyList();
-    String methodName = call.getMethodExpression().getReferenceName();
-    if (methodName == null || !OPTIONAL_METHOD_NAMES.contains(methodName)) return Collections.emptyList();
-    PsiMethod method = call.resolveMethod();
-    if (method == null || !TypeUtils.isOptional(method.getContainingClass())) return Collections.emptyList();
-    DfaCallArguments arguments = popCall(instruction, runner, memState, false);
-    DfaValue[] argValues = arguments.myArguments;
-    DfaValue result = null;
-    DfaValueFactory factory = runner.getFactory();
-    switch (methodName) {
-      case "of":
-      case "ofNullable":
-      case "fromNullable":
-        if ("of".equals(methodName) || (argValues != null && argValues.length == 1 && memState.isNotNull(argValues[0]))) {
-          result = factory.getOptionalFactory().getOptional(true);
-        }
-        break;
-      case "empty":
-      case "absent":
-        result = factory.getOptionalFactory().getOptional(false);
-        break;
-      case "orElse":
-        if (argValues != null && argValues.length == 1) {
-          DfaMemoryState falseState = memState.createCopy();
-          DfaOptionalValue optional = factory.getOptionalFactory().getOptional(true);
-          DfaValue relation = factory.createCondition(arguments.myQualifier, RelationType.IS, optional);
-          List<DfaMemoryState> states = new ArrayList<>(2);
-          if (memState.applyCondition(relation)) {
-            memState.push(factory.createTypeValue(instruction.getResultType(), Nullness.NOT_NULL));
-            states.add(memState);
-          }
-          if (falseState.applyCondition(relation.createNegated())) {
-            falseState.push(argValues[0]);
-            states.add(falseState);
-          }
-          return states;
-        }
-        break;
-      case "filter":
-      case "flatMap":
-      case "ifPresent":
-      case "map":
-      case "or":
-      case "orElseGet":
-      case "transform": {
-        DfaOptionalValue optional = factory.getOptionalFactory().getOptional(!methodName.startsWith("or"));
-        DfaValue relation = factory.createCondition(arguments.myQualifier, RelationType.IS, optional);
-        runner.updateStackTopClosures(state -> state.applyCondition(relation));
-        break;
-      }
-      default:
-    }
-    memState.push(result == null ? getMethodResultValue(instruction, arguments.myQualifier, factory) : result);
-    return Collections.singletonList(memState);
-  }
-
-  @NotNull
   private DfaCallArguments popCall(MethodCallInstruction instruction,
                                    DataFlowRunner runner,
                                    DfaMemoryState memState,
@@ -437,7 +362,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                       DataFlowRunner runner,
                                       DfaMemoryState memState,
                                       boolean contractOnly) {
-    final PsiExpression[] args = instruction.getArgs();
+    final int argCount = instruction.getArgCount();
 
     PsiMethod method = instruction.getTargetMethod();
     boolean varargCall = instruction.isVarArgCall();
@@ -447,7 +372,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     } else {
       PsiParameterList paramList = method.getParameterList();
       int paramCount = paramList.getParametersCount();
-      if (paramCount == args.length || method.isVarArgs() && args.length >= paramCount - 1) {
+      if (paramCount == argCount || method.isVarArgs() && argCount >= paramCount - 1) {
         argValues = new DfaValue[paramCount];
         if (varargCall) {
           argValues[paramCount - 1] = runner.getFactory().createTypeValue(paramList.getParameters()[paramCount - 1].getType(), Nullness.NOT_NULL);
@@ -457,22 +382,22 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
     }
 
-    for (int i = 0; i < args.length; i++) {
+    for (int i = 0; i < argCount; i++) {
       final DfaValue arg = memState.pop();
-      int paramIndex = args.length - i - 1;
+      int paramIndex = argCount - i - 1;
       if (argValues != null && (paramIndex < argValues.length - 1 || !varargCall)) {
         argValues[paramIndex] = arg;
       }
 
-      PsiExpression expr = args[paramIndex];
-      Nullness requiredNullability = instruction.getArgRequiredNullability(expr);
+      PsiElement anchor = instruction.getArgumentAnchor(paramIndex);
+      Nullness requiredNullability = instruction.getArgRequiredNullability(paramIndex);
       if (requiredNullability == Nullness.NOT_NULL) {
-        if (!checkNotNullable(memState, arg, NullabilityProblem.passingNullableToNotNullParameter, expr)) {
+        if (!checkNotNullable(memState, arg, NullabilityProblem.passingNullableToNotNullParameter, anchor)) {
           forceNotNull(runner, memState, arg);
         }
       }
       else if (!instruction.updateOfNullable(memState, arg) && requiredNullability == Nullness.UNKNOWN) {
-        checkNotNullable(memState, arg, NullabilityProblem.passingNullableArgumentToNonAnnotatedParameter, expr);
+        checkNotNullable(memState, arg, NullabilityProblem.passingNullableArgumentToNonAnnotatedParameter, anchor);
       }
     }
     return argValues;
@@ -482,7 +407,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     @NotNull final DfaValue qualifier = memState.pop();
     boolean unboxing = instruction.getMethodType() == MethodCallInstruction.MethodType.UNBOXING;
     NullabilityProblem problem = unboxing ? NullabilityProblem.unboxingNullable : NullabilityProblem.callNPE;
-    PsiElement anchor = unboxing ? instruction.getContext() : instruction.getCallExpression();
+    PsiElement anchor = instruction.getContext();
     if (!checkNotNullable(memState, qualifier, problem, anchor)) {
       forceNotNull(runner, memState, qualifier);
     }
@@ -545,7 +470,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   }
 
   @NotNull
-  private DfaValue getMethodResultValue(MethodCallInstruction instruction, @Nullable DfaValue qualifierValue, DfaValueFactory factory) {
+  private static DfaValue getMethodResultValue(MethodCallInstruction instruction,
+                                               @Nullable DfaValue qualifierValue,
+                                               DfaValueFactory factory) {
     DfaValue precalculated = instruction.getPrecalculatedReturnValue();
     if (precalculated != null) {
       return precalculated;
@@ -573,7 +500,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
 
     if (type != null && !(type instanceof PsiPrimitiveType)) {
-      Nullness nullability = myReturnTypeNullability.get(instruction);
+      Nullness nullability = instruction.getReturnNullability();
       PsiMethod targetMethod = instruction.getTargetMethod();
       if (nullability == Nullness.UNKNOWN && targetMethod != null) {
         nullability = factory.suggestNullabilityForNonAnnotatedMember(targetMethod);
@@ -610,6 +537,24 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       state.applyCondition(factory.createCondition(value, RelationType.NE, factory.getConstFactory().getNull()));
     }
     return notNullable;
+  }
+
+  @Override
+  public DfaInstructionState[] visitCheckNotNull(CheckNotNullInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    if (!checkNotNullable(memState, memState.peek(), instruction.getProblem(), instruction.getExpression())) {
+      DfaValue arg = memState.peek();
+      if (arg instanceof DfaVariableValue) {
+        DfaVariableValue var = (DfaVariableValue)arg;
+        memState.setVarValue(var, runner.getFactory().createTypeValue(var.getVariableType(), Nullness.NOT_NULL));
+      } else if (arg instanceof DfaTypeValue) {
+        memState.pop();
+        memState.push(((DfaTypeValue)arg).withNullness(Nullness.NOT_NULL));
+      } else if (memState.isNull(arg) && instruction.getProblem() == NullabilityProblem.nullableFunctionReturn) {
+        memState.pop();
+        memState.push(runner.getFactory().createTypeValue(PsiType.VOID, Nullness.NOT_NULL));
+      }
+    }
+    return super.visitCheckNotNull(instruction, runner, memState);
   }
 
   @Override

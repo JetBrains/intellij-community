@@ -212,7 +212,9 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
       @Override
       public void succeeded() {
-        myAllDeployments.replaceRemotesWith(myCollectedDeployments);
+        synchronized (myCollectedDeployments) {
+          myAllDeployments.replaceRemotesWith(myCollectedDeployments);
+        }
 
         myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
         onFinished.run();
@@ -233,7 +235,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   @Override
   public void undeploy(@NotNull Deployment deployment, @NotNull final DeploymentRuntime runtime) {
     String deploymentName = deployment.getName();
-    final StateTransition undeployInProgress = myAllDeployments.startUndeploy(deploymentName);
+    final UndeployTransition undeployInProgress = myAllDeployments.startUndeploy(deploymentName);
 
     myEventDispatcher.queueDeploymentsChanged(this);
 
@@ -389,7 +391,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     @Override
     public void errorOccurred(@NotNull String errorMessage) {
       myLoggingHandler.printlnSystemMessage("Failed to deploy '" + myDeploymentName + "': " + errorMessage);
-      synchronized (myAllDeployments.LOCAL_LOCK) {
+      synchronized (myAllDeployments.myLocalLock) {
         myDeployment.changeState(DeploymentStatus.DEPLOYING, DeploymentStatus.NOT_DEPLOYED, errorMessage, null);
       }
       myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
@@ -405,8 +407,8 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   }
 
   private static class MyDeployments {
-    private final Object LOCAL_LOCK = new Object();
-    private final Object REMOTE_LOCK = new Object();
+    private final Object myLocalLock = new Object();
+    private final Object myRemoteLock = new Object();
 
     private final Map<String, DeploymentImpl> myRemoteDeployments = new HashMap<>();
     private final Map<String, LocalDeploymentImpl> myLocalDeployments = new HashMap<>();
@@ -418,14 +420,14 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     }
 
     public void addLocal(@NotNull LocalDeploymentImpl<?> deployment) {
-      synchronized (LOCAL_LOCK) {
+      synchronized (myLocalLock) {
         myLocalDeployments.put(deployment.getName(), deployment);
         myCachedAllDeployments = null;
       }
     }
 
     public void replaceRemotesWith(@NotNull Collection<DeploymentImpl> newDeployments) {
-      synchronized (REMOTE_LOCK) {
+      synchronized (myRemoteLock) {
         myRemoteDeployments.clear();
         myCachedAllDeployments = null;
         for (DeploymentImpl deployment : newDeployments) {
@@ -440,7 +442,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
                                             @NotNull DeploymentStatus deploymentStatus,
                                             @Nullable String deploymentStatusText) {
 
-      synchronized (REMOTE_LOCK) {
+      synchronized (myRemoteLock) {
         DeploymentImpl result = myRemoteDeployments.get(deploymentName);
         if (result != null && !result.getStatus().isTransition()) {
           result.changeState(result.getStatus(), deploymentStatus, deploymentStatusText, deploymentRuntime);
@@ -455,8 +457,8 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
                                   @NotNull DeploymentStatus newStatus,
                                   @Nullable String statusText) {
 
-      synchronized (LOCAL_LOCK) {
-        synchronized (REMOTE_LOCK) {
+      synchronized (myLocalLock) {
+        synchronized (myRemoteLock) {
           return deployment.changeState(oldStatus, newStatus, statusText, deploymentRuntime);
         }
       }
@@ -464,8 +466,8 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
     @NotNull
     public Collection<Deployment> listDeployments() {
-      synchronized (LOCAL_LOCK) {
-        synchronized (REMOTE_LOCK) {
+      synchronized (myLocalLock) {
+        synchronized (myRemoteLock) {
           if (myCachedAllDeployments == null) {
             Collection<Deployment> result = doListDeployments();
             myCachedAllDeployments = Collections.unmodifiableList(new ArrayList<>(result));
@@ -477,7 +479,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     }
 
     private Collection<Deployment> doListDeployments() {
-      //assumed both LOCAL_LOCK and REMOTE_LOCK
+      //assumed both myLocalLock and myRemoteLock
       Set<Deployment> result = new LinkedHashSet<>();
       Map<Deployment, DeploymentImpl> orderedDeployments = new TreeMap<>(myDeploymentComparator);
 
@@ -505,18 +507,18 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
     @SuppressWarnings("Duplicates")
     @Nullable
-    public StateTransition startUndeploy(@NotNull String deploymentName) {
+    public UndeployTransition startUndeploy(@NotNull String deploymentName) {
 
-      synchronized (LOCAL_LOCK) {
-        synchronized (REMOTE_LOCK) {
+      synchronized (myLocalLock) {
+        synchronized (myRemoteLock) {
 
           DeploymentImpl local = myLocalDeployments.get(deploymentName);
           if (local != null) {
             return new UndeployTransition(local) {
               @Override
               public void succeeded() {
-                synchronized (LOCAL_LOCK) {
-                  if (completeStateChange()) {
+                synchronized (myLocalLock) {
+                  if (tryChangeToTerminalState(DeploymentStatus.NOT_DEPLOYED)) {
                     myLocalDeployments.remove(getDeployment().getName());
                     myCachedAllDeployments = null;
                   }
@@ -525,8 +527,8 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
               @Override
               public void failed() {
-                synchronized (LOCAL_LOCK) {
-                  rollbackStateChange();
+                synchronized (myLocalLock) {
+                  tryChangeToTerminalState(DeploymentStatus.DEPLOYED);
                 }
               }
             };
@@ -536,8 +538,8 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
             return new UndeployTransition(remote) {
               @Override
               public void succeeded() {
-                synchronized (REMOTE_LOCK) {
-                  if (completeStateChange()) {
+                synchronized (myRemoteLock) {
+                  if (tryChangeToTerminalState(DeploymentStatus.NOT_DEPLOYED)) {
                     myRemoteDeployments.remove(getDeployment().getName());
                     myCachedAllDeployments = null;
                   }
@@ -546,8 +548,8 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
 
               @Override
               public void failed() {
-                synchronized (REMOTE_LOCK) {
-                  rollbackStateChange();
+                synchronized (myRemoteLock) {
+                  tryChangeToTerminalState(DeploymentStatus.DEPLOYED);
                 }
               }
             };
@@ -556,48 +558,26 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
         }
       }
     }
-
-    private static abstract class UndeployTransition extends StateTransitionImpl {
-      public UndeployTransition(@NotNull DeploymentImpl deployment) {
-        super(deployment, DeploymentStatus.DEPLOYED, DeploymentStatus.DEPLOYING, DeploymentStatus.NOT_DEPLOYED);
-      }
-    }
-
-    private static abstract class StateTransitionImpl implements StateTransition {
-      private final DeploymentImpl myDeployment;
-      private final DeploymentStatus myStartStatus;
-      private final DeploymentStatus myInProgressStatus;
-      private final DeploymentStatus myEndStatus;
-
-      public StateTransitionImpl(@NotNull DeploymentImpl deployment,
-                                 @NotNull DeploymentStatus start, @NotNull DeploymentStatus inProgress, @NotNull DeploymentStatus end) {
-
-        myDeployment = deployment;
-        myStartStatus = start;
-        myEndStatus = end;
-        myInProgressStatus = inProgress;
-        //
-        myDeployment.changeState(start, inProgress, null, null);
-      }
-
-      @NotNull
-      protected final DeploymentImpl getDeployment() {
-        return myDeployment;
-      }
-
-      protected boolean completeStateChange() {
-        return myDeployment.changeState(myInProgressStatus, myEndStatus, null, null);
-      }
-
-      protected boolean rollbackStateChange() {
-        return myDeployment.changeState(myInProgressStatus, myStartStatus, null, null);
-      }
-    }
   }
 
-  private interface StateTransition {
-    void succeeded();
+  private static abstract class UndeployTransition {
+    private final DeploymentImpl myDeployment;
 
-    void failed();
+    public UndeployTransition(@NotNull DeploymentImpl deployment) {
+      myDeployment = deployment;
+      myDeployment.changeState(DeploymentStatus.DEPLOYED, DeploymentStatus.DEPLOYING, null, null);
+    }
+
+    public abstract void succeeded();
+
+    public abstract void failed();
+
+    protected boolean tryChangeToTerminalState(DeploymentStatus terminalState) {
+      return myDeployment.changeState(DeploymentStatus.DEPLOYING, terminalState, null, null);
+    }
+
+    protected DeploymentImpl getDeployment() {
+      return myDeployment;
+    }
   }
 }

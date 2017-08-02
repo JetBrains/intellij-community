@@ -20,9 +20,6 @@ import com.intellij.codeInsight.completion.util.MethodParenthesesHandler;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.hint.ShowParameterInfoContext;
 import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
-import com.intellij.codeInsight.hints.HintInfo;
-import com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider;
-import com.intellij.codeInsight.hints.MethodInfoBlacklistFilter;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
@@ -332,10 +329,10 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       return;
     }
 
-    methodCall.putUserData(COMPLETION_HINTS, Boolean.TRUE);
+    setCompletionMode(methodCall, true);
     ParameterInfoController controller = new ParameterInfoController(project, editor, braceOffset, infoContext.getItemsToShow(), null,
-                                                                 parameterOwner, handler, false, false);
-    Disposable hintsDisposal = () -> methodCall.putUserData(COMPLETION_HINTS, null);
+                                                                     methodCall.getArgumentList(), handler, false, false);
+    Disposable hintsDisposal = () -> setCompletionMode(methodCall, false);
     if (Disposer.isDisposed(controller)) {
       Disposer.dispose(hintsDisposal);
     }
@@ -345,7 +342,11 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     }
   }
 
-  public static boolean showCompletionHints(@NotNull PsiCallExpression expression) {
+  public static void setCompletionMode(@NotNull PsiCall expression, boolean value) {
+    expression.putUserData(COMPLETION_HINTS, value ? Boolean.TRUE : null);
+  }
+
+  public static boolean isCompletionMode(@NotNull PsiCall expression) {
     return expression.getUserData(COMPLETION_HINTS) != null;
   }
 

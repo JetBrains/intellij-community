@@ -16,9 +16,14 @@
 
 package com.intellij.openapi.roots.impl.libraries;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.util.InvalidDataException;
 import org.jdom.Element;
@@ -49,5 +54,24 @@ public class LibraryTableImplUtil {
   public static Library createModuleLevelLibrary(@Nullable String name, PersistentLibraryKind kind, @NotNull RootModelImpl rootModel,
                                                  @Nullable ProjectModelExternalSource externalSource) {
     return new LibraryImpl(name, kind, null, rootModel, externalSource);
+  }
+
+  public static boolean isValidLibrary(@NotNull Library library) {
+    LibraryTable table = library.getTable();
+    if (table != null) {
+      String name = library.getName();
+      return name != null && table.getLibraryByName(name) == library;
+    }
+
+    if (!(library instanceof LibraryImpl)) return false;
+
+    Module module = ((LibraryImpl)library).getModule();
+    if (module == null) return false;
+    for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
+      if (entry instanceof LibraryOrderEntry && ((LibraryOrderEntry)entry).getLibrary() == library) {
+        return true;
+      }
+    }
+    return false;
   }
 }

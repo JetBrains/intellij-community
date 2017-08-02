@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -129,10 +130,14 @@ public class JavaMethodOverloadSwitchHandler extends EditorWriteActionHandler {
     }
     if (targetCaretPosition == -1) targetCaretPosition = offset;
     caret.moveToLogicalPosition(editor.offsetToLogicalPosition(targetCaretPosition).leanForward(true));
-    call.putUserData(JavaMethodCallElement.COMPLETION_HINTS, Boolean.TRUE);
+    PsiCall methodCall = (PsiCall)call;
+    if (!JavaMethodCallElement.isCompletionMode(methodCall)) {
+      JavaMethodCallElement.setCompletionMode(methodCall, true);
+      Disposer.register(controller, () -> JavaMethodCallElement.setCompletionMode(methodCall, false));
+    }
 
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-    CompletionMemory.registerChosenMethod(targetMethod, (PsiCall)call);
+    CompletionMemory.registerChosenMethod(targetMethod, methodCall);
     controller.resetHighlighted();
     controller.updateComponent(); // update popup immediately (otherwise, it will be updated only after delay)
     ParameterHintsPass.syncUpdate(call, editor);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.psi;
 
+import com.intellij.lang.jvm.JvmTypeParameter;
+import com.intellij.lang.jvm.types.JvmReferenceType;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author dsl
  */
-public interface PsiTypeParameter extends PsiClass, PsiAnnotationOwner {
+public interface PsiTypeParameter extends PsiClass, PsiAnnotationOwner, JvmTypeParameter {
   /**
    * The empty array of PSI type parameters which can be reused to avoid unnecessary allocations.
    */
@@ -47,6 +49,7 @@ public interface PsiTypeParameter extends PsiClass, PsiAnnotationOwner {
    * @return the type parameter owner instance.
    */
   @Nullable
+  @Override
   PsiTypeParameterListOwner getOwner();
 
   /**
@@ -55,4 +58,16 @@ public interface PsiTypeParameter extends PsiClass, PsiAnnotationOwner {
    * @return the type parameter position.
    */
   int getIndex();
+
+  @NotNull
+  @Override
+  default PsiAnnotation[] getAnnotations() {
+    return PsiClass.super.getAnnotations();
+  }
+
+  @NotNull
+  @Override
+  default JvmReferenceType[] getBounds() {
+    return getExtendsList().getReferencedTypes();
+  }
 }

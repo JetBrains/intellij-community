@@ -28,10 +28,10 @@ import javax.swing.*;
  * and to small IDE (PhpStorm, WebStorm etc. available via File -> 'New Project...').
  *
  * @author Sergey Simonchik
+ *
+ * Deprecated since 2017.3. Please use 'WebProjectTemplate' class instead
  */
-
 @Deprecated
-//[kradima] to be removed in 2017.3
 public abstract class WebProjectGenerator<T> extends DirectoryProjectGeneratorBase<T> {
   @Nullable
   public Integer getPreferredDescriptionWidth() {
@@ -54,6 +54,9 @@ public abstract class WebProjectGenerator<T> extends DirectoryProjectGeneratorBa
 
   public abstract String getDescription();
 
+  /**
+   * Deprecated since 2017.3. Please use 'ProjectGeneratorPeer' class instead
+   */
   @Deprecated
   public interface GeneratorPeer<T> extends ProjectGeneratorPeer<T> {
     @NotNull
@@ -73,6 +76,9 @@ public abstract class WebProjectGenerator<T> extends DirectoryProjectGeneratorBa
     void addSettingsStateListener(@NotNull SettingsStateListener listener);
   }
 
+  /*
+   * Deprecated since 2017.3. Please use 'ProjectGeneratorPeer.SettingsListener' class instead
+   */
   @Deprecated
   public interface SettingsStateListener {
     void stateChanged(boolean validSettings);

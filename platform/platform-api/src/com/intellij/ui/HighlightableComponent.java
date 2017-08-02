@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
@@ -29,6 +30,8 @@ import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Eugene Belyaev
@@ -378,6 +381,33 @@ public class HighlightableComponent extends JComponent implements Accessible {
     return null;
   }
 
+  @NotNull
+  public Map<String, Rectangle> getHightlightedRegionsBoundsMap() {
+
+    HashMap<String, Rectangle> map = new HashMap<>();
+    FontMetrics defFontMetrics = getFontMetrics(getFont());
+
+    int pivot = getTextOffset();
+    int start, end;
+
+    if (myText.length() != 0 && myHighlightedRegions.size() != 0) {
+      int endIndex = 0;
+      for (HighlightedRegion hRegion : myHighlightedRegions) {
+        pivot += defFontMetrics.stringWidth(myText.substring(endIndex, hRegion.startOffset));
+        start = pivot;
+        endIndex = hRegion.endOffset;
+
+        String text = getRegionText(hRegion);
+        Font regFont = getFont().deriveFont(hRegion.textAttributes.getFontType());
+        FontMetrics fontMetrics = getFontMetrics(regFont);
+        pivot += fontMetrics.stringWidth(text);
+        end = pivot;
+        map.put(text, new Rectangle(this.getBounds().x + start, this.getBounds().y, end, this.getBounds().height));
+      }
+    }
+    return map;
+  }
+
   public Dimension getPreferredSize() {
     FontMetrics defFontMetrics = getFontMetrics(getFont());
 
@@ -412,7 +442,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
     return new Dimension(width + 2, height);
   }
 
-  private String getRegionText(HighlightedRegion hRegion) {
+  public String getRegionText(HighlightedRegion hRegion) {
     String text;
     if (hRegion.endOffset > myText.length()) {
       if (hRegion.startOffset < myText.length()) {

@@ -211,7 +211,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       int oldDelay = settings.AUTOREPARSE_DELAY;
       try {
         settings.AUTOREPARSE_DELAY = 0;
-        List<HighlightInfo> infos = codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, toIgnore, canChangeDocument, null);
+        List<HighlightInfo> infos =
+          codeAnalyzer.runPasses(file, editor.getDocument(), Collections.singletonList(textEditor), toIgnore, canChangeDocument, null);
         infos.addAll(DaemonCodeAnalyzerEx.getInstanceEx(project).getFileLevelHighlights(project, file));
         return infos;
       }

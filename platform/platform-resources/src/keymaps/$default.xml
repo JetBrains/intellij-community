@@ -214,6 +214,10 @@
     <keyboard-shortcut first-keystroke="control ADD"/>
     <keyboard-shortcut first-keystroke="control EQUALS"/>
   </action>
+  <action id="ExpandExpandableComponent">
+    <keyboard-shortcut first-keystroke="control ADD"/>
+    <keyboard-shortcut first-keystroke="control EQUALS"/>
+  </action>
   <action id="GotoSuperMethod">
     <keyboard-shortcut first-keystroke="control U"/>
   </action>
@@ -439,6 +443,10 @@
     <keyboard-shortcut first-keystroke="control shift EQUALS"/>
   </action>
   <action id="CollapseAll">
+    <keyboard-shortcut first-keystroke="control SUBTRACT"/>
+    <keyboard-shortcut first-keystroke="control MINUS"/>
+  </action>
+  <action id="CollapseExpandableComponent">
     <keyboard-shortcut first-keystroke="control SUBTRACT"/>
     <keyboard-shortcut first-keystroke="control MINUS"/>
   </action>

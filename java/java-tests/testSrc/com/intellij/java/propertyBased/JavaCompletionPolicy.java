@@ -15,6 +15,7 @@
  */
 package com.intellij.java.propertyBased;
 
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -26,26 +27,49 @@ import org.jetbrains.annotations.NotNull;
  */
 class JavaCompletionPolicy extends CompletionPolicy {
   @Override
-  protected boolean shouldSuggestReferenceText(@NotNull PsiReference ref) {
-    if (ref instanceof PsiJavaCodeReferenceElement && !shouldSuggestJavaTarget((PsiJavaCodeReferenceElement)ref)) {
+  protected boolean shouldSuggestReferenceText(@NotNull PsiReference ref, @NotNull PsiElement target) {
+    PsiElement refElement = ref.getElement();
+    if (refElement instanceof PsiJavaCodeReferenceElement && 
+        !shouldSuggestJavaTarget((PsiJavaCodeReferenceElement)refElement, target)) {
       return false;
     }
     return true;
   }
 
-  private static boolean shouldSuggestJavaTarget(PsiJavaCodeReferenceElement ref) {
-    if (PsiTreeUtil.getParentOfType(ref, PsiPackageStatement.class) == null) return false;
+  private static boolean shouldSuggestJavaTarget(PsiJavaCodeReferenceElement ref, @NotNull PsiElement target) {
+    if (PsiTreeUtil.getParentOfType(ref, PsiPackageStatement.class) != null) return false;
 
-    PsiElement target = ref.resolve();
     if (!ref.isQualified() && target instanceof PsiPackage) return false;
+    if (target instanceof PsiClass && PsiTreeUtil.isAncestor(target, ref, true)) {
+      PsiElement lBrace = ((PsiClass)target).getLBrace();
+      if (lBrace == null || ref.getTextRange().getStartOffset() < lBrace.getTextRange().getStartOffset()) {
+        return false;
+      }
+    }
+    if (target instanceof PsiField &&
+        SyntaxTraverser.psiApi().parents(ref).find(e -> e instanceof PsiMethod && ((PsiMethod)e).isConstructor()) != null) {
+      // https://youtrack.jetbrains.com/issue/IDEA-174744 on red code
+      return false;
+    }
+    if (isStaticWithInstanceQualifier(ref, target)) {
+      return false;
+    }
     return target != null;
+  }
+
+  private static boolean isStaticWithInstanceQualifier(PsiJavaCodeReferenceElement ref, @NotNull PsiElement target) {
+    PsiElement qualifier = ref.getQualifier();
+    return target instanceof PsiModifierListOwner &&
+           ((PsiModifierListOwner)target).hasModifier(JvmModifier.STATIC) &&
+           qualifier instanceof PsiJavaCodeReferenceElement &&
+           !(((PsiJavaCodeReferenceElement)qualifier).resolve() instanceof PsiClass);
   }
 
   @Override
   protected boolean shouldSuggestNonReferenceLeafText(@NotNull PsiElement leaf) {
     if (leaf instanceof PsiKeyword) {
       if (leaf.getParent() instanceof PsiClassObjectAccessExpression &&
-          PsiUtil.resolveClassInType(((PsiClassObjectAccessExpression)leaf.getParent()).getType()) == null) {
+          PsiUtil.resolveClassInType(((PsiClassObjectAccessExpression)leaf.getParent()).getOperand().getType()) == null) {
         return false;
       }
     }

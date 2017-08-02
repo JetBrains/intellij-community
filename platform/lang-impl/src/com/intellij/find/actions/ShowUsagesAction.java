@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,10 +75,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.AsyncProcessIcon;
-import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.ListTableModel;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -1200,7 +1197,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
       Component component = super.prepareRenderer(renderer, row, column);
       if (component instanceof JComponent) {
-        ((JComponent)component).setBorder(IdeBorderFactory.createEmptyBorder(MARGIN, MARGIN, MARGIN, 0));
+        ((JComponent)component).setBorder(JBUI.Borders.empty(MARGIN, MARGIN, MARGIN, 0));
       }
       return component;
     }

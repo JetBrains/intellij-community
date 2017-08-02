@@ -71,7 +71,8 @@ public class PyRedeclarationInspection extends PyInspection {
 
     @Override
     public void visitPyFunction(final PyFunction node) {
-      if (!isDecorated(node)) {
+      if (!PyKnownDecoratorUtil.hasUnknownDecorator(node, myTypeEvalContext) &&
+          !PyKnownDecoratorUtil.hasRedeclarationDecorator(node, myTypeEvalContext)) {
         processElement(node);
       }
     }

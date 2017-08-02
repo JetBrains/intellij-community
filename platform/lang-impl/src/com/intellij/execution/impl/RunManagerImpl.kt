@@ -831,7 +831,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     for (configuration in allSettings) {
       if (configuration.isShared) {
         if (result == null) {
-          result = ArrayList<RunnerAndConfigurationSettings>()
+          result = ArrayList()
         }
         result.add(configuration)
       }
@@ -1051,11 +1051,11 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
         }
       }
 
-      if (tasks == templateTasks) {
-        result = emptyList()
+      result = if (tasks == templateTasks) {
+        emptyList()
       }
       else  {
-        result = getEffectiveBeforeRunTaskList(tasks, templateTasks = templateTasks, ownIsOnlyEnabled = false, isDisableTemplateTasks = true)
+        getEffectiveBeforeRunTaskList(tasks, templateTasks = templateTasks, ownIsOnlyEnabled = false, isDisableTemplateTasks = true)
       }
     }
 
@@ -1063,7 +1063,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     fireBeforeRunTasksUpdated()
   }
 
-  fun checkIfDependenciesAreStable(configuration: RunConfiguration) {
+  private fun checkIfDependenciesAreStable(configuration: RunConfiguration) {
     if (isFirstLoadState.get()) return
     for (runTask in configuration.beforeRunTasks) {
       if (runTask is RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask && runTask.settings != null && runTask.settings.isTemporary) {
@@ -1182,4 +1182,4 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   }
 }
 
-private fun isUseProjectSchemeManager() = Registry.`is`("runManager.use.schemeManager", false)
+internal fun isUseProjectSchemeManager() = Registry.`is`("runManager.use.schemeManager", false)

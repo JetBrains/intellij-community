@@ -31,6 +31,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.ContentUtilEx;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -159,14 +160,7 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
       if (!selectedExistingContent) {
         String tabName = myPath.getName();
         if (myStartingRevisionNumber != null) {
-          tabName += " (";
-          if (myStartingRevisionNumber instanceof ShortVcsRevisionNumber) {
-            tabName += ((ShortVcsRevisionNumber)myStartingRevisionNumber).toShortString();
-          }
-          else {
-            tabName += myStartingRevisionNumber.asString();
-          }
-          tabName += ")";
+          tabName += " (" + VcsUtil.getShortRevisionString(myStartingRevisionNumber) + ")";
         }
         ContentUtilEx.addTabbedContent(manager, myFileHistoryPanel, "History", tabName, true);
       }

@@ -18,6 +18,7 @@ package com.intellij.structuralsearch.impl.matcher.filters;
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiNameValuePair;
 
 /**
  * Filters expression nodes
@@ -34,6 +35,6 @@ public class ExpressionFilter implements NodeFilter {
 
   @Override
   public boolean accepts(PsiElement element) {
-    return element instanceof PsiExpression;
+    return element instanceof PsiExpression || element instanceof PsiNameValuePair;
   }
 }

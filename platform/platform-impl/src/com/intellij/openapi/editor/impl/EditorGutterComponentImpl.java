@@ -414,37 +414,17 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         }
 
         int annotationSize = myTextAnnotationGutterSizes.get(i);
-        VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, startVisualLine);
-        while (!visLinesIterator.atEnd() && visLinesIterator.getVisualLine() <= endVisualLine) {
-          int logLine = visLinesIterator.getStartLogicalLine();
-          int y = visLinesIterator.getY();
-          String s = gutterProvider.getLineText(logLine, myEditor);
-          final EditorFontType style = gutterProvider.getStyle(logLine, myEditor);
-          final Color bg = gutterProvider.getBgColor(logLine, myEditor);
-          if (bg != null) {
-            g.setColor(bg);
-            g.fillRect(x, y, annotationSize, lineHeight);
-          }
-          g.setColor(myEditor.getColorsScheme().getColor(gutterProvider.getColor(logLine, myEditor)));
-          g.setFont(myEditor.getColorsScheme().getFont(style));
-          if (!StringUtil.isEmpty(s)) {
-            // we leave half of the gap before the text
-            g.drawString(s, GAP_BETWEEN_ANNOTATIONS / 2 + x, y + myEditor.getAscent());
-          }
-          visLinesIterator.advance();
-        }
         if (startVisualLine == 0 && endVisualLine == 0) { //allow paining gutters for empty documents
-          String s = gutterProvider.getLineText(0, myEditor);
-          final EditorFontType style = gutterProvider.getStyle(0, myEditor);
-          final Color bg = gutterProvider.getBgColor(0, myEditor);
-          if (bg != null) {
-            g.setColor(bg);
-            g.fillRect(x, 0, annotationSize, lineHeight);
-          }
-          g.setColor(myEditor.getColorsScheme().getColor(gutterProvider.getColor(0, myEditor)));
-          g.setFont(myEditor.getColorsScheme().getFont(style));
-          if (!StringUtil.isEmpty(s)) {
-            g.drawString(s, GAP_BETWEEN_ANNOTATIONS / 2 + x, myEditor.getAscent());
+          paintAnnotationLine(g, gutterProvider, 0, x, 0, annotationSize, lineHeight);
+        }
+        else {
+          VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, startVisualLine);
+          while (!visLinesIterator.atEnd() && visLinesIterator.getVisualLine() <= endVisualLine) {
+            int logLine = visLinesIterator.getStartLogicalLine();
+            int y = visLinesIterator.getY();
+            paintAnnotationLine(g, gutterProvider, logLine, x, y, annotationSize, lineHeight);
+            
+            visLinesIterator.advance();
           }
         }
 
@@ -454,6 +434,25 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
     finally {
       if (old != null) g.setTransform(old);
+    }
+  }
+
+  private void paintAnnotationLine(Graphics g, TextAnnotationGutterProvider gutterProvider, int line, int x, int y, int width, int height) {
+    String s = gutterProvider.getLineText(line, myEditor);
+    final EditorFontType style = gutterProvider.getStyle(line, myEditor);
+    final Color bg = gutterProvider.getBgColor(line, myEditor);
+    if (bg != null) {
+      g.setColor(bg);
+      g.fillRect(x, y, width, height);
+    }
+    if (!StringUtil.isEmpty(s)) {
+      g.setColor(myEditor.getColorsScheme().getColor(gutterProvider.getColor(line, myEditor)));
+      Font font = myEditor.getColorsScheme().getFont(style);
+      if (font.canDisplayUpTo(s) != -1) {
+        font = UIUtil.getFontWithFallback(font);
+      }
+      g.setFont(font);
+      g.drawString(s, GAP_BETWEEN_ANNOTATIONS / 2 + x, y + myEditor.getAscent());
     }
   }
 

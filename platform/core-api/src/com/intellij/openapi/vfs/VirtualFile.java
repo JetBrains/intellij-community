@@ -24,8 +24,10 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LineSeparator;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,7 +92,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see VirtualFileListener#propertyChanged
    * @see VirtualFilePropertyEvent#getPropertyName
    */
-  public static final String PROP_HIDDEN = VFileProperty.HIDDEN.getName();
+  public static final String PROP_HIDDEN = "HIDDEN";
 
   /**
    * Used as a property name in the {@link VirtualFilePropertyEvent} fired when a symlink target of a
@@ -100,6 +102,13 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see VirtualFilePropertyEvent#getPropertyName
    */
   public static final String PROP_SYMLINK_TARGET = "symlink";
+
+  /**
+   * Acceptable values for "propertyName" argument in
+   * {@link VFilePropertyChangeEvent#VFilePropertyChangeEvent(Object, VirtualFile, String, Object, Object, boolean)}
+   */
+  @MagicConstant(stringValues = {PROP_NAME, PROP_ENCODING, PROP_HIDDEN, PROP_WRITABLE, PROP_SYMLINK_TARGET})
+  public @interface PropName {}
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VirtualFile");
   private static final Key<byte[]> BOM_KEY = Key.create("BOM");

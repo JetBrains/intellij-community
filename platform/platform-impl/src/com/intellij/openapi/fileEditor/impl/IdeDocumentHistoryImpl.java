@@ -17,6 +17,7 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
@@ -34,6 +35,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.psi.ExternalChangeAction;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -190,7 +192,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   private void onDocumentChanged(DocumentEvent e) {
     Document document = e.getDocument();
     final VirtualFile file = getFileDocumentManager().getFile(document);
-    if (file != null) {
+    if (file != null && !ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class)) {
       myCurrentCommandHasChanges = true;
       myChangedFilesInCurrentCommand.add(file);
     }
@@ -294,6 +296,10 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     }
 
     return VfsUtilCore.toVirtualFileArray(files);
+  }
+
+  public boolean isRecentlyChanged(@NotNull VirtualFile file) {
+    return myRecentlyChangedFiles.CHANGED_PATHS.contains(file.getPath());
   }
 
   @Override

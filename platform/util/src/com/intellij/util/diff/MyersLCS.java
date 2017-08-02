@@ -184,7 +184,7 @@ class MyersLCS {
       }
       else {
         //The difference is more than the given estimate
-        if (throwException) throw new FilesTooBigForDiffException(0);
+        if (throwException) throw new FilesTooBigForDiffException();
       }
     }
   }

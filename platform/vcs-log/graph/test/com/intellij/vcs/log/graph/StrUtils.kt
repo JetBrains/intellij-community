@@ -28,7 +28,7 @@ import com.intellij.vcs.log.graph.parser.EdgeNodeCharConverter.toChar
 fun LinearGraph.asString(sorted: Boolean = false): String {
   val s = StringBuilder()
   for (nodeIndex in 0..nodesCount() - 1) {
-    if (nodeIndex > 0) s.append("\n");
+    if (nodeIndex > 0) s.append("\n")
     val node = getGraphNode(nodeIndex)
     s.append(node.asString()).append(CommitParser.SEPARATOR)
 
@@ -38,7 +38,7 @@ fun LinearGraph.asString(sorted: Boolean = false): String {
     }
     adjEdges.map { it.asString() }.joinTo(s, separator = " ")
   }
-  return s.toString();
+  return s.toString()
 }
 
 fun GraphNode.asString(): String = "${nodeIndex}_${toChar(type)}"

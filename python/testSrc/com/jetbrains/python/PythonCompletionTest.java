@@ -1203,6 +1203,12 @@ public class PythonCompletionTest extends PyTestCase {
     assertContainsElements(variants, "List", "Union", "Optional");
   }
 
+  public void testIncompleteQualifiedNameClashesWithLocalVariable() {
+    final List<String> variants = doTestByFile();
+    assertContainsElements(variants, "upper", "split", "__len__");
+    assertDoesntContain(variants, "illegal");
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion";

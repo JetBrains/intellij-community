@@ -15,7 +15,7 @@
  */
 package org.jetbrains.settingsRepository
 
-import com.intellij.internal.statistic.ActionsCollector
+import com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollector
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project

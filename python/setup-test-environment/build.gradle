@@ -12,8 +12,8 @@ envs {
   packages = ["pip", "setuptools"]
   _64Bits = true
 
-  conda "django19", "2.7", ["django==1.9", "tox", "nose", "pytest", "behave", "lettuce>=0.2.22", "unittest2", "teamcity-messages"], true
-  textfile "django19/tags.txt", "python2.7\ndjango\nnose\npytest\nbehave\nlettuce\npackaging\ntox\nunittest2"
+  conda "django19", "2.7", ["django==1.9", "tox", "nose", "pytest", "Twisted", "behave", "lettuce>=0.2.22", "unittest2", "teamcity-messages"], true
+  textfile "django19/tags.txt", "python2.7\ndjango\nnose\npytest\nbehave\nlettuce\npackaging\ntox\nunittest2\ntwisted"
 
   conda "django110", "3.4", ["django==1.10", "django-nose"], false
   textfile "django110/tags.txt", "python3.4\ndjango\nskeletons\ndjango-nose"

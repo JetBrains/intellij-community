@@ -49,5 +49,25 @@ public interface ProjectGeneratorPeer<T> {
 
   boolean isBackgroundJobRunning();
 
+  interface SettingsListener {
+    void stateChanged(boolean validSettings);
+  }
+
+  /**
+   * Adds settings state listener to validate user input
+   */
+  default void addSettingsListener(@NotNull SettingsListener listener) {
+    addSettingsStateListener(new WebProjectGenerator.SettingsStateListener() {
+      @Override
+      public void stateChanged(boolean validSettings) {
+        listener.stateChanged(validSettings);
+      }
+    });
+  }
+
+  /**
+   * Please use {@link #addSettingsListener(SettingsListener)} method instead
+   */
+  @Deprecated
   void addSettingsStateListener(@NotNull WebProjectGenerator.SettingsStateListener listener);
 }

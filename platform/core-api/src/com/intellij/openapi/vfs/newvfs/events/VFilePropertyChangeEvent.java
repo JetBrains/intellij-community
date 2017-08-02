@@ -34,7 +34,7 @@ public class VFilePropertyChangeEvent extends VFileEvent {
 
   public VFilePropertyChangeEvent(Object requestor,
                                   @NotNull VirtualFile file,
-                                  @NotNull String propertyName,
+                                  @VirtualFile.PropName @NotNull String propertyName,
                                   @Nullable Object oldValue,
                                   @Nullable Object newValue,
                                   boolean isFromRefresh) {
@@ -86,6 +86,7 @@ public class VFilePropertyChangeEvent extends VFileEvent {
   }
 
   @NotNull
+  @VirtualFile.PropName
   public String getPropertyName() {
     return myPropertyName;
   }

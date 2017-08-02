@@ -26,12 +26,10 @@ import com.intellij.util.containers.MultiMap;
 import git4idea.GitVcs;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
+import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.util.ObjectUtils.notNull;
 import static git4idea.history.GitLogParser.GitLogOption.HASH;
@@ -43,9 +41,12 @@ import static git4idea.history.GitLogParser.GitLogOption.TREE;
  */
 abstract class GitLogRecordCollector implements Consumer<GitLogRecord> {
   private static final Logger LOG = Logger.getInstance(GitLogRecordCollector.class);
+  private static final int STATUS_LINES_THRESHOLD = 20_000;
   @NotNull private final Project myProject;
   @NotNull private final VirtualFile myRoot;
-  @NotNull private final MultiMap<String, GitLogRecord> myHashToRecord = MultiMap.createLinked();
+  @NotNull private final MultiMap<String, GitLogRecord> myHashToRecord = MultiMap.create();
+  @NotNull private final MultiMap<String, GitLogRecord> myHashToIncompleteRecords = MultiMap.create();
+  private int myIncompleteStatusLinesCount = 0;
 
   protected GitLogRecordCollector(@NotNull Project project, @NotNull VirtualFile root) {
     myProject = project;
@@ -61,12 +62,12 @@ abstract class GitLogRecordCollector implements Consumer<GitLogRecord> {
     else {
       myHashToRecord.putValue(record.getHash(), record);
       if (parents.length == myHashToRecord.get(record.getHash()).size()) {
-        processCollectedRecords();
+        processCollectedRecords(false);
       }
     }
   }
 
-  private void processCollectedRecords() {
+  private void processCollectedRecords(boolean processIncompleteRecords) {
     // there is a surprising (or not really surprising, depending how to look at it) problem with `-m` option
     // despite what is written in git-log documentation, it does not always output a record for each parent of a merge commit
     // if a merge commit has no changes with one of the parents, nothing is output for that parent
@@ -80,62 +81,99 @@ abstract class GitLogRecordCollector implements Consumer<GitLogRecord> {
       ArrayList<GitLogRecord> records = ContainerUtil.newArrayList(notNull(myHashToRecord.get(hash)));
       GitLogRecord firstRecord = records.get(0);
       if (firstRecord.getParentsHashes().length != 0 && records.size() != firstRecord.getParentsHashes().length) {
-        if (!fillWithEmptyRecords(records)) continue; // skipping commit altogether on error
+        myHashToIncompleteRecords.put(hash, records);
+        records.forEach(r -> myIncompleteStatusLinesCount += r.getStatusInfos().size());
       }
-      consume(records);
+      else {
+        consume(records);
+      }
     }
     myHashToRecord.clear();
+
+    // we want to avoid executing a lot of "git log" commands
+    // at the same time we do not want to waste too much memory on records
+    // so we process "incomplete" records when we accumulate too much of them in terms of status lines
+    // or at the very end
+    if (!myHashToIncompleteRecords.isEmpty() && (processIncompleteRecords || myIncompleteStatusLinesCount >= STATUS_LINES_THRESHOLD)) {
+      try {
+        Map<String, String> hashToTreeMap = getHashToTreeMap(ContainerUtil.map(myHashToIncompleteRecords.entrySet(),
+                                                                               e -> ContainerUtil.getFirstItem(e.getValue())));
+        for (String hash : myHashToIncompleteRecords.keySet()) {
+          ArrayList<GitLogRecord> records = ContainerUtil.newArrayList(notNull(myHashToIncompleteRecords.get(hash)));
+          fillWithEmptyRecords(records, hashToTreeMap);
+          consume(records);
+        }
+      }
+      catch (VcsException e) {
+        LOG.error(e);
+      }
+      finally {
+        myHashToIncompleteRecords.clear();
+        myIncompleteStatusLinesCount = 0;
+        // do not keep records on error
+      }
+    }
   }
 
   public void finish() {
-    processCollectedRecords();
+    processCollectedRecords(true);
   }
 
   public abstract void consume(@NotNull List<GitLogRecord> records);
 
   /*
-   * This method calculates tree hashes for a commit and its parents and places an empty record for parents that have same tree hash.
+   * This method calculates tree hashes for commits and their parents.
    */
-  private boolean fillWithEmptyRecords(@NotNull List<GitLogRecord> records) {
+  @NotNull
+  private Map<String, String> getHashToTreeMap(@NotNull Collection<GitLogRecord> records) throws VcsException {
+    Set<String> hashes = ContainerUtil.newHashSet();
+
+    for (GitLogRecord r : records) {
+      hashes.add(r.getHash());
+      hashes.addAll(Arrays.asList(r.getParentsHashes()));
+    }
+
+    GitSimpleHandler handler = new GitSimpleHandler(myProject, myRoot, GitCommand.LOG);
+    GitLogParser parser = new GitLogParser(myProject, GitLogParser.NameStatus.NONE, HASH, TREE);
+    GitVcs vcs = notNull(GitVcs.getInstance(myProject));
+    handler.setStdoutSuppressed(true);
+    handler.addParameters(parser.getPretty());
+    handler.addParameters(GitLogUtil.getNoWalkParameter(vcs));
+    handler.addParameters(GitLogUtil.STDIN);
+    handler.endOptions();
+
+    GitLogUtil.sendHashesToStdin(vcs, hashes, handler);
+    String output = handler.run();
+
+    if (!handler.errors().isEmpty()) {
+      throw new VcsException(GitUIUtil.stringifyErrors(handler.errors()));
+    }
+
+    List<GitLogRecord> hashAndTreeRecords = parser.parse(output);
+    return ContainerUtil.map2Map(hashAndTreeRecords, record -> Pair.create(record.getHash(), record.getTreeHash()));
+  }
+
+  /*
+   * This method places an empty record for parents that have same tree hash.
+   */
+  private static void fillWithEmptyRecords(@NotNull List<GitLogRecord> records, @NotNull Map<String, String> hashToTreeMap) {
     GitLogRecord firstRecord = records.get(0);
     String commit = firstRecord.getHash();
     String[] parents = firstRecord.getParentsHashes();
 
-    List<String> hashes = ContainerUtil.newArrayList(parents);
-    hashes.add(commit);
+    String commitTreeHash = hashToTreeMap.get(commit);
+    LOG.assertTrue(commitTreeHash != null, "Could not get tree hash for commit " + commit);
 
-    GitSimpleHandler handler = new GitSimpleHandler(myProject, myRoot, GitCommand.LOG);
-    GitLogParser parser = new GitLogParser(myProject, GitLogParser.NameStatus.NONE, HASH, TREE);
-    handler.setStdoutSuppressed(true);
-    handler.addParameters(parser.getPretty());
-    handler.addParameters(GitHistoryUtils.formHashParameters(notNull(GitVcs.getInstance(myProject)), hashes));
-    handler.endOptions();
-
-    try {
-      String output = handler.run();
-
-      List<GitLogRecord> hashAndTreeRecords = parser.parse(output);
-      Map<String, String> hashToTreeMap = ContainerUtil.map2Map(hashAndTreeRecords,
-                                                                record -> Pair.create(record.getHash(), record.getTreeHash()));
-      String commitTreeHash = hashToTreeMap.get(commit);
-      LOG.assertTrue(commitTreeHash != null, "Could not get tree hash for commit " + commit);
-
-      for (int parentIndex = 0; parentIndex < parents.length; parentIndex++) {
-        String parent = parents[parentIndex];
-        // sometimes a merge commit is identical to all its parents
-        // in this case, we get one empty record
-        String parentTreeHash = hashToTreeMap.get(parent);
-        LOG.assertTrue(parentTreeHash != null, "Could not get tree hash for commit " + parent);
-        if (parentTreeHash.equals(commitTreeHash) && records.size() < parents.length) {
-          records.add(parentIndex, new GitLogRecord(firstRecord.getOptions(), ContainerUtil.emptyList(), ContainerUtil.emptyList(),
-                                                    firstRecord.isSupportsRawBody()));
-        }
+    for (int parentIndex = 0; parentIndex < parents.length; parentIndex++) {
+      String parent = parents[parentIndex];
+      // sometimes a merge commit is identical to all its parents
+      // in this case, we get one empty record
+      String parentTreeHash = hashToTreeMap.get(parent);
+      LOG.assertTrue(parentTreeHash != null, "Could not get tree hash for commit " + parent);
+      if (parentTreeHash.equals(commitTreeHash) && records.size() < parents.length) {
+        records.add(parentIndex, new GitLogRecord(firstRecord.getOptions(), ContainerUtil.emptyList(), ContainerUtil.emptyList(),
+                                                  firstRecord.isSupportsRawBody()));
       }
     }
-    catch (VcsException e) {
-      LOG.error(e);
-      return false;
-    }
-    return true;
   }
 }

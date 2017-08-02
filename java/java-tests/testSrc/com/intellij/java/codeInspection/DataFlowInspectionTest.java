@@ -532,4 +532,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
     assertEmpty(ContainerUtil.findAll(myFixture.getAvailableIntentions(), i -> i.getText().contains("null")));
   }
 
+  public void testEmptySingletonMap() {doTest();}
 }

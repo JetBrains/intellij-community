@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.engine.JavaDebugProcess;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.settings.JavaDebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.idea.ActionsBundle;
@@ -27,8 +27,6 @@ import com.intellij.openapi.options.TabbedConfigurable;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.JBUI;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
@@ -107,14 +105,6 @@ public class CustomizeContextViewAction extends XDebuggerTreeActionBase {
   @Override
   public void update(AnActionEvent e) {
     e.getPresentation().setText(ActionsBundle.actionText(DebuggerActions.CUSTOMIZE_VIEWS));
-    Project project = getEventProject(e);
-    if (project != null) {
-      final XDebugSession currentSession = XDebuggerManager.getInstance(project).getCurrentSession();
-      if (currentSession != null) {
-        e.getPresentation().setEnabledAndVisible(currentSession.getDebugProcess() instanceof JavaDebugProcess);
-        return;
-      }
-    }
-    e.getPresentation().setEnabledAndVisible(false);
+    e.getPresentation().setEnabledAndVisible(DebuggerUtilsEx.isInJavaSession(e));
   }
 }

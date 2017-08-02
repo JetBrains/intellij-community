@@ -105,6 +105,11 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
       public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
         updateDashboardIfNeeded(settings);
       }
+
+      @Override
+      public void endUpdate() {
+        updateDashboard(true);
+      }
     });
     connection.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
       @Override
@@ -233,6 +238,13 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   public void setShowConfigurations(boolean value) {
     myShowConfigurations = value;
     updateToolWindowContent();
+  }
+
+  @Override
+  public RunDashboardAnimator getAnimator() {
+    if (myDashboardContent == null) return null;
+
+    return myDashboardContent.getAnimator();
   }
 
   private void updateDashboardIfNeeded(@Nullable RunnerAndConfigurationSettings settings) {

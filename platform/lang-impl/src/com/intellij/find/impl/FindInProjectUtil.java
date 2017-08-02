@@ -113,6 +113,9 @@ public class FindInProjectUtil {
     // apply explicit settings from context
     if (module != null) {
       model.setModuleName(module.getName());
+      directoryName = null;// Explicit 'module' scope is more specific than 'module directory' scope
+      model.setCustomScope(false);
+      model.setDirectoryName(null);
     }
 
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
@@ -124,7 +127,7 @@ public class FindInProjectUtil {
     }
 
     // set project scope if we have no other settings
-    model.setProjectScope(model.getDirectoryName() == null && model.getModuleName() == null && !model.isCustomScope());
+    model.setProjectScope(directoryName == null && module == null && !model.isCustomScope());
   }
 
   /**

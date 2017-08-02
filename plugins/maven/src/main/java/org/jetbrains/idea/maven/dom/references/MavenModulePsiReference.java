@@ -38,6 +38,7 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -143,8 +144,18 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
     private VirtualFile createModulePom() throws IOException {
       VirtualFile baseDir = myVirtualFile.getParent();
       String modulePath = PathUtil.getCanonicalPath(baseDir.getPath() + "/" + myText);
+      String pomFileName = MavenConstants.POM_XML;
+
+      if (!new File(FileUtil.toSystemDependentName(modulePath)).isDirectory()) {
+        String fileName = PathUtil.getFileName(modulePath);
+        if (MavenUtil.isPomFileName(fileName) || MavenUtil.isPotentialPomFile(fileName)) {
+          modulePath = PathUtil.getParentPath(modulePath);
+          pomFileName = fileName;
+        }
+      }
+
       VirtualFile moduleDir = VfsUtil.createDirectories(modulePath);
-      return moduleDir.createChildData(this, MavenConstants.POM_XML);
+      return moduleDir.createChildData(this, pomFileName);
     }
   }
 }

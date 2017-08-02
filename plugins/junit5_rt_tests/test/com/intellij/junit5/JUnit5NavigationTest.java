@@ -91,11 +91,6 @@ class JUnit5NavigationTest {
   void deriveSuiteOrTestFromDescription() {
     myTestSource = methodOrClassSource();
     Assertions.assertTrue(locationHintValue().startsWith("java:suite:"));
-
-    ConfigurableTestDescriptor descriptor = new ConfigurableTestDescriptor(myTestSource);
-    descriptor.isTest(true);
-    Assertions.assertTrue(locationHintValue(descriptor).startsWith("java:test:"));
-
   }
 
   @Test
@@ -140,7 +135,7 @@ class JUnit5NavigationTest {
 
   private static String locationHintValue(final ConfigurableTestDescriptor descriptor) {
     TestIdentifier testIdentifier = TestIdentifier.from(descriptor);
-    return JUnit5TestExecutionListener.getLocationHintValue(testIdentifier.getSource().orElseThrow(IllegalStateException::new), testIdentifier.isTest());
+    return JUnit5TestExecutionListener.getLocationHintValue(testIdentifier.getSource().orElseThrow(IllegalStateException::new));
   }
 
   private static ClassSource anySupportedSource() {

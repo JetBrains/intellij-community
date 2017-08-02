@@ -688,6 +688,11 @@ public class ListUtils {
     assert myFixture.lookupElementStrings == ['char']
   }
 
+  void testShadowedTypeParameter() {
+    configure()
+    assert myFixture.lookupElementStrings == ['MyParam']
+  }
+
   void testMethodReturnType() throws Throwable {
     doTest()
   }
@@ -1793,6 +1798,11 @@ class Bar {
   void testDuplicateEnumValueOf() {
     configure()
     assert myFixture.lookupElements.collect { LookupElementPresentation.renderElement(it).itemText } == ['Bar.valueOf', 'Foo.valueOf', 'Enum.valueOf']
+  }
+  
+  void testTypeArgumentInCast() {
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'String'
   }
 
 }

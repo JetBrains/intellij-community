@@ -30,6 +30,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,15 +38,16 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import slowCheck.DataStructure;
-import slowCheck.Generator;
-import slowCheck.IntDistribution;
+import jetCheck.DataStructure;
+import jetCheck.Generator;
+import jetCheck.IntDistribution;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -72,7 +74,17 @@ public class MadTestingUtil {
     });
   }
 
-  private static <E extends Throwable> void watchDocumentChanges(ThrowableRunnable<E> r, final Consumer<DocumentEvent> eventHandler) throws E {
+  public static void prohibitDocumentChanges(Runnable r) {
+    watchDocumentChanges(r::run, event -> {
+      Document changed = event.getDocument();
+      VirtualFile file = FileDocumentManager.getInstance().getFile(changed);
+      if (file != null && file.isInLocalFileSystem()) {
+        throw new AssertionError("Unexpected document change: " + changed);
+      }
+    });
+  }
+
+  private static <E extends Throwable> void watchDocumentChanges(ThrowableRunnable<E> r, Consumer<DocumentEvent> eventHandler) throws E {
     Disposable disposable = Disposer.newDisposable();
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
@@ -153,7 +165,7 @@ public class MadTestingUtil {
   }
 
   /**
-   * Finds files under {@code rootPath} (e.g. test data root) satisfying {@code fileFilter condition} (e.g. correct extension) and uses {@code actions} to generate actions those files (e.g. invoke compleiton/intentions or random editing).
+   * Finds files under {@code rootPath} (e.g. test data root) satisfying {@code fileFilter condition} (e.g. correct extension) and uses {@code actions} to generate actions those files (e.g. invoke completion/intentions or random editing).
    * Almost: the files with same paths and contents are created inside the test project, then the actions are executed on them.
    * Note that the test project contains only one file at each moment, so it's best to test actions that don't require much environment. 
    * @return
@@ -180,10 +192,12 @@ public class MadTestingUtil {
       PsiDocumentManager.getInstance(fixture.getProject()).commitAllDocuments();
       PsiFile file = PsiManager.getInstance(fixture.getProject()).findFile(vFile);
       if (file instanceof PsiBinaryFile || file instanceof PsiPlainTextFile) {
-        return Generator.constant(null);
+        // no operations, but the just created file needs to be deleted (in FileWithActions#runActions)
+        // todo a side-effect-free generator
+        return Generator.constant(new FileWithActions(file, Collections.emptyList()));
       }
       return Generator.nonEmptyLists(actions.apply(file)).map(a -> new FileWithActions(file, a));
-    }).suchThat(Objects::nonNull);
+    });
   }
 
   private static boolean shouldGoInsiderDir(@NotNull String name) {
@@ -204,9 +218,8 @@ public class MadTestingUtil {
 
   @NotNull
   private static VirtualFile copyFileToProject(File ioFile, CodeInsightTestFixture fixture, String rootPath) {
-    //todo strip test data markup
     try {
-      String path = FileUtil.getRelativePath(rootPath, ioFile.getPath(), '/');
+      String path = FileUtil.getRelativePath(FileUtil.toCanonicalPath(rootPath), ioFile.getPath(), '/');
       assert path != null;
       VirtualFile existing = fixture.findFileInTempDir(path);
       if (existing != null) {
@@ -220,11 +233,27 @@ public class MadTestingUtil {
     }
   }
 
+  /**
+   * Generates actions checking that incremental reparse produces the same PSI as full reparse. This check makes sense
+   * in languages employing {@link com.intellij.psi.tree.ILazyParseableElementTypeBase}.
+   */
   @NotNull
   public static Generator<MadTestingAction> randomEditsWithReparseChecks(PsiFile file) {
     return Generator.anyOf(DeleteRange.psiRangeDeletions(file),
                            Generator.constant(new CheckPsiTextConsistency(file)),
                            InsertString.asciiInsertions(file));
+  }
+
+  static boolean isAfterError(PsiFile file, int offset) {
+    PsiElement leaf = file.findElementAt(offset);
+    Set<Integer> errorOffsets = SyntaxTraverser.psiTraverser(file)
+      .filter(PsiErrorElement.class)
+      .map(PsiTreeUtil::nextVisibleLeaf)
+      .filter(Condition.NOT_NULL)
+      .map(e -> e.getTextRange().getStartOffset())
+      .toSet();
+    return !errorOffsets.isEmpty() &&
+           SyntaxTraverser.psiApi().parents(leaf).find(e -> errorOffsets.contains(e.getTextRange().getStartOffset())) != null;
   }
 
   private static class FileGenerator implements Function<DataStructure, File> {

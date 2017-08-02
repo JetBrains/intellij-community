@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,9 @@
 package com.siyeh.ipp.switchtoif;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ConvertSwitchToIfIntention;
-import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.PsiSwitchStatement;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -30,11 +31,9 @@ public class ReplaceSwitchWithIfIntention extends Intention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element) {
     final PsiJavaToken switchToken = (PsiJavaToken)element;
-    final PsiSwitchStatement switchStatement =
-      (PsiSwitchStatement)switchToken.getParent();
+    final PsiSwitchStatement switchStatement = (PsiSwitchStatement)switchToken.getParent();
     if (switchStatement == null) {
       return;
     }

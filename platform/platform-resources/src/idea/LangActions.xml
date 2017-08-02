@@ -304,7 +304,6 @@
     </group>
     
     <action id="ToggleInlineHintsAction" class="com.intellij.codeInsight.hints.ToggleInlineHintsAction">
-      <add-to-group group-id="EditorPopupMenu"/>
       <add-to-group group-id="ParameterNameHints"/>
     </action>
     
@@ -1032,6 +1031,10 @@
       <action id="RunDashboard.CopyConfiguration" class="com.intellij.execution.dashboard.actions.CopyConfigurationAction"
               use-shortcut-of="EditorDuplicate"/>
       <action id="RunDashboard.RemoveConfiguration" class="com.intellij.execution.dashboard.actions.RemoveConfigurationAction"
+              use-shortcut-of="$Delete"/>
+      <separator/>
+      <action id="RunDashboard.GroupConfigurations" class="com.intellij.execution.dashboard.actions.GroupConfigurationsAction"/>
+      <action id="RunDashboard.UngroupConfigurations" class="com.intellij.execution.dashboard.actions.UngroupConfigurationsActions"
               use-shortcut-of="$Delete"/>
     </group>
 

@@ -20,11 +20,10 @@ import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
-import com.intellij.testFramework.LightPlatformTestCase;
 
 import java.util.List;
 
-public class CodeStyleSchemesModelTest extends LightPlatformTestCase {
+public class CodeStyleSchemesModelTest extends CodeStyleTestCase {
   private CodeStyleSchemesModel myModel;
   private CodeStyleScheme myDefaultScheme;
 

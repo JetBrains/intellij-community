@@ -111,7 +111,6 @@
     <orderEntry type="module" module-name="typeMigration" />
     <orderEntry type="module" module-name="platform-tests" />
     <orderEntry type="module" module-name="android" />
-    <orderEntry type="module" module-name="devkit-tests" scope="TEST" />
     <orderEntry type="module" module-name="diff-tests" scope="TEST" />
     <orderEntry type="module" module-name="built-in-server-tests" scope="TEST" />
     <orderEntry type="module" module-name="updater" scope="TEST" />
@@ -125,6 +124,6 @@
     <orderEntry type="module" module-name="platform-build-scripts" scope="TEST" />
     <orderEntry type="module" module-name="android-plugin" />
     <orderEntry type="module" module-name="stats-collector" />
-    <orderEntry type="module" module-name="slowCheck" scope="TEST" />
+    <orderEntry type="module" module-name="jetCheck" scope="TEST" />
   </component>
 </module>

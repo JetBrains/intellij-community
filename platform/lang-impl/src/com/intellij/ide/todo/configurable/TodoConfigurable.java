@@ -68,7 +68,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
     myPatternsModel = new PatternsTableModel(myPatterns);
   }
 
-  private boolean arePatternsModified() {
+  protected boolean arePatternsModified() {
     TodoConfiguration todoConfiguration = TodoConfiguration.getInstance();
     TodoPattern[] initialPatterns = getTodoPatternsToDisplay(todoConfiguration);
     if (initialPatterns.length != myPatterns.size()) {

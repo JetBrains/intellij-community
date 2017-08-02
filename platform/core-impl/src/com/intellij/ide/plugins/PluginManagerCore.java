@@ -23,6 +23,7 @@ import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
@@ -1259,11 +1260,21 @@ public class PluginManagerCore {
     return detectReasonToNotLoad(descriptor, ourPlugins) != null || isBrokenPlugin(descriptor);
   }
 
+  private static void checkEssentialPluginsAreAvailable(IdeaPluginDescriptorImpl[] plugins) {
+    Set<String> availableIds = ContainerUtil.map2Set(plugins, plugin -> plugin.getPluginId().getIdString());
+    for (String pluginId : ((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getEssentialPluginsIds()) {
+      if (!availableIds.contains(pluginId)) {
+        throw new InstallationCorruptedException("Required plugin '" + pluginId + "' isn't available");
+      }
+    }
+  }
+
   private static void initializePlugins(@Nullable StartupProgress progress) {
     configureExtensions();
 
     final List<String> errors = ContainerUtil.newArrayList();
     final IdeaPluginDescriptorImpl[] pluginDescriptors = loadDescriptors(progress, errors);
+    checkEssentialPluginsAreAvailable(pluginDescriptors);
 
     final Class callerClass = ReflectionUtil.findCallerClass(1);
     assert callerClass != null;
@@ -1485,6 +1496,12 @@ public class PluginManagerCore {
     @Override
     public void warn(Throwable t) {
       getLogger().info(t);
+    }
+  }
+
+  static class InstallationCorruptedException extends RuntimeException {
+    public InstallationCorruptedException(String message) {
+      super(message);
     }
   }
 }

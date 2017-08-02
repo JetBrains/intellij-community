@@ -92,7 +92,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   public static final String NAME = "Git";
   public static final String ID = "git";
 
-  private static final Logger log = Logger.getInstance(GitVcs.class.getName());
+  private static final Logger LOG = Logger.getInstance(GitVcs.class.getName());
   private static final VcsKey ourKey = createKey(NAME);
 
   @Nullable private final ChangeProvider myChangeProvider;
@@ -255,7 +255,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
         return GitRevisionNumber.resolve(myProject, root, revision);
       }
       catch (VcsException e) {
-        log.info("Unexpected problem with resolving the git revision number: ", e);
+        LOG.info("Unexpected problem with resolving the git revision number: ", e);
         throw e;
       }
     }
@@ -392,13 +392,13 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     final String executable = myAppSettings.getPathToGit();
     try {
       myVersion = GitVersion.identifyVersion(executable);
-      if (! myVersion.isSupported()) {
-        log.info("Unsupported Git version: " + myVersion);
+      LOG.info("Git version: " + myVersion);
+      if (!myVersion.isSupported()) {
         final String SETTINGS_LINK = "settings";
         final String UPDATE_LINK = "update";
         String message = String.format("The <a href='" + SETTINGS_LINK + "'>configured</a> version of Git is not supported: %s.<br/> " +
                                        "The minimal supported version is %s. Please <a href='" + UPDATE_LINK + "'>update</a>.",
-                                       myVersion, GitVersion.MIN);
+                                       myVersion.getPresentation(), GitVersion.MIN.getPresentation());
         VcsNotifier.getInstance(myProject).notifyError("Unsupported Git version", message,
                                                        new NotificationListener.Adapter() {
                                                          @Override
@@ -415,7 +415,9 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
                                                        }
         );
       }
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
+      LOG.warn(e);
       if (getExecutableValidator().checkExecutableAndNotifyIfNeeded()) { // check executable before notifying error
         final String reason = (e.getCause() != null ? e.getCause() : e).getMessage();
         String message = GitBundle.message("vcs.unable.to.run.git", executable, reason);

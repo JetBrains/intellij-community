@@ -23,7 +23,6 @@
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="maven" />
-    <orderEntry type="module" module-name="junit" />
     <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="library" exported="" name="Slf4j" level="project" />
     <orderEntry type="library" exported="" name="Gradle" level="project" />
@@ -80,7 +79,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="junit" />
     <orderEntry type="module" module-name="smRunner" />
     <orderEntry type="library" name="Kryo" level="project" />
     <orderEntry type="library" name="Ant" level="project" />

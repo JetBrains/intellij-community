@@ -63,6 +63,14 @@ public class NavBarPresentation {
   @Nullable
   public Icon getIcon(final Object object) {
     if (!NavBarModel.isValid(object)) return null;
+
+    for (NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
+      Icon icon = modelExtension.getIcon(object);
+      if (icon != null) {
+        return icon;
+      }
+    }
+
     if (object instanceof Project) return AllIcons.Nodes.Project;
     if (object instanceof Module) return ModuleType.get(((Module)object)).getIcon();
     try {

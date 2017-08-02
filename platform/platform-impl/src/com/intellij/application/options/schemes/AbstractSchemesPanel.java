@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBDimension;
@@ -138,7 +137,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     JComponent toolbarComponent = toolbar.getComponent();
     toolbarActionGroup.add(new ShowSchemesActionsListAction(myActions.getActions(), toolbarComponent));
     toolbarComponent.setMaximumSize(new Dimension(toolbarComponent.getPreferredSize().width, Short.MAX_VALUE));
-    toolbarComponent.setBorder(IdeBorderFactory.createEmptyBorder());
+    toolbarComponent.setBorder(JBUI.Borders.empty());
     return toolbarComponent;
   }
 

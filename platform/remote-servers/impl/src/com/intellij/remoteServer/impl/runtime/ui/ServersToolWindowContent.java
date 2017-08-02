@@ -116,6 +116,10 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
     this(project, contribution, ActionGroups.SHARED_ACTION_GROUPS);
   }
 
+  /**
+   * @param actionGroups allows to customize action groups bound to view toolbars and tree' poup menu.
+   *                     Use {@link ActionGroups#SHARED_ACTION_GROUPS} to use a predefined action groups.
+   */
   public ServersToolWindowContent(@NotNull Project project, @NotNull RemoteServersViewContribution contribution,
                                   @NotNull ActionGroups actionGroups) {
     super(new BorderLayout());

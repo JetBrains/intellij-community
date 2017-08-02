@@ -15,8 +15,6 @@
  */
 package com.intellij.testFramework.propertyBased;
 
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-
 import java.util.List;
 
 /**
@@ -30,8 +28,6 @@ public interface MadTestingAction {
     for (int i = 0; i < list.size(); i++) {
       MadTestingAction action = list.get(i);
       if (i > 0 && action == list.get(i - 1)) continue;
-
-      FileDocumentManager.getInstance().saveAllDocuments();
 
       action.performAction();
     }

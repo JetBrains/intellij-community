@@ -52,8 +52,12 @@ class BuildOptions {
   static final SEARCHABLE_OPTIONS_INDEX_STEP = "search_index"
   static final PROVIDED_MODULES_LIST_STEP = "provided_modules_list"
   static final SOURCES_ARCHIVE_STEP = "sources_archive"
+  /** build Mac OS X artifacts */
+  static final MAC_ARTIFACTS = "mac_artifacts"
   /** product DMG file for Mac OS X. If it is skipped only sit archive will be produced. */
   static final MAC_DMG_STEP = "mac_dmg"
+  /** product TAR.GZ file for Linux. */
+  static final LINUX_TAR_GZ_STEP = "linux_targz"
   /** sign additional binary files in Mac OS X distribution */
   static final MAC_SIGN_STEP = "mac_sign"
   /** create *.exe installer for Windows distribution. If it is skipped only zip archive will be produced. */
@@ -67,6 +71,12 @@ class BuildOptions {
    */
   public static final String BUILD_DMG_WITHOUT_BUNDLED_JRE = "intellij.build.dmg.without.bundled.jre"
   boolean buildDmgWithoutBundledJre = SystemProperties.getBooleanProperty(BUILD_DMG_WITHOUT_BUNDLED_JRE, SystemProperties.getBooleanProperty("artifact.mac.no.jdk", false))
+
+  /**
+   * Pass 'true' to this system property to produce .snap packages.
+   * A build configuration should have "docker.version >= 17" in requirements.
+   */
+  boolean buildUnixSnaps = SystemProperties.getBooleanProperty("intellij.build.unix.snaps", false)
 
   /**
    * Path to a zip file containing 'production' and 'test' directories with compiled classes of the project modules inside.

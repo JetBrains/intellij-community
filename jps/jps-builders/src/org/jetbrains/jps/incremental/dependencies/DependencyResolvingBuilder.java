@@ -86,7 +86,7 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
   @Override
   public void chunkBuildStarted(CompileContext context, ModuleChunk chunk) {
     try {
-      checkDependencies(context, chunk);
+      resolveMissingDependencies(context, chunk.getModules());
     }
     catch (Exception e) {
       context.putUserData(RESOLVE_ERROR_KEY, e);
@@ -101,31 +101,36 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
 
     final Exception error = context.getUserData(RESOLVE_ERROR_KEY);
     if (error != null) {
-      final StringBuilder builder = new StringBuilder().append("Error resolving dependencies for ").append(chunk.getPresentableShortName());
-      Throwable th = error;
-      final Set<Throwable> processed = new HashSet<>();
-      final Set<String> detailsMessage = new HashSet<>();
-      while (th != null && processed.add(th)) {
-        String details = th.getMessage();
-        if (th instanceof UnknownHostException) {
-          details = "Unknown host: " + details; // hack for UnknownHostException
-        }
-        if (details != null && detailsMessage.add(details)) {
-          builder.append(":\n").append(details);
-        }
-        th = th.getCause();
-      }
-      final String msg = builder.toString();
-      LOG.info(msg, error);
-      context.processMessage(new CompilerMessage(NAME, BuildMessage.Kind.ERROR, msg));
-      return ExitCode.ABORT;
+      return reportError(context, chunk.getPresentableShortName(), error);
     }
 
     return ExitCode.OK;
   }
 
-  private static void checkDependencies(CompileContext context, ModuleChunk chunk) throws Exception {
-    final Collection<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> libs = getRepositoryLibraries(chunk);
+  @NotNull
+  static ExitCode reportError(CompileContext context, String placePresentableName, Exception error) {
+    final StringBuilder builder = new StringBuilder().append("Error resolving dependencies for ").append(placePresentableName);
+    Throwable th = error;
+    final Set<Throwable> processed = new HashSet<>();
+    final Set<String> detailsMessage = new HashSet<>();
+    while (th != null && processed.add(th)) {
+      String details = th.getMessage();
+      if (th instanceof UnknownHostException) {
+        details = "Unknown host: " + details; // hack for UnknownHostException
+      }
+      if (details != null && detailsMessage.add(details)) {
+        builder.append(":\n").append(details);
+      }
+      th = th.getCause();
+    }
+    final String msg = builder.toString();
+    LOG.info(msg, error);
+    context.processMessage(new CompilerMessage(NAME, BuildMessage.Kind.ERROR, msg));
+    return ExitCode.ABORT;
+  }
+
+  static void resolveMissingDependencies(CompileContext context, Collection<JpsModule> modules) throws Exception {
+    Collection<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> libs = getRepositoryLibraries(modules);
     if (!libs.isEmpty()) {
       final ArtifactRepositoryManager repoManager = getRepositoryManager(context);
       for (JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>> lib : libs) {
@@ -140,6 +145,8 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
               }
             }
             if (!required.isEmpty()) {
+              context.processMessage(new ProgressMessage("Resolving '" + lib.getName() + "' library..."));
+              LOG.debug("Downloading missing files for " + lib.getName() + " library: " + required);
               final Collection<File> resolved = repoManager.resolveDependency(descriptor.getGroupId(), descriptor.getArtifactId(), descriptor.getVersion());
               if (!resolved.isEmpty()) {
                 syncPaths(required, resolved);
@@ -229,9 +236,9 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
   }
 
   @NotNull
-  private static Collection<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> getRepositoryLibraries(ModuleChunk chunk) {
+  private static Collection<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> getRepositoryLibraries(Collection<JpsModule> modules) {
     final Collection<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> result = new SmartHashSet<>();
-    for (JpsModule module : chunk.getModules()) {
+    for (JpsModule module : modules) {
       for (JpsDependencyElement dep : module.getDependenciesList().getDependencies()) {
         if (dep instanceof JpsLibraryDependency) {
           final JpsLibrary _lib = ((JpsLibraryDependency)dep).getLibrary();

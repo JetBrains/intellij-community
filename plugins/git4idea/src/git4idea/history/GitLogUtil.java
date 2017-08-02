@@ -38,29 +38,30 @@ import git4idea.GitCommit;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitLineHandler;
-import git4idea.commands.GitSimpleHandler;
-import git4idea.commands.GitTextHandler;
+import git4idea.commands.*;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.log.GitLogProvider;
 import git4idea.log.GitRefManager;
+import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.*;
 
 import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static git4idea.history.GitLogParser.GitLogOption.*;
 
 public class GitLogUtil {
   private static final Logger LOG = Logger.getInstance(GitLogUtil.class);
+  public static final String GRAFTED = "grafted";
+  public static final String REPLACED = "replaced";
   /**
    * A parameter to {@code git log} which is equivalent to {@code --all}, but doesn't show the stuff from index or stash.
    */
   public static final List<String> LOG_ALL = Arrays.asList("HEAD", "--branches", "--remotes", "--tags");
+  public static final String STDIN = "--stdin";
 
   @NotNull
   public static List<? extends VcsShortCommitDetails> collectShortDetails(@NotNull Project project,
@@ -145,7 +146,7 @@ public class GitLogUtil {
                                               @NotNull VcsLogObjectsFactory factory,
                                               @NotNull VirtualFile root) {
     return ContainerUtil.mapNotNull(refs, refName -> {
-      if (refName.equals(GitUtil.GRAFTED) || refName.equals(GitUtil.REPLACED)) return null;
+      if (refName.equals(GRAFTED) || refName.equals(REPLACED)) return null;
       VcsRefType type = GitRefManager.getRefType(refName);
       refName = GitBranchUtil.stripRefsPrefix(refName);
       return refName.equals(GitUtil.ORIGIN_HEAD) ? null : factory.createRef(hash, refName, type, root);
@@ -254,11 +255,23 @@ public class GitLogUtil {
     GitLogRecordCollector recordCollector = new GitLogRecordCollector(project, root) {
       @Override
       public void consume(@NotNull List<GitLogRecord> records) {
+        assertCorrectNumberOfRecords(records);
         commitConsumer.consume(createCommit(project, root, records, factory));
       }
     };
     readRecords(project, root, false, true, true, recordCollector, parameters);
     recordCollector.finish();
+  }
+
+  public static void assertCorrectNumberOfRecords(@NotNull List<GitLogRecord> records) {
+    GitLogRecord firstRecord = notNull(getFirstItem(records));
+    String[] parents = firstRecord.getParentsHashes();
+    LOG.assertTrue(parents.length == 0 || parents.length == records.size(), "Not enough records for commit " +
+                                                                            firstRecord.getHash() +
+                                                                            " expected " +
+                                                                            parents.length +
+                                                                            " records, but got " +
+                                                                            records.size());
   }
 
   private static void readRecords(@NotNull Project project,
@@ -355,13 +368,23 @@ public class GitLogUtil {
     GitLogRecordCollector recordCollector = new GitLogRecordCollector(project, root) {
       @Override
       public void consume(@NotNull List<GitLogRecord> records) {
+        assertCorrectNumberOfRecords(records);
         commitConsumer.consume(createCommit(project, root, records, factory));
       }
     };
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG, createConfigParameters(true, fast));
+    sendHashesToStdin(vcs, hashes, handler);
 
+    readRecordsFromHandler(project, root, false, true, recordCollector, handler, getNoWalkParameter(vcs), STDIN);
+    recordCollector.finish();
+
+    if (!handler.errors().isEmpty()) {
+      throw new VcsException(GitUIUtil.stringifyErrors(handler.errors()));
+    }
+  }
+
+  public static void sendHashesToStdin(@NotNull GitVcs vcs, @NotNull Collection<String> hashes, @NotNull GitHandler handler) {
     String separator = getSeparator(vcs);
-    Ref<Exception> inputError = new Ref<>();
     handler.setInputProcessor(stream -> {
       try (OutputStreamWriter writer = new OutputStreamWriter(stream, handler.getCharset())) {
         for (String hash : hashes) {
@@ -371,18 +394,7 @@ public class GitLogUtil {
         writer.write(separator);
         writer.flush();
       }
-      catch (IOException e) {
-        inputError.set(e);
-      }
-      return false;
     });
-
-    readRecordsFromHandler(project, root, false, true, recordCollector, handler, getNoWalkParameter(vcs), "--stdin");
-    recordCollector.finish();
-
-    if (!inputError.isNull()) {
-      throw new VcsException(inputError.get());
-    }
   }
 
   @NotNull

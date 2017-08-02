@@ -23,12 +23,13 @@ import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil
 import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl
 import com.intellij.psi.impl.source.tree.java.PsiNewExpressionImpl
 import com.intellij.psi.util.TypeConversionUtil
+import com.intellij.util.IncorrectOperationException
 
 
 object JavaInlayHintsProvider {
 
   fun hints(callExpression: PsiCallExpression): Set<InlayInfo> {
-    if (JavaMethodCallElement.showCompletionHints(callExpression)) {
+    if (JavaMethodCallElement.isCompletionMode(callExpression)) {
       val method = CompletionMemory.getChosenMethod(callExpression)?:return emptySet()
       
       val params = method.parameterList.parameters
@@ -46,7 +47,7 @@ object JavaInlayHintsProvider {
       }.toSet()
     }
     
-    if (!EditorSettingsExternalizable.getInstance().isShowParameterNameHints()) return emptySet()
+    if (!EditorSettingsExternalizable.getInstance().isShowParameterNameHints) return emptySet()
     
     val resolveResult = callExpression.resolveMethodGenerics()
     val hints = methodHints(callExpression, resolveResult)
@@ -88,10 +89,53 @@ object JavaInlayHintsProvider {
     
     if (element is PsiMethod && isMethodToShow(element, callExpression)) {
       val info = callInfo(callExpression, element)
-      return hintSet(info, substitutor)
+      if (isCallInfoToShow(info)) {
+        return hintSet(info, substitutor)
+      }
     }
     
     return emptySet()
+  }
+
+  private fun isCallInfoToShow(info: CallInfo): Boolean {
+    val hintsProvider = JavaInlayParameterHintsProvider.getInstance()
+    if (hintsProvider.ignoreOneCharOneDigitHints.get() && info.allParamsSequential()) {
+      return false
+    }
+    return true
+  }
+
+  private fun String.decomposeOrderedParams(): Pair<String, Int>? {
+    val firstDigit = indexOfFirst { it.isDigit() }
+    if (firstDigit < 0) return null
+
+    val prefix = substring(0, firstDigit)
+    try {
+      val number = substring(firstDigit, length).toInt()
+      return prefix to number
+    }
+    catch (e: NumberFormatException) {
+      return null
+    }
+  }
+
+  private fun CallInfo.allParamsSequential(): Boolean {
+    val paramNames = regularArgs
+      .map { it.parameter.name?.decomposeOrderedParams() }
+      .filterNotNull()
+
+    if (paramNames.size > 1 && paramNames.size == regularArgs.size) {
+      val prefixes = paramNames.map { it.first }
+      if (prefixes.toSet().size != 1) return false
+
+      val numbers = paramNames.map { it.second }
+      val first = numbers.first()
+      if (first == 0 || first == 1) {
+        return numbers.areSequential()
+      }
+    }
+
+    return false
   }
 
   private fun hintSet(info: CallInfo, substitutor: PsiSubstitutor): Set<InlayInfo> {
@@ -107,7 +151,7 @@ object JavaInlayHintsProvider {
     }
     
     resultSet.addAll(info.unclearInlays(substitutor))
-    
+
     return resultSet
   }
 
@@ -167,6 +211,15 @@ object JavaInlayHintsProvider {
     return CallInfo(regularArgInfos, varargParam, varargExpressions)
   }
   
+}
+
+private fun List<Int>.areSequential(): Boolean {
+  if (size == 0) throw IncorrectOperationException("List is empty")
+  val ordered = (first()..first() + size - 1).toList()
+  if (ordered.size == size) {
+    return zip(ordered).all { it.first == it.second }
+  }
+  return false
 }
 
 

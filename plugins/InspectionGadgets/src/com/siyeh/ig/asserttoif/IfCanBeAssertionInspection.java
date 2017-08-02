@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2013 Bas Leijdekkers
+ * Copyright 2010-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,50 +56,11 @@ public class IfCanBeAssertionInspection extends BaseInspection {
     return new IfToAssertionFix();
   }
 
-  private static void doFixImpl(@NotNull PsiElement element) {
-    final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiIfStatement)) {
-      return;
-    }
-    final PsiIfStatement ifStatement = (PsiIfStatement)parent;
-    final PsiExpression condition = ifStatement.getCondition();
-    @NonNls final StringBuilder newStatementText = new StringBuilder("assert ");
-    newStatementText.append(BoolUtils.getNegatedExpressionText(condition));
-    final PsiNewExpression newException = getThrownNewException(ifStatement);
-    final String message = getExceptionMessage(newException);
-    if (message != null) {
-      newStatementText.append(':').append(message);
-    }
-    newStatementText.append(';');
-    PsiReplacementUtil.replaceStatement(ifStatement, newStatementText.toString());
-  }
-
-  private static String getExceptionMessage(PsiNewExpression newExpression) {
-    if (newExpression != null) {
-      final PsiExpressionList argumentList = newExpression.getArgumentList();
-      if (argumentList != null) {
-        final PsiExpression[] arguments = argumentList.getExpressions();
-        if (arguments.length >= 1) {
-          return arguments[0].getText();
-        }
-      }
-    }
-    return null;
-  }
-
-  private static PsiNewExpression getThrownNewException(PsiIfStatement ifStatement) {
-    if (ifStatement.getElseBranch() == null) {
-      final PsiStatement thenBranch = ifStatement.getThenBranch();
-      return getThrownNewExceptionImpl(thenBranch);
-    }
-    return null;
-  }
-
-  private static PsiNewExpression getThrownNewExceptionImpl(PsiElement element) {
+  static PsiNewExpression getThrownNewException(PsiElement element) {
     if (element instanceof PsiBlockStatement) {
       final PsiStatement[] statements = ((PsiBlockStatement)element).getCodeBlock().getStatements();
       if (statements.length == 1) {
-        return getThrownNewExceptionImpl(statements[0]);
+        return getThrownNewException(statements[0]);
       }
     }
     else if (element instanceof PsiThrowStatement) {
@@ -113,16 +74,14 @@ public class IfCanBeAssertionInspection extends BaseInspection {
   }
 
   private static class IfToAssertionVisitor extends BaseInspectionVisitor {
+
     @Override
-    public void visitKeyword(PsiKeyword keyword) {
-      super.visitKeyword(keyword);
-      if (keyword.getTokenType() == JavaTokenType.IF_KEYWORD) {
-        final PsiElement parent = keyword.getParent();
-        if (parent instanceof PsiIfStatement) {
-          if (getThrownNewException((PsiIfStatement)parent) != null) {
-            registerError(keyword);
-          }
-        }
+    public void visitIfStatement(PsiIfStatement statement) {
+      super.visitIfStatement(statement);
+      if (statement.getCondition() != null &&
+          statement.getElseBranch() == null &&
+          getThrownNewException(statement.getThenBranch()) != null) {
+        registerStatementError(statement);
       }
     }
   }
@@ -137,7 +96,35 @@ public class IfCanBeAssertionInspection extends BaseInspection {
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
-      doFixImpl(descriptor.getPsiElement());
+      final PsiElement parent = descriptor.getPsiElement().getParent();
+      if (!(parent instanceof PsiIfStatement)) {
+        return;
+      }
+      final PsiIfStatement ifStatement = (PsiIfStatement)parent;
+      @NonNls final StringBuilder newStatementText = new StringBuilder("assert ");
+      newStatementText.append(BoolUtils.getNegatedExpressionText(ifStatement.getCondition()));
+      final PsiNewExpression newException = getThrownNewException(ifStatement.getThenBranch());
+      final String message = getExceptionMessage(newException);
+      if (message != null) {
+        newStatementText.append(':').append(message);
+      }
+      newStatementText.append(';');
+      PsiReplacementUtil.replaceStatement(ifStatement, newStatementText.toString());
+    }
+
+    private static String getExceptionMessage(PsiNewExpression newExpression) {
+      if (newExpression == null) {
+        return null;
+      }
+      final PsiExpressionList argumentList = newExpression.getArgumentList();
+      if (argumentList == null) {
+        return null;
+      }
+      final PsiExpression[] arguments = argumentList.getExpressions();
+      if (arguments.length < 1) {
+        return null;
+      }
+      return arguments[0].getText();
     }
   }
 }

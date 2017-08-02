@@ -34,7 +34,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.ArrayUtil
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsFullCommitDetails
@@ -278,8 +277,7 @@ class GitApplyChangesProcess(private val project: Project,
       return null
     }
 
-    val adjustedMessage = commitMessage.replace('\n', ' ').replace("[ ]{2,}".toRegex(), " ")
-    val changeListName = createNameForChangeList(adjustedMessage)
+    val changeListName = createNameForChangeList(commitMessage)
     val createdChangeList = (changeListManager as ChangeListManagerEx).addChangeList(changeListName, commitMessage,
                                                                                      if (preserveCommitMetadata) commit else null)
     val actualChangeList = moveChanges(originalChanges, createdChangeList)
@@ -313,7 +311,7 @@ class GitApplyChangesProcess(private val project: Project,
     }
     try {
       changeListManager.addChangeListListener(listener)
-      changeListManager.moveChangesTo(targetChangeList, *ArrayUtil.toObjectArray(localChanges, Change::class.java))
+      changeListManager.moveChangesTo(targetChangeList, *localChanges.toTypedArray())
       val success = moveChangesWaiter.await(100, TimeUnit.SECONDS)
       if (!success) {
         LOG.error("Couldn't await for changes move.")
@@ -329,7 +327,11 @@ class GitApplyChangesProcess(private val project: Project,
     }
   }
 
-  private fun createNameForChangeList(proposedName: String): String {
+  private fun createNameForChangeList(commitMessage: String): String {
+    val proposedName = commitMessage.trim()
+      .substringBefore('\n')
+      .trim()
+      .replace("[ ]{2,}".toRegex(), " ")
     return UniqueNameGenerator.generateUniqueName(proposedName, "", "", "-", "", { changeListManager.findChangeList(it) == null })
   }
 

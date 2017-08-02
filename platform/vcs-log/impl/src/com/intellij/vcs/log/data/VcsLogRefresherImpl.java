@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.graph.GraphCommit;
@@ -82,19 +81,20 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
     mySingleTaskController = new SingleTaskController<RefreshRequest, DataPack>(dataPack -> {
       myDataPack = dataPack;
       dataPackUpdateHandler.consume(dataPack);
-    }) {
+    }, false) {
+      @NotNull
       @Override
-      protected void startNewBackgroundTask() {
-        VcsLogRefresherImpl.this.startNewBackgroundTask(new MyRefreshTask(myDataPack));
+      protected ProgressIndicator startNewBackgroundTask() {
+        return VcsLogRefresherImpl.this.startNewBackgroundTask(new MyRefreshTask(myDataPack));
       }
     };
   }
 
-  protected void startNewBackgroundTask(@NotNull final Task.Backgroundable refreshTask) {
-    UIUtil.invokeLaterIfNeeded(() -> {
-      LOG.debug("Starting a background task...");
-      ProgressManager.getInstance().runProcessWithProgressAsynchronously(refreshTask, myProgress.createProgressIndicator());
-    });
+  protected ProgressIndicator startNewBackgroundTask(@NotNull final Task.Backgroundable refreshTask) {
+    LOG.debug("Starting a background task...");
+    ProgressIndicator indicator = myProgress.createProgressIndicator();
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(refreshTask, indicator);
+    return indicator;
   }
 
   @NotNull

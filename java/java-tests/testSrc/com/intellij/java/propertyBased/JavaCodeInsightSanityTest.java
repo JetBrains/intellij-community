@@ -18,10 +18,11 @@ package com.intellij.java.propertyBased;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.SkipSlowTestLocally;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.testFramework.propertyBased.*;
 import org.jetbrains.annotations.NotNull;
-import slowCheck.*;
+import jetCheck.Generator;
+import jetCheck.PropertyChecker;
 
 import java.util.function.Function;
 
@@ -29,15 +30,16 @@ import java.util.function.Function;
  * @author peter
  */
 @SkipSlowTestLocally
-public class JavaCodeInsightSanityTest extends LightPlatformCodeInsightFixtureTestCase {
+public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
 
   public void testRandomActivity() {
     MadTestingUtil.enableAllInspections(getProject(), getTestRootDisposable());
     Function<PsiFile, Generator<? extends MadTestingAction>> fileActions = file ->
       Generator.anyOf(InvokeIntention.randomIntentions(file, new JavaIntentionPolicy()),
                       InvokeCompletion.completions(file, new JavaCompletionPolicy()),
+                      Generator.constant(new StripTestDataMarkup(file)),
                       DeleteRange.psiRangeDeletions(file));
-    PropertyChecker.forAll(actionsOnJavaFiles(fileActions), FileWithActions::runActions);
+    PropertyChecker.forAll(actionsOnJavaFiles(fileActions)).shouldHold(FileWithActions::runActions);
   }
 
   @NotNull
@@ -46,6 +48,6 @@ public class JavaCodeInsightSanityTest extends LightPlatformCodeInsightFixtureTe
   }
 
   public void testReparse() {
-    PropertyChecker.forAll(actionsOnJavaFiles(MadTestingUtil::randomEditsWithReparseChecks), FileWithActions::runActions);
+    PropertyChecker.forAll(actionsOnJavaFiles(MadTestingUtil::randomEditsWithReparseChecks)).shouldHold(FileWithActions::runActions);
   }
 }

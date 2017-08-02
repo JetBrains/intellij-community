@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.EditorTestUtil;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 
 public class EditorImplTest extends AbstractEditorTest {
   public void testPositionCalculationForZeroWidthChars() throws Exception {
@@ -489,5 +491,27 @@ public class EditorImplTest extends AbstractEditorTest {
     right();
     paste();
     checkResultByText("abc\nabc<caret>");
+  }
+  
+  public void testPasteInVirtualSpaceWhenSelectionExists() throws Exception {
+    initText("foo");
+    myEditor.getSettings().setVirtualSpace(true);
+    mouse().clickAt(0, 10);
+    executeAction(IdeActions.ACTION_SELECT_ALL);
+    CopyPasteManager.getInstance().setContents(new StringSelection("bar"));
+    paste();
+    checkResultByText("bar<caret>");
+  }
+
+  public void testMoveTextNearInlayAtBrokenSurrogates() throws Exception {
+    initText(""); // Cannot set up text with singular surrogate characters directly
+    runWriteCommand(() -> myEditor.getDocument().setText(LOW_SURROGATE + HIGH_SURROGATE));
+    Inlay inlay = addInlay(2);
+    FoldRegion region = addCollapsedFoldRegion(1, 2, "...");
+    
+    runWriteCommand(() -> ((DocumentEx)myEditor.getDocument()).moveText(1, 2, 0));
+    
+    assertFalse(inlay.isValid() && inlay.getOffset() == 1);
+    assertFalse(region.isValid() && (region.getStartOffset() == 1 || region.getEndOffset() == 1));
   }
 }

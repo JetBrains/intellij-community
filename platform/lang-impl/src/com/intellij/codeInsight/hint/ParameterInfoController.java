@@ -155,8 +155,7 @@ public class ParameterInfoController implements Disposable {
     myEditorCaretListener = new CaretListener(){
       @Override
       public void caretPositionChanged(CaretEvent e) {
-        myAlarm.cancelAllRequests();
-        addAlarmRequest();
+        rescheduleUpdate();
       }
     };
     myEditor.getCaretModel().addCaretListener(myEditorCaretListener);
@@ -164,16 +163,14 @@ public class ParameterInfoController implements Disposable {
     myEditor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
-        myAlarm.cancelAllRequests();
-        addAlarmRequest();
+        rescheduleUpdate();
       }
     }, this);
 
     MessageBusConnection connection = project.getMessageBus().connect(this);
     connection.subscribe(ExternalParameterInfoChangesProvider.TOPIC, (e, offset) -> {
       if (e != myEditor || myLbraceMarker.getStartOffset() != offset) return;
-      myAlarm.cancelAllRequests();
-      addAlarmRequest();
+      rescheduleUpdate();
     });
 
     PropertyChangeListener lookupListener = new PropertyChangeListener() {
@@ -204,6 +201,7 @@ public class ParameterInfoController implements Disposable {
     if (myDisposed) return;
     myDisposed = true;
     myHint.hide();
+    myHandler.dispose();
     List<ParameterInfoController> allControllers = getAllControllers(myEditor);
     allControllers.remove(this);
     myEditor.getCaretModel().removeCaretListener(myEditorCaretListener);
@@ -257,7 +255,8 @@ public class ParameterInfoController implements Disposable {
     }
   }
 
-  private void addAlarmRequest(){
+  private void rescheduleUpdate(){
+    myAlarm.cancelAllRequests();
     Runnable request = () -> {
       if (!myDisposed && !myProject.isDisposed()) {
         PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {

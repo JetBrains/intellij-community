@@ -32,7 +32,7 @@ import java.util.*;
 import java.util.stream.Stream;
 
 public class ParameterHintsUpdater {
-
+  private static final Key<Boolean> HINT_REMOVAL_DELAYED = Key.create("hint.removal.delayed");
   private static final Key<Boolean> REPEATED_PASS = Key.create("RepeatedParameterHintsPass");
 
   private final ParameterHintsPresentationManager myHintsManager = ParameterHintsPresentationManager.getInstance();
@@ -43,10 +43,11 @@ public class ParameterHintsUpdater {
   private final boolean myForceImmediateUpdate;
 
   private final Editor myEditor;
-  private final List<InlayUpdateInfo> myUpdateList;
+  private final List<Inlay> myEditorInlays;
+  private List<InlayUpdateInfo> myUpdateList;
 
   public ParameterHintsUpdater(@NotNull Editor editor,
-                               @NotNull List<Inlay> inlays,
+                               @NotNull List<Inlay> editorInlays,
                                @NotNull TIntObjectHashMap<List<ParameterHintsPass.HintData>> newHints,
                                @NotNull TIntObjectHashMap<String> hintsToPreserve, 
                                boolean forceImmediateUpdate) {
@@ -59,11 +60,13 @@ public class ParameterHintsUpdater {
     List<Caret> allCarets = myEditor.getCaretModel().getAllCarets();
     allCarets.forEach((caret) -> myCaretMap.put(caret.getOffset(), caret));
 
-    myUpdateList = getInlayUpdates(inlays);
+    myEditorInlays = editorInlays;
   }
   
   
   private List<InlayUpdateInfo> getInlayUpdates(List<Inlay> editorHints) {
+    myEditor.putUserData(HINT_REMOVAL_DELAYED, Boolean.FALSE);
+
     List<InlayUpdateInfo> updates = ContainerUtil.newArrayList();
     ParameterHintsPresentationManager presentationManager = ParameterHintsPresentationManager.getInstance();
     
@@ -72,7 +75,11 @@ public class ParameterHintsUpdater {
       String presentationText = presentationManager.getHintText(editorHint);
       ParameterHintsPass.HintData newHint = findAndRemoveMatchingHint(offset, presentationText, myNewHints);
       String newText = newHint == null ? null : newHint.presentationText;
-      if (!myForceImmediateUpdate && delayRemoval(editorHint) || isPreserveHint(editorHint, newText)) return;
+      if (!myForceImmediateUpdate && delayRemoval(editorHint)) {
+        myEditor.putUserData(HINT_REMOVAL_DELAYED, Boolean.TRUE);
+        return;
+      }
+      if (isPreserveHint(editorHint, newText)) return;
       updates.add(new InlayUpdateInfo(offset, editorHint, newText, newHint != null && newHint.showAfterCaret));
     });
 
@@ -84,6 +91,10 @@ public class ParameterHintsUpdater {
 
     updates.sort(Comparator.comparing((update) -> update.offset));
     return updates;
+  }
+
+  public static boolean hintRemovalDelayed(@NotNull Editor editor) {
+    return editor.getUserData(HINT_REMOVAL_DELAYED) == Boolean.TRUE;
   }
 
   @Nullable
@@ -120,6 +131,7 @@ public class ParameterHintsUpdater {
   
 
   public void update() {
+    myUpdateList = getInlayUpdates(myEditorInlays);
     boolean firstTime = myEditor.getUserData(REPEATED_PASS) == null;
     boolean isUpdateInBulkMode = myUpdateList.size() > 1000;
     DocumentUtil.executeInBulk(myEditor.getDocument(), isUpdateInBulkMode, () -> performHintsUpdate(firstTime, isUpdateInBulkMode));

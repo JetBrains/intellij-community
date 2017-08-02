@@ -15,7 +15,6 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,13 +33,7 @@ public class RightMarginEditorCustomization extends SimpleEditorCustomization {
 
   @Override
   public void customize(@NotNull EditorEx editor) {
-    if (isEnabled()) {
-      editor.getSettings().setRightMarginShown(true);
-      editor.getSettings().setRightMargin(getRightMarginColumns());
-      // ensure we've got a monospace font by loading up the global editor scheme
-      editor.setColorsScheme(EditorColorsManager.getInstance().getGlobalScheme());
-    } else {
-      editor.getSettings().setRightMarginShown(false);
-    }
+    editor.getSettings().setRightMarginShown(isEnabled());
+    editor.getSettings().setRightMargin(getRightMarginColumns());
   }
 }

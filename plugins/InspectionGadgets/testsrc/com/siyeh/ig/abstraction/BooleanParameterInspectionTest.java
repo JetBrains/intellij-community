@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,12 @@ public class BooleanParameterInspectionTest extends LightInspectionTestCase {
   public void testConstructor() {
     doTest("class X {" +
            "  public /*'public' constructor 'X()' with 'boolean' parameter*/X/**/(boolean x) {}" +
+           "}");
+  }
+
+  public void testSetter() {
+    doTest("class X {" +
+           "  public void setMyProperty(final boolean myProperty) {}" +
            "}");
   }
 

@@ -57,6 +57,5 @@
     <orderEntry type="library" scope="TEST" name="memoryfilesystem" level="project" />
     <orderEntry type="module" module-name="testExtensions" scope="TEST" />
     <orderEntry type="module" module-name="configuration-store-impl" scope="TEST" />
-    <orderEntry type="module" module-name="slowCheck" scope="TEST" />
   </component>
 </module>

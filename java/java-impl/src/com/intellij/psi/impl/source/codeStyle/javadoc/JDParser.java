@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -441,7 +441,7 @@ public class JDParser {
       boolean parse(String tag, String line, JDComment c) {
         boolean isMyTag = JDTag.SINCE.tagEqual(tag);
         if (isMyTag) {
-          c.setSince(line);
+          c.addSince(line);
         }
         return isMyTag;
       }

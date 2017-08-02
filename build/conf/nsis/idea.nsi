@@ -872,6 +872,7 @@ skip_ipr:
   File "${PRODUCT_PROPERTIES_FILE}"
   File "${PRODUCT_VM_OPTIONS_FILE}"
 
+  Call customPostInstallActions
   StrCpy $0 $baseRegKey
   StrCpy $1 "Software\${MANUFACTURER}\${PRODUCT_REG_VER}"
   StrCpy $2 ""
@@ -1143,6 +1144,7 @@ FunctionEnd
 
 
 Section "Uninstall"
+  Call un.customUninstallActions
   StrCpy $0 $baseRegKey
   StrCpy $1 "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}"
   StrCpy $2 "InstallLocation"

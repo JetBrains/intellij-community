@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.testFramework.TestFileType;
+import org.jetbrains.annotations.NotNull;
 
 public class EditorColorsSchemeDelegateTest extends AbstractEditorTest {
   private EditorColorsScheme mySavedScheme;
@@ -57,12 +58,14 @@ public class EditorColorsSchemeDelegateTest extends AbstractEditorTest {
     globalPrefs.copyTo(tempCopy);
     try {
       assertInstanceOf(globalPrefs, ModifiableFontPreferences.class);
+      LOG.debug(dumpFontPreferences("globalPrefs", globalPrefs));
       ((ModifiableFontPreferences)globalPrefs).register("DummyFont", globalPrefs.getSize(globalPrefs.getFontFamily()));
       assertEquals(2, globalPrefs.getRealFontFamilies().size());
 
       init("blah", TestFileType.TEXT);
 
       FontPreferences editorPrefs = myEditor.getColorsScheme().getFontPreferences();
+      LOG.debug(dumpFontPreferences("editorPrefs", editorPrefs));
       assertEquals(2, editorPrefs.getRealFontFamilies().size());
       assertEquals("DummyFont", editorPrefs.getRealFontFamilies().get(1));
     }
@@ -70,4 +73,17 @@ public class EditorColorsSchemeDelegateTest extends AbstractEditorTest {
       tempCopy.copyTo(globalPrefs);
     }
   }
+
+  private static String dumpFontPreferences(@NotNull String message, @NotNull FontPreferences fontPreferences) {
+    StringBuilder sb = new StringBuilder();
+    sb.append(message).append(": ");
+    sb.append("Real font families: ");
+    boolean isFirst = true;
+    for (String fontFamily : fontPreferences.getRealFontFamilies()) {
+      if (isFirst) isFirst = false; else sb.append(", ");
+      sb.append(fontFamily);
+    }
+    return sb.toString();
+  }
+
 }

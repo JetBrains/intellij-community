@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,21 @@
  */
 package com.siyeh.ig.security;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiTypeParameter;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
 
 public class CloneableClassInSecureContextInspection extends BaseInspection {
 
@@ -37,6 +43,83 @@ public class CloneableClassInSecureContextInspection extends BaseInspection {
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("cloneable.class.in.secure.context.problem.descriptor");
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    // the quickfixes below probably require some thought and shouldn't be applied blindly on many classes at once
+    return true;
+  }
+
+  @Nullable
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final PsiClass aClass = (PsiClass)infos[0];
+    if (CloneUtils.isDirectlyCloneable(aClass)) {
+      return new RemoveCloneableFix();
+    }
+    final boolean hasCloneMethod = Arrays.stream(aClass.findMethodsByName("clone", false)).anyMatch(CloneUtils::isClone);
+    if (hasCloneMethod) {
+      return null;
+    }
+    return new CreateExceptionCloneMethodFix();
+  }
+
+  private static class RemoveCloneableFix extends InspectionGadgetsFix {
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return InspectionGadgetsBundle.message("remove.cloneable.quickfix");
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement().getParent();
+      if (!(element instanceof PsiClass)) {
+        return;
+      }
+      final PsiClass aClass = (PsiClass)element;
+      final PsiReferenceList implementsList = aClass.getImplementsList();
+      if (implementsList == null) {
+        return;
+      }
+      final PsiClass cloneableClass = ClassUtils.findClass(CommonClassNames.JAVA_LANG_CLONEABLE, element);
+      if (cloneableClass == null) {
+        return;
+      }
+      final PsiJavaCodeReferenceElement[] referenceElements = implementsList.getReferenceElements();
+      for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
+        final PsiElement target = referenceElement.resolve();
+        if (cloneableClass.equals(target)) {
+          referenceElement.delete();
+          return;
+        }
+      }
+    }
+  }
+
+  private static class CreateExceptionCloneMethodFix extends InspectionGadgetsFix {
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return InspectionGadgetsBundle.message("cloneable.class.in.secure.context.quickfix");
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement().getParent();
+      if (!(element instanceof PsiClass)) {
+        return;
+      }
+      final PsiClass aClass = (PsiClass)element;
+      final String cloneMethod =
+        "public " + aClass.getName() + " clone() throws java.lang.CloneNotSupportedException{\n" +
+        "throw new java.lang.CloneNotSupportedException();\n" +
+        "}";
+      final PsiMethod method = JavaPsiFacade.getElementFactory(project).createMethodFromText(cloneMethod, aClass);
+      aClass.add(method);
+    }
   }
 
   @Override
@@ -54,15 +137,17 @@ public class CloneableClassInSecureContextInspection extends BaseInspection {
       if (!CloneUtils.isCloneable(aClass)) {
         return;
       }
-      final PsiMethod[] methods = aClass.getMethods();
-      for (final PsiMethod method : methods) {
-        if (CloneUtils.isClone(method)) {
-          if (ControlFlowUtils.methodAlwaysThrowsException(method)) {
-            return;
-          }
+      for (final PsiMethod method : aClass.findMethodsByName("clone", true)) {
+        final PsiClass containingClass = method.getContainingClass();
+        if (containingClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
+          // optimization
+          break;
+        }
+        if (CloneUtils.isClone(method) && ControlFlowUtils.methodAlwaysThrowsException((PsiMethod)method.getNavigationElement())) {
+          return;
         }
       }
-      registerClassError(aClass);
+      registerClassError(aClass, aClass);
     }
   }
 }

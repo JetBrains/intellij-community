@@ -9,6 +9,7 @@
     <inspectionElementsMerger implementation="com.siyeh.ig.threading.WaitNotifyNotInSynchronizedContextInspectionMerger"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.internationalization.CallToSuspiciousStringMethodInspectionMerger"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.visibility.MethodOverridesInaccessibleMethodMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.security.SerializableClassInSecureContextMerger"/>
 
     <!--group.names.abstraction.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="BooleanParameter" bundle="com.siyeh.InspectionGadgetsBundle" key="boolean.parameter.display.name"
@@ -2183,10 +2184,6 @@
     <localInspection groupPath="Java" language="JAVA" shortName="CustomSecurityManager" bundle="com.siyeh.InspectionGadgetsBundle" key="custom.security.manager.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.security.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.security.CustomSecurityManagerInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="DeserializableClassInSecureContext" alternativeId="serial"
-                     bundle="com.siyeh.InspectionGadgetsBundle" key="deserializable.class.in.secure.context.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.security.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.security.DeserializableClassInSecureContextInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="DesignForExtension" bundle="com.siyeh.InspectionGadgetsBundle" key="design.for.extension.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.security.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.security.DesignForExtensionInspection"/>
@@ -2221,10 +2218,10 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="runtime.exec.with.non.constant.string.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.security.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.security.RuntimeExecWithNonConstantStringInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="SerializableClassInSecureContext" alternativeId="serial"
+    <localInspection groupPath="Java" language="JAVA" shortName="SerializableDeserializableClassInSecureContext" alternativeId="serial"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="serializable.class.in.secure.context.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.security.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.security.SerializableClassInSecureContextInspection"/>
+                     implementationClass="com.siyeh.ig.security.SerializableDeserializableClassInSecureContextInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="CallToSystemSetSecurityManager" shortName="SystemSetSecurityManager"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="system.set.security.manager.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.security.issues" enabledByDefault="false"
@@ -2627,7 +2624,7 @@
                      implementationClass="com.siyeh.ig.threading.NestedSynchronizedStatementInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="NonAtomicOperationOnVolatileField" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="non.atomic.operation.on.volatile.field.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.threading.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.threading.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.threading.NonAtomicOperationOnVolatileFieldInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="NonSynchronizedMethodOverridesSynchronizedMethod" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="non.synchronized.method.overrides.synchronized.method.display.name" groupBundle="messages.InspectionsBundle"

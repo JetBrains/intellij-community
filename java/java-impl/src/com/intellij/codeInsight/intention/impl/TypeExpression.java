@@ -25,6 +25,8 @@ import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -60,7 +62,8 @@ public class TypeExpression extends Expression {
 
       @Override
       public String toString() {
-        return myItems.size() == 1 ? super.toString() : type.getPresentableText();
+        final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+        return myItems.size() == 1 || settings.isUseFqClassNames() ? super.toString() : type.getPresentableText();
       }
     };
   }

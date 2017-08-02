@@ -1,6 +1,6 @@
 package com.intellij.internal.statistic.connect;
 
-import com.intellij.internal.statistic.StatisticsUploadAssistant;
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.util.text.StringUtil;

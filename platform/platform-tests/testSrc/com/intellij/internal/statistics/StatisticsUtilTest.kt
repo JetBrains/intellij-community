@@ -16,8 +16,8 @@
 package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.beans.UsageDescriptor
-import com.intellij.internal.statistic.getBooleanUsage
-import com.intellij.internal.statistic.getCountingUsage
+import com.intellij.internal.statistic.utils.getBooleanUsage
+import com.intellij.internal.statistic.utils.getCountingUsage
 import org.junit.Test
 import kotlin.test.assertEquals
 

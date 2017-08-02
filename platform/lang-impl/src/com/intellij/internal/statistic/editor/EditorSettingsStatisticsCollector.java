@@ -17,7 +17,7 @@ package com.intellij.internal.statistic.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
-import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
+import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
 import com.intellij.internal.statistic.CollectUsagesException;
 import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
@@ -143,7 +143,7 @@ class EditorSettingsStatisticsCollector extends UsagesCollector {
     }
   }
 
-  public static class ProjectUsages extends AbstractApplicationUsagesCollector {
+  public static class ProjectUsages extends AbstractProjectsUsagesCollector {
     @NotNull
     @Override
     public GroupDescriptor getGroupId() {

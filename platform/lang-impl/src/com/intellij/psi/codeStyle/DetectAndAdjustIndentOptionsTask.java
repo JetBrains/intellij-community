@@ -38,29 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.ExecutorService;
 
 
-class TimeStampedIndentOptions extends IndentOptions {
-  private long myTimeStamp;
-  private int myOriginalIndentOptionsHash;
-
-  public TimeStampedIndentOptions(IndentOptions toCopyFrom, long timeStamp) {
-    copyFrom(toCopyFrom);
-    myTimeStamp = timeStamp;
-  }
-  
-  void setTimeStamp(long timeStamp) {
-    myTimeStamp = timeStamp;
-  }
-
-  public void setOriginalIndentOptionsHash(int originalIndentOptionsHash) {
-    myOriginalIndentOptionsHash = originalIndentOptionsHash;
-  }
-
-  public boolean isOutdated(@NotNull Document document, @NotNull IndentOptions defaultForFile) {
-    return document.getModificationStamp() != myTimeStamp 
-           || defaultForFile.hashCode() != myOriginalIndentOptionsHash;
-  }
-}
-
 class DetectAndAdjustIndentOptionsTask extends ReadTask {
   private static final Logger LOG = Logger.getInstance(DetectAndAdjustIndentOptionsTask.class);
   private static final int INDENT_COMPUTATION_TIMEOUT = 5 * Time.SECOND;

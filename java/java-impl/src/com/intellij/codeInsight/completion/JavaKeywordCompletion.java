@@ -38,7 +38,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
@@ -311,8 +310,6 @@ public class JavaKeywordCompletion {
 
     addClassLiteral();
 
-    addUnfinishedMethodTypeParameters();
-
     addExtendsImplements();
   }
 
@@ -516,8 +513,12 @@ public class JavaKeywordCompletion {
         addKeyword(new OverridableSpace(createKeyword(s), TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
 
-      addKeyword(new OverridableSpace(createKeyword(PsiKeyword.CLASS), TailType.HUMBLE_SPACE_BEFORE_WORD));
-      if (PsiTreeUtil.getParentOfType(myPosition, PsiCodeBlock.class, true, PsiMember.class) == null) {
+      PsiExpression expression = PsiTreeUtil.getParentOfType(myPosition, PsiExpression.class, true, PsiMember.class);
+      if (expression != null && expression.getParent() instanceof PsiExpressionStatement) {
+        addKeyword(new OverridableSpace(createKeyword(PsiKeyword.CLASS), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      }
+      if (expression == null && PsiTreeUtil.getParentOfType(myPosition, PsiCodeBlock.class, true, PsiMember.class) == null) {
+        addKeyword(new OverridableSpace(createKeyword(PsiKeyword.CLASS), TailType.HUMBLE_SPACE_BEFORE_WORD));
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.INTERFACE), TailType.HUMBLE_SPACE_BEFORE_WORD));
         if (PsiUtil.isLanguageLevel5OrHigher(myPosition)) {
           addKeyword(new OverridableSpace(createKeyword(PsiKeyword.ENUM), TailType.INSERT_SPACE));
@@ -612,25 +613,6 @@ public class JavaKeywordCompletion {
     }
 
     return END_OF_BLOCK.getValue().isAcceptable(position, position);
-  }
-
-  private void addUnfinishedMethodTypeParameters() {
-    final ProcessingContext context = new ProcessingContext();
-    if (psiElement().inside(
-      psiElement(PsiTypeElement.class).afterLeaf(
-        psiElement().withText(">").withParent(
-          psiElement(PsiTypeParameterList.class).withParent(PsiErrorElement.class).save("typeParameterList")))).accepts(myPosition, context)) {
-      final PsiTypeParameterList list = (PsiTypeParameterList)context.get("typeParameterList");
-      PsiElement current = list.getParent().getParent();
-      if (current instanceof PsiField) {
-        current = current.getParent();
-      }
-      if (current instanceof PsiClass) {
-        for (PsiTypeParameter typeParameter : list.getTypeParameters()) {
-          addKeyword(new JavaPsiClassReferenceElement(typeParameter));
-        }
-      }
-    }
   }
 
   static boolean isAfterPrimitiveOrArrayType(PsiElement element) {

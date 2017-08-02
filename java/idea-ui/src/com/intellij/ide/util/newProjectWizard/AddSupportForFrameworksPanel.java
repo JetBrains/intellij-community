@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CheckedTreeNode;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -273,7 +272,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
   private static JScrollPane wrapInScrollPane(JPanel panel) {
     JPanel wrapper = new JPanel(new BorderLayout());
     wrapper.add(panel);
-    wrapper.setBorder(IdeBorderFactory.createEmptyBorder(5));
+    wrapper.setBorder(JBUI.Borders.empty(5));
     return ScrollPaneFactory.createScrollPane(wrapper, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                               ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
   }

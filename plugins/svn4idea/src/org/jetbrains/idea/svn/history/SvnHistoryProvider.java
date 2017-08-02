@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,15 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -155,7 +159,7 @@ public class SvnHistoryProvider
       }.initPosition()
         .addExtraAction(AnActionButton.fromAction(sourceAction))
         .createPanel();
-      fieldPanel.setBorder(IdeBorderFactory.createEmptyBorder());
+      fieldPanel.setBorder(JBUI.Borders.empty());
       addComp = fieldPanel;
     }
     else {

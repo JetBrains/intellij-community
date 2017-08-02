@@ -48,6 +48,7 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
+import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,9 +58,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Files;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Creates new project for each test.
@@ -111,10 +117,22 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
 
     for (File fileToDelete : myFilesToDelete) {
       runAll = runAll.append(() -> {
-        if (!FileUtil.delete(fileToDelete)) {
-          throw new IOException("Can't delete " + fileToDelete);
-        }
-      });
+        List<Throwable> errors = Files.walk(fileToDelete.toPath())
+          .sorted(Comparator.reverseOrder())
+          .map(x -> {
+            try {
+              Files.delete(x);
+              return null;
+            }
+            catch (IOException e) {
+              return e;
+            }
+          })
+          .filter(Objects::nonNull)
+          .collect(Collectors.toList());
+
+        CompoundRuntimeException.throwIfNotEmpty(errors);
+     });
     }
 
     runAll

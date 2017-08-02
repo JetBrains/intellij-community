@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static com.intellij.codeInsight.hints.ParameterHintsPassFactory.forceHintsUpdateOnNextPass;
 import static com.intellij.codeInsight.hints.ParameterHintsPassFactory.putCurrentPsiModificationStamp;
 
 public class ParameterHintsPass extends EditorBoundHighlightingPass {
@@ -115,7 +116,13 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
     ParameterHintsUpdater updater = new ParameterHintsUpdater(myEditor, hints, myHints, myShowOnlyIfExistedBeforeHints, myForceImmediateUpdate);
     updater.update();
     keeper.restoreOriginalLocation(false);
-    putCurrentPsiModificationStamp(myEditor, myFile);
+
+    if (ParameterHintsUpdater.hintRemovalDelayed(myEditor)) {
+      forceHintsUpdateOnNextPass(myEditor);
+    }
+    else {
+      putCurrentPsiModificationStamp(myEditor, myFile);
+    }
   }
 
   @NotNull

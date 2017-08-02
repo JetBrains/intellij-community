@@ -21,11 +21,11 @@ import com.intellij.openapi.ui.MultiLineLabelUI
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testGuiFramework.framework.RunWithIde
 import com.intellij.testGuiFramework.impl.GuiTestCase
-import com.intellij.testGuiFramework.launcher.ide.IdeType
+import com.intellij.testGuiFramework.launcher.ide.CommunityIde
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-@RunWithIde(IdeType.IDEA_COMMUNITY)
+@RunWithIde(CommunityIde::class)
 class CommandLineProjectTest: GuiTestCase() {
 
   val testProjectName = "test-cmd-template"

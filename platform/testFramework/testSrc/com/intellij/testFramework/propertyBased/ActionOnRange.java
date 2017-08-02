@@ -18,6 +18,7 @@ package com.intellij.testFramework.propertyBased;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,10 +35,16 @@ import org.jetbrains.annotations.Nullable;
 abstract class ActionOnRange implements MadTestingAction {
   private final SmartPsiFileRange myMarker;
   private TextRange myFinalRange;
+  protected final int myInitialStart; 
+  protected final int myInitialEnd; 
 
   ActionOnRange(PsiFile file, int start, int end) {
-    myMarker = SmartPointerManager.getInstance(file.getProject()).createSmartPsiFileRangePointer(file, new TextRange(start, end));
-    assert file.getTextLength() == getDocument().getTextLength() : file + " " + getDocument();
+    myInitialStart = start;
+    myInitialEnd = end;
+    myMarker = SmartPointerManager.getInstance(file.getProject()).createSmartPsiFileRangePointer(file, new ProperTextRange(start, end));
+    int length = file.getTextLength();
+    assert length == getDocument().getTextLength() : file + " " + getDocument();
+    assert end <= length : end + " >= " + length;
   }
 
   @NotNull
@@ -60,13 +67,20 @@ abstract class ActionOnRange implements MadTestingAction {
     return FileDocumentManager.getInstance().getDocument(getVirtualFile());
   }
 
-  int getStartOffset() {
-    TextRange range = getFinalRange();
-    return range == null ? -1 : range.getStartOffset();
+  Segment getCurrentRange() {
+    return myFinalRange != null ? myFinalRange : myMarker.getRange();
+  }
+  
+  int getCurrentStartOffset() {
+    return getStartOffset(getCurrentRange());
   }
 
-  Segment getCurrentRange() {
-    return myFinalRange == null ? myMarker.getRange() : myFinalRange;
+  int getFinalStartOffset() {
+    return getStartOffset(getFinalRange());
+  }
+
+  private static int getStartOffset(Segment range) {
+    return range == null ? -1 : range.getStartOffset();
   }
 
   @Nullable

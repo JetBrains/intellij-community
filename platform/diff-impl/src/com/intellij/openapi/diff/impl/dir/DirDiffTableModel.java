@@ -16,11 +16,15 @@
 package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.CommonBundle;
+import com.intellij.diff.DiffRequestFactory;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.diff.*;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.dir.actions.popup.WarnOnDeletion;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -36,6 +40,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLoadingPanel;
@@ -401,7 +406,13 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public String getTitle() {
-    if (myDisposed) return "";
+    if (myDisposed) return "Diff";
+    if (mySrc instanceof VirtualFileDiffElement &&
+        myTrg instanceof VirtualFileDiffElement) {
+      VirtualFile srcFile = ((VirtualFileDiffElement)mySrc).getValue();
+      VirtualFile trgFile = ((VirtualFileDiffElement)myTrg).getValue();
+      return DiffRequestFactory.getInstance().getTitle(srcFile, trgFile);
+    }
     return IdeBundle.message("diff.dialog.title", mySrc.getPresentablePath(), myTrg.getPresentablePath());
   }
 

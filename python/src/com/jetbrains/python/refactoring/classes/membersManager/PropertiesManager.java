@@ -20,8 +20,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -187,14 +185,7 @@ class PropertiesManager extends MembersManager<PyElement> {
 
     @Override
     public void visitPyExpression(final PyExpression node) {
-      final PsiReference reference;
-      if (node instanceof PyReferenceOwner) {
-        final TypeEvalContext context = TypeEvalContext.userInitiated(node.getProject(), null);
-        reference = ((PyReferenceOwner)node).getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
-      }
-      else {
-        reference = node.getReference();
-      }
+      final PsiReference reference = node.getReference();
       if (reference == null) {
         return;
       }

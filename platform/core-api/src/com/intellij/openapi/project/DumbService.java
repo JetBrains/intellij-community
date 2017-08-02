@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.Debugger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,7 +74,7 @@ public abstract class DumbService {
    * Note that it's not guaranteed that the dumb mode won't start again during this runnable execution, it should manage that situation explicitly.
    * @param runnable runnable to run
    */
-  public abstract void runWhenSmart(@NotNull Runnable runnable);
+  public abstract void runWhenSmart(@Debugger.Capture @NotNull Runnable runnable);
 
   /**
    * Pause the current thread until dumb mode ends and then continue execution.

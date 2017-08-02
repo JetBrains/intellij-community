@@ -1,4 +1,5 @@
 class A:
+
     def y(self):
         pass
 

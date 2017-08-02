@@ -275,6 +275,9 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
 
   public void updateCellSource() {
     final String text = myEditableTextArea.getText();
+    if (StringUtil.isEmpty(text) && myCell.getSource().isEmpty()) {
+      return;
+    }
     myCell.setSource(Arrays.asList(StringUtil.splitByLinesKeepSeparators(text != null ? text : "")));
   }
 

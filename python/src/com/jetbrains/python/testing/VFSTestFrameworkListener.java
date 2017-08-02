@@ -135,12 +135,12 @@ public class VFSTestFrameworkListener {
    * @return null if we can't be sure
    */
   @Contract("null, _ -> null")
-  private Boolean checkTestFrameworkInstalled(@Nullable Sdk sdk, @NotNull String testPackageName) {
-    return checkTestFrameworksInstalled(sdk, testPackageName).get(testPackageName);
+  private Boolean checkTestFrameworkInstalled(@Nullable Sdk sdk, @NotNull String testFrameworkName) {
+    return checkTestFrameworksInstalled(sdk, testFrameworkName).get(testFrameworkName);
   }
 
   @NotNull
-  private Map<String, Boolean> checkTestFrameworksInstalled(@Nullable Sdk sdk, @NotNull String... testPackageNames) {
+  private Map<String, Boolean> checkTestFrameworksInstalled(@Nullable Sdk sdk, @NotNull String... testFrameworkNames) {
     final Map<String, Boolean> result = new HashMap<>();
     if (sdk == null || StringUtil.isEmptyOrSpaces(sdk.getHomePath())) {
       LOG.info("Searching test runner in empty sdk");
@@ -151,8 +151,9 @@ public class VFSTestFrameworkListener {
     if (refreshed) {
       final List<PyPackage> packages = manager.getPackages();
       if (packages != null) {
-        for (String name : testPackageNames) {
-          result.put(name, PyPackageUtil.findPackage(packages, name) != null);
+        for (final String frameworkName : testFrameworkNames) {
+          final String packageName = PyTestFrameworkService.getPackageByFramework(frameworkName);
+          result.put(frameworkName, PyPackageUtil.findPackage(packages, packageName) != null);
         }
       }
     }

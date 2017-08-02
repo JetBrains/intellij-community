@@ -30,7 +30,7 @@ class ProjectUtilTest : PlatformTestCase() {
   }
 
   // https://youtrack.jetbrains.com/issue/IDEA-176128
-  fun `testVerticalBarInTheProjectName | `() {
+  fun testVerticalBarInTheProjectName() {
     (project as ProjectImpl).setProjectName("World of heavens | Client")
 
     val cachePath = appSystemDir.relativize(project.getProjectCachePath("test", true)).toString()

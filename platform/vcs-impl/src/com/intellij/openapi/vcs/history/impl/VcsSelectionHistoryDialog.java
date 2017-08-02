@@ -292,12 +292,10 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
 
     if (data.isLoading()) {
       VcsFileRevision revision = data.getCurrentLoadingRevision();
-      if (revision != null) {
-        myStatusLabel.setText("<html>Loading revision <tt>" + revision.getRevisionNumber() + "</tt></html>");
-      }
-      else {
-        myStatusLabel.setText("Loading...");
-      }
+      String loadingString = revision != null
+                             ? String.format("Loading revision <tt>%s</tt>...", VcsUtil.getShortRevisionString(revision.getRevisionNumber()))
+                             : "Loading...";
+      myStatusLabel.setText(String.format("<html>%s (%s/%s)</html>", loadingString, data.myBlocks.size(), myRevisions.size()));
 
       myStatusSpinner.resume();
       myStatusSpinner.setVisible(true);

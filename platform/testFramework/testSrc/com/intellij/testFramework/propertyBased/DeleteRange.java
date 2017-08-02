@@ -21,8 +21,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
-import slowCheck.Generator;
-import slowCheck.IntDistribution;
+import jetCheck.Generator;
+import jetCheck.IntDistribution;
 
 import java.util.Objects;
 
@@ -48,12 +48,12 @@ public class DeleteRange extends ActionOnRange {
       return new DeleteRange(psiFile,
                              commonParent.getTextRange().getStartOffset(),
                              commonParent.getTextRange().getEndOffset());
-    }).suchThat(Objects::nonNull);
+    }).suchThat(Objects::nonNull).noShrink();
   }
 
   @Override
   public String toString() {
-    return "DeleteRange: " + getVirtualFile().getPath() + " " + getCurrentRange();
+    return "DeleteRange{" + getVirtualFile().getPath() + " " + getCurrentRange() + ", raw=(" + myInitialStart + ", " + myInitialEnd + ")}";
   }
 
   public void performAction() {

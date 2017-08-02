@@ -17,7 +17,7 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.internal.statistic.ToolbarClicksCollector;
+import com.intellij.internal.statistic.customUsageCollectors.ui.ToolbarClicksCollector;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;

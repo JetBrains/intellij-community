@@ -31,7 +31,7 @@ object InlayParameterHintsExtension : LanguageExtension<InlayParameterHintsProvi
  * @property isShowOnlyIfExistedBefore defines if hint should be shown only if it was present in editor before update
  *
  * @property isFilterByBlacklist allows to prevent hints from filtering by blacklist matcher (possible use in completion hints)
- * @property showAfterCaret todo @batrdmi
+ * @property showAfterCaret determines hint's visual position if hint happens to be added at caret offset
  */
 class InlayInfo(val text: String,
                 val offset: Int,

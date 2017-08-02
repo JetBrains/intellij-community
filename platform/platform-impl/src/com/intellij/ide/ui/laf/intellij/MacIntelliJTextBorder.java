@@ -19,6 +19,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI;
 import com.intellij.openapi.ui.ErrorBorderCapable;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ColorPanel;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -37,7 +38,12 @@ import java.awt.geom.Rectangle2D;
 public class MacIntelliJTextBorder implements Border, UIResource, ErrorBorderCapable {
   @Override
   public Insets getBorderInsets(Component c) {
-    return JBUI.insets(3, 6).asUIResource();
+    if (c instanceof JTextField && c.getParent() instanceof ColorPanel) {
+      return JBUI.insets(3, 3, 2, 2).asUIResource();
+    }
+    Insets insets = JBUI.insets(3, 8).asUIResource();
+    TextFieldWithPopupHandlerUI.updateBorderInsets(c, insets);
+    return insets;
   }
 
   @Override

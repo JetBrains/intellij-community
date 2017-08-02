@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework.propertyBased;
 
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -32,14 +33,17 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.TestLookupElementPresentation;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import jetCheck.Generator;
+import jetCheck.IntDistribution;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
-import slowCheck.Generator;
-import slowCheck.IntDistribution;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -51,23 +55,20 @@ import java.util.Set;
  */
 public class InvokeCompletion extends ActionOnRange {
   private final int myItemIndexRaw;
-  private LookupElement mySelectedItem;
   private final char myCompletionChar;
   private final CompletionPolicy myPolicy;
-  private final String myConstructorArgs;
+  private String myLog = "not invoked";
 
   InvokeCompletion(PsiFile file, int offset, int itemIndexRaw, char completionChar, CompletionPolicy policy) {
     super(file, offset, offset);
-    this.myItemIndexRaw = itemIndexRaw;
-    this.myCompletionChar = completionChar;
+    myItemIndexRaw = itemIndexRaw;
+    myCompletionChar = completionChar;
     myPolicy = policy;
-    myConstructorArgs = "_, " + offset + ", " + itemIndexRaw + ", '" + StringUtil.escapeStringCharacters(String.valueOf(completionChar)) + "', _";
   }
 
   @Override
   public String toString() {
-    return "InvokeCompletion(" + myConstructorArgs + ")" +
-           "{" + getVirtualFile().getPath() + ", offset=" + getStartOffset() + ", selected=" + mySelectedItem + '}';
+    return "InvokeCompletion{" + getVirtualFile().getPath() + ", " + myLog + ", raw=" + myInitialStart + "," + myItemIndexRaw + "}";
   }
 
   @Override
@@ -78,8 +79,10 @@ public class InvokeCompletion extends ActionOnRange {
     assert editor != null;
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    int offset = getStartOffset();
+    int offset = getFinalStartOffset();
     if (offset < 0) return;
+    
+    myLog = "offset=" + offset;
 
     editor.getCaretModel().moveToOffset(offset);
     
@@ -100,41 +103,78 @@ public class InvokeCompletion extends ActionOnRange {
   }
 
   private void performCompletion(Editor editor) {
-    String expectedVariant = myPolicy.getExpectedVariant(editor, getFile());
+    int caretOffset = editor.getCaretModel().getOffset();
+    int adjustedOffset = TargetElementUtil.adjustOffset(getFile(), getDocument(), caretOffset);
+
+    PsiElement leaf = getFile().findElementAt(adjustedOffset);
+    PsiReference ref = getFile().findReferenceAt(adjustedOffset);
+
+    String expectedVariant = leaf == null ? null : myPolicy.getExpectedVariant(editor, getFile(), leaf, ref);
+    boolean prefixEqualsExpected = isPrefixEqualToExpectedVariant(caretOffset, leaf, ref, expectedVariant);
+    boolean shouldCheckDuplicates = myPolicy.shouldCheckDuplicates(editor, getFile(), leaf);
+    long stampBefore = getDocument().getModificationStamp();
 
     new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), editor);
+    
+    String notFound = ". Please either fix completion so that the variant is suggested, " +
+                      "or, if absolutely needed, tweak CompletionPolicy to exclude it.";
 
     LookupEx lookup = LookupManager.getActiveLookup(editor);
     if (lookup == null) {
-      if (expectedVariant == null) return;
-      TestCase.fail("No lookup, but expected " + expectedVariant + " among completion variants");
+      if (editor.getCaretModel().getOffset() != caretOffset || getDocument().getModificationStamp() != stampBefore) {
+        myLog += ", auto-inserted";
+        return;
+      }
+      myLog += ", no lookup";
+      if (expectedVariant == null || prefixEqualsExpected) return;
+      TestCase.fail("No lookup, but expected '" + expectedVariant + "' among completion variants" + notFound);
     }
 
     List<LookupElement> items = lookup.getItems();
     if (expectedVariant != null) {
       LookupElement sameItem = ContainerUtil.find(items, e -> e.getAllLookupStrings().contains(expectedVariant));
-      TestCase.assertNotNull("No variant " + expectedVariant + " among " + items, sameItem);
+      TestCase.assertNotNull("No variant '" + expectedVariant + "' among " + items + notFound, sameItem);
     }
 
-    checkNoDuplicates(items);
+    if (shouldCheckDuplicates) {
+      checkNoDuplicates(items);
+    }
 
     LookupElement item = items.get(myItemIndexRaw % items.size());
-    mySelectedItem = item;
+    myLog += ", selected '" + item + "' with '" + StringUtil.escapeStringCharacters(String.valueOf(myCompletionChar)) + "'";
     ((LookupImpl)lookup).finishLookup(myCompletionChar, item);
+  }
+
+  private boolean isPrefixEqualToExpectedVariant(int caretOffset, PsiElement leaf, PsiReference ref, String expectedVariant) {
+    if (expectedVariant == null) return false;
+
+    int expectedEnd = ref != null ? ref.getRangeInElement().getEndOffset() + ref.getElement().getTextRange().getStartOffset() :
+                      leaf != null ? leaf.getTextRange().getEndOffset() :
+                      0;
+    return expectedEnd == caretOffset && getFile().getText().substring(0, caretOffset).endsWith(expectedVariant);
   }
 
   private static void checkNoDuplicates(List<LookupElement> items) {
     Set<List<?>> presentations = new HashSet<>();
     for (LookupElement item : items) {
-      LookupElementPresentation p = LookupElementPresentation.renderElement(item);
-      List<Object> info = Arrays.asList(p.getItemText(), p.getItemTextForeground(), p.isItemTextBold(), p.isItemTextUnderlined(),
+      LookupElementPresentation p = TestLookupElementPresentation.renderReal(item);
+      if (seemsTruncated(p.getItemText()) || seemsTruncated(p.getTailText()) || seemsTruncated(p.getTypeText())) {
+        continue;
+      }
+
+      List<Object> info = Arrays.asList(TestLookupElementPresentation.unwrapIcon(p.getIcon()),
+                                        p.getItemText(), p.getItemTextForeground(), p.isItemTextBold(), p.isItemTextUnderlined(),
                                         p.getTailFragments(),
-                                        p.getTypeText(), p.getTypeIcon(), p.isTypeGrayed(),
+                                        p.getTypeText(), TestLookupElementPresentation.unwrapIcon(p.getTypeIcon()), p.isTypeGrayed(),
                                         p.isStrikeout());
       if (!presentations.add(info)) {
         TestCase.fail("Duplicate suggestions: " + p);
       }
     }
+  }
+
+  private static boolean seemsTruncated(String text) {
+    return text != null && text.contains("...");
   }
 
   @NotNull
@@ -144,7 +184,8 @@ public class InvokeCompletion extends ActionOnRange {
       assert document != null;
       int offset = data.drawInt(IntDistribution.uniform(0, document.getTextLength()));
       int itemIndex = data.drawInt(IntDistribution.uniform(0, 100));
-      char c = Generator.sampledFrom('\n', '\t', '\r', ' ', '.', '(').generateUnstructured(data);
+      String selectionCharacters = policy.getPossibleSelectionCharacters();
+      char c = selectionCharacters.charAt(data.drawInt(IntDistribution.uniform(0, selectionCharacters.length() - 1)));
       return new InvokeCompletion(psiFile, offset, itemIndex, c, policy);
     });
   }

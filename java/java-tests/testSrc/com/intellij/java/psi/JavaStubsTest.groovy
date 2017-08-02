@@ -221,4 +221,42 @@ class Foo {
     PsiTestUtil.checkStubsMatchText(psiFile)
   }
 
+  void "test inserting enum keyword"() {
+    String text = "class Foo { void foo() { return; } }"
+    PsiFile psiFile = myFixture.addFileToProject("a.java", text)
+    Document document = psiFile.getViewProvider().getDocument()
+
+    WriteCommandAction.runWriteCommandAction(project) {
+      document.insertString(text.indexOf("return"), "enum Foo")
+    }
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
+    PsiTestUtil.checkStubsMatchText(psiFile)
+  }
+
+  void "test type arguments without type in a method"() {
+    String text = "class Foo { { final Collection<String> contexts; f instanceof -> } }"
+    PsiFile psiFile = myFixture.addFileToProject("a.java", text)
+
+    WriteCommandAction.runWriteCommandAction(project) { deleteString(psiFile, "Collection") }
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
+    PsiTestUtil.checkStubsMatchText(psiFile)
+  }
+
+  private static void deleteString(PsiFile file, String fragment) {
+    def document = file.viewProvider.document
+    def index = document.text.indexOf(fragment)
+    document.deleteString(index, index + fragment.size())
+  }
+
+  void "test remove class literal qualifier"() {
+    String text = "class Foo { { foo(String.class); } }"
+    PsiFile psiFile = myFixture.addFileToProject("a.java", text)
+    WriteCommandAction.runWriteCommandAction(project) {
+      psiFile.viewProvider.document.insertString(text.indexOf(');'), ' x')
+      WriteCommandAction.runWriteCommandAction(project) { deleteString(psiFile, "String") }
+    }
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
+    PsiTestUtil.checkStubsMatchText(psiFile)
+  }
+
 }

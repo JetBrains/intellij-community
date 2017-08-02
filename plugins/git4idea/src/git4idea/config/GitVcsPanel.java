@@ -133,10 +133,10 @@ public class GitVcsPanel {
     if (version.isSupported()) {
       Messages.showInfoMessage(myRootPanel,
                                String.format("<html>%s<br>Git version is %s</html>", GitBundle.getString("find.git.success.title"),
-                                             version.toString()),
+                                             version.getPresentation()),
                                GitBundle.getString("find.git.success.title"));
     } else {
-      Messages.showWarningDialog(myRootPanel, GitBundle.message("find.git.unsupported.message", version.toString(), GitVersion.MIN),
+      Messages.showWarningDialog(myRootPanel, GitBundle.message("find.git.unsupported.message", version.getPresentation(), GitVersion.MIN.getPresentation()),
                                  GitBundle.getString("find.git.success.title"));
     }
   }

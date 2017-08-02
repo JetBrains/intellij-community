@@ -398,8 +398,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
         public void visitPyTargetExpression(PyTargetExpression node) {
           if (parameterWasReassigned.get()) return;
 
-          final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-          if (node.getReference(resolveContext).isReferenceTo(PyNamedParameterImpl.this)) {
+          if (node.getReference().isReferenceTo(PyNamedParameterImpl.this)) {
             parameterWasReassigned.set(true);
           }
           else {

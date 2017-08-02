@@ -65,4 +65,9 @@ public interface Inlay extends Disposable, UserDataHolderEx {
    * @see EditorCustomElementRenderer#calcWidthInPixels(Editor)
    */
   void updateSize();
+
+  /**
+   * Causes repaint of inlay in editor.
+   */
+  void repaint();
 }

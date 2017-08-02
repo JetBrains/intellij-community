@@ -60,7 +60,7 @@ public class PatternCompiler {
   private static CompileContext lastTestingContext;
 
   public static CompiledPattern compilePattern(final Project project, final MatchOptions options)
-    throws MalformedPatternException, UnsupportedOperationException {
+    throws MalformedPatternException, NoMatchFoundException, UnsupportedOperationException {
     FileType fileType = options.getFileType();
     assert fileType instanceof LanguageFileType;
     Language language = ((LanguageFileType)fileType).getLanguage();
@@ -95,7 +95,7 @@ public class PatternCompiler {
         }
 
         if (filesToScan.size() == 0) {
-          throw new MalformedPatternException(SSRBundle.message("ssr.will.not.find.anything"));
+          throw new NoMatchFoundException(SSRBundle.message("ssr.will.not.find.anything", scope.getDisplayName()));
         }
         result.setScope(new LocalSearchScope(PsiUtilCore.toPsiElementArray(filesToScan)));
       }
@@ -137,7 +137,7 @@ public class PatternCompiler {
                                                        MatchOptions options,
                                                        CompiledPattern pattern,
                                                        CompileContext context,
-                                                       String[] applicablePrefixes) {
+                                                       String[] applicablePrefixes) throws MalformedPatternException {
     if (applicablePrefixes.length == 0) {
       return Collections.emptyList();
     }
@@ -189,7 +189,7 @@ public class PatternCompiler {
                                                     String[] applicablePrefixes,
                                                     Pattern[] substitutionPatterns,
                                                     String[] prefixSequence,
-                                                    int index) {
+                                                    int index) throws MalformedPatternException {
     if (index >= prefixSequence.length) {
       final List<PsiElement> elements = doCompile(project, options, pattern, new ArrayPrefixProvider(prefixSequence), context);
       if (elements.isEmpty()) {
@@ -353,7 +353,7 @@ public class PatternCompiler {
                                             MatchOptions options,
                                             CompiledPattern result,
                                             PrefixProvider prefixProvider,
-                                            CompileContext context) {
+                                            CompileContext context) throws MalformedPatternException {
     result.clearHandlers();
 
     final StringBuilder buf = new StringBuilder();
@@ -506,7 +506,8 @@ public class PatternCompiler {
     }
   }
 
-  private static void addScriptConstraint(Project project, String name, MatchVariableConstraint constraint, SubstitutionHandler handler) {
+  private static void addScriptConstraint(Project project, String name, MatchVariableConstraint constraint, SubstitutionHandler handler)
+    throws MalformedPatternException {
     if (constraint.getScriptCodeConstraint()!= null && constraint.getScriptCodeConstraint().length() > 2) {
       final String script = StringUtil.unquoteString(constraint.getScriptCodeConstraint());
       final String problem = ScriptSupport.checkValidScript(script);

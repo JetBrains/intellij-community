@@ -30,6 +30,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.PicoPluginExtensionInitializationException;
@@ -110,6 +111,13 @@ public class PluginManager extends PluginManagerCore {
 
   public static void processException(Throwable t) {
     if (!IdeaApplication.isLoaded()) {
+      InstallationCorruptedException corrupted = findCause(t, InstallationCorruptedException.class);
+      String productName = ApplicationNamesInfo.getInstance().getFullProductName();
+      if (corrupted != null) {
+        Main.showMessage("Corrupted Installation", corrupted.getMessage() + ". Try reinstalling " + productName + " from scratch.", true);
+        System.exit(Main.INSTALLATION_CORRUPTED);
+      }
+
       @SuppressWarnings("ThrowableResultOfMethodCallIgnored") StartupAbortedException se = findCause(t, StartupAbortedException.class);
       if (se == null) se = new StartupAbortedException(t);
       @SuppressWarnings("ThrowableResultOfMethodCallIgnored") PluginException pe = findCause(t, PluginException.class);
@@ -132,12 +140,12 @@ public class PluginManager extends PluginManagerCore {
         PluginConflictReporter.INSTANCE.reportConflictByClasses(conflictException.getConflictingClasses());
       }
 
-      if (pluginId != null && !CORE_PLUGIN_ID.equals(pluginId.getIdString())) {
+      if (pluginId != null && !ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(pluginId.getIdString())) {
         disablePlugin(pluginId.getIdString());
 
         StringWriter message = new StringWriter();
         message.append("Plugin '").append(pluginId.getIdString()).append("' failed to initialize and will be disabled. ");
-        message.append(" Please restart ").append(ApplicationNamesInfo.getInstance().getFullProductName()).append('.');
+        message.append(" Please restart ").append(productName).append('.');
         message.append("\n\n");
         pe.getCause().printStackTrace(new PrintWriter(message));
 

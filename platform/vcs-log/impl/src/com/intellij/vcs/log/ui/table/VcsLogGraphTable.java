@@ -95,7 +95,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @NotNull private final AbstractVcsLogUi myUi;
   @NotNull private final VcsLogData myLogData;
   @NotNull private final MyDummyTableCellEditor myDummyEditor = new MyDummyTableCellEditor();
-  @NotNull private final TableCellRenderer myDummyRenderer = new DefaultTableCellRenderer();
+  @NotNull private final TableCellRenderer myDummyRenderer = new MyDefaultTableCellRenderer();
   @NotNull private final GraphCommitCellRenderer myGraphCommitCellRenderer;
   @NotNull private final GraphTableController myController;
   @NotNull private final StringCellRenderer myStringCellRenderer;
@@ -799,6 +799,17 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     @Override
     public void setBackground(Color bg) {
       myBorderColor = bg;
+    }
+  }
+
+  private static class MyDefaultTableCellRenderer extends DefaultTableCellRenderer {
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+      component.setBackground(isSelected
+                              ? table.hasFocus() ? UIUtil.getListSelectionBackground() : UIUtil.getListUnfocusedSelectionBackground()
+                              : UIUtil.getListBackground());
+      return component;
     }
   }
 

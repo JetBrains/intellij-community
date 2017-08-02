@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@ package com.intellij.usages.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageContextPanel;
 import com.intellij.usages.UsageViewPresentation;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +41,7 @@ public abstract class UsageContextPanelBase extends JPanel implements UsageConte
     myProject = project;
     myPresentation = presentation;
     setLayout(new BorderLayout());
-    setBorder(IdeBorderFactory.createEmptyBorder());
+    setBorder(JBUI.Borders.empty());
   }
 
   @NotNull

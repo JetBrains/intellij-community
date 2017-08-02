@@ -73,6 +73,32 @@ public class RecentProjectsTest extends PlatformTestCase {
     doReopenCloseAndCheckGroups(p3, "g2", "g1");
   }
 
+  public void testTimestampForOpenProjectUpdatesWhenGetStateCalled() throws Exception {
+    Project project = null;
+    try {
+      File path = PlatformTestCase.createTempDir("z1");
+      ProjectManagerEx manager = ProjectManagerEx.getInstanceEx();
+      project = manager.createProject(null, path.getPath());
+      project.save();
+      closeProject(project);
+      project = manager.loadAndOpenProject(path.getPath());
+      long timestamp = getProjectOpenTimestamp("z1");
+      Thread.sleep(2);
+      Assert.assertTrue("Timestamp for opened project has not been updated", timestamp < getProjectOpenTimestamp("z1"));
+    }
+    finally {
+      closeProject(project);
+    }
+  }
+
+  private static long getProjectOpenTimestamp(String projectName) {
+    List<String> keys = RecentProjectsManagerBase.getInstanceEx().getState()
+      .additionalInfo.keySet().stream()
+      .filter(s -> s.endsWith(projectName))
+      .collect(Collectors.toList());
+    return RecentProjectsManagerBase.getInstanceEx().getState().additionalInfo.get(keys.get(0)).projectOpenTimestamp;
+  }
+
   private static void doReopenCloseAndCheck(String projectPath, String... results) throws IOException, JDOMException {
     Project project = ProjectManager.getInstance().loadAndOpenProject(projectPath);
     closeProject(project);

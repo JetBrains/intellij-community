@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1056,35 +1056,9 @@ public class ControlFlowUtil {
         if (nextOffset > flow.getSize()) nextOffset = flow.getSize();
         if (offset > endOffset) return;
         int throwToOffset = instruction.offset;
-        boolean isNormal = false;
+        boolean isNormal;
         if (throwToOffset == nextOffset) {
-
-          if (nextOffset == endOffset) {
-            int lastOffset = endOffset - 1;
-            Instruction lastInstruction = flow.getInstructions().get(lastOffset);
-            while (lastInstruction instanceof GoToInstruction &&
-                ((GoToInstruction)lastInstruction).role == BranchingInstruction.Role.END &&
-                !((GoToInstruction)lastInstruction).isReturn) {
-              if (((GoToInstruction)lastInstruction).offset == startOffset) {
-                lastOffset = -1;
-                break;
-              } 
-              else {
-                lastOffset--;
-                if (lastOffset < 0) {
-                  break;
-                }
-                lastInstruction = flow.getInstructions().get(lastOffset);
-              }
-            }
-
-            if (lastOffset >= 0) {
-              isNormal = !(lastInstruction instanceof GoToInstruction && ((GoToInstruction)lastInstruction).isReturn) &&
-                         !(lastInstruction instanceof ThrowToInstruction);
-            }
-          }
-
-          isNormal |= throwToOffset <= endOffset && !isLeaf(nextOffset) && canCompleteNormally[nextOffset];
+          isNormal = throwToOffset <= endOffset && !isLeaf(nextOffset) && canCompleteNormally[nextOffset];
         }
         else {
           isNormal = canCompleteNormally[nextOffset];

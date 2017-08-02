@@ -19,7 +19,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.SpecialField;
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
@@ -27,6 +26,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
+import com.intellij.psi.impl.light.LightVariableBuilder;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -202,14 +202,8 @@ public class DfaExpressionFactory {
   private PsiVariable getArrayIndexVariable(@Nullable PsiExpression indexExpression) {
     Object constant = JavaConstantExpressionEvaluator.computeConstantExpression(indexExpression, false);
     if (constant instanceof Integer && ((Integer)constant).intValue() >= 0) {
-      PsiVariable mockVar = myMockIndices.get(constant);
-      if (mockVar == null) {
-        PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(indexExpression.getProject())
-          .createFileFromText("ArrayIndex.java", JavaFileType.INSTANCE, "class _Index_ { int $array$index$" + constant + ";}");
-        mockVar = file.getClasses()[0].getFields()[0];
-        myMockIndices.put((Integer)constant, mockVar);
-      }
-      return mockVar;
+      return myMockIndices
+        .computeIfAbsent((Integer)constant, k -> new LightVariableBuilder<>("$array$index$" + k, PsiType.INT, indexExpression));
     }
     return null;
   }

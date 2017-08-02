@@ -239,7 +239,7 @@ public class PluginDownloader {
     indicator.checkCanceled();
     indicator.setText2(IdeBundle.message("progress.downloading.plugin", getPluginName()));
 
-    return HttpRequests.request(myPluginUrl).gzip(false).forceHttps(myForceHttps).connect(new HttpRequests.RequestProcessor<File>() {
+    return HttpRequests.request(myPluginUrl).gzip(false).forceHttps(myForceHttps).productNameAsUserAgent().connect(new HttpRequests.RequestProcessor<File>() {
       @Override
       public File process(@NotNull HttpRequests.Request request) throws IOException {
         request.saveToFile(file, indicator);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,7 +109,7 @@ public class SwitchUtils {
   }
 
   private static boolean canBeSwitchExpression(PsiExpression expression, LanguageLevel languageLevel) {
-    if (expression == null || SideEffectChecker.mayHaveSideEffects(expression)) {
+    if (expression == null) {
       return false;
     }
     final PsiType type = expression.getType();
@@ -160,8 +160,8 @@ public class SwitchUtils {
       return determinePossibleSwitchExpressions(operands[0], languageLevel, nullSafe, stringEquality);
     }
     else if (operation.equals(JavaTokenType.EQEQ) && operands.length == 2) {
-      final PsiExpression lhs = operands[0];
-      final PsiExpression rhs = operands[1];
+      final PsiExpression lhs = ParenthesesUtils.stripParentheses(operands[0]);
+      final PsiExpression rhs = ParenthesesUtils.stripParentheses(operands[1]);
       if (canBeCaseLabel(lhs, languageLevel, stringEquality)) {
         return rhs;
       }

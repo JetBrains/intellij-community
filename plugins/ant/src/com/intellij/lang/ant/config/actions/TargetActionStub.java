@@ -65,7 +65,7 @@ public class TargetActionStub extends AnAction implements Disposable {
     }
     finally {
       invokeAction(e);
-      dispose();
+      Disposer.dispose(this);
     }
   }
   

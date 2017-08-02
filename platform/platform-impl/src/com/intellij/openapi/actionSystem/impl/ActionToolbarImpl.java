@@ -232,6 +232,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     ourToolbars.remove(this);
   }
 
+  @NotNull
   @Override
   public JComponent getComponent() {
     return this;

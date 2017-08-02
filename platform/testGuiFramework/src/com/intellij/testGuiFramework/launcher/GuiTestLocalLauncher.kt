@@ -23,8 +23,9 @@ import com.intellij.testGuiFramework.impl.GuiTestStarter
 import com.intellij.testGuiFramework.launcher.classpath.ClassPathBuilder
 import com.intellij.testGuiFramework.launcher.classpath.ClassPathBuilder.Companion.isWin
 import com.intellij.testGuiFramework.launcher.classpath.PathUtils
+import com.intellij.testGuiFramework.launcher.ide.CommunityIde
 import com.intellij.testGuiFramework.launcher.ide.Ide
-import com.intellij.testGuiFramework.launcher.ide.IdeType
+import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -80,24 +81,24 @@ object GuiTestLocalLauncher {
     }
   }
 
-  fun runIdeLocally(ide: Ide = Ide(IdeType.IDEA_ULTIMATE, 0, 0), port: Int = 0) {
+  fun runIdeLocally(ide: Ide = Ide(CommunityIde(), 0, 0), port: Int = 0) {
     //todo: check that we are going to run test locally
     val args = createArgs(ide = ide, port = port)
     return startIde(ide = ide, args = args)
   }
 
-  fun runIdeByPath(path: String, ide: Ide = Ide(IdeType.IDEA_ULTIMATE, 0, 0), port: Int = 0) {
+  fun runIdeByPath(path: String, ide: Ide = Ide(CommunityIde(), 0, 0), port: Int = 0) {
     //todo: check that we are going to run test locally
     val args = createArgsByPath(path, port)
     return startIde(ide = ide, args = args)
   }
 
-  fun firstStartIdeLocally(ide: Ide = Ide(IdeType.IDEA_ULTIMATE, 0, 0)) {
-    val args = createArgsForFirstStart(ide)
+  fun firstStartIdeLocally(ide: Ide = Ide(CommunityIde(), 0, 0), firstStartClassName: String = "undefined") {
+    val args = createArgsForFirstStart(ide = ide, firstStartClassName = firstStartClassName)
     return startIdeAndWait(ide = ide, args = args)
   }
 
-  fun firstStartIdeByPath(path: String, ide: Ide = Ide(IdeType.IDEA_ULTIMATE, 0, 0)) {
+  fun firstStartIdeByPath(path: String, ide: Ide = Ide(CommunityIde(), 0, 0)) {
     val args = createArgsForFirstStartByPath(ide, path)
     return startIdeAndWait(ide = ide, args = args)
   }
@@ -141,15 +142,23 @@ object GuiTestLocalLauncher {
 
 
   private fun createArgs(ide: Ide, mainClass: String = "com.intellij.idea.Main", port: Int = 0): List<String>
-    = createArgsBase(ide, mainClass, GuiTestStarter.COMMAND_NAME, port)
+    = createArgsBase(ide = ide,
+                     mainClass = mainClass,
+                     commandName = GuiTestStarter.COMMAND_NAME,
+                     port = port)
 
-  private fun createArgsForFirstStart(ide: Ide, port: Int = 0): List<String>
-    = createArgsBase(ide, "com.intellij.testGuiFramework.impl.FirstStarterKt", null, port)
+  private fun createArgsForFirstStart(ide: Ide, firstStartClassName: String = "undefined", port: Int = 0): List<String>
+    = createArgsBase(ide = ide,
+                     mainClass = "com.intellij.testGuiFramework.impl.FirstStarterKt",
+                     firstStartClassName = firstStartClassName,
+                     commandName = null,
+                     port = port)
 
-  private fun createArgsBase(ide: Ide, mainClass: String, commandName: String?, port: Int): List<String> {
+  private fun createArgsBase(ide: Ide, mainClass: String, commandName: String?, firstStartClassName: String = "undefined", port: Int): List<String> {
     var resultingArgs = listOf<String>()
       .plus(getCurrentJavaExec())
       .plus(getDefaultVmOptions(ide))
+      .plus("-Didea.gui.test.first.start.class=$firstStartClassName")
       .plus("-classpath")
       .plus(getOsSpecificClasspath(ide.ideType.mainModule))
       .plus(mainClass)
@@ -162,12 +171,13 @@ object GuiTestLocalLauncher {
   }
 
 
-  private fun createArgsForFirstStartByPath(ide: Ide, path: String): List<String> {
+  private fun createArgsForFirstStartByPath(ide: Ide, path: String, firstStartClassName: String = "undefined"): List<String> {
 
     val classpath = PathUtils(path).makeClassPathBuilder().build(emptyList())
     val resultingArgs = listOf<String>()
       .plus(getCurrentJavaExec())
       .plus(getDefaultVmOptions(ide))
+      .plus("-Didea.gui.test.first.start.class=$firstStartClassName")
       .plus("-classpath")
       .plus(classpath)
       .plus(com.intellij.testGuiFramework.impl.FirstStarter::class.qualifiedName!! + "Kt")
@@ -175,12 +185,13 @@ object GuiTestLocalLauncher {
   }
 
   private fun createArgsByPath(path: String, port: Int = 0): List<String> {
-    var resultingArgs = listOf<String>()
-      .plus("open")
-      .plus(path) //path to exec
-      .plus("--args")
-      .plus(GuiTestStarter.COMMAND_NAME)
-    if (port != 0) resultingArgs = resultingArgs.plus("port=$port")
+    val resultingArgs = mutableListOf<String>(
+      path,
+      "--args",
+      GuiTestStarter.COMMAND_NAME
+    )
+    if (SystemInfo.isMac()) resultingArgs.add(0, "open")
+    if (port != 0) resultingArgs.add("port=$port")
     LOG.info("Running with args: ${resultingArgs.joinToString(" ")}")
     return resultingArgs
   }
@@ -188,26 +199,26 @@ object GuiTestLocalLauncher {
   /**
    * Default VM options to start IntelliJ IDEA (or IDEA-based IDE). To customize options use com.intellij.testGuiFramework.launcher.GuiTestOptions
    */
-  private fun getDefaultVmOptions(ide: Ide) : List<String> {
+  private fun getDefaultVmOptions(ide: Ide): List<String> {
     return listOf<String>()
-        .plus("-Xmx${GuiTestOptions.getXmxSize()}m")
-        .plus("-XX:ReservedCodeCacheSize=150m")
-        .plus("-XX:+UseConcMarkSweepGC")
-        .plus("-XX:SoftRefLRUPolicyMSPerMB=50")
-        .plus("-XX:MaxJavaStackTraceDepth=10000")
-        .plus("-ea")
-        .plus("-Xbootclasspath/p:${GuiTestOptions.getBootClasspath()}")
-        .plus("-Dsun.awt.disablegrab=true")
-        .plus("-Dsun.io.useCanonCaches=false")
-        .plus("-Djava.net.preferIPv4Stack=true")
-        .plus("-Dapple.laf.useScreenMenuBar=${GuiTestOptions.useAppleScreenMenuBar().toString()}")
-        .plus("-Didea.is.internal=${GuiTestOptions.isInternal().toString()}")
-        .plus("-Didea.config.path=${GuiTestOptions.getConfigPath()}")
-        .plus("-Didea.system.path=${GuiTestOptions.getSystemPath()}")
-        .plus("-Dfile.encoding=${GuiTestOptions.getEncoding()}")
-        .plus("-Didea.platform.prefix=${ide.ideType.platformPrefix}")
-        .plus("-Xdebug")
-        .plus("-Xrunjdwp:transport=dt_socket,server=y,suspend=${GuiTestOptions.suspendDebug()},address=${GuiTestOptions.getDebugPort()}")
+      .plus("-Xmx${GuiTestOptions.getXmxSize()}m")
+      .plus("-XX:ReservedCodeCacheSize=240m")
+      .plus("-XX:+UseConcMarkSweepGC")
+      .plus("-XX:SoftRefLRUPolicyMSPerMB=50")
+      .plus("-XX:MaxJavaStackTraceDepth=10000")
+      .plus("-ea")
+      .plus("-Xbootclasspath/p:${GuiTestOptions.getBootClasspath()}")
+      .plus("-Dsun.awt.disablegrab=true")
+      .plus("-Dsun.io.useCanonCaches=false")
+      .plus("-Djava.net.preferIPv4Stack=true")
+      .plus("-Dapple.laf.useScreenMenuBar=${GuiTestOptions.useAppleScreenMenuBar().toString()}")
+      .plus("-Didea.is.internal=${GuiTestOptions.isInternal().toString()}")
+      .plus("-Didea.config.path=${GuiTestOptions.getConfigPath()}")
+      .plus("-Didea.system.path=${GuiTestOptions.getSystemPath()}")
+      .plus("-Dfile.encoding=${GuiTestOptions.getEncoding()}")
+      .plus("-Didea.platform.prefix=${ide.ideType.platformPrefix}")
+      .plus("-Xdebug")
+      .plus("-Xrunjdwp:transport=dt_socket,server=y,suspend=${GuiTestOptions.suspendDebug()},address=${GuiTestOptions.getDebugPort()}")
   }
 
   private fun getCurrentJavaExec(): String {
@@ -279,8 +290,8 @@ object GuiTestLocalLauncher {
    * @return true if classloader's output path is the same to module's output path (and also same to project)
    */
   private fun needToChangeProjectOutput(project: JpsProject): Boolean =
-      JpsJavaExtensionService.getInstance().getProjectExtension(project)?.outputUrl ==
-          getOutputRootFromClassloader().path
+    JpsJavaExtensionService.getInstance().getProjectExtension(project)?.outputUrl ==
+      getOutputRootFromClassloader().path
 
 
   private fun JpsProject.changeOutputIfNeeded() {
@@ -290,8 +301,4 @@ object GuiTestLocalLauncher {
     }
   }
 
-}
-
-fun main(args: Array<String>) {
-  GuiTestLocalLauncher.firstStartIdeLocally(Ide(ideType = IdeType.WEBSTORM, version = 0, build = 0))
 }

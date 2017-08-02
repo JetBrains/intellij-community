@@ -67,10 +67,12 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   private static final Key<Boolean> OUR_NO_SIZE_LIMIT_KEY = Key.create("no.size.limit");
   private static final Logger LOG = Logger.getInstance("#" + SingleRootFileViewProvider.class.getCanonicalName());
   public static final Key<Object> FREE_THREADED = Key.create("FREE_THREADED");
+  private static final Key<Set<SingleRootFileViewProvider>> KNOWN_COPIES = Key.create("KNOWN_COPIES");
   @NotNull private final PsiManager myManager;
   @NotNull private final VirtualFile myVirtualFile;
   private final boolean myEventSystemEnabled;
   private final boolean myPhysical;
+  private boolean myInvalidated;
   private final AtomicReference<PsiFile> myPsiFile = Atomics.newReference();
   private volatile Content myContent;
   private volatile Reference<Document> myDocument;
@@ -571,10 +573,33 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   public void markInvalidated() {
+    if (myInvalidated) return;
+    
+    myInvalidated = true;
     PsiFile psiFile = getCachedPsi(myBaseLanguage);
     if (psiFile instanceof PsiFileEx) {
       ((PsiFileEx)psiFile).markInvalidated();
     }
+    invalidateCopies();
+  }
+
+  private void invalidateCopies() {
+    Set<SingleRootFileViewProvider> knownCopies = getUserData(KNOWN_COPIES);
+    if (knownCopies != null) {
+      for (SingleRootFileViewProvider copy : knownCopies) {
+        if (copy.getCachedPsiFiles().stream().anyMatch(f -> f.getOriginalFile().getViewProvider() == this)) {
+          ((PsiManagerEx)myManager).getFileManager().setViewProvider(copy.getVirtualFile(), null);
+        }
+      }
+    }
+  }
+
+  public void registerAsCopy(@NotNull SingleRootFileViewProvider copy) {
+    Set<SingleRootFileViewProvider> copies = getUserData(KNOWN_COPIES);
+    if (copies == null) {
+      copies = putUserDataIfAbsent(KNOWN_COPIES, Collections.newSetFromMap(ContainerUtil.createConcurrentWeakMap()));
+    }
+    copies.add(copy);
   }
 
   private interface Content {

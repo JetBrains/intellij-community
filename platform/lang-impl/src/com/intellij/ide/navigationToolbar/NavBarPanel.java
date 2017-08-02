@@ -36,6 +36,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -586,6 +587,12 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   @Override
   @Nullable
   public Object getData(String dataId) {
+    // First of all try to obtain data from extension
+    for (NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
+      Object data = modelExtension.getData(dataId, this);
+      if (data != null) return data;
+    }
+
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return !myProject.isDisposed() ? myProject : null;
     }

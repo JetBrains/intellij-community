@@ -24,7 +24,6 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.LowMemoryWatcher;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,13 +32,18 @@ import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.*;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.BitUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NonNls;
@@ -57,8 +61,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class PersistentFSImpl extends PersistentFS implements ApplicationComponent, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.PersistentFS");
 
-  private final MessageBus myEventBus;
-
   private final Map<String, VirtualFileSystemEntry> myRoots = ContainerUtil.newConcurrentMap(10, 0.4f, JobSchedulerImpl.CORES_COUNT, FileUtil.PATH_HASHING_STRATEGY);
   private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myRootsById = ContainerUtil.createConcurrentIntObjectMap(10, 0.4f, JobSchedulerImpl.CORES_COUNT);
 
@@ -68,11 +70,12 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   private final AtomicBoolean myShutDown = new AtomicBoolean(false);
   private volatile int myStructureModificationCount;
+  private final BulkFileListener myPublisher;
 
   public PersistentFSImpl(@NotNull MessageBus bus) {
-    myEventBus = bus;
     ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown);
     LowMemoryWatcher.register(this::clearIdCache, this);
+    myPublisher = bus.syncPublisher(VirtualFileManager.VFS_CHANGES);
   }
 
   @Override
@@ -615,8 +618,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
         VFileContentChangeEvent event = new VFileContentChangeEvent(requestor, file, file.getModificationStamp(), modStamp, false);
         List<VFileContentChangeEvent> events = Collections.singletonList(event);
-        BulkFileListener publisher = myEventBus.syncPublisher(VirtualFileManager.VFS_CHANGES);
-        publisher.before(events);
+        myPublisher.before(events);
 
         NewVirtualFileSystem delegate = getDelegate(file);
         OutputStream ioFileStream = delegate.getOutputStream(file, requestor, modStamp, timeStamp);
@@ -636,7 +638,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
             ioFileStream.close();
 
             executeTouch(file, false, event.getModificationStamp());
-            publisher.after(events);
+            myPublisher.after(events);
           }
         }
       }
@@ -668,56 +670,113 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     // optimisation: skip all groupings
     if (event.isValid()) {
-      BulkFileListener publisher = myEventBus.syncPublisher(VirtualFileManager.VFS_CHANGES);
       List<VFileEvent> events = Collections.singletonList(event);
-      publisher.before(events);
+      myPublisher.before(events);
 
       applyEvent(event);
 
-      publisher.after(events);
+      myPublisher.after(events);
     }
   }
 
-  // group events by type and containing directory and validate
-  // "outApplyEvents" will contain handlers applying the grouped events
-  // e.g. for [delete(d/x), delete(d2/z), delete(d/y), create(d/x), create(d/z), change(d/x)]
-  //   the outApplyEvents will contain:
-  //   [applyDeletions("d/x, d/y", "d2/z"), applyCreations(d/x, d/z), applyEvent(d/x)]
-  // returns all validated events
-  private List<VFileEvent> groupAndValidate(@NotNull List<VFileEvent> events, @NotNull List<Runnable> outApplyEvents) {
-    int groupStart=0;
-    List<VFileEvent> validated = new ArrayList<>(events.size());
-    VFileEvent eventFromGroup = events.get(0);
-    for (int i = 1; i <= events.size(); i++) {
-      VFileEvent event = i==events.size() ? null : events.get(i);
-      if (i==events.size() || !eventFromGroup.getClass().equals(event.getClass())) {
-        if (eventFromGroup instanceof VFileCreateEvent) {
-          groupCreations(events, groupStart, i, validated, outApplyEvents);
-        }
-        else if (eventFromGroup instanceof VFileDeleteEvent) {
-          groupDeletions(events, groupStart, i, validated, outApplyEvents);
-        }
-        else {
-          groupOthers(events, groupStart, i, validated, outApplyEvents);
-        }
-        groupStart = i;
+  // Tries to find a group of non-conflicting events in range [startIndex..inEvents.size()).
+  // Two events are conflicting if the originating file of one event is an ancestor (non-strict) of the file from the other.
+  // E.g. "change(a/b/c/x.txt)" and "delete(a/b/c)" are conflicting because "a/b/c/x.txt" is under the "a/b/c" directory from the other event.
+  //
+  // returns index after the last grouped event.
+  private static int groupByPath(@NotNull List<VFileEvent> inEvents, int startIndex, Set<String> files, Set<String> middleDirs) {
+    // store all paths from all events (including all parents)
+    // check the each new event's path against this set and if it's there, this event is conflicting
+
+    int i;
+    for (i = startIndex; i < inEvents.size(); i++) {
+      VFileEvent event = inEvents.get(i);
+      String path = event.getPath();
+      if (checkIfConflictingEvent(path, files, middleDirs)) {
+        break;
       }
-      eventFromGroup = event;
+      // some synthetic events really are composite events, e.g. VFileMoveEvent = VFileDeleteEvent+VFileCreateEvent, so both paths should be checked for conflicts
+      String path2 = null;
+      if (event instanceof VFilePropertyChangeEvent && ((VFilePropertyChangeEvent)event).getPropertyName().equals(VirtualFile.PROP_NAME)) {
+        VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;
+        VirtualFile parent = pce.getFile().getParent();
+        String newName = (String)pce.getNewValue();
+        path2 = parent == null ? newName : parent.getPath()+"/"+newName;
+      }
+      else if (event instanceof VFileCopyEvent) {
+        path2 = ((VFileCopyEvent)event).getFile().getPath();
+      }
+      else if (event instanceof VFileMoveEvent) {
+        VFileMoveEvent vme = (VFileMoveEvent)event;
+        String newName = vme.getFile().getName();
+        path2 = vme.getNewParent().getPath() + "/" + newName;
+      }
+      if (path2 != null && !path2.equals(path) && checkIfConflictingEvent(path2, files, middleDirs)) {
+        break;
+      }
     }
-    return validated;
+
+    return i;
   }
 
-  // events[start..end) are all VFileCreateEvent
+  private static boolean checkIfConflictingEvent(String path, Set<String> files, Set<String> middleDirs) {
+    if (!files.add(path) || middleDirs.contains(path)) {
+      // conflicting event found for (non-strict) descendant, stop
+      return true;
+    }
+    int li = path.length();
+    while (true) {
+      int liPrev = path.lastIndexOf('/', li-1);
+      if (liPrev == -1) break;
+      String parentDir = path.substring(0, liPrev);
+      if (files.contains(parentDir)) {
+        // conflicting event found for ancestor, stop
+        return true;
+      }
+      if (!middleDirs.add(parentDir)) break;  // all parents up already stored, stop
+      li = liPrev;
+    }
+
+    return false;
+  }
+
+  // finds a group of non-conflicting events, validate them.
+  // "outApplyEvents" will contain handlers for applying the grouped events
+  // "outValidatedEvents" will contain events for which VFileEvent.isValid() is true
+  // return index after the last processed event
+  private int groupAndValidate(@NotNull List<VFileEvent> events,
+                               int startIndex,
+                               @NotNull List<Runnable> outApplyEvents,
+                               @NotNull List<VFileEvent> outValidatedEvents,
+                               @NotNull Set<String> files, @NotNull Set<String> middleDirs) {
+    int endIndex = groupByPath(events, startIndex, files, middleDirs);
+    // since all events in the group are mutually non-conflicting, we can re-arrange creations/deletions together
+    groupCreations(events, startIndex, endIndex, outValidatedEvents, outApplyEvents);
+    groupDeletions(events, startIndex, endIndex, outValidatedEvents, outApplyEvents);
+    groupOthers(events, startIndex, endIndex, outValidatedEvents, outApplyEvents);
+
+    return endIndex;
+  }
+
+  // find all VFileCreateEvent events in [start..end)
   // group them by parent directory, validate in bulk for each directory, and return "applyCreations()" runnable
   private void groupCreations(@NotNull List<VFileEvent> events,
                               int start,
                               int end,
                               @NotNull List<VFileEvent> outValidated,
                               @NotNull List<Runnable> outApplyEvents) {
-    MultiMap<VirtualDirectoryImpl, VFileCreateEvent> grouped = MultiMap.createSmart();
+    MultiMap<VirtualDirectoryImpl, VFileCreateEvent> grouped = new MultiMap<VirtualDirectoryImpl, VFileCreateEvent>(){
+      @NotNull
+      @Override
+      protected Map<VirtualDirectoryImpl, Collection<VFileCreateEvent>> createMap() {
+        return new THashMap<>(end-start);
+      }
+    };
 
     for (int i = start; i < end; i++) {
-      VFileCreateEvent event = (VFileCreateEvent)events.get(i);
+      VFileEvent e = events.get(i);
+      if (!(e instanceof VFileCreateEvent)) continue;
+      VFileCreateEvent event = (VFileCreateEvent)e;
       VirtualDirectoryImpl parent = (VirtualDirectoryImpl)event.getParent();
       grouped.putValue(parent, event);
     }
@@ -740,47 +799,42 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       });
     }
   }
-  
-  // events[start..end) are all VFileDeleteEvent
+
+  // find all VFileDeleteEvent events in [start..end)
   // group them by parent directory (can be null), filter out files which parent dir is to be deleted too, and return "applyDeletions()" runnable
   private void groupDeletions(@NotNull List<VFileEvent> events,
                               int start,
                               int end,
                               @NotNull List<VFileEvent> outValidated,
                               @NotNull List<Runnable> outApplyEvents) {
-    List<Pair<VFileDeleteEvent, String>> deletionsWithPath = new ArrayList<>(end-start);
-
+    MultiMap<VirtualDirectoryImpl, VFileDeleteEvent> grouped = new MultiMap<VirtualDirectoryImpl, VFileDeleteEvent>(){
+      @NotNull
+      @Override
+      protected Map<VirtualDirectoryImpl, Collection<VFileDeleteEvent>> createMap() {
+        return new HashMap<>(end-start); // can be null keys
+      }
+    };
+    boolean hasValidEvents = false;
     for (int i = start; i < end; i++) {
       VFileEvent event = events.get(i);
-      if (!event.isValid()) continue;
-      deletionsWithPath.add(Pair.create((VFileDeleteEvent)event, event.getPath()));
+      if (!(event instanceof VFileDeleteEvent) || !event.isValid()) continue;
+      VFileDeleteEvent de = (VFileDeleteEvent)event;
+      @Nullable VirtualDirectoryImpl parent = (VirtualDirectoryImpl)de.getFile().getParent();
+      grouped.putValue(parent, de);
+      outValidated.add(event);
+      hasValidEvents = true;
     }
 
-    if (!deletionsWithPath.isEmpty()) {
-      filterOutInvalidDeletions(deletionsWithPath);
-
-      MultiMap<VirtualDirectoryImpl, VFileDeleteEvent> grouped = MultiMap.create(); // can be nulls
-      boolean hasValidEvents = false;
-      for (Pair<VFileDeleteEvent, String> pair : deletionsWithPath) {
-        if (pair == null) continue; // filtered out
-        VFileDeleteEvent event = pair.getFirst();
-        @Nullable VirtualDirectoryImpl parent = (VirtualDirectoryImpl)event.getFile().getParent();
-        grouped.putValue(parent, event);
-        outValidated.add(event);
-        hasValidEvents = true;
-      }
-
-      if (hasValidEvents) {
-        outApplyEvents.add(() -> {
-          clearIdCache();
-          applyDeletions(grouped);
-          incStructuralModificationCount();
-        });
-      }
+    if (hasValidEvents) {
+      outApplyEvents.add(() -> {
+        clearIdCache();
+        applyDeletions(grouped);
+        incStructuralModificationCount();
+      });
     }
   }
 
-  // events[start..end) are neither VFileCreateEvent nor VFileDeleteEvent
+  // find events other than VFileCreateEvent or VFileDeleteEvent in [start..end)
   // validate and return "applyEvent()" runnable for each event because it's assumed there won't be too many of them
   private void groupOthers(@NotNull List<VFileEvent> events,
                            int start,
@@ -789,29 +843,9 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
                            @NotNull List<Runnable> outApplyEvents) {
     for (int i = start; i < end; i++) {
       VFileEvent event = events.get(i);
-      if (!event.isValid()) continue;
+      if (event instanceof VFileCreateEvent || event instanceof VFileDeleteEvent || !event.isValid()) continue;
       outValidated.add(event);
       outApplyEvents.add(() -> applyEvent(event));
-    }
-  }
-
-  // filter out files which parent dir is to be deleted too. nullize redundant events in the list.
-  private static void filterOutInvalidDeletions(@NotNull List<Pair<VFileDeleteEvent, String>> deletionsWithPath) {
-    boolean caseSensitive = deletionsWithPath.get(0).getFirst().getFile().getFileSystem().isCaseSensitive();
-    deletionsWithPath.sort((o1, o2) -> StringUtil.compare(o1.getSecond(), o2.getSecond(), !caseSensitive));
-
-    // loop over sorted paths and if there are "/dir1" and "/dir1/file2" neighbors filter out the latter.
-    String prevPath = deletionsWithPath.get(0).getSecond();
-    for (int i = 1; i < deletionsWithPath.size(); i++) {
-      String path = deletionsWithPath.get(i).getSecond();
-      int prefixLength = StringUtil.commonPrefixLength(prevPath, path, !caseSensitive);
-      if (prefixLength == prevPath.length() && prefixLength < path.length() && path.charAt(prefixLength) == '/') {
-        deletionsWithPath.set(i, null);
-        // continue to compare with the prevPath
-      }
-      else {
-        prevPath = path;
-      }
     }
   }
 
@@ -819,16 +853,25 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   public void processEvents(@NotNull List<VFileEvent> events) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    List<Runnable> applyEvents = new ArrayList<>();
-    List<VFileEvent> validated = groupAndValidate(events, applyEvents);
+    int startIndex = 0;
+    List<Runnable> applyEvents = new ArrayList<>(events.size());
+    List<VFileEvent> validated = new ArrayList<>(events.size());
+    Set<String> files = new THashSet<>(events.size());
+    Set<String> middleDirs = new THashSet<>(events.size());
+    while (startIndex != events.size()) {
+      applyEvents.clear();
+      validated.clear();
+      files.clear();
+      middleDirs.clear();
+      startIndex = groupAndValidate(events, startIndex, applyEvents, validated, files, middleDirs);
 
-    if (!validated.isEmpty()) {
-      BulkFileListener publisher = myEventBus.syncPublisher(VirtualFileManager.VFS_CHANGES);
-      publisher.before(validated);
+      if (!validated.isEmpty()) {
+        myPublisher.before(validated);
 
-      applyEvents.forEach(Runnable::run);
+        applyEvents.forEach(Runnable::run);
 
-      publisher.after(validated);
+        myPublisher.after(validated);
+      }
     }
   }
 
@@ -1157,7 +1200,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   private void executeDelete(@NotNull VirtualFile file) {
     if (!file.exists()) {
-      LOG.error("Deleting a file, which does not exist: " + file.getPath());
+      LOG.error("Deleting a file which does not exist: " +((VirtualFileWithId)file).getId()+ " "+file.getPath());
       return;
     }
     clearIdCache();

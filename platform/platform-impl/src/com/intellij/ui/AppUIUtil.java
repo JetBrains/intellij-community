@@ -66,6 +66,7 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 public class AppUIUtil {
   private static final String VENDOR_PREFIX = "jetbrains-";
   private static final boolean DEBUG_MODE = SystemProperties.getBooleanProperty("idea.debug.mode", false);
+  private static boolean ourMacDocIconSet = false;
 
   public static void updateWindowIcon(@NotNull Window window) {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
@@ -95,8 +96,9 @@ public class AppUIUtil {
       if (!SystemInfo.isMac) {
         window.setIconImages(images);
       }
-      else if (DEBUG_MODE) {
+      else if (DEBUG_MODE && !ourMacDocIconSet) {
         MacAppIcon.setDockIcon(ImageUtil.toBufferedImage(images.get(0)));
+        ourMacDocIconSet = true;
       }
     }
   }

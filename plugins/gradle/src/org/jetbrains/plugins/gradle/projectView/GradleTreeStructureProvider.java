@@ -23,6 +23,7 @@ import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouperKt;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -48,7 +49,7 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
  * @author Vladislav.Soroka
  * @since 2/4/2016
  */
-public class GradleTreeStructureProvider implements TreeStructureProvider {
+public class GradleTreeStructureProvider implements TreeStructureProvider, DumbAware {
   @NotNull
   @Override
   public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent,

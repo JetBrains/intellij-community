@@ -22,7 +22,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer;
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -137,12 +136,11 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
       }
 
       final String revisonNumber = revision.getRevisionNumber().asString();
-      final Pair<String,Boolean> info = CommittedChangeListRenderer.getDescriptionOfChangeList(revision.getCommitMessage());
-      String description = info.getFirst();
+      String description = CommittedChangeListRenderer.getDescriptionOfChangeList(revision.getCommitMessage());
       int width = metrics.stringWidth(description);
       int dotsWidth = metrics.stringWidth(ourDots);
-      boolean descriptionTruncated = info.getSecond();
-      if ((descriptionTruncated && (ourMaxWidth - dotsWidth < width)) || (! descriptionTruncated) && (ourMaxWidth < width)) {
+      boolean descriptionTruncated = false;
+      if (ourMaxWidth < width) {
         description = CommittedChangeListRenderer.truncateDescription(description, metrics, ourMaxWidth - dotsWidth);
         descriptionTruncated = true;
       }

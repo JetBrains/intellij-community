@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ref;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
@@ -89,6 +90,15 @@ public class DebugReflectionUtil {
       }
       catch (NoClassDefFoundError e) {
         cached = EMPTY_FIELD_ARRAY;
+      }
+      catch (@ReviseWhenPortedToJDK("9") RuntimeException e) {
+        // field.setAccessible() can now throw this exception when accessing unexported module 
+        if (e.getClass().getName().equals("java.lang.reflect.InaccessibleObjectException")) {
+          cached = EMPTY_FIELD_ARRAY;
+        }
+        else {
+          throw e;
+        }
       }
 
       allFields.put(aClass, cached);

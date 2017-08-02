@@ -25,7 +25,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeTable;
-import com.intellij.ui.*;
+import com.intellij.ui.BrowserHyperlinkListener;
+import com.intellij.ui.ClickListener;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLabelDecorator;
 import com.intellij.ui.components.panels.StatelessCardLayout;
@@ -47,7 +50,7 @@ public class InspectionNodeInfo extends JPanel {
   public InspectionNodeInfo(@NotNull final InspectionTree tree,
                             @NotNull final Project project) {
     setLayout(new GridBagLayout());
-    setBorder(IdeBorderFactory.createEmptyBorder(11, 0, 0, 0));
+    setBorder(JBUI.Borders.emptyTop(11));
     final InspectionToolWrapper toolWrapper = tree.getSelectedToolWrapper(false);
     LOG.assertTrue(toolWrapper != null);
     InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();

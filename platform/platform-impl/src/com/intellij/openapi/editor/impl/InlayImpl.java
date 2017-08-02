@@ -52,6 +52,14 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
     myEditor.getInlayModel().notifyChanged(this);
   }
 
+  @Override
+  public void repaint() {
+    if (isValid() && !myEditor.isDisposed()) {
+      int offset = getOffset();
+      myEditor.repaint(offset, offset, false);
+    }
+  }
+
   private void doUpdateSize() {
     myWidthInPixels = myRenderer.calcWidthInPixels(myEditor);
     if (myWidthInPixels <= 0) {
@@ -70,7 +78,13 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
   @Override
   protected void onReTarget(int startOffset, int endOffset, int destOffset) {
     if (DocumentUtil.isInsideSurrogatePair(getDocument(), getOffset())) {
-      invalidate("moved inside surrogate pair on retarget");
+      myEditor.getInlayModel().myMoveInProgress = true;
+      try {
+        invalidate("moved inside surrogate pair on retarget");
+      }
+      finally {
+        myEditor.getInlayModel().myMoveInProgress = false;
+      }
     }
   }
 

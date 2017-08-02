@@ -30,7 +30,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.IconUtil;
@@ -81,7 +80,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
                                          @Nullable Project project,
                                          @NotNull Presentation presentation) {
     if (project != null && target != null && settings != null) {
-      String name = RunManager.getShortenName(settings.getName());
+      String name = Executor.shortenNameIfNeed(settings.getName());
       if (target != DefaultExecutionTarget.INSTANCE) {
         name += " | " + target.getDisplayName();
       } else {
@@ -127,7 +126,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     ComboBoxButton button = createComboBoxButton(presentation);
     button.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
-    panel.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, 2));
+    panel.setBorder(JBUI.Borders.empty(0, 0, 0, 2));
     panel.add(button);
     return panel;
   }
@@ -207,7 +206,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
         disable(presentation);
       }
       else {
-        presentation.setText(ExecutionBundle.message("save.temporary.run.configuration.action.name", RunManager.getShortenName(settings.getName())));
+        presentation.setText(ExecutionBundle.message("save.temporary.run.configuration.action.name", Executor.shortenNameIfNeed(settings.getName())));
         presentation.setDescription(presentation.getText());
         presentation.setVisible(true);
         presentation.setEnabled(true);
@@ -268,7 +267,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     public SelectConfigAction(final RunnerAndConfigurationSettings configuration, final Project project) {
       myConfiguration = configuration;
       myProject = project;
-      String name = RunManager.getShortenName(configuration.getName());
+      String name = Executor.shortenNameIfNeed(configuration.getName());
       if (name.isEmpty()) {
         name = " ";
       }

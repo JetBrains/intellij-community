@@ -1,7 +1,6 @@
 # encoding: utf-8
 import atexit
 import zipfile
-import shutil
 
 # TODO: Move all CLR-specific functions to clr_tools
 
@@ -95,7 +94,8 @@ def is_skipped_module(path, f):
 def is_module(d, root):
     return (os.path.exists(os.path.join(root, d, "__init__.py")) or
             os.path.exists(os.path.join(root, d, "__init__.pyc")) or
-            os.path.exists(os.path.join(root, d, "__init__.pyo")))
+            os.path.exists(os.path.join(root, d, "__init__.pyo")) or
+            is_valid_implicit_namespace_package_name(d))
 
 
 def walk_python_path(path):
@@ -154,7 +154,7 @@ def list_binaries(paths):
     return list(res.values())
 
 
-def list_sources(paths, target_path):
+def list_sources(paths):
     #noinspection PyBroadException
     try:
         for path in paths:
@@ -162,29 +162,14 @@ def list_sources(paths, target_path):
 
             path = os.path.normpath(path)
 
-            target_dir_path = ''
-            extra_info = ''
-
             if path.endswith('.egg') and os.path.isfile(path):
-                if target_path is not None:
-                    extra_info = '\t' + os.path.basename(path)
-                say("%s\t%s\t%d%s", path, path, os.path.getsize(path), extra_info)
-            else:
-                target_dir_path = compute_path_hash(path)
-                if target_path is not None:
-                    extra_info = '\t' + target_dir_path
+                say("%s\t%s\t%d", path, path, os.path.getsize(path))
 
             for root, files in walk_python_path(path):
                 for name in files:
-                    if name.endswith('.py'):
+                    if name.endswith('.py') or name.endswith('-nspkg.pth'):
                         file_path = os.path.join(root, name)
-                        if target_path is not None:
-                            relpath = os.path.relpath(root, path)
-                            folder_path = os.path.join(target_path, target_dir_path, relpath)
-                            if not os.path.exists(folder_path):
-                                os.makedirs(folder_path)
-                            shutil.copyfile(file_path, os.path.join(folder_path, name))
-                        say("%s\t%s\t%d%s", os.path.normpath(file_path), path, os.path.getsize(file_path), extra_info)
+                        say("%s\t%s\t%d", os.path.normpath(file_path), path, os.path.getsize(file_path))
         say('END')
         sys.stdout.flush()
     except:
@@ -193,13 +178,6 @@ def list_sources(paths, target_path):
         traceback.print_exc()
         sys.exit(1)
 
-def compute_path_hash(path):
-    # computes hash string of provided path
-    h = 0
-    for c in path:
-        h = (31 * h + ord(c)) & 0xFFFFFFFF
-    h = ((h + 0x80000000) & 0xFFFFFFFF) - 0x80000000
-    return str(h)
 
 #noinspection PyBroadException
 def zip_sources(zip_path):
@@ -366,7 +344,7 @@ if __name__ == "__main__":
     from getopt import getopt
 
     helptext = get_help_text()
-    opts, args = getopt(sys.argv[1:], "d:hbqxvc:ps:C:LiSz")
+    opts, args = getopt(sys.argv[1:], "d:hbqxvc:ps:LiSz")
     opts = dict(opts)
 
     quiet = '-q' in opts
@@ -410,7 +388,7 @@ if __name__ == "__main__":
             report("Expected no args with -S, got %d args", len(args))
             sys.exit(1)
         say(VERSION)
-        list_sources(sys.path, opts.get('-C', None))
+        list_sources(sys.path)
         sys.exit(0)
 
     if "-z" in opts:

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@
  */
 package com.intellij.util.ui;
 
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -131,7 +130,7 @@ public class FormBuilder {
 
   public FormBuilder addTooltip(final String text) {
     final JBLabel label = new JBLabel(text, UIUtil.ComponentStyle.SMALL, UIUtil.FontColor.BRIGHTER);
-    label.setBorder(IdeBorderFactory.createEmptyBorder(0, 10, 0, 0));
+    label.setBorder(JBUI.Borders.emptyLeft(10));
     return addComponentToRightColumn(label, 1);
   }
 

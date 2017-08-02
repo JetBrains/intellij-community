@@ -16,6 +16,8 @@
 package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -30,5 +32,10 @@ public abstract class RunConfigurationTreeAction extends RunDashboardTreeAction<
   @Override
   protected Class<DashboardRunConfigurationNode> getTargetNodeClass() {
     return DashboardRunConfigurationNode.class;
+  }
+
+  @Override
+  protected boolean isVisibleForAnySelection(@NotNull AnActionEvent e) {
+    return false;
   }
 }
