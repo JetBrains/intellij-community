@@ -26,6 +26,8 @@ import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
 /**
+ * Consider using {@link DevKitUastInspectionBase} instead.
+ *
  * @author swr
  */
 public abstract class DevKitInspectionBase extends BaseJavaLocalInspectionTool {
