@@ -643,7 +643,6 @@ class RunConfigurable extends BaseConfigurable implements Disposable {
     final RunManagerImpl manager = getRunManager();
     manager.fireBeginUpdate();
     try {
-      updateActiveConfigurationFromSelected();
 
       TObjectIntHashMap<RunnerAndConfigurationSettings> settingsToOrder = new TObjectIntHashMap<>();
       int order = 0;
@@ -684,7 +683,7 @@ class RunConfigurable extends BaseConfigurable implements Disposable {
     finally {
       manager.fireEndUpdate();
     }
-
+    updateActiveConfigurationFromSelected();
     setModified(false);
     myTree.repaint();
   }
