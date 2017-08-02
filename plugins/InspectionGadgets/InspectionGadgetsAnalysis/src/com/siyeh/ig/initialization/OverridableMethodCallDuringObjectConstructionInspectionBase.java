@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,10 +63,6 @@ public class OverridableMethodCallDuringObjectConstructionInspectionBase extends
       }
       final PsiMethod calledMethod = expression.resolveMethod();
       if (calledMethod == null || !PsiUtil.canBeOverriden(calledMethod) || calledMethod.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
-        return;
-      }
-      final PsiClass calledMethodClass = calledMethod.getContainingClass();
-      if (calledMethodClass == null || !calledMethodClass.equals(containingClass)) {
         return;
       }
       registerMethodCallError(expression, expression);
