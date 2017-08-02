@@ -34,7 +34,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testIntegration.TestLocationProvider;
 import com.intellij.util.io.URLUtil;
@@ -245,7 +244,7 @@ public class SMTestRunnerConnectionUtil {
       if (URLUtil.FILE_PROTOCOL.equals(protocol)) {
         return FileUrlProvider.INSTANCE.getLocation(protocol, path, project, scope);
       }
-      else if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator) || Registry.is("dumb.aware.run.configurations")) {
+      else if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator)) {
         return myLocator.getLocation(protocol, path, project, scope);
       }
       else {

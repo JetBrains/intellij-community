@@ -84,7 +84,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
         configuration.checkSettings(executor)
       }
       catch (ignored: IndexNotReadyException) {
-        return Registry.`is`("dumb.aware.run.configurations")
+        return false
       }
       catch (ignored: RuntimeConfigurationError) {
         return false
