@@ -62,7 +62,8 @@ abstract public class LiveTemplateLookupElement extends LookupElement {
     presentation.setItemText(getItemText());
     if (sudden) {
       presentation.setItemTextBold(true);
-      if (!presentation.isReal() || !((RealLookupElementPresentation)presentation).isLookupSelectionTouched()) {
+      if (!(presentation instanceof RealLookupElementPresentation) || 
+          !((RealLookupElementPresentation)presentation).isLookupSelectionTouched()) {
         if (shortcut == TemplateSettings.DEFAULT_CHAR) {
           shortcut = TemplateSettings.getInstance().getDefaultShortcutChar();
         }
