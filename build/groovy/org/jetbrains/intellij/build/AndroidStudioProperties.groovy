@@ -113,6 +113,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
       withModule("android", "android.jar", false)
       withModule("android-plugin", "android.jar")
+      withModule("artwork")
       withModule("observable", "android.jar")
       withModule("observable-ui", "android.jar")
       withModule("flags", "android.jar")
