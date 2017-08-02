@@ -16,7 +16,8 @@
 package com.intellij.settingsSummary;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public interface ProblemType {
-  String collectInfo(Project project);
+  String collectInfo(@NotNull Project project);
 }
