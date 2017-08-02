@@ -191,6 +191,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
       if (myState.pid == null) {
         myState.pid = State.getPid();
       }
+      updateLastProjectPath();
       myState.validateRecentProjects();
       myState.updateOpenProjectsTimestamps(this);
       return myState;
