@@ -21,10 +21,8 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * In order to show run configurations of the specific configuration type in Run Dashboard tool window,
@@ -87,19 +85,5 @@ public abstract class RunDashboardContributor {
 
   public boolean handleDoubleClick(@NotNull RunConfiguration runConfiguration) {
     return false;
-  }
-
-  @Nullable
-  public static RunDashboardContributor getContributor(@NotNull ConfigurationType type) {
-    if (!Registry.is("ide.run.dashboard")) {
-      return null;
-    }
-
-    for (RunDashboardContributor contributor : EP_NAME.getExtensions()) {
-      if (type.equals(contributor.getType())) {
-        return contributor;
-      }
-    }
-    return null;
   }
 }

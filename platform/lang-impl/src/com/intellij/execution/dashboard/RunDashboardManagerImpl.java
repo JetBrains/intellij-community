@@ -16,6 +16,7 @@
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.*;
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.dashboard.tree.DashboardGrouper;
 import com.intellij.execution.impl.ExecutionManagerImpl;
@@ -189,7 +190,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     List<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>> result = new ArrayList<>();
 
     List<RunnerAndConfigurationSettings> configurations = RunManager.getInstance(myProject).getAllSettings().stream()
-      .filter(runConfiguration -> RunDashboardContributor.getContributor(runConfiguration.getType()) != null)
+      .filter(runConfiguration -> getContributor(runConfiguration.getType()) != null)
       .collect(Collectors.toList());
 
     //noinspection ConstantConditions ???
@@ -197,8 +198,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     configurations.forEach(configurationSettings -> {
       List<RunContentDescriptor> descriptors = filterByContent(executionManager.getDescriptors(
           settings -> Comparing.equal(settings.getConfiguration(), configurationSettings.getConfiguration())));
-      RunDashboardContributor contributor = RunDashboardContributor.getContributor(configurationSettings.getType());
-      if (descriptors.isEmpty() && contributor != null &&  contributor.isShowInDashboard(configurationSettings.getConfiguration())) {
+      if (descriptors.isEmpty() && isShowInDashboard(configurationSettings.getConfiguration())) {
         result.add(Pair.create(configurationSettings, null));
       }
       else {
@@ -211,7 +211,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     List<RunConfiguration> storedConfigurations = configurations.stream().map(RunnerAndConfigurationSettings::getConfiguration)
       .collect(Collectors.toList());
     List<RunContentDescriptor> notStoredDescriptors = filterByContent(executionManager.getRunningDescriptors(settings ->
-      RunDashboardContributor.getContributor(settings.getType()) != null && !storedConfigurations.contains(settings.getConfiguration())));
+      getContributor(settings.getType()) != null && !storedConfigurations.contains(settings.getConfiguration())));
     notStoredDescriptors.forEach(descriptor -> {
       Set<RunnerAndConfigurationSettings> settings = executionManager.getConfigurations(descriptor);
       settings.forEach(setting -> result.add(Pair.create(setting, descriptor)));
@@ -247,8 +247,29 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     return myDashboardContent.getAnimator();
   }
 
+  @Override
+  public boolean isShowInDashboard(@NotNull  RunConfiguration runConfiguration) {
+    RunDashboardContributor contributor = getContributor(runConfiguration.getType());
+    return contributor != null && contributor.isShowInDashboard(runConfiguration);
+  }
+
+  @Override
+  @Nullable
+  public RunDashboardContributor getContributor(@NotNull ConfigurationType type) {
+    if (!Registry.is("ide.run.dashboard")) {
+      return null;
+    }
+
+    for (RunDashboardContributor contributor : RunDashboardContributor.EP_NAME.getExtensions()) {
+      if (type.equals(contributor.getType())) {
+        return contributor;
+      }
+    }
+    return null;
+  }
+
   private void updateDashboardIfNeeded(@Nullable RunnerAndConfigurationSettings settings) {
-    if (settings != null && RunDashboardContributor.getContributor(settings.getType()) != null) {
+    if (settings != null && getContributor(settings.getType()) != null) {
       updateDashboard(true);
     }
   }

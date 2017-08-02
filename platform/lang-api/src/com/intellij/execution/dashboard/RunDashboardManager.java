@@ -16,6 +16,8 @@
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -23,6 +25,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +35,7 @@ import java.util.List;
 /**
  * @author konstantin.aleev
  */
+@ApiStatus.Experimental
 public interface RunDashboardManager {
   Topic<DashboardListener> DASHBOARD_TOPIC =
     Topic.create("run dashboard", DashboardListener.class, Topic.BroadcastDirection.TO_PARENT);
@@ -58,4 +62,9 @@ public interface RunDashboardManager {
 
   @Nullable
   RunDashboardAnimator getAnimator();
+
+  boolean isShowInDashboard(@NotNull RunConfiguration runConfiguration);
+
+  @Nullable
+  RunDashboardContributor getContributor(@NotNull ConfigurationType type);
 }

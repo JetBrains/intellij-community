@@ -232,7 +232,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
         if (myLastSelection instanceof DashboardRunConfigurationNode && myLastSelection.getChildren().isEmpty()) {
           DashboardRunConfigurationNode node = (DashboardRunConfigurationNode)myLastSelection;
           RunnerAndConfigurationSettings settings = node.getConfigurationSettings();
-          RunDashboardContributor contributor = RunDashboardContributor.getContributor(settings.getType());
+          RunDashboardContributor contributor = RunDashboardManager.getInstance(myProject).getContributor(settings.getType());
           if (contributor != null) {
             return contributor.handleDoubleClick(settings.getConfiguration());
           }
