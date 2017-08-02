@@ -195,7 +195,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
 
       private void consoleExec(String command) {
-        myDebugProcess.consoleExec(command, new PyDebugCallback<String>() {
+        getPyDebugProcess().consoleExec(command, new PyDebugCallback<String>() {
           @Override
           public void ok(String value) {
 
@@ -221,7 +221,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       public void testing() throws Exception {
         waitForPause();
 
-        List<PydevCompletionVariant> list = myDebugProcess.getCompletions("xvalu");
+        List<PydevCompletionVariant> list = getPyDebugProcess().getCompletions("xvalu");
         assertEquals(2, list.size());
       }
     });

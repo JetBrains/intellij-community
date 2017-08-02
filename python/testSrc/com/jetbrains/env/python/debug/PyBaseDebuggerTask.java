@@ -53,7 +53,7 @@ import java.util.concurrent.Semaphore;
  */
 public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   private Set<Pair<String, Integer>> myBreakpoints = Sets.newHashSet();
-  protected PyDebugProcess myDebugProcess;
+  protected XDebugProcess myDebugProcess;
   protected XDebugSession mySession;
   protected Semaphore myPausedSemaphore;
   protected Semaphore myTerminateSemaphore;
@@ -71,6 +71,9 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
 
     XDebuggerTestUtil.waitForSwing();
   }
+
+  abstract PyDebugProcess getPyDebugProcess();
+
 
   protected void waitForTerminate() throws InterruptedException, InvocationTargetException {
     setProcessCanTerminate(true);
@@ -133,7 +136,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     Assert.assertTrue(currentSession.isSuspended());
     Assert.assertEquals(0, myPausedSemaphore.availablePermits());
 
-    myDebugProcess.startSmartStepInto(funcName);
+    getPyDebugProcess().startSmartStepInto(funcName);
   }
 
   @NotNull
@@ -232,7 +235,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   }
 
   public String getRunningThread() {
-    for (PyThreadInfo thread : myDebugProcess.getThreads()) {
+    for (PyThreadInfo thread : getPyDebugProcess().getThreads()) {
       if (!thread.isPydevThread()) {
         if ((thread.getState() == null) || (thread.getState() == PyThreadInfo.State.RUNNING)) {
           return thread.getName();
@@ -247,7 +250,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     final PyReferringObjectsValue value = new PyReferringObjectsValue((PyDebugValue)var);
     EvaluationCallback callback = new EvaluationCallback();
 
-    myDebugProcess.loadReferrers(value, new PyDebugCallback<XValueChildrenList>() {
+    getPyDebugProcess().loadReferrers(value, new PyDebugCallback<XValueChildrenList>() {
       @Override
       public void ok(XValueChildrenList valueList) {
         callback.evaluated(valueList.size());
@@ -276,7 +279,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
 
   protected void setVal(String name, String value) throws InterruptedException, PyDebuggerException {
     XValue var = XDebuggerTestUtil.evaluate(mySession, name).first;
-    myDebugProcess.changeVariable((PyDebugValue)var, value);
+    getPyDebugProcess().changeVariable((PyDebugValue)var, value);
   }
 
   public void waitForOutput(String... string) throws InterruptedException {
