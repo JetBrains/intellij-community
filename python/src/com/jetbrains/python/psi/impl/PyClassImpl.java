@@ -1494,7 +1494,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         .orElse(null);
     }
 
-    return objectType;
+    return objectType == null ? null : objectType.toClass();
   }
 
   @NotNull
