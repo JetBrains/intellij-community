@@ -2263,6 +2263,19 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-24960
+  public void testOperatorReturnsAny() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("Union[bool, Any]",
+                   "from typing import Any\n" +
+                   "class Bar:\n" +
+                   "    def __eq__(self, other) -> Any:\n" +
+                   "        pass\n" +
+                   "expr = (Bar() == 2)")
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
