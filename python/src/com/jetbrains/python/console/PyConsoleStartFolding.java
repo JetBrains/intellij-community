@@ -88,6 +88,7 @@ public class PyConsoleStartFolding implements ConsoleCommunicationListener, Fold
       if (myStartFoldRegion != null) {
         foldingModel.removeFoldRegion(myStartFoldRegion);
       }
+      if (start > finish) return;
       FoldRegion foldRegion = foldingModel.addFoldRegion(start, finish, placeholderText);
       if (foldRegion != null) {
         foldRegion.setExpanded(false);
