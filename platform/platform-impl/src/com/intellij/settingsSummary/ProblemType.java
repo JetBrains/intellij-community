@@ -18,6 +18,10 @@ package com.intellij.settingsSummary;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Implement this interface and register the implementation as com.intellij.settingsSummaryFactory extension
+ * to see result of {@link #collectInfo} in Help|Settings Summary dialog.
+ */
 public interface ProblemType {
   String collectInfo(@NotNull Project project);
 }
