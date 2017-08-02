@@ -293,6 +293,11 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
   }
 
   void removeRegionFromTree(@NotNull FoldRegionImpl region) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (!myEditor.getFoldingModel().isInBatchFoldingOperation()) {
+      LOG.error("Fold regions must be added or removed inside batchFoldProcessing() only.");
+    }
+    myFoldRegionsProcessed = true;
     myRegionTree.removeInterval(region);
   }
 
