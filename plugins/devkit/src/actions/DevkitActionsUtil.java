@@ -126,11 +126,11 @@ public final class DevkitActionsUtil {
   @Nullable
   private static Module getModule(PsiDirectory dir) {
     Project project = dir.getProject();
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
-    final VirtualFile vFile = dir.getVirtualFile();
+    VirtualFile vFile = dir.getVirtualFile();
     if (fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile)) {
-      final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(vFile);
+      List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(vFile);
       if (orderEntries.isEmpty()) {
         return null;
       }
@@ -138,7 +138,7 @@ public final class DevkitActionsUtil {
       for (OrderEntry orderEntry : orderEntries) {
         modules.add(orderEntry.getOwnerModule());
       }
-      final Module[] candidates = modules.toArray(new Module[modules.size()]);
+      Module[] candidates = modules.toArray(new Module[modules.size()]);
       Arrays.sort(candidates, ModuleManager.getInstance(project).moduleDependencyComparator());
       return candidates[0];
     }
@@ -146,7 +146,7 @@ public final class DevkitActionsUtil {
   }
 
   private static void addPluginModule(Module module, Set<XmlFile> pluginXmlsToPatch) {
-    final XmlFile pluginXml = PluginModuleType.getPluginXml(module);
+    XmlFile pluginXml = PluginModuleType.getPluginXml(module);
     if (pluginXml != null) pluginXmlsToPatch.add(pluginXml);
   }
 }

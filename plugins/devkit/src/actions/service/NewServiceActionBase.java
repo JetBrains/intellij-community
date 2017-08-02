@@ -67,7 +67,7 @@ public abstract class NewServiceActionBase extends CreateInDirectoryActionBase i
   }
 
   @Override
-  public final void actionPerformed(final AnActionEvent e) {
+  public final void actionPerformed(AnActionEvent e) {
     IdeView view = e.getData(LangDataKeys.IDE_VIEW);
     if (view == null) {
       return;
@@ -249,7 +249,7 @@ public abstract class NewServiceActionBase extends CreateInDirectoryActionBase i
           implementationName, JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME, myDirectory);
 
         // make service implementation implement service interface
-        JavaPsiFacade facade = JavaPsiFacade.getInstance(myDirectory.getProject());
+        JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
         PsiElementFactory factory = facade.getElementFactory();
         PsiJavaCodeReferenceElement interfaceReference =
           factory.createReferenceElementByFQClassName(createdInterface.getQualifiedName(), createdImplementation.getResolveScope());
@@ -299,9 +299,9 @@ public abstract class NewServiceActionBase extends CreateInDirectoryActionBase i
     }
 
     private void patchPluginXml(@Nullable PsiClass createdInterface, @NotNull PsiClass createdImplementation, XmlFile pluginXml) {
-      DescriptorUtil.checkPluginXmlsWritable(createdImplementation.getProject(), pluginXml);
+      DescriptorUtil.checkPluginXmlsWritable(getProject(), pluginXml);
 
-      DomFileElement<IdeaPlugin> fileElement = DomManager.getDomManager(pluginXml.getProject()).getFileElement(pluginXml, IdeaPlugin.class);
+      DomFileElement<IdeaPlugin> fileElement = DomManager.getDomManager(getProject()).getFileElement(pluginXml, IdeaPlugin.class);
       if (fileElement == null) {
         throw new IncorrectOperationException(DevKitBundle.message("error.cannot.process.plugin.xml", pluginXml));
       }

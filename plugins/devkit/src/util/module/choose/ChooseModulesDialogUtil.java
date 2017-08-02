@@ -35,7 +35,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
 
-class ChooseModulesDialogUtil {
+final class ChooseModulesDialogUtil {
   private ChooseModulesDialogUtil() {
   }
 
@@ -55,28 +55,28 @@ class ChooseModulesDialogUtil {
   }
 
   private static class MyTableCellRenderer implements TableCellRenderer {
-    private final JList myList;
     private final Project myProject;
-    private final ColoredListCellRenderer myCellRenderer;
+    private final JList<Module> myList;
+    private final ColoredListCellRenderer<Module> myCellRenderer;
 
     public MyTableCellRenderer(Project project) {
       myProject = project;
-      myList = new JBList();
-      myCellRenderer = new ColoredListCellRenderer() {
-        protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
-          final Module module = ((Module)value);
-          setIcon(ModuleType.get(module).getIcon());
-          append(module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      myList = new JBList<>();
+      myCellRenderer = new ColoredListCellRenderer<Module>() {
+        protected void customizeCellRenderer(@NotNull JList list, Module value, int index, boolean selected, boolean hasFocus) {
+          setIcon(ModuleType.get(value).getIcon());
+          append(value.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
-          final XmlFile pluginXml = PluginModuleType.getPluginXml(module);
+          XmlFile pluginXml = PluginModuleType.getPluginXml(value);
           assert pluginXml != null;
 
-          final VirtualFile virtualFile = pluginXml.getVirtualFile();
+          VirtualFile virtualFile = pluginXml.getVirtualFile();
           assert virtualFile != null;
-          final VirtualFile projectPath = myProject.getBaseDir();
+          VirtualFile projectPath = myProject.getBaseDir();
           assert projectPath != null;
           if (VfsUtilCore.isAncestor(projectPath, virtualFile, false)) {
-            append(" (" + VfsUtilCore.getRelativePath(virtualFile, projectPath, File.separatorChar) + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+            append(" (" + VfsUtilCore.getRelativePath(virtualFile, projectPath, File.separatorChar) + ")",
+                   SimpleTextAttributes.GRAYED_ATTRIBUTES);
           } else {
             append(" (" + virtualFile.getPresentableUrl() + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
@@ -85,7 +85,7 @@ class ChooseModulesDialogUtil {
     }
 
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      return myCellRenderer.getListCellRendererComponent(myList, value, row, isSelected, hasFocus);
+      return myCellRenderer.getListCellRendererComponent(myList, (Module)value, row, isSelected, hasFocus);
     }
   }
 }

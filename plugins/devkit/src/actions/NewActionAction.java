@@ -49,7 +49,7 @@ public class NewActionAction extends CreateElementActionBase implements Descript
   @NotNull
   @Override
   protected final PsiElement[] invokeDialog(Project project, PsiDirectory directory) {
-    final PsiElement[] psiElements = doInvokeDialog(project, directory);
+    PsiElement[] psiElements = doInvokeDialog(project, directory);
     return psiElements == DevkitActionsUtil.CANCELED ? PsiElement.EMPTY_ARRAY : psiElements;
   }
 
@@ -75,16 +75,16 @@ public class NewActionAction extends CreateElementActionBase implements Descript
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(AnActionEvent e) {
     super.update(e);
 
-    final Presentation presentation = e.getPresentation();
+    Presentation presentation = e.getPresentation();
     if (presentation.isEnabled()) {
-      final Project project = e.getProject();
-      final Module module = e.getData(LangDataKeys.MODULE);
+      Project project = e.getProject();
+      Module module = e.getData(LangDataKeys.MODULE);
       if (project != null && module != null &&
           PsiUtil.isPluginModule(module)) {
-        final IdeView view = e.getData(LangDataKeys.IDE_VIEW);
+        IdeView view = e.getData(LangDataKeys.IDE_VIEW);
         if (view != null) {
           // from com.intellij.ide.actions.CreateClassAction.update()
           ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
@@ -117,7 +117,7 @@ public class NewActionAction extends CreateElementActionBase implements Descript
 
 
   @Override
-  public void patchPluginXml(final XmlFile pluginXml, final PsiClass klass) throws IncorrectOperationException {
+  public void patchPluginXml(XmlFile pluginXml, PsiClass klass) throws IncorrectOperationException {
     ActionType.ACTION.patchPluginXml(pluginXml, klass, myDialog);
   }
 
