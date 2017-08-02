@@ -45,11 +45,11 @@ public abstract class PyEnvTestCase {
 
   private static final String TAGS_FILE = "tags.txt";
   /**
-   * Platform-specific separated list of python interpreters
+   * Folder with python interpreters.
    */
-  private static final String PYCHARM_PYTHON_ENVS = "PYCHARM_PYTHON_ENVS";
+  private static final String PYCHARM_PYTHON_ENVS = "PYCHARM_PYTHONS";
   /**
-   * Folder with virtual envs (python interpreters).
+   * Folder with virtual envs.
    */
   private static final String PYCHARM_PYTHON_VIRTUAL_ENVS = "PYCHARM_PYTHON_VIRTUAL_ENVS";
 
@@ -268,30 +268,27 @@ public abstract class PyEnvTestCase {
 
     String envs = System.getenv(PYCHARM_PYTHON_ENVS);
     if (envs != null) {
-      roots.addAll(Lists.newArrayList(envs.split(File.pathSeparator)));
+      roots.addAll(readEnvRoots(envs));
     }
 
     String virtualEnvs = System.getenv(PYCHARM_PYTHON_VIRTUAL_ENVS);
-
     if (virtualEnvs != null) {
-      roots.addAll(readVirtualEnvRoots(virtualEnvs));
+      roots.addAll(readEnvRoots(virtualEnvs));
     }
+
     return roots;
   }
 
-  protected static List<String> readVirtualEnvRoots(@NotNull String envs) {
+  protected static List<String> readEnvRoots(@NotNull String envPaths) {
     List<String> result = Lists.newArrayList();
-    String[] roots = envs.split(File.pathSeparator);
+    String[] roots = envPaths.split(File.pathSeparator);
     for (String root : roots) {
-      File virtualEnvRoot = new File(root);
-      File[] virtualenvs = virtualEnvRoot.listFiles();
-      if (virtualenvs != null) {
-        for (File f : virtualenvs) {
+      File envRoot = new File(root);
+      File[] envs = envRoot.listFiles();
+      if (envs != null) {
+        for (File f : envs) {
           result.add(f.getAbsolutePath());
         }
-      }
-      else {
-        LOG.error(root + " is not a directory of doesn't exist");
       }
     }
 
