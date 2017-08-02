@@ -28,7 +28,8 @@ internal class BinaryXmlWriter(private val out: DataOutputStream) {
   }
 
   private fun writeString(string: String) {
-    if (string.isEmpty()) {
+    @Suppress("ReplaceSizeZeroCheckWithIsEmpty")
+    if (string.length == 0) {
       out.write(1)
       return
     }
