@@ -26,6 +26,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.NullableFunction;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.util.PointableCandidate;
 
@@ -58,16 +59,19 @@ class LineMarkerInfoHelper {
   }
 
 
+  @NotNull
   public static RelatedItemLineMarkerInfo<PsiElement> createExtensionLineMarkerInfo(List<? extends PointableCandidate> targets,
                                                                                  PsiElement element) {
     return createPluginLineMarkerInfo(targets, element, "Choose Extension", EXTENSION_NAMER);
   }
 
+  @NotNull
   public static RelatedItemLineMarkerInfo<PsiElement> createExtensionPointLineMarkerInfo(List<? extends PointableCandidate> targets,
                                                                                     PsiElement element) {
     return createPluginLineMarkerInfo(targets, element, "Choose Extension Point", EXTENSION_POINT_NAMER);
   }
 
+  @NotNull
   private static RelatedItemLineMarkerInfo<PsiElement> createPluginLineMarkerInfo(List<? extends PointableCandidate> targets,
                                                                                   PsiElement element, String popup,
                                                                                   NullableFunction<PointableCandidate, String> namer) {
@@ -80,6 +84,7 @@ class LineMarkerInfoHelper {
       .createLineMarkerInfo(element);
   }
 
+  @NotNull
   private static NullableFunction<PointableCandidate, String> createNamer(String tooltipPatternPropertyName,
                                                                           NotNullFunction<XmlTag, String> nameProvider) {
     return target -> {
