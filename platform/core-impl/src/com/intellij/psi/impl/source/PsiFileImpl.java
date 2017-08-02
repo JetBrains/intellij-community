@@ -794,6 +794,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     }
   }
 
+  FileTrees getFileTrees() {
+    return myTrees;
+  }
+
   private void bindStubsToCachedPsi(StubTree stubTree) {
     for (StubBasedPsiElementBase<?> psi : myRefToPsi.getAllCachedPsi()) {
       int index = psi.getStubIndex();
