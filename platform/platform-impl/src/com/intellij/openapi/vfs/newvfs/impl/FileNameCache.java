@@ -35,10 +35,6 @@ public class FileNameCache {
   @SuppressWarnings("unchecked") private final IntSLRUCache<IntObjectLinkedMap.MapEntry<CharSequence>>[] myNameCache = new IntSLRUCache[16];
   private final IntObjectLinkedMap.MapEntry<CharSequence>[] myArrayCache = new IntObjectLinkedMap.MapEntry[ourLOneSize];
 
-  public static FileNameCache getInstance() {
-    return ((PersistentFSImpl)(PersistentFS.getInstance())).getNamesCache();
-  }
-
   public FileNameCache(PersistentStringEnumerator names) {
     myNames = names;
     final int protectedSize = 40000 / myNameCache.length;

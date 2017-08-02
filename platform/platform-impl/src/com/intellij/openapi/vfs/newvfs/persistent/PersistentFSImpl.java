@@ -76,6 +76,10 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   private PersistentStringEnumerator myNames;
   private FileNameCache myNamesCache;
 
+  public static PersistentFSImpl getImpl() {
+    return (PersistentFSImpl)PersistentFS.getInstance();
+  }
+
   @TestOnly
   public FSRecords getRecords() {
     return myRecords;
@@ -308,11 +312,11 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return myRecords.getModCount();
   }
 
-  private boolean   writeAttributesToRecord(final int id,
-                                                 final int parentId,
-                                                 @NotNull VirtualFile file,
-                                                 @NotNull NewVirtualFileSystem fs,
-                                                 @NotNull FileAttributes attributes) {
+  private boolean writeAttributesToRecord(final int id,
+                                          final int parentId,
+                                          @NotNull VirtualFile file,
+                                          @NotNull NewVirtualFileSystem fs,
+                                          @NotNull FileAttributes attributes) {
     assert id > 0 : id;
     String name = file.getName();
     if (!name.isEmpty()) {

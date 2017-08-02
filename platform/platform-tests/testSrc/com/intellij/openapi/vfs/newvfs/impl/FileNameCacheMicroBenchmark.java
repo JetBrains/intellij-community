@@ -17,6 +17,7 @@ package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.IdeaTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -65,7 +66,7 @@ public class FileNameCacheMicroBenchmark {
       final int blackHole = threadRandom.nextInt();
 
       for (int j = 0; j < queryCount; j++) {
-        final CharSequence name = FileNameCache.getInstance().getVFileName(ids[threadRandom.nextInt(ids.length)]);
+        final CharSequence name = PersistentFSImpl.getImpl().getNamesCache().getVFileName(ids[threadRandom.nextInt(ids.length)]);
 
         if (blackHole == name.hashCode() && blackHole+1 == name.hashCode()) {
           failure();
@@ -161,7 +162,7 @@ public class FileNameCacheMicroBenchmark {
     int result = 0;
 
     while (id > 0) {
-      result += FileNameCache.getInstance().getVFileName(ids[id]).hashCode();
+      result += PersistentFSImpl.getImpl().getNamesCache().getVFileName(ids[id]).hashCode();
       id /= 10;
     }
     return result;
@@ -208,7 +209,7 @@ public class FileNameCacheMicroBenchmark {
 
   private static void checkNames(TIntObjectHashMap<CharSequence> map, int[] ids) {
     for (int id : ids) {
-      Assert.assertEquals(map.get(id), FileNameCache.getInstance().getVFileName(id).toString());
+      Assert.assertEquals(map.get(id), PersistentFSImpl.getImpl().getNamesCache().getVFileName(id).toString());
     }
   }
 
@@ -218,7 +219,7 @@ public class FileNameCacheMicroBenchmark {
     TIntObjectHashMap<CharSequence> map = new TIntObjectHashMap<>();
     for (int i = 0; i < nameCount; i++) {
       String name = "some_name_" + random.nextInt() + StringUtil.repeat("a", random.nextInt(10));
-      int id = FileNameCache.getInstance().storeName(name);
+      int id = PersistentFSImpl.getImpl().getNamesCache().storeName(name);
       map.put(id, name);
     }
     return map;

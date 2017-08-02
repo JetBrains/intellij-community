@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ConcurrentBitSet;
@@ -175,7 +176,7 @@ public class VfsData {
   }
 
   static CharSequence getNameByFileId(int id) {
-    return FileNameCache.getInstance().getVFileName(assertNotNull(getSegment(id, false)).getNameId(id));
+    return PersistentFSImpl.getImpl().getNamesCache().getVFileName(assertNotNull(getSegment(id, false)).getNameId(id));
   }
 
   static boolean isFileValid(int id) {
