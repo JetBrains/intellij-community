@@ -29,11 +29,11 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
-import org.jetbrains.idea.devkit.util.ChooseModulesDialog;
+import org.jetbrains.idea.devkit.util.module.choose.ChooseMultipleModulesDialog;
+import org.jetbrains.idea.devkit.util.module.choose.ChooseSingleModuleDialog;
 
 import java.util.*;
 
@@ -46,12 +46,30 @@ public final class DevkitActionsUtil {
   public static final PsiClass[] CANCELED = new PsiClass[1];
 
 
-  @NotNull
-  public static PsiClass[] createSinglePluginClass(String name, String classTemplateName, PsiDirectory directory,
-                                              Set<XmlFile> pluginXmlsToPatch, Presentation templatePresentation) {
+  /**
+   * @return selected plugin descriptor or null if canceled.
+   * @throws IncorrectOperationException if no plugin descriptors found.
+   */
+  @Nullable
+  public static XmlFile showChooseModuleDialog(PsiDirectory directory, Presentation templatePresentation) {
+    XmlFile[] result = doShowChooseModulesDialog(false, directory, templatePresentation);
+    return result == null ? null : result[0];
+  }
+
+  /**
+   * @return selected plugin descriptors (never an empty array) or null if canceled.
+   * @throws IncorrectOperationException if no plugin descriptors found.
+   */
+  @Nullable
+  public static XmlFile[] showChooseModulesDialog(PsiDirectory directory, Presentation templatePresentation) {
+    return doShowChooseModulesDialog(true, directory, templatePresentation);
+  }
+
+  private static XmlFile[] doShowChooseModulesDialog(boolean multiple, PsiDirectory directory, Presentation templatePresentation) {
     Project project = directory.getProject();
     Module module = getModule(directory);
 
+    Set<XmlFile> pluginXmlsToPatch = new HashSet<>();
     if (module != null) {
       addPluginModule(module, pluginXmlsToPatch);
 
@@ -65,27 +83,35 @@ public final class DevkitActionsUtil {
 
         if (candidateModules.size() == 1) {
           addPluginModule(candidateModules.get(0), pluginXmlsToPatch);
-        }
-        else {
-          ChooseModulesDialog dialog = new ChooseModulesDialog(project, candidateModules, templatePresentation.getDescription());
-          if (!dialog.showAndGet()) {
-            // create() should return CANCELED now
-            return CANCELED;
-          }
-          else {
-            List<Module> modules = dialog.getSelectedModules();
-            for (Module m : modules) {
-              addPluginModule(m, pluginXmlsToPatch);
+        } else {
+          if (multiple) {
+            ChooseMultipleModulesDialog dialog =
+              new ChooseMultipleModulesDialog(project, candidateModules, templatePresentation.getDescription());
+            if (!dialog.showAndGet()) {
+              return null; // canceled
             }
+            List<Module> modules = dialog.getSelectedModules();
+            modules.forEach(m -> addPluginModule(m, pluginXmlsToPatch));
+          } else {
+            ChooseSingleModuleDialog dialog =
+              new ChooseSingleModuleDialog(project, candidateModules, templatePresentation.getDescription());
+            if (!dialog.showAndGet()) {
+              return null; // canceled
+            }
+            addPluginModule(dialog.getSelectedModule(), pluginXmlsToPatch);
           }
         }
       }
     }
 
-    if (pluginXmlsToPatch.size() == 0) {
+    if (pluginXmlsToPatch.isEmpty()) {
       throw new IncorrectOperationException(DevKitBundle.message("error.no.plugin.xml"));
     }
 
+    return pluginXmlsToPatch.toArray(new XmlFile[pluginXmlsToPatch.size()]);
+  }
+
+  public static PsiClass createSingleClass(String name, String classTemplateName, PsiDirectory directory) {
     if (name.contains(".")) {
       String[] names = name.split("\\.");
       for (int i = 0; i < names.length - 1; i++) {
@@ -94,8 +120,7 @@ public final class DevkitActionsUtil {
       name = names[names.length - 1];
     }
 
-    PsiClass klass = JavaDirectoryService.getInstance().createClass(directory, name, classTemplateName);
-    return new PsiClass[] {klass};
+    return JavaDirectoryService.getInstance().createClass(directory, name, classTemplateName);
   }
 
   @Nullable

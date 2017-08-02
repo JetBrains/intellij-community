@@ -34,8 +34,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
-import org.jetbrains.idea.devkit.util.ChooseModulesDialog;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
+import org.jetbrains.idea.devkit.util.module.choose.ChooseMultipleModulesDialog;
 
 import java.util.List;
 
@@ -93,7 +93,7 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
         else {
           List<Module> modules = PluginModuleType.getCandidateModules(module);
           if (modules.size() > 1) {
-            ChooseModulesDialog dialog = new ChooseModulesDialog(project, modules, getName());
+            ChooseMultipleModulesDialog dialog = new ChooseMultipleModulesDialog(project, modules, getName());
             if (!dialog.showAndGet()) {
               return;
             }
