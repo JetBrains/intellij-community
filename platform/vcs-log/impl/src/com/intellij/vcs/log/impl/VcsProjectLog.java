@@ -207,13 +207,15 @@ public class VcsProjectLog implements Disposable {
     public void runActivity(@NotNull Project project) {
       if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) return;
 
-      VcsProjectLog projectLog = getInstance(project);
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        VcsProjectLog projectLog = getInstance(project);
 
-      MessageBusConnection connection = project.getMessageBus().connect(project);
-      connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, projectLog::recreateLog);
-      if (projectLog.hasDvcsRoots()) {
-        projectLog.createLog();
-      }
+        MessageBusConnection connection = project.getMessageBus().connect(project);
+        connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, projectLog::recreateLog);
+        if (projectLog.hasDvcsRoots()) {
+          projectLog.createLog();
+        }
+      });
     }
   }
 
