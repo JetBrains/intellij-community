@@ -397,6 +397,16 @@ public class ControlFlowUtils {
     }
   }
 
+
+  @NotNull
+  public static PsiStatement[] unwrapBlock(@Nullable PsiStatement statement) {
+    PsiBlockStatement block = ObjectUtils.tryCast(statement, PsiBlockStatement.class);
+    if (block != null) {
+      return block.getCodeBlock().getStatements();
+    }
+    return statement == null ? PsiStatement.EMPTY_ARRAY : new PsiStatement[]{statement};
+  }
+
   public static boolean statementCompletesWithStatement(@NotNull PsiStatement containingStatement, @NotNull PsiStatement statement) {
     PsiElement statementToCheck = statement;
     while (true) {

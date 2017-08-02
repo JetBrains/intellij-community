@@ -157,6 +157,14 @@ public class StreamApiMigrationInspectionTest {
     }
   }
 
+
+  public static class JoiningTest extends StreamApiMigrationInspectionBaseTest {
+    @Override
+    String getFolder() {
+      return "joining";
+    }
+  }
+
   public static class LimitTest extends StreamApiMigrationInspectionBaseTest {
     @Override
     String getFolder() {

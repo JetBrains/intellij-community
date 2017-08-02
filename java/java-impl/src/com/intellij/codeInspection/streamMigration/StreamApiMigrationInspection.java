@@ -473,8 +473,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       if (isCountOperation(nonFinalVariables, tb)) {
         return new CountMigration(true);
       }
-      if (nonFinalVariables.isEmpty()) {
-        CollectMigration.CollectTerminal terminal = CollectMigration.extractCollectTerminal(tb);
+      if (nonFinalVariables.size() == 0) {
+        CollectMigration.CollectTerminal terminal = CollectMigration.extractCollectTerminal(tb, nonFinalVariables);
         if (terminal != null) {
           boolean addAll = loop instanceof PsiForeachStatement && !tb.hasOperations() && isAddAllCall(tb);
           // Don't suggest to convert the loop which can be trivially replaced via addAll:
@@ -486,6 +486,9 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                                !terminal.isTrivial();
           return new CollectMigration(shouldWarn, terminal.getMethodName());
         }
+      }
+      if(JoiningMigration.extractTerminal(tb, nonFinalVariables) != null) {
+        return new JoiningMigration(true);
       }
       if (tb.getCountExpression() != null || tb.isEmpty()) return null;
       if (nonFinalVariables.isEmpty() && extractArray(tb) != null) {
@@ -1100,6 +1103,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
     CountingLoopSource withBound(PsiExpression bound) {
       return new CountingLoopSource(getLoop(), getVariable(), getExpression(), bound, myIncluding);
+    }
+
+    CountingLoopSource withInitializer(PsiExpression expression) {
+      return new CountingLoopSource(getLoop(), getVariable(), expression, myBound, myIncluding);
     }
 
     @Override

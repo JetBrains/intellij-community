@@ -7,7 +7,7 @@ public class Test {
     StringBuilder sb = new StringBuilder("[");
     for (String s : li<caret>st) {
       if (!s.isEmpty()) {
-        if(sb.length() > 0) sb.append(',');
+        if(sb.length() > 1) sb.append(',');
         sb.append(s);
       }
     }

@@ -1004,6 +1004,14 @@ public class ExpressionUtils {
     return expression;
   }
 
+  @Contract(value = "null -> null")
+  @Nullable
+  public static PsiLocalVariable resolveLocalVariable(@Nullable PsiExpression expression) {
+    PsiReferenceExpression referenceExpression = ObjectUtils.tryCast(expression, PsiReferenceExpression.class);
+    if(referenceExpression == null) return null;
+    return ObjectUtils.tryCast(referenceExpression.resolve(), PsiLocalVariable.class);
+  }
+
   public static boolean isOctalLiteral(PsiLiteralExpression literal) {
     final PsiType type = literal.getType();
     if (!PsiType.INT.equals(type) && !PsiType.LONG.equals(type)) {
