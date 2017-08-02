@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,11 @@
  */
 package com.intellij.ui.dualView;
 
-import javax.swing.*;
-import java.awt.*;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * author: lesya
- */
-public interface CellWrapper{
-  void wrap(Component component, JTable table,
-                                                 Object value,
-                                                 boolean isSelected,
-                                                 boolean hasFocus,
-                                                 int row,
-                                                 int column, Object treeNode);
+import javax.swing.table.TableCellRenderer;
+
+public interface TableCellRendererWrapper extends TableCellRenderer {
+  @NotNull
+  TableCellRenderer getBaseRenderer();
 }

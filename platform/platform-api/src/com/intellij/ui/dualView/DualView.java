@@ -65,7 +65,6 @@ public class DualView extends JPanel {
   private JBTable myCurrentView;
   private TableView myFlatView;
   private boolean myRootVisible;
-  private CellWrapper myCellWrapper;
 
   private final Storage.PropertiesComponentStorage myFlatStorage;
   private final Storage.PropertiesComponentStorage myTreeStorage;
@@ -201,10 +200,6 @@ public class DualView extends JPanel {
 
   private Component createTreeComponent(DualViewColumnInfo[] columns, TreeNode root) {
     myTreeView = new TreeTableView(new ListTreeTableModelOnColumns(root, createTreeColumns(columns))) {
-      public TableCellRenderer getCellRenderer(int row, int column) {
-        return createWrappedRenderer(super.getCellRenderer(row, column));
-      }
-
       @Override
       public void doLayout() {
         try {
@@ -235,10 +230,6 @@ public class DualView extends JPanel {
     ListTableModel flatModel = new ListTableModel(shownColumns.toArray(new ColumnInfo[shownColumns.size()]));
     //noinspection unchecked
     myFlatView = new TableView(flatModel) {
-      public TableCellRenderer getCellRenderer(int row, int column) {
-        return createWrappedRenderer(super.getCellRenderer(row, column));
-      }
-
       @NotNull
       @Override
       public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
@@ -274,15 +265,6 @@ public class DualView extends JPanel {
     JPanel result = new JPanel(new BorderLayout());
     result.add(ScrollPaneFactory.createScrollPane(myFlatView), BorderLayout.CENTER);
     return result;
-  }
-
-  private TableCellRenderer createWrappedRenderer(final TableCellRenderer renderer) {
-    if (myCellWrapper == null) {
-      return renderer;
-    }
-    else {
-      return new TableCellRendererWrapper(renderer);
-    }
   }
 
   public void expandAll() {
@@ -380,10 +362,6 @@ public class DualView extends JPanel {
     myTreeView.setTreeCellRenderer(cellRenderer);
   }
 
-  public void setCellWrapper(CellWrapper wrapper) {
-    myCellWrapper = wrapper;
-  }
-
   public void installDoubleClickHandler(AnAction action) {
     action.registerCustomShortcutSet(CommonShortcuts.DOUBLE_CLICK_1, myFlatView);
     action.registerCustomShortcutSet(CommonShortcuts.DOUBLE_CLICK_1, myTreeView);
@@ -418,43 +396,6 @@ public class DualView extends JPanel {
   public void rebuild() {
     ((AbstractTableModel)myFlatView.getModel()).fireTableDataChanged();
     ((AbstractTableModel)myTreeView.getModel()).fireTableDataChanged();
-  }
-
-  public class TableCellRendererWrapper implements TableCellRenderer {
-    private final TableCellRenderer myRenderer;
-
-    public TableCellRendererWrapper(final TableCellRenderer renderer) {
-      myRenderer = renderer;
-    }
-
-    public TableCellRenderer getRenderer() {
-      return myRenderer;
-    }
-
-    public Component getTableCellRendererComponent(JTable table,
-                                                   Object value,
-                                                   boolean isSelected,
-                                                   boolean hasFocus,
-                                                   int row,
-                                                   int column) {
-      Component result = myRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      Object treeNode = null;
-
-      final int modelRow = table.convertRowIndexToModel(row);
-
-      if (myCurrentView == myTreeView) {
-        TreePath path = myTreeView.getTree().getPathForRow(modelRow);
-        if (path != null) {
-          treeNode = path.getLastPathComponent();
-        }
-      }
-      else if (myCurrentView == myFlatView) {
-        treeNode = myFlatView.getItems().get(modelRow);
-      }
-
-      myCellWrapper.wrap(result, table, value, isSelected, hasFocus, row, column, treeNode);
-      return result;
-    }
   }
 
   @Override
