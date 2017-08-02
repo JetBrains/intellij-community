@@ -979,6 +979,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         e.getPresentation().setEnabled(false);
       }
       else {
+        super.update(e);
         e.getPresentation().setEnabled(true);
       }
     }

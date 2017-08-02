@@ -468,6 +468,7 @@ public class LightToolWindow extends JPanel {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
+      super.update(e);
       e.getPresentation().setEnabledAndVisible(!SystemInfo.isMac);
     }
   }
