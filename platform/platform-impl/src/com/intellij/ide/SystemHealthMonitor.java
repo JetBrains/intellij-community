@@ -58,7 +58,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
 public class SystemHealthMonitor implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance(SystemHealthMonitor.class);
 
@@ -81,14 +80,6 @@ public class SystemHealthMonitor implements ApplicationComponent {
     checkSignalBlocking();
     checkLauncherScript();
     startDiskSpaceMonitoring();
-  }
-
-  private void checkReservedCodeCacheSize() {
-    int minReservedCodeCacheSize = 240;
-    int reservedCodeCacheSize = VMOptions.readOption(VMOptions.MemoryKind.CODE_CACHE, true);
-    if (reservedCodeCacheSize > 0 && reservedCodeCacheSize < minReservedCodeCacheSize) {
-      showNotification(new KeyHyperlinkAdapter("vmoptions.warn.message"), reservedCodeCacheSize, minReservedCodeCacheSize);
-    }
   }
 
   private void checkRuntime() {
@@ -129,6 +120,14 @@ public class SystemHealthMonitor implements ApplicationComponent {
           }
         }, bundleVersion, LATEST_JDK_RELEASE);
       }
+    }
+  }
+
+  private void checkReservedCodeCacheSize() {
+    int minReservedCodeCacheSize = 240;
+    int reservedCodeCacheSize = VMOptions.readOption(VMOptions.MemoryKind.CODE_CACHE, true);
+    if (reservedCodeCacheSize > 0 && reservedCodeCacheSize < minReservedCodeCacheSize) {
+      showNotification(new KeyHyperlinkAdapter("vmoptions.warn.message"), reservedCodeCacheSize, minReservedCodeCacheSize);
     }
   }
 
