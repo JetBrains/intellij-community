@@ -36,7 +36,7 @@ abstract class SettingsSearch extends SearchTextField implements KeyListener {
   private boolean myDelegatingNow;
 
   SettingsSearch() {
-    super(false);
+    super("SettingsSearchHistory");
     updateToolTipText();
     addKeyListener(new KeyAdapter() {
     });

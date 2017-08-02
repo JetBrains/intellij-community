@@ -540,7 +540,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     toolbar.setForceMinimumSize(true);
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.setSecondaryButtonPopupStateModifier(mySearchToolbar1PopupStateModifier);
-    toolbar.setSecondaryActionsTooltip("More Options(" + KeymapUtil.getShortcutText(ShowMoreOptions.SHORT_CUT) + ")");
+    toolbar.setSecondaryActionsTooltip("Show Filter Popup (" + KeymapUtil.getShortcutText(ShowMoreOptions.SHORT_CUT) + ")");
     toolbar.setSecondaryActionsIcon(AllIcons.General.Filter);
 
     new ShowMoreOptions(toolbar, mySearchFieldWrapper);

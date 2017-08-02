@@ -19,11 +19,14 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.intellij.MacIntelliJTextFieldUI;
 import com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.ExtendableTextField;
 import com.intellij.ui.components.ExtendableTextField.Extension;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,6 +59,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   private static final String MONOSPACED = "monospaced";
   private static final String VARIANT = "JTextField.variant";
   private static final String POPUP = "JTextField.Search.FindPopup";
+  private static final String INPLACE_HISTORY = "JTextField.Search.InplaceHistory";
   private static final String ON_CLEAR = "JTextField.Search.CancelAction";
   @SuppressWarnings("UseDPIAwareInsets")
   private final Insets insets = new Insets(0, 0, 0, 0);
@@ -574,6 +578,14 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         Rectangle editor = getVisibleEditorRect();
         if (editor != null) popup.show(component, bounds.x, editor.y + editor.height);
       };
+    }
+
+    @Override
+    public String getTooltip() {
+      String prefix = null;
+      if (UIUtil.getClientProperty(getComponent(), INPLACE_HISTORY ) != null) prefix = "Recent Search";
+      if (getActionOnClick() != null) prefix = "Search History";
+      return (prefix == null) ? null : prefix + " (" + KeymapUtil.getKeystrokeText(SearchTextField.SHOW_HISTORY_KEYSTROKE) + ")";
     }
 
     @Override
