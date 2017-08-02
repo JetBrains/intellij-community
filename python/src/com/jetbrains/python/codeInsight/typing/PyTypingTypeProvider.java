@@ -27,6 +27,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -926,6 +927,32 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     final PyClass coroutine = as(PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString(COROUTINE),
                                                                            PyResolveImportUtil.fromFoothold(resolveAnchor)), PyClass.class);
     return coroutine != null ? new PyCollectionTypeImpl(coroutine, false, Arrays.asList(null, null, returnType)) : null;
+  }
+
+  @Nullable
+  public static PyType wrapInGeneratorType(@Nullable PyType elementType, @Nullable PyType returnType, @NotNull PsiElement anchor) {
+    final PyClass generator = as(PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString(GENERATOR),
+                                                                           PyResolveImportUtil.fromFoothold(anchor)), PyClass.class);
+    return generator != null ? new PyCollectionTypeImpl(generator, false, Arrays.asList(elementType, null, returnType)) : null;
+  }
+
+  @Nullable
+  public static PyType wrapInAsyncGeneratorType(@Nullable PyType elementType, @NotNull PsiElement anchor) {
+    final PyClass asyncGenerator = as(PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString(ASYNC_GENERATOR),
+                                                                                PyResolveImportUtil.fromFoothold(anchor)), PyClass.class);
+    return asyncGenerator != null ? new PyCollectionTypeImpl(asyncGenerator, false, Arrays.asList(elementType, null)) : null;
+  }
+
+  @Nullable
+  public static Ref<PyType> coroutineOrGeneratorElementType(@Nullable PyType coroutineOrGeneratorType, @NotNull TypeEvalContext context) {
+    final PyCollectionType genericType = as(coroutineOrGeneratorType, PyCollectionType.class);
+    final PyClassType classType = as(coroutineOrGeneratorType, PyClassType.class);
+
+    if (genericType != null && classType != null && ArrayUtil.contains(classType.getClassQName(), COROUTINE, GENERATOR)) {
+      return Ref.create(ContainerUtil.getOrElse(genericType.getElementTypes(context), 2, null));
+    }
+
+    return null;
   }
 
   private static class Context {

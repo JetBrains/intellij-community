@@ -44,7 +44,6 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
@@ -379,12 +378,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       elementType = Ref.create(PyUnionType.union(types));
     }
     if (elementType != null) {
-      final PyClass generator = as(PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString(PyTypingTypeProvider.GENERATOR),
-                                                                             PyResolveImportUtil.fromFoothold(this)), PyClass.class);
-      if (generator != null) {
-        final List<PyType> parameters = Arrays.asList(elementType.get(), null, getReturnStatementType(context));
-        return Ref.create(new PyCollectionTypeImpl(generator, false, parameters));
-      }
+      return Ref.create(PyTypingTypeProvider.wrapInGeneratorType(elementType.get(), getReturnStatementType(context), this));
     }
     if (!types.isEmpty()) {
       return Ref.create(null);
@@ -413,17 +407,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       final PyClassLikeType classType = as(returnType, PyClassLikeType.class);
       if (classType != null) {
         if (PyTypingTypeProvider.GENERATOR.equals(classType.getClassQName())) {
-          final QualifiedName asyncGeneratorName = QualifiedName.fromDottedString(PyTypingTypeProvider.ASYNC_GENERATOR);
-          final PsiElement resolvedGenerator = PyResolveImportUtil.resolveTopLevelMember(asyncGeneratorName,
-                                                                                         PyResolveImportUtil.fromFoothold(this));
-          final PyClass asyncGenerator = as(resolvedGenerator, PyClass.class);
-          if (asyncGenerator != null) {
-            return new PyCollectionTypeImpl(asyncGenerator, false,
-                                            Arrays.asList(((PyCollectionType)returnType).getIteratedItemType(), null));
-          }
-          else {
-            return null;
-          }
+          return PyTypingTypeProvider.wrapInAsyncGeneratorType(((PyCollectionType)returnType).getIteratedItemType(), this);
         }
       }
     }
