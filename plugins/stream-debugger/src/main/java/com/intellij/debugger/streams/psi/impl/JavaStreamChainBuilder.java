@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.streams.psi.impl;
 
+import com.intellij.debugger.streams.psi.PsiUtil;
 import com.intellij.debugger.streams.psi.StreamApiUtil;
 import com.intellij.debugger.streams.psi.StreamChainTransformer;
 import com.intellij.debugger.streams.wrapper.StreamChain;
@@ -42,7 +43,7 @@ public class JavaStreamChainBuilder implements StreamChainBuilder {
 
   @Override
   public boolean isChainExists(@NotNull PsiElement startElement) {
-    PsiElement current = getLatestElementInCurrentScope(ignoreWhiteSpaces(startElement));
+    PsiElement current = getLatestElementInCurrentScope(PsiUtil.ignoreWhiteSpaces(startElement));
     while (current != null) {
       myExistenceChecker.reset();
       current.accept(myExistenceChecker);
@@ -60,7 +61,7 @@ public class JavaStreamChainBuilder implements StreamChainBuilder {
   public List<StreamChain> build(@NotNull PsiElement startElement) {
     final MyChainCollectorVisitor visitor = new MyChainCollectorVisitor();
 
-    PsiElement current = getLatestElementInCurrentScope(ignoreWhiteSpaces(startElement));
+    PsiElement current = getLatestElementInCurrentScope(PsiUtil.ignoreWhiteSpaces(startElement));
     while (current != null) {
       current.accept(visitor);
       current = toUpperLevel(current);
@@ -68,19 +69,6 @@ public class JavaStreamChainBuilder implements StreamChainBuilder {
 
     final List<List<PsiMethodCallExpression>> chains = visitor.getPsiChains();
     return buildChains(chains, startElement);
-  }
-
-  @NotNull
-  private static PsiElement ignoreWhiteSpaces(@NotNull PsiElement element) {
-    PsiElement result = PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class);
-    if (result == null) {
-      result = PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace.class);
-      if (result == null) {
-        result = element;
-      }
-    }
-
-    return result;
   }
 
   @Nullable
