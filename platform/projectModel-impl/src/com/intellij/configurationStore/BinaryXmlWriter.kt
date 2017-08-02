@@ -20,6 +20,16 @@ import com.intellij.util.io.IOUtil
 import org.jdom.*
 import java.io.DataOutputStream
 
+private fun String.isEmptySafe(): Boolean {
+  return try {
+    isEmpty()
+  }
+  catch (e: NullPointerException) {
+    LOG.error(e)
+    true
+  }
+}
+
 internal class BinaryXmlWriter(private val out: DataOutputStream) {
   private val strings = ObjectIntHashMap<String>()
 
@@ -28,8 +38,7 @@ internal class BinaryXmlWriter(private val out: DataOutputStream) {
   }
 
   private fun writeString(string: String) {
-    @Suppress("ReplaceSizeZeroCheckWithIsEmpty")
-    if (string.length == 0) {
+    if (string.isEmptySafe()) {
       out.write(1)
       return
     }
