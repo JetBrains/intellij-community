@@ -87,7 +87,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
     consoleComm.execInterpreter(code) {}
   }
 
-  private fun updateConsoleState() {
+  override fun updateConsoleState() {
     if (!isEnabled) {
       executingPrompt()
     }

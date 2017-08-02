@@ -295,6 +295,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     VirtualFile file = getVirtualFile();
     if (PyConsoleUtil.detectIPythonImported(text, outputType)) {
       PyConsoleUtil.markIPython(file);
+      getExecuteActionHandler().updateConsoleState();
     }
     if (PyConsoleUtil.detectIPythonAutomagicOn(text)) {
       PyConsoleUtil.setIPythonAutomagic(file, true);

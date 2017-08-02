@@ -371,8 +371,7 @@ def get_interpreter():
     except AttributeError:
         interpreterInterface = InterpreterInterface(None, None, threading.currentThread())
         setattr(__builtin__, 'interpreter', interpreterInterface)
-        sys.stderr.write(interpreterInterface.get_greeting_msg())
-        sys.stderr.flush()
+        print(interpreterInterface.get_greeting_msg())
 
     return interpreterInterface
 
