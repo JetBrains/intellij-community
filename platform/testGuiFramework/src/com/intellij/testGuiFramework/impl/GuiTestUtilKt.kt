@@ -164,7 +164,11 @@ object GuiTestUtilKt {
 
   fun <BoundedComponent> findBoundedComponentByText(robot: Robot, container: Container, text: String, componentType: Class<BoundedComponent>): BoundedComponent {
     val componentWithText = findComponentByText(robot, container, text)
-    if (componentWithText is JLabel && componentWithText.labelFor != null && componentType.isInstance(componentWithText.labelFor)) return componentWithText.labelFor as BoundedComponent
+    if (componentWithText is JLabel && componentWithText.labelFor != null) {
+      val labeledComponent = componentWithText.labelFor
+      if (componentType.isInstance(labeledComponent)) return labeledComponent as BoundedComponent
+      return robot.finder().find(labeledComponent as Container) { component -> componentType.isInstance(component) } as BoundedComponent
+    }
     try {
       return withPause {
         val componentsOfInstance = robot.finder().findAll(container, ComponentMatcher { component -> componentType.isInstance(component) })
