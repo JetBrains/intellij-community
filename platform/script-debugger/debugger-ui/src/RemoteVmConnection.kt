@@ -35,8 +35,6 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JList
 
 abstract class RemoteVmConnection : VmConnection<Vm>() {
-  @Deprecated("Use address")
-  var port = -1
   var address: InetSocketAddress? = null
 
   private val connectCancelHandler = AtomicReference<() -> Unit>()
@@ -52,8 +50,6 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
     }
 
     this.address = address
-    @Suppress("DEPRECATION")
-    port = address.port
     setState(ConnectionStatus.WAITING_FOR_CONNECTION, "Connecting to ${address.hostString}:${address.port}")
     val result = AsyncPromise<Vm>()
     
