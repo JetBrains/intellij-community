@@ -108,7 +108,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     plugin("android-plugin") {
       directoryName = "android"
       mainJarName = "android.jar"
-      withModule("android-common", "android-common.jar", false)
+      withModule("build-common", "build-common.jar", false)
       withModule("android-rt", "android-rt.jar", false)
 
       withModule("android", "android.jar", false)
