@@ -15,9 +15,41 @@
  */
 package com.intellij.debugger.streams.psi.impl
 
+import com.intellij.debugger.streams.lib.LibraryManager
+import com.intellij.debugger.streams.wrapper.StreamChain
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
+import org.jetbrains.kotlin.psi.*
+
 /**
  * @author Vitaliy.Bibaev
  */
 class KotlinJavaStreamChainBuilder : KotlinChainBuilderBase() {
+  override val existenceChecker: ExistenceChecker = MyExistenceChecker()
 
+  override fun build(startElement: PsiElement): List<StreamChain> {
+    return super.build(startElement)
+  }
+
+  private class MyExistenceChecker : ExistenceChecker() {
+    override fun visitCallExpression(expression: KtCallExpression) {
+      // TODO: make the check more sophisticated
+      val name = expression.analyze().getType(expression)!!.getJetTypeFqName(false)
+      if (LibraryManager.getInstance(expression.project).isPackageSupported(StringUtil.getPackageName(name))) {
+        fireElementFound()
+      }
+    }
+  }
+
+  override fun toUpperLevel(element: PsiElement): PsiElement? {
+    var current = element.parent
+
+    while (current != null && !(current is KtLambdaExpression || current is KtAnonymousInitializer)) {
+      current = current.parent
+    }
+
+    return current
+  }
 }

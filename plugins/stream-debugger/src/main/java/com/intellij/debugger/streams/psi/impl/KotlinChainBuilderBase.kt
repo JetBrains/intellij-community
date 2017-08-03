@@ -15,15 +15,45 @@
  */
 package com.intellij.debugger.streams.psi.impl
 
+import com.intellij.debugger.streams.psi.PsiUtil
 import com.intellij.debugger.streams.wrapper.StreamChain
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 
 /**
  * @author Vitaliy.Bibaev
  */
 abstract class KotlinChainBuilderBase : StreamChainBuilder {
-  override fun isChainExists(startElement: PsiElement): Boolean = false
+  protected abstract val existenceChecker: ExistenceChecker
+  override fun isChainExists(startElement: PsiElement): Boolean {
+    var element: PsiElement? = PsiUtil.ignoreWhiteSpaces(startElement)
+    while (element != null && !existenceChecker.isFound()) {
+      existenceChecker.reset()
+      element.accept(existenceChecker)
+      element = toUpperLevel(element)
+    }
+
+    return existenceChecker.isFound()
+  }
 
   override fun build(startElement: PsiElement): List<StreamChain> = emptyList()
+
+  protected abstract fun toUpperLevel(element: PsiElement): PsiElement?
+
+  protected abstract class ExistenceChecker : KtTreeVisitorVoid() {
+    private var myIsFound: Boolean = false
+    fun isFound(): Boolean = myIsFound
+    fun reset(): Unit = setFound(false)
+    protected fun fireElementFound(): Unit = setFound(true)
+
+    private fun setFound(value: Boolean) {
+      myIsFound = value
+    }
+
+    override fun visitLambdaExpression(lambdaExpression: KtLambdaExpression) {}
+    override fun visitBlockExpression(expression: KtBlockExpression) {}
+  }
 }
