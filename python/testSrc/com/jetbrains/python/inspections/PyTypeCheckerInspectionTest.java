@@ -441,4 +441,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testIterateOverDictValueWhenItsTypeIsUnion() {
     doTest();
   }
+
+  // PY-23864
+  public void testClassObjectAndMetaclassCompatibility() {
+    doTest();
+  }
 }
