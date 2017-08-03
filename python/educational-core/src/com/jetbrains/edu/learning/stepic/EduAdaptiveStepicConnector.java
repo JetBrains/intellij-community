@@ -152,7 +152,6 @@ public class EduAdaptiveStepicConnector {
     return CODE_TASK_TYPE.equals(stepType)
            || CHOICE_TYPE_TEXT.equals(stepType)
            || TEXT_STEP_TYPE.equals(stepType)
-           || OutputTask.OUTPUT_TASK_TYPE.equals(stepType)
            || stepType.startsWith(EduStepicNames.PYCHARM_PREFIX);
   }
 
