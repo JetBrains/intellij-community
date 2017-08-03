@@ -22,6 +22,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyIfStatement;
 import com.jetbrains.python.psi.PyStatementWithElse;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Set;
@@ -35,13 +36,13 @@ public class PyElseUnwrapper extends PyElseUnwrapperBase {
   }
 
   @Override
-  public PsiElement collectAffectedElements(PsiElement e, List<PsiElement> toExtract) {
+  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<PsiElement> toExtract) {
     super.collectAffectedElements(e, toExtract);
     return PsiTreeUtil.getParentOfType(e, PyStatementWithElse.class);
   }
 
   @Override
-  public void collectElementsToIgnore(PsiElement element, Set<PsiElement> result) {
+  public void collectElementsToIgnore(@NotNull PsiElement element, @NotNull Set<PsiElement> result) {
     PsiElement parent = element.getParent();
 
     while (parent instanceof PyIfStatement) {

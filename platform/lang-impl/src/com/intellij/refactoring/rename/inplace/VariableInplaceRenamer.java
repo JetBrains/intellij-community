@@ -99,7 +99,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   }
 
   @Override
-  protected void collectAdditionalElementsToRename(final List<Pair<PsiElement, TextRange>> stringUsages) {
+  protected void collectAdditionalElementsToRename(@NotNull final List<Pair<PsiElement, TextRange>> stringUsages) {
     final String stringToSearch = myElementToRename.getName();
     final PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     if (!StringUtil.isEmptyOrSpaces(stringToSearch)) {

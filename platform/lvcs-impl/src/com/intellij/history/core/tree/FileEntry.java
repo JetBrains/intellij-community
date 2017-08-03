@@ -97,7 +97,7 @@ public class FileEntry extends Entry {
   }
 
   @Override
-  public void collectDifferencesWith(Entry e, List<Difference> result) {
+  public void collectDifferencesWith(@NotNull Entry e, @NotNull List<Difference> result) {
     if (getPath().equals(e.getPath())
         && myContent.equals(e.getContent())
         && isReadOnly == e.isReadOnly()) return;
@@ -106,12 +106,12 @@ public class FileEntry extends Entry {
   }
 
   @Override
-  protected void collectCreatedDifferences(List<Difference> result) {
+  protected void collectCreatedDifferences(@NotNull List<Difference> result) {
     result.add(new Difference(true, null, this));
   }
 
   @Override
-  protected void collectDeletedDifferences(List<Difference> result) {
+  protected void collectDeletedDifferences(@NotNull List<Difference> result) {
     result.add(new Difference(true, this, null));
   }
 }

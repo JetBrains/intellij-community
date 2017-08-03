@@ -229,7 +229,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     ProgressManager.checkCanceled();
 
     myInfos = new ArrayList<>();
-    addHighlightsFromResults(myInfos, progress);
+    addHighlightsFromResults(myInfos);
   }
 
   @NotNull
@@ -452,7 +452,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), myInfos, getColorsScheme(), getId());
   }
 
-  private void addHighlightsFromResults(@NotNull List<HighlightInfo> outInfos, @NotNull ProgressIndicator indicator) {
+  private void addHighlightsFromResults(@NotNull List<HighlightInfo> outInfos) {
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     InjectedLanguageManager ilManager = InjectedLanguageManager.getInstance(myProject);
     Set<Pair<TextRange, String>> emptyActionRegistered = new THashSet<>();
@@ -654,7 +654,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     outElements.addAll(result);
   }
 
-  static void appendDialects(PsiElement element, Set<Language> outProcessedLanguages, Set<String> outDialectIds) {
+  private static void appendDialects(PsiElement element, Set<Language> outProcessedLanguages, Set<String> outDialectIds) {
     Language language = element.getLanguage();
     outDialectIds.add(language.getID());
     if (outProcessedLanguages.add(language)) {

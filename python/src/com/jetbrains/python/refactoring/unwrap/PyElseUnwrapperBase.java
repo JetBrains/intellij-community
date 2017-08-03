@@ -20,6 +20,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyElsePart;
 import com.jetbrains.python.psi.PyIfStatement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User : ktisha
@@ -30,7 +31,7 @@ public abstract class PyElseUnwrapperBase extends PyUnwrapper {
   }
 
   @Override
-  public boolean isApplicableTo(PsiElement e) {
+  public boolean isApplicableTo(@NotNull PsiElement e) {
       return (e instanceof PyElsePart);
   }
   @Override
