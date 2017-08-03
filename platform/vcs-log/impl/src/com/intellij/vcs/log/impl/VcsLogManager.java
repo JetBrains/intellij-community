@@ -17,7 +17,6 @@ package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -175,13 +174,9 @@ public class VcsLogManager implements Disposable {
     return logProviders;
   }
 
-  public void disposeLog() {
-    Disposer.dispose(myLogData);
-  }
-
   @Override
   public void dispose() {
-    disposeLog();
+    Disposer.dispose(myLogData);
   }
 
   @NotNull
