@@ -51,16 +51,3 @@ public class AnnotateMethodTest extends LightQuickFixTestCase {
     return LanguageLevel.JDK_1_5;
   }
 }
-abstract class P2 {
-    @NotNull<caret>
-    String foo(@NotNull String p) {
-        return p;
-    }
-
-    Object o = new P2() {
-        @Override
-        String foo(String p) {
-            return "";
-        }
-    };
-}
