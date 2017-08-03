@@ -59,7 +59,7 @@ public class PySkeletonGenerator {
   protected static final String GENERATOR3 = "generator3.py";
 
   private final String mySkeletonsPath;
-  @NotNull protected final Map<String, String> myEnv;
+  @NotNull private final Map<String, String> myEnv;
 
   public void finishSkeletonsGeneration() {
   }
