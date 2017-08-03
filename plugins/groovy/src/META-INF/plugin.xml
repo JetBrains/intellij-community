@@ -337,8 +337,8 @@
     <codeInsight.parameterNameHints
         language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GroovyInlayParameterHintsProvider"
     />
-    <lang.jvm.actions.jvmCommonIntentionActionsFactory language="Groovy"
-                                                       implementationClass="com.intellij.codeInsight.intention.impl.JavaElementActionsFactoryImpl"/>
+    <lang.jvm.actions.jvmElementActionsFactory language="Groovy"
+                                               implementationClass="com.intellij.codeInsight.intention.impl.JavaElementActionsFactoryImpl"/>
 
     <fileTypeFactory implementation="org.jetbrains.plugins.groovy.GroovyFileTypeLoader"/>
     <fileTypeFactory implementation="org.jetbrains.plugins.groovy.dgm.DGMFileTypeFactory"/>
