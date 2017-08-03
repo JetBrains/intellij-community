@@ -789,12 +789,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         final LocalQuickFix[] fixes =
           PsiTreeUtil.getParentOfType(expr, PsiMethod.class, PsiLambdaExpression.class) instanceof PsiLambdaExpression
           ? LocalQuickFix.EMPTY_ARRAY
-          : new LocalQuickFix[]{ new AnnotateMethodFix(defaultNullable, ArrayUtil.toStringArray(manager.getNotNulls())) {
-            @Override
-            public int shouldAnnotateBaseMethod(PsiMethod method, PsiMethod superMethod, Project project) {
-              return 1;
-            }
-          }};
+          : new LocalQuickFix[]{ new AnnotateMethodFix(defaultNullable, ArrayUtil.toStringArray(manager.getNotNulls()))};
         holder.registerProblem(expr, text, fixes);
       }
     }

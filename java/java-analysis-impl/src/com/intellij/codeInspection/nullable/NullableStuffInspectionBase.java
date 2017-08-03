@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -360,12 +360,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
     final PsiIdentifier nameIdentifier = getter == null ? null : getter.getNameIdentifier();
     if (nameIdentifier != null && nameIdentifier.isPhysical()) {
       if (PropertyUtil.isSimpleGetter(getter)) {
-        AnnotateMethodFix getterAnnoFix = new AnnotateMethodFix(anno, ArrayUtil.toStringArray(annoToRemove)) {
-          @Override
-          public int shouldAnnotateBaseMethod(PsiMethod method, PsiMethod superMethod, Project project) {
-            return 1;
-          }
-        };
+        AnnotateMethodFix getterAnnoFix = new AnnotateMethodFix(anno, ArrayUtil.toStringArray(annoToRemove));
         if (REPORT_NOT_ANNOTATED_GETTER) {
           if (!manager.hasNullability(getter) && !TypeConversionUtil.isPrimitiveAndNotNull(getter.getReturnType())) {
             holder.registerProblem(nameIdentifier, InspectionsBundle
@@ -862,20 +857,8 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
     }
 
     @Override
-    public int shouldAnnotateBaseMethod(PsiMethod method, PsiMethod superMethod, Project project) {
-      return 1;
-    }
-
-    @Override
-    @NotNull
-    public String getName() {
-      return InspectionsBundle.message("annotate.overridden.methods.as.notnull", ClassUtil.extractClassName(myAnnotation));
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return InspectionsBundle.message("inspection.annotate.overridden.method.quickfix.family.name");
+    protected boolean annotateSelf() {
+      return false;
     }
   }
 }
