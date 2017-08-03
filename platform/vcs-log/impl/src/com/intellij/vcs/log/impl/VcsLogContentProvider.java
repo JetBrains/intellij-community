@@ -18,6 +18,7 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.openapi.wm.ToolWindow;
@@ -37,6 +38,7 @@ import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -68,8 +70,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
 
       @Override
       public void logDisposed(@NotNull VcsLogManager logManager) {
-        myContainer.removeAll();
-        closeLogTabs(logManager);
+        dispose(logManager);
       }
     });
 
@@ -88,6 +89,13 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     }
   }
 
+  private void dispose(@Nullable VcsLogManager logManager) {
+    myContainer.removeAll();
+    VcsLogUiImpl ui = myProjectLog.getMainLogUi();
+    if (ui != null) Disposer.dispose(ui);
+    if (logManager != null) closeLogTabs(logManager);
+  }
+
   @Override
   public JComponent initContent() {
     ApplicationManager.getApplication().executeOnPooledThread(() -> myProjectLog.createLog());
@@ -96,12 +104,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
 
   @Override
   public void disposeContent() {
-    myContainer.removeAll();
-
-    VcsLogManager logManager = myProjectLog.getLogManager();
-    if (logManager != null) {
-      closeLogTabs(logManager);
-    }
+    dispose(myProjectLog.getLogManager());
   }
 
   public static <U extends AbstractVcsLogUi> boolean findAndSelectContent(@NotNull Project project,
