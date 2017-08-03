@@ -56,7 +56,8 @@ public class CreateBeanPropertyFixes {
     JvmElementActionsFactory factory = JvmElementActionsFactory.forLanguage(psiClass.getLanguage());
     if (factory == null) return IntentionAction.EMPTY_ARRAY;
     return toObjectArray(
-      factory.createActions(psiClass, new MemberRequest.Property(propertyName, JvmModifier.PUBLIC, type, createSetter, !createSetter)),
+      factory.createAddPropertyActions(psiClass,
+                                       new MemberRequest.Property(propertyName, JvmModifier.PUBLIC, type, createSetter, !createSetter)),
       IntentionAction.class);
   }
 }

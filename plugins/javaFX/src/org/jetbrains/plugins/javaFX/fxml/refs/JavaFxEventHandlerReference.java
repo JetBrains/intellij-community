@@ -112,12 +112,11 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
           .createMethodFromText(javaSignature, ref.myController);
 
         MemberRequest.Method method =
-          MemberRequest.simpleMethodRequest(ref.myController,
-                                            javaMethod.getName(),
+          MemberRequest.simpleMethodRequest(javaMethod.getName(),
                                             Arrays.asList(javaMethod.getModifiers()),
                                             javaMethod.getReturnType(),
                                             Arrays.asList(javaMethod.getParameterList().getParameters()));
-        intentionActionsFactory.createActions(method).forEach(registrar::register);
+        intentionActionsFactory.createAddMethodActions(ref.myController, method).forEach(registrar::register);
       }
     }
 

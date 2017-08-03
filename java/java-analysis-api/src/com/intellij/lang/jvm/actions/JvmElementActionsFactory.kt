@@ -36,13 +36,13 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 abstract class JvmElementActionsFactory {
 
-  open fun createActions(target: JvmModifiersOwner, request: MemberRequest.Modifier): List<IntentionAction> = emptyList()
+  open fun createChangeModifierActions(target: JvmModifiersOwner, request: MemberRequest.Modifier): List<IntentionAction> = emptyList()
 
-  open fun createActions(targetClass: JvmClass, request: MemberRequest.Constructor): List<IntentionAction> = emptyList()
+  open fun createAddConstructorActions(targetClass: JvmClass, request: MemberRequest.Constructor): List<IntentionAction> = emptyList()
 
-  open fun createActions(targetClass: JvmClass, request: MemberRequest.Method): List<IntentionAction> = emptyList()
+  open fun createAddMethodActions(targetClass: JvmClass, request: MemberRequest.Method): List<IntentionAction> = emptyList()
 
-  open fun createActions(targetClass: JvmClass, request: MemberRequest.Property): List<IntentionAction> = emptyList()
+  open fun createAddPropertyActions(targetClass: JvmClass, request: MemberRequest.Property): List<IntentionAction> = emptyList()
 
   companion object : LanguageExtension<JvmElementActionsFactory>(
     "com.intellij.lang.jvm.actions.jvmElementActionsFactory") {

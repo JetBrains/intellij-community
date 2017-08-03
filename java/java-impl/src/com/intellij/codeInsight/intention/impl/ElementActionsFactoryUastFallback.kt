@@ -38,13 +38,13 @@ class ElementActionsFactoryUastFallback(
     val factory = UastJvmCommonIntentionActionsFactory.forLanguage(lang) ?: return null
     return object : JvmElementActionsFactory() {
 
-      override fun createActions(target: JvmModifiersOwner, request: MemberRequest.Modifier): List<IntentionAction> =
+      override fun createChangeModifierActions(target: JvmModifiersOwner, request: MemberRequest.Modifier): List<IntentionAction> =
         with(request) {
           listOfNotNull(
             factory.createChangeModifierAction(target.asUast<UDeclaration>(), renderer.render(modifier), shouldPresent))
         }
 
-      override fun createActions(targetClass: JvmClass, request: MemberRequest.Constructor): List<IntentionAction> =
+      override fun createAddConstructorActions(targetClass: JvmClass, request: MemberRequest.Constructor): List<IntentionAction> =
         with(request) {
           factory.createAddCallableMemberActions(
             UastMethodInsertionInfo.Constructor(
@@ -56,7 +56,7 @@ class ElementActionsFactoryUastFallback(
           )
         }
 
-      override fun createActions(targetClass: JvmClass, request: MemberRequest.Method): List<IntentionAction> =
+      override fun createAddMethodActions(targetClass: JvmClass, request: MemberRequest.Method): List<IntentionAction> =
         with(request) {
           factory.createAddCallableMemberActions(
             UastMethodInsertionInfo.Method(
@@ -71,7 +71,7 @@ class ElementActionsFactoryUastFallback(
           )
         }
 
-      override fun createActions(targetClass: JvmClass, request: MemberRequest.Property): List<IntentionAction> =
+      override fun createAddPropertyActions(targetClass: JvmClass, request: MemberRequest.Property): List<IntentionAction> =
         with(request) {
           factory.createAddBeanPropertyActions(targetClass.asUast<UClass>(), propertyName,
                                                renderer.render(visibilityModifier),

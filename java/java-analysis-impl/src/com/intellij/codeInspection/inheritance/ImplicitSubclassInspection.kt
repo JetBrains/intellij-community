@@ -188,8 +188,8 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
                                 shouldPresent: Boolean,
                                 actionsList: SmartList<IntentionAction>) {
       if (declaration.hasModifier(modifier) != shouldPresent) {
-        actionsFactory.createActions(declaration, MemberRequest.Modifier(modifier,
-                                                                         shouldPresent)).let {
+        actionsFactory.createChangeModifierActions(declaration, MemberRequest.Modifier(modifier,
+                                                                                       shouldPresent)).let {
           actionsList.addAll(it)
         }
       }
