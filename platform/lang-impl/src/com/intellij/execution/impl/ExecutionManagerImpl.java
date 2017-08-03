@@ -341,12 +341,9 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
             DumbService.getInstance(myProject).runWhenSmart(startRunnable);
           } else {
             try {
-              DumbService.getInstance(myProject).setAlternativeResolveEnabled(true);
               startRunnable.run();
             } catch (IndexNotReadyException ignored) {
               ExecutionUtil.handleExecutionError(environment, new ExecutionException("cannot start while indexing is in progress."));
-            } finally {
-              DumbService.getInstance(myProject).setAlternativeResolveEnabled(false);
             }
           }
         }
