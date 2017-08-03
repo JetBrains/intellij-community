@@ -825,7 +825,13 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
   }
 
   protected AnnotateMethodFix createAnnotateMethodFix(final String defaultNotNull, final String[] annotationsToRemove) {
-    return new AnnotateMethodFix(defaultNotNull, annotationsToRemove);
+    return new AnnotateMethodFix(defaultNotNull, annotationsToRemove) {
+      @NotNull
+      @Override
+      protected String getPreposition() {
+        return "as";
+      }
+    };
   }
 
   private static void reportNullableNotNullConflict(final ProblemsHolder holder, final PsiModifierListOwner listOwner, final PsiAnnotation declaredNullable,
@@ -849,6 +855,12 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
   private static class MyAnnotateMethodFix extends AnnotateMethodFix {
     public MyAnnotateMethodFix(String defaultNotNull, String[] annotationsToRemove) {
       super(defaultNotNull, annotationsToRemove);
+    }
+
+    @NotNull
+    @Override
+    protected String getPreposition() {
+      return "as";
     }
 
     @Override

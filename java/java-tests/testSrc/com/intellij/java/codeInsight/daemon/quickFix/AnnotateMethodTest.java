@@ -16,7 +16,6 @@
 package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
-import com.intellij.codeInspection.AnnotateMethodFix;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.pom.java.LanguageLevel;
@@ -31,12 +30,7 @@ public class AnnotateMethodTest extends LightQuickFixTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new NullableStuffInspection(){
-      @Override
-      protected AnnotateMethodFix createAnnotateMethodFix(String defaultNotNull, String[] annotationsToRemove) {
-        return new AnnotateMethodFix(defaultNotNull, annotationsToRemove);
-      }
-    }};
+    return new LocalInspectionTool[]{new NullableStuffInspection()};
   }
 
   @Override

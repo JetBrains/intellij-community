@@ -50,7 +50,12 @@ public class AnnotateMethodFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getName() {
-    return getFamilyName() + " " + InspectionsBundle.message("inspection.annotate.method.name.suffix", ClassUtil.extractClassName(myAnnotation));
+    return getFamilyName() + " " + getPreposition() + " \'@" + ClassUtil.extractClassName(myAnnotation) + "\'";
+  }
+
+  @NotNull
+  protected String getPreposition() {
+    return "with";
   }
 
   @Override
