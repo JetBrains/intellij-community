@@ -31,7 +31,7 @@ import com.intellij.openapi.project.Project
  * @author Vitaliy.Bibaev
  */
 class StreamExLibrarySupport(project: Project)
-  : LibrarySupportBase(LibraryImpl("StreamEx", JavaLanguage(project), "one.util.stream"),
+  : LibrarySupportBase(LibraryImpl("StreamEx", JavaLanguage(project), "one.util.streamex"),
                        StandardLibrarySupport(project)) {
   init {
     addIntermediateOperationsSupport(*filterOperations(
