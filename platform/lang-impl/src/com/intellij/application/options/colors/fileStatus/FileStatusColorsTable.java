@@ -18,9 +18,10 @@ package com.intellij.application.options.colors.fileStatus;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.ui.*;
+import com.intellij.ui.ClickListener;
+import com.intellij.ui.ColorPicker;
+import com.intellij.ui.Gray;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -46,16 +47,18 @@ public class FileStatusColorsTable extends JBTable {
     getColumnModel().setColumnSelectionAllowed(false);
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     setDefaultRenderer(Color.class, new MyColorCellRenderer(defaultColor));
+    setTableHeader(null);
     registerKeyboardAction(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
           setColor();
         }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false), JComponent.WHEN_FOCUSED);
-    new DoubleClickListener() {
+    new ClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent event) {
-        return setColor();
+      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
+        int col = FileStatusColorsTable.this.columnAtPoint(event.getPoint());
+        return getModel().getColumnClass(col).equals(Color.class) && setColor();
       }
     }.installOn(this);
     initPopup();
@@ -64,13 +67,13 @@ public class FileStatusColorsTable extends JBTable {
   private void initPopup() {
     mySetColorMenu = new JBPopupMenu();
     mySetColorMenu.add(new JBMenuItem(new ChooseColorAction()));
-    mySetColorMenu.add(new JBMenuItem(new ResetToDefaultAction()));
     mySetColorMenu.add(new JBMenuItem(new DropColorAction()));
+    mySetColorMenu.add(new JBMenuItem(new ResetToDefaultAction()));
   }
 
   private class ChooseColorAction extends AbstractAction {
     public ChooseColorAction() {
-      super("Choose Color...");
+      super(ApplicationBundle.message("file.status.color.menu.choose.color"));
     }
 
     @Override
@@ -81,7 +84,7 @@ public class FileStatusColorsTable extends JBTable {
 
   private class DropColorAction extends AbstractAction {
     public DropColorAction() {
-      super("Set to Normal Text");
+      super(ApplicationBundle.message("file.status.color.menu.normal.text"));
     }
 
     @Override
@@ -95,7 +98,7 @@ public class FileStatusColorsTable extends JBTable {
 
   private class ResetToDefaultAction extends AbstractAction {
     public ResetToDefaultAction() {
-      super("Reset to Default");
+      super(ApplicationBundle.message("file.status.color.menu.reset.to.default"));
     }
 
     @Override
@@ -174,7 +177,7 @@ public class FileStatusColorsTable extends JBTable {
       Color c = getDisplayColor(value);
       colorLabel.setIcon(getIcon(c));
       //noinspection StringToUpperCaseOrToLowerCaseWithoutLocale
-      colorLabel.setText(value != null ? ColorUtil.toHex(c).toUpperCase() : ApplicationBundle.message("file.status.color.none"));
+      colorLabel.setText(value != null ? "" : ApplicationBundle.message("file.status.color.none"));
       colorLabel.setForeground(c);
       if (isSelected) {
         colorLabel.setOpaque(true);
@@ -184,12 +187,43 @@ public class FileStatusColorsTable extends JBTable {
       return colorLabel;
     }
 
+    @NotNull
     private Color getDisplayColor(@Nullable Object value) {
       return value instanceof Color ? (Color)value : myDefaultColor;
     }
 
-    private static Icon getIcon(Color color) {
-      return color == null ? EmptyIcon.ICON_16 : JBUI.scale(new ColorIcon(16, 13, color, true));
+    private Icon getIcon(@NotNull  Color color) {
+      return color != myDefaultColor ? JBUI.scale(new MyColorIcon(color)) : null;
     }
+  }
+
+  private static class MyColorIcon extends EmptyIcon {
+
+    public static final int COLOR_HEIGHT = 14;
+    public static final int ICON_HEIGHT = 16;
+    public static final int ICON_WIDTH = 32;
+    private Color myColor;
+
+    public MyColorIcon(@NotNull Color color) {
+      //noinspection deprecation
+      super(ICON_WIDTH, ICON_HEIGHT);
+      myColor = color;
+    }
+
+    @Override
+    public void paintIcon(final Component component, final Graphics g, final int i, final int j) {
+      final int iconHeight = getIconHeight();
+      final int iconWidth = getIconWidth();
+      g.setColor(myColor);
+
+      final int size = scaleVal(COLOR_HEIGHT);
+      final int y = j + (iconHeight - size) / 2;
+
+      g.fillRect(0, y, iconWidth, size);
+
+      g.setColor(Gray.x00.withAlpha(40));
+      g.drawRect(0, y, iconWidth, size);
+    }
+
   }
 }
