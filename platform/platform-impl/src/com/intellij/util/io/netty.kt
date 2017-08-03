@@ -182,13 +182,13 @@ private fun connectNio(bootstrap: Bootstrap,
     }
     else if (maxAttemptCount == -1) {
       sleep(300)?.let {
-        ConnectToChannelResult(it)
+        return ConnectToChannelResult(it)
       }
       attemptCount++
     }
     else if (++attemptCount < maxAttemptCount) {
       sleep(attemptCount * NettyUtil.MIN_START_TIME)?.let {
-        ConnectToChannelResult(it)
+        return ConnectToChannelResult(it)
       }
     }
     else {
