@@ -38,7 +38,7 @@ import java.util.List;
 public class AnnotateMethodFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance(AnnotateMethodFix.class);
 
-  protected final String myAnnotation;
+  private final String myAnnotation;
   private final String[] myAnnotationsToRemove;
 
   public AnnotateMethodFix(@NotNull String fqn, @NotNull String... annotationsToRemove) {
