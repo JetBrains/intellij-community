@@ -267,7 +267,9 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     }
 
     buildContext.ant.copy(todir: "$targetDirectory/bin/lldb/shared") {
-      fileset(dir: "$root/tools/vendor/google/android-ndk/bin/lldb/shared")
+      fileset(dir: "$root/tools/vendor/google/android-ndk/bin/lldb/shared") {
+        exclude(name: "BUILD")
+      }
     }
   }
 
