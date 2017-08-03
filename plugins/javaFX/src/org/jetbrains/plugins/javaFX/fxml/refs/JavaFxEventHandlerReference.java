@@ -113,6 +113,7 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
 
         MemberRequest.Method method =
           MemberRequest.simpleMethodRequest(javaMethod.getName(),
+                                            Arrays.asList(javaMethod.getAnnotations()),
                                             Arrays.asList(javaMethod.getModifiers()),
                                             javaMethod.getReturnType(),
                                             Arrays.asList(javaMethod.getParameterList().getParameters()));

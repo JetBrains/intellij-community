@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.jvm.actions
 
+import com.intellij.lang.jvm.JvmAnnotation
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmParameter
 import com.intellij.lang.jvm.JvmTypeParameter
@@ -32,10 +33,12 @@ sealed class MemberRequest {
 
     @JvmStatic
     fun simpleMethodRequest(methodName: String,
+                            annotations: List<JvmAnnotation>,
                             modifier: List<JvmModifier>,
                             returnType: JvmType,
                             parameters: List<JvmParameter>) =
       Method(name = methodName,
+             annotations = annotations,
              modifiers = modifier,
              returnType = returnType,
              parameters = parameters)
@@ -45,13 +48,14 @@ sealed class MemberRequest {
                             modifier: JvmModifier,
                             returnType: JvmType,
                             parameters: List<JvmParameter>) =
-      simpleMethodRequest(methodName, listOf(modifier), returnType, parameters)
+      simpleMethodRequest(methodName, emptyList(), listOf(modifier), returnType, parameters)
 
   }
 
 
   class Method(
     val name: String,
+    val annotations: List<JvmAnnotation> = emptyList(),
     val modifiers: List<JvmModifier> = emptyList(),
     val typeParameters: List<JvmTypeParameter> = emptyList(),
     val returnType: JvmType,
@@ -59,6 +63,7 @@ sealed class MemberRequest {
   ) : MemberRequest()
 
   class Constructor(
+    val annotations: List<JvmAnnotation> = emptyList(),
     val modifiers: List<JvmModifier> = emptyList(),
     val typeParameters: List<JvmTypeParameter> = emptyList(),
     val parameters: List<JvmParameter> = emptyList()

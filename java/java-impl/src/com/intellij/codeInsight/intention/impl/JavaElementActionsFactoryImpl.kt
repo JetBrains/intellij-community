@@ -56,8 +56,7 @@ class JavaElementActionsFactoryImpl(
 
   override fun createAddMethodActions(targetClass: JvmClass, request: MemberRequest.Method): List<IntentionAction> =
     with(request) {
-      createAddMethodAction(targetClass, name, modifiers,
-                            returnType, parameters)
+      createAddMethodAction(targetClass, request)
         ?.let { listOf(it) } ?: emptyList()
     }
 
@@ -85,43 +84,42 @@ class JavaElementActionsFactoryImpl(
   }
 
 
-  private fun createAddMethodAction(psiClass: JvmClass,
-                                    methodName: String,
-                                    visibilityModifier: List<JvmModifier>,
-                                    returnType: JvmType,
-                                    parameters: List<JvmParameter>): IntentionAction? {
-    val psiClass = materializer.materialize(psiClass)
-    val signatureString = with(renderer) {
-      val paramsString = parameters.mapIndexed { i, t -> "${render(t.type)} ${t.name ?: "arg$i"}" }.joinToString()
-      "${render(visibilityModifier)} ${render(returnType)} $methodName($paramsString){}"
-    }
-    val targetClassPointer = SmartPointerManager.getInstance(psiClass.project).createSmartPsiElementPointer(psiClass)
-    return object : AbstractIntentionAction() {
-
-      private val text = targetClassPointer.element?.let { psiClass ->
-        QuickFixBundle.message("create.method.from.usage.text",
-                               PsiFormatUtil.formatMethod(createMethod(psiClass), PsiSubstitutor.EMPTY,
-                                                          PsiFormatUtilBase.SHOW_NAME or
-                                                            PsiFormatUtilBase.SHOW_TYPE or
-                                                            PsiFormatUtilBase.SHOW_PARAMETERS or
-                                                            PsiFormatUtilBase.SHOW_RAW_TYPE,
-                                                          PsiFormatUtilBase.SHOW_TYPE or PsiFormatUtilBase.SHOW_RAW_TYPE, 2))
-      } ?: ""
-
-      override fun getText(): String = text
-
-      override fun invoke(project: Project, editor: Editor?, file: PsiFile) {
-        val targetClass = targetClassPointer.element ?: return
-        runWriteAction {
-          val addedMethod = targetClass.add(createMethod(targetClass))
-          JavaCodeStyleManager.getInstance(project).shortenClassReferences(addedMethod)
-        }
+  private fun createAddMethodAction(psiClass: JvmClass, request: MemberRequest.Method): IntentionAction? {
+    with(request) {
+      val psiClass = materializer.materialize(psiClass)
+      val signatureString = with(renderer) {
+        val paramsString = parameters.mapIndexed { i, t -> "${render(t.type)} ${t.name ?: "arg$i"}" }.joinToString()
+        val modifiersString = (annotations.map { render(it) } + modifiers.map { render(it) }).joinToString(" ")
+        "${modifiersString} ${render(returnType)} $name($paramsString){}"
       }
+      val targetClassPointer = SmartPointerManager.getInstance(psiClass.project).createSmartPsiElementPointer(psiClass)
+      return object : AbstractIntentionAction() {
 
-      private fun createMethod(targetClass: PsiClass): PsiMethod {
-        val elementFactory = JVMElementFactories.getFactory(targetClass.language, targetClass.project) // it could be Groovy
-                             ?: JavaPsiFacade.getElementFactory(targetClass.project)
-        return elementFactory.createMethodFromText(signatureString, targetClass)
+        private val text = targetClassPointer.element?.let { psiClass ->
+          QuickFixBundle.message("create.method.from.usage.text",
+                                 PsiFormatUtil.formatMethod(createMethod(psiClass), PsiSubstitutor.EMPTY,
+                                                            PsiFormatUtilBase.SHOW_NAME or
+                                                              PsiFormatUtilBase.SHOW_TYPE or
+                                                              PsiFormatUtilBase.SHOW_PARAMETERS or
+                                                              PsiFormatUtilBase.SHOW_RAW_TYPE,
+                                                            PsiFormatUtilBase.SHOW_TYPE or PsiFormatUtilBase.SHOW_RAW_TYPE, 2))
+        } ?: ""
+
+        override fun getText(): String = text
+
+        override fun invoke(project: Project, editor: Editor?, file: PsiFile) {
+          val targetClass = targetClassPointer.element ?: return
+          runWriteAction {
+            val addedMethod = targetClass.add(createMethod(targetClass))
+            JavaCodeStyleManager.getInstance(project).shortenClassReferences(addedMethod)
+          }
+        }
+
+        private fun createMethod(targetClass: PsiClass): PsiMethod {
+          val elementFactory = JVMElementFactories.getFactory(targetClass.language, targetClass.project) // it could be Groovy
+                               ?: JavaPsiFacade.getElementFactory(targetClass.project)
+          return elementFactory.createMethodFromText(signatureString, targetClass)
+        }
       }
     }
   }
@@ -142,6 +140,9 @@ class JavaElementRenderer {
 
   fun render(jvmType: JvmType): String =
     (jvmType as PsiType).canonicalText
+
+  fun render(jvmAnnotation: JvmAnnotation): String =
+    "@" + (jvmAnnotation as PsiAnnotation).qualifiedName!!
 
   @PsiModifier.ModifierConstant
   fun render(modifier: JvmModifier): String = when (modifier) {
