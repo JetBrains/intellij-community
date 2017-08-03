@@ -23,8 +23,4 @@ import com.intellij.psi.PsiElement
 class KotlinSequenceChainBuilder : KotlinChainBuilderBase() {
   override val existenceChecker: ExistenceChecker
     get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
-
-  override fun toUpperLevel(element: PsiElement): PsiElement? {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-  }
 }

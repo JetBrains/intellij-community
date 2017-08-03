@@ -19,6 +19,7 @@ import com.intellij.debugger.streams.psi.PsiUtil
 import com.intellij.debugger.streams.wrapper.StreamChain
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.psi.KtAnonymousInitializer
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
@@ -41,9 +42,21 @@ abstract class KotlinChainBuilderBase : StreamChainBuilder {
 
   override fun build(startElement: PsiElement): List<StreamChain> = emptyList()
 
-  protected abstract fun toUpperLevel(element: PsiElement): PsiElement?
+  protected fun toUpperLevel(element: PsiElement): PsiElement? {
+    var current = element.parent
 
-  protected abstract class ExistenceChecker : KtTreeVisitorVoid() {
+    while (current != null && !(current is KtLambdaExpression || current is KtAnonymousInitializer)) {
+      current = current.parent
+    }
+
+    return current
+  }
+
+  protected fun getLatestElementInScope(element: PsiElement): PsiElement? {
+    return element
+  }
+
+  protected abstract class ExistenceChecker : MyTreeVisitor() {
     private var myIsFound: Boolean = false
     fun isFound(): Boolean = myIsFound
     fun reset(): Unit = setFound(false)
@@ -52,7 +65,9 @@ abstract class KotlinChainBuilderBase : StreamChainBuilder {
     private fun setFound(value: Boolean) {
       myIsFound = value
     }
+  }
 
+  protected abstract class MyTreeVisitor : KtTreeVisitorVoid() {
     override fun visitLambdaExpression(lambdaExpression: KtLambdaExpression) {}
     override fun visitBlockExpression(expression: KtBlockExpression) {}
   }

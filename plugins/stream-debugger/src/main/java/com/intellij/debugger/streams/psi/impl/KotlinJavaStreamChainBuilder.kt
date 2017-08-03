@@ -30,6 +30,16 @@ class KotlinJavaStreamChainBuilder : KotlinChainBuilderBase() {
   override val existenceChecker: ExistenceChecker = MyExistenceChecker()
 
   override fun build(startElement: PsiElement): List<StreamChain> {
+    val visitor = MyBuilderVisitor()
+    var element = getLatestElementInScope(startElement)
+    while (element != null) {
+      element.accept(visitor)
+      element = toUpperLevel(element)
+      element = if (element == null) null else getLatestElementInScope(element)
+    }
+
+    visitor.chains()
+
     return super.build(startElement)
   }
 
@@ -43,13 +53,15 @@ class KotlinJavaStreamChainBuilder : KotlinChainBuilderBase() {
     }
   }
 
-  override fun toUpperLevel(element: PsiElement): PsiElement? {
-    var current = element.parent
-
-    while (current != null && !(current is KtLambdaExpression || current is KtAnonymousInitializer)) {
-      current = current.parent
+  private class MyBuilderVisitor : MyTreeVisitor() {
+    private val myTerminationCalls = mutableSetOf<KtCallExpression>()
+    private val myPreviousCalls = mutableMapOf<KtCallExpression, KtCallExpression>()
+    override fun visitCallExpression(expression: KtCallExpression) {
+      super.visitCallExpression(expression)
     }
 
-    return current
+    fun chains(): List<List<KtCallExpression>> {
+      return emptyList()
+    }
   }
 }
