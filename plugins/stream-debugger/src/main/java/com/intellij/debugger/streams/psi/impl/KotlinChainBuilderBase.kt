@@ -15,20 +15,19 @@
  */
 package com.intellij.debugger.streams.psi.impl
 
+import com.intellij.debugger.streams.psi.ChainTransformer
 import com.intellij.debugger.streams.psi.PsiUtil
 import com.intellij.debugger.streams.wrapper.StreamChain
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.psi.KtAnonymousInitializer
-import org.jetbrains.kotlin.psi.KtBlockExpression
-import org.jetbrains.kotlin.psi.KtLambdaExpression
-import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
+import org.jetbrains.kotlin.psi.*
 
 /**
  * @author Vitaliy.Bibaev
  */
-abstract class KotlinChainBuilderBase : StreamChainBuilder {
+abstract class KotlinChainBuilderBase(private val transformer: ChainTransformer.Kotlin) : StreamChainBuilder {
   protected abstract val existenceChecker: ExistenceChecker
+
   override fun isChainExists(startElement: PsiElement): Boolean {
     var element: PsiElement? = PsiUtil.ignoreWhiteSpaces(startElement)
     while (element != null && !existenceChecker.isFound()) {
@@ -40,9 +39,18 @@ abstract class KotlinChainBuilderBase : StreamChainBuilder {
     return existenceChecker.isFound()
   }
 
-  override fun build(startElement: PsiElement): List<StreamChain> = emptyList()
+  override fun build(startElement: PsiElement): List<StreamChain> {
+    val visitor = createChainsBuilder()
+    var element = getLatestElementInScope(startElement)
+    while (element != null) {
+      element.accept(visitor)
+      element = getLatestElementInScope(toUpperLevel(element))
+    }
 
-  protected fun toUpperLevel(element: PsiElement): PsiElement? {
+    return visitor.chains().map { transformer.transform(it, startElement) }
+  }
+
+  private fun toUpperLevel(element: PsiElement): PsiElement? {
     var current = element.parent
 
     while (current != null && !(current is KtLambdaExpression || current is KtAnonymousInitializer)) {
@@ -52,8 +60,20 @@ abstract class KotlinChainBuilderBase : StreamChainBuilder {
     return current
   }
 
-  protected fun getLatestElementInScope(element: PsiElement): PsiElement? {
-    return element
+  protected abstract fun createChainsBuilder(): ChainBuilder
+
+  private fun getLatestElementInScope(element: PsiElement?): PsiElement? {
+    var current = element
+    while (current != null) {
+      val parent = current.parent
+      if (parent is KtBlockExpression || parent is KtLambdaExpression || parent is KtStatementExpression) {
+        break
+      }
+
+      current = parent
+    }
+
+    return current
   }
 
   protected abstract class ExistenceChecker : MyTreeVisitor() {
@@ -65,6 +85,10 @@ abstract class KotlinChainBuilderBase : StreamChainBuilder {
     private fun setFound(value: Boolean) {
       myIsFound = value
     }
+  }
+
+  protected abstract class ChainBuilder : MyTreeVisitor() {
+    abstract fun chains(): List<List<KtCallExpression>>
   }
 
   protected abstract class MyTreeVisitor : KtTreeVisitorVoid() {

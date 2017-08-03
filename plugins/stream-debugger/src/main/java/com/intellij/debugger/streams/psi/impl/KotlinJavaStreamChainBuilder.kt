@@ -16,32 +16,18 @@
 package com.intellij.debugger.streams.psi.impl
 
 import com.intellij.debugger.streams.lib.LibraryManager
-import com.intellij.debugger.streams.wrapper.StreamChain
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
 
 /**
  * @author Vitaliy.Bibaev
  */
-class KotlinJavaStreamChainBuilder : KotlinChainBuilderBase() {
+class KotlinJavaStreamChainBuilder : KotlinChainBuilderBase(KotlinChainTransformerImpl()) {
   override val existenceChecker: ExistenceChecker = MyExistenceChecker()
 
-  override fun build(startElement: PsiElement): List<StreamChain> {
-    val visitor = MyBuilderVisitor()
-    var element = getLatestElementInScope(startElement)
-    while (element != null) {
-      element.accept(visitor)
-      element = toUpperLevel(element)
-      element = if (element == null) null else getLatestElementInScope(element)
-    }
-
-    visitor.chains()
-
-    return super.build(startElement)
-  }
+  override fun createChainsBuilder(): ChainBuilder = MyBuilderVisitor()
 
   private class MyExistenceChecker : ExistenceChecker() {
     override fun visitCallExpression(expression: KtCallExpression) {
@@ -53,14 +39,14 @@ class KotlinJavaStreamChainBuilder : KotlinChainBuilderBase() {
     }
   }
 
-  private class MyBuilderVisitor : MyTreeVisitor() {
+  private class MyBuilderVisitor : ChainBuilder() {
     private val myTerminationCalls = mutableSetOf<KtCallExpression>()
     private val myPreviousCalls = mutableMapOf<KtCallExpression, KtCallExpression>()
     override fun visitCallExpression(expression: KtCallExpression) {
       super.visitCallExpression(expression)
     }
 
-    fun chains(): List<List<KtCallExpression>> {
+    override fun chains(): List<List<KtCallExpression>> {
       return emptyList()
     }
   }

@@ -15,14 +15,17 @@
  */
 package com.intellij.debugger.streams.psi.impl
 
+import com.intellij.debugger.streams.psi.ChainTransformer
+import com.intellij.debugger.streams.wrapper.StreamChain
+import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.psi.KtCallExpression
+
 /**
  * @author Vitaliy.Bibaev
  */
-class KotlinSequenceChainBuilder : KotlinChainBuilderBase(TODO("transmit here a correct transformer")) {
-  override fun createChainsBuilder(): ChainBuilder {
-    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+class KotlinChainTransformerImpl : ChainTransformer.Kotlin {
+  override fun transform(callChain: List<KtCallExpression>, context: PsiElement): StreamChain {
+    assert(!callChain.isEmpty())
+    TODO()
   }
-
-  override val existenceChecker: ExistenceChecker
-    get() = TODO("not implemented") //To change initializer of created properties use File | Settings | File Templates.
 }
