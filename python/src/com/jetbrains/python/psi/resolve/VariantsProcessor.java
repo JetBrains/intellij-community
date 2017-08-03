@@ -121,12 +121,14 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
     return false;
   }
 
-  protected void addElement(@NotNull String name, @NotNull PsiElement element) {
-    mySeenNames.add(name);
-  }
+  protected abstract void addElement(@NotNull String name, @NotNull PsiElement element);
 
   protected void addImportedElement(@NotNull String name, @NotNull PyElement element) {
     addElement(name, element);
+  }
+
+  protected void markAsProcessed(@NotNull String name) {
+    mySeenNames.add(name);
   }
 
   @Contract("null -> false")

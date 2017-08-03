@@ -161,6 +161,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
     if (PyUtil.isClassPrivateName(name) && !PyUtil.inSameFile(element, myContext)) {
       return;
     }
+    markAsProcessed(name);
     myVariants.put(name, setupItem(LookupElementBuilder.createWithSmartPointer(name, element).withIcon(element.getIcon(0))));
   }
 
@@ -169,6 +170,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
     Icon icon = element.getIcon(0);
     // things like PyTargetExpression cannot have a general icon, but here we only have variables
     if (icon == null) icon = PlatformIcons.VARIABLE_ICON;
+    markAsProcessed(name);
     myVariants.put(name, setupItem(LookupElementBuilder.createWithSmartPointer(name, element).withIcon(icon)));
   }
 }
