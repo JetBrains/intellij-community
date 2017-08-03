@@ -345,7 +345,7 @@ fun MultiThreadEventLoopGroup(workerCount: Int): MultithreadEventLoopGroup {
 }
 
 class ConnectToChannelResult {
-  private val channel: Channel?
+  val channel: Channel?
   private val message: String?
   private val throwable: Throwable?
 
@@ -359,11 +359,6 @@ class ConnectToChannelResult {
     this.channel = channel
     this.message = message
     this.throwable = throwable
-  }
-
-  fun handleResult(consumer: Consumer<in Channel?>) : ConnectToChannelResult {
-    consumer.accept(channel)
-    return this
   }
 
   fun handleError(consumer: Consumer<String>) : ConnectToChannelResult {

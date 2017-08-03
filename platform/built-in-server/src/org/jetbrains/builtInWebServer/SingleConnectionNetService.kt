@@ -30,15 +30,13 @@ abstract class SingleConnectionNetService(project: Project) : NetService(project
     this.port = port
 
     val connectResult = bootstrap.connectRetrying(loopbackSocketAddress(port))
-    connectResult.handleResult(java.util.function.Consumer {
-      if (it != null) {
-        promise.catchError {
-          processChannel.set(it)
-          addCloseListener(it)
-          promise.setResult(processHandler)
-        }
+    connectResult.channel?.let {
+      promise.catchError {
+        processChannel.set(it)
+        addCloseListener(it)
+        promise.setResult(processHandler)
       }
-    })
+    }
     handleErrors(connectResult, promise)
   }
 
@@ -50,15 +48,13 @@ abstract class SingleConnectionNetService(project: Project) : NetService(project
 
     val promise = AsyncPromise<Channel>()
     val connectResult = bootstrap!!.connectRetrying(loopbackSocketAddress(port))
-    connectResult.handleResult(java.util.function.Consumer {
-      if (it != null) {
-        promise.catchError {
-          processChannel.set(it)
-          addCloseListener(it)
-          promise.setResult(it)
-        }
+    connectResult.channel?.let {
+      promise.catchError {
+        processChannel.set(it)
+        addCloseListener(it)
+        promise.setResult(it)
       }
-    })
+    }
     handleErrors(connectResult, promise)
 
     return promise
