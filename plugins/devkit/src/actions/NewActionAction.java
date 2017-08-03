@@ -39,6 +39,10 @@ import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 public class NewActionAction extends CreateElementActionBase implements DescriptorUtil.Patcher {
+  // length == 1 is important to make MyInputValidator close the dialog when
+  // module selection is canceled. That's some weird interface actually...
+  private static final PsiClass[] CANCELED = new PsiClass[1];
+
   private NewActionDialog myDialog;
   private XmlFile[] pluginDescriptorsToPatch;
 
@@ -50,7 +54,7 @@ public class NewActionAction extends CreateElementActionBase implements Descript
   @Override
   protected final PsiElement[] invokeDialog(Project project, PsiDirectory directory) {
     PsiElement[] psiElements = doInvokeDialog(project, directory);
-    return psiElements == DevkitActionsUtil.CANCELED ? PsiElement.EMPTY_ARRAY : psiElements;
+    return psiElements == CANCELED ? PsiElement.EMPTY_ARRAY : psiElements;
   }
 
   private PsiElement[] doInvokeDialog(Project project, PsiDirectory directory) {

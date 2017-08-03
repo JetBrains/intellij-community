@@ -41,10 +41,6 @@ public final class DevkitActionsUtil {
   private DevkitActionsUtil() {
   }
 
-  // length == 1 is important to make MyInputValidator close the dialog when
-  // module selection is canceled. That's some weird interface actually...
-  public static final PsiClass[] CANCELED = new PsiClass[1];
-
 
   /**
    * @return selected plugin descriptor or null if canceled.
