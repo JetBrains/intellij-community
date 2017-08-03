@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Vitaliy.Bibaev
  */
-public interface TerminatorStreamCall extends StreamCall, TypeBeforeAwareCall {
+public interface TerminatorStreamCall extends StreamCall, TypeBeforeAware {
   @NotNull
   GenericType getResultType();
 }

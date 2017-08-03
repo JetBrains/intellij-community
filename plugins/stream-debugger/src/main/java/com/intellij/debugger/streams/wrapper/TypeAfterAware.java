@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Vitaliy.Bibaev
  */
-public interface TypeBeforeAwareCall {
+public interface TypeAfterAware {
   @NotNull
-  GenericType getTypeBefore();
+  GenericType getTypeAfter();
 }
