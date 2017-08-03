@@ -35,6 +35,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -44,24 +45,35 @@ import java.util.*;
  * @author yole
  */
 public class CompletionVariantsProcessor extends VariantsProcessor {
+
+  @NotNull
   private final Map<String, LookupElement> myVariants = new HashMap<>();
-  private boolean mySuppressParentheses = false;
+
+  private final boolean mySuppressParentheses;
 
   public CompletionVariantsProcessor(PsiElement context) {
     super(context);
+    mySuppressParentheses = false;
   }
 
   public CompletionVariantsProcessor(PsiElement context,
                                      @Nullable Condition<PsiElement> nodeFilter,
                                      @Nullable Condition<String> nameFilter) {
     super(context, nodeFilter, nameFilter);
+    mySuppressParentheses = false;
   }
 
-  public void suppressParentheses() {
-    mySuppressParentheses = true;
+  public CompletionVariantsProcessor(PsiElement context,
+                                     @Nullable Condition<PsiElement> nodeFilter,
+                                     @Nullable Condition<String> nameFilter,
+                                     boolean plainNamesOnly,
+                                     boolean suppressParentheses) {
+    super(context, nodeFilter, nameFilter, plainNamesOnly);
+    mySuppressParentheses = suppressParentheses;
   }
 
-  private LookupElementBuilder setupItem(LookupElementBuilder item) {
+  @NotNull
+  private LookupElementBuilder setupItem(@NotNull LookupElementBuilder item) {
     final PsiElement element = item.getPsiElement();
     if (!myPlainNamesOnly) {
       if (!mySuppressParentheses &&
@@ -115,9 +127,9 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
     return item;
   }
 
-  private static boolean isSingleArgDecoratorCall(PsiElement elementInCall, PyFunction callee) {
+  private static boolean isSingleArgDecoratorCall(@Nullable PsiElement elementInCall, @NotNull PyFunction callee) {
     // special case hack to avoid the need of patching generator3.py
-    PyClass containingClass = callee.getContainingClass();
+    final PyClass containingClass = callee.getContainingClass();
     if (containingClass != null && PyNames.PROPERTY.equals(containingClass.getName()) &&
         PyBuiltinCache.getInstance(elementInCall).isBuiltin(containingClass)) {
       return true;
@@ -126,24 +138,26 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
     if (callee.getParameterList().getParameters().length > 1) {
       return false;
     }
-    PyDecorator decorator = PsiTreeUtil.getParentOfType(elementInCall, PyDecorator.class);
+    final PyDecorator decorator = PsiTreeUtil.getParentOfType(elementInCall, PyDecorator.class);
     if (decorator == null) {
       return false;
     }
     return PsiTreeUtil.isAncestor(decorator.getCallee(), elementInCall, false);
   }
 
+  @NotNull
   public LookupElement[] getResult() {
     final Collection<LookupElement> variants = myVariants.values();
     return variants.toArray(new LookupElement[variants.size()]);
   }
 
+  @NotNull
   public List<LookupElement> getResultList() {
     return new ArrayList<>(myVariants.values());
   }
 
   @Override
-  protected void addElement(String name, PsiElement element) {
+  protected void addElement(@NotNull String name, @NotNull PsiElement element) {
     if (PyUtil.isClassPrivateName(name) && !PyUtil.inSameFile(element, myContext)) {
       return;
     }
@@ -151,11 +165,10 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
   }
 
   @Override
-  protected void addImportedElement(String referencedName, PyElement expr) {
-    Icon icon = expr.getIcon(0);
+  protected void addImportedElement(@NotNull String name, @NotNull PyElement element) {
+    Icon icon = element.getIcon(0);
     // things like PyTargetExpression cannot have a general icon, but here we only have variables
     if (icon == null) icon = PlatformIcons.VARIABLE_ICON;
-    LookupElementBuilder lookupItem = setupItem(LookupElementBuilder.createWithSmartPointer(referencedName, expr).withIcon(icon));
-    myVariants.put(referencedName, lookupItem);
+    myVariants.put(name, setupItem(LookupElementBuilder.createWithSmartPointer(name, element).withIcon(icon)));
   }
 }

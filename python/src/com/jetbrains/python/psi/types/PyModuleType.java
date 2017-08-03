@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -367,14 +368,15 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   private static CompletionVariantsProcessor createCompletionVariantsProcessor(PsiElement location,
                                                                                boolean suppressParentheses,
                                                                                PointInImport point) {
-    final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(location,
-                                                                                  psiElement -> !(psiElement instanceof PyImportElement) ||
-                                                                                                                                                                          PsiTreeUtil.getParentOfType(psiElement, PyImportStatementBase.class) instanceof PyFromImportStatement, null);
-    if (suppressParentheses) {
-      processor.suppressParentheses();
-    }
-    processor.setPlainNamesOnly(point == PointInImport.AS_NAME); // no parens after imported function names
-    return processor;
+    final Condition<PsiElement> nodeFilter =
+      psiElement -> !(psiElement instanceof PyImportElement) ||
+                    PsiTreeUtil.getParentOfType(psiElement, PyImportStatementBase.class) instanceof PyFromImportStatement;
+
+    return new CompletionVariantsProcessor(location,
+                                           nodeFilter,
+                                           null,
+                                           point == PointInImport.AS_NAME, // no parens after imported function names
+                                           suppressParentheses);
   }
 
   @NotNull
