@@ -13,33 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig.inheritance;
-
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
-
-public class MissingOverrideAnnotationInspectionTest extends LightInspectionTestCase {
-
-  public void testSimple() {
-    doTest();
-  }
-
-  public void testNotAvailable() {
-    doTest();
-  }
-
-  public void testHierarchy() {
-    doTest();
-  }
-
-  public void testHierarchy2() {
-    doTest();
-  }
-
-  @Nullable
+class A implements Runnable {
   @Override
-  protected InspectionProfileEntry getInspection() {
-    return new MissingOverrideAnnotationInspection();
+  public void <warning descr="Overridden methods are not annotated with '@Override'">run</warning>() {
+
+  }
+}
+
+class B extends A {
+  public void <warning descr="Missing '@Override' annotation on 'run()'">run</warning>() {
   }
 }
