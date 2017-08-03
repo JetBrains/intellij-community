@@ -46,6 +46,10 @@ abstract class JvmCommonIntentionActionsFactory {
 
   open fun createAddCallableMemberActions(info: MethodInsertionInfo): List<IntentionAction> = emptyList()
 
+  open fun createGenerateFieldFromUsageActions(info: CreateFromUsage.FieldInfo): List<IntentionAction> = emptyList()
+  open fun createGenerateMethodFromUsageActions(info: CreateFromUsage.MethodInfo): List<IntentionAction> = emptyList()
+  open fun createGenerateConstructorFromUsageActions(info: CreateFromUsage.ConstructorInfo): List<IntentionAction> = emptyList()
+
   open fun createAddBeanPropertyActions(psiClass: @JvmCommon PsiClass,
                                         propertyName: String,
                                         @PsiModifier.ModifierConstant visibilityModifier: String,
@@ -77,6 +81,43 @@ abstract class JvmCommonIntentionActionsFactory {
                                         getterRequired: Boolean): List<IntentionAction> = emptyList()
 
 
+}
+
+@ApiStatus.Experimental
+object CreateFromUsage {
+  // type constraint is a language-specific object (e.g. ExpectedTypeInfo for Java)
+  class TypeInfo(val typeConstraints: List<Any>)
+
+  class ParameterInfo(val typeInfo: TypeInfo, val suggestedNames: List<String>)
+
+  abstract class MemberInfo(
+      val targetClass: @JvmCommon PsiClass,
+      @PsiModifier.ModifierConstant val modifiers: List<String> = emptyList()
+  )
+
+  class FieldInfo(
+      targetClass: @JvmCommon PsiClass,
+      val name: String,
+      @PsiModifier.ModifierConstant
+      modifiers: List<String> = emptyList(),
+      val returnType: TypeInfo
+  ) : MemberInfo(targetClass, modifiers)
+
+  class MethodInfo(
+      targetClass: @JvmCommon PsiClass,
+      val name: String,
+      @PsiModifier.ModifierConstant
+      modifiers: List<String> = emptyList(),
+      val returnType: TypeInfo,
+      val parameters: List<ParameterInfo>
+  ) : MemberInfo(targetClass, modifiers)
+
+  class ConstructorInfo(
+      targetClass: @JvmCommon PsiClass,
+      @PsiModifier.ModifierConstant
+      modifiers: List<String> = emptyList(),
+      val parameters: List<ParameterInfo>
+  ) : MemberInfo(targetClass, modifiers)
 }
 
 @ApiStatus.Experimental
