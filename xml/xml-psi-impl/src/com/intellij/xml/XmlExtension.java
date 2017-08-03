@@ -54,6 +54,10 @@ public abstract class XmlExtension {
 
     @NotNull
     String getPostfix();
+    
+    default boolean showAutoPopup() {
+      return true;
+    }
   }
 
   private static XmlExtension calcExtension(PsiFile file) {
@@ -168,7 +172,8 @@ public abstract class XmlExtension {
     return descriptor.isRequired();
   }
 
-  public AttributeValuePresentation getAttributeValuePresentation(@NotNull XmlAttributeDescriptor descriptor,
+  @NotNull
+  public AttributeValuePresentation getAttributeValuePresentation(@Nullable XmlAttributeDescriptor descriptor,
                                                                   @NotNull String defaultAttributeQuote) {
     return new AttributeValuePresentation() {
       @NotNull
