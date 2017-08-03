@@ -76,6 +76,9 @@ public class TestTextFieldAction extends DumbAwareAction {
     };
     private final List<JTextField> fields = Arrays.asList(
       new JBTextField(),
+      new JBTextField() {{
+        putClientProperty("JTextField.variant", "search");
+      }},
       new SearchTextField(false).getTextEditor(),
       new SearchTextField(true).getTextEditor(),
       new ExpandableTextField(),
