@@ -436,4 +436,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testComparingFloatAndInt() {
     doTest();
   }
+
+  // PY-23864
+  public void testClassObjectAndMetaclassCompatibility() {
+    doTest();
+  }
 }

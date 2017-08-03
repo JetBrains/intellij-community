@@ -81,8 +81,13 @@ public class PyTypeChecker {
       }
     }
     if (expected instanceof PyInstantiableType && actual instanceof PyInstantiableType
-        && !(expected instanceof PyGenericType && typeVarAcceptsBothClassAndInstanceTypes((PyGenericType)expected)) 
+        && !(expected instanceof PyGenericType && typeVarAcceptsBothClassAndInstanceTypes((PyGenericType)expected))
         && ((PyInstantiableType)expected).isDefinition() ^ ((PyInstantiableType)actual).isDefinition()) {
+      if (((PyInstantiableType)actual).isDefinition() && !((PyInstantiableType)expected).isDefinition()) {
+        if (actual instanceof PyClassLikeType && matchClassObjectAndMetaclass(expected, (PyClassLikeType)actual, context)) {
+          return true;
+        }
+      }
       return false;
     }
     if (actualClassType != null && PyNames.BASESTRING.equals(actualClassType.getName())) {
@@ -297,6 +302,17 @@ public class PyTypeChecker {
       }
     }
     return matchNumericTypes(expected, actual);
+  }
+
+  private static boolean matchClassObjectAndMetaclass(@NotNull PyType expected,
+                                                      @NotNull PyClassLikeType actual,
+                                                      @NotNull TypeEvalContext context) {
+
+    if (!actual.isDefinition()) {
+      return false;
+    }
+    final PyClassLikeType metaClass = actual.getMetaClassType(context, true);
+    return metaClass != null && match(expected, metaClass, context);
   }
 
   private static boolean typeVarAcceptsBothClassAndInstanceTypes(@NotNull PyGenericType typeVar) {
