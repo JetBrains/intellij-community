@@ -35,6 +35,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.NotNullList;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.graph.InboundSemiGraph;
@@ -746,7 +747,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   public List<ScopeToolState> getAllTools() {
     initInspectionTools();
 
-    List<ScopeToolState> result = new ArrayList<>();
+    List<ScopeToolState> result = new NotNullList<>();
     for (Tools tools : myTools.values()) {
       tools.collectTools(result);
     }

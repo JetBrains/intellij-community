@@ -32,6 +32,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.NotNullList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenResource;
@@ -250,7 +251,7 @@ public class MavenFoldersImporter {
       }
     }
 
-    List<String> facetExcludes = new ArrayList<>();
+    List<String> facetExcludes = new NotNullList<>();
     for (MavenImporter each : MavenImporter.getSuitableImporters(myMavenProject)) {
       each.collectExcludedFolders(myMavenProject, facetExcludes);
     }
