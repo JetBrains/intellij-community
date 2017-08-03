@@ -66,7 +66,16 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
     }
 
     ResourceRootConfiguration rootConfiguration = artifactResourceConfiguration.getRootConfiguration(root);
-    if (rootConfiguration == null) return new MavenWebArtifactCopyingHandler(artifactResourceConfiguration, moduleResourceConfiguration);
+    if (rootConfiguration == null) {
+      // do not filter files located not under the war source directory, e.g. libraries from .m2
+      // it's not possible to calculate valid relative paths for all such files since we do not have the output path information.
+      // the relative file output path in the artifact can be resolved based on CopyToDirectoryInstructionCreator.myOutputPath
+      // but it requires significant API change
+      if(!FileUtil.isAncestor(new File(artifactResourceConfiguration.warSourceDirectory), root, false)) {
+        return null;
+      }
+      return new MavenWebArtifactCopyingHandler(artifactResourceConfiguration, moduleResourceConfiguration);
+    }
 
     MavenResourceFileProcessor fileProcessor = new MavenResourceFileProcessor(projectConfiguration, model.getProject(), moduleResourceConfiguration);
     return new MavenWebRootCopyingHandler(fileProcessor, artifactResourceConfiguration, rootConfiguration, moduleResourceConfiguration, root);
