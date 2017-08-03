@@ -18,10 +18,15 @@ package com.intellij.java.psi.codeStyle
 
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions
 import com.intellij.psi.codeStyle.DetectableIndentOptionsProvider
+import com.intellij.psi.codeStyle.TimeStampedIndentOptions
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.assertj.core.api.Assertions.assertThat
 
@@ -47,7 +52,25 @@ class Test {
   }
 }
 """
-  
+
+  fun `test store valid timestamped options in document when detecting indents`() {
+    val file = PsiFileFactory.getInstance(project).createFileFromText("Test.java", JavaFileType.INSTANCE, code, 0, true)
+    val detectableOptionsProvider = object : DetectableIndentOptionsProvider() {
+      override fun scheduleDetectionInBackground(project: Project, document: Document, indentOptions: TimeStampedIndentOptions) {
+        //just do nothing, so default indent options will be kept (same as very long indent detection calculation)
+      }
+    }
+    detectableOptionsProvider.setEnabledInTest(true)
+
+    val settings = CodeStyleSettingsManager.getSettings(project)
+    val options = detectableOptionsProvider.getIndentOptions(settings, file)
+
+    val document = PsiDocumentManager.getInstance(project).getDocument(file)!!
+    val indentOptions = detectableOptionsProvider.getValidCachedIndentOptions(file, document)!!
+
+    assert(options == indentOptions && options === indentOptions)
+  }
+
   fun testDropIndentOptions_WhenTabSizeChanged() {
     val current = CodeStyleSettingsManager.getInstance(project).currentSettings
     val options = current.getCommonSettings(JavaLanguage.INSTANCE).indentOptions!!

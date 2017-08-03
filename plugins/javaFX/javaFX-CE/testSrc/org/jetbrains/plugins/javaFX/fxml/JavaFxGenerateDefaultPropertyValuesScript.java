@@ -32,7 +32,7 @@ import java.util.zip.ZipInputStream;
  * <p>
  * When launched without arguments it produces default values for JavaFX classes having default constructor and their superclasses, including some (but not all) abstract classes
  * <p>
- * When launched with <code>-fromSource</code> argument it attempts to extract default property values from the sources (JavaDoc and declarations),
+ * When launched with {@code -fromSource} argument it attempts to extract default property values from the sources (JavaDoc and declarations),
  * the results can be used for updating the contents of {@link #ourFromSource} map, which contains manually edited properties
  *
  * @author Pavel.Dolgov

@@ -19,7 +19,6 @@
     <orderEntry type="module" module-name="xml-openapi" />
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="module" module-name="platform-impl" />
-    <orderEntry type="module" module-name="vcs-api" />
   </component>
 </module>
 

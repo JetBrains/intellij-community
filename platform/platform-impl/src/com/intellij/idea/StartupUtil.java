@@ -93,7 +93,6 @@ public class StartupUtil {
 
     if (!Main.isHeadless()) {
       AppUIUtil.updateFrameClass();
-      AppUIUtil.updateAppIcon();
       newConfigFolder = !new File(PathManager.getConfigPath()).exists();
     }
 

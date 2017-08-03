@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,11 @@
  */
 package com.intellij.refactoring.typeMigration.rules.guava;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.refactoring.typeMigration.inspections.GuavaConversionSettings;
@@ -30,7 +33,6 @@ import java.util.Map;
  * @author Dmitry Batkovich
  */
 public class GuavaLambdaConversionRule extends BaseGuavaTypeConversionRule {
-  private final static Logger LOG = Logger.getInstance(GuavaLambdaConversionRule.class);
   private final GuavaLambda myLambda;
 
   protected GuavaLambdaConversionRule(GuavaLambda lambda) {
@@ -44,8 +46,7 @@ public class GuavaLambdaConversionRule extends BaseGuavaTypeConversionRule {
 
   @Nullable
   @Override
-  protected TypeConversionDescriptorBase findConversionForVariableReference(@NotNull PsiReferenceExpression referenceExpression,
-                                                                            @NotNull PsiVariable psiVariable, PsiExpression context) {
+  protected TypeConversionDescriptorBase findConversionForVariableReference(PsiExpression context) {
     return new FunctionalInterfaceTypeConversionDescriptor(myLambda.getSamName(), myLambda.getJavaAnalogueSamName(), myLambda.getJavaAnalogueClassQName());
   }
 
@@ -59,6 +60,11 @@ public class GuavaLambdaConversionRule extends BaseGuavaTypeConversionRule {
   @Override
   public String ruleToClass() {
     return myLambda.getJavaAnalogueClassQName();
+  }
+
+  @Override
+  protected TypeConversionDescriptorBase getUnknownMethodConversion() {
+    return new TypeConversionDescriptor("$q$.$m$($args$)", "$q$.$m$($args$)::" + myLambda.getJavaAnalogueSamName());
   }
 
   @Nullable

@@ -4,15 +4,12 @@ java.lang.Object -> Bar FooImpl
 
 Backward References:
 Bar in Bar occurrences = 1
-Bar.<init>(0) in Bar occurrences = 1
 Bar.m(1) in Bar occurrences = 1
 Foo in Foo FooImpl occurrences = 2
 Foo.getSomeText(0) in Foo occurrences = 1
 FooImpl in Bar FooImpl occurrences = 2
-FooImpl.<init>(0) in FooImpl occurrences = 1
 FooImpl.TITLE in FooImpl occurrences = 1
 FooImpl.getSomeText(0) in FooImpl occurrences = 1
-java.lang.Object.<init>(0) in Bar FooImpl occurrences = 2
 java.lang.String in Foo FooImpl occurrences = 3
 
 Class Definitions:

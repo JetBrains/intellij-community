@@ -15,7 +15,18 @@
  */
 package org.jetbrains.plugins.groovy.lang.highlighting
 
+import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
+
 class GrGenericsInferringTest extends GrHighlightingTestBase {
+
+  @Override
+  @NotNull
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return GroovyLightProjectDescriptor.GROOVY_2_3
+  }
+
   void testMapExplicit() {
     testHighlighting '''
       import groovy.transform.CompileStatic
@@ -318,5 +329,70 @@ class Foo {
   }
 }
 '''
+  }
+
+  void testClosureToSAM() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+interface SAM<In, Out> {
+    Out run(In argument)
+}
+
+@CompileStatic
+class SomeClass2 {
+    static <T> String join(T item, SAM<T, String> f) {
+        return ""
+    }
+
+    static void method() {
+        join(new SomeClass2(), { it.toString() })
+    }
+}
+
+'''
+  }
+
+  void testClosureToSAMWildcard() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+interface SAM<In, Out> {
+    Out run(In argument)
+}
+
+@CompileStatic
+class SomeClass2 {
+    static <T> String join(T item, SAM<? extends T, String> f) {
+        return ""
+    }
+
+    static void method() {
+        join(new SomeClass2(), { it.toString() })
+    }
+}
+'''
+  }
+
+  void testClosureToSAMGenericWildcard() {
+    testHighlighting '''\
+  import groovy.transform.CompileStatic
+  
+  interface SAM<In, Out> {
+      Out run(In argument)
+  }
+  
+  @CompileStatic
+  class SomeClass2 {
+      static <T> String join(List<? extends T> item, SAM<T, String> f) {
+          return ""
+      }
+  
+      static void method() {
+          def list = [new SomeClass2()] 
+          join(list, { it.toString() })
+      }
+  }
+  '''
   }
 }

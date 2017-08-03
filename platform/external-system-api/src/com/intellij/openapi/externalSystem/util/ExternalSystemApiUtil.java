@@ -543,8 +543,8 @@ public class ExternalSystemApiUtil {
    *
    * @param ideProject       target ide project
    * @param projectData      target external project
-   * @return                 <code>true</code> if given ide project has 1-1 mapping to the given external project;
-   *                         <code>false</code> otherwise
+   * @return                 {@code true} if given ide project has 1-1 mapping to the given external project;
+   *                         {@code false} otherwise
    */
   public static boolean isOneToOneMapping(@NotNull Project ideProject, @NotNull ProjectData projectData) {
     String linkedExternalProjectPath = null;
@@ -622,7 +622,7 @@ public class ExternalSystemApiUtil {
    * @param externalSystemId     target external system
    * @param project              target ide project
    * @return                     root external project's path if given path is considered to point to a known sub-project's config;
-   *                             <code>null</code> if it's not possible to find a root project's config path on the basis of the
+   *                             {@code null} if it's not possible to find a root project's config path on the basis of the
    *                             given path
    */
   @Nullable
@@ -728,8 +728,8 @@ public class ExternalSystemApiUtil {
    *
    * @param externalSystemId     target external system
    *
-   * @return   <code>true</code> if the ide is configured to work with external system api from the ide process;
-   *           <code>false</code> otherwise
+   * @return   {@code true} if the ide is configured to work with external system api from the ide process;
+   *           {@code false} otherwise
    */
   public static boolean isInProcessMode(ProjectSystemId externalSystemId) {
     return Registry.is(externalSystemId.getId() + ExternalSystemConstants.USE_IN_PROCESS_COMMUNICATION_REGISTRY_KEY_SUFFIX, false);
@@ -742,9 +742,9 @@ public class ExternalSystemApiUtil {
    * <p/>
    * It's also possible that particular implementation of {@link ParametersEnhancer} is compiled using dependency to classes
    * which are provided by the {@link ParametersEnhancer#enhanceLocalProcessing(List) expanded classpath}. E.g. a class
-   * <code>'A'</code> might use method of class <code>'B'</code> and 'A' is located at the current (system/plugin) classpath but
-   * <code>'B'</code> is not. We need to reload <code>'A'</code> using its expanded classpath then, i.e. create new class loaded
-   * with that expanded classpath and load <code>'A'</code> by it.
+   * {@code 'A'} might use method of class {@code 'B'} and 'A' is located at the current (system/plugin) classpath but
+   * {@code 'B'} is not. We need to reload {@code 'A'} using its expanded classpath then, i.e. create new class loaded
+   * with that expanded classpath and load {@code 'A'} by it.
    * <p/>
    * This method allows to do that.
    *

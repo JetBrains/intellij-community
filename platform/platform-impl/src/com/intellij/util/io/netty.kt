@@ -43,8 +43,6 @@ import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.ssl.SslHandler
 import io.netty.resolver.ResolvedAddressTypes
 import io.netty.util.concurrent.GenericFutureListener
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.Promise
 import org.jetbrains.ide.PooledThreadExecutor
 import org.jetbrains.io.BuiltInServer
 import org.jetbrains.io.NettyUtil
@@ -55,6 +53,7 @@ import java.net.NetworkInterface
 import java.net.Socket
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
+import java.util.function.Consumer
 
 // used in Go
 fun oioClientBootstrap(): Bootstrap {
@@ -110,25 +109,28 @@ fun Channel.closeAndShutdownEventLoop() {
   }
 }
 
+/**
+ * Synchronously connects to remote address.
+ */
 @JvmOverloads
-fun Bootstrap.connect(remoteAddress: InetSocketAddress, promise: AsyncPromise<*>? = null, maxAttemptCount: Int = NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT, stopCondition: Condition<Void>? = null): Channel? {
+fun Bootstrap.connectRetrying(remoteAddress: InetSocketAddress,
+                              maxAttemptCount: Int = NettyUtil.DEFAULT_CONNECT_ATTEMPT_COUNT,
+                              stopCondition: Condition<Void>? = null): ConnectToChannelResult {
   try {
-    return doConnect(this, remoteAddress, promise, maxAttemptCount, stopCondition ?: Conditions.alwaysFalse<Void>())
+    return doConnect(this, remoteAddress, maxAttemptCount, stopCondition ?: Conditions.alwaysFalse<Void>())
   }
   catch (e: Throwable) {
-    promise?.setError(e)
-    return null
+    return ConnectToChannelResult(e)
   }
 }
 
 private fun doConnect(bootstrap: Bootstrap,
                        remoteAddress: InetSocketAddress,
-                       promise: AsyncPromise<*>?,
                        maxAttemptCount: Int,
-                       stopCondition: Condition<Void>): Channel? {
+                       stopCondition: Condition<Void>): ConnectToChannelResult {
   var attemptCount = 0
   if (bootstrap.config().group() !is OioEventLoopGroup) {
-    return connectNio(bootstrap, remoteAddress, promise, maxAttemptCount, stopCondition, attemptCount)
+    return connectNio(bootstrap, remoteAddress, maxAttemptCount, stopCondition, attemptCount)
   }
 
   bootstrap.validate()
@@ -137,26 +139,25 @@ private fun doConnect(bootstrap: Bootstrap,
     try {
       val channel = OioSocketChannel(Socket(remoteAddress.address, remoteAddress.port))
       BootstrapUtil.initAndRegister(channel, bootstrap).sync()
-      return channel
+      return ConnectToChannelResult(channel)
     }
     catch (e: IOException) {
-      if (stopCondition.value(null) || promise != null && promise.state != Promise.State.PENDING) {
-        return null
+      if (stopCondition.value(null)) {
+        return ConnectToChannelResult()
       }
       else if (maxAttemptCount == -1) {
-        if (sleep(promise, 300)) {
-          return null
+        sleep(300)?.let {
+          return ConnectToChannelResult(it)
         }
         attemptCount++
       }
       else if (++attemptCount < maxAttemptCount) {
-        if (sleep(promise, attemptCount * NettyUtil.MIN_START_TIME)) {
-          return null
+        sleep(attemptCount * NettyUtil.MIN_START_TIME)?.let {
+          return ConnectToChannelResult(it)
         }
       }
       else {
-        promise?.setError(e)
-        return null
+        return ConnectToChannelResult(e)
       }
     }
   }
@@ -164,10 +165,9 @@ private fun doConnect(bootstrap: Bootstrap,
 
 private fun connectNio(bootstrap: Bootstrap,
                        remoteAddress: InetSocketAddress,
-                       promise: AsyncPromise<*>?,
                        maxAttemptCount: Int,
                        stopCondition: Condition<Void>,
-                       _attemptCount: Int): Channel? {
+                       _attemptCount: Int): ConnectToChannelResult {
   var attemptCount = _attemptCount
   while (true) {
     val future = bootstrap.connect(remoteAddress).awaitUninterruptibly()
@@ -175,49 +175,45 @@ private fun connectNio(bootstrap: Bootstrap,
       if (!future.channel().isOpen) {
         continue
       }
-      return future.channel()
+      return ConnectToChannelResult(future.channel())
     }
-    else if (stopCondition.value(null) || promise != null && promise.state == Promise.State.REJECTED) {
-      return null
+    else if (stopCondition.value(null)) {
+      return ConnectToChannelResult()
     }
     else if (maxAttemptCount == -1) {
-      if (sleep(promise, 300)) {
-        return null
+      sleep(300)?.let {
+        ConnectToChannelResult(it)
       }
       attemptCount++
     }
     else if (++attemptCount < maxAttemptCount) {
-      if (sleep(promise, attemptCount * NettyUtil.MIN_START_TIME)) {
-        return null
+      sleep(attemptCount * NettyUtil.MIN_START_TIME)?.let {
+        ConnectToChannelResult(it)
       }
     }
     else {
       @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
       val cause = future.cause()
-      if (promise != null) {
-        if (cause == null) {
-          promise.setError("Cannot connect: unknown error")
-        }
-        else {
-          promise.setError(cause)
-        }
+      if (cause == null) {
+        return ConnectToChannelResult("Cannot connect: unknown error")
       }
-      return null
+      else {
+        return ConnectToChannelResult(cause)
+      }
     }
   }
 }
 
-fun sleep(promise: AsyncPromise<*>?, time: Int): Boolean {
+private fun sleep(time: Int): String? {
   try {
     //noinspection BusyWait
     Thread.sleep(time.toLong())
   }
   catch (ignored: InterruptedException) {
-    promise?.setError("Interrupted")
-    return true
+    return "Interrupted"
   }
 
-  return false
+  return null
 }
 
 val Channel.uriScheme: String
@@ -346,4 +342,36 @@ fun MultiThreadEventLoopGroup(workerCount: Int): MultithreadEventLoopGroup {
   }
 
   return NioEventLoopGroup(workerCount, PooledThreadExecutor.INSTANCE)
+}
+
+class ConnectToChannelResult {
+  val channel: Channel?
+  private val message: String?
+  private val throwable: Throwable?
+
+  constructor(channel: Channel? = null) : this(channel, null, null)
+
+  constructor(message: String): this(null, message, null)
+
+  constructor(error: Throwable) : this(null, null, error)
+
+  private constructor(channel: Channel?,  message: String?, throwable: Throwable?) {
+    this.channel = channel
+    this.message = message
+    this.throwable = throwable
+  }
+
+  fun handleError(consumer: Consumer<String>) : ConnectToChannelResult {
+    if (message != null) {
+      consumer.accept(message)
+    }
+    return this
+  }
+
+  fun handleThrowable(consumer: Consumer<Throwable>) : ConnectToChannelResult {
+    if (throwable != null) {
+      consumer.accept(throwable)
+    }
+    return this
+  }
 }

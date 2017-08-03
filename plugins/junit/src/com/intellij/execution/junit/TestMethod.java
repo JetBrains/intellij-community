@@ -20,16 +20,12 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
-import com.intellij.rt.execution.junit.JUnitStarter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 class TestMethod extends TestObject {
   public TestMethod(JUnitConfiguration configuration, ExecutionEnvironment environment) {
@@ -46,32 +42,6 @@ class TestMethod extends TestObject {
 
   protected JavaParameters createDefaultJavaParameters() throws ExecutionException {
     return super.createJavaParameters();
-  }
-
-  @Nullable
-  @Override
-  protected String getPreferredRunner(GlobalSearchScope globalSearchScope) {
-    Project project = getConfiguration().getProject();
-    JUnitConfiguration.Data data = getConfiguration().getPersistentData();
-    final PsiClass psiClass = JavaExecutionUtil.findMainClass(project, data.getMainClassName(), globalSearchScope);
-    if (psiClass == null) return null;
-
-    if (JUnitUtil.isJUnit5TestClass(psiClass, false)) {
-      return JUnitStarter.JUNIT5_PARAMETER;
-    }
-
-    if (JUnitUtil.isJUnit4TestClass(psiClass)) {
-      return JUnitStarter.JUNIT4_PARAMETER;
-    }
-
-    final String methodName = data.getMethodName();
-    final PsiMethod[] methods = psiClass.findMethodsByName(methodName, true);
-    for (PsiMethod method : methods) {
-      if (JUnitUtil.isTestAnnotated(method)) {
-        return JUnitStarter.JUNIT4_PARAMETER;
-      }
-    }
-    return JUnitStarter.JUNIT3_PARAMETER;
   }
 
   @Override

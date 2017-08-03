@@ -290,8 +290,8 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
   //with test tree build before start actual tests
   public void testPrependTreeAndSameTestsStartFinish() throws Exception {
     //send tree
-    myEventsProcessor.onSuiteTreeStarted("suite1", null);
-    myEventsProcessor.onSuiteTreeNodeAdded("test1", null);
+    myEventsProcessor.onSuiteTreeStarted("suite1", null, "suite1", "0");
+    myEventsProcessor.onSuiteTreeNodeAdded("test1", null, "test1", "suite1");
     myEventsProcessor.onSuiteTreeEnded("suite1");
 
     //start testing

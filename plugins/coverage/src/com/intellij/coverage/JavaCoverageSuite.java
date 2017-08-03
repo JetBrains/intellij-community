@@ -112,7 +112,7 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
 
   @NotNull
   public String[] getExcludedClassNames() {
-    return getClassNames(myFilters);
+    return getClassNames(myExcludePatterns);
   }
 
   @NotNull
@@ -210,7 +210,12 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
   }
 
   public boolean isClassFiltered(final String classFQName) {
-    for (final String className : getFilteredClassNames()) {
+    return isClassFiltered(classFQName, getFilteredClassNames());
+  }
+
+  public boolean isClassFiltered(final String classFQName,
+                                 final String[] classPatterns) {
+    for (final String className : classPatterns) {
       if (className.equals(classFQName) || classFQName.startsWith(className) && classFQName.charAt(className.length()) == '$') {
         return true;
       }

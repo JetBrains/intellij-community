@@ -37,6 +37,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -96,6 +97,13 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     myTextArea = textArea;
     mySearchMode = searchMode;
     myInfoMode = infoMode;
+
+    if (UIUtil.isUnderWindowsLookAndFeel()) {
+      myTextArea.setFont(UIManager.getFont("TextField.font"));
+    } else {
+      Utils.setSmallerFont(myTextArea);
+    }
+
     myTextArea.addPropertyChangeListener("background", this);
     myTextArea.addPropertyChangeListener("font", this);
     myTextArea.addFocusListener(this);
@@ -258,8 +266,12 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     myMultilineEnabled = enabled;
     myTextArea.getDocument().putProperty("filterNewlines", myMultilineEnabled ? null : Boolean.TRUE);
     if (!myMultilineEnabled) {
+      myTextArea.getInputMap().put(KeyStroke.getKeyStroke("shift UP"), "selection-begin-line");
+      myTextArea.getInputMap().put(KeyStroke.getKeyStroke("shift DOWN"), "selection-end-line");
       myTextArea.addKeyListener(myEnterRedispatcher);
     } else {
+      myTextArea.getInputMap().put(KeyStroke.getKeyStroke("shift UP"), "selection-up");
+      myTextArea.getInputMap().put(KeyStroke.getKeyStroke("shift DOWN"), "selection-down");
       myTextArea.removeKeyListener(myEnterRedispatcher);
     }
     updateIconsLayout();
@@ -336,8 +348,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
             (mySearchMode ? "Search" : "Replace") + " history",
             myHelper.getShowHistoryIcon());
 
-      KeyStroke stroke = KeyStroke.getKeyStroke(KeyEvent.VK_H, InputEvent.CTRL_DOWN_MASK);
-      registerCustomShortcutSet(new CustomShortcutSet(new KeyboardShortcut(stroke, null)), myTextArea);
+      registerCustomShortcutSet(SearchTextField.SHOW_HISTORY_SHORTCUT, myTextArea);
     }
 
     @Override
@@ -346,9 +357,8 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
       FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(e.getProject());
       String[] recent = mySearchMode ? findInProjectSettings.getRecentFindStrings()
                                      : findInProjectSettings.getRecentReplaceStrings();
-      String title = "Recent " + (mySearchMode ? "Searches" : "Replaces");
       JBList historyList = new JBList((Object[])ArrayUtil.reverseArray(recent));
-      Utils.showCompletionPopup(SearchTextArea.this, historyList, title, myTextArea, null);
+      Utils.showCompletionPopup(SearchTextArea.this, historyList, null, myTextArea, null);
     }
   }
 

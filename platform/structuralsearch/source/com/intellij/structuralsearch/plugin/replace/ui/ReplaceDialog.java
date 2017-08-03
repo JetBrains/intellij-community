@@ -193,11 +193,11 @@ public class ReplaceDialog extends SearchDialog {
       Replacer.checkSupportedReplacementPattern(searchContext.getProject(), ((ReplaceConfiguration)model.getConfig()).getReplaceOptions());
     }
     catch (UnsupportedPatternException ex) {
-      reportMessage("unsupported.replacement.pattern.message", replaceCriteriaEdit, ex.getMessage());
+      reportMessage(SSRBundle.message("unsupported.replacement.pattern.message", ex.getMessage()), replaceCriteriaEdit);
       return false;
     }
     catch (MalformedPatternException ex) {
-      reportMessage("malformed.replacement.pattern.message", replaceCriteriaEdit, ex.getMessage());
+      reportMessage(SSRBundle.message("malformed.replacement.pattern.message", ex.getMessage()), replaceCriteriaEdit);
       return false;
     }
 

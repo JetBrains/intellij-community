@@ -81,8 +81,8 @@ public class SocketServer {
      * Override this method to implement the actual logic of the protocol.
      *
      * @param socket The connected socket
-     * @return <code>true</code> if the server should keep listening for new incoming requests, 
-     *         <code>false</code> if the server handling the protocol can be shutdown.
+     * @return {@code true} if the server should keep listening for new incoming requests,
+     *         {@code false} if the server handling the protocol can be shutdown.
      * 
      * @throws IOException when the communication over the socket gives errors.
      */

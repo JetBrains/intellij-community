@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
             return descriptor;
           }
           return GuavaLambda.SUPPLIER.getClassQName().equals(qName)
-                 ? new GuavaTypeConversionDescriptor("$val$.or($other$)", "$val$.orElseGet($other$)")
+                 ? new GuavaTypeConversionDescriptor("$val$.or($other$)", "$val$.orElseGet($other$)", context)
                  : new TypeConversionDescriptor("$val$.or($other$)", "$val$.orElse($other$)");
         }
         return null;
@@ -86,7 +86,7 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
           return null;
         }
         final PsiExpression functionArgument = arguments[0];
-        final TypeConversionDescriptor descriptor = new GuavaTypeConversionDescriptor("$val$.transform($fun$)", "$val$.map($fun$)");
+        final TypeConversionDescriptor descriptor = new GuavaTypeConversionDescriptor("$val$.transform($fun$)", "$val$.map($fun$)", context);
         final PsiType typeParameter = GuavaConversionUtil.getFunctionReturnType(functionArgument);
         if (typeParameter == null) {
           return descriptor;
@@ -112,9 +112,7 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
 
   @Nullable
   @Override
-  protected TypeConversionDescriptorBase findConversionForVariableReference(@NotNull PsiReferenceExpression referenceExpression,
-                                                                            @NotNull PsiVariable psiVariable,
-                                                                            @Nullable PsiExpression context) {
+  protected TypeConversionDescriptorBase findConversionForVariableReference(@Nullable PsiExpression context) {
     if (GuavaOptionalConversionUtil.isOptionalOrContext(context)) {
       return new TypeConversionDescriptor("$o$", "com.google.common.base." + OPTIONAL_CONVERTOR_PATTERN);
     }
@@ -170,5 +168,10 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
   @Override
   public String ruleToClass() {
     return JAVA_OPTIONAL;
+  }
+
+  @Override
+  protected TypeConversionDescriptorBase getUnknownMethodConversion() {
+    return null;
   }
 }

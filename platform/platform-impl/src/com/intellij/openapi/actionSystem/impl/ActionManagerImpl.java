@@ -547,7 +547,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   /**
-   * @return instance of ActionGroup or ActionStub. The method never returns real subclasses of <code>AnAction</code>.
+   * @return instance of ActionGroup or ActionStub. The method never returns real subclasses of {@code AnAction}.
    */
   @Nullable
   private AnAction processActionElement(Element element, final ClassLoader loader, PluginId pluginId) {
@@ -850,7 +850,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   /**
-   * @param parentGroup group which is the parent of the separator. It can be <code>null</code> in that
+   * @param parentGroup group which is the parent of the separator. It can be {@code null} in that
    *                    case separator will be added to group described in the <add-to-group ....> subelement.
    * @param element     XML element which represent separator.
    */
@@ -1115,16 +1115,16 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       if (isGroup != newAction instanceof ActionGroup) {
         throw new IllegalStateException("cannot replace a group with an action and vice versa: " + actionId);
       }
+      for (String groupId : myId2GroupId.get(actionId)) {
+        DefaultActionGroup group = ObjectUtils.assertNotNull((DefaultActionGroup)getActionOrStub(groupId));
+        group.replaceAction(oldAction, newAction);
+      }
       unregisterAction(actionId);
       if (isGroup) {
         myId2GroupId.values().remove(actionId);
       }
     }
     registerAction(actionId, newAction, pluginId);
-    for (String groupId : myId2GroupId.get(actionId)) {
-      DefaultActionGroup group = ObjectUtils.assertNotNull((DefaultActionGroup)getActionOrStub(groupId));
-      group.replaceAction(oldAction, newAction);
-    }
     return oldAction;
   }
 

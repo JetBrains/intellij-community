@@ -16,9 +16,11 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -54,6 +56,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.lang.management.ManagementFactory;
 import java.net.MalformedURLException;
 import java.util.*;
 import java.util.List;
@@ -79,6 +82,13 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     public Map<String, String> names = ContainerUtil.newLinkedHashMap();
     public List<ProjectGroup> groups = new SmartList<>();
     public String lastPath;
+    public String pid;
+
+    private static String getPid() {
+        String processName = ManagementFactory.getRuntimeMXBean().getName();
+        return processName.split("@")[0];
+    }
+
     public Map<String, RecentProjectMetaInfo> additionalInfo = ContainerUtil.newLinkedHashMap();
 
     public String lastProjectLocation;
@@ -99,43 +109,64 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
     // TODO Should be removed later (required to convert the already saved system-dependent paths).
     private void makePathsSystemIndependent() {
-      makeSystemIndependent(recentPaths);
+      ApplicationInfo appInfo = ApplicationInfo.getInstance();
+      String version = appInfo.getMajorVersion() + "." + appInfo.getMinorVersion();
+      PathMacroManager pathMacroManager = PathMacroManager.getInstance(ApplicationManager.getApplication());
+      Function<String, String> convert = depPath -> {
+        String result = PathUtil.toSystemIndependentName(depPath);
+        if (!result.startsWith("$APP") && result.contains("2017.1")) {
+          String migrated = result.replace("2017.1", version);
+          // check for possible PathMacroUtil.APPLICATION_*
+          if (pathMacroManager.collapsePath(migrated).startsWith("$APP")) {
+            return migrated;
+          }
+        }
+        return result;
+      };
+      Consumer<List<String>> convertList = o -> {
+        for (ListIterator<String> it = o.listIterator(); it.hasNext(); ) {
+          it.set(convert.fun(it.next()));
+        }
+      };
 
-      makeSystemIndependent(openPaths);
+      convertList.consume(recentPaths);
+      convertList.consume(openPaths);
 
       Map<String, String> namesCopy = new HashMap<>(names);
       names.clear();
       for (Map.Entry<String, String> entry : namesCopy.entrySet()) {
-        names.put(PathUtil.toSystemIndependentName(entry.getKey()), entry.getValue());
+        names.put(convert.fun(entry.getKey()), entry.getValue());
       }
 
       for (ProjectGroup group : groups) {
         List<String> paths = new ArrayList<>(group.getProjects());
-        makeSystemIndependent(paths);
+        convertList.consume(paths);
         group.save(paths);
       }
 
       if (lastPath != null) {
-        lastPath = PathUtil.toSystemIndependentName(lastPath);
+        lastPath = convert.fun(lastPath);
       }
 
       Map<String, RecentProjectMetaInfo> additionalInfoCopy = new HashMap<>(additionalInfo);
       additionalInfo.clear();
       for (Map.Entry<String, RecentProjectMetaInfo> entry : additionalInfoCopy.entrySet()) {
-        entry.getValue().binFolder = PathUtil.toSystemIndependentName(entry.getValue().binFolder);
-        additionalInfo.put(PathUtil.toSystemIndependentName(entry.getKey()), entry.getValue());
+        entry.getValue().binFolder = convert.fun(entry.getValue().binFolder);
+        additionalInfo.put(convert.fun(entry.getKey()), entry.getValue());
       }
 
       if (lastProjectLocation != null) {
-        lastProjectLocation = PathUtil.toSystemIndependentName(lastProjectLocation);
+        lastProjectLocation = convert.fun(lastProjectLocation);
       }
     }
 
-    private static void makeSystemIndependent(List<String> paths) {
-      List<String> copy = new ArrayList<>(paths);
-      paths.clear();
-      for (String path : copy) {
-        paths.add(PathUtil.toSystemIndependentName(path));
+    public void updateOpenProjectsTimestamps(RecentProjectsManagerBase mgr) {
+      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        String path = PathUtil.toSystemIndependentName(mgr.getProjectPath(project));
+        RecentProjectMetaInfo info = additionalInfo.get(path);
+        if (info != null) {
+          info.projectOpenTimestamp = System.currentTimeMillis();
+        }
       }
     }
   }
@@ -151,15 +182,18 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   protected RecentProjectsManagerBase(@NotNull MessageBus messageBus) {
     MessageBusConnection connection = messageBus.connect();
     connection.subscribe(AppLifecycleListener.TOPIC, new MyAppLifecycleListener());
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      connection.subscribe(ProjectManager.TOPIC, new MyProjectListener());
-    }
+    connection.subscribe(ProjectManager.TOPIC, new MyProjectListener());
   }
 
   @Override
   public State getState() {
     synchronized (myStateLock) {
+      if (myState.pid == null) {
+        myState.pid = State.getPid();
+      }
+      updateLastProjectPath();
       myState.validateRecentProjects();
+      myState.updateOpenProjectsTimestamps(this);
       return myState;
     }
   }
@@ -168,17 +202,16 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   public void loadState(final State state) {
     state.makePathsSystemIndependent();
     removeDuplicates(state);
-    if (state.lastPath != null && !new File(state.lastPath).exists()) {
-      state.lastPath = null;
-    }
     if (state.lastPath != null) {
-      File lastFile = new File(state.lastPath);
-      if (lastFile.isDirectory() && !new File(lastFile, Project.DIRECTORY_STORE_FOLDER).exists()) {
+      File lastFile = new File(PathUtil.toSystemDependentName(state.lastPath));
+      if (!lastFile.exists() ||
+          lastFile.isDirectory() && !new File(lastFile, Project.DIRECTORY_STORE_FOLDER).exists()) {
         state.lastPath = null;
       }
     }
     synchronized (myStateLock) {
       myState = state;
+      myState.pid = null;
     }
   }
 
@@ -450,10 +483,10 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
         }
 
         private int getGroupIndex(ProjectGroup group) {
-          int index = -1;
+          int index = Integer.MAX_VALUE;
           for (String path : group.getProjects()) {
             final int i = projectPaths.indexOf(path);
-            if (index >= 0 && index > i) {
+            if (i >= 0 && index > i) {
               index = i;
             }
           }
@@ -562,7 +595,13 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
       if (path != null) {
         markPathRecent(path);
       }
-      SystemDock.updateMenu();
+      updateUI();
+    }
+
+    private void updateUI() {
+      if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        SystemDock.updateMenu();
+      }
     }
 
     @Override
@@ -585,7 +624,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
           markPathRecent(path);
         }
       }
-      SystemDock.updateMenu();
+      updateUI();
     }
   }
 

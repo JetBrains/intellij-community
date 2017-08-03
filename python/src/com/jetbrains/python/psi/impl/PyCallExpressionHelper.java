@@ -584,9 +584,33 @@ public class PyCallExpressionHelper {
     if (providedType instanceof PyCallableType) {
       return Ref.create(((PyCallableType)providedType).getCallType(context, call));
     }
+    final Ref<PyType> propertyCallType = getPropertyCallType(call, target, context);
+    if (propertyCallType != null) {
+      return propertyCallType;
+    }
     if (target instanceof PyCallable) {
       final PyCallable callable = (PyCallable)target;
       return Ref.create(callable.getCallType(context, call));
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Ref<PyType> getPropertyCallType(@NotNull PyCallExpression call,
+                                                 @NotNull PsiElement target,
+                                                 @NotNull TypeEvalContext context) {
+    if (target instanceof PyCallable && target instanceof PyPossibleClassMember) {
+      final PyClass containingClass = ((PyPossibleClassMember)target).getContainingClass();
+      if (containingClass != null) {
+        final PyCallable callable = (PyCallable)target;
+        final Property property = containingClass.findPropertyByCallable(callable);
+        if (property != null) {
+          final PyType propertyType = property.getType(call.getReceiver(callable), context);
+          if (propertyType instanceof PyCallableType) {
+            return Ref.create(((PyCallableType)propertyType).getCallType(context, call));
+          }
+        }
+      }
     }
     return null;
   }

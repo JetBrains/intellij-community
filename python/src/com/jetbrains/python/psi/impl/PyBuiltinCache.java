@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.ModuleLibraryOrderEntryImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.*;
@@ -104,12 +105,18 @@ public class PyBuiltinCache {
   }
 
   @Nullable
-  public static Sdk findSdkForNonModuleFile(PsiFileSystemItem psiFile) {
-    Project project = psiFile.getProject();
+  public static Sdk findSdkForNonModuleFile(@NotNull PsiFileSystemItem psiFile) {
+    final VirtualFile vfile;
+    if (psiFile instanceof PsiFile) {
+      final PsiFile contextFile = FileContextUtil.getContextFile(psiFile);
+      vfile = contextFile != null ? contextFile.getOriginalFile().getVirtualFile() : null;
+    }
+    else {
+      vfile = psiFile.getVirtualFile();
+    }
     Sdk sdk = null;
-    final VirtualFile vfile = psiFile instanceof PsiFile ? ((PsiFile) psiFile).getOriginalFile().getVirtualFile() : psiFile.getVirtualFile();
     if (vfile != null) { // reality
-      final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
+      final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(psiFile.getProject());
       sdk = projectRootManager.getProjectSdk();
       if (sdk == null) {
         final List<OrderEntry> orderEntries = projectRootManager.getFileIndex().getOrderEntriesForFile(vfile);

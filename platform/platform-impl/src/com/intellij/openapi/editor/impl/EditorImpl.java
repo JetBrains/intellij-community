@@ -523,7 +523,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     UIUtil.putClientProperty(
       myPanel, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, (Iterable<JComponent>)() -> {
         JComponent component = getPermanentHeaderComponent();
-        if (component != null && !component.isValid()) {
+        if (component != null && component.getParent() == null) {
           return Collections.singleton(component).iterator();
         }
         return ContainerUtil.emptyIterator();

@@ -72,6 +72,12 @@ public class ReplaceWithArraysAsListIntention extends Intention implements HighP
   protected void processIntention(@NotNull PsiElement element) {
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
     final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+    final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+    final PsiReferenceParameterList parameterList = methodExpression.getParameterList();
+    if (parameterList != null) {
+      final int dotIndex = replacementText.lastIndexOf('.') + 1;
+      replacementText = replacementText.substring(0, dotIndex) + parameterList.getText() + replacementText.substring(dotIndex);
+    }
     PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression, replacementText + argumentList.getText());
   }
 

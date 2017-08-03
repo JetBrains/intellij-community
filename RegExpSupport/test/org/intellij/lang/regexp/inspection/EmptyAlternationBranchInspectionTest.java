@@ -28,11 +28,23 @@ public class EmptyAlternationBranchInspectionTest extends RegExpInspectionTestCa
   }
 
   public void testEmptyLeft() {
-    quickfixTest("<warning descr=\"Empty branch in alternation\">|</warning>right", "right", "Remove empty branch");
+    highlightTest("|right");
   }
 
   public void testEmptyRight() {
-    quickfixTest("left<warning descr=\"Empty branch in alternation\">|<caret></warning>", "left", "Remove empty branch");
+    highlightTest("left|");
+  }
+
+  public void testEmptyLeftAndRight() {
+    quickfixTest("|m<warning descr=\"Empty branch in alternation\">|<caret></warning>", "|m", "Remove empty branch");
+  }
+
+  public void testEmptyMiddle() {
+    quickfixTest("a<warning descr=\"Empty branch in alternation\"><caret>|</warning>|b", "a|b", "Remove empty branch");
+  }
+
+  public void testLogbackUnit() {
+    highlightTest("(|kb|mb|gb)s?");
   }
 
   @NotNull

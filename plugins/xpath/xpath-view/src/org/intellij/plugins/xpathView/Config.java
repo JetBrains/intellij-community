@@ -22,7 +22,7 @@ import java.awt.*;
 
 /**
  * Class that holds the plugin's configuration. All customizable settings are accessible via property getters/setters.
- * The configuration itself can be acquired with <code>getConfig()</code> in {@link XPathAppComponent}.
+ * The configuration itself can be acquired with {@code getConfig()} in {@link XPathAppComponent}.
  */
 public class Config {
   public boolean SHOW_IN_TOOLBAR = true;

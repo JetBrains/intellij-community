@@ -478,19 +478,8 @@ public class InferenceSession {
         final PsiSubstitutor nestedSubstitutor = myInferenceSessionContainer.findNestedSubstitutor(arg, myInferenceSubstitution);
         final PsiType parameterType = nestedSubstitutor.substitute(getParameterType(parameters, i, siteSubstitutor, varargs));
         if (!isPertinentToApplicability(arg, parentMethod)) {
-          if (arg instanceof PsiLambdaExpression) {
-            for (Object expr : MethodCandidateInfo.ourOverloadGuard.currentStack()) {
-              if (PsiTreeUtil.getParentOfType((PsiElement)expr, PsiLambdaExpression.class) == arg) {
-                return;
-              }
-            }
-
-            for (Object expr : LambdaUtil.ourParameterGuard.currentStack()) {
-              if (expr instanceof PsiParameter && ((PsiParameter)expr).getDeclarationScope() == arg) {
-                ignoredConstraints.add(new ExpressionCompatibilityConstraint(arg, parameterType));
-                return;
-              }
-            }
+          if (arg instanceof PsiLambdaExpression && ignoreConstraintTree(ignoredConstraints, arg, parameterType)) {
+            continue;
           }
           additionalConstraints.add(new ExpressionCompatibilityConstraint(arg, parameterType));
         }
@@ -512,6 +501,22 @@ public class InferenceSession {
         }
       }
     }
+  }
+
+  private static boolean ignoreConstraintTree(Set<ConstraintFormula> ignoredConstraints, PsiExpression arg, PsiType parameterType) {
+    for (Object expr : MethodCandidateInfo.ourOverloadGuard.currentStack()) {
+      if (PsiTreeUtil.getParentOfType((PsiElement)expr, PsiLambdaExpression.class) == arg) {
+        return true;
+      }
+    }
+
+    for (Object expr : LambdaUtil.ourParameterGuard.currentStack()) {
+      if (expr instanceof PsiParameter && ((PsiParameter)expr).getDeclarationScope() == arg) {
+        ignoredConstraints.add(new ExpressionCompatibilityConstraint(arg, parameterType));
+        return true;
+      }
+    }
+    return false;
   }
 
   public static PsiMethod getCalledMethod(PsiCall arg) {

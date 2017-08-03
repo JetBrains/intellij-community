@@ -97,7 +97,7 @@ public class JDOMUtil {
   /**
    *
    * @param ignoreEmptyAttrValues defines if elements like <element foo="bar" skip_it=""/> and <element foo="bar"/> are 'equal'
-   * @return <code>true</code> if two elements are deep-equals by their content and attributes
+   * @return {@code true} if two elements are deep-equals by their content and attributes
    */
   public static boolean areElementsEqual(@Nullable Element e1, @Nullable Element e2, boolean ignoreEmptyAttrValues) {
     if (e1 == null && e2 == null) return true;

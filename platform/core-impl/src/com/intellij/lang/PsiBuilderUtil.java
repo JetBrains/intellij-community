@@ -15,6 +15,7 @@
  */
 package com.intellij.lang;
 
+import com.intellij.lexer.Lexer;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
@@ -128,5 +129,52 @@ public class PsiBuilderUtil {
     }
 
     return marker;
+  }
+
+  /**
+   * Checks if `text` looks like a proper block.
+   * In particular it
+   *  (1) checks brace balance
+   *  (2) verifies that the block's closing brace is the last token
+   *
+   * @param text - text to check
+   * @param lexer - lexer to use
+   * @param leftBrace - left brace element type
+   * @param rightBrace - right brace element type
+   * @return true if `text` passes the checks
+   */
+  public static boolean hasProperBraceBalance(@NotNull CharSequence text,
+                                              @NotNull Lexer lexer,
+                                              @NotNull IElementType leftBrace,
+                                              @NotNull IElementType rightBrace) {
+    lexer.start(text);
+
+    if (lexer.getTokenType() != leftBrace) return false;
+
+    lexer.advance();
+    int balance = 1;
+
+    while (true) {
+      IElementType type = lexer.getTokenType();
+
+      if (type == null) {
+        //eof: checking balance
+        return balance == 0;
+      }
+
+      if (balance == 0) {
+        //the last brace is not the last token
+        return false;
+      }
+
+      if (type == leftBrace) {
+        balance++;
+      }
+      else if (type == rightBrace) {
+        balance--;
+      }
+
+      lexer.advance();
+    }
   }
 }

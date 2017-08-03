@@ -451,10 +451,17 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       while (true) {
         Disposable disposable = Disposer.newDisposable();
         ProgressIndicator wrapper = new SensitiveProgressWrapper(progressIndicator);
-        wrapper.start();
-        ProgressIndicatorUtils.forceWriteActionPriority(wrapper, disposable);
 
         try {
+          // avoid "attach listener"/"write action" race
+          ReadAction.run(() -> {
+            wrapper.start();
+            ProgressIndicatorUtils.forceWriteActionPriority(wrapper, disposable);
+            // there is a chance we are racing with write action, in which case just registered listener might not be called, retry.
+            if (ApplicationManagerEx.getApplicationEx().isWriteActionPending()) {
+              throw new ProcessCanceledException();
+            }
+          });
           // use wrapper here to cancel early when write action start but do not affect the original indicator
           ((JobLauncherImpl)JobLauncher.getInstance()).processQueue(filesToInspect, filesFailedToInspect, wrapper, TOMBSTONE, processor);
           break;
@@ -485,7 +492,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       }
     }
 
-    progressIndicator.checkCanceled();
+    ProgressManager.checkCanceled();
 
     for (Tools tools : globalSimpleTools) {
       GlobalInspectionToolWrapper toolWrapper = (GlobalInspectionToolWrapper)tools.getTool();
@@ -588,7 +595,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         try {
           final FileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
           scope.accept(file -> {
-            indicator.checkCanceled();
+            ProgressManager.checkCanceled();
             if (ProjectUtil.isProjectOrWorkspaceFile(file) || !fileIndex.isInContent(file)) return true;
 
             PsiFile psiFile = ReadAction.compute(() -> {
@@ -600,17 +607,19 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
               }
               return null;
             });
-            //do not inspect binary files
+            // do not inspect binary files
             if (psiFile != null) {
               try {
-                LOG.assertTrue(!ApplicationManager.getApplication().isReadAccessAllowed());
+                if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+                  throw new IllegalStateException("Must not have read action");
+                }
                 outFilesToInspect.put(psiFile);
               }
               catch (InterruptedException e) {
                 LOG.error(e);
               }
             }
-            indicator.checkCanceled();
+            ProgressManager.checkCanceled();
             return true;
           });
         }

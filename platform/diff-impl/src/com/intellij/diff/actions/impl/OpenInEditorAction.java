@@ -43,7 +43,7 @@ public class OpenInEditorAction extends EditSourceAction implements DumbAware {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    if (!e.isActionToolbar()) {
+    if (!e.isFromActionToolbar()) {
       e.getPresentation().setEnabledAndVisible(true);
       return;
     }

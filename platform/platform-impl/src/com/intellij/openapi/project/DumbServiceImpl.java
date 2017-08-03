@@ -48,6 +48,7 @@ import com.intellij.util.containers.Queue;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Debugger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -272,6 +273,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     return !myProject.isDisposed();
   }
 
+  @Debugger.Insert(keyExpression = "runnable", group = "com.intellij.openapi.project.DumbService.runWhenSmart")
   private void updateFinished() {
     if (!WriteAction.compute(this::switchToSmartMode)) return;
 

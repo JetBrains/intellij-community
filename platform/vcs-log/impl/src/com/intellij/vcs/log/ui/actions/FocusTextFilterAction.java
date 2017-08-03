@@ -45,7 +45,7 @@ public class FocusTextFilterAction extends DumbAwareAction {
 
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     MainFrame mainFrame = ((VcsLogUiImpl)e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI)).getMainFrame();
-    if (mainFrame.getTextFilter().getTextEditor().hasFocus()) {
+    if (IdeFocusManager.getInstance(project).getFocusedDescendantFor(mainFrame.getToolbar()) != null) {
       IdeFocusManager.getInstance(project).requestFocus(mainFrame.getGraphTable(), true);
     }
     else {

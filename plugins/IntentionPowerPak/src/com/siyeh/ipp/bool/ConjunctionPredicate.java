@@ -17,6 +17,7 @@ package com.siyeh.ipp.bool;
 
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -30,10 +31,17 @@ class ConjunctionPredicate implements PsiElementPredicate {
     }
     final PsiPolyadicExpression expression = (PsiPolyadicExpression)element;
     final IElementType tokenType = expression.getOperationTokenType();
-    if (!tokenType.equals(JavaTokenType.ANDAND) &&
-        !tokenType.equals(JavaTokenType.OROR)) {
+    if (!tokenType.equals(JavaTokenType.ANDAND) && !tokenType.equals(JavaTokenType.OROR)) {
       return false;
     }
-    return !ErrorUtil.containsError(element);
+    if (ErrorUtil.containsError(expression)) {
+      return false;
+    }
+    for (PsiExpression operand : expression.getOperands()) {
+      if (ErrorUtil.containsError(operand)) {
+        return false;
+      }
+    }
+    return true;
   }
 }

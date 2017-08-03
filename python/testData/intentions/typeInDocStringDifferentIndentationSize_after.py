@@ -1,6 +1,7 @@
 def func(x):
-    """
-  
-    :type x: object
-    """
-    return 1
+  """
+
+  :type x: object
+  """
+  print(x)
+  return 1

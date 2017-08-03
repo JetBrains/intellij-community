@@ -15,6 +15,7 @@
  */
 package com.intellij.diff;
 
+import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
 import com.intellij.diff.actions.DocumentFragmentContent;
 import com.intellij.diff.contents.*;
 import com.intellij.diff.tools.util.DiffNotifications;
@@ -52,7 +53,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.datatransfer.DataFlavor;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 
 public class DiffContentFactoryImpl extends DiffContentFactoryEx {
@@ -409,11 +409,8 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     if (isBOM) charset = bomCharset;
 
     boolean malformedContent = false;
-    String text;
-    try {
-      text = CharsetToolkit.tryDecodeString(content, charset);
-    }
-    catch (CharacterCodingException e) {
+    String text = CharsetToolkit.tryDecodeString(content, charset);
+    if (text == null) {
       text = CharsetToolkit.decodeString(content, charset);
       malformedContent = true;
     }
@@ -481,7 +478,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       LightVirtualFile file = new LightVirtualFile(fileName, fileType, content);
       file.setWritable(!readOnly);
 
-      file.putUserData(DiffPsiFileSupport.KEY, true);
+      OutsidersPsiFileSupport.markFile(file);
 
       Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document == null) return null;

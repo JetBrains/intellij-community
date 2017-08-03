@@ -67,6 +67,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.*;
 import gnu.trove.THashSet;
@@ -2063,6 +2064,11 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(true, false);
   }
 
+  public void testCustomBoolean() throws Exception {
+    configureByFiles(null, BASE_PATH + "CustomBoolean.xml", BASE_PATH + "CustomBoolean.xsd");
+    doDoTest(true, false);
+  }
+
   public void testStackOverflowInSchema() throws Exception {
     configureByFiles(null, BASE_PATH + "XMLSchema_1_1.xsd");
     doHighlighting();
@@ -2101,6 +2107,15 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   public void testBillionLaughsValidation() throws Exception {
     configureByFiles(null, BASE_PATH + "BillionLaughs.xml");
     doDoTest(true, false);
+  }
+
+  public void testMaxOccurLimitValidation() throws Exception {
+    configureByFiles(null, BASE_PATH + "MaxOccurLimit.xml", BASE_PATH + "MaxOccurLimit.xsd");
+    assertTrue(doHighlighting().stream().anyMatch(info -> info.getSeverity() == HighlightSeverity.ERROR));
+
+    configureByFiles(null, BASE_PATH + "MaxOccurLimit.xml", BASE_PATH + "MaxOccurLimit.xsd");
+    System.setProperty(ValidateXmlActionHandler.JDK_XML_MAX_OCCUR_LIMIT, "10000");
+    assertFalse(doHighlighting().stream().anyMatch(info -> info.getSeverity() == HighlightSeverity.ERROR));
   }
 
   public void testTheSameElement() throws Exception {

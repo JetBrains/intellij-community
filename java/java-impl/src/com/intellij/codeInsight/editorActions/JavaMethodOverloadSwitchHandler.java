@@ -17,13 +17,12 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.completion.CompletionMemory;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
-import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.hint.ParameterInfoController;
+import com.intellij.codeInsight.hints.ParameterHintsPass;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -34,7 +33,9 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public class JavaMethodOverloadSwitchHandler extends EditorWriteActionHandler {
   private static final Key<Map<String, String>> ENTERED_PARAMETERS = Key.create("entered.parameters");
@@ -117,39 +118,29 @@ public class JavaMethodOverloadSwitchHandler extends EditorWriteActionHandler {
     caret.moveToOffset(lbraceOffset); // avoid caret impact on hints location
     int offset = lbraceOffset + 1;
     int endOffset = exprList.getTextRange().getEndOffset() - 1;
-    List<Inlay> oldInlays = editor.getInlayModel().getInlineElementsInRange(offset, endOffset);
-    for (Inlay inlay : oldInlays) {
-      Disposer.dispose(inlay);
-    }
     editor.getDocument().deleteString(offset, endOffset);
     int targetCaretPosition = -1;
-    List<Inlay> addedHints = new ArrayList<>(parametersCount);
     for (int i = 0; i < parametersCount; i++) {
       String key = getParameterKey(targetMethod, i);
       String value = enteredParameters.getOrDefault(key, "");
       if (value.isEmpty() && targetCaretPosition == -1) targetCaretPosition = offset;
       if (i < parametersCount - 1) value += ", ";
       editor.getDocument().insertString(offset, value);
-      String name = parameterList.getParameters()[i].getName();
-      if (name != null) {
-        addedHints.add(ParameterHintsPresentationManager.getInstance().addHint(editor, offset, name + ":", false, true));
-      }
       offset += value.length();
     }
     if (targetCaretPosition == -1) targetCaretPosition = offset;
     caret.moveToLogicalPosition(editor.offsetToLogicalPosition(targetCaretPosition).leanForward(true));
-    exprList.putUserData(JavaMethodCallElement.COMPLETION_HINTS, addedHints);
-    Disposer.register(controller, () -> {
-      for (Inlay hint : addedHints) {
-        if (hint != null) ParameterHintsPresentationManager.getInstance().unpin(hint);
-      }
-      addedHints.clear();
-    });
+    PsiCall methodCall = (PsiCall)call;
+    if (!JavaMethodCallElement.isCompletionMode(methodCall)) {
+      JavaMethodCallElement.setCompletionMode(methodCall, true);
+      Disposer.register(controller, () -> JavaMethodCallElement.setCompletionMode(methodCall, false));
+    }
 
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-    CompletionMemory.registerChosenMethod(targetMethod, (PsiCall)call);
+    CompletionMemory.registerChosenMethod(targetMethod, methodCall);
     controller.resetHighlighted();
     controller.updateComponent(); // update popup immediately (otherwise, it will be updated only after delay)
+    ParameterHintsPass.syncUpdate(call, editor);
   }
 
   private static String getParameterKey(PsiMethod method, int parameterIndex) {

@@ -44,9 +44,9 @@ public abstract class AbstractRegionToKillRingTest extends LightPlatformCodeInsi
   protected abstract void doTest(@NotNull String text) throws Exception;
 
   /**
-   * Checks current editor and returns tuple of <code>(selected text; text over than selected)</code>.
+   * Checks current editor and returns tuple of {@code (selected text; text over than selected)}.
    * 
-   * @return    tuple of <code>(selected text; text over than selected)</code>.
+   * @return    tuple of {@code (selected text; text over than selected)}.
    */
   @NotNull
   protected static Pair<String, String> parse() {

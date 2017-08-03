@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
  */
 public class ThreadDumpParser {
   private static final Pattern ourThreadStartPattern = Pattern.compile("^\\s*\"(.+)\".+(prio=\\d+ (?:os_prio=[^\\s]+ )?tid=[^\\s]+ nid=[^\\s]+|[Ii][Dd]=\\d+) ([^\\[]+)");
-  private static final Pattern ourYourkitThreadStartPattern = Pattern.compile("([^ \t].+) \\[([^\\[]*)]");
+  private static final Pattern ourYourkitThreadStartPattern = Pattern.compile("(?:\\s)*(.+) \\[([A-Z_, ]*)]");
   private static final Pattern ourYourkitThreadStartPattern2 = Pattern.compile("(.+) State: (.+) CPU usage on sample: .+");
   private static final Pattern ourThreadStatePattern = Pattern.compile("java\\.lang\\.Thread\\.State: (.+) \\((.+)\\)");
   private static final Pattern ourThreadStatePattern2 = Pattern.compile("java\\.lang\\.Thread\\.State: (.+)");

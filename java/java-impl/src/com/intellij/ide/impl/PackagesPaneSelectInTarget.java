@@ -24,7 +24,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 
 public class PackagesPaneSelectInTarget extends ProjectViewSelectInTarget {
   public PackagesPaneSelectInTarget(Project project) {
@@ -36,20 +36,12 @@ public class PackagesPaneSelectInTarget extends ProjectViewSelectInTarget {
   }
 
   public boolean canSelect(PsiFileSystemItem file) {
-    if (!super.canSelect(file)) return false;
-    final VirtualFile vFile = PsiUtilBase.getVirtualFile(file);
+    VirtualFile vFile = PsiUtilCore.getVirtualFile(file);
+    if (vFile == null || !vFile.isValid()) return false;
 
-    return canSelect(vFile);
-  }
-
-  private boolean canSelect(final VirtualFile vFile) {
-    if (vFile != null && vFile.isValid()) {
-      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-      return fileIndex.isInSourceContent(vFile) || isInLibraryContentOnly(vFile);
-    }
-    else {
-      return false;
-    }
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+    return fileIndex.isInSourceContent(vFile) ||
+           isInLibraryContentOnly(vFile);
   }
 
   public boolean isSubIdSelectable(String subId, SelectInContext context) {
@@ -72,7 +64,4 @@ public class PackagesPaneSelectInTarget extends ProjectViewSelectInTarget {
     return StandardTargetWeights.PACKAGES_WEIGHT;
   }
 
-  protected boolean canWorkWithCustomObjects() {
-    return false;
-  }
 }

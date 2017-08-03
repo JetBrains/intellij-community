@@ -47,6 +47,7 @@ import org.junit.Test;
 import java.io.File;
 import java.util.Set;
 
+import static com.jetbrains.python.fixtures.PyTestCase.assertType;
 import static org.junit.Assert.*;
 
 /**
@@ -145,10 +146,7 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
         ApplicationManager.getApplication().runReadAction(() -> {
           final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
           final PsiFile file = myFixture.getFile();
-          final TypeEvalContext context = TypeEvalContext.codeAnalysis(file.getProject(), file);
-          final PyType type = context.getType(expr);
-          final String actualType = PythonDocumentationProvider.getTypeName(type, context);
-          assertEquals("int", actualType);
+          assertType("int", expr, TypeEvalContext.codeAnalysis(file.getProject(), file));
         });
       }
     });

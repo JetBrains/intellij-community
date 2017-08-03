@@ -2643,6 +2643,10 @@ public class UIUtil {
     }
   }
 
+  public static FontUIResource getFontWithFallback(@NotNull Font font) {
+    return getFontWithFallback(font.getFamily(), font.getStyle(), font.getSize());
+  }
+
   public static FontUIResource getFontWithFallback(@NotNull String familyName, @JdkConstants.FontStyle int style, int size) {
     Font fontWithFallback = new StyleContext().getFont(familyName, style, size);
     return fontWithFallback instanceof FontUIResource ? (FontUIResource)fontWithFallback : new FontUIResource(fontWithFallback);

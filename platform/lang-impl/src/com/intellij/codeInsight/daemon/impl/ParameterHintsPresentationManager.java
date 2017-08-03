@@ -43,7 +43,6 @@ import java.util.Iterator;
 import java.util.Set;
 
 public class ParameterHintsPresentationManager implements Disposable {
-  private static final Key<Boolean> PINNED = Key.create("parameter.hint.pinned");
   private static final Key<MyFontMetrics> HINT_FONT_METRICS = Key.create("ParameterHintFontMetrics");
   private static final Key<AnimationStep> ANIMATION_STEP = Key.create("ParameterHintAnimationStep");
 
@@ -64,24 +63,15 @@ public class ParameterHintsPresentationManager implements Disposable {
     return inlay.getRenderer() instanceof MyRenderer;
   }
 
-  public boolean isPinned(@NotNull Inlay inlay) {
-    return Boolean.TRUE.equals(inlay.getUserData(PINNED));
-  }
-
-  public void unpin(@NotNull Inlay inlay) {
-    inlay.putUserData(PINNED, null);
-  }
-
   public String getHintText(@NotNull Inlay inlay) {
     EditorCustomElementRenderer renderer = inlay.getRenderer();
     return renderer instanceof MyRenderer ? ((MyRenderer)renderer).getText() : null;
   }
 
-  public Inlay addHint(@NotNull Editor editor, int offset, @NotNull String hintText, boolean useAnimation, boolean pinned) {
+  public Inlay addHint(@NotNull Editor editor, int offset, @NotNull String hintText, boolean useAnimation) {
     MyRenderer renderer = new MyRenderer(editor, hintText, useAnimation);
     Inlay inlay = editor.getInlayModel().addInlineElement(offset, renderer);
     if (inlay != null) {
-      if (pinned) inlay.putUserData(PINNED, Boolean.TRUE);
       if (useAnimation) scheduleRendererUpdate(editor, inlay);
     }
     return inlay;
@@ -98,6 +88,22 @@ public class ParameterHintsPresentationManager implements Disposable {
 
   public void replaceHint(@NotNull Editor editor, @NotNull Inlay hint, @NotNull String newText) {
     updateRenderer(editor, hint, newText);
+  }
+
+  public void setHighlighted(@NotNull Inlay hint, boolean highlighted) {
+    if (!isParameterHint(hint)) throw new IllegalArgumentException("Not a parameter hint");
+    MyRenderer renderer = (MyRenderer)hint.getRenderer();
+    boolean oldValue = renderer.highlighted;
+    if (highlighted != oldValue) {
+      renderer.highlighted = highlighted;
+      hint.repaint();
+    }
+  }
+
+  public boolean isHighlighted(@NotNull Inlay hint) {
+    if (!isParameterHint(hint)) throw new IllegalArgumentException("Not a parameter hint");
+    MyRenderer renderer = (MyRenderer)hint.getRenderer();
+    return renderer.highlighted;
   }
 
   private void updateRenderer(@NotNull Editor editor, @NotNull Inlay hint, @Nullable String newText) {
@@ -176,6 +182,7 @@ public class ParameterHintsPresentationManager implements Disposable {
     private int startWidth;
     private int steps;
     private int step;
+    private boolean highlighted;
 
     private MyRenderer(Editor editor, String text, boolean animated) {
       updateState(editor, text, animated);
@@ -225,7 +232,7 @@ public class ParameterHintsPresentationManager implements Disposable {
         TextAttributes attributes = editor.getColorsScheme().getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
         if (attributes != null) {
           MyFontMetrics fontMetrics = getFontMetrics(editor);
-          Color backgroundColor = attributes.getBackgroundColor();
+          Color backgroundColor = getBackgroundColor(attributes);
           if (backgroundColor != null) {
             GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
             GraphicsUtil.paintWithAlpha(g, BACKGROUND_ALPHA);
@@ -234,7 +241,7 @@ public class ParameterHintsPresentationManager implements Disposable {
             g.fillRoundRect(r.x + 2, r.y + gap, r.width - 4, r.height - gap * 2, 8, 8);
             config.restore();
           }
-          Color foregroundColor = attributes.getForegroundColor();
+          Color foregroundColor = getForegroundColor(attributes);
           if (foregroundColor != null) {
             g.setColor(foregroundColor);
             g.setFont(getFont(editor));
@@ -247,6 +254,14 @@ public class ParameterHintsPresentationManager implements Disposable {
           }
         }
       }
+    }
+
+    private Color getForegroundColor(TextAttributes attributes) {
+      return highlighted ? attributes.getBackgroundColor() : attributes.getForegroundColor();
+    }
+
+    private Color getBackgroundColor(TextAttributes attributes) {
+      return highlighted ? attributes.getForegroundColor() : attributes.getBackgroundColor();
     }
   }
 

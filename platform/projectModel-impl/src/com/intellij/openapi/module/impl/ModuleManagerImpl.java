@@ -31,6 +31,8 @@ import com.intellij.openapi.module.*;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -273,16 +275,18 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       }
       tasks.add(Pair.create(service.submit(() -> {
         progressIndicator.setFraction(progressIndicator.getFraction() + myProgressStep);
-        try {
-          return myProject.isDisposed() ? null : moduleModel.loadModuleInternal(path);
-        }
-        catch (IOException e) {
-          reportError(errors, modulePath, e);
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-        return null;
+        return ProgressManager.getInstance().runProcess(() -> {
+          try {
+            return myProject.isDisposed() ? null : moduleModel.loadModuleInternal(path);
+          }
+          catch (IOException e) {
+            reportError(errors, modulePath, e);
+          }
+          catch (Exception e) {
+            LOG.error(e);
+          }
+          return null;
+        }, ProgressWrapper.wrap(progressIndicator));
       }), modulePath));
     }
 

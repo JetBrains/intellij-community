@@ -27,9 +27,7 @@ import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.courseFormat.tasks.ChoiceTask;
-import com.jetbrains.edu.learning.courseFormat.tasks.Task;
-import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
+import com.jetbrains.edu.learning.courseFormat.tasks.*;
 import com.jetbrains.edu.learning.editor.StudyChoiceVariantsPanel;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
@@ -44,9 +42,11 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
   public static final String ACTION_ID = "RefreshTaskAction";
   public static final String SHORTCUT = "ctrl shift pressed X";
   private static final Logger LOG = Logger.getInstance(StudyRefreshTaskFileAction.class.getName());
+  private static final String TEXT = "Reset Task File";
+  private static final String RESET_TASK = "Reset Task";
 
   public StudyRefreshTaskFileAction() {
-    super("Reset Task File", "Refresh current task", EducationalCoreIcons.ResetTaskFile);
+    super(TEXT, "Refresh current task", EducationalCoreIcons.ResetTaskFile);
   }
 
   public static void refresh(@NotNull final Project project) {
@@ -168,6 +168,11 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
       if (course == null) {
         return;
       }
+      Task task = StudyUtils.getCurrentTask(project);
+      if (task == null) {
+        return;
+      }
+      presentation.setText(task instanceof PyCharmTask ? TEXT : RESET_TASK);
       if (!EduNames.STUDY.equals(course.getCourseMode())) {
         presentation.setVisible(true);
         presentation.setEnabled(false);

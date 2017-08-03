@@ -376,6 +376,14 @@ class TerminalBlock {
   }
 
   @Nullable
+  TerminalBlock withoutLastOperation() {
+    if(myOperations.length == 1) return null;
+    Operation[] operations = new Operation[myOperations.length - 1];
+    System.arraycopy(myOperations, 0, operations, 0, operations.length);
+    return new TerminalBlock(operations, operations[operations.length - 1].getVariable(), myStatements);
+  }
+
+  @Nullable
   <T extends Operation> T getLastOperation(Class<T> clazz) {
     return tryCast(getLastOperation(), clazz);
   }

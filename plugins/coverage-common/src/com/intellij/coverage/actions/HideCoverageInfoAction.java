@@ -37,7 +37,7 @@ public class HideCoverageInfoAction extends AnAction {
   public void update(AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     presentation.setEnabled(false);
-    presentation.setVisible(e.isActionToolbar());
+    presentation.setVisible(e.isFromActionToolbar());
     final Project project = e.getProject();
     if (project != null) {
       final CoverageSuitesBundle suitesBundle = CoverageDataManager.getInstance(project).getCurrentSuitesBundle();

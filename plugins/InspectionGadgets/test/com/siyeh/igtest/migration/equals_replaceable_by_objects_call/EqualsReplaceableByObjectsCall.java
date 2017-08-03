@@ -90,6 +90,15 @@ class EqualsReplaceableByObjectsCall {
     return CONSTANT.equals(o);
   }
 
+  boolean constantLiteral(Object o) {
+    return ("a" + "b").equals(o);
+  }
+
+  static final String CONSTANT_EXPR = CONSTANT + 1;
+  boolean constantExpr(Object o) {
+    return CONSTANT_EXPR.equals(o);
+  }
+
   static final String NULL_CONSTANT = null;
   boolean nullConstant(Object o) {
     return <warning descr="'NULL_CONSTANT.equals(o)' replaceable by 'Objects.equals()' expression">NULL_CONSTANT.equals(o)</warning>;

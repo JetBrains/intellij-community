@@ -21,6 +21,7 @@ import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.ResourcesTargetType;
 import org.jetbrains.jps.incremental.dependencies.DependencyResolvingBuilder;
+import org.jetbrains.jps.incremental.dependencies.ProjectDependenciesResolver;
 import org.jetbrains.jps.incremental.instrumentation.NotNullInstrumentingBuilder;
 import org.jetbrains.jps.incremental.instrumentation.RmiStubsGenerator;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
@@ -29,7 +30,6 @@ import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -42,6 +42,7 @@ public class JavaBuilderService extends BuilderService {
     List<BuildTargetType<?>> types = new ArrayList<>();
     types.addAll(JavaModuleBuildTargetType.ALL_TYPES);
     types.addAll(ResourcesTargetType.ALL_TYPES);
+    types.add(ProjectDependenciesResolver.ProjectDependenciesResolvingTargetType.INSTANCE);
     return types;
   }
 
@@ -60,6 +61,6 @@ public class JavaBuilderService extends BuilderService {
   @NotNull
   @Override
   public List<? extends TargetBuilder<?, ?>> createBuilders() {
-    return Collections.singletonList(new ResourcesBuilder());
+    return Arrays.asList(new ResourcesBuilder(), new ProjectDependenciesResolver());
   }
 }

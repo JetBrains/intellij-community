@@ -28,6 +28,8 @@
 
     <applicationService serviceImplementation="com.intellij.packageDependencies.DependencyUISettings"/>
 
+    <applicationService serviceImplementation="com.intellij.refactoring.rename.RenameHandlerRegistry"/>
+
     <projectService serviceInterface="com.intellij.ide.fileTemplates.FileTemplateManager"
                     serviceImplementation="com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl"/>
     <projectService serviceImplementation="com.intellij.ide.fileTemplates.impl.FileTemplateSettings"/>
@@ -419,7 +421,7 @@
                              key="filetype.settings.title" bundle="messages.FileTypesBundle"/>
 
     <search.topHitProvider implementation="com.intellij.codeInsight.intention.impl.config.IntentionsOptionsTopHitProvider"/>
-    <applicationConfigurable groupId="editor" key="intention.settings" bundle="messages.CodeInsightBundle" instance="com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable" id="preferences.intentionPowerPack"/>
+    <applicationConfigurable groupId="editor" key="intention.settings" bundle="messages.CodeInsightBundle" provider="com.intellij.codeInsight.intention.impl.config.IntentionsConfigurableProviderImpl" id="preferences.intentionPowerPack"/>
 
     <!-- Live Templates -->
     <search.topHitProvider implementation="com.intellij.codeInsight.template.impl.LiveTemplatesOptionsTopHitProvider"/>
@@ -535,6 +537,8 @@
 
     <ideRootPaneNorth implementation="com.intellij.ide.navigationToolbar.NavBarRootPaneExtension"/>
     <navbar implementation="com.intellij.ide.navigationToolbar.DefaultNavBarExtension" id="defaultNavbar" order="last"/>
+    <applicationService serviceInterface="com.intellij.ide.navigationToolbar.NavBarModelBuilder"
+                        serviceImplementation="com.intellij.ide.navigationToolbar.NavBarModelBuilderImpl"/>
 
     <statistician key="completion" implementationClass="com.intellij.codeInsight.completion.DefaultCompletionStatistician" order="last"/>
 

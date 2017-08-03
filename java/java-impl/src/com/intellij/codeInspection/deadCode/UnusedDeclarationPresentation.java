@@ -74,6 +74,7 @@ import java.awt.event.MouseEvent;
 import java.net.URL;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class UnusedDeclarationPresentation extends DefaultInspectionToolPresentation {
 
@@ -124,6 +125,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       if (!((RefElementImpl)refElement).hasSuspiciousCallers() || ((RefJavaElementImpl)refElement).isSuspiciousRecursive()) return 1;
 
       for (RefElement element : refElement.getInReferences()) {
+        if (refElement instanceof RefFile) return 1;
         if (((UnusedDeclarationInspectionBase)myTool).isEntryPoint(element)) return 1;
       }
 
@@ -234,20 +236,33 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     @Override
     protected boolean applyFix(@NotNull final RefEntity[] refElements) {
       if (!super.applyFix(refElements)) return false;
-      final PsiElement[] psiElements = Arrays
-        .stream(refElements)
-        .filter((obj) -> obj instanceof RefJavaElement && getFilter().accepts((RefJavaElement)obj))
-        .map(e -> ((RefElement) e).getElement())
-        .filter(e -> e != null)
-        .toArray(PsiElement[]::new);
-      if (psiElements.length == 0) return false;
+
+      //filter only elements applicable to be deleted (exclude entry points)
+      RefElement[] filteredRefElements = Arrays.stream(refElements)
+        .filter(entry -> entry instanceof RefJavaElement && getFilter().accepts((RefJavaElement)entry))
+        .toArray(RefElement[]::new);
+
       ApplicationManager.getApplication().invokeLater(() -> {
         final Project project = getContext().getProject();
         if (isDisposed() || project.isDisposed()) return;
-        SafeDeleteHandler.invoke(project, psiElements, false,
+        Set<RefEntity> classes = Arrays.stream(filteredRefElements)
+          .filter(refElement -> refElement instanceof RefClass)
+          .collect(Collectors.toSet());
+
+        //filter out elements inside classes to be deleted
+        PsiElement[] elements = Arrays.stream(filteredRefElements).filter(e -> {
+          RefEntity owner = e.getOwner();
+          if (owner != null && classes.contains(owner)) {
+            return false;
+          }
+          return true;
+        }).map(e -> e.getElement())
+          .filter(e -> e != null)
+          .toArray(PsiElement[]::new);
+        SafeDeleteHandler.invoke(project, elements, false,
                                  () -> {
-                                   removeElements(refElements, project, myToolWrapper);
-                                   for (RefEntity ref : refElements) {
+                                   removeElements(filteredRefElements, project, myToolWrapper);
+                                   for (RefEntity ref : filteredRefElements) {
                                      myFixedElements.put(ref, UnusedDeclarationHint.DELETE);
                                    }
                                  });

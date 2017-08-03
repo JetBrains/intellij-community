@@ -208,8 +208,9 @@ public class JBEditorTabs extends JBTabsImpl {
     Rectangle beforeTabs;
     Rectangle afterTabs;
     if (vertical) {
-      beforeTabs = new Rectangle(insets.left, insets.top, getWidth(), minOffset - insets.top);
-      afterTabs = new Rectangle(insets.left, maxOffset, getWidth(),
+      int width = maxLength - insets.left - insets.right;
+      beforeTabs = new Rectangle(insets.left, insets.top, width, minOffset - insets.top);
+      afterTabs = new Rectangle(insets.left, maxOffset, width,
                                 r2.height - maxOffset - insets.top - insets.bottom);
     } else {
       int y = r2.y + insets.top;

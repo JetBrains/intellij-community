@@ -50,7 +50,7 @@ public abstract class XDebugProcess {
   private ProcessHandler myProcessHandler;
 
   /**
-   * @param session pass <code>session</code> parameter of {@link XDebugProcessStarter#start} method to this constructor
+   * @param session pass {@code session} parameter of {@link XDebugProcessStarter#start} method to this constructor
    */
   protected XDebugProcess(@NotNull XDebugSession session) {
     mySession = session;
@@ -213,7 +213,7 @@ public abstract class XDebugProcess {
 
   /**
    * Resume execution and call {@link XDebugSession#positionReached(XSuspendContext)}
-   * when <code>position</code> is reached.
+   * when {@code position} is reached.
    * Do not call this method directly. Use {@link XDebugSession#runToPosition} instead
    *
    * @param position position in source code

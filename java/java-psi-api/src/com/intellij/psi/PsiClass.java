@@ -15,16 +15,21 @@
  */
 package com.intellij.psi;
 
+import com.intellij.lang.jvm.JvmClass;
+import com.intellij.lang.jvm.JvmClassKind;
+import com.intellij.lang.jvm.types.JvmReferenceType;
 import com.intellij.openapi.util.Pair;
+import com.intellij.pom.PomRenameableTarget;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.pom.PomRenameableTarget;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.psi.PsiJvmConversionHelper.*;
 
 /**
  * Represents a Java class or interface.
@@ -33,7 +38,7 @@ import java.util.List;
  */
 public interface PsiClass
   extends PsiNameIdentifierOwner, PsiModifierListOwner, PsiDocCommentOwner, PsiTypeParameterListOwner,
-          PsiQualifiedNamedElement, PsiTarget, PomRenameableTarget<PsiElement> {
+          PsiQualifiedNamedElement, PsiTarget, PomRenameableTarget<PsiElement>, JvmClass {
   /**
    * The empty array of PSI classes which can be reused to avoid unnecessary allocations.
    */
@@ -353,4 +358,22 @@ public interface PsiClass
 
   @Override
   PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException;
+
+  @NotNull
+  @Override
+  default JvmClassKind getClassKind() {
+    return getJvmClassKind(this);
+  }
+
+  @Nullable
+  @Override
+  default JvmReferenceType getSuperClassType() {
+    return getClassSuperType(this);
+  }
+
+  @NotNull
+  @Override
+  default JvmReferenceType[] getInterfaceTypes() {
+    return getClassInterfaces(this);
+  }
 }

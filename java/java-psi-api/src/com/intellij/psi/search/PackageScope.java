@@ -58,13 +58,13 @@ public class PackageScope extends GlobalSearchScope {
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    VirtualFile parent = file.getParent();
+    VirtualFile dir = file.isDirectory() ? file : file.getParent();
     if (!myIncludeSubpackages) {
-      if (myDirs.contains(parent)) return true;
+      if (myDirs.contains(dir)) return true;
     } else {
-      while (parent != null) {
-        if (myDirs.contains(parent)) return true;
-        parent = parent.getParent();
+      while (dir != null) {
+        if (myDirs.contains(dir)) return true;
+        dir = dir.getParent();
       }
     }
 

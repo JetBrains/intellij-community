@@ -399,7 +399,10 @@ class AbstractWriterThread(threading.Thread):
         thread_id = splitted[3]
         return thread_id
 
-    def wait_for_breakpoint_hit(self, reason='111', get_line=False, get_name=False):
+    def wait_for_breakpoint_hit(self, *args, **kwargs):
+        return self.wait_for_breakpoint_hit_with_suspend_type(*args, **kwargs)[:-1]
+
+    def wait_for_breakpoint_hit_with_suspend_type(self, reason='111', get_line=False, get_name=False):
         '''
             108 is over
             109 is return
@@ -419,25 +422,26 @@ class AbstractWriterThread(threading.Thread):
 
         # we have something like <xml><thread id="12152656" stop_reason="111"><frame id="12453120" name="encode" ...
         splitted = last.split('"')
+        suspend_type = splitted[7]
         thread_id = splitted[1]
-        frameId = splitted[7]
-        name = splitted[9]
+        frameId = splitted[9]
+        name = splitted[11]
         if get_line:
             self.log.append('End(0): wait_for_breakpoint_hit: %s' % (last,))
             try:
                 if not get_name:
-                    return thread_id, frameId, int(splitted[13])
+                    return thread_id, frameId, int(splitted[15]), suspend_type
                 else:
-                    return thread_id, frameId, int(splitted[13]), name
+                    return thread_id, frameId, int(splitted[15]), name, suspend_type
             except:
                 raise AssertionError('Error with: %s, %s, %s.\nLast: %s.\n\nAll: %s\n\nSplitted: %s' % (
                     thread_id, frameId, splitted[13], last, '\n'.join(self.reader_thread.all_received), splitted))
 
         self.log.append('End(1): wait_for_breakpoint_hit: %s' % (last,))
         if not get_name:
-            return thread_id, frameId
+            return thread_id, frameId, suspend_type
         else:
-            return thread_id, frameId, name
+            return thread_id, frameId, name, suspend_type
 
     def wait_for_custom_operation(self, expected):
         i = 0
@@ -551,6 +555,10 @@ class AbstractWriterThread(threading.Thread):
 
     def write_add_exception_breakpoint(self, exception):
         self.write("122\t%s\t%s" % (self.next_seq(), exception))
+        self.log.append('write_add_exception_breakpoint: %s' % (exception,))
+
+    def write_add_exception_breakpoint_with_policy(self, exception, notify_always, notify_on_terminate, ignore_libraries):
+        self.write("122\t%s\t%s" % (self.next_seq(), '\t'.join([exception, notify_always, notify_on_terminate, ignore_libraries])))
         self.log.append('write_add_exception_breakpoint: %s' % (exception,))
 
     def write_remove_breakpoint(self, breakpoint_id):

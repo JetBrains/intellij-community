@@ -68,7 +68,7 @@ public class LocalFileSystemTest extends PlatformTestCase {
         for (VFileEvent event : events) {
           VirtualFile file = event.getFile();
           if (file != null) {
-            boolean shouldBeValid = !(event instanceof VFileCreateEvent) || ((VFileCreateEvent)event).isReCreation();
+            boolean shouldBeValid = !(event instanceof VFileCreateEvent);
             assertEquals(event.toString(), shouldBeValid, file.isValid());
           }
         }

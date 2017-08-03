@@ -388,6 +388,10 @@ public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, La
     myContentUI.setLeftToolbarVisible(value);
   }
 
+  public void setContentToolbarBefore(boolean value) {
+    myContentUI.setContentToolbarBefore(value);
+  }
+
   public List<AnAction> getActions() {
     return myContentUI.getActions(true);
   }

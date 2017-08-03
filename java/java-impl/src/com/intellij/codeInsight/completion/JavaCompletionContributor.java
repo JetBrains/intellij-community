@@ -123,7 +123,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return new AnnotationTypeFilter();
     }
 
-    if (JavaKeywordCompletion.DECLARATION_START.getValue().accepts(position) ||
+    if (JavaKeywordCompletion.isDeclarationStart(position) ||
         JavaKeywordCompletion.isInsideParameterList(position) ||
         isInsideAnnotationName(position)) {
       return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE);
@@ -144,7 +144,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return null;
     }
 
-    if (JavaKeywordCompletion.START_FOR.accepts(position)) {
+    if (JavaKeywordCompletion.START_FOR.withParents(PsiJavaCodeReferenceElement.class, PsiExpressionStatement.class, PsiForStatement.class).accepts(position)) {
       return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.VARIABLE);
     }
 
@@ -308,10 +308,22 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) {
       session.flushBatchItems();
-      new JavaInheritorsGetter(ConstructorInsertHandler.BASIC_INSTANCE).generateVariants(parameters, matcher, session::addClassItem);
+      new JavaInheritorsGetter(ConstructorInsertHandler.BASIC_INSTANCE).generateVariants(parameters, matcher, lookupElement -> {
+        if (!isSuggestedByKeywordCompletion(lookupElement)) {
+          session.addClassItem(lookupElement);
+        }
+      });
     }
 
     suggestSmartCast(parameters, session, false, result);
+  }
+
+  private static boolean isSuggestedByKeywordCompletion(LookupElement lookupElement) {
+    if (lookupElement instanceof PsiTypeLookupItem) {
+      PsiType type = ((PsiTypeLookupItem)lookupElement).getType();
+      return type instanceof PsiArrayType && ((PsiArrayType)type).getComponentType() instanceof PsiPrimitiveType;
+    }
+    return false;
   }
 
   private static void suggestSmartCast(CompletionParameters parameters, JavaCompletionSession session, boolean quick, Consumer<LookupElement> result) {
@@ -777,6 +789,11 @@ public class JavaCompletionContributor extends CompletionContributor {
       }
 
       if (context.getCompletionType() == CompletionType.BASIC) {
+        if (PsiTreeUtil.findElementOfClassAtOffset(file, context.getStartOffset() - 1, PsiReferenceParameterList.class, false) != null) {
+          context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED);
+          return;
+        }
+
         if (semicolonNeeded(context.getEditor(), file, context.getStartOffset())) {
           context.setDummyIdentifier(CompletionInitializationContext.DUMMY_IDENTIFIER.trim() + ";");
           return;
@@ -806,7 +823,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
   }
 
-  public static boolean semicolonNeeded(final Editor editor, PsiFile file,  final int startOffset) {
+  public static boolean semicolonNeeded(Editor editor, PsiFile file, int startOffset) {
     PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiJavaCodeReferenceElement.class, false);
     if (ref != null && !(ref instanceof PsiReferenceExpression)) {
       if (ref.getParent() instanceof PsiTypeElement) {

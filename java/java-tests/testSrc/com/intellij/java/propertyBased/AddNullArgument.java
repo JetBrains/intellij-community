@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.propertyBased.FilePsiMutation;
 
 class AddNullArgument extends FilePsiMutation {
 

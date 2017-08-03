@@ -335,6 +335,9 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   public final void changeView(@NotNull final String typeName) {
+    changeView(typeName, true);
+  }
+  public final void changeView(@NotNull final String typeName, boolean requestFocus) {
     setCurrentViewType(typeName);
 
     final PsiElement element = mySmartPsiElementPointer.getElement();
@@ -378,9 +381,11 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       }
     }
 
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(getCurrentTree(), true);
-    });
+    if (requestFocus) {
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(getCurrentTree(), true);
+      });
+    }
   }
 
   @SuppressWarnings("deprecation")

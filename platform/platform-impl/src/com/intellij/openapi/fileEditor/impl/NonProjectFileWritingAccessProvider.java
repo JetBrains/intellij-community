@@ -34,7 +34,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.project.ProjectKt;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -121,8 +120,10 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
 
     if (!(file.getFileSystem() instanceof LocalFileSystem)) return true; // do not block e.g., HttpFileSystem, LightFileSystem etc.
     if (file.getFileSystem() instanceof TempFileSystem) return true;
-    
-    if (ArrayUtil.contains(file, IdeDocumentHistory.getInstance(project).getChangedFiles())) return true;
+
+    IdeDocumentHistoryImpl documentHistory = (IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(project);
+
+    if (documentHistory.isRecentlyChanged(file)) return true;
     
     if (!getApp().isUnitTestMode()
         && FileUtil.isAncestor(new File(FileUtil.getTempDirectory()), VfsUtilCore.virtualToIoFile(file), true)) {

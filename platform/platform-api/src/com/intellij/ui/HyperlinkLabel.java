@@ -200,7 +200,7 @@ public class HyperlinkLabel extends HighlightableComponent {
     myListeners.remove(listener);
   }
 
-  String getText() {
+  public String getText() {
     return myHighlightedText.getText();
   }
 

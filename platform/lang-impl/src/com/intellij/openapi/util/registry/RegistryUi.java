@@ -28,6 +28,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ShadowAction;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
@@ -328,7 +329,7 @@ public class RegistryUi implements Disposable {
       @Override
       protected void dispose() {
         super.dispose();
-        RegistryUi.this.dispose();
+        Disposer.dispose(RegistryUi.this);
       }
 
       @Override

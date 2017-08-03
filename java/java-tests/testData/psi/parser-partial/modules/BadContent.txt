@@ -11,7 +11,7 @@ PsiJavaFile:BadContent.java
     PsiWhiteSpace(' ')
     PsiJavaToken:LBRACE('{')
     PsiWhiteSpace('\n ')
-    PsiErrorElement:Module statement expected
+    PsiErrorElement:Module directive expected
       PsiIdentifier:some('some')
       PsiWhiteSpace(' ')
       PsiIdentifier:junk('junk')

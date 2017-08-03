@@ -42,6 +42,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -492,9 +493,7 @@ public class CodeCompletionHandlerBase {
       final CompletionPhase.CommittingDocuments phase = (CompletionPhase.CommittingDocuments)CompletionServiceImpl.getCompletionPhase();
 
       AutoPopupController.runTransactionWithEverythingCommitted(project, () -> {
-        if (phase.checkExpired() ||
-            !initContext.getFile().isValid() || !hostCopy.isValid() ||
-            !CompletionAssertions.isEditorValid(initContext.getEditor())) {
+        if (phase.checkExpired() || isAnythingInvalidatedAfterCommit(initContext, hostCopy)) {
           Disposer.dispose(translator);
           return;
         }
@@ -503,9 +502,18 @@ public class CodeCompletionHandlerBase {
     }
     else {
       PsiDocumentManager.getInstance(project).commitDocument(copyDocument);
+      if (isAnythingInvalidatedAfterCommit(initContext, hostCopy)) {
+        Disposer.dispose(translator);
+        return;
+      }
 
       doComplete(initContext, hasModifiers, invocationCount, translator, topLevelOffsets, copyOffsets);
     }
+  }
+
+  private boolean isAnythingInvalidatedAfterCommit(CompletionInitializationContext initContext, PsiFile hostCopy) {
+    return !initContext.getFile().isValid() || !hostCopy.isValid() ||
+           !CompletionAssertions.isEditorValid(initContext.getEditor());
   }
 
   private static CompletionContext createCompletionContext(PsiFile originalFile, OffsetsInFile hostCopyOffsets) {
@@ -726,9 +734,18 @@ public class CodeCompletionHandlerBase {
     if (mayCacheCopy) {
       final Document document = copy.getViewProvider().getDocument();
       assert document != null;
+      syncAcceptSlashR(file.getViewProvider().getDocument(), document);
       file.putUserData(FILE_COPY_KEY, new SoftReference<>(Pair.create(copy, document)));
     }
     return copy;
+  }
+
+  private static void syncAcceptSlashR(Document originalDocument, Document documentCopy) {
+    if (!(originalDocument instanceof DocumentImpl) || !(documentCopy instanceof DocumentImpl)) {
+      return;
+    }
+
+    ((DocumentImpl) documentCopy).setAcceptSlashR(((DocumentImpl) originalDocument).acceptsSlashR());
   }
 
   private static boolean isAutocompleteOnInvocation(final CompletionType type) {

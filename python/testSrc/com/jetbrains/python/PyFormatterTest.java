@@ -799,6 +799,47 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-21931
+  public void testSpacesAroundElseInConditionalExpression() {
+    doTest();
+  }
+
+  // PY-20970
+  public void testSpacesAfterNonlocal() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+  }
+
+  // PY-21515
+  public void testSpacesBeforeFromImportSource() {
+    doTest();
+  }
+
+  public void testSpacesAfterFromInYieldFrom() {
+    runWithLanguageLevel(LanguageLevel.PYTHON33, this::doTest);
+  }
+
+  // PY-24220
+  public void testBlankLinesAfterTopLevelImportsBeforeClass() {
+    getCommonCodeStyleSettings().BLANK_LINES_AFTER_IMPORTS = 5;
+    doTest();
+  }
+
+  // PY-24220
+  public void testBlankLinesAfterTopLevelImportsBeforeClassWithPrecedingComments() {
+    getCommonCodeStyleSettings().BLANK_LINES_AFTER_IMPORTS = 5;
+    doTest();
+  }
+
+  // PY-25356
+  public void testCommentsSpacing() {
+    doTest();
+  }
+
+  // PY-19705
+  public void testBlankLinesAroundFirstMethod() {
+    doTest();
+  }
+
   public void testVariableAnnotations() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }

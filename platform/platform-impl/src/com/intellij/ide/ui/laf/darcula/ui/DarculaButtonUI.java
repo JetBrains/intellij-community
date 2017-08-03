@@ -74,8 +74,8 @@ public class DarculaButtonUI extends BasicButtonUI {
    * Paints additional buttons decorations
    * @param g Graphics
    * @param c button component
-   * @return <code>true</code> if it is allowed to continue painting,
-   *         <code>false</code> if painting should be stopped
+   * @return {@code true} if it is allowed to continue painting,
+   *         {@code false} if painting should be stopped
    */
   protected boolean paintDecorations(Graphics2D g, JComponent c) {
     int w = c.getWidth();

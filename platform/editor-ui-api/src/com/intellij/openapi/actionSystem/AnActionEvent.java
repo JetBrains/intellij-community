@@ -49,8 +49,8 @@ public class AnActionEvent implements PlaceProvider<String> {
   private final boolean myIsActionToolbar;
 
   /**
-   * @throws IllegalArgumentException if <code>dataContext</code> is <code>null</code> or
-   * <code>place</code> is <code>null</code> or <code>presentation</code> is <code>null</code>
+   * @throws IllegalArgumentException if {@code dataContext} is {@code null} or
+   * {@code place} is {@code null} or {@code presentation} is {@code null}
    *
    * @see ActionManager#getInstance()
    */
@@ -64,8 +64,8 @@ public class AnActionEvent implements PlaceProvider<String> {
   }
 
   /**
-   * @throws IllegalArgumentException if <code>dataContext</code> is <code>null</code> or
-   * <code>place</code> is <code>null</code> or <code>presentation</code> is <code>null</code>
+   * @throws IllegalArgumentException if {@code dataContext} is {@code null} or
+   * {@code place} is {@code null} or {@code presentation} is {@code null}
    *
    * @see ActionManager#getInstance()
    */
@@ -136,9 +136,9 @@ public class AnActionEvent implements PlaceProvider<String> {
   }
 
   /**
-   * Returns the <code>InputEvent</code> which causes invocation of the action. It might be
-   * <code>KeyEvent</code>, <code>MouseEvent</code>.
-   * @return the <code>InputEvent</code> instance.
+   * Returns the {@code InputEvent} which causes invocation of the action. It might be
+   * {@code KeyEvent}, {@code MouseEvent}.
+   * @return the {@code InputEvent} instance.
    */
   public InputEvent getInputEvent() {
     return myInputEvent;
@@ -240,11 +240,11 @@ public class AnActionEvent implements PlaceProvider<String> {
     return myPlace;
   }
 
-  public boolean isActionToolbar() {
+  public boolean isFromActionToolbar() {
     return myIsActionToolbar;
   }
 
-  public boolean isContextMenu() {
+  public boolean isFromContextMenu() {
     return myIsContextMenuAction;
   }
 

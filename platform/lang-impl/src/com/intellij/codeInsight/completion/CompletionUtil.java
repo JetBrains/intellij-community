@@ -116,7 +116,20 @@ public class CompletionUtil {
     if(insertedElement == null) return "";
     final String text = insertedElement.getText();
 
-    final int offsetInElement = offset - insertedElement.getTextRange().getStartOffset();
+    int startOffset = insertedElement.getTextRange().getStartOffset();
+    return findInText(offset, startOffset, idPart, idStart, text);
+  }
+
+
+  public static String findIdentifierPrefix(@NotNull Document document, int offset, ElementPattern<Character> idPart,
+                                            ElementPattern<Character> idStart) {
+    final String text = document.getText();
+    return findInText(offset, 0, idPart, idStart, text);
+  }
+
+  @NotNull
+  private static String findInText(int offset, int startOffset, ElementPattern<Character> idPart, ElementPattern<Character> idStart, String text) {
+    final int offsetInElement = offset - startOffset;
     int start = offsetInElement - 1;
     while (start >=0 ) {
       if (!idPart.accepts(text.charAt(start))) break;

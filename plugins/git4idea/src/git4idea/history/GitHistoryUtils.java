@@ -94,6 +94,7 @@ public class GitHistoryUtils {
     GitLogParser parser = new GitLogParser(project, HASH, COMMIT_TIME, AUTHOR_NAME, COMMITTER_NAME, SUBJECT, BODY, RAW_BODY);
     h.setSilent(true);
     h.addParameters("-n1", parser.getPretty());
+    h.addParameters("--encoding=UTF-8");
     h.addParameters("--all");
     h.endOptions();
     h.addRelativePaths(filePath);

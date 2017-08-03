@@ -45,7 +45,7 @@ public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testRedundantEscape1() {
-    doTest("<weak_warning descr=\"Redundant character escape\">\\;</weak_warning>");
+    doTest("\\;");
   }
 
   public void testBoundaries() {
@@ -85,7 +85,7 @@ public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testRedundantEscape2() {
-    doTest("<weak_warning descr=\"Redundant character escape\">\\-</weak_warning>[<weak_warning descr=\"Redundant character escape\">\\*</weak_warning>\\-\\[\\]\\\\<weak_warning descr=\"Redundant character escape\">\\+</weak_warning>]");
+    doTest("\\-[\\*\\-\\[\\]\\\\\\+]");
   }
 
   public void testBoundaryInsideCharacterClass() {
@@ -160,7 +160,7 @@ public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testRedundantlyEscapedClosingBrace() {
-    doTest("<weak_warning descr=\"Redundant character escape\">\\]</weak_warning><weak_warning descr=\"Redundant character escape\">\\}</weak_warning>");
+    doTest("\\]\\}");
   }
 
   public void testBadEscape1() {
@@ -213,7 +213,7 @@ public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testEscapedWhitespace() {
-    doTest("a<weak_warning descr=\"Redundant character escape\">\\ </weak_warning>b<weak_warning descr=\"Redundant character escape\">\\ </weak_warning>c");
+    doTest("a\\ b\\ c");
   }
 
   public void testEscapedWhitespaceCommentMode() {

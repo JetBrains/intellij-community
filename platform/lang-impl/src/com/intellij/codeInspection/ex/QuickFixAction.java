@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ClickListener;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -329,9 +328,8 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     }.installOn(button);
     JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
-    panel.setBorder(IdeBorderFactory.createEmptyBorder(7, 0, 8, 0));
+    panel.setBorder(JBUI.Borders.empty(7, 0, 8, 0));
     panel.add(button);
-    panel.add(Box.createHorizontalStrut(JBUI.scale(3)));
     return panel;
   }
 

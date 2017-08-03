@@ -860,7 +860,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
    * Looks for explicitly specified attributes either in the scheme or its parent scheme. No fallback keys are used.
    *
    * @param key The key to use for search.
-   * @return Explicitly defined attribute or <code>null</code> if not found.
+   * @return Explicitly defined attribute or {@code null} if not found.
    */
   @Nullable
   public TextAttributes getDirectlyDefinedAttributes(@NotNull TextAttributesKey key) {

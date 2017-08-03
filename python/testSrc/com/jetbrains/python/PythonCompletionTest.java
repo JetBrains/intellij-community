@@ -22,11 +22,15 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.testFramework.PsiTestUtil;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1197,6 +1201,12 @@ public class PythonCompletionTest extends PyTestCase {
     myFixture.copyDirectoryToProject("../typing", "");
     final List<String> variants = doTestByFile();
     assertContainsElements(variants, "List", "Union", "Optional");
+  }
+
+  public void testIncompleteQualifiedNameClashesWithLocalVariable() {
+    final List<String> variants = doTestByFile();
+    assertContainsElements(variants, "upper", "split", "__len__");
+    assertDoesntContain(variants, "illegal");
   }
 
   @Override

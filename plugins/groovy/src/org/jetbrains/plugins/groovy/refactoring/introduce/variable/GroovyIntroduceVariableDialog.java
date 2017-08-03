@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.ui.NameSuggestionsField;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -163,7 +164,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
 
   private NameSuggestionsField setUpNameComboBox() {
     LinkedHashSet<String> names = suggestNames();
-    return new NameSuggestionsField(names.toArray(new String[names.size()]), myProject, GroovyFileType.GROOVY_FILE_TYPE);
+    return new NameSuggestionsField(ArrayUtil.toStringArray(names), myProject, GroovyFileType.GROOVY_FILE_TYPE);
   }
 
   @Override

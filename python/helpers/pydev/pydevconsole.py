@@ -143,9 +143,6 @@ class InterpreterInterface(BaseInterpreterInterface):
     def close(self):
         sys.exit(0)
 
-    def get_greeting_msg(self):
-        return 'PyDev console: starting.\n'
-
 
 class _ProcessExecQueueHelper:
     _debug_hook = None
@@ -328,10 +325,6 @@ def start_console_server(host, port, interpreter):
         print(port)
         print(interpreter.client_port)
 
-
-    sys.stderr.write(interpreter.get_greeting_msg())
-    sys.stderr.flush()
-
     while True:
         try:
             server.serve_forever()
@@ -351,12 +344,15 @@ def start_console_server(host, port, interpreter):
     return server
 
 
-def start_server(host, port, client_port):
+def start_server(host, port, client_port, client_host = None):
+    if not client_host:
+        client_host = host
+
     #replace exit (see comments on method)
     #note that this does not work in jython!!! (sys method can't be replaced).
     sys.exit = do_exit
 
-    interpreter = InterpreterInterface(host, client_port, threading.currentThread())
+    interpreter = InterpreterInterface(client_host, client_port, threading.currentThread())
 
     start_new_thread(start_console_server,(host, port, interpreter))
 
@@ -375,8 +371,7 @@ def get_interpreter():
     except AttributeError:
         interpreterInterface = InterpreterInterface(None, None, threading.currentThread())
         setattr(__builtin__, 'interpreter', interpreterInterface)
-        sys.stderr.write(interpreterInterface.get_greeting_msg())
-        sys.stderr.flush()
+        print(interpreterInterface.get_greeting_msg())
 
     return interpreterInterface
 
@@ -530,4 +525,10 @@ if __name__ == '__main__':
 
         client_port = p
 
-    pydevconsole.start_server(pydev_localhost.get_localhost(), int(port), int(client_port))
+    if len(sys.argv) > 4:
+        host = sys.argv[3]
+        client_host = sys.argv[4]
+    else:
+        host = client_host = pydev_localhost.get_localhost()
+
+    pydevconsole.start_server(host, int(port), int(client_port), client_host)

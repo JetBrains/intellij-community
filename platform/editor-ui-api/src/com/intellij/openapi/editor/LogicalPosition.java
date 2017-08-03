@@ -55,7 +55,7 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    * {@link #softWrapLinesBeforeCurrentLogicalLine}, {@link #softWrapColumnDiff} etc during {@code 'visual position' -> 'logical position'} conversion
    * in order to be able to easy match it back to visual position.
    *
-   * @deprecated Always <code>false</code> in {@link LogicalPosition} instances returned by platform code since 2016.1. 
+   * @deprecated Always {@code false} in {@link LogicalPosition} instances returned by platform code since 2016.1.
    *             Will be removed in future.
    */
   public final boolean visualPositionAware;
@@ -64,7 +64,7 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    * Number of virtual soft wrap-introduced lines before the current logical line.
    *
    * @see #visualPositionAware
-   * @deprecated Always <code>0</code> in {@link LogicalPosition} instances returned by platform code since 2016.1. 
+   * @deprecated Always {@code 0} in {@link LogicalPosition} instances returned by platform code since 2016.1.
    *             Will be removed in future.
    */
   public final int softWrapLinesBeforeCurrentLogicalLine;
@@ -77,7 +77,7 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    * it will work regardless of whether current {@code LogicalPosition} instance is {@link #visualPositionAware}.
    *
    * @see #visualPositionAware
-   * @deprecated Always <code>0</code> in {@link LogicalPosition} instances returned by platform code since 2016.1. 
+   * @deprecated Always {@code 0} in {@link LogicalPosition} instances returned by platform code since 2016.1.
    *             Will be removed in future.
    */
   public final int softWrapLinesOnCurrentLogicalLine;
@@ -86,7 +86,7 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    * Number to add to the {@link #column logical column} in order to get soft wrap-introduced visual column offset.
    *
    * @see #visualPositionAware
-   * @deprecated Always <code>0</code> in {@link LogicalPosition} instances returned by platform code since 2016.1. 
+   * @deprecated Always {@code 0} in {@link LogicalPosition} instances returned by platform code since 2016.1.
    *             Will be removed in future.
    */
   public final int softWrapColumnDiff;
@@ -95,7 +95,7 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    * Number of folded line feeds before the current position.
    *
    * @see #visualPositionAware
-   * @deprecated Always <code>0</code> in {@link LogicalPosition} instances returned by platform code since 2016.1. 
+   * @deprecated Always {@code 0} in {@link LogicalPosition} instances returned by platform code since 2016.1.
    *             Will be removed in future.
    */
   public final int foldedLines;
@@ -104,7 +104,7 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    * Number to add to the {@link #column logical column} in order to get folding-introduced visual column offset.
    *
    * @see #visualPositionAware
-   * @deprecated Always <code>0</code> in {@link LogicalPosition} instances returned by platform code since 2016.1. 
+   * @deprecated Always {@code 0} in {@link LogicalPosition} instances returned by platform code since 2016.1.
    *             Will be removed in future.
    */
   public final int foldingColumnDiff;
@@ -122,7 +122,7 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    * This field provides the value of {@link VisualPosition#leansRight} field of visual position corresponding to current position.
    * It has meaning only if {@link #visualPositionAware} is set.
    * 
-   * @deprecated Always <code>false</code> in {@link LogicalPosition} instances returned by platform code since 2016.1. 
+   * @deprecated Always {@code false} in {@link LogicalPosition} instances returned by platform code since 2016.1.
    *             Will be removed in future.
    */
   public final boolean visualPositionLeansRight;

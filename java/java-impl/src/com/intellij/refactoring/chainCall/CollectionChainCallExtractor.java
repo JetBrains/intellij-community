@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.chainCall;
 
+import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.ig.psiutils.StreamApiUtil;
@@ -39,11 +40,11 @@ public class CollectionChainCallExtractor implements ChainCallExtractor {
 
   @Override
   public String getMethodName(PsiVariable variable, PsiExpression expression, PsiType expressionType) {
-    return "stream()." + StreamApiUtil.getMapOperationName(variable.getType(), expressionType);
+    return "stream()." + StreamRefactoringUtil.getMapOperationName(variable.getType(), expressionType);
   }
 
   @Override
   public String buildChainCall(PsiVariable variable, PsiExpression expression, PsiType expressionType) {
-    return ".stream()" + StreamApiUtil.generateMapOperation(variable, expressionType, expression);
+    return ".stream()" + StreamRefactoringUtil.generateMapOperation(variable, expressionType, expression);
   }
 }

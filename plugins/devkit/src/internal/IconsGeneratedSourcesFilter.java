@@ -33,7 +33,10 @@ public class IconsGeneratedSourcesFilter extends GeneratedSourcesFilter {
           for (PsiClass aClass : ((PsiJavaFile)psiFile).getClasses()) {
             if (aClass.isValid() && aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
               PsiDocComment comment = aClass.getDocComment();
-              return comment != null && comment.getText().contains("run build/scripts/icons.gant instead");
+              if (comment == null) return false;
+              String docText = comment.getText();
+              return docText.contains("NOTE THIS FILE IS AUTO-GENERATED") &&
+                     docText.contains("DO NOT EDIT IT BY HAND");
             }
           }
         }

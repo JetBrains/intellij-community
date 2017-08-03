@@ -41,11 +41,11 @@ public abstract class ChooseItemAction extends EditorAction {
     super(handler);
   }
 
-  protected static class Handler extends EditorActionHandler {
+  public static class Handler extends EditorActionHandler {
     final boolean focusedOnly;
     final char finishingChar;
 
-    protected Handler(boolean focusedOnly, char finishingChar) {
+    public Handler(boolean focusedOnly, char finishingChar) {
       this.focusedOnly = focusedOnly;
       this.finishingChar = finishingChar;
     }

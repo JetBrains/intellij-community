@@ -126,8 +126,8 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    * Checks if one of the specified modules directly depends on the other module.
    *
    * @param module   the module to check the dependency for.
-   * @param onModule the module on which <code>module</code> may depend.
-   * @return true if <code>module</code> directly depends on <code>onModule</code>, false otherwise.
+   * @param onModule the module on which {@code module} may depend.
+   * @return true if {@code module} directly depends on {@code onModule}, false otherwise.
    */
   public abstract boolean isModuleDependent(@NotNull Module module, @NotNull Module onModule);
 

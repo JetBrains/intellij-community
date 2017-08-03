@@ -20,9 +20,8 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
@@ -96,11 +95,9 @@ public class CompoundRunConfiguration extends RunConfigurationBase implements Ru
         ApplicationManager.getApplication().invokeLater(() -> {
           RunManagerImpl manager = RunManagerImpl.getInstanceImpl(getProject());
           for (RunConfiguration configuration : getSetToRun()) {
-            RunnerAndConfigurationSettings settings = new RunnerAndConfigurationSettingsImpl(manager, configuration, false);
-            ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.createOrNull(executor, settings);
-            if (builder != null) {
-              ExecutionManager.getInstance(getProject())
-                .restartRunProfile(builder.activeTarget().dataContext(null).build());
+            RunnerAndConfigurationSettings settings = manager.getSettings(configuration);
+            if (settings != null) {
+              ExecutionUtil.runConfiguration(settings, executor);
             }
           }
         });

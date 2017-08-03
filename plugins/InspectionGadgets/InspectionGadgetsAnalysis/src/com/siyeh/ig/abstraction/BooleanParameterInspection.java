@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ public class BooleanParameterInspection extends BaseInspection {
           return;
         }
       }
-      if (PropertyUtil.isSimpleSetter(method) || LibraryUtil.isOverrideOfLibraryMethod(method)) {
+      if (PropertyUtil.isSimplePropertySetter(method) || LibraryUtil.isOverrideOfLibraryMethod(method)) {
         return;
       }
       final PsiParameterList parameterList = method.getParameterList();
@@ -91,7 +91,7 @@ public class BooleanParameterInspection extends BaseInspection {
       int count = 0;
       for (PsiParameter parameter : parameters) {
         final PsiType type = parameter.getType();
-        if (!PsiPrimitiveType.BOOLEAN.equals(type)) {
+        if (!PsiType.BOOLEAN.equals(type)) {
           continue;
         }
         count++;

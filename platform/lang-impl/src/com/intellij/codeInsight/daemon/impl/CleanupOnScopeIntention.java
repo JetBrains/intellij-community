@@ -28,8 +28,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
-class CleanupOnScopeIntention extends CleanupIntention {
-  static final CleanupOnScopeIntention INSTANCE = new CleanupOnScopeIntention();
+public class CleanupOnScopeIntention extends CleanupIntention {
+  public static final CleanupOnScopeIntention INSTANCE = new CleanupOnScopeIntention();
 
   private CleanupOnScopeIntention() {}
 

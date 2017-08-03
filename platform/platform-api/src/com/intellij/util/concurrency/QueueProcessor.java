@@ -97,11 +97,11 @@ public class QueueProcessor<T> {
 
   /**
    * Constructs a QueueProcessor with the given processor and autostart setting.
-   * By default QueueProcessor starts processing when it receives the first element. Pass <code>false</code> to alternate its behavior.
+   * By default QueueProcessor starts processing when it receives the first element. Pass {@code false} to alternate its behavior.
    *
    * @param processor processor of queue elements.
-   * @param autostart if <code>true</code> (which is by default), the queue will be processed immediately when it receives the first element.
-   *                  If <code>false</code>, then it will wait for the {@link #start()} command.
+   * @param autostart if {@code true} (which is by default), the queue will be processed immediately when it receives the first element.
+   *                  If {@code false}, then it will wait for the {@link #start()} command.
    *                  After QueueProcessor has started once, autostart setting doesn't matter anymore: all other elements will be processed immediately.
    */
 

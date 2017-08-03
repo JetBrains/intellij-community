@@ -82,9 +82,10 @@ public abstract class Identikit {
     @Nullable
     @Override
     public PsiElement findPsiElement(@NotNull PsiFile file, int startOffset, int endOffset) {
-      PsiElement anchor = file.getViewProvider().findElementAt(startOffset, myFileLanguage);
+      Language actualLanguage = myFileLanguage != Language.ANY ? myFileLanguage : file.getViewProvider().getBaseLanguage();
+      PsiElement anchor = file.getViewProvider().findElementAt(startOffset, actualLanguage);
       if (anchor == null && startOffset == file.getTextLength()) {
-        PsiElement lastChild = file.getViewProvider().getPsi(myFileLanguage).getLastChild();
+        PsiElement lastChild = file.getViewProvider().getPsi(actualLanguage).getLastChild();
         if (lastChild != null) {
           anchor = PsiTreeUtil.getDeepestLast(lastChild);
         }

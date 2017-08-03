@@ -3,7 +3,7 @@
     <log_file path="$PROJECT_DIR$/system/AndroidStudio/log/idea.log" checked="true" skipped="true" show_all="false" alias="C:\Work\IDEA\system\AndroidStudio\log\idea.log" />
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
     <option name="MAIN_CLASS_NAME" value="com.intellij.idea.Main" />
-    <option name="VM_PARAMETERS" value="-ea -Dsun.io.useCanonCaches=false -Dapple.laf.useScreenMenuBar=true -Xbootclasspath/p:../out/classes/production/boot -Xmx380m -Didea.platform.prefix=AndroidStudio -Dsun.awt.disablegrab=true -Didea.is.internal=true -Didea.system.path=../system/AndroidStudio -Didea.config.path=../config/AndroidStudio -Dstudio.dev.jdk=&quot;C:/Program Files/Java/jdk1.8.0_101&quot; -Didea.fix.mac.env=true -XX:SoftRefLRUPolicyMSPerMB=50" />
+    <option name="VM_PARAMETERS" value="-ea -Dsun.io.useCanonCaches=false -Dapple.laf.useScreenMenuBar=true -Xbootclasspath/p:../out/classes/production/boot -Xmx380m -Didea.platform.prefix=AndroidStudio -Dsun.awt.disablegrab=true -Didea.is.internal=true -Didea.system.path=../system/AndroidStudio -Didea.config.path=../config/AndroidStudio -Didea.fix.mac.env=true -XX:SoftRefLRUPolicyMSPerMB=50" />
     <option name="PROGRAM_PARAMETERS" value="" />
     <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$/bin" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />

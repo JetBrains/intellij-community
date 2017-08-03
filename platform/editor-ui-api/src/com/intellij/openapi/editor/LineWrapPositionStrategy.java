@@ -39,15 +39,15 @@ public interface LineWrapPositionStrategy {
    * @param startOffset                       start offset to use with the given text holder (exclusive)
    * @param endOffset                         end offset to use with the given text holder (exclusive)
    * @param maxPreferredOffset                this method is expected to do its best to return offset that belongs to
-   *                                          <code>(startOffset; maxPreferredOffset]</code> interval. However, it's allowed
-   *                                          to return value from <code>(maxPreferredOffset; endOffset)</code> interval
-   *                                          unless <code>'allowToBeyondMaxPreferredOffset'</code> if <code>'false'</code>
+   *                                          {@code (startOffset; maxPreferredOffset]} interval. However, it's allowed
+   *                                          to return value from {@code (maxPreferredOffset; endOffset)} interval
+   *                                          unless {@code 'allowToBeyondMaxPreferredOffset'} if {@code 'false'}
    * @param allowToBeyondMaxPreferredOffset   indicates if it's allowed to return value from
-   *                                          <code>(maxPreferredOffset; endOffset]</code> interval in case of inability to
-   *                                          find appropriate offset from <code>(startOffset; maxPreferredOffset]</code> interval
+   *                                          {@code (maxPreferredOffset; endOffset]} interval in case of inability to
+   *                                          find appropriate offset from {@code (startOffset; maxPreferredOffset]} interval
    * @param virtual                           identifies if current request is for virtual wrap (soft wrap) position
-   * @return                                  offset from <code>(startOffset; endOffset)</code> interval where
-   *                                          target line should be wrapped OR <code>-1</code> if no wrapping should be performed
+   * @return                                  offset from {@code (startOffset; endOffset)} interval where
+   *                                          target line should be wrapped OR {@code -1} if no wrapping should be performed
    */
   int calculateWrapPosition(
     @NotNull Document document, @Nullable Project project, int startOffset, int endOffset, int maxPreferredOffset,

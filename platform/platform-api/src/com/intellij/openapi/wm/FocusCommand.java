@@ -34,7 +34,7 @@ import java.awt.event.FocusEvent;
 import java.util.Arrays;
 
 /**
- * The container class for focus requests for <code>IdeFocusManager</code>
+ * The container class for focus requests for {@code IdeFocusManager}
  * @see IdeFocusManager
  */
 public abstract class FocusCommand extends ActiveRunnable implements Expirable {

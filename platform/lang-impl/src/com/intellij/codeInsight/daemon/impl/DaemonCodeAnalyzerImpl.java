@@ -288,17 +288,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     return result;
   }
 
-  @NotNull
-  @TestOnly
-  public List<HighlightInfo> runPasses(@NotNull PsiFile file,
-                                       @NotNull Document document,
-                                       @NotNull TextEditor textEditor,
-                                       @NotNull int[] toIgnore,
-                                       boolean canChangeDocument,
-                                       @Nullable Runnable callbackWhileWaiting) throws ProcessCanceledException {
-    return runPasses(file, document, Collections.singletonList(textEditor), toIgnore, canChangeDocument, callbackWhileWaiting);
-  }
-
   private volatile boolean mustWaitForSmartMode = true;
   @TestOnly
   public void mustWaitForSmartMode(final boolean mustWait, @NotNull Disposable parent) {

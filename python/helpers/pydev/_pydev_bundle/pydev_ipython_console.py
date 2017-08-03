@@ -1,14 +1,14 @@
+import traceback
+
 import sys
 from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface
+from _pydev_bundle.pydev_ipython_console_011 import get_pydev_frontend
+from _pydevd_bundle.pydevd_constants import dict_iter_items
+from _pydevd_bundle.pydevd_io import IOBuf
 
-import os
-import traceback
 
 # Uncomment to force PyDev standard shell.
 # raise ImportError()
-
-from _pydev_bundle.pydev_ipython_console_011 import get_pydev_frontend
-from _pydevd_bundle.pydevd_constants import dict_iter_items
 
 #=======================================================================================================================
 # InterpreterInterface
@@ -22,33 +22,35 @@ class InterpreterInterface(BaseInterpreterInterface):
         BaseInterpreterInterface.__init__(self, mainThread)
         self.client_port = client_port
         self.host = host
+
+        # Wrap output to handle IPython's banner and show it in appropriate time
+        original_stdout = sys.stdout
+        sys.stdout = IOBuf()
         self.interpreter = get_pydev_frontend(host, client_port, show_banner=show_banner)
+        self.default_banner = sys.stdout.getvalue()
+        sys.stdout = original_stdout
+
         self._input_error_printed = False
         self.notification_succeeded = False
         self.notification_tries = 0
         self.notification_max_tries = 3
 
-        self.notify_about_magic()
-
     def get_greeting_msg(self):
-        return self.interpreter.get_greeting_msg()
+        return self.interpreter.get_greeting_msg() + "\n" + self.default_banner
 
-    def do_add_exec(self, codeFragment):
+    def do_add_exec(self, code_fragment):
         self.notify_about_magic()
-        if (codeFragment.text.rstrip().endswith('??')):
+        if code_fragment.text.rstrip().endswith('??'):
             print('IPython-->')
         try:
-            res = bool(self.interpreter.add_exec(codeFragment.text))
+            res = bool(self.interpreter.add_exec(code_fragment.text))
         finally:
-            if (codeFragment.text.rstrip().endswith('??')):
+            if code_fragment.text.rstrip().endswith('??'):
                 print('<--IPython')
-
         return res
-
 
     def get_namespace(self):
         return self.interpreter.get_namespace()
-
 
     def getCompletions(self, text, act_tok):
         return self.interpreter.getCompletions(text, act_tok)
@@ -89,4 +91,3 @@ class InterpreterInterface(BaseInterpreterInterface):
         except:
             # Getting IPython variables shouldn't break loading frame variables
             traceback.print_exc()
-

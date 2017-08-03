@@ -714,6 +714,13 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     myUpdateDocAlarm.addRequest(() -> {
       if (myProject.isDisposed()) return;
       LOG.debug("Started fetching documentation...");
+
+      final PsiElement element = ReadAction.compute(() -> provider.getElement());
+      if (element == null) {
+        LOG.debug("Element for which documentation was requested is not available anymore");
+        return;
+      }
+
       final Throwable[] ex = new Throwable[1];
       String text = null;
       try {
@@ -738,11 +745,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
       LOG.debug("Documentation fetched successfully:\n", text);
 
-      final PsiElement element = ReadAction.compute(() -> provider.getElement());
-      if (element == null) {
-        LOG.debug("Element for which documentation was requested is not available anymore");
-        return;
-      }
       final String documentationText = text;
       PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
         if (!element.isValid()) {
@@ -1132,6 +1134,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
       final Ref<String> result = new Ref<>();
       QuickDocUtil.runInReadActionWithWriteActionPriorityWithRetries(() -> {
+        if (!myElement.isValid()) return;
         final SmartPsiElementPointer originalElement = myElement.getUserData(ORIGINAL_ELEMENT_KEY);
         String doc = provider.generateDoc(myElement, originalElement != null ? originalElement.getElement() : null);
         result.set(doc);

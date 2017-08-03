@@ -21,6 +21,7 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.requests.LoadingDiffRequest;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -86,7 +87,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   protected DiffRequest loadRequest(@NotNull ChangeWrapper provider, @NotNull ProgressIndicator indicator)
     throws ProcessCanceledException, DiffRequestProducerException {
     ChangeDiffRequestProducer presentable = ChangeDiffRequestProducer.create(getProject(), provider.change);
-    if (presentable == null) return new ErrorDiffRequest("Can't show diff");
+    if (presentable == null) return new ErrorDiffRequest(DiffBundle.message("error.cant.show.diff.message"));
     return presentable.process(getContext(), indicator);
   }
 

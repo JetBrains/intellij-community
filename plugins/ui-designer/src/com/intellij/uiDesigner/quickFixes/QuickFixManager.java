@@ -101,7 +101,7 @@ public abstract class QuickFixManager <T extends JComponent>{
   /**
    * @return rectangle (in {@link #myComponent} coordinates) that represents
    * area that contains errors. This methods is invoked only if {@link #getErrorInfos()}
-   * returned non empty list of error infos. <code>null</code> means that
+   * returned non empty list of error infos. {@code null} means that
    * error bounds are not defined.
    */
   @Nullable

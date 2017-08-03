@@ -34,7 +34,7 @@ import java.util.List;
 public interface InlayModel {
   /**
    * Introduces an inline visual element at a given offset, its width and appearance is defined by the provided renderer. With respect to
-   * document changes, created element behaves in a similar way to a zero-range {@link RangeMarker}. This method returns <code>null</code>
+   * document changes, created element behaves in a similar way to a zero-range {@link RangeMarker}. This method returns {@code null}
    * if requested element cannot be created, e.g. if corresponding functionality is not supported by current editor instance.
    */
   @Nullable
@@ -59,7 +59,7 @@ public interface InlayModel {
 
   /**
    * Return a custom visual element at given coordinates in editor's coordinate space,
-   * or <code>null</code> if there's no element at given point.
+   * or {@code null} if there's no element at given point.
    */
   @Nullable
   Inlay getElementAt(@NotNull Point point);

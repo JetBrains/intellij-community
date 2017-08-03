@@ -320,13 +320,13 @@ class QList<E> {
 }
 
 class QCmp<E> {
-  void cmpre(E o1, E o2) {}
+  void cmpre(E oe1, E oq2) {}
 }
 
 
 public class Test {
   public void main(QCmp<Integer> c, QList<String> l) {
-    c.cmpre(<hint text="o1:"/>0, /** ddd */<hint text="o2:"/>3);
+    c.cmpre(<hint text="oe1:"/>0, /** ddd */<hint text="oq2:"/>3);
     l.add(<hint text="query:"/>1, <hint text="obj:"/>"uuu");
   }
 }
@@ -895,7 +895,120 @@ class Test {
 """)
   }
 
-  
+  fun `test if resolved but no hints just return no hints`() {
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+public class Test {
+
+    public void main() {
+        foo(1<caret>);
+    }
+
+    void foo(int a) {}
+    void foo() {}
+}
+""")
+
+    myFixture.doHighlighting()
+
+    var inlays = getHints()
+    assert(inlays.size == 1)
+
+
+    myFixture.type('\b')
+
+    myFixture.performEditorAction("EditorLeft")
+    myFixture.doHighlighting()
+
+    inlays = getHints()
+    assert(inlays.isEmpty())
+  }
+
+  fun `test one-char one-digit hints enabled`() {
+    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(false)
+    check("""
+class Test {
+  void main() {
+    timeoutExecution(<hint text="t1:"/>1, <hint text="t2:"/>2, <hint text="t3:"/>3, <hint text="t4:"/>4, <hint text="t5:"/>5, <hint text="t6:"/>6, <hint text="t7:"/>7, <hint text="t8:"/>8, <hint text="t9:"/>9, <hint text="t10:"/>10);
+  }
+  void timeoutExecution(int t1, int t2, int t3, int t4, int t5, int t6, int t7, int t8, int t9, int t10) {}
+}
+""")
+  }
+
+  fun `test ordered sequential`() {
+    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(true)
+    check("""
+class Test {
+  void main() {
+    rect(<hint text="x1:"/>1, <hint text="y1:"/>2, <hint text="x2:"/>3, <hint text="y2:"/>4);
+    fromZero(1, 2);
+    fromOne(1, 2);
+    fromX(<hint text="x86:"/>1, <hint text="x87:"/>2);
+    fromX(<hint text="x86:"/>1);
+  }
+  void rect(int x1, int y1, int x2, int y2) {}
+  void fromZero(int x0, int x1) {}
+  void fromOne(int x1, int x2) {}
+  void fromX(int x86, int x87) {}
+  void fromX(int x86) {}
+}
+""")
+  }
+
+  fun `test unordered sequential`() {
+    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(true)
+    check("""
+class Test {
+  void test() {
+    unordered(<hint text="x1:"/>100, <hint text="x3:"/>200);
+    unordered2(<hint text="x0:"/>100, <hint text="x3:"/>200);
+  }
+  void unordered(int x1, int x3) {}
+  void unordered2(int x0, int x3) {}
+}
+""")
+  }
+
+  fun `test ordered with varargs`() {
+    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(true)
+    check("""
+class Test {
+  void test() {
+    ord(100, 200);
+    ord2(100, 200);
+  }
+  void ord(int x1, int x2, int... others) {}
+  void ord2(int x0, int x1, int... others) {}
+}
+""")
+  }
+
+  fun `test one-char one-digit hints disabled`() {
+    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(true)
+    check("""
+class Test {
+  void main() {
+    timeoutExecution(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+  }
+  void timeoutExecution(int t1, int t2, int t3, int t4, int t5, int t6, int t7, int t8, int t9, int t10) {}
+}
+""")
+  }
+
+  fun `test just some unparsable parameter name`() {
+    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(true)
+    check("""
+class Test {
+  void main() {
+    check(<hint text="main2toMain:"/>100);
+    www(<hint text="x86:"/>100);
+  }
+  void check(int main2toMain) {}
+  void www(int x86) {}
+}
+""")
+  }
+
   fun getHints(): List<String> {
     val document = myFixture.getDocument(myFixture.file)
     val manager = ParameterHintsPresentationManager.getInstance()

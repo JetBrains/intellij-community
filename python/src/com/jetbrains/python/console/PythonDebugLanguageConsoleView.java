@@ -51,6 +51,7 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
     getSwitchConsoleActionPresentation().setText(PyBundle.message("run.configuration.show.command.line.action.name"));
 
     List<AnAction> actions = ContainerUtil.newArrayList(PyConsoleUtil.createTabCompletionAction(getPydevConsoleView()));
+    actions.add(PyConsoleUtil.createInterruptAction(getPydevConsoleView()));
     AbstractConsoleRunnerWithHistory.registerActionShortcuts(actions, getPydevConsoleView().getEditor().getComponent());
   }
 
@@ -59,9 +60,13 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
   }
 
   @Override
-  public void executeCode(@NotNull String code, @Nullable Editor e) {
+  public void executeCode(@Nullable String code, @Nullable Editor e) {
     enableConsole(false);
-    getPydevConsoleView().executeInConsole(code);
+    if (code != null) {
+      getPydevConsoleView().executeInConsole(code);
+    } else {
+      IdeFocusManager.findInstance().doWhenFocusSettlesDown(() -> getPydevConsoleView().requestFocus());
+    }
   }
 
   @NotNull

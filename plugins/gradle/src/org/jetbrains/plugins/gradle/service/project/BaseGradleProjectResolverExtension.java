@@ -170,6 +170,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     final ModuleData mainModuleData = mainModuleNode.getData();
     final String mainModuleConfigPath = mainModuleData.getLinkedExternalProjectPath();
     final String mainModuleFileDirectoryPath = mainModuleData.getModuleFileDirectoryPath();
+    final String jdkName = getJdkName(gradleModule);
 
     ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
     if (resolverCtx.isResolveModulePerSourceSet() && externalProject != null) {
@@ -200,6 +201,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
         sourceSetData.setSourceCompatibility(sourceSet.getSourceCompatibility());
         sourceSetData.setTargetCompatibility(sourceSet.getTargetCompatibility());
+        sourceSetData.setSdkName(jdkName);
 
         final Set<File> artifacts = ContainerUtil.newTroveSet(FileUtil.FILE_HASHING_STRATEGY);
         if ("main".equals(sourceSet.getName())) {
@@ -245,6 +247,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
             mainModuleData.setTargetCompatibility(languageSettings.getTargetBytecodeVersion().toString());
           }
         }
+        mainModuleData.setSdkName(jdkName);
       }
       catch (UnsupportedMethodException ignore) {
         // org.gradle.tooling.model.idea.IdeaModule.getJavaLanguageSettings method supported since Gradle 2.11
@@ -258,6 +261,16 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     }
 
     return mainModuleNode;
+  }
+
+  @Nullable
+  private static String getJdkName(@NotNull IdeaModule gradleModule) {
+    try {
+      return gradleModule.getJdkName();
+    }
+    catch (UnsupportedMethodException e) {
+      return null;
+    }
   }
 
   @Override
@@ -698,7 +711,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         "    if (task instanceof JavaForkOptions && (" + names + ".contains(task.name) || " + names + ".contains(task.path))) {",
         "        def jvmArgs = task.jvmArgs.findAll{!it?.startsWith('-agentlib:jdwp') && !it?.startsWith('-Xrunjdwp')}",
         "        jvmArgs << '" + jvmAgentSetup.trim().replace("\\", "\\\\") + '\'',
-        "        task.jvmArgs jvmArgs",
+        "        task.jvmArgs = jvmArgs",
         "    }" +
         "}",
       };

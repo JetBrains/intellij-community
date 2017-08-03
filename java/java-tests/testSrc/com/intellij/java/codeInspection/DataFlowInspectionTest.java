@@ -483,6 +483,8 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
     checkIntentionResult("Remove 'for' statement");
   }
 
+  public void testUsingInterfaceConstant() { doTest();}
+
   //https://youtrack.jetbrains.com/issue/IDEA-162184
   public void testNullLiteralAndInferredMethodContract() {
     doTest();
@@ -530,4 +532,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
     assertEmpty(ContainerUtil.findAll(myFixture.getAvailableIntentions(), i -> i.getText().contains("null")));
   }
 
+  public void testEmptySingletonMap() {doTest();}
 }

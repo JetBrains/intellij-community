@@ -24,7 +24,7 @@ import static com.intellij.formatting.FormatterTestUtils.Action.REFORMAT_WITH_CO
 
 /**
  * Is intended to hold specific java formatting tests for alignment settings (
- * <code>Project Settings - Code Style - Alignment and Braces</code>).
+ * {@code Project Settings - Code Style - Alignment and Braces}).
  *
  * @author Denis Zhdanov
  * @since Apr 27, 2010 6:42:00 PM

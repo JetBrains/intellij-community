@@ -94,14 +94,15 @@ public class GradleAttachSourcesProvider implements AttachSourcesProvider {
         if (gradlePath == null) return ActionCallback.REJECTED;
 
         final String taskName = "Download sources";
-        String initScript = "projectsEvaluated {\n" +
-                            "  def project = rootProject.findProject('" + gradlePath + "')\n" +
-                            "  if(project) {\n" +
-                            "    project.configurations.maybeCreate('downloadSources')\n" +
-                            "    project.dependencies.add('downloadSources', '" + artifactCoordinates + ":sources" + "')\n" +
-                            "    project.tasks.create(name: '" + taskName + "', overwrite: true) {\n" +
-                            "      doLast{\n" +
-                            "        project.configurations.downloadSources.resolve()\n" +
+        String initScript = "allprojects {\n" +
+                            "  afterEvaluate { project ->\n" +
+                            "    if(project.path == '" + gradlePath + "') {\n" +
+                            "        project.configurations.maybeCreate('downloadSources')\n" +
+                            "        project.dependencies.add('downloadSources', '" + artifactCoordinates + ":sources" + "')\n" +
+                            "        project.tasks.create(name: '" + taskName + "', overwrite: true) {\n" +
+                            "        doLast {\n" +
+                            "          project.configurations.downloadSources.resolve()\n" +
+                            "        }\n" +
                             "      }\n" +
                             "    }\n" +
                             "  }\n" +

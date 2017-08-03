@@ -43,7 +43,7 @@ public abstract class ActionManager {
   }
 
   /**
-   * Factory method that creates an <code>ActionPopupMenu</code> from the
+   * Factory method that creates an {@code ActionPopupMenu} from the
    * specified group. The specified place is associated with the created popup.
    *
    * @param place Determines the place that will be set for {@link AnActionEvent} passed
@@ -52,12 +52,12 @@ public abstract class ActionManager {
    *
    * @param group Group from which the actions for the menu are taken.
    *
-   * @return An instance of <code>ActionPopupMenu</code>
+   * @return An instance of {@code ActionPopupMenu}
    */
   public abstract ActionPopupMenu createActionPopupMenu(@NonNls String place, @NotNull ActionGroup group);
 
   /**
-   * Factory method that creates an <code>ActionToolbar</code> from the
+   * Factory method that creates an {@code ActionToolbar} from the
    * specified group. The specified place is associated with the created toolbar.
    *
    * @param place Determines the place that will be set for {@link AnActionEvent} passed
@@ -68,7 +68,7 @@ public abstract class ActionManager {
    *
    * @param horizontal The orientation of the toolbar (true - horizontal, false - vertical)
    *
-   * @return An instance of <code>ActionToolbar</code>
+   * @return An instance of {@code ActionToolbar}
    */
   public abstract ActionToolbar createActionToolbar(@NonNls String place, @NotNull ActionGroup group, boolean horizontal);
 
@@ -77,10 +77,10 @@ public abstract class ActionManager {
    *
    * @param actionId Id of the registered action
    *
-   * @return Action associated with the specified actionId, <code>null</code> if
+   * @return Action associated with the specified actionId, {@code null} if
    *  there is no actions associated with the specified actionId
    *
-   * @exception java.lang.IllegalArgumentException if <code>actionId</code> is <code>null</code>
+   * @exception java.lang.IllegalArgumentException if {@code actionId} is {@code null}
    *
    * @see com.intellij.openapi.actionSystem.IdeActions
    */
@@ -89,10 +89,10 @@ public abstract class ActionManager {
   /**
    * Returns actionId associated with the specified action.
    *
-   * @return id associated with the specified action, <code>null</code> if action
+   * @return id associated with the specified action, {@code null} if action
    *  is not registered
    *
-   * @exception java.lang.IllegalArgumentException if <code>action</code> is <code>null</code>
+   * @exception java.lang.IllegalArgumentException if {@code action} is {@code null}
    */
   public abstract String getId(@NotNull AnAction action);
 
@@ -125,7 +125,7 @@ public abstract class ActionManager {
   /**
    * Returns the list of all registered action IDs with the specified prefix.
    *
-   * @return all action <code>id</code>s which have the specified prefix.
+   * @return all action {@code id}s which have the specified prefix.
    * @since 5.1
    */
   public abstract String[] getActionIds(@NotNull String idPrefix);

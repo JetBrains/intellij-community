@@ -17,7 +17,7 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.internal.statistic.ToolbarClicksCollector;
+import com.intellij.internal.statistic.customUsageCollectors.ui.ToolbarClicksCollector;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -179,7 +179,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         }
       });
       popupMenu.setDataContextProvider(() -> this.getDataContext());
-      if (event.isActionToolbar()) {
+      if (event.isFromActionToolbar()) {
         popupMenu.getComponent().show(this, 0, getHeight());
       }
       else {
@@ -240,7 +240,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   /**
    * @return button's icon. Icon depends on action's state. It means that the method returns
-   *         disabled icon if action is disabled. If the action's icon is <code>null</code> then it returns
+   *         disabled icon if action is disabled. If the action's icon is {@code null} then it returns
    *         an empty icon.
    */
   public Icon getIcon() {

@@ -741,7 +741,7 @@ public class SearchDialog extends DialogWrapper {
       startSearching();
     }
     catch (MalformedPatternException ex) {
-      reportMessage("this.pattern.is.malformed.message", searchCriteriaEdit, ex.getMessage());
+      reportMessage(SSRBundle.message("this.pattern.is.malformed.message", ex.getMessage()), searchCriteriaEdit);
     }
   }
 
@@ -776,20 +776,24 @@ public class SearchDialog extends DialogWrapper {
     }
     catch (MalformedPatternException ex) {
       if (myRunFindActionOnClose) {
-        reportMessage("this.pattern.is.malformed.message", searchCriteriaEdit, (ex.getMessage() != null) ? ex.getMessage() : "");
+        reportMessage(SSRBundle.message("this.pattern.is.malformed.message",
+                                        (ex.getMessage() != null) ? ex.getMessage() : ""), searchCriteriaEdit);
         return false;
       }
     }
     catch (UnsupportedPatternException ex) {
-      reportMessage("this.pattern.is.unsupported.message", searchCriteriaEdit, ex.getMessage());
+      reportMessage(SSRBundle.message("this.pattern.is.unsupported.message", ex.getMessage()), searchCriteriaEdit);
+      return false;
+    }
+    catch (NoMatchFoundException e) {
+      reportMessage(e.getMessage(), searchCriteriaEdit);
       return false;
     }
     return true;
   }
 
-  protected void reportMessage(@NonNls final String messageId, final Editor editor, final Object... params) {
+  protected void reportMessage(String message, Editor editor) {
     com.intellij.util.ui.UIUtil.invokeLaterIfNeeded(() -> {
-      final String message = messageId != null ? SSRBundle.message(messageId, params) : "";
       status.setText(message);
       status.setToolTipText(message);
       status.revalidate();

@@ -20,6 +20,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitUtil;
 import git4idea.config.GitConfigUtil;
 import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NonNls;
@@ -48,7 +49,7 @@ class GitInteractiveRebaseFile {
     final StringScanner s = new StringScanner(FileUtil.loadFile(new File(myFile), encoding));
     boolean noop = false;
     while (s.hasMoreData()) {
-      if (s.isEol() || s.startsWith('#')) {
+      if (s.isEol() || s.startsWith(GitUtil.COMMENT_CHAR)) {
         s.nextLine();
         continue;
       }

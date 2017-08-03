@@ -226,7 +226,7 @@ public class ExpressionUtils {
 
   @Contract("null -> false")
   public static boolean isNullLiteral(@Nullable PsiExpression expression) {
-    expression = ParenthesesUtils.stripParentheses(expression);
+    expression = PsiUtil.deparenthesizeExpression(expression);
     return expression != null && PsiType.NULL.equals(expression.getType());
   }
 
@@ -762,6 +762,7 @@ public class ExpressionUtils {
    * @return extracted assignment or null if assignment is not found or assignment is compound
    */
   @Contract("null -> null")
+  @Nullable
   public static PsiAssignmentExpression getAssignment(PsiElement element) {
     if(element instanceof PsiExpressionStatement) {
       element = ((PsiExpressionStatement)element).getExpression();

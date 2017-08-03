@@ -33,6 +33,7 @@ import java.util.function.Supplier;
 import static com.intellij.util.ArrayUtil.EMPTY_OBJECT_ARRAY;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public final class AsyncTreeModelTest {
   private final static boolean PRINT = false;
@@ -140,11 +141,38 @@ public final class AsyncTreeModelTest {
   @Test
   public void testChildrenResolve() {
     Node node = new Node("node");
-    testAsync(() -> new Node("root", new Node("upper", new Node("middle", new Node("lower", node)))), test
+    Node root = new Node("root", new Node("upper", new Node("middle", new Node("lower", node))));
+    TreePath tp = TreeUtil.convertArrayToTreePath(node.getPath());
+    testAsync(() -> root, test
       -> testPathState(test.tree, "   +'root'\n      'upper'\n", ()
-      -> test.resolve(new TreePath(node.getPath()), path
+      -> test.resolve(tp, path
       -> test.expand(path.getParentPath(), () // expand parent path because leaf nodes are ignored
       -> testPathState(test.tree, "   +'root'\n     +'upper'\n       +'middle'\n         +'lower'\n            'node'\n", test::done)))));
+  }
+
+  @Test
+  public void testChildrenVisit() {
+    Node node = new Node("node");
+    Node root = new Node("root", new Node("upper", new Node("middle", new Node("lower", node))));
+    TreePath tp = TreeUtil.convertArrayToTreePath(node.getPath(), Object::toString);
+    testAsync(() -> root, test
+      -> testPathState(test.tree, "   +'root'\n      'upper'\n", ()
+      -> test.visit(new TreeVisitor.PathFinder(tp, Object::toString), true, path
+      -> test.expand(path.getParentPath(), () // expand parent path because leaf nodes are ignored
+      -> testPathState(test.tree, "   +'root'\n     +'upper'\n       +'middle'\n         +'lower'\n            'node'\n", test::done)))));
+  }
+
+  @Test
+  public void testChildrenVisitWithoutLoading() {
+    Node node = new Node("node");
+    Node root = new Node("root", new Node("upper", new Node("middle", new Node("lower", node))));
+    TreePath tp = TreeUtil.convertArrayToTreePath(node.getPath(), Object::toString);
+    testAsync(() -> root, test
+      -> testPathState(test.tree, "   +'root'\n      'upper'\n", ()
+      -> test.visit(new TreeVisitor.PathFinder(tp, Object::toString), false, path -> {
+      assertNull(path);
+      test.done();
+    })));
   }
 
   @NotNull
@@ -372,14 +400,13 @@ public final class AsyncTreeModelTest {
     }
 
     private void resolve(@NotNull TreePath path, @NotNull Consumer<TreePath> consumer) {
-      TreeModel model = tree.getModel();
-      if (model instanceof AsyncTreeModel) {
-        AsyncTreeModel async = (AsyncTreeModel)model;
-        async.resolve(path).rejected(error -> promise.setError(error)).done(consumer::accept);
-      }
-      else {
-        runOnSwingThread(() -> consumer.accept(path));
-      }
+      AsyncTreeModel model = (AsyncTreeModel)tree.getModel();
+      model.resolve(path).rejected(promise::setError).done(consumer::accept);
+    }
+
+    private void visit(@NotNull TreeVisitor visitor, boolean allowLoading, @NotNull Consumer<TreePath> consumer) {
+      AsyncTreeModel model = (AsyncTreeModel)tree.getModel();
+      model.visit(visitor, allowLoading).rejected(promise::setError).done(consumer::accept);
     }
 
     @Override

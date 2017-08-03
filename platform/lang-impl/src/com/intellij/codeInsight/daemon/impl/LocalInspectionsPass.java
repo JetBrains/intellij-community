@@ -226,7 +226,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     visitRestElementsAndCleanup(progress, outside, session, init, elementDialectIds);
     inspectInjectedPsi(outside, isOnTheFly, progress, iManager, false, toolWrappers);
 
-    progress.checkCanceled();
+    ProgressManager.checkCanceled();
 
     myInfos = new ArrayList<>();
     addHighlightsFromResults(myInfos, progress);
@@ -264,7 +264,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                     @NotNull final LocalInspectionToolSession session,
                                     @NotNull List<InspectionContext> init,
                                     @NotNull Set<String> elementDialectIds) {
-    indicator.checkCanceled();
+    ProgressManager.checkCanceled();
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
     final LocalInspectionTool tool = toolWrapper.getTool();
@@ -300,7 +300,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                            @NotNull final Set<String> elementDialectIds) {
     Processor<InspectionContext> processor =
       context -> {
-        indicator.checkCanceled();
+        ProgressManager.checkCanceled();
         ApplicationManager.getApplication().assertReadAccessAllowed();
         InspectionEngine.acceptElements(elements, context.visitor, elementDialectIds, context.dialectIdsSpecifiedForTool);
         advanceProgress(1);
@@ -458,18 +458,18 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     Set<Pair<TextRange, String>> emptyActionRegistered = new THashSet<>();
 
     for (Map.Entry<PsiFile, List<InspectionResult>> entry : result.entrySet()) {
-      indicator.checkCanceled();
+      ProgressManager.checkCanceled();
       PsiFile file = entry.getKey();
       Document documentRange = documentManager.getDocument(file);
       if (documentRange == null) continue;
       List<InspectionResult> resultList = entry.getValue();
       synchronized (resultList) {
         for (InspectionResult inspectionResult : resultList) {
-          indicator.checkCanceled();
+          ProgressManager.checkCanceled();
           LocalInspectionToolWrapper tool = inspectionResult.tool;
           HighlightSeverity severity = myProfileWrapper.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), file).getSeverity();
           for (ProblemDescriptor descriptor : inspectionResult.foundProblems) {
-            indicator.checkCanceled();
+            ProgressManager.checkCanceled();
             PsiElement element = descriptor.getPsiElement();
             if (element != null) {
               createHighlightsForDescriptor(outInfos, emptyActionRegistered, ilManager, file, documentRange, tool, severity, descriptor, element);
@@ -711,7 +711,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
     Map<LocalInspectionToolWrapper, Set<String>> toolToSpecifiedLanguageIds = InspectionEngine.getToolsToSpecifiedLanguages(wrappers);
     for (Map.Entry<LocalInspectionToolWrapper, Set<String>> pair : toolToSpecifiedLanguageIds.entrySet()) {
-      indicator.checkCanceled();
+      ProgressManager.checkCanceled();
       final LocalInspectionToolWrapper wrapper = pair.getKey();
       final LocalInspectionTool tool = wrapper.getTool();
       if (host != null && myIgnoreSuppressed && SuppressionUtil.inspectionResultSuppressed(host, tool)) {

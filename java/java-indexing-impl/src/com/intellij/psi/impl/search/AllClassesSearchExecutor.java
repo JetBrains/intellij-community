@@ -22,6 +22,7 @@ package com.intellij.psi.impl.search;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -98,8 +99,8 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
 
         @Override
         public boolean process(String s) {
-          if (indicator != null && i++ % 512 == 0) {
-            indicator.checkCanceled();
+          if (i++ % 512 == 0) {
+            ProgressManager.checkCanceled();
           }
           consumer.consume(s);
           return true;
@@ -108,9 +109,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
       return null;
     });
 
-    if (indicator != null) {
-      indicator.checkCanceled();
-    }
+    ProgressManager.checkCanceled();
     return project;
   }
 

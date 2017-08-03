@@ -35,7 +35,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.HintHint;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.Alarm;
@@ -159,7 +158,7 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
     settings.setAdditionalPageAtBottom(false);
     settings.setCaretRowShown(false);
     previewEditor.setCaretEnabled(false);
-    previewEditor.setBorder(IdeBorderFactory.createEmptyBorder());
+    previewEditor.setBorder(JBUI.Borders.empty());
 
     JBPanel panel = new JBPanel(new BorderLayout()) {
       @NotNull

@@ -30,7 +30,6 @@ import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.actions.CleanupAllIntention;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
@@ -278,10 +277,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   private static boolean appendCleanupCode(@NotNull List<HighlightInfo.IntentionActionDescriptor> actionDescriptors, @NotNull PsiFile file) {
     for (HighlightInfo.IntentionActionDescriptor descriptor : actionDescriptors) {
       if (descriptor.canCleanup(file)) {
-        final ArrayList<IntentionAction> options = new ArrayList<>();
-        options.add(EditCleanupProfileIntentionAction.INSTANCE);
-        options.add(CleanupOnScopeIntention.INSTANCE);
-        actionDescriptors.add(new HighlightInfo.IntentionActionDescriptor(CleanupAllIntention.INSTANCE, options, "Code Cleanup Options"));
+        IntentionManager manager = IntentionManager.getInstance();
+        actionDescriptors.add(new HighlightInfo.IntentionActionDescriptor(manager.createCleanupAllIntention(),
+                                                                          manager.getCleanupIntentionOptions(), "Code Cleanup Options"));
         return true;
       }
     }

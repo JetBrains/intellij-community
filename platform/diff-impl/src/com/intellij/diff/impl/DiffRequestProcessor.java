@@ -43,6 +43,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.DumbAware;
@@ -277,31 +278,29 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     request.putUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE, scrollToChangePolicy);
 
-    boolean hadFocus = isFocused();
+    DiffUtil.runPreservingFocus(myContext, () -> {
+      myState.destroy();
+      myToolbarStatusPanel.setContent(null);
+      myContentPanel.setContent(null);
 
-    myState.destroy();
-    myToolbarStatusPanel.setContent(null);
-    myContentPanel.setContent(null);
+      myToolbarGroup.removeAll();
+      myPopupActionGroup.removeAll();
+      ActionUtil.clearActions(myMainPanel);
 
-    myToolbarGroup.removeAll();
-    myPopupActionGroup.removeAll();
-    ActionUtil.clearActions(myMainPanel);
+      myActiveRequest.onAssigned(false);
+      myActiveRequest = request;
+      myActiveRequest.onAssigned(true);
 
-    myActiveRequest.onAssigned(false);
-    myActiveRequest = request;
-    myActiveRequest.onAssigned(true);
-
-    try {
-      myState = createState();
-      myState.init();
-    }
-    catch (Throwable e) {
-      LOG.error(e);
-      myState = new ErrorState(new ErrorDiffRequest("Error: can't show diff"), getFittedTool());
-      myState.init();
-    }
-
-    if (hadFocus) requestFocusInternal();
+      try {
+        myState = createState();
+        myState.init();
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+        myState = new ErrorState(new ErrorDiffRequest(DiffBundle.message("error.cant.show.diff.message")), getFittedTool());
+        myState.init();
+      }
+    });
   }
 
   protected void setWindowTitle(@NotNull String title) {
@@ -337,20 +336,17 @@ public abstract class DiffRequestProcessor implements Disposable {
   // Misc
   //
 
-  public boolean isWindowFocused() {
+  protected boolean isWindowFocused() {
     Window window = SwingUtilities.getWindowAncestor(myPanel);
     return window != null && window.isFocused();
   }
 
-  public boolean isFocused() {
-    return DiffUtil.isFocusedComponent(myProject, myPanel);
+  private boolean isFocused() {
+    return DiffUtil.isFocusedComponent(myProject, myContentPanel) ||
+           DiffUtil.isFocusedComponent(myProject, myToolbar.getComponent());
   }
 
-  public void requestFocus() {
-    DiffUtil.requestFocus(myProject, getPreferredFocusedComponent());
-  }
-
-  protected void requestFocusInternal() {
+  private void requestFocusInternal() {
     JComponent component = getPreferredFocusedComponent();
     if (component != null) component.requestFocusInWindow();
   }
@@ -936,6 +932,11 @@ public abstract class DiffRequestProcessor implements Disposable {
       else {
         myProgressBar.stopProgress();
       }
+    }
+
+    @Override
+    public void setWindowTitle(@NotNull String title) {
+      setTitle(title);
     }
 
     @Nullable

@@ -35,7 +35,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.rt.execution.junit.JUnitStarter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,12 +51,6 @@ public class TestMethods extends TestMethod {
     super(configuration, environment);
 
     myFailedTests = failedTests;
-  }
-
-  @Nullable
-  @Override
-  protected String getPreferredRunner(GlobalSearchScope globalSearchScope) {
-    return JUnitUtil.isJUnit5(globalSearchScope, getConfiguration().getProject()) ? JUnitStarter.JUNIT5_PARAMETER : null;
   }
 
   @Override

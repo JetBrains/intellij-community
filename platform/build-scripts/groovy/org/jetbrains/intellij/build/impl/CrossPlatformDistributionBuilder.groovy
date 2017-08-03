@@ -55,7 +55,7 @@ class CrossPlatformDistributionBuilder {
         mapper(type: "glob", from: "*.jnilib", to: "*.dylib")
       }
 
-      String targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.baseFileName}${buildContext.fullBuildNumber}.zip"
+      String targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}.zip"
       buildContext.ant.zip(zipfile: targetPath, duplicate: "fail") {
         fileset(dir: buildContext.paths.distAll) {
           exclude(name: "bin/idea.properties")

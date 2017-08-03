@@ -13,12 +13,10 @@ import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.ut.PyTestTestProcessRunner;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.sdkTools.SdkCreationType;
-import com.jetbrains.python.testing.PythonTestConfigurationsModel;
-import com.jetbrains.python.testing.PyTestConfiguration;
-import com.jetbrains.python.testing.PyTestFactory;
-import com.jetbrains.python.testing.TestTargetType;
+import com.jetbrains.python.testing.*;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -36,6 +34,9 @@ import static org.junit.Assert.assertEquals;
  */
 @EnvTestTagsRequired(tags = "pytest")
 public final class PythonPyTestingTest extends PyEnvTestCase {
+
+  private final String myFrameworkName = PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.PY_TEST);
+
 
 
   // Ensures setup/teardown does not break anything
@@ -206,7 +207,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   @Test
   public void testClosestSrcIsWorkDirOnNewConfig() throws Exception {
     runPythonTest(
-      new CreateConfigurationTestTask<PyTestConfiguration>(PythonTestConfigurationsModel.PY_TEST_NAME,
+      new CreateConfigurationTestTask<PyTestConfiguration>(myFrameworkName,
                                                            PyTestConfiguration.class) {
         @NotNull
         @Override
@@ -276,13 +277,13 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   @Test
   public void testConfigurationProducer() throws Exception {
     runPythonTest(
-      new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.PY_TEST_NAME, PyTestConfiguration.class));
+      new CreateConfigurationByFileTask<>(myFrameworkName, PyTestConfiguration.class));
   }
 
   @Test
   public void testMultipleCases() throws Exception {
     runPythonTest(
-      new CreateConfigurationMultipleCasesTask<>(PythonTestConfigurationsModel.PY_TEST_NAME, PyTestConfiguration.class));
+      new CreateConfigurationMultipleCasesTask<>(myFrameworkName, PyTestConfiguration.class));
   }
 
   /**
@@ -291,8 +292,8 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   @Test
   public void testTestsInSubFolderResolvable() throws Exception {
     runPythonTest(
-      new PyUnitTestProcessWithConsoleTestTask.PyTestsInSubFolderRunner<PyTestTestProcessRunner>("test_metheggs", "test_funeggs",
-                                                                                                 "test_first") {
+      new PyTestsInSubFolderRunner<PyTestTestProcessRunner>("test_metheggs", "test_funeggs",
+                                                            "test_first") {
         @NotNull
         @Override
         protected PyTestTestProcessRunner createProcessRunner() throws Exception {
@@ -313,7 +314,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   @Test
   public void testOutput() throws Exception {
     runPythonTest(
-      new PyUnitTestProcessWithConsoleTestTask.PyTestsOutputRunner<PyTestTestProcessRunner>("test_metheggs", "test_funeggs", "test_first") {
+      new PyTestsOutputRunner<PyTestTestProcessRunner>("test_metheggs", "test_funeggs", "test_first") {
         @NotNull
         @Override
         protected PyTestTestProcessRunner createProcessRunner() throws Exception {
@@ -346,14 +347,14 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   @Test
   public void testConfigurationProducerOnDirectory() throws Exception {
     runPythonTest(
-      new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(PythonTestConfigurationsModel.PY_TEST_NAME,
+      new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(myFrameworkName,
                                                                                      PyTestConfiguration.class));
   }
 
   @Test
   public void testProduceConfigurationOnFile() throws Exception {
     runPythonTest(
-      new CreateConfigurationByFileTask<PyTestConfiguration>(PythonTestConfigurationsModel.PY_TEST_NAME,
+      new CreateConfigurationByFileTask<PyTestConfiguration>(myFrameworkName,
                                                              PyTestConfiguration.class, "spam.py") {
         @NotNull
         @Override
@@ -367,7 +368,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   public void testRenameClass() throws Exception {
     runPythonTest(
       new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameClassTask<>(
-        PythonTestConfigurationsModel.PY_TEST_NAME,
+        myFrameworkName,
         PyTestConfiguration.class));
   }
 

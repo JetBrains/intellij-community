@@ -16,6 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.openapi.diagnostic.Logger;
@@ -461,7 +462,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       handler("reducing", 3, "map({1}).reduce({0}, {2})", false),
       handler("summingInt", 1, "mapToInt({0}).sum()", false),
       handler("summingLong", 1, "mapToLong({0}).sum()", false),
-      handler("summingDouble", 1, "mapToInt({0}).sum()", false));
+      handler("summingDouble", 1, "mapToDouble({0}).sum()", false));
 
     private final String myCollector;
     private final String myStreamSequence;
@@ -1041,7 +1042,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       PsiLambdaExpression newLambda = (PsiLambdaExpression)factory
         .createExpressionFromText("(" + elementType.getCanonicalText() + " " + name + ")->" + ct.text(body), mapToObjCall);
       PsiParameter newParameter = ArrayUtil.getFirstElement(newLambda.getParameterList().getParameters());
-      replacement += StreamApiUtil.generateMapOperation(newParameter, outElementType, newLambda.getBody());
+      replacement += StreamRefactoringUtil.generateMapOperation(newParameter, outElementType, newLambda.getBody());
       PsiElement result = ct.replaceAndRestoreComments(mapToObjCall, replacement);
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
       result = JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);

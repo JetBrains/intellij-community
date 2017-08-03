@@ -19,6 +19,7 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -128,6 +129,7 @@ public final class CompletionServiceImpl extends CompletionService {
 
     @Override
     public void addElement(@NotNull final LookupElement element) {
+      ProgressManager.checkCanceled();
       if (!element.isValid()) {
         LOG.error("Invalid lookup element: " + element + " of " + element.getClass() +
           " in " + myParameters.getOriginalFile() + " of " + myParameters.getOriginalFile().getClass());

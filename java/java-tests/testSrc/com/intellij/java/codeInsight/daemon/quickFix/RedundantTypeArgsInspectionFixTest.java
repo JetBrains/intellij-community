@@ -27,7 +27,7 @@ public class RedundantTypeArgsInspectionFixTest extends LightQuickFixParameteriz
     return new LocalInspectionTool[]{ new RedundantTypeArgsInspection()};
   }
 
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {

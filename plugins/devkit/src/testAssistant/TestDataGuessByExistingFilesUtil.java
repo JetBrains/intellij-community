@@ -181,51 +181,46 @@ public class TestDataGuessByExistingFilesUtil {
     final Collection<String> fileNames = getAllFileNames(possibleFileName, gotoModel);
     for (String name : fileNames) {
       ProgressManager.checkCanceled();
-      boolean currentNameProcessed = false;
-        final Object[] elements = gotoModel.getElementsByName(name, false, name);
-        for (Object element : elements) {
-          if (!(element instanceof PsiFile)) {
-            continue;
-          }
-          final VirtualFile file = ((PsiFile)element).getVirtualFile();
-          if (file == null || fileIndex.isInSource(file) && !fileIndex.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.RESOURCES)) {
-            continue;
-          }
-
-          final String filePath = file.getPath();
-          if (!StringUtil.containsIgnoreCase(filePath, possibleFilePath) && !StringUtil.containsIgnoreCase(filePath, test)) {
-            continue;
-          }
-          final String fileName = PathUtil.getFileName(filePath).toLowerCase();
-          int i = fileName.indexOf(possibleFileName.toLowerCase());
-          // Skip files that doesn't contain target test name and files that contain digit after target test name fragment.
-          // Example: there are tests with names 'testEnter()' and 'testEnter2()' and we don't want test data file 'testEnter2'
-          // to be matched to the test 'testEnter()'.
-          if (i < 0 || (i + possibleFileName.length() < fileName.length())
-                       && Character.isDigit(fileName.charAt(i + possibleFileName.length())))
-          {
-            continue;
-          }
-
-          TestLocationDescriptor current = new TestLocationDescriptor();
-          current.populate(possibleFileName, file);
-          if (!current.isComplete()) {
-            continue;
-          }
-
-          currentNameProcessed = true;
-          if (descriptors.isEmpty() || (descriptors.iterator().next().dir.equals(current.dir) && !descriptors.contains(current))) {
-            descriptors.add(current);
-            continue;
-          }
-          if (moreRelevantPath(current, descriptors, psiClass)) {
-            descriptors.clear();
-            descriptors.add(current);
-          }
+      final Object[] elements = gotoModel.getElementsByName(name, false, name);
+      for (Object element : elements) {
+        if (!(element instanceof PsiFile)) {
+          continue;
         }
-        if (currentNameProcessed) {
-          break;
+        final VirtualFile file = ((PsiFile)element).getVirtualFile();
+        if (file == null || fileIndex.isInSource(file) && !fileIndex.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.RESOURCES)) {
+          continue;
         }
+
+        final String filePath = file.getPath();
+        if (!StringUtil.containsIgnoreCase(filePath, possibleFilePath) && !StringUtil.containsIgnoreCase(filePath, test)) {
+          continue;
+        }
+        final String fileName = PathUtil.getFileName(filePath).toLowerCase();
+        int i = fileName.indexOf(possibleFileName.toLowerCase());
+        // Skip files that doesn't contain target test name and files that contain digit after target test name fragment.
+        // Example: there are tests with names 'testEnter()' and 'testEnter2()' and we don't want test data file 'testEnter2'
+        // to be matched to the test 'testEnter()'.
+        if (i < 0 || (i + possibleFileName.length() < fileName.length())
+                     && Character.isDigit(fileName.charAt(i + possibleFileName.length()))) {
+          continue;
+        }
+
+        TestLocationDescriptor current = new TestLocationDescriptor();
+        current.populate(possibleFileName, file);
+        if (!current.isComplete()) {
+          continue;
+        }
+
+        if (descriptors.isEmpty() || (descriptors.iterator().next().dir.equals(current.dir) && !descriptors.contains(current))) {
+          descriptors.add(current);
+          continue;
+        }
+        if (moreRelevantPath(current, descriptors, psiClass)) {
+          descriptors.clear();
+          descriptors.add(current);
+        }
+        break;
+      }
     }
     return new TestDataDescriptor(descriptors, possibleFileName);
   }

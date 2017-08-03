@@ -82,6 +82,22 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     doTestAllMethodCallExpressions();
   }
 
+  public void testLambdaParameterTypeSideEffects() throws Exception {
+    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    Collection<PsiParameter> parameters = PsiTreeUtil.findChildrenOfType(getFile(), PsiParameter.class);
+    for (PsiParameter parameter : parameters) {
+      if (parameter.getTypeElement() == null) { //lambda parameter
+        assertNotNull(parameter.getType());
+        Collection<PsiCallExpression> expressions = PsiTreeUtil.findChildrenOfType(getFile(), PsiCallExpression.class);
+        for (PsiCallExpression expression : expressions) {
+          assertNotNull(expression.getText(), expression.resolveMethod());
+        }
+
+        getPsiManager().dropResolveCaches();
+      }
+    }
+  }
+
   public void testCachingOfResultsDuringCandidatesIteration() throws Exception {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
     final Collection<PsiMethodCallExpression> methodCallExpressions = PsiTreeUtil.findChildrenOfType(getFile(), PsiMethodCallExpression.class);

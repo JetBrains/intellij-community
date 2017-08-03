@@ -132,6 +132,80 @@ public class RestLexerTest extends TestCase {
     );
   }
 
+  public void testSubstitutions() throws IOException {
+    doTest(".. |end-user| replace:: :term:`user`\n" +
+           ".. |PNS ID| replace:: :term:`user`\n" +
+           ".. |PNS.ID| replace:: :term:`user`",
+           "[.. , EXPLISIT_MARKUP_START]",
+           "[|end-user|, SUBSTITUTION]",
+           "[ , WHITESPACE]",
+           "[replace::, DIRECTIVE]",
+           "[ :term:`user`, LINE]",
+           "[\n, WHITESPACE]",
+           "[.. , EXPLISIT_MARKUP_START]",
+           "[|PNS ID|, SUBSTITUTION]",
+           "[ , WHITESPACE]",
+           "[replace::, DIRECTIVE]",
+           "[ :term:`user`, LINE]",
+           "[\n, WHITESPACE]",
+           "[.. , EXPLISIT_MARKUP_START]",
+           "[|PNS.ID|, SUBSTITUTION]",
+           "[ , WHITESPACE]",
+           "[replace::, DIRECTIVE]",
+           "[ :term:`user`, LINE]"
+           );
+  }
+
+  public void testLinks() throws IOException {
+    doTest("link_/\n" +
+           "link_!\n" +
+           "\"link_\"\n" +
+           "'link_'\n" +
+           "link_;\n",
+           "[link_, REFERENCE_NAME]",
+           "[/, LINE]",
+           "[\n, WHITESPACE]",
+           "[link_, REFERENCE_NAME]",
+           "[!, LINE]",
+           "[\n, WHITESPACE]",
+           "[\", LINE]",
+           "[link_, REFERENCE_NAME]",
+           "[\", LINE]",
+           "[\n, WHITESPACE]",
+           "[', LINE]",
+           "[link_, REFERENCE_NAME]",
+           "[', LINE]",
+           "[\n, WHITESPACE]",
+           "[link_, REFERENCE_NAME]",
+           "[;, LINE]",
+           "[\n, WHITESPACE]"
+           );
+  }
+
+  public void testFieldInCodeBlock() throws IOException {
+    doTest(".. code-block:: python\n" +
+           "   :class: extra-css-class\n" +
+           "\n" +
+           "    def thing(x):  # comment\n" +
+           "        print(\"{x} is a thing\".format(x=x))",
+           "[.. , EXPLISIT_MARKUP_START]",
+           "[code-block::, CUSTOM_DIRECTIVE]",
+           "[ , WHITESPACE]",
+           "[python\n, LINE]",
+           "[ , WHITESPACE]",
+           "[  , WHITESPACE]",
+           "[:class:, FIELD]",
+           "[ extra-css-class, LINE]",
+           "[\n, WHITESPACE]",
+           "[\n, WHITESPACE]",
+           "[    , PYTHON_LINE]",
+           "[def thing(x):  # comment, PYTHON_LINE]",
+           "[\n, PYTHON_LINE]",
+           "[        , PYTHON_LINE]",
+           "[print(\"{x} is a thing\".format(x=x)), PYTHON_LINE]"
+           );
+  }
+
   public void testInterpreted() throws IOException {
     doTest(":kbd:`1`\n" +
            "\n" +

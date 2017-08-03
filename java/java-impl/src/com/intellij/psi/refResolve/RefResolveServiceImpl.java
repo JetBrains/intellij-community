@@ -114,7 +114,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
       }
       else {
         // just to be safe, re-resolve all if VFS files count changes since last restart
-        list.dispose();
+        Disposer.dispose(list);
         storage = new PersistentIntList(dataFile, maxId);
         log("VFS maxId changed: was "+list.getSize()+"; now: "+maxId+"; re-resolving everything");
         fileIsResolved.clear();

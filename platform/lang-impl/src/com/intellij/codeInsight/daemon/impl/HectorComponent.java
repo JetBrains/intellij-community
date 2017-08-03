@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.HectorComponentPanelsProvider;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -37,8 +38,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
-import com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurable;
+import com.intellij.profile.codeInspection.ui.ErrorsConfigurableProvider;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -161,7 +161,8 @@ public class HectorComponent extends JPanel {
         }
         if (!DaemonCodeAnalyzer.getInstance(myFile.getProject()).isHighlightingAvailable(myFile)) return;
         final Project project = myFile.getProject();
-        ShowSettingsUtil.getInstance().editConfigurable(project, new ProjectInspectionToolsConfigurable(ProjectInspectionProfileManager.getInstance(myFile.getProject())));
+        ShowSettingsUtil.getInstance().editConfigurable(project, ConfigurableExtensionPointUtil
+          .createProjectConfigurableForProvider(project, ErrorsConfigurableProvider.class));
       }
     });
 

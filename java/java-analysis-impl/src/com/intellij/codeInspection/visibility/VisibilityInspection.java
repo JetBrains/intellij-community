@@ -406,13 +406,9 @@ public class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       if (to instanceof RefJavaElementImpl && ((RefJavaElementImpl)to).isUsedQualifiedOutsidePackage()) {
         return false;
       }
-      if (SUGGEST_PRIVATE_FOR_INNERS) {
-        return fromTopLevel != null && refUtil.isInheritor(fromTopLevel, toOwner)
-               || fromOwner != null && refUtil.isInheritor(fromOwner, toTopLevel)
-               || toOwner != null && refUtil.getOwnerClass(toOwner) == from;
-      }
-
-      return fromTopLevel != null && refUtil.isInheritor(fromTopLevel, toOwner);
+      return fromTopLevel != null && refUtil.isInheritor(fromTopLevel, toOwner)
+             || fromOwner != null && refUtil.isInheritor(fromOwner, toTopLevel)
+             || toTopLevel != null && toTopLevel == fromTopLevel;
     }
 
     if (accessModifier == PsiModifier.PRIVATE) {

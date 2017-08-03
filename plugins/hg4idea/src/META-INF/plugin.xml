@@ -1,9 +1,9 @@
 <idea-plugin>
   <id>hg4idea</id>
-  <name>hg4idea</name>
+  <name>Mercurial Integration</name>
   <description>
     <![CDATA[
-      Allows working with <a href="http://mercurial.selenic.com/">Mercurial version control system</a>.
+      Allows working with <a href="http://www.mercurial-scm.org/">Mercurial version control system</a>.
       The following features are available:
         <ul>
         <li>Dedicated page under the Version Control node in the Settings/Preferences dialog.</li>

@@ -111,6 +111,10 @@ class ImageSanityChecker(projectHome: File) : ImageSanityCheckerBase(projectHome
       println()
       println(warnings)
     }
+    else {
+      println()
+      println("No warnings found")
+    }
   }
 
   override fun log(severity: Severity, message: String, module: JpsModule, images: Collection<ImagePaths>) {

@@ -26,18 +26,27 @@ import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.Arrays;
+import java.util.function.Predicate;
 
 public class TestPackage extends TestObject {
 
@@ -64,12 +73,31 @@ public class TestPackage extends TestObject {
         final SourceScope sourceScope = getSourceScope();
         final Module module = getConfiguration().getConfigurationModule().getModule();
         if (sourceScope != null && !ReadAction.compute(() -> isJUnit5(module, sourceScope, myProject))) {
+          DumbService instance = DumbService.getInstance(myProject);
           try {
+            instance.setAlternativeResolveEnabled(true);
             final TestClassFilter classFilter = getClassFilter(data);
             LOG.assertTrue(classFilter.getBase() != null);
-            ConfigurationUtil.findAllTestClasses(classFilter, module, myClasses);
+            long start = System.currentTimeMillis();
+            if (Registry.is("junit4.search.4.tests.in.classpath", false)) {
+              String packageName = getPackageName(data);
+              String[] classNames = TestClassCollector.collectClassFQNames(packageName, getConfiguration(), TestPackage::createPredicate);
+              PsiManager manager = PsiManager.getInstance(myProject);
+              Arrays.stream(classNames)
+                .filter(className -> acceptClassName(className)) //check patterns
+                .map(name -> ReadAction.compute(() -> ClassUtil.findPsiClass(manager, name, null, true, classFilter.getScope())))
+                .filter(aClass -> aClass != null)
+                .forEach(myClasses::add);
+              LOG.info("Found tests in " + (System.currentTimeMillis() - start));
+            }
+            else {
+              ConfigurationUtil.findAllTestClasses(classFilter, module, myClasses);
+            }
           }
           catch (CantRunException ignored) {}
+          finally {
+            instance.setAlternativeResolveEnabled(false);
+          }
         }
       }
 
@@ -83,6 +111,10 @@ public class TestPackage extends TestObject {
         catch (ExecutionException ignored) {}
       }
     };
+  }
+
+  protected boolean acceptClassName(String className) {
+    return true;
   }
 
   protected boolean createTempFiles() {
@@ -189,5 +221,50 @@ public class TestPackage extends TestObject {
   @TestOnly
   public File getWorkingDirsFile() {
     return myWorkingDirsFile;
+  }
+
+  private static Predicate<Class<?>> createPredicate(ClassLoader classLoader) {
+
+    try {
+      Class<?> testCaseClass = Class.forName("junit.framework.TestCase", true, classLoader);
+
+      @SuppressWarnings("unchecked")
+      Class<? extends Annotation> runWithClass = (Class<? extends Annotation>)Class.forName("org.junit.runner.RunWith", true, classLoader);
+
+      @SuppressWarnings("unchecked")
+      Class<? extends Annotation> testClass = (Class<? extends Annotation>)Class.forName("org.junit.Test", true, classLoader);
+
+      return aClass -> {
+        //junit 3
+        if (testCaseClass.isAssignableFrom(aClass)) {
+          return hasSingleConstructor(aClass);
+        }
+        else {
+          //annotation
+          if (aClass.isAnnotationPresent(runWithClass)) {
+            return true;
+          }
+          else {
+            //junit 4 & suite
+            for (Method method : aClass.getMethods()) {
+              if (Modifier.isStatic(method.getModifiers()) && "suite".equals(method.getName()) ||
+                  method.isAnnotationPresent(testClass)) {
+                return hasSingleConstructor(aClass);
+              }
+            }
+          }
+        }
+        return false;
+      };
+    }
+    catch (ClassNotFoundException e) {
+      LOG.error(e);
+      return aClass -> false;
+    }
+  }
+
+  private static boolean hasSingleConstructor(Class<?> aClass) {
+    Constructor<?>[] constructors = aClass.getConstructors();
+    return constructors.length == 1 && constructors[0].getParameterTypes().length == 0;
   }
 }

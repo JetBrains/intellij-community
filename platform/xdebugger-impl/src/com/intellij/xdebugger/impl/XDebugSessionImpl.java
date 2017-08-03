@@ -258,6 +258,10 @@ public class XDebugSessionImpl implements XDebugSession {
     return myCurrentStackFrame;
   }
 
+  public XExecutionStack getCurrentExecutionStack() {
+    return myCurrentExecutionStack;
+  }
+
   @Override
   public XSuspendContext getSuspendContext() {
     return mySuspendContext;

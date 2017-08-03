@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,9 +77,13 @@ public class PackageInfoWithoutPackageInspection extends BaseInspection {
         return;
       }
       final PsiJavaFile file = (PsiJavaFile)element;
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final PsiPackageStatement packageStatement = factory.createPackageStatement(myPackageName);
-      file.add(packageStatement);
+      // can't use file.setPackageName(myPackageName) here because it will put the package in the wrong place and screw up formatting.
+      PsiElement anchor = file.getFirstChild();
+      while (anchor instanceof PsiWhiteSpace || anchor instanceof PsiComment) {
+        anchor = anchor.getNextSibling();
+      }
+      final PsiPackageStatement packageStatement = JavaPsiFacade.getElementFactory(project).createPackageStatement(myPackageName);
+      file.addBefore(packageStatement, anchor);
     }
   }
 
@@ -100,9 +104,8 @@ public class PackageInfoWithoutPackageInspection extends BaseInspection {
       if (packageStatement != null) {
         return;
       }
-      final JavaDirectoryService directoryService = JavaDirectoryService.getInstance();
       final PsiDirectory directory = file.getContainingDirectory();
-      final PsiPackage aPackage = directoryService.getPackage(directory);
+      final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
       if (aPackage == null) {
         return;
       }

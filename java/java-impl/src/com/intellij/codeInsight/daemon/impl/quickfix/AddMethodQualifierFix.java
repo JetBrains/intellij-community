@@ -32,6 +32,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -39,6 +40,7 @@ import java.util.List;
  */
 public class AddMethodQualifierFix implements IntentionAction {
   private static final boolean UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
+  private enum SearchMode { MAX_2_CANDIDATES, FULL_SEARCH }
 
   private final SmartPsiElementPointer<PsiMethodCallExpression> myMethodCall;
   private List<PsiVariable> myCandidates;
@@ -50,15 +52,14 @@ public class AddMethodQualifierFix implements IntentionAction {
   @NotNull
   @Override
   public String getText() {
-    final List<PsiVariable> candidates = getOrFindCandidates();
-    if (candidates.isEmpty()) {
+    if (myCandidates == null || myCandidates.isEmpty()) {
+      throw new IllegalStateException();
+    }
+    if (myCandidates.size() == 1) {
+      return QuickFixBundle.message("add.method.qualifier.fix.text", myCandidates.get(0).getName());
+    } else {
       return getFamilyName();
     }
-    String text = QuickFixBundle.message("add.method.qualifier.fix.text", candidates.size() > 1 ? "" : candidates.get(0).getName());
-    if (candidates.size() > 1) {
-      text += "...";
-    }
-    return text;
   }
 
   @NotNull
@@ -73,22 +74,18 @@ public class AddMethodQualifierFix implements IntentionAction {
     if (element == null || !element.isValid()) {
       return false;
     }
-    return getOrFindCandidates().size() != 0;
-  }
-
-  private synchronized List<PsiVariable> getOrFindCandidates() {
     if (myCandidates == null) {
-      findCandidates();
+      myCandidates = findCandidates(SearchMode.MAX_2_CANDIDATES);
     }
-    return myCandidates;
+    return !myCandidates.isEmpty();
   }
 
-  private void findCandidates() {
-    myCandidates = new ArrayList<>();
+  private List<PsiVariable> findCandidates(@NotNull SearchMode mode) {
+    List<PsiVariable> candidates = new ArrayList<>();
     final PsiMethodCallExpression methodCallElement = myMethodCall.getElement();
     final String methodName = methodCallElement.getMethodExpression().getReferenceName();
     if (methodName == null) {
-      return;
+      return Collections.emptyList();
     }
 
     for (final PsiVariable var : CreateFromUsageUtils.guessMatchingVariables(methodCallElement)) {
@@ -104,14 +101,18 @@ public class AddMethodQualifierFix implements IntentionAction {
         continue;
       }
       if (resolvedClass.findMethodsByName(methodName, true).length > 0) {
-        myCandidates.add(var);
+        candidates.add(var);
+        if (mode == SearchMode.MAX_2_CANDIDATES && candidates.size() >= 2) {
+          return candidates;
+        }
       }
     }
+    return candidates;
   }
 
   @TestOnly
   public List<PsiVariable> getCandidates() {
-    return getOrFindCandidates();
+    return findCandidates(SearchMode.FULL_SEARCH);
   }
 
   @Nullable
@@ -122,21 +123,27 @@ public class AddMethodQualifierFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    if (getOrFindCandidates().size() == 1 || UNIT_TEST_MODE) {
-      qualify(getOrFindCandidates().get(0), editor);
+    List<PsiVariable> candidates = findCandidates(SearchMode.FULL_SEARCH);
+    if (candidates.size() == 1 || UNIT_TEST_MODE) {
+      qualify(candidates.get(0), editor);
     }
     else {
-      chooseAndQualify(editor);
+      chooseAndQualify(editor, candidates);
     }
   }
 
-  private void chooseAndQualify(final Editor editor) {
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  private void chooseAndQualify(Editor editor, List<PsiVariable> candidates) {
     final BaseListPopupStep<PsiVariable> step =
-      new BaseListPopupStep<PsiVariable>(QuickFixBundle.message("add.qualifier"), getOrFindCandidates()) {
+      new BaseListPopupStep<PsiVariable>(QuickFixBundle.message("add.qualifier"), candidates) {
         @Override
         public PopupStep onChosen(final PsiVariable selectedValue, final boolean finalChoice) {
           if (selectedValue != null && finalChoice) {
-            WriteCommandAction.runWriteCommandAction(selectedValue.getProject(), () -> qualify(selectedValue, editor));
+            qualify(selectedValue, editor);
           }
           return FINAL_CHOICE;
         }
@@ -158,17 +165,14 @@ public class AddMethodQualifierFix implements IntentionAction {
   }
 
   private void qualify(final PsiVariable qualifier, final Editor editor) {
-    final String qualifierPresentableText = qualifier.getName();
-    final PsiMethodCallExpression oldExpression = myMethodCall.getElement();
-    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(qualifier.getProject());
-    final PsiExpression expression = elementFactory
-      .createExpressionFromText(qualifierPresentableText + "." + oldExpression.getMethodExpression().getReferenceName() + "()", null);
-    final PsiElement replacedExpression = oldExpression.replace(expression);
-    editor.getCaretModel().moveToOffset(replacedExpression.getTextOffset() + replacedExpression.getTextLength());
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
+    WriteCommandAction.runWriteCommandAction(qualifier.getProject(), () -> {
+      final String qualifierPresentableText = qualifier.getName();
+      final PsiMethodCallExpression oldExpression = myMethodCall.getElement();
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(qualifier.getProject());
+      final PsiExpression expression = elementFactory
+        .createExpressionFromText(qualifierPresentableText + "." + oldExpression.getMethodExpression().getReferenceName() + "()", null);
+      final PsiElement replacedExpression = oldExpression.replace(expression);
+      editor.getCaretModel().moveToOffset(replacedExpression.getTextOffset() + replacedExpression.getTextLength());
+    });
   }
 }

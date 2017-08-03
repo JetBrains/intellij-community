@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,8 @@ import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescri
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NotNullComputable;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SeparatorFactory;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,7 +109,7 @@ public class FrameworkSupportOptionsComponent {
       Disposer.register(myConfigurable, myLibraryOptionsPanel);
       if (addSeparator) {
         JComponent separator1 = SeparatorFactory.createSeparator("Libraries", null);
-        separator1.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 5, 5));
+        separator1.setBorder(JBUI.Borders.empty(5, 0, 5, 5));
         myLibraryOptionsPanelWrapper.add(BorderLayout.NORTH, separator1);
       }
       myLibraryOptionsPanelWrapper.add(BorderLayout.CENTER, myLibraryOptionsPanel.getMainPanel());

@@ -22,7 +22,7 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Action that toggles <code>'show soft wraps at editor'</code> option and is expected to be used at various menus.
+ * Action that toggles {@code 'show soft wraps at editor'} option and is expected to be used at various menus.
  *
  * @author Denis Zhdanov
  * @since Aug 19, 2010 3:15:26 PM
@@ -36,7 +36,7 @@ public class ToggleUseSoftWrapsMenuAction extends AbstractToggleUseSoftWrapsActi
   @Override
   public void update(@NotNull AnActionEvent e){
     super.update(e);
-    if (!e.isActionToolbar()) {
+    if (!e.isFromActionToolbar()) {
       e.getPresentation().setIcon(null);
     }
     if (ActionPlaces.UNKNOWN.equals(e.getPlace())) {

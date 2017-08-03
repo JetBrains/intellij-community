@@ -44,9 +44,9 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
 
   public ProgressManagerImpl() {
     HeavyProcessLatch.INSTANCE.addUIActivityListener(new HeavyProcessLatch.HeavyProcessListener() {
-      CheckCanceledHook sleepHook = indicator -> sleepIfNeededToGivePriorityToAnotherThread();
-      AtomicBoolean scheduled = new AtomicBoolean();
-      Runnable addHookLater = () -> {
+      private final CheckCanceledHook sleepHook = indicator -> sleepIfNeededToGivePriorityToAnotherThread();
+      private final AtomicBoolean scheduled = new AtomicBoolean();
+      private final Runnable addHookLater = () -> {
         scheduled.set(false);
         if (HeavyProcessLatch.INSTANCE.hasPrioritizedThread()) {
           addCheckCanceledHook(sleepHook);
@@ -100,7 +100,7 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   }
 
   @TestOnly
-  public static void runWithAlwaysCheckingCanceled(@NotNull Runnable runnable) {
+  public static void __testWhileAlwaysCheckingCanceled(@NotNull Runnable runnable) {
     Thread fake = new Thread("fake");
     try {
       threadsUnderCanceledIndicator.add(fake);

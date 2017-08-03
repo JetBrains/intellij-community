@@ -678,6 +678,20 @@ public class ListUtils {
     configure()
     assert myFixture.lookupElementStrings == ['boolean', 'byte']
   }
+  void testNoExpectedVoidReturnTypeDuplication() {
+    configure()
+    assert myFixture.lookupElementStrings == ['void']
+  }
+
+  void testNoExpectedArrayTypeDuplication() {
+    configure()
+    assert myFixture.lookupElementStrings == ['char']
+  }
+
+  void testShadowedTypeParameter() {
+    configure()
+    assert myFixture.lookupElementStrings == ['MyParam']
+  }
 
   void testMethodReturnType() throws Throwable {
     doTest()
@@ -1774,6 +1788,21 @@ class Bar {
   void testPairAngleBracketDisabled() {
     CodeInsightSettings.instance.AUTOINSERT_PAIR_BRACKET = false
     doTest('<')
+  }
+
+  void testDuplicateGenericMethodSuggestionWhenInheritingFromRawType() {
+    configure()
+    assert myFixture.lookupElementStrings == ['indexOf']
+  }
+
+  void testDuplicateEnumValueOf() {
+    configure()
+    assert myFixture.lookupElements.collect { LookupElementPresentation.renderElement(it).itemText } == ['Bar.valueOf', 'Foo.valueOf', 'Enum.valueOf']
+  }
+  
+  void testTypeArgumentInCast() {
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'String'
   }
 
 }

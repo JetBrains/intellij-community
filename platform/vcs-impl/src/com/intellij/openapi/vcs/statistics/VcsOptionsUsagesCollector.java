@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.vcs.statistics;
 
-import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
+import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.project.Project;
@@ -25,10 +25,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-import static com.intellij.internal.statistic.StatisticsUtilKt.getBooleanUsage;
-import static com.intellij.internal.statistic.StatisticsUtilKt.getEnumUsage;
+import static com.intellij.internal.statistic.utils.StatisticsUtilKt.getBooleanUsage;
+import static com.intellij.internal.statistic.utils.StatisticsUtilKt.getEnumUsage;
 
-public class VcsOptionsUsagesCollector extends AbstractApplicationUsagesCollector {
+public class VcsOptionsUsagesCollector extends AbstractProjectsUsagesCollector {
   private static final String GROUP_ID = "vcs-options";
 
   @NotNull

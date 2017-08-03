@@ -20,6 +20,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.propertyBased.FilePsiMutation;
 
 class MakeAllMethodsVoid extends FilePsiMutation {
 

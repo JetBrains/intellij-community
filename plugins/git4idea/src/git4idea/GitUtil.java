@@ -79,9 +79,12 @@ public class GitUtil {
 
   public static final String DOT_GIT = ".git";
 
+  /**
+   * This comment char overrides the standard '#' and any other potentially defined by user via {@code core.commentChar}.
+   */
+  public static final String COMMENT_CHAR = "\u0001";
+
   public static final String ORIGIN_HEAD = "origin/HEAD";
-  public static final String GRAFTED = "grafted";
-  public static final String REPLACED = "replaced";
 
   public static final Function<GitRepository, VirtualFile> REPOSITORY_TO_ROOT = repository -> repository.getRoot();
 
@@ -307,7 +310,7 @@ public class GitUtil {
    * @param value      Value to parse.
    * @param handler    Git handler that was called to received the output.
    * @param gitOutput  Git output.
-   * @return Parsed Date or <code>new Date</code> in the case of error.
+   * @return Parsed Date or {@code new Date} in the case of error.
    */
   public static Date parseTimestampWithNFEReport(String value, GitHandler handler, String gitOutput) {
     try {
@@ -556,7 +559,7 @@ public class GitUtil {
    * <p>Unescape path returned by Git.</p>
    * <p>
    *   If there are quotes in the file name, Git not only escapes them, but also encloses the file name into quotes:
-   *   <code>"\"quote"</code>
+   *   {@code "\"quote"}
    * </p>
    * <p>
    *   If there are spaces in the file name, Git displays the name as is, without escaping spaces and without enclosing name in quotes.
@@ -727,7 +730,7 @@ public class GitUtil {
 
   /**
    * Returns absolute paths which have changed remotely comparing to the current branch, i.e. performs
-   * <code>git diff --name-only master..origin/master</code>
+   * {@code git diff --name-only master..origin/master}
    * <p/>
    * Paths are absolute, Git-formatted (i.e. with forward slashes).
    */

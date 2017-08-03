@@ -1,8 +1,8 @@
 <html>
 <body>
-Reports any calls to <b>String.format()</b> where only a format string is
+Reports any calls to <b>String.format()</b> or <b>PrintStream.printf()</b> where only a format string is
 provided, but no arguments. Such a call is unnecessary and can be replaced with just
-the string.
+the string or a call to <b>PrintStream.print()</b> respectively.
 <!-- tooltip end -->
 <p>
 

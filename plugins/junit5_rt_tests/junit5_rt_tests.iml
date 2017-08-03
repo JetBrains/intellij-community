@@ -10,7 +10,7 @@
     <orderEntry type="module-library" scope="TEST">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../junit5_rt/lib/junit-jupiter-api-5.0.0-M5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../junit5_rt/lib/junit-jupiter-api-5.0.0-M6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

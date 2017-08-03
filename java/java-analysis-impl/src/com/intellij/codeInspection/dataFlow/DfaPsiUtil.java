@@ -117,8 +117,8 @@ public class DfaPsiUtil {
 
   @NotNull
   public static Nullness getTypeNullability(@Nullable PsiType type) {
-    if (type == null) return Nullness.UNKNOWN;
-    
+    if (type == null || type instanceof PsiPrimitiveType) return Nullness.UNKNOWN;
+
     Ref<Nullness> result = Ref.create(Nullness.UNKNOWN);
     InheritanceUtil.processSuperTypes(type, true, eachType -> {
       result.set(getTypeOwnNullability(result, eachType));

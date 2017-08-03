@@ -33,7 +33,7 @@ public interface IndentsModel {
    * @param startLine   logical line where target indent guide is started
    * @param endLine     logical line where target indent guide is ended
    * @return            indent guide descriptor registered for the given lines at the current model previously if any;
-   *                    <code>null</code> otherwise
+   *                    {@code null} otherwise
    */
   @Nullable
   IndentGuideDescriptor getDescriptor(int startLine, int endLine);

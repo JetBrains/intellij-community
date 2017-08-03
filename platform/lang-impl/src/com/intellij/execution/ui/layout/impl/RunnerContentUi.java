@@ -137,6 +137,8 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   private int myAttractionCount;
   private ActionGroup myLeftToolbarActions;
 
+  private boolean myContentToolbarBefore = true;
+
   private JBTabs myCurrentOver;
   private Image myCurrentOverImg;
   private TabInfo myCurrentOverInfo;
@@ -202,6 +204,16 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
     myComponent.revalidate();
     myComponent.repaint();
+  }
+
+  public void setContentToolbarBefore(boolean value) {
+    myContentToolbarBefore = value;
+    for (GridImpl each : getGrids()) {
+      each.setToolbarBefore(value);
+    }
+
+    myContextActions.clear();
+    updateTabsUI(false);
   }
 
   public void initUi() {
@@ -721,6 +733,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     if (grid != null || !createIfMissing) return grid;
 
     grid = new GridImpl(this, mySessionName);
+    grid.setToolbarBefore(myContentToolbarBefore);
 
     if (myCurrentOver != null || myOriginal != null) {
       Integer forcedDropIndex = content.getUserData(RunnerLayout.DROP_INDEX);

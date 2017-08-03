@@ -9,6 +9,7 @@ public enum NullabilityProblem {
   unboxingNullable,
   assigningToNotNull,
   nullableReturn,
+  nullableFunctionReturn,
   passingNullableToNotNullParameter,
   passingNullableArgumentToNonAnnotatedParameter
 }

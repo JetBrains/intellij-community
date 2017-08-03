@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.Semaphore;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
@@ -44,9 +45,8 @@ import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.GlobalContextKey;
-import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.Diagnostic;
+import javax.tools.*;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -81,7 +81,7 @@ public class ExternalJavacManager {
   public void start(int listenPort) {
     final ChannelHandler compilationRequestsHandler = new CompilationRequestsHandler();
     final ServerBootstrap bootstrap = new ServerBootstrap()
-      .group(new NioEventLoopGroup(1, SharedThreadPool.getInstance()))
+      .group(new NioEventLoopGroup(1, ConcurrencyUtil.newNamedThreadFactory("Javac server event loop")))
       .channel(NioServerSocketChannel.class)
       .childOption(ChannelOption.TCP_NODELAY, true)
       .childOption(ChannelOption.SO_KEEPALIVE, true)

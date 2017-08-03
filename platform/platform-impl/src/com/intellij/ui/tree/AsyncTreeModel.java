@@ -38,6 +38,7 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.ArrayDeque;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -236,6 +237,43 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
       }
     }
     return -1;
+  }
+
+  /**
+   * Starts visiting the tree structure with loading all needed children.
+   *
+   * @param visitor an object that controls visiting a tree structure
+   * @return a promise that will be resolved when visiting is finished
+   */
+  public Promise<TreePath> visit(@NotNull TreeVisitor visitor) {
+    return visit(visitor, true);
+  }
+
+  /**
+   * Starts visiting the tree structure.
+   *
+   * @param visitor      an object that controls visiting a tree structure
+   * @param allowLoading load all needed children if {@code true}
+   * @return a promise that will be resolved when visiting is finished
+   */
+  public Promise<TreePath> visit(@NotNull TreeVisitor visitor, boolean allowLoading) {
+    AbstractTreeWalker<Node> walker = new AbstractTreeWalker<Node>(visitor, node -> node.object) {
+      @Override
+      protected Collection<Node> getChildren(@NotNull Node node) {
+        if (node.leaf || !allowLoading) return node.getChildren();
+        promiseChildren(node).done(parent -> setChildren(parent.getChildren())).rejected(this::setError);
+        return null;
+      }
+    };
+    onValidThread(() -> {
+      if (allowLoading) {
+        promiseRootEntry().done(walker::start).rejected(walker::setError);
+      }
+      else {
+        walker.start(tree.root);
+      }
+    });
+    return walker.promise();
   }
 
   /**

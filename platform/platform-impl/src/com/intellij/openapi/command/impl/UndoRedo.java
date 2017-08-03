@@ -210,11 +210,11 @@ abstract class UndoRedo {
   }
 
   private boolean restore(EditorAndState pair, boolean onlyIfDiffers) {
-    if (myEditor == null ||
-        !myEditor.isValid() || // editor can be invalid if underlying file is deleted during undo (e.g. after undoing scratch file creation)
-        pair == null || pair.getEditor() == null) {
-      return false;
-    }
+    // editor can be invalid if underlying file is deleted during undo (e.g. after undoing scratch file creation)
+    if (pair == null || myEditor == null || !myEditor.isValid()) return false;
+
+    FileEditor editor = pair.getEditor();
+    if (editor == null) return false;
 
     // we cannot simply compare editors here because of the following scenario:
     // 1. make changes in editor for file A
@@ -222,10 +222,12 @@ abstract class UndoRedo {
     // 3. close editor
     // 4. re-open editor for A via Ctrl-E
     // 5. undo -> position is not affected, because instance created in step 4 is not the same!!!
-    if (!myEditor.getClass().equals(pair.getEditor().getClass())) {
-      return false;
-    }
+    if (!myEditor.getClass().equals(editor.getClass())) return false;
 
+    VirtualFile myFile = myEditor.getFile();
+    VirtualFile file = editor.getFile();
+    if (myFile != null && file != null && !myFile.equals(file)) return false;
+    
     // If current editor state isn't equals to remembered state then
     // we have to try to restore previous state. But sometime it's
     // not possible to restore it. For example, it's not possible to

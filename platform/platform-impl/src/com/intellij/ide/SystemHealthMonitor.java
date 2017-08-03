@@ -16,6 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.diagnostic.VMOptions;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.util.PropertiesComponent;
@@ -74,6 +75,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
   @Override
   public void initComponent() {
     checkRuntime();
+    checkReservedCodeCacheSize();
     checkIBus();
     checkSignalBlocking();
     checkLauncherScript();
@@ -118,6 +120,14 @@ public class SystemHealthMonitor implements ApplicationComponent {
           }
         }, bundleVersion, LATEST_JDK_RELEASE);
       }
+    }
+  }
+
+  private void checkReservedCodeCacheSize() {
+    int minReservedCodeCacheSize = 240;
+    int reservedCodeCacheSize = VMOptions.readOption(VMOptions.MemoryKind.CODE_CACHE, true);
+    if (reservedCodeCacheSize > 0 && reservedCodeCacheSize < minReservedCodeCacheSize) {
+      showNotification(new KeyHyperlinkAdapter("vmoptions.warn.message"), reservedCodeCacheSize, minReservedCodeCacheSize);
     }
   }
 

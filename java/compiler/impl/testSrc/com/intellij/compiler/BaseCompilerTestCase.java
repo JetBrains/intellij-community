@@ -353,6 +353,9 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     }.execute().getResultObject();
   }
 
+  protected CompilationLog buildAllModules() {
+    return make(getCompilerManager().createProjectCompileScope(myProject), CompilerFilter.ALL);
+  }
 
   protected static void assertOutput(Module module, TestFileSystemBuilder item) {
     assertOutput(module, item, false);

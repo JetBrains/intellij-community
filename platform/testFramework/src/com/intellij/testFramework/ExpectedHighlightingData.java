@@ -224,7 +224,7 @@ public class ExpectedHighlightingData {
       endOffset -= endTag.length();
 
       LineMarkerInfo markerInfo = new LineMarkerInfo<PsiElement>(myFile, new TextRange(startOffset, endOffset), null, Pass.LINE_MARKERS,
-                                                                 new ConstantFunction<>(descr), null,
+                                                                 new ConstantFunction<>(StringUtil.unescapeStringCharacters(descr)), null,
                                                                  GutterIconRenderer.Alignment.RIGHT);
 
       myLineMarkerInfos.put(document.createRangeMarker(startOffset, endOffset), markerInfo);
@@ -317,7 +317,8 @@ public class ExpectedHighlightingData {
       final Matcher closingTagMatcher = Pattern.compile("</" + marker + ">").matcher(text);
       while (true) {
         if (!closingTagMatcher.find(pos)) {
-          LOG.error("Cannot find closing </" + marker + "> in position " + pos);
+          toContinueFrom = pos;
+          break;
         }
 
         final int nextTagStart = matcher.find(pos) ? matcher.start() : text.length();

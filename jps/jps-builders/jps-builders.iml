@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="forms_rt" />
     <orderEntry type="module" module-name="forms-compiler" />
     <orderEntry type="module" module-name="instrumentation-util" />
+    <orderEntry type="module" module-name="instrumentation-util-8" scope="RUNTIME" />
     <orderEntry type="module" module-name="aether-dependency-resolver" />
     <orderEntry type="library" exported="" name="ASM" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />

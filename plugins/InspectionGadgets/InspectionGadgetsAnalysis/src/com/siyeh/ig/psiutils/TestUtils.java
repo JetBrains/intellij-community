@@ -28,6 +28,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 public class TestUtils {
   public static final String RUN_WITH = "org.junit.runner.RunWith";
 
@@ -64,8 +66,8 @@ public class TestUtils {
     if (method == null) return false;
     final PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return false;
-    final TestFramework framework = TestFrameworks.detectFramework(containingClass);
-    return framework != null && framework.getName().startsWith("JUnit") && framework.isTestMethod(method, false);
+    final Set<TestFramework> frameworks = TestFrameworks.detectApplicableFrameworks(containingClass);
+    return frameworks.stream().anyMatch(framework -> framework.getName().startsWith("JUnit") && framework.isTestMethod(method, false));
   }
 
   public static boolean isRunnable(PsiMethod method) {

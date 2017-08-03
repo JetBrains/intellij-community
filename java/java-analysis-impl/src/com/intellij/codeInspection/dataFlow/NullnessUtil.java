@@ -148,6 +148,13 @@ public class NullnessUtil {
       PsiElement target = ((PsiReferenceExpression)expression).resolve();
       return DfaPsiUtil.getElementNullability(expression.getType(), (PsiModifierListOwner)target);
     }
+    if (expression instanceof PsiAssignmentExpression) {
+      PsiAssignmentExpression assignment = (PsiAssignmentExpression)expression;
+      if(assignment.getOperationTokenType().equals(JavaTokenType.EQ)) {
+        return getExpressionNullness(assignment.getRExpression());
+      }
+      return Nullness.NOT_NULL;
+    }
     if (expression instanceof PsiMethodCallExpression) {
       PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
       return method != null ? DfaPsiUtil.getElementNullability(expression.getType(), method) : Nullness.UNKNOWN;

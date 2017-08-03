@@ -3,8 +3,6 @@ java.lang.Object -> Bar
 
 Backward References:
 Bar in Bar occurrences = 1
-Bar.<init>(0) in Bar occurrences = 1
-java.lang.Object.<init>(0) in Bar occurrences = 1
 java.util.ArrayList in Bar occurrences = 1
 java.util.Collections in Bar occurrences = 2
 java.util.Collections.EMPTY_LIST in Bar occurrences = 1

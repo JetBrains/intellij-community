@@ -27,7 +27,8 @@ final class WideSelectionListUI extends BasicListUI {
 
   @Override
   public void paint(Graphics g, JComponent c) {
-    myPaintBounds = g.getClipBounds();
+    // do not paint a line background if layout orientation is not vertical
+    myPaintBounds = !isVerticalList(c) ? null : g.getClipBounds();
     super.paint(g, c);
   }
 
@@ -84,5 +85,17 @@ final class WideSelectionListUI extends BasicListUI {
         g.fillRect(0, y, owner.getWidth(), height);
       }
     }
+  }
+
+  /**
+   * @param component the component being painted
+   * @return {@code true} if the specified component is a list with vertical orientation
+   */
+  private static boolean isVerticalList(Component component) {
+    if (component instanceof JList) {
+      JList list = (JList)component;
+      return JList.VERTICAL == list.getLayoutOrientation();
+    }
+    return false;
   }
 }

@@ -130,7 +130,7 @@ public class EduStepicConnector {
     return null;
   }
 
-  private static StepicWrappers.CoursesContainer getCoursesFromStepik(@Nullable StepicUser user, URI url) throws IOException {
+  public static StepicWrappers.CoursesContainer getCoursesFromStepik(@Nullable StepicUser user, URI url) throws IOException {
     final StepicWrappers.CoursesContainer coursesContainer;
     if (user != null) {
       coursesContainer = EduStepicAuthorizedClient.getFromStepic(url.toString(), StepicWrappers.CoursesContainer.class, user);
@@ -200,10 +200,6 @@ public class EduStepicConnector {
   }
 
   private static void setCourseLanguage(RemoteCourse info) {
-    if (info.isAdaptive()) {
-      info.setLanguage("Python"); // adaptive courses available only in PyCharm now
-      return;
-    }
     String courseType = info.getType();
     final int separator = courseType.indexOf(" ");
     assert separator != -1;

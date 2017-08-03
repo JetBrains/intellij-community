@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,15 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
+import com.intellij.ui.HintHint;
+import com.intellij.ui.LightweightHint;
+import com.intellij.ui.ListenerUtil;
+import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.speedSearch.ListWithFilter;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -161,7 +165,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
       disposables.add(navBarItem);
       return navBarItem;
     });
-    list.setBorder(IdeBorderFactory.createEmptyBorder(5, 5, 5, 5));
+    list.setBorder(JBUI.Borders.empty(5, 5, 5, 5));
     installMoveAction(list, panel, -1, KeyEvent.VK_LEFT);
     installMoveAction(list, panel, 1, KeyEvent.VK_RIGHT);
     installEnterAction(list, panel, KeyEvent.VK_ENTER);

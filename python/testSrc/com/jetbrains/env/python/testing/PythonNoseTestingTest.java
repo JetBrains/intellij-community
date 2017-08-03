@@ -6,8 +6,9 @@ import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.python.testing.CreateConfigurationTestTask.PyConfigurationCreationTask;
 import com.jetbrains.env.ut.PyNoseTestProcessRunner;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.sdkTools.SdkCreationType;
-import com.jetbrains.python.testing.PythonTestConfigurationsModel;
+import com.jetbrains.python.testing.PyTestFrameworkService;
 import com.jetbrains.python.testing.PyNoseTestConfiguration;
 import com.jetbrains.python.testing.PyNoseTestFactory;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +25,8 @@ import static org.junit.Assert.assertEquals;
 @EnvTestTagsRequired(tags = "nose")
 public final class PythonNoseTestingTest extends PyEnvTestCase {
 
+
+  private final String myFrameworkName = PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.NOSE_TEST);;
 
   @Test
   public void testNoseGenerators() {
@@ -106,7 +109,7 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
   @Test
   public void testMultipleCases() throws Exception {
     runPythonTest(
-      new CreateConfigurationMultipleCasesTask<>(PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME,
+      new CreateConfigurationMultipleCasesTask<>(PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.NOSE_TEST),
                                                  PyNoseTestConfiguration.class));
   }
 
@@ -116,8 +119,8 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
   @Test
   public void testTestsInSubFolderResolvable() throws Exception {
     runPythonTest(
-      new PyUnitTestProcessWithConsoleTestTask.PyTestsInSubFolderRunner<PyNoseTestProcessRunner>("test_metheggs", "test_funeggs",
-                                                                                                 "test_first") {
+      new PyTestsInSubFolderRunner<PyNoseTestProcessRunner>("test_metheggs", "test_funeggs",
+                                                            "test_first") {
         @NotNull
         @Override
         protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
@@ -138,7 +141,7 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
   @Test
   public void testOutput() throws Exception {
     runPythonTest(
-      new PyUnitTestProcessWithConsoleTestTask.PyTestsOutputRunner<PyNoseTestProcessRunner>("test_metheggs", "test_funeggs", "test_first") {
+      new PyTestsOutputRunner<PyNoseTestProcessRunner>("test_metheggs", "test_funeggs", "test_first") {
         @NotNull
         @Override
         protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
@@ -172,13 +175,13 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
   @Test
   public void testConfigurationProducer() throws Exception {
     runPythonTest(
-      new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME, PyNoseTestConfiguration.class));
+      new CreateConfigurationByFileTask<>(myFrameworkName, PyNoseTestConfiguration.class));
   }
 
   @Test
   public void testConfigurationProducerOnDirectory() throws Exception {
     runPythonTest(
-      new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME,
+      new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(myFrameworkName,
                                                                                      PyNoseTestConfiguration.class));
   }
 
@@ -186,7 +189,7 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
   public void testRenameClass() throws Exception {
     runPythonTest(
       new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameClassTask<>(
-        PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME,
+        myFrameworkName,
         PyNoseTestConfiguration.class));
   }
 

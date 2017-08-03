@@ -1,4 +1,5 @@
 class Ancestor(object):
+
     def __init__(self, a, b):
         self.a = a
         self.b = b
@@ -8,5 +9,6 @@ class Ancestor(object):
 
 
 class Basic(Ancestor):
+
     def func2(self):
         return self.func1()

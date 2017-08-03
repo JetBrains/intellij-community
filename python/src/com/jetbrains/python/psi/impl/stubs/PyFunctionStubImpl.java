@@ -29,15 +29,23 @@ public class PyFunctionStubImpl extends StubBase<PyFunction> implements PyFuncti
   private final String myDeprecationMessage;
   private final boolean myAsync;
   private final String myTypeComment;
+  private final String myAnnotation;
 
-  public PyFunctionStubImpl(@Nullable String name, @Nullable String docString, @Nullable String deprecationMessage, boolean isAsync,
-                            @Nullable String typeComment, final StubElement parent, @NotNull IStubElementType stubElementType) {
+  public PyFunctionStubImpl(@Nullable String name,
+                            @Nullable String docString,
+                            @Nullable String deprecationMessage,
+                            boolean isAsync,
+                            @Nullable String typeCommentContent,
+                            @Nullable String annotation, 
+                            final StubElement parent,
+                            @NotNull IStubElementType stubElementType) {
     super(parent, stubElementType);
     myName = name;
     myDocString = docString;
     myDeprecationMessage = deprecationMessage;
     myAsync = isAsync;
-    myTypeComment = typeComment;
+    myTypeComment = typeCommentContent;
+    myAnnotation = annotation;
   }
 
   @Nullable
@@ -62,6 +70,12 @@ public class PyFunctionStubImpl extends StubBase<PyFunction> implements PyFuncti
   @Override
   public String getTypeComment() {
     return myTypeComment;
+  }
+
+  @Nullable
+  @Override
+  public String getAnnotation() {
+    return myAnnotation;
   }
 
   @Override

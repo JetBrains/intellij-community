@@ -52,7 +52,7 @@ public class ChangeListWorker {
   private final ChangesDelta myDelta;
   private final Set<String> myListsToDisappear;
 
-  private final Map<LocalChangeListImpl, OpenTHashSet<Change>> myChangesBeforeUpdateMap = new HashMap<>();
+  private final Map<String, OpenTHashSet<Change>> myChangesBeforeUpdateMap = new HashMap<>();
 
   public ChangeListWorker(@NotNull Project project, @NotNull PlusMinusModify<BaseRevision> deltaListener) {
     myProject = project;
@@ -76,8 +76,13 @@ public class ChangeListWorker {
       LocalChangeListImpl copy = list.copy();
       myMap.put(copy.getName(), copy);
       if (copy.isDefault()) {
-        if (myDefault != null) LOG.error("multiple default lists found when copy");
-        myDefault = copy;
+        if (myDefault != null) {
+          LOG.error("multiple default lists found when copy");
+          copy.setDefault(false);
+        }
+        else {
+          myDefault = copy;
+        }
       }
     }
 
@@ -225,8 +230,13 @@ public class ChangeListWorker {
     for (LocalChangeListImpl list : lists) {
       myMap.put(list.getName(), list);
       if (list.isDefault()) {
-        if (myDefault != null) LOG.error("multiple default lists found when copy");
-        myDefault = list;
+        if (myDefault != null) {
+          LOG.error("multiple default lists found");
+          list.setDefault(false);
+        }
+        else {
+          myDefault = list;
+        }
       }
 
       for (Change change : list.getChanges()) {
@@ -255,7 +265,7 @@ public class ChangeListWorker {
     final String path = ChangesUtil.getFilePath(change).getPath();
     LOG.debug("[addChangeToCorrespondingList] for change " + path  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
     for (LocalChangeListImpl list : myMap.values()) {
-      OpenTHashSet<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list);
+      OpenTHashSet<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list.getName());
       if (changesBeforeUpdate.contains(change)) {
         LOG.debug("[addChangeToCorrespondingList] matched: " + list.getName());
         addChangeToList(list, change, vcsKey);
@@ -313,9 +323,13 @@ public class ChangeListWorker {
     final LocalChangeListImpl list = myMap.get(fromName);
     if (list == null || list.isReadOnly()) return false;
 
-    list.setNameImpl(toName);
+    LocalChangeListImpl newList = list.copy(toName);
     myMap.remove(fromName);
-    myMap.put(toName, list);
+    myMap.put(toName, newList);
+
+    OpenTHashSet<Change> changesBeforeUpdateFrom = myChangesBeforeUpdateMap.remove(fromName);
+    OpenTHashSet<Change> changesBeforeUpdateTo = myChangesBeforeUpdateMap.put(toName, changesBeforeUpdateFrom);
+    LOG.assertTrue(changesBeforeUpdateTo == null, "old changes for new changelist name found during rename");
 
     return true;
   }
@@ -411,7 +425,7 @@ public class ChangeListWorker {
 
   private void startProcessingChanges(@NotNull LocalChangeListImpl list) {
     OpenTHashSet<Change> changesBeforeUpdate = new OpenTHashSet<>(list.getChanges());
-    myChangesBeforeUpdateMap.put(list, changesBeforeUpdate);
+    myChangesBeforeUpdateMap.put(list.getName(), changesBeforeUpdate);
   }
 
   @NotNull
@@ -450,7 +464,7 @@ public class ChangeListWorker {
   private boolean doneProcessingChanges(@NotNull LocalChangeListImpl list,
                                         @NotNull List<Change> removedChanges,
                                         @NotNull List<Change> addedChanges) {
-    OpenTHashSet<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list);
+    OpenTHashSet<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list.getName());
     Set<Change> changes = list.getChanges();
 
     for (Change newChange : changes) {

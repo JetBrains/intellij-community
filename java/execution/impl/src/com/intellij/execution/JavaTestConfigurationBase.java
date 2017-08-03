@@ -19,6 +19,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RefactoringListenerProvider;
+import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -54,4 +55,6 @@ public abstract class JavaTestConfigurationBase extends ModuleBasedConfiguration
   public String prepareParameterizedParameter(String paramSetName) {
     return paramSetName;
   }
+
+  public abstract TestSearchScope getTestSearchScope();
 }

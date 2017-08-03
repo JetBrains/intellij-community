@@ -19,13 +19,13 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.awt.geom.Path2D;
-import java.awt.geom.Rectangle2D;
 
 import static com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.isSquare;
 import static com.intellij.ide.ui.laf.intellij.WinIntelliJButtonUI.DISABLED_ALPHA_LEVEL;
@@ -45,19 +45,18 @@ public class WinIntelliJButtonBorder implements Border, UIResource {
     Graphics2D g2 = (Graphics2D)g.create();
     AbstractButton b = (AbstractButton)c;
     ButtonModel bm = b.getModel();
-    Rectangle r = new Rectangle(x, y, width, height);
+    Rectangle outerRect = new Rectangle(x, y, width, height);
     try {
-      if (isSquare(c)) {
-        JBInsets.removeFrom(r, b.getInsets());
+      JBInsets.removeFrom(outerRect, JBUI.insets(1));
+      if (UIUtil.getParentOfType(ActionToolbar.class, c) != null) {
+        JBInsets.removeFrom(outerRect, JBUI.insetsRight(3));
       }
 
-      g2.translate(r.x, r.y);
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
       Color color = UIManager.getColor("Button.intellij.native.borderColor");
-      int bw = JBUI.scale(1);
-
+      int bw = 1;
       if (!c.isEnabled()) {
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, DISABLED_ALPHA_LEVEL));
       } else if (bm.isPressed()) {
@@ -66,14 +65,17 @@ public class WinIntelliJButtonBorder implements Border, UIResource {
         color = UIManager.getColor("Button.intellij.native.focusedBorderColor");
       }  else {
         if (DarculaButtonUI.isDefaultButton(b)) {
-          bw = JBUI.scale(2);
+          bw = 2;
           color = UIManager.getColor("Button.intellij.native.focusedBorderColor");
         }
       }
 
       Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
-      border.append(new Rectangle2D.Double(0, 0, r.width, r.height), false);
-      border.append(new Rectangle2D.Double(bw, bw, r.width - 2*bw, r.height - 2*bw), false);
+      border.append(outerRect, false);
+
+      Rectangle innerRect = new Rectangle(outerRect);
+      JBInsets.removeFrom(innerRect, JBUI.insets(bw));
+      border.append(innerRect, false);
 
       g2.setColor(color);
       g2.fill(border);
@@ -84,14 +86,14 @@ public class WinIntelliJButtonBorder implements Border, UIResource {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    if (c.getParent() instanceof ActionToolbar) {
-      return JBUI.insets(4, 16).asUIResource();
+    if (UIUtil.getParentOfType(ActionToolbar.class, c) != null) {
+      return JBUI.insets(4, 16, 4, 19).asUIResource();
     } else if (isSquare(c)) {
-      return JBUI.insets(1).asUIResource();
+      return JBUI.insets(2).asUIResource();
     } else if (DarculaButtonUI.isHelpButton((JComponent)c)) {
       return JBUI.insets(0, 0, 0, 10).asUIResource();
     } else {
-      return JBUI.insets(3, 17).asUIResource();
+      return JBUI.insets(4, 18).asUIResource();
     }
   }
 

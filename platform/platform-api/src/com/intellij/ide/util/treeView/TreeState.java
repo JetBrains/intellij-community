@@ -24,6 +24,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,10 +33,10 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -45,6 +46,11 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
+
+import static java.util.stream.Collectors.toList;
+import static org.jetbrains.concurrency.Promises.collectResults;
 
 /**
  * @see #createOn(JTree)
@@ -57,14 +63,13 @@ public class TreeState implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance(TreeState.class);
 
   public static final Key<WeakReference<ActionCallback>> CALLBACK = Key.create("Callback");
+  public static final Key<Function<TreeVisitor, Promise<TreePath>>> VISIT = Key.create("TreeVisit");
 
   private static final String EXPAND_TAG = "expand";
   private static final String SELECT_TAG = "select";
   private static final String PATH_TAG = "path";
 
-  private static final int NOT_MATCHED = 0;
-  private static final int ID_MATCHED = 1;
-  private static final int OBJECT_MATCHED = 2;
+  private enum Match {OBJECT, ID_TYPE}
 
   @Tag("item")
   static class PathElement {
@@ -78,7 +83,7 @@ public class TreeState implements JDOMExternalizable {
     Object userObject;
     final int index;
 
-    /** @noinspection unused*/
+    @SuppressWarnings("unused")
     PathElement() {
       this(null, null, -1, null);
     }
@@ -95,6 +100,17 @@ public class TreeState implements JDOMExternalizable {
     @Override
     public String toString() {
       return id + ": " + type;
+    }
+
+    private boolean isMatchTo(Object object) {
+      return getMatchTo(object) != null;
+    }
+
+    private Match getMatchTo(Object object) {
+      Object userObject = TreeUtil.getUserObject(object);
+      if (this.userObject != null && this.userObject.equals(userObject)) return Match.OBJECT;
+      return Comparing.equal(this.id, calcId(userObject)) &&
+             Comparing.equal(this.type, calcType(userObject)) ? Match.ID_TYPE : null;
     }
   }
 
@@ -224,6 +240,7 @@ public class TreeState implements JDOMExternalizable {
   }
 
   public void applyTo(@NotNull JTree tree, @Nullable Object root) {
+    if (visit(tree)) return; // AsyncTreeModel#visit
     if (root == null) return;
     TreeFacade facade = TreeFacade.getFacade(tree);
     ActionCallback callback = facade.getInitialized().doWhenDone(new TreeRunnable("TreeState.applyTo: on done facade init") {
@@ -251,7 +268,7 @@ public class TreeState implements JDOMExternalizable {
     for (List<PathElement> path : myExpandedPaths) {
       if (path.isEmpty()) continue;
       int index = rootPath.getPathCount() - 1;
-      if (pathMatches(path.get(index), rootPath.getPathComponent(index)) == NOT_MATCHED) continue;
+      if (!path.get(index).isMatchTo(rootPath.getPathComponent(index))) continue;
       expandImpl(0, path, rootPath, tree, indicator);
     }
   }
@@ -280,15 +297,17 @@ public class TreeState implements JDOMExternalizable {
   private static TreePath findMatchedChild(@NotNull TreeModel model, @NotNull TreePath treePath, @NotNull PathElement pathElement) {
     Object parent = treePath.getLastPathComponent();
     int childCount = model.getChildCount(parent);
+    if (childCount <= 0) return null;
+
     boolean idMatchedFound = false;
     Object idMatchedChild = null;
     for (int j = 0; j < childCount; j++) {
       Object child = model.getChild(parent, j);
-      int match = pathMatches(pathElement, child);
-      if (match == OBJECT_MATCHED) {
+      Match match = pathElement.getMatchTo(child);
+      if (match == Match.OBJECT) {
         return treePath.pathByAddingChild(child);
       }
-      else if (match == ID_MATCHED && !idMatchedFound) {
+      if (match == Match.ID_TYPE && !idMatchedFound) {
         idMatchedChild = child;
         idMatchedFound = true;
       }
@@ -297,21 +316,9 @@ public class TreeState implements JDOMExternalizable {
       return treePath.pathByAddingChild(idMatchedChild);
     }
 
-    if (childCount > 0) {
-      int index = Math.max(0, Math.min(pathElement.index, childCount - 1));
-      Object child = model.getChild(parent, index);
-      return treePath.pathByAddingChild(child);
-    }
-
-    return null;
-  }
-
-  @MagicConstant(intValues = {NOT_MATCHED, ID_MATCHED, OBJECT_MATCHED})
-  private static int pathMatches(@NotNull PathElement pe, Object child) {
-    Object userObject = TreeUtil.getUserObject(child);
-    if (pe.userObject != null && pe.userObject.equals(userObject)) return OBJECT_MATCHED;
-    return Comparing.equal(pe.id, calcId(userObject)) &&
-           Comparing.equal(pe.type, calcType(userObject)) ? ID_MATCHED : NOT_MATCHED;
+    int index = Math.max(0, Math.min(pathElement.index, childCount - 1));
+    Object child = model.getChild(parent, index);
+    return treePath.pathByAddingChild(child);
   }
 
   private static void expandImpl(int positionInPath,
@@ -332,7 +339,7 @@ public class TreeState implements JDOMExternalizable {
         int childCount = model.getChildCount(parent);
         for (int j = 0; j < childCount; j++) {
           Object child = tree.tree.getModel().getChild(parent, j);
-          if (pathMatches(next, child) != NOT_MATCHED) {
+          if (next.isMatchTo(child)) {
             expandImpl(positionInPath + 1, path, treePath.pathByAddingChild(child), tree, indicator);
             break;
           }
@@ -357,7 +364,6 @@ public class TreeState implements JDOMExternalizable {
       AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(tree);
       return builder != null ? new BuilderFacade(builder) : new JTreeFacade(tree);
     }
-
   }
 
   static class JTreeFacade extends TreeFacade {
@@ -435,6 +441,53 @@ public class TreeState implements JDOMExternalizable {
       content = ExceptionUtil.getThrowableText(e);
     }
     return "TreeState(" + myScrollToSelection + ")\n" + content;
+  }
+
+  private Promise<List<TreePath>> expand(@NotNull Function<TreeVisitor, Promise<TreePath>> visit, @NotNull JTree tree) {
+    return collectResults(myExpandedPaths.stream().map(elements -> new Visitor(elements, tree::expandPath)).map(visit).collect(toList()));
+  }
+
+  private Promise<List<TreePath>> select(@NotNull Function<TreeVisitor, Promise<TreePath>> visit) {
+    return collectResults(mySelectedPaths.stream().map(elements -> new Visitor(elements, null)).map(visit).collect(toList()));
+  }
+
+  private boolean visit(@NotNull JTree tree) {
+    Function<TreeVisitor, Promise<TreePath>> visit = UIUtil.getClientProperty(tree, VISIT);
+    if (visit == null) return false;
+
+    expand(visit, tree).done(expanded -> {
+      if (tree.getSelectionCount() == 0) {
+        select(visit).done(selected -> {
+          if (tree.getSelectionCount() == 0) {
+            for (TreePath path : selected) {
+              tree.addSelectionPath(path);
+            }
+          }
+        });
+      }
+    });
+    return true;
+  }
+
+  private static final class Visitor implements TreeVisitor {
+    private final List<PathElement> elements;
+    private final Consumer<TreePath> consumer;
+
+    private Visitor(List<PathElement> elements, Consumer<TreePath> consumer) {
+      this.elements = elements;
+      this.consumer = consumer;
+    }
+
+    @NotNull
+    @Override
+    public Action accept(@NotNull TreePath path) {
+      int count = path.getPathCount();
+      if (count > elements.size()) return Action.SKIP_CHILDREN;
+      boolean matches = elements.get(count - 1).isMatchTo(path.getLastPathComponent());
+      if (!matches) return Action.SKIP_CHILDREN;
+      if (consumer != null) consumer.accept(path);
+      return count < elements.size() ? Action.CONTINUE : Action.INTERRUPT;
+    }
   }
 }
 

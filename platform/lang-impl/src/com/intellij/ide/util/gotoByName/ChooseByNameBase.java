@@ -450,7 +450,7 @@ public abstract class ChooseByNameBase {
       myToolArea = new JLabel(JBUI.scale(EmptyIcon.create(1, 24)));
     }
     else {
-      myToolArea.setBorder(IdeBorderFactory.createEmptyBorder(0, 6, 0, 0)); // space between checkbox and filter/show all in view buttons
+      myToolArea.setBorder(JBUI.Borders.emptyLeft(6)); // space between checkbox and filter/show all in view buttons
     }
     hBox.add(myToolArea);
     hBox.add(toolbarComponent);

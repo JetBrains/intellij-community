@@ -254,7 +254,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
 
   public void testPerformanceOfMergeableTokens() throws Exception {
     withCycleConsole(1000, console ->
-      PlatformTestUtil.startPerformanceTest("console print", 3500, () -> {
+      PlatformTestUtil.startPerformanceTest("console print with mergeable tokens", 3500, () -> {
         console.clear();
         for (int i=0; i<10_000_000; i++) {
           console.print("xxx\n", ConsoleViewContentType.NORMAL_OUTPUT);

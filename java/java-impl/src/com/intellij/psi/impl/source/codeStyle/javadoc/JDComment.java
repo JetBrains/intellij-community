@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,10 @@ import com.intellij.formatting.IndentInfo;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -34,7 +34,7 @@ public class JDComment {
   private String myDescription;
   private List<String> myUnknownList;
   private List<String> mySeeAlsoList;
-  private String mySince;
+  private List<String> mySinceList;
   private String myDeprecated;
   private boolean myMultiLineComment;
   private String myFirstLine = "/**";
@@ -110,11 +110,13 @@ public class JDComment {
       }
     }
 
-    if (!isNull(mySince)) {
+    if (!isNull(mySinceList)) {
       JDTag tag = JDTag.SINCE;
-      StringBuilder tagDescription = myFormatter.getParser()
-        .formatJDTagDescription(mySince, prefix + tag.getWithEndWhitespace(), continuationPrefix);
-      sb.append(tagDescription);
+      for (String since : mySinceList) {
+        StringBuilder tagDescription = myFormatter.getParser()
+          .formatJDTagDescription(since, prefix + tag.getWithEndWhitespace(), continuationPrefix);
+        sb.append(tagDescription);
+      }
     }
 
     if (myDeprecated != null) {
@@ -160,21 +162,18 @@ public class JDComment {
   }
 
   public void addSeeAlso(@NotNull String seeAlso) {
-    if (mySeeAlsoList == null) {
-      mySeeAlsoList = ContainerUtilRt.newArrayList();
-    }
+    if (mySeeAlsoList == null) mySeeAlsoList = new ArrayList<>();
     mySeeAlsoList.add(seeAlso);
   }
 
   public void addUnknownTag(@NotNull String unknownTag) {
-    if (myUnknownList == null) {
-      myUnknownList = ContainerUtilRt.newArrayList();
-    }
+    if (myUnknownList == null) myUnknownList = new ArrayList<>();
     myUnknownList.add(unknownTag);
   }
 
-  public void setSince(@Nullable String since) {
-    this.mySince = since;
+  public void addSince(@NotNull String since) {
+    if (mySinceList == null) mySinceList = new ArrayList<>();
+    mySinceList.add(since);
   }
 
   public void setDeprecated(@Nullable String deprecated) {

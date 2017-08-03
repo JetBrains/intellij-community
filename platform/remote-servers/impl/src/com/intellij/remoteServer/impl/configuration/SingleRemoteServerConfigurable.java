@@ -181,6 +181,7 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
     boolean uncheckedApply = myConfigurable.isModified();
     myConfigurable.apply();
     XmlSerializerUtil.copyBean(myInnerServer.getConfiguration(), myServer.getConfiguration());
+    myServer.setName(myServerName);
     myNew = false;
     myUncheckedApply = uncheckedApply;
     myInnerApplied = false;

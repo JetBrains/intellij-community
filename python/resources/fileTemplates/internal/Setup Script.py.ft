@@ -1,4 +1,4 @@
-from distutils.core import setup
+$Import
 
 setup(
     name='$Package_name',

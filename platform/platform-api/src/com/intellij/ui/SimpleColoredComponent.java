@@ -73,7 +73,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   private TIntIntHashMap myFragmentAlignment;
 
   /**
-   * Component's icon. It can be <code>null</code>.
+   * Component's icon. It can be {@code null}.
    */
   private Icon myIcon;
   /**
@@ -97,7 +97,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   /**
    * This is the border around the text. For example, text can have a border
    * if the component represents a selected item in a focused JList.
-   * Border can be <code>null</code>.
+   * Border can be {@code null}.
    */
   private Border myBorder;
 
@@ -154,7 +154,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   /**
    * Appends string fragments to existing ones. Appended string
-   * will have specified <code>attributes</code>.
+   * will have specified {@code attributes}.
    *
    * @param fragment   text fragment
    * @param attributes text attributes
@@ -179,7 +179,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   /**
    * Appends string fragments to existing ones. Appended string
-   * will have specified <code>attributes</code>.
+   * will have specified {@code attributes}.
    *
    * @param fragment   text fragment
    * @param attributes text attributes
@@ -253,7 +253,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   /**
-   * Clear all special attributes of <code>SimpleColoredComponent</code>.
+   * Clear all special attributes of {@code SimpleColoredComponent}.
    * They are icon, text fragments and their attributes, "paint focus border".
    */
   public void clear() {
@@ -273,7 +273,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   /**
-   * @return component's icon. This method returns <code>null</code>
+   * @return component's icon. This method returns {@code null}
    * if there is no icon.
    */
   public final Icon getIcon() {
@@ -321,7 +321,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
    * Sets a new gap between icon and text
    *
    * @param iconTextGap the gap between text and icon
-   * @throws IllegalArgumentException if the <code>iconTextGap</code>
+   * @throws IllegalArgumentException if the {@code iconTextGap}
    *                                            has a negative value
    */
   public void setIconTextGap(final int iconTextGap) {
@@ -344,7 +344,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   /**
    * Sets whether focus border is painted or not
    *
-   * @param paintFocusBorder <code>true</code> or <code>false</code>
+   * @param paintFocusBorder {@code true} or {@code false}
    */
   protected final void setPaintFocusBorder(final boolean paintFocusBorder) {
     myPaintFocusBorder = paintFocusBorder;
@@ -356,7 +356,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
    * Sets whether focus border extends to icon or not. If so then
    * component also extends the selection.
    *
-   * @param focusBorderAroundIcon <code>true</code> or <code>false</code>
+   * @param focusBorderAroundIcon {@code true} or {@code false}
    */
   protected final void setFocusBorderAroundIcon(final boolean focusBorderAroundIcon) {
     myFocusBorderAroundIcon = focusBorderAroundIcon;

@@ -50,7 +50,7 @@ public class UnusedSymbolUtil {
                                         @Nullable ProgressIndicator progress) {
     if (isInjected(project, element)) return true;
     for (ImplicitUsageProvider provider : Extensions.getExtensions(ImplicitUsageProvider.EP_NAME)) {
-      checkCanceled(progress);
+      ProgressManager.checkCanceled();
       if (provider.isImplicitUsage(element)) {
         return true;
       }
@@ -65,7 +65,7 @@ public class UnusedSymbolUtil {
 
   public static boolean isImplicitRead(@NotNull Project project, @NotNull PsiVariable element, @Nullable ProgressIndicator progress) {
     for(ImplicitUsageProvider provider: Extensions.getExtensions(ImplicitUsageProvider.EP_NAME)) {
-      checkCanceled(progress);
+      ProgressManager.checkCanceled();
       if (provider.isImplicitRead(element)) {
         return true;
       }
@@ -81,7 +81,7 @@ public class UnusedSymbolUtil {
                                         @NotNull PsiVariable element,
                                         @Nullable ProgressIndicator progress) {
     for(ImplicitUsageProvider provider: Extensions.getExtensions(ImplicitUsageProvider.EP_NAME)) {
-      checkCanceled(progress);
+      ProgressManager.checkCanceled();
       if (provider.isImplicitWrite(element)) {
         return true;
       }
@@ -161,14 +161,6 @@ public class UnusedSymbolUtil {
       }
     }
     return false;
-  }
-
-  private static void checkCanceled(@Nullable ProgressIndicator progress) {
-    if (progress != null) {
-      progress.checkCanceled();
-    } else {
-      ProgressManager.checkCanceled();
-    }
   }
 
   private static boolean weAreSureThereAreNoUsages(@NotNull Project project,

@@ -64,6 +64,7 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -246,7 +247,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   public static String getPresentableText(@NotNull VcsFileRevision revision, boolean withMessage) {
     // implementation reflected by com.intellij.vcs.log.ui.frame.VcsLogGraphTable.getPresentableText()
     StringBuilder sb = new StringBuilder();
-    sb.append(FileHistoryPanelImpl.RevisionColumnInfo.toString(revision.getRevisionNumber())).append(" ");
+    sb.append(VcsUtil.getShortRevisionString(revision.getRevisionNumber())).append(" ");
     sb.append(revision.getAuthor());
     long time = revision.getRevisionDate().getTime();
     sb.append(" on ").append(DateFormatUtil.formatDate(time)).append(" at ").append(DateFormatUtil.formatTime(time));
@@ -668,17 +669,10 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       myRenderer = new ColoredTableCellRenderer() {
         protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
           setOpaque(selected);
-          append(RevisionColumnInfo.toString((VcsRevisionNumber)value));
+          append(VcsUtil.getShortRevisionString((VcsRevisionNumber)value));
           SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected);
         }
       };
-    }
-
-    @NotNull
-    private static String toString(@NotNull VcsRevisionNumber number) {
-      return number instanceof ShortVcsRevisionNumber
-             ? ((ShortVcsRevisionNumber)number).toShortString()
-             : number.asString();
     }
 
     @Nullable

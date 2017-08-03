@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
@@ -54,11 +55,14 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest extends 
   }
 
   private void assertSingleEPDeclaration(String filePath) {
-    myFixture.configureByFile("plugin.xml"); // index
+    PsiFile file = myFixture.configureByFile("plugin.xml");
+    String path = file.getVirtualFile().getPath();
+    int expectedTagPosition = file.getText().indexOf("<extensionPoint name=\"myStringEP\" interface=\"java.lang.String\"/>");
+    String expectedTooltip = "<html><body>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#navigation/" + path
+                             + ":" + expectedTagPosition + "\">myStringEP</a> extension point declaration in <a href=\"#navigation/" + path
+                             + ":0\">plugin.xml</a><br></body></html>";
 
     final GutterMark gutter = myFixture.findGutter(filePath);
-    DevKitGutterTargetsChecker.checkGutterTargets(gutter, "Extension Point Declaration",
-                                                  AllIcons.Nodes.Plugin,
-                                                  "extensionPoint");
+    DevKitGutterTargetsChecker.checkGutterTargets(gutter, expectedTooltip, AllIcons.Nodes.Plugin, "extensionPoint");
   }
 }

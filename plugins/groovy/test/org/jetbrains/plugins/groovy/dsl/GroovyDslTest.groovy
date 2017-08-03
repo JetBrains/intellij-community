@@ -170,7 +170,7 @@ class Foo<T> {
 public class MyCategory {
   public static void foo(String s) {}
 }""")
-    def foo = category.getMethods()[0]
+    def foo = TestUtils.getMethods(category)[0]
     addGdsl("""
     contributor([:]){category 'MyCategory'}""")
     myFixture.renameElement foo, "bar", false, false

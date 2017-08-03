@@ -88,7 +88,7 @@ public class JavaExecutionStack extends XExecutionStack {
     try {
       StackFrameProxyImpl frame = myThreadProxy.frame(0);
       if (frame != null) {
-        myTopFrame = createStackFrame(frame, myTracker);
+        myTopFrame = createStackFrame(frame);
       }
     }
     catch (EvaluateException e) {
@@ -99,8 +99,9 @@ public class JavaExecutionStack extends XExecutionStack {
     }
   }
 
-  private static XStackFrame createStackFrame(@NotNull StackFrameProxyImpl stackFrameProxy, @NotNull MethodsTracker tracker) {
-    StackFrameDescriptorImpl descriptor = new StackFrameDescriptorImpl(stackFrameProxy, tracker);
+  @NotNull
+  public XStackFrame createStackFrame(@NotNull StackFrameProxyImpl stackFrameProxy) {
+    StackFrameDescriptorImpl descriptor = new StackFrameDescriptorImpl(stackFrameProxy, myTracker);
     DebugProcessImpl debugProcess = (DebugProcessImpl)descriptor.getDebugProcess();
     Location location = descriptor.getLocation();
     if (location != null) {
@@ -193,7 +194,7 @@ public class JavaExecutionStack extends XExecutionStack {
         }
         else {
           frameProxy = myStackFramesIterator.next();
-          frame = createStackFrame(frameProxy, myTracker);
+          frame = createStackFrame(frameProxy);
           if (first && !myTopFrameReady) {
             myTopFrame = frame;
             myTopFrameReady = true;

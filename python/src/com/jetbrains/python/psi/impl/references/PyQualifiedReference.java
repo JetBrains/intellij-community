@@ -49,9 +49,9 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
+import com.jetbrains.python.psi.stubs.PyClassAttributesIndex;
 import com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
-import com.jetbrains.python.psi.stubs.PyInstanceAttributeIndex;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -158,16 +158,11 @@ public class PyQualifiedReference extends PyReferenceImpl {
       }
     }
 
-    final Collection attributes = PyInstanceAttributeIndex.find(referencedName, project, scope);
-    for (Object attribute : attributes) {
-      if (!(attribute instanceof PyTargetExpression)) {
-        FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID,
-                                                     new Throwable(
-                                                       "found non-target expression object " + attribute + " in target expression list"));
-        break;
-      }
-      ret.add(new ImplicitResolveResult((PyTargetExpression)attribute, getImplicitResultRate((PyTargetExpression)attribute, imports)));
-    }
+    PyClassAttributesIndex.findClassAndInstanceAttributes(referencedName, project, scope).forEach((PyTargetExpression attribute) -> {
+      ret.add(new ImplicitResolveResult(attribute, getImplicitResultRate(attribute, imports)));
+    });
+
+
   }
 
   private static List<QualifiedName> collectImports(PyFile containingFile) {
@@ -287,27 +282,26 @@ public class PyQualifiedReference extends PyReferenceImpl {
       if (qualifier instanceof PyQualifiedExpression) {
         final PyQualifiedExpression qualifierExpression = (PyQualifiedExpression)qualifier;
         final QualifiedName qualifiedName = qualifierExpression.asQualifiedName();
-        if (qualifiedName == null) {
-          return variants.toArray();
-        }
-        final Collection<PyExpression> attrs = collectAssignedAttributes(qualifiedName, qualifier);
-        for (PyExpression ex : attrs) {
-          final String name = ex.getName();
-          if (name != null && name.endsWith(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)) {
-            continue;
-          }
-          if (ex instanceof PsiNamedElement && qualifierType instanceof PyClassType && name != null) {
-            variants.add(LookupElementBuilder.createWithSmartPointer(name, ex)
-                           .withTypeText(qualifierType.getName())
-                           .withIcon(PlatformIcons.FIELD_ICON));
-          }
-          if (ex instanceof PyReferenceExpression) {
-            PyReferenceExpression refExpr = (PyReferenceExpression)ex;
-            namesAlready.add(refExpr.getReferencedName());
-          }
-          else if (ex instanceof PyTargetExpression) {
-            PyTargetExpression targetExpr = (PyTargetExpression)ex;
-            namesAlready.add(targetExpr.getName());
+        if (qualifiedName != null) {
+          final Collection<PyExpression> attrs = collectAssignedAttributes(qualifiedName, qualifier);
+          for (PyExpression ex : attrs) {
+            final String name = ex.getName();
+            if (name != null && name.endsWith(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)) {
+              continue;
+            }
+            if (ex instanceof PsiNamedElement && qualifierType instanceof PyClassType && name != null) {
+              variants.add(LookupElementBuilder.createWithSmartPointer(name, ex)
+                             .withTypeText(qualifierType.getName())
+                             .withIcon(PlatformIcons.FIELD_ICON));
+            }
+            if (ex instanceof PyReferenceExpression) {
+              PyReferenceExpression refExpr = (PyReferenceExpression)ex;
+              namesAlready.add(refExpr.getReferencedName());
+            }
+            else if (ex instanceof PyTargetExpression) {
+              PyTargetExpression targetExpr = (PyTargetExpression)ex;
+              namesAlready.add(targetExpr.getName());
+            }
           }
         }
         Collections.addAll(variants, qualifierType.getCompletionVariants(element.getName(), element, ctx));

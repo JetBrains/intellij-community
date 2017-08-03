@@ -42,9 +42,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.stubs.StubTree;
+import com.intellij.psi.stubs.StubTreeBuilder;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.FileContentImpl;
+import com.intellij.util.indexing.IndexingDataKeys;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -411,14 +415,15 @@ public class PsiTestUtil {
   }
 
   public static void checkStubsMatchText(@NotNull PsiFile file) {
-    Project project = file.getProject();
-
     StubTree tree = getStubTree(file);
-    StubTree copyTree = getStubTree(
-      PsiFileFactory.getInstance(project).createFileFromText(file.getName(), file.getLanguage(), file.getText()));
-    if (tree == null || copyTree == null) return;
+    if (tree == null) return;
+    
+    FileContentImpl fc = new FileContentImpl(file.getViewProvider().getVirtualFile(), file.getText(), 0);
+    fc.putUserData(IndexingDataKeys.PROJECT, file.getProject());
+    Stub copyTree = StubTreeBuilder.buildStubTree(fc);
+    if (copyTree == null) return;
 
-    String fromText = DebugUtil.stubTreeToString(copyTree.getRoot());
+    String fromText = DebugUtil.stubTreeToString(copyTree);
     String fromPsi = DebugUtil.stubTreeToString(tree.getRoot());
     if (!fromText.equals(fromPsi)) {
       Assert.assertEquals("Re-created from text:\n" + fromText, "Stubs from PSI structure:\n" + fromPsi);

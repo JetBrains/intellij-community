@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.Intention;
@@ -61,10 +62,11 @@ public class MoveCommentToSeparateLineIntention extends Intention {
       newline = text.substring(text.lastIndexOf('\n'));
     }
     final PsiElement prev = PsiTreeUtil.prevLeaf(comment);
-    final int deleteOffset = prev instanceof PsiWhiteSpace ? prev.getTextOffset() : comment.getTextOffset();
-    document.deleteString(deleteOffset, comment.getTextOffset() + comment.getTextLength());
+    final TextRange commentRange = comment.getTextRange();
+    final int deleteOffset = prev instanceof PsiWhiteSpace ? prev.getTextRange().getStartOffset() : commentRange.getStartOffset();
+    document.deleteString(deleteOffset, commentRange.getEndOffset());
 
-    final int offset = anchor.getTextOffset();
+    final int offset = anchor.getTextRange().getStartOffset();
     document.insertString(offset, newline);
     document.insertString(offset, comment.getText());
     scrollToVisible(project, offset);

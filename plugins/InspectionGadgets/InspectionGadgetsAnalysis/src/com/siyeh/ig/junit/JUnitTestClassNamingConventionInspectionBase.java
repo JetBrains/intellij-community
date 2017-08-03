@@ -23,6 +23,8 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.naming.ConventionInspection;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 public class JUnitTestClassNamingConventionInspectionBase extends ConventionInspection {
   private static final int DEFAULT_MIN_LENGTH = 8;
   private static final int DEFAULT_MAX_LENGTH = 64;
@@ -88,8 +90,8 @@ public class JUnitTestClassNamingConventionInspectionBase extends ConventionInsp
         return;
       }
 
-      final TestFramework framework = TestFrameworks.detectFramework(aClass);
-      if (framework == null || !framework.getName().startsWith("JUnit") || !framework.isTestClass(aClass)) {
+      final Set<TestFramework> frameworks = TestFrameworks.detectApplicableFrameworks(aClass);
+      if (frameworks.stream().noneMatch(framework -> framework.getName().startsWith("JUnit") && framework.isTestClass(aClass))) {
         return;
       }
 

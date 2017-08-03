@@ -45,4 +45,6 @@ public interface ParameterInfoHandler <ParameterOwner, ParameterType> {
   // Can be null if parameter info does not track parameter index
   @Nullable String getParameterCloseChars();
   boolean tracksParameterIndex();
+
+  default void dispose() {}
 }

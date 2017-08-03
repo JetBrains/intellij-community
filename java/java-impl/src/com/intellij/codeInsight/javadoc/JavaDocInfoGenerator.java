@@ -15,7 +15,9 @@
  */
 package com.intellij.codeInsight.javadoc;
 
-import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.javadoc.JavadocGeneratorRunProfile;
@@ -1617,7 +1619,7 @@ public class JavaDocInfoGenerator {
           if (valueElement == null) return false;
           if (Arrays.stream(localTags)
             .map(PsiDocTag::getValueElement)
-            .map(ObjectUtils::notNull)
+            .filter(Objects::nonNull)
             .anyMatch(docTagValue -> areWeakEqual(docTagValue.getText(), valueElement.getText()))) {
             return false;
           }

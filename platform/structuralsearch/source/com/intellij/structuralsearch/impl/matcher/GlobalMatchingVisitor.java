@@ -219,7 +219,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
 
         final List<PsiElement> matchedNodes = matchContext.getMatchedNodes();
 
-        if (matched) {
+        if (matched && matchedNodes != null) {
           dispatchMatched(matchedNodes, matchContext.getResult());
         }
 

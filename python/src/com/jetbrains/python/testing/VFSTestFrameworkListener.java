@@ -42,14 +42,12 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class VFSTestFrameworkListener {
   private static final Logger LOG = Logger.getInstance(VFSTestFrameworkListener.class);
-  
+
   private final AtomicBoolean myIsUpdating = new AtomicBoolean(false);
   private final PyTestFrameworkService myService = PyTestFrameworkService.getInstance();
   private final MergingUpdateQueue myQueue;
@@ -65,12 +63,25 @@ public class VFSTestFrameworkListener {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         for (VFileEvent event : events) {
-          if (!(event.getFileSystem() instanceof LocalFileSystem) || event instanceof VFileContentChangeEvent)
+          if (!(event.getFileSystem() instanceof LocalFileSystem) || event instanceof VFileContentChangeEvent) {
             continue;
+          }
           final String path = event.getPath();
-          final boolean containsNose = path.contains(PyNames.NOSE_TEST);
-          final boolean containsPy = path.contains("py-1") || path.contains(PyNames.PY_TEST);
-          if (!containsNose && !containsPy) continue;
+
+          final Set<String> existingFrameworks = new HashSet<>();
+          for (final String framework : PyTestFrameworkService.getFrameworkNamesSet()) {
+            if (path.contains(framework)) {
+              existingFrameworks.add(framework);
+            }
+            if (path.contains("py-1")) {
+              existingFrameworks.add(PyNames.PY_TEST);
+            }
+          }
+
+
+          if (existingFrameworks.isEmpty()) {
+            continue;
+          }
           for (Sdk sdk : PythonSdkType.getAllSdks()) {
             if (PySdkUtil.isRemote(sdk)) {
               continue;
@@ -78,14 +89,9 @@ public class VFSTestFrameworkListener {
             for (VirtualFile virtualFile : sdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
               final String root = virtualFile.getCanonicalPath();
               if (root != null && path.contains(root)) {
-                if (containsNose) {
-                  scheduleTestFrameworkCheck(sdk, PyNames.NOSE_TEST);
-                  return;
-                }
-                else if (containsPy) {
-                  scheduleTestFrameworkCheck(sdk, PyNames.PY_TEST);
-                  return;
-                }
+                final String framework = existingFrameworks.iterator().next();
+                scheduleTestFrameworkCheck(sdk, framework);
+                return;
               }
             }
           }
@@ -96,7 +102,7 @@ public class VFSTestFrameworkListener {
   }
 
   public void updateAllTestFrameworks(@NotNull Sdk sdk) {
-    final Map<String, Boolean> whichInstalled = checkTestFrameworksInstalled(sdk, PyNames.PY_TEST, PyNames.NOSE_TEST);
+    final Map<String, Boolean> whichInstalled = checkTestFrameworksInstalled(sdk, PyTestFrameworkService.getFrameworkNamesArray());
     ApplicationManager.getApplication().invokeLater(() -> {
       for (Map.Entry<String, Boolean> entry : whichInstalled.entrySet()) {
         final Boolean installed = entry.getValue();
@@ -129,12 +135,12 @@ public class VFSTestFrameworkListener {
    * @return null if we can't be sure
    */
   @Contract("null, _ -> null")
-  private Boolean checkTestFrameworkInstalled(@Nullable Sdk sdk, @NotNull String testPackageName) {
-    return checkTestFrameworksInstalled(sdk, testPackageName).get(testPackageName);
+  private Boolean checkTestFrameworkInstalled(@Nullable Sdk sdk, @NotNull String testFrameworkName) {
+    return checkTestFrameworksInstalled(sdk, testFrameworkName).get(testFrameworkName);
   }
 
   @NotNull
-  private Map<String, Boolean> checkTestFrameworksInstalled(@Nullable Sdk sdk, @NotNull String... testPackageNames) {
+  private Map<String, Boolean> checkTestFrameworksInstalled(@Nullable Sdk sdk, @NotNull String... testFrameworkNames) {
     final Map<String, Boolean> result = new HashMap<>();
     if (sdk == null || StringUtil.isEmptyOrSpaces(sdk.getHomePath())) {
       LOG.info("Searching test runner in empty sdk");
@@ -145,59 +151,29 @@ public class VFSTestFrameworkListener {
     if (refreshed) {
       final List<PyPackage> packages = manager.getPackages();
       if (packages != null) {
-        for (String name : testPackageNames) {
-          result.put(name, PyPackageUtil.findPackage(packages, name) != null);
+        for (final String frameworkName : testFrameworkNames) {
+          final String packageName = PyTestFrameworkService.getPackageByFramework(frameworkName);
+          result.put(frameworkName, PyPackageUtil.findPackage(packages, packageName) != null);
         }
       }
     }
     return result;
   }
 
-  private void setPyTestInstalled(boolean installed, @NotNull String sdkHome) {
-    myService.SDK_TO_PYTEST.put(sdkHome, installed);
-  }
-
-  public boolean isPyTestInstalled(@Nullable Sdk sdk) {
+  public boolean isTestFrameworkInstalled(@Nullable final Sdk sdk, @NotNull final String name) {
     if (sdk == null) {
       return false;
     }
-    final Boolean isInstalled = myService.SDK_TO_PYTEST.get(sdk.getHomePath());
+    final Boolean isInstalled = myService.getSdkToTestRunnerByName(name).get(sdk.getHomePath());
     if (isInstalled == null) {
-      scheduleTestFrameworkCheck(sdk, PyNames.PY_TEST);
+      scheduleTestFrameworkCheck(sdk, name);
       return true;
     }
     return isInstalled;
   }
 
-  private void setNoseTestInstalled(boolean installed, @NotNull String sdkHome) {
-    myService.SDK_TO_NOSETEST.put(sdkHome, installed);
-  }
 
-  public boolean isNoseTestInstalled(@Nullable Sdk sdk) {
-    if (sdk == null) {
-      return false;
-    }
-    final Boolean isInstalled = myService.SDK_TO_NOSETEST.get(sdk.getHomePath());
-    if (isInstalled == null) {
-      scheduleTestFrameworkCheck(sdk, PyNames.NOSE_TEST);
-      return true;
-    }
-    return isInstalled;
-  }
-
-  private void setAtTestInstalled(boolean installed, @NotNull String sdkHome) {
-    myService.SDK_TO_ATTEST.put(sdkHome, installed);
-  }
-
-
-  public void setTestFrameworkInstalled(boolean installed, @NotNull String sdkHome, @NotNull String name) {
-    switch (name) {
-      case PyNames.NOSE_TEST:
-        setNoseTestInstalled(installed, sdkHome);
-        break;
-      case PyNames.PY_TEST:
-        setPyTestInstalled(installed, sdkHome);
-        break;
-    }
+  public final void setTestFrameworkInstalled(boolean installed, @NotNull String sdkHome, @NotNull String name) {
+    myService.getSdkToTestRunnerByName(name).put(sdkHome, installed);
   }
 }

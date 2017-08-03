@@ -17,13 +17,10 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.completion.util.MethodParenthesesHandler;
-import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.hint.ShowParameterInfoContext;
 import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
-import com.intellij.codeInsight.hints.MethodInfoBlacklistFilter;
-import com.intellij.codeInsight.hints.HintInfo;
-import com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider;
+import com.intellij.codeInsight.hints.ParameterHintsPass;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.codeInsight.template.*;
@@ -32,10 +29,11 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
@@ -55,8 +53,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -64,7 +62,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class JavaMethodCallElement extends LookupItem<PsiMethod> implements TypedLookupItem, StaticallyImportable {
   public static final ClassConditionKey<JavaMethodCallElement> CLASS_CONDITION_KEY = ClassConditionKey.create(JavaMethodCallElement.class);
-  public static final Key<List<Inlay>> COMPLETION_HINTS = Key.create("completion.hints");
+  public static final Key<Boolean> COMPLETION_HINTS = Key.create("completion.hints");
   @Nullable private final PsiClass myContainingClass;
   private final PsiMethod myMethod;
   private final MemberLookupHelper myHelper;
@@ -72,6 +70,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   private PsiSubstitutor myInferenceSubstitutor = PsiSubstitutor.EMPTY;
   private boolean myMayNeedExplicitTypeParameters;
   private String myForcedQualifier = "";
+  @Nullable private String myPresentableTypeArgs;
 
   public JavaMethodCallElement(@NotNull PsiMethod method) {
     this(method, method.getName());
@@ -112,6 +111,10 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   public void setInferenceSubstitutor(@NotNull final PsiSubstitutor substitutor, PsiElement place) {
     myInferenceSubstitutor = substitutor;
     myMayNeedExplicitTypeParameters = mayNeedTypeParameters(place);
+    myPresentableTypeArgs = shouldInsertTypeParameters() ? getTypeParamsText(true, myMethod, substitutor) : null;
+    if (myPresentableTypeArgs != null && myPresentableTypeArgs.length() > 10) {
+      myPresentableTypeArgs = myPresentableTypeArgs.substring(0, 10) + "...>";
+    }
   }
 
   public JavaMethodCallElement setQualifierSubstitutor(@NotNull PsiSubstitutor qualifierSubstitutor) {
@@ -149,14 +152,16 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     if (this == o) return true;
     if (!(o instanceof JavaMethodCallElement)) return false;
     if (!super.equals(o)) return false;
+    if (!Objects.equals(myPresentableTypeArgs, ((JavaMethodCallElement)o).myPresentableTypeArgs)) return false;
 
-    return myInferenceSubstitutor.equals(((JavaMethodCallElement)o).myInferenceSubstitutor);
+    return myQualifierSubstitutor.equals(((JavaMethodCallElement)o).myQualifierSubstitutor);
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + myInferenceSubstitutor.hashCode();
+    result = 31 * result + (myPresentableTypeArgs == null ? 0 : myPresentableTypeArgs.hashCode());
+    result = 31 * result + myQualifierSubstitutor.hashCode();
     return result;
   }
 
@@ -306,19 +311,10 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       return;
     }
 
-    boolean showHints = true;
-    if (parametersCount == 1) {
-      HintInfo.MethodInfo methodInfo = JavaInlayParameterHintsProvider.Companion.getInstance().getMethodInfo(method);
-      if (methodInfo != null) {
-        showHints = MethodInfoBlacklistFilter.forLanguage(JavaLanguage.INSTANCE).showHint(methodInfo);
-      }
-    }
-
     Editor editor = context.getEditor();
     CaretModel caretModel = editor.getCaretModel();
     int offset = caretModel.getOffset();
-    caretModel.moveToOffset(offset - 1); // avoid caret impact on hints location
-    int braceOffset = caretModel.getOffset();
+    int braceOffset = offset - 1;
     int numberOfCommas = parametersCount - 1;
     if (parametersCount > 1 && PsiImplUtil.isVarArgs(method)) numberOfCommas--;
     String commas = StringUtil.repeat(", ", numberOfCommas);
@@ -330,48 +326,28 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     ShowParameterInfoContext infoContext = new ShowParameterInfoContext(editor, project, context.getFile(), braceOffset, braceOffset);
     if (handler.findElementForParameterInfo(infoContext) == null) {
       editor.getDocument().deleteString(offset, offset + commas.length());
-      caretModel.moveToOffset(offset);
       return;
     }
 
-    List<Inlay> addedHints = new ArrayList<>(parametersCount);
-    if (showHints) {
-      for (PsiParameter parameter : parameterList.getParameters()) {
-        String name = parameter.getName();
-        if (name != null) {
-          if (parametersCount > 1 && parameter.isVarArgs()) {
-            name = ", " + name;
-            offset -= 2;
-          }
-          addedHints.add(ParameterHintsPresentationManager.getInstance().addHint(editor, offset, name + ":", false, true));
-        }
-        offset += 2;
-      }
-    }
-    VisualPosition afterBracePosition = editor.offsetToVisualPosition(braceOffset + 1);
-    caretModel.moveToVisualPosition(new VisualPosition(afterBracePosition.line, 
-                                                       afterBracePosition.column + (showHints ? 1 : 0))); // after hint
-
-    parameterOwner.putUserData(COMPLETION_HINTS, addedHints);
+    setCompletionMode(methodCall, true);
     ParameterInfoController controller = new ParameterInfoController(project, editor, braceOffset, infoContext.getItemsToShow(), null,
-                                                                 parameterOwner, handler, false, false);
-    Disposable hintsDisposal = () -> {
-      for (Inlay inlay : addedHints) {
-        if (inlay != null) ParameterHintsPresentationManager.getInstance().unpin(inlay);
-      }
-      addedHints.clear();
-    };
+                                                                     methodCall.getArgumentList(), handler, false, false);
+    Disposable hintsDisposal = () -> setCompletionMode(methodCall, false);
     if (Disposer.isDisposed(controller)) {
       Disposer.dispose(hintsDisposal);
     }
     else {
+      ParameterHintsPass.syncUpdate(methodCall, editor);
       Disposer.register(controller, hintsDisposal);
     }
   }
 
-  public static boolean hasCompletionHints(@NotNull PsiCallExpression expression) {
-    PsiExpressionList argumentList = expression.getArgumentList();
-    return argumentList != null && !ContainerUtil.isEmpty(argumentList.getUserData(COMPLETION_HINTS));
+  public static void setCompletionMode(@NotNull PsiCall expression, boolean value) {
+    expression.putUserData(COMPLETION_HINTS, value ? Boolean.TRUE : null);
+  }
+
+  public static boolean isCompletionMode(@NotNull PsiCall expression) {
+    return expression.getUserData(COMPLETION_HINTS) != null;
   }
 
   private static void setupNonFilledArgumentRemoving(final Editor editor, final TemplateState templateState) {
@@ -491,22 +467,14 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       presentation.setItemText(myForcedQualifier + presentation.getItemText());
     }
 
-    if (shouldInsertTypeParameters()) {
-      String typeParamsText = getTypeParamsText(true, getObject(), getInferenceSubstitutor());
-      if (typeParamsText != null) {
-        if (typeParamsText.length() > 10) {
-          typeParamsText = typeParamsText.substring(0, 10) + "...>";
-        }
-
-        String itemText = presentation.getItemText();
-        assert itemText != null;
-        int i = itemText.indexOf('.');
-        if (i > 0) {
-          presentation.setItemText(itemText.substring(0, i + 1) + typeParamsText + itemText.substring(i + 1));
-        }
+    if (myPresentableTypeArgs != null) {
+      String itemText = presentation.getItemText();
+      assert itemText != null;
+      int i = itemText.indexOf('.');
+      if (i > 0) {
+        presentation.setItemText(itemText.substring(0, i + 1) + myPresentableTypeArgs + itemText.substring(i + 1));
       }
     }
-    
   }
 
   private static class AutoPopupCompletion extends Expression {

@@ -27,15 +27,15 @@ import org.jetbrains.git4idea.GitExternalApp;
  *    I. e. if no username is specified, then it is started and queried for the username, and then started once again for the password.</p>
  * <p>Since Git 1.7.9 the query format is the following:
  *    <ul>
- *      <li><code>Username for 'https://bitbucket.org':</code></li>
- *      <li><code>Password for 'https://bitbucket.org':</code></li>
- *      <li><code>Password for 'https://username@bitbucket.org':</code></li>
+ *      <li>{@code Username for 'https://bitbucket.org':}</li>
+ *      <li>{@code Password for 'https://bitbucket.org':}</li>
+ *      <li>{@code Password for 'https://username@bitbucket.org':}</li>
  *    </ul>
  * </p>
  * <p>Before Git 1.7.9 the query didn't contain the URL:
  *   <ul>
- *     <li><code>Username: </code></li>
- *     <li><code>Password: </code></li>
+ *     <li>{@code Username: }</li>
+ *     <li>{@code Password: }</li>
  *   </ul>
  * </p>
  * <p>Git expects the reply from the program's standard output.</p>

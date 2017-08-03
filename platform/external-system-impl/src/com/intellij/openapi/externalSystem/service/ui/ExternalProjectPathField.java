@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TextAccessor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.TextFieldCompletionProvider;
@@ -52,6 +51,7 @@ import com.intellij.util.TextFieldCompletionProviderDumbAware;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -108,7 +108,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
       public void actionPerformed(ActionEvent e) {
         final Ref<JBPopup> popupRef = new Ref<>();
         final Tree tree = buildRegisteredProjectsTree(project, externalSystemId);
-        tree.setBorder(IdeBorderFactory.createEmptyBorder(8));
+        tree.setBorder(JBUI.Borders.empty(8));
         Runnable treeSelectionCallback = () -> {
           TreePath path = tree.getSelectionPath();
           if (path != null) {

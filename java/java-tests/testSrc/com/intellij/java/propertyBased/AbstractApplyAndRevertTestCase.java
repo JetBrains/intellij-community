@@ -55,7 +55,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.*;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import slowCheck.Generator;
+import jetCheck.Generator;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -80,82 +80,6 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
 
   protected Generator<PsiJavaFile> psiJavaFiles() {
     return javaFiles().map(vf -> (PsiJavaFile)PsiManager.getInstance(myProject).findFile(vf));
-  }
-
-  protected static void restrictChangesToDocument(Document document, Runnable r) {
-    watchDocumentChanges(r::run, event -> {
-      Document changed = event.getDocument();
-      if (changed != document) {
-        VirtualFile file = FileDocumentManager.getInstance().getFile(changed);
-        if (file != null && file.isInLocalFileSystem()) {
-          throw new AssertionError("Unexpected document change: " + changed);
-        }
-      }
-    });
-  }
-
-  private static <E extends Throwable> void watchDocumentChanges(ThrowableRunnable<E> r, final Consumer<DocumentEvent> eventHandler) throws E {
-    Disposable disposable = Disposer.newDisposable();
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
-      @Override
-      public void documentChanged(DocumentEvent event) {
-        eventHandler.accept(event);
-      }
-    }, disposable);
-    try {
-      r.run();
-    } finally {
-      Disposer.dispose(disposable);
-    }
-  }
-
-  protected static void changeAndRevert(Project project, Runnable r) {
-    Label label = LocalHistory.getInstance().putUserLabel(project, "changeAndRevert");
-    boolean failed = false;
-    try {
-      r.run();
-    }
-    catch (Throwable e) {
-      failed = true;
-      throw e;
-    }
-    finally {
-      restoreEverything(label, failed, project);
-    }
-  }
-
-  private static void restoreEverything(Label label, boolean failed, Project project) {
-    try {
-      WriteAction.run(() -> {
-        PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-        new RunAll(
-          () -> PostprocessReformattingAspect.getInstance(project).doPostponedFormatting(),
-          () -> FileEditorManagerEx.getInstanceEx(project).closeAllFiles(),
-          () -> FileDocumentManager.getInstance().saveAllDocuments(),
-          () -> revertVfs(label, project),
-          () -> documentManager.commitAllDocuments(),
-          () -> assertEmpty(documentManager.getUncommittedDocuments()),
-          () -> assertEmpty(FileDocumentManager.getInstance().getUnsavedDocuments())
-        ).run();
-      });
-    }
-    catch (Throwable e) {
-      if (failed) {
-        LOG.info("Exceptions while restoring state", e);
-      } else {
-        throw e;
-      }
-    }
-  }
-
-  private static void revertVfs(Label label, Project project) throws LocalHistoryException {
-    watchDocumentChanges(() -> label.revert(project, project.getBaseDir()),
-                               __ -> {
-                                 PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-                                 if (documentManager.getUncommittedDocuments().length > 3) {
-                                   documentManager.commitAllDocuments();
-                                 }
-                               });
   }
 
   @Override
@@ -230,21 +154,5 @@ public abstract class AbstractApplyAndRevertTestCase extends PlatformTestCase {
     return messages.stream()
       .filter(message -> message.getCategory() == CompilerMessageCategory.ERROR)
       .collect(Collectors.toList());
-  }
-
-  public static void enableAllInspections(Project project, Disposable disposable) {
-    InspectionProfileImpl.INIT_INSPECTIONS = true;
-    InspectionProfileImpl profile = new InspectionProfileImpl("allEnabled");
-    profile.enableAllTools(project);
-    
-    ProjectInspectionProfileManager manager = (ProjectInspectionProfileManager)InspectionProjectProfileManager.getInstance(project);
-    manager.addProfile(profile);
-    InspectionProfileImpl prev = manager.getCurrentProfile();
-    manager.setCurrentProfile(profile);
-    Disposer.register(disposable, () -> {
-      InspectionProfileImpl.INIT_INSPECTIONS = false;
-      manager.setCurrentProfile(prev);
-      manager.deleteProfile(profile);
-    });
   }
 }

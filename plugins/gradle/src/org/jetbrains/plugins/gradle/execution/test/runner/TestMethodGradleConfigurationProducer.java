@@ -21,7 +21,6 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.junit.InheritorChooser;
-import com.intellij.execution.junit.PatternConfigurationProducer;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -55,7 +54,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
   protected boolean doSetupConfigurationFromContext(ExternalSystemRunConfiguration configuration,
                                                     ConfigurationContext context,
                                                     Ref<PsiElement> sourceElement) {
-    if (RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).isMultipleElementsSelected(context)) {
+    if (RunConfigurationProducer.getInstance(PatternGradleConfigurationProducer.class).isMultipleElementsSelected(context)) {
       return false;
     }
     final Location contextLocation = context.getLocation();
@@ -83,7 +82,7 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
 
   @Override
   protected boolean doIsConfigurationFromContext(ExternalSystemRunConfiguration configuration, ConfigurationContext context) {
-    if (RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).isMultipleElementsSelected(context)) {
+    if (RunConfigurationProducer.getInstance(PatternGradleConfigurationProducer.class).isMultipleElementsSelected(context)) {
       return false;
     }
 

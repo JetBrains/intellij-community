@@ -51,7 +51,10 @@ import com.intellij.refactoring.ui.JavaComboBoxVisibilityPanel;
 import com.intellij.refactoring.ui.VisibilityPanelBase;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.TableColumnAnimator;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.Tree;
@@ -230,7 +233,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     myPropExceptionsButton.setShortcut(CustomShortcutSet.fromString("alt X"));
 
     final JPanel panel = ToolbarDecorator.createDecorator(table).addExtraAction(myPropExceptionsButton).createPanel();
-    panel.setBorder(IdeBorderFactory.createEmptyBorder());
+    panel.setBorder(JBUI.Borders.empty());
 
     myExceptionsModel.addTableModelListener(mySignatureUpdater);
 

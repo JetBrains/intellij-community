@@ -49,4 +49,10 @@ class C {
     B(C <error descr="The receiver name does not match the enclosing class type">B.this</error>, long p) { }
     B(C <error descr="The receiver name does not match the enclosing class type">this</error>, float p) { }
   }
+
+  static class CI<T> {
+    void m1(CI<T> this) { }
+    <T> void m2(<error descr="The receiver type does not match the enclosing class type">CI<T></error> this) { }
+    void m3(<error descr="The receiver type does not match the enclosing class type">CI<String></error> this) { }
+  }
 }

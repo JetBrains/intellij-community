@@ -35,6 +35,7 @@ import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static com.intellij.notification.NotificationDisplayType.STICKY_BALLOON;
 
@@ -98,15 +99,16 @@ public abstract class ExecutableValidator {
    * @return true if process with the supplied executable completed without errors and with exit code 0.
    */
   protected boolean isExecutableValid(@NotNull String executable) {
-    return doCheckExecutable(executable, Collections.emptyList());
+    return doCheckExecutable(executable, Collections.emptyList(), Collections.emptyMap());
   }
 
-  protected static boolean doCheckExecutable(@NotNull String executable, @NotNull List<String> processParameters) {
+  protected static boolean doCheckExecutable(@NotNull String executable, @NotNull List<String> processParameters, @NotNull Map<String, String> envVariables) {
     try {
       GeneralCommandLine commandLine = new GeneralCommandLine();
       commandLine.setExePath(executable);
       commandLine.addParameters(processParameters);
       commandLine.setCharset(CharsetToolkit.getDefaultSystemCharset());
+      commandLine.withEnvironment(envVariables);
       CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
       ProcessOutput result = handler.runProcess(TIMEOUT_MS);
       boolean timeout = result.isTimeout();

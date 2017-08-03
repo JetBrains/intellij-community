@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.trivialif.MergeIfAndIntention;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
   }
 
   public SurroundWithIfFix(@NotNull PsiExpression expressionToAssert) {
-    myText = expressionToAssert.getText();
+    myText = ParenthesesUtils.getText(expressionToAssert, ParenthesesUtils.BINARY_AND_PRECEDENCE);
   }
 
   @Override

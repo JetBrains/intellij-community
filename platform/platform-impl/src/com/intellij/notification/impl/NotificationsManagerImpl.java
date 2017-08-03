@@ -29,7 +29,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -91,8 +90,6 @@ import java.util.List;
 public class NotificationsManagerImpl extends NotificationsManager {
   public static final Color FILL_COLOR = new JBColor(Gray._242, new Color(78, 80, 82));
   public static final Color BORDER_COLOR = new JBColor(Gray._178.withAlpha(205), new Color(86, 90, 92, 205));
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.notification.impl.NotificationsManagerImpl");
 
   public NotificationsManagerImpl() {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
@@ -185,8 +182,6 @@ public class NotificationsManagerImpl extends NotificationsManager {
       default:
         Balloon balloon = notifyByBalloon(notification, type, project);
         if (project == null || project.isDefault()) {
-          LOG.warn("Wrong project: " + project +
-                   " for notification: " + notification.getGroupId() + ", " + notification.getTitle() + ", " + notification.getContent());
           return;
         }
         if (!settings.isShouldLog() || type == NotificationDisplayType.STICKY_BALLOON) {

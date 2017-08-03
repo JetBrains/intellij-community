@@ -828,6 +828,8 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
     @Nullable
     private ReadTask.Continuation doExecute(@NotNull PsiFile file, int offset) {
+      if (isTaskOutdated()) return null;
+
       final Info info;
       final DocInfo docInfo;
       try {
@@ -842,9 +844,13 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
       LOG.debug("Obtained info about element under cursor");
       return new ReadTask.Continuation(() -> {
-        if (myDisposed || myEditor.isDisposed() || !myEditor.getComponent().isShowing()) return;
+        if (isTaskOutdated()) return;
         showHint(info, docInfo);
       });
+    }
+
+    private boolean isTaskOutdated() {
+      return myDisposed || myProject.isDisposed() || myEditor.isDisposed() || !myEditor.getComponent().isShowing();
     }
 
     private void showHint(@NotNull Info info, @NotNull DocInfo docInfo) {

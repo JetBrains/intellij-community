@@ -27,10 +27,7 @@ import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -407,7 +404,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         List<PsiFile> psiRoots = file.getViewProvider().getAllFiles();
         Set<PsiFile> processed = new THashSet<>(psiRoots.size() * 2, (float)0.5);
         for (final PsiFile psiRoot : psiRoots) {
-          progress.checkCanceled();
+          ProgressManager.checkCanceled();
           assert psiRoot != null : "One of the roots of file " + file + " is null. All roots: " + psiRoots + "; ViewProvider: " +
                                    file.getViewProvider() + "; Virtual file: " + file.getViewProvider().getVirtualFile();
           if (!processed.add(psiRoot)) continue;
@@ -501,7 +498,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
       final int patternLength = qName.length();
       for (int i = 0; i < files.length; i++) {
-        progress.checkCanceled();
+        ProgressManager.checkCanceled();
         final PsiFile psiFile = files[i];
         if (psiFile instanceof PsiBinaryFile) continue;
 
@@ -785,7 +782,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(result);
       processFilesContainingAllKeys(myManager.getProject(), commonScope, null, keys, processor);
       for (final VirtualFile file : result) {
-        progress.checkCanceled();
+        ProgressManager.checkCanceled();
         for (final IdIndexEntry indexEntry : keys) {
           myDumbService.runReadActionInSmartMode(
             () -> FileBasedIndex.getInstance().processValues(IdIndex.NAME, indexEntry, file, (file1, value) -> {
@@ -935,7 +932,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
       @Override
       public boolean process(VirtualFile file) {
-        indicator.checkCanceled();
+        ProgressManager.checkCanceled();
         if (Comparing.equal(file, virtualFileToIgnoreOccurrencesIn)) return true;
         final int value = count.incrementAndGet();
         return value < 10;

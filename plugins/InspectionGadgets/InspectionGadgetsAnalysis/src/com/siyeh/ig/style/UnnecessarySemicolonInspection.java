@@ -117,6 +117,7 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
 
     private void findTopLevelSemicolons(PsiElement element) {
       for (PsiElement sibling = element.getFirstChild(); sibling != null; sibling = skipForwardWhiteSpacesAndComments(sibling)) {
+        if (sibling instanceof PsiErrorElement) return;
         if (PsiUtil.isJavaToken(sibling, JavaTokenType.SEMICOLON)) {
           registerError(sibling, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
         }

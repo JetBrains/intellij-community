@@ -1131,7 +1131,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
   @Override
   public <K> void scheduleRebuild(@NotNull final ID<K, ?> indexId, @NotNull final Throwable e) {
-    requestRebuild(indexId, new Throwable(e));
+    requestRebuild(indexId, e);
   }
 
   private static void scheduleIndexRebuild(String reason) {
@@ -2118,10 +2118,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           }
         });
 
-        if (myProgressIndicator != null && file.isDirectory()) { // once for dir is cheap enough
-          myProgressIndicator.checkCanceled();
-          myProgressIndicator.setText("Scanning files to index");
-        }
+        ProgressManager.checkCanceled();
         return true;
       }
     }

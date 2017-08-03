@@ -12,14 +12,7 @@ public class FilesTooBigForDiffException extends Exception {
   // Do not try to compare two lines by-word after this much fails.
   public static final int MAX_BAD_LINES = 3;
 
-  private final int myNumLines;
-
-  public FilesTooBigForDiffException(int numLines) {
+  public FilesTooBigForDiffException() {
     super("Can not calculate diff. File is too big and there are too many changes.");
-    myNumLines = numLines;
-  }
-
-  public int getNumLines() {
-    return myNumLines;
   }
 }

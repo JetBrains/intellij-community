@@ -133,9 +133,9 @@ public abstract class AbstractExternalSystemSettings<
    * Un-links given external project from the current ide project.
    * 
    * @param linkedProjectPath  path of external project to be unlinked
-   * @return                   <code>true</code> if there was an external project with the given config path linked to the current
+   * @return                   {@code true} if there was an external project with the given config path linked to the current
    *                           ide project;
-   *                           <code>false</code> otherwise
+   *                           {@code false} otherwise
    */
   public boolean unlinkExternalProject(@NotNull String linkedProjectPath) {
     PS removed = myLinkedProjectsSettings.remove(linkedProjectPath);

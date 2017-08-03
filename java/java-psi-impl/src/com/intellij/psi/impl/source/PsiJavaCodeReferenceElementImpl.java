@@ -47,12 +47,15 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
 public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement implements PsiAnnotatedJavaCodeReferenceElement, SourceJavaCodeReference {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl");
@@ -207,26 +210,30 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       assert dot != null : this;
       deleteChildRange(child.getPsi(), dot.getPsi());
 
-      PsiModifierList modifierList = PsiImplUtil.findNeighbourModifierList(this);
-      if (modifierList != null) {
-        ASTNode ref = findChildByRole(ChildRole.REFERENCE_NAME);
-        assert ref != null : this;
-        PsiElement lastChild = ref.getPsi().getPrevSibling();
-        if (lastChild != null) {
+      ASTNode ref = findChildByRole(ChildRole.REFERENCE_NAME);
+      assert ref != null : this;
+      PsiElement lastChild = ref.getPsi().getPrevSibling();
+      if (lastChild != null) {
+        PsiElement modifierList = PsiImplUtil.findNeighbourModifierList(this);
+        if (modifierList != null) {
           modifierList.addRange(getFirstChild(), lastChild);
-          deleteChildRange(getFirstChild(), lastChild);
+        }
+        else {
+          getParent().addRangeBefore(getFirstChild(), lastChild, this);
+        }
+        // during previous operations, formatter support could have altered the children (if they're whitespace), 
+        // so we retrieve and check them again
+        if (ref != getFirstChild()) {
+          deleteChildRange(getFirstChild(), ref.getPsi().getPrevSibling());
         }
       }
-      return;
     }
-
-    if (child.getElementType() == JavaElementType.REFERENCE_PARAMETER_LIST) {
+    else if (child.getElementType() == JavaElementType.REFERENCE_PARAMETER_LIST) {
       replaceChildInternal(child, PsiReferenceExpressionImpl.createEmptyRefParameterList(getProject()));
-      return;
     }
-
-
-    super.deleteChildInternal(child);
+    else {
+      super.deleteChildInternal(child);
+    }
   }
 
   @Override
@@ -859,7 +866,32 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
     OrFilter filter = new OrFilter(filters.toArray(ElementFilter.EMPTY_ARRAY));
     FilterScopeProcessor proc = new FilterScopeProcessor(filter, processor);
+
+    for (PsiTypeParameter typeParameter : getUnfinishedMethodTypeParameters()) {
+      if (!proc.execute(typeParameter, ResolveState.initial())) {
+        return;
+      }
+    }
+
     PsiScopesUtil.resolveAndWalk(proc, this, null, true);
+  }
+
+  private PsiTypeParameter[] getUnfinishedMethodTypeParameters() {
+    ProcessingContext context = new ProcessingContext();
+    if (psiElement().inside(
+      psiElement(PsiTypeElement.class).afterLeaf(
+        psiElement().withText(">").withParent(
+          psiElement(PsiTypeParameterList.class).withParent(PsiErrorElement.class).save("typeParameterList")))).accepts(this, context)) {
+      PsiTypeParameterList list = (PsiTypeParameterList)context.get("typeParameterList");
+      PsiElement current = list.getParent().getParent();
+      if (current instanceof PsiField) {
+        current = current.getParent();
+      }
+      if (current instanceof PsiClass) {
+        return list.getTypeParameters();
+      }
+    }
+    return PsiTypeParameter.EMPTY_ARRAY;
   }
 
   private boolean isInCode() {

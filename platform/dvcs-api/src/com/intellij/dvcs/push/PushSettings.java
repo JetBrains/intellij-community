@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Set;
 
 @State(name = "Push.Settings", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class PushSettings implements PersistentStateComponent<PushSettings.State> {
@@ -35,9 +34,6 @@ public class PushSettings implements PersistentStateComponent<PushSettings.State
   private State myState = new State();
 
   public static class State {
-    @Tag("excluded-roots")
-    @AbstractCollection(surroundWithTag = false, elementTag = "path")
-    public Set<String> EXCLUDED_ROOTS = ContainerUtil.newHashSet();
     @AbstractCollection(surroundWithTag = false)
     @Tag("force-push-targets")
     public List<ForcePushTargetInfo> FORCE_PUSH_TARGETS = ContainerUtil.newArrayList();
@@ -53,16 +49,6 @@ public class PushSettings implements PersistentStateComponent<PushSettings.State
   public void loadState(State state) {
     myState = state;
   }
-
-  @NotNull
-  public Set<String> getExcludedRepoRoots() {
-    return myState.EXCLUDED_ROOTS;
-  }
-
-  public void saveExcludedRepoRoots(@NotNull Set<String> roots) {
-    myState.EXCLUDED_ROOTS = roots;
-  }
-
 
   public boolean containsForcePushTarget(@NotNull final String remote, @NotNull final String branch) {
     return ContainerUtil.exists(myState.FORCE_PUSH_TARGETS,

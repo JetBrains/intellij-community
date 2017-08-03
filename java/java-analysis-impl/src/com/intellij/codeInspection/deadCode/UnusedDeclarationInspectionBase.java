@@ -43,7 +43,6 @@ import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -333,16 +332,13 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
                   }
                 };
 
-                if (helper.processUsagesInNonJavaFiles(qualifiedName, processor, globalSearchScope)) {
-                  final PsiReference reference = ReferencesSearch.search(psiClass, globalSearchScope).findFirst();
-                  if (reference != null) {
+                helper.processUsagesInNonJavaFiles(qualifiedName, processor, globalSearchScope);
+
+                //references from java-like are already in graph or
+                //they would be checked during GlobalJavaInspectionContextImpl.performPostRunActivities
+                for (RefElement element : refElement.getInReferences()) {
+                  if (!(element instanceof RefJavaElement)) {
                     getEntryPointsManager(globalContext).addEntryPoint(refElement, false);
-                    for (PsiMethod method : psiClass.getMethods()) {
-                      final RefElement refMethod = refManager.getReference(method);
-                      if (refMethod != null) {
-                        getEntryPointsManager(globalContext).addEntryPoint(refMethod, false);
-                      }
-                    }
                   }
                 }
               }

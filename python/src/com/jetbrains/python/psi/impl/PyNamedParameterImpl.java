@@ -191,6 +191,12 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     return getStubOrPsiChild(PyElementTypes.ANNOTATION);
   }
 
+  @Nullable
+  @Override
+  public String getAnnotationValue() {
+    return getAnnotationContentFromStubOrPsi(this);
+  }
+
   @Override
   @NotNull
   public Icon getIcon(final int flags) {
@@ -515,14 +521,6 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   @Nullable
   @Override
   public String getTypeCommentAnnotation() {
-    final PyNamedParameterStub stub = getStub();
-    if (stub != null) {
-      return stub.getTypeComment();
-    }
-    final PsiComment comment = getTypeComment();
-    if (comment != null) {
-      return PyTypingTypeProvider.getTypeCommentValue(comment.getText());
-    }
-    return null;
+    return getTypeCommentAnnotationFromStubOrPsi(this);
   }
 }

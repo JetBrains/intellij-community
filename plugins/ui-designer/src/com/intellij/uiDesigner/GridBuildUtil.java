@@ -281,10 +281,10 @@ public class GridBuildUtil {
   }
 
   /**
-   * @param x array of <code>X</code> coordinates of components that should be layed out in a grid.
+   * @param x array of {@code X} coordinates of components that should be layed out in a grid.
    * This is input/output parameter.
    *
-   * @param y array of <code>Y</code> coordinates of components that should be layed out in a grid.
+   * @param y array of {@code Y} coordinates of components that should be layed out in a grid.
    * This is input/output parameter.
    *
    * @param rowSpans output parameter.

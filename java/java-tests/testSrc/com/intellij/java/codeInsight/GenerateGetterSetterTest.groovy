@@ -219,7 +219,29 @@ class Foo {
 }
 '''
   }
-  
+
+  void "test invoke between comment and method"() {
+    myFixture.enableInspections(UnqualifiedFieldAccessInspection.class)
+    myFixture.configureByText 'a.java', '''
+class Foo {
+  int a;
+  //comment
+ <caret> void foo() {}
+}'''
+    generateGetter()
+    myFixture.checkResult '''
+class Foo {
+  int a;
+
+    public int getA() {
+        return this.a;
+    }
+
+    //comment
+  void foo() {}
+}'''
+  }
+
   private void generateSetter() {
     new GenerateSetterHandler() {
       @Override

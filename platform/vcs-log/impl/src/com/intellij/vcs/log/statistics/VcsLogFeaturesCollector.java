@@ -15,12 +15,12 @@
  */
 package com.intellij.vcs.log.statistics;
 
-import com.intellij.internal.statistic.AbstractApplicationUsagesCollector;
+import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
 import com.intellij.internal.statistic.CollectUsagesException;
-import com.intellij.internal.statistic.StatisticsUtilKt;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,7 +38,7 @@ import java.util.Set;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.*;
 import static com.intellij.vcs.log.ui.VcsLogUiImpl.LOG_HIGHLIGHTER_FACTORY_EP;
 
-public class VcsLogFeaturesCollector extends AbstractApplicationUsagesCollector {
+public class VcsLogFeaturesCollector extends AbstractProjectsUsagesCollector {
   public static final GroupDescriptor ID = GroupDescriptor.create("VCS Log Ui Settings");
 
   @NotNull

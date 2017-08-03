@@ -30,9 +30,8 @@ public abstract class ForcedCopyModeAction extends AnAction {
   public void update(AnActionEvent e) {
     Presentation p = e.getPresentation();
     Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
-    p.setVisible(RichCopySettings.getInstance().isEnabled() != myRichCopyEnabled && 
-                 (ActionPlaces.isToolbarPlace(e.getPlace()) ||
-                  editor != null && editor.getSelectionModel().hasSelection(true)));
+    p.setVisible(RichCopySettings.getInstance().isEnabled() != myRichCopyEnabled &&
+                 (e.isFromActionToolbar() || (editor != null && editor.getSelectionModel().hasSelection(true))));
     p.setEnabled(true);
   }
 

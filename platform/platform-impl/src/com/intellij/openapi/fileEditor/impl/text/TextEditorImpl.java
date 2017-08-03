@@ -80,6 +80,12 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   public void dispose(){
   }
 
+  @NotNull
+  @Override
+  public VirtualFile getFile() {
+    return myFile;
+  }
+
   @Override
   @NotNull
   public TextEditorComponent getComponent() {

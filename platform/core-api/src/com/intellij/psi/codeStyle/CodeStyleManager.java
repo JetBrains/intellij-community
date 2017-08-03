@@ -271,7 +271,7 @@ public abstract class CodeStyleManager  {
   /**
    * Calculates minimum spacing, allowed by formatting model (in columns) for a block starting at given offset,
    * relative to its previous sibling block.
-   * Returns <code>-1</code>, if required block cannot be found at provided offset,
+   * Returns {@code -1}, if required block cannot be found at provided offset,
    * or spacing cannot be calculated due to some other reason.
    */
   public int getSpacing(@NotNull PsiFile file, int offset) {
@@ -280,7 +280,7 @@ public abstract class CodeStyleManager  {
 
   /**
    * Calculates minimum number of line feeds that should precede block starting at given offset, as dictated by formatting model.
-   * Returns <code>-1</code>, if required block cannot be found at provided offset,
+   * Returns {@code -1}, if required block cannot be found at provided offset,
    * or spacing cannot be calculated due to some other reason.
    */
   public int getMinLineFeeds(@NotNull PsiFile file, int offset) {
@@ -302,5 +302,19 @@ public abstract class CodeStyleManager  {
       }
     }
     return FormattingMode.REFORMAT;
+  }
+
+  /**
+   * Run the given runnable disabling doc comment formatting.
+   * @param file     The file for which doc comment formatting should be temporarily disabled.
+   * @param runnable The runnable to run.
+   */
+  public void runWithDocCommentFormattingDisabled(@NotNull PsiFile file, @NotNull Runnable runnable) {
+    runnable.run();
+  }
+
+  @NotNull
+  public DocCommentSettings getDocCommentSettings(@NotNull PsiFile file) {
+    return DocCommentSettings.DEFAULTS;
   }
 }

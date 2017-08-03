@@ -21,6 +21,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ThreeState;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.testing.*;
@@ -42,7 +43,7 @@ public class PythonNoseTestConfigurationProducer extends
       module = modules[0];
     }
     final Sdk sdk = PythonSdkType.findPythonSdk(module);
-    return (PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME.equals(TestRunnerService.getInstance(module).getProjectConfiguration()) && sdk != null);
+    return ( PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.NOSE_TEST).equals(TestRunnerService.getInstance(module).getProjectConfiguration()) && sdk != null);
   }
 
   @Override

@@ -480,6 +480,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     private PsiElement myCurrent;
 
     @Override public void visitAnnotation(PsiAnnotation annotation) {
+      super.visitAnnotation(annotation);
       final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
 
       if (nameReferenceElement == null ||
@@ -702,9 +703,15 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       return offset - (end - start);
     }
     final PsiElement nextSibling = PsiTreeUtil.skipWhitespacesForward(element);
-    if (nextSibling instanceof PsiJavaToken && isRemovableToken(nextSibling)) {
+    if (isRemovableToken(nextSibling)) {
       final int start = info.getStartIndex() + offset;
       final int end = info.getAfterDelimiterPos() + nextSibling.getTextLength() + offset;
+      result.delete(start, end);
+      return offset - 1;
+    }
+    else if (element instanceof PsiTypeElement && nextSibling instanceof PsiIdentifier) {
+      final int start = info.getStartIndex() + offset;
+      final int end = info.getAfterDelimiterPos() + offset;
       result.delete(start, end);
       return offset - 1;
     }
@@ -715,6 +722,9 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   private static boolean isRemovableToken(PsiElement element) {
+    if (!(element instanceof PsiJavaToken)) {
+      return false;
+    }
     final PsiElement parent = element.getParent();
     if (!(parent instanceof PsiAnnotationParameterList || // ',' between annotation parameters
           parent instanceof PsiAssertStatement || // ':' before assertion message
@@ -725,7 +735,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
           parent instanceof PsiReferenceParameterList || // ','
           parent instanceof PsiResourceList || // ';'
           parent instanceof PsiTypeParameterList || // ','
-          parent instanceof PsiVariable)) { // '=' before initializer
+          parent instanceof PsiLocalVariable || parent instanceof PsiField)) { // '=' before initializer
       return false;
     }
     final String text = element.getText();

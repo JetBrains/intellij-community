@@ -48,7 +48,7 @@ public final class WindowWatcher implements PropertyChangeListener{
   private final Object myLock = new Object();
   private final Map<Window, WindowInfo> myWindow2Info = new WeakHashMap<>();
   /**
-   * Currenly focused window (window which has focused component). Can be <code>null</code> if there is no focused
+   * Currenly focused window (window which has focused component). Can be {@code null} if there is no focused
    * window at all.
    */
   private Window myFocusedWindow;
@@ -62,8 +62,8 @@ public final class WindowWatcher implements PropertyChangeListener{
 
   /**
    * This method should get notifications abount changes of focused window.
-   * Only <code>focusedWindow</code> property is acceptable.
-   * @throws IllegalArgumentException if property name isn't <code>focusedWindow</code>.
+   * Only {@code focusedWindow} property is acceptable.
+   * @throws IllegalArgumentException if property name isn't {@code focusedWindow}.
    */
   public final void propertyChange(final PropertyChangeEvent e){
     if(LOG.isDebugEnabled()){
@@ -281,7 +281,7 @@ public final class WindowWatcher implements PropertyChangeListener{
   }
 
   /**
-   * @return active window for specified <code>project</code>. There is only one window
+   * @return active window for specified {@code project}. There is only one window
    * for project can be at any point of time.
    */
   @Nullable

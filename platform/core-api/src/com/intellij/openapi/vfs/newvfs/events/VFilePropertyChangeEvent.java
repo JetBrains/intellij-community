@@ -34,7 +34,7 @@ public class VFilePropertyChangeEvent extends VFileEvent {
 
   public VFilePropertyChangeEvent(Object requestor,
                                   @NotNull VirtualFile file,
-                                  @NotNull String propertyName,
+                                  @VirtualFile.PropName @NotNull String propertyName,
                                   @Nullable Object oldValue,
                                   @Nullable Object newValue,
                                   boolean isFromRefresh) {
@@ -46,28 +46,36 @@ public class VFilePropertyChangeEvent extends VFileEvent {
     checkPropertyValuesCorrect(requestor, propertyName, oldValue, newValue);
   }
 
-  public static void checkPropertyValuesCorrect(Object requestor, @NotNull String propertyName, Object oldValue, Object newValue) {
+  public static void checkPropertyValuesCorrect(Object requestor, @VirtualFile.PropName @NotNull String propertyName, Object oldValue, Object newValue) {
     if (Comparing.equal(oldValue, newValue) && FileContentUtilCore.FORCE_RELOAD_REQUESTOR != requestor) {
       throw new IllegalArgumentException("Values must be different, got the same: " + oldValue);
     }
-    if (VirtualFile.PROP_NAME.equals(propertyName)) {
-      if (oldValue == null) throw new IllegalArgumentException("oldName must not be null");
-      if (newValue == null) throw new IllegalArgumentException("newName must not be null");
-    }
-    else if (VirtualFile.PROP_ENCODING.equals(propertyName)) {
-      if (oldValue == null) throw new IllegalArgumentException("oldCharset must not be null");
-    }
-    else if (VirtualFile.PROP_WRITABLE.equals(propertyName)) {
-      if (!(oldValue instanceof Boolean)) throw new IllegalArgumentException("oldWriteable must be boolean, got "+oldValue);
-      if (!(newValue instanceof Boolean)) throw new IllegalArgumentException("newWriteable must be boolean, got "+newValue);
-    }
-    else if (VirtualFile.PROP_HIDDEN.equals(propertyName)) {
-      if (!(oldValue instanceof Boolean)) throw new IllegalArgumentException("oldHidden must be boolean, got "+oldValue);
-      if (!(newValue instanceof Boolean)) throw new IllegalArgumentException("newHidden must be boolean, got "+newValue);
-    }
-    else if (VirtualFile.PROP_SYMLINK_TARGET.equals(propertyName)) {
-      if (oldValue != null && !(oldValue instanceof String)) throw new IllegalArgumentException("oldSymTarget must be String, got "+oldValue);
-      if (newValue != null && !(newValue instanceof String)) throw new IllegalArgumentException("newSymTarget must be String, got "+newValue);
+    switch (propertyName) {
+      case VirtualFile.PROP_NAME:
+        if (oldValue == null) throw new IllegalArgumentException("oldName must not be null");
+        if (newValue == null) throw new IllegalArgumentException("newName must not be null");
+        break;
+      case VirtualFile.PROP_ENCODING:
+        if (oldValue == null) throw new IllegalArgumentException("oldCharset must not be null");
+        break;
+      case VirtualFile.PROP_WRITABLE:
+        if (!(oldValue instanceof Boolean)) throw new IllegalArgumentException("oldWriteable must be boolean, got " + oldValue);
+        if (!(newValue instanceof Boolean)) throw new IllegalArgumentException("newWriteable must be boolean, got " + newValue);
+        break;
+      case VirtualFile.PROP_HIDDEN:
+        if (!(oldValue instanceof Boolean)) throw new IllegalArgumentException("oldHidden must be boolean, got " + oldValue);
+        if (!(newValue instanceof Boolean)) throw new IllegalArgumentException("newHidden must be boolean, got " + newValue);
+        break;
+      case VirtualFile.PROP_SYMLINK_TARGET:
+        if (oldValue != null && !(oldValue instanceof String)) {
+          throw new IllegalArgumentException("oldSymTarget must be String, got " + oldValue);
+        }
+        if (newValue != null && !(newValue instanceof String)) {
+          throw new IllegalArgumentException("newSymTarget must be String, got " + newValue);
+        }
+        break;
+      default:
+        throw new IllegalArgumentException("Unknown property name: '"+propertyName+"'. Must be one of: VirtualFile.PROP_NAME, VirtualFile.PROP_ENCODING, VirtualFile.PROP_WRITABLE, VirtualFile.PROP_HIDDEN, VirtualFile.PROP_SYMLINK_TARGET");
     }
   }
 
@@ -86,6 +94,7 @@ public class VFilePropertyChangeEvent extends VFileEvent {
   }
 
   @NotNull
+  @VirtualFile.PropName
   public String getPropertyName() {
     return myPropertyName;
   }

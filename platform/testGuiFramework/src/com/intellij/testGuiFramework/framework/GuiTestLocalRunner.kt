@@ -18,15 +18,14 @@ package com.intellij.testGuiFramework.framework
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Ref
 import com.intellij.testGuiFramework.impl.GuiTestStarter
-import com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher.killProcessIfPossible
 import com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher.runIdeLocally
+import com.intellij.testGuiFramework.launcher.ide.CommunityIde
 import com.intellij.testGuiFramework.launcher.ide.Ide
 import com.intellij.testGuiFramework.launcher.ide.IdeType
 import com.intellij.testGuiFramework.remote.server.JUnitServerHolder
-import com.intellij.testGuiFramework.remote.server.ServerHandler
 import com.intellij.testGuiFramework.remote.transport.*
 import org.junit.Assert
-import org.junit.internal.AssumptionViolatedException
+import org.junit.AssumptionViolatedException
 import org.junit.internal.runners.model.EachTestNotifier
 import org.junit.runner.Description
 import org.junit.runner.notification.Failure
@@ -35,14 +34,13 @@ import org.junit.runner.notification.RunNotifier
 import org.junit.runners.BlockJUnit4ClassRunner
 import org.junit.runners.model.FrameworkMethod
 import org.junit.runners.model.InitializationError
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
+import kotlin.reflect.KClass
 
 
 class GuiTestLocalRunner @Throws(InitializationError::class)
 constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
 
-  val SERVER_LOG = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.GuiTestLocalRunner")
+  val SERVER_LOG = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.GuiTestLocalRunner")!!
   val criticalError = Ref<Boolean>(false)
 
   override fun runChild(method: FrameworkMethod, notifier: RunNotifier) {
@@ -65,56 +63,33 @@ constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
     val eachNotifier = EachTestNotifier(notifier, description)
     if (criticalError.get()) { eachNotifier.fireTestIgnored(); return }
 
-    val cdl = CountDownLatch(1)
     SERVER_LOG.info("Starting test on server side: ${testClass.name}#${method.name}")
     val server = JUnitServerHolder.getServer()
 
-    val myServerHandler = object : ServerHandler() {
-
-      override fun acceptObject(message: TransportMessage) = message.content is JUnitInfo && message.content.testClassAndMethodName == JUnitInfo.getClassAndMethodName(description)
-      override fun handleObject(message: TransportMessage) {
-        val jUnitInfo = message.content as JUnitInfo
-        when (jUnitInfo.type) {
-          Type.STARTED -> eachNotifier.fireTestStarted()
-          Type.ASSUMPTION_FAILURE -> eachNotifier.addFailedAssumption((jUnitInfo.obj as Failure).exception as AssumptionViolatedException)
-          Type.IGNORED -> { eachNotifier.fireTestIgnored(); cdl.countDown() }
-          Type.FAILURE -> eachNotifier.addFailure(jUnitInfo.obj as Throwable)
-          Type.FINISHED -> { cdl.countDown() }
-          else -> throw UnsupportedOperationException("Unable to recognize received from JUnitClient")
-        }
-      }
-    }
-
     try {
-      server.addHandler(myServerHandler)
-      server.setFailHandler({
-                              throwable ->
-                              notifier.pleaseStop()
-                              eachNotifier.addFailure(throwable)
-                              criticalError.set(true)
-                              cdl.countDown()
-                              throw throwable
-                            }
-      )
       if (!server.isConnected())
         runIdeLocally(port = server.getPort(), ide = getIdeFromAnnotation(this@GuiTestLocalRunner.testClass.javaClass))
       val jUnitTestContainer = JUnitTestContainer(method.declaringClass, method.name)
       server.send(TransportMessage(MessageType.RUN_TEST, jUnitTestContainer))
     }
     catch (e: Exception) {
+      SERVER_LOG.error(e)
       notifier.fireTestIgnored(description)
       Assert.fail(e.message)
-      cdl.countDown()
     }
-    if (!cdl.await(10, TimeUnit.MINUTES)) {
-      //kill idea if tests exceeded timeout
-      killProcessIfPossible()
-      eachNotifier.addFailure(Exception("Test timeout error."))
-      eachNotifier.fireTestFinished()
-    } else {
-      if (criticalError.get()) killProcessIfPossible()
-      server.removeAllHandlers()
-      eachNotifier.fireTestFinished()
+    var testIsRunning = true
+    while(testIsRunning) {
+      val message = server.receive()
+      if (message.content is JUnitInfo && message.content.testClassAndMethodName == JUnitInfo.getClassAndMethodName(description)) {
+        when (message.content.type) {
+          Type.STARTED -> eachNotifier.fireTestStarted()
+          Type.ASSUMPTION_FAILURE -> eachNotifier.addFailedAssumption((message.content.obj as Failure).exception as AssumptionViolatedException)
+          Type.IGNORED -> { eachNotifier.fireTestIgnored(); testIsRunning = false }
+          Type.FAILURE -> eachNotifier.addFailure(message.content.obj as Throwable)
+          Type.FINISHED -> { eachNotifier.fireTestFinished(); testIsRunning = false }
+          else -> throw UnsupportedOperationException("Unable to recognize received from JUnitClient")
+        }
+      }
     }
   }
 
@@ -140,19 +115,25 @@ constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
       }
     }
 
-    notifier.addListener(runListener)
+    try {
 
-    LOG.info("Starting test: '${testClass.name}.${method.name}'")
-    if (GuiTestUtil.doesIdeHaveFatalErrors()) {
-      notifier.fireTestIgnored(describeChild(method))
-      LOG.error("Skipping test '${method.name}': a fatal error has occurred in the IDE")
-      notifier.pleaseStop()
-    }
-    else {
-      if (!GuiTestStarter.isGuiTestThread())
-        runIdeLocally()
-      else
-        super.runChild(method, notifier)
+      notifier.addListener(runListener)
+
+      LOG.info("Starting test: '${testClass.name}.${method.name}'")
+      if (GuiTestUtil.doesIdeHaveFatalErrors()) {
+        notifier.fireTestIgnored(describeChild(method))
+        LOG.error("Skipping test '${method.name}': a fatal error has occurred in the IDE")
+        notifier.pleaseStop()
+      }
+      else {
+        if (!GuiTestStarter.isGuiTestThread())
+          runIdeLocally()
+        else
+          super.runChild(method, notifier)
+      }
+    } catch (e: Exception) {
+      LOG.error(e)
+      throw e
     }
   }
 
@@ -161,7 +142,8 @@ constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
 
     fun getIdeFromAnnotation(clazz: Class<*>): Ide {
       val annotation = clazz.getAnnotation(RunWithIde::class.java)
-      val ideType = annotation?.value ?: IdeType.IDEA_COMMUNITY //ide community by default
+      val value = annotation?.value
+      val ideType = if(value != null) (value as KClass<out IdeType>).java.newInstance() else CommunityIde()
       return Ide(ideType, 0, 0)
     }
   }

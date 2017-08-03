@@ -48,4 +48,8 @@ public class ConcatenationToMessageFormatActionTest extends LightIdeaTestCase {
   public void test3() throws Exception {
     doTest("\"Test{A = \" + 1 + \", B = \" + 2 + \", C = \" + 3 + \"}\"", "Test'{'A = {0}, B = {1}, C = {2}'}'", "1", "2", "3");
   }
+
+  public void testNullCast() {
+    doTest("\"abc\" + (String)()", "abc{0}", "(String)()");
+  }
 }

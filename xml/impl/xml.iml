@@ -24,6 +24,7 @@
     <orderEntry type="library" name="Netty" level="project" />
     <orderEntry type="module" module-name="xdebugger-api" />
     <orderEntry type="module" module-name="built-in-server-api" />
+    <orderEntry type="module" module-name="vcs-impl" />
   </component>
   <component name="copyright">
     <Base>

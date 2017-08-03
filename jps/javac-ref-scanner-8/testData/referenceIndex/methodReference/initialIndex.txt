@@ -4,9 +4,7 @@ java.lang.Runnable -> fun_expr(id=0)
 
 Backward References:
 MethodReference in MethodReference occurrences = 1
-MethodReference.<init>(0) in MethodReference occurrences = 1
 MethodReference.main(1) in MethodReference occurrences = 1
-java.lang.Object.<init>(0) in MethodReference occurrences = 1
 java.lang.String in MethodReference occurrences = 1
 java.lang.Thread in MethodReference occurrences = 1
 java.lang.Thread.<init>(1) in MethodReference occurrences = 1

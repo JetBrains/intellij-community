@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.MagicConstant;
 
@@ -51,8 +52,8 @@ public class ScrollPaneFactory implements ScrollPaneConstants {
   public static JScrollPane createScrollPane(Component view, boolean withoutBorder) {
     JBScrollPane scrollPane = new JBScrollPane(view);
     if (withoutBorder) {
-      scrollPane.setBorder(IdeBorderFactory.createEmptyBorder()); // set empty border, because setting null doesn't always take effect
-      scrollPane.setViewportBorder(IdeBorderFactory.createEmptyBorder());
+      scrollPane.setBorder(JBUI.Borders.empty()); // set empty border, because setting null doesn't always take effect
+      scrollPane.setViewportBorder(JBUI.Borders.empty());
     }
     return scrollPane;
   }

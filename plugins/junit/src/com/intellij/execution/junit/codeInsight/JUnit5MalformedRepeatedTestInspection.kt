@@ -31,6 +31,11 @@ import com.siyeh.ig.psiutils.ExpressionUtils
 import org.jetbrains.annotations.Nls
 
 class JUnit5MalformedRepeatedTestInspection : BaseJavaBatchLocalInspectionTool() {
+  object Annotations {
+    val NON_REPEATED_ANNOTATIONS = listOf(JUnitUtil.TEST5_ANNOTATION,
+                                          JUnitUtil.TEST5_FACTORY_ANNOTATION,
+                                          JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST)
+  }
 
   @Nls
   override fun getDisplayName(): String {
@@ -66,9 +71,9 @@ class JUnit5MalformedRepeatedTestInspection : BaseJavaBatchLocalInspectionTool()
         else {
           val repetitionInfo = JavaPsiFacade.getInstance(holder.project).findClass(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_REPETITION_INFO, file.resolveScope)
           val repetitionType = JavaPsiFacade.getElementFactory(holder.project).createType(repetitionInfo!!)
-          val repetitionInfoParam = method.parameterList.parameters.find { it.type.isAssignableFrom(repetitionType) }
+          val repetitionInfoParam = method.parameterList.parameters.find { it.type == repetitionType }
           if (repetitionInfoParam != null) {
-            if (MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_JUPITER_ANNOTATIONS)) {
+            if (MetaAnnotationUtil.isMetaAnnotated(method, Annotations.NON_REPEATED_ANNOTATIONS)) {
               holder.registerProblem(repetitionInfoParam.nameIdentifier ?: repetitionInfoParam, "RepetitionInfo is injected for @RepeatedTest only")
             }
             else {

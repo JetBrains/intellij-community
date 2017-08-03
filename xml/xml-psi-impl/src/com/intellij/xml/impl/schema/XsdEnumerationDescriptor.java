@@ -24,7 +24,6 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairProcessor;
-import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.xml.impl.XmlEnumerationDescriptor;
 import com.intellij.xml.util.XmlUtil;
@@ -84,7 +83,8 @@ public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends Xml
     final XmlElementDescriptorImpl elementDescriptor = (XmlElementDescriptorImpl)XmlUtil.findXmlDescriptorByType(getDeclaration(), contextTag);
 
     if (elementDescriptor!=null && elementDescriptor.getType() instanceof ComplexTypeDescriptor) {
-      return processEnumerationImpl(((ComplexTypeDescriptor)elementDescriptor.getType()).getDeclaration(), processor, forCompletion);
+      TypeDescriptor type = elementDescriptor.getType();
+      return processEnumerationImpl(type.getDeclaration(), (ComplexTypeDescriptor)type, processor, forCompletion);
     }
 
     final String namespacePrefix = getDeclaration().getNamespacePrefix();
@@ -93,37 +93,42 @@ public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends Xml
     );
 
     if (type != null) {
-      return processEnumerationImpl(type, processor, forCompletion);
+      return processEnumerationImpl(type, null, processor, forCompletion);
     }
 
     return false;
   }
 
   private boolean processEnumerationImpl(final XmlTag declaration,
+                                         @Nullable ComplexTypeDescriptor type,
                                          final PairProcessor<PsiElement, String> pairProcessor,
                                          boolean forCompletion) {
     XmlAttribute name = declaration.getAttribute("name");
-    if (name != null && "boolean".equals(name.getValue())) {
-      XmlAttributeValue valueElement = name.getValueElement();
-      pairProcessor.process(valueElement, "true");
-      pairProcessor.process(valueElement, "false");
-      if (!forCompletion) {
-        pairProcessor.process(valueElement, "1");
-        pairProcessor.process(valueElement, "0");
+    if (name != null && "boolean".equals(name.getValue()) && type != null) {
+      XmlNSDescriptorImpl nsDescriptor = type.getNsDescriptor();
+      if (nsDescriptor != null) {
+        String namespace = nsDescriptor.getDefaultNamespace();
+        if (XmlUtil.XML_SCHEMA_URI.equals(namespace)) {
+          XmlAttributeValue valueElement = name.getValueElement();
+          pairProcessor.process(valueElement, "true");
+          pairProcessor.process(valueElement, "false");
+          if (!forCompletion) {
+            pairProcessor.process(valueElement, "1");
+            pairProcessor.process(valueElement, "0");
+          }
+          myExhaustiveEnum = true;
+          return true;
+        }
       }
-      myExhaustiveEnum = true;
-      return true;
     }
 
-    else {
-      final Ref<Boolean> found = new Ref<>(Boolean.FALSE);
-      myExhaustiveEnum = XmlUtil.processEnumerationValues(declaration, tag -> {
-        found.set(Boolean.TRUE);
-        XmlAttribute name1 = tag.getAttribute("value");
-        return name1 == null || pairProcessor.process(tag, name1.getValue());
-      });
-      return found.get();
-    }
+    final Ref<Boolean> found = new Ref<>(Boolean.FALSE);
+    myExhaustiveEnum = XmlUtil.processEnumerationValues(declaration, tag -> {
+      found.set(Boolean.TRUE);
+      XmlAttribute name1 = tag.getAttribute("value");
+      return name1 == null || pairProcessor.process(tag, name1.getValue());
+    });
+    return found.get();
   }
 
   @Override

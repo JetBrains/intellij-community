@@ -3,9 +3,7 @@ java.lang.Object -> TypeParam
 
 Backward References:
 TypeParam in TypeParam occurrences = 1
-TypeParam.<init>(0) in TypeParam occurrences = 1
 TypeParam.method(1) in TypeParam occurrences = 1
-java.lang.Object.<init>(0) in TypeParam occurrences = 1
 java.lang.String in TypeParam occurrences = 1
 java.util.List in TypeParam occurrences = 2
 

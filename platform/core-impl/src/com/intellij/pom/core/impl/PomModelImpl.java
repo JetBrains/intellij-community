@@ -163,7 +163,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         throw e;
       }
       catch(Exception e){
-        LOG.error(e);
+        throwables.add(e);
         return;
       }
       finally{

@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.util;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -182,13 +183,13 @@ public class OptionalUtil {
                     return qualifier + ".stream()";
                   }
                   if(arg.getType() != null && elementType.isAssignableFrom(arg.getType())) {
-                    return qualifier + ".stream()" + StreamApiUtil.generateMapOperation(var, elementType, arg);
+                    return qualifier + ".stream()" + StreamRefactoringUtil.generateMapOperation(var, elementType, arg);
                   }
                 }
               }
             }
           }
-          String flatMapOperationName = StreamApiUtil.getFlatMapOperationName(var.getType(), elementType);
+          String flatMapOperationName = StreamRefactoringUtil.getFlatMapOperationName(var.getType(), elementType);
           if(flatMapOperationName != null) {
             return qualifier + ".stream()."+flatMapOperationName+"(" + LambdaUtil.createLambda(var, trueExpression) + ")";
           }

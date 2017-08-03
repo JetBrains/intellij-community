@@ -47,6 +47,16 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
+  public void testWrongCandidateAfterImport() {
+    myFixture.addClass("package foo; class Empty {}"); //to ensure package is in the project
+    myFixture.configureByFile(getTestName(false) + ".java");
+
+    final IntentionAction intentionAction = myFixture.findSingleIntention("Add static import for 'foo.Test.X.test'");
+    assertNotNull(intentionAction);
+    myFixture.launchAction(intentionAction);
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
   public void testAllowStaticImportWhenAlreadyImported() {
     myFixture.addClass("package foo; " +
                        "public class Clazz {\n" +

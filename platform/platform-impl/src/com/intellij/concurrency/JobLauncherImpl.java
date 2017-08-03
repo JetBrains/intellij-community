@@ -18,6 +18,7 @@ package com.intellij.concurrency;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -40,6 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author cdr
  */
 public class JobLauncherImpl extends JobLauncher {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.concurrency.JobLauncherImpl");
   static final int CORES_FORK_THRESHOLD = 1;
 
   @Override
@@ -72,6 +74,9 @@ public class JobLauncherImpl extends JobLauncher {
       throw e;
     }
     catch (ProcessCanceledException e) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(e);
+      }
       // task1.processor returns false and the task cancels the indicator
       // then task2 calls checkCancel() and get here
       return false;
@@ -282,7 +287,7 @@ public class JobLauncherImpl extends JobLauncher {
         ProgressManager.getInstance().executeProcessUnderProgress(() -> {
           try {
             while (true) {
-              progress.checkCanceled();
+              ProgressManager.checkCanceled();
               T element = failedToProcess.poll();
               if (element == null) element = things.take();
 

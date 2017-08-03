@@ -48,5 +48,8 @@
     <localInspection groupName="RegExp" language="RegExp" shortName="AnonymousGroup"
                      displayName="Anonymous capturing group or numeric back reference" enabledByDefault="false" level="WARNING"
                      implementationClass="org.intellij.lang.regexp.inspection.AnonymousGroupInspection"/>
+    <localInspection groupName="RegExp" language="RegExp" shortName="RedundantEscape"
+                     displayName="Redundant character escape" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.intellij.lang.regexp.inspection.RedundantEscapeInspection"/>
   </extensions>
 </idea-plugin>

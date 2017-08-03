@@ -44,12 +44,16 @@ import java.util.List;
 public abstract class GeneralTestEventsProcessor implements Disposable {
   private static final Logger LOG = Logger.getInstance(GeneralTestEventsProcessor.class.getName());
   protected final SMTRunnerEventsListener myEventPublisher;
+  protected final SMTestProxy.SMRootTestProxy myTestsRootProxy;
+  protected SMTestLocator myLocator = null;
   private final String myTestFrameworkName;
   private final Project myProject;
   private TransferToEDTQueue<Runnable> myTransferToEDTQueue;
   protected List<SMTRunnerEventsListener> myListenerAdapters = new ArrayList<>();
 
-  public GeneralTestEventsProcessor(Project project, @NotNull String testFrameworkName) {
+  protected boolean myTreeBuildBeforeStart = false;
+
+  public GeneralTestEventsProcessor(Project project, @NotNull String testFrameworkName, @NotNull SMTestProxy.SMRootTestProxy testsRootProxy) {
     myProject = project;
     myEventPublisher = project.getMessageBus().syncPublisher(SMTRunnerEventsListener.TEST_STATUS);
     myTestFrameworkName = testFrameworkName;
@@ -57,17 +61,85 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
       runnable.run();
       return true;
     }, project.getDisposed(), 300);
+    myTestsRootProxy = testsRootProxy;
   }
   // tree construction events
 
-  public void onRootPresentationAdded(String rootName, String comment, String rootLocation) {}
-  
-  public void onSuiteTreeNodeAdded(String testName, String locationHint) { }
+  public void onRootPresentationAdded(final String rootName, final String comment, final String rootLocation) {
+    addToInvokeLater(() -> {
+      myTestsRootProxy.setPresentation(rootName);
+      myTestsRootProxy.setComment(comment);
+      myTestsRootProxy.setRootLocationUrl(rootLocation);
+      if (myLocator != null) {
+        myTestsRootProxy.setLocator(myLocator);
+      }
+    });
+  }
 
-  public void onSuiteTreeStarted(String suiteName, String locationHint) { }
+  protected SMTestProxy createProxy(String testName, String locationHint, String id, String parentNodeId) {
+    return new SMTestProxy(testName, false, locationHint);
+  }
 
-  public void onSuiteTreeEnded(String suiteName) { }
-  public void onBuildTreeEnded() { }
+  protected SMTestProxy createSuite(String suiteName, String locationHint, String id, String parentNodeId) {
+    return new SMTestProxy(suiteName, true, locationHint);
+  }
+
+  protected final List<Runnable> myBuildTreeRunnables = new ArrayList<>();
+
+  public void onSuiteTreeNodeAdded(final String testName, final String locationHint, String id, String parentNodeId) {
+    myTreeBuildBeforeStart = true;
+    myBuildTreeRunnables.add(() -> {
+      final SMTestProxy testProxy = createProxy(testName, locationHint, id, parentNodeId);
+      testProxy.setTreeBuildBeforeStart();
+      if (myLocator != null) {
+        testProxy.setLocator(myLocator);
+      }
+      myEventPublisher.onSuiteTreeNodeAdded(testProxy);
+      for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+        adapter.onSuiteTreeNodeAdded(testProxy);
+      }
+      //ensure root node gets the flag when merged with a single child
+      testProxy.getParent().setTreeBuildBeforeStart();
+    });
+  }
+
+  public void onSuiteTreeStarted(final String suiteName, final String locationHint, String id, String parentNodeId) {
+    myTreeBuildBeforeStart = true;
+    myBuildTreeRunnables.add(() -> {
+      final SMTestProxy newSuite = createSuite(suiteName, locationHint, id, parentNodeId);
+      if (myLocator != null) {
+        newSuite.setLocator(myLocator);
+      }
+      newSuite.setTreeBuildBeforeStart();
+      myEventPublisher.onSuiteTreeStarted(newSuite);
+      for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+        adapter.onSuiteTreeStarted(newSuite);
+      }
+    });
+  }
+
+  public void onSuiteTreeEnded(final String suiteName) {
+    if (myBuildTreeRunnables.size() > 100) {
+      final ArrayList<Runnable> runnables = new ArrayList<>(myBuildTreeRunnables);
+      myBuildTreeRunnables.clear();
+      processTreeBuildEvents(runnables);
+    }
+  }
+
+  public void onBuildTreeEnded() {
+    final ArrayList<Runnable> runnables = new ArrayList<>(myBuildTreeRunnables);
+    myBuildTreeRunnables.clear();
+    processTreeBuildEvents(runnables);
+  }
+
+  private void processTreeBuildEvents(final List<Runnable> runnables) {
+    addToInvokeLater(() -> {
+      for (Runnable runnable : runnables) {
+        runnable.run();
+      }
+      runnables.clear();
+    });
+  }
 
   // progress events
 
@@ -201,7 +273,9 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
 
   public abstract void onTestsReporterAttached();
 
-  public abstract void setLocator(@NotNull SMTestLocator locator);
+  public void setLocator(@NotNull SMTestLocator locator) {
+    myLocator = locator;
+  }
 
   public void addEventsListener(@NotNull SMTRunnerEventsListener listener) {
     myListenerAdapters.add(listener);

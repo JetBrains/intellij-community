@@ -33,9 +33,9 @@ public class LabeledIcon implements Icon {
   private Font myFont = UIUtil.getLabelFont();
 
   /**
-   * @param icon     not <code>null</code> icon.
+   * @param icon     not {@code null} icon.
    * @param text     to be painted under the <code>icon<code>. This parameter can
-   *                 be <code>null</code> if text isn't specified. In that case <code>LabeledIcon</code>
+   *                 be {@code null} if text isn't specified. In that case {@code LabeledIcon}
    * @param mnemonic
    */
   public LabeledIcon(Icon icon, String text, String mnemonic) {

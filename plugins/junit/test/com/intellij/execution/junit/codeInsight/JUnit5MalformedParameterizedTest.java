@@ -37,6 +37,8 @@ public class JUnit5MalformedParameterizedTest extends LightInspectionTestCase {
                         "public @interface Test {}");
     addEnvironmentClass("package org.junit.jupiter.api;\n" +
                         "public interface TestInfo {}");
+    addEnvironmentClass("package org.junit.jupiter.api;\n" +
+                        "public interface TestReporter {}");
     addEnvironmentClass("package org.junit.jupiter.params.provider;\n" +
                         "public @interface MethodSource {String[] value();}");
     addEnvironmentClass("package org.junit.jupiter.params.provider;\n" +
@@ -49,11 +51,13 @@ public class JUnit5MalformedParameterizedTest extends LightInspectionTestCase {
                         "double[] doubles() default {};\n" +
                         "}\n");
     addEnvironmentClass("package org.junit.jupiter.params.provider;\n" +
-                        "public interface Arguments {}\n");
+                        "public @interface CsvSource {String[] value();}");
+    addEnvironmentClass("package org.junit.jupiter.params.provider;\n" +
+                        "public interface Arguments {static Arguments of(Object... arguments){}}\n");
   }
 
   public void testMalformedSources() { doTest(); }
-  public void testMalformedSourcesArguments() { doTest(); }
+  public void testMethodSource() { doTest(); }
   public void testMalformedSourcesImplicitConversion() { doTest(); }
   public void testMalformedSourcesImplicitParameters() { doTest(); }
 

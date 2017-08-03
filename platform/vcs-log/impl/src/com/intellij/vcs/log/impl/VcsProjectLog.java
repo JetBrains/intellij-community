@@ -19,7 +19,6 @@ import com.intellij.ide.caches.CachesInvalidator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -29,7 +28,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -54,7 +52,6 @@ public class VcsProjectLog implements Disposable {
   @NotNull
   private final LazyVcsLogManager myLogManager = new LazyVcsLogManager();
   private int myRecreatedLogCount = 0;
-  private volatile VcsLogUiImpl myUi;
 
   public VcsProjectLog(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties) {
     myProject = project;
@@ -74,9 +71,9 @@ public class VcsProjectLog implements Disposable {
     return Arrays.asList(ProjectLevelVcsManager.getInstance(myProject).getAllVcsRoots());
   }
 
-  @CalledInAwt
+  @CalledInAny
   void setMainUi(@NotNull VcsLogUiImpl ui) {
-    myUi = ui;
+    myLogManager.setLogUi(ui);
   }
 
   /**
@@ -84,7 +81,7 @@ public class VcsProjectLog implements Disposable {
    */
   @Nullable
   public VcsLogUiImpl getMainLogUi() {
-    return myUi;
+    return myLogManager.getLogUi();
   }
 
   @Nullable
@@ -94,15 +91,12 @@ public class VcsProjectLog implements Disposable {
 
   @CalledInAny
   private void recreateLog() {
-    GuiUtils.invokeLaterIfNeeded(() -> {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
       disposeLog();
-
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        if (hasDvcsRoots()) {
-          createLog();
-        }
-      });
-    }, ModalityState.any());
+      if (hasDvcsRoots()) {
+        createLog();
+      }
+    });
   }
 
   @CalledInAwt
@@ -126,9 +120,8 @@ public class VcsProjectLog implements Disposable {
     recreateLog();
   }
 
-  @CalledInAwt
+  @CalledInBackground
   private void disposeLog() {
-    myUi = null;
     myLogManager.drop();
   }
 
@@ -159,11 +152,12 @@ public class VcsProjectLog implements Disposable {
 
   @Override
   public void dispose() {
-    disposeLog();
+    ApplicationManager.getApplication().executeOnPooledThread(this::disposeLog);
   }
 
   private class LazyVcsLogManager {
     @Nullable private VcsLogManager myValue;
+    @Nullable private VcsLogUiImpl myUi;
 
     @NotNull
     @CalledInBackground
@@ -182,8 +176,9 @@ public class VcsProjectLog implements Disposable {
       return new VcsLogManager(myProject, myUiProperties, getVcsRoots(), false, VcsProjectLog.this::recreateOnError);
     }
 
-    @CalledInAwt
+    @CalledInBackground
     public synchronized void drop() {
+      myUi = null;
       if (myValue != null) {
         myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(myValue);
         Disposer.dispose(myValue);
@@ -195,6 +190,16 @@ public class VcsProjectLog implements Disposable {
     public synchronized VcsLogManager getCached() {
       return myValue;
     }
+
+    public synchronized void setLogUi(@NotNull VcsLogUiImpl ui) {
+      myUi = ui;
+    }
+
+    @Nullable
+    @CalledInAny
+    public synchronized VcsLogUiImpl getLogUi() {
+      return myUi;
+    }
   }
 
   public static class InitLogStartupActivity implements StartupActivity {
@@ -202,13 +207,15 @@ public class VcsProjectLog implements Disposable {
     public void runActivity(@NotNull Project project) {
       if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) return;
 
-      VcsProjectLog projectLog = getInstance(project);
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        VcsProjectLog projectLog = getInstance(project);
 
-      MessageBusConnection connection = project.getMessageBus().connect(project);
-      connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, projectLog::recreateLog);
-      if (projectLog.hasDvcsRoots()) {
-        projectLog.createLog();
-      }
+        MessageBusConnection connection = project.getMessageBus().connect(project);
+        connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, projectLog::recreateLog);
+        if (projectLog.hasDvcsRoots()) {
+          projectLog.createLog();
+        }
+      });
     }
   }
 

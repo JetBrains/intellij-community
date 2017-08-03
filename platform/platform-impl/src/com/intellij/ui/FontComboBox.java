@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,14 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ui.FontInfo;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.Dimension;
+import javax.swing.*;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
+import javax.swing.plaf.basic.ComboPopup;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import javax.swing.AbstractListModel;
-import javax.swing.ComboBoxModel;
 
 /**
  * @author Sergey.Malenkov
@@ -53,6 +55,22 @@ public final class FontComboBox extends ComboBox {
     setPreferredSize(size);
     setSwingPopup(true);
     setRenderer(RENDERER);
+    getModel().addListDataListener(new ListDataListener() {
+      @Override
+      public void intervalAdded(ListDataEvent e) {}
+
+      @Override
+      public void intervalRemoved(ListDataEvent e) {}
+
+      @Override
+      public void contentsChanged(ListDataEvent e) {
+        ComboPopup popup = FontComboBox.this.getPopup();
+        if (popup != null && popup.isVisible()) {
+          popup.hide();
+          popup.show();
+        }
+      }
+    });
   }
 
   public boolean isMonospacedOnly() {

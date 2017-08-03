@@ -22,6 +22,7 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.notification.*;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -43,7 +44,6 @@ import java.util.Set;
  */
 public class CheckRequiredPluginsActivity implements StartupActivity, DumbAware {
   private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Required Plugins", NotificationDisplayType.BALLOON, true);
-  public static final String PLUGINS_HOST = "https://plugins.jetbrains.com";
 
   @Override
   public void runActivity(@NotNull final Project project) {
@@ -139,6 +139,6 @@ public class CheckRequiredPluginsActivity implements StartupActivity, DumbAware 
   }
 
   private static String getCustomRepository(PluginId id, String channel) {
-    return String.format(PLUGINS_HOST + "/plugins/%s/%s", channel, id);
+    return String.format(ApplicationInfoImpl.getShadowInstance().getPluginManagerUrl() + "/plugins/%s/%s", channel, id);
   }
 }

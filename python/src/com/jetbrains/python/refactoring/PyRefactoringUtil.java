@@ -121,7 +121,7 @@ public class PyRefactoringUtil {
       final String prefix = parentText.substring(0, startOffset);
       final String suffix = parentText.substring(endOffset, parentText.length());
       final TextRange textRange = TextRange.from(startOffset, endOffset - startOffset);
-      final PsiElement fakeExpression = generator.createFromText(langLevel, parent.getClass(), prefix + "python" + suffix);
+      final PsiElement fakeExpression = generator.createExpressionFromText(langLevel, prefix + "python" + suffix);
       if (PsiUtilCore.hasErrorElementChild(fakeExpression)) {
         return null;
       }

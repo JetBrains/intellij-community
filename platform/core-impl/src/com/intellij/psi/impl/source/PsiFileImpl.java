@@ -169,9 +169,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       // but some VFS listeners receive the same events before that and ask PsiFile.isValid
       return false;
     }
-    if (myOriginalFile != null && myOriginalFile != this && !myOriginalFile.isValid()) {
-      return false;
-    }
     return !myInvalidated;
   }
 
@@ -545,6 +542,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   public void setOriginalFile(@NotNull final PsiFile originalFile) {
     myOriginalFile = originalFile.getOriginalFile();
+
+    FileViewProvider original = myOriginalFile.getViewProvider();
+    if (myViewProvider instanceof SingleRootFileViewProvider && original instanceof SingleRootFileViewProvider) {
+      ((SingleRootFileViewProvider)original).registerAsCopy((SingleRootFileViewProvider)myViewProvider);
+    }
   }
 
   @Override
@@ -790,6 +792,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       LOG.error("Non-atomic trees update");
       myTrees = trees;
     }
+  }
+
+  FileTrees getFileTrees() {
+    return myTrees;
   }
 
   private void bindStubsToCachedPsi(StubTree stubTree) {

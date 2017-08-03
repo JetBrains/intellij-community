@@ -260,8 +260,9 @@ public class GitBranchUtil {
   @Nullable
   public static GitNewBranchOptions getNewBranchNameFromUser(@NotNull Project project,
                                                              @NotNull Collection<GitRepository> repositories,
-                                                             @NotNull String dialogTitle) {
-    return new GitNewBranchDialog(project, dialogTitle, GitNewBranchNameValidator.newInstance(repositories)).showAndGetOptions();
+                                                             @NotNull String dialogTitle,
+                                                             @Nullable String initialName) {
+    return new GitNewBranchDialog(project, dialogTitle, initialName, GitNewBranchNameValidator.newInstance(repositories)).showAndGetOptions();
   }
 
   /**
@@ -295,7 +296,7 @@ public class GitBranchUtil {
    *     If selected file is unknown (for example, no file is selected in the Project View or Changes View and no file is open in the editor),
    *     continues guessing. Otherwise returns the Git root for the selected file. If the file is not under a known Git root,
    *     but there is at least one git root,  continues guessing, otherwise
-   *     <code>null</code> will be returned - the file is definitely determined, but it is not under Git and no git roots exists in project.
+   *     {@code null} will be returned - the file is definitely determined, but it is not under Git and no git roots exists in project.
    *   </li>
    *   <li>
    *     Takes all Git roots registered in the Project. If there is only one, it is returned.
@@ -311,7 +312,7 @@ public class GitBranchUtil {
    * </p>
    * @param project current project
    * @return Git root that may be considered as "current".
-   *         <code>null</code> is returned if a file not under Git was explicitly selected, if there are no Git roots in the project,
+   *         {@code null} is returned if a file not under Git was explicitly selected, if there are no Git roots in the project,
    *         or if the current Git root couldn't be determined.
    */
   @Nullable

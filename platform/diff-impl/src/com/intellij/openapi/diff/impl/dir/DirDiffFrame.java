@@ -34,7 +34,7 @@ public class DirDiffFrame extends FrameWrapper {
     super(project, "DirDiffDialog");
     setSize(JBUI.size(800, 600));
     setTitle(model.getTitle());
-    myPanel = new DirDiffPanel(model, new DirDiffWindow(this));
+    myPanel = new DirDiffPanel(model, new DirDiffWindow.Frame(this));
     Disposer.register(this, myPanel);
     setComponent(myPanel.getPanel());
     if (project != null) {

@@ -15,12 +15,17 @@
  */
 package com.intellij.testGuiFramework.impl
 
+import com.intellij.openapi.util.Ref
+import com.intellij.testGuiFramework.framework.GuiTestUtil
 import org.fest.swing.core.ComponentMatcher
 import org.fest.swing.core.Robot
 import org.fest.swing.edt.GuiActionRunner
 import org.fest.swing.edt.GuiQuery
 import org.fest.swing.edt.GuiTask
 import org.fest.swing.exception.ComponentLookupException
+import org.fest.swing.exception.WaitTimedOutError
+import org.fest.swing.timing.Condition
+import org.fest.swing.timing.Pause
 import java.awt.Component
 import java.awt.Container
 import java.util.*
@@ -152,29 +157,40 @@ object GuiTestUtilKt {
     }
   }
 
-  fun findComponentByText(robot: Robot, container: Container, text: String): Component
-    = robot.finder().find(container, ComponentMatcher { component ->
-    component!!.isTextComponent() && component.getComponentText() == text && component.isShowing })
+  fun findComponentByText(robot: Robot, container: Container, text: String): Component {
+    return withPause { robot.finder().findAll(container, ComponentMatcher { component ->
+      component!!.isShowing && component.isTextComponent() && component.getComponentText() == text }).firstOrNull() }
+  }
 
   fun <BoundedComponent> findBoundedComponentByText(robot: Robot, container: Container, text: String, componentType: Class<BoundedComponent>): BoundedComponent {
     val componentWithText = findComponentByText(robot, container, text)
-    if (componentWithText is JLabel && componentWithText.labelFor != null && componentType.isInstance(componentWithText.labelFor)) return componentWithText.labelFor as BoundedComponent
-    val components = robot.finder().findAll(container, ComponentMatcher { component -> componentType.isInstance(component) && component!!.hasOnCenterXAxis(componentWithText, true) })
-    if (components.isEmpty()) throw ComponentLookupException("Unable to find component of type: ${componentType.simpleName} in $container by text: $text" )
-    val first = components.sortedBy { it.bounds.x }.first()
-    return first as BoundedComponent
+    if (componentWithText is JLabel && componentWithText.labelFor != null) {
+      val labeledComponent = componentWithText.labelFor
+      if (componentType.isInstance(labeledComponent)) return labeledComponent as BoundedComponent
+      return robot.finder().find(labeledComponent as Container) { component -> componentType.isInstance(component) } as BoundedComponent
+    }
+    try {
+      return withPause {
+        val componentsOfInstance = robot.finder().findAll(container, ComponentMatcher { component -> componentType.isInstance(component) })
+        componentsOfInstance.filter { it.isShowing && it.onHeightCenter(componentWithText, true) }
+          .sortedBy { it.bounds.x }
+          .firstOrNull()
+      } as BoundedComponent
+    } catch (e: WaitTimedOutError) {
+      throw ComponentLookupException("Unable to find component of type: ${componentType.simpleName} in $container by text: $text" )
+    }
   }
 
-  //Does the textComponent intersects X axis line going through the center of this component and lays lefter than this component
-  fun Component.hasOnCenterXAxis(textComponent: Component, onLeft: Boolean): Boolean {
-    val centerXAxis = this.bounds.height / 2 + this.bounds.y + this.locationOnScreen.y
+  //Does the textComponent intersects horizontal line going through the center of this component and lays lefter than this component
+  fun Component.onHeightCenter(textComponent: Component, onLeft: Boolean): Boolean {
+    val centerXAxis = this.bounds.height / 2 + this.locationOnScreen.y
     val sideCheck =
       if (onLeft)
-        textComponent.bounds.x + textComponent.locationOnScreen.x + textComponent.bounds.width < this.bounds.x + this.locationOnScreen.x
+        textComponent.locationOnScreen.x  < this.locationOnScreen.x
       else
-        textComponent.bounds.x + textComponent.locationOnScreen.x > this.bounds.x + this.locationOnScreen.x + this.bounds.width
-    return (textComponent.bounds.y + textComponent.locationOnScreen.y <= centerXAxis)
-           && (textComponent.bounds.y + textComponent.locationOnScreen.y + textComponent.bounds.height >= centerXAxis)
+        textComponent.locationOnScreen.x > this.locationOnScreen.x
+    return (textComponent.locationOnScreen.y <= centerXAxis)
+           && (textComponent.locationOnScreen.y + textComponent.bounds.height >= centerXAxis)
            && (sideCheck)
   }
 
@@ -184,6 +200,21 @@ object GuiTestUtilKt {
         task()
       }
     })
+  }
+
+  /**
+   * waits for 30 sec timeout when testWithPause() not return null
+   */
+  fun <ReturnType> withPause(testWithPause: () -> ReturnType?): ReturnType {
+    val ref = Ref<ReturnType>()
+    Pause.pause(object: Condition("With pause...") {
+      override fun test(): Boolean {
+        val testWithPauseResult = testWithPause()
+        if (testWithPauseResult != null) ref.set(testWithPauseResult)
+        return (testWithPauseResult != null)
+      }
+    }, GuiTestUtil.THIRTY_SEC_TIMEOUT)
+    return ref.get()
   }
 
   fun <ReturnType> computeOnEdt(query: () -> ReturnType): ReturnType?

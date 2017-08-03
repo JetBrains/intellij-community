@@ -18,30 +18,23 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
-import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 public class JavadocInspectionQuickFixTest extends LightQuickFixParameterizedTestCase {
-
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    final JavaDocLocalInspection javaDocLocalInspection = new JavaDocLocalInspection();
-    javaDocLocalInspection.TOP_LEVEL_CLASS_OPTIONS.REQUIRED_TAGS = "param";
-    javaDocLocalInspection.TOP_LEVEL_CLASS_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = "package";
-    javaDocLocalInspection.METHOD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = "package";
-    return new LocalInspectionTool[]{javaDocLocalInspection};
+    JavaDocLocalInspection inspection = new JavaDocLocalInspection();
+    inspection.TOP_LEVEL_CLASS_OPTIONS.REQUIRED_TAGS = "param";
+    inspection.TOP_LEVEL_CLASS_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = "package";
+    inspection.METHOD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = "package";
+    return new LocalInspectionTool[]{inspection};
   }
 
-  public void test() throws Exception { doAllTests(); }
+  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/javadocTags";
-  }
-
-  @Override
-  protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_1_5;
   }
 }

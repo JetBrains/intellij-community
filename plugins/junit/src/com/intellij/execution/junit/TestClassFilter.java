@@ -34,6 +34,7 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -98,24 +99,13 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
 
   public static TestClassFilter create(final SourceScope sourceScope, Module module, final String pattern) throws JUnitUtil.NoJUnitException {
     final PsiClass testCase = getTestCase(sourceScope, module);
-    final String[] patterns = pattern.split("\\|\\|");
-    final List<Pattern> compilePatterns = new ArrayList<>();
-    for (String p : patterns) {
-      final Pattern compilePattern = getCompilePattern(p);
-      if (compilePattern != null) {
-        compilePatterns.add(compilePattern);
-      }
-    }
+    Predicate<String> predicate = getClassNamePredicate(pattern);
     return new TestClassFilter(testCase, sourceScope.getGlobalSearchScope()){
       @Override
       public boolean isAccepted(final PsiClass aClass) {
         if (super.isAccepted(aClass)) {
           final String qualifiedName = ReadAction.compute(() -> aClass.getQualifiedName());
-          for (Pattern compilePattern : compilePatterns) {
-            if (compilePattern.matcher(qualifiedName).matches()) {
-              return true;
-            }
-          }
+          return predicate.test(qualifiedName);
         }
         return false;
       }
@@ -131,6 +121,25 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
       compilePattern = null;
     }
     return compilePattern;
+  }
+
+  public static Predicate<String> getClassNamePredicate(String pattern) {
+    final String[] patterns = pattern.split("\\|\\|");
+    final List<Pattern> compilePatterns = new ArrayList<>();
+    for (String p : patterns) {
+      final Pattern compilePattern = getCompilePattern(p);
+      if (compilePattern != null) {
+        compilePatterns.add(compilePattern);
+      }
+    }
+    return qualifiedName -> {
+      for (Pattern compilePattern : compilePatterns) {
+        if (compilePattern.matcher(qualifiedName).matches()) {
+          return true;
+        }
+      }
+      return false;
+    };
   }
 
   public GlobalSearchScope getScope() { return myScope; }

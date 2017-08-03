@@ -69,9 +69,9 @@ public interface RemoteExternalSystemFacade<S extends ExternalSystemExecutionSet
   };
 
   /**
-   * Exposes <code>'resolve external system project'</code> service that works at another process.
+   * Exposes {@code 'resolve external system project'} service that works at another process.
    *
-   * @return                        <code>'resolve external system project'</code> service
+   * @return                        {@code 'resolve external system project'} service
    * @throws RemoteException        in case of unexpected I/O exception during processing
    * @throws IllegalStateException  in case of inability to create the service
    */
@@ -79,7 +79,7 @@ public interface RemoteExternalSystemFacade<S extends ExternalSystemExecutionSet
   RemoteExternalSystemProjectResolver<S> getResolver() throws RemoteException, IllegalStateException;
 
   /**
-   * Exposes <code>'run external system task'</code> service which works at another process.
+   * Exposes {@code 'run external system task'} service which works at another process.
    *
    * @return external system build manager
    * @throws RemoteException  in case of inability to create the service

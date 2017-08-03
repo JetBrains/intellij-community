@@ -46,7 +46,7 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
     Language language = file.getLanguage();
     InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
     if (provider == null) return null;
-    return new ParameterHintsPass(file, editor, MethodInfoBlacklistFilter.forLanguage(language));
+    return new ParameterHintsPass(file, editor, MethodInfoBlacklistFilter.forLanguage(language), false);
   }
 
   public static long getCurrentModificationStamp(@NotNull PsiFile file) {

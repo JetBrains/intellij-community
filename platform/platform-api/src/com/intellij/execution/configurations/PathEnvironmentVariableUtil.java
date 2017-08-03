@@ -81,7 +81,7 @@ public class PathEnvironmentVariableUtil {
   /**
    * Finds an executable file with the specified base name, that is located in a directory
    * listed in an original PATH environment variable.
-   * Original PATH environment variable value is a value returned by <code>System.getenv("PATH")</code>.
+   * Original PATH environment variable value is a value returned by {@code System.getenv("PATH")}.
    *
    * @param fileBaseName file base name
    * @return {@link File} instance or null if not found

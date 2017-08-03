@@ -55,10 +55,10 @@ public class FixedSizeButton extends JButton {
   }
 
   /**
-   * Creates the <code>FixedSizeButton</code> with specified size.
+   * Creates the {@code FixedSizeButton} with specified size.
    *
    * @throws IllegalArgumentException
-   *          if <code>size</code> isn't
+   *          if {@code size} isn't
    *          positive integer number.
    */
   public FixedSizeButton(int size) {
@@ -69,8 +69,8 @@ public class FixedSizeButton extends JButton {
   }
 
   /**
-   * Creates the <code>FixedSizeButton</code> which size is equals to
-   * <code>component.getPreferredSize().height</code>. It is very convenient
+   * Creates the {@code FixedSizeButton} which size is equals to
+   * {@code component.getPreferredSize().height}. It is very convenient
    * way to create "browse" like button near the text fields.
    */
   public FixedSizeButton(@NotNull JComponent component) {

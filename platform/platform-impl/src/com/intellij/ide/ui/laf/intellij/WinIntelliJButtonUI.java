@@ -16,11 +16,9 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.ui.components.JBOptionButton;
-import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.ui.*;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -84,8 +82,9 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
           g2.fill(r);
         }
 
-        if (isSquare(c)) { // Count insets for square buttons
-          JBInsets.removeFrom(r, c.getInsets());
+        JBInsets.removeFrom(r, JBUI.insets(2));
+        if (UIUtil.getParentOfType(ActionToolbar.class, c) != null) {
+          JBInsets.removeFrom(r, JBUI.insetsRight(3));
         }
 
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -133,9 +132,9 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
     if (isHelpButton(c)) {
       Icon icon = MacIntelliJIconCache.getIcon("winHelp");
       Insets i = c.getInsets();
-      return new Dimension(icon.getIconWidth() + i.left + i.right, JBUI.scale(22));
+      return new Dimension(icon.getIconWidth() + i.left + i.right, JBUI.scale(24));
     } else if (isSquare(c)) {
-      return new JBDimension(22, 22);
+      return new JBDimension(24, 24);
     } else {
       return super.getPreferredSize(c);
     }

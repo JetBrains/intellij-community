@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.pom.java.LanguageLevel;
@@ -36,6 +37,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.*;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -44,6 +46,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * @author Dmitry Avdeev
@@ -496,4 +499,34 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
 
     assertEquals(javaCount, tracker.getJavaStructureModificationCount());
     assertFalse(codeBlockCount == tracker.getOutOfCodeBlockModificationCount());
-  }}
+  }
+
+  public void testChangeBothInsideAnonymousAndOutsideShouldAdvanceJavaModStructureAndClearCaches() {
+    PsiFile file = configureByText(JavaFileType.INSTANCE, "class A{ void bar() {\n" +
+                                                          "int a = foo().goo();\n" +
+                                                          "Object r = new Object() {\n" +
+                                                          "  void foo() {}\n" +
+                                                          "};\n" +
+                                                          "}}");
+
+    PsiAnonymousClass anon = SyntaxTraverser.psiTraverser(file).filter(PsiAnonymousClass.class).first();
+    Arrays.stream(anon.getAllMethods()).forEach(PsiUtilCore::ensureValid);
+
+    PsiModificationTracker tracker = PsiManager.getInstance(getProject()).getModificationTracker();
+    long javaCount = tracker.getJavaStructureModificationCount();
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      TextRange methodRange = anon.getMethods()[0].getTextRange();
+      getEditor().getDocument().deleteString(methodRange.getStartOffset(), methodRange.getEndOffset());
+      
+      int gooIndex = file.getText().indexOf("goo");
+      getEditor().getDocument().deleteString(gooIndex, gooIndex + 3);
+      
+      PsiDocumentManager.getInstance(myProject).commitDocument(getEditor().getDocument());
+    });
+
+    Arrays.stream(anon.getAllMethods()).forEach(PsiUtilCore::ensureValid);
+    assertFalse(javaCount == tracker.getJavaStructureModificationCount());
+  }
+
+}

@@ -78,6 +78,9 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   public BalloonPopupBuilderImpl(@Nullable Map<Disposable, List<Balloon>> storage, @NotNull final JComponent content) {
     myStorage = storage;
     myContent = content;
+    if (UIUtil.isClientPropertyTrue(myContent, BalloonImpl.FORCED_NO_SHADOW)) {
+      myShadow = false;
+    }
   }
 
   @NotNull

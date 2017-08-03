@@ -19,7 +19,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
 /**
  * Is intended to hold specific java formatting tests for 'braces placement' settings (
- * <code>Project Settings - Code Style - Alignment and Braces</code>).
+ * {@code Project Settings - Code Style - Alignment and Braces}).
  *
  * @author Denis Zhdanov
  * @since Apr 27, 2010 6:39:24 PM

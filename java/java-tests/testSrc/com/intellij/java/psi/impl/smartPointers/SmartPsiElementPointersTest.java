@@ -1018,4 +1018,29 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     assertEquals(file.getClasses()[0].getMethods()[1], pointer.getElement());
   }
 
+  public void testRangePointerSurvivesLanguageChange() throws Exception {
+    PsiFile file = createFile("a.java", "abc");
+    SmartPsiFileRange pointer = getPointerManager().createSmartPsiFileRangePointer(file, TextRange.from(0, 1));
+    assertInstanceOf(pointer.getElement(), PsiJavaFile.class);
+    
+    WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      Document document = file.getViewProvider().getDocument();
+      file.setName("a.txt");
+      document.insertString(0, "ddd");
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    });
+    
+    assertInstanceOf(pointer.getElement(), PsiPlainTextFile.class);
+    assertEquals(TextRange.from(3, 1), TextRange.create(pointer.getRange()));
+  }
+
+  public void testFileRangeWithUnicode() throws Exception {
+    PsiFile file = createFile("a.java", "Ы");
+    assertEquals(1, file.getTextLength());
+    SmartPsiFileRange pointer = getPointerManager().createSmartPsiFileRangePointer(file, TextRange.from(0, file.getTextLength()));
+    assertEquals(TextRange.from(0, 1), TextRange.create(pointer.getPsiRange()));
+    assertEquals(TextRange.from(0, 1), TextRange.create(pointer.getRange()));
+
+  }
+
 }

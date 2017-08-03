@@ -133,6 +133,7 @@ public class ReferenceParser {
       type.drop();
       if (anno != null && isSet(flags, INCOMPLETE_ANNO)) {
         error(builder, JavaErrorMessages.message("expected.type"));
+        typeInfo.marker = anno;
         typeInfo.hasErrors = true;
         return typeInfo;
       }

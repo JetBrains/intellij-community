@@ -768,7 +768,7 @@ class EditorPainter implements TextDrawingCallback {
 
     /**
      * Returns a list of pairs of x coordinates for visual ranges representing given logical range. If 
-     * <code>startOffset == endOffset</code>, a pair of equal numbers is returned, corresponding to target position. Target offsets are 
+     * {@code startOffset == endOffset}, a pair of equal numbers is returned, corresponding to target position. Target offsets are
      * supposed to be located on the same visual line.
      */
   private TFloatArrayList logicalRangeToVisualRanges(int startOffset, int endOffset) {

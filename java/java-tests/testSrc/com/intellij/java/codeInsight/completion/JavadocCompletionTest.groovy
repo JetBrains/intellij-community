@@ -680,4 +680,20 @@ class Foo {
     myFixture.type('\n')
     myFixture.checkResult "/** @see java.io.IOException<caret> */"
   }
+
+  void "test no hierarchical generic method duplicates"() {
+    myFixture.configureByText 'a.java', """
+interface Foo<T> {
+    void foo(T t);
+}
+
+/**
+ * {@link Bar#f<caret>} 
+ */
+interface Bar<T> extends Foo<T> {
+    void foo(T t);
+}"""
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'foo', 'finalize'
+  }
 }

@@ -16,6 +16,7 @@
 package com.intellij.refactoring.chainCall;
 
 import com.intellij.codeInsight.intention.impl.InlineStreamMapAction;
+import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.ig.psiutils.StreamApiUtil;
@@ -53,23 +54,23 @@ public class StreamChainCallExtractor implements ChainCallExtractor {
     PsiType outType = StreamApiUtil.getStreamElementType(call.getType(), false);
     String methodName = Objects.requireNonNull(call.getMethodExpression().getReferenceName());
     if (methodName.startsWith("flatMap")) {
-      return Objects.requireNonNull(StreamApiUtil.getFlatMapOperationName(inType, outType));
+      return Objects.requireNonNull(StreamRefactoringUtil.getFlatMapOperationName(inType, outType));
     }
     if (methodName.startsWith("map")) {
-      return StreamApiUtil.getMapOperationName(inType, outType);
+      return StreamRefactoringUtil.getMapOperationName(inType, outType);
     }
     return methodName;
   }
 
   @Override
   public String getMethodName(PsiVariable variable, PsiExpression expression, PsiType expressionType) {
-    String shortcutMappingMethod = StreamApiUtil.getShortcutMappingMethod(variable, expressionType, expression);
+    String shortcutMappingMethod = StreamRefactoringUtil.getShortcutMappingMethod(variable, expressionType, expression);
     if(shortcutMappingMethod != null) return shortcutMappingMethod;
-    return StreamApiUtil.getMapOperationName(variable.getType(), expressionType);
+    return StreamRefactoringUtil.getMapOperationName(variable.getType(), expressionType);
   }
 
   @Override
   public String buildChainCall(PsiVariable variable, PsiExpression expression, PsiType expressionType) {
-    return StreamApiUtil.generateMapOperation(variable, expressionType, expression);
+    return StreamRefactoringUtil.generateMapOperation(variable, expressionType, expression);
   }
 }

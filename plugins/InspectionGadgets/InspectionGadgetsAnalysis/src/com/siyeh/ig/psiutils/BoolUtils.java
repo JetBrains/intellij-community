@@ -120,17 +120,24 @@ public class BoolUtils {
         return result.toString();
       }
       if(tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR)) {
-        String targetToken = tokenType.equals(JavaTokenType.ANDAND) ? "||" : "&&";
+        final String targetToken;
+        final boolean needParenthesis;
+        if (tokenType.equals(JavaTokenType.ANDAND)) {
+          targetToken = "||";
+          needParenthesis = ParenthesesUtils.OR_PRECEDENCE > precedence;
+        }
+        else {
+          targetToken = "&&";
+          needParenthesis = ParenthesesUtils.AND_PRECEDENCE > precedence;
+        }
         Function<PsiElement, String> replacer = child -> {
           if (child instanceof PsiExpression) {
             return getNegatedExpressionText((PsiExpression)child);
           }
-          if (child instanceof PsiJavaToken && ((PsiJavaToken)child).getTokenType().equals(tokenType)) {
-            return targetToken;
-          }
-          return child.getText();
+          return child instanceof PsiJavaToken ? targetToken : child.getText();
         };
-        return StringUtil.join(polyadicExpression.getChildren(), replacer, "");
+        final String join = StringUtil.join(polyadicExpression.getChildren(), replacer, "");
+        return needParenthesis ? '(' + join + ')' : join;
       }
     }
     return '!' + ParenthesesUtils.getText(expression, ParenthesesUtils.PREFIX_PRECEDENCE);

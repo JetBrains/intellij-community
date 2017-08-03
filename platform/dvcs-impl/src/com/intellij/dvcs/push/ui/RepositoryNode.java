@@ -85,7 +85,7 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
 
   @NotNull
   private String getRepoName(@NotNull ColoredTreeCellRenderer renderer, int maxWidth) {
-    String name = myRepositoryPanel.getRepositoryName();
+    String name = getRepositoryName();
     return GraphicsUtil.stringWidth(name, renderer.getFont()) > maxWidth - UIUtil.DEFAULT_HGAP ? name + "  " : name;
   }
 
@@ -139,5 +139,10 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
 
   public boolean isLoading() {
     return myLoading.get();
+  }
+
+  @NotNull
+  String getRepositoryName() {
+    return myRepositoryPanel.getRepositoryName();
   }
 }

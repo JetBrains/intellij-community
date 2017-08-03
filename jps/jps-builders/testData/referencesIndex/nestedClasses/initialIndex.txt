@@ -4,17 +4,12 @@ java.lang.Object -> Boo Boo$Baz Foo Foo$Bar
 Backward References:
 Boo in Foo occurrences = 1
 Boo$Baz in Foo occurrences = 1
-Boo$Baz.<init>(0) in Foo occurrences = 1
 Boo$Baz.m(0) in Foo occurrences = 1
-Boo.<init>(0) in Foo occurrences = 1
 Boo.m(0) in Foo occurrences = 1
 Foo in Foo occurrences = 1
 Foo$Bar in Foo occurrences = 1
-Foo$Bar.<init>(0) in Foo occurrences = 1
 Foo$Bar.m(0) in Foo occurrences = 1
-Foo.<init>(0) in Foo occurrences = 1
 Foo.m(0) in Foo occurrences = 1
-java.lang.Object.<init>(0) in Foo occurrences = 4
 java.util.Collections in Foo occurrences = 5
 java.util.Collections.emptyList(0) in Foo occurrences = 1
 java.util.Collections.emptyMap(0) in Foo occurrences = 1

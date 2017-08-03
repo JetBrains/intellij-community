@@ -81,4 +81,9 @@ public class JpsMavenRepositoryLibraryDescriptor {
   public int hashCode() {
     return myMavenId != null ? myMavenId.hashCode() : 0;
   }
+
+  @Override
+  public String toString() {
+    return myMavenId != null ? myMavenId : "null";
+  }
 }

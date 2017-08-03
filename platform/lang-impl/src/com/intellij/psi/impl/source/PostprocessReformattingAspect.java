@@ -40,6 +40,7 @@ import com.intellij.pom.tree.events.ChangeInfo;
 import com.intellij.pom.tree.events.TreeChange;
 import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -344,16 +345,11 @@ public class PostprocessReformattingAspect implements PomModelAspect {
         toDispose.addAll(normalizedActions);
 
         // only in following loop real changes in document are made
+        final FileViewProvider viewProvider = key;
         for (final PostponedAction normalizedAction : normalizedActions) {
-          CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myPsiManager.getProject());
-          boolean old = settings.ENABLE_JAVADOC_FORMATTING;
-          settings.ENABLE_JAVADOC_FORMATTING = false;
-          try {
-            normalizedAction.execute(key);
-          }
-          finally {
-            settings.ENABLE_JAVADOC_FORMATTING = old;
-          }
+          CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myPsiManager.getProject());
+          codeStyleManager.runWithDocCommentFormattingDisabled(
+            viewProvider.getPsi(viewProvider.getBaseLanguage()), () -> normalizedAction.execute(viewProvider));
         }
       }
     }

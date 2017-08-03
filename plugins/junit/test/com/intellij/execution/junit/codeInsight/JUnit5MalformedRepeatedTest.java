@@ -32,15 +32,23 @@ public class JUnit5MalformedRepeatedTest extends LightInspectionTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     addEnvironmentClass("package org.junit.jupiter.api;\n" +
-                        "public @interface RepeatedTest {int value(); }");
+                        "public @interface RepeatedTest {int value(); String name() default \"\";}");
     addEnvironmentClass("package org.junit.jupiter.api;\n" +
                         "public @interface Test {}");
+    addEnvironmentClass("package org.junit.jupiter.api;\n" +
+                        "public @interface AfterEach {}");
     addEnvironmentClass("package org.junit.jupiter.api;\n" +
                         "public @interface BeforeAll {}");
     addEnvironmentClass("package org.junit.jupiter.api;\n" +
                         "public @interface BeforeEach {}");
     addEnvironmentClass("package org.junit.jupiter.api;\n" +
                         "public interface RepetitionInfo {}");
+    addEnvironmentClass("package org.junit.jupiter.api;\n" +
+                        "public interface TestInfo {}");
+    addEnvironmentClass("package org.junit.jupiter.api;\n" +
+                        "public interface TestReporter {}");
+    addEnvironmentClass("package org.junit.jupiter.api;\n" +
+                        "public @interface ParameterizedTest {}");
   }
 
   public void testMalformed() { doTest(); }

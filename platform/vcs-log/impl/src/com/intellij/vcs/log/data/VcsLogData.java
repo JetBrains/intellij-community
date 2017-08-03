@@ -36,6 +36,7 @@ import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.VcsLogCachesInvalidator;
+import com.intellij.vcs.log.impl.VcsLogSharedSettings;
 import com.intellij.vcs.log.util.PersistentUtil;
 import com.intellij.vcs.log.util.StopWatch;
 import org.jetbrains.annotations.NotNull;
@@ -97,7 +98,12 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     VcsLogCachesInvalidator invalidator = CachesInvalidator.EP_NAME.findExtension(VcsLogCachesInvalidator.class);
     if (invalidator.isValid()) {
       myStorage = createStorage();
-      myIndex = new VcsLogPersistentIndex(myProject, myStorage, progress, logProviders, myFatalErrorsConsumer, this);
+      if (VcsLogSharedSettings.isIndexSwitchedOn(myProject)) {
+        myIndex = new VcsLogPersistentIndex(myProject, myStorage, progress, logProviders, myFatalErrorsConsumer, this);
+      } else {
+        LOG.info("Vcs log index is turned off for project " + myProject.getName());
+        myIndex = new EmptyIndex();
+      }
     }
     else {
       // this is not recoverable

@@ -33,13 +33,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.util.DetailViewImpl;
 import com.intellij.ui.popup.util.ItemWrapper;
 import com.intellij.ui.popup.util.MasterDetailPopupBuilder;
 import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -312,7 +312,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     @Override
     protected Editor createEditor(@Nullable Project project, Document document, VirtualFile file) {
       Editor editor = super.createEditor(project, document, file);
-      editor.setBorder(IdeBorderFactory.createEmptyBorder());
+      editor.setBorder(JBUI.Borders.empty());
       return editor;
     }
   }
