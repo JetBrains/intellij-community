@@ -34,16 +34,19 @@ public class TestTextFieldAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent event) {
-    if (frame != null) {
+    if (frame != null && frame.isVisible()) {
       frame.dispose();
       frame = null;
     }
     else {
-      frame = new JFrame("Test Text Fields");
-      frame.add(new View());
-      frame.pack();
-      frame.setLocationRelativeTo(null);
+      if (frame == null) {
+        frame = new JFrame("Test Text Fields");
+        frame.add(new View());
+        frame.pack();
+        frame.setLocationRelativeTo(null);
+      }
       frame.setVisible(true);
+      frame.toFront();
     }
   }
 
