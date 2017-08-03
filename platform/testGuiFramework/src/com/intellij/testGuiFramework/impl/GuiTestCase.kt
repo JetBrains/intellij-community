@@ -83,11 +83,6 @@ import javax.swing.text.JTextComponent
  */
 open class GuiTestCase : GuiTestBase() {
 
-  @After
-  fun closeProjects(){
-    closeAllProjects()
-  }
-
   class GuiSettings internal constructor() {
 
     init {
