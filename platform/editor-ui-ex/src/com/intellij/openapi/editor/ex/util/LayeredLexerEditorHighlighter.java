@@ -275,6 +275,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       if (endIndex < mySegmentCount) {
         System.arraycopy(array, endIndex, array, startIndex, mySegmentCount - endIndex);
       }
+      Arrays.fill(array, mySegmentCount - (endIndex - startIndex), mySegmentCount, null);
       return array;
     }
 
