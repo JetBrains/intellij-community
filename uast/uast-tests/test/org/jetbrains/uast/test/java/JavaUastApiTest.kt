@@ -52,4 +52,13 @@ class JavaUastApiTest : AbstractJavaUastTest() {
             UsefulTestCase.assertInstanceOf(literal.toUElement(), ULiteralExpression::class.java)
         }
     }
+
+    @Test fun testFunctionalInterfaceType() {
+        doTest("Simple/FunctionalInterfaceType.java") { name, file ->
+            val lambda = file.findElementByText<ULambdaExpression>("() -> { }")
+            assertEquals(
+                    lambda.functionalInterfaceType?.canonicalText,
+                    "java.lang.Runnable")
+        }
+    }
 }
