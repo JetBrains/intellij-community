@@ -179,7 +179,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       withResourceFromModule("android","lib/juniversalchardet-1.0.3.jar", "lib")
 
       withResourceFromModule("android","lib/androidWidgets", "lib/androidWidgets")
-      withResourceFromModule("android","device-art-resources", "lib/device-art-resources")
+      withResourceFromModule("artwork","resources/device-art-resources", "lib/device-art-resources")
       withResourceFromModule("android","lib/sampleData", "lib/sampleData")
       withResourceArchiveFromModule("android", "annotations", "lib/androidAnnotations.jar")
 
