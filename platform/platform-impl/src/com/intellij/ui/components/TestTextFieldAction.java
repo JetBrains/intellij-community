@@ -25,6 +25,8 @@ import com.intellij.ui.components.panels.HorizontalLayout;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class TestTextFieldAction extends DumbAwareAction {
@@ -69,84 +71,82 @@ public class TestTextFieldAction extends DumbAwareAction {
         }
       }
     };
-    private final JTextField normal = new JBTextField();
-    private final JTextField search = new SearchTextField(false).getTextEditor();
-    private final JTextField history = new SearchTextField(true).getTextEditor();
-    private final JTextField expand = new ExpandableTextField();
-    private final JTextField extend = new ExtendableTextField() {{
-      setExtensions(
-        new Extension() {
-          @Override
-          public Icon getIcon(boolean hovered) {
-            return AllIcons.General.GearPlain;
-          }
+    private final List<JTextField> fields = Arrays.asList(
+      new JBTextField(),
+      new SearchTextField(false).getTextEditor(),
+      new SearchTextField(true).getTextEditor(),
+      new ExpandableTextField(),
+      new ExtendableTextField() {{
+        setExtensions(
+          new Extension() {
+            @Override
+            public Icon getIcon(boolean hovered) {
+              return AllIcons.General.GearPlain;
+            }
 
-          @Override
-          public String getTooltip() {
-            return "Settings";
-          }
+            @Override
+            public String getTooltip() {
+              return "Settings";
+            }
 
-          @Override
-          public boolean isIconBeforeText() {
-            return true;
-          }
-        },
-        new Extension() {
-          @Override
-          public Icon getIcon(boolean hovered) {
-            return hovered ? AllIcons.General.LocateHover : AllIcons.General.Locate;
-          }
+            @Override
+            public boolean isIconBeforeText() {
+              return true;
+            }
+          },
+          new Extension() {
+            @Override
+            public Icon getIcon(boolean hovered) {
+              return hovered ? AllIcons.General.LocateHover : AllIcons.General.Locate;
+            }
 
-          @Override
-          public String getTooltip() {
-            return "Locate";
-          }
+            @Override
+            public String getTooltip() {
+              return "Locate";
+            }
 
-          @Override
-          public boolean isIconBeforeText() {
-            return true;
-          }
+            @Override
+            public boolean isIconBeforeText() {
+              return true;
+            }
 
-          @Override
-          public Runnable getActionOnClick() {
-            return null;
-          }
-        },
-        new Extension() {
-          @Override
-          public Icon getIcon(boolean hovered) {
-            return AllIcons.Actions.ForceRefresh;
-          }
+            @Override
+            public Runnable getActionOnClick() {
+              return null;
+            }
+          },
+          new Extension() {
+            @Override
+            public Icon getIcon(boolean hovered) {
+              return AllIcons.Actions.ForceRefresh;
+            }
 
-          @Override
-          public String getTooltip() {
-            return "Refresh";
-          }
-        },
-        new Extension() {
-          @Override
-          public Icon getIcon(boolean hovered) {
-            if (null == getActionOnClick()) return null;
-            return hovered ? AllIcons.Actions.Clean : AllIcons.Actions.CleanLight;
-          }
+            @Override
+            public String getTooltip() {
+              return "Refresh";
+            }
+          },
+          new Extension() {
+            @Override
+            public Icon getIcon(boolean hovered) {
+              if (null == getActionOnClick()) return null;
+              return hovered ? AllIcons.Actions.Clean : AllIcons.Actions.CleanLight;
+            }
 
-          @Override
-          public String getTooltip() {
-            return "Clear";
-          }
+            @Override
+            public String getTooltip() {
+              return "Clear";
+            }
 
-          @Override
-          public Runnable getActionOnClick() {
-            return getText().isEmpty() ? null : () -> setText(null);
-          }
-        });
-    }};
+            @Override
+            public Runnable getActionOnClick() {
+              return getText().isEmpty() ? null : () -> setText(null);
+            }
+          });
+      }});
 
     private View() {
       super(new BorderLayout(10, 10));
-      normal.setColumns(20);
-      search.setColumns(20);
-      history.setColumns(20);
       setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
       add(BorderLayout.NORTH, control);
       add(BorderLayout.CENTER, center);
@@ -198,11 +198,7 @@ public class TestTextFieldAction extends DumbAwareAction {
     }
 
     private void update(Consumer<JTextField> consumer) {
-      consumer.accept(normal);
-      consumer.accept(search);
-      consumer.accept(history);
-      consumer.accept(expand);
-      consumer.accept(extend);
+      fields.forEach(consumer);
       center.revalidate();
       center.repaint();
     }
