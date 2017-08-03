@@ -18,30 +18,32 @@ package com.intellij.testGuiFramework.fixtures
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.JBTerminalPanel
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
+import com.jediterm.terminal.model.TerminalTextBuffer
 import org.fest.swing.core.Robot
 
 class TerminalFixture(project: Project, robot: Robot): ToolWindowFixture("Terminal", project, robot) {
 
   private val myJBTerminalPanel: JBTerminalPanel
+  private val terminalTextBuffer: TerminalTextBuffer
 
   init {
     val content = this.getContent("") ?: throw Exception("Unable to get content of terminal tool window")
     myJBTerminalPanel = myRobot.finder().find(content.component) { component -> component is JBTerminalPanel } as JBTerminalPanel
-
+    terminalTextBuffer = myJBTerminalPanel.terminalTextBuffer
   }
 
   fun getScreenLines(): String {
-    return myJBTerminalPanel.terminalTextBuffer.screenLines
+    return terminalTextBuffer.screenLines
   }
 
   fun getLastLine(): String {
-    val lastLineIndex = myJBTerminalPanel.terminalTextBuffer.height - 1
-    return myJBTerminalPanel.terminalTextBuffer.getLine(lastLineIndex).text
+    val lastLineIndex = terminalTextBuffer.height - 1
+    return terminalTextBuffer.getLine(lastLineIndex).text
   }
 
   fun waitUntilTextAppeared(text: String, timeoutInSeconds: Int = 60) {
     waitUntil(condition = "'$text' appeared in terminal", timeoutInSeconds = timeoutInSeconds) {
-      myJBTerminalPanel.terminalTextBuffer.screenLines.contains(text)
+      terminalTextBuffer.screenLines.contains(text)
     }
   }
 
