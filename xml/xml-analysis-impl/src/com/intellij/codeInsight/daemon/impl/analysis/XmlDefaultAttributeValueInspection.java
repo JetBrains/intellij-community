@@ -44,7 +44,7 @@ public class XmlDefaultAttributeValueInspection extends XmlSuppressableInspectio
         if (!(parent instanceof XmlAttribute)) {
           return;
         }
-        if (parent.getParent() instanceof HtmlTag && "input".equals(((HtmlTag)parent.getParent()).getName())) return;
+        if (parent.getParent() instanceof HtmlTag) return;
         XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
         if (descriptor == null) {
           return;
