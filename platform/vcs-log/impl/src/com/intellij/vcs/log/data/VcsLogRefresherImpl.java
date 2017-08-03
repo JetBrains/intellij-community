@@ -143,8 +143,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
 
   @NotNull
   private Map<VirtualFile, VcsLogProvider> getProvidersForRoots(@NotNull Set<VirtualFile> roots) {
-    return ContainerUtil.map2Map(roots,
-                                 root -> Pair.create(root, myProviders.get(root)));
+    return ContainerUtil.map2Map(roots, root -> Pair.create(root, myProviders.get(root)));
   }
 
   @Override
