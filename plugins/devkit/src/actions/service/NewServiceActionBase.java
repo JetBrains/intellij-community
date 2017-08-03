@@ -78,7 +78,7 @@ public abstract class NewServiceActionBase extends CreateInDirectoryActionBase i
     PsiDirectory dir = view.getOrChooseDirectory();
     if (dir == null) return;
 
-    ServiceCreator serviceCreator = new ServiceCreator(dir, getInterfaceTemplateName(), getOnlyImplementationTemplateName());
+    ServiceCreator serviceCreator = new ServiceCreator(dir, getInterfaceTemplateName(), getOnlyImplementationTemplateName(), getTagName());
     PsiClass[] createdClasses = invokeDialog(project, serviceCreator, dir);
     if (createdClasses == null) {
       return;
@@ -219,19 +219,24 @@ public abstract class NewServiceActionBase extends CreateInDirectoryActionBase i
   }
 
 
-  private class ServiceCreator {
+  static class ServiceCreator { // not private for testing purpose only
     private final Logger LOG = Logger.getInstance("#" + ServiceCreator.class.getCanonicalName());
 
     private final PsiDirectory myDirectory;
     private final String myServiceInterfaceTemplateName;
     private final String myServiceOnlyImplementationTemplateName;
+    private final String myTagName;
 
     private PsiClass[] createdClasses = null;
 
-    ServiceCreator(PsiDirectory directory, String serviceInterfaceTemplateName, String serviceOnlyImplementationTemplateName) {
+    ServiceCreator(PsiDirectory directory,
+                   String serviceInterfaceTemplateName,
+                   String serviceOnlyImplementationTemplateName,
+                   String tagName) {
       myDirectory = directory;
       this.myServiceInterfaceTemplateName = serviceInterfaceTemplateName;
       this.myServiceOnlyImplementationTemplateName = serviceOnlyImplementationTemplateName;
+      this.myTagName = tagName;
     }
 
     PsiClass[] getCreatedClasses() {
@@ -313,7 +318,7 @@ public abstract class NewServiceActionBase extends CreateInDirectoryActionBase i
         .findAny()
         .orElseGet(() -> ideaPlugin.addExtensions());
 
-      XmlTag serviceTag = targetExtensions.addExtension(Extensions.DEFAULT_PREFIX + "." + getTagName()).getXmlTag();
+      XmlTag serviceTag = targetExtensions.addExtension(Extensions.DEFAULT_PREFIX + "." + myTagName).getXmlTag();
       if (createdInterface != null) {
         serviceTag.setAttribute("serviceInterface", createdInterface.getQualifiedName());
       }
