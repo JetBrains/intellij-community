@@ -226,6 +226,7 @@ public class ExecutionPointHighlighter {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
     // need to always invoke later to maintain order of increment/decrement
+    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
       JComponent component = editor.getComponent();
       Object o = component.getClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING);
