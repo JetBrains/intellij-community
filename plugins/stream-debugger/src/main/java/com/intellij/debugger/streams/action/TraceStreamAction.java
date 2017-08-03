@@ -53,7 +53,7 @@ public class TraceStreamAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(TraceStreamAction.class);
 
   private final DebuggerPositionResolver myPositionResolver = new DebuggerPositionResolverImpl();
-  private final List<StreamChainBuilder> myBuilders = Arrays.asList(new JavaStreamChainBuilder(new StreamChainTransformerImpl()),
+  private final List<StreamChainBuilder> myBuilders = Arrays.asList(new JavaStreamChainBuilder(new JavaChainTransformerImpl()),
                                                                     new KotlinJavaStreamChainBuilder());
 
   @Override

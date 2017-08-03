@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.streams.psi.impl;
 
-import com.intellij.debugger.streams.psi.StreamChainTransformer;
+import com.intellij.debugger.streams.psi.ChainTransformer;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericTypeUtil;
 import com.intellij.debugger.streams.wrapper.*;
@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 /**
  * @author Vitaliy.Bibaev
  */
-public class StreamChainTransformerImpl implements StreamChainTransformer {
+public class JavaChainTransformerImpl implements ChainTransformer.Java {
   @NotNull
   @Override
   public StreamChain transform(@NotNull List<PsiMethodCallExpression> streamExpressions, @NotNull PsiElement context) {

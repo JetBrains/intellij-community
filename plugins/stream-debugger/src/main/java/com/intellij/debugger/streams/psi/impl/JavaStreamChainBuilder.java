@@ -15,13 +15,12 @@
  */
 package com.intellij.debugger.streams.psi.impl;
 
+import com.intellij.debugger.streams.psi.ChainTransformer;
 import com.intellij.debugger.streams.psi.PsiUtil;
 import com.intellij.debugger.streams.psi.StreamApiUtil;
-import com.intellij.debugger.streams.psi.StreamChainTransformer;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,9 +34,9 @@ import java.util.stream.Collectors;
 public class JavaStreamChainBuilder implements StreamChainBuilder {
   private static final MyStreamChainExistenceChecker myExistenceChecker = new MyStreamChainExistenceChecker();
 
-  private final StreamChainTransformer myChainTransformer;
+  private final ChainTransformer.Java myChainTransformer;
 
-  public JavaStreamChainBuilder(@NotNull StreamChainTransformer transformer) {
+  public JavaStreamChainBuilder(@NotNull ChainTransformer.Java transformer) {
     myChainTransformer = transformer;
   }
 
