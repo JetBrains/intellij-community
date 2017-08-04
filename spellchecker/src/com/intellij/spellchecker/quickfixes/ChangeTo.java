@@ -61,8 +61,10 @@ public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
     }
 
     TextRange textRange = ((ProblemDescriptorBase)descriptor).getTextRange();
-    editor.getSelectionModel().setSelection(textRange.getStartOffset(), textRange.getEndOffset());
-
+    final int documentLength = editor.getDocument().getTextLength();
+    final int textEndOffset = textRange.getEndOffset();
+    final int endOffset = textEndOffset <= documentLength ? textEndOffset : documentLength;
+    editor.getSelectionModel().setSelection(textRange.getStartOffset(), endOffset);
     String word = editor.getSelectionModel().getSelectedText();
 
     if (word == null || StringUtil.isEmpty(word)) {
