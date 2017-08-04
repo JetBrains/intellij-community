@@ -153,7 +153,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   @Nullable
   private BlockTreeBuilder myBlockTreeBuilder;
   @Nullable
-  private PsiViewerStubTreeBuilder myPsiViewerStubTreeBuilder;
+  private PsiViewerStubTreeBuilder myStubTreeBuilder;
   private RangeHighlighter myHighlighter;
   private HashMap<PsiElement, BlockTreeNode> myPsiToBlockMap;
 
@@ -351,6 +351,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     });
 
     initTree(myBlockTree);
+    initTree(myStubTree);
 
     myEditor.getSettings().setFoldingOutlineShown(false);
     myEditor.getDocument().addDocumentListener(myEditorListener);
@@ -373,8 +374,8 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     List<PsiViewerSourceWrapper> fileTypeBasedWrappers = PsiViewerSourceWrapper.getFileTypeBasedWrappers();
     for (PsiViewerSourceWrapper wrapper : fileTypeBasedWrappers) {
       mySourceWrappers.addAll(fileTypeBasedWrappers);
-      if (lastUsed == null && wrapper.getText().equals(type)) lastUsed = wrapper;
-      if (curLanguage != null && wrapper.myFileType == curLanguage.getAssociatedFileType()) {
+      if (lastUsed == null && wrapper.getText().equals(type) ||
+          curLanguage != null && wrapper.myFileType == curLanguage.getAssociatedFileType()) {
         lastUsed = wrapper;
       }
     }
@@ -743,14 +744,14 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       return;
     }
     Stub stub = buildStubForElement(myProject, rootElement, textToParse);
-    
+
     if (stub instanceof StubElement) {
       final StubTreeNode rootNode = new StubTreeNode((StubElement)stub, null);
       final StubTreeStructure treeStructure = new StubTreeStructure(rootNode);
-      myPsiViewerStubTreeBuilder = new PsiViewerStubTreeBuilder(myStubTree, treeStructure);
+      myStubTreeBuilder = new PsiViewerStubTreeBuilder(myStubTree, treeStructure);
       myStubTree.setRootVisible(true);
       myStubTree.expandRow(0);
-      myPsiViewerStubTreeBuilder.queueUpdate();
+      myStubTreeBuilder.queueUpdate();
     }
     else {
       myStubTree.setRootVisible(false);
@@ -968,14 +969,17 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
               myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
             }
           }
-          if (myBlockTreeBuilder != null && myPsiTree.hasFocus()) {
-            BlockTreeNode currentBlockNode = findBlockNode(element);
-            if (currentBlockNode != null) {
-              selectBlockNode(currentBlockNode);
+
+          if (myPsiTree.hasFocus()) {
+            if (myBlockTreeBuilder != null) {
+              BlockTreeNode currentBlockNode = findBlockNode(element);
+              if (currentBlockNode != null) {
+                selectBlockNode(currentBlockNode);
+              }
             }
-          }
-          if (myPsiViewerStubTreeBuilder != null) {
-            selectStubNode(element);
+            if (myStubTreeBuilder != null) {
+              selectStubNode(element);
+            }
           }
           updateReferences(element);
         }
@@ -1016,12 +1020,12 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   }
 
   private void selectStubNode(@Nullable PsiElement element) {
-    if (myPsiViewerStubTreeBuilder == null || element == null) return;
+    if (myStubTreeBuilder == null || element == null) return;
     final PsiFile file = element.getContainingFile();
     if (!(file instanceof PsiFileWithStubSupport)) return;
 
     final PsiFileWithStubSupport stubFile = (PsiFileWithStubSupport)file;
-    final StubTreeNode rootNode = (StubTreeNode)myPsiViewerStubTreeBuilder.getRootElement();
+    final StubTreeNode rootNode = (StubTreeNode)myStubTreeBuilder.getRootElement();
     if (rootNode == null) return;
 
     final StubElement<?> stub = rootNode.getStub();
@@ -1030,7 +1034,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     final StubTree stubTree = new StubTree((PsiFileStub)stub);
     final TextRange elementTextRange = element.getTextRange();
 
-    myPsiViewerStubTreeBuilder.select(StubTreeNode.class, new TreeVisitor<StubTreeNode>() {
+    myStubTreeBuilder.select(StubTreeNode.class, new TreeVisitor<StubTreeNode>() {
       @Override
       public boolean visit(@NotNull StubTreeNode node) {
         final ASTNode stub = stubFile.findTreeForStub(stubTree, node.getStub());
@@ -1151,8 +1155,8 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     if (!myEditor.isDisposed()) {
       EditorFactory.getInstance().releaseEditor(myEditor);
     }
-    if (myPsiViewerStubTreeBuilder != null) {
-      Disposer.dispose(myPsiViewerStubTreeBuilder);
+    if (myStubTreeBuilder != null) {
+      Disposer.dispose(myStubTreeBuilder);
     }
     super.dispose();
   }
