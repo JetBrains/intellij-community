@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.resolve;
 
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.project.Project;
@@ -28,6 +29,7 @@ import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.completion.PyClassInsertHandler;
 import com.jetbrains.python.codeInsight.completion.PyFunctionInsertHandler;
+import com.jetbrains.python.codeInsight.completion.PythonCompletionWeigher;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
@@ -73,7 +75,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
   }
 
   @NotNull
-  private LookupElementBuilder setupItem(@NotNull LookupElementBuilder item) {
+  private LookupElement setupItem(@NotNull LookupElementBuilder item) {
     final PsiElement element = item.getPsiElement();
     if (!myPlainNamesOnly) {
       if (!mySuppressParentheses &&
@@ -124,6 +126,15 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
     if (source != null) {
       item = item.withTypeText(source);
     }
+
+    final PsiElement parent = myContext != null ? myContext.getParent() : null;
+    if (parent instanceof PyKeywordArgument) {
+      final String keyword = ((PyKeywordArgument)parent).getKeyword();
+      if (item.getLookupString().equals(keyword)) {
+        return PrioritizedLookupElement.withPriority(item, PythonCompletionWeigher.WEIGHT_DELTA);
+      }
+    }
+
     return item;
   }
 
