@@ -94,7 +94,6 @@ public class Xsd2InstanceUtils {
         SchemaTypeSystem sts = null;
         if (schemas.length > 0)
         {
-            Collection errors = new ArrayList();
             XmlOptions compileOptions = new XmlOptions();
             if (dl)
                 compileOptions.setCompileDownloadUrls();
@@ -105,10 +104,12 @@ public class Xsd2InstanceUtils {
 
           try {
             sts = XmlBeans.compileXsd(schemas, XmlBeans.getBuiltinTypeSystem(), compileOptions);
-          } catch (XmlException e) {
-              String out = "Schema compilation errors: ";
-              for (Object error : errors) out += "\n" + error;
-              throw new IllegalArgumentException(out);
+          }
+          catch (XmlException e) {
+            StringBuilder out = new StringBuilder("Schema compilation errors: ");
+            Collection errors = e.getErrors();
+            for (Object error : errors) out.append("\n").append(error);
+              throw new IllegalArgumentException(out.toString());
           }
         }
 

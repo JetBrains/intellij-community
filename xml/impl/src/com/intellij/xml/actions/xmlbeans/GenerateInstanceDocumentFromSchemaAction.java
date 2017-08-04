@@ -69,7 +69,7 @@ public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
     dialog.show();
   }
 
-  private static void doAction(final Project project, final GenerateInstanceDocumentFromSchemaDialog dialog) {
+  public static void doAction(final Project project, final GenerateInstanceDocumentFromSchemaDialog dialog) {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     @NonNls List<String> parameters = new LinkedList<>();
