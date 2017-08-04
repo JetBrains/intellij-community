@@ -1046,19 +1046,6 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       }
       return false;
     }).collect(Collectors.toList());
-/*    List<JBPopup> childPopupList = Collections.emptyList();
-
-    for (JBPopup jbPopup : AbstractPopup.all) {
-      boolean itIsAChild = false;
-      Component owner = jbPopup.getOwner();
-      while (owner != null) {
-        if (owner.equals(component)) {
-          childPopupList.add(jbPopup);
-        }
-        owner = owner.getParent();
-      }
-    }
-    return childPopupList;*/
   }
 
   @Override

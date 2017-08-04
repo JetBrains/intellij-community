@@ -1400,8 +1400,26 @@ public class AbstractPopup implements JBPopup {
     myMouseOutCanceller = null;
 
     if (myFinalRunnable != null) {
-      ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(myFinalRunnable);
-      myFinalRunnable = null;
+      final ActionCallback typeAheadDone = new ActionCallback();
+      IdeFocusManager.getInstance(myProject).typeAheadUntil(typeAheadDone);
+
+      ModalityState modalityState = ModalityState.current();
+      Runnable finalRunnable = myFinalRunnable;
+
+      getFocusManager().doWhenFocusSettlesDown(() -> {
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(() -> {
+          if (ModalityState.current().equals(modalityState)) {
+            ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(finalRunnable);
+          }
+          // Otherwise the UI has changed unexpectedly and the action is likely not applicable.
+          // And we don't want finalRunnable to perform potentially destructive actions
+          //   in the context of a suddenly appeared modal dialog.
+        });
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(typeAheadDone.createSetDoneRunnable());
+        myFinalRunnable = null;
+      });
     }
 
     if (LOG.isDebugEnabled()) {

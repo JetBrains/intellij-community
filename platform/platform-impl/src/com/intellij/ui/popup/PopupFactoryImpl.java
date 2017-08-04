@@ -1029,15 +1029,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
       }
       return false;
     }).collect(Collectors.toList());
-
-    /*Window[] windows = SwingUtilities.windowForComponent(component).getOwnedWindows();
-    for (Window w : windows) {
-      if (w.isFocused() *//*&& w.getClass().getName().contains("Popup")*//* && w instanceof JBPopup) {
-        //return UIUtil.uiTraverser(w).filter(c -> c.getClass().getName().contains("Popup")).toList();
-        System.err.println("");
-      }
-    }
-    return UIUtil.uiTraverser(component).filter(JBPopup.class).toList();*/
   }
 
   @Override
