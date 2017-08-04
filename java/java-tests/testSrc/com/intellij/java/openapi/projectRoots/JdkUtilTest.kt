@@ -64,7 +64,6 @@ class JdkUtilTest : BareTestFixtureTestCase() {
   }
 
   @Test fun noDynamicClasspathInJarMode() {
-    parameters.setUseDynamicClasspath(false)
     parameters.mainClass = null
     parameters.jarPath = "/classes/main.jar"
     doTest("-Xmx256m", "-Dan.option=1", "-classpath", "/classes/hello.jar", "-jar", "/classes/main.jar", "hello")
