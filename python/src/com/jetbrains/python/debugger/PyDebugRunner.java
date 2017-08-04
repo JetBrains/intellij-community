@@ -131,8 +131,18 @@ public class PyDebugRunner extends GenericProgramRunner {
     final ServerSocket serverSocket = PythonCommandLineState.createServerSocket();
     final int serverLocalPort = serverSocket.getLocalPort();
     RunProfile profile = environment.getRunProfile();
+    CommandLinePatcher[] patchers = createCommandLinePatchers(environment.getProject(), pyState, profile, serverLocalPort);
+
+    return createSessionHelper(environment, pyState, serverSocket, patchers);
+  }
+
+  @NotNull
+  protected XDebugSession createSessionHelper(@NotNull ExecutionEnvironment environment,
+                                      PythonCommandLineState pyState,
+                                      ServerSocket serverSocket,
+                                      CommandLinePatcher[] patchers) throws ExecutionException {
     final ExecutionResult result =
-      pyState.execute(environment.getExecutor(), createCommandLinePatchers(environment.getProject(), pyState, profile, serverLocalPort));
+      pyState.execute(environment.getExecutor(), patchers);
 
     return XDebuggerManager.getInstance(environment.getProject()).
       startSession(environment, new XDebugProcessStarter() {
