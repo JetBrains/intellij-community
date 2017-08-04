@@ -102,7 +102,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
           }
         });
       }
-    }, "", true, project)) {
+    }, "Searching for Overriding Methods", true, project)) {
       return;
     }
 
