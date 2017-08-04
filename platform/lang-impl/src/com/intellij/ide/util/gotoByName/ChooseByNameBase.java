@@ -75,6 +75,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -983,6 +984,9 @@ public abstract class ChooseByNameBase {
 
     Object[] oldElements = myListModel.getItems().toArray();
     Object[] newElements = elements.toArray();
+    if (ArrayUtil.contains(null, newElements)) {
+      LOG.error("Null after filtering elements by " + this);
+    }
     List<ModelDiff.Cmd> commands = ModelDiff.createDiffCmds(myListModel, oldElements, newElements);
 
     myTextField.setForeground(UIUtil.getTextFieldForeground());
@@ -1451,6 +1455,10 @@ public abstract class ChooseByNameBase {
         indicator,
         o -> {
           if (indicator.isCanceled()) return false;
+          if (o == null) {
+            LOG.error("Null returned from " + myProvider + " with " + myModel + " in " + ChooseByNameBase.this);
+            return true;
+          }
           elements.add(o);
 
           if (isOverflow(elements)) {
