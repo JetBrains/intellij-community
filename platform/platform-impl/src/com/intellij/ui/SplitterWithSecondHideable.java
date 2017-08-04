@@ -156,7 +156,12 @@ public abstract class SplitterWithSecondHideable {
 
       @Override
       protected void handle(MouseEvent event) {
-        ((MyDivider)myDivider).processMouseEvent(event);
+        if (event.getID() == MouseEvent.MOUSE_DRAGGED || event.getID() == MouseEvent.MOUSE_MOVED) {
+          ((MyDivider)myDivider).processMouseMotionEvent(event);
+        }
+        else {
+          ((MyDivider)myDivider).processMouseEvent(event);
+        }
       }
     };
 
