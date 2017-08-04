@@ -50,7 +50,7 @@
                 </properties>
                 <border type="empty"/>
                 <children>
-                  <grid id="bb268" binding="myStructureTreePanel" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                  <grid id="bb268" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                     <margin top="0" left="0" bottom="0" right="0"/>
                     <constraints>
                       <splitpane position="left"/>
@@ -81,81 +81,13 @@
                       </component>
                     </children>
                   </grid>
-                  <splitpane id="93797" binding="myBlockRefSplitPane">
-                    <constraints>
-                      <splitpane position="right"/>
-                    </constraints>
-                    <properties>
-                      <continuousLayout value="true"/>
-                      <dividerLocation value="200"/>
-                      <enabled value="true"/>
-                    </properties>
-                    <border type="empty"/>
-                    <children>
-                      <grid id="47abd" binding="myReferencesPanel" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-                        <margin top="0" left="0" bottom="0" right="0"/>
-                        <constraints>
-                          <splitpane position="left"/>
-                        </constraints>
-                        <properties/>
-                        <border type="none"/>
-                        <children>
-                          <component id="128ee" class="com.intellij.ui.components.JBList" binding="myRefs" custom-create="true">
-                            <constraints>
-                              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-                            </constraints>
-                            <properties/>
-                          </component>
-                          <component id="287f6" class="com.intellij.ui.TitledSeparator" binding="myRefsSeparator">
-                            <constraints>
-                              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                            </constraints>
-                            <properties>
-                              <text value="&amp;References"/>
-                            </properties>
-                          </component>
-                        </children>
-                      </grid>
-                      <grid id="35049" binding="myBlockStructurePanel" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-                        <margin top="0" left="0" bottom="0" right="0"/>
-                        <constraints>
-                          <splitpane position="right"/>
-                        </constraints>
-                        <properties/>
-                        <border type="none"/>
-                        <children>
-                          <scrollpane id="690aa" class="com.intellij.ui.components.JBScrollPane">
-                            <constraints>
-                              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-                            </constraints>
-                            <properties/>
-                            <border type="none"/>
-                            <children>
-                              <component id="7dc8f" class="com.intellij.ui.treeStructure.Tree" binding="myBlockTree" custom-create="true">
-                                <constraints/>
-                                <properties/>
-                              </component>
-                            </children>
-                          </scrollpane>
-                          <component id="62949" class="com.intellij.ui.TitledSeparator" binding="myBlockTreeSeparator">
-                            <constraints>
-                              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                            </constraints>
-                            <properties>
-                              <text value="Bloc&amp;k Structure"/>
-                            </properties>
-                          </component>
-                        </children>
-                      </grid>
-                    </children>
-                  </splitpane>
                 </children>
               </splitpane>
             </children>
           </grid>
         </children>
       </splitpane>
-      <grid id="a4d7" layout-manager="GridLayoutManager" row-count="1" column-count="6" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="a4d7" layout-manager="GridLayoutManager" row-count="1" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="2" indent="0" use-parent-layout="false"/>
@@ -250,7 +182,7 @@
           </grid>
           <component id="aa136" class="javax.swing.JCheckBox" binding="myShowBlocksCheckBox">
             <constraints>
-              <grid row="0" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <label value="Show formatting blocks"/>
