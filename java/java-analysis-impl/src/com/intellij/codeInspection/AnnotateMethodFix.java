@@ -18,8 +18,10 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -38,7 +40,7 @@ import java.util.List;
 public class AnnotateMethodFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance(AnnotateMethodFix.class);
 
-  protected final String myAnnotation;
+  private final String myAnnotation;
   private final String[] myAnnotationsToRemove;
 
   public AnnotateMethodFix(@NotNull String fqn, @NotNull String... annotationsToRemove) {
@@ -87,15 +89,21 @@ public class AnnotateMethodFix implements LocalQuickFix {
     if (annotateSelf()) {
       toAnnotate.add(method);
     }
-    if (annotateOverriddenMethods()) {
+
+    if (annotateOverriddenMethods() && !ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       PsiMethod[] methods = OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY);
       for (PsiMethod psiMethod : methods) {
-        if (AnnotationUtil.isAnnotatingApplicable(psiMethod, myAnnotation) &&
-            !AnnotationUtil.isAnnotated(psiMethod, myAnnotation, false, false, true) &&
-            psiMethod.getManager().isInProject(psiMethod)) {
-          toAnnotate.add(psiMethod);
-        }
+        ReadAction.run(() -> {
+          if (psiMethod.isPhysical() &&
+              psiMethod.getManager().isInProject(psiMethod) &&
+              AnnotationUtil.isAnnotatingApplicable(psiMethod, myAnnotation) &&
+              !AnnotationUtil.isAnnotated(psiMethod, myAnnotation, false, false, true)) {
+            toAnnotate.add(psiMethod);
+          }
+        });
       }
+    }, "Searching for Overriding Methods", true, project)) {
+      return;
     }
 
     FileModificationService.getInstance().preparePsiElementsForWrite(toAnnotate);

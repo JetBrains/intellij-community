@@ -37,9 +37,9 @@ public class FileStatusColorsTableModel extends AbstractTableModel {
 
   private final static ColumnInfo[] COLUMNS_INFO = {
     new ColumnInfo(
-      String.class, ApplicationBundle.message("file.status.colors.header.status"), descriptor -> descriptor.getStatus().getText()),
+      Color.class, ApplicationBundle.message("file.status.colors.header.color"), descriptor -> descriptor.getColor()),
     new ColumnInfo(
-      Color.class, ApplicationBundle.message("file.status.colors.header.color"), descriptor -> descriptor.getColor())
+      String.class, ApplicationBundle.message("file.status.colors.header.status"), descriptor -> descriptor.getStatus().getText())
   };
 
   private static class ColumnInfo {

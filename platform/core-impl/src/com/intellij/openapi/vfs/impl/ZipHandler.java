@@ -139,6 +139,7 @@ public class ZipHandler extends ArchiveHandler {
 
   private void removeZipHandlerFromCache() {
     ourZipFileFileAccessorCache.remove(this);
+    clearCaches();
   }
 
   @NotNull
