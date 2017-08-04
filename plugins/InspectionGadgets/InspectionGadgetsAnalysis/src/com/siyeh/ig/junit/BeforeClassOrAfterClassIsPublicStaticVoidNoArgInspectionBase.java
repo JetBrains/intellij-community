@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -82,8 +83,10 @@ public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspectionBase extend
       }
 
       final PsiParameterList parameterList = method.getParameterList();
-      if (isJunit4Annotation(annotation) && (parameterList.getParametersCount() != 0 || !method.hasModifierProperty(PsiModifier.PUBLIC)) ||
-          !returnType.equals(PsiType.VOID) || !method.hasModifierProperty(PsiModifier.STATIC)) {
+      boolean junit4Annotation = isJunit4Annotation(annotation);
+      if (junit4Annotation && (parameterList.getParametersCount() != 0 || !method.hasModifierProperty(PsiModifier.PUBLIC)) ||
+          !returnType.equals(PsiType.VOID) || 
+          !method.hasModifierProperty(PsiModifier.STATIC) && (junit4Annotation || !TestUtils.testInstancePerClass(targetClass))) {
         registerMethodError(method, method, annotation);
       }
     }
