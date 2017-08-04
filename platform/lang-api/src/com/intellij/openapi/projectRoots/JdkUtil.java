@@ -178,7 +178,8 @@ public class JdkUtil {
         setArgFileParams(commandLine, javaParameters, vmParameters, dynamicVMOptions, dynamicParameters);
         dynamicMainClass = dynamicParameters;
       }
-      else if (!explicitClassPath(vmParameters) && (commandLineWrapper = getCommandLineWrapperClass()) != null) {
+      else if (!explicitClassPath(vmParameters) && javaParameters.getJarPath() == null
+               && (commandLineWrapper = getCommandLineWrapperClass()) != null) {
         if (canUseClasspathJar(javaParameters)) {
           setClasspathJarParams(commandLine, javaParameters, vmParameters, commandLineWrapper, dynamicVMOptions, dynamicParameters);
         }

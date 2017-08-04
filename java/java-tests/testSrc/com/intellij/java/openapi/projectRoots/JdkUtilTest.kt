@@ -70,6 +70,13 @@ class JdkUtilTest : BareTestFixtureTestCase() {
     doTest("-Xmx256m", "-Dan.option=1", "-classpath", "/classes/hello.jar", "-jar", "/classes/main.jar", "hello")
   }
 
+  @Test fun `do not use CommandLineWrapper for 'java -jar' command`() {
+    parameters.mainClass = null
+    parameters.classPath.clear()
+    parameters.jarPath = "/classes/main.jar"
+    doTest("-Xmx256m", "-Dan.option=1", "-jar", "/classes/main.jar", "hello")
+  }
+
   @Test fun dynamicClasspathWithJar() {
     parameters.isUseClasspathJar = true
     doTest("-Xmx256m", "-Dan.option=1", "-classpath", "#classpath.jar#", "hello.Main", "hello")
