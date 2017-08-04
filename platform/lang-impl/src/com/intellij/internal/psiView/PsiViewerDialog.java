@@ -454,7 +454,6 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     psiTreeStructure.setShowWhiteSpaces(settings.showWhiteSpaces);
     myShowTreeNodesCheckBox.setSelected(settings.showTreeNodes);
     psiTreeStructure.setShowTreeNodes(settings.showTreeNodes);
-    myBlockStructurePanel.setVisible(settings.showBlocks);
     myTextPanel.setLayout(new BorderLayout());
     myTextPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
 
@@ -1140,7 +1139,6 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     settings.dialect = myDialectComboBox.isVisible() && selectedDialect != null ? selectedDialect.toString() : "";
     settings.textDividerLocation = myTextSplit.getDividerLocation();
     settings.treeDividerLocation = myTreeSplit.getDividerLocation();
-    settings.showBlocks = myShowBlocksCheckBox.isSelected();
   }
 
   @Override
