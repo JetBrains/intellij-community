@@ -25,8 +25,8 @@ import com.intellij.ide.ui.laf.intellij.MacIntelliJIconCache;
 import com.intellij.ide.ui.laf.intellij.MacIntelliJTextFieldUI;
 import com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.actionSystem.impl.InplaceActionButtonLook;
 import com.intellij.openapi.editor.EditorCopyPasteHelper;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -371,7 +371,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
         return DataManager.getInstance().getDataContext(this);
       }
     };
-    button.setLook(new InplaceActionButtonLook());
+    button.setLook(ActionButtonLook.INPLACE_LOOK);
     button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     button.updateIcon();
     return button;

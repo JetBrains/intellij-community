@@ -133,7 +133,7 @@ public class ActionButtonWithText extends ActionButton {
                                                      SwingConstants.CENTER, horizontalTextAlignment(),
                                                      SwingConstants.CENTER, horizontalTextPosition(),
                                                      viewRect, iconRect, textRect, iconTextSpace());
-    ActionButtonLook look = ActionButtonLook.IDEA_LOOK;
+    ActionButtonLook look = ActionButtonLook.DEFAULT_LOOK;
     look.paintBackground(g, this);
     look.paintIconAt(g, this, icon, iconRect.x, iconRect.y);
     look.paintBorder(g, this);
