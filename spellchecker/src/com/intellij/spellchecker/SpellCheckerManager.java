@@ -22,11 +22,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
+import com.intellij.spellchecker.dictionary.AggregatedDictionary;
 import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.spellchecker.dictionary.Loader;
 import com.intellij.spellchecker.engine.SpellCheckerEngine;
@@ -34,6 +36,7 @@ import com.intellij.spellchecker.engine.SpellCheckerFactory;
 import com.intellij.spellchecker.engine.SuggestionProvider;
 import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import com.intellij.spellchecker.state.AggregatedDictionaryState;
+import com.intellij.spellchecker.util.SPFileUtil;
 import com.intellij.spellchecker.util.Strings;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,7 +47,6 @@ import java.io.InputStream;
 import java.util.*;
 
 import static com.intellij.openapi.util.io.FileUtil.isAncestor;
-import static com.intellij.spellchecker.util.SPFileUtil.processFilesRecursively;
 
 public class SpellCheckerManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.SpellCheckerManager");
@@ -54,7 +56,7 @@ public class SpellCheckerManager {
 
   private final Project project;
   private SpellCheckerEngine spellChecker;
-  private EditableDictionary userDictionary;
+  private AggregatedDictionary userDictionary;
   private final SuggestionProvider suggestionProvider = new BaseSuggestionProvider(this);
   private final SpellCheckerSettings settings;
 
@@ -66,6 +68,7 @@ public class SpellCheckerManager {
     this.project = project;
     this.settings = settings;
     fullConfigurationReload();
+    
     LocalFileSystem.getInstance().addVirtualFileListener(new VirtualFileListener() {
       @Override
       public void fileDeleted(@NotNull VirtualFileEvent event) {
@@ -79,7 +82,8 @@ public class SpellCheckerManager {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {
         final String path = event.getFile().getPath();
-        boolean customDic = path.endsWith(".dic") && settings.getDictionaryFoldersPaths().stream().anyMatch(i -> isAncestor(i, path, true));
+        boolean customDic = FileUtilRt.extensionEquals(path, "dic") &&
+                            settings.getDictionaryFoldersPaths().stream().anyMatch(dicFolderPath -> isAncestor(dicFolderPath, path, true));
         if (customDic) {
           spellChecker.loadDictionary(new FileLoader(path, path));
           restartInspections();
@@ -128,8 +132,8 @@ public class SpellCheckerManager {
     if (settings != null && settings.getDictionaryFoldersPaths() != null) {
       final Set<String> disabledDictionaries = settings.getDisabledDictionariesPaths();
       for (String folder : settings.getDictionaryFoldersPaths()) {
-        processFilesRecursively(folder, s -> {
-          boolean dictionaryShouldBeLoad = !disabledDictionaries.contains(s);
+        SPFileUtil.processFilesRecursively(folder, s -> {
+          boolean dictionaryShouldBeLoad =!disabledDictionaries.contains(s);
           boolean dictionaryIsLoad = spellChecker.isDictionaryLoad(s);
           if (dictionaryIsLoad && !dictionaryShouldBeLoad) {
             spellChecker.removeDictionary(s);
@@ -179,7 +183,7 @@ public class SpellCheckerManager {
     if (settings != null && settings.getDictionaryFoldersPaths() != null) {
       final Set<String> disabledDictionaries = settings.getDisabledDictionariesPaths();
       for (String folder : settings.getDictionaryFoldersPaths()) {
-        processFilesRecursively(folder, s -> {
+        SPFileUtil.processFilesRecursively(folder, s -> {
           if (!disabledDictionaries.contains(s)) {
             loaders.add(new FileLoader(s, s));
           }
@@ -191,7 +195,9 @@ public class SpellCheckerManager {
       spellChecker.loadDictionary(loader);
     }
 
-    userDictionary = ServiceManager.getService(project, AggregatedDictionaryState.class).getDictionary();
+    final AggregatedDictionaryState dictionaryState = ServiceManager.getService(project, AggregatedDictionaryState.class);
+    dictionaryState.addDictStateListener((dict) -> restartInspections());
+    userDictionary = dictionaryState.getDictionary();
     spellChecker.addModifiableDictionary(userDictionary);
   }
 
