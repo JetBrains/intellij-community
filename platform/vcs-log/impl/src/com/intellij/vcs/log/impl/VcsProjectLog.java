@@ -89,10 +89,9 @@ public class VcsProjectLog implements Disposable {
     return myLogManager.getCached();
   }
 
-  @CalledInAny
+  @CalledInAwt
   private void recreateLog() {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      disposeLog();
+    myLogManager.drop(() -> {
       if (hasDvcsRoots()) {
         createLog();
       }
@@ -118,11 +117,6 @@ public class VcsProjectLog implements Disposable {
     }
 
     recreateLog();
-  }
-
-  @CalledInBackground
-  private void disposeLog() {
-    myLogManager.drop();
   }
 
   @CalledInBackground
@@ -152,7 +146,7 @@ public class VcsProjectLog implements Disposable {
 
   @Override
   public void dispose() {
-    ApplicationManager.getApplication().executeOnPooledThread(this::disposeLog);
+    myLogManager.drop();
   }
 
   private class LazyVcsLogManager {
@@ -176,13 +170,23 @@ public class VcsProjectLog implements Disposable {
       return new VcsLogManager(myProject, myUiProperties, getVcsRoots(), false, VcsProjectLog.this::recreateOnError);
     }
 
-    @CalledInBackground
+    @CalledInAwt
     public synchronized void drop() {
-      myUi = null;
+      drop(null);
+    }
+
+    public synchronized void drop(@Nullable Runnable callback) {
       if (myValue != null) {
         myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(myValue);
-        Disposer.dispose(myValue);
+        VcsLogManager value = myValue;
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          Disposer.dispose(value);
+          if (callback != null) {
+            callback.run();
+          }
+        });
       }
+      myUi = null;
       myValue = null;
     }
 

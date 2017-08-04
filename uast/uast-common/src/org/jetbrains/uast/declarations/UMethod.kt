@@ -62,8 +62,12 @@ interface UMethod : UDeclaration, PsiMethod {
         append(psi.renderModifiers())
         append("fun ").append(name)
 
-        uastParameters.joinTo(this, prefix = "(", postfix = ")") {
-            it.name + ": " + it.type.canonicalText
+        uastParameters.joinTo(this, prefix = "(", postfix = ")") { parameter ->
+            val annotationsText = if (parameter.annotations.isNotEmpty())
+                parameter.annotations.joinToString(separator = " ", postfix = " ") { it.asRenderString() }
+            else
+                ""
+            annotationsText + parameter.name + ": " + parameter.type.canonicalText
         }
 
         psi.returnType?.let { append(" : " + it.canonicalText) }

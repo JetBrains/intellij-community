@@ -33,10 +33,12 @@ class CompilationTasksImpl extends CompilationTasks {
   void compileModules(List<String> moduleNames, List<String> includingTestsInModules) {
     if (context.options.useCompiledClassesFromProjectOutput) {
       context.messages.info("Compilation skipped, the compiled classes from the project output will be used")
+      resolveProjectDependencies()
       return
     }
     if (context.options.pathToCompiledClassesArchive != null) {
       context.messages.info("Compilation skipped, the compiled classes from '${context.options.pathToCompiledClassesArchive}' will be used")
+      resolveProjectDependencies()
       return
     }
 
@@ -70,6 +72,10 @@ class CompilationTasksImpl extends CompilationTasks {
     catch (Throwable e) {
       context.messages.error("Compilation failed with exception: $e", e)
     }
+  }
+
+  void resolveProjectDependencies() {
+    new JpsCompilationRunner(context).resolveProjectDependencies()
   }
 
   @Override

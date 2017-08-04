@@ -275,6 +275,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       if (endIndex < mySegmentCount) {
         System.arraycopy(array, endIndex, array, startIndex, mySegmentCount - endIndex);
       }
+      Arrays.fill(array, mySegmentCount - (endIndex - startIndex), mySegmentCount, null);
       return array;
     }
 
@@ -487,6 +488,11 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
         mapper.resetCachedTextAttributes();
       }
     }
+  }
+
+  @Override
+  protected boolean hasAdditionalData(int segmentIndex) {
+    return getSegments().myRanges[segmentIndex] != null;
   }
 
   private class LayeredHighlighterIteratorImpl implements LayeredHighlighterIterator {

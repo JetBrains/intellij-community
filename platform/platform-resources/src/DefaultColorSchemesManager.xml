@@ -561,6 +561,18 @@
         </value>
       </option>
 
+      <option name="EVALUATED_EXPRESSION_ATTRIBUTES">
+        <value>
+          <option name="BACKGROUND" value="e5e5e5"/>
+        </value>
+      </option>
+
+      <option name="EVALUATED_EXPRESSION_EXECUTION_LINE_ATTRIBUTES">
+        <value>
+          <option name="BACKGROUND" value="bfbfbf"/>
+        </value>
+      </option>
+
       <option name="UNMATCHED_BRACE_ATTRIBUTES">
         <value>
           <option name="FOREGROUND"/>
@@ -1553,6 +1565,16 @@
       <option name="NOT_TOP_FRAME_ATTRIBUTES">
         <value>
           <option name="BACKGROUND" value="243040"/>
+        </value>
+      </option>
+      <option name="EVALUATED_EXPRESSION_ATTRIBUTES">
+        <value>
+          <option name="BACKGROUND" value="424242"/>
+        </value>
+      </option>
+      <option name="EVALUATED_EXPRESSION_EXECUTION_LINE_ATTRIBUTES">
+        <value>
+          <option name="BACKGROUND" value="474747"/>
         </value>
       </option>
       <option name="FOLDED_TEXT_ATTRIBUTES">

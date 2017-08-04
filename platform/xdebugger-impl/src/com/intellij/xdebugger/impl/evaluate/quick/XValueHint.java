@@ -202,8 +202,7 @@ public class XValueHint extends AbstractValueHint {
             }
 
             SimpleColoredText text = new SimpleColoredText();
-            text.append(StringUtil.trimMiddle(myValueName, 200), XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
-            XValueNodeImpl.buildText(valuePresenter, text);
+            XValueNodeImpl.buildText(valuePresenter, text, false);
 
             if (!hasChildren) {
               JComponent component = createHintComponent(text, valuePresenter, myFullValueEvaluator);

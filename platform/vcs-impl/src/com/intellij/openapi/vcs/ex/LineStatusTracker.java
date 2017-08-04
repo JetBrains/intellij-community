@@ -38,6 +38,7 @@ import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
@@ -177,6 +178,11 @@ public class LineStatusTracker extends LineStatusTrackerBase {
       // later to avoid saving inside document change event processing.
       TransactionGuard.getInstance().submitTransactionLater(getProject(), () -> {
         FileDocumentManager.getInstance().saveDocument(myDocument);
+        List<Range> ranges = getRanges();
+        if (ranges == null || ranges.isEmpty()) {
+          // file was modified, and now it's not -> dirty local change
+          myVcsDirtyScopeManager.fileDirty(myVirtualFile);
+        }
       });
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,13 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.openapi.command.undo.UndoUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,18 +36,40 @@ import java.util.List;
  * @author cdr
  */
 public class AnnotateMethodFix implements LocalQuickFix {
+  private static final Logger LOG = Logger.getInstance(AnnotateMethodFix.class);
+
   protected final String myAnnotation;
   private final String[] myAnnotationsToRemove;
 
   public AnnotateMethodFix(@NotNull String fqn, @NotNull String... annotationsToRemove) {
     myAnnotation = fqn;
     myAnnotationsToRemove = annotationsToRemove;
+    LOG.assertTrue(annotateSelf() || annotateOverriddenMethods(), "annotate method quick fix should not do nothing");
   }
 
   @Override
   @NotNull
   public String getName() {
-    return InspectionsBundle.message("inspection.annotate.method.quickfix.name", ClassUtil.extractClassName(myAnnotation));
+    return getFamilyName() + " " + getPreposition() + " \'@" + ClassUtil.extractClassName(myAnnotation) + "\'";
+  }
+
+  @NotNull
+  protected String getPreposition() {
+    return "with";
+  }
+
+  @Override
+  @NotNull
+  public String getFamilyName() {
+    if (annotateSelf()) {
+      if (annotateOverriddenMethods()) {
+        return InspectionsBundle.message("inspection.annotate.overridden.method.and.self.quickfix.family.name");
+      } else {
+        return InspectionsBundle.message("inspection.annotate.method.quickfix.family.name");
+      }
+    } else {
+      return InspectionsBundle.message("inspection.annotate.overridden.method.quickfix.family.name");
+    }
   }
 
   @Override
@@ -62,18 +84,8 @@ public class AnnotateMethodFix implements LocalQuickFix {
     PsiMethod method = PsiTreeUtil.getParentOfType(psiElement, PsiMethod.class);
     if (method == null) return;
     final List<PsiMethod> toAnnotate = new ArrayList<>();
-    toAnnotate.add(method);
-    List<MethodSignatureBackedByPsiMethod> superMethodSignatures = method.findSuperMethodSignaturesIncludingStatic(true);
-    for (MethodSignatureBackedByPsiMethod superMethodSignature : superMethodSignatures) {
-      PsiMethod superMethod = superMethodSignature.getMethod();
-      if (!AnnotationUtil.isAnnotated(superMethod, myAnnotation, false, false, true) &&
-          superMethod.getManager().isInProject(superMethod)) {
-        int ret = shouldAnnotateBaseMethod(method, superMethod, project);
-        if (ret != 0 && ret != 1) return;
-        if (ret == 0) {
-          toAnnotate.add(superMethod);
-        }
-      }
+    if (annotateSelf()) {
+      toAnnotate.add(method);
     }
     if (annotateOverriddenMethods()) {
       PsiMethod[] methods = OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY);
@@ -93,19 +105,12 @@ public class AnnotateMethodFix implements LocalQuickFix {
     UndoUtil.markPsiFileForUndo(method.getContainingFile());
   }
 
-  // 0-annotate, 1-do not annotate, 2- cancel
-  public int shouldAnnotateBaseMethod(final PsiMethod method, final PsiMethod superMethod, final Project project) {
-    return 0;
-  }
-
   protected boolean annotateOverriddenMethods() {
     return false;
   }
 
-  @Override
-  @NotNull
-  public String getFamilyName() {
-    return InspectionsBundle.message("inspection.annotate.method.quickfix.family.name");
+  protected boolean annotateSelf() {
+    return true;
   }
 
   private void annotateMethod(@NotNull PsiMethod method) {

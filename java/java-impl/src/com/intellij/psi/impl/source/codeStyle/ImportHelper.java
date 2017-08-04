@@ -48,6 +48,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.NotNullList;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
@@ -81,7 +82,7 @@ public class ImportHelper{
     //     /* comment */
     //     import b;
     // We want to preserve those comments then.
-    List<PsiElement> nonImports = new ArrayList<>();
+    List<PsiElement> nonImports = new NotNullList<>();
     // Note: this array may contain "<packageOrClassName>.*" for unresolved imports!
     List<Pair<String, Boolean>> names = new ArrayList<>(collectNamesToImport(file, nonImports));
     Collections.sort(names, Comparator.comparing(o -> o.getFirst()));

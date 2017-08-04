@@ -492,10 +492,10 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   private void addExtension(Extension extension) {
     icons.put(extension.toString(), new IconHolder(extension));
     if (extension.isIconBeforeText()) {
-      insets.left = extension.getPreferredSpace();
+      insets.left += extension.getPreferredSpace();
     }
     else {
-      insets.right = extension.getPreferredSpace();
+      insets.right += extension.getPreferredSpace();
     }
   }
 

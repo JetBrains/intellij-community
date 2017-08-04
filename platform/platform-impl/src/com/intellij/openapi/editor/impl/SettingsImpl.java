@@ -393,7 +393,7 @@ public class SettingsImpl implements EditorSettings {
       LOG.error("Error determining tab size", e);
       tabSize = new CommonCodeStyleSettings.IndentOptions().TAB_SIZE;
     }
-    myCachedTabSize = Integer.valueOf(tabSize);
+    myCachedTabSize = Integer.valueOf(Math.max(1, tabSize));
     return tabSize;
   }
 
@@ -407,7 +407,7 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public void setTabSize(int tabSize) {
-    final Integer newValue = Integer.valueOf(tabSize);
+    final Integer newValue = Integer.valueOf(Math.max(1, tabSize));
     if (newValue.equals(myTabSize)) return;
     myTabSize = newValue;
     fireEditorRefresh();

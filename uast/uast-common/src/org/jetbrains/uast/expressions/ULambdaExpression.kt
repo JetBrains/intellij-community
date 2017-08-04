@@ -15,6 +15,7 @@
  */
 package org.jetbrains.uast
 
+import com.intellij.psi.PsiType
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
 import org.jetbrains.uast.visitor.UastTypedVisitor
@@ -33,6 +34,11 @@ interface ULambdaExpression : UExpression {
      * Returns the lambda body expression.
      */
     val body: UExpression
+
+    /**
+     * Returns SAM type the lambda expression corresponds to or null when no SAM type could be found
+     */
+    val functionalInterfaceType: PsiType?
 
     override fun accept(visitor: UastVisitor) {
         if (visitor.visitLambdaExpression(this)) return

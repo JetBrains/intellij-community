@@ -16,6 +16,9 @@
 package com.intellij.ui.components;
 
 import javax.swing.Icon;
+import javax.swing.JComponent;
+import javax.swing.border.Border;
+import javax.swing.plaf.TextUI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -92,6 +95,39 @@ public class ExtendableTextField extends JBTextField {
 
     default String getTooltip() {
       return null;
+    }
+  }
+
+  /**
+   * Temporary solution to support icons in the text component for different L&F.
+   * This method replaces non-supported UI with Darcula UI.
+   *
+   * @param ui an object to paint this text component
+   */
+  @Override
+  @Deprecated
+  public void setUI(TextUI ui) {
+    TextUI suggested = ui;
+    String name = ui == null ? null : ui.getClass().getSuperclass().getName();
+    if (!"com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI".equals(name)) {
+      try {
+        ui = (TextUI)Class
+          .forName("com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI")
+          .getDeclaredMethod("createUI", JComponent.class)
+          .invoke(null, this);
+      }
+      catch (Exception ignore) {
+      }
+    }
+    super.setUI(ui);
+    if (ui != suggested) {
+      try {
+        setBorder((Border)Class
+          .forName("com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder")
+          .newInstance());
+      }
+      catch (Exception ignore) {
+      }
     }
   }
 }

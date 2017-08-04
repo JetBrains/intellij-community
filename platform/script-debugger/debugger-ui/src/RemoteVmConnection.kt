@@ -94,9 +94,17 @@ abstract class RemoteVmConnection : VmConnection<Vm>() {
     val connectResult = createBootstrap(address, result).connectRetrying(address, maxAttemptCount, stopCondition)
     connectResult.handleError(Consumer { result.setError(it) })
     connectResult.handleThrowable(Consumer { result.setError(it) })
-    connectResult.channel?.closeFuture()?.addListener {
+    val channel = connectResult.channel
+    channel?.closeFuture()?.addListener {
       if (result.isFulfilled) {
         close("Process disconnected unexpectedly", ConnectionStatus.DISCONNECTED)
+      }
+    }
+    if (channel != null) {
+      stateChanged {
+        if (it.status == ConnectionStatus.DISCONNECTED) {
+          channel.close()
+        }
       }
     }
   }

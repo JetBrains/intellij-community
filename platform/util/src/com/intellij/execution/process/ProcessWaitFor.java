@@ -28,6 +28,7 @@ public class ProcessWaitFor {
 
   private final Future<?> myWaitForThreadFuture;
   private final BlockingQueue<Consumer<Integer>> myTerminationCallback = new ArrayBlockingQueue<Consumer<Integer>>(1);
+  private volatile boolean myDetached = false;
 
   /** @deprecated use {@link #ProcessWaitFor(Process, TaskExecutor, String)} instead (to be removed in IDEA 2018) */
   @Deprecated
@@ -47,22 +48,26 @@ public class ProcessWaitFor {
         try {
           int exitCode = 0;
           try {
-            while (true) {
+            while (!myDetached) {
               try {
                 exitCode = process.waitFor();
                 break;
               }
               catch (InterruptedException e) {
-                LOG.debug(e);
+                if (!myDetached) {
+                  LOG.debug(e);
+                }
               }
             }
           }
           finally {
-            try {
-              myTerminationCallback.take().consume(exitCode);
-            }
-            catch (InterruptedException e) {
-              LOG.info(e);
+            if (!myDetached) {
+              try {
+                myTerminationCallback.take().consume(exitCode);
+              }
+              catch (InterruptedException e) {
+                LOG.info(e);
+              }
             }
           }
         }
@@ -76,6 +81,7 @@ public class ProcessWaitFor {
   }
 
   public void detach() {
+    myDetached = true;
     myWaitForThreadFuture.cancel(true);
   }
 

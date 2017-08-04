@@ -24,5 +24,6 @@
     <orderEntry type="module" module-name="testFramework" />
     <orderEntry type="module" module-name="jps-builders" />
     <orderEntry type="module" module-name="diff-impl" scope="TEST" />
+    <orderEntry type="library" name="jediterm-pty" level="project" />
   </component>
 </module>

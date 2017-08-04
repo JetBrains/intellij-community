@@ -993,7 +993,7 @@ public class GitUtil {
   public static boolean isCaseOnlyChange(@NotNull String oldPath, @NotNull String newPath) {
     if (oldPath.equalsIgnoreCase(newPath)) {
       if (oldPath.equals(newPath)) {
-        LOG.error("Comparing perfectly equal paths: " + newPath);
+        LOG.info("Comparing perfectly equal paths: " + newPath);
       }
       return true;
     }

@@ -37,7 +37,7 @@ public class XmlInspectionsTest extends LightPlatformCodeInsightFixtureTestCase 
                           "</schema>");
   }
 
-  public void testHtmlFromRncSchema() {
+  public void _testHtmlFromRncSchema() {
     myFixture.enableInspections(new XmlDefaultAttributeValueInspection());
     myFixture.configureByText(HtmlFileType.INSTANCE, "<!DOCTYPE html>\n" +
                                                      "<html lang=\"en\">\n" +

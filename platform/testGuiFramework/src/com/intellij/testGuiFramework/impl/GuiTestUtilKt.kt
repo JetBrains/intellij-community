@@ -16,7 +16,6 @@
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.openapi.util.Ref
-import com.intellij.testGuiFramework.framework.GuiTestUtil
 import org.fest.swing.core.ComponentMatcher
 import org.fest.swing.core.Robot
 import org.fest.swing.edt.GuiActionRunner
@@ -26,9 +25,11 @@ import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
+import org.fest.swing.timing.Timeout
 import java.awt.Component
 import java.awt.Container
 import java.util.*
+import java.util.concurrent.TimeUnit
 import javax.swing.JLabel
 import javax.swing.JRadioButton
 
@@ -158,7 +159,7 @@ object GuiTestUtilKt {
   }
 
   fun findComponentByText(robot: Robot, container: Container, text: String): Component {
-    return withPause { robot.finder().findAll(container, ComponentMatcher { component ->
+    return withPauseWhenNull { robot.finder().findAll(container, ComponentMatcher { component ->
       component!!.isShowing && component.isTextComponent() && component.getComponentText() == text }).firstOrNull() }
   }
 
@@ -170,7 +171,7 @@ object GuiTestUtilKt {
       return robot.finder().find(labeledComponent as Container) { component -> componentType.isInstance(component) } as BoundedComponent
     }
     try {
-      return withPause {
+      return withPauseWhenNull {
         val componentsOfInstance = robot.finder().findAll(container, ComponentMatcher { component -> componentType.isInstance(component) })
         componentsOfInstance.filter { it.isShowing && it.onHeightCenter(componentWithText, true) }
           .sortedBy { it.bounds.x }
@@ -205,7 +206,7 @@ object GuiTestUtilKt {
   /**
    * waits for 30 sec timeout when testWithPause() not return null
    */
-  fun <ReturnType> withPause(testWithPause: () -> ReturnType?): ReturnType {
+  fun <ReturnType> withPauseWhenNull(timeoutInSeconds: Int = 30, testWithPause: () -> ReturnType?): ReturnType {
     val ref = Ref<ReturnType>()
     Pause.pause(object: Condition("With pause...") {
       override fun test(): Boolean {
@@ -213,9 +214,37 @@ object GuiTestUtilKt {
         if (testWithPauseResult != null) ref.set(testWithPauseResult)
         return (testWithPauseResult != null)
       }
-    }, GuiTestUtil.THIRTY_SEC_TIMEOUT)
+    }, Timeout.timeout(timeoutInSeconds.toLong(), TimeUnit.SECONDS))
     return ref.get()
   }
+
+  fun waitUntil(condition: String, timeoutInSeconds: Int = 60, conditionalFunction: () -> Boolean) {
+    Pause.pause(object : Condition("Wait for $timeoutInSeconds until $condition") {
+      override fun test() = conditionalFunction()
+    }, Timeout.timeout(timeoutInSeconds.toLong(), TimeUnit.SECONDS))
+  }
+
+  fun <ComponentType : Component> findAllWithDFS(container: Container, clazz: Class<ComponentType>): List<ComponentType> {
+    val result = LinkedList<ComponentType>()
+    val queue: Queue<Component> = LinkedList()
+
+    @Suppress("UNCHECKED_CAST")
+    fun check(container: Component) {
+      if (clazz.isInstance(container)) result.add(container as ComponentType)
+    }
+
+    queue.add(container)
+    while(queue.isNotEmpty()) {
+      val polled = queue.poll()
+      check(polled)
+      if (polled is Container)
+        queue.addAll(polled.components)
+    }
+
+    return result
+
+  }
+
 
   fun <ReturnType> computeOnEdt(query: () -> ReturnType): ReturnType?
     = GuiActionRunner.execute(object : GuiQuery<ReturnType>() {

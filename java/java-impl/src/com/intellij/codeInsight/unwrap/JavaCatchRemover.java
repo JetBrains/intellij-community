@@ -20,6 +20,7 @@ import com.intellij.psi.PsiCatchSection;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiTryStatement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class JavaCatchRemover extends JavaUnwrapper {
   public JavaCatchRemover() {
@@ -27,7 +28,7 @@ public class JavaCatchRemover extends JavaUnwrapper {
   }
 
   @Override
-  public boolean isApplicableTo(PsiElement e) {
+  public boolean isApplicableTo(@NotNull PsiElement e) {
     return e instanceof PsiCatchSection && tryHasSeveralCatchesOrResourcesDefined(e);
   }
 

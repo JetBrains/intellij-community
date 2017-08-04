@@ -31,9 +31,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.event.AncestorListener;
-import javax.swing.plaf.TextUI;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
@@ -110,31 +108,6 @@ public class ExpandableTextField extends ExtendableTextField implements Expandab
   public void setEnabled(boolean enabled) {
     if (!enabled) collapse();
     super.setEnabled(enabled);
-  }
-
-  @Override
-  @Deprecated
-  public void setUI(TextUI ui) {
-    TextUI suggested = ui;
-    String name = ui == null ? null : ui.getClass().getSuperclass().getName();
-    if (!"com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI".equals(name)) {
-      try {
-        ui = (TextUI)Class
-          .forName("com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI")
-          .getDeclaredMethod("createUI", JComponent.class)
-          .invoke(null, this);
-      }
-      catch (Exception ignore) {
-      }
-    }
-    super.setUI(ui);
-    if (ui != suggested) {
-      try {
-        setBorder((Border)Class.forName("com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder").newInstance());
-      }
-      catch (Exception ignore) {
-      }
-    }
   }
 
   @Override
