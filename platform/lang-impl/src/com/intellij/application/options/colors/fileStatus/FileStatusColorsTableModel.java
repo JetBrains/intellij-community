@@ -108,6 +108,10 @@ public class FileStatusColorsTableModel extends AbstractTableModel {
     fireTableCellUpdated(rowIndex, 1);
   }
 
+  boolean isResetAvailable(int rowIndex) {
+    return !myDescriptors.get(rowIndex).isDefault();
+  }
+
   public boolean isModified() {
     for (FileStatusColorDescriptor descriptor : myDescriptors) {
       ColorKey key = descriptor.getStatus().getColorKey();
