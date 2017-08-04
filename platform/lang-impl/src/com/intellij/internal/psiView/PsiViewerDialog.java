@@ -17,7 +17,6 @@ package com.intellij.internal.psiView;
 
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.LogMessageEx;
-import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.formatting.ASTBlock;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingModel;
@@ -73,12 +72,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.*;
+import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -166,7 +167,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   private int myIgnoreBlockTreeSelectionMarker = 0;
 
   private boolean myExternalDocument;
-  
+
   @NotNull
   private final JBTabsImpl myTabs;
 
@@ -742,34 +743,48 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       }
       return;
     }
-    try {
-      Stub stub = null;
-      if (rootElement instanceof StubBasedPsiElementBase) {
-        stub = ((StubBasedPsiElementBase)rootElement).getGreenStub();
-      }
-      if (stub == null) {
-        LightVirtualFile file = new LightVirtualFile("stub", rootElement.getLanguage(), textToParse);
-        final FileContentImpl fc = new FileContentImpl(file, file.contentsToByteArray());
-        fc.putUserData(IndexingDataKeys.PROJECT, myProject);
+    Stub stub = buildStubForElement(myProject, rootElement, textToParse);
+    
+    if (stub instanceof StubElement) {
+      final StubTreeNode rootNode = new StubTreeNode((StubElement)stub, null);
+      final StubTreeStructure treeStructure = new StubTreeStructure(rootNode);
+      myPsiViewerStubTreeBuilder = new PsiViewerStubTreeBuilder(myStubTree, treeStructure);
+      myStubTree.setRootVisible(true);
+      myStubTree.expandRow(0);
+      myPsiViewerStubTreeBuilder.queueUpdate();
+    }
+    else {
+      myStubTree.setRootVisible(false);
+      myStubTree.removeAll();
+      StatusText text = myStubTree.getEmptyText();
+      text.setText("No stubs for " + rootElement.getLanguage().getDisplayName());
+    }
+  }
+
+  @Nullable
+  private static Stub buildStubForElement(Project project, PsiElement rootElement, @NotNull String textToParse) {
+    Stub stub = null;
+    StubTree tree = ((PsiFileWithStubSupport)rootElement).getStubTree();
+    if (tree != null) {
+      stub = tree.getRoot();
+    }
+    else if (rootElement instanceof PsiFileImpl) {
+      IStubFileElementType builder = ((PsiFileImpl)rootElement).getElementTypeForStubBuilder();
+      stub = builder == null ? null : builder.getBuilder().buildStubTree((PsiFile)rootElement);
+    }
+    if (stub == null) {
+      LightVirtualFile file = new LightVirtualFile("stub", rootElement.getLanguage(), textToParse);
+      final FileContentImpl fc;
+      try {
+        fc = new FileContentImpl(file, file.contentsToByteArray());
+        fc.putUserData(IndexingDataKeys.PROJECT, project);
         stub = StubTreeBuilder.buildStubTree(fc);
       }
-      if (stub instanceof StubElement) {
-        final StubTreeNode rootNode = new StubTreeNode((StubElement)stub, null);
-        final StubTreeStructure treeStructure = new StubTreeStructure(rootNode);
-        myPsiViewerStubTreeBuilder = new PsiViewerStubTreeBuilder(myStubTree, treeStructure);
-        myStubTree.setRootVisible(true);
-        myStubTree.expandRow(0);
-        myPsiViewerStubTreeBuilder.queueUpdate();
-      }
-      else {
-        myStubTree.setRootVisible(false);
-        myStubTree.removeAll();
-        StatusText text = myStubTree.getEmptyText();
-        text.setText("No stubs for " + rootElement.getLanguage().getDisplayName());
+      catch (IOException e) {
+
       }
     }
-    catch (IOException ignored) {
-    }
+    return stub;
   }
 
   private void buildBlockTree(PsiElement rootElement) {
