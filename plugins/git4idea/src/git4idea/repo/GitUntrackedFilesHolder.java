@@ -234,10 +234,6 @@ public class GitUntrackedFilesHolder implements Disposable, BulkFileListener {
   }
 
   @Override
-  public void before(@NotNull List<? extends VFileEvent> events) {
-  }
-
-  @Override
   public void after(@NotNull List<? extends VFileEvent> events) {
     myEventsProcessor.add(newArrayList(events));
   }
