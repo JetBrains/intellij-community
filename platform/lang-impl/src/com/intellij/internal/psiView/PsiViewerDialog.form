@@ -180,17 +180,6 @@
               </component>
             </children>
           </grid>
-          <component id="aa136" class="javax.swing.JCheckBox" binding="myShowBlocksCheckBox">
-            <constraints>
-              <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <label value="Show formatting blocks"/>
-              <margin top="0" left="0" bottom="0" right="0"/>
-              <selected value="true"/>
-              <text value="Show &amp;formatting blocks"/>
-            </properties>
-          </component>
         </children>
       </grid>
       <component id="9944b" class="com.intellij.ui.TitledSeparator" binding="myTextSeparator">
