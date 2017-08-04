@@ -55,6 +55,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * @author peter
@@ -185,8 +186,19 @@ public class MadTestingUtil {
              fileFilter.accept(child) &&
              child.length() < 500_000;
     };
-    Generator<File> randomFiles =
-      Generator.from(new FileGenerator(new File(rootPath), interestingIdeaFiles)).suchThat(Objects::nonNull).noShrink();
+    Generator<File> randomFiles = Generator.from(new FileGenerator(new File(rootPath), interestingIdeaFiles))
+      .suchThat(new Predicate<File>() {
+        @Override
+        public boolean test(File file) {
+          return file != null;
+        }
+
+        @Override
+        public String toString() {
+          return "can find a file under " + rootPath + " satisfying given filters";
+        }
+      })
+      .noShrink();
     return randomFiles.flatMap(ioFile -> {
       VirtualFile vFile = copyFileToProject(ioFile, fixture, rootPath);
       PsiDocumentManager.getInstance(fixture.getProject()).commitAllDocuments();

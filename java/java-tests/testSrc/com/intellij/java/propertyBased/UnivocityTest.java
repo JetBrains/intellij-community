@@ -46,7 +46,7 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
 
     AtomicLong rebuildStamp = new AtomicLong();
 
-    Generator<InvokeIntention> genIntention = psiJavaFiles().flatMap(file -> InvokeIntention.randomIntentions(file, new JavaIntentionPolicy()));
+    Generator<InvokeIntention> genIntention = psiJavaFiles().flatMap(file -> InvokeIntention.randomIntentions(file, new JavaGreenIntentionPolicy()));
     PropertyChecker.forAll(Generator.listsOf(genIntention.noShrink())).withIterationCount(30).shouldHold(list -> {
       long startModCount = tracker.getModificationCount();
       if (rebuildStamp.getAndSet(startModCount) != startModCount) {

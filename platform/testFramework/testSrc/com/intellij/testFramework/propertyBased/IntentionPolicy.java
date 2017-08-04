@@ -27,6 +27,8 @@ public class IntentionPolicy {
   }
 
   protected boolean shouldSkipIntention(@NotNull String actionText) {
-    return actionText.startsWith("Typo: Change to..."); // doesn't change file text (starts live template);
+    return actionText.startsWith("Typo: Change to...") || // doesn't change file text (starts live template);
+           actionText.startsWith("Optimize imports") || // https://youtrack.jetbrains.com/issue/IDEA-173801
+           actionText.startsWith("Convert to project line separators"); // changes VFS, not document
   }
 }

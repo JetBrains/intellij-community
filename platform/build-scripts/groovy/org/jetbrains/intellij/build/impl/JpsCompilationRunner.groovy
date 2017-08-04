@@ -72,19 +72,23 @@ class JpsCompilationRunner {
         }
       }
     }
-    runBuild(names, false, false)
+    runBuild(names, false, false, false)
+  }
+
+  void resolveProjectDependencies() {
+    runBuild([] as Set, false, false, true)
   }
 
   void buildModuleTests(JpsModule module) {
-    runBuild(getModuleDependencies(module, true), false, true)
+    runBuild(getModuleDependencies(module, true), false, true, false)
   }
 
   void buildAll() {
-    runBuild(Collections.<String>emptySet(), true, true)
+    runBuild(Collections.<String> emptySet(), true, true, false)
   }
 
   void buildProduction() {
-    runBuild(Collections.<String>emptySet(), true, false)
+    runBuild(Collections.<String> emptySet(), true, false, false)
   }
 
   private static Set<String> getModuleDependencies(JpsModule module, boolean includeTests) {
@@ -95,7 +99,7 @@ class JpsCompilationRunner {
     return enumerator.modules.collect(new HashSet<>()) { it.name } as Set<String>
   }
 
-  private void runBuild(final Set<String> modulesSet, final boolean allModules, boolean includeTests) {
+  private void runBuild(final Set<String> modulesSet, final boolean allModules, boolean includeTests, boolean resolveProjectDependencies) {
     System.setProperty(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "false")
     final AntMessageHandler messageHandler = new AntMessageHandler()
     AntLoggerFactory.ourMessageHandler = new AntMessageHandler()
@@ -126,9 +130,12 @@ class JpsCompilationRunner {
         }
       }
     }
+    if (resolveProjectDependencies) {
+      scopes.add(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope.newBuilder().setTypeId("project-dependencies-resolving").setForceBuild(false).setAllTargets(true).build())
+    }
 
     context.messages.info("Starting build; incremental: $context.options.incrementalCompilation, cache directory: $compilationData.dataStorageRoot.absolutePath")
-    context.messages.info("Build scope: ${allModules ? "all" : modulesSet.size()} modules, ${includeTests ? "including tests" : "production only"}")
+    context.messages.info("Build scope: ${allModules ? "all" : modulesSet.size()} modules, ${includeTests ? "including tests" : "production only"}${resolveProjectDependencies ? ", resolve dependencies" : ""}")
     long compilationStart = System.currentTimeMillis()
     context.messages.block("Compilation") {
       try {

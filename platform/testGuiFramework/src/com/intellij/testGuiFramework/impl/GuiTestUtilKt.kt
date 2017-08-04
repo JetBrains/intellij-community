@@ -224,6 +224,28 @@ object GuiTestUtilKt {
     }, Timeout.timeout(timeoutInSeconds.toLong(), TimeUnit.SECONDS))
   }
 
+  fun <ComponentType : Component> findAllWithDFS(container: Container, clazz: Class<ComponentType>): List<ComponentType> {
+    val result = LinkedList<ComponentType>()
+    val queue: Queue<Component> = LinkedList()
+
+    @Suppress("UNCHECKED_CAST")
+    fun check(container: Component) {
+      if (clazz.isInstance(container)) result.add(container as ComponentType)
+    }
+
+    queue.add(container)
+    while(queue.isNotEmpty()) {
+      val polled = queue.poll()
+      check(polled)
+      if (polled is Container)
+        queue.addAll(polled.components)
+    }
+
+    return result
+
+  }
+
+
   fun <ReturnType> computeOnEdt(query: () -> ReturnType): ReturnType?
     = GuiActionRunner.execute(object : GuiQuery<ReturnType>() {
     override fun executeInEDT(): ReturnType = query()

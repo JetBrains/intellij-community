@@ -152,8 +152,7 @@ public class VFSTestFrameworkListener {
       final List<PyPackage> packages = manager.getPackages();
       if (packages != null) {
         for (final String frameworkName : testFrameworkNames) {
-          final String packageName = PyTestFrameworkService.getPackageByFramework(frameworkName);
-          result.put(frameworkName, PyPackageUtil.findPackage(packages, packageName) != null);
+          result.put(frameworkName, PyPackageUtil.findPackage(packages, frameworkName) != null);
         }
       }
     }

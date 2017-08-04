@@ -477,6 +477,7 @@ public class InstalledPackagesPanel extends JPanel {
         @Override
         public void consume(Exception e) {
           UIUtil.invokeLaterIfNeeded(() -> decrement());
+          LOG.warn("Cannot fetch the latest version of the installed package " + pkg, e);
         }
 
         @Override
@@ -534,6 +535,7 @@ public class InstalledPackagesPanel extends JPanel {
           }, ModalityState.stateForComponent(myPackagesTable));
         }
         catch (IOException ignored) {
+          LOG.warn("Cannot refresh the list of available packages with their latest versions", ignored);
           myPackagesTable.setPaintBusy(false);
         }
       }

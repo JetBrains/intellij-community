@@ -34,6 +34,6 @@ public interface JvmModifiersOwner extends JvmAnnotatedElement {
    * @return true if the element has the modifier, false otherwise
    */
   default boolean hasModifier(@NotNull JvmModifier modifier) {
-    return contains(getModifiers(), modifier);
+    return contains(modifier, getModifiers());
   }
 }

@@ -16,14 +16,13 @@
 package com.intellij.testGuiFramework.cellReader
 
 import com.intellij.testGuiFramework.framework.GuiTestUtil
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.findAllWithDFS
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.JBList
 import org.fest.swing.cell.JComboBoxCellReader
 import org.fest.swing.cell.JListCellReader
 import org.fest.swing.cell.JTableCellReader
 import org.fest.swing.cell.JTreeCellReader
-import org.fest.swing.core.BasicRobot
-import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.driver.BasicJComboBoxCellReader
 import org.fest.swing.driver.BasicJListCellReader
 import org.fest.swing.driver.BasicJTableCellReader
@@ -110,12 +109,12 @@ private fun Component.findText(): String? {
     val container = this as Container
     val resultList = ArrayList<String>()
     resultList.addAll(
-      findAllWithRobot(container, JLabel::class.java)
+      findAllWithDFS(container, JLabel::class.java)
         .filter { !it.text.isNullOrEmpty() }
         .map { it.text }
     )
     resultList.addAll(
-      findAllWithRobot(container, SimpleColoredComponent::class.java)
+      findAllWithDFS(container, SimpleColoredComponent::class.java)
         .filter { !it.getText().isNullOrEmpty() }
         .map { it.getText()!! }
     )
@@ -126,11 +125,4 @@ private fun Component.findText(): String? {
   }
 }
 
-private fun <ComponentType : Component> findAllWithRobot(container: Container, clazz: Class<ComponentType>): List<ComponentType> {
-  val robot = BasicRobot.robotWithCurrentAwtHierarchyWithoutScreenLock()
-  val result = robot.finder().findAll(container, object : GenericTypeMatcher<ComponentType>(clazz) {
-    override fun isMatching(component: ComponentType) = true
-  })
-  robot.cleanUpWithoutDisposingWindows()
-  return result.toList()
-}
+
