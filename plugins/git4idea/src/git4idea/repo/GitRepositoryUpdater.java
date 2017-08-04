@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.dvcs.DvcsUtil.ensureAllChildrenInVfs;
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 /**
  * Listens to .git service files changes and updates {@link GitRepository} when needed.
@@ -83,7 +84,7 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
 
   @Override
   public void after(@NotNull List<? extends VFileEvent> events) {
-    myUpdateQueue.add(events);
+    myUpdateQueue.add(newArrayList(events));
   }
 
   private void processEvents(@NotNull List<? extends VFileEvent> events) {
