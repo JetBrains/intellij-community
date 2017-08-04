@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,81 +16,72 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ProjectTopics;
-import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ext.LibraryDependentToolWindow;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
-public class LibraryDependentToolWindowManager extends AbstractProjectComponent {
-  private final ToolWindowManagerEx myToolWindowManager;
-
-  protected LibraryDependentToolWindowManager(Project project, ToolWindowManagerEx toolWindowManager) {
-    super(project);
-    myToolWindowManager = toolWindowManager;
-  }
+public class LibraryDependentToolWindowManager implements StartupActivity {
 
   @Override
-  public void projectOpened() {
+  public void runActivity(@NotNull Project project) {
+    final Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode() ||
+        application.isHeadlessEnvironment()) {
+      return;
+    }
+
     final ModuleRootListener rootListener = new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
-        if (!myProject.isDisposed()) {
-          checkToolWindowStatuses(myProject);
-        }
+        checkToolWindowStatuses(project);
       }
     };
 
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> {
-      if (!myProject.isDisposed()) {
-        checkToolWindowStatuses(myProject);
-        final MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
-        connection.subscribe(ProjectTopics.PROJECT_ROOTS, rootListener);
-      }
+    checkToolWindowStatuses(project);
+
+    final MessageBusConnection connection = project.getMessageBus().connect(project);
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, rootListener);
+  }
+
+  private static void checkToolWindowStatuses(@NotNull final Project project) {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      if (project.isDisposed()) return;
+
+      doCheckToolWindowStatuses(project);
     });
   }
 
-  private void checkToolWindowStatuses(@NotNull final Project project) {
-    assert !project.isDisposed();
+  private static void doCheckToolWindowStatuses(@NotNull final Project project) {
+    final ToolWindowManagerEx toolWindowManagerEx = ToolWindowManagerEx.getInstanceEx(project);
 
-    DumbService.getInstance(project).smartInvokeLater(new Runnable() {
-      @Override
-      public void run() {
-        for (LibraryDependentToolWindow libraryToolWindow : Extensions.getExtensions(LibraryDependentToolWindow.EXTENSION_POINT_NAME)) {
-          boolean exists;
-          try {
-            exists = libraryToolWindow.getLibrarySearchHelper().isLibraryExists(project);
-          }
-          catch (ProcessCanceledException e) {
-            exists = false;
-            DumbService.getInstance(project).smartInvokeLater(this);
-          }
-          if (exists) {
-            ensureToolWindowExists(libraryToolWindow);
-          }
-          else {
-            ToolWindow toolWindow = myToolWindowManager.getToolWindow(libraryToolWindow.id);
-            if (toolWindow != null) {
-              myToolWindowManager.unregisterToolWindow(libraryToolWindow.id);
-            }
+    for (LibraryDependentToolWindow libraryToolWindow : Extensions.getExtensions(LibraryDependentToolWindow.EXTENSION_POINT_NAME)) {
+      boolean exists = DumbService.getInstance(project)
+        .runReadActionInSmartMode(() -> libraryToolWindow.getLibrarySearchHelper().isLibraryExists(project));
+
+      ApplicationManager.getApplication().invokeLater(() -> {
+        ToolWindow toolWindow = toolWindowManagerEx.getToolWindow(libraryToolWindow.id);
+
+        if (exists) {
+          if (toolWindow == null) {
+            toolWindowManagerEx.initToolWindow(libraryToolWindow);
           }
         }
-      }
-    });
-  }
-
-  private void ensureToolWindowExists(LibraryDependentToolWindow extension) {
-    ToolWindow toolWindow = myToolWindowManager.getToolWindow(extension.id);
-    if (toolWindow == null) {
-      myToolWindowManager.initToolWindow(extension);
+        else {
+          if (toolWindow != null) {
+            toolWindowManagerEx.unregisterToolWindow(libraryToolWindow.id);
+          }
+        }
+      });
     }
   }
 }
