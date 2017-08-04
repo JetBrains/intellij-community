@@ -1081,11 +1081,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     return myDisposed;
   }
 
-  public void updateCurrentProfile() {
-    final String name = myInspectionProfile.getName();
-    myInspectionProfile = myInspectionProfile.getProfileManager().getProfile(name);
-  }
-
   public boolean isRerunAvailable() {
     return !(myProvider instanceof OfflineInspectionRVContentProvider) && myScope.isValid();
   }
