@@ -18,6 +18,7 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeInspection.ProblemDescriptorBase;
 import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.util.DiffDrawUtil;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ScrollType;
@@ -39,6 +40,10 @@ class ProblemPreviewEditorPresentation {
 
   static void setupFoldingsForNonProblemRanges(@NotNull EditorEx editor, @NotNull InspectionResultsView view) {
     final Document doc = editor.getDocument();
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(view.getProject());
+    if (documentManager.isUncommited(doc)) {
+      WriteAction.run(() -> documentManager.commitDocument(doc));
+    }
     final SortedSet<PreviewEditorFoldingRegion> foldingRegions = new TreeSet<>(Comparator.comparing(x -> x.startLine));
     foldingRegions.add(new PreviewEditorFoldingRegion(0, doc.getLineCount()));
     List<UsageInfo> usages = Arrays.stream(view.getTree().getAllValidSelectedDescriptors())
