@@ -59,6 +59,7 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
   private static final Logger LOG = Logger.getInstance(StudyToolWindow.class);
   private static final String TASK_INFO_ID = "taskInfo";
   public static final String EMPTY_TASK_TEXT = "Please, open any task to see task description";
+  private static final String HELP_ID = "task.description";
 
   private final JBCardLayout myCardLayout;
   private final JPanel myContentPanel;
@@ -335,5 +336,14 @@ public abstract class StudyToolWindow extends SimpleToolWindowPanel implements D
       }
     }
     return solved;
+  }
+
+  @Nullable
+  @Override
+  public Object getData(String dataId) {
+    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      return HELP_ID;
+    }
+    return super.getData(dataId);
   }
 }
