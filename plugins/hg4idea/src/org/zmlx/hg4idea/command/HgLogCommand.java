@@ -22,10 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.execution.HgCommandException;
-import org.zmlx.hg4idea.execution.HgCommandExecutor;
-import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.execution.HgLineProcessListener;
+import org.zmlx.hg4idea.execution.*;
 import org.zmlx.hg4idea.log.HgBaseLogParser;
 import org.zmlx.hg4idea.log.HgFileRevisionLogParser;
 import org.zmlx.hg4idea.log.HgHistoryUtil;
@@ -140,17 +137,16 @@ public class HgLogCommand {
   @Nullable
   public HgCommandResult execute(@NotNull VirtualFile repo, @NotNull String template, int limit, @Nullable HgFile hgFile,
                                  @Nullable List<String> argsForCmd) {
-    List<String> arguments = createArguments(template, limit, hgFile, argsForCmd);
-    HgCommandExecutor commandExecutor = new HgCommandExecutor(myProject);
-    commandExecutor.setOutputAlwaysSuppressed(true);
-    return commandExecutor.executeInCurrentThread(repo, "log", arguments);
+    ShellCommand.CommandResultCollector collector = new ShellCommand.CommandResultCollector(false);
+    boolean success = execute(repo, template, limit, hgFile, argsForCmd, collector);
+    return success ? collector.getResult() : null;
   }
 
-  public void execute(@NotNull VirtualFile repo, @NotNull String template, int limit, @Nullable HgFile hgFile,
-                      @Nullable List<String> argsForCmd, @NotNull HgLineProcessListener listener) {
+  public boolean execute(@NotNull VirtualFile repo, @NotNull String template, int limit, @Nullable HgFile hgFile,
+                         @Nullable List<String> argsForCmd, @NotNull HgLineProcessListener listener) {
     List<String> arguments = createArguments(template, limit, hgFile, argsForCmd);
     HgCommandExecutor commandExecutor = new HgCommandExecutor(myProject);
     commandExecutor.setOutputAlwaysSuppressed(true);
-    commandExecutor.executeInCurrentThread(repo, "log", arguments, false, listener);
+    return commandExecutor.executeInCurrentThread(repo, "log", arguments, false, listener);
   }
 }
