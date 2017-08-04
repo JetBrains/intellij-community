@@ -292,7 +292,11 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
     @Override
     public void changedUpdate(DocumentEvent event) {
-      updateIcon(icons.get("clear"));
+      if (!icons.isEmpty()) {
+        for (IconHolder holder : icons.values()) {
+          updateIcon(holder);
+        }
+      }
     }
 
     @Override
