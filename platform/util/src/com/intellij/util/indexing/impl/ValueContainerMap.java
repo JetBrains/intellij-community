@@ -18,7 +18,6 @@ package com.intellij.util.indexing.impl;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
-import com.intellij.util.io.PersistentMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;

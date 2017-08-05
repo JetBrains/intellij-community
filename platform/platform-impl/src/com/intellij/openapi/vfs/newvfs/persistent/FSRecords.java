@@ -51,15 +51,15 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.IntPredicate;
 
 /**
  * @author max
  */
 @SuppressWarnings({"PointlessArithmeticExpression", "HardCodedStringLiteral"})
-public class FSRecords {
+public class FSRecords implements IFSRecords {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
 
-  public static final boolean weHaveContentHashes = SystemProperties.getBooleanProperty("idea.share.contents", true);
   private static final boolean lazyVfsDataCleaning = SystemProperties.getBooleanProperty("idea.lazy.vfs.data.cleaning", true);
   static final boolean backgroundVfsFlush = SystemProperties.getBooleanProperty("idea.background.vfs.flush", true);
   private static final boolean inlineAttributes = SystemProperties.getBooleanProperty("idea.inline.vfs.attributes", true);
@@ -68,6 +68,7 @@ public class FSRecords {
   private static final boolean useSmallAttrTable = SystemProperties.getBooleanProperty("idea.use.small.attr.table.for.vfs", true);
   static final String VFS_FILES_EXTENSION = System.getProperty("idea.vfs.files.extension", ".dat");
   private static final boolean ourStoreRootsSeparately = SystemProperties.getBooleanProperty("idea.store.roots.separately", false);
+  public static boolean weHaveContentHashes = SystemProperties.getBooleanProperty("idea.share.contents", true);
 
   private static final int VERSION = 21 + (weHaveContentHashes ? 0x10:0) + (IOUtil.ourByteBuffersUseNativeByteOrder ? 0x37:0) +
                                      31 + (bulkAttrReadSupport ? 0x27:0) + (inlineAttributes ? 0x31 : 0) +
@@ -118,6 +119,15 @@ public class FSRecords {
   private static final int FREE_RECORD_FLAG = 0x100;
   private static final int ALL_VALID_FLAGS = PersistentFS.ALL_VALID_FLAGS | FREE_RECORD_FLAG;
 
+  static File defaultBasePath() {
+    return new File(getCachesDir());
+  }
+
+  static String getCachesDir() {
+    String dir = System.getProperty("caches_dir"); //TODO: return here
+    return dir == null ? PathManager.getSystemPath() + "/caches/" : dir;
+  }
+
   static {
     //noinspection ConstantConditions
     assert HEADER_SIZE <= RECORD_SIZE;
@@ -132,7 +142,8 @@ public class FSRecords {
     w = lock.writeLock();
   }
 
-  void writeAttributesToRecord(int id, int parentId, @NotNull FileAttributes attributes, @NotNull String name) {
+  @Override
+  public void writeAttributesToRecord(int id, int parentId, @NotNull FileAttributes attributes, @NotNull String name) {
     w.lock();
     try {
       setName(id, name);
@@ -141,10 +152,10 @@ public class FSRecords {
       setLength(id, attributes.isDirectory() ? -1L : attributes.length);
 
       setFlags(id, (attributes.isDirectory() ? PersistentFS.IS_DIRECTORY_FLAG : 0) |
-                             (attributes.isWritable() ? 0 : PersistentFS.IS_READ_ONLY) |
-                             (attributes.isSymLink() ? PersistentFS.IS_SYMLINK : 0) |
-                             (attributes.isSpecial() ? PersistentFS.IS_SPECIAL : 0) |
-                             (attributes.isHidden() ? PersistentFS.IS_HIDDEN : 0), true);
+                   (attributes.isWritable() ? 0 : PersistentFS.IS_READ_ONLY) |
+                   (attributes.isSymLink() ? PersistentFS.IS_SYMLINK : 0) |
+                   (attributes.isSpecial() ? PersistentFS.IS_SPECIAL : 0) |
+                   (attributes.isHidden() ? PersistentFS.IS_HIDDEN : 0), true);
       setParent(id, parentId);
     }
     catch (Throwable e) {
@@ -162,10 +173,6 @@ public class FSRecords {
 
   File basePath() {
     return myBaseFile;
-  }
-
-  public static File defaultBasePath() {
-    return new File(getCachesDir());
   }
 
   private boolean myInitialized;
@@ -187,6 +194,7 @@ public class FSRecords {
   private final AttrPageAwareCapacityAllocationPolicy REASONABLY_SMALL = new AttrPageAwareCapacityAllocationPolicy();
 
 
+  @Override
   public void connect(PagedFileStorage.StorageLockContext lockContext, PersistentStringEnumerator names, FileNameCache fileNameCache) {
     w.lock();
     try {
@@ -370,11 +378,6 @@ public class FSRecords {
     }
   }
 
-  public static String getCachesDir() {
-    String dir = System.getProperty("caches_dir"); //TODO: return here
-    return dir == null ? PathManager.getSystemPath() + "/caches/" : dir;
-  }
-
   private void markDirty() {
     if (!myDirty) {
       myDirty = true;
@@ -400,6 +403,7 @@ public class FSRecords {
     });
   }
 
+  @Override
   public void force() {
     w.lock();
     try {
@@ -436,6 +440,7 @@ public class FSRecords {
     }
   }
 
+  @Override
   public boolean isDirty() {
     return myDirty || myNames.isDirty() || myAttributes.isDirty() || myContents.isDirty() || myRecords.isDirty() ||
            myContentHashesEnumerator != null && myContentHashesEnumerator.isDirty();
@@ -449,6 +454,7 @@ public class FSRecords {
     return recordsVersion;
   }
 
+  @Override
   public long getTimestamp() {
     return myRecords.getLong(HEADER_TIMESTAMP_OFFSET);
   }
@@ -463,10 +469,6 @@ public class FSRecords {
 
   void cleanRecord(int id) {
     myRecords.put(id * RECORD_SIZE, ZEROES, 0, RECORD_SIZE);
-  }
-
-  public PersistentStringEnumerator getNames() {
-    return myNames;
   }
 
   private void closeFiles() throws IOException {
@@ -517,7 +519,8 @@ public class FSRecords {
     return myAttributesList.getId(attId) + FIRST_ATTR_ID_OFFSET;
   }
 
-  void handleError(@NotNull Throwable e) throws RuntimeException, Error {
+  @Override
+  public void handleError(@NotNull Throwable e) throws RuntimeException, Error {
     if (!myIsDisposed) {
       // No need to forcibly mark VFS corrupted if it is already shut down
       if (!myCorrupted && w.tryLock()) { // avoid deadlock if r lock is occupied by current thread
@@ -533,6 +536,11 @@ public class FSRecords {
     throw new RuntimeException(e);
   }
 
+  @Override
+  public void handleError(int fileId, @NotNull Throwable e) throws RuntimeException, Error {
+    handleError(e);
+  }
+
   private static class AttrPageAwareCapacityAllocationPolicy extends CapacityAllocationPolicy {
     boolean myAttrPageRequested;
 
@@ -542,6 +550,7 @@ public class FSRecords {
     }
   }
 
+  @Override
   public long getCreationTimestamp() {
     r.lock();
     try {
@@ -566,6 +575,11 @@ public class FSRecords {
 
   private Storage getAttributesStorage() {
     return myAttributes;
+  }
+
+  @Override
+  public int createChildRecord(int parentId) {
+    return createRecord();
   }
 
   // todo: Address  / capacity store in records table, size store with payload
@@ -601,6 +615,7 @@ public class FSRecords {
   private int length() {
     return (int)getRecords().length();
   }
+
   public int getMaxId() {
     r.lock();
     try {
@@ -611,7 +626,8 @@ public class FSRecords {
     }
   }
 
-  void deleteRecordRecursively(int id) {
+  @Override
+  public void deleteRecordRecursively(int id) {
     w.lock();
     try {
       incModCount(id);
@@ -716,8 +732,9 @@ public class FSRecords {
 
   private static final int ROOT_RECORD_ID = 1;
 
+  @Override
   @NotNull
-  int[] listRoots() {
+  public int[] listRoots() {
     try {
       r.lock();
       try {
@@ -738,7 +755,7 @@ public class FSRecords {
           return result.toNativeArray();
         }
 
-        final DataInputStream input = readAttribute(ROOT_RECORD_ID, ourChildrenAttr);
+        final DataInputStream input = readAttributeNoLock(ROOT_RECORD_ID, ourChildrenAttr);
         if (input == null) return ArrayUtil.EMPTY_INT_ARRAY;
 
         try {
@@ -777,7 +794,8 @@ public class FSRecords {
     }
   }
 
-  int findRootRecord(@NotNull String rootUrl) {
+  @Override
+  public int findRootRecord(@NotNull String rootUrl) {
     w.lock();
 
     try {
@@ -802,9 +820,9 @@ public class FSRecords {
         }
       }
 
-      final int root = getNames().enumerate(rootUrl);
+      final int root = myNames.enumerate(rootUrl);
 
-      final DataInputStream input = readAttribute(ROOT_RECORD_ID, ourChildrenAttr);
+      final DataInputStream input = readAttributeNoLock(ROOT_RECORD_ID, ourChildrenAttr);
       int[] names = ArrayUtil.EMPTY_INT_ARRAY;
       int[] ids = ArrayUtil.EMPTY_INT_ARRAY;
 
@@ -854,7 +872,8 @@ public class FSRecords {
     return -1;
   }
 
-  void deleteRootRecord(int id) {
+  @Override
+  public void deleteRootRecord(int id) {
     w.lock();
 
     try {
@@ -883,7 +902,7 @@ public class FSRecords {
         return;
       }
 
-      final DataInputStream input = readAttribute(ROOT_RECORD_ID, ourChildrenAttr);
+      final DataInputStream input = readAttributeNoLock(ROOT_RECORD_ID, ourChildrenAttr);
       assert input != null;
       int[] names;
       int[] ids;
@@ -923,12 +942,13 @@ public class FSRecords {
     }
   }
 
+  @Override
   @NotNull
   public int[] list(int id) {
     try {
       r.lock();
       try {
-        final DataInputStream input = readAttribute(id, ourChildrenAttr);
+        final DataInputStream input = readAttributeNoLock(id, ourChildrenAttr);
         if (input == null) return ArrayUtil.EMPTY_INT_ARRAY;
 
         final int count = DataInputOutputUtil.readINT(input);
@@ -950,31 +970,13 @@ public class FSRecords {
     }
   }
 
-  public static class NameId {
-    @NotNull
-    public static final NameId[] EMPTY_ARRAY = new NameId[0];
-    public final int id;
-    public final CharSequence name;
-    public final int nameId;
-
-    public NameId(int id, int nameId, @NotNull CharSequence name) {
-      this.id = id;
-      this.nameId = nameId;
-      this.name = name;
-    }
-
-    @Override
-    public String toString() {
-      return name + " (" + id + ")";
-    }
-  }
-
+  @Override
   @NotNull
   public NameId[] listAll(int parentId) {
     try {
       r.lock();
       try {
-        final DataInputStream input = readAttribute(parentId, ourChildrenAttr);
+        final DataInputStream input = readAttributeNoLock(parentId, ourChildrenAttr);
         if (input == null) return NameId.EMPTY_ARRAY;
 
         int count = DataInputOutputUtil.readINT(input);
@@ -999,7 +1001,8 @@ public class FSRecords {
     }
   }
 
-  boolean wereChildrenAccessed(int id) {
+  @Override
+  public boolean wereChildrenAccessed(int id) {
     try {
       r.lock();
       try {
@@ -1014,6 +1017,7 @@ public class FSRecords {
     return false;
   }
 
+  @Override
   public void updateList(int id, @NotNull int[] childIds) {
     Arrays.sort(childIds);
     w.lock();
@@ -1057,10 +1061,12 @@ public class FSRecords {
     myLocalModificationCount++;
   }
 
-  int getLocalModCount() {
+  @Override
+  public int getLocalModCount() {
     return myLocalModificationCount; // This is volatile, only modified under Application.runWriteAction() lock.
   }
 
+  @Override
   public int getModCount() {
     r.lock();
     try {
@@ -1094,15 +1100,16 @@ public class FSRecords {
   }
 
   // returns id, parent(id), parent(parent(id)), ...  (already cached id or rootId)
+  @Override
   @NotNull
-  public TIntArrayList getParents(int id, @NotNull ConcurrentIntObjectMap<?> idCache) {
+  public TIntArrayList getParents(int id, @NotNull IntPredicate cached) {
     TIntArrayList result = new TIntArrayList(10);
     r.lock();
     try {
       int parentId;
       do {
         result.add(id);
-        if (idCache.containsKey(id)) {
+        if (cached.test(id)) {
           break;
         }
         parentId = getRecordInt(id, PARENT_OFFSET);
@@ -1122,6 +1129,7 @@ public class FSRecords {
     return result;
   }
 
+  @Override
   public void setParent(int id, int parentId) {
     if (id == parentId) {
       LOG.error("Cyclic parent/child relations");
@@ -1141,6 +1149,7 @@ public class FSRecords {
     }
   }
 
+  @Override
   public int getNameId(int id) {
     try {
       r.lock();
@@ -1157,11 +1166,12 @@ public class FSRecords {
     return -1;
   }
 
+  @Override
   public int getNameId(String name) {
     try {
       r.lock();
       try {
-        return getNames().enumerate(name);
+        return myNames.enumerate(name);
       }
       finally {
         r.unlock();
@@ -1173,10 +1183,12 @@ public class FSRecords {
     return -1;
   }
 
+  @Override
   public String getName(int id) {
     return getNameSequence(id).toString();
   }
 
+  @Override
   @NotNull
   public CharSequence getNameSequence(int id) {
     try {
@@ -1195,11 +1207,12 @@ public class FSRecords {
     }
   }
 
+  @Override
   public void setName(int id, @NotNull String name) {
     w.lock();
     try {
       incModCount(id);
-      int nameId = getNames().enumerate(name);
+      int nameId = myNames.enumerate(name);
       putRecordInt(id, NAME_OFFSET, nameId);
     }
     catch (Throwable e) {
@@ -1210,6 +1223,7 @@ public class FSRecords {
     }
   }
 
+  @Override
   public int getFlags(int id) {
     r.lock();
     try {
@@ -1220,6 +1234,7 @@ public class FSRecords {
     }
   }
 
+  @Override
   public void setFlags(int id, int flags, final boolean markAsChange) {
     w.lock();
     try {
@@ -1236,6 +1251,7 @@ public class FSRecords {
     }
   }
 
+  @Override
   public long getLength(int id) {
     r.lock();
     try {
@@ -1246,6 +1262,7 @@ public class FSRecords {
     }
   }
 
+  @Override
   public void setLength(int id, long len) {
     w.lock();
     try {
@@ -1264,6 +1281,7 @@ public class FSRecords {
     }
   }
 
+  @Override
   public long getTimestamp(int id) {
     r.lock();
     try {
@@ -1274,6 +1292,7 @@ public class FSRecords {
     }
   }
 
+  @Override
   public void setTimestamp(int id, long value) {
     w.lock();
     try {
@@ -1292,7 +1311,8 @@ public class FSRecords {
     }
   }
 
-  int getModCount(int id) {
+  @Override
+  public int getModCount(int id) {
     r.lock();
     try {
       return getRecordInt(id, MOD_COUNT_OFFSET);
@@ -1334,6 +1354,7 @@ public class FSRecords {
     return id * RECORD_SIZE + offset;
   }
 
+  @Override
   @Nullable
   public DataInputStream readContent(int fileId) {
     try {
@@ -1356,8 +1377,9 @@ public class FSRecords {
     return null;
   }
 
+  @Override
   @Nullable
-  DataInputStream readContentById(int contentId) {
+  public DataInputStream readContentById(int contentId) {
     try {
       return doReadContentById(contentId);
     }
@@ -1377,12 +1399,13 @@ public class FSRecords {
     return stream;
   }
 
+  @Override
   @Nullable
-  public DataInputStream readAttributeWithLock(int fileId, FileAttribute att) {
+  public DataInputStream readAttribute(int fileId, FileAttribute att) {
     try {
       r.lock();
       try {
-        DataInputStream stream = readAttribute(fileId, att);
+        DataInputStream stream = readAttributeNoLock(fileId, att);
         if (stream != null && att.isVersioned()) {
           try {
             int actualVersion = DataInputOutputUtil.readINT(stream);
@@ -1410,7 +1433,7 @@ public class FSRecords {
 
   // should be called under r or w lock
   @Nullable
-  private DataInputStream readAttribute(int fileId, FileAttribute attribute) throws IOException {
+  private DataInputStream readAttributeNoLock(int fileId, FileAttribute attribute) throws IOException {
     checkFileIsValid(fileId);
 
     int recordId = getAttributeRecordId(fileId);
@@ -1543,7 +1566,8 @@ public class FSRecords {
     }
   }
 
-  int acquireFileContent(int fileId) {
+  @Override
+  public int acquireFileContent(int fileId) {
     w.lock();
     try {
       int record = getContentRecordId(fileId);
@@ -1559,7 +1583,8 @@ public class FSRecords {
     return -1;
   }
 
-  void releaseContent(int contentId) {
+  @Override
+  public void releaseContent(int contentId) {
     w.lock();
     try {
       RefCountingStorage contentStorage = getContentStorage();
@@ -1577,6 +1602,7 @@ public class FSRecords {
     }
   }
 
+  @Override
   public int getContentId(int fileId) {
     try {
       r.lock();
@@ -1593,14 +1619,16 @@ public class FSRecords {
     return -1;
   }
 
+  @Override
   @NotNull
-  DataOutputStream writeContent(int fileId, boolean readOnly) {
+  public DataOutputStream writeContent(int fileId, boolean readOnly) {
     return new ContentOutputStream(fileId, readOnly);
   }
 
   private static final MessageDigest myDigest = ContentHashesUtil.createHashDigest();
 
-  void writeContent(int fileId, ByteSequence bytes, boolean readOnly) {
+  @Override
+  public void writeContent(int fileId, ByteSequence bytes, boolean readOnly) {
     try {
       writeBytes(fileId, bytes, readOnly);
     }
@@ -1609,7 +1637,8 @@ public class FSRecords {
     }
   }
 
-  int storeUnlinkedContent(byte[] bytes) {
+  @Override
+  public int storeUnlinkedContent(byte[] bytes) {
     w.lock();
     try {
       int recordId;
@@ -1635,6 +1664,7 @@ public class FSRecords {
     return -1;
   }
 
+  @Override
   @NotNull
   public DataOutputStream writeAttribute(final int fileId, @NotNull FileAttribute att) {
     DataOutputStream stream = new AttributeOutputStream(fileId, att);
@@ -1649,6 +1679,7 @@ public class FSRecords {
     return stream;
   }
 
+  @Override
   public void writeBytes(int fileId, ByteSequence bytes, boolean preferFixedSize) throws IOException {
     RefCountingStorage contentStorage = getContentStorage();
     w.lock();
@@ -1939,6 +1970,7 @@ public class FSRecords {
     }
   }
 
+  @Override
   public void dispose() {
     w.lock();
     try {
@@ -1954,6 +1986,7 @@ public class FSRecords {
     }
   }
 
+  @Override
   public void invalidateCaches() {
     createBrokenMarkerFile(null);
   }
@@ -1990,7 +2023,7 @@ public class FSRecords {
   }
 
   private void checkRecordSanity(final int id, final int recordCount, final IntArrayList usedAttributeRecordIds,
-                                        final IntArrayList validAttributeIds) {
+                                 final IntArrayList validAttributeIds) {
     int parentId = getParent(id);
     assert parentId >= 0 && parentId < recordCount;
     if (parentId > 0 && getParent(parentId) > 0) {
@@ -2032,7 +2065,7 @@ public class FSRecords {
   }
 
   private void checkAttributesSanity(final int attributeRecordId, final IntArrayList usedAttributeRecordIds,
-                                            final IntArrayList validAttributeIds) throws IOException {
+                                     final IntArrayList validAttributeIds) throws IOException {
     assert !usedAttributeRecordIds.contains(attributeRecordId);
     usedAttributeRecordIds.add(attributeRecordId);
 

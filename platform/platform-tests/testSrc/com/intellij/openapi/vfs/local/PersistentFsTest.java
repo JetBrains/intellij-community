@@ -26,7 +26,7 @@ import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.openapi.vfs.newvfs.persistent.IFSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.testFramework.LoggedErrorProcessor;
@@ -45,7 +45,7 @@ import java.util.jar.JarFile;
 public class PersistentFsTest extends PlatformTestCase {
   private PersistentFS myFs;
   private LocalFileSystem myLocalFs;
-  private FSRecords myRecords;
+  private IFSRecords myRecords;
 
   @Override
   public void setUp() throws Exception {

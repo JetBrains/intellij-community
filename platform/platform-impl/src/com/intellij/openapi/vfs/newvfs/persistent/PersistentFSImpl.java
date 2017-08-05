@@ -72,7 +72,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   private final AtomicBoolean myShutDown = new AtomicBoolean(false);
   private volatile int myStructureModificationCount;
 
-  private FSRecords myRecords;
+  private IFSRecords myRecords;
   private PersistentStringEnumerator myNames;
   private FileNameCache myNamesCache;
 
@@ -81,7 +81,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   @TestOnly
-  public FSRecords getRecords() {
+  public IFSRecords getRecords() {
     return myRecords;
   }
 
@@ -253,7 +253,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Nullable
   public DataInputStream readAttribute(@NotNull final VirtualFile file, @NotNull final FileAttribute att) {
     System.out.println("readAttribute file = [" + file + "], att = [" + att + "]");
-    return myRecords.readAttributeWithLock(getFileId(file), att);
+    return myRecords.readAttribute(getFileId(file), att);
   }
 
   @Override
@@ -575,7 +575,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         return FileUtil.loadBytes(contentStream, (int)length);
       }
       catch (IOException e) {
-        myRecords.handleError(e);
+        myRecords.handleError(fileId, e);
         return ArrayUtil.EMPTY_BYTE_ARRAY;
       }
     }
@@ -829,7 +829,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public DataInputStream readAttributeById(int fileId, FileAttribute attr) {
-    return myRecords.readAttributeWithLock(fileId, attr);
+    return myRecords.readAttribute(fileId, attr);
   }
 
   @Override
@@ -1016,7 +1016,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     VirtualFileSystemEntry cached = myIdToDirCache.get(id);
     if (cached != null) return cached;
 
-    TIntArrayList parents = myRecords.getParents(id, myIdToDirCache); //TODO: ids are global in myIdToDirCache
+    TIntArrayList parents = myRecords.getParents(id, i -> myIdToDirCache.containsKey(i));
+
     // the last element of the parents is either a root or already cached element
     int parentId = parents.get(parents.size() - 1);
     VirtualFileSystemEntry result = myIdToDirCache.get(parentId);
@@ -1145,10 +1146,10 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   private int createAndFillRecord(@NotNull NewVirtualFileSystem delegateSystem,
-                                         @NotNull VirtualFile delegateFile,
-                                         int parentId,
-                                         @NotNull FileAttributes attributes) {
-    final int childId = myRecords.createRecord();
+                                  @NotNull VirtualFile delegateFile,
+                                  int parentId,
+                                  @NotNull FileAttributes attributes) {
+    final int childId = myRecords.createChildRecord(parentId);
     writeAttributesToRecord(childId, parentId, delegateFile, delegateSystem, attributes);
     return childId;
   }
