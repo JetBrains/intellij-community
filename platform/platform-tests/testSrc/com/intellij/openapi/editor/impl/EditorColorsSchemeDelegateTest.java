@@ -61,8 +61,8 @@ public class EditorColorsSchemeDelegateTest extends AbstractEditorTest {
       init("blah", TestFileType.TEXT);
 
       assertInstanceOf(globalPrefs, ModifiableFontPreferences.class);
-      LOG.debug(dumpFontPreferences("globalPrefs", globalPrefs));
       ((ModifiableFontPreferences)globalPrefs).register("DummyFont", globalPrefs.getSize(globalPrefs.getFontFamily()));
+      LOG.debug(dumpFontPreferences("globalPrefs", globalPrefs));
       assertEquals(2, globalPrefs.getRealFontFamilies().size());
       ((EditorEx)myEditor).reinitSettings();
 
