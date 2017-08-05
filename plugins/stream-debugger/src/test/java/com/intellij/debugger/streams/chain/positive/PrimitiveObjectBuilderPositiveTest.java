@@ -78,7 +78,7 @@ public class PrimitiveObjectBuilderPositiveTest extends StreamChainBuilderPositi
     final StreamChain chain = chains.get(0);
     final List<IntermediateStreamCall> intermediateCalls = chain.getIntermediateCalls();
     assertEquals(intermediateAfterTypes.length, intermediateCalls.size());
-    assertEquals(producerAfterType, chain.getProducerCall().getTypeAfter());
+    assertEquals(producerAfterType, chain.getQualifierExpression().getTypeAfter());
 
     if (intermediateAfterTypes.length > 0) {
       assertEquals(producerAfterType, intermediateCalls.get(0).getTypeBefore());

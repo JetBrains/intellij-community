@@ -18,11 +18,14 @@ package com.intellij.debugger.streams.psi.impl;
 import com.intellij.debugger.streams.psi.ChainTransformer;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericTypeUtil;
-import com.intellij.debugger.streams.wrapper.*;
+import com.intellij.debugger.streams.wrapper.CallArgument;
+import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
+import com.intellij.debugger.streams.wrapper.StreamChain;
+import com.intellij.debugger.streams.wrapper.TerminatorStreamCall;
 import com.intellij.debugger.streams.wrapper.impl.*;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.TypeConversionUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,33 +40,28 @@ import java.util.stream.Collectors;
 public class JavaChainTransformerImpl implements ChainTransformer.Java {
   @NotNull
   @Override
-  public StreamChain transform(@NotNull List<PsiMethodCallExpression> streamExpressions, @NotNull PsiElement context) {
+  public StreamChain transform(@NotNull List<PsiMethodCallExpression> streamExpressions,
+                               @NotNull PsiElement context) {
     // TODO: support variable.sum() where variable has a stream type
-    if (streamExpressions.size() < 2) {
-      throw new RuntimeException("Wrong length of the stream chain");
-    }
+    // TODO: add test
 
-    final ProducerStreamCall producer = createProducer(streamExpressions.get(0));
+    final PsiMethodCallExpression firstCall = streamExpressions.get(0);
 
+    final PsiExpression qualifierExpression = firstCall.getMethodExpression().getQualifierExpression();
+    final GenericType typeAfterQualifier = resolveType(firstCall);
+
+    final QualifierExpressionImpl qualifier =
+      qualifierExpression == null
+      ? new QualifierExpressionImpl("", TextRange.EMPTY_RANGE, typeAfterQualifier)
+      : new QualifierExpressionImpl(qualifierExpression.getText(), qualifierExpression.getTextRange(), typeAfterQualifier);
     final List<IntermediateStreamCall> intermediateCalls =
-      createIntermediateCalls(producer.getTypeAfter(), streamExpressions.subList(1, streamExpressions.size() - 1));
+      createIntermediateCalls(typeAfterQualifier, streamExpressions.subList(0, streamExpressions.size() - 1));
 
     final GenericType typeBefore =
-      intermediateCalls.isEmpty() ? producer.getTypeAfter() : intermediateCalls.get(intermediateCalls.size() - 1).getTypeAfter();
+      intermediateCalls.isEmpty() ? qualifier.getTypeAfter() : intermediateCalls.get(intermediateCalls.size() - 1).getTypeAfter();
     final TerminatorStreamCall terminationCall = createTerminationCall(typeBefore, streamExpressions.get(streamExpressions.size() - 1));
 
-    return new StreamChainImpl(producer, intermediateCalls, terminationCall, context);
-  }
-
-  @NotNull
-  private ProducerStreamCall createProducer(@NotNull PsiMethodCallExpression expression) {
-    GenericType prevCallType = resolveType(expression);
-    final PsiType type = TypeConversionUtil.erasure(expression.getType());
-    assert type != null;
-    final String packageName = StringUtil.getPackageName(type.getCanonicalText());
-
-    return new ProducerStreamCallImpl(resolveProducerCallName(expression), resolveArguments(expression), prevCallType,
-                                      expression.getTextRange(), packageName);
+    return new StreamChainImpl(qualifier, intermediateCalls, terminationCall, context);
   }
 
   @NotNull
@@ -91,11 +89,6 @@ public class JavaChainTransformerImpl implements ChainTransformer.Java {
     final GenericType resultType = resolveTerminationCallType(expression);
     final String packageName = resolvePackageName(expression);
     return new TerminatorStreamCallImpl(name, args, typeBefore, resultType, expression.getTextRange(), packageName);
-  }
-
-  @NotNull
-  private static String resolveProducerCallName(@NotNull PsiMethodCallExpression methodCall) {
-    return methodCall.getChildren()[0].getText();
   }
 
   @NotNull

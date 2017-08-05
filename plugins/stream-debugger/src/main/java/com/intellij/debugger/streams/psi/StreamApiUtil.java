@@ -20,6 +20,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.kotlin.psi.KtCallExpression;
 
 /**
  * @author Vitaliy.Bibaev
@@ -36,8 +37,20 @@ public class StreamApiUtil {
     return checkStreamCall(expression, true, false);
   }
 
+  public static boolean isTerminationStreamCall(@NotNull KtCallExpression expression) {
+    // TODO: implement
+    return false;
+  }
+
   public static boolean isProducerStreamCall(@NotNull PsiMethodCallExpression expression) {
-    return checkStreamCall(expression, false, true);
+    final PsiMethod method = expression.resolveMethod();
+
+    return (method != null && method.hasModifierProperty(PsiModifier.STATIC)) ||
+           checkStreamCall(expression, false, true);
+  }
+
+  public static boolean isProducerStreamCall(@NotNull KtCallExpression expression) {
+    return false;
   }
 
   private static boolean isIntermediateStreamCall(@NotNull PsiMethodCallExpression expression) {

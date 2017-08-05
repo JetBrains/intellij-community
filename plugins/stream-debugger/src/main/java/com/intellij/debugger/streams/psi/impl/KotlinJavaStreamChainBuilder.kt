@@ -16,10 +16,12 @@
 package com.intellij.debugger.streams.psi.impl
 
 import com.intellij.debugger.streams.lib.LibraryManager
+import com.intellij.debugger.streams.psi.StreamApiUtil
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
 import org.jetbrains.kotlin.psi.KtCallExpression
+import java.util.*
 
 /**
  * @author Vitaliy.Bibaev
@@ -47,7 +49,23 @@ class KotlinJavaStreamChainBuilder : KotlinChainBuilderBase(KotlinChainTransform
     }
 
     override fun chains(): List<List<KtCallExpression>> {
-      return emptyList()
+      val chains = ArrayList<List<KtCallExpression>>()
+      for (terminationCall in myTerminationCalls) {
+        val chain = ArrayList<KtCallExpression>()
+        var current: KtCallExpression? = terminationCall
+        while (current != null) {
+          chain.add(current)
+          if (StreamApiUtil.isProducerStreamCall(current)) {
+            break
+          }
+          current = myPreviousCalls.get(current)
+        }
+
+        Collections.reverse(chain)
+        chains.add(chain)
+      }
+
+      return chains
     }
   }
 }

@@ -18,7 +18,6 @@ package com.intellij.debugger.streams.trace.impl.handler;
 import com.intellij.debugger.streams.trace.IntermediateCallHandler;
 import com.intellij.debugger.streams.trace.TerminatorCallHandler;
 import com.intellij.debugger.streams.trace.TraceHandler;
-import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -45,11 +44,6 @@ public abstract class HandlerBase implements TraceHandler {
 
   @NotNull
   protected abstract List<Variable> getVariables();
-
-  static abstract class Producer extends HandlerBase {
-    @NotNull
-    public abstract List<IntermediateStreamCall> additionalCallsAfter();
-  }
 
   public static abstract class Intermediate extends HandlerBase implements IntermediateCallHandler {
   }

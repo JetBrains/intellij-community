@@ -18,13 +18,11 @@ package com.intellij.debugger.streams.ui.impl;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.streams.resolve.ResolvedStreamCall;
 import com.intellij.debugger.streams.resolve.ResolvedStreamChain;
-import com.intellij.debugger.streams.trace.IntermediateState;
-import com.intellij.debugger.streams.trace.PrevAwareState;
-import com.intellij.debugger.streams.trace.ResolvedTracingResult;
-import com.intellij.debugger.streams.trace.TraceElement;
+import com.intellij.debugger.streams.trace.*;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.ui.TraceController;
 import com.intellij.debugger.streams.wrapper.CallArgument;
+import com.intellij.debugger.streams.wrapper.QualifierExpression;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.icons.AllIcons;
@@ -83,12 +81,17 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     myCenterPane = new JPanel(layout);
     myCenterPane.add(myTabsPane.getComponent());
     myTabContents = new ArrayList<>();
+    final QualifierExpression qualifierExpression = chain.getQualifierExpression();
+    final MyPlaceholder firstTab = new MyPlaceholder();
+    myTabsPane.insertTab("qualifier", StreamDebuggerIcons.STREAM_CALL_TAB_ICON, firstTab, qualifierExpression.getText(), 0);
+    myTabContents.add(firstTab);
+
     for (int i = 0, chainLength = chain.length(); i < chainLength; i++) {
       final StreamCall call = chain.getCall(i);
       final MyPlaceholder tab = new MyPlaceholder();
       final String callName = call.getName().replace(" ", "");
       myTabsPane.insertTab(callName, StreamDebuggerIcons.STREAM_CALL_TAB_ICON, tab,
-                           callName + formatArguments(call.getArguments()), i);
+                           callName + formatArguments(call.getArguments()), i + 1);
       myTabContents.add(tab);
     }
 
@@ -109,8 +112,6 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     final ResolvedStreamChain chain = resolvedTrace.getResolvedChain();
 
     assert chain.length() == myTabContents.size();
-    chain.getProducer().getStateAfter().getTrace();
-
     final List<TraceControllerImpl> controllers = createControllers(resolvedTrace);
 
     if (controllers.isEmpty()) return;
@@ -182,11 +183,14 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     List<TraceControllerImpl> controllers = new ArrayList<>();
     final ResolvedStreamChain chain = resolvedResult.getResolvedChain();
 
-    final TraceControllerImpl producerController = new TraceControllerImpl(chain.getProducer().getStateAfter());
     final List<ResolvedStreamCall.Intermediate> intermediateCalls = chain.getIntermediateCalls();
+    final NextAwareState firstState = intermediateCalls.isEmpty()
+                                      ? chain.getTerminator().getStateBefore()
+                                      : intermediateCalls.get(0).getStateBefore();
+    final TraceControllerImpl firstController = new TraceControllerImpl(firstState);
 
-    controllers.add(producerController);
-    TraceControllerImpl prevController = producerController;
+    controllers.add(firstController);
+    TraceControllerImpl prevController = firstController;
     for (final ResolvedStreamCall.Intermediate intermediate : intermediateCalls) {
       final PrevAwareState after = intermediate.getStateAfter();
       final TraceControllerImpl controller = new TraceControllerImpl(after);

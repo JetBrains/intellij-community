@@ -17,6 +17,7 @@ package com.intellij.debugger.streams.trace;
 
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -24,7 +25,7 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public interface PrevAwareState extends IntermediateState {
-  @NotNull
+  @Nullable
   StreamCall getPrevCall();
 
   @NotNull

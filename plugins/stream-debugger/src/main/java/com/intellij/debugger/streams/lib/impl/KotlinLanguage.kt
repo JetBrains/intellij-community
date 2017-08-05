@@ -25,6 +25,5 @@ import com.intellij.openapi.project.Project
  */
 class KotlinLanguage(project: Project) : Language {
   override val name: String = "Kotlin"
-  // TODO: implement kotlin expression builder
   override val expressionBuilder: TraceExpressionBuilder = TraceExpressionBuilderImpl(project)
 }

@@ -15,12 +15,10 @@
  */
 package com.intellij.debugger.streams.resolve;
 
-import com.intellij.debugger.streams.trace.BidirectionalAwareState;
 import com.intellij.debugger.streams.trace.IntermediateState;
 import com.intellij.debugger.streams.trace.NextAwareState;
 import com.intellij.debugger.streams.trace.PrevAwareState;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
-import com.intellij.debugger.streams.wrapper.ProducerStreamCall;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.TerminatorStreamCall;
 import org.jetbrains.annotations.NotNull;
@@ -39,25 +37,19 @@ public interface ResolvedStreamCall<CALL extends StreamCall, STATE_BEFORE extend
   @Nullable
   STATE_AFTER getStateAfter();
 
-  interface Producer extends ResolvedStreamCall<ProducerStreamCall, NextAwareState, BidirectionalAwareState> {
+  interface Intermediate extends ResolvedStreamCall<IntermediateStreamCall, NextAwareState, PrevAwareState> {
     @NotNull
     @Override
-    BidirectionalAwareState getStateAfter();
+    NextAwareState getStateBefore();
+
+    @NotNull
+    @Override
+    PrevAwareState getStateAfter();
   }
 
-  interface Intermediate extends ResolvedStreamCall<IntermediateStreamCall, BidirectionalAwareState, BidirectionalAwareState> {
+  interface Terminator extends ResolvedStreamCall<TerminatorStreamCall, NextAwareState, PrevAwareState> {
     @NotNull
     @Override
-    BidirectionalAwareState getStateBefore();
-
-    @NotNull
-    @Override
-    BidirectionalAwareState getStateAfter();
-  }
-
-  interface Terminator extends ResolvedStreamCall<TerminatorStreamCall, BidirectionalAwareState, PrevAwareState> {
-    @NotNull
-    @Override
-    BidirectionalAwareState getStateBefore();
+    NextAwareState getStateBefore();
   }
 }

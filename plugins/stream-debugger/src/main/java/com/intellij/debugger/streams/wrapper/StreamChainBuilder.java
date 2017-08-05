@@ -24,6 +24,13 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public interface StreamChainBuilder {
+
+  /**
+   * Check that a chain for debugging exists (the method should be an allocation-free)
+   *
+   * @param startElement a psi element
+   * @return true if chain was found, else otherwise
+   */
   boolean isChainExists(@NotNull PsiElement startElement);
 
   @NotNull

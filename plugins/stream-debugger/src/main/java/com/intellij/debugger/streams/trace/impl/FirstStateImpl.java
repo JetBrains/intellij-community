@@ -15,9 +15,8 @@
  */
 package com.intellij.debugger.streams.trace.impl;
 
-import com.intellij.debugger.streams.trace.BidirectionalAwareState;
+import com.intellij.debugger.streams.trace.NextAwareState;
 import com.intellij.debugger.streams.trace.TraceElement;
-import com.intellij.debugger.streams.wrapper.ProducerStreamCall;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,19 +27,16 @@ import java.util.Map;
 /**
  * @author Vitaliy.Bibaev
  */
-public class ProducerStateImpl extends StateBase implements BidirectionalAwareState {
+public class FirstStateImpl extends StateBase implements NextAwareState {
   private final StreamCall myNextCall;
-  private final ProducerStreamCall myProducerCall;
   private final Map<TraceElement, List<TraceElement>> myToNext;
 
-  ProducerStateImpl(@NotNull List<TraceElement> elements,
-                    @NotNull ProducerStreamCall producerCall,
-                    @NotNull StreamCall nextCall,
-                    @NotNull Map<TraceElement, List<TraceElement>> toNextMapping) {
+  FirstStateImpl(@NotNull List<TraceElement> elements,
+                 @NotNull StreamCall nextCall,
+                 @NotNull Map<TraceElement, List<TraceElement>> toNextMapping) {
     super(elements);
     myNextCall = nextCall;
     myToNext = toNextMapping;
-    myProducerCall = producerCall;
   }
 
   @NotNull
@@ -53,17 +49,5 @@ public class ProducerStateImpl extends StateBase implements BidirectionalAwareSt
   @Override
   public List<TraceElement> getNextValues(@NotNull TraceElement value) {
     return myToNext.getOrDefault(value, Collections.emptyList());
-  }
-
-  @NotNull
-  @Override
-  public ProducerStreamCall getPrevCall() {
-    return myProducerCall;
-  }
-
-  @NotNull
-  @Override
-  public List<TraceElement> getPrevValues(@NotNull TraceElement value) {
-    return Collections.emptyList();
   }
 }

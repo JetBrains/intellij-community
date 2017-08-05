@@ -23,8 +23,6 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public interface ResolvedStreamChain {
-  @NotNull
-  ResolvedStreamCall.Producer getProducer();
 
   @NotNull
   ResolvedStreamCall.Terminator getTerminator();

@@ -24,10 +24,9 @@ import com.intellij.debugger.streams.trace.TerminatorCallHandler;
 import com.intellij.debugger.streams.trace.TraceExpressionBuilder;
 import com.intellij.debugger.streams.trace.TraceHandler;
 import com.intellij.debugger.streams.trace.impl.handler.PeekCall;
-import com.intellij.debugger.streams.trace.impl.handler.ProducerHandler;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
-import com.intellij.debugger.streams.wrapper.ProducerStreamCall;
+import com.intellij.debugger.streams.wrapper.QualifierExpression;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.TerminatorStreamCall;
 import com.intellij.debugger.streams.wrapper.impl.StreamChainImpl;
@@ -68,17 +67,16 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
   @Override
   public String createTraceExpression(@NotNull StreamChain chain) {
     final LibraryManager libraryManager = LibraryManager.getInstance(myProject);
-    final ProducerHandler producerHandler = new ProducerHandler(chain.getProducerCall().getTypeAfter());
     final List<IntermediateCallHandler> intermediateHandlers = getHandlers(libraryManager, chain.getIntermediateCalls());
     final TerminatorStreamCall terminatorCall = chain.getTerminationCall();
     final TerminatorCallHandler terminatorHandler = libraryManager.getLibrary(terminatorCall).getHandlerFactory()
       .getForTermination(terminatorCall, "evaluationResult[0]");
 
-    final StreamChain traceChain = buildTraceChain(chain, producerHandler, intermediateHandlers, terminatorHandler);
+    final StreamChain traceChain = buildTraceChain(chain, intermediateHandlers, terminatorHandler);
 
-    final String declarations = buildDeclarations(producerHandler, intermediateHandlers, terminatorHandler);
+    final String declarations = buildDeclarations(intermediateHandlers, terminatorHandler);
 
-    final String fillingInfoArray = buildFillInfo(producerHandler, intermediateHandlers, terminatorHandler);
+    final String fillingInfoArray = buildFillInfo(intermediateHandlers, terminatorHandler);
 
     final String tracingCall = buildStreamExpression(traceChain);
 
@@ -105,14 +103,12 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
 
   @NotNull
   private static StreamChain buildTraceChain(@NotNull StreamChain chain,
-                                             @NotNull ProducerHandler producerHandler,
                                              @NotNull List<IntermediateCallHandler> intermediateCallHandlers,
                                              @NotNull TerminatorCallHandler terminatorHandler) {
     final List<IntermediateStreamCall> newIntermediateCalls = new ArrayList<>();
-    final ProducerStreamCall producerCall = chain.getProducerCall();
 
-    newIntermediateCalls.add(createTimePeekCall(producerCall.getTypeAfter()));
-    newIntermediateCalls.addAll(producerHandler.additionalCallsAfter());
+    final QualifierExpression qualifierExpression = chain.getQualifierExpression();
+    newIntermediateCalls.add(createTimePeekCall(qualifierExpression.getTypeAfter()));
 
     final List<IntermediateStreamCall> intermediateCalls = chain.getIntermediateCalls();
     assert intermediateCalls.size() == intermediateCallHandlers.size();
@@ -132,10 +128,8 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
     newIntermediateCalls.addAll(terminatorHandler.additionalCallsBefore());
     final TerminatorStreamCall terminatorCall = chain.getTerminationCall();
 
-    return new StreamChainImpl(producerHandler.transformCall(producerCall),
-                               newIntermediateCalls,
-                               terminatorHandler.transformCall(terminatorCall),
-                               chain.getContext());
+    return new StreamChainImpl(qualifierExpression, newIntermediateCalls,
+                               terminatorHandler.transformCall(terminatorCall), chain.getContext());
   }
 
   @NotNull
@@ -143,8 +137,7 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
     return new PeekCall("x -> time.incrementAndGet()", elementType);
   }
 
-  private static String buildDeclarations(@NotNull ProducerHandler producerHandler,
-                                          @NotNull List<IntermediateCallHandler> intermediateCallsHandlers,
+  private static String buildDeclarations(@NotNull List<IntermediateCallHandler> intermediateCallsHandlers,
                                           @NotNull TerminatorCallHandler terminatorHandler) {
     final StringBuilder builder = new StringBuilder();
     builder.append("final long startTime = java.lang.System.nanoTime();" + LINE_SEPARATOR);
@@ -153,7 +146,6 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
       .append("final java.util.concurrent.atomic.AtomicInteger time = new java.util.concurrent.atomic.AtomicInteger(0);")
       .append(LINE_SEPARATOR);
 
-    builder.append(producerHandler.additionalVariablesDeclaration());
     intermediateCallsHandlers.forEach(x -> builder.append(x.additionalVariablesDeclaration()));
     builder.append(terminatorHandler.additionalVariablesDeclaration());
 
@@ -193,13 +185,12 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
   }
 
   @NotNull
-  private static String buildFillInfo(ProducerHandler producerHandler,
-                                      List<IntermediateCallHandler> intermediateCallsHandlers,
+  private static String buildFillInfo(List<IntermediateCallHandler> intermediateCallsHandlers,
                                       TerminatorCallHandler terminatorHandler) {
     final StringBuilder builder = new StringBuilder();
 
     final Iterator<TraceHandler> iterator =
-      StreamEx.of((TraceHandler)producerHandler).append(intermediateCallsHandlers).append(terminatorHandler).iterator();
+      StreamEx.of(intermediateCallsHandlers).map(x -> (TraceHandler)x).append(terminatorHandler).iterator();
 
     int i = 0;
     while (iterator.hasNext()) {

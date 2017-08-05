@@ -157,10 +157,10 @@ public class JavaStreamChainBuilder implements StreamChainBuilder {
         final List<PsiMethodCallExpression> chain = new ArrayList<>();
         PsiMethodCallExpression current = terminationCall;
         while (current != null) {
-          chain.add(current);
           if (StreamApiUtil.isProducerStreamCall(current)) {
             break;
           }
+          chain.add(current);
           current = myPreviousCalls.get(current);
         }
 

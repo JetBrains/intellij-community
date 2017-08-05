@@ -24,8 +24,9 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public interface StreamChain {
+
   @NotNull
-  ProducerStreamCall getProducerCall();
+  QualifierExpression getQualifierExpression();
 
   @NotNull
   List<IntermediateStreamCall> getIntermediateCalls();

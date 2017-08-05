@@ -29,16 +29,16 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public class StreamChainImpl implements StreamChain {
-  private final ProducerStreamCall myProducer;
+  private final QualifierExpression myQualifierExpression;
   private final List<IntermediateStreamCall> myIntermediateCalls;
   private final TerminatorStreamCall myTerminator;
   private final PsiElement myContext;
 
-  public StreamChainImpl(@NotNull ProducerStreamCall producer,
+  public StreamChainImpl(@NotNull QualifierExpression qualifierExpression,
                          @NotNull List<IntermediateStreamCall> intermediateCalls,
                          @NotNull TerminatorStreamCall terminator,
                          @NotNull PsiElement context) {
-    myProducer = producer;
+    myQualifierExpression = qualifierExpression;
     myIntermediateCalls = intermediateCalls;
     myTerminator = terminator;
     myContext = context;
@@ -46,8 +46,8 @@ public class StreamChainImpl implements StreamChain {
 
   @NotNull
   @Override
-  public ProducerStreamCall getProducerCall() {
-    return myProducer;
+  public QualifierExpression getQualifierExpression() {
+    return myQualifierExpression;
   }
 
   @NotNull
@@ -75,8 +75,9 @@ public class StreamChainImpl implements StreamChain {
   @NotNull
   @Override
   public String getText() {
-    final Iterator<StreamCall> iterator = StreamEx.of((StreamCall)myProducer).append(myIntermediateCalls).append(myTerminator).iterator();
+    final Iterator<StreamCall> iterator = StreamEx.of(myIntermediateCalls).map(x -> (StreamCall)x).append(myTerminator).iterator();
     final StringBuilder builder = new StringBuilder();
+    builder.append(myQualifierExpression.getText()).append(TraceExpressionBuilderImpl.LINE_SEPARATOR).append(".");
 
     while (iterator.hasNext()) {
       final MethodCall call = iterator.next();
@@ -94,7 +95,7 @@ public class StreamChainImpl implements StreamChain {
   @Override
   public String getCompactText() {
     final StringBuilder builder = new StringBuilder();
-    builder.append(myProducer.getName().replaceAll("\\s+", ""));
+    builder.append(myQualifierExpression.getText().replaceAll("\\s+", ""));
     for (final StreamCall call : StreamEx.of(myIntermediateCalls).map(x -> (StreamCall)x).append(myTerminator)) {
       builder.append(" -> ").append(call.getName());
     }
@@ -104,7 +105,7 @@ public class StreamChainImpl implements StreamChain {
 
   @Override
   public int length() {
-    return 2 + myIntermediateCalls.size();
+    return 1 + myIntermediateCalls.size();
   }
 
   @NotNull
@@ -114,12 +115,8 @@ public class StreamChainImpl implements StreamChain {
   }
 
   private StreamCall doGetCall(int index) {
-    if (index == 0) {
-      return myProducer;
-    }
-
-    if (index <= myIntermediateCalls.size()) {
-      return myIntermediateCalls.get(index - 1);
+    if (index < myIntermediateCalls.size()) {
+      return myIntermediateCalls.get(index);
     }
 
     return myTerminator;

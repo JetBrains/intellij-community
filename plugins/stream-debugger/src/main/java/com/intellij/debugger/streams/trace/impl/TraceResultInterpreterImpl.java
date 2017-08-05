@@ -59,6 +59,7 @@ public class TraceResultInterpreterImpl implements TraceResultInterpreter {
   private List<TraceInfo> getTrace(@NotNull StreamChain chain, @NotNull ArrayReference info) {
     final int callCount = chain.length();
     final List<TraceInfo> result = new ArrayList<>(callCount);
+
     for (int i = 0; i < callCount; i++) {
       final StreamCall call = chain.getCall(i);
       final Value trace = info.getValue(i);
