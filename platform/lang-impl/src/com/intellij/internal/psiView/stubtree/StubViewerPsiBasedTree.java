@@ -45,6 +45,7 @@ import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.io.IOException;
 
+import static com.intellij.internal.psiView.PsiViewerDialog.LOG;
 import static com.intellij.internal.psiView.PsiViewerDialog.initTree;
 
 public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
@@ -76,7 +77,7 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
       Disposer.dispose(myStubTreeBuilder);
       myStubTreeBuilder = null;
     }
-    
+
     buildStubTree(rootRootElement, text);
   }
 
@@ -161,13 +162,13 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
         stub = StubTreeBuilder.buildStubTree(fc);
       }
       catch (IOException e) {
-
+        LOG.warn(e.getMessage(), e);
       }
     }
     return stub;
   }
 
-  public void selectNodeForPsi(@Nullable PsiElement element) {
+  public void selectNodeFromPsi(@Nullable PsiElement element) {
     if (myStubTreeBuilder == null || element == null) return;
     final PsiFile file = element.getContainingFile();
     if (!(file instanceof PsiFileWithStubSupport)) return;

@@ -819,8 +819,8 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
           }
 
           if (myPsiTree.hasFocus()) {
-            myBlockTree.selectNodeForPsi(element);
-            myStubTree.selectNodeForPsi(element);
+            myBlockTree.selectNodeFromPsi(element);
+            myStubTree.selectNodeFromPsi(element);
           }
           updateReferences(element);
         }
@@ -1065,7 +1065,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       int baseOffset = rootPsiElement.getTextRange().getStartOffset();
       final int offset = myEditor.getCaretModel().getOffset() + baseOffset;
       final PsiElement element = InjectedLanguageUtil.findElementAtNoCommit(rootElement.getContainingFile(), offset);
-      myBlockTree.selectNodeForEditor(element);
+      myBlockTree.selectNodeFromEditor(element);
       myPsiTreeBuilder.select(element);
     }
 
@@ -1085,7 +1085,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
                          InjectedLanguageUtil.findElementAtNoCommit(rootElement.getContainingFile(), end));
       if (element != null) {
         if (myEditor.getContentComponent().hasFocus()) {
-          myBlockTree.selectNodeForEditor(element);
+          myBlockTree.selectNodeFromEditor(element);
         }
       }
       myPsiTreeBuilder.select(element);

@@ -31,10 +31,10 @@ public interface ViewerPsiBasedTree extends Disposable {
 
   void reloadTree(@Nullable PsiElement rootRootElement, @NotNull String text);
 
-  void selectNodeForPsi(@Nullable PsiElement element);
+  void selectNodeFromPsi(@Nullable PsiElement element);
 
-  default void selectNodeForEditor(@Nullable PsiElement element) {
-    selectNodeForPsi(element);
+  default void selectNodeFromEditor(@Nullable PsiElement element) {
+    selectNodeFromPsi(element);
   }
 
   @NotNull
