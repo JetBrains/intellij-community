@@ -44,7 +44,7 @@ fun assertNotification(type: NotificationType, title: String, content: String, a
   assertEquals("Incorrect notification type: " + tos(actual), type, actual.type)
   assertEquals("Incorrect notification title: " + tos(actual), title, actual.title)
   assertEquals("Incorrect notification content: " + tos(actual), cleanupForAssertion(content), cleanupForAssertion(actual.content))
-  assertOrderedEquals("Incorrect notification actions", actions, actual.actions.map { it.templatePresentation.text })
+  assertOrderedEquals("Incorrect notification actions", actual.actions.map { it.templatePresentation.text }, actions)
   return actual
 }
 
