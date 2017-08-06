@@ -234,10 +234,26 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
       ASTNode treeNode = myFile.findTreeForStub(stubTree, stubElement);
       if (treeNode == null) return;
 
-      PsiElement result = CodeInsightUtilCore
-        .findElementInRange(myFile, treeNode.getStartOffset(),
-                            treeNode.getStartOffset() + treeNode.getTextLength(), PsiElement.class,
-                            myFile.getLanguage());
+      PsiElement result = null;
+      if (treeNode.getTextLength() > 0) {
+        result = CodeInsightUtilCore
+          .findElementInRange(myFile, treeNode.getStartOffset(),
+                              treeNode.getStartOffset() + treeNode.getTextLength(), PsiElement.class,
+                              myFile.getLanguage());
+      }
+      else {
+        PsiElement elementAt = myFile.findElementAt(treeNode.getStartOffset());
+        if (elementAt != null && elementAt.getTextLength() > 0) {
+          PsiElement parent = elementAt.getParent();
+          PsiElement child = parent != null ? parent.getFirstChild() : null;
+          if (child != null && child.getTextRange().getStartOffset() == treeNode.getStartOffset()) {
+            elementAt = child;
+          }
+        }
+        if (elementAt != null && elementAt.getTextLength() == 0) {
+          result = elementAt;
+        }
+      }
 
       if (result != null) {
         myUpdater.updatePsiTree(result, myStubTree.hasFocus() ? result.getTextRange() : null);
