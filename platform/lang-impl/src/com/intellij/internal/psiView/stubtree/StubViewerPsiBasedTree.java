@@ -59,9 +59,9 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
   @Nullable
   private JPanel myPanel;
   @NotNull
-  private Project myProject;
+  private final Project myProject;
   @NotNull
-  private PsiTreeUpdater myUpdater;
+  private final PsiTreeUpdater myUpdater;
 
 
   public StubViewerPsiBasedTree(@NotNull Project project, @NotNull PsiTreeUpdater updater) {

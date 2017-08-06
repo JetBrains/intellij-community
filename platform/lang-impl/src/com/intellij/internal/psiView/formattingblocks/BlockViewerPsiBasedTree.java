@@ -57,13 +57,17 @@ import java.util.Set;
 import static com.intellij.internal.psiView.PsiViewerDialog.initTree;
 
 public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
-
+  
+  @NotNull
   private final JPanel myBlockStructurePanel;
   @Nullable
   private BlockTreeBuilder myBlockTreeBuilder;
-  private Tree myBlockTree;
-  private Project myProject;
-  private PsiTreeUpdater myUpdater;
+  @NotNull
+  private final Tree myBlockTree;
+  @NotNull
+  private final Project myProject;
+  @NotNull
+  private final PsiTreeUpdater myUpdater;
 
   private int myIgnoreBlockTreeSelectionMarker = 0;
   @Nullable
@@ -117,7 +121,11 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   @Override
   public void dispose() {
-
+    myBlockTree.removeAll();
+    if (myBlockTreeBuilder != null) {
+      Disposer.dispose(myBlockTreeBuilder);
+      myBlockTreeBuilder = null;
+    }
   }
 
   private void buildBlockTree(PsiElement rootElement) {
@@ -172,7 +180,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   private void selectBlockNode(@Nullable BlockTreeNode currentBlockNode) {
     if (myBlockTreeBuilder == null) return;
-    
+
     if (currentBlockNode != null) {
       myIgnoreBlockTreeSelectionMarker++;
       myBlockTreeBuilder.select(currentBlockNode, () -> {
