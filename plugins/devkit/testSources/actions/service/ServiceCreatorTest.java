@@ -81,7 +81,7 @@ public class ServiceCreatorTest extends JavaCodeInsightFixtureTestCase {
 
     PsiClass[] createdClasses = creator.getCreatedClasses();
     assertNotNull(createdClasses);
-    assertTrue(createdClasses.length == 2);
+    assertSize(2, createdClasses);
 
     PsiClass createdInterface = createdClasses[0];
     PsiClass createdImplementation = createdClasses[1];
@@ -107,7 +107,7 @@ public class ServiceCreatorTest extends JavaCodeInsightFixtureTestCase {
     assertNotNull(extensions);
     XmlTag[] extensionTags = extensions.getSubTags();
     assertNotNull(extensionTags);
-    assertEquals(1, extensionTags.length);
+    assertSize(1, extensionTags);
 
     XmlTag serviceTag = extensionTags[0];
     assertEquals(tagName, serviceTag.getName());
@@ -126,7 +126,7 @@ public class ServiceCreatorTest extends JavaCodeInsightFixtureTestCase {
 
     PsiClass[] createdClasses = creator.getCreatedClasses();
     assertNotNull(createdClasses);
-    assertTrue(createdClasses.length == 1);
+    assertSize(1, createdClasses);
 
     PsiClass createdImplementation = createdClasses[0];
     assertEquals(implementationFqName.substring(implementationFqName.lastIndexOf(".") + 1), createdImplementation.getName());
@@ -142,7 +142,7 @@ public class ServiceCreatorTest extends JavaCodeInsightFixtureTestCase {
     assertNotNull(extensions);
     XmlTag[] extensionTags = extensions.getSubTags();
     assertNotNull(extensionTags);
-    assertEquals(1, extensionTags.length);
+    assertSize(1, extensionTags);
 
     XmlTag serviceTag = extensionTags[0];
     assertEquals(tagName, serviceTag.getName());
