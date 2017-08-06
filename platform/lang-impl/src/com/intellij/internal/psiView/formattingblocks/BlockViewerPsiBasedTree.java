@@ -40,6 +40,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +58,7 @@ import java.util.Set;
 import static com.intellij.internal.psiView.PsiViewerDialog.initTree;
 
 public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
-  
+
   @NotNull
   private final JPanel myBlockStructurePanel;
   @Nullable
@@ -85,11 +86,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   @Override
   public void reloadTree(@Nullable PsiElement rootRootElement, @NotNull String text) {
-    if (myBlockTreeBuilder != null) {
-      Disposer.dispose(myBlockTreeBuilder);
-      myBlockTreeBuilder = null;
-    }
-
+    resetBlockTree();
     buildBlockTree(rootRootElement);
   }
 
@@ -121,14 +118,20 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   @Override
   public void dispose() {
+    resetBlockTree();
+  }
+
+  private void resetBlockTree() {
     myBlockTree.removeAll();
     if (myBlockTreeBuilder != null) {
       Disposer.dispose(myBlockTreeBuilder);
       myBlockTreeBuilder = null;
     }
+    ViewerPsiBasedTree.removeListenerOfClass(myBlockTree, BlockTreeSelectionListener.class);
   }
 
-  private void buildBlockTree(PsiElement rootElement) {
+
+  private void buildBlockTree(@Nullable PsiElement rootElement) {
     Block rootBlock = rootElement == null ? null : buildBlocks(rootElement);
     if (rootBlock == null) {
       myBlockTreeBuilder = null;
@@ -159,7 +162,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
     }
 
     blockTreeStructure.setRoot(blockNode);
-    myBlockTree.addTreeSelectionListener(new MyBlockTreeSelectionListener(rootElement));
+    myBlockTree.addTreeSelectionListener(new BlockTreeSelectionListener(rootElement));
     myBlockTree.setRootVisible(true);
     myBlockTree.expandRow(0);
     myBlockTreeBuilder.queueUpdate();
@@ -201,10 +204,11 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
     }
   }
 
-  public class MyBlockTreeSelectionListener implements TreeSelectionListener {
+  public class BlockTreeSelectionListener implements TreeSelectionListener {
+    @NotNull
     private PsiElement myRootElement;
 
-    public MyBlockTreeSelectionListener(PsiElement rootElement) {
+    public BlockTreeSelectionListener(@NotNull PsiElement rootElement) {
       myRootElement = rootElement;
     }
 
@@ -215,8 +219,10 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
       }
 
       Set<?> blockElementsSet = myBlockTreeBuilder.getSelectedElements();
-      if (blockElementsSet.isEmpty()) return;
-      BlockTreeNode descriptor = (BlockTreeNode)blockElementsSet.iterator().next();
+      Object item = ContainerUtil.getFirstItem(blockElementsSet);
+      if (!(item instanceof BlockTreeNode)) return;
+      BlockTreeNode descriptor = (BlockTreeNode)item;
+
       PsiElement rootPsi = myRootElement;
       int blockStart = descriptor.getBlock().getTextRange().getStartOffset();
       PsiFile file = rootPsi.getContainingFile();

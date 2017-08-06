@@ -1066,6 +1066,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       final int offset = myEditor.getCaretModel().getOffset() + baseOffset;
       final PsiElement element = InjectedLanguageUtil.findElementAtNoCommit(rootElement.getContainingFile(), offset);
       myBlockTree.selectNodeFromEditor(element);
+      myStubTree.selectNodeFromEditor(element);
       myPsiTreeBuilder.select(element);
     }
 
@@ -1086,6 +1087,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       if (element != null) {
         if (myEditor.getContentComponent().hasFocus()) {
           myBlockTree.selectNodeFromEditor(element);
+          myStubTree.selectNodeFromEditor(element);
         }
       }
       myPsiTreeBuilder.select(element);

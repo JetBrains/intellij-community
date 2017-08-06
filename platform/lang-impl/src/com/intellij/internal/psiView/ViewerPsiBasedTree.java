@@ -18,10 +18,12 @@ package com.intellij.internal.psiView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionListener;
 
 public interface ViewerPsiBasedTree extends Disposable {
 
@@ -44,4 +46,14 @@ public interface ViewerPsiBasedTree extends Disposable {
 
 
   void focusTree();
+
+  static void removeListenerOfClass(@NotNull Tree tree, @NotNull Class<?> listenerClass) {
+    TreeSelectionListener[] listeners = tree.getTreeSelectionListeners();
+
+    for (TreeSelectionListener listener : listeners) {
+      if (listenerClass.isInstance(listener)) {
+        tree.removeTreeSelectionListener(listener);
+      }
+    }
+  }
 }

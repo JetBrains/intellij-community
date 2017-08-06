@@ -15,6 +15,7 @@
  */
 package com.intellij.internal.psiView.stubtree;
 
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.ide.util.treeView.TreeVisitor;
 import com.intellij.internal.psiView.ViewerPsiBasedTree;
 import com.intellij.lang.ASTNode;
@@ -33,6 +34,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileContentImpl;
 import com.intellij.util.indexing.IndexingDataKeys;
 import com.intellij.util.ui.StatusText;
@@ -40,10 +42,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.io.IOException;
+import java.util.Set;
 
 import static com.intellij.internal.psiView.PsiViewerDialog.LOG;
 import static com.intellij.internal.psiView.PsiViewerDialog.initTree;
@@ -73,12 +78,18 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   @Override
   public void reloadTree(PsiElement rootRootElement, @NotNull String text) {
+    resetStubTree();
+    buildStubTree(rootRootElement, text);
+  }
+
+  private void resetStubTree() {
+    myStubTree.removeAll();
     if (myStubTreeBuilder != null) {
       Disposer.dispose(myStubTreeBuilder);
       myStubTreeBuilder = null;
     }
 
-    buildStubTree(rootRootElement, text);
+    ViewerPsiBasedTree.removeListenerOfClass(myStubTree, StubTreeSelectionListener.class);
   }
 
   @NotNull
@@ -106,7 +117,6 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
   private void buildStubTree(PsiElement rootElement, @NotNull String textToParse) {
     if (!(rootElement instanceof PsiFileWithStubSupport)) {
       myStubTree.setRootVisible(false);
-      myStubTree.removeAll();
       StatusText text = myStubTree.getEmptyText();
       if (rootElement instanceof PsiFile) {
         text.setText("No stubs for " + rootElement.getLanguage().getDisplayName());
@@ -119,16 +129,18 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
     Stub stub = buildStubForElement(myProject, rootElement, textToParse);
 
     if (stub instanceof StubElement) {
+      PsiFileWithStubSupport file = (PsiFileWithStubSupport)rootElement;
       final StubTreeNode rootNode = new StubTreeNode((StubElement)stub, null);
       final StubTreeStructure treeStructure = new StubTreeStructure(rootNode);
       myStubTreeBuilder = new PsiViewerStubTreeBuilder(myStubTree, treeStructure);
       myStubTree.setRootVisible(true);
       myStubTree.expandRow(0);
+
+      myStubTree.addTreeSelectionListener(new StubTreeSelectionListener(file));
       myStubTreeBuilder.queueUpdate();
     }
     else {
       myStubTree.setRootVisible(false);
-      myStubTree.removeAll();
       StatusText text = myStubTree.getEmptyText();
       text.setText("No stubs for " + rootElement.getLanguage().getDisplayName());
     }
@@ -136,10 +148,7 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   @Override
   public void dispose() {
-    myStubTree.removeAll();
-    if (myStubTreeBuilder != null) {
-      Disposer.dispose(myStubTreeBuilder);
-    }
+    resetStubTree();
   }
 
   @Nullable
@@ -179,11 +188,10 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
 
     final StubElement<?> stub = rootNode.getStub();
     if (!(stub instanceof PsiFileStub)) return;
-
+    ((PsiFileStub)stub).putUserData(PSI_ELEMENT_SELECTION_REQUESTOR, true);
     final StubTree stubTree = new StubTree((PsiFileStub)stub);
     final TextRange elementTextRange = element.getTextRange();
 
-    element.putUserData(PSI_ELEMENT_SELECTION_REQUESTOR, true);
     myStubTreeBuilder.select(StubTreeNode.class, new TreeVisitor<StubTreeNode>() {
       @Override
       public boolean visit(@NotNull StubTreeNode node) {
@@ -191,7 +199,49 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
         return stub != null && stub.getTextRange().equals(elementTextRange);
       }
     }, null, false);
+    ((PsiFileStub)stub).putUserData(PSI_ELEMENT_SELECTION_REQUESTOR, false);
+  }
 
-    element.putUserData(PSI_ELEMENT_SELECTION_REQUESTOR, false);
+  private class StubTreeSelectionListener implements TreeSelectionListener {
+    @NotNull
+    private PsiFileWithStubSupport myFile;
+
+    public StubTreeSelectionListener(@NotNull PsiFileWithStubSupport element) {
+      myFile = element;
+    }
+
+    @Override
+    public void valueChanged(TreeSelectionEvent e) {
+      if (myStubTreeBuilder == null) {
+        return;
+      }
+      final StubTreeNode rootNode = (StubTreeNode)myStubTreeBuilder.getRootElement();
+      StubElement<?> stub = rootNode == null ? null : rootNode.getStub();
+      if (!(stub instanceof PsiFileStub)) return;
+      PsiFileStub stubFile = (PsiFileStub)stub;
+      if (Boolean.TRUE.equals(stubFile.getUserData(PSI_ELEMENT_SELECTION_REQUESTOR))) {
+        return;
+      }
+
+      final StubTree stubTree = new StubTree(stubFile);
+
+      Set<?> blockElementsSet = myStubTreeBuilder.getSelectedElements();
+      Object item = ContainerUtil.getFirstItem(blockElementsSet);
+      if (!(item instanceof StubTreeNode)) return;
+      StubTreeNode descriptor = (StubTreeNode)item;
+      StubElement<?> stubElement = descriptor.getStub();
+
+      ASTNode treeNode = myFile.findTreeForStub(stubTree, stubElement);
+      if (treeNode == null) return;
+
+      PsiElement result = CodeInsightUtilCore
+        .findElementInRange(myFile, treeNode.getStartOffset(),
+                            treeNode.getStartOffset() + treeNode.getTextLength(), PsiElement.class,
+                            myFile.getLanguage());
+
+      if (result != null) {
+        myUpdater.updatePsiTree(result, myStubTree.hasFocus() ? result.getTextRange() : null);
+      }
+    }
   }
 }
