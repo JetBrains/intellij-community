@@ -15,7 +15,10 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -26,6 +29,7 @@ import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.vcsUtil.VcsUtil;
 import junit.framework.Assert;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 public class SvnHistoryTest extends Svn17TestCase {
@@ -35,7 +39,6 @@ public class SvnHistoryTest extends Svn17TestCase {
   public void testRepositoryRootHistory() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-    myCnt = 0;
     final VcsHistoryProvider provider = SvnVcs.getInstance(myProject).getVcsHistoryProvider();
     final SubTree tree = new SubTree(myWorkingCopyDir);
     checkin();
@@ -45,39 +48,8 @@ public class SvnHistoryTest extends Svn17TestCase {
       checkin();
     }
 
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-    final FilePath rootPath = VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(myRepoUrl, true);
-    provider.reportAppendableHistory(rootPath, new VcsAppendableHistorySessionPartner() {
-      @Override
-      public void reportCreatedEmptySession(VcsAbstractHistorySession session) {
-      }
-
-      @Override
-      public void acceptRevision(VcsFileRevision revision) {
-        ++ myCnt;
-        semaphore.up();
-      }
-
-      @Override
-      public void reportException(VcsException exception) {
-        throw new RuntimeException(exception);
-      }
-
-      @Override
-      public void finished() {
-      }
-
-      @Override
-      public void beforeRefresh() {
-      }
-
-      @Override
-      public void forceRefresh() {
-      }
-    });
-    semaphore.waitFor(1000);
-
+    FilePath rootPath = VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(myRepoUrl, true);
+    reportHistory(provider, rootPath, true);
     Assert.assertTrue(myCnt > 0);
   }
 
@@ -85,7 +57,6 @@ public class SvnHistoryTest extends Svn17TestCase {
   public void testSimpleHistory() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-    myCnt = 0;
     final VcsHistoryProvider provider = SvnVcs.getInstance(myProject).getVcsHistoryProvider();
     final SubTree tree = new SubTree(myWorkingCopyDir);
     checkin();
@@ -95,39 +66,8 @@ public class SvnHistoryTest extends Svn17TestCase {
       checkin();
     }
 
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-    final FilePath rootPath = VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(myRepoUrl + "/root/source/s1.txt", true);
-    provider.reportAppendableHistory(rootPath, new VcsAppendableHistorySessionPartner() {
-      @Override
-      public void reportCreatedEmptySession(VcsAbstractHistorySession session) {
-      }
-
-      @Override
-      public void acceptRevision(VcsFileRevision revision) {
-        ++ myCnt;
-      }
-
-      @Override
-      public void reportException(VcsException exception) {
-        throw new RuntimeException(exception);
-      }
-
-      @Override
-      public void finished() {
-        semaphore.up();
-      }
-
-      @Override
-      public void beforeRefresh() {
-      }
-
-      @Override
-      public void forceRefresh() {
-      }
-    });
-    semaphore.waitFor(1000);
-
+    FilePath rootPath = VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(myRepoUrl + "/root/source/s1.txt", true);
+    reportHistory(provider, rootPath);
     Assert.assertEquals(11, myCnt);
   }
 
@@ -135,7 +75,6 @@ public class SvnHistoryTest extends Svn17TestCase {
   public void testSimpleHistoryLocal() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-    myCnt = 0;
     final VcsHistoryProvider provider = SvnVcs.getInstance(myProject).getVcsHistoryProvider();
     final SubTree tree = new SubTree(myWorkingCopyDir);
     checkin();
@@ -145,38 +84,7 @@ public class SvnHistoryTest extends Svn17TestCase {
       checkin();
     }
 
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-    provider.reportAppendableHistory(VcsUtil.getFilePath(tree.myS1File), new VcsAppendableHistorySessionPartner() {
-      @Override
-      public void reportCreatedEmptySession(VcsAbstractHistorySession session) {
-      }
-
-      @Override
-      public void acceptRevision(VcsFileRevision revision) {
-        ++ myCnt;
-      }
-
-      @Override
-      public void reportException(VcsException exception) {
-        throw new RuntimeException(exception);
-      }
-
-      @Override
-      public void finished() {
-        semaphore.up();
-      }
-
-      @Override
-      public void beforeRefresh() {
-      }
-
-      @Override
-      public void forceRefresh() {
-      }
-    });
-    semaphore.waitFor(1000);
-
+    reportHistory(provider, VcsUtil.getFilePath(tree.myS1File));
     Assert.assertEquals(11, myCnt);
   }
 
@@ -184,7 +92,6 @@ public class SvnHistoryTest extends Svn17TestCase {
   public void testLocallyRenamedFileHistory() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-    myCnt = 0;
     final VcsHistoryProvider provider = SvnVcs.getInstance(myProject).getVcsHistoryProvider();
     final SubTree tree = new SubTree(myWorkingCopyDir);
     checkin();
@@ -198,38 +105,7 @@ public class SvnHistoryTest extends Svn17TestCase {
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     ChangeListManager.getInstance(myProject).ensureUpToDate(false);
 
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-    provider.reportAppendableHistory(VcsUtil.getFilePath(tree.myS1File), new VcsAppendableHistorySessionPartner() {
-      @Override
-      public void reportCreatedEmptySession(VcsAbstractHistorySession session) {
-      }
-
-      @Override
-      public void acceptRevision(VcsFileRevision revision) {
-        ++ myCnt;
-      }
-
-      @Override
-      public void reportException(VcsException exception) {
-        throw new RuntimeException(exception);
-      }
-
-      @Override
-      public void finished() {
-        semaphore.up();
-      }
-
-      @Override
-      public void beforeRefresh() {
-      }
-
-      @Override
-      public void forceRefresh() {
-      }
-    });
-    semaphore.waitFor(1000);
-
+    reportHistory(provider, VcsUtil.getFilePath(tree.myS1File));
     Assert.assertEquals(11, myCnt);
   }
 
@@ -237,7 +113,6 @@ public class SvnHistoryTest extends Svn17TestCase {
   public void testLocallyMovedToRenamedDirectory() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-    myCnt = 0;
     final VcsHistoryProvider provider = SvnVcs.getInstance(myProject).getVcsHistoryProvider();
     final SubTree tree = new SubTree(myWorkingCopyDir);
     checkin();
@@ -252,50 +127,36 @@ public class SvnHistoryTest extends Svn17TestCase {
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     ChangeListManager.getInstance(myProject).ensureUpToDate(false);
 
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-    provider.reportAppendableHistory(VcsUtil.getFilePath(tree.myS1File), new VcsAppendableHistorySessionPartner() {
-      @Override
-      public void reportCreatedEmptySession(VcsAbstractHistorySession session) {
-      }
-
-      @Override
-      public void acceptRevision(VcsFileRevision revision) {
-        ++ myCnt;
-      }
-
-      @Override
-      public void reportException(VcsException exception) {
-        throw new RuntimeException(exception);
-      }
-
-      @Override
-      public void finished() {
-        semaphore.up();
-      }
-
-      @Override
-      public void beforeRefresh() {
-      }
-
-      @Override
-      public void forceRefresh() {
-      }
-    });
-    semaphore.waitFor(1000);
-
+    reportHistory(provider, VcsUtil.getFilePath(tree.myS1File));
     Assert.assertEquals(11, myCnt);
 
+    reportHistory(provider, VcsUtil.getFilePath(tree.myTargetDir));
+    Assert.assertEquals(1, myCnt);
+
+    reportHistory(provider, VcsUtil.getFilePath(tree.myTargetFiles.get(0)));
+    Assert.assertEquals(1, myCnt);
+  }
+
+  private void reportHistory(@NotNull VcsHistoryProvider provider, @NotNull FilePath path) throws VcsException {
+    reportHistory(provider, path, false);
+  }
+
+  private void reportHistory(@NotNull VcsHistoryProvider provider, @NotNull FilePath path, boolean firstOnly) throws VcsException {
+    Semaphore semaphore = new Semaphore();
+
     myCnt = 0;
     semaphore.down();
-    provider.reportAppendableHistory(VcsUtil.getFilePath(tree.myTargetDir), new VcsAppendableHistorySessionPartner() {
+    provider.reportAppendableHistory(path, new VcsAppendableHistorySessionPartner() {
       @Override
       public void reportCreatedEmptySession(VcsAbstractHistorySession session) {
       }
 
       @Override
       public void acceptRevision(VcsFileRevision revision) {
-        ++ myCnt;
+        ++myCnt;
+        if (firstOnly) {
+          semaphore.up();
+        }
       }
 
       @Override
@@ -305,7 +166,9 @@ public class SvnHistoryTest extends Svn17TestCase {
 
       @Override
       public void finished() {
-        semaphore.up();
+        if (!firstOnly) {
+          semaphore.up();
+        }
       }
 
       @Override
@@ -316,40 +179,7 @@ public class SvnHistoryTest extends Svn17TestCase {
       public void forceRefresh() {
       }
     });
+
     semaphore.waitFor(1000);
-    Assert.assertEquals(1, myCnt);
-
-    myCnt = 0;
-    semaphore.down();
-    provider.reportAppendableHistory(VcsUtil.getFilePath(tree.myTargetFiles.get(0)), new VcsAppendableHistorySessionPartner() {
-      @Override
-      public void reportCreatedEmptySession(VcsAbstractHistorySession session) {
-      }
-
-      @Override
-      public void acceptRevision(VcsFileRevision revision) {
-        ++ myCnt;
-      }
-
-      @Override
-      public void reportException(VcsException exception) {
-        throw new RuntimeException(exception);
-      }
-
-      @Override
-      public void finished() {
-        semaphore.up();
-      }
-
-      @Override
-      public void beforeRefresh() {
-      }
-
-      @Override
-      public void forceRefresh() {
-      }
-    });
-    semaphore.waitFor(1000);
-    Assert.assertEquals(1, myCnt);
   }
 }
