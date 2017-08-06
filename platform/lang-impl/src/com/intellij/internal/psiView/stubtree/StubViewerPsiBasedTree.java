@@ -234,6 +234,15 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
       ASTNode treeNode = myFile.findTreeForStub(stubTree, stubElement);
       if (treeNode == null) return;
 
+      PsiElement result = findElementForNode(treeNode);
+
+      if (result != null) {
+        myUpdater.updatePsiTree(result, myStubTree.hasFocus() ? result.getTextRange() : null);
+      }
+    }
+
+    @Nullable
+    private PsiElement findElementForNode(@NotNull ASTNode treeNode) {
       PsiElement result = null;
       if (treeNode.getTextLength() > 0) {
         result = CodeInsightUtilCore
@@ -254,10 +263,7 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
           result = elementAt;
         }
       }
-
-      if (result != null) {
-        myUpdater.updatePsiTree(result, myStubTree.hasFocus() ? result.getTextRange() : null);
-      }
+      return result;
     }
   }
 }
