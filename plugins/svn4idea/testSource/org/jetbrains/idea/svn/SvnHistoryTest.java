@@ -32,8 +32,9 @@ import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class SvnHistoryTest extends Svn17TestCase {
-  private volatile int myCnt;
 
   @Test
   public void testRepositoryRootHistory() throws Exception {
@@ -49,8 +50,8 @@ public class SvnHistoryTest extends Svn17TestCase {
     }
 
     FilePath rootPath = VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(myRepoUrl, true);
-    reportHistory(provider, rootPath, true);
-    Assert.assertTrue(myCnt > 0);
+    int count = reportHistory(provider, rootPath, true);
+    Assert.assertTrue(count > 0);
   }
 
   @Test
@@ -67,8 +68,8 @@ public class SvnHistoryTest extends Svn17TestCase {
     }
 
     FilePath rootPath = VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(myRepoUrl + "/root/source/s1.txt", true);
-    reportHistory(provider, rootPath);
-    Assert.assertEquals(11, myCnt);
+    int count = reportHistory(provider, rootPath);
+    Assert.assertEquals(11, count);
   }
 
   @Test
@@ -84,8 +85,8 @@ public class SvnHistoryTest extends Svn17TestCase {
       checkin();
     }
 
-    reportHistory(provider, VcsUtil.getFilePath(tree.myS1File));
-    Assert.assertEquals(11, myCnt);
+    int count = reportHistory(provider, VcsUtil.getFilePath(tree.myS1File));
+    Assert.assertEquals(11, count);
   }
 
   @Test
@@ -105,8 +106,8 @@ public class SvnHistoryTest extends Svn17TestCase {
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     ChangeListManager.getInstance(myProject).ensureUpToDate(false);
 
-    reportHistory(provider, VcsUtil.getFilePath(tree.myS1File));
-    Assert.assertEquals(11, myCnt);
+    int count = reportHistory(provider, VcsUtil.getFilePath(tree.myS1File));
+    Assert.assertEquals(11, count);
   }
 
   @Test
@@ -127,24 +128,24 @@ public class SvnHistoryTest extends Svn17TestCase {
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     ChangeListManager.getInstance(myProject).ensureUpToDate(false);
 
-    reportHistory(provider, VcsUtil.getFilePath(tree.myS1File));
-    Assert.assertEquals(11, myCnt);
+    int count = reportHistory(provider, VcsUtil.getFilePath(tree.myS1File));
+    Assert.assertEquals(11, count);
 
-    reportHistory(provider, VcsUtil.getFilePath(tree.myTargetDir));
-    Assert.assertEquals(1, myCnt);
+    count = reportHistory(provider, VcsUtil.getFilePath(tree.myTargetDir));
+    Assert.assertEquals(1, count);
 
-    reportHistory(provider, VcsUtil.getFilePath(tree.myTargetFiles.get(0)));
-    Assert.assertEquals(1, myCnt);
+    count = reportHistory(provider, VcsUtil.getFilePath(tree.myTargetFiles.get(0)));
+    Assert.assertEquals(1, count);
   }
 
-  private void reportHistory(@NotNull VcsHistoryProvider provider, @NotNull FilePath path) throws VcsException {
-    reportHistory(provider, path, false);
+  private static int reportHistory(@NotNull VcsHistoryProvider provider, @NotNull FilePath path) throws VcsException {
+    return reportHistory(provider, path, false);
   }
 
-  private void reportHistory(@NotNull VcsHistoryProvider provider, @NotNull FilePath path, boolean firstOnly) throws VcsException {
+  private static int reportHistory(@NotNull VcsHistoryProvider provider, @NotNull FilePath path, boolean firstOnly) throws VcsException {
     Semaphore semaphore = new Semaphore();
+    AtomicInteger count = new AtomicInteger();
 
-    myCnt = 0;
     semaphore.down();
     provider.reportAppendableHistory(path, new VcsAppendableHistorySessionPartner() {
       @Override
@@ -153,7 +154,7 @@ public class SvnHistoryTest extends Svn17TestCase {
 
       @Override
       public void acceptRevision(VcsFileRevision revision) {
-        ++myCnt;
+        count.incrementAndGet();
         if (firstOnly) {
           semaphore.up();
         }
@@ -181,5 +182,7 @@ public class SvnHistoryTest extends Svn17TestCase {
     });
 
     semaphore.waitFor(1000);
+
+    return count.get();
   }
 }
