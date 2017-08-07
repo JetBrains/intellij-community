@@ -16,8 +16,11 @@
 
 
 
+
 import com.intellij.openapi.util.SystemInfoRt
-import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.ReferenceIndexFileLock
+import org.jetbrains.backwardRefs.CompilerBackwardReferenceIndex
+import org.jetbrains.backwardRefs.JavacReferenceIndexWriter
+import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.ReferenceIndexHolder
 import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.ReferenceIndexJavacPlugin
 
 apply plugin: BackRefCollectorGradlePlugin
@@ -36,10 +39,34 @@ class BackRefCollectorGradlePlugin implements Plugin<Gradle> {
 
   @Override
   void apply(Gradle gradle) {
-    ReferenceIndexFileLock.createLockFile(INDEX_PATH)
-
+    ReferenceIndexHolder.ourIndexWriter = new JavacReferenceIndexWriter(new CompilerBackwardReferenceIndex(new File(INDEX_PATH), false) {
+      @Override
+      protected RuntimeException createBuildDataCorruptedException(IOException cause) {
+        return new RuntimeException(cause)
+      }
+    })
     gradle.buildFinished {
-      ReferenceIndexFileLock.deleteLockFile(INDEX_PATH)
+      if (ReferenceIndexHolder.ourIndexWriter != null) {
+        ReferenceIndexHolder.ourIndexWriter.close()
+      }
+    }
+
+    gradle.allprojects { p ->
+      Action<JavaCompile> javaCompilerPluginInstaller =
+        new Action<JavaCompile>() {
+          @Override
+          void execute(JavaCompile task) {
+            def args = task.options.compilerArgs
+            args.add("-processorpath")
+            args.add("${JAVAC_PLUGIN_PATH}")
+            args.add("-Xplugin:$ReferenceIndexJavacPlugin.PLUGIN_NAME index.path=$INDEX_PATH")
+          }
+        }
+
+      def javaCompileTasks = project.getTasks().withType(JavaCompile.class)
+      javaCompileTasks.all(javaCompilerPluginInstaller)
+      javaCompileTasks.whenTaskAdded(javaCompilerPluginInstaller)
+
     }
 
     gradle.projectsLoaded{ g ->

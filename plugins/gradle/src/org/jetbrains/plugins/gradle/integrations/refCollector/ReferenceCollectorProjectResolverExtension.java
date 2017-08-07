@@ -21,6 +21,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -34,16 +36,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.backwardRefs.LightRef;
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension;
+import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext;
 import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.GradleJavacReferenceIndexWriter;
+import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.ReferenceIndexHolder;
 import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.ReferenceIndexJavacPlugin;
 
+import java.io.File;
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.intellij.openapi.util.io.FileUtil.filesEqual;
+import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
+import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
 
 @Order(ExternalSystemConstants.UNORDERED)
 public class ReferenceCollectorProjectResolverExtension extends AbstractProjectResolverExtension {
@@ -61,11 +69,12 @@ public class ReferenceCollectorProjectResolverExtension extends AbstractProjectR
           throw new IllegalStateException("can't find reference collector gradle script");
         }
         ImmutableSet<Class> requiredClasses = ImmutableSet.of(ReferenceIndexJavacPlugin.class,
-                                                 LightRef.class,
-                                                 TObjectIntHashMap.class,
-                                                 PersistentHashMap.class,
-                                                 Snappy.class,
-                                                 Consumer.class);
+                                                              ReferenceIndexHolder.class,
+                                                              LightRef.class,
+                                                              TObjectIntHashMap.class,
+                                                              PersistentHashMap.class,
+                                                              Snappy.class,
+                                                              Consumer.class);
         String initScript = FileUtil.loadTextAndClose(stream)
           .replaceAll(Pattern.quote("${EXTENSIONS_JARS_PATH}"), getToolingExtensionsJarPaths(requiredClasses, true))
           .replaceAll(Pattern.quote("${JAVAC_PLUGIN_PATH}"), getToolingExtensionsJarPaths(requiredClasses, false));
@@ -95,12 +104,32 @@ public class ReferenceCollectorProjectResolverExtension extends AbstractProjectR
   @NotNull
   @Override
   public List<Pair<String, String>> getExtraJvmArgs() {
-    return Collections.singletonList(Pair.create("ref_index_path", "/home/user/index"));
+    Project project = findProject(resolverCtx);
+    return super.getExtraJvmArgs();
   }
 
   @NotNull
   @Override
   public Set<Class> getToolingExtensionsClasses() {
     return ImmutableSet.of(ReferenceIndexJavacPlugin.class, GradleJavacReferenceIndexWriter.class, TObjectIntHashMap.class);
+  }
+
+  @NotNull
+  private static Project findProject(@NotNull ProjectResolverContext context) {
+    String projectPath = context.getProjectPath();
+    if (isNotEmpty(projectPath)) {
+      File projectDirPath = new File(toSystemDependentName(projectPath));
+      Project[] projects = ProjectManager.getInstance().getOpenProjects();
+      for (Project project : projects) {
+        String basePath = project.getBasePath();
+        if (basePath != null) {
+          File currentPath = new File(basePath);
+          if (filesEqual(projectDirPath, currentPath)) {
+            return project;
+          }
+        }
+      }
+    }
+    throw new AssertionError();
   }
 }

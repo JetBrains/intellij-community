@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.service.task;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
@@ -27,6 +28,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.BuildLauncher;
@@ -36,6 +38,7 @@ import org.gradle.tooling.ProjectConnection;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.Boot;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.UnsupportedCancellationToken;
@@ -160,6 +163,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
         throw friendlyError == null ? e : friendlyError;
       }
     };
+    effectiveSettings.withVmOption("-Xbootclasspath/a:" + PathUtil.getCanonicalPath(PathManager.getJarPathForClass(Boot.class)));
     myHelper.execute(projectPath, effectiveSettings, f);
   }
 

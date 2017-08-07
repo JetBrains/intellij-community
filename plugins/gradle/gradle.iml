@@ -84,5 +84,6 @@
     <orderEntry type="library" name="Ant" level="project" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="javac-ref-index" />
+    <orderEntry type="module" module-name="gradle-tooling-extension-boot" />
   </component>
 </module>

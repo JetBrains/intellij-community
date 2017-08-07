@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.externalSystem.JavaProjectData;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,6 +40,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -54,6 +56,7 @@ import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.Boot;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
 import org.jetbrains.plugins.gradle.model.data.CompositeBuildData;

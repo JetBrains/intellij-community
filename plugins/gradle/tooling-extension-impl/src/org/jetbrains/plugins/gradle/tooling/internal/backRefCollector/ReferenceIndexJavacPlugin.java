@@ -18,22 +18,14 @@ package org.jetbrains.plugins.gradle.tooling.internal.backRefCollector;
 import com.intellij.util.Consumer;
 import com.sun.source.util.JavacTask;
 import com.sun.source.util.Plugin;
-import com.sun.source.util.TaskEvent;
-import com.sun.source.util.TaskListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.backwardRefs.BackwardReferenceIndexUtil;
-import org.jetbrains.backwardRefs.CompilerBackwardReferenceIndex;
 import org.jetbrains.backwardRefs.JavacReferenceIndexWriter;
 import org.jetbrains.backwardRefs.javac.ast.JavacReferenceIndexListener;
 import org.jetbrains.backwardRefs.javac.ast.api.JavacFileData;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.nio.channels.FileLock;
-import java.util.ArrayDeque;
-import java.util.Queue;
 
 public class ReferenceIndexJavacPlugin implements Plugin {
   public static final String PLUGIN_NAME = "ReferenceIndexJavacPlugin";
@@ -50,44 +42,31 @@ public class ReferenceIndexJavacPlugin implements Plugin {
     File dir = getIndexDir(args);
     if (dir == null) return;
 
-    JavacFileDataStream stream;
+    boolean inProcess = false;
     try {
-      stream = new JavacFileDataStream(dir);
+      inProcess = ReferenceIndexHolder.ourInProcess;
     }
-    catch (FileNotFoundException e) {
-      throw new RuntimeException(e);
-    }
+    catch (NoClassDefFoundError ignored) { }
 
+    if (inProcess) {
+      setupForInProcessMode(task);
+    } else {
+      //don't setup
+    }
+  }
+
+  private static void setupForInProcessMode(@NotNull JavacTask task) {
     task.addTaskListener(new JavacReferenceIndexListener(false, new Consumer<JavacFileData>() {
       @Override
       public void consume(JavacFileData data) {
-        stream.add(data);
+        BackwardReferenceIndexUtil.registerFile(data.getFilePath(), data.getRefs(), data.getDefs(),
+                                                (JavacReferenceIndexWriter)ReferenceIndexHolder.ourIndexWriter);
       }
     }, task, true));
+  }
 
-    task.addTaskListener(new TaskListener() {
-      int count;
-      @Override
-      public void started(TaskEvent e) {
-      }
-
-      @Override
-      public void finished(TaskEvent e) {
-        if (e.getKind() == TaskEvent.Kind.PARSE) {
-          count++;
-        } else if (e.getKind() == TaskEvent.Kind.GENERATE) {
-          count--;
-          if (count == 0) {
-            try {
-              stream.flush();
-            }
-            catch (IOException e1) {
-              throw new RuntimeException(e1);
-            }
-          }
-        }
-      }
-    });
+  private static void setupForForkMode(@NotNull JavacTask task, @NotNull String indexPath) {
+    //TODO
   }
 
   @Nullable
@@ -98,53 +77,5 @@ public class ReferenceIndexJavacPlugin implements Plugin {
       }
     }
     return null;
-  }
-
-  private static class JavacFileDataStream {
-    private final Queue<JavacFileData> myQueue = new ArrayDeque<>();
-    private final ReferenceIndexFileLock myFileLock;
-    private final File myDir;
-
-    private JavacFileDataStream(File indexDir) throws FileNotFoundException {
-      myDir = indexDir;
-      myFileLock = new ReferenceIndexFileLock(myDir);
-    }
-
-    public void add(JavacFileData data) {
-      myQueue.add(data);
-      if (myQueue.size() > 1000) {
-        try {
-          flush();
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }
-
-    private void flush() throws IOException {
-      FileLock lock = myFileLock.lock();
-      try {
-        JavacReferenceIndexWriter w = new JavacReferenceIndexWriter(new CompilerBackwardReferenceIndex(myDir, false) {
-          @NotNull
-          @Override
-          protected RuntimeException createBuildDataCorruptedException(IOException cause) {
-            return new RuntimeException(cause);
-          }
-        });
-        //TODO
-        while (!myQueue.isEmpty()) {
-          JavacFileData data = myQueue.poll();
-          BackwardReferenceIndexUtil.registerFile(data.getFilePath(),
-                                                  data.getRefs(),
-                                                  data.getDefs(),
-                                                  w);
-        }
-
-        w.close();
-      } finally {
-        lock.release();
-      }
-    }
   }
 }
