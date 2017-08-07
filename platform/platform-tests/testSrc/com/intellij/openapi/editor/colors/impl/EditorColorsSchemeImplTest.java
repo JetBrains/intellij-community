@@ -457,4 +457,20 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertTrue(scheme.getFontPreferences().useLigatures());
     assertFalse(scheme.getConsoleFontPreferences().useLigatures());
   }
+
+  public void testReadFontPreferencesIdea176762() throws Exception {
+    String[] fontFamilyNames = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
+    if (fontFamilyNames.length == 0) return;
+    String fontName = fontFamilyNames[0];
+    EditorColorsScheme scheme = loadScheme(
+      "<scheme name=\"_@user_Default\" version=\"142\" parent_scheme=\"Default\">\n" +
+      "  <option name=\"FONT_SCALE\" value=\"1.5\" />\n" +
+      "  <option name=\"EDITOR_FONT_SIZE\" value=\"18\" />\n" +
+      "  <option name=\"EDITOR_LIGATURES\" value=\"true\" />\n" +
+      "  <option name=\"EDITOR_FONT_NAME\" value=\"" + fontName + "\" />\n" +
+      "</scheme>"
+    );
+    assertEquals(fontName, scheme.getEditorFontName());
+    assertTrue("Expected font ligatures on", scheme.getFontPreferences().useLigatures());
+  }
 }
