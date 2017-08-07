@@ -60,7 +60,6 @@ public class ExtensionLocator {
     return result;
   }
 
-  @SuppressWarnings("unchecked") // it's fine with Processor.FALSE
   public static boolean isRegisteredExtension(@NotNull PsiClass psiClass) {
     String name = psiClass.getQualifiedName();
     if (name == null) {

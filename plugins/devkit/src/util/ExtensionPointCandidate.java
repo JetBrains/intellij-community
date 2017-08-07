@@ -18,9 +18,6 @@ package org.jetbrains.idea.devkit.util;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.xml.XmlTag;
 
-/**
- * @author yole
- */
 public class ExtensionPointCandidate extends PointableCandidate {
   public final String epName;
   public final String attributeName;
@@ -51,5 +48,29 @@ public class ExtensionPointCandidate extends PointableCandidate {
   @Override
   public String toString() {
     return epName;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    ExtensionPointCandidate candidate = (ExtensionPointCandidate)o;
+
+    if (epName != null ? !epName.equals(candidate.epName) : candidate.epName != null) return false;
+    if (attributeName != null ? !attributeName.equals(candidate.attributeName) : candidate.attributeName != null) return false;
+    if (tagName != null ? !tagName.equals(candidate.tagName) : candidate.tagName != null) return false;
+    if (beanClassName != null ? !beanClassName.equals(candidate.beanClassName) : candidate.beanClassName != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = epName != null ? epName.hashCode() : 0;
+    result = 31 * result + (attributeName != null ? attributeName.hashCode() : 0);
+    result = 31 * result + (tagName != null ? tagName.hashCode() : 0);
+    result = 31 * result + (beanClassName != null ? beanClassName.hashCode() : 0);
+    return result;
   }
 }
