@@ -260,6 +260,8 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest(false);
   }
 
+  public void testAdaptReturnTypesOfSiblingMethods() { doTest(false);}
+
   private void doTest() {
     doTest(true);
   }
