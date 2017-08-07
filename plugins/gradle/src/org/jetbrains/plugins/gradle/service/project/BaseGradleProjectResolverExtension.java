@@ -46,6 +46,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.text.CharArrayUtil;
 import groovy.lang.GroovyObject;
@@ -393,6 +394,11 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       processSourceSets(resolverCtx, gradleModule, externalProject, ideModule, new SourceSetsProcessor() {
         @Override
         public void process(@NotNull DataNode<? extends ModuleData> dataNode, @NotNull ExternalSourceSet sourceSet) {
+          MultiMap<ExternalSystemSourceType, String> gradleOutputMap = dataNode.getUserData(GradleProjectResolver.GRADLE_OUTPUTS);
+          if (gradleOutputMap == null) {
+            gradleOutputMap = MultiMap.create();
+            dataNode.putUserData(GradleProjectResolver.GRADLE_OUTPUTS, gradleOutputMap);
+          }
           for (Map.Entry<IExternalSystemSourceType, ExternalSourceDirectorySet> directorySetEntry : sourceSet.getSources().entrySet()) {
             ExternalSystemSourceType sourceType = ExternalSystemSourceType.from(directorySetEntry.getKey());
             ExternalSourceDirectorySet sourceDirectorySet = directorySetEntry.getValue();
@@ -402,21 +408,13 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
             moduleData.setCompileOutputPath(sourceType, outputDir.getAbsolutePath());
             moduleData.setInheritProjectCompileOutputPath(sourceDirectorySet.isCompilerOutputPathInherited());
 
-
-            String gradleOutputPath = moduleData.getCompileOutputPath(sourceType);
             for (File gradleOutputDir : sourceDirectorySet.getGradleOutputDirs()) {
+              String gradleOutputPath = ExternalSystemApiUtil.toCanonicalPath(gradleOutputDir.getAbsolutePath());
+              gradleOutputMap.putValue(sourceType, gradleOutputPath);
               if(!gradleOutputDir.getPath().equals(outputDir.getPath())) {
-                gradleOutputPath = ExternalSystemApiUtil.toCanonicalPath(gradleOutputDir.getAbsolutePath());
                 moduleOutputsMap.put(gradleOutputPath, Pair.create(moduleData.getId(), sourceType));
               }
             }
-
-            Map<ExternalSystemSourceType, String> map = dataNode.getUserData(GradleProjectResolver.GRADLE_OUTPUTS);
-            if(map == null) {
-              map = ContainerUtil.newHashMap();
-              dataNode.putUserData(GradleProjectResolver.GRADLE_OUTPUTS, map);
-            }
-            map.put(sourceType, gradleOutputPath);
           }
         }
       });
