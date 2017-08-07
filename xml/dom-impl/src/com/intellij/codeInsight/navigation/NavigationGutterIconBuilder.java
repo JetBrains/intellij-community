@@ -111,7 +111,7 @@ public class NavigationGutterIconBuilder<T> {
   public static <T> NavigationGutterIconBuilder<T> create(@NotNull final Icon icon,
                                                           @NotNull NotNullFunction<T, Collection<? extends PsiElement>> converter,
                                                           final @Nullable NotNullFunction<T, Collection<? extends GotoRelatedItem>> gotoRelatedItemProvider) {
-    return new NavigationGutterIconBuilder<T>(icon, converter, gotoRelatedItemProvider);
+    return new NavigationGutterIconBuilder<>(icon, converter, gotoRelatedItemProvider);
   }
 
   public NavigationGutterIconBuilder<T> setTarget(@Nullable T target) {
@@ -166,7 +166,7 @@ public class NavigationGutterIconBuilder<T> {
   }
 
   public NavigationGutterIconBuilder<T> setCellRenderer(@NotNull final PsiElementListCellRenderer cellRenderer) {
-    myCellRenderer = new Computable.PredefinedValueComputable<PsiElementListCellRenderer>(cellRenderer);
+    myCellRenderer = new Computable.PredefinedValueComputable<>(cellRenderer);
     return this;
   }
 
@@ -255,7 +255,7 @@ public class NavigationGutterIconBuilder<T> {
     final boolean empty = isEmpty();
 
     if (myTooltipText == null && !myLazy) {
-      final SortedSet<String> names = new TreeSet<String>();
+      final SortedSet<String> names = new TreeSet<>();
       for (T t : myTargets.getValue()) {
         final String text = myNamer.fun(t);
         if (text != null) {
@@ -274,7 +274,7 @@ public class NavigationGutterIconBuilder<T> {
     }
 
     Computable<PsiElementListCellRenderer> renderer =
-      myCellRenderer == null ? (Computable<PsiElementListCellRenderer>)() -> new DefaultPsiElementCellRenderer() : myCellRenderer;
+      myCellRenderer == null ? () -> new DefaultPsiElementCellRenderer() : myCellRenderer;
     return new MyNavigationGutterIconRenderer(this, myAlignment, myIcon, myTooltipText, pointers, renderer, empty);
   }
 
@@ -299,8 +299,8 @@ public class NavigationGutterIconBuilder<T> {
   private static <T> List<SmartPsiElementPointer> calcPsiTargets(Project project, Collection<? extends T> targets,
                                                                  NotNullFunction<T, Collection<? extends PsiElement>> converter) {
     SmartPointerManager manager = SmartPointerManager.getInstance(project);
-    Set<PsiElement> elements = new THashSet<PsiElement>();
-    final List<SmartPsiElementPointer> list = new ArrayList<SmartPsiElementPointer>(targets.size());
+    Set<PsiElement> elements = new THashSet<>();
+    final List<SmartPsiElementPointer> list = new ArrayList<>(targets.size());
     for (final T target : targets) {
       for (final PsiElement psiElement : converter.fun(target)) {
         if (elements.add(psiElement) && psiElement.isValid()) {
@@ -316,7 +316,7 @@ public class NavigationGutterIconBuilder<T> {
       return false;
     }
 
-    Set<PsiElement> elements = new THashSet<PsiElement>();
+    Set<PsiElement> elements = new THashSet<>();
     Collection<? extends T> targets = myTargets.getValue();
     for (final T target : targets) {
       for (final PsiElement psiElement : myConverter.fun(target)) {
@@ -390,18 +390,6 @@ public class NavigationGutterIconBuilder<T> {
       result = 31 * result + (myIcon != null ? myIcon.hashCode() : 0);
       result = 31 * result + (myTooltipText != null ? myTooltipText.hashCode() : 0);
       return result;
-    }
-  }
-
-  private static class MyPsiElementRelatedItemLineMarkerInfo extends RelatedItemLineMarkerInfo<PsiElement> {
-    public MyPsiElementRelatedItemLineMarkerInfo(PsiElement element,
-                                                 NavigationGutterIconRenderer renderer,
-                                                 String tooltip,
-                                                 NotNullLazyValue<Collection<? extends GotoRelatedItem>> gotoTargets) {
-      super(element, element.getTextRange(), renderer.getIcon(), Pass.LINE_MARKERS, tooltip == null
-                                                                                    ? null
-                                                                                    : new ConstantFunction<>(tooltip),
-            renderer.isNavigateAction() ? renderer : null, renderer.getAlignment(), gotoTargets);
     }
   }
 }
