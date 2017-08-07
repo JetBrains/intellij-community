@@ -1707,13 +1707,13 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override public void visitClass(PsiClass aClass) {
   }
 
-  void inlineLambda(PsiLambdaExpression lambda, boolean forceNotNullResult) {
+  void inlineLambda(PsiLambdaExpression lambda, Nullness resultNullness) {
     PsiLambdaExpression oldLambda = myLambdaExpression;
     boolean oldForceNotNullLambdaResult = myForceNotNullLambdaResult;
     // Transfer value is pushed to avoid emptying stack beyond this point
     addInstruction(new PushInstruction(myFactory.controlTransfer(ReturnTransfer.INSTANCE, this.myTrapStack), null));
     myLambdaExpression = lambda;
-    myForceNotNullLambdaResult = forceNotNullResult;
+    myForceNotNullLambdaResult = resultNullness == Nullness.NOT_NULL;
     startElement(lambda);
     try {
       PsiElement body = lambda.getBody();
