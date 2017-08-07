@@ -31,7 +31,7 @@ public class FSRecordsShard implements IFSRecords {
   }
 
   private int addShardId(int id) {
-    return myShardId & (id << 8);
+    return myShardId | (id << 8);
   }
 
   private int[] addShardId(int[] ids) {
@@ -154,7 +154,7 @@ public class FSRecordsShard implements IFSRecords {
     TIntArrayList parents = myDelegate.getParents(removeShardId(id), i -> cached.test(addShardId(i)));
     TIntArrayList res = new TIntArrayList(parents.size());
     for (int i = 0; i < parents.size(); ++i) {
-      res.set(i, parents.getQuick(i));
+      res.add(addShardId(parents.getQuick(i)));
     }
     return res;
   }

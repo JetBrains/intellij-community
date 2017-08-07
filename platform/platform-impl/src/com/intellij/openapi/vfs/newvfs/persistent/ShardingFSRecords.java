@@ -17,12 +17,12 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.function.IntFunction;
 import java.util.function.IntPredicate;
+import java.util.function.Supplier;
 
 public class ShardingFSRecords implements IFSRecords {
 
-  private final IntFunction<IFSRecords> myFactory;
+  private final Supplier<IFSRecords> myFactory;
 
   private PagedFileStorage.StorageLockContext myContext;
   private PersistentStringEnumerator myNames;
@@ -31,12 +31,12 @@ public class ShardingFSRecords implements IFSRecords {
 
   private TIntObjectHashMap<IFSRecords> myShards = new TIntObjectHashMap<>();
 
-  public ShardingFSRecords(IntFunction<IFSRecords> shardFactory) {
+  public ShardingFSRecords(Supplier<IFSRecords> shardFactory) {
     myFactory = shardFactory;
   }
 
   private IFSRecords getShard(int recordId) {
-    int shardId = (recordId << 24) >> 24;
+    int shardId = ((recordId < 0 ? -recordId : recordId) << 24) >> 24;
     IFSRecords shard = myShards.get(shardId);
     if (shard != null) {
       return shard;
@@ -46,7 +46,7 @@ public class ShardingFSRecords implements IFSRecords {
       if (shard != null) {
         return shard;
       }
-      shard = myFactory.apply(shardId);
+      shard = new FSRecordsShard(shardId, myFactory.get());
       shard.connect(myContext, myNames, myCache);
       myShards.put(shardId, shard);
       return shard;
@@ -107,6 +107,9 @@ public class ShardingFSRecords implements IFSRecords {
 
   @Override
   public long getCreationTimestamp() {
+    if (getShards().isEmpty()) {
+      return getShard(1).getCreationTimestamp();
+    }
     // TODO: not thread safe!!!
     long ts = Long.MAX_VALUE;
     for (IFSRecords records : getShards()) {
@@ -143,7 +146,9 @@ public class ShardingFSRecords implements IFSRecords {
         return record;
       }
     }
-    return -1;
+    int record = getShard(1).findRootRecord(rootUrl);
+    assert record > 0 : record;
+    return record;
   }
 
   @Override

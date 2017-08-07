@@ -31,7 +31,6 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.CompressionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
@@ -140,6 +139,7 @@ public class FSRecords implements IFSRecords {
     ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     r = lock.readLock();
     w = lock.writeLock();
+    myAttributesList = new VfsDependentEnum<>(baseFile, "attrib", EnumeratorStringDescriptor.INSTANCE, 1);
   }
 
   @Override
@@ -184,7 +184,7 @@ public class FSRecords implements IFSRecords {
   private ResizeableMappedFile myRecords;
   private PersistentBTreeEnumerator<byte[]> myContentHashesEnumerator;
   private File myRootsFile;
-  private final VfsDependentEnum<String> myAttributesList = new VfsDependentEnum<>(basePath(), "attrib", EnumeratorStringDescriptor.INSTANCE, 1);
+  private final VfsDependentEnum<String> myAttributesList;
   private final TIntArrayList myFreeRecords = new TIntArrayList();
 
   private boolean myDirty;

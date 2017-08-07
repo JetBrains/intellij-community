@@ -53,6 +53,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 /**
  * @author max
@@ -97,7 +98,12 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public void initComponent() {
-    myRecords = new FSRecords(new File(FSRecords.getCachesDir()));
+    final AtomicBoolean once = new AtomicBoolean();
+    myRecords = new ShardingFSRecords(() -> {
+      assert !once.get();
+      once.set(true);
+      return new FSRecords(new File(FSRecords.getCachesDir()));
+    });
     String cachesDir = System.getProperty("caches_dir");
     cachesDir = cachesDir == null ? PathManager.getSystemPath() + "/caches/" : cachesDir;
     File namesFile = new File(cachesDir, "names" + FSRecords.VFS_FILES_EXTENSION);
