@@ -64,9 +64,17 @@ class JdkUtilTest : BareTestFixtureTestCase() {
   }
 
   @Test fun noDynamicClasspathInJarMode() {
+    parameters.setUseDynamicClasspath(false)
     parameters.mainClass = null
     parameters.jarPath = "/classes/main.jar"
     doTest("-Xmx256m", "-Dan.option=1", "-classpath", "/classes/hello.jar", "-jar", "/classes/main.jar", "hello")
+  }
+
+  @Test fun `do not use CommandLineWrapper for 'java -jar' command`() {
+    parameters.mainClass = null
+    parameters.classPath.clear()
+    parameters.jarPath = "/classes/main.jar"
+    doTest("-Xmx256m", "-Dan.option=1", "-jar", "/classes/main.jar", "hello")
   }
 
   @Test fun dynamicClasspathWithJar() {
