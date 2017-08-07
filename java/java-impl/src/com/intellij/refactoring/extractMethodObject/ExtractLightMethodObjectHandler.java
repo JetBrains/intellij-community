@@ -114,6 +114,18 @@ public class ExtractLightMethodObjectHandler {
       return null;
     }
 
+    // expand lambda to code block if needed
+    PsiElement containingMethod = PsiTreeUtil.getParentOfType(originalAnchor, PsiMember.class, PsiLambdaExpression.class);
+    if (containingMethod instanceof PsiLambdaExpression) {
+      PsiElement body = ((PsiLambdaExpression)containingMethod).getBody();
+      if (body instanceof PsiExpression) {
+        PsiElement newBody = ((PsiLambdaExpression)RefactoringUtil.expandExpressionLambdaToCodeBlock(body)).getBody();
+        if (newBody instanceof PsiCodeBlock) {
+          originalAnchor = ((PsiCodeBlock)newBody).getStatements()[0];
+        }
+      }
+    }
+
     PsiElement anchor = RefactoringUtil.getParentStatement(originalAnchor, false);
     if (anchor == null) {
       if (PsiTreeUtil.getParentOfType(originalAnchor, PsiCodeBlock.class) != null) {
