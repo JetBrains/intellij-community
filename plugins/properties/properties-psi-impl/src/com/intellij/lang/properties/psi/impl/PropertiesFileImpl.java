@@ -20,6 +20,7 @@ import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
+import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.lang.properties.psi.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -155,12 +156,22 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   }
 
   private void insertLineBreakBefore(final ASTNode anchorBefore) {
-    getPropertiesList().addChild(ASTFactory.whitespace("\n"), anchorBefore);
+    ASTNode propertiesList = getPropertiesList();
+    if (anchorBefore == null && propertiesList.getFirstChildNode() == null) {
+      getNode().addChild(ASTFactory.whitespace("\n"), propertiesList);
+    } else {
+      propertiesList.addChild(ASTFactory.whitespace("\n"), anchorBefore);
+    }
   }
 
   private boolean haveToAddNewLine() {
-    ASTNode lastChild = getPropertiesList().getLastChildNode();
-    return lastChild != null && !lastChild.getText().endsWith("\n");
+    ASTNode propertiesList = getPropertiesList();
+    ASTNode lastChild = propertiesList.getLastChildNode();
+    if (lastChild != null) {
+      return !lastChild.getText().endsWith("\n");
+    }
+    ASTNode prev = propertiesList.getTreePrev();
+    return prev == null || !PropertiesTokenTypes.WHITESPACES.contains(prev.getElementType());
   }
 
   @Override
