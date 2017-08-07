@@ -18,6 +18,7 @@ package com.intellij.vcs.log.ui;
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -47,6 +48,7 @@ import java.util.Collection;
 import java.util.concurrent.Future;
 
 public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
+  private static final Logger LOG = Logger.getInstance(AbstractVcsLogUi.class);
   public static final ExtensionPointName<VcsLogHighlighterFactory> LOG_HIGHLIGHTER_FACTORY_EP =
     ExtensionPointName.create("com.intellij.logHighlighterFactory");
 
@@ -243,6 +245,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
 
   @Override
   public void dispose() {
+    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     myRefresher.removeVisiblePackChangeListener(myVisiblePackChangeListener);
     getTable().removeAllHighlighters();
     myVisiblePack = VisiblePack.EMPTY;

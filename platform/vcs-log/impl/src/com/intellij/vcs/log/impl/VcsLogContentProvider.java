@@ -85,6 +85,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
 
   @CalledInAwt
   private void addLogUi(@NotNull VcsLogManager logManager) {
+    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     if (myProjectLog.getMainLogUi() == null) {
       VcsLogUiImpl ui = logManager.createLogUi(VcsLogTabsProperties.MAIN_LOG_ID, TAB_NAME);
       myProjectLog.setMainUi(ui);
@@ -93,6 +94,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   }
 
   private void dispose(@Nullable VcsLogManager logManager) {
+    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     myContainer.removeAll();
     VcsLogUiImpl ui = myProjectLog.getMainLogUi();
     if (ui != null) Disposer.dispose(ui);
