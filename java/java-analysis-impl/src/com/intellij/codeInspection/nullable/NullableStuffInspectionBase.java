@@ -609,7 +609,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
     final String defaultNotNull = nullableManager.getDefaultNotNull();
     final String[] annotationsToRemove = ArrayUtil.toStringArray(nullableManager.getNullables());
     return AnnotationUtil.isAnnotatingApplicable(method, defaultNotNull)
-                              ? createAnnotateMethodFix(defaultNotNull, annotationsToRemove)
+                              ? createAnnotateMethodFix(defaultNotNull, annotationsToRemove, method)
                               : createChangeDefaultNotNullFix(nullableManager, superMethod);
   }
 
@@ -824,14 +824,8 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
     return null;
   }
 
-  protected AnnotateMethodFix createAnnotateMethodFix(final String defaultNotNull, final String[] annotationsToRemove) {
-    return new AnnotateMethodFix(defaultNotNull, annotationsToRemove) {
-      @NotNull
-      @Override
-      protected String getPreposition() {
-        return "as";
-      }
-    };
+  private AddAnnotationPsiFix createAnnotateMethodFix(String defaultNotNull, String[] annotationsToRemove, PsiMethod method) {
+    return new AddAnnotationPsiFix(defaultNotNull, method, PsiNameValuePair.EMPTY_ARRAY, annotationsToRemove);
   }
 
   private static void reportNullableNotNullConflict(final ProblemsHolder holder, final PsiModifierListOwner listOwner, final PsiAnnotation declaredNullable,
