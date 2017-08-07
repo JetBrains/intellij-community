@@ -90,7 +90,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     Key.create("resolvedSourceSets");
   public static final Key<Map<String/* output path */, Pair<String /* module id*/, ExternalSystemSourceType>>> MODULES_OUTPUTS =
     Key.create("moduleOutputsMap");
-  public static final Key<Map<ExternalSystemSourceType, String /* output path*/>> GRADLE_OUTPUTS = Key.create("gradleOutputs");
+  public static final Key<MultiMap<ExternalSystemSourceType, String /* output path*/>> GRADLE_OUTPUTS = Key.create("gradleOutputs");
   public static final Key<Map<String/* artifact path */, String /* module id*/>> CONFIGURATION_ARTIFACTS =
     Key.create("gradleArtifactsMap");
 
@@ -523,10 +523,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         final ModuleData moduleData = pair.first.getData();
         if (targetModuleOutputPaths == null) {
           final Set<String> compileSet = ContainerUtil.newHashSet();
-          Map<ExternalSystemSourceType, String> gradleOutputs = pair.first.getUserData(GRADLE_OUTPUTS);
+          MultiMap<ExternalSystemSourceType, String> gradleOutputs = pair.first.getUserData(GRADLE_OUTPUTS);
           if(gradleOutputs != null) {
             ContainerUtil.addAllNotNull(compileSet,
-                                        gradleOutputs.get(ExternalSystemSourceType.SOURCE),
+                                        gradleOutputs.get(ExternalSystemSourceType.SOURCE));
+            ContainerUtil.addAllNotNull(compileSet,
                                         gradleOutputs.get(ExternalSystemSourceType.RESOURCE));
           }
           if (!compileSet.isEmpty() && ContainerUtil.intersects(libraryPaths, compileSet)) {
@@ -536,7 +537,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
             final Set<String> testSet = ContainerUtil.newHashSet();
             if(gradleOutputs != null) {
               ContainerUtil.addAllNotNull(testSet,
-                                          gradleOutputs.get(ExternalSystemSourceType.TEST),
+                                          gradleOutputs.get(ExternalSystemSourceType.TEST));
+              ContainerUtil.addAllNotNull(testSet,
                                           gradleOutputs.get(ExternalSystemSourceType.TEST_RESOURCE));
             }
             if (!testSet.isEmpty() && ContainerUtil.intersects(libraryPaths, testSet)) {
