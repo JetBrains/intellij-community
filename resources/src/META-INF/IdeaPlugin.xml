@@ -818,9 +818,9 @@
     <localInspection groupPath="Java" language="JAVA" shortName="InvalidComparatorMethodReference" displayName="Invalid method reference used for Comparator"
                      groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.InvalidComparatorMethodReferenceInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="TrivialMethodReference" displayName="Method reference can be replaced with its qualifier"
+    <localInspection groupPath="Java" language="JAVA" shortName="FunctionalExpressionCanBeFolded" displayName="Functional expression can be folded"
                      groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.TrivialMethodReferenceInspection"/>
+                     implementationClass="com.intellij.codeInspection.FunctionalExpressionCanBeFoldedInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="TrivialFunctionalExpressionUsage" displayName="Trivial usage of functional expression"
                      groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.TrivialFunctionalExpressionUsageInspection"/>

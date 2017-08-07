@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,9 @@ import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class TrivialMethodReferenceInspection extends BaseJavaBatchLocalInspectionTool {
+import java.util.function.Supplier;
+
+public class FunctionalExpressionCanBeFoldedInspection extends BaseJavaBatchLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
@@ -31,18 +33,39 @@ public class TrivialMethodReferenceInspection extends BaseJavaBatchLocalInspecti
       public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
         final PsiExpression qualifierExpression = expression.getQualifierExpression();
         final PsiElement referenceNameElement = expression.getReferenceNameElement();
+        doCheckCall(expression, () -> expression.resolve(), qualifierExpression, referenceNameElement,
+                    "Method reference can be replaced with qualifier");
+      }
+
+      @Override
+      public void visitLambdaExpression(PsiLambdaExpression lambdaExpression) {
+        PsiElement body = lambdaExpression.getBody();
+        PsiExpression asMethodReference = LambdaCanBeMethodReferenceInspection
+          .canBeMethodReferenceProblem(body, lambdaExpression.getParameterList().getParameters(), lambdaExpression.getFunctionalInterfaceType(), null);
+        if (asMethodReference instanceof PsiMethodCallExpression) {
+          PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)asMethodReference).getMethodExpression();
+          PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+          doCheckCall(lambdaExpression, () -> ((PsiMethodCallExpression)asMethodReference).resolveMethod(), qualifierExpression, asMethodReference,
+                      "Lambda can be replaced with call qualifier");
+        }
+      }
+
+      private void doCheckCall(PsiFunctionalExpression expression,
+                               Supplier<PsiElement> resolver,
+                               PsiExpression qualifierExpression,
+                               PsiElement referenceNameElement,
+                               final String errorMessage) {
         if (qualifierExpression != null && referenceNameElement != null && !(qualifierExpression instanceof PsiSuperExpression)) {
           final PsiType qualifierType = qualifierExpression.getType();
           if (qualifierType != null) {
             final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
             final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
             if (interfaceMethod != null) {
-              final PsiElement resolve = expression.resolve();
+              final PsiElement resolve = resolver.get();
               if (resolve instanceof PsiMethod &&
                   (interfaceMethod == resolve || MethodSignatureUtil.isSuperMethod(interfaceMethod, (PsiMethod)resolve)) &&
                   TypeConversionUtil.isAssignable(functionalInterfaceType, qualifierType)) {
-                holder.registerProblem(referenceNameElement, "Method reference can be replaced with qualifier",
-                                       new ReplaceMethodRefWithQualifierFix());
+                holder.registerProblem(referenceNameElement, errorMessage, new ReplaceMethodRefWithQualifierFix());
               }
             }
           }
@@ -67,6 +90,15 @@ public class TrivialMethodReferenceInspection extends BaseJavaBatchLocalInspecti
         final PsiExpression qualifierExpression = ((PsiMethodReferenceExpression)parent).getQualifierExpression();
         if (qualifierExpression != null) {
           parent.replace(qualifierExpression);
+        }
+      }
+      else if (parent instanceof PsiLambdaExpression) {
+        PsiExpression expression = LambdaUtil.extractSingleExpressionFromBody(((PsiLambdaExpression)parent).getBody());
+        if (expression instanceof PsiMethodCallExpression) {
+          PsiExpression qualifierExpression = ((PsiMethodCallExpression)expression).getMethodExpression().getQualifierExpression();
+          if (qualifierExpression != null) {
+            parent.replace(qualifierExpression);
+          }
         }
       }
     }

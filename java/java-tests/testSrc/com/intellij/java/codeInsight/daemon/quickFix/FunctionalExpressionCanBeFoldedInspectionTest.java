@@ -16,17 +16,17 @@
 package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.codeInspection.FunctionalExpressionCanBeFoldedInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.TrivialMethodReferenceInspection;
 import org.jetbrains.annotations.NotNull;
 
 
-public class TrivialMethodReferenceInspectionTest extends LightQuickFixParameterizedTestCase {
+public class FunctionalExpressionCanBeFoldedInspectionTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
-      new TrivialMethodReferenceInspection(),
+      new FunctionalExpressionCanBeFoldedInspection(),
     };
   }
 
