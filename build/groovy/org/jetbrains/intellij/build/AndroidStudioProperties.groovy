@@ -317,8 +317,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
         def androidRoot = "$root/tools/adt/idea"
         context.ant.copy(file: "$androidRoot/native/installer/win/builds/uninstall.exe", tofile: "$targetDirectory/uninstall.exe")
-        context.ant.copy(file: "$androidRoot/android/lib/libwebp/win/webp_jni.dll", tofile: "$targetDirectory/plugins/android/lib/webp_jni.dll")
-        context.ant.copy(file: "$androidRoot/android/lib/libwebp/win/webp_jni64.dll", tofile: "$targetDirectory/plugins/android/lib/webp_jni64.dll")
+        context.ant.copy(file: "$androidRoot/adt-ui/lib/libwebp/win/webp_jni.dll", tofile: "$targetDirectory/plugins/android/lib/webp_jni.dll")
+        context.ant.copy(file: "$androidRoot/adt-ui/lib/libwebp/win/webp_jni64.dll", tofile: "$targetDirectory/plugins/android/lib/webp_jni64.dll")
       }
     }
   }
@@ -343,8 +343,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         }
 
         def androidRoot = "$root/tools/adt/idea"
-        context.ant.copy(file: "$androidRoot/android/lib/libwebp/linux/libwebp_jni.so", tofile: "$targetDirectory/plugins/android/lib/libwebp_jni.so")
-        context.ant.copy(file: "$androidRoot/android/lib/libwebp/linux/libwebp_jni64.so", tofile: "$targetDirectory/plugins/android/lib/libwebp_jni64.so")
+        context.ant.copy(file: "$androidRoot/adt-ui/lib/libwebp/linux/libwebp_jni.so", tofile: "$targetDirectory/plugins/android/lib/libwebp_jni.so")
+        context.ant.copy(file: "$androidRoot/adt-ui/lib/libwebp/linux/libwebp_jni64.so", tofile: "$targetDirectory/plugins/android/lib/libwebp_jni64.so")
       }
     }
   }
@@ -381,7 +381,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         }
 
         def androidRoot = "$root/tools/adt/idea"
-        context.ant.copy(file: "$androidRoot/android/lib/libwebp/mac/libwebp_jni64.dylib", tofile: "$targetDirectory/plugins/android/lib/libwebp_jni64.dylib")
+        context.ant.copy(file: "$androidRoot/adt-ui/lib/libwebp/mac/libwebp_jni64.dylib", tofile: "$targetDirectory/plugins/android/lib/libwebp_jni64.dylib")
       }
     }
   }

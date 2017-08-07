@@ -12,7 +12,7 @@ iml_project(
         "//prebuilts/tools/common/simpleperf",
         "//prebuilts/tools:offline-sdk",
         "//prebuilts/tools/common/kotlin-gradle-plugin",
-        "//tools/adt/idea/android/lib/libwebp",
+        "//tools/adt/idea/adt-ui/lib/libwebp",
         "//tools/adt/idea/native/installer:uninstaller",
         "//tools/base/build-system:gradle-distrib",
         "//tools/base/templates",
