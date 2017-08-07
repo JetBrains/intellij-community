@@ -24,8 +24,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.gradle.tooling.ProgressEvent;
 import org.gradle.tooling.ProgressListener;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
