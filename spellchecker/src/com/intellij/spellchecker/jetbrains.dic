@@ -318,6 +318,7 @@ labelers
 lcov
 lcovonly
 ldap
+lexing
 libxml
 lifecycle
 likec
