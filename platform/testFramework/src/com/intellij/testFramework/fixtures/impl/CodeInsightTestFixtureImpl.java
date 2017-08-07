@@ -207,7 +207,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
 
     ProcessCanceledException exception = null;
-    for (int i = 0; i < 1000; i++) {
+    int retries = 1000;
+    for (int i = 0; i < retries; i++) {
       int oldDelay = settings.AUTOREPARSE_DELAY;
       try {
         settings.AUTOREPARSE_DELAY = 0;
@@ -231,8 +232,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         settings.AUTOREPARSE_DELAY = oldDelay;
       }
     }
-    // unable to highlight after 100 retries
-    throw exception;
+    throw new AssertionError("Unable to highlight after " + retries + " retries", exception);
   }
 
   public static void ensureIndexesUpToDate(@NotNull Project project) {
