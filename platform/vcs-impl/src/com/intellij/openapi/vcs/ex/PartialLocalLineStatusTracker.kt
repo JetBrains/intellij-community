@@ -444,6 +444,36 @@ class PartialLocalLineStatusTracker(project: Project,
 
 
   @CalledInAwt
+  fun storeTrackerState(): State {
+    return documentTracker.readLock {
+      val vcsContent = documentTracker.getContent(Side.LEFT)
+      val currentContent = documentTracker.getContent(Side.RIGHT)
+
+      val rangeStates = blocks.map { RangeState(it.range, it.marker.changelistId) }
+
+      State(virtualFile, vcsContent.toString(), currentContent.toString(), rangeStates)
+    }
+  }
+
+  private fun restoreState(state: State) {
+    documentTracker.doFrozen {
+      // ensure that changelist can't disappear in the middle of operation
+      changeListManager.executeUnderDataLock {
+        documentTracker.writeLock {
+          val success = documentTracker.setFrozenState(state.vcsContent, state.currentContent, state.ranges.map { it.range })
+          if (success) {
+            restoreChangelistsState(state.ranges)
+          }
+        }
+      }
+
+      updateDocument(Side.LEFT) {
+        vcsDocument.setText(state.vcsContent)
+      }
+    }
+  }
+
+  @CalledInAwt
   internal fun restoreState(states: List<RangeState>) {
     documentTracker.doFrozen {
       // ensure that changelist can't disappear in the middle of operation
@@ -451,26 +481,26 @@ class PartialLocalLineStatusTracker(project: Project,
         documentTracker.writeLock {
           val success = documentTracker.setFrozenState(states.map { it.range })
           if (success) {
-            val changelistIds = changeListManager.changeLists.map { it.id }
-            val idToMarker = ContainerUtil.newMapFromKeys(changelistIds.iterator(), { ChangeListMarker(it) })
-            assert(blocks.size == states.size)
-            blocks.forEachIndexed { i, block ->
-              block.marker = idToMarker[states[i].changelistId] ?: defaultMarker
-              updateHighlighter(block)
-            }
+            restoreChangelistsState(states)
           }
-
-          updateAffectedChangeLists()
         }
       }
     }
   }
 
+  private fun restoreChangelistsState(states: List<RangeState>) {
+    val changelistIds = changeListManager.changeLists.map { it.id }
+    val idToMarker = ContainerUtil.newMapFromKeys(changelistIds.iterator(), { ChangeListMarker(it) })
 
-  class RangeState(
-    val range: com.intellij.diff.util.Range,
-    val changelistId: String
-  )
+    assert(blocks.size == states.size)
+    blocks.forEachIndexed { i, block ->
+      block.marker = idToMarker[states[i].changelistId] ?: defaultMarker
+      updateHighlighter(block)
+    }
+
+    updateAffectedChangeLists()
+  }
+
 
   private class MyUndoableAction(
     project: Project,
@@ -501,6 +531,18 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
 
+  class State(
+    val virtualFile: VirtualFile,
+    val vcsContent: String,
+    val currentContent: String,
+    val ranges: List<RangeState>
+  )
+
+  class RangeState(
+    val range: com.intellij.diff.util.Range,
+    val changelistId: String
+  )
+
   class LocalRange(line1: Int, line2: Int, vcsLine1: Int, vcsLine2: Int, innerRanges: List<InnerRange>?,
                    val changelistId: String)
     : Range(line1, line2, vcsLine1, vcsLine2, innerRanges)
@@ -529,6 +571,17 @@ class PartialLocalLineStatusTracker(project: Project,
       return PartialLocalLineStatusTracker(project, document, virtualFile, mode)
     }
 
+    @JvmStatic
+    @CalledInAwt
+    fun createTracker(project: Project,
+                      document: Document,
+                      virtualFile: VirtualFile,
+                      mode: Mode,
+                      state: State): PartialLocalLineStatusTracker {
+      val tracker = createTracker(project, document, virtualFile, mode)
+      tracker.restoreState(state)
+      return tracker
+    }
 
     @JvmStatic
     fun createTracker(project: Project,

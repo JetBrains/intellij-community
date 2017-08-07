@@ -635,6 +635,49 @@ class LineStatusTrackerManager(
       LOG.warn(message)
     }
   }
+
+
+  @CalledInAwt
+  internal fun collectPartiallyChangedFilesStates(): List<PartialLocalLineStatusTracker.State> {
+    val result = mutableListOf<PartialLocalLineStatusTracker.State>()
+    synchronized(LOCK) {
+      for (data in trackers.values) {
+        val tracker = data.tracker
+        if (tracker is PartialLocalLineStatusTracker) {
+          val hasPartialChanges = tracker.affectedChangeListsIds.size > 1
+          if (hasPartialChanges) {
+            result.add(tracker.storeTrackerState())
+          }
+        }
+      }
+    }
+    return result
+  }
+
+  @CalledInAwt
+  internal fun restoreTrackersForPartiallyChangedFiles(trackerStates: List<PartialLocalLineStatusTracker.State>) {
+    synchronized(LOCK) {
+      for (state in trackerStates) {
+        val virtualFile = state.virtualFile
+        val document = fileDocumentManager.getDocument(virtualFile) ?: continue
+
+        if (!canCreatePartialTrackerFor(virtualFile)) continue
+
+        val tracker = PartialLocalLineStatusTracker.createTracker(project, document, virtualFile, getTrackingMode(), state)
+        val oldTracker = trackers.put(document, TrackerData(tracker))
+
+        if (oldTracker != null) {
+          unregisterTrackerInCLM(oldTracker.tracker)
+          oldTracker.tracker.release()
+        }
+
+        registerTrackerInCLM(tracker)
+        refreshTracker(tracker)
+
+        log("Tracker restored from config", virtualFile)
+      }
+    }
+  }
 }
 
 

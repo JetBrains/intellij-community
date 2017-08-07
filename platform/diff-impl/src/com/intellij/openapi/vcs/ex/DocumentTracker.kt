@@ -252,6 +252,21 @@ class DocumentTracker : Disposable {
     return DiffUtil.applyModification(content, lineOffsets, otherContent, otherLineOffsets, ranges)
   }
 
+  fun setFrozenState(content1: CharSequence, content2: CharSequence, lineRanges: List<Range>): Boolean {
+    assert(freezeHelper.isFrozen(Side.LEFT) && freezeHelper.isFrozen(Side.RIGHT))
+    if (isDisposed) return false
+
+    LOCK.write {
+      if (!isValidState(content1, content2, lineRanges)) return false
+
+      freezeHelper.setFrozenContent(Side.LEFT, content1)
+      freezeHelper.setFrozenContent(Side.RIGHT, content2)
+      tracker.setRanges(lineRanges, true)
+
+      return true
+    }
+  }
+
   @CalledInAwt
   fun setFrozenState(lineRanges: List<Range>): Boolean {
     if (isDisposed) return false
