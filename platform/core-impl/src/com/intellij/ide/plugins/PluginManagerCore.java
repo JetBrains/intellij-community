@@ -37,6 +37,7 @@ import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.graph.*;
@@ -1262,10 +1263,10 @@ public class PluginManagerCore {
 
   private static void checkEssentialPluginsAreAvailable(IdeaPluginDescriptorImpl[] plugins) {
     Set<String> availableIds = ContainerUtil.map2Set(plugins, plugin -> plugin.getPluginId().getIdString());
-    for (String pluginId : ((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getEssentialPluginsIds()) {
-      if (!availableIds.contains(pluginId)) {
-        throw new InstallationCorruptedException("Required plugin '" + pluginId + "' isn't available");
-      }
+    List<String> ids = ((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getEssentialPluginsIds();
+    Set<String> missing = JBIterable.from(ids).filter(id -> !availableIds.contains(id)).toSet();
+    if (!missing.isEmpty()) {
+      throw new EssentialPluginMissingException(missing);
     }
   }
 
@@ -1499,9 +1500,11 @@ public class PluginManagerCore {
     }
   }
 
-  static class InstallationCorruptedException extends RuntimeException {
-    public InstallationCorruptedException(String message) {
-      super(message);
+  static class EssentialPluginMissingException extends RuntimeException {
+    final Set<String> pluginIds;
+
+    public EssentialPluginMissingException(@NotNull Set<String> ids) {
+      this.pluginIds = ids;
     }
   }
 }

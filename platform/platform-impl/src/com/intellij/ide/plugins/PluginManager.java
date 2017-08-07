@@ -37,6 +37,7 @@ import com.intellij.openapi.extensions.impl.PicoPluginExtensionInitializationExc
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ArrayUtil;
@@ -52,7 +53,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author mike
@@ -111,10 +114,17 @@ public class PluginManager extends PluginManagerCore {
 
   public static void processException(Throwable t) {
     if (!IdeaApplication.isLoaded()) {
-      InstallationCorruptedException corrupted = findCause(t, InstallationCorruptedException.class);
       String productName = ApplicationNamesInfo.getInstance().getFullProductName();
-      if (corrupted != null) {
-        Main.showMessage("Corrupted Installation", corrupted.getMessage() + ". Try reinstalling " + productName + " from scratch.", true);
+      EssentialPluginMissingException exception = findCause(t, EssentialPluginMissingException.class);
+      Set<String> pluginIds = exception == null ? null : exception.pluginIds;
+      if (pluginIds != null) {
+        String[] strings = ArrayUtil.toStringArray(pluginIds);
+        Arrays.sort(strings);
+        Main.showMessage("Corrupted Installation",
+                         "Missing essential plugin" + (strings.length == 1 ? "" : "s") + ":\n\n" +
+                         "  " + StringUtil.join(strings, "\n  ") +
+                         "\n\n" +
+                         "Please reinstall " + productName + " from scratch.", true);
         System.exit(Main.INSTALLATION_CORRUPTED);
       }
 
