@@ -432,10 +432,8 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   }
 
   public void testReadFontPreferences() throws Exception {
-    String[] fontFamilyNames = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
-    if (fontFamilyNames.length < 2) return;
-    String name1 = fontFamilyNames[0];
-    String name2 = fontFamilyNames[1];
+    String name1 = getExistingNonDefaultFontName();
+    String name2 = getAnotherExistingNonDefaultFontName();
     EditorColorsScheme scheme = loadScheme(
       "<scheme name=\"fira\" version=\"142\" parent_scheme=\"Default\">\n" +
       "  <option name=\"LINE_SPACING\" value=\"0.93\" />\n" +
@@ -459,9 +457,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   }
 
   public void testReadFontPreferencesIdea176762() throws Exception {
-    String[] fontFamilyNames = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
-    if (fontFamilyNames.length == 0) return;
-    String fontName = fontFamilyNames[0];
+    String fontName = getExistingNonDefaultFontName();
     EditorColorsScheme scheme = loadScheme(
       "<scheme name=\"_@user_Default\" version=\"142\" parent_scheme=\"Default\">\n" +
       "  <option name=\"FONT_SCALE\" value=\"1.5\" />\n" +

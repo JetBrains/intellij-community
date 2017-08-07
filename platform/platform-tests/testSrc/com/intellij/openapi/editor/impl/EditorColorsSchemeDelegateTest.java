@@ -15,16 +15,15 @@
  */
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.FontPreferences;
-import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
+import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.testFramework.TestFileType;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.openapi.editor.colors.FontPreferencesTest.getExistingNonDefaultFontName;
 
 public class EditorColorsSchemeDelegateTest extends AbstractEditorTest {
   private EditorColorsScheme mySavedScheme;
@@ -54,6 +53,7 @@ public class EditorColorsSchemeDelegateTest extends AbstractEditorTest {
   }
   
   public void testSecondaryFontIsAvailable() throws Exception {
+    String secondaryFont = getExistingNonDefaultFontName();
     FontPreferences globalPrefs = AppEditorFontOptions.getInstance().getFontPreferences();
     FontPreferences tempCopy = new FontPreferencesImpl();
     globalPrefs.copyTo(tempCopy);
@@ -61,7 +61,7 @@ public class EditorColorsSchemeDelegateTest extends AbstractEditorTest {
       init("blah", TestFileType.TEXT);
 
       assertInstanceOf(globalPrefs, ModifiableFontPreferences.class);
-      ((ModifiableFontPreferences)globalPrefs).register("DummyFont", globalPrefs.getSize(globalPrefs.getFontFamily()));
+      ((ModifiableFontPreferences)globalPrefs).register(secondaryFont, globalPrefs.getSize(globalPrefs.getFontFamily()));
       LOG.debug(dumpFontPreferences("globalPrefs", globalPrefs));
       assertEquals(2, globalPrefs.getRealFontFamilies().size());
       ((EditorEx)myEditor).reinitSettings();
@@ -69,7 +69,7 @@ public class EditorColorsSchemeDelegateTest extends AbstractEditorTest {
       FontPreferences editorPrefs = myEditor.getColorsScheme().getFontPreferences();
       LOG.debug(dumpFontPreferences("editorPrefs", editorPrefs));
       assertEquals(2, editorPrefs.getRealFontFamilies().size());
-      assertEquals("DummyFont", editorPrefs.getRealFontFamilies().get(1));
+      assertEquals(secondaryFont, editorPrefs.getRealFontFamilies().get(1));
     }
     finally {
       tempCopy.copyTo(globalPrefs);
