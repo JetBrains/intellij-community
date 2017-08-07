@@ -16,11 +16,11 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -119,10 +119,11 @@ public class SaveAndSyncHandlerImpl extends SaveAndSyncHandler implements Dispos
 
   @Override
   public void saveProjectsAndDocuments() {
-    if (!ApplicationManager.getApplication().isDisposed() &&
+    Application app = ApplicationManager.getApplication();
+    if (!app.isDisposed() &&
         mySettings.isSaveOnFrameDeactivation() &&
         myBlockSaveOnFrameDeactivationCount.get() == 0) {
-      StoreUtil.saveDocumentsAndProjectsAndApp();
+      app.saveAll();
     }
   }
 
