@@ -68,6 +68,15 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase implements Wr
     }
   }
 
+  @Nullable
+  @Override
+  protected Throwable getCancellationTrace() {
+    if (myOriginal instanceof AbstractProgressIndicatorBase) {
+      return ((AbstractProgressIndicatorBase)myOriginal).getCancellationTrace();
+    }
+    return super.getCancellationTrace();
+  }
+
   private boolean isCanceledRaw() { return super.isCanceled(); }
   private void checkCanceledRaw() { super.checkCanceled(); }
 
