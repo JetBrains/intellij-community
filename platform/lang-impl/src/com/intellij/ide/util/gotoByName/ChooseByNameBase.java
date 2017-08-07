@@ -1442,7 +1442,10 @@ public abstract class ChooseByNameBase {
     @Override
     public void onCanceled(@NotNull ProgressIndicator indicator) {
       LOG.assertTrue(myCalcElementsThread == this, myCalcElementsThread);
-      new CalcElementsThread(myPattern, myCheckboxState, myCallback, myModalityState).scheduleThread();
+
+      if (!myProject.isDisposed()) {
+        new CalcElementsThread(myPattern, myCheckboxState, myCallback, myModalityState).scheduleThread();
+      }
     }
 
     private void addElementsByPattern(@NotNull String pattern,
