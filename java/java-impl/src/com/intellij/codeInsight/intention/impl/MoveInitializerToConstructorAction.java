@@ -57,7 +57,8 @@ public class MoveInitializerToConstructorAction extends BaseMoveInitializerToMet
         PsiClassInitializer[] initializers = containingClass.getInitializers();
         PsiElement[] elements = 
           Arrays.stream(containingClass.getFields())
-          .filter(f -> f.hasInitializer()).map(f -> f.getInitializer())
+          .map(f -> f.getInitializer())
+          .filter(Objects::nonNull)
           .toArray(PsiElement[]::new);
         return ReferencesSearch.search(field, new LocalSearchScope(ArrayUtil.mergeArrays(elements, initializers))).findFirst() == null;
       }

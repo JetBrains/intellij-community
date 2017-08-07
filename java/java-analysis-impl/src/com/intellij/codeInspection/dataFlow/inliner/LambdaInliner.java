@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.dataFlow.inliner;
 
 import com.intellij.codeInspection.dataFlow.CFGBuilder;
+import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
@@ -47,7 +48,7 @@ public class LambdaInliner implements CallInliner {
                                                       .boxUnbox(arg, parameter.getType())
                                                       .assign()
                                                       .pop());
-    builder.inlineLambda(lambda, false);
+    builder.inlineLambda(lambda, Nullness.UNKNOWN);
     return true;
   }
 }

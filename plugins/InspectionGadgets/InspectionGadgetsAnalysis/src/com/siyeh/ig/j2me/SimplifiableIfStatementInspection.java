@@ -22,6 +22,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -112,26 +115,7 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
       return "";
     }
     final PsiJavaToken token = elseAssignment.getOperationSign();
-    if (BoolUtils.isTrue(thenRhs)) {
-      return lhs.getText() + ' ' + token.getText() + ' ' +
-             buildExpressionText(condition, ParenthesesUtils.OR_PRECEDENCE) + " || " +
-             buildExpressionText(elseRhs, ParenthesesUtils.OR_PRECEDENCE) + ';';
-    }
-    else if (BoolUtils.isFalse(thenRhs)) {
-      return lhs.getText() + ' ' + token.getText() + ' ' +
-             BoolUtils.getNegatedExpressionText(condition, ParenthesesUtils.AND_PRECEDENCE) + " && " +
-             buildExpressionText(elseRhs, ParenthesesUtils.AND_PRECEDENCE) + ';';
-    }
-    if (BoolUtils.isTrue(elseRhs)) {
-      return lhs.getText() + ' ' + token.getText() + ' ' +
-             BoolUtils.getNegatedExpressionText(condition, ParenthesesUtils.OR_PRECEDENCE) + " || " +
-             buildExpressionText(thenRhs, ParenthesesUtils.OR_PRECEDENCE) + ';';
-    }
-    else {
-      return lhs.getText() + ' ' + token.getText() + ' ' +
-             buildExpressionText(condition, ParenthesesUtils.AND_PRECEDENCE) + " && " +
-             buildExpressionText(thenRhs, ParenthesesUtils.AND_PRECEDENCE) + ';';
-    }
+    return lhs.getText() + ' ' + token.getText() + ' ' + getCombinedConditionText(condition, thenRhs, elseRhs) + ';';
   }
 
   @NonNls
@@ -146,22 +130,60 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
     if (elseReturnValue == null) {
       return "";
     }
-    if (BoolUtils.isTrue(thenReturnValue)) {
-      return "return " + buildExpressionText(condition, ParenthesesUtils.OR_PRECEDENCE) + " || " +
-             buildExpressionText(elseReturnValue, ParenthesesUtils.OR_PRECEDENCE) + ';';
+    return "return " + getCombinedConditionText(condition, thenReturnValue, elseReturnValue) + ';';
+  }
+
+  @NotNull
+  private static String getCombinedConditionText(PsiExpression condition, PsiExpression thenValue, PsiExpression elseValue) {
+    if (BoolUtils.isTrue(thenValue)) {
+      return joinConditions(condition, elseValue, false);
     }
-    else if (BoolUtils.isFalse(thenReturnValue)) {
-      return "return " + BoolUtils.getNegatedExpressionText(condition, ParenthesesUtils.AND_PRECEDENCE) + " && " +
-             buildExpressionText(elseReturnValue, ParenthesesUtils.AND_PRECEDENCE) + ';';
+    else if (BoolUtils.isFalse(thenValue)) {
+      return BoolUtils.getNegatedExpressionText(condition, ParenthesesUtils.AND_PRECEDENCE) + " && " +
+             buildExpressionText(elseValue, ParenthesesUtils.AND_PRECEDENCE);
     }
-    if (BoolUtils.isTrue(elseReturnValue)) {
-      return "return " + BoolUtils.getNegatedExpressionText(condition, ParenthesesUtils.OR_PRECEDENCE) + " || " +
-             buildExpressionText(thenReturnValue, ParenthesesUtils.OR_PRECEDENCE) + ';';
+    if (BoolUtils.isTrue(elseValue)) {
+      return BoolUtils.getNegatedExpressionText(condition, ParenthesesUtils.OR_PRECEDENCE) + " || " +
+             buildExpressionText(thenValue, ParenthesesUtils.OR_PRECEDENCE);
     }
     else {
-      return "return " + buildExpressionText(condition, ParenthesesUtils.AND_PRECEDENCE) + " && " +
-             buildExpressionText(thenReturnValue, ParenthesesUtils.AND_PRECEDENCE) + ';';
+      return joinConditions(condition, thenValue, true);
     }
+  }
+
+  @NotNull
+  private static String joinConditions(PsiExpression left, PsiExpression right, boolean isAnd) {
+    int precedence;
+    String token;
+    IElementType tokenType;
+    if (isAnd) {
+      precedence = ParenthesesUtils.AND_PRECEDENCE;
+      token = " && ";
+      tokenType = JavaTokenType.ANDAND;
+    }
+    else {
+      precedence = ParenthesesUtils.OR_PRECEDENCE;
+      token = " || ";
+      tokenType = JavaTokenType.OROR;
+    }
+    PsiPolyadicExpression leftPolyadic = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(left), PsiPolyadicExpression.class);
+    PsiPolyadicExpression rightPolyadic = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(right), PsiPolyadicExpression.class);
+    // foo && (foo && bar) -> foo && bar
+    if (rightPolyadic != null && rightPolyadic.getOperationTokenType().equals(tokenType) &&
+        EquivalenceChecker.getCanonicalPsiEquivalence()
+          .expressionsAreEquivalent(ArrayUtil.getFirstElement(rightPolyadic.getOperands()), left) &&
+        !SideEffectChecker.mayHaveSideEffects(left)) {
+      return buildExpressionText(rightPolyadic, ParenthesesUtils.NUM_PRECEDENCES);
+    }
+    // (foo && bar) && bar -> foo && bar
+    if (leftPolyadic != null && leftPolyadic.getOperationTokenType().equals(tokenType) &&
+        EquivalenceChecker.getCanonicalPsiEquivalence()
+          .expressionsAreEquivalent(ArrayUtil.getLastElement(leftPolyadic.getOperands()), right) &&
+        !SideEffectChecker.mayHaveSideEffects(right)) {
+      return buildExpressionText(leftPolyadic, ParenthesesUtils.NUM_PRECEDENCES);
+    }
+    return buildExpressionText(left, precedence) + token +
+           buildExpressionText(right, precedence);
   }
 
   private static String buildExpressionText(PsiExpression expression, int precedence) {

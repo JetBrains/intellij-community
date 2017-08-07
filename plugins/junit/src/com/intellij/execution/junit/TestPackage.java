@@ -45,6 +45,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.function.Predicate;
 
@@ -81,7 +82,7 @@ public class TestPackage extends TestObject {
             long start = System.currentTimeMillis();
             if (Registry.is("junit4.search.4.tests.in.classpath", false)) {
               String packageName = getPackageName(data);
-              String[] classNames = TestClassCollector.collectClassFQNames(packageName, getConfiguration(), TestPackage::createPredicate);
+              String[] classNames = TestClassCollector.collectClassFQNames(packageName, getRootPath(), getConfiguration(), TestPackage::createPredicate);
               PsiManager manager = PsiManager.getInstance(myProject);
               Arrays.stream(classNames)
                 .filter(className -> acceptClassName(className)) //check patterns
@@ -111,6 +112,13 @@ public class TestPackage extends TestObject {
         catch (ExecutionException ignored) {}
       }
     };
+  }
+
+  @Nullable
+  protected Path getRootPath() {
+    Module module = getConfiguration().getConfigurationModule().getModule();
+    boolean chooseSingleModule = getConfiguration().getTestSearchScope() == TestSearchScope.SINGLE_MODULE;
+    return TestClassCollector.getRootPath(module, chooseSingleModule);
   }
 
   protected boolean acceptClassName(String className) {

@@ -473,7 +473,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder invokeFunction(int argCount, @Nullable PsiExpression functionalExpression) {
-    return invokeFunction(argCount, functionalExpression, false);
+    return invokeFunction(argCount, functionalExpression, Nullness.UNKNOWN);
   }
 
   /**
@@ -483,17 +483,17 @@ public class CFGBuilder {
    *
    * @param argCount             number of stack arguments to consume
    * @param functionalExpression a functional expression to invoke
-   * @param forceNotNullResult   if true, function result will be forced to not-null (possibly issuing a warning)
+   * @param resultNullness       an expected nullness of the lambda result
    * @return this builder
    */
-  public CFGBuilder invokeFunction(int argCount, @Nullable PsiExpression functionalExpression, boolean forceNotNullResult) {
+  public CFGBuilder invokeFunction(int argCount, @Nullable PsiExpression functionalExpression, Nullness resultNullness) {
     PsiExpression stripped = PsiUtil.deparenthesizeExpression(functionalExpression);
     if (stripped instanceof PsiLambdaExpression) {
       PsiLambdaExpression lambda = (PsiLambdaExpression)stripped;
       PsiParameter[] parameters = lambda.getParameterList().getParameters();
       if (parameters.length == argCount && lambda.getBody() != null) {
         StreamEx.ofReversed(parameters).forEach(p -> assignTo(p).pop());
-        return inlineLambda(lambda, forceNotNullResult);
+        return inlineLambda(lambda, resultNullness);
       }
     }
     if (stripped instanceof PsiMethodReferenceExpression) {
@@ -520,7 +520,7 @@ public class CFGBuilder {
           myAnalyzer.addBareCall(null, methodRef);
           myAnalyzer.generateBoxingUnboxingInstructionFor(methodRef, resolveResult.getSubstitutor().substitute(method.getReturnType()),
                                                           LambdaUtil.getFunctionalInterfaceReturnType(methodRef));
-          if (forceNotNullResult) {
+          if (resultNullness == Nullness.NOT_NULL) {
             checkNotNull(methodRef, NullabilityProblem.nullableFunctionReturn);
           }
           return this;
@@ -570,8 +570,8 @@ public class CFGBuilder {
     }
   }
 
-  public CFGBuilder inlineLambda(PsiLambdaExpression lambda, boolean forceNotNullResult) {
-    myAnalyzer.inlineLambda(lambda, forceNotNullResult);
+  public CFGBuilder inlineLambda(PsiLambdaExpression lambda, Nullness resultNullness) {
+    myAnalyzer.inlineLambda(lambda, resultNullness);
     return this;
   }
 

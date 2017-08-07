@@ -537,8 +537,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     @NotNull private final TIntHashSet myCommits;
     private final boolean myFull;
 
-    public volatile int myNewIndexedCommits;
-    public volatile int myOldCommits;
+    @NotNull private final AtomicInteger myNewIndexedCommits = new AtomicInteger();
+    @NotNull private final AtomicInteger myOldCommits = new AtomicInteger();
 
     public IndexingRequest(@NotNull VirtualFile root, @NotNull TIntHashSet commits, boolean full) {
       myRoot = root;
@@ -562,7 +562,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
           else {
             IntStream commits = TroveUtil.stream(myCommits).filter(c -> {
               if (isIndexed(c)) {
-                myOldCommits++;
+                myOldCommits.incrementAndGet();
                 return false;
               }
               return true;
@@ -601,7 +601,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
                   myNewIndexedCommits + " commits in " + myRoot.getName());
       }
       else {
-        int leftCommits = myCommits.size() - myNewIndexedCommits - myOldCommits;
+        int leftCommits = myCommits.size() - myNewIndexedCommits.get() - myOldCommits.get();
         String leftCommitsMessage = (leftCommits > 0) ? ". " + leftCommits + " commits left" : "";
 
         LOG.debug(formattedTime +
@@ -613,7 +613,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     }
 
     private void scheduleReindex() {
-      LOG.debug("Schedule reindexing of " + (myCommits.size() - myNewIndexedCommits - myOldCommits) + " commits in " + myRoot.getName());
+      LOG.debug("Schedule reindexing of " + (myCommits.size() - myNewIndexedCommits.get() - myOldCommits.get()) + " commits in " + myRoot.getName());
       myCommits.forEach(value -> {
         markForIndexing(value, myRoot);
         return true;
@@ -631,7 +631,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         List<String> hashes = TroveUtil.map(batch, value -> myStorage.getCommitId(value).getHash().asString());
         myProviders.get(myRoot).readFullDetails(myRoot, hashes, detail -> {
           VcsLogPersistentIndex.this.storeDetail(detail);
-          myNewIndexedCommits++;
+          myNewIndexedCommits.incrementAndGet();
         }, true);
 
         displayProgress(indicator);
@@ -643,9 +643,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
       myProviders.get(myRoot).readAllFullDetails(myRoot, details -> {
         storeDetail(details);
-        myNewIndexedCommits++;
 
-        if (myNewIndexedCommits % FLUSHED_COMMITS_NUMBER == 0) flush();
+        if (myNewIndexedCommits.incrementAndGet() % FLUSHED_COMMITS_NUMBER == 0) flush();
 
         indicator.checkCanceled();
         displayProgress(indicator);
@@ -653,7 +652,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     }
 
     public void displayProgress(@NotNull ProgressIndicator indicator) {
-      indicator.setFraction(((double)myNewIndexedCommits + myOldCommits) / myCommits.size());
+      indicator.setFraction(((double)myNewIndexedCommits.get() + myOldCommits.get()) / myCommits.size());
     }
 
     @Override

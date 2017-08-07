@@ -761,6 +761,9 @@
         <constraint name="s" nameOfExprType="java.lang.String" exprTypeWithinHierarchy="true" within="" contains="" />
         <constraint name="c" nameOfExprType="char" exprTypeWithinHierarchy="true" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="Can be de-lambdified" text="()-&gt;$R$.run()&#10;&#10;" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="$R$&#10;&#10;">
+        <constraint name="R" script="&quot;R instanceof com.intellij.psi.PsiExpression &amp;&amp; &#10;com.intellij.psi.util.InheritanceUtil.isInheritor(com.intellij.psi.util.PsiUtil.resolveClassInType(((com.intellij.psi.PsiExpression)R).getType()), &quot;java.lang.Runnable&quot;)&quot;" exprTypeWithinHierarchy="true" formalTypeWithinHierarchy="true" within="" contains="" />
+      </replaceConfiguration>
     </inspection_tool>
     <inspection_tool class="SafeVarargsDetector" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SeamAnnotationIncorrectSignatureInspection" enabled="false" level="ERROR" enabled_by_default="false" />

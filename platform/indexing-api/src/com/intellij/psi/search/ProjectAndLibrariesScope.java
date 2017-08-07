@@ -29,6 +29,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Scope for all things inside the project: files in the project content plus files in libraries/libraries sources
+ */
 public class ProjectAndLibrariesScope extends GlobalSearchScope {
   protected final ProjectFileIndex myProjectFileIndex;
   protected final boolean mySearchOutsideRootModel;

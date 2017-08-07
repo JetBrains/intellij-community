@@ -17,12 +17,22 @@ package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook;
+import com.intellij.openapi.actionSystem.impl.Win10ActionButtonLook;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
 
 public abstract class ActionButtonLook {
-  public static final ActionButtonLook IDEA_LOOK = new IdeaActionButtonLook();
+  @SuppressWarnings("StaticInitializerReferencesSubClass")
+  public static final ActionButtonLook DEFAULT_LOOK = UIUtil.isUnderWin10LookAndFeel() ?
+                                                       new Win10ActionButtonLook() :
+                                                       new IdeaActionButtonLook();
+
+  public static final ActionButtonLook INPLACE_LOOK = new ActionButtonLook() {
+    @Override public void paintBackground(Graphics g, JComponent component, int state) {}
+    @Override public void paintBorder(Graphics g, JComponent component, int state) {}
+  };
 
   public <ButtonType extends JComponent & ActionButtonComponent> void paintBackground(Graphics g, ButtonType button) {
     paintBackground(g, button, getState(button));
@@ -43,7 +53,15 @@ public abstract class ActionButtonLook {
     return button.getPopState();
   }
 
-  public abstract void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon);
+  public void paintIcon(Graphics g, ActionButtonComponent actionButton, Icon icon) {
+    int width = icon.getIconWidth();
+    int height = icon.getIconHeight();
+    int x = (actionButton.getWidth() - width) / 2;
+    int y = (actionButton.getHeight() - height) / 2;
+    paintIconAt(g, actionButton, icon, x, y);
+  }
 
-  public abstract void paintIconAt(Graphics g, ActionButtonComponent button, Icon icon, int x, int y);
+  public void paintIconAt(Graphics g, ActionButtonComponent button, Icon icon, int x, int y) {
+    icon.paintIcon(null, g, x, y);
+  }
 }

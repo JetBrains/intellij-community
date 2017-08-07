@@ -44,6 +44,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
+import com.intellij.ui.components.ExpandableTextField;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.TableView;
@@ -140,17 +141,9 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
 
     final JPanel panel = myPattern.getComponent();
     panel.setLayout(new BorderLayout());
-    myPatternTextField = new TextFieldWithBrowseButton();
+    myPatternTextField = new TextFieldWithBrowseButton(new ExpandableTextField());
     myPatternTextField.setButtonIcon(IconUtil.getAddIcon());
     panel.add(myPatternTextField, BorderLayout.CENTER);
-    final FixedSizeButton editBtn = new FixedSizeButton();
-    editBtn.setIcon(AllIcons.Actions.ShowViewer);
-    editBtn.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        Messages.showTextAreaDialog(myPatternTextField.getTextField(), "Configure suite tests", "EditParametersPopupWindow");
-      }
-    });
-    panel.add(editBtn, BorderLayout.EAST);
 
     final CollectionComboBoxModel<TestType> testKindModel = new CollectionComboBoxModel<>();
     for (TestType type : TestType.values()) {

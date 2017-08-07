@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.colors.fileStatus;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 
 import java.awt.*;
@@ -40,6 +41,10 @@ public class FileStatusColorDescriptor {
 
   public void setColor(Color color) {
     myColor = color;
+  }
+
+  public boolean isDefault() {
+    return Comparing.equal(myColor, myDefaultColor);
   }
 
   public void resetToDefault() {

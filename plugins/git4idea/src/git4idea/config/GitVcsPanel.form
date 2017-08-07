@@ -134,7 +134,7 @@
               <text value="Allow &amp;force push"/>
             </properties>
           </component>
-          <component id="b0317" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myProtectedBranchesButton" custom-create="true" default-binding="true">
+          <component id="fbb33" class="javax.swing.JTextField" binding="myProtectedBranchesField" custom-create="true" default-binding="true">
             <constraints>
               <grid row="6" column="7" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>

@@ -234,6 +234,12 @@ public class PyDunderSlotsInspectionTest extends PyTestCase {
     doTestPy3();
   }
 
+  // PY-22716
+  public void testWriteToInheritedSlot() {
+    doTestPy2();
+    doTestPy3();
+  }
+
   private void doTestPy2() {
     runWithLanguageLevel(LanguageLevel.PYTHON26, this::doTestPy);
   }

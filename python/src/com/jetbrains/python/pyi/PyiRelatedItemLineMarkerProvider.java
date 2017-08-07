@@ -48,7 +48,7 @@ public class PyiRelatedItemLineMarkerProvider extends RelatedItemLineMarkerProvi
   public static final Icon ICON = AllIcons.Gutter.Unique;
 
   @Override
-  protected void collectNavigationMarkers(@NotNull PsiElement element, Collection<? super RelatedItemLineMarkerInfo> result) {
+  protected void collectNavigationMarkers(@NotNull PsiElement element, @NotNull Collection<? super RelatedItemLineMarkerInfo> result) {
     if (element instanceof PyFunction || element instanceof PyTargetExpression || element instanceof PyClass) {
       final PsiElement pythonStub = PyiUtil.getPythonStub((PyElement)element);
       if (pythonStub != null) {

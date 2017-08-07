@@ -69,26 +69,24 @@ public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
     dialog.show();
   }
 
-  private void doAction(final Project project, final GenerateInstanceDocumentFromSchemaDialog dialog) {
+  public static void doAction(final Project project, final GenerateInstanceDocumentFromSchemaDialog dialog) {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     @NonNls List<String> parameters = new LinkedList<>();
 
     final String url = dialog.getUrl().getText();
     final VirtualFile relativeFile = VfsUtilCore.findRelativeFile(ExternalResourceManager.getInstance().getResourceLocation(url), null);
-    final PsiFile file = PsiManager.getInstance(project).findFile(relativeFile);
-    if (! (file instanceof XmlFile)) {
-      Messages.showErrorDialog(project, "This is not XmlFile" + file == null ? "" : " (" + file.getFileType().getName() + ")", XmlBundle.message("error"));
-      return;
-    }
-
-    VirtualFile relativeFileDir;
     if (relativeFile == null) {
       Messages.showErrorDialog(project, XmlBundle.message("file.doesnt.exist", url), XmlBundle.message("error"));
       return;
-    } else {
-      relativeFileDir = relativeFile.getParent();
     }
+    final PsiFile file = PsiManager.getInstance(project).findFile(relativeFile);
+    if (!(file instanceof XmlFile)) {
+      Messages.showErrorDialog(project, " (" + file.getFileType().getName() + ")", XmlBundle.message("error"));
+      return;
+    }
+
+    VirtualFile relativeFileDir = relativeFile.getParent();
     if (relativeFileDir == null) {
       Messages.showErrorDialog(project, XmlBundle.message("file.doesnt.exist", url), XmlBundle.message("error"));
       return;
@@ -146,9 +144,7 @@ public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
     }
 
 
-
-    final VirtualFile baseDirForCreatedInstanceDocument1 = relativeFileDir;
-    String xmlFileName = baseDirForCreatedInstanceDocument1.getPath() + File.separatorChar + dialog.getOutputFileName();
+    String xmlFileName = relativeFileDir.getPath() + File.separatorChar + dialog.getOutputFileName();
 
     try {
         // the generated XML doesn't have any XML declaration -> utf-8

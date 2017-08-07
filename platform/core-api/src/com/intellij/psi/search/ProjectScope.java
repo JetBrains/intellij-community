@@ -21,7 +21,6 @@ package com.intellij.psi.search;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyKey;
-import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 
 public class ProjectScope {
@@ -51,6 +50,9 @@ public class ProjectScope {
   private ProjectScope() {
   }
 
+  /**
+   * @return Scope for all things inside the project: files in the project content plus files in libraries/libraries sources
+   */
   @NotNull
   public static GlobalSearchScope getAllScope(@NotNull Project project) {
     return ALL_SCOPE_KEY.getValue(project);
@@ -71,6 +73,9 @@ public class ProjectScope {
     return CONTENT_SCOPE_KEY.getValue(project);
   }
 
+  /**
+   * @return The biggest possible scope: every file on the planet belongs to this.
+   */
   @NotNull
   public static GlobalSearchScope getEverythingScope(@NotNull Project project) {
     return EVERYTHING_SCOPE_KEY.getValue(project);

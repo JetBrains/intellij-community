@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.testFramework.TestFileType;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,12 +58,13 @@ public class EditorColorsSchemeDelegateTest extends AbstractEditorTest {
     FontPreferences tempCopy = new FontPreferencesImpl();
     globalPrefs.copyTo(tempCopy);
     try {
-      assertInstanceOf(globalPrefs, ModifiableFontPreferences.class);
-      LOG.debug(dumpFontPreferences("globalPrefs", globalPrefs));
-      ((ModifiableFontPreferences)globalPrefs).register("DummyFont", globalPrefs.getSize(globalPrefs.getFontFamily()));
-      assertEquals(2, globalPrefs.getRealFontFamilies().size());
-
       init("blah", TestFileType.TEXT);
+
+      assertInstanceOf(globalPrefs, ModifiableFontPreferences.class);
+      ((ModifiableFontPreferences)globalPrefs).register("DummyFont", globalPrefs.getSize(globalPrefs.getFontFamily()));
+      LOG.debug(dumpFontPreferences("globalPrefs", globalPrefs));
+      assertEquals(2, globalPrefs.getRealFontFamilies().size());
+      ((EditorEx)myEditor).reinitSettings();
 
       FontPreferences editorPrefs = myEditor.getColorsScheme().getFontPreferences();
       LOG.debug(dumpFontPreferences("editorPrefs", editorPrefs));

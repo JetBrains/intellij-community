@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.actionSystem.impl;
+package com.intellij.internal.psiView.stubtree;
 
-import javax.swing.*;
-import java.awt.*;
+import com.intellij.ui.treeStructure.SimpleTreeStructure;
 
-public class InplaceActionButtonLook extends IdeaActionButtonLook {
-  @Override
-  public void paintBackground(Graphics g, JComponent component, int state) {
+/**
+ * @author Konstantin.Ulitin
+ */
+public class StubTreeStructure extends SimpleTreeStructure {
+
+  private final StubTreeNode myRoot;
+
+  public StubTreeStructure(StubTreeNode root) {
+    myRoot = root;
   }
 
   @Override
-  public void paintBorder(Graphics g, JComponent component, int state) {
+  public StubTreeNode getRootElement() {
+    return myRoot;
   }
 }

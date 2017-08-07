@@ -42,6 +42,7 @@ import java.awt.event.MouseEvent;
 public class FileStatusColorsTable extends JBTable {
 
   private JBPopupMenu mySetColorMenu;
+  private JBMenuItem myResetItem;
 
   public FileStatusColorsTable(@NotNull Color defaultColor) {
     setShowGrid(false);
@@ -69,7 +70,8 @@ public class FileStatusColorsTable extends JBTable {
     mySetColorMenu = new JBPopupMenu();
     mySetColorMenu.add(new JBMenuItem(new ChooseColorAction()));
     mySetColorMenu.add(new JBMenuItem(new DropColorAction()));
-    mySetColorMenu.add(new JBMenuItem(new ResetToDefaultAction()));
+    myResetItem = new JBMenuItem(new ResetToDefaultAction());
+    mySetColorMenu.add(myResetItem);
   }
 
   private class ChooseColorAction extends AbstractAction {
@@ -115,10 +117,17 @@ public class FileStatusColorsTable extends JBTable {
     Point location = getPopupLocation();
     if (location != null) {
       mySetColorMenu.show(this, location.x, location.y);
+      myResetItem.setVisible(isResetAvailable());
+      mySetColorMenu.pack();
       mySetColorMenu.getSelectionModel().setSelectedIndex(0);
       return true;
     }
     return false;
+  }
+
+  private boolean isResetAvailable() {
+    int row = getSelectedRow();
+    return row >= 0 && ((FileStatusColorsTableModel)getModel()).isResetAvailable(row);
   }
 
   @Nullable

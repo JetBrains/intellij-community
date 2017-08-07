@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.util.ConcurrencyUtil;
@@ -166,7 +167,9 @@ public class PushController implements Disposable {
   }
 
   private boolean isPreChecked(@NotNull MyRepoModel model) {
-    return model.getSupport().getRepositoryManager().isSyncEnabled() || preselectByUser(model.getRepository());
+    return Registry.is("vcs.push.all.with.commits") ||
+           model.getSupport().getRepositoryManager().isSyncEnabled() ||
+           preselectByUser(model.getRepository());
   }
 
   private RepositoryNode findNodeByRepo(@Nullable final Repository repository) {
@@ -373,7 +376,10 @@ public class PushController implements Disposable {
 
   private boolean shouldSelectNodeAfterLoad(@NotNull MyRepoModel model) {
     if (mySingleRepoProject) return true;
-    return model.isSelected() && (hasCommitsToPush(model) || !model.getSupport().getRepositoryManager().isSyncEnabled());
+    return model.isSelected() &&
+           (hasCommitsToPush(model) ||
+            // set force check only for async with no registry option
+            !(model.getSupport().getRepositoryManager().isSyncEnabled() || Registry.is("vcs.push.all.with.commits")));
   }
 
   private boolean preselectByUser(@NotNull Repository repository) {

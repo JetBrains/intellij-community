@@ -52,7 +52,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   protected final Presentation myPresentation;
   protected final AnAction myAction;
   protected final String myPlace;
-  private ActionButtonLook myLook = ActionButtonLook.IDEA_LOOK;
+  private ActionButtonLook myLook = ActionButtonLook.DEFAULT_LOOK;
   private boolean myMouseDown;
   private boolean myRollover;
   private static boolean ourGlobalMouseDown = false;
@@ -293,7 +293,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       myLook = look;
     }
     else {
-      myLook = ActionButtonLook.IDEA_LOOK;
+      myLook = ActionButtonLook.DEFAULT_LOOK;
     }
     repaint();
   }

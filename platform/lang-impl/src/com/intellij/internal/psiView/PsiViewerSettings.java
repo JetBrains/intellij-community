@@ -36,8 +36,7 @@ public class PsiViewerSettings implements PersistentStateComponent<PsiViewerSett
   public String dialect = "";
   public int textDividerLocation = 250;
   public int treeDividerLocation = 400;
-  public int blockRefDividerLocation = 600;
-  public boolean showBlocks = true;
+  public int lastSelectedTabIndex = 0;
 
   public static PsiViewerSettings getSettings() {
     return ServiceManager.getService(PsiViewerSettings.class);
