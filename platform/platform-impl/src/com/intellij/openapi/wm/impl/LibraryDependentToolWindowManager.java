@@ -18,6 +18,8 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -27,10 +29,16 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ext.LibraryDependentToolWindow;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.ExecutorService;
+
 public class LibraryDependentToolWindowManager implements StartupActivity {
+
+  private static final ExecutorService ourExecutor =
+    SequentialTaskExecutor.createSequentialApplicationPoolExecutor("LibraryDependentToolWindowManager");
 
   @Override
   public void runActivity(@NotNull Project project) {
@@ -54,21 +62,24 @@ public class LibraryDependentToolWindowManager implements StartupActivity {
   }
 
   private static void checkToolWindowStatuses(@NotNull final Project project) {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      if (project.isDisposed()) return;
+    final ModalityState currentModalityState = ModalityState.current();
 
-      doCheckToolWindowStatuses(project);
+    ourExecutor.submit(() -> {
+      doCheckToolWindowStatuses(project, currentModalityState);
     });
   }
 
-  private static void doCheckToolWindowStatuses(@NotNull final Project project) {
-    final ToolWindowManagerEx toolWindowManagerEx = ToolWindowManagerEx.getInstanceEx(project);
+  private static void doCheckToolWindowStatuses(@NotNull final Project project,
+                                                ModalityState currentModalityState) {
+    final DumbService dumbService = ReadAction.compute(() -> project.isDisposed() ? null : DumbService.getInstance(project));
+    if (dumbService == null) return;
 
     for (LibraryDependentToolWindow libraryToolWindow : Extensions.getExtensions(LibraryDependentToolWindow.EXTENSION_POINT_NAME)) {
-      boolean exists = DumbService.getInstance(project)
-        .runReadActionInSmartMode(() -> libraryToolWindow.getLibrarySearchHelper().isLibraryExists(project));
+      boolean exists = dumbService.runReadActionInSmartMode(() -> !project.isDisposed() &&
+                                                                  libraryToolWindow.getLibrarySearchHelper().isLibraryExists(project));
 
       ApplicationManager.getApplication().invokeLater(() -> {
+        final ToolWindowManagerEx toolWindowManagerEx = ToolWindowManagerEx.getInstanceEx(project);
         ToolWindow toolWindow = toolWindowManagerEx.getToolWindow(libraryToolWindow.id);
 
         if (exists) {
@@ -81,7 +92,7 @@ public class LibraryDependentToolWindowManager implements StartupActivity {
             toolWindowManagerEx.unregisterToolWindow(libraryToolWindow.id);
           }
         }
-      });
+      }, currentModalityState, project.getDisposed());
     }
   }
 }
