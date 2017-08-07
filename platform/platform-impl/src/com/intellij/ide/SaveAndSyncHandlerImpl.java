@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -27,7 +28,6 @@ import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -122,23 +122,8 @@ public class SaveAndSyncHandlerImpl extends SaveAndSyncHandler implements Dispos
     if (!ApplicationManager.getApplication().isDisposed() &&
         mySettings.isSaveOnFrameDeactivation() &&
         myBlockSaveOnFrameDeactivationCount.get() == 0) {
-      doSaveDocumentsAndProjectsAndApp();
+      StoreUtil.saveDocumentsAndProjectsAndApp();
     }
-  }
-
-  public static void doSaveDocumentsAndProjectsAndApp() {
-    LOG.debug("saving documents");
-    FileDocumentManager.getInstance().saveAllDocuments();
-
-    for (Project project : ProjectManagerEx.getInstanceEx().getOpenProjects()) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("saving project: " + project);
-      }
-      project.save();
-    }
-
-    LOG.debug("saving application settings");
-    ApplicationManager.getApplication().saveSettings();
   }
 
   @Override
