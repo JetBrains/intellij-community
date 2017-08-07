@@ -269,6 +269,7 @@ public class InjectorUtils {
 
     // calculate topmost siblings & heights
     PsiElement commonParent = PsiTreeUtil.findCommonParent(psiComment, target);
+    if (commonParent == null) return null;
     PsiElement topmostElement = target;
     PsiElement parent = target;
     while (parent != null && (treeElementsIncludeComment ? parent : parent.getParent()) != commonParent) {
