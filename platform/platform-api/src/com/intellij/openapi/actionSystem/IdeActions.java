@@ -24,6 +24,7 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_CUT = "EditorCut";
   @NonNls String ACTION_EDITOR_COPY = "EditorCopy";
   @NonNls String ACTION_EDITOR_PASTE = "EditorPaste";
+  @NonNls String ACTION_EDITOR_PASTE_SIMPLE = "EditorPasteSimple";
   @NonNls String ACTION_EDITOR_DELETE = "EditorDelete";
   @NonNls String ACTION_EDITOR_DELETE_TO_WORD_START = "EditorDeleteToWordStart";
   @NonNls String ACTION_EDITOR_DELETE_TO_WORD_END = "EditorDeleteToWordEnd";
