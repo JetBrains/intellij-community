@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
-
-
-import com.intellij.openapi.util.SystemInfoRt
 import org.jetbrains.backwardRefs.CompilerBackwardReferenceIndex
 import org.jetbrains.backwardRefs.JavacReferenceIndexWriter
 import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.ReferenceIndexHolder
@@ -35,11 +30,11 @@ apply plugin: BackRefCollectorGradlePlugin
 
 @SuppressWarnings("GrPackage")
 class BackRefCollectorGradlePlugin implements Plugin<Gradle> {
-  private static String INDEX_PATH = SystemInfoRt.isMac ? "/Users/dima/index" : "/home/user/index"
 
   @Override
   void apply(Gradle gradle) {
-    ReferenceIndexHolder.ourIndexWriter = new JavacReferenceIndexWriter(new CompilerBackwardReferenceIndex(new File(INDEX_PATH), false) {
+    def indexDir = ReferenceIndexHolder.ourIndexDir
+    ReferenceIndexHolder.ourIndexWriter = new JavacReferenceIndexWriter(new CompilerBackwardReferenceIndex(new File(indexDir), false) {
       @Override
       protected RuntimeException createBuildDataCorruptedException(IOException cause) {
         return new RuntimeException(cause)
@@ -59,7 +54,7 @@ class BackRefCollectorGradlePlugin implements Plugin<Gradle> {
             def args = task.options.compilerArgs
             args.add("-processorpath")
             args.add("${JAVAC_PLUGIN_PATH}")
-            args.add("-Xplugin:$ReferenceIndexJavacPlugin.PLUGIN_NAME index.path=$INDEX_PATH")
+            args.add("-Xplugin:$ReferenceIndexJavacPlugin.PLUGIN_NAME index.path=$indexDir")
           }
         }
 
@@ -79,7 +74,7 @@ class BackRefCollectorGradlePlugin implements Plugin<Gradle> {
                 def args = task.options.compilerArgs
                 args.add("-processorpath")
                 args.add("${JAVAC_PLUGIN_PATH}")
-                args.add("-Xplugin:$ReferenceIndexJavacPlugin.PLUGIN_NAME index.path=$INDEX_PATH")
+                args.add("-Xplugin:$ReferenceIndexJavacPlugin.PLUGIN_NAME index.path=$indexDir")
               }
             }
 

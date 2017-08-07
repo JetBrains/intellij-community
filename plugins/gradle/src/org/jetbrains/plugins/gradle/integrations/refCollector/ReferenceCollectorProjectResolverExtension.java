@@ -43,6 +43,7 @@ import org.jetbrains.plugins.gradle.tooling.internal.backRefCollector.ReferenceI
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -105,7 +106,13 @@ public class ReferenceCollectorProjectResolverExtension extends AbstractProjectR
   @Override
   public List<Pair<String, String>> getExtraJvmArgs() {
     Project project = findProject(resolverCtx);
-    return super.getExtraJvmArgs();
+    return Collections.singletonList(Pair.create("idea.javac.ref.index", CompilerReferenceService.getInstance(project).getIndexDir().getAbsolutePath()));
+  }
+
+  @NotNull
+  @Override
+  public List<String> getExtraCommandLineArgs() {
+    return super.getExtraCommandLineArgs();
   }
 
   @NotNull

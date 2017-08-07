@@ -53,6 +53,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.StorageException;
@@ -67,6 +68,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.backwardRefs.LightRef;
 import org.jetbrains.backwardRefs.SignatureData;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.LongAdder;
@@ -146,7 +148,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
         CompilerManager compilerManager = CompilerManager.getInstance(myProject);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
           boolean isUpToDate;
-          boolean indexExist = CompilerReferenceReader.exists(myProject);
+          boolean indexExist = CompilerReferenceReader.exists(getIndexDir());
           if (indexExist) {
             CompileScope projectCompileScope = compilerManager.createProjectCompileScope(myProject);
             isUpToDate = compilerManager.isUpToDate(projectCompileScope);
@@ -218,6 +220,12 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     }
   }
 
+
+  @NotNull
+  @Override
+  public File getIndexDir() {
+    return ObjectUtils.notNull(BuildManager.getInstance().getProjectSystemDirectory(myProject));
+  }
 
   @NotNull
   @Override
@@ -589,7 +597,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
         LOG.assertTrue(myReader == null, "isAutoMakeEnabled = " +
                                          ReadAction
                                            .compute(() -> CompilerWorkspaceConfiguration.getInstance(myProject).MAKE_PROJECT_ON_SAVE));
-        myReader = CompilerReferenceReader.create(myProject);
+        myReader = CompilerReferenceReader.create(getIndexDir());
         LOG.info("backward reference index reader " + (myReader == null ? "doesn't exist" : "is opened"));
       }
     }

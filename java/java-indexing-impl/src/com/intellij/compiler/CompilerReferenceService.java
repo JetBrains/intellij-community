@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+
 /**
  * The service is intended to provide an information about class/method/field usages or classes hierarchy that is obtained on compilation time.
  * It means that this service should not affect any find usages result when initial project is not compiled or project language is not support
@@ -42,6 +44,9 @@ public abstract class CompilerReferenceService extends AbstractProjectComponent 
   public static CompilerReferenceService getInstance(@NotNull Project project) {
     return project.getComponent(CompilerReferenceService.class);
   }
+
+  @NotNull
+  public abstract File getIndexDir();
 
   /**
    * @return a scope where given element has no references in code. This scope might be not a strict scope where element is not occurred.

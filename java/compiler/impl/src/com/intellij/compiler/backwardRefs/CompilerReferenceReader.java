@@ -15,10 +15,8 @@
  */
 package com.intellij.compiler.backwardRefs;
 
-import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -183,18 +181,17 @@ class CompilerReferenceReader {
     return myIndex;
   }
 
-  static boolean exists(Project project) {
-    File buildDir = BuildManager.getInstance().getProjectSystemDirectory(project);
-    if (buildDir == null || CompilerBackwardReferenceIndex.versionDiffers(buildDir)) {
+  static boolean exists(File indexDir) {
+    if (indexDir == null || CompilerBackwardReferenceIndex.versionDiffers(indexDir)) {
       return false;
     }
-    return CompilerBackwardReferenceIndex.exist(buildDir);
+    return CompilerBackwardReferenceIndex.exist(indexDir);
   }
 
-  static CompilerReferenceReader create(Project project) {
-    if (!exists(project)) return null;
+  static CompilerReferenceReader create(File indexDir) {
+    if (!exists(indexDir)) return null;
     try {
-      return new CompilerReferenceReader(BuildManager.getInstance().getProjectSystemDirectory(project));
+      return new CompilerReferenceReader(indexDir);
     }
     catch (RuntimeException e) {
       LOG.error("An exception while initialization of compiler reference index.", e);
