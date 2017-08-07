@@ -1799,7 +1799,7 @@
 
     <xdebugger.debuggerSupport implementation="com.intellij.debugger.ui.JavaDebuggerSupport"/>
     <xdebugger.settings implementation="com.intellij.debugger.settings.JavaDebuggerSettings"/>
-    <xdebugger.localAttachDebuggerProvider implementation="com.intellij.debugger.engine.JavaAttachDebuggerProvider"/>
+    <xdebugger.attachDebuggerProvider implementation="com.intellij.debugger.engine.JavaAttachDebuggerProvider"/>
 
     <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaMethodBreakpointType"/>
     <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaWildcardMethodBreakpointType"/>
