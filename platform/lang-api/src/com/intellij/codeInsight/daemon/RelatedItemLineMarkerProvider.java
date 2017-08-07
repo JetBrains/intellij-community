@@ -40,8 +40,8 @@ public abstract class RelatedItemLineMarkerProvider extends LineMarkerProviderDe
     collectNavigationMarkers(elements, result, false);
   }
 
-  public void collectNavigationMarkers(List<PsiElement> elements,
-                                       Collection<? super RelatedItemLineMarkerInfo> result,
+  public void collectNavigationMarkers(@NotNull List<PsiElement> elements,
+                                       @NotNull Collection<? super RelatedItemLineMarkerInfo> result,
                                        boolean forNavigation) {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, size = elements.size(); i < size; i++) {
@@ -56,7 +56,7 @@ public abstract class RelatedItemLineMarkerProvider extends LineMarkerProviderDe
     }
   }
 
-  protected void collectNavigationMarkers(@NotNull PsiElement element, Collection<? super RelatedItemLineMarkerInfo> result) {
+  protected void collectNavigationMarkers(@NotNull PsiElement element, @NotNull Collection<? super RelatedItemLineMarkerInfo> result) {
   }
 
   @Override

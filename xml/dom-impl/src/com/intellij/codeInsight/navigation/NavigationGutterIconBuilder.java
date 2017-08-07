@@ -57,8 +57,8 @@ import java.util.*;
  */
 public class NavigationGutterIconBuilder<T> {
   @NonNls private static final String PATTERN = "&nbsp;&nbsp;&nbsp;&nbsp;{0}";
-  private static final NotNullFunction<PsiElement, Collection<? extends PsiElement>> DEFAULT_PSI_CONVERTOR =
-    element -> ContainerUtil.createMaybeSingletonList(element);
+  private static final NotNullFunction<PsiElement,Collection<? extends PsiElement>> DEFAULT_PSI_CONVERTOR =
+    ContainerUtil::createMaybeSingletonList;
 
   private final Icon myIcon;
   private final NotNullFunction<T, Collection<? extends PsiElement>> myConverter;
@@ -90,7 +90,7 @@ public class NavigationGutterIconBuilder<T> {
 
   protected NavigationGutterIconBuilder(@NotNull final Icon icon,
                                         @NotNull NotNullFunction<T, Collection<? extends PsiElement>> converter,
-                                        final @Nullable NotNullFunction<T, Collection<? extends GotoRelatedItem>> gotoRelatedItemProvider) {
+                                        @Nullable final NotNullFunction<T, Collection<? extends GotoRelatedItem>> gotoRelatedItemProvider) {
     myIcon = icon;
     myConverter = converter;
     myGotoRelatedItemProvider = gotoRelatedItemProvider;
@@ -110,7 +110,7 @@ public class NavigationGutterIconBuilder<T> {
   @NotNull
   public static <T> NavigationGutterIconBuilder<T> create(@NotNull final Icon icon,
                                                           @NotNull NotNullFunction<T, Collection<? extends PsiElement>> converter,
-                                                          final @Nullable NotNullFunction<T, Collection<? extends GotoRelatedItem>> gotoRelatedItemProvider) {
+                                                          @Nullable final NotNullFunction<T, Collection<? extends GotoRelatedItem>> gotoRelatedItemProvider) {
     return new NavigationGutterIconBuilder<>(icon, converter, gotoRelatedItemProvider);
   }
 
@@ -274,7 +274,7 @@ public class NavigationGutterIconBuilder<T> {
     }
 
     Computable<PsiElementListCellRenderer> renderer =
-      myCellRenderer == null ? () -> new DefaultPsiElementCellRenderer() : myCellRenderer;
+      myCellRenderer == null ? DefaultPsiElementCellRenderer::new : myCellRenderer;
     return new MyNavigationGutterIconRenderer(this, myAlignment, myIcon, myTooltipText, pointers, renderer, empty);
   }
 
@@ -334,13 +334,13 @@ public class NavigationGutterIconBuilder<T> {
     private final String myTooltipText;
     private final boolean myEmpty;
 
-    public MyNavigationGutterIconRenderer(@NotNull NavigationGutterIconBuilder builder,
-                                          final Alignment alignment,
-                                          final Icon icon,
-                                          @Nullable final String tooltipText,
-                                          @NotNull NotNullLazyValue<List<SmartPsiElementPointer>> pointers,
-                                          Computable<PsiElementListCellRenderer> cellRenderer,
-                                          boolean empty) {
+    MyNavigationGutterIconRenderer(@NotNull NavigationGutterIconBuilder builder,
+                                   final Alignment alignment,
+                                   final Icon icon,
+                                   @Nullable final String tooltipText,
+                                   @NotNull NotNullLazyValue<List<SmartPsiElementPointer>> pointers,
+                                   Computable<PsiElementListCellRenderer> cellRenderer,
+                                   boolean empty) {
       super(builder.myPopupTitle, builder.myEmptyText, cellRenderer, pointers);
       myAlignment = alignment;
       myIcon = icon;
