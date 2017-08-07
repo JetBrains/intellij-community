@@ -16,6 +16,7 @@
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.OutgoingResult;
+import com.intellij.dvcs.push.PushTarget;
 import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -144,5 +145,16 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
   @NotNull
   String getRepositoryName() {
     return myRepositoryPanel.getRepositoryName();
+  }
+
+  @Override
+  public String toString() {
+    return getRepositoryName() + " " + getRepositoryPresentationDetails();
+  }
+
+  @NotNull
+  protected String getRepositoryPresentationDetails() {
+    PushTarget targetValue = myRepositoryPanel.getTargetPanel().getValue();
+    return myRepositoryPanel.getSourceName() + (targetValue != null ? myRepositoryPanel.getArrow() + targetValue : "");
   }
 }
