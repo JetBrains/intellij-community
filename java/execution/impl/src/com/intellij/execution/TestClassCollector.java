@@ -15,7 +15,6 @@
  */
 package com.intellij.execution;
 
-import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.CompilerModuleExtension;
@@ -27,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.lang.UrlClassLoader;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,7 +43,10 @@ public class TestClassCollector {
 
   private static final Logger LOG = Logger.getInstance(TestClassCollector.class);
 
-  public static String[] collectClassFQNames(String packageName, JavaTestConfigurationBase configuration, Function<ClassLoader, Predicate<Class<?>>> predicateProducer) {
+  public static String[] collectClassFQNames(String packageName,
+                                             @Nullable Path rootPath,
+                                             JavaTestConfigurationBase configuration,
+                                             Function<ClassLoader, Predicate<Class<?>>> predicateProducer) {
     Module module = configuration.getConfigurationModule().getModule();
     List<URL> urls = new ArrayList<>();
 
@@ -55,17 +58,6 @@ public class TestClassCollector {
       }
       catch (MalformedURLException ignored) {
         LOG.info(ignored);
-      }
-    }
-
-    Path rootPath = null;
-    if (configuration.getTestSearchScope() == TestSearchScope.SINGLE_MODULE) {
-      CompilerModuleExtension moduleExtension = CompilerModuleExtension.getInstance(module);
-      if (moduleExtension != null) {
-        VirtualFile tests = moduleExtension.getCompilerOutputPathForTests();
-        if (tests != null) {
-          rootPath = Paths.get(VfsUtilCore.virtualToIoFile(tests).toURI());
-        }
       }
     }
 
@@ -122,5 +114,19 @@ public class TestClassCollector {
     }
 
     return ArrayUtil.toStringArray(classes);
+  }
+
+  @Nullable
+  public static Path getRootPath(Module module, final boolean chooseSingleModule) {
+    if (chooseSingleModule) {
+      CompilerModuleExtension moduleExtension = CompilerModuleExtension.getInstance(module);
+      if (moduleExtension != null) {
+        VirtualFile tests = moduleExtension.getCompilerOutputPathForTests();
+        if (tests != null) {
+          return Paths.get(VfsUtilCore.virtualToIoFile(tests).toURI());
+        }
+      }
+    }
+    return null;
   }
 }
