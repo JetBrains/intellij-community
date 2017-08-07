@@ -43,7 +43,6 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.PotemkinProgress;
@@ -1447,19 +1446,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   public void saveAll() {
     if (myDoNotSave) return;
 
-    FileDocumentManager.getInstance().saveAllDocuments();
-
-    ProjectManager projectManager = ProjectManager.getInstance();
-    if (projectManager instanceof ProjectManagerEx) {
-      ((ProjectManagerEx)projectManager).flushChangedProjectFileAlarm();
-    }
-
-    Project[] openProjects = projectManager.getOpenProjects();
-    for (Project openProject : openProjects) {
-      openProject.save();
-    }
-
-    saveSettings();
+    StoreUtil.saveDocumentsAndProjectsAndApp();
   }
 
   @Override
