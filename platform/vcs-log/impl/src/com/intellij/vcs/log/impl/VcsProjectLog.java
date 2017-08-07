@@ -172,6 +172,7 @@ public class VcsProjectLog implements Disposable {
 
     @CalledInAwt
     public synchronized void drop() {
+      LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
       drop(null);
     }
 

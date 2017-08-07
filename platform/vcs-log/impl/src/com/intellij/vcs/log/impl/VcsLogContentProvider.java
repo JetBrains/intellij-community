@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -51,6 +52,7 @@ import java.util.List;
  * Delegates to the VcsLogManager.
  */
 public class VcsLogContentProvider implements ChangesViewContentProvider {
+  private static final Logger LOG = Logger.getInstance(VcsLogContentProvider.class);
   public static final String TAB_NAME = "Log";
 
   @NotNull private final Project myProject;
@@ -82,6 +84,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
 
   @CalledInAwt
   private void addLogUi(@NotNull VcsLogManager logManager) {
+    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     if (myProjectLog.getMainLogUi() == null) {
       VcsLogUiImpl ui = logManager.createLogUi(VcsLogTabsProperties.MAIN_LOG_ID, TAB_NAME);
       myProjectLog.setMainUi(ui);
@@ -90,6 +93,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   }
 
   private void dispose(@Nullable VcsLogManager logManager) {
+    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     myContainer.removeAll();
     VcsLogUiImpl ui = myProjectLog.getMainLogUi();
     if (ui != null) Disposer.dispose(ui);
